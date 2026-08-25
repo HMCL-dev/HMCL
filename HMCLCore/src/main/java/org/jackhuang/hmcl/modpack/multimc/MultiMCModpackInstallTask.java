@@ -50,6 +50,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /**
  * <p>A task transforming MultiMC Modpack Scheme to Official Launcher Scheme.
  * The transforming process contains 7 stage:
@@ -81,6 +83,16 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     private final List<Task<?>> dependencies = new ArrayList<>();
     private final DefaultDependencyManager dependencyManager;
 
+    /// The repository transaction that owns a newly created instance root until publication.
+    private @Nullable DefaultGameRepositoryDraft draft;
+
+    /// Creates a MultiMC modpack installation task.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param zipFile           the source modpack archive
+    /// @param modpack           the parsed modpack metadata
+    /// @param manifest          the MultiMC instance configuration
+    /// @param instanceId        the target instance ID
     public MultiMCModpackInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, MultiMCInstanceConfiguration manifest, GameInstanceID instanceId) {
         this.zipFile = zipFile;
         this.modpack = modpack;
@@ -94,6 +106,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
 
         onDone().register(event -> {
+            abortOpenDraft();
             if (event.isFailed())
                 repository.removeInstanceFromDisk(instanceId);
         });
@@ -104,8 +117,23 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         return true;
     }
 
+    /// Reserves the instance in a repository draft before preparing tasks that write its root.
     @Override
     public void preExecute() throws Exception {
+        DefaultGameRepositoryDraft openedDraft = repository.openDraft();
+        draft = openedDraft;
+        try {
+            openedDraft.put(new GameInstanceManifest(instanceId));
+        } catch (IOException | RuntimeException e) {
+            try {
+                openedDraft.abort();
+            } catch (IOException cleanupFailure) {
+                e.addSuppressed(cleanupFailure);
+            }
+            draft = null;
+            throw e;
+        }
+
         // Stage #0: General Setup
         {
             Path run = repository.getLayout().getInstanceRoot(instanceId);
@@ -286,8 +314,8 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         // Stage #5: Assemble game files.
         {
             GameInstanceManifest instanceManifest = artifact.getManifest();
+            requireDraft().put(instanceManifest);
 
-            dependencies.add(repository.saveAsync(artifact.getManifest()));
             dependencies.add(new GameAssetDownloadTask(dependencyManager, instanceManifest, GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY, true));
             dependencies.add(new GameLibrariesTask(
                     dependencyManager,
@@ -315,28 +343,58 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         return true;
     }
 
+    /// Applies JAR mods after downloads succeed and then publishes the completed manifest.
     @Override
     public void postExecute() throws Exception {
         MultiMCInstancePatch.ResolvedInstance artifact = Objects.requireNonNull(getResult(), "ResolvedInstance");
 
         List<String> files = artifact.getJarModFileNames();
-        if (!isDependenciesSucceeded() || files.isEmpty()) {
+        if (!isDependenciesSucceeded()) {
             return;
         }
 
-        // Stage #7: Apply jar mods.
-        try (FileSystem fs = openModpack()) {
-            Path root = getRootPath(fs).resolve("jarmods");
+        if (!files.isEmpty()) {
+            // Stage #7: Apply jar mods.
+            try (FileSystem fs = openModpack()) {
+                Path root = getRootPath(fs).resolve("jarmods");
 
-            try (FileSystem mc = CompressingUtils.writable(
-                    repository.getLayout().getInstanceRoot(instanceId).resolve(instanceId + ".jar")
-            ).setAutoDetectEncoding(true).build()) {
-                for (String fileName : files) {
-                    try (FileSystem jm = CompressingUtils.readonly(root.resolve(fileName)).setAutoDetectEncoding(true).build()) {
-                        FileUtils.copyDirectory(jm.getPath("/"), mc.getPath("/"));
+                try (FileSystem mc = CompressingUtils.writable(
+                        repository.getLayout().getInstanceRoot(instanceId).resolve(instanceId + ".jar")
+                ).setAutoDetectEncoding(true).build()) {
+                    for (String fileName : files) {
+                        try (FileSystem jm = CompressingUtils.readonly(root.resolve(fileName)).setAutoDetectEncoding(true).build()) {
+                            FileUtils.copyDirectory(jm.getPath("/"), mc.getPath("/"));
+                        }
                     }
                 }
             }
+        }
+
+        requireDraft().commit();
+    }
+
+    /// Returns the open draft associated with this task.
+    ///
+    /// @return the open draft
+    /// @throws IllegalStateException if the task has not reserved a draft or already released it
+    private DefaultGameRepositoryDraft requireDraft() {
+        @Nullable DefaultGameRepositoryDraft currentDraft = draft;
+        if (currentDraft == null || !currentDraft.isOpen()) {
+            throw new IllegalStateException("MultiMC installation draft is not open");
+        }
+        return currentDraft;
+    }
+
+    /// Aborts the task's draft when execution ends before commit.
+    private void abortOpenDraft() {
+        @Nullable DefaultGameRepositoryDraft currentDraft = draft;
+        if (currentDraft == null || !currentDraft.isOpen()) {
+            return;
+        }
+        try {
+            currentDraft.abort();
+        } catch (IOException e) {
+            LOG.warning("Failed to abort MultiMC installation draft for " + instanceId, e);
         }
     }
 

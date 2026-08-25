@@ -64,7 +64,9 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
         this.update = repository.hasInstance(instanceId);
 
-        GameBuilder builder = dependencyManager.newGameBuilder().id(instanceId);
+        GameBuilder builder = dependencyManager.newGameBuilder()
+                .id(instanceId)
+                .useInstanceRunDirectory();
         for (McbbsModpackManifest.Addon addon : manifest.getAddons()) {
             @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
             if (componentType != null)

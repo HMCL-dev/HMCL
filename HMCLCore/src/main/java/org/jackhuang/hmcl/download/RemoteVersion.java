@@ -43,24 +43,20 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
     private final List<String> urls;
     private final Type type;
 
-    /**
-     * Constructor.
-     *
-     * @param gameVersion the Minecraft version that this remote version suits.
-     * @param selfVersion the version string of the remote version.
-     * @param urls        the installer or universal jar original URL.
-     */
+    /// Constructor.
+    ///
+    /// @param gameVersion the Minecraft version that this remote version suits.
+    /// @param selfVersion the version string of the remote version.
+    /// @param urls        the installer or universal jar original URL.
     public RemoteVersion(GameComponentType componentType, String gameVersion, String selfVersion, Instant releaseDate, List<String> urls) {
         this(componentType, gameVersion, selfVersion, releaseDate, Type.UNCATEGORIZED, urls);
     }
 
-    /**
-     * Constructor.
-     *
-     * @param gameVersion the Minecraft version that this remote version suits.
-     * @param selfVersion the version string of the remote version.
-     * @param urls        the installer or universal jar URL.
-     */
+    /// Constructor.
+    ///
+    /// @param gameVersion the Minecraft version that this remote version suits.
+    /// @param selfVersion the version string of the remote version.
+    /// @param urls        the installer or universal jar URL.
     public RemoteVersion(GameComponentType componentType, String gameVersion, String selfVersion, Instant releaseDate, Type type, List<String> urls) {
         this.componentType = Objects.requireNonNull(componentType);
         this.gameVersion = Objects.requireNonNull(gameVersion);
@@ -102,12 +98,12 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
     /// instance run tree (for example Fabric/Quilt API).
     ///
     /// @param dependencyManager the dependency manager
-    /// @param baseVersion       the manifest being installed into
+    /// @param baseManifest       the manifest being installed into
     /// @param modsDirectory     the mods directory of the target instance run directory
     /// @return the install task
     public Task<GameInstancePatch> getInstallTask(
             DefaultDependencyManager dependencyManager,
-            GameInstanceManifest baseVersion,
+            GameInstanceManifest baseManifest,
             Path modsDirectory) {
         throw new UnsupportedOperationException(this + " cannot be installed yet");
     }

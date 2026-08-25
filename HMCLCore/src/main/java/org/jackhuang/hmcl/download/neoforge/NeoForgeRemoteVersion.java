@@ -33,8 +33,8 @@ public class NeoForgeRemoteVersion extends RemoteVersion {
     }
 
     @Override
-    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion, Path modsDirectory) {
-        return new NeoForgeInstallTask(dependencyManager, baseVersion, this);
+    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseManifest, Path modsDirectory) {
+        return new NeoForgeInstallTask(dependencyManager, baseManifest, this);
     }
 
     private static Type getType(String version) {

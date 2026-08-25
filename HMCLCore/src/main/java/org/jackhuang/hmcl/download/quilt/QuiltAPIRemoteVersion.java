@@ -59,9 +59,9 @@ public class QuiltAPIRemoteVersion extends RemoteVersion {
     @Override
     public Task<GameInstancePatch> getInstallTask(
             DefaultDependencyManager dependencyManager,
-            GameInstanceManifest baseVersion,
+            GameInstanceManifest baseManifest,
             Path modsDirectory) {
-        return new QuiltAPIInstallTask(dependencyManager, baseVersion, this, modsDirectory);
+        return new QuiltAPIInstallTask(dependencyManager, baseManifest, this, modsDirectory);
     }
 
     @Override

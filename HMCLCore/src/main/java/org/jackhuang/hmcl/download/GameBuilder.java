@@ -35,11 +35,27 @@ public abstract class GameBuilder {
     protected @Nullable GameInstanceID id;
     protected final EnumMap<GameComponentType, Object /* String | RemoteVersion */> components = new EnumMap<>(GameComponentType.class);
 
+    /// Whether new-instance component installers write run-directory content under the instance root.
+    protected boolean useInstanceRunDirectory;
+
     /// The new game instance id, for `.minecraft/<instanceId>`.
     ///
     /// @param id the instance id of new game instance.
     public GameBuilder id(GameInstanceID id) {
         this.id = Objects.requireNonNull(id);
+        return this;
+    }
+
+    /// Uses the instance root as the run directory while installing a new instance.
+    ///
+    /// This affects files installed by components, such as loader-provided mods. It does not write
+    /// instance settings; callers must persist the corresponding isolation setting after the
+    /// instance is published.
+    ///
+    /// @return this builder
+    @Contract("-> this")
+    public GameBuilder useInstanceRunDirectory() {
+        useInstanceRunDirectory = true;
         return this;
     }
 

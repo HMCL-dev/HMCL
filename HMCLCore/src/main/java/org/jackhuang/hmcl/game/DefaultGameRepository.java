@@ -116,31 +116,6 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @return the layout used by this repository
     protected abstract DefaultGameRepositoryLayout createLayout(Path baseDirectory);
 
-    /// Returns whether a new draft may claim `instanceRoot` as draft-owned storage.
-    ///
-    /// The default implementation permits only a root that does not exist. Subclasses may recognize
-    /// an explicit pre-install reservation, but must not permit an unrelated pre-existing directory:
-    /// aborting the draft will recursively remove every claimed root.
-    ///
-    /// @param instanceId   the instance being created
-    /// @param instanceRoot the normalized instance root
-    /// @return whether the draft may own and clean up the root
-    protected boolean mayClaimDraftInstanceRoot(GameInstanceID instanceId, Path instanceRoot) {
-        return Files.notExists(instanceRoot);
-    }
-
-    /// Materializes subclass-specific data for a newly claimed draft instance root.
-    ///
-    /// This method is called during commit, after the draft has recorded ownership and created the
-    /// root, so failure cleanup will remove the root. The default implementation has no additional
-    /// data to materialize.
-    ///
-    /// @param instanceId   the instance being created
-    /// @param instanceRoot the normalized instance root owned by the draft
-    /// @throws IOException if prepared data cannot be written
-    protected void initializeDraftInstanceRoot(GameInstanceID instanceId, Path instanceRoot) throws IOException {
-    }
-
     /// Prepares subclass-managed writes before instance files are moved or removed.
     ///
     /// The default implementation does nothing.
@@ -194,7 +169,6 @@ public abstract class DefaultGameRepository implements GameRepository {
     protected void publishSnapshot(DefaultGameRepositorySnapshot newSnapshot) {
         newSnapshot.seal();
         runOnFxThreadAndWait(() -> {
-
             snapshot.set(newSnapshot);
         });
     }
@@ -572,17 +546,6 @@ public abstract class DefaultGameRepository implements GameRepository {
             return instance.getManifestFile();
         }
         return getLayout().getInstanceJson(instanceId);
-    }
-
-    /// Returns the run directory to use while installing an instance before it is published.
-    ///
-    /// The default official-layout repository uses its shared base directory. Subclasses may derive
-    /// an isolated directory from repository-specific settings without creating a [GameInstance].
-    ///
-    /// @param instanceId the instance being installed
-    /// @return the installation run directory
-    public Path getRunDirectoryForInstallation(GameInstanceID instanceId) {
-        return getBaseDirectory();
     }
 
     /// Opens a draft for staging instance index changes and committing them once.

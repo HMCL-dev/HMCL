@@ -55,7 +55,11 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         if (repository.hasInstance(this.instanceId) && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists");
 
-        dependents.add(dependency.newGameBuilder().id(this.instanceId).component(GameComponentType.GAME, modpack.getGameVersion()).buildAsync());
+        dependents.add(dependency.newGameBuilder()
+                .id(this.instanceId)
+                .useInstanceRunDirectory()
+                .component(GameComponentType.GAME, modpack.getGameVersion())
+                .buildAsync());
 
         onDone().register(event -> {
             if (event.isFailed()) repository.removeInstanceFromDisk(this.instanceId);

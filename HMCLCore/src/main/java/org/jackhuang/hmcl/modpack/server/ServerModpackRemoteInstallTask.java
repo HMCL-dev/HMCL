@@ -54,7 +54,9 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
         if (repository.hasInstance(instanceId) && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
 
-        GameBuilder builder = dependencyManager.newGameBuilder().id(instanceId);
+        GameBuilder builder = dependencyManager.newGameBuilder()
+                .id(instanceId)
+                .useInstanceRunDirectory();
         for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
             @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
             if (componentType != null)

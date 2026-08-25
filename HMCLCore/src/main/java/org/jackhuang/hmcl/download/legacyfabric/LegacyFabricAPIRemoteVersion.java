@@ -59,9 +59,9 @@ public class LegacyFabricAPIRemoteVersion extends RemoteVersion {
     @Override
     public Task<GameInstancePatch> getInstallTask(
             DefaultDependencyManager dependencyManager,
-            GameInstanceManifest baseVersion,
+            GameInstanceManifest baseManifest,
             Path modsDirectory) {
-        return new LegacyFabricAPIInstallTask(dependencyManager, baseVersion, this, modsDirectory);
+        return new LegacyFabricAPIInstallTask(dependencyManager, baseManifest, this, modsDirectory);
     }
 
     @Override

@@ -21,7 +21,10 @@ import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
@@ -54,15 +57,15 @@ public class DefaultGameBuilder extends GameBuilder {
     /// {@inheritDoc}
     ///
     /// Retains an unpublished working manifest, installs the configured game and optional loaders,
-    /// resolves them into launch and standalone views, and commits the standalone manifest once.
-    /// Failure or cancellation aborts the draft.
+    /// resolves the launch view, and commits it with the original patches once. Failure or
+    /// cancellation aborts the draft.
     ///
     /// @return the build task
     /// @throws NullPointerException if [#id] was not set
     @Override
     public Task<?> buildAsync() {
         GameInstanceID id = Objects.requireNonNull(this.id, "GameBuilder.id must be set");
-        String gameVersion = (String) components.get(GameComponentType.GAME);
+        @Nullable String gameVersion = (String) components.get(GameComponentType.GAME);
         if (gameVersion == null)
             throw new IllegalStateException("GameBuilder.gameVersion must be set");
 
@@ -86,9 +89,23 @@ public class DefaultGameBuilder extends GameBuilder {
         DefaultGameRepository repository = dependencyManager.getGameRepository();
         //noinspection resource
         DefaultGameRepositoryDraft draft = repository.openDraft();
+        GameInstanceManifest initialManifest = new GameInstanceManifest(id);
+        try {
+            draft.put(initialManifest);
+        } catch (IOException | RuntimeException e) {
+            abortAfterReservationFailure(draft, e);
+            throw new IllegalStateException("Cannot reserve game instance " + id, e);
+        }
+
+        Path runDirectory = repository.hasInstance(id)
+                ? repository.getInstance(id).getRunDirectory()
+                : useInstanceRunDirectory
+                        ? repository.getLayout().getInstanceRoot(id)
+                        : repository.getBaseDirectory();
+        Path modsDirectory = runDirectory.resolve("mods");
 
         Task<GameInstanceManifest> libraryTask = dependencyManager.installNewInstanceComponentAsync(
-                new GameInstanceManifest(id), gameVersion, GameComponentType.GAME, gameVersion);
+                initialManifest, modsDirectory, gameVersion, GameComponentType.GAME, gameVersion);
 
         for (Map.Entry<GameComponentType, Object> entry : components.entrySet()) {
             GameComponentType componentType = entry.getKey();
@@ -98,11 +115,11 @@ public class DefaultGameBuilder extends GameBuilder {
             if (entry.getValue() instanceof RemoteVersion remoteVersion) {
                 libraryTask = libraryTask.thenComposeAsync(manifest ->
                         dependencyManager.installNewInstanceComponentAsync(
-                                manifest, remoteVersion));
+                                manifest, modsDirectory, remoteVersion));
             } else if (entry.getValue() instanceof String version) {
                 libraryTask = libraryTask.thenComposeAsync(manifest ->
                         dependencyManager.installNewInstanceComponentAsync(
-                                manifest, gameVersion, componentType, version));
+                                manifest, modsDirectory, gameVersion, componentType, version));
             } else {
                 throw new AssertionError("Unexpected version type: " + entry.getValue().getClass());
             }
@@ -123,6 +140,20 @@ public class DefaultGameBuilder extends GameBuilder {
                     }
                 })
                 .withStagesHints(hints);
+    }
+
+    /// Aborts a draft whose initial instance reservation failed.
+    ///
+    /// @param draft   the draft to abort
+    /// @param failure the reservation failure that receives any cleanup failure as suppressed
+    private static void abortAfterReservationFailure(
+            DefaultGameRepositoryDraft draft,
+            Throwable failure) {
+        try {
+            draft.abort();
+        } catch (IOException cleanupFailure) {
+            failure.addSuppressed(cleanupFailure);
+        }
     }
 
 }

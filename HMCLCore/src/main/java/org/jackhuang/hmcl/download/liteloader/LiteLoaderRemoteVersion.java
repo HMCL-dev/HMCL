@@ -56,7 +56,7 @@ public class LiteLoaderRemoteVersion extends RemoteVersion {
     }
 
     @Override
-    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion, Path modsDirectory) {
-        return new LiteLoaderInstallTask(dependencyManager, baseVersion, this);
+    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseManifest, Path modsDirectory) {
+        return new LiteLoaderInstallTask(dependencyManager, baseManifest, this);
     }
 }

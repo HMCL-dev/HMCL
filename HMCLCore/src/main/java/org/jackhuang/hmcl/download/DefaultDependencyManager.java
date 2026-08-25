@@ -182,12 +182,13 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// [GameInstance].
     ///
     /// @param baseManifest     the working manifest for this step
+    /// @param modsDirectory    the mods directory to use during installation
     /// @param componentVersion the remote component to install
     /// @return the task producing the updated manifest (not yet committed)
     Task<GameInstanceManifest> installNewInstanceComponentAsync(
             GameInstanceManifest baseManifest,
+            Path modsDirectory,
             RemoteVersion componentVersion) {
-        Path modsDirectory = repository.getRunDirectoryForInstallation(baseManifest.id()).resolve("mods");
         return Task.supplyAsync(() -> baseManifest.removeComponent(componentVersion.getComponentType()))
                 .thenComposeAsync(manifest -> componentVersion
                         .getInstallTask(this, manifest, modsDirectory)
@@ -200,12 +201,14 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// Resolves and installs a component into an unpublished new instance.
     ///
     /// @param baseManifest     the working manifest for this step
+    /// @param modsDirectory    the mods directory to use during installation
     /// @param gameVersion      the Minecraft version used to look up the remote list
     /// @param componentType    the component list id, such as `game` or `forge`
     /// @param componentVersion the component version id
     /// @return the installation task
     Task<GameInstanceManifest> installNewInstanceComponentAsync(
             GameInstanceManifest baseManifest,
+            Path modsDirectory,
             String gameVersion,
             GameComponentType componentType,
             String componentVersion) {
@@ -213,6 +216,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         return versionList.loadAsync(gameVersion)
                 .thenComposeAsync(() -> installNewInstanceComponentAsync(
                         baseManifest,
+                        modsDirectory,
                         versionList.getVersion(gameVersion, componentVersion)
                                 .orElseThrow(() -> new IOException(
                                         "Remote component " + componentType + " has no version " + componentVersion))))

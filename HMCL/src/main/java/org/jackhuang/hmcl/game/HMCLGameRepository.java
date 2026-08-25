@@ -49,7 +49,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
@@ -66,9 +65,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// The selected instance resolved from the current repository snapshot.
     private final ReadOnlyObjectWrapper<@Nullable HMCLGameInstance> selectedInstance;
-
-    /// Settings reservations transferred to the next draft that creates the corresponding id.
-    private final Map<GameInstanceID, PreparedInstanceSettings> preparedInstanceSettings = new ConcurrentHashMap<>();
 
     /// Creates a repository backed by the given game directory.
     ///
@@ -93,45 +89,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     @Override
     protected HMCLGameRepositorySnapshot createSnapshot(DefaultGameRepositoryLayout layout) {
         return new HMCLGameRepositorySnapshot(this, (HMCLGameRepositoryLayout) layout);
-    }
-
-    /// {@inheritDoc}
-    ///
-    /// Prepared settings belong to the old layout and are discarded after a successful replacement.
-    @Override
-    public void setBaseDirectory(Path baseDirectory) {
-        super.setBaseDirectory(baseDirectory);
-        preparedInstanceSettings.clear();
-    }
-
-    /// {@inheritDoc}
-    ///
-    /// Accepts an existing root only when this repository reserved the id while the root was absent.
-    @Override
-    protected boolean mayClaimDraftInstanceRoot(GameInstanceID instanceId, Path instanceRoot) {
-        PreparedInstanceSettings prepared = preparedInstanceSettings.get(instanceId);
-        if (prepared != null) {
-            return prepared.instanceRoot().equals(instanceRoot) && prepared.rootWasAbsent();
-        }
-        return super.mayClaimDraftInstanceRoot(instanceId, instanceRoot);
-    }
-
-    /// {@inheritDoc}
-    ///
-    /// Writes settings prepared by [#ensureIsolatedRunningDirectory(GameInstanceID)] only after the
-    /// draft owns the instance root.
-    @Override
-    protected void initializeDraftInstanceRoot(GameInstanceID instanceId, Path instanceRoot) throws IOException {
-        PreparedInstanceSettings prepared = preparedInstanceSettings.get(instanceId);
-        if (prepared == null) {
-            return;
-        }
-        if (!prepared.instanceRoot().equals(instanceRoot) || !prepared.rootWasAbsent()) {
-            throw new IOException("Prepared instance root cannot be claimed: " + instanceRoot);
-        }
-
-        writeInstanceGameSettings(instanceId, prepared.settings());
-        preparedInstanceSettings.remove(instanceId, prepared);
     }
 
     @Override
@@ -286,19 +243,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    /// {@inheritDoc}
-    ///
-    /// Resolves HMCL isolation and modpack rules directly from files and settings so an unpublished
-    /// installation does not require a [GameInstance].
-    @Override
-    public Path getRunDirectoryForInstallation(GameInstanceID instanceId) {
-        @Nullable PreparedInstanceSettings prepared = preparedInstanceSettings.get(instanceId);
-        return computeRunDirectory(
-                instanceId,
-                Files.exists(getLayout().getModpackConfigurationFile(instanceId)),
-                prepared != null ? prepared.settings() : getInstanceGameSettings(instanceId));
-    }
-
     private String selectedRunningDirectory(
             GameSettings.@Nullable Instance localSetting,
             boolean useInstanceRunningDirectory) {
@@ -315,8 +259,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Reads instance-local settings from disk without requiring a registered snapshot member.
     ///
-    /// Used for install-time path resolution and migration before the instance is indexed. Does not
-    /// publish a snapshot entry.
+    /// Used while loading or migrating settings before the instance is indexed. Does not publish a
+    /// snapshot entry.
     ///
     /// @param instanceId the instance id
     /// @return the loaded settings, or `null` when none can be loaded
@@ -349,40 +293,21 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Ensures the instance uses an isolated running directory under its instance root.
     ///
-    /// When the instance is already registered, settings are updated through
-    /// [HMCLGameInstance]. Otherwise the settings are retained in memory and transferred to the
-    /// draft that creates the instance, so the draft owns every file created for the installation.
-    ///
     /// @param instanceId the instance id
+    /// @throws NoSuchGameInstanceException if the instance is not registered
     public void ensureIsolatedRunningDirectory(GameInstanceID instanceId) {
         HMCLGameInstance instance = findInstance(instanceId);
-        if (instance != null) {
-            if (instance.isSettingsReadOnly()) {
-                return;
-            }
-            GameSettings.Instance setting = instance.getSettingsOrCreate();
-            if (setting != null
-                    && setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
-                instance.saveSettings();
-            }
+        if (instance == null) {
+            throw new NoSuchGameInstanceException(instanceId);
+        }
+        if (instance.isSettingsReadOnly()) {
             return;
         }
-
-        Path instanceRoot = getLayout().getInstanceRoot(instanceId).toAbsolutePath().normalize();
-        PreparedInstanceSettings prepared = preparedInstanceSettings.get(instanceId);
-        GameSettings.Instance setting = prepared != null
-                ? prepared.settings()
-                : peekInstanceGameSettings(instanceId);
-        if (setting == null) {
-            setting = new GameSettings.Instance();
+        @Nullable GameSettings.Instance setting = instance.getSettingsOrCreate();
+        if (setting != null
+                && setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
+            instance.saveSettings();
         }
-        setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY);
-        preparedInstanceSettings.put(
-                instanceId,
-                new PreparedInstanceSettings(
-                        setting,
-                        instanceRoot,
-                        prepared != null ? prepared.rootWasAbsent() : Files.notExists(instanceRoot)));
     }
 
     public Stream<HMCLGameInstance> getDisplayInstances() {
@@ -518,6 +443,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     /// Returns whether a new instance should use an isolated running directory under the default isolation settings.
+    ///
+    /// @param modded whether the new instance contains a mod loader
+    /// @return whether installation-time run-directory content should be placed under the instance root
     public boolean shouldIsolateNewInstance(boolean modded) {
         GameSettings.Preset preset = getParentGameSettings(null);
         DefaultIsolationType type = Lang.requireNonNullElse(preset.defaultIsolationTypeProperty().getValue(), DefaultIsolationType.MODDED);
@@ -526,17 +454,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             case ALWAYS -> true;
             case MODDED -> modded;
         };
-    }
-
-    /// Applies default isolation to a new instance before its manifest is saved.
-    ///
-    /// Writes the isolation flag to the instance settings file so a later
-    /// [HMCLGameInstance#getRunDirectory] returns the instance root.
-    public void applyDefaultIsolationSettingForNewInstance(GameInstanceID instanceId, boolean modded) {
-        if (!shouldIsolateNewInstance(modded)) {
-            return;
-        }
-        ensureIsolatedRunningDirectory(instanceId);
     }
 
     /// Loads settings from disk for an unregistered id, running legacy migration when needed.
@@ -627,14 +544,4 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 : suggested;
     }
 
-    /// Records settings prepared for an instance that has not entered a repository draft yet.
-    ///
-    /// @param settings      the settings to materialize after the draft claims the root
-    /// @param instanceRoot  the normalized root reserved for the instance
-    /// @param rootWasAbsent whether the root was absent when the reservation was made
-    private record PreparedInstanceSettings(
-            GameSettings.Instance settings,
-            Path instanceRoot,
-            boolean rootWasAbsent) {
-    }
 }
