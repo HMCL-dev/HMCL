@@ -59,7 +59,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.javafx.ItemPropertyCache;
+import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -318,7 +318,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         private final BooleanProperty active;
         private final LocalModFile localModFile;
         private final @Nullable ModTranslations.Mod modTranslations;
-        private final ItemPropertyCache<Image, ModInfoObject> iconCache;
+        private final ItemPropertyAsyncCache<Image, ModInfoObject> iconCache;
 
         ModInfoObject(LocalModFile localModFile) {
             this.localModFile = localModFile;
@@ -326,7 +326,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             this.modTranslations = ModTranslations.MOD.getMod(localModFile.getId(), localModFile.getName());
 
-            this.iconCache = new ItemPropertyCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
         LocalModFile getModInfo() {

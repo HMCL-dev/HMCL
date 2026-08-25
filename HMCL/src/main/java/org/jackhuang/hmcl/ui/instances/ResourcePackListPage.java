@@ -58,7 +58,7 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.javafx.ItemPropertyCache;
+import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -499,13 +499,13 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final ResourcePackFile file;
         private final BooleanProperty enabled;
 
-        private final ItemPropertyCache<Image, ResourcePackInfoObject> iconCache;
+        private final ItemPropertyAsyncCache<Image, ResourcePackInfoObject> iconCache;
 
         public ResourcePackInfoObject(Pair<ResourcePackFile, Boolean> pair) {
             this.file = pair.key();
             this.enabled = new SimpleBooleanProperty(this, "enabled", pair.value());
 
-            this.iconCache = new ItemPropertyCache.Soft<>(this, this::loadImage, this::getDefaultImage);
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadImage, this::getDefaultImage);
         }
 
         public ResourcePackFile getFile() {

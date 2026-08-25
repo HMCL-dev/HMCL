@@ -32,11 +32,11 @@ import java.util.function.Supplier;
 ///
 /// @param <T> type of the property value
 /// @param <B> type of the bean, aka. the item
-public abstract class ItemPropertyCache<T, B> {
+public abstract class ItemPropertyAsyncCache<T, B> {
 
     private final B bean;
 
-    public ItemPropertyCache(B bean) {
+    public ItemPropertyAsyncCache(B bean) {
         this.bean = Objects.requireNonNull(bean);
     }
 
@@ -79,7 +79,7 @@ public abstract class ItemPropertyCache<T, B> {
     ///
     /// @param <T> {@inheritDoc}
     /// @param <B> {@inheritDoc}
-    private static abstract class Base<T, B> extends ItemPropertyCache<T, B> {
+    private static abstract class Base<T, B> extends ItemPropertyAsyncCache<T, B> {
 
         private final Supplier<T> valueSupplier, defaultSupplier;
 
@@ -104,7 +104,7 @@ public abstract class ItemPropertyCache<T, B> {
         }
     }
 
-    /// Implementation of [ItemPropertyCache], using a [SoftReference] to balance the cost of time and memory.
+    /// Implementation of [ItemPropertyAsyncCache], using a [SoftReference] to balance the cost of time and memory.
     ///
     /// @param <T> {@inheritDoc}
     /// @param <B> {@inheritDoc}

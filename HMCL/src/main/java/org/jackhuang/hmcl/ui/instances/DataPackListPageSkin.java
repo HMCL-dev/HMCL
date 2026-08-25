@@ -53,7 +53,7 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
-import org.jackhuang.hmcl.util.javafx.ItemPropertyCache;
+import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.lang.ref.WeakReference;
@@ -259,13 +259,13 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         private final BooleanProperty activeProperty;
         private final DataPack.Pack packInfo;
 
-        private final ItemPropertyCache<Image, DataPackInfoObject> iconCache;
+        private final ItemPropertyAsyncCache<Image, DataPackInfoObject> iconCache;
 
         DataPackInfoObject(DataPack.Pack packInfo) {
             this.packInfo = packInfo;
             this.activeProperty = packInfo.activeProperty();
 
-            this.iconCache = new ItemPropertyCache.Soft<>(this, this::loadImage, this::getDefaultImage);
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadImage, this::getDefaultImage);
         }
 
         String getTitle() {
