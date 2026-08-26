@@ -304,6 +304,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             GameBuilder builder = dependencyManager.newGameBuilder();
 
             GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
+            if (instanceId == null) {
+                throw new IllegalStateException("Instance ID is not set");
+            }
+
             builder.id(instanceId);
             builder.component(GameComponentType.GAME, ((ComponentRemoteVersion) settings.get(GameComponentType.GAME.getPatchId())).getGameVersion());
 
