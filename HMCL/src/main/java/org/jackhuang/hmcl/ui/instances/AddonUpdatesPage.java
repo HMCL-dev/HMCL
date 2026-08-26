@@ -29,7 +29,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.util.StringConverter;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -217,7 +216,6 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         final StringProperty currentVersion = new SimpleStringProperty();
         final StringProperty targetVersion = new SimpleStringProperty();
         final StringProperty source = new SimpleStringProperty();
-        String changelog = null;
 
         public AddonUpdateObject(LocalAddonFile.AddonUpdate data) {
             this.data = data;
