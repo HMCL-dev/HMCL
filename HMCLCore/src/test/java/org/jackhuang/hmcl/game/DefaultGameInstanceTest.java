@@ -69,7 +69,7 @@ public final class DefaultGameInstanceTest {
                         new Library(new Artifact("net.minecraftforge", "forge", "1.0")),
                         new Library(new Artifact("optifine", "OptiFine", "1.0"))));
         TestGameInstance instance = repository.publish(instanceId, manifest);
-        GameInstanceManifest launchManifest = instance.getResolvedManifest().launchManifest();
+        GameInstanceManifest launchManifest = instance.getLaunchManifest();
         assertTrue(launchManifest.getLibraries().stream()
                 .noneMatch(library -> library.is(
                         "org.jackhuang.hmcl", "transformer-discovery-service")));

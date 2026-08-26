@@ -261,7 +261,7 @@ public abstract class DefaultGameInstance implements GameInstance {
     /// instance's own jar is returned from [#getOwnJarFile()].
     @Override
     public Path getInstanceJarFile() {
-        GameInstanceManifest launchManifest = getResolvedManifest().launchManifest();
+        GameInstanceManifest launchManifest = getLaunchManifest();
         GameInstanceID jarId = Optional.ofNullable(launchManifest.jar()).orElse(launchManifest.id());
         if (!jarId.equals(id)) {
             DefaultGameInstance other = snapshot.findInstance(jarId);
