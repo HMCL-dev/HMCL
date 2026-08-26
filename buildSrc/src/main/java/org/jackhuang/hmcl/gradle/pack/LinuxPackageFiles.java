@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NotNullByDefault;
 /// behave consistently across package formats.
 @NotNullByDefault
 final class LinuxPackageFiles {
+    /// Directory containing the installed HMCL shell artifact.
+    static final String INSTALL_DIRECTORY = "/usr/share/java/hmcl";
+
     /// Generic command managed by the alternatives system.
     static final String COMMON_LAUNCHER_PATH = "/usr/bin/hmcl";
 
@@ -56,7 +59,7 @@ final class LinuxPackageFiles {
 
     /// Returns the installed location of the bundled HMCL shell artifact.
     String targetPath() {
-        return "/usr/share/java/hmcl/" + appFileName;
+        return INSTALL_DIRECTORY + "/" + appFileName;
     }
 
     /// Returns the installed desktop entry path for this channel.

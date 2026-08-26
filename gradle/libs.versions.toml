@@ -26,6 +26,7 @@ jwebp = "0.2.0"
 weburl = "0.2.0"
 uuid-tools = "0.2.0"
 commonmark = "0.27.1"
+eclipse-packager = "0.21.0"
 
 # testing
 junit = "6.0.1"
@@ -68,6 +69,7 @@ commonmark-autolink = { module = "org.commonmark:commonmark-ext-autolink", versi
 commonmark-underline = { module = "org.commonmark:commonmark-ext-ins", version.ref = "commonmark" }
 commonmark-strikethrough = { module = "org.commonmark:commonmark-ext-gfm-strikethrough", version.ref = "commonmark" }
 commonmark-table = { module = "org.commonmark:commonmark-ext-gfm-tables", version.ref = "commonmark" }
+eclipse-packager-rpm = { module = "org.eclipse.packager:packager-rpm", version.ref = "eclipse-packager" }
 
 # testing
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }

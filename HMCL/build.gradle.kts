@@ -314,6 +314,7 @@ val makeRpm = tasks.register("makeRpm", CreateRpm::class) {
     dependsOn(makeExecutables)
 
     val rpmFile = layout.file(provider { artifactFile("rpm") })
+    val rpmBuildTimestamp = providers.environmentVariable("SOURCE_DATE_EPOCH").map { it.toLong() }
 
     val rpmChannel = when (versionType) {
         "stable" -> ReleaseType.STABLE
@@ -324,6 +325,7 @@ val makeRpm = tasks.register("makeRpm", CreateRpm::class) {
     version.set(project.version.toString())
     releaseType.set(rpmChannel)
     launcherClassName.set("org.jackhuang.hmcl.Launcher")
+    buildTimestamp.set(rpmBuildTimestamp)
     appShFile.set(layout.file(provider { artifactFile("sh") }))
     iconFile.set(layout.projectDirectory.file("image/hmcl.png"))
     outputFile.set(rpmFile)
@@ -336,6 +338,7 @@ val makeRpm = tasks.register("makeRpm", CreateRpm::class) {
 tasks.build {
     dependsOn(makeExecutables)
     dependsOn(makeDeb)
+    dependsOn(makeRpm)
 }
 
 fun parseToolOptions(options: String?): MutableList<String> {

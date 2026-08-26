@@ -48,6 +48,8 @@ jobs:
           wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.sh.sha256"
           wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.deb"
           wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.deb.sha256"
+          wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.rpm"
+          wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.rpm.sha256"
       - name: Verify artifacts
         if: ${{ env.continue == 'true' }}
         run: |
@@ -55,11 +57,13 @@ jobs:
           export EXE_SHA256=$(cat HMCL-$HMCL_VERSION.exe.sha256 | tr -d '\n')
           export SH_SHA256=$(cat HMCL-$HMCL_VERSION.sh.sha256 | tr -d '\n')
           export DEB_SHA256=$(cat HMCL-$HMCL_VERSION.deb.sha256 | tr -d '\n')
+          export RPM_SHA256=$(cat HMCL-$HMCL_VERSION.rpm.sha256 | tr -d '\n')
           
           echo "$JAR_SHA256  HMCL-$HMCL_VERSION.jar" | sha256sum -c
           echo "$EXE_SHA256  HMCL-$HMCL_VERSION.exe" | sha256sum -c
           echo "$SH_SHA256  HMCL-$HMCL_VERSION.sh" | sha256sum -c
           echo "$DEB_SHA256  HMCL-$HMCL_VERSION.deb" | sha256sum -c
+          echo "$RPM_SHA256  HMCL-$HMCL_VERSION.rpm" | sha256sum -c
       - name: Generate release note
         if: ${{ env.continue == 'true' }}
         run: |
@@ -72,6 +76,7 @@ jobs:
           echo "| [HMCL-$HMCL_VERSION.jar]($GH_DOWNLOAD_BASE_URL/v$HMCL_VERSION/HMCL-$HMCL_VERSION.jar) | \`$(cat HMCL-$HMCL_VERSION.jar.sha256)\` |" >> RELEASE_NOTE
           echo "| [HMCL-$HMCL_VERSION.sh]($GH_DOWNLOAD_BASE_URL/v$HMCL_VERSION/HMCL-$HMCL_VERSION.sh)   | \`$(cat HMCL-$HMCL_VERSION.sh.sha256)\` |"  >> RELEASE_NOTE
           echo "| [HMCL-$HMCL_VERSION.deb]($GH_DOWNLOAD_BASE_URL/v$HMCL_VERSION/HMCL-$HMCL_VERSION.deb) | \`$(cat HMCL-$HMCL_VERSION.deb.sha256)\` |"  >> RELEASE_NOTE
+          echo "| [HMCL-$HMCL_VERSION.rpm]($GH_DOWNLOAD_BASE_URL/v$HMCL_VERSION/HMCL-$HMCL_VERSION.rpm) | \`$(cat HMCL-$HMCL_VERSION.rpm.sha256)\` |"  >> RELEASE_NOTE
           
           # CNB Release Note
           echo "[更新日志](https://docs.hmcl.net/changelog/${{ matrix.channel }}.html#HMCL-$HMCL_VERSION)" >> CNB_RELEASE_NOTE
@@ -82,6 +87,7 @@ jobs:
           echo "| [HMCL-$HMCL_VERSION.jar]($CNB_DOWNLOAD_BASE_URL/v$HMCL_VERSION/HMCL-$HMCL_VERSION.jar) | \`$(cat HMCL-$HMCL_VERSION.jar.sha256)\` |" >> CNB_RELEASE_NOTE
           echo "| [HMCL-$HMCL_VERSION.sh]($CNB_DOWNLOAD_BASE_URL/v$HMCL_VERSION/HMCL-$HMCL_VERSION.sh)   | \`$(cat HMCL-$HMCL_VERSION.sh.sha256)\` |"  >> CNB_RELEASE_NOTE
           echo "| [HMCL-$HMCL_VERSION.deb]($CNB_DOWNLOAD_BASE_URL/v$HMCL_VERSION/HMCL-$HMCL_VERSION.deb) | \`$(cat HMCL-$HMCL_VERSION.deb.sha256)\` |"  >> CNB_RELEASE_NOTE
+          echo "| [HMCL-$HMCL_VERSION.rpm]($CNB_DOWNLOAD_BASE_URL/v$HMCL_VERSION/HMCL-$HMCL_VERSION.rpm) | \`$(cat HMCL-$HMCL_VERSION.rpm.sha256)\` |"  >> CNB_RELEASE_NOTE
 
         env:
           GH_DOWNLOAD_BASE_URL: https://github.com/${{ github.repository }}/releases/download
@@ -94,6 +100,7 @@ jobs:
             "HMCL-${{ env.HMCL_VERSION }}.jar" \
             "HMCL-${{ env.HMCL_VERSION }}.sh" \
             "HMCL-${{ env.HMCL_VERSION }}.deb" \
+            "HMCL-${{ env.HMCL_VERSION }}.rpm" \
             --target "${{ env.HMCL_COMMIT_SHA }}" \
             --title "${{ env.HMCL_TAG_NAME }}" \
             --notes-file RELEASE_NOTE \
@@ -131,6 +138,9 @@ jobs:
           
           echo "Uploading HMCL-$HMCL_VERSION.deb"
            ~/go/bin/git-cnb release asset-upload --repo="$CNB_REPO" --tag-name "$HMCL_TAG_NAME" --file-name "HMCL-$HMCL_VERSION.deb"
+
+          echo "Uploading HMCL-$HMCL_VERSION.rpm"
+           ~/go/bin/git-cnb release asset-upload --repo="$CNB_REPO" --tag-name "$HMCL_TAG_NAME" --file-name "HMCL-$HMCL_VERSION.rpm"
         env:
           CNB_TOKEN: ${{ secrets.CNB_SYNC_TOKEN }}
           CNB_REPO: HMCL-dev/HMCL
