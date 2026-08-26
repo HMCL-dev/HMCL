@@ -91,6 +91,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         return repository;
     }
 
+    @Override
     public DefaultGameRepositorySnapshot getBaseSnapshot() {
         return baseSnapshot;
     }
