@@ -440,9 +440,9 @@ public final class GameDirectoriesTest {
         }
     }
 
-    /// Tests that default isolation is applied after a new instance is published.
+    /// Tests that a default isolation decision is persisted after a new instance is published.
     @Test
-    public void newInstanceAppliesDefaultIsolationAfterPublication(@TempDir Path tempDirectory)
+    public void newInstancePersistsDefaultIsolationDecisionAfterPublication(@TempDir Path tempDirectory)
             throws Exception {
         GameSettingsPresetID defaultPresetId =
                 GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174002");
@@ -466,7 +466,8 @@ public final class GameDirectoriesTest {
             GameInstanceID id = new GameInstanceID("1.21.11-fabric");
 
             assertFalse(repository.hasInstance(id));
-            assertTrue(repository.shouldIsolateNewInstance(false));
+            boolean isolated = repository.shouldIsolateNewInstance(false);
+            assertTrue(isolated);
             assertThrows(
                     NoSuchGameInstanceException.class,
                     () -> repository.ensureIsolatedRunningDirectory(id));
@@ -478,7 +479,9 @@ public final class GameDirectoriesTest {
             }
 
             HMCLGameInstance instance = repository.getInstance(id);
-            instance.applyDefaultIsolationSetting();
+            if (isolated) {
+                repository.ensureIsolatedRunningDirectory(id);
+            }
             assertEquals(repository.getLayout().getInstanceRoot(id), instance.getRunDirectory());
             assertEquals(repository.getLayout().getInstanceRoot(id).resolve("mods"), instance.getModsDirectory());
             GameSettings.Instance instanceSettings = Objects.requireNonNull(instance.getSettings());

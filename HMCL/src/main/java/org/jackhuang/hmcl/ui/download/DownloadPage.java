@@ -313,12 +313,17 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     builder.component(remoteVersion);
             });
 
-            if (repository.shouldIsolateNewInstance(settings.isInstallingModdedVersion())) {
+            boolean isolated = repository.shouldIsolateNewInstance(settings.isInstallingModdedVersion());
+            if (isolated) {
                 builder.useInstanceRunDirectory();
             }
-            return builder.buildAsync().whenComplete(any -> {
-                repository.refresh();
-                repository.getInstance(instanceId).applyDefaultIsolationSetting();
+            return builder.buildAsync().whenComplete(exception -> {
+                if (exception == null) {
+                    repository.refresh();
+                    if (isolated) {
+                        repository.ensureIsolatedRunningDirectory(instanceId);
+                    }
+                }
             }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(repository.getInstance(instanceId)));
         }
 
