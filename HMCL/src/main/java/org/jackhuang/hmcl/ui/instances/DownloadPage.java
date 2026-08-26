@@ -53,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -594,9 +595,12 @@ public class DownloadPage extends Control implements DecoratorPage {
             Task.composeAsync(() -> {
                 // TODO: Massive tasks may cause OOM.
                 EnumMap<RemoteAddon.DependencyType, Pair<Label, List<DependencyAddonItem>>> dependencies = new EnumMap<>(RemoteAddon.DependencyType.class);
+                AtomicBoolean hasBroken = new AtomicBoolean(false);
                 List<Task<?>> queue = new ArrayList<>(version.dependencies().size());
                 for (RemoteAddon.Dependency dependency : version.dependencies()) {
-                    if (dependency.getType() == RemoteAddon.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteAddon.DependencyType.BROKEN) {
+                    if (dependency.getType() == RemoteAddon.DependencyType.INCOMPATIBLE) continue;
+                    if (dependency.getType() == RemoteAddon.DependencyType.BROKEN) {
+                        hasBroken.set(true);
                         continue;
                     }
 
@@ -611,6 +615,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                             .setSignificance(Task.TaskSignificance.MINOR)
                             .thenAcceptAsync(Schedulers.javafx(), dep -> {
                                 if (dep == RemoteAddon.BROKEN) {
+                                    hasBroken.set(true);
                                     return;
                                 }
                                 DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep, selfPage.instanceReference);
@@ -621,17 +626,28 @@ public class DownloadPage extends Control implements DecoratorPage {
                             .setSignificance(Task.TaskSignificance.MINOR));
                 }
 
-                return Task.allOf(queue).thenSupplyAsync(() ->
-                        dependencies.values().stream().flatMap(types -> {
-                            if (types.value().isEmpty()) return Stream.of();
-                            return Stream.concat(
-                                    Stream.of(types.key()),
-                                    types.value().stream().sorted(Comparator.comparing(item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)));
-                        }).toList()
-                );
+                return Task.allOf(queue).thenSupplyAsync(() -> {
+                    var dependenciesStream = dependencies.values().stream().flatMap(types -> {
+                        if (types.value().isEmpty()) return Stream.of();
+                        return Stream.concat(
+                                Stream.of(types.key()),
+                                types.value().stream().sorted(Comparator.comparing(item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)));
+                    });
+                    if (!hasBroken.get()) {
+                        return dependenciesStream;
+                    } else {
+                        Label warning = new Label(i18n("addon.dependencies.has_broken"));
+                        warning.setWrapText(true);
+                        warning.setPadding(new Insets(0, 8, 0, 8));
+                        return Stream.concat(
+                                Stream.of(warning),
+                                dependenciesStream
+                        );
+                    }
+                });
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
-                    dependenciesList.getContent().setAll(result);
+                    dependenciesList.getContent().setAll(result.toList());
                     spinnerPane.setFailedReason(null);
                 } else {
                     dependenciesList.getContent().setAll();
