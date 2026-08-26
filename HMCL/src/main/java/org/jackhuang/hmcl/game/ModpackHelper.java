@@ -160,7 +160,7 @@ public final class ModpackHelper {
     public static Task<?> getInstallTask(HMCLGameRepository repository, ServerModpackManifest manifest, GameInstanceID instanceId, Modpack modpack) {
         ExceptionalRunnable<?> success = () -> {
             repository.refresh();
-            repository.ensureIsolatedRunningDirectory(instanceId);
+            repository.getInstance(instanceId).enableIsolation();
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {
@@ -198,7 +198,7 @@ public final class ModpackHelper {
     public static Task<?> getInstallTask(HMCLGameRepository repository, Path zipFile, GameInstanceID instanceId, Modpack modpack, @Nullable String iconUrl) {
         ExceptionalRunnable<?> success = () -> {
             repository.refresh();
-            repository.ensureIsolatedRunningDirectory(instanceId);
+            repository.getInstance(instanceId).enableIsolation();
         };
 
         ExceptionalConsumer<Exception, ?> failure = ex -> {

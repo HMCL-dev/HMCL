@@ -27,6 +27,8 @@ import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLDependencyManager;
+import org.jackhuang.hmcl.game.HMCLGameBuilder;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
@@ -282,7 +284,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     private static class VanillaInstallWizardProvider implements WizardProvider {
         private final HMCLGameRepository repository;
-        private final DefaultDependencyManager dependencyManager;
+        private final HMCLDependencyManager dependencyManager;
         private final DownloadProvider downloadProvider;
         private final GameRemoteVersion gameVersion;
 
@@ -301,7 +303,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         private Task<Void> finishVersionDownloadingAsync(SettingsMap settings) {
-            GameBuilder builder = dependencyManager.newGameBuilder();
+            HMCLGameBuilder builder = dependencyManager.newGameBuilder();
 
             GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
             if (instanceId == null) {
@@ -317,18 +319,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     builder.component(remoteVersion);
             });
 
-            boolean isolated = repository.shouldIsolateNewInstance(settings.isInstallingModdedVersion());
-            if (isolated) {
-                builder.useInstanceRunDirectory();
-            }
-            return builder.buildAsync().whenComplete(exception -> {
-                if (exception == null) {
-                    repository.refresh();
-                    if (isolated) {
-                        repository.ensureIsolatedRunningDirectory(instanceId);
-                    }
-                }
-            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(repository.getInstance(instanceId)));
+            return builder.buildAsync()
+                    .thenRunAsync(
+                            Schedulers.javafx(),
+                            () -> repository.setSelectedInstance(repository.getInstance(instanceId)));
         }
 
         @Override

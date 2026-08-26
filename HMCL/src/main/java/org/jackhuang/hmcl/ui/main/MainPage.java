@@ -44,7 +44,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.game.*;
@@ -373,7 +372,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         .orElseThrow(() -> new IOException("No versions found")))
                 .thenComposeAsync(version -> {
                     HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
-                    DefaultDependencyManager dependency = repository.getDependency();
+                    HMCLDependencyManager dependency = repository.getDependency();
 
                     String gameVersion = version.getGameVersion();
                     GameInstanceID instanceId = new GameInstanceID(gameVersion);
@@ -385,7 +384,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             .component(GameComponentType.GAME, gameVersion)
                             .buildAsync();
                 })
-                .whenComplete(any -> GameDirectoryManager.getSelectedRepository().refresh())
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
                         HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();

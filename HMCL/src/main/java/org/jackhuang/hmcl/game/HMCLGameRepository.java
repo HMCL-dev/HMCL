@@ -21,7 +21,6 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
@@ -203,12 +202,17 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     /// Returns a dependency manager using the currently selected download provider.
-    public DefaultDependencyManager getDependency() {
+    ///
+    /// @return a new dependency manager for this repository
+    public HMCLDependencyManager getDependency() {
         return getDependency(DownloadProviders.getDownloadProvider());
     }
 
     /// Returns a dependency manager using the given download provider.
-    public DefaultDependencyManager getDependency(DownloadProvider downloadProvider) {
+    ///
+    /// @param downloadProvider the remote download provider
+    /// @return a new dependency manager for this repository
+    public HMCLDependencyManager getDependency(DownloadProvider downloadProvider) {
         return new HMCLDependencyManager(this, downloadProvider, HMCLCacheRepository.REPOSITORY);
     }
 
@@ -289,25 +293,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         Files.createDirectories(file.getParent());
         setting.setSchema(GameSettings.Instance.CURRENT_SCHEMA);
         FileUtils.saveSafely(file, LauncherSettings.SETTINGS_GSON.toJson(setting));
-    }
-
-    /// Ensures the instance uses an isolated running directory under its instance root.
-    ///
-    /// @param instanceId the instance id
-    /// @throws NoSuchGameInstanceException if the instance is not registered
-    public void ensureIsolatedRunningDirectory(GameInstanceID instanceId) {
-        HMCLGameInstance instance = findInstance(instanceId);
-        if (instance == null) {
-            throw new NoSuchGameInstanceException(instanceId);
-        }
-        if (instance.isSettingsReadOnly()) {
-            return;
-        }
-        @Nullable GameSettings.Instance setting = instance.getSettingsOrCreate();
-        if (setting != null
-                && setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
-            instance.saveSettings();
-        }
     }
 
     public Stream<HMCLGameInstance> getDisplayInstances() {

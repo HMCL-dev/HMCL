@@ -76,7 +76,7 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
 
     public static GameComponentAnalyzer analyze(GameInstanceManifest manifest, @Nullable GameVersionNumber gameVersion) {
         if (manifest.inheritsFrom() != null)
-            throw new IllegalArgumentException("LibraryAnalyzer can only analyze independent game version");
+            throw new IllegalArgumentException("GameComponentAnalyzer can only analyze independent game version");
 
         return analyze(manifest, manifest, gameVersion);
     }

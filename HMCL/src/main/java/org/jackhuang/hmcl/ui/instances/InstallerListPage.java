@@ -67,7 +67,8 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
-        this.gameInstance = instance.instance();
+        HMCLGameInstance gameInstance = instance.instance();
+        this.gameInstance = gameInstance;
         if (gameInstance == null) {
             itemsProperty().clear();
             return;

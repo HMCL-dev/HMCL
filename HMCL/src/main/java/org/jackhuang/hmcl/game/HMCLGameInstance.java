@@ -211,6 +211,23 @@ public class HMCLGameInstance extends DefaultGameInstance {
         return gameSettingsReadOnly;
     }
 
+    /// Enables instance-local running-directory selection for this instance.
+    ///
+    /// A blank local running directory resolves to the instance root. This operation is idempotent
+    /// and schedules a settings save only when it adds the override. It leaves the instance
+    /// unchanged when its local settings cannot be written safely.
+    public void enableIsolation() {
+        if (isSettingsReadOnly()) {
+            return;
+        }
+
+        @Nullable GameSettings.Instance setting = getSettingsOrCreate();
+        if (setting != null
+                && setting.getOverrideProperties().add(GameSettings.PROPERTY_RUNNING_DIRECTORY)) {
+            saveSettings();
+        }
+    }
+
     /// Backs up and overwrites the settings file when this instance still owns its settings.
     public void forceOverwriteSettings() {
         ensureGameSettingsLoaded();

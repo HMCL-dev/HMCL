@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameRepositoryDraft;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.NoSuchGameInstanceException;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
@@ -468,9 +467,6 @@ public final class GameDirectoriesTest {
             assertFalse(repository.hasInstance(id));
             boolean isolated = repository.shouldIsolateNewInstance(false);
             assertTrue(isolated);
-            assertThrows(
-                    NoSuchGameInstanceException.class,
-                    () -> repository.ensureIsolatedRunningDirectory(id));
 
             try (GameRepositoryDraft draft = repository.openDraft()) {
                 draft.put(new GameInstanceManifest(id));
@@ -480,8 +476,11 @@ public final class GameDirectoriesTest {
 
             HMCLGameInstance instance = repository.getInstance(id);
             if (isolated) {
-                repository.ensureIsolatedRunningDirectory(id);
+                instance.enableIsolation();
             }
+            FileSaver.waitForAllSaves();
+            repository.refresh();
+            instance = repository.getInstance(id);
             assertEquals(repository.getLayout().getInstanceRoot(id), instance.getRunDirectory());
             assertEquals(repository.getLayout().getInstanceRoot(id).resolve("mods"), instance.getModsDirectory());
             GameSettings.Instance instanceSettings = Objects.requireNonNull(instance.getSettings());
