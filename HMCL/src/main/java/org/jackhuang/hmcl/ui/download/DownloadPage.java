@@ -323,6 +323,13 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     builder.component(remoteVersion);
             });
 
+            boolean modded = GameComponentType.MOD_LOADERS.stream()
+                    .anyMatch(componentType ->
+                            settings.get(componentType.getPatchId()) instanceof ComponentRemoteVersion);
+            if (repository.shouldIsolateNewInstance(modded)) {
+                builder.enableIsolation();
+            }
+
             Task<?> buildTask = builder.buildAsync();
             buildTask.onDone().register(event -> {
                 if (!event.isFailed()) {

@@ -18,16 +18,14 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.download.DefaultGameBuilder;
-import org.jackhuang.hmcl.task.Task;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
-
-import java.util.Objects;
 
 /// Builds game instances and applies HMCL-specific post-installation settings.
 @NotNullByDefault
 public class HMCLGameBuilder extends DefaultGameBuilder {
     /// Whether the current build must enable instance-local running-directory settings.
-    private boolean enableIsolation;
+    private boolean isolationEnabled;
 
     /// Creates a builder bound to the given dependency manager.
     ///
@@ -36,36 +34,24 @@ public class HMCLGameBuilder extends DefaultGameBuilder {
         super(dependencyManager);
     }
 
-    /// {@inheritDoc}
-    @Override
-    public HMCLDependencyManager getDependencyManager() {
-        return (HMCLDependencyManager) super.getDependencyManager();
-    }
-
-    /// {@inheritDoc}
+    /// Requests instance-local running-directory settings for the instance built by this builder.
     ///
-    /// For an unregistered instance, applies the repository's default isolation policy to the
-    /// configured component set. When isolation is selected, component-provided run-directory
-    /// files are installed under the instance root and the corresponding instance setting is
-    /// enabled after publication. Existing instances retain their current run-directory settings.
-    @Override
-    public Task<?> buildAsync() {
-        GameInstanceID instanceId = Objects.requireNonNull(id, "GameBuilder.id must be set");
-        HMCLGameRepository repository = getDependencyManager().getGameRepository();
-        enableIsolation = !repository.hasInstance(instanceId)
-                && repository.shouldIsolateNewInstance(
-                        components.keySet().stream().anyMatch(GameComponentType::isModLoader));
-        if (enableIsolation) {
-            useInstanceRunDirectory();
-        }
-
-        return super.buildAsync();
+    /// Component-provided run-directory files are installed under the instance root, and the
+    /// corresponding instance setting is enabled after publication when it can be written safely.
+    /// A read-only instance retains its existing setting.
+    ///
+    /// @return this builder
+    @Contract("-> this")
+    public HMCLGameBuilder enableIsolation() {
+        useInstanceRunDirectory();
+        isolationEnabled = true;
+        return this;
     }
 
     /// {@inheritDoc}
     @Override
     protected void onInstanceCommitted(DefaultGameInstance instance) {
-        if (enableIsolation) {
+        if (isolationEnabled) {
             ((HMCLGameInstance) instance).enableIsolation();
         }
     }
