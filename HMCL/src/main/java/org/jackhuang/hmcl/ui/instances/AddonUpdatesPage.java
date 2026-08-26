@@ -320,7 +320,10 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             versionComboBox.setConverter(FXUtils.stringConverter(RemoteAddon.Version::name));
             HBox.setHgrow(versionComboBox, Priority.ALWAYS);
 
-            Label selectVersionLabel = new Label(i18n("addon.changelog.other_versions"));
+            Label selectVersionLabel = new Label(i18n("addon.changelog.view_other_log"));
+            selectVersionLabel.maxWidthProperty().bind(box.widthProperty().divide(3));
+            FXUtils.showTooltipWhenTruncated(selectVersionLabel);
+
             HBox versionSelector = new HBox(8, selectVersionLabel, versionComboBox);
             versionSelector.setAlignment(Pos.CENTER_LEFT);
             versionSelector.setPadding(new Insets(0, 0, 4, 0));
