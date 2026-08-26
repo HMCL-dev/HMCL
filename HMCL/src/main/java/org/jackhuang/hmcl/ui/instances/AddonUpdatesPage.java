@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
@@ -27,10 +28,8 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.util.StringConverter;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -54,7 +53,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -300,14 +301,40 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
     }
 
     private static final class AddonChangelog extends JFXDialogLayout {
+        private final Map<String, String> changelogCache = new HashMap<>();
 
         public AddonChangelog(AddonUpdateObject object) {
+            List<RemoteAddon.Version> availableVersions = object.data.availableVersions();
             RemoteAddon.Version targetVersion = object.data.targetVersion();
 
-            this.setHeading(new HBox(new Label(i18n("addon.changelog") + " - " + targetVersion.name())));
+            Label headingLabel = new Label(i18n("addon.changelog"));
+            this.setHeading(new HBox(8, headingLabel));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
+
+            // Version selector ComboBox
+            JFXComboBox<RemoteAddon.Version> versionComboBox = new JFXComboBox<>();
+            versionComboBox.getItems().setAll(availableVersions);
+            versionComboBox.getSelectionModel().select(targetVersion);
+            versionComboBox.setConverter(new StringConverter<RemoteAddon.Version>() {
+                @Override
+                public String toString(RemoteAddon.Version version) {
+                    return version == null ? "" : version.name();
+                }
+
+                @Override
+                public RemoteAddon.Version fromString(String string) {
+                    return null;
+                }
+            });
+            versionComboBox.prefWidthProperty().bind(box.widthProperty());
+
+            Label selectVersionLabel = new Label(i18n("addon.changelog.other_versions"));
+            HBox versionSelector = new HBox(8, selectVersionLabel, versionComboBox);
+            versionSelector.setAlignment(Pos.CENTER_LEFT);
+            versionSelector.setPadding(new Insets(0, 0, 4, 0));
+            box.getChildren().add(versionSelector);
 
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
@@ -315,8 +342,14 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             FXUtils.setOverflowHidden(scrollPane, 8);
 
-            loadChangelog(object, spinnerPane, scrollPane);
-            spinnerPane.setOnFailedAction(e -> loadChangelog(object, spinnerPane, scrollPane));
+            loadChangelog(object, versionComboBox.getSelectionModel().getSelectedItem(), spinnerPane, scrollPane);
+            spinnerPane.setOnFailedAction(e -> loadChangelog(object, versionComboBox.getSelectionModel().getSelectedItem(), spinnerPane, scrollPane));
+
+            versionComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVersion, newVersion) -> {
+                if (newVersion != null) {
+                    loadChangelog(object, newVersion, spinnerPane, scrollPane);
+                }
+            });
 
             spinnerPane.setContent(scrollPane);
             box.getChildren().add(spinnerPane);
@@ -340,23 +373,25 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             onEscPressed(this, closeButton::fire);
         }
 
-        private void loadChangelog(AddonUpdateObject object, SpinnerPane spinnerPane, ScrollPane scrollPane) {
+        private void loadChangelog(AddonUpdateObject object, RemoteAddon.Version version, SpinnerPane spinnerPane, ScrollPane scrollPane) {
+            if (version == null) return;
             spinnerPane.setLoading(true);
             RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
             Task.supplyAsync(() -> {
-                if (object.changelog != null) {
-                    return object.changelog;
+                String cached = changelogCache.get(version.versionId());
+                if (cached != null) {
+                    return cached;
                 }
-                RemoteAddon.Version version = object.data.targetVersion();
                 if (repo == null) return null;
                 return StringUtils.convertToHtml(
                         repo.getAddonChangelog(DownloadProviders.getDownloadProvider(), version.projectId(), version.versionId()),
-                        "238222".equals(object.data.targetVersion().projectId())
+                        "238222".equals(version.projectId())
                 );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
-                    object.changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
-                    scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, repo == null ? "" : repo.getBaseUrl()));
+                    String html = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
+                    changelogCache.put(version.versionId(), html);
+                    scrollPane.setContent(FXUtils.renderAddonChangelog(html, repo == null ? "" : repo.getBaseUrl()));
                     FXUtils.smoothScrolling(scrollPane);
                     spinnerPane.setFailedReason(null);
                 } else {
