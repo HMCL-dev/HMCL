@@ -204,59 +204,61 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
         });
     }
 
+    @FXThread
+    private void doSave() {
+        if (gameDirectory != null) {
+            LocalizedText name = LocalizedText.plain(txtGameDirectoryName.getText());
+            PortablePath path = StringUtils.isNotBlank(getLocation()) ? createPortableLocation() : gameDirectory.getPath();
+            if (!GameDirectoryManager.canUpdateGameDirectory(gameDirectory, path)) {
+                Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
+                    GameDirectoryManager.forceOverwriteGameDirectoryFiles(gameDirectory, path);
+                    GameDirectoryManager.updateGameDirectory(gameDirectory, name, path);
+                    fireEvent(new PageCloseEvent());
+                });
+                return;
+            }
+
+            GameDirectoryManager.updateGameDirectory(gameDirectory, name, path);
+        } else {
+            if (StringUtils.isBlank(getLocation())) {
+                gameDir.fire();
+            }
+            GameDirectory newGameDirectory = new GameDirectory(
+                    GameDirectoryManager.newGameDirectoryId(),
+                    LocalizedText.plain(txtGameDirectoryName.getText()),
+                    createPortableLocation());
+            if (newGameDirectory.getPath().isAbsolute()) {
+                if (SettingsManager.isUserGameDirectoriesReadOnly()) {
+                    Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
+                        SettingsManager.forceOverwriteUserGameDirectories();
+                        GameDirectoryManager.addUserGameDirectory(newGameDirectory);
+                        fireEvent(new PageCloseEvent());
+                    });
+                    return;
+                }
+                GameDirectoryManager.addUserGameDirectory(newGameDirectory);
+            } else {
+                if (SettingsManager.isLocalGameDirectoriesReadOnly()) {
+                    Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
+                        SettingsManager.forceOverwriteLocalGameDirectories();
+                        GameDirectoryManager.addLocalGameDirectory(newGameDirectory);
+                        fireEvent(new PageCloseEvent());
+                    });
+                    return;
+                }
+                GameDirectoryManager.addLocalGameDirectory(newGameDirectory);
+            }
+        }
+
+        fireEvent(new PageCloseEvent());
+    }
+
     /// Saves the edited game directory or adds a new entry to the appropriate game directory store.
     @FXThread
     private void onSave() {
         if (Objects.equals(Path.of(getLocation()).getRoot(), Path.of(getLocation()))) {
-            Controllers.confirm(i18n("game_directory.root"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING,
-                    () -> {
-                        if (gameDirectory != null) {
-                            LocalizedText name = LocalizedText.plain(txtGameDirectoryName.getText());
-                            PortablePath path = StringUtils.isNotBlank(getLocation()) ? createPortableLocation() : gameDirectory.getPath();
-                            if (!GameDirectoryManager.canUpdateGameDirectory(gameDirectory, path)) {
-                                Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
-                                    GameDirectoryManager.forceOverwriteGameDirectoryFiles(gameDirectory, path);
-                                    GameDirectoryManager.updateGameDirectory(gameDirectory, name, path);
-                                    fireEvent(new PageCloseEvent());
-                                });
-                                return;
-                            }
-
-                            GameDirectoryManager.updateGameDirectory(gameDirectory, name, path);
-                        } else {
-                            if (StringUtils.isBlank(getLocation())) {
-                                gameDir.fire();
-                            }
-                            GameDirectory newGameDirectory = new GameDirectory(
-                                    GameDirectoryManager.newGameDirectoryId(),
-                                    LocalizedText.plain(txtGameDirectoryName.getText()),
-                                    createPortableLocation());
-                            if (newGameDirectory.getPath().isAbsolute()) {
-                                if (SettingsManager.isUserGameDirectoriesReadOnly()) {
-                                    Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
-                                        SettingsManager.forceOverwriteUserGameDirectories();
-                                        GameDirectoryManager.addUserGameDirectory(newGameDirectory);
-                                        fireEvent(new PageCloseEvent());
-                                    });
-                                    return;
-                                }
-                                GameDirectoryManager.addUserGameDirectory(newGameDirectory);
-                            } else {
-                                if (SettingsManager.isLocalGameDirectoriesReadOnly()) {
-                                    Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
-                                        SettingsManager.forceOverwriteLocalGameDirectories();
-                                        GameDirectoryManager.addLocalGameDirectory(newGameDirectory);
-                                        fireEvent(new PageCloseEvent());
-                                    });
-                                    return;
-                                }
-                                GameDirectoryManager.addLocalGameDirectory(newGameDirectory);
-                            }
-                        }
-
-                        fireEvent(new PageCloseEvent());
-                    }, null);
-        }
+            Controllers.confirm(i18n("game_directory.root"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING, this::doSave, null);
+        } else doSave();
     }
 
     /// Creates the portable path for the current location according to the relative-path toggle.
