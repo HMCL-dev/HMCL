@@ -17,14 +17,20 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DefaultGameBuilder;
+import org.jetbrains.annotations.NotNullByDefault;
 
+@NotNullByDefault
 public class HMCLGameBuilder extends DefaultGameBuilder {
     /// Creates a builder bound to the given dependency manager.
     ///
     /// @param dependencyManager the dependency manager for the target repository
-    public HMCLGameBuilder(DefaultDependencyManager dependencyManager) {
+    public HMCLGameBuilder(HMCLDependencyManager dependencyManager) {
         super(dependencyManager);
+    }
+
+    @Override
+    public HMCLDependencyManager getDependencyManager() {
+        return (HMCLDependencyManager) super.getDependencyManager();
     }
 }
