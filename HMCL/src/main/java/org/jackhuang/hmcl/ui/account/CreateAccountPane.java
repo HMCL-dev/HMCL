@@ -56,6 +56,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,6 +73,7 @@ import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.classPropertyFor;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private static final Pattern USERNAME_CHECKER_PATTERN = Pattern.compile("^[A-Za-z0-9_]+$");
@@ -388,7 +390,16 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 add(lblServers, 0, rowIndex);
 
                 cboServers = new JFXComboBox<>();
-                cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
+                cboServers.setConverter(stringConverter(it -> {
+                    String host;
+                    try {
+                        host = NetworkUtils.toURI(server.getUrl()).getHost();
+                    } catch (IllegalArgumentException e) {
+                        host = server.getUrl();
+                        LOG.warning("Unparsable authlib-injector server url " + server.getUrl(), e);
+                    }
+                    return String.format("%s (%s)", it.getName(), host);
+                }));
                 bindContent(cboServers.getItems(), getAuthlibInjectorServers());
                 cboServers.getItems().addListener(onInvalidating(
                         () -> Platform.runLater( // the selection will not be updated as expected if we call it immediately
