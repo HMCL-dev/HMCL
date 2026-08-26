@@ -31,11 +31,7 @@ import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackProvider;
 import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.modpack.server.ServerModpackProvider;
 import org.jackhuang.hmcl.modpack.server.ServerModpackRemoteInstallTask;
-import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.setting.GameWindowType;
-import org.jackhuang.hmcl.setting.JavaVersionType;
-import org.jackhuang.hmcl.setting.GameDirectory;
-import org.jackhuang.hmcl.setting.GameDirectoryManager;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
@@ -46,13 +42,13 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -60,10 +56,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Lang.toIterable;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /// Utilities for reading, installing, and applying modpack-specific game settings.
@@ -114,8 +108,8 @@ public final class ModpackHelper {
         } catch (IOException ignored) {
         }
 
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file, charset)) {
-            findMinecraftDirectoryInManuallyCreatedModpack(file.toString(), fs);
+        try {
+            findMinecraftDirectoryInManuallyCreatedModpack(file.toString(), file);
             throw new ManuallyCreatedModpackException(file);
         } catch (IOException e) {
             // ignore it
@@ -124,28 +118,35 @@ public final class ModpackHelper {
         throw new UnsupportedModpackException(file.toString());
     }
 
-    public static Path findMinecraftDirectoryInManuallyCreatedModpack(String modpackName, FileSystem fs) throws IOException, UnsupportedModpackException {
-        Path root = fs.getPath("/");
-        if (isMinecraftDirectory(root)) return root;
-        try (Stream<Path> firstLayer = Files.list(root)) {
-            for (Path dir : toIterable(firstLayer)) {
-                if (isMinecraftDirectory(dir)) return dir;
+    public static String findMinecraftDirectoryInManuallyCreatedModpack(String modpackName, Path zipPath)
+            throws IOException, UnsupportedModpackException {
 
-                try (Stream<Path> secondLayer = Files.list(dir)) {
-                    for (Path subdir : toIterable(secondLayer)) {
-                        if (isMinecraftDirectory(subdir)) return subdir;
+        try (ArchiveFileTree<?, ?> tree = ArchiveFileTree.open(zipPath)) {
+            ArchiveFileTree.Dir<?> rootDir = tree.getRoot();
+
+            if (isMinecraftDirectory(rootDir)) {
+                return "";
+            }
+
+
+            for (ArchiveFileTree.Dir<?> firstLayer : rootDir.getSubDirs().values()) {
+                if (isMinecraftDirectory(firstLayer)) {
+                    return firstLayer.getName();
+                }
+
+                for (ArchiveFileTree.Dir<?> secondLayer : firstLayer.getSubDirs().values()) {
+                    if (isMinecraftDirectory(secondLayer)) {
+                        return firstLayer.getName() + "/" + secondLayer.getName();
                     }
-                } catch (IOException ignored) {
                 }
             }
-        } catch (IOException ignored) {
         }
+
         throw new UnsupportedModpackException(modpackName);
     }
 
-    private static boolean isMinecraftDirectory(Path path) {
-        return Files.isDirectory(path.resolve("versions")) &&
-                (path.getFileName() == null || ".minecraft".equals(FileUtils.getName(path)));
+    private static boolean isMinecraftDirectory(ArchiveFileTree.Dir<?> dir) {
+        return dir.getSubDirs().containsKey("versions") && (dir.isRoot() || ".minecraft".equals(dir.getName()));
     }
 
     public static ModpackConfiguration<?> readModpackConfiguration(Path file) throws IOException {

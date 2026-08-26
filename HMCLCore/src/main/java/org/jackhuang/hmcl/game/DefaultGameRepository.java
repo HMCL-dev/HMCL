@@ -638,8 +638,7 @@ public abstract class DefaultGameRepository implements GameRepository {
         return Task.supplyAsync(() -> {
                     GameRepositoryDraft draft = openDraft();
                     active.set(draft);
-                    GameInstance publishedInstance = getInstance(instanceId);
-                    return publishedInstance;
+                    return draft.getBaseSnapshot().getInstance(instanceId);
                 })
                 .thenComposeAsync(updater)
                 .thenApplyAsync(manifest -> {
