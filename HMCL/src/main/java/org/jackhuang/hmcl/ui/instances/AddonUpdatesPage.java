@@ -317,18 +317,8 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             JFXComboBox<RemoteAddon.Version> versionComboBox = new JFXComboBox<>();
             versionComboBox.getItems().setAll(availableVersions);
             versionComboBox.getSelectionModel().select(targetVersion);
-            versionComboBox.setConverter(new StringConverter<RemoteAddon.Version>() {
-                @Override
-                public String toString(RemoteAddon.Version version) {
-                    return version == null ? "" : version.name();
-                }
-
-                @Override
-                public RemoteAddon.Version fromString(String string) {
-                    return null;
-                }
-            });
-            versionComboBox.prefWidthProperty().bind(box.widthProperty());
+            versionComboBox.setConverter(FXUtils.stringConverter(RemoteAddon.Version::name));
+            HBox.setHgrow(versionComboBox, Priority.ALWAYS);
 
             Label selectVersionLabel = new Label(i18n("addon.changelog.other_versions"));
             HBox versionSelector = new HBox(8, selectVersionLabel, versionComboBox);
