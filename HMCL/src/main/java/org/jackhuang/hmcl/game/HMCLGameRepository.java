@@ -209,7 +209,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     /// Returns a dependency manager using the given download provider.
     public DefaultDependencyManager getDependency(DownloadProvider downloadProvider) {
-        return new DefaultDependencyManager(this, downloadProvider, HMCLCacheRepository.REPOSITORY);
+        return new HMCLDependencyManager(this, downloadProvider, HMCLCacheRepository.REPOSITORY);
     }
 
     /// Resolves the run directory from modpack state and local settings.

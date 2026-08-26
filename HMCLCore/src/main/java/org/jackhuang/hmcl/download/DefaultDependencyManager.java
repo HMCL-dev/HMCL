@@ -88,7 +88,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public GameBuilder newGameBuilder() {
+    public DefaultGameBuilder newGameBuilder() {
         return new DefaultGameBuilder(this);
     }
 
