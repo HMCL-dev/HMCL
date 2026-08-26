@@ -58,6 +58,10 @@ public interface GameInstance {
     /// @return the resolved manifest views
     GameInstanceManifest.Resolved getResolvedManifest();
 
+    default GameInstanceManifest getResolvedManifest2() {
+        return getResolvedManifest().launchManifest();
+    }
+
     /// Returns the manifest used by launch-time consumers.
     ///
     /// @return the launch manifest

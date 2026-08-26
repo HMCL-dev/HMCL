@@ -87,7 +87,7 @@ public final class LaunchManifestNormalizer {
         @Nullable String mainClass = null;
 
         // Re-add LiteLoader tweaker when Forge overwrote the argument list (unless ModLauncher is in use).
-        if (analyzer.has(GameComponentType.LITELOADER) && !analyzer.hasModLauncher()) {
+        if (analyzer.has(GameComponentType.LITELOADER) && !analyzer.hasForgeModLauncher()) {
             builder.replaceTweakClass(
                     GameComponentAnalyzer.LITELOADER_TWEAKER,
                     GameComponentAnalyzer.LITELOADER_TWEAKER,
@@ -107,7 +107,7 @@ public final class LaunchManifestNormalizer {
                             !reorderTweakClass,
                             reorderTweakClass);
                 }
-            } else if (analyzer.hasModLauncher()) {
+            } else if (analyzer.hasForgeModLauncher()) {
                 // Prefer ModLauncher over LaunchWrapper when both are present.
                 mainClass = GameComponentAnalyzer.MOD_LAUNCHER_MAIN;
                 for (String optiFineTweaker : GameComponentAnalyzer.OPTIFINE_TWEAKERS) {
@@ -128,7 +128,7 @@ public final class LaunchManifestNormalizer {
         }
 
         boolean hasForge = analyzer.has(GameComponentType.FORGE);
-        boolean hasModLauncher = analyzer.hasModLauncher();
+        boolean hasModLauncher = analyzer.hasForgeModLauncher();
         for (String forgeTweaker : GameComponentAnalyzer.FORGE_TWEAKERS) {
             if (!hasForge) {
                 builder.removeTweakClass(forgeTweaker);

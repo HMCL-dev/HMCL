@@ -104,7 +104,7 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
         return false;
     }
 
-    public boolean hasModLauncher() {
+    public boolean hasForgeModLauncher() {
         return GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(manifest.mainClass()) || manifest.getPatches().stream().anyMatch(
                 patch -> GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(patch.mainClass())
         );
@@ -121,6 +121,20 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
 
     public @Nullable String getBootstrapVersion() {
         return bootstrapVersion;
+    }
+
+    public boolean isModded() {
+        String mainClass = manifest.mainClass();
+        if (mainClass == null || GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN.equals(mainClass)) {
+            return false;
+        }
+
+        for (String packageName : GameComponentAnalyzer.MOD_LOADER_MAIN_CLASSES_PACKAGES) {
+            if (mainClass.startsWith(packageName))
+                return true;
+        }
+
+        return false;
     }
 
     /// If a library is provided in `$.patches`, it's structure is so clear that we can do any operation.

@@ -198,7 +198,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
         boolean isolated = switch (type) {
             case NEVER -> false;
             case ALWAYS -> true;
-            case MODDED -> getResolvedManifest().isModded();
+            case MODDED -> getAnalyzer().isModded();
         };
 
         if (isolated) {
