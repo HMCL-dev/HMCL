@@ -302,7 +302,11 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             settings.put(GameComponentType.GAME.getPatchId(), gameVersion);
         }
 
-        private Task<Void> finishVersionDownloadingAsync(SettingsMap settings) {
+        /// Builds the selected instance and selects it after successful completion.
+        ///
+        /// @param settings the installer selections and target instance id
+        /// @return the builder task with its stage hints preserved as the outermost task wrapper
+        private Task<?> finishVersionDownloadingAsync(SettingsMap settings) {
             HMCLGameBuilder builder = dependencyManager.newGameBuilder();
 
             GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
@@ -319,10 +323,13 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     builder.component(remoteVersion);
             });
 
-            return builder.buildAsync()
-                    .thenRunAsync(
-                            Schedulers.javafx(),
-                            () -> repository.setSelectedInstance(repository.getInstance(instanceId)));
+            Task<?> buildTask = builder.buildAsync();
+            buildTask.onDone().register(event -> {
+                if (!event.isFailed()) {
+                    runInFX(() -> repository.setSelectedInstance(repository.getInstance(instanceId)));
+                }
+            });
+            return buildTask;
         }
 
         @Override

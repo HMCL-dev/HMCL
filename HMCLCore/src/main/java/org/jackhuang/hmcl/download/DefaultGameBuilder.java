@@ -131,7 +131,9 @@ public class DefaultGameBuilder extends GameBuilder {
                             .thenApplyAsync(minecraftJar -> {
                                 draft.put(resolved.launchManifest().withPatches(manifest.patches()));
                                 draft.putPrimaryJar(id, minecraftJar);
-                                return draft.commit().getInstance(id);
+                                DefaultGameInstance instance = draft.commit().getInstance(id);
+                                onInstanceCommitted(instance);
+                                return instance;
                             });
                 })
                 .whenComplete(exception -> {
@@ -140,6 +142,16 @@ public class DefaultGameBuilder extends GameBuilder {
                     }
                 })
                 .withStagesHints(hints);
+    }
+
+    /// Performs repository-specific initialization after an instance is committed.
+    ///
+    /// This method is invoked after the repository has published the committed snapshot and before
+    /// the build task completes. The default implementation does nothing. An unchecked exception
+    /// prevents the task from completing successfully but does not roll back the committed instance.
+    ///
+    /// @param instance the committed instance from the published snapshot
+    protected void onInstanceCommitted(DefaultGameInstance instance) {
     }
 
     /// Aborts a draft whose initial instance reservation failed.

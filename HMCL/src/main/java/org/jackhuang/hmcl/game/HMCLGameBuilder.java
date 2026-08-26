@@ -26,6 +26,9 @@ import java.util.Objects;
 /// Builds game instances and applies HMCL-specific post-installation settings.
 @NotNullByDefault
 public class HMCLGameBuilder extends DefaultGameBuilder {
+    /// Whether the current build must enable instance-local running-directory settings.
+    private boolean enableIsolation;
+
     /// Creates a builder bound to the given dependency manager.
     ///
     /// @param dependencyManager the dependency manager for the target repository
@@ -49,18 +52,21 @@ public class HMCLGameBuilder extends DefaultGameBuilder {
     public Task<?> buildAsync() {
         GameInstanceID instanceId = Objects.requireNonNull(id, "GameBuilder.id must be set");
         HMCLGameRepository repository = getDependencyManager().getGameRepository();
-        boolean enableIsolation = !repository.hasInstance(instanceId)
+        enableIsolation = !repository.hasInstance(instanceId)
                 && repository.shouldIsolateNewInstance(
                         components.keySet().stream().anyMatch(GameComponentType::isModLoader));
         if (enableIsolation) {
             useInstanceRunDirectory();
         }
 
-        Task<?> buildTask = super.buildAsync();
-        if (!enableIsolation) {
-            return buildTask;
-        }
+        return super.buildAsync();
+    }
 
-        return buildTask.thenRunAsync(() -> repository.getInstance(instanceId).enableIsolation());
+    /// {@inheritDoc}
+    @Override
+    protected void onInstanceCommitted(DefaultGameInstance instance) {
+        if (enableIsolation) {
+            ((HMCLGameInstance) instance).enableIsolation();
+        }
     }
 }
