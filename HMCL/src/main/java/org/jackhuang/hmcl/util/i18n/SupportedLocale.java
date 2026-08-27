@@ -313,9 +313,9 @@ public final class SupportedLocale {
     public double getTranslationCompleteness() {
         if (METHOOD_LOOKUP_HANDLE_KEY_SET == null) return 0.0;
 
-        ResourceBundle enBundle = SupportedLocale.getLocale(Locale.ENGLISH).getResourceBundle();
-        Set<String> enKeys = enBundle.keySet();
-        int totalKeys = enKeys.size();
+        ResourceBundle enBundle = SupportedLocale.getLocale(Locale.SIMPLIFIED_CHINESE).getResourceBundle();
+        Set<String> baseKeys = enBundle.keySet();
+        int totalKeys = baseKeys.size();
         if (totalKeys == 0) return 0.0;
 
         ResourceBundle currentBundle = getResourceBundle();
@@ -331,7 +331,7 @@ public final class SupportedLocale {
         }
 
         long actualTranslatedCount = handleKeys.stream()
-                .filter(enKeys::contains)
+                .filter(baseKeys::contains)
                 .count();
 
         double v = (double) actualTranslatedCount / totalKeys;
@@ -341,6 +341,17 @@ public final class SupportedLocale {
     public boolean isSameLanguage(SupportedLocale other) {
         return LocaleUtils.getRootLanguage(this.getLocale())
                 .equals(LocaleUtils.getRootLanguage(other.getLocale()));
+    }
+
+    @Override
+    public String toString() {
+        return "SupportedLocale{" +
+                "isDefault=" + isDefault +
+                ", name='" + name + '\'' +
+                ", locale=" + locale +
+                ", displayLocale=" + displayLocale +
+                ", textDirection=" + textDirection +
+               '}';
     }
 
     public static final class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {

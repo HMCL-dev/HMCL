@@ -43,8 +43,6 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.tukaani.xz.XZInputStream;
@@ -162,40 +160,6 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("update")), updatePaneList);
-            }
-
-            {
-                ComponentList languagePaneList = new ComponentList();
-
-                {
-                    var chooseLanguagePane = new LineSelectButton<SupportedLocale>();
-                    chooseLanguagePane.setTitle(i18n("settings.launcher.language"));
-                    chooseLanguagePane.setSubtitle(i18n("settings.take_effect_after_restart"));
-
-                    SupportedLocale currentLocale = I18n.getLocale();
-                    chooseLanguagePane.setNullSafeConverter(it -> it.getDisplayName(currentLocale));
-                    chooseLanguagePane.setNullSafeDescriptionConverter(locale -> {
-                        if (locale.isDefault())
-                            return "";
-
-                        String name = locale.getDisplayName(locale);
-
-                        double completeness = locale.getTranslationCompleteness();
-                        if (completeness != 0.0)
-                            return String.format("%s - %.2f%%", name, completeness * 100);
-                        else return name;
-                    });
-                    chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
-                    chooseLanguagePane.valueProperty().bindBidirectional(settings().languageProperty());
-
-                    LineButton helpButton = LineButton.createExternalLinkButton(Metadata.LOCALIZATION_URL);
-                    helpButton.setTitle(i18n("settings.launcher.language.contribution.title"));
-                    helpButton.setSubtitle(i18n("settings.launcher.language.contribution.subtitle"));
-
-                    languagePaneList.getContent().addAll(chooseLanguagePane, helpButton);
-                }
-
-                rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.language")), languagePaneList);
             }
 
             {
