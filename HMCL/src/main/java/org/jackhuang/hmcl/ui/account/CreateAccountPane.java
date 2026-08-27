@@ -33,6 +33,7 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.*;
+import org.glavo.url.WebURL;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
@@ -71,6 +72,7 @@ import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServe
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private static final Pattern USERNAME_CHECKER_PATTERN = Pattern.compile("^[A-Za-z0-9_]+$");
@@ -387,8 +389,30 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 add(lblServers, 0, rowIndex);
 
                 cboServers = new JFXComboBox<>();
-                cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
-                cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
+                cboServers.setConverter(stringConverter(it -> {
+                    String url = it.getUrl();
+
+                    try {
+                        WebURL parsed = WebURL.parseBrowserInput(url);
+                        if ("https".equals(parsed.getScheme())) {
+                            StringBuilder builder = new StringBuilder();
+                            builder.append(it.getName()).append(" (");
+
+                            builder.append(parsed.getHost());
+                            if (parsed.getPort() != 443) {
+                                builder.append(':').append(parsed.getPort());
+                            }
+
+                            if (!"/api/yggdrasil/".equals(parsed.getPath()))
+                                builder.append(parsed.getPath());
+                            builder.append(")");
+                            return builder.toString();
+                        }
+                    } catch (Exception e) {
+                        LOG.warning("Unparsable authlib-injector server url " + url, e);
+                    }
+                    return it.getName() + " (" + url + ")";
+                }));
                 bindContent(cboServers.getItems(), getAuthlibInjectorServers());
                 cboServers.getItems().addListener(onInvalidating(
                         () -> Platform.runLater( // the selection will not be updated as expected if we call it immediately
