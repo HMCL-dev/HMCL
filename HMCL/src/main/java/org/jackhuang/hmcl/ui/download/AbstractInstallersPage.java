@@ -28,7 +28,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -42,8 +41,6 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
-
-import java.util.Locale;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -82,7 +79,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                     controller.onNext(
                             new VersionsPage(
                                     controller,
-                                    i18n("install.installer.choose", i18n("install.installer." + type.getPatchId().toLowerCase(Locale.ROOT))),
+                                    i18n("install.installer.choose", i18n("install.installer." + type.getPatchId())),
                                     gameVersion,
                                     downloadProvider,
                                     type,
