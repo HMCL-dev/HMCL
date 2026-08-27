@@ -488,6 +488,11 @@ public final class TypeUtils {
         }
 
         @Override
+        public int hashCode() {
+            return componentType.hashCode();
+        }
+
+        @Override
         public String toString() {
             return typeToString(componentType) + "[]";
         }
