@@ -19,15 +19,23 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.download.DefaultGameBuilder;
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
 
 /// Builds game instances and applies HMCL-specific post-installation settings.
 @NotNullByDefault
 public class HMCLGameBuilder extends DefaultGameBuilder {
-    /// Creates a builder bound to the given dependency manager.
+    /// Creates a builder for installing a new HMCL instance.
     ///
     /// @param dependencyManager the dependency manager for the target repository
-    public HMCLGameBuilder(HMCLDependencyManager dependencyManager, @Nullable HMCLGameInstance instance) {
+    /// @param instanceId        the id of the new instance
+    public HMCLGameBuilder(HMCLDependencyManager dependencyManager, GameInstanceID instanceId) {
+        super(dependencyManager, instanceId);
+    }
+
+    /// Creates a builder for replacing the components of an existing HMCL instance.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param instance          the existing instance selecting update mode and the target id
+    public HMCLGameBuilder(HMCLDependencyManager dependencyManager, HMCLGameInstance instance) {
         super(dependencyManager, instance);
     }
 

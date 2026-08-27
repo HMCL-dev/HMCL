@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.modpack.server;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -57,12 +58,14 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
         Path run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        if (repository.hasInstance(instanceId) && Files.notExists(json))
+        @Nullable DefaultGameInstance existingInstance = repository.getSnapshot().findInstance(instanceId);
+        if (existingInstance != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
 
-        GameBuilder builder = dependencyManager.newGameBuilder()
-                .id(instanceId)
-                .enableIsolation();
+        GameBuilder builder = existingInstance == null
+                ? dependencyManager.newGameBuilder(instanceId)
+                : dependencyManager.newGameBuilder(existingInstance);
+        builder.enableIsolation();
         for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
             @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
             if (componentType != null)
@@ -71,11 +74,11 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
 
         dependents.add(builder.buildAsync());
         onDone().register(event -> {
-            if (event.isFailed())
+            if (existingInstance == null && event.isFailed())
                 repository.removeInstanceFromDisk(instanceId);
         });
 
-        ModpackConfiguration<ServerModpackManifest> config = null;
+        @Nullable ModpackConfiguration<ServerModpackManifest> config = null;
         try {
             if (Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));

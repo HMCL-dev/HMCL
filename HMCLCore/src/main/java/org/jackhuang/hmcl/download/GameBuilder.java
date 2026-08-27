@@ -18,30 +18,20 @@
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.game.GameComponentType;
-import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.task.Task;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.EnumMap;
 
-/// The builder which provide a task to build Minecraft environment.
+/// Configures the components used to install or update a game instance.
 ///
 /// @author huangyuhui
 @NotNullByDefault
 public abstract class GameBuilder {
 
-    protected @Nullable GameInstanceID id;
+    /// Components to install, keyed by their manifest patch type.
     protected final EnumMap<GameComponentType, Object /* String | RemoteVersion */> components = new EnumMap<>(GameComponentType.class);
-
-    /// The new game instance id, for `.minecraft/<instanceId>`.
-    ///
-    /// @param id the instance id of new game instance.
-    public GameBuilder id(GameInstanceID id) {
-        this.id = Objects.requireNonNull(id);
-        return this;
-    }
 
     /// Enables instance isolation for the built instance.
     ///
@@ -53,20 +43,33 @@ public abstract class GameBuilder {
     @Contract("-> this")
     public abstract GameBuilder enableIsolation();
 
+    /// Configures a component by its remote version id.
+    ///
+    /// Reconfiguring the same component type replaces its previous value.
+    ///
+    /// @param componentType the component type
+    /// @param version       the remote version id
+    /// @return this builder
     @Contract("_, _ -> this")
     public GameBuilder component(GameComponentType componentType, String version) {
         components.put(componentType, version);
         return this;
     }
 
+    /// Configures a component using an already resolved remote version.
+    ///
+    /// Reconfiguring the same component type replaces its previous value.
+    ///
+    /// @param remoteVersion the remote component version
+    /// @return this builder
     @Contract("_ -> this")
     public GameBuilder component(ComponentRemoteVersion remoteVersion) {
         components.put(remoteVersion.getComponentType(), remoteVersion);
         return this;
     }
 
-    /**
-     * @return the task that can build the whole Minecraft environment
-     */
+    /// Creates the task that installs the configured components and publishes the target instance.
+    ///
+    /// @return the instance build task
     public abstract Task<?> buildAsync();
 }

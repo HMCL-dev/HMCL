@@ -28,10 +28,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.Objects;
 
-/// Builds a new game instance in an exclusive [GameRepositoryDraft], installs its components, and
-/// publishes the completed instance once.
+/// Installs a new game instance or replaces an existing instance in an exclusive
+/// [GameRepositoryDraft], then publishes the completed instance once.
+///
+/// Replacement starts from an empty manifest with the target id and installs only the configured
+/// components. It retains the existing run directory unless isolation is explicitly enabled.
 ///
 /// Shared libraries, assets, and download caches may remain after failure. The instance manifest
 /// and primary JAR enter the instance tree only when the draft commits.
@@ -41,18 +43,35 @@ public class DefaultGameBuilder extends GameBuilder {
     /// Dependency manager used for component installation and repository access.
     private final DefaultDependencyManager dependencyManager;
 
-    private final @Nullable DefaultGameInstance instance;
+    /// Id of the instance to create or replace.
+    private final GameInstanceID instanceId;
+
+    /// Whether this builder must replace a currently published instance.
+    private final boolean updating;
 
     /// Whether instance isolation was requested for this build.
     protected boolean isolationEnabled;
 
-    /// Creates a builder bound to the given dependency manager.
+    /// Creates a builder for installing a new instance.
     ///
     /// @param dependencyManager the dependency manager for the target repository
-    /// @param instance the existing game instance, or null to create a new one
-    public DefaultGameBuilder(DefaultDependencyManager dependencyManager, @Nullable DefaultGameInstance instance) {
+    /// @param instanceId        the id of the new instance
+    public DefaultGameBuilder(DefaultDependencyManager dependencyManager, GameInstanceID instanceId) {
         this.dependencyManager = dependencyManager;
-        this.instance = instance;
+        this.instanceId = instanceId;
+        this.updating = false;
+    }
+
+    /// Creates a builder for replacing the components of an existing instance.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param instance          the existing instance selecting update mode and the target id
+    /// @throws IllegalArgumentException if `instance` belongs to another repository
+    public DefaultGameBuilder(DefaultDependencyManager dependencyManager, DefaultGameInstance instance) {
+        dependencyManager.validateGameInstance(instance);
+        this.dependencyManager = dependencyManager;
+        this.instanceId = instance.getId();
+        this.updating = true;
     }
 
     /// Returns the dependency manager used by this builder.
@@ -77,10 +96,11 @@ public class DefaultGameBuilder extends GameBuilder {
     /// cancellation aborts the draft.
     ///
     /// @return the build task
-    /// @throws NullPointerException if [#id] was not set
+    /// @throws IllegalStateException if the configured game version is absent, the target of a new
+    ///                               installation already exists, or the target of an update no
+    ///                               longer exists
     @Override
     public Task<?> buildAsync() {
-        GameInstanceID id = Objects.requireNonNull(this.id, "GameBuilder.id must be set");
         @Nullable String gameVersion = (String) components.get(GameComponentType.GAME);
         if (gameVersion == null)
             throw new IllegalStateException("GameBuilder.gameVersion must be set");
@@ -104,22 +124,27 @@ public class DefaultGameBuilder extends GameBuilder {
 
         DefaultGameRepository repository = dependencyManager.getGameRepository();
         DefaultGameRepositoryDraft draft = repository.openDraft();
-        GameInstanceManifest initialManifest = new GameInstanceManifest(id);
+        @Nullable DefaultGameInstance currentInstance;
+        GameInstanceManifest initialManifest = new GameInstanceManifest(instanceId);
         try {
+            currentInstance = resolveCurrentInstance(draft.getBaseSnapshot());
             draft.put(initialManifest);
-        } catch (IOException | RuntimeException e) {
-            abortAfterReservationFailure(draft, e);
-            throw new IllegalStateException("Cannot reserve game instance " + id, e);
+        } catch (IOException e) {
+            abortAfterSetupFailure(draft, e);
+            throw new IllegalStateException("Cannot reserve game instance " + instanceId, e);
+        } catch (RuntimeException e) {
+            abortAfterSetupFailure(draft, e);
+            throw e;
         }
 
         Path runDirectory = isolationEnabled
-                ? repository.getLayout().getInstanceRoot(id)
-                : repository.hasInstance(id)
-                        ? repository.getInstance(id).getRunDirectory()
+                ? repository.getLayout().getInstanceRoot(instanceId)
+                : currentInstance != null
+                        ? currentInstance.getRunDirectory()
                         : repository.getBaseDirectory();
         Path modsDirectory = runDirectory.resolve("mods");
 
-        Task<GameInstanceManifest> libraryTask = dependencyManager.installNewInstanceComponentAsync(
+        Task<GameInstanceManifest> libraryTask = dependencyManager.installUnpublishedComponentAsync(
                 initialManifest, modsDirectory, gameVersion, GameComponentType.GAME, gameVersion);
 
         for (Map.Entry<GameComponentType, Object> entry : components.entrySet()) {
@@ -129,11 +154,11 @@ public class DefaultGameBuilder extends GameBuilder {
 
             if (entry.getValue() instanceof ComponentRemoteVersion remoteVersion) {
                 libraryTask = libraryTask.thenComposeAsync(manifest ->
-                        dependencyManager.installNewInstanceComponentAsync(
+                        dependencyManager.installUnpublishedComponentAsync(
                                 manifest, modsDirectory, remoteVersion));
             } else if (entry.getValue() instanceof String version) {
                 libraryTask = libraryTask.thenComposeAsync(manifest ->
-                        dependencyManager.installNewInstanceComponentAsync(
+                        dependencyManager.installUnpublishedComponentAsync(
                                 manifest, modsDirectory, gameVersion, componentType, version));
             } else {
                 throw new AssertionError("Unexpected version type: " + entry.getValue().getClass());
@@ -145,8 +170,8 @@ public class DefaultGameBuilder extends GameBuilder {
                     return new GameDownloadTask(dependencyManager, resolved.launchManifest())
                             .thenApplyAsync(minecraftJar -> {
                                 draft.put(resolved.launchManifest().withPatches(manifest.patches()));
-                                draft.putPrimaryJar(id, minecraftJar);
-                                DefaultGameInstance instance = draft.commit().getInstance(id);
+                                draft.putPrimaryJar(instanceId, minecraftJar);
+                                DefaultGameInstance instance = draft.commit().getInstance(instanceId);
                                 onInstanceCommitted(instance);
                                 return instance;
                             });
@@ -159,6 +184,26 @@ public class DefaultGameBuilder extends GameBuilder {
                 .withStagesHints(hints);
     }
 
+    /// Resolves and validates the declared installation mode against the draft base snapshot.
+    ///
+    /// @param snapshot the immutable repository state captured by the draft
+    /// @return the current update target, or `null` for a valid new installation
+    /// @throws IllegalStateException if the declared target state does not match the snapshot
+    private @Nullable DefaultGameInstance resolveCurrentInstance(DefaultGameRepositorySnapshot snapshot) {
+        @Nullable DefaultGameInstance currentInstance = snapshot.findInstance(instanceId);
+        if (!updating) {
+            if (currentInstance != null) {
+                throw new IllegalStateException("Game instance already exists: " + instanceId);
+            }
+            return null;
+        }
+
+        if (currentInstance == null) {
+            throw new IllegalStateException("Game instance no longer exists: " + instanceId);
+        }
+        return currentInstance;
+    }
+
     /// Performs repository-specific initialization after an instance is committed.
     ///
     /// This method is invoked after the repository has published the committed snapshot and before
@@ -169,11 +214,11 @@ public class DefaultGameBuilder extends GameBuilder {
     protected void onInstanceCommitted(DefaultGameInstance instance) {
     }
 
-    /// Aborts a draft whose initial instance reservation failed.
+    /// Aborts a draft after target validation or initial reservation fails.
     ///
     /// @param draft   the draft to abort
-    /// @param failure the reservation failure that receives any cleanup failure as suppressed
-    private static void abortAfterReservationFailure(
+    /// @param failure the setup failure that receives any cleanup failure as suppressed
+    private static void abortAfterSetupFailure(
             DefaultGameRepositoryDraft draft,
             Throwable failure) {
         try {

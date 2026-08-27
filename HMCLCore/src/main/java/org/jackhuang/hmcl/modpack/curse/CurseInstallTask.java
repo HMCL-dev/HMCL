@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.modpack.curse;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -31,6 +32,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -40,11 +42,9 @@ import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * Install a downloaded CurseForge modpack.
- *
- * @author huangyuhui
- */
+/// Install a downloaded CurseForge modpack.
+///
+/// @author huangyuhui
 public final class CurseInstallTask extends Task<Void> {
 
     private final DefaultDependencyManager dependencyManager;
@@ -53,23 +53,37 @@ public final class CurseInstallTask extends Task<Void> {
     private final Modpack modpack;
     private final CurseManifest manifest;
     private final GameInstanceID instanceId;
-    private final String iconUrl;
+
+    /// Optional remote icon URL supplied by the install source.
+    private final @Nullable String iconUrl;
     private final Path run;
-    private final ModpackConfiguration<CurseManifest> config;
-    private String iconExt;
-    private Task<Path> downloadIconTask;
+
+    /// Previous modpack configuration when updating, or `null` for a new installation.
+    private final @Nullable ModpackConfiguration<CurseManifest> config;
+
+    /// Validated extension of the scheduled icon download, or `null` when no icon is scheduled.
+    private @Nullable String iconExt;
+
+    /// Scheduled icon download corresponding to [#iconExt], or `null` when absent.
+    private @Nullable Task<Path> downloadIconTask;
     private final List<Task<?>> dependents = new ArrayList<>(4);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    /**
-     * Constructor.
-     *
-     * @param dependencyManager the dependency manager.
-     * @param zipFile           the CurseForge modpack file.
-     * @param manifest          The manifest content of given CurseForge modpack.
-     * @param instanceId        the new instance ID
-     */
-    public CurseInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, CurseManifest manifest, GameInstanceID instanceId, String iconUrl) {
+    /// Creates a task that installs or updates a CurseForge modpack instance.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param zipFile           the CurseForge modpack archive
+    /// @param modpack           the parsed modpack metadata
+    /// @param manifest          the CurseForge manifest
+    /// @param instanceId        the target instance id; an existing modpack instance is updated
+    /// @param iconUrl           the optional icon URL, or `null`
+    public CurseInstallTask(
+            DefaultDependencyManager dependencyManager,
+            Path zipFile,
+            Modpack modpack,
+            CurseManifest manifest,
+            GameInstanceID instanceId,
+            @Nullable String iconUrl) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
@@ -81,12 +95,14 @@ public final class CurseInstallTask extends Task<Void> {
         this.run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        if (repository.hasInstance(instanceId) && Files.notExists(json))
+        @Nullable DefaultGameInstance existingInstance = repository.getSnapshot().findInstance(instanceId);
+        if (existingInstance != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
 
-        GameBuilder builder = dependencyManager.newGameBuilder()
-                .id(instanceId)
-                .enableIsolation()
+        GameBuilder builder = existingInstance == null
+                ? dependencyManager.newGameBuilder(instanceId)
+                : dependencyManager.newGameBuilder(existingInstance);
+        builder.enableIsolation()
                 .component(GameComponentType.GAME, manifest.minecraft().gameVersion());
         for (CurseManifestModLoader modLoader : manifest.minecraft().modLoaders()) {
             if (modLoader.id().startsWith("forge-")) {
@@ -100,15 +116,15 @@ public final class CurseInstallTask extends Task<Void> {
         dependents.add(builder.buildAsync());
 
         onDone().register(event -> {
-            Exception ex = event.getTask().getException();
-            if (event.isFailed()) {
+            @Nullable Exception ex = event.getTask().getException();
+            if (existingInstance == null && event.isFailed()) {
                 if (!(ex instanceof ModpackCompletionException)) {
                     repository.removeInstanceFromDisk(instanceId);
                 }
             }
         });
 
-        ModpackConfiguration<CurseManifest> config = null;
+        @Nullable ModpackConfiguration<CurseManifest> config = null;
         try {
             if (Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(CurseManifest.class));
@@ -122,7 +138,7 @@ public final class CurseInstallTask extends Task<Void> {
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(manifest.overrides()), any -> true, config).withStage("hmcl.modpack"));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(manifest.overrides()), manifest, CurseModpackProvider.INSTANCE, manifest.name(), manifest.version(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
 
-        URI iconUri = NetworkUtils.toURIOrNull(iconUrl);
+        @Nullable URI iconUri = NetworkUtils.toURIOrNull(iconUrl);
         if (iconUri != null) {
             String ext = FileUtils.getExtension(StringUtils.substringAfter(iconUri.getPath(), '/')).toLowerCase(Locale.ROOT);
             if (Modpack.SUPPORTED_ICON_EXTS.contains(ext)) {
@@ -177,10 +193,10 @@ public final class CurseInstallTask extends Task<Void> {
             // resolves those file names and writes the enriched manifest to
             // manifest.json, so read from there when available.
             Path oldManifestFile = repository.getLayout().getInstanceRoot(instanceId).resolve("manifest.json");
-            List<CurseManifestFile> oldFiles = config.getManifest().files();
+            @Nullable List<CurseManifestFile> oldFiles = config.getManifest().files();
             if (Files.exists(oldManifestFile)) {
                 try {
-                    CurseManifest oldManifest = JsonUtils.fromJsonFile(oldManifestFile, CurseManifest.class);
+                    @Nullable CurseManifest oldManifest = JsonUtils.fromJsonFile(oldManifestFile, CurseManifest.class);
                     if (oldManifest != null) {
                         oldFiles = oldManifest.files();
                     }
@@ -204,9 +220,13 @@ public final class CurseInstallTask extends Task<Void> {
         Files.createDirectories(root);
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), manifest);
 
-        if (iconExt != null && Modpack.SUPPORTED_ICON_NAMES.stream().map(root::resolve).allMatch(Files::notExists)) {
+        @Nullable String iconExtension = iconExt;
+        @Nullable Task<Path> iconTask = downloadIconTask;
+        if (iconExtension != null
+                && iconTask != null
+                && Modpack.SUPPORTED_ICON_NAMES.stream().map(root::resolve).allMatch(Files::notExists)) {
             try {
-                Files.copy(downloadIconTask.getResult(), root.resolve("icon." + iconExt));
+                Files.copy(iconTask.getResult(), root.resolve("icon." + iconExtension));
             } catch (Exception e) {
                 LOG.warning("Failed to copy modpack icon", e);
             }

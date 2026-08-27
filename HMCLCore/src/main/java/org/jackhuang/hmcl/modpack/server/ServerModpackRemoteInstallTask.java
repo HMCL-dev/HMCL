@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.modpack.server;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -51,12 +52,14 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
         this.manifest = manifest;
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        if (repository.hasInstance(instanceId) && Files.notExists(json))
+        @Nullable DefaultGameInstance existingInstance = repository.getSnapshot().findInstance(instanceId);
+        if (existingInstance != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
 
-        GameBuilder builder = dependencyManager.newGameBuilder()
-                .id(instanceId)
-                .enableIsolation();
+        GameBuilder builder = existingInstance == null
+                ? dependencyManager.newGameBuilder(instanceId)
+                : dependencyManager.newGameBuilder(existingInstance);
+        builder.enableIsolation();
         for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
             @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
             if (componentType != null)
@@ -65,7 +68,7 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
 
         dependents.add(builder.buildAsync());
         onDone().register(event -> {
-            if (event.isFailed())
+            if (existingInstance == null && event.isFailed())
                 repository.removeInstanceFromDisk(instanceId);
         });
 

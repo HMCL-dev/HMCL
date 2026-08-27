@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstance;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.task.Task;
@@ -70,14 +71,24 @@ public interface DependencyManager {
     /// @throws IllegalArgumentException if `instance` belongs to another repository
     Task<?> checkPatchCompletionAsync(GameInstance instance, GameInstanceManifest manifest, boolean integrityCheck);
 
-    /// Creates a builder for installing a new game instance and optional loaders.
+    /// Creates a builder for installing a new game instance and optional components.
     ///
+    /// The target id must be absent when the builder starts the installation.
+    ///
+    /// @param instanceId the id of the new instance
     /// @return a new game builder
-    GameBuilder newGameBuilder();
+    GameBuilder newGameBuilder(GameInstanceID instanceId);
 
-    /// Creates a builder for modifying an existing game instance and optional loaders.
+    /// Creates a builder for replacing the components of an existing game instance.
+    ///
+    /// The instance selects update mode and fixes the target repository and id. The currently
+    /// published instance with that id is used when the builder starts the update, so the supplied
+    /// snapshot-bound object need not remain current. The resulting manifest is rebuilt from the
+    /// components configured on the builder; components that are not configured are not retained.
     ///
     /// @param instance the existing game instance to update
+    /// @return a game builder targeting the existing instance
+    /// @throws IllegalArgumentException if `instance` belongs to another repository
     GameBuilder newGameBuilder(GameInstance instance);
 
     /// Returns a registered remote-version list.

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.modpack.modrinth;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -30,6 +31,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -47,15 +49,37 @@ public class ModrinthInstallTask extends Task<Void> {
     private final Modpack modpack;
     private final ModrinthManifest manifest;
     private final GameInstanceID instanceId;
-    private final String iconUrl;
+
+    /// Optional remote icon URL supplied by the install source.
+    private final @Nullable String iconUrl;
     private final Path run;
-    private final ModpackConfiguration<ModrinthManifest> config;
-    private String iconExt;
-    private Task<Path> downloadIconTask;
+
+    /// Previous modpack configuration when updating, or `null` for a new installation.
+    private final @Nullable ModpackConfiguration<ModrinthManifest> config;
+
+    /// Validated extension of the scheduled icon download, or `null` when no icon is scheduled.
+    private @Nullable String iconExt;
+
+    /// Scheduled icon download corresponding to [#iconExt], or `null` when absent.
+    private @Nullable Task<Path> downloadIconTask;
     private final List<Task<?>> dependents = new ArrayList<>(4);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public ModrinthInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, ModrinthManifest manifest, GameInstanceID instanceId, String iconUrl) {
+    /// Creates a task that installs or updates a Modrinth modpack instance.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param zipFile           the Modrinth modpack archive
+    /// @param modpack           the parsed modpack metadata
+    /// @param manifest          the Modrinth index
+    /// @param instanceId        the target instance id; an existing modpack instance is updated
+    /// @param iconUrl           the optional icon URL, or `null`
+    public ModrinthInstallTask(
+            DefaultDependencyManager dependencyManager,
+            Path zipFile,
+            Modpack modpack,
+            ModrinthManifest manifest,
+            GameInstanceID instanceId,
+            @Nullable String iconUrl) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
@@ -66,12 +90,14 @@ public class ModrinthInstallTask extends Task<Void> {
         this.run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        if (repository.hasInstance(instanceId) && Files.notExists(json))
+        @Nullable DefaultGameInstance existingInstance = repository.getSnapshot().findInstance(instanceId);
+        if (existingInstance != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
 
-        GameBuilder builder = dependencyManager.newGameBuilder()
-                .id(instanceId)
-                .enableIsolation();
+        GameBuilder builder = existingInstance == null
+                ? dependencyManager.newGameBuilder(instanceId)
+                : dependencyManager.newGameBuilder(existingInstance);
+        builder.enableIsolation();
         builder.component(GameComponentType.GAME, manifest.getGameVersion());
         for (Map.Entry<String, String> modLoader : manifest.getDependencies().entrySet()) {
             switch (modLoader.getKey()) {
@@ -98,15 +124,15 @@ public class ModrinthInstallTask extends Task<Void> {
         dependents.add(builder.buildAsync());
 
         onDone().register(event -> {
-            Exception ex = event.getTask().getException();
-            if (event.isFailed()) {
+            @Nullable Exception ex = event.getTask().getException();
+            if (existingInstance == null && event.isFailed()) {
                 if (!(ex instanceof ModpackCompletionException)) {
                     repository.removeInstanceFromDisk(instanceId);
                 }
             }
         });
 
-        ModpackConfiguration<ModrinthManifest> config = null;
+        @Nullable ModpackConfiguration<ModrinthManifest> config = null;
         try {
             if (Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ModrinthManifest.class));
@@ -122,7 +148,7 @@ public class ModrinthInstallTask extends Task<Void> {
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
 
-        URI iconUri = NetworkUtils.toURIOrNull(iconUrl);
+        @Nullable URI iconUri = NetworkUtils.toURIOrNull(iconUrl);
         if (iconUri != null) {
             String ext = FileUtils.getExtension(StringUtils.substringAfter(iconUri.getPath(), '/')).toLowerCase(Locale.ROOT);
             if (Modpack.SUPPORTED_ICON_EXTS.contains(ext)) {
@@ -160,9 +186,13 @@ public class ModrinthInstallTask extends Task<Void> {
         Files.createDirectories(root);
         JsonUtils.writeToJsonFile(root.resolve("modrinth.index.json"), manifest);
 
-        if (iconExt != null && Modpack.SUPPORTED_ICON_NAMES.stream().map(root::resolve).allMatch(Files::notExists)) {
+        @Nullable String iconExtension = iconExt;
+        @Nullable Task<Path> iconTask = downloadIconTask;
+        if (iconExtension != null
+                && iconTask != null
+                && Modpack.SUPPORTED_ICON_NAMES.stream().map(root::resolve).allMatch(Files::notExists)) {
             try {
-                Files.copy(downloadIconTask.getResult(), root.resolve("icon." + iconExt));
+                Files.copy(iconTask.getResult(), root.resolve("icon." + iconExtension));
             } catch (Exception e) {
                 LOG.warning("Failed to copy modpack icon", e);
             }

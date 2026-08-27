@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -26,6 +27,7 @@ import org.jackhuang.hmcl.modpack.ModpackInstallTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,20 +54,25 @@ public final class HMCLModpackInstallTask extends Task<Void> {
 
         Path run = repository.getLayout().getInstanceRoot(this.instanceId);
         Path json = repository.getLayout().getModpackConfigurationFile(this.instanceId);
-        if (repository.hasInstance(this.instanceId) && Files.notExists(json))
+        @Nullable HMCLGameInstance existingInstance = repository.findInstance(this.instanceId);
+        if (existingInstance != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists");
 
-        dependents.add(dependency.newGameBuilder()
-                .id(this.instanceId)
+        GameBuilder builder = existingInstance == null
+                ? dependency.newGameBuilder(this.instanceId)
+                : dependency.newGameBuilder(existingInstance);
+        dependents.add(builder
                 .enableIsolation()
                 .component(GameComponentType.GAME, modpack.getGameVersion())
                 .buildAsync());
 
         onDone().register(event -> {
-            if (event.isFailed()) repository.removeInstanceFromDisk(this.instanceId);
+            if (existingInstance == null && event.isFailed()) {
+                repository.removeInstanceFromDisk(this.instanceId);
+            }
         });
 
-        ModpackConfiguration<Modpack> config = null;
+        @Nullable ModpackConfiguration<Modpack> config = null;
         try {
             if (Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(Modpack.class));

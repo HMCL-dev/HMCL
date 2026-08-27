@@ -60,13 +60,15 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
         Path run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        if (repository.hasInstance(instanceId) && Files.notExists(json))
+        @Nullable DefaultGameInstance existingInstance = repository.getSnapshot().findInstance(instanceId);
+        if (existingInstance != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
-        this.update = repository.hasInstance(instanceId);
+        this.update = existingInstance != null;
 
-        GameBuilder builder = dependencyManager.newGameBuilder()
-                .id(instanceId)
-                .enableIsolation();
+        GameBuilder builder = existingInstance == null
+                ? dependencyManager.newGameBuilder(instanceId)
+                : dependencyManager.newGameBuilder(existingInstance);
+        builder.enableIsolation();
         for (McbbsModpackManifest.Addon addon : manifest.getAddons()) {
             @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
             if (componentType != null)
@@ -75,11 +77,11 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
 
         dependents.add(builder.buildAsync());
         onDone().register(event -> {
-            if (event.isFailed())
+            if (!update && event.isFailed())
                 repository.removeInstanceFromDisk(instanceId);
         });
 
-        ModpackConfiguration<McbbsModpackManifest> config = null;
+        @Nullable ModpackConfiguration<McbbsModpackManifest> config = null;
         try {
             if (Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(McbbsModpackManifest.class));

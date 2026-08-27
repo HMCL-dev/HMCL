@@ -307,14 +307,12 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         /// @param settings the installer selections and target instance id
         /// @return the builder task with its stage hints preserved as the outermost task wrapper
         private Task<?> finishVersionDownloadingAsync(SettingsMap settings) {
-            HMCLGameBuilder builder = dependencyManager.newGameBuilder();
-
             GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
             if (instanceId == null) {
                 throw new IllegalStateException("Instance ID is not set");
             }
 
-            builder.id(instanceId);
+            HMCLGameBuilder builder = dependencyManager.newGameBuilder(instanceId);
             builder.component(GameComponentType.GAME, ((ComponentRemoteVersion) settings.get(GameComponentType.GAME.getPatchId())).getGameVersion());
 
             settings.asStringMap().forEach((key, value) -> {

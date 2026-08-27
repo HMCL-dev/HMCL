@@ -142,7 +142,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
         Map<String, String> oldAddons = toMap(manifest.getManifest().getAddons());
         Map<String, String> newAddons = toMap(remoteManifest.getAddons());
         if (!Objects.equals(oldAddons, newAddons)) {
-            GameBuilder builder = dependencyManager.newGameBuilder().id(instance.getId());
+            GameBuilder builder = dependencyManager.newGameBuilder(instance);
             for (ServerModpackManifest.Addon addon : remoteManifest.getAddons()) {
                 @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
                 if (componentType != null)

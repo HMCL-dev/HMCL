@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DefaultGameBuilder;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
@@ -377,10 +378,58 @@ public final class DefaultGameInstanceTest {
                 new DefaultCacheRepository(tempDirectory.resolve("cache")));
 
         assertThrows(IllegalArgumentException.class, () -> dependencyManager.validateGameInstance(instance));
+        assertThrows(IllegalArgumentException.class, () -> dependencyManager.newGameBuilder(instance));
         assertThrows(IllegalArgumentException.class, () -> new CurseCompletionTask(dependencyManager, instance));
         assertThrows(IllegalArgumentException.class, () -> new McbbsModpackCompletionTask(dependencyManager, instance));
         assertThrows(IllegalArgumentException.class, () -> new ModrinthCompletionTask(dependencyManager, instance));
         assertThrows(IllegalArgumentException.class, () -> new ServerModpackCompletionTask(dependencyManager, instance));
+    }
+
+    /// A new-install builder rejects an id that is already present when its draft opens.
+    @Test
+    public void testGameBuilderRejectsNewInstallationOverExistingInstance(@TempDir Path tempDirectory)
+            throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        GameInstanceID instanceId = new GameInstanceID("instance");
+        repository.publish(instanceId, new GameInstanceManifest(instanceId));
+        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
+                repository,
+                new MojangDownloadProvider(),
+                new DefaultCacheRepository(tempDirectory.resolve("cache")));
+        DefaultGameBuilder builder = dependencyManager.newGameBuilder(instanceId);
+        builder.component(GameComponentType.GAME, "1.21.1");
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, builder::buildAsync);
+
+        assertEquals("Game instance already exists: instance", exception.getMessage());
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            assertTrue(draft.isOpen());
+        }
+    }
+
+    /// An update builder rejects a target that disappeared before its draft opened.
+    @Test
+    public void testGameBuilderRejectsMissingUpdateTarget(@TempDir Path tempDirectory)
+            throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        GameInstanceID instanceId = new GameInstanceID("instance");
+        TestGameInstance instance = repository.publish(
+                instanceId,
+                new GameInstanceManifest(instanceId));
+        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
+                repository,
+                new MojangDownloadProvider(),
+                new DefaultCacheRepository(tempDirectory.resolve("cache")));
+        DefaultGameBuilder builder = dependencyManager.newGameBuilder(instance);
+        builder.component(GameComponentType.GAME, "1.21.1");
+        repository.publishEmpty();
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, builder::buildAsync);
+
+        assertEquals("Game instance no longer exists: instance", exception.getMessage());
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            assertTrue(draft.isOpen());
+        }
     }
 
     /// Non-conventional JSON/jar basenames are kept on disk and recorded on the instance.
@@ -536,6 +585,11 @@ public final class DefaultGameInstanceTest {
             snapshot.put(instance);
             publishSnapshot(snapshot);
             return instance;
+        }
+
+        /// Publishes an empty snapshot to simulate removal during a builder's lifetime.
+        private void publishEmpty() {
+            publishSnapshot(newSnapshot());
         }
 
         /// Creates an empty mutable snapshot using the current layout.

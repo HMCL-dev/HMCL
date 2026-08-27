@@ -88,14 +88,13 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
-    public DefaultGameBuilder newGameBuilder() {
-        return new DefaultGameBuilder(this, null);
+    public DefaultGameBuilder newGameBuilder(GameInstanceID instanceId) {
+        return new DefaultGameBuilder(this, instanceId);
     }
 
     @Override
     public DefaultGameBuilder newGameBuilder(GameInstance instance) {
-        if (instance.getRepository() != this.getGameRepository())
-            throw new IllegalArgumentException("Game instance and dependency manager belong to different repositories");
+        validateGameInstance(instance);
 
         return new DefaultGameBuilder(this, (DefaultGameInstance) instance);
     }
@@ -186,14 +185,14 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         });
     }
 
-    /// Installs a component into an unpublished new instance without constructing a
+    /// Installs a component into an unpublished working manifest without constructing a
     /// [GameInstance].
     ///
     /// @param baseManifest     the working manifest for this step
     /// @param modsDirectory    the mods directory to use during installation
     /// @param componentVersion the remote component to install
     /// @return the task producing the updated manifest (not yet committed)
-    Task<GameInstanceManifest> installNewInstanceComponentAsync(
+    Task<GameInstanceManifest> installUnpublishedComponentAsync(
             GameInstanceManifest baseManifest,
             Path modsDirectory,
             ComponentRemoteVersion componentVersion) {
@@ -206,7 +205,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                         componentVersion.getSelfVersion()));
     }
 
-    /// Resolves and installs a component into an unpublished new instance.
+    /// Resolves and installs a component into an unpublished working manifest.
     ///
     /// @param baseManifest     the working manifest for this step
     /// @param modsDirectory    the mods directory to use during installation
@@ -214,7 +213,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// @param componentType    the component list id, such as `game` or `forge`
     /// @param componentVersion the component version id
     /// @return the installation task
-    Task<GameInstanceManifest> installNewInstanceComponentAsync(
+    Task<GameInstanceManifest> installUnpublishedComponentAsync(
             GameInstanceManifest baseManifest,
             Path modsDirectory,
             String gameVersion,
@@ -222,7 +221,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             String componentVersion) {
         ComponentVersionList<?> versionList = getVersionList(componentType);
         return versionList.loadAsync(gameVersion)
-                .thenComposeAsync(() -> installNewInstanceComponentAsync(
+                .thenComposeAsync(() -> installUnpublishedComponentAsync(
                         baseManifest,
                         modsDirectory,
                         versionList.getVersion(gameVersion, componentVersion)
