@@ -32,7 +32,7 @@ public class LegacyForgeHelper {
         if (agentArgs != null && !agentArgs.trim().isEmpty()) {
             newRootUrl = agentArgs.trim();
         }
-        System.out.println("[FMLFixAgent] Loaded. Target RootURL will be replaced with: " + newRootUrl);
+        System.out.println("[LegacyForgeHelper] Loaded. Target RootURL will be replaced with: " + newRootUrl);
         inst.addTransformer(new CoreFMLLibrariesTransformer());
     }
 
@@ -52,12 +52,12 @@ public class LegacyForgeHelper {
 
             if (TARGET_CLASS.equals(className) || "cpw.mods.fml.relauncher.CoreFMLLibraries".equals(className)) {
                 try {
-                    System.out.println("[FMLFixAgent] Transforming " + className + " ...");
+                    System.out.println("[LegacyForgeHelper] Transforming " + className + " ...");
                     byte[] modified = patchConstantPoolUtf8(classfileBuffer, TARGET_URL, newRootUrl);
-                    System.out.println("[FMLFixAgent] Successfully patched RootURL in " + className);
+                    System.out.println("[LegacyForgeHelper] Successfully patched RootURL in " + className);
                     return modified;
                 } catch (Throwable t) {
-                    System.err.println("[FMLFixAgent] Failed to patch class: " + t.getMessage());
+                    System.err.println("[LegacyForgeHelper] Failed to patch class: " + t.getMessage());
                     t.printStackTrace();
                 }
             }
@@ -147,7 +147,7 @@ public class LegacyForgeHelper {
             }
         }
 
-        System.out.println("[FMLFixAgent] Warning: Target URL string not found in constant pool.");
+        System.out.println("[LegacyForgeHelper] Warning: Target URL string not found in constant pool.");
         return classBytes;
     }
 }

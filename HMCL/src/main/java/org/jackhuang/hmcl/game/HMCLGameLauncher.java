@@ -172,7 +172,17 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     protected void appendJvmArgs(CommandBuilder result) {
         super.appendJvmArgs(result);
 
+        if (this.instance.getVersion().compareTo("1.6") < 0 && this.instance.hasComponent(GameComponentType.FORGE)) {
+            LOG.info("Attempting to patch game with legacy-forge-helper");
+            try {
+                result.add("-javaagent:" + extractLegacyForgeHelper());
+            } catch (Exception e) {
+                LOG.warning("Failed to extract legacy-forge-helper", e);
+            }
+        }
+
         if (!options.isAllowAutoAgent() && !options.isNoGeneratedJVMArgs()) return;
+
         if (!options.isNoGeneratedOptimizingJVMArgs()
                 && NativePatcher.needPatchMemoryUtil(manifest, options.getJava().getParsedVersion())) {
             LOG.info("Attempting to patch game with lwjgl-unsafe-agent");
@@ -180,13 +190,6 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                 result.add("-javaagent:" + extractLwjglUnsafeAgent());
             } catch (Exception e) {
                 LOG.warning("Failed to extract lwjgl-unsafe-agent", e);
-            }
-        } else if (this.instance.getVersion().compareTo("1.6") < 0 && this.instance.hasComponent(GameComponentType.FORGE)) {
-            LOG.info("Attempting to patch game with legacy-forge-helper");
-            try {
-                result.add("-javaagent:" + extractLegacyForgeHelper());
-            } catch (Exception e) {
-                LOG.warning("Failed to extract legacy-forge-helper", e);
             }
         }
     }
