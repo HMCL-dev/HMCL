@@ -74,7 +74,7 @@ public class ForgeInstallation {
                     throw new VersionMismatchException(profile.minecraft(), gameVersion);
                 return ForgeInstallerType.NEW;
             } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
-                ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
+                ForgeOldInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeOldInstallProfile.class);
                 if (!gameVersion.equals(profile.install().minecraft()))
                     throw new VersionMismatchException(profile.install().minecraft(), gameVersion);
                 return ForgeInstallerType.OLD;
@@ -104,32 +104,31 @@ public class ForgeInstallation {
             String gameVersion,
             Path installer) throws IOException, VersionMismatchException, UnsupportedInstallationException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            if ((Files.isRegularFile(fs.getPath("mod_MinecraftForge.class")) || Files.isRegularFile(fs.getPath("fmlversion.properties"))) && !Files.isRegularFile(fs.getPath("install_profile.json"))) {
-                return new ForgeLegacyInstallTask(dependencyManager, manifest, tryGetLegacyForgeVersion(installer), installer);
-            }
+            switch (detectForgeInstallerType(gameVersion, installer)) {
+                case LEGACY -> {
+                    return new ForgeLegacyInstallTask(dependencyManager, manifest, tryGetLegacyForgeVersion(installer), installer);
+                }
+                case OLD -> {
+                    checkCleanroomCompatibility(dependencyManager, manifest, gameVersion);
+                    String installProfileText = Files.readString(fs.getPath("install_profile.json"));
+                    ForgeOldInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeOldInstallProfile.class);
 
-            String installProfileText = Files.readString(fs.getPath("install_profile.json"));
-            Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
-            if (installProfile.containsKey("spec")) {
-                checkCleanroomCompatibility(dependencyManager, manifest, gameVersion);
-                ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
-                if (!gameVersion.equals(profile.minecraft()))
-                    throw new VersionMismatchException(profile.minecraft(), gameVersion);
-                return new GameDownloadTask(dependencyManager, manifest)
-                        .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
-                                dependencyManager,
-                                manifest,
-                                minecraftJar,
-                                modifyVersion(gameVersion, profile.version()),
-                                installer));
-            } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
-                checkCleanroomCompatibility(dependencyManager, manifest, gameVersion);
-                ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
-                if (!gameVersion.equals(profile.install().minecraft()))
-                    throw new VersionMismatchException(profile.install().minecraft(), gameVersion);
-                return new ForgeOldInstallTask(dependencyManager, manifest, modifyVersion(gameVersion, profile.install().path().getVersion().replaceAll("(?i)forge", "")), installer);
-            } else {
-                throw new IOException();
+                    return new ForgeOldInstallTask(dependencyManager, manifest, modifyVersion(gameVersion, profile.install().path().getVersion().replaceAll("(?i)forge", "")), installer);
+                }
+                case NEW -> {
+                    checkCleanroomCompatibility(dependencyManager, manifest, gameVersion);
+                    String installProfileText = Files.readString(fs.getPath("install_profile.json"));
+                    ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
+
+                    return new GameDownloadTask(dependencyManager, manifest)
+                            .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
+                                    dependencyManager,
+                                    manifest,
+                                    minecraftJar,
+                                    modifyVersion(gameVersion, profile.version()),
+                                    installer));
+                }
+                default -> throw new IOException();
             }
         }
     }
