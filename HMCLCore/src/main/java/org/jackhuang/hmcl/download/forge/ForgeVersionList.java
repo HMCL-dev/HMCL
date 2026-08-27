@@ -64,28 +64,28 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
                             return;
                         versions.clear();
 
-                        for (Map.Entry<String, int[]> entry : root.getGameVersions().entrySet()) {
+                        for (Map.Entry<String, int[]> entry : root.mcversion().entrySet()) {
                             String gameVersion = fromLookupVersion(VersionNumber.normalize(entry.getKey()));
                             for (int v : entry.getValue()) {
-                                ForgeVersion version = root.getNumber().get(v);
+                                ForgeVersion version = root.number().get(v);
                                 if (version == null)
                                     continue;
                                 String jar = null;
-                                for (String[] file : version.getFiles())
+                                for (String[] file : version.files())
                                     if (file.length > 1 && "installer".equals(file[1])) {
-                                        String classifier = version.getGameVersion() + "-" + version.getVersion()
-                                                + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
-                                        String fileName = root.getArtifact() + "-" + classifier + "-" + file[1] + "." + file[0];
-                                        jar = root.getWebPath() + classifier + "/" + fileName;
+                                        String classifier = version.mcversion() + "-" + version.version()
+                                                + (StringUtils.isNotBlank(version.branch()) ? "-" + version.branch() : "");
+                                        String fileName = root.artifact() + "-" + classifier + "-" + file[1] + "." + file[0];
+                                        jar = root.webpath() + classifier + "/" + fileName;
                                     }
 
                                 if (jar == null)
                                     continue;
 
                                 versions.put(gameVersion, new ForgeRemoteVersion(
-                                        toLookupVersion(version.getGameVersion()),
-                                        version.getVersion(),
-                                        version.getModified() > 0 ? Instant.ofEpochSecond(version.getModified()) : null,
+                                        toLookupVersion(version.mcversion()),
+                                        version.version(),
+                                        version.modified() > 0 ? Instant.ofEpochSecond(version.modified()) : null,
                                         Collections.singletonList(jar)
                                 ));
                             }
