@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.concurrent.CancellationException;
 import java.util.zip.ZipException;
 
@@ -104,7 +105,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     public Node createPage(WizardController controller, int step, SettingsMap settings) {
         switch (step) {
             case 0:
-                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + componentType)), gameInstance.getVersion().toString(), downloadProvider, componentType, () -> {
+                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + componentType.getPatchId().toLowerCase(Locale.ROOT))), gameInstance.getVersion().toString(), downloadProvider, componentType, () -> {
                     if (oldLibraryVersion == null) {
                         controller.onFinish();
                     } else if (componentType == GameComponentType.GAME) {
