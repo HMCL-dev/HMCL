@@ -399,7 +399,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                             builder.append(it.getName()).append(" (");
 
                             builder.append(parsed.getHost());
-                            if (parsed.getPort() >0) {
+                            if (parsed.getPort() != 443) {
                                 builder.append(':').append(parsed.getPort());
                             }
 
