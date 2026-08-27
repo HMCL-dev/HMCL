@@ -30,9 +30,13 @@ import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.*;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.ZipException;
 
 /**
@@ -284,34 +288,5 @@ public final class CompressingUtils {
      */
     public static String readTextZipEntry(ZipArchiveReader zipFile, String name) throws IOException {
         return IOUtils.readFullyAsString(zipFile.getInputStream(zipFile.getEntry(name)));
-    }
-
-    /**
-     * Read the text content of a file in zip.
-     *
-     * @param zipFile the zip file
-     * @param name    the location of the text in zip file, something like A/B/C/D.txt
-     * @return the plain text content of given file.
-     * @throws IOException if the file is not a valid zip file.
-     */
-    public static String readTextZipEntry(Path zipFile, String name, Charset encoding) throws IOException {
-        try (ZipArchiveReader s = openZipFile(zipFile, encoding)) {
-            return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)));
-        }
-    }
-
-    /**
-     * Read the text content of a file in zip.
-     *
-     * @param file the zip file
-     * @param name the location of the text in zip file, something like A/B/C/D.txt
-     * @return the plain text content of given file.
-     */
-    public static Optional<String> readTextZipEntryQuietly(Path file, String name, Charset encoding) {
-        try {
-            return Optional.of(readTextZipEntry(file, name, encoding));
-        } catch (IOException | NullPointerException e) {
-            return Optional.empty();
-        }
     }
 }
