@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
@@ -35,7 +35,7 @@ public final class SettingsMapTest {
     @Test
     public void minecraftSelectionIsNotModdedInstallation() {
         SettingsMap settings = new SettingsMap();
-        settings.put(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), remoteVersion("game"));
+        settings.put(GameComponentType.GAME.getPatchId(), remoteVersion(GameComponentType.GAME));
 
         assertFalse(settings.isInstallingModdedVersion());
     }
@@ -44,14 +44,14 @@ public final class SettingsMapTest {
     @Test
     public void modLoaderSelectionIsModdedInstallation() {
         SettingsMap settings = new SettingsMap();
-        settings.put(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), remoteVersion("game"));
-        settings.put(LibraryAnalyzer.LibraryType.FABRIC.getPatchId(), remoteVersion("fabric"));
+        settings.put(GameComponentType.GAME.getPatchId(), remoteVersion(GameComponentType.GAME));
+        settings.put(GameComponentType.FABRIC.getPatchId(), remoteVersion(GameComponentType.FABRIC));
 
         assertTrue(settings.isInstallingModdedVersion());
     }
 
     /// Creates a minimal remote version for installer state tests.
-    private static RemoteVersion remoteVersion(String libraryId) {
-        return new RemoteVersion(libraryId, "1.21.11", "test", Instant.EPOCH, List.of());
+    private static RemoteVersion remoteVersion(GameComponentType componentType) {
+        return new RemoteVersion(componentType, "1.21.11", "test", Instant.EPOCH, List.of());
     }
 }
