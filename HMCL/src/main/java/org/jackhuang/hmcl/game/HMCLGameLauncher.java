@@ -181,6 +181,15 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             }
         }
 
+        if (this.instance.getVersion().compareTo("1.2") < 0 && this.instance.hasComponent(GameComponentType.FORGE)) {
+            LOG.info("Attempting to patch game with modloader-helper");
+            try {
+                result.add("-javaagent:" + extractModloaderHelper());
+            } catch (Exception e) {
+                LOG.warning("Failed to extract modloader-helper", e);
+            }
+        }
+
         if (!options.isAllowAutoAgent() && !options.isNoGeneratedJVMArgs()) return;
 
         if (!options.isNoGeneratedOptimizingJVMArgs()
@@ -235,6 +244,39 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     private Path extractLegacyForgeHelper() throws IOException {
         Library library = new Library(new Artifact("org.jackhuang.hmcl", "legacy-forge-helper", "1.0"));
         String fileName = "HMCLLegacyForgeHelper-1.0.jar";
+
+        Path agentPath = instance.getLayout().getLibraryFile(instance.getId(), library).toAbsolutePath().normalize();
+        if (agentPath.toString().contains("=")) {
+            throw new IOException("Invalid library path: " + agentPath);
+        }
+
+        byte[] bytes;
+        try (InputStream input = DefaultLauncher.class.getResourceAsStream("/assets/game/" + fileName)) {
+            if (input == null) {
+                throw new IOException("/assets/game/" + fileName + " not found");
+            }
+
+            bytes = input.readAllBytes();
+        }
+
+        if (Files.isRegularFile(agentPath)) {
+            try {
+                if (Files.size(agentPath) == bytes.length) {
+                    return agentPath;
+                }
+            } catch (IOException e) {
+                LOG.warning("Failed to check size of " + agentPath, e);
+            }
+        }
+
+        Files.createDirectories(agentPath.getParent());
+        FileUtils.saveSafely(agentPath, output -> output.write(bytes));
+        return agentPath;
+    }
+
+    private Path extractModloaderHelper() throws IOException {
+        Library library = new Library(new Artifact("org.jackhuang.hmcl", "modloader-helper", "1.0"));
+        String fileName = "HMCLModloaderHelper-1.0.jar";
 
         Path agentPath = instance.getLayout().getLibraryFile(instance.getId(), library).toAbsolutePath().normalize();
         if (agentPath.toString().contains("=")) {
