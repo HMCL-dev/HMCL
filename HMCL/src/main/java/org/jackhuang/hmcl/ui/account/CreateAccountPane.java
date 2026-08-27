@@ -33,6 +33,7 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.*;
+import org.glavo.url.WebURL;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
@@ -56,7 +57,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jetbrains.annotations.Nullable;
 
@@ -390,14 +390,28 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
                 cboServers = new JFXComboBox<>();
                 cboServers.setConverter(stringConverter(it -> {
-                    String host;
+                    String url = it.getUrl();
+
                     try {
-                        host = NetworkUtils.toURI(it.getUrl()).getHost();
-                    } catch (IllegalArgumentException e) {
-                        host = it.getUrl();
-                        LOG.warning("Unparsable authlib-injector server url " + it.getUrl(), e);
+                        WebURL parsed = WebURL.parseBrowserInput(url);
+                        if ("https".equals(parsed.getScheme())) {
+                            StringBuilder builder = new StringBuilder();
+                            builder.append(it.getName()).append(" (");
+
+                            builder.append(parsed.getHost());
+                            if (parsed.getPort() >0) {
+                                builder.append(':').append(parsed.getPort());
+                            }
+
+                            if (!"/api/yggdrasil/".equals(parsed.getPath()))
+                                builder.append(parsed.getPath());
+                            builder.append(")");
+                            return builder.toString();
+                        }
+                    } catch (Exception e) {
+                        LOG.warning("Unparsable authlib-injector server url " + url, e);
                     }
-                    return String.format("%s (%s)", it.getName(), host);
+                    return it.getName() + " (" + url + ")";
                 }));
                 bindContent(cboServers.getItems(), getAuthlibInjectorServers());
                 cboServers.getItems().addListener(onInvalidating(
