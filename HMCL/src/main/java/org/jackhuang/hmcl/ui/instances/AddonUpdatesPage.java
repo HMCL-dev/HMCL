@@ -319,8 +319,6 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             HBox.setHgrow(versionComboBox, Priority.ALWAYS);
 
             Label selectVersionLabel = new Label(i18n("addon.changelog.view_other_log"));
-            selectVersionLabel.maxWidthProperty().bind(box.widthProperty().divide(3));
-            FXUtils.showTooltipWhenTruncated(selectVersionLabel);
 
             HBox versionSelector = new HBox(8, selectVersionLabel, versionComboBox);
             versionSelector.setAlignment(Pos.CENTER_LEFT);
