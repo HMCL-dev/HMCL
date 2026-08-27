@@ -172,6 +172,8 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     protected void appendJvmArgs(CommandBuilder result) {
         super.appendJvmArgs(result);
 
+        if (!options.isAllowAutoAgent() && !options.isNoGeneratedJVMArgs()) return;
+
         if (this.instance.getVersion().compareTo("1.6") < 0 && this.instance.hasComponent(GameComponentType.FORGE)) {
             LOG.info("Attempting to patch game with legacy-forge-helper");
             try {
@@ -189,8 +191,6 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                 LOG.warning("Failed to extract modloader-helper", e);
             }
         }
-
-        if (!options.isAllowAutoAgent() && !options.isNoGeneratedJVMArgs()) return;
 
         if (!options.isNoGeneratedOptimizingJVMArgs()
                 && NativePatcher.needPatchMemoryUtil(manifest, options.getJava().getParsedVersion())) {
