@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstance;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -41,18 +40,14 @@ public final class GameVerificationFixTask extends Task<Void> {
     /// The detected Minecraft version.
     private final GameVersionNumber gameVersion;
 
-    /// The effective launch manifest used to detect Forge.
-    private final GameInstanceManifest manifest;
-
     /// Creates a task for a fixed instance and effective launch manifest.
     ///
     /// @param instance    the instance whose client jar may be modified
     /// @param gameVersion the detected Minecraft version
     /// @param manifest    the effective launch manifest used to detect Forge
-    public GameVerificationFixTask(GameInstance instance, GameVersionNumber gameVersion, GameInstanceManifest manifest) {
+    public GameVerificationFixTask(GameInstance instance, GameVersionNumber gameVersion) {
         this.instance = instance;
         this.gameVersion = gameVersion;
-        this.manifest = manifest;
 
         setSignificance(TaskSignificance.MODERATE);
     }
