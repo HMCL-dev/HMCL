@@ -298,7 +298,8 @@ public final class ForgeNewModMetadata {
             for (ZipArchiveEntry embeddedModFile : embeddedModFiles) {
                 tree.extractTo(embeddedModFile, tempFile);
                 try (ZipFileTree embeddedTree = CompressingUtils.openZipTree(tempFile)) {
-                    return fromFile(modManager, modFile, embeddedTree, modLoaderType, coreModInfo);
+                    CoreModInfo embeddedCoreModInfo = CoreModInfo.fromFile(modFile, embeddedTree);
+                    return fromFile(modManager, modFile, embeddedTree, modLoaderType, embeddedCoreModInfo);
                 } catch (Exception ignored) {
                 }
             }
