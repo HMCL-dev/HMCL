@@ -91,7 +91,7 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                                 continue;
                             List<String> urls = new ArrayList<>();
                             for (ForgeVersion.File file : version.getFiles())
-                                if ("installer".equals(file.getCategory()) && "jar".equals(file.getFormat())) {
+                                if (("installer".equals(file.getCategory()) && "jar".equals(file.getFormat())) || (("client".equals(file.getCategory()) || "universal".equals(file.getCategory())) && "zip".equals(file.getFormat()))) {
                                     String branch = toLookupBranch(gameVersion, version.getBranch());
 
                                     String classifier = lookupVersion + "-" + version.getVersion() + (branch.isEmpty() ? "" : '-' + branch);

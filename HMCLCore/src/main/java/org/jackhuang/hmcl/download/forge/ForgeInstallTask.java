@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
-import org.jackhuang.hmcl.download.*;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.UnsupportedInstallationException;
+import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameComponentType;
@@ -109,16 +111,24 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
                 throw new UnsupportedInstallationException(UNSUPPORTED_LAUNCH_WRAPPER);
         }
 
-        if (detectForgeInstallerType(remote.getGameVersion(), installer)) {
-            dependency = new GameDownloadTask(dependencyManager, manifest)
-                    .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
-                            dependencyManager,
-                            manifest,
-                            minecraftJar,
-                            remote.getSelfVersion(),
-                            installer));
-        } else {
-            dependency = new ForgeOldInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer);
+        var type = detectForgeInstallerType(remote.getGameVersion(), installer);
+
+        switch (type) {
+            case LEGACY:
+                dependency = new ForgeLegacyInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer);
+                break;
+            case NORMAL:
+                dependency = new ForgeOldInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer);
+                break;
+            case MODERN:
+                dependency = new GameDownloadTask(dependencyManager, manifest)
+                        .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
+                                dependencyManager,
+                                manifest,
+                                minecraftJar,
+                                remote.getSelfVersion(),
+                                installer));
+                break;
         }
     }
 
@@ -130,20 +140,24 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
     /// @throws IOException              if the installer profile is missing, malformed, or
     ///                                  unsupported
     /// @throws VersionMismatchException if the installer targets another Minecraft version
-    public static boolean detectForgeInstallerType(String gameVersion, Path installer) throws IOException, VersionMismatchException {
+    public static ForgeInstallerType detectForgeInstallerType(String gameVersion, Path installer) throws IOException, VersionMismatchException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
+            if ((Files.isRegularFile(fs.getPath("mod_MinecraftForge.class")) || Files.isRegularFile(fs.getPath("fmlversion.properties"))) && !Files.isRegularFile(fs.getPath("install_profile.json"))) {
+                return ForgeInstallerType.LEGACY;
+            }
+
             String installProfileText = Files.readString(fs.getPath("install_profile.json"));
             Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
             if (installProfile.containsKey("spec")) {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion);
-                return true;
+                return ForgeInstallerType.MODERN;
             } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
                 ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
                 if (!gameVersion.equals(profile.install().getMinecraft()))
                     throw new VersionMismatchException(profile.install().getMinecraft(), gameVersion);
-                return false;
+                return ForgeInstallerType.NORMAL;
             } else {
                 throw new IOException();
             }
@@ -160,9 +174,9 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
     /// @param gameVersion       Minecraft version expected by the installation
     /// @param installer         the Forge installer JAR
     /// @return the task producing the Forge patch
-    /// @throws IOException              if the installer profile is missing, malformed, or
+    /// @throws IOException                      if the installer profile is missing, malformed, or
     ///                                  unsupported
-    /// @throws VersionMismatchException if the installer targets another Minecraft version
+    /// @throws VersionMismatchException         if the installer targets another Minecraft version
     /// @throws UnsupportedInstallationException if the manifest already contains Cleanroom
     public static Task<GameInstancePatch> install(
             DefaultDependencyManager dependencyManager,

@@ -33,6 +33,7 @@ language-subtag-registry
 /HMCLBoot/build/
 /minecraft/libraries/HMCLTransformerDiscoveryService/build/
 /minecraft/libraries/HMCLMultiMCBootstrap/build/
+/minecraft/libraries/HMCLLegacyForgeHelper/build/
 /buildSrc/build/
 
 # idea
@@ -42,6 +43,7 @@ language-subtag-registry
 /HMCLCore/out/
 /minecraft/libraries/HMCLTransformerDiscoveryService/out/
 /minecraft/libraries/HMCLMultiMCBootstrap/out/
+/minecraft/libraries/HMCLLegacyForgeHelper/out/
 
 # eclipse
 /bin/

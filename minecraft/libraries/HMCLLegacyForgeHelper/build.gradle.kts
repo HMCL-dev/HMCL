@@ -9,7 +9,10 @@ tasks.jar {
     manifest {
         attributes(
             "Created-By" to "Copyright(c) 2026 huangyuhui.",
-            "Implementation-Version" to project.version
+            "Implementation-Version" to project.version,
+            "Premain-Class" to "org.jackhuang.hmcl.LegacyForgeHelper",
+            "Can-Redefine-Classes" to true,
+            "Can-Retransform-Classes" to true
         )
     }
 }
