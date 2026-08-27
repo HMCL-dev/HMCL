@@ -23,7 +23,11 @@ import java.nio.charset.StandardCharsets;
 import java.security.ProtectionDomain;
 
 @SuppressWarnings("JavaPrintToLogpoint")
-public class LegacyForgeHelper {
+public final class LegacyForgeHelper {
+    private LegacyForgeHelper () {
+        throw new AssertionError();
+    }
+
     private static final String TARGET_URL = "http://files.minecraftforge.net/fmllibs/%s";
 
     private static String newRootUrl = "https://files.multimc.org/fmllibs/%s";
@@ -40,12 +44,11 @@ public class LegacyForgeHelper {
         premain(agentArgs, inst);
     }
 
-    private static class CoreFMLLibrariesTransformer implements ClassFileTransformer {
+    private final static class CoreFMLLibrariesTransformer implements ClassFileTransformer {
         private static final String TARGET_CLASS = "cpw/mods/fml/relauncher/CoreFMLLibraries";
 
         @Override
-        public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
-                                ProtectionDomain protectionDomain, byte[] classfileBuffer) {
+        public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) {
             if (className == null) {
                 return null;
             }
@@ -72,10 +75,7 @@ public class LegacyForgeHelper {
 
         int pos = 0;
 
-        int magic = ((classBytes[pos++] & 0xFF) << 24) |
-                ((classBytes[pos++] & 0xFF) << 16) |
-                ((classBytes[pos++] & 0xFF) << 8)  |
-                (classBytes[pos++] & 0xFF);
+        int magic = ((classBytes[pos++] & 0xFF) << 24) | ((classBytes[pos++] & 0xFF) << 16) | ((classBytes[pos++] & 0xFF) << 8) | (classBytes[pos++] & 0xFF);
         if (magic != 0xCAFEBABE) {
             throw new IllegalArgumentException("Invalid class file (magic mismatch)");
         }
