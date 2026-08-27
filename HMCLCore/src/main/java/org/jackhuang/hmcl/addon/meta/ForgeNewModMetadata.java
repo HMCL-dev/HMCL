@@ -174,33 +174,33 @@ public final class ForgeNewModMetadata {
         }
     }
 
-    public static LocalModFile fromForgeFile(ModManager modManager, Path modFile, ZipFileTree tree, CoreMods coreMods) throws IOException {
-        return fromFile(modManager, modFile, tree, ModLoaderType.FORGE, coreMods);
+    public static LocalModFile fromForgeFile(ModManager modManager, Path modFile, ZipFileTree tree, CoreModInfo coreModInfo) throws IOException {
+        return fromFile(modManager, modFile, tree, ModLoaderType.FORGE, coreModInfo);
     }
 
-    public static LocalModFile fromNeoForgeFile(ModManager modManager, Path modFile, ZipFileTree tree, CoreMods coreMods) throws IOException {
-        return fromFile(modManager, modFile, tree, ModLoaderType.NEO_FORGE, coreMods);
+    public static LocalModFile fromNeoForgeFile(ModManager modManager, Path modFile, ZipFileTree tree, CoreModInfo coreModInfo) throws IOException {
+        return fromFile(modManager, modFile, tree, ModLoaderType.NEO_FORGE, coreModInfo);
     }
 
-    private static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType, CoreMods coreMods) throws IOException {
+    private static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType, CoreModInfo coreModInfo) throws IOException {
         if (modLoaderType != ModLoaderType.FORGE && modLoaderType != ModLoaderType.NEO_FORGE) {
             throw new IOException("Invalid mod loader: " + modLoaderType);
         }
 
         if (modLoaderType == ModLoaderType.NEO_FORGE) {
             try {
-                return fromFile0("META-INF/neoforge.mods.toml", modLoaderType, modManager, modFile, tree, coreMods);
+                return fromFile0("META-INF/neoforge.mods.toml", modLoaderType, modManager, modFile, tree, coreModInfo);
             } catch (Exception ignored) {
             }
         }
 
         try {
-            return fromFile0("META-INF/mods.toml", modLoaderType, modManager, modFile, tree, coreMods);
+            return fromFile0("META-INF/mods.toml", modLoaderType, modManager, modFile, tree, coreModInfo);
         } catch (Exception ignored) {
         }
 
         try {
-            return fromEmbeddedMod(modManager, modFile, tree, modLoaderType, coreMods);
+            return fromEmbeddedMod(modManager, modFile, tree, modLoaderType, coreModInfo);
         } catch (Exception ignored) {
         }
 
@@ -213,7 +213,7 @@ public final class ForgeNewModMetadata {
             ModManager modManager,
             Path modFile,
             ZipFileTree tree,
-            CoreMods coreMods) throws IOException, JsonParseException {
+            CoreModInfo coreModInfo) throws IOException, JsonParseException {
         ZipArchiveEntry modToml = tree.getEntry(tomlPath);
         if (modToml == null)
             throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
@@ -245,10 +245,10 @@ public final class ForgeNewModMetadata {
         return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalAddonFile.Description(mod.getDescription()),
                 mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                 mod.getDisplayURL(),
-                logoPath, coreMods);
+                logoPath, coreModInfo);
     }
 
-    private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType, CoreMods coreMods) throws IOException {
+    private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType, CoreModInfo coreModInfo) throws IOException {
         ZipArchiveEntry manifestFile = tree.getEntry("META-INF/MANIFEST.MF");
         if (manifestFile == null)
             throw new IOException("Missing MANIFEST.MF in file " + modFile);
@@ -298,7 +298,7 @@ public final class ForgeNewModMetadata {
             for (ZipArchiveEntry embeddedModFile : embeddedModFiles) {
                 tree.extractTo(embeddedModFile, tempFile);
                 try (ZipFileTree embeddedTree = CompressingUtils.openZipTree(tempFile)) {
-                    return fromFile(modManager, modFile, embeddedTree, modLoaderType, coreMods);
+                    return fromFile(modManager, modFile, embeddedTree, modLoaderType, coreModInfo);
                 } catch (Exception ignored) {
                 }
             }

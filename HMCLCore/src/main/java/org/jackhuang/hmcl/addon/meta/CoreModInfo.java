@@ -41,19 +41,19 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @see <a href="https://github.com/xfl03/CoreModTutor">CoreModTutor by xfl03 and contributors</a>
 @Immutable
-public final class CoreMods {
+public final class CoreModInfo {
 
-    public static final CoreMods EMPTY = new CoreMods();
+    public static final CoreModInfo EMPTY = new CoreModInfo();
 
     private final Map<ModLoaderType, List<VersionRange<GameVersionNumber>>> coreMods;
     private final boolean liteLoaderAsMod;
 
-    private CoreMods() {
+    private CoreModInfo() {
         this.coreMods = Collections.emptyMap();
         this.liteLoaderAsMod = false;
     }
 
-    private CoreMods(List<CoreMod> coreModList, boolean liteloaderAsMod) {
+    private CoreModInfo(List<CoreMod> coreModList, boolean liteloaderAsMod) {
         EnumMap<ModLoaderType, List<VersionRange<GameVersionNumber>>> map = new EnumMap<>(ModLoaderType.class);
         for (var coreMod : coreModList) {
             map.computeIfAbsent(coreMod.modLoaderType(), k -> new ArrayList<>()).add(coreMod.mcVersionRange());
@@ -70,7 +70,7 @@ public final class CoreMods {
         return liteLoaderAsMod;
     }
 
-    public Set<ModLoaderType> getModLoaders(GameVersionNumber gameVersionNumber) {
+    public EnumSet<ModLoaderType> getModLoaders(GameVersionNumber gameVersionNumber) {
         EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
         if (gameVersionNumber == GameVersionNumber.unknown()) return supportedLoaders;
         for (var entry : coreMods.entrySet())
@@ -79,8 +79,13 @@ public final class CoreMods {
         return supportedLoaders;
     }
 
+    /// @return whether this coremod supports Forge 1.5.2-
+    public boolean isLegacy() {
+        return !getModLoaders(GameVersionNumber.asGameVersion("1.5.2")).isEmpty();
+    }
+
     @NotNull
-    public static CoreMods fromFile(Path modFile, ZipFileTree tree) {
+    public static CoreModInfo fromFile(Path modFile, ZipFileTree tree) {
         List<CoreMod> coreModList = new ArrayList<>();
         boolean liteloaderAsMod = false;
         {
@@ -157,7 +162,7 @@ public final class CoreMods {
             if (tree.getEntry("META-INF/services/net.neoforged.neoforgespi.transformation.ClassProcessorProvider") != null)
                 coreModList.add(new CoreMod(ModLoaderType.NEO_FORGE, "1.21.9"));
         }
-        return new CoreMods(coreModList, liteloaderAsMod);
+        return new CoreModInfo(coreModList, liteloaderAsMod);
     }
 
     private record CoreMod(ModLoaderType modLoaderType, VersionRange<GameVersionNumber> mcVersionRange) {

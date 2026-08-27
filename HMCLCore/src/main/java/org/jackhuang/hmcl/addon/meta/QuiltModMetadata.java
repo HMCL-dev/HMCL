@@ -71,7 +71,7 @@ public final class QuiltModMetadata {
         this.quilt_loader = quiltLoader;
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, CoreMods coreMods) throws IOException, JsonParseException {
+    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, CoreModInfo coreModInfo) throws IOException, JsonParseException {
         ZipArchiveEntry path = tree.getEntry("quilt.mod.json");
         if (path == null) {
             throw new IOException("File " + modFile + " is not a Quilt mod.");
@@ -92,7 +92,7 @@ public final class QuiltModMetadata {
                 root.quilt_loader.version,
                 "",
                 Optional.ofNullable(root.quilt_loader.metadata.contact.get("homepage")).map(jsonElement -> jsonElement.getAsJsonPrimitive().getAsString()).orElse(""),
-                root.quilt_loader.metadata.icon, coreMods
+                root.quilt_loader.metadata.icon, coreModInfo
         );
     }
 }

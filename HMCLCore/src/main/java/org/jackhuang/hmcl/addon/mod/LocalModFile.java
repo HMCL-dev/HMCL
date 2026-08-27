@@ -23,10 +23,11 @@ import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.addon.meta.CoreMods;
+import org.jackhuang.hmcl.addon.meta.CoreModInfo;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,15 +53,15 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     private final String url;
     private final String fileName;
     private final String logoPath;
-    private final CoreMods coreMods;
+    private final CoreModInfo coreModInfo;
 
     private final BooleanProperty activeProperty;
 
-    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, CoreMods coreMods) {
-        this(modManager, mod, file, name, description, "", "", "", "", "", coreMods);
+    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, CoreModInfo coreModInfo) {
+        this(modManager, mod, file, name, description, "", "", "", "", "", coreModInfo);
     }
 
-    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath, CoreMods coreMods) {
+    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath, CoreModInfo coreModInfo) {
         super();
         this.modManager = modManager;
         this.mod = mod;
@@ -72,7 +73,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         this.gameVersion = gameVersion;
         this.url = url;
         this.logoPath = logoPath;
-        this.coreMods = coreMods;
+        this.coreModInfo = coreModInfo;
 
         activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
             @Override
@@ -114,6 +115,12 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         return file;
     }
 
+    public @Nullable String getSubfolderName() {
+        var parent = getFile().getParent();
+        if (parent.equals(getModManager().getDirectory())) return null;
+        return parent.getFileName().toString();
+    }
+
     public ModLoaderType getModLoaderType() {
         return mod.getModLoaderType();
     }
@@ -151,12 +158,12 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     public boolean isCoreMod() {
-        return !coreMods.isEmpty();
+        return !coreModInfo.isEmpty();
     }
 
     @NotNull
-    public CoreMods getCoreMods() {
-        return coreMods;
+    public CoreModInfo getCoreModInfo() {
+        return coreModInfo;
     }
 
     public BooleanProperty activeProperty() {

@@ -43,7 +43,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     @FunctionalInterface
     private interface ModMetadataReader {
-        LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, CoreMods coreMods) throws IOException, JsonParseException;
+        LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, CoreModInfo coreModInfo) throws IOException, JsonParseException;
     }
 
     private static final Map<String, List<Pair<ModMetadataReader, ModLoaderType>>> READERS;
@@ -114,7 +114,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
     }
 
-    private void addModInfo(Path file) {
+    private void addModInfo(Path file, boolean coreModOnly) {
         String fileName = StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
         String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
 
@@ -138,28 +138,28 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
 
         LocalModFile modInfo = null;
-        CoreMods coreMods = CoreMods.EMPTY;
+        CoreModInfo coreModInfo = CoreModInfo.EMPTY;
 
         List<Exception> exceptions = new ArrayList<>();
         try (ZipFileTree tree = CompressingUtils.openZipTree(file)) {
             try {
-                coreMods = CoreMods.fromFile(file, tree);
+                coreModInfo = CoreModInfo.fromFile(file, tree);
             } catch (Exception e) {
                 exceptions.add(e);
             }
 
-            if (coreMods.isLiteLoaderAsMod()) {
+            if (coreModInfo.isLiteLoaderAsMod()) {
                 modInfo = new LocalModFile(this,
                         getLocalMod("liteloader-forge", ModLoaderType.FORGE),
                         file,
                         "LiteLoader",
                         new LocalAddonFile.Description("LiteLoader working together with Forge as a mod"),
-                        coreMods
+                        coreModInfo
                 );
-            } else {
+            } else if (!coreModOnly) {
                 for (ModMetadataReader reader : supportedReaders) {
                     try {
-                        modInfo = reader.fromFile(this, file, tree, coreMods);
+                        modInfo = reader.fromFile(this, file, tree, coreModInfo);
                         break;
                     } catch (Exception e) {
                         exceptions.add(e);
@@ -169,7 +169,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                 if (modInfo == null) {
                     for (ModMetadataReader reader : unsupportedReaders) {
                         try {
-                            modInfo = reader.fromFile(this, file, tree, coreMods);
+                            modInfo = reader.fromFile(this, file, tree, coreModInfo);
                             break;
                         } catch (Exception ignored) {
                         }
@@ -177,15 +177,18 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                 }
             }
         } catch (Exception e) {
+            exceptions.add(e);
             LOG.warning("Failed to open mod file " + file, e);
         }
 
         if (modInfo == null) {
-            Exception exception = new Exception("Failed to read mod metadata");
-            for (Exception e : exceptions) {
-                exception.addSuppressed(e);
+            if (!exceptions.isEmpty()) {
+                Exception exception = new Exception("Failed to read mod metadata");
+                for (Exception e : exceptions) {
+                    exception.addSuppressed(e);
+                }
+                LOG.warning("Failed to read mod metadata", exception);
             }
-            LOG.warning("Failed to read mod metadata", exception);
 
             String fileNameWithoutExtension = FileUtils.getNameWithoutExtension(file);
 
@@ -194,7 +197,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     file,
                     fileNameWithoutExtension,
                     new LocalAddonFile.Description("litemod".equals(extension) ? "LiteLoader Mod" : ""),
-                    coreMods
+                    coreModInfo
             );
         }
 
@@ -223,15 +226,25 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                         if (supportSubfolders && Files.isDirectory(subitem) && !".connector".equalsIgnoreCase(subitem.getFileName().toString())) {
                             try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
                                 for (Path subsubitem : subitemDirectoryStream) {
-                                    addModInfo(subsubitem);
+                                    addModInfo(subsubitem, false);
                                 }
                             }
                         } else {
-                            addModInfo(subitem);
+                            addModInfo(subitem, false);
                         }
                     }
                 }
             }
+
+            var coreModsDir = instance.getCoreModsDirectory();
+            if (coreModsDir != null) {
+                try (DirectoryStream<Path> coreModsDirectoryStream = Files.newDirectoryStream(coreModsDir)) {
+                    for (Path item : coreModsDirectoryStream) {
+                        addModInfo(item, true);
+                    }
+                }
+            }
+
             loaded = true;
         } finally {
             lock.unlock();
@@ -263,13 +276,19 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             if (!loaded)
                 refresh();
 
-            Path modsDirectory = getDirectory();
-            Files.createDirectories(modsDirectory);
+            boolean isLegacyCoreMod;
+            try (var tree = CompressingUtils.openZipTree(file)) {
+                isLegacyCoreMod = CoreModInfo.fromFile(file, tree).isLegacy();
+            }
 
-            Path newFile = modsDirectory.resolve(file.getFileName());
+            Path coreModsDir = instance.getCoreModsDirectory();
+            Path dir = isLegacyCoreMod && coreModsDir != null ? coreModsDir : getDirectory();
+            Files.createDirectories(dir);
+
+            Path newFile = dir.resolve(file.getFileName());
             FileUtils.copyFile(file, newFile);
 
-            addModInfo(newFile);
+            addModInfo(newFile, isLegacyCoreMod);
         } finally {
             lock.unlock();
         }
