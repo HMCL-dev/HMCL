@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -241,7 +240,7 @@ public record Library(
             }
         }
 
-        String repo = Lang.requireNonNullElse(url, Constants.DEFAULT_LIBRARY_URL);
+        String repo = Objects.requireNonNullElse(url, Constants.DEFAULT_LIBRARY_URL);
         if (!repo.endsWith("/")) {
             repo += '/';
         }
