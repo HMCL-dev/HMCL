@@ -43,6 +43,8 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
+import java.util.Locale;
+
 import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -80,7 +82,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                     controller.onNext(
                             new VersionsPage(
                                     controller,
-                                    i18n("install.installer.choose", i18n("install.installer." + type.getPatchId())),
+                                    i18n("install.installer.choose", i18n("install.installer." + type.getPatchId().toLowerCase(Locale.ROOT))),
                                     gameVersion,
                                     downloadProvider,
                                     type,
