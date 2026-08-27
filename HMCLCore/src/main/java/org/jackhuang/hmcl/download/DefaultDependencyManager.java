@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
-import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
+import org.jackhuang.hmcl.download.forge.ForgeInstallation;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
@@ -350,7 +350,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                     }
 
                     try {
-                        return ForgeInstallTask.install(this, baseManifest, gameVersion, installer);
+                        return ForgeInstallation.install(this, baseManifest, gameVersion, installer);
                     } catch (IOException ignore) {
                     }
 

@@ -188,13 +188,13 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
                 }
 
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
-                if (!gameVersion.equals(profile.getMinecraft()))
-                    throw new VersionMismatchException(profile.getMinecraft(), gameVersion);
+                if (!gameVersion.equals(profile.minecraft()))
+                    throw new VersionMismatchException(profile.minecraft(), gameVersion);
                 return new CleanroomInstallTask(
                         dependencyManager,
                         manifest,
                         gameVersion,
-                        modifyVersion(profile.getVersion()),
+                        modifyVersion(profile.version()),
                         installer);
             } else {
                 throw new IOException();
