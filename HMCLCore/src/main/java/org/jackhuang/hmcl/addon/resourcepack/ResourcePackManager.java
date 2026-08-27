@@ -329,6 +329,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
                     }
                 }
             }
+
             loaded = true;
         } finally {
             lock.unlock();
@@ -350,6 +351,8 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             } else {
                 FileUtils.copyFile(file, newFile);
             }
+
+            loaded = false;
         } else {
             throw new IllegalArgumentException("File '" + file + "' is not a resource pack");
         }
@@ -366,6 +369,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
                     modified = true;
                 }
             }
+            if (modified) loaded = false;
             return modified;
         } finally {
             lock.unlock();
@@ -392,6 +396,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
                 options.put("resourcePacks", serializePackList(resourcePacks));
                 options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
                 saveOptions(options);
+                loaded = false;
             }
             return modified;
         } finally {
@@ -435,6 +440,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
                 options.put("resourcePacks", serializePackList(resourcePacks));
                 options.put("incompatibleResourcePacks", serializePackList(incompatibleResourcePacks));
                 saveOptions(options);
+                loaded = false;
             }
             return modified;
         } finally {

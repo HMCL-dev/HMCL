@@ -203,6 +203,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     }
                 }
             }
+
             loaded = true;
         } finally {
             lock.unlock();
@@ -223,12 +224,14 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
         Path newFile = modsDirectory.resolve(file.getFileName());
         FileUtils.copyFile(file, newFile);
+        loaded = false;
     }
 
     public void removeMods(LocalModFile... localModFiles) throws IOException {
         for (LocalModFile localModFile : localModFiles) {
             localModFile.delete();
         }
+        if (localModFiles.length > 0) loaded = false;
     }
 
     public void rollback(LocalModFile from, LocalModFile to) throws IOException {
@@ -265,6 +268,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             from.setOld(true);
             to.setOld(false);
             to.setActive(active);
+
+            loaded = false;
         } finally {
             lock.unlock();
         }
@@ -279,14 +284,18 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         Path disabled = file.resolveSibling(fileName + DISABLED_EXTENSION);
         if (Files.exists(file))
             Files.move(file, disabled, StandardCopyOption.REPLACE_EXISTING);
+
+        loaded = false;
         return disabled;
     }
 
     public Path enableMod(Path file) throws IOException {
         if (isOld(file)) return file;
         Path enabled = file.resolveSibling(StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION));
+        if (enabled.equals(file)) return file;
         if (Files.exists(file))
             Files.move(file, enabled, StandardCopyOption.REPLACE_EXISTING);
+        loaded = false;
         return enabled;
     }
 

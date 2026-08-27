@@ -634,6 +634,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     queue.add(Task.supplyAsync(Schedulers.io(), () -> {
                                 var addon = dependency.load(selfPage.getDownloadProvider());
+                                if (addon == RemoteAddon.BROKEN) return Pair.pair(addon, false);
                                 return Pair.pair(addon, addon.checkInstalled(
                                         selfPage.repository.getRemoteVersionsById(selfPage.getDownloadProvider(), addon.id()),
                                         selfPage.getInstanceOptional().instance()

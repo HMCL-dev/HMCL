@@ -156,8 +156,8 @@ public record RemoteAddon(String id, String slug, String author, String title, S
                 CurseForgeRemoteAddonRepository.RESOURCE_PACKS,
                 CurseForgeRemoteAddonRepository.SHADERS,
                 CurseForgeRemoteAddonRepository.WORLDS,
-                CurseForgeRemoteAddonRepository.MODPACKS,
                 null,
+                CurseForgeRemoteAddonRepository.MODPACKS,
                 CurseForgeRemoteAddonRepository.CUSTOMIZATIONS
         ),
         MODRINTH(
