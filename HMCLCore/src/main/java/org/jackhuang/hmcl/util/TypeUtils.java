@@ -21,21 +21,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.GenericDeclaration;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Properties;
+import java.lang.reflect.*;
+import java.util.*;
 
 /**
  * Static methods for working with types.
@@ -128,43 +115,6 @@ public final class TypeUtils {
         } else {
             // type is either serializable as-is or unsupported
             return type;
-        }
-    }
-
-    public static Class<?> getRawType(Type type) {
-        if (type instanceof Class<?> clazz) {
-            // type is a normal class.
-            return clazz;
-        } else if (type instanceof ParameterizedType parameterizedType) {
-
-            // getRawType() returns Type instead of Class; that seems to be an API mistake,
-            // see https://bugs.openjdk.org/browse/JDK-8250659
-            Type rawType = parameterizedType.getRawType();
-            checkArgument(rawType instanceof Class);
-            return (Class<?>) rawType;
-
-        } else if (type instanceof GenericArrayType g) {
-            Type componentType = g.getGenericComponentType();
-            return Array.newInstance(getRawType(componentType), 0).getClass();
-
-        } else if (type instanceof TypeVariable) {
-            // we could use the variable's bounds, but that won't work if there are multiple.
-            // having a raw type that's more general than necessary is okay
-            return Object.class;
-
-        } else if (type instanceof WildcardType w) {
-            Type[] bounds = w.getUpperBounds();
-            // Currently the JLS only permits one bound for wildcards so using first bound is safe
-            assert bounds.length == 1;
-            return getRawType(bounds[0]);
-
-        } else {
-            String className = type == null ? "null" : type.getClass().getName();
-            throw new IllegalArgumentException(
-                    "Expected a Class, ParameterizedType, or GenericArrayType, but <"
-                            + type
-                            + "> is of type "
-                            + className);
         }
     }
 
@@ -284,53 +234,6 @@ public final class TypeUtils {
         checkArgument(supertype.isAssignableFrom(contextRawType));
         return resolve(
                 context, contextRawType, TypeUtils.getGenericSupertype(context, contextRawType, supertype));
-    }
-
-    /**
-     * Returns the component type of this array type.
-     *
-     * @throws ClassCastException if this type is not an array.
-     */
-    public static Type getArrayComponentType(Type array) {
-        return array instanceof GenericArrayType g
-                ? g.getGenericComponentType()
-                : ((Class<?>) array).getComponentType();
-    }
-
-    /**
-     * Returns the element type of this collection type.
-     *
-     * @throws IllegalArgumentException if this type is not a collection.
-     */
-    public static Type getCollectionElementType(Type context, Class<?> contextRawType) {
-        Type collectionType = getSupertype(context, contextRawType, Collection.class);
-
-        if (collectionType instanceof ParameterizedType p) {
-            return p.getActualTypeArguments()[0];
-        }
-        return Object.class;
-    }
-
-    /**
-     * Returns a two element array containing this map's key and value types in positions 0 and 1
-     * respectively.
-     */
-    public static Type[] getMapKeyAndValueTypes(Type context, Class<?> contextRawType) {
-        /*
-         * Work around a problem with the declaration of java.util.Properties. That
-         * class should extend Hashtable<String, String>, but it's declared to
-         * extend Hashtable<Object, Object>.
-         */
-        if (Properties.class.isAssignableFrom(contextRawType)) {
-            return new Type[]{String.class, String.class};
-        }
-
-        Type mapType = getSupertype(context, contextRawType, Map.class);
-        // TODO: strip wildcards?
-        if (mapType instanceof ParameterizedType mapParameterizedType) {
-            return mapParameterizedType.getActualTypeArguments();
-        }
-        return new Type[]{Object.class, Object.class};
     }
 
     public static Type resolve(Type context, Class<?> contextRawType, Type toResolve) {
@@ -568,10 +471,8 @@ public final class TypeUtils {
         private static final long serialVersionUID = 0;
     }
 
-    private static final class GenericArrayTypeImpl implements GenericArrayType, Serializable {
-        private final Type componentType;
-
-        public GenericArrayTypeImpl(Type componentType) {
+    private record GenericArrayTypeImpl(Type componentType) implements GenericArrayType, Serializable {
+        private GenericArrayTypeImpl(Type componentType) {
             Objects.requireNonNull(componentType);
             this.componentType = canonicalize(componentType);
         }
@@ -584,11 +485,6 @@ public final class TypeUtils {
         @Override
         public boolean equals(Object o) {
             return o instanceof GenericArrayType g && TypeUtils.equals(this, g);
-        }
-
-        @Override
-        public int hashCode() {
-            return componentType.hashCode();
         }
 
         @Override

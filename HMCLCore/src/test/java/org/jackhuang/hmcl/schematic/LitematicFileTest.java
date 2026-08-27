@@ -40,14 +40,14 @@ public final class LitematicFileTest {
     @Test
     public void test() throws Exception {
         LitematicFile file = load("/schematics/test.litematic");
-        assertEquals("刷石机一桶岩浆下推爆破8.3万每小时", file.getName());
-        assertEquals("hsds", file.getAuthor());
-        assertEquals("", file.getDescription());
-        assertEquals(Instant.ofEpochMilli(1746443586433L), file.getTimeCreated());
-        assertEquals(Instant.ofEpochMilli(1746443586433L), file.getTimeModified());
-        assertEquals(1334, file.getTotalBlocks());
-        assertEquals(5746, file.getTotalVolume());
-        assertEquals(new Point3D(17, 26, 13), file.getEnclosingSize());
-        assertEquals(1, file.getRegionCount());
+        assertEquals("刷石机一桶岩浆下推爆破8.3万每小时", file.name());
+        assertEquals("hsds", file.author());
+        assertEquals("", file.description());
+        assertEquals(Instant.ofEpochMilli(1746443586433L), file.timeCreated());
+        assertEquals(Instant.ofEpochMilli(1746443586433L), file.timeModified());
+        assertEquals(1334, file.totalBlocks());
+        assertEquals(5746, file.totalVolume());
+        assertEquals(new Point3D(17, 26, 13), file.enclosingSize());
+        assertEquals(1, file.regionCount());
     }
 }
