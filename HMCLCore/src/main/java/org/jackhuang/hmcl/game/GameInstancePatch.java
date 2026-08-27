@@ -158,6 +158,37 @@ public record GameInstancePatch(
                 null);
     }
 
+    /// Creates a patch from manifest metadata.
+    public static GameInstancePatch fromLibraries(
+            List<Library> libraries,
+            String id,
+            @Nullable String version,
+            int priority) {
+        return new GameInstancePatch(
+                id,
+                version,
+                priority,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                libraries,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
     /// Returns the patch priority.
     public int getPriority() {
         return priority == null ? Integer.MIN_VALUE : priority;

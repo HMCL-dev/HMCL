@@ -30,12 +30,14 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Properties;
 
 import static org.jackhuang.hmcl.download.UnsupportedInstallationException.CLEANROOM_NOT_COMPATIBLE_WITH_FORGE;
 import static org.jackhuang.hmcl.download.UnsupportedInstallationException.UNSUPPORTED_LAUNCH_WRAPPER;
@@ -50,7 +52,7 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
-    private Path installer;
+    private Path jar;
     private final ForgeRemoteVersion remote;
     private FileDownloadTask dependent;
     private Task<GameInstancePatch> dependency;
@@ -69,11 +71,13 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void preExecute() throws Exception {
-        installer = Files.createTempFile("forge-installer", ".jar");
+        jar = remote.getFileType() == ForgeRemoteVersion.FileType.INSTALLER
+                ? Files.createTempFile("forge-installer", ".jar")
+                : Files.createTempFile("forge-universal", ".zip");
 
         dependent = new FileDownloadTask(
                 dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()),
-                installer, null);
+                jar, null);
         dependent.setCacheRepository(dependencyManager.getCacheRepository());
         dependent.setCaching(true);
         dependent.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
@@ -86,7 +90,7 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void postExecute() throws Exception {
-        Files.deleteIfExists(installer);
+        Files.deleteIfExists(jar);
         setResult(dependency.getResult());
     }
 
@@ -109,16 +113,18 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
                 throw new UnsupportedInstallationException(UNSUPPORTED_LAUNCH_WRAPPER);
         }
 
-        if (detectForgeInstallerType(remote.getGameVersion(), installer)) {
+        if (remote.getFileType() == ForgeRemoteVersion.FileType.UNIVERSAL) {
+            dependency = new ForgeUniversalInstallTask(dependencyManager, manifest, remote.getSelfVersion(), jar);
+        } else if (detectForgeInstallerType(remote.getGameVersion(), jar)) {
             dependency = new GameDownloadTask(dependencyManager, manifest)
                     .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
                             dependencyManager,
                             manifest,
                             minecraftJar,
                             remote.getSelfVersion(),
-                            installer));
+                            jar));
         } else {
-            dependency = new ForgeOldInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer);
+            dependency = new ForgeOldInstallTask(dependencyManager, manifest, remote.getSelfVersion(), jar);
         }
     }
 
@@ -170,30 +176,42 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
             String gameVersion,
             Path installer) throws IOException, VersionMismatchException, UnsupportedInstallationException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            String installProfileText = Files.readString(fs.getPath("install_profile.json"));
-            Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
-            if (installProfile.containsKey("spec")) {
-                checkCleanroomCompatibility(dependencyManager, manifest, gameVersion);
-                ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
-                if (!gameVersion.equals(profile.getMinecraft()))
-                    throw new VersionMismatchException(profile.getMinecraft(), gameVersion);
-                return new GameDownloadTask(dependencyManager, manifest)
-                        .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
-                                dependencyManager,
-                                manifest,
-                                minecraftJar,
-                                modifyVersion(gameVersion, profile.getVersion()),
-                                installer));
-            } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
-                checkCleanroomCompatibility(dependencyManager, manifest, gameVersion);
-                ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
-                if (!gameVersion.equals(profile.install().getMinecraft()))
-                    throw new VersionMismatchException(profile.install().getMinecraft(), gameVersion);
-                return new ForgeOldInstallTask(dependencyManager, manifest, modifyVersion(gameVersion, profile.install().getPath().getVersion().replaceAll("(?i)forge", "")), installer);
-            } else {
-                throw new IOException();
+            Path installProfilePath = fs.getPath("install_profile.json");
+            Path versionPropertiesPath = fs.getPath("forgeversion.properties");
+            if (Files.isRegularFile(installProfilePath)) {
+                String installProfileText = Files.readString(installProfilePath);
+                Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
+                if (installProfile.containsKey("spec")) {
+                    checkCleanroomCompatibility(dependencyManager, manifest, gameVersion);
+                    ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
+                    if (!gameVersion.equals(profile.getMinecraft()))
+                        throw new VersionMismatchException(profile.getMinecraft(), gameVersion);
+                    return new GameDownloadTask(dependencyManager, manifest)
+                            .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
+                                    dependencyManager,
+                                    manifest,
+                                    minecraftJar,
+                                    modifyVersion(gameVersion, profile.getVersion()),
+                                    installer));
+                } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
+                    checkCleanroomCompatibility(dependencyManager, manifest, gameVersion);
+                    ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
+                    if (!gameVersion.equals(profile.install().getMinecraft()))
+                        throw new VersionMismatchException(profile.install().getMinecraft(), gameVersion);
+                    return new ForgeOldInstallTask(dependencyManager, manifest, modifyVersion(gameVersion, profile.install().getPath().getVersion().replaceAll("(?i)forge", "")), installer);
+                }
+            } else if (Files.isRegularFile(versionPropertiesPath)) {
+                Properties prop = new Properties();
+                prop.load(new StringReader(Files.readString(versionPropertiesPath)));
+                String major = prop.getProperty("forge.major.number");
+                String minor = prop.getProperty("forge.minor.number");
+                String revision = prop.getProperty("forge.revision.number");
+                String build = prop.getProperty("forge.build.number");
+                if (major != null && minor != null && revision != null && build != null)
+                    return new ForgeUniversalInstallTask(dependencyManager, manifest, "%s.%s.%s.%s".formatted(major, minor, revision, build), installer);
             }
         }
+        throw new IOException();
     }
 
     /// Rejects Forge installation when the manifest already contains Cleanroom.

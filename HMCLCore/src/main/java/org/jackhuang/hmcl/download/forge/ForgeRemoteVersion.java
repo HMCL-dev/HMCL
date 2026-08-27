@@ -28,19 +28,33 @@ import java.time.Instant;
 import java.util.List;
 
 public class ForgeRemoteVersion extends RemoteVersion {
+
+    private final FileType fileType;
+
     /**
      * Constructor.
      *
      * @param gameVersion the Minecraft version that this remote version suits.
      * @param selfVersion the version string of the remote version.
      * @param url         the installer or universal jar original URL.
+     * @param fileType    the type of the file.
      */
-    public ForgeRemoteVersion(String gameVersion, String selfVersion, Instant releaseDate, List<String> url) {
+    public ForgeRemoteVersion(String gameVersion, String selfVersion, Instant releaseDate, List<String> url, FileType fileType) {
         super(GameComponentType.FORGE, gameVersion, selfVersion, releaseDate, url);
+        this.fileType = fileType;
     }
 
     @Override
     public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
         return new ForgeInstallTask(dependencyManager, baseVersion, this);
+    }
+
+    public FileType getFileType() {
+        return fileType;
+    }
+
+    public enum FileType {
+        INSTALLER,
+        UNIVERSAL
     }
 }

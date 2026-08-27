@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -89,26 +90,35 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                         for (ForgeVersion version : forgeVersions) {
                             if (version == null)
                                 continue;
-                            List<String> urls = new ArrayList<>();
-                            for (ForgeVersion.File file : version.getFiles())
-                                if ("installer".equals(file.getCategory()) && "jar".equals(file.getFormat())) {
-                                    String branch = toLookupBranch(gameVersion, version.getBranch());
+                            List<String> installerUrls = new ArrayList<>();
+                            List<String> universalUrls = new ArrayList<>();
+                            for (ForgeVersion.File file : version.getFiles()) {
+                                String branch = toLookupBranch(gameVersion, version.getBranch());
 
-                                    String classifier = lookupVersion + "-" + version.getVersion() + (branch.isEmpty() ? "" : '-' + branch);
-                                    String fileName1 = "forge-" + classifier + "-" + file.getCategory() + "." + file.getFormat();
-                                    String fileName2 = "forge-" + classifier + "-" + lookupVersion + "-" + file.getCategory() + "." + file.getFormat();
-                                    urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "/" + fileName1);
-                                    urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "-" + lookupVersion + "/" + fileName2);
-                                    urls.add(NetworkUtils.withQuery("https://bmclapi2.bangbang93.com/forge/download", mapOf(
+                                String classifier = lookupVersion + "-" + version.getVersion() + (branch.isEmpty() ? "" : '-' + branch);
+                                String fileName1 = "forge-" + classifier + "-" + file.getCategory() + "." + file.getFormat();
+                                String fileName2 = "forge-" + classifier + "-" + lookupVersion + "-" + file.getCategory() + "." + file.getFormat();
+
+                                Consumer<List<String>> addUrls = urlList -> {
+                                    urlList.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "/" + fileName1);
+                                    urlList.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "-" + lookupVersion + "/" + fileName2);
+                                    urlList.add(NetworkUtils.withQuery("https://bmclapi2.bangbang93.com/forge/download", mapOf(
                                             pair("mcversion", version.getGameVersion()),
                                             pair("version", version.getVersion()),
                                             pair("branch", branch),
                                             pair("category", file.getCategory()),
                                             pair("format", file.getFormat())
                                     )));
-                                }
+                                };
 
-                            if (urls.isEmpty())
+                                if ("installer".equals(file.getCategory()) && "jar".equals(file.getFormat())) {
+                                    addUrls.accept(installerUrls);
+                                } else if ("universal".equals(file.getCategory())) {
+                                    addUrls.accept(universalUrls);
+                                }
+                            }
+
+                            if (installerUrls.isEmpty() && universalUrls.isEmpty())
                                 continue;
 
                             Instant releaseDate = null;
@@ -120,8 +130,23 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
                                 }
                             }
 
-                            versions.put(gameVersion, new ForgeRemoteVersion(
-                                    fromLookupVersion(version.getGameVersion()), version.getVersion(), releaseDate, urls));
+                            if (!installerUrls.isEmpty()) {
+                                versions.put(gameVersion, new ForgeRemoteVersion(
+                                        fromLookupVersion(version.getGameVersion()),
+                                        version.getVersion(),
+                                        releaseDate,
+                                        installerUrls,
+                                        ForgeRemoteVersion.FileType.INSTALLER
+                                ));
+                            } else {
+                                versions.put(gameVersion, new ForgeRemoteVersion(
+                                        fromLookupVersion(version.getGameVersion()),
+                                        version.getVersion(),
+                                        releaseDate,
+                                        universalUrls,
+                                        ForgeRemoteVersion.FileType.UNIVERSAL
+                                ));
+                            }
                         }
                     } finally {
                         lock.writeLock().unlock();
