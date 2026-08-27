@@ -392,10 +392,10 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 cboServers.setConverter(stringConverter(it -> {
                     String host;
                     try {
-                        host = NetworkUtils.toURI(server.getUrl()).getHost();
+                        host = NetworkUtils.toURI(it.getUrl()).getHost();
                     } catch (IllegalArgumentException e) {
-                        host = server.getUrl();
-                        LOG.warning("Unparsable authlib-injector server url " + server.getUrl(), e);
+                        host = it.getUrl();
+                        LOG.warning("Unparsable authlib-injector server url " + it.getUrl(), e);
                     }
                     return String.format("%s (%s)", it.getName(), host);
                 }));
