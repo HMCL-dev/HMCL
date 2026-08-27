@@ -46,12 +46,11 @@ public final class DirtyTracker {
         dirty.add(observable);
     }
 
-    private static final class Listener implements InvalidationListener, WeakListener {
-
-        private final WeakReference<DirtyTracker> trackerReference;
+    private record Listener(
+            WeakReference<DirtyTracker> trackerReference) implements InvalidationListener, WeakListener {
 
         public Listener(DirtyTracker trackerReference) {
-            this.trackerReference = new WeakReference<>(trackerReference);
+            this(new WeakReference<>(trackerReference));
         }
 
         @Override
