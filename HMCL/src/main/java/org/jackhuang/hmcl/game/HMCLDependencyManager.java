@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DefaultGameBuilder;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jetbrains.annotations.NotNullByDefault;
 
@@ -46,6 +47,14 @@ public class HMCLDependencyManager extends DefaultDependencyManager {
     /// {@inheritDoc}
     @Override
     public HMCLGameBuilder newGameBuilder() {
-        return new HMCLGameBuilder(this);
+        return new HMCLGameBuilder(this, null);
+    }
+
+    @Override
+    public HMCLGameBuilder newGameBuilder(GameInstance instance) {
+        if (instance.getRepository() != this.getGameRepository())
+            throw new IllegalArgumentException("Game instance and dependency manager belong to different repositories");
+
+        return new HMCLGameBuilder(this, (HMCLGameInstance) instance);
     }
 }

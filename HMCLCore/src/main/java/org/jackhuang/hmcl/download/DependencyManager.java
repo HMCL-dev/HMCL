@@ -75,6 +75,11 @@ public interface DependencyManager {
     /// @return a new game builder
     GameBuilder newGameBuilder();
 
+    /// Creates a builder for modifying an existing game instance and optional loaders.
+    ///
+    /// @param instance the existing game instance to update
+    GameBuilder newGameBuilder(GameInstance instance);
+
     /// Returns a registered remote-version list.
     ///
     /// @param componentType the component type, such as `game`, `forge`, or `optifine`

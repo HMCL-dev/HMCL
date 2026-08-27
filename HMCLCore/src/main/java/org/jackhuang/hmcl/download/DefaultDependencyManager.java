@@ -89,7 +89,15 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     @Override
     public DefaultGameBuilder newGameBuilder() {
-        return new DefaultGameBuilder(this);
+        return new DefaultGameBuilder(this, null);
+    }
+
+    @Override
+    public DefaultGameBuilder newGameBuilder(GameInstance instance) {
+        if (instance.getRepository() != this.getGameRepository())
+            throw new IllegalArgumentException("Game instance and dependency manager belong to different repositories");
+
+        return new DefaultGameBuilder(this, (DefaultGameInstance) instance);
     }
 
     @Override

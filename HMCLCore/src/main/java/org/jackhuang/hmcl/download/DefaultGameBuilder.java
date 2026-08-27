@@ -41,14 +41,18 @@ public class DefaultGameBuilder extends GameBuilder {
     /// Dependency manager used for component installation and repository access.
     private final DefaultDependencyManager dependencyManager;
 
+    private final @Nullable DefaultGameInstance instance;
+
     /// Whether instance isolation was requested for this build.
     protected boolean isolationEnabled;
 
     /// Creates a builder bound to the given dependency manager.
     ///
     /// @param dependencyManager the dependency manager for the target repository
-    public DefaultGameBuilder(DefaultDependencyManager dependencyManager) {
+    /// @param instance the existing game instance, or null to create a new one
+    public DefaultGameBuilder(DefaultDependencyManager dependencyManager, @Nullable DefaultGameInstance instance) {
         this.dependencyManager = dependencyManager;
+        this.instance = instance;
     }
 
     /// Returns the dependency manager used by this builder.
