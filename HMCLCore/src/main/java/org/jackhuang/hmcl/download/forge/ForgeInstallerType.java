@@ -19,6 +19,6 @@ package org.jackhuang.hmcl.download.forge;
 
 public enum ForgeInstallerType {
     LEGACY,
-    NORMAL,
-    MODERN
+    OLD,
+    NEW
 }

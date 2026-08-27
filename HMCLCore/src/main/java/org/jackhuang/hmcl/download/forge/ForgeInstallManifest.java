@@ -17,31 +17,16 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
-import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.Artifact;
+import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
-import org.jetbrains.annotations.NotNullByDefault;
 
-import java.util.Objects;
-
-/// @author huangyuhui
-@NotNullByDefault
+/**
+ *
+ * @author huangyuhui
+ */
+@Immutable
 @JsonSerializable
-public record ForgeInstallProfile(@SerializedName("install") ForgeInstallManifest install,
-                                  @SerializedName("versionInfo") GameInstanceManifest versionInfo) {
-
-    public ForgeInstallProfile {
-        Objects.requireNonNull(install, "install");
-        Objects.requireNonNull(versionInfo, "versionInfo");
-    }
-
-    @Override
-    public ForgeInstallManifest install() {
-        return install;
-    }
-
-    @Override
-    public GameInstanceManifest versionInfo() {
-        return versionInfo;
-    }
+public record ForgeInstallManifest(String profileName, String target, Artifact path, String version, String filePath,
+                                   String welcome, String minecraft, String mirrorList, String logo) {
 }

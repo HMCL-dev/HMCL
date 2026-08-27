@@ -23,20 +23,20 @@ import java.nio.charset.StandardCharsets;
 import java.security.ProtectionDomain;
 
 @SuppressWarnings("JavaPrintToLogpoint")
-public final class LegacyForgeHelper {
-    private LegacyForgeHelper () {
+public final class HMCLLegacyForgeHelper {
+    private HMCLLegacyForgeHelper() {
         throw new AssertionError();
     }
 
     private static final String TARGET_URL = "http://files.minecraftforge.net/fmllibs/%s";
 
-    private static String newRootUrl = "https://files.multimc.org/fmllibs/%s";
+    private static String newRootUrl = "https://https://hmcl.glavo.site/metadata/fmllibs/%s";
 
     public static void premain(String agentArgs, Instrumentation inst) {
         if (agentArgs != null && !agentArgs.trim().isEmpty()) {
             newRootUrl = agentArgs.trim();
         }
-        System.out.println("[LegacyForgeHelper] Loaded. Target RootURL will be replaced with: " + newRootUrl);
+
         inst.addTransformer(new CoreFMLLibrariesTransformer());
     }
 
@@ -45,7 +45,6 @@ public final class LegacyForgeHelper {
     }
 
     private final static class CoreFMLLibrariesTransformer implements ClassFileTransformer {
-        private static final String TARGET_CLASS = "cpw/mods/fml/relauncher/CoreFMLLibraries";
 
         @Override
         public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) {
@@ -53,14 +52,14 @@ public final class LegacyForgeHelper {
                 return null;
             }
 
-            if (TARGET_CLASS.equals(className) || "cpw.mods.fml.relauncher.CoreFMLLibraries".equals(className)) {
+            if ("cpw/mods/fml/relauncher/CoreFMLLibraries".equals(className) || "cpw.mods.fml.relauncher.CoreFMLLibraries".equals(className)) {
                 try {
                     System.out.println("[LegacyForgeHelper] Transforming " + className + " ...");
                     byte[] modified = patchConstantPoolUtf8(classfileBuffer, TARGET_URL, newRootUrl);
                     System.out.println("[LegacyForgeHelper] Successfully patched RootURL in " + className);
                     return modified;
                 } catch (Throwable t) {
-                    System.err.println("[LegacyForgeHelper] Failed to patch class: " + t.getMessage());
+                    System.err.println("[LegacyForgeHelper] Failed to patch class");
                     t.printStackTrace();
                 }
             }

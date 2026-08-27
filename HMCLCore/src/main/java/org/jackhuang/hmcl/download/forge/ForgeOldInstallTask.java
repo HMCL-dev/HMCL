@@ -19,11 +19,7 @@ package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.game.GameComponentType;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.GameInstancePatch;
-import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
@@ -74,12 +70,12 @@ public class ForgeOldInstallTask extends Task<GameInstancePatch> {
             ForgeInstallProfile installProfile = JsonUtils.fromNonNullJsonFully(stream, ForgeInstallProfile.class);
 
             // unpack the universal jar in the installer file.
-            Library forgeLibrary = new Library(installProfile.install().getPath());
+            Library forgeLibrary = new Library(installProfile.install().path());
             GameRepository gameRepository = dependencyManager.getGameRepository();
             Path forgeFile = gameRepository.getLayout().getLibraryFile(manifest.id(), forgeLibrary);
             Files.createDirectories(forgeFile.getParent());
 
-            ZipEntry forgeEntry = zipFile.getEntry(installProfile.install().getFilePath());
+            ZipEntry forgeEntry = zipFile.getEntry(installProfile.install().filePath());
             try (InputStream is = zipFile.getInputStream(forgeEntry);
                  OutputStream os = Files.newOutputStream(forgeFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
                 is.transferTo(os);

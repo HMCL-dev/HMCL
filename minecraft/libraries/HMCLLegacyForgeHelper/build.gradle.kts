@@ -10,7 +10,7 @@ tasks.jar {
         attributes(
             "Created-By" to "Copyright(c) 2026 huangyuhui.",
             "Implementation-Version" to project.version,
-            "Premain-Class" to "org.jackhuang.hmcl.LegacyForgeHelper",
+            "Premain-Class" to "org.jackhuang.hmcl.HMCLLegacyForgeHelper",
             "Can-Redefine-Classes" to true,
             "Can-Retransform-Classes" to true
         )
