@@ -51,6 +51,7 @@ import java.nio.file.Path;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+@SuppressWarnings("FieldCanBeLocal") // Strong reference
 public class GameInstancePage extends DecoratorAnimatedPage implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final TabHeader tab;

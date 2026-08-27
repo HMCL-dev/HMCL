@@ -47,6 +47,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
+@SuppressWarnings("FieldCanBeLocal") // Strong reference
 public final class WorldManagePage extends DecoratorAnimatedPage implements DecoratorPage {
 
     private final World world;

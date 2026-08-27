@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import static org.jackhuang.hmcl.setting.SettingsManager.userState;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+@SuppressWarnings("FieldCanBeLocal") // Strong reference
 public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
     private static final int TERRACOTTA_AGREEMENT_VERSION = 2;
 
