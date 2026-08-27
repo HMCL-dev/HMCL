@@ -18,54 +18,87 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.game.DownloadInfo;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.CacheRepository;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Task to download Minecraft jar
- * @author huangyuhui
- */
-public final class GameDownloadTask extends Task<Void> {
+/// Obtains a Minecraft client JAR from content-addressed cache storage.
+@NotNullByDefault
+public final class GameDownloadTask extends Task<Path> {
+
+    /// The dependency manager supplying downloads and cache access.
     private final DefaultDependencyManager dependencyManager;
-    private final String gameVersion;
+
+    /// The resolved manifest that supplies client download metadata.
     private final GameInstanceManifest manifest;
+
+    /// The cache task created during execution.
     private final List<Task<?>> dependencies = new ArrayList<>();
 
-    public GameDownloadTask(DefaultDependencyManager dependencyManager, String gameVersion, GameInstanceManifest manifest) {
+    /// Creates a task that returns a cached Minecraft client JAR.
+    ///
+    /// @param dependencyManager the dependency manager used for resolution and downloading
+    /// @param manifest          the manifest supplying client download metadata
+    public GameDownloadTask(
+            DefaultDependencyManager dependencyManager,
+            GameInstanceManifest manifest) {
         this.dependencyManager = dependencyManager;
-        this.gameVersion = gameVersion;
-        this.manifest = manifest.resolve(dependencyManager.getGameRepository());
+        this.manifest = dependencyManager.getGameRepository().resolve(manifest).launchManifest();
 
         setSignificance(TaskSignificance.MODERATE);
     }
 
+    /// Returns the cache operation created by [#execute()], if execution has started.
+    ///
+    /// @return the live dependency collection
     @Override
     public Collection<Task<?>> getDependencies() {
         return dependencies;
     }
 
+    /// Creates the checksum-aware cache download.
     @Override
     public void execute() {
-        Path jar = dependencyManager.getGameRepository().getInstanceJar(manifest);
-
-        var task = new FileDownloadTask(
-                dependencyManager.getDownloadProvider().injectURLWithCandidates(manifest.getDownloadInfo().getUrl()),
-                jar,
-                FileDownloadTask.IntegrityCheck.of(CacheRepository.SHA1, manifest.getDownloadInfo().getSha1()));
-        task.setCaching(true);
-        task.setCacheRepository(dependencyManager.getCacheRepository());
-
-        if (gameVersion != null)
-            task.setCandidate(dependencyManager.getCacheRepository().getCommonDirectory().resolve("jars").resolve(gameVersion + ".jar"));
-
-        dependencies.add(task);
+        DownloadInfo downloadInfo = manifest.getDownloadInfo();
+        @Nullable String sha1 = downloadInfo.getSha1();
+        CacheFileTask cacheTask = sha1 != null
+                ? new CacheFileTask(
+                        dependencyManager.getDownloadProvider()
+                                .injectURLWithCandidates(downloadInfo.getUrl()),
+                        sha1)
+                : new CacheFileTask(
+                        dependencyManager.getDownloadProvider()
+                                .injectURLWithCandidates(downloadInfo.getUrl()));
+        cacheTask.setCacheRepository(dependencyManager.getCacheRepository());
+        cacheTask.storeTo(this::setResult);
+        dependencies.add(cacheTask);
     }
-    
+
+    /// Requests post-execution so the completed destination can be returned.
+    @Override
+    public boolean doPostExecute() {
+        return true;
+    }
+
+    /// Returns the downloaded or previously validated client JAR.
+    ///
+    /// @throws IOException if no regular cached JAR is available
+    @Override
+    public void postExecute() throws IOException {
+        @Nullable Path result = getResult();
+        //noinspection ConstantValue
+        if (result == null || !Files.isRegularFile(result)) {
+            throw new IOException("Minecraft client JAR was not downloaded");
+        }
+    }
 }

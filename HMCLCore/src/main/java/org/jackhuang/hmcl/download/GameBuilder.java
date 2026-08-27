@@ -17,57 +17,41 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.task.Task;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * The builder which provide a task to build Minecraft environment.
- *
- * @author huangyuhui
- */
+/// The builder which provide a task to build Minecraft environment.
+///
+/// @author huangyuhui
+@NotNullByDefault
 public abstract class GameBuilder {
 
-    protected @Nullable GameInstanceID name;
-    protected String gameVersion = "";
-    protected final Map<String, String> toolVersions = new HashMap<>();
-    protected final Set<RemoteVersion> remoteVersions = new HashSet<>();
+    protected @Nullable GameInstanceID id;
+    protected final EnumMap<GameComponentType, Object /* String | RemoteVersion */> components = new EnumMap<>(GameComponentType.class);
 
-    public GameInstanceID getName() {
-        return name;
-    }
-
-    /**
-     * The new game version name, for .minecraft/&lt;version name&gt;.
-     *
-     * @param name the name of new game version.
-     */
-    public GameBuilder name(GameInstanceID name) {
-        this.name = Objects.requireNonNull(name);
+    /// The new game instance id, for `.minecraft/<instanceId>`.
+    ///
+    /// @param id the instance id of new game instance.
+    public GameBuilder id(GameInstanceID id) {
+        this.id = Objects.requireNonNull(id);
         return this;
     }
 
-    public GameBuilder gameVersion(String version) {
-        this.gameVersion = Objects.requireNonNull(version);
+    @Contract("_, _ -> this")
+    public GameBuilder component(GameComponentType componentType, String version) {
+        components.put(componentType, version);
         return this;
     }
 
-    /**
-     * @param id the core library id. i.e. "forge", "liteloader", "optifine"
-     * @param version the version of the core library. For documents, you can first try [VersionList.versions]
-     */
-    public GameBuilder version(String id, String version) {
-        if ("game".equals(id))
-            gameVersion(version);
-        else
-            toolVersions.put(id, version);
-        return this;
-    }
-
-    public GameBuilder version(RemoteVersion remoteVersion) {
-        remoteVersions.add(remoteVersion);
+    @Contract("_ -> this")
+    public GameBuilder component(RemoteVersion remoteVersion) {
+        components.put(remoteVersion.getComponentType(), remoteVersion);
         return this;
     }
 

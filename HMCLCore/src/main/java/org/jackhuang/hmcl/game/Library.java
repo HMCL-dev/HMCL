@@ -24,10 +24,14 @@ import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 
 /// A class that describes a Minecraft dependency.
 ///
@@ -151,6 +155,7 @@ public record Library(
         return artifact.getVersion();
     }
 
+    @Contract(pure = true)
     public @Nullable String classifier() {
         if (artifact.getClassifier() == null) {
             if (natives != null) {
@@ -191,9 +196,12 @@ public record Library(
             return true;
         }
 
-        return downloads != null
-                && downloads.classifiers() != null
-                && downloads.classifiers().keySet().stream().anyMatch(s -> s.startsWith("native"));
+        if (downloads != null && downloads.classifiers() != null
+                && downloads.classifiers().keySet().stream().anyMatch(s -> s.startsWith("native"))) {
+            return true;
+        }
+
+        return this.artifact().getClassifier() != null && this.artifact().getClassifier().startsWith("natives-");
     }
 
     public @Nullable LibraryDownloadInfo getRawDownloadInfo() {
