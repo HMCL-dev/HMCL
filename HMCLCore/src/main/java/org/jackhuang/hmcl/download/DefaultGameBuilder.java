@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,9 @@ public class DefaultGameBuilder extends GameBuilder {
     /// Dependency manager used for component installation and repository access.
     private final DefaultDependencyManager dependencyManager;
 
+    /// Whether instance isolation was requested for this build.
+    protected boolean isolationEnabled;
+
     /// Creates a builder bound to the given dependency manager.
     ///
     /// @param dependencyManager the dependency manager for the target repository
@@ -52,6 +56,14 @@ public class DefaultGameBuilder extends GameBuilder {
     /// @return the dependency manager
     public DefaultDependencyManager getDependencyManager() {
         return dependencyManager;
+    }
+
+    /// {@inheritDoc}
+    @Override
+    @Contract("-> this")
+    public DefaultGameBuilder enableIsolation() {
+        isolationEnabled = true;
+        return this;
     }
 
     /// {@inheritDoc}
@@ -87,7 +99,6 @@ public class DefaultGameBuilder extends GameBuilder {
 
 
         DefaultGameRepository repository = dependencyManager.getGameRepository();
-        //noinspection resource
         DefaultGameRepositoryDraft draft = repository.openDraft();
         GameInstanceManifest initialManifest = new GameInstanceManifest(id);
         try {
@@ -97,10 +108,10 @@ public class DefaultGameBuilder extends GameBuilder {
             throw new IllegalStateException("Cannot reserve game instance " + id, e);
         }
 
-        Path runDirectory = repository.hasInstance(id)
-                ? repository.getInstance(id).getRunDirectory()
-                : useInstanceRunDirectory
-                        ? repository.getLayout().getInstanceRoot(id)
+        Path runDirectory = isolationEnabled
+                ? repository.getLayout().getInstanceRoot(id)
+                : repository.hasInstance(id)
+                        ? repository.getInstance(id).getRunDirectory()
                         : repository.getBaseDirectory();
         Path modsDirectory = runDirectory.resolve("mods");
 

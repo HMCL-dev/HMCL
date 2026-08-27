@@ -71,7 +71,7 @@ public class ModrinthInstallTask extends Task<Void> {
 
         GameBuilder builder = dependencyManager.newGameBuilder()
                 .id(instanceId)
-                .useInstanceRunDirectory();
+                .enableIsolation();
         builder.component(GameComponentType.GAME, manifest.getGameVersion());
         for (Map.Entry<String, String> modLoader : manifest.getDependencies().entrySet()) {
             switch (modLoader.getKey()) {

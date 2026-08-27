@@ -57,7 +57,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
 
         dependents.add(dependency.newGameBuilder()
                 .id(this.instanceId)
-                .useInstanceRunDirectory()
+                .enableIsolation()
                 .component(GameComponentType.GAME, modpack.getGameVersion())
                 .buildAsync());
 

@@ -66,7 +66,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
 
         GameBuilder builder = dependencyManager.newGameBuilder()
                 .id(instanceId)
-                .useInstanceRunDirectory();
+                .enableIsolation();
         for (McbbsModpackManifest.Addon addon : manifest.getAddons()) {
             @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
             if (componentType != null)

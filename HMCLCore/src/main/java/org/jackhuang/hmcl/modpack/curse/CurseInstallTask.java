@@ -86,7 +86,7 @@ public final class CurseInstallTask extends Task<Void> {
 
         GameBuilder builder = dependencyManager.newGameBuilder()
                 .id(instanceId)
-                .useInstanceRunDirectory()
+                .enableIsolation()
                 .component(GameComponentType.GAME, manifest.minecraft().gameVersion());
         for (CurseManifestModLoader modLoader : manifest.minecraft().modLoaders()) {
             if (modLoader.id().startsWith("forge-")) {
