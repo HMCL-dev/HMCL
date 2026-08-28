@@ -56,7 +56,7 @@ import java.util.zip.ZipException;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.fromNonNullJson;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ForgeNewInstallTask extends Task<GameInstancePatch> {
+public class ForgeNewInstallTask extends Task<GameInstancePatch> {
 
     private class ProcessorTask extends Task<Void> {
 
