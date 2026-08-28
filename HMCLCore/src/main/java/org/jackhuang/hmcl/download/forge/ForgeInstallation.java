@@ -46,11 +46,10 @@ import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class ForgeInstallation {
+public final class ForgeInstallation {
     private ForgeInstallation() {
         throw new AssertionError();
     }
-
 
     /// Returns whether a Forge installer uses the processor-based format.
     ///
