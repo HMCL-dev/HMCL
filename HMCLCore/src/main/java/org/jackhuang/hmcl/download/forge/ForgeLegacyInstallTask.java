@@ -22,7 +22,10 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -43,18 +46,20 @@ public class ForgeLegacyInstallTask extends Task<GameInstancePatch> {
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
     private final Path installer;
-    private final String selfVersion;
+    private final @Nullable String selfVersion;
     private final ForgeInstallerType type;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    ForgeLegacyInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, String selfVersion, Path installer, ForgeInstallerType type) {
+    ForgeLegacyInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, @Nullable String selfVersion, Path installer, ForgeInstallerType type) throws IOException {
         this.dependencyManager = dependencyManager;
         this.manifest = manifest;
         this.installer = installer;
-        this.selfVersion = selfVersion;
+        if (selfVersion != null)
+            this.selfVersion = selfVersion;
+        else
+            this.selfVersion = DigestUtils.digestToString("SHA-1", installer);
         this.type = type;
 
-        setName("hmcl.install.forge");
         setSignificance(TaskSignificance.MAJOR);
     }
 
