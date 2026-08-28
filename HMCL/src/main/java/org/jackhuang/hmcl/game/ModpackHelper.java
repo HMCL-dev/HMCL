@@ -226,12 +226,14 @@ public final class ModpackHelper {
 
     public static Task<Void> getUpdateTask(HMCLGameRepository repository, ServerModpackManifest manifest, Charset charset, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
         switch (configuration.getType()) {
-            case ServerModpackRemoteInstallTask.MODPACK_TYPE:
+            case ServerModpackRemoteInstallTask.MODPACK_TYPE: {
+                HMCLGameInstance instance = repository.getInstance(instanceId);
                 return new ModpackUpdateTask(
-                        repository.getInstance(instanceId),
-                        new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instanceId))
+                        instance,
+                        new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instance))
                         .thenComposeAsync(repository.refreshAsync())
                         .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
+            }
             default:
                 throw new UnsupportedModpackException();
         }

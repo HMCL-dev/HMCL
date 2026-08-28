@@ -75,13 +75,23 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     private final Modpack modpack;
     private final MultiMCInstanceConfiguration manifest;
     private final GameInstanceID instanceId;
+
+    /// Whether this task updates the instance supplied at construction.
+    private final boolean updating;
+
     private final DefaultGameRepository repository;
     private final List<Task<?>> dependents = new ArrayList<>();
     private final List<Task<?>> dependencies = new ArrayList<>();
     private final DefaultDependencyManager dependencyManager;
 
+    /// Previous modpack configuration when updating, or `null` for a new installation.
+    private final @Nullable ModpackConfiguration<MultiMCInstanceConfiguration> config;
+
     /// The repository transaction that owns a newly created instance root until publication.
     private @Nullable DefaultGameRepositoryDraft draft;
+
+    /// Whether this task successfully reserved a previously absent instance in its draft.
+    private boolean newInstallationReserved;
 
     /// Creates a MultiMC modpack installation task.
     ///
@@ -89,22 +99,79 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     /// @param zipFile           the source modpack archive
     /// @param modpack           the parsed modpack metadata
     /// @param manifest          the MultiMC instance configuration
-    /// @param instanceId        the target instance ID
-    public MultiMCModpackInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, MultiMCInstanceConfiguration manifest, GameInstanceID instanceId) {
+    /// @param instanceId        the id of the new instance
+    public MultiMCModpackInstallTask(
+            DefaultDependencyManager dependencyManager,
+            Path zipFile,
+            Modpack modpack,
+            MultiMCInstanceConfiguration manifest,
+            GameInstanceID instanceId) {
+        this(dependencyManager, zipFile, modpack, manifest, instanceId, null);
+    }
+
+    /// Creates a MultiMC modpack update task.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param zipFile           the source modpack archive
+    /// @param modpack           the parsed modpack metadata
+    /// @param manifest          the MultiMC instance configuration
+    /// @param instance          the existing instance to update
+    /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
+    ///                                  modpack configuration, or records another provider type
+    public MultiMCModpackInstallTask(
+            DefaultDependencyManager dependencyManager,
+            Path zipFile,
+            Modpack modpack,
+            MultiMCInstanceConfiguration manifest,
+            DefaultGameInstance instance) {
+        this(dependencyManager, zipFile, modpack, manifest, instance.getId(), instance);
+    }
+
+    /// Creates a MultiMC modpack task in the mode selected by `updateTarget`.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param zipFile           the source modpack archive
+    /// @param modpack           the parsed modpack metadata
+    /// @param manifest          the MultiMC instance configuration
+    /// @param instanceId        the target instance id
+    /// @param updateTarget      the existing instance selecting update mode, or `null` for install
+    private MultiMCModpackInstallTask(
+            DefaultDependencyManager dependencyManager,
+            Path zipFile,
+            Modpack modpack,
+            MultiMCInstanceConfiguration manifest,
+            GameInstanceID instanceId,
+            @Nullable DefaultGameInstance updateTarget) {
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
         this.instanceId = instanceId;
+        this.updating = updateTarget != null;
         this.dependencyManager = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
+        if (updateTarget != null) {
+            dependencyManager.validateGameInstance(updateTarget);
+        }
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        if (repository.hasInstance(instanceId) && Files.notExists(json))
-            throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
+        if (updating && Files.notExists(json))
+            throw new IllegalArgumentException("Instance " + instanceId + " is not a MultiMC modpack. Cannot update this instance.");
+
+        @Nullable ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
+        try {
+            if (updating && Files.exists(json)) {
+                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
+
+                if (config == null || !MultiMCModpackProvider.INSTANCE.getName().equals(config.getType()))
+                    throw new IllegalArgumentException("Instance " + instanceId + " is not a MultiMC modpack. Cannot update this instance.");
+            }
+        } catch (JsonParseException | IOException ignore) {
+        }
+        this.config = config;
 
         onDone().register(event -> {
             abortOpenDraft();
-            if (event.isFailed())
+            if (event.isFailed() && newInstallationReserved)
                 repository.removeInstanceFromDisk(instanceId);
         });
     }
@@ -120,7 +187,17 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         DefaultGameRepositoryDraft openedDraft = repository.openDraft();
         draft = openedDraft;
         try {
+            // Construction fixes the mode; the captured snapshot only verifies that it is still valid.
+            boolean targetExists = openedDraft.getBaseSnapshot().hasInstance(instanceId);
+            if (!updating && targetExists) {
+                throw new IllegalStateException("Game instance already exists: " + instanceId);
+            }
+            if (updating && !targetExists) {
+                throw new IllegalStateException("Game instance no longer exists: " + instanceId);
+            }
+
             openedDraft.put(new GameInstanceManifest(instanceId));
+            newInstallationReserved = !updating;
         } catch (IOException | RuntimeException e) {
             try {
                 openedDraft.abort();
@@ -134,18 +211,6 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         // Stage #0: General Setup
         {
             Path run = repository.getLayout().getInstanceRoot(instanceId);
-            Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-
-            ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
-            try {
-                if (Files.exists(json)) {
-                    config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
-
-                    if (!MultiMCModpackProvider.INSTANCE.getName().equals(config.getType()))
-                        throw new IllegalArgumentException("Instance " + instanceId + " is not a MultiMC modpack. Cannot update this instance.");
-                }
-            } catch (JsonParseException | IOException ignore) {
-            }
 
             String mcDirectory;
             try (FileSystem fs = openModpack()) {

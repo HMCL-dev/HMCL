@@ -24,10 +24,14 @@ import org.jackhuang.hmcl.download.MojangDownloadProvider;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
+import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthCompletionTask;
+import org.jackhuang.hmcl.modpack.multimc.MultiMCInstanceConfiguration;
+import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -42,6 +46,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -432,6 +437,43 @@ public final class DefaultGameInstanceTest {
         }
     }
 
+    /// A MultiMC task declared as a new installation rejects an existing id without deleting it.
+    @Test
+    public void testMultiMCInstallTaskDoesNotInferUpdateFromExistingInstance(
+            @TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        GameInstanceID instanceId = new GameInstanceID("instance");
+        TestGameInstance instance = repository.publish(
+                instanceId,
+                new GameInstanceManifest(instanceId));
+        Path marker = instance.getInstanceRoot().resolve("marker.txt");
+        Files.createDirectories(marker.getParent());
+        Files.writeString(marker, "existing");
+        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
+                repository,
+                new MojangDownloadProvider(),
+                new DefaultCacheRepository(tempDirectory.resolve("cache")));
+        MultiMCInstanceConfiguration manifest = createMultiMCConfiguration();
+        Modpack modpack = createMultiMCModpack(manifest);
+        MultiMCModpackInstallTask task = new MultiMCModpackInstallTask(
+                dependencyManager,
+                tempDirectory.resolve("modpack.zip"),
+                modpack,
+                manifest,
+                instanceId);
+
+        assertFalse(task.executor().test());
+
+        assertEquals(
+                "Game instance already exists: instance",
+                Objects.requireNonNull(task.getException()).getMessage());
+        assertSame(instance, repository.getInstance(instanceId));
+        assertEquals("existing", Files.readString(marker));
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            assertTrue(draft.isOpen());
+        }
+    }
+
     /// Non-conventional JSON/jar basenames are kept on disk and recorded on the instance.
     @Test
     public void testRefreshRecordsNonConventionalStoragePaths(@TempDir Path tempDirectory) throws IOException {
@@ -532,6 +574,56 @@ public final class DefaultGameInstanceTest {
         try (ZipFile zip = new ZipFile(zipFile.toFile())) {
             return zip.getEntry(entryName) != null;
         }
+    }
+
+    /// Creates minimal MultiMC settings for testing mode validation before archive access.
+    ///
+    /// @return the test configuration
+    private static MultiMCInstanceConfiguration createMultiMCConfiguration() {
+        return new MultiMCInstanceConfiguration(
+                "OneSix",
+                "Test",
+                "1.21.1",
+                0,
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                false,
+                0,
+                0,
+                0,
+                0,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                "");
+    }
+
+    /// Creates modpack metadata backed by the given MultiMC configuration.
+    ///
+    /// @param manifest the MultiMC configuration
+    /// @return the test modpack metadata
+    private static Modpack createMultiMCModpack(MultiMCInstanceConfiguration manifest) {
+        return new Modpack("Test", "", "", manifest.getGameVersion(), "", StandardCharsets.UTF_8, manifest) {
+            /// This test invokes the concrete installation task directly.
+            @Override
+            public Task<?> getInstallTask(
+                    DefaultDependencyManager dependencyManager,
+                    Path zipFile,
+                    GameInstanceID instanceId,
+                    String iconUrl) {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     /// Minimal repository implementation for snapshot-bound instance tests.

@@ -54,6 +54,9 @@ public final class CurseInstallTask extends Task<Void> {
     private final CurseManifest manifest;
     private final GameInstanceID instanceId;
 
+    /// Whether this task updates the instance supplied at construction.
+    private final boolean updating;
+
     /// Optional remote icon URL supplied by the install source.
     private final @Nullable String iconUrl;
     private final Path run;
@@ -69,14 +72,15 @@ public final class CurseInstallTask extends Task<Void> {
     private final List<Task<?>> dependents = new ArrayList<>(4);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    /// Creates a task that installs or updates a CurseForge modpack instance.
+    /// Creates a task that installs a new CurseForge modpack instance.
     ///
     /// @param dependencyManager the dependency manager for the target repository
     /// @param zipFile           the CurseForge modpack archive
     /// @param modpack           the parsed modpack metadata
     /// @param manifest          the CurseForge manifest
-    /// @param instanceId        the target instance id; an existing modpack instance is updated
+    /// @param instanceId        the id of the new instance
     /// @param iconUrl           the optional icon URL, or `null`
+    /// @throws IllegalStateException if `instanceId` is already registered
     public CurseInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -84,24 +88,77 @@ public final class CurseInstallTask extends Task<Void> {
             CurseManifest manifest,
             GameInstanceID instanceId,
             @Nullable String iconUrl) {
+        this(dependencyManager, zipFile, modpack, manifest, instanceId, null, iconUrl);
+    }
+
+    /// Creates a task that updates an existing CurseForge modpack instance.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param zipFile           the CurseForge modpack archive
+    /// @param modpack           the parsed modpack metadata
+    /// @param manifest          the CurseForge manifest
+    /// @param instance          the existing instance to update
+    /// @param iconUrl           the optional icon URL, or `null`
+    /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
+    ///                                  modpack configuration, or records another provider type
+    /// @throws IllegalStateException    if `instance` is no longer registered
+    public CurseInstallTask(
+            DefaultDependencyManager dependencyManager,
+            Path zipFile,
+            Modpack modpack,
+            CurseManifest manifest,
+            DefaultGameInstance instance,
+            @Nullable String iconUrl) {
+        this(dependencyManager, zipFile, modpack, manifest, instance.getId(), instance, iconUrl);
+    }
+
+    /// Creates a CurseForge installation task in the mode selected by `updateTarget`.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param zipFile           the CurseForge modpack archive
+    /// @param modpack           the parsed modpack metadata
+    /// @param manifest          the CurseForge manifest
+    /// @param instanceId        the target instance id
+    /// @param updateTarget      the existing instance selecting update mode, or `null` for install
+    /// @param iconUrl           the optional icon URL, or `null`
+    private CurseInstallTask(
+            DefaultDependencyManager dependencyManager,
+            Path zipFile,
+            Modpack modpack,
+            CurseManifest manifest,
+            GameInstanceID instanceId,
+            @Nullable DefaultGameInstance updateTarget,
+            @Nullable String iconUrl) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
         this.instanceId = instanceId;
+        this.updating = updateTarget != null;
         this.iconUrl = iconUrl;
         this.repository = dependencyManager.getGameRepository();
 
         this.run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        @Nullable DefaultGameInstance existingInstance = repository.getSnapshot().findInstance(instanceId);
-        if (existingInstance != null && Files.notExists(json))
-            throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
-
-        GameBuilder builder = existingInstance == null
+        GameBuilder builder = updateTarget == null
                 ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(existingInstance);
+                : dependencyManager.newGameBuilder(updateTarget);
+        if (updating && Files.notExists(json))
+            throw new IllegalArgumentException("Instance " + instanceId + " is not a Curse modpack. Cannot update this instance.");
+
+        @Nullable ModpackConfiguration<CurseManifest> config = null;
+        try {
+            if (updating && Files.exists(json)) {
+                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(CurseManifest.class));
+
+                if (config == null || !CurseModpackProvider.INSTANCE.getName().equals(config.getType()))
+                    throw new IllegalArgumentException("Instance " + instanceId + " is not a Curse modpack. Cannot update this instance.");
+            }
+        } catch (JsonParseException | IOException ignore) {
+        }
+        this.config = config;
+
         builder.enableIsolation()
                 .component(GameComponentType.GAME, manifest.minecraft().gameVersion());
         for (CurseManifestModLoader modLoader : manifest.minecraft().modLoaders()) {
@@ -117,24 +174,13 @@ public final class CurseInstallTask extends Task<Void> {
 
         onDone().register(event -> {
             @Nullable Exception ex = event.getTask().getException();
-            if (existingInstance == null && event.isFailed()) {
+            if (!updating && event.isFailed()) {
                 if (!(ex instanceof ModpackCompletionException)) {
                     repository.removeInstanceFromDisk(instanceId);
                 }
             }
         });
 
-        @Nullable ModpackConfiguration<CurseManifest> config = null;
-        try {
-            if (Files.exists(json)) {
-                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(CurseManifest.class));
-
-                if (!CurseModpackProvider.INSTANCE.getName().equals(config.getType()))
-                    throw new IllegalArgumentException("Instance " + instanceId + " is not a Curse modpack. Cannot update this instance.");
-            }
-        } catch (JsonParseException | IOException ignore) {
-        }
-        this.config = config;
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(manifest.overrides()), any -> true, config).withStage("hmcl.modpack"));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(manifest.overrides()), manifest, CurseModpackProvider.INSTANCE, manifest.name(), manifest.version(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
 

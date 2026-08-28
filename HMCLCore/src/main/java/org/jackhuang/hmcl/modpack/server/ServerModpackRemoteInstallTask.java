@@ -36,29 +36,82 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/// Installs or updates a remote server modpack using the mode selected at construction.
 public class ServerModpackRemoteInstallTask extends Task<Void> {
 
     private final GameInstanceID instanceId;
+
+    /// Whether this task updates the instance supplied at construction.
+    private final boolean updating;
+
     private final DefaultDependencyManager dependency;
     private final DefaultGameRepository repository;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final ServerModpackManifest manifest;
 
-    public ServerModpackRemoteInstallTask(DefaultDependencyManager dependencyManager, ServerModpackManifest manifest, GameInstanceID instanceId) {
+    /// Creates a task that installs a new remote server modpack instance.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param manifest          the remote server modpack manifest
+    /// @param instanceId        the id of the new instance
+    /// @throws IllegalStateException if `instanceId` is already registered
+    public ServerModpackRemoteInstallTask(
+            DefaultDependencyManager dependencyManager,
+            ServerModpackManifest manifest,
+            GameInstanceID instanceId) {
+        this(dependencyManager, manifest, instanceId, null);
+    }
+
+    /// Creates a task that updates an existing remote server modpack instance.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param manifest          the remote server modpack manifest
+    /// @param instance          the existing instance to update
+    /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
+    ///                                  modpack configuration, or records another provider type
+    /// @throws IllegalStateException    if `instance` is no longer registered
+    public ServerModpackRemoteInstallTask(
+            DefaultDependencyManager dependencyManager,
+            ServerModpackManifest manifest,
+            DefaultGameInstance instance) {
+        this(dependencyManager, manifest, instance.getId(), instance);
+    }
+
+    /// Creates a remote server modpack task in the mode selected by `updateTarget`.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param manifest          the remote server modpack manifest
+    /// @param instanceId        the target instance id
+    /// @param updateTarget      the existing instance selecting update mode, or `null` for install
+    private ServerModpackRemoteInstallTask(
+            DefaultDependencyManager dependencyManager,
+            ServerModpackManifest manifest,
+            GameInstanceID instanceId,
+            @Nullable DefaultGameInstance updateTarget) {
         this.instanceId = instanceId;
+        this.updating = updateTarget != null;
         this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
         this.manifest = manifest;
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        @Nullable DefaultGameInstance existingInstance = repository.getSnapshot().findInstance(instanceId);
-        if (existingInstance != null && Files.notExists(json))
-            throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
-
-        GameBuilder builder = existingInstance == null
+        GameBuilder builder = updateTarget == null
                 ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(existingInstance);
+                : dependencyManager.newGameBuilder(updateTarget);
+        if (updating && Files.notExists(json))
+            throw new IllegalArgumentException("Instance " + instanceId + " is not a Server modpack. Cannot update this instance.");
+
+        try {
+            if (updating && Files.exists(json)) {
+                @Nullable ModpackConfiguration<ServerModpackManifest> config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));
+
+                if (config == null || !MODPACK_TYPE.equals(config.getType()))
+                    throw new IllegalArgumentException("Instance " + instanceId + " is not a Server modpack. Cannot update this instance.");
+            }
+        } catch (JsonParseException | IOException ignore) {
+        }
+
         builder.enableIsolation();
         for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
             @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
@@ -68,20 +121,9 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
 
         dependents.add(builder.buildAsync());
         onDone().register(event -> {
-            if (existingInstance == null && event.isFailed())
+            if (!updating && event.isFailed())
                 repository.removeInstanceFromDisk(instanceId);
         });
-
-        ModpackConfiguration<ServerModpackManifest> config;
-        try {
-            if (Files.exists(json)) {
-                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));
-
-                if (!MODPACK_TYPE.equals(config.getType()))
-                    throw new IllegalArgumentException("Instance " + instanceId + " is not a Server modpack. Cannot update this instance.");
-            }
-        } catch (JsonParseException | IOException ignore) {
-        }
     }
 
     @Override

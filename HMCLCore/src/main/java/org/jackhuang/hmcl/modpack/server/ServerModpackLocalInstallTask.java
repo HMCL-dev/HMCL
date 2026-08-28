@@ -39,32 +39,98 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/// Installs or updates a local server modpack using the mode selected at construction.
 public class ServerModpackLocalInstallTask extends Task<Void> {
 
     private final Path zipFile;
     private final Modpack modpack;
     private final ServerModpackManifest manifest;
     private final GameInstanceID instanceId;
+
+    /// Whether this task updates the instance supplied at construction.
+    private final boolean updating;
+
     private final DefaultGameRepository repository;
     private final List<Task<?>> dependencies = new ArrayList<>();
     private final List<Task<?>> dependents = new ArrayList<>(4);
 
-    public ServerModpackLocalInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, ServerModpackManifest manifest, GameInstanceID instanceId) {
+    /// Creates a task that installs a new local server modpack instance.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param zipFile           the server modpack archive
+    /// @param modpack           the parsed modpack metadata
+    /// @param manifest          the server modpack manifest
+    /// @param instanceId        the id of the new instance
+    /// @throws IllegalStateException if `instanceId` is already registered
+    public ServerModpackLocalInstallTask(
+            DefaultDependencyManager dependencyManager,
+            Path zipFile,
+            Modpack modpack,
+            ServerModpackManifest manifest,
+            GameInstanceID instanceId) {
+        this(dependencyManager, zipFile, modpack, manifest, instanceId, null);
+    }
+
+    /// Creates a task that updates an existing local server modpack instance.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param zipFile           the server modpack archive
+    /// @param modpack           the parsed modpack metadata
+    /// @param manifest          the server modpack manifest
+    /// @param instance          the existing instance to update
+    /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
+    ///                                  modpack configuration, or records another provider type
+    /// @throws IllegalStateException    if `instance` is no longer registered
+    public ServerModpackLocalInstallTask(
+            DefaultDependencyManager dependencyManager,
+            Path zipFile,
+            Modpack modpack,
+            ServerModpackManifest manifest,
+            DefaultGameInstance instance) {
+        this(dependencyManager, zipFile, modpack, manifest, instance.getId(), instance);
+    }
+
+    /// Creates a local server modpack task in the mode selected by `updateTarget`.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param zipFile           the server modpack archive
+    /// @param modpack           the parsed modpack metadata
+    /// @param manifest          the server modpack manifest
+    /// @param instanceId        the target instance id
+    /// @param updateTarget      the existing instance selecting update mode, or `null` for install
+    private ServerModpackLocalInstallTask(
+            DefaultDependencyManager dependencyManager,
+            Path zipFile,
+            Modpack modpack,
+            ServerModpackManifest manifest,
+            GameInstanceID instanceId,
+            @Nullable DefaultGameInstance updateTarget) {
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
         this.instanceId = instanceId;
+        this.updating = updateTarget != null;
         this.repository = dependencyManager.getGameRepository();
         Path run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        @Nullable DefaultGameInstance existingInstance = repository.getSnapshot().findInstance(instanceId);
-        if (existingInstance != null && Files.notExists(json))
-            throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
-
-        GameBuilder builder = existingInstance == null
+        GameBuilder builder = updateTarget == null
                 ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(existingInstance);
+                : dependencyManager.newGameBuilder(updateTarget);
+        if (updating && Files.notExists(json))
+            throw new IllegalArgumentException("Instance " + instanceId + " is not a Server modpack. Cannot update this instance.");
+
+        @Nullable ModpackConfiguration<ServerModpackManifest> config = null;
+        try {
+            if (updating && Files.exists(json)) {
+                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));
+
+                if (config == null || !ServerModpackProvider.INSTANCE.getName().equals(config.getType()))
+                    throw new IllegalArgumentException("Instance " + instanceId + " is not a Server modpack. Cannot update this instance.");
+            }
+        } catch (JsonParseException | IOException ignore) {
+        }
+
         builder.enableIsolation();
         for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
             @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
@@ -74,20 +140,10 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
 
         dependents.add(builder.buildAsync());
         onDone().register(event -> {
-            if (existingInstance == null && event.isFailed())
+            if (!updating && event.isFailed())
                 repository.removeInstanceFromDisk(instanceId);
         });
 
-        @Nullable ModpackConfiguration<ServerModpackManifest> config = null;
-        try {
-            if (Files.exists(json)) {
-                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));
-
-                if (!ServerModpackProvider.INSTANCE.getName().equals(config.getType()))
-                    throw new IllegalArgumentException("Instance " + instanceId + " is not a Server modpack. Cannot update this instance.");
-            }
-        } catch (JsonParseException | IOException ignore) {
-        }
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
     }

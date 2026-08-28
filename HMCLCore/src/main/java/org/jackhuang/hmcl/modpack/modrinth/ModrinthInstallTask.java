@@ -50,6 +50,9 @@ public class ModrinthInstallTask extends Task<Void> {
     private final ModrinthManifest manifest;
     private final GameInstanceID instanceId;
 
+    /// Whether this task updates the instance supplied at construction.
+    private final boolean updating;
+
     /// Optional remote icon URL supplied by the install source.
     private final @Nullable String iconUrl;
     private final Path run;
@@ -65,14 +68,15 @@ public class ModrinthInstallTask extends Task<Void> {
     private final List<Task<?>> dependents = new ArrayList<>(4);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    /// Creates a task that installs or updates a Modrinth modpack instance.
+    /// Creates a task that installs a new Modrinth modpack instance.
     ///
     /// @param dependencyManager the dependency manager for the target repository
     /// @param zipFile           the Modrinth modpack archive
     /// @param modpack           the parsed modpack metadata
     /// @param manifest          the Modrinth index
-    /// @param instanceId        the target instance id; an existing modpack instance is updated
+    /// @param instanceId        the id of the new instance
     /// @param iconUrl           the optional icon URL, or `null`
+    /// @throws IllegalStateException if `instanceId` is already registered
     public ModrinthInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -80,23 +84,76 @@ public class ModrinthInstallTask extends Task<Void> {
             ModrinthManifest manifest,
             GameInstanceID instanceId,
             @Nullable String iconUrl) {
+        this(dependencyManager, zipFile, modpack, manifest, instanceId, null, iconUrl);
+    }
+
+    /// Creates a task that updates an existing Modrinth modpack instance.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param zipFile           the Modrinth modpack archive
+    /// @param modpack           the parsed modpack metadata
+    /// @param manifest          the Modrinth index
+    /// @param instance          the existing instance to update
+    /// @param iconUrl           the optional icon URL, or `null`
+    /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
+    ///                                  modpack configuration, or records another provider type
+    /// @throws IllegalStateException    if `instance` is no longer registered
+    public ModrinthInstallTask(
+            DefaultDependencyManager dependencyManager,
+            Path zipFile,
+            Modpack modpack,
+            ModrinthManifest manifest,
+            DefaultGameInstance instance,
+            @Nullable String iconUrl) {
+        this(dependencyManager, zipFile, modpack, manifest, instance.getId(), instance, iconUrl);
+    }
+
+    /// Creates a Modrinth installation task in the mode selected by `updateTarget`.
+    ///
+    /// @param dependencyManager the dependency manager for the target repository
+    /// @param zipFile           the Modrinth modpack archive
+    /// @param modpack           the parsed modpack metadata
+    /// @param manifest          the Modrinth index
+    /// @param instanceId        the target instance id
+    /// @param updateTarget      the existing instance selecting update mode, or `null` for install
+    /// @param iconUrl           the optional icon URL, or `null`
+    private ModrinthInstallTask(
+            DefaultDependencyManager dependencyManager,
+            Path zipFile,
+            Modpack modpack,
+            ModrinthManifest manifest,
+            GameInstanceID instanceId,
+            @Nullable DefaultGameInstance updateTarget,
+            @Nullable String iconUrl) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
         this.instanceId = instanceId;
+        this.updating = updateTarget != null;
         this.iconUrl = iconUrl;
         this.repository = dependencyManager.getGameRepository();
         this.run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        @Nullable DefaultGameInstance existingInstance = repository.getSnapshot().findInstance(instanceId);
-        if (existingInstance != null && Files.notExists(json))
-            throw new IllegalArgumentException("Instance " + instanceId + " already exists.");
-
-        GameBuilder builder = existingInstance == null
+        GameBuilder builder = updateTarget == null
                 ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(existingInstance);
+                : dependencyManager.newGameBuilder(updateTarget);
+        if (updating && Files.notExists(json))
+            throw new IllegalArgumentException("Instance " + instanceId + " is not a Modrinth modpack. Cannot update this instance.");
+
+        @Nullable ModpackConfiguration<ModrinthManifest> config = null;
+        try {
+            if (updating && Files.exists(json)) {
+                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ModrinthManifest.class));
+
+                if (config == null || !ModrinthModpackProvider.INSTANCE.getName().equals(config.getType()))
+                    throw new IllegalArgumentException("Instance " + instanceId + " is not a Modrinth modpack. Cannot update this instance.");
+            }
+        } catch (JsonParseException | IOException ignore) {
+        }
+        this.config = config;
+
         builder.enableIsolation();
         builder.component(GameComponentType.GAME, manifest.getGameVersion());
         for (Map.Entry<String, String> modLoader : manifest.getDependencies().entrySet()) {
@@ -125,25 +182,13 @@ public class ModrinthInstallTask extends Task<Void> {
 
         onDone().register(event -> {
             @Nullable Exception ex = event.getTask().getException();
-            if (existingInstance == null && event.isFailed()) {
+            if (!updating && event.isFailed()) {
                 if (!(ex instanceof ModpackCompletionException)) {
                     repository.removeInstanceFromDisk(instanceId);
                 }
             }
         });
 
-        @Nullable ModpackConfiguration<ModrinthManifest> config = null;
-        try {
-            if (Files.exists(json)) {
-                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ModrinthManifest.class));
-
-                if (!ModrinthModpackProvider.INSTANCE.getName().equals(config.getType()))
-                    throw new IllegalArgumentException("Instance " + instanceId + " is not a Modrinth modpack. Cannot update this instance.");
-            }
-        } catch (JsonParseException | IOException ignore) {
-        }
-
-        this.config = config;
         List<String> subDirectories = Arrays.asList("/client-overrides", "/overrides");
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
