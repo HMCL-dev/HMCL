@@ -27,7 +27,7 @@ import org.jackhuang.hmcl.task.Task;
 import java.time.Instant;
 import java.util.List;
 
-public class ForgeRemoteVersion extends RemoteVersion {
+public final class ForgeRemoteVersion extends RemoteVersion {
     /**
      * Constructor.
      *

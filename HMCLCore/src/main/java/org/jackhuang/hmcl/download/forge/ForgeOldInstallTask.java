@@ -34,7 +34,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
-public class ForgeOldInstallTask extends Task<GameInstancePatch> {
+public final class ForgeOldInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
