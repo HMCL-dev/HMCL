@@ -47,7 +47,7 @@ public class DefaultGameBuilder extends GameBuilder {
     private final GameInstanceID instanceId;
 
     /// Existing instance selecting update mode, or `null` for a new installation.
-    private final @Nullable GameInstance updateTarget;
+    private final @Nullable DefaultGameInstance updateTarget;
 
     /// Whether instance isolation was requested for this build.
     protected boolean isolationEnabled;
@@ -121,13 +121,19 @@ public class DefaultGameBuilder extends GameBuilder {
             }
         });
 
-
         DefaultGameRepository repository = dependencyManager.getGameRepository();
         DefaultGameRepositoryDraft draft = repository.openDraft();
         @Nullable DefaultGameInstance currentInstance;
         GameInstanceManifest initialManifest = new GameInstanceManifest(instanceId);
         try {
-            currentInstance = resolveCurrentInstance(draft.getBaseSnapshot());
+            currentInstance = draft.getBaseSnapshot().findInstance(instanceId);
+            if (updateTarget == null) {
+                if (currentInstance != null) {
+                    throw new IllegalStateException("Game instance already exists: " + instanceId);
+                }
+            } else if (currentInstance == null) {
+                throw new IllegalStateException("Game instance no longer exists: " + instanceId);
+            }
             draft.put(initialManifest);
         } catch (IOException e) {
             abortAfterSetupFailure(draft, e);
@@ -182,26 +188,6 @@ public class DefaultGameBuilder extends GameBuilder {
                     }
                 })
                 .withStagesHints(hints);
-    }
-
-    /// Resolves and validates the declared installation mode against the draft base snapshot.
-    ///
-    /// @param snapshot the immutable repository state captured by the draft
-    /// @return the current update target, or `null` for a valid new installation
-    /// @throws IllegalStateException if the declared target state does not match the snapshot
-    private @Nullable DefaultGameInstance resolveCurrentInstance(DefaultGameRepositorySnapshot snapshot) {
-        @Nullable DefaultGameInstance currentInstance = snapshot.findInstance(instanceId);
-        if (updateTarget == null) {
-            if (currentInstance != null) {
-                throw new IllegalStateException("Game instance already exists: " + instanceId);
-            }
-            return null;
-        }
-
-        if (currentInstance == null) {
-            throw new IllegalStateException("Game instance no longer exists: " + instanceId);
-        }
-        return currentInstance;
     }
 
     /// Performs repository-specific initialization after an instance is committed.
