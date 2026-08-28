@@ -32,7 +32,51 @@ import java.util.zip.GZIPInputStream;
 
 /// @author Glavo
 /// @see <a href="https://litemapy.readthedocs.io/en/v0.9.0b0/litematics.html">The Litematic file format</a>
-public final class LitematicFile {
+public record LitematicFile(@NotNull Path file, int version, int subVersion, int minecraftDataVersion, int regionCount,
+                            int[] previewImageData, String name, String author, String description, Instant timeCreated,
+                            Instant timeModified, int totalBlocks, int totalVolume, Point3D enclosingSize) {
+    private static LitematicFile parse(@NotNull Path file, @NotNull CompoundTag metadata,
+                                       int version, int subVersion, int minecraftDataVersion, int regionCount) {
+        Tag previewImageData = metadata.get("PreviewImageData");
+        var previewImageDataArray = previewImageData instanceof IntArrayTag intArrayTag
+                ? intArrayTag.getArray()
+                : null;
+
+        var name = tryGetString(metadata.get("Name"));
+        var author = tryGetString(metadata.get("Author"));
+        var description = tryGetString(metadata.get("Description"));
+        var timeCreated = metadata.get("TimeCreated") instanceof LongTag time ? Instant.ofEpochMilli(time.getValue()) : null;
+        var timeModified = metadata.get("TimeModified") instanceof LongTag time ? Instant.ofEpochMilli(time.getValue()) : null;
+        var totalBlocks = metadata.getIntOrZero("TotalBlocks");
+        var totalVolume = metadata.getIntOrZero("TotalVolume");
+
+        Point3D enclosingSize = null;
+        if (metadata.get("EnclosingSize") instanceof CompoundTag list) {
+            int x = list.getIntOrZero("x");
+            int y = list.getIntOrZero("y");
+            int z = list.getIntOrZero("z");
+
+            if (x >= 0 && y >= 0 && z >= 0)
+                enclosingSize = new Point3D(x, y, z);
+        }
+
+        return new LitematicFile(
+                file,
+                version,
+                subVersion,
+                minecraftDataVersion,
+                regionCount,
+                previewImageDataArray,
+                name,
+                author,
+                description,
+                timeCreated,
+                timeModified,
+                totalBlocks,
+                totalVolume,
+                enclosingSize
+        );
+    }
 
     private static @Nullable String tryGetString(Tag tag) {
         return tag instanceof StringTag stringTag ? stringTag.get() : null;
@@ -61,7 +105,7 @@ public final class LitematicFile {
         if (root.get("Regions") instanceof CompoundTag regionsTag)
             regions = regionsTag.size();
 
-        return new LitematicFile(file, (CompoundTag) metadataTag,
+        return parse(file, (CompoundTag) metadataTag,
                 ((IntTag) versionTag).getValue(),
                 root.getIntOrZero("SubVersion"),
                 root.getIntOrZero("MinecraftDataVersion"),
@@ -69,109 +113,8 @@ public final class LitematicFile {
         );
     }
 
-    private final @NotNull Path file;
-
-    private final int version;
-    private final int subVersion;
-    private final int minecraftDataVersion;
-    private final int regionCount;
-    private final int[] previewImageData;
-    private final String name;
-    private final String author;
-    private final String description;
-    private final Instant timeCreated;
-    private final Instant timeModified;
-    private final int totalBlocks;
-    private final int totalVolume;
-    private final Point3D enclosingSize;
-
-    private LitematicFile(@NotNull Path file, @NotNull CompoundTag metadata,
-                          int version, int subVersion, int minecraftDataVersion, int regionCount) {
-        this.file = file;
-        this.version = version;
-        this.subVersion = subVersion;
-        this.minecraftDataVersion = minecraftDataVersion;
-        this.regionCount = regionCount;
-
-        Tag previewImageData = metadata.get("PreviewImageData");
-        this.previewImageData = previewImageData instanceof IntArrayTag intArrayTag
-                ? intArrayTag.getArray()
-                : null;
-
-        this.name = tryGetString(metadata.get("Name"));
-        this.author = tryGetString(metadata.get("Author"));
-        this.description = tryGetString(metadata.get("Description"));
-        this.timeCreated = metadata.get("TimeCreated") instanceof LongTag time ? Instant.ofEpochMilli(time.getValue()) : null;
-        this.timeModified = metadata.get("TimeModified") instanceof LongTag time ? Instant.ofEpochMilli(time.getValue()) : null;
-        this.totalBlocks = metadata.getIntOrZero("TotalBlocks");
-        this.totalVolume = metadata.getIntOrZero("TotalVolume");
-
-        Point3D enclosingSize = null;
-        if (metadata.get("EnclosingSize") instanceof CompoundTag list) {
-            int x = list.getIntOrZero("x");
-            int y = list.getIntOrZero("y");
-            int z = list.getIntOrZero("z");
-
-            if (x >= 0 && y >= 0 && z >= 0)
-                enclosingSize = new Point3D(x, y, z);
-        }
-        this.enclosingSize = enclosingSize;
-
-    }
-
-    public @NotNull Path getFile() {
-        return file;
-    }
-
-    public int getVersion() {
-        return version;
-    }
-
-    public int getSubVersion() {
-        return subVersion;
-    }
-
-    public int getMinecraftDataVersion() {
-        return minecraftDataVersion;
-    }
-
-    public int[] getPreviewImageData() {
+    @Override
+    public int[] previewImageData() {
         return previewImageData != null ? previewImageData.clone() : null;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public Instant getTimeCreated() {
-        return timeCreated;
-    }
-
-    public Instant getTimeModified() {
-        return timeModified;
-    }
-
-    public int getTotalBlocks() {
-        return totalBlocks;
-    }
-
-    public int getTotalVolume() {
-        return totalVolume;
-    }
-
-    public Point3D getEnclosingSize() {
-        return enclosingSize;
-    }
-
-    public int getRegionCount() {
-        return regionCount;
     }
 }

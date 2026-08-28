@@ -55,7 +55,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -402,15 +401,15 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
         private LitematicFileItem(LitematicFile file) {
             this.file = file;
 
-            String name = file.getName();
+            String name = file.name();
             if (name != null && !"Unnamed".equals(name)) {
                 this.name = name;
             } else {
-                this.name = StringUtils.removeSuffix(file.getFile().getFileName().toString(), ".litematic");
+                this.name = StringUtils.removeSuffix(file.file().getFileName().toString(), ".litematic");
             }
 
             WritableImage image = null;
-            int[] previewImageData = file.getPreviewImageData();
+            int[] previewImageData = file.previewImageData();
             if (previewImageData != null && previewImageData.length > 0) {
                 int size = (int) Math.sqrt(previewImageData.length);
                 if ((size * size) == previewImageData.length) {
@@ -435,7 +434,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
         @Override
         Path getPath() {
-            return file.getFile();
+            return file.file();
         }
 
         @Override
@@ -445,7 +444,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
         @Override
         String getDescription() {
-            return file.getFile().getFileName().toString();
+            return file.file().getFileName().toString();
         }
 
         @Override
@@ -474,16 +473,16 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
         @Override
         void onReveal() {
-            FXUtils.showFileInExplorer(file.getFile());
+            FXUtils.showFileInExplorer(file.file());
         }
 
         @Override
         void onDelete() {
             try {
-                Files.deleteIfExists(file.getFile());
+                Files.deleteIfExists(file.file());
                 refresh();
             } catch (IOException e) {
-                LOG.warning("Failed to delete litematic file: " + file.getFile(), e);
+                LOG.warning("Failed to delete litematic file: " + file.file(), e);
             }
         }
 
@@ -499,26 +498,26 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
             private void updateContent(LitematicFile file) {
                 details.getContent().clear();
-                addDetailItem(i18n("schematics.info.name"), file.getName());
-                if (StringUtils.isNotBlank(file.getAuthor()))
-                    addDetailItem(i18n("schematics.info.schematic_author"), translateAuthorName(file.getAuthor()));
-                if (file.getTimeCreated() != null)
-                    addDetailItem(i18n("schematics.info.time_created"), I18n.formatDateTime(file.getTimeCreated()));
-                if (file.getTimeModified() != null && !file.getTimeModified().equals(file.getTimeCreated()))
-                    addDetailItem(i18n("schematics.info.time_modified"), I18n.formatDateTime(file.getTimeModified()));
-                if (file.getRegionCount() > 0)
-                    addDetailItem(i18n("schematics.info.region_count"), String.valueOf(file.getRegionCount()));
-                if (file.getTotalVolume() > 0)
-                    addDetailItem(i18n("schematics.info.total_volume"), file.getTotalVolume());
-                if (file.getTotalBlocks() > 0)
-                    addDetailItem(i18n("schematics.info.total_blocks"), file.getTotalBlocks());
-                if (file.getEnclosingSize() != null)
+                addDetailItem(i18n("schematics.info.name"), file.name());
+                if (StringUtils.isNotBlank(file.author()))
+                    addDetailItem(i18n("schematics.info.schematic_author"), translateAuthorName(file.author()));
+                if (file.timeCreated() != null)
+                    addDetailItem(i18n("schematics.info.time_created"), I18n.formatDateTime(file.timeCreated()));
+                if (file.timeModified() != null && !file.timeModified().equals(file.timeCreated()))
+                    addDetailItem(i18n("schematics.info.time_modified"), I18n.formatDateTime(file.timeModified()));
+                if (file.regionCount() > 0)
+                    addDetailItem(i18n("schematics.info.region_count"), String.valueOf(file.regionCount()));
+                if (file.totalVolume() > 0)
+                    addDetailItem(i18n("schematics.info.total_volume"), file.totalVolume());
+                if (file.totalBlocks() > 0)
+                    addDetailItem(i18n("schematics.info.total_blocks"), file.totalBlocks());
+                if (file.enclosingSize() != null)
                     addDetailItem(i18n("schematics.info.enclosing_size"),
-                            String.format("%d x %d x %d", (int) file.getEnclosingSize().getX(),
-                                    (int) file.getEnclosingSize().getY(),
-                                    (int) file.getEnclosingSize().getZ()));
+                            String.format("%d x %d x %d", (int) file.enclosingSize().getX(),
+                                    (int) file.enclosingSize().getY(),
+                                    (int) file.enclosingSize().getZ()));
 
-                addDetailItem(i18n("schematics.info.version"), file.getVersion());
+                addDetailItem(i18n("schematics.info.version"), file.version());
             }
 
             LitematicInfoDialog() {
@@ -528,7 +527,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
                     TwoLineListItem title = new TwoLineListItem();
                     title.setTitle(getName());
-                    title.setSubtitle(file.getFile().getFileName().toString());
+                    title.setSubtitle(file.file().getFileName().toString());
 
                     titleBox.getChildren().setAll(icon, title);
                     setHeading(titleBox);
