@@ -494,7 +494,8 @@ public final class Launcher extends Application {
             if ("wayland".equals(xdgSessionType)
                     && StringUtils.startsWithIgnoreCase(xdgCurrentDesktop, "KDE")) {
                 try {
-                    @Nullable String xftDpi = SystemUtils.run(List.of("xrdb", "-query"), inputStream -> {
+                    @Nullable Path xrdb = SystemUtils.which("xrdb");
+                    @Nullable String xftDpi = xrdb != null ? SystemUtils.run(List.of(FileUtils.getAbsolutePath(xrdb), "-query"), inputStream -> {
                         @Nullable String dpiLine;
 
                         try (var reader = new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET);
@@ -507,7 +508,7 @@ public final class Launcher extends Application {
                         return dpiLine != null
                                 ? dpiLine.substring("Xft.dpi:".length()).trim()
                                 : null;
-                    }, java.time.Duration.ofSeconds(1));
+                    }, java.time.Duration.ofSeconds(1)) : null;
 
                     if (xftDpi != null) {
                         float dpiValue = Float.parseFloat(xftDpi);
