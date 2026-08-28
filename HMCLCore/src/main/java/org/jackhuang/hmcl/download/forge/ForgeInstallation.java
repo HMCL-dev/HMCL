@@ -62,8 +62,12 @@ public class ForgeInstallation {
     /// @throws VersionMismatchException if the installer targets another Minecraft version
     public static ForgeInstallerType detectForgeInstallerType(String gameVersion, Path installer) throws IOException, VersionMismatchException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            if ((Files.isRegularFile(fs.getPath("mod_MinecraftForge.class")) || Files.isRegularFile(fs.getPath("fmlversion.properties"))) && !Files.isRegularFile(fs.getPath("install_profile.json"))) {
-                return ForgeInstallerType.LEGACY;
+            if ((Files.isRegularFile(fs.getPath("mod_MinecraftForge.class"))) && !Files.isRegularFile(fs.getPath("install_profile.json"))) {
+                return ForgeInstallerType.LEGACY_MODLOADER;
+            }
+
+            if ((Files.isRegularFile(fs.getPath("fmlversion.properties"))) && !Files.isRegularFile(fs.getPath("install_profile.json"))) {
+                return ForgeInstallerType.LEGACY_FML;
             }
 
             String installProfileText = Files.readString(fs.getPath("install_profile.json"));
@@ -104,9 +108,11 @@ public class ForgeInstallation {
             String gameVersion,
             Path installer) throws IOException, VersionMismatchException, UnsupportedInstallationException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            switch (detectForgeInstallerType(gameVersion, installer)) {
-                case LEGACY -> {
-                    return new ForgeLegacyInstallTask(dependencyManager, manifest, tryGetLegacyForgeVersion(installer), installer);
+            var type = detectForgeInstallerType(gameVersion, installer);
+
+            switch (type) {
+                case LEGACY_MODLOADER, LEGACY_FML -> {
+                    return new ForgeLegacyInstallTask(dependencyManager, manifest, tryGetLegacyForgeVersion(installer), installer, type);
                 }
                 case OLD -> {
                     checkCleanroomCompatibility(dependencyManager, manifest, gameVersion);

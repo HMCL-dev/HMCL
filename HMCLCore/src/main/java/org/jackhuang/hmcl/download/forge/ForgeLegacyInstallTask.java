@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download.forge;
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 
 import java.io.InputStream;
@@ -34,25 +35,53 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 public class ForgeLegacyInstallTask extends Task<GameInstancePatch> {
+    public static final Library MODLOADER_LIBRARY = new Library(new Artifact("modloader", "modloader", "1.1"));
+    public static final String MODLOADER_DOWNLOAD_URL = "https://github.com/HMCL-dev/metadata/raw/refs/heads/main/fmllibs/ModLoader%201.1.zip";
+    public static final Library MODLOADER_MP_LIBRARY = new Library(new Artifact("modloader", "modloader-mp", "1.1"));
+    public static final String MODLOADER_MP_DOWNLOAD_URL = "https://github.com/HMCL-dev/metadata/raw/refs/heads/main/fmllibs/ModLoaderMP%201.1%20v4.zip";
 
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
     private final Path installer;
     private final String selfVersion;
+    private final ForgeInstallerType type;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    ForgeLegacyInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, String selfVersion, Path installer) {
+    ForgeLegacyInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, String selfVersion, Path installer, ForgeInstallerType type) {
         this.dependencyManager = dependencyManager;
         this.manifest = manifest;
         this.installer = installer;
         this.selfVersion = selfVersion;
+        this.type = type;
 
+        setName("hmcl.install.forge");
         setSignificance(TaskSignificance.MAJOR);
     }
 
     @Override
     public List<Task<?>> getDependencies() {
         return dependencies;
+    }
+
+    @Override
+    public void preExecute() throws Exception {
+        if (type == ForgeInstallerType.LEGACY_MODLOADER) {
+            GameRepository gameRepository = dependencyManager.getGameRepository();
+
+            Path modloaderFile = gameRepository.getLayout().getLibraryFile(manifest.id(), MODLOADER_LIBRARY);
+            var modloaderDownloadTask = new FileDownloadTask(MODLOADER_DOWNLOAD_URL, modloaderFile, null);
+            modloaderDownloadTask.setCacheRepository(dependencyManager.getCacheRepository());
+            modloaderDownloadTask.setCaching(true);
+            modloaderDownloadTask.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
+            dependencies.add(modloaderDownloadTask);
+
+            Path modloaderMpFile = gameRepository.getLayout().getLibraryFile(manifest.id(), MODLOADER_MP_LIBRARY);
+            var modloaderMpDownloadTask = new FileDownloadTask(MODLOADER_MP_DOWNLOAD_URL, modloaderMpFile, null);
+            modloaderMpDownloadTask.setCacheRepository(dependencyManager.getCacheRepository());
+            modloaderMpDownloadTask.setCaching(true);
+            modloaderMpDownloadTask.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
+            dependencies.add(modloaderMpDownloadTask);
+        }
     }
 
     @Override
@@ -80,20 +109,23 @@ public class ForgeLegacyInstallTask extends Task<GameInstancePatch> {
                 throw new ArtifactMalformedException("Malformed forge installer file, forgeversion.properties and mod_MinecraftForge.class both does not exist.");
             }
 
-            // unpack the universal jar in the installer file.
-            Library forgeLibrary = new Library(new Artifact(
-                    "net.minecraftforge", "forge", selfVersion
-            ));
+            Library forgeLibrary = new Library(new Artifact("net.minecraftforge", "forge", selfVersion));
             GameRepository gameRepository = dependencyManager.getGameRepository();
             Path forgeFile = gameRepository.getLayout().getLibraryFile(manifest.id(), forgeLibrary);
             Files.createDirectories(forgeFile.getParent());
 
-            try (InputStream is = Files.newInputStream(installer);
-                 OutputStream os = Files.newOutputStream(forgeFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+            try (InputStream is = Files.newInputStream(installer); OutputStream os = Files.newOutputStream(forgeFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
                 is.transferTo(os);
             }
 
-            setResult(new GameInstancePatch(GameComponentType.FORGE.getPatchId(), selfVersion, GameInstancePatch.PRIORITY_LOADER, null, null, List.of(forgeLibrary)));
+            List<Library> libraries;
+            if (type == ForgeInstallerType.LEGACY_MODLOADER) {
+                libraries = List.of(forgeLibrary, MODLOADER_LIBRARY, MODLOADER_MP_LIBRARY);
+            } else {
+                libraries = List.of(forgeLibrary);
+            }
+
+            setResult(new GameInstancePatch(GameComponentType.FORGE.getPatchId(), selfVersion, GameInstancePatch.PRIORITY_LOADER, null, null, libraries));
         } catch (ZipException ex) {
             throw new ArtifactMalformedException("Malformed forge installer file", ex);
         }

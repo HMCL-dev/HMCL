@@ -107,8 +107,8 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
         var type = detectForgeInstallerType(remote.getGameVersion(), installer);
 
         switch (type) {
-            case LEGACY ->
-                    dependency = new ForgeLegacyInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer);
+            case LEGACY_MODLOADER, LEGACY_FML ->
+                    dependency = new ForgeLegacyInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer, type);
             case OLD ->
                     dependency = new ForgeOldInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer);
             case NEW -> dependency = new GameDownloadTask(dependencyManager, manifest)

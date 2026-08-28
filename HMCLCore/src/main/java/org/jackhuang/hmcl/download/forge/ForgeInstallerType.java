@@ -18,7 +18,8 @@
 package org.jackhuang.hmcl.download.forge;
 
 public enum ForgeInstallerType {
-    LEGACY,
+    LEGACY_MODLOADER,
+    LEGACY_FML,
     OLD,
     NEW
 }
