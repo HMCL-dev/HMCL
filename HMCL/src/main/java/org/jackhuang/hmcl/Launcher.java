@@ -57,21 +57,24 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.net.CookieHandler;
 import java.net.CookieManager;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -455,14 +458,25 @@ public final class Launcher extends Application {
             }
         }
 
-        String uiScale = System.getProperty("hmcl.uiScale", System.getenv("HMCL_UI_SCALE"));
-        if (uiScale != null) {
-            uiScale = uiScale.trim();
+        float uiScaleLowerBound;
+        float uiScaleUpperBound;
 
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            // JavaFX behavior may be abnormal when the DPI scaling factor is too high
+            uiScaleLowerBound = 0.25f;
+            uiScaleUpperBound = 4f;
+        } else {
+            uiScaleLowerBound = 0.01f;
+            uiScaleUpperBound = 10f;
+        }
+
+        String uiScale = System.getProperty("hmcl.uiScale", System.getenv("HMCL_UI_SCALE"));
+
+        float scaleValue = Float.NaN;
+        if (uiScale != null && !(uiScale = uiScale.trim()).isEmpty()) {
             LOG.info("HMCL_UI_SCALE: " + uiScale);
 
             try {
-                float scaleValue;
                 if (uiScale.endsWith("%")) {
                     scaleValue = Integer.parseInt(uiScale.substring(0, uiScale.length() - 1)) / 100.0f;
                 } else if (uiScale.endsWith("dpi") || uiScale.endsWith("DPI")) {
@@ -470,80 +484,58 @@ public final class Launcher extends Application {
                 } else {
                     scaleValue = Float.parseFloat(uiScale);
                 }
-
-                float lowerBound;
-                float upperBound;
-
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    // JavaFX behavior may be abnormal when the DPI scaling factor is too high
-                    lowerBound = 0.25f;
-                    upperBound = 4f;
-                } else {
-                    lowerBound = 0.01f;
-                    upperBound = 10f;
-                }
-
-                if (scaleValue >= lowerBound && scaleValue <= upperBound) {
-                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                        System.getProperties().putIfAbsent("glass.win.uiScale", uiScale);
-                    } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                        LOG.warning("macOS does not support setting UI scale, so it will be ignored");
-                    } else {
-                        System.getProperties().putIfAbsent("glass.gtk.uiScale", uiScale);
-                    }
-                } else {
-                    LOG.warning("UI scale out of range: " + uiScale);
-                }
             } catch (Throwable e) {
                 LOG.warning("Invalid UI scale: " + uiScale);
             }
-        // ponytail: xrdb only, add kwinrc fallback when xrdb missing on Wayland without XWayland
-        } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
-                && ("wayland".equals(System.getenv("XDG_SESSION_TYPE"))
-                    || (System.getenv("XDG_SESSION_TYPE") == null && System.getenv("WAYLAND_DISPLAY") != null))
-                && System.getProperty("glass.gtk.uiScale") == null) {
-            autoDetectWaylandUiScale();
-        }
-    }
+        } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            String xdgSessionType = Objects.requireNonNullElse(System.getenv("XDG_SESSION_TYPE"), "");
+            String xdgCurrentDesktop = Objects.requireNonNullElse(System.getenv("XDG_CURRENT_DESKTOP"), "");
 
-    /// Detects the UI scale on Wayland through XWayland's `Xft.dpi` resource.
-    /// JavaFX Glass up to version 25 computes the scale from `GDK_SCALE` and
-    /// `org.gnome.desktop.interface scaling-factor` before `gdk_screen_get_resolution`, so a 1.5x
-    /// KDE session (Xft.dpi = 144) is reported as 1x. Querying `xrdb` reproduces the value written by
-    /// KWin (`kwinrc [Xwayland] Scale * 96`) and Mutter (`gsd-xsettings`). Never throws.
-    private static void autoDetectWaylandUiScale() {
-        try {
-            ProcessBuilder pb = new ProcessBuilder("xrdb", "-query");
-            pb.redirectErrorStream(true);
-            Process p = pb.start();
-            if (!p.waitFor(1, TimeUnit.SECONDS)) {
-                p.destroyForcibly();
-                return;
-            }
-            if (p.exitValue() != 0) {
-                LOG.debug("xrdb -query exited with " + p.exitValue());
-                return;
-            }
-
-            String out = new String(p.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            for (String line : out.split("\\R")) {
-                line = line.trim();
-                if (!line.startsWith("Xft.dpi:")) continue;
-
-                float scale;
+            if ("wayland".equals(xdgSessionType)
+                    && StringUtils.startsWithIgnoreCase(xdgCurrentDesktop, "KDE")) {
                 try {
-                    scale = Float.parseFloat(line.substring("Xft.dpi:".length()).trim()) / 96f;
-                } catch (NumberFormatException e) {
-                    LOG.warning("Invalid Xft.dpi value in xrdb output: " + line);
-                    continue;
-                }
-                if (scale >= 0.25f && scale <= 4f && scale != 1f) {
-                    LOG.info("Auto-detected Wayland UI scale: " + scale);
-                    System.getProperties().putIfAbsent("glass.gtk.uiScale", String.valueOf(scale));
+                    @Nullable String xftDpi = SystemUtils.run(List.of("xrdb", "-query"), inputStream -> {
+                        @Nullable String dpiLine;
+
+                        try (var reader = new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET);
+                             BufferedReader bufferedReader = new BufferedReader(reader);
+                             Stream<String> lines = bufferedReader.lines()) {
+                            dpiLine = lines.filter(line -> line.trim().startsWith("Xft.dpi:"))
+                                    .findFirst().orElse(null);
+                        }
+
+                        return dpiLine != null
+                                ? dpiLine.substring("Xft.dpi:".length()).trim()
+                                : null;
+                    }, java.time.Duration.ofSeconds(1));
+
+                    if (xftDpi != null) {
+                        float dpiValue = Float.parseFloat(xftDpi);
+                        float scale = dpiValue / 96f;
+
+                        if (scale > 1 && scale <= 10) {
+                            LOG.info("Detected Xft.dpi: %s (%.1fx)".formatted(dpiValue, scale));
+                            scaleValue = scale;
+                        }
+                    }
+                } catch (Exception e) {
+                    LOG.warning("Failed to read Xft.dpi from xrdb", e);
                 }
             }
-        } catch (Exception e) {
-            LOG.warning("Failed to read Xft.dpi from xrdb", e);
+        }
+
+        if (Float.isFinite(scaleValue)) {
+            if (scaleValue >= uiScaleLowerBound && scaleValue <= uiScaleUpperBound) {
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    System.getProperties().putIfAbsent("glass.win.uiScale", uiScale);
+                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                    LOG.warning("macOS does not support setting UI scale, so it will be ignored");
+                } else {
+                    System.getProperties().putIfAbsent("glass.gtk.uiScale", uiScale);
+                }
+            } else {
+                LOG.warning("UI scale out of range: " + uiScale);
+            }
         }
     }
 
