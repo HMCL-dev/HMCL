@@ -1,8 +1,8 @@
 version = "1.0"
 
 tasks.compileJava {
-    sourceCompatibility = "1.8"
-    targetCompatibility = "1.8"
+    sourceCompatibility = "1.6"
+    targetCompatibility = "1.6"
 }
 
 tasks.jar {
@@ -14,5 +14,11 @@ tasks.jar {
             "Can-Redefine-Classes" to true,
             "Can-Retransform-Classes" to true
         )
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
     }
 }
