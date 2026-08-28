@@ -63,6 +63,9 @@ public final class GameVerificationFixTask extends Task<Void> {
             try (FileSystem fs = CompressingUtils.createWritableZipFileSystem(jar, StandardCharsets.UTF_8)) {
                 Files.deleteIfExists(fs.getPath("META-INF/MOJANG_C.DSA"));
                 Files.deleteIfExists(fs.getPath("META-INF/MOJANG_C.SF"));
+                Files.deleteIfExists(fs.getPath("META-INF/CODESIGN.SF"));
+                Files.deleteIfExists(fs.getPath("META-INF/CODESIGN.RSA"));
+                Files.deleteIfExists(fs.getPath("META-INF/MANIFEST.MF"));
             }
         }
     }

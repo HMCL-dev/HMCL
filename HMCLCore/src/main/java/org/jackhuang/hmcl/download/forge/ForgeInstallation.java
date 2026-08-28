@@ -61,12 +61,12 @@ public final class ForgeInstallation {
     /// @throws VersionMismatchException if the installer targets another Minecraft version
     public static ForgeInstallerType detectForgeInstallerType(String gameVersion, Path installer) throws IOException, VersionMismatchException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            if ((Files.isRegularFile(fs.getPath("mod_MinecraftForge.class"))) && !Files.isRegularFile(fs.getPath("install_profile.json"))) {
-                return ForgeInstallerType.LEGACY_MODLOADER;
-            }
-
             if ((Files.isRegularFile(fs.getPath("fmlversion.properties"))) && !Files.isRegularFile(fs.getPath("install_profile.json"))) {
                 return ForgeInstallerType.LEGACY_FML;
+            }
+
+            if ((Files.isRegularFile(fs.getPath("mod_MinecraftForge.class"))) && !Files.isRegularFile(fs.getPath("install_profile.json"))) {
+                return ForgeInstallerType.LEGACY_MODLOADER;
             }
 
             String installProfileText = Files.readString(fs.getPath("install_profile.json"));
