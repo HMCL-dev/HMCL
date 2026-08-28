@@ -66,9 +66,7 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
     public void preExecute() throws Exception {
         installer = Files.createTempFile("forge-installer", ".jar");
 
-        dependent = new FileDownloadTask(
-                dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()),
-                installer, null);
+        dependent = new FileDownloadTask(dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()), installer, null);
         dependent.setCacheRepository(dependencyManager.getCacheRepository());
         dependent.setCaching(true);
         dependent.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
@@ -111,13 +109,8 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
                     dependency = new ForgeLegacyInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer, type);
             case OLD ->
                     dependency = new ForgeOldInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer);
-            case NEW -> dependency = new GameDownloadTask(dependencyManager, manifest)
-                    .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
-                            dependencyManager,
-                            manifest,
-                            minecraftJar,
-                            remote.getSelfVersion(),
-                            installer));
+            case NEW ->
+                    dependency = new GameDownloadTask(dependencyManager, manifest).thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(dependencyManager, manifest, minecraftJar, remote.getSelfVersion(), installer));
         }
     }
 }

@@ -102,11 +102,7 @@ public class ForgeInstallation {
     ///                                  unsupported
     /// @throws VersionMismatchException         if the installer targets another Minecraft version
     /// @throws UnsupportedInstallationException if the manifest already contains Cleanroom
-    public static Task<GameInstancePatch> install(
-            DefaultDependencyManager dependencyManager,
-            GameInstanceManifest manifest,
-            String gameVersion,
-            Path installer) throws IOException, VersionMismatchException, UnsupportedInstallationException {
+    public static Task<GameInstancePatch> install(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, String gameVersion, Path installer) throws IOException, VersionMismatchException, UnsupportedInstallationException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             var type = detectForgeInstallerType(gameVersion, installer);
 
@@ -126,13 +122,7 @@ public class ForgeInstallation {
                     String installProfileText = Files.readString(fs.getPath("install_profile.json"));
                     ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
 
-                    return new GameDownloadTask(dependencyManager, manifest)
-                            .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
-                                    dependencyManager,
-                                    manifest,
-                                    minecraftJar,
-                                    modifyVersion(gameVersion, profile.version()),
-                                    installer));
+                    return new GameDownloadTask(dependencyManager, manifest).thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(dependencyManager, manifest, minecraftJar, modifyVersion(gameVersion, profile.version()), installer));
                 }
                 default -> throw new IOException();
             }
@@ -145,13 +135,8 @@ public class ForgeInstallation {
     /// @param manifest          working manifest receiving the Forge patch
     /// @param gameVersion       Minecraft version used for component analysis
     /// @throws UnsupportedInstallationException if the manifest already contains Cleanroom
-    private static void checkCleanroomCompatibility(
-            DefaultDependencyManager dependencyManager,
-            GameInstanceManifest manifest,
-            String gameVersion) throws UnsupportedInstallationException {
-        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(
-                dependencyManager.getGameRepository().resolve(manifest),
-                GameVersionNumber.asGameVersion(gameVersion));
+    private static void checkCleanroomCompatibility(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, String gameVersion) throws UnsupportedInstallationException {
+        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(dependencyManager.getGameRepository().resolve(manifest), GameVersionNumber.asGameVersion(gameVersion));
         if (analyzer.has(GameComponentType.CLEANROOM)) {
             throw new UnsupportedInstallationException(CLEANROOM_NOT_COMPATIBLE_WITH_FORGE);
         }
