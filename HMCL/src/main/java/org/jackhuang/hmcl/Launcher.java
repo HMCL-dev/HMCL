@@ -308,8 +308,8 @@ public final class Launcher extends Application {
             LOG.info("Current Directory: " + Metadata.CURRENT_DIRECTORY);
             LOG.info("HMCL User Home: " + Metadata.HMCL_USER_HOME);
             LOG.info("HMCL Local Home: " + Metadata.HMCL_LOCAL_HOME);
-            LOG.info("HMCL Jar Path: " + Lang.requireNonNullElse(JarUtils.thisJarPath(), "Not Found"));
-            LOG.info("HMCL Log File: " + Lang.requireNonNullElse(LOG.getLogFile(), "In Memory"));
+            LOG.info("HMCL Jar Path: " + Objects.requireNonNullElse(JarUtils.thisJarPath(), "Not Found"));
+            LOG.info("HMCL Log File: " + Objects.requireNonNullElse(LOG.getLogFile(), "In Memory"));
             LOG.info("JVM Max Memory: " + MEGABYTES.formatBytes(Runtime.getRuntime().maxMemory()));
             try {
                 for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {

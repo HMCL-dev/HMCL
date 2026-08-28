@@ -621,7 +621,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
                 .setEnableDebugLogOutput(vs.getInheritable(GameSettings::enableDebugLogOutputProperty))
                 .setAllowAutoAgent(vs.getInheritable(GameSettings::allowAutoAgentProperty))
                 .setDisableAutoGameOptions(vs.getInheritable(GameSettings::disableAutoGameOptionsProperty))
-                .setUseNativeGLFW(vs.getInheritable(GameSettings::useNativeGLFWProperty))
+                .setUseNativeGLFWorSDL(vs.getInheritable(GameSettings::useNativeGLFWorSDLProperty))
                 .setUseNativeOpenAL(vs.getInheritable(GameSettings::useNativeOpenALProperty))
                 .setUseHighPerformanceGPU(vs.getInheritable(GameSettings::highPerformanceProperty))
                 .setDaemon(!makeLaunchScript && vs.getInheritable(GameSettings::launcherVisibilityProperty).isDaemon())

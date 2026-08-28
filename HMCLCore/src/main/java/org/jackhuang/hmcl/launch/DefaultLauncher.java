@@ -467,9 +467,14 @@ public class DefaultLauncher extends Launcher {
                                 if (ext.equals("sha1") || ext.equals("git"))
                                     return false;
 
-                                if (options.isUseNativeGLFW() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("glfw")) {
+                                if (options.isUseNativeGLFWorSDL() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("glfw")) {
                                     return false;
                                 }
+
+                                if (options.isUseNativeGLFWorSDL() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("sdl")) {
+                                    return false;
+                                }
+
                                 if (options.isUseNativeOpenAL() && FileUtils.getName(destFile).toLowerCase(Locale.ROOT).contains("openal")) {
                                     return false;
                                 }
