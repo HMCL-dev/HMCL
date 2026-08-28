@@ -517,6 +517,7 @@ public final class Launcher extends Application {
                         if (scale > 1 && scale <= 10) {
                             LOG.info("Detected Xft.dpi: %s (%.1fx)".formatted(dpiValue, scale));
                             scaleValue = scale;
+                            uiScale = Float.toString(scale);
                         }
                     }
                 } catch (Exception e) {
