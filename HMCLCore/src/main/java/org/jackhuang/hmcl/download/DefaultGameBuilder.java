@@ -46,8 +46,8 @@ public class DefaultGameBuilder extends GameBuilder {
     /// Id of the instance to create or replace.
     private final GameInstanceID instanceId;
 
-    /// Whether this builder must replace a currently published instance.
-    private final boolean updating;
+    /// Existing instance selecting update mode, or `null` for a new installation.
+    private final @Nullable GameInstance updateTarget;
 
     /// Whether instance isolation was requested for this build.
     protected boolean isolationEnabled;
@@ -59,7 +59,7 @@ public class DefaultGameBuilder extends GameBuilder {
     public DefaultGameBuilder(DefaultDependencyManager dependencyManager, GameInstanceID instanceId) {
         this.dependencyManager = dependencyManager;
         this.instanceId = instanceId;
-        this.updating = false;
+        this.updateTarget = null;
     }
 
     /// Creates a builder for replacing the components of an existing instance.
@@ -71,7 +71,7 @@ public class DefaultGameBuilder extends GameBuilder {
         dependencyManager.validateGameInstance(instance);
         this.dependencyManager = dependencyManager;
         this.instanceId = instance.getId();
-        this.updating = true;
+        this.updateTarget = instance;
     }
 
     /// Returns the dependency manager used by this builder.
@@ -191,7 +191,7 @@ public class DefaultGameBuilder extends GameBuilder {
     /// @throws IllegalStateException if the declared target state does not match the snapshot
     private @Nullable DefaultGameInstance resolveCurrentInstance(DefaultGameRepositorySnapshot snapshot) {
         @Nullable DefaultGameInstance currentInstance = snapshot.findInstance(instanceId);
-        if (!updating) {
+        if (updateTarget == null) {
             if (currentInstance != null) {
                 throw new IllegalStateException("Game instance already exists: " + instanceId);
             }

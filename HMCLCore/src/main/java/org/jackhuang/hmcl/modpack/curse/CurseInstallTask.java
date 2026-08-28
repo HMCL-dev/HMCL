@@ -20,10 +20,7 @@ package org.jackhuang.hmcl.modpack.curse;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
-import org.jackhuang.hmcl.game.DefaultGameInstance;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.GameComponentType;
-import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Task;
@@ -54,8 +51,8 @@ public final class CurseInstallTask extends Task<Void> {
     private final CurseManifest manifest;
     private final GameInstanceID instanceId;
 
-    /// Whether this task updates the instance supplied at construction.
-    private final boolean updating;
+    /// Existing instance selecting update mode, or `null` for a new installation.
+    private final @Nullable DefaultGameInstance updateTarget;
 
     /// Optional remote icon URL supplied by the install source.
     private final @Nullable String iconUrl;
@@ -134,22 +131,22 @@ public final class CurseInstallTask extends Task<Void> {
         this.modpack = modpack;
         this.manifest = manifest;
         this.instanceId = instanceId;
-        this.updating = updateTarget != null;
+        this.updateTarget = updateTarget;
         this.iconUrl = iconUrl;
         this.repository = dependencyManager.getGameRepository();
 
         this.run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        GameBuilder builder = updateTarget == null
+        GameBuilder builder = this.updateTarget == null
                 ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(updateTarget);
-        if (updating && Files.notExists(json))
+                : dependencyManager.newGameBuilder(this.updateTarget);
+        if (this.updateTarget != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a Curse modpack. Cannot update this instance.");
 
         @Nullable ModpackConfiguration<CurseManifest> config = null;
         try {
-            if (updating && Files.exists(json)) {
+            if (this.updateTarget != null && Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(CurseManifest.class));
 
                 if (config == null || !CurseModpackProvider.INSTANCE.getName().equals(config.getType()))
@@ -174,7 +171,7 @@ public final class CurseInstallTask extends Task<Void> {
 
         onDone().register(event -> {
             @Nullable Exception ex = event.getTask().getException();
-            if (!updating && event.isFailed()) {
+            if (this.updateTarget == null && event.isFailed()) {
                 if (!(ex instanceof ModpackCompletionException)) {
                     repository.removeInstanceFromDisk(instanceId);
                 }

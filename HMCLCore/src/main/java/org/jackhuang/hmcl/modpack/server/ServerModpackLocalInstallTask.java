@@ -20,10 +20,7 @@ package org.jackhuang.hmcl.modpack.server;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
-import org.jackhuang.hmcl.game.DefaultGameInstance;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.GameComponentType;
-import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -47,8 +44,8 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
     private final ServerModpackManifest manifest;
     private final GameInstanceID instanceId;
 
-    /// Whether this task updates the instance supplied at construction.
-    private final boolean updating;
+    /// Existing instance selecting update mode, or `null` for a new installation.
+    private final @Nullable DefaultGameInstance updateTarget;
 
     private final DefaultGameRepository repository;
     private final List<Task<?>> dependencies = new ArrayList<>();
@@ -109,20 +106,20 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
         this.modpack = modpack;
         this.manifest = manifest;
         this.instanceId = instanceId;
-        this.updating = updateTarget != null;
+        this.updateTarget = updateTarget;
         this.repository = dependencyManager.getGameRepository();
         Path run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        GameBuilder builder = updateTarget == null
+        GameBuilder builder = this.updateTarget == null
                 ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(updateTarget);
-        if (updating && Files.notExists(json))
+                : dependencyManager.newGameBuilder(this.updateTarget);
+        if (this.updateTarget != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a Server modpack. Cannot update this instance.");
 
         @Nullable ModpackConfiguration<ServerModpackManifest> config = null;
         try {
-            if (updating && Files.exists(json)) {
+            if (this.updateTarget != null && Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));
 
                 if (config == null || !ServerModpackProvider.INSTANCE.getName().equals(config.getType()))
@@ -140,7 +137,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
 
         dependents.add(builder.buildAsync());
         onDone().register(event -> {
-            if (!updating && event.isFailed())
+            if (this.updateTarget == null && event.isFailed())
                 repository.removeInstanceFromDisk(instanceId);
         });
 

@@ -76,8 +76,8 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     private final MultiMCInstanceConfiguration manifest;
     private final GameInstanceID instanceId;
 
-    /// Whether this task updates the instance supplied at construction.
-    private final boolean updating;
+    /// Existing instance selecting update mode, or `null` for a new installation.
+    private final @Nullable DefaultGameInstance updateTarget;
 
     private final DefaultGameRepository repository;
     private final List<Task<?>> dependents = new ArrayList<>();
@@ -146,20 +146,20 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         this.modpack = modpack;
         this.manifest = manifest;
         this.instanceId = instanceId;
-        this.updating = updateTarget != null;
+        this.updateTarget = updateTarget;
         this.dependencyManager = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
-        if (updateTarget != null) {
-            dependencyManager.validateGameInstance(updateTarget);
+        if (this.updateTarget != null) {
+            dependencyManager.validateGameInstance(this.updateTarget);
         }
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        if (updating && Files.notExists(json))
+        if (this.updateTarget != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a MultiMC modpack. Cannot update this instance.");
 
         @Nullable ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
         try {
-            if (updating && Files.exists(json)) {
+            if (this.updateTarget != null && Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
 
                 if (config == null || !MultiMCModpackProvider.INSTANCE.getName().equals(config.getType()))
@@ -189,15 +189,15 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         try {
             // Construction fixes the mode; the captured snapshot only verifies that it is still valid.
             boolean targetExists = openedDraft.getBaseSnapshot().hasInstance(instanceId);
-            if (!updating && targetExists) {
+            if (this.updateTarget == null && targetExists) {
                 throw new IllegalStateException("Game instance already exists: " + instanceId);
             }
-            if (updating && !targetExists) {
+            if (this.updateTarget != null && !targetExists) {
                 throw new IllegalStateException("Game instance no longer exists: " + instanceId);
             }
 
             openedDraft.put(new GameInstanceManifest(instanceId));
-            newInstallationReserved = !updating;
+            newInstallationReserved = this.updateTarget == null;
         } catch (IOException | RuntimeException e) {
             try {
                 openedDraft.abort();

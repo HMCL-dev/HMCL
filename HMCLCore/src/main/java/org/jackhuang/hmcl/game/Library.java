@@ -144,7 +144,6 @@ public record Library(
         this(new Artifact(group, name, version, classifier));
     }
 
-
     public String groupId() {
         return artifact.getGroup();
     }

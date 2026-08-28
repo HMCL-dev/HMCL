@@ -41,8 +41,8 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     private final Path zipFile;
     private final GameInstanceID instanceId;
 
-    /// Whether this task updates the instance supplied at construction.
-    private final boolean updating;
+    /// Existing instance selecting update mode, or `null` for a new installation.
+    private final @Nullable DefaultGameInstance updateTarget;
 
     private final HMCLGameRepository repository;
     private final DefaultDependencyManager dependency;
@@ -99,20 +99,20 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         this.dependency = repository.getDependency();
         this.zipFile = zipFile;
         this.instanceId = instanceId;
-        this.updating = updateTarget != null;
+        this.updateTarget = updateTarget;
         this.modpack = modpack;
 
         Path run = repository.getLayout().getInstanceRoot(this.instanceId);
         Path json = repository.getLayout().getModpackConfigurationFile(this.instanceId);
-        GameBuilder builder = updateTarget == null
+        GameBuilder builder = this.updateTarget == null
                 ? dependency.newGameBuilder(this.instanceId)
-                : dependency.newGameBuilder(updateTarget);
-        if (updating && Files.notExists(json))
+                : dependency.newGameBuilder(this.updateTarget);
+        if (this.updateTarget != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a HMCL modpack. Cannot update this instance.");
 
         @Nullable ModpackConfiguration<Modpack> config = null;
         try {
-            if (updating && Files.exists(json)) {
+            if (this.updateTarget != null && Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(Modpack.class));
 
                 if (config == null || !HMCLModpackProvider.INSTANCE.getName().equals(config.getType()))
@@ -127,7 +127,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
                 .buildAsync());
 
         onDone().register(event -> {
-            if (!updating && event.isFailed()) {
+            if (this.updateTarget == null && event.isFailed()) {
                 repository.removeInstanceFromDisk(this.instanceId);
             }
         });

@@ -45,7 +45,8 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
     private final Modpack modpack;
     private final McbbsModpackManifest manifest;
     private final GameInstanceID instanceId;
-    private final boolean update;
+    /// Existing instance selecting update mode, or `null` for a new installation.
+    private final @Nullable DefaultGameInstance updateTarget;
     private final DefaultGameRepository repository;
     private final MinecraftInstanceTask<McbbsModpackManifest> instanceTask;
     private final List<Task<?>> dependencies = new ArrayList<>(2);
@@ -107,20 +108,20 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
         this.modpack = modpack;
         this.manifest = manifest;
         this.instanceId = instanceId;
-        this.update = updateTarget != null;
+        this.updateTarget = updateTarget;
         this.repository = dependencyManager.getGameRepository();
         Path run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        GameBuilder builder = updateTarget == null
+        GameBuilder builder = this.updateTarget == null
                 ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(updateTarget);
-        if (update && Files.notExists(json))
+                : dependencyManager.newGameBuilder(this.updateTarget);
+        if (this.updateTarget != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a Mcbbs modpack. Cannot update this instance.");
 
         @Nullable ModpackConfiguration<McbbsModpackManifest> config = null;
         try {
-            if (update && Files.exists(json)) {
+            if (this.updateTarget != null && Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
                 if (config == null || !McbbsModpackProvider.INSTANCE.getName().equals(config.getType()))
@@ -138,7 +139,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
 
         dependents.add(builder.buildAsync());
         onDone().register(event -> {
-            if (!update && event.isFailed())
+            if (this.updateTarget == null && event.isFailed())
                 repository.removeInstanceFromDisk(instanceId);
         });
 
@@ -161,7 +162,7 @@ public final class McbbsModpackLocalInstallTask extends Task<Void> {
     public void execute() throws Exception {
         GameInstanceManifest instanceManifest = repository.getInstanceManifest(instanceId);
         Optional<GameInstancePatch> mcbbsPatch = instanceManifest.getPatches().stream().filter(patch -> PATCH_NAME.equals(patch.id())).findFirst();
-        if (!update) {
+        if (this.updateTarget == null) {
             GameInstancePatch patch = new GameInstancePatch(PATCH_NAME).withLibraries(manifest.getLibraries());
             dependencies.add(repository.saveAsync(instanceManifest.addPatch(patch)));
         } else if (mcbbsPatch.isPresent()) {
