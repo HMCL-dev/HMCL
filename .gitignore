@@ -34,7 +34,7 @@ language-subtag-registry
 /minecraft/libraries/HMCLTransformerDiscoveryService/build/
 /minecraft/libraries/HMCLMultiMCBootstrap/build/
 /minecraft/libraries/HMCLLegacyForgeHelper/build/
-/minecraft/libraries/HMCLModloaderHelper/build/
+/minecraft/libraries/HMCLModLoaderHelper/build/
 /buildSrc/build/
 
 # idea
@@ -45,7 +45,7 @@ language-subtag-registry
 /minecraft/libraries/HMCLTransformerDiscoveryService/out/
 /minecraft/libraries/HMCLMultiMCBootstrap/out/
 /minecraft/libraries/HMCLLegacyForgeHelper/out/
-/minecraft/libraries/HMCLModloaderHelper/out/
+/minecraft/libraries/HMCLModLoaderHelper/out/
 
 # eclipse
 /bin/
@@ -55,7 +55,7 @@ language-subtag-registry
 /minecraft/libraries/HMCLTransformerDiscoveryService/bin/
 /minecraft/libraries/HMCLMultiMCBootstrap/bin/
 /minecraft/libraries/HMCLLegacyForgeHelper/bin/
-/minecraft/libraries/HMCLModloaderHelper/bin/
+/minecraft/libraries/HMCLModLoaderHelper/bin/
 .classpath
 .project
 .settings

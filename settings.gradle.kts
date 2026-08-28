@@ -6,7 +6,7 @@ include(
 )
 
 val minecraftLibraries =
-    listOf("HMCLTransformerDiscoveryService", "HMCLMultiMCBootstrap", "HMCLLegacyForgeHelper", "HMCLModloaderHelper")
+    listOf("HMCLTransformerDiscoveryService", "HMCLMultiMCBootstrap", "HMCLLegacyForgeHelper", "HMCLModLoaderHelper")
 include(minecraftLibraries)
 
 for (library in minecraftLibraries) {

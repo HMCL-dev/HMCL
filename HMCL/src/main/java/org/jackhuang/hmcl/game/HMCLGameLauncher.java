@@ -184,7 +184,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         if (this.instance.getVersion().compareTo("1.2") < 0 && this.instance.hasComponent(GameComponentType.FORGE)) {
             LOG.info("Attempting to patch game with modloader-helper");
             try {
-                result.add("-javaagent:" + extractModloaderHelper());
+                result.add("-javaagent:" + extractModLoaderHelper());
             } catch (Exception e) {
                 LOG.warning("Failed to extract modloader-helper", e);
             }
@@ -274,9 +274,9 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         return agentPath;
     }
 
-    private Path extractModloaderHelper() throws IOException {
+    private Path extractModLoaderHelper() throws IOException {
         Library library = new Library(new Artifact("org.jackhuang.hmcl", "modloader-helper", "1.0"));
-        String fileName = "HMCLModloaderHelper-1.0.jar";
+        String fileName = "HMCLModLoaderHelper-1.0.jar";
 
         Path agentPath = instance.getLayout().getLibraryFile(instance.getId(), library).toAbsolutePath().normalize();
         if (agentPath.toString().contains("=")) {

@@ -27,8 +27,8 @@ import java.net.URL;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
 
-public final class HMCLModloaderHelper {
-    private HMCLModloaderHelper() {
+public final class HMCLModLoaderHelper {
+    private HMCLModLoaderHelper() {
         throw new AssertionError();
     }
 
