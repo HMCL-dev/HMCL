@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jetbrains.annotations.Nullable;
 
 import java.net.HttpURLConnection;
 import java.nio.file.Path;
@@ -172,41 +173,50 @@ public final class MicrosoftAccount extends OAuthAccount {
 
     /// Activates an owned cape for this account.
     ///
+    /// The caller uses the returned cape list directly, avoiding an additional
+    /// `GET /minecraft/profile` after the change.
+    ///
     /// @param capeId the server-side cape ID to activate
+    /// @return the updated cape list, as returned by the activation request
     /// @throws AuthenticationException on failure, or when the server rejects the token
-    public void showCape(String capeId) throws AuthenticationException {
+    public List<MicrosoftService.MinecraftProfileResponseCape> showCape(String capeId) throws AuthenticationException {
         requireNonNull(capeId);
 
         logIn();
+        MicrosoftService.MinecraftProfileResponse profile;
         try {
-            service.showCape(session.accessToken(), capeId);
+            profile = service.showCape(session.accessToken(), capeId);
         } catch (AuthenticationException e) {
             if (isUnauthorized(e)) {
                 refreshSession();
-                service.showCape(session.accessToken(), capeId);
+                profile = service.showCape(session.accessToken(), capeId);
             } else {
                 throw e;
             }
         }
         clearProfileCache();
+        return capesOf(profile);
     }
 
     /// Removes this account's active cape.
     ///
+    /// @return the updated cape list, or `null` when the server returned no profile
     /// @throws AuthenticationException on failure, or when the server rejects the token
-    public void hideCape() throws AuthenticationException {
+    public @Nullable List<MicrosoftService.MinecraftProfileResponseCape> hideCape() throws AuthenticationException {
         logIn();
+        MicrosoftService.MinecraftProfileResponse profile;
         try {
-            service.hideCape(session.accessToken());
+            profile = service.hideCape(session.accessToken());
         } catch (AuthenticationException e) {
             if (isUnauthorized(e)) {
                 refreshSession();
-                service.hideCape(session.accessToken());
+                profile = service.hideCape(session.accessToken());
             } else {
                 throw e;
             }
         }
         clearProfileCache();
+        return profile == null ? null : capesOf(profile);
     }
 
     /// Reads the current cape list straight from the Minecraft Services profile.
@@ -216,6 +226,13 @@ public final class MicrosoftAccount extends OAuthAccount {
                 .filter(Objects::nonNull)
                 .map(capes -> capes.stream().filter(Objects::nonNull).toList())
                 .orElse(List.of());
+    }
+
+    /// Extracts the cape list from a Minecraft Services profile.
+    private static List<MicrosoftService.MinecraftProfileResponseCape> capesOf(MicrosoftService.MinecraftProfileResponse profile) {
+        return profile.capes == null
+                ? List.of()
+                : profile.capes.stream().filter(Objects::nonNull).toList();
     }
 
     /// Invalidates the cached profile so the UI re-fetches the server state after a cape change.

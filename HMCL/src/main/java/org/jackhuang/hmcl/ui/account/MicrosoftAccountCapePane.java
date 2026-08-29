@@ -19,11 +19,13 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import javafx.animation.PauseTransition;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftService.MinecraftProfileResponseCape;
 import org.jackhuang.hmcl.game.CapePreview;
@@ -40,6 +42,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -48,18 +51,40 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// activate one of them or remove the active cape.
 ///
 /// Cape data is always read from the Minecraft Services profile, never from a
-/// locally fabricated list.
+/// locally fabricated list. A cape change is debounced and serialized so rapid
+/// clicks yield a single `PUT`/`DELETE` instead of hammering the rate-limited
+/// Minecraft Services endpoint.
 @NotNullByDefault
 public final class MicrosoftAccountCapePane extends StackPane {
 
-    private final MicrosoftAccount account;
-    private final AdvancedListBox listBox = new AdvancedListBox();
-    private final SpinnerPane spinnerPane = new SpinnerPane();
+    /// Idle delay before a pending cape change is actually sent. Rapid clicks
+    /// within this window are coalesced into the final selection.
+    private static final int CAPE_CHANGE_DEBOUNCE_MILLIS = 400;
 
     /// Preview display width in the list; the height is derived from the 10:16
     /// cape aspect ratio so the front face is never stretched into a square.
     private static final double CAPE_PREVIEW_WIDTH = 20;
     private static final double CAPE_PREVIEW_HEIGHT = CAPE_PREVIEW_WIDTH / CapePreview.ASPECT_RATIO;
+
+    private final MicrosoftAccount account;
+    private final AdvancedListBox listBox = new AdvancedListBox();
+    private final SpinnerPane spinnerPane = new SpinnerPane();
+
+    /// Guards against concurrent `GET /minecraft/profile` reloads.
+    private final AtomicBoolean reloading = new AtomicBoolean(false);
+    /// Guards against concurrent cape-change requests, so only one
+    /// `PUT`/`DELETE` runs at a time.
+    private final AtomicBoolean changingCape = new AtomicBoolean(false);
+
+    /// The cape list currently displayed; reused when a `DELETE` returns no body.
+    private List<MinecraftProfileResponseCape> currentCapes = List.of();
+    /// Whether a debounced cape change is pending.
+    private boolean hasPendingChange;
+    /// The pending cape id (`null` means "remove the active cape").
+    private @Nullable String pendingCapeId;
+
+    /// Debounce timer coalescing rapid selections.
+    private final PauseTransition debounce = new PauseTransition(Duration.millis(CAPE_CHANGE_DEBOUNCE_MILLIS));
 
     public MicrosoftAccountCapePane(MicrosoftAccount account) {
         this.account = account;
@@ -74,6 +99,8 @@ public final class MicrosoftAccountCapePane extends StackPane {
         spinnerPane.setPrefHeight(360);
         spinnerPane.setOnFailedAction(e -> reload());
 
+        debounce.setOnFinished(e -> runPendingChange());
+
         JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
         cancelButton.getStyleClass().add("dialog-cancel");
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
@@ -85,28 +112,41 @@ public final class MicrosoftAccountCapePane extends StackPane {
         reload();
     }
 
-    /// Reloads the cape list from the server and re-renders the item list.
+    /// Reloads the cape list from the server. At most one reload runs at a time.
     private void reload() {
+        if (!reloading.compareAndSet(false, true)) {
+            return;
+        }
         spinnerPane.showSpinner();
         Task.supplyAsync(account::getCapes)
-                .whenComplete(Schedulers.javafx(), this::renderCapes)
+                .whenComplete(Schedulers.javafx(), (capes, exception) -> {
+                    reloading.set(false);
+                    renderCapes(capes, exception);
+                })
                 .start();
     }
 
-    /// Renders the loading result, or the failure reason when loading failed.
+    /// Renders the initial-load result, or the failure reason when loading failed.
     private void renderCapes(@Nullable List<MinecraftProfileResponseCape> capes, @Nullable Exception exception) {
         spinnerPane.hideSpinner();
         if (exception != null) {
             spinnerPane.setFailedReason(Accounts.localizeErrorMessage(exception));
             return;
         }
+        renderList(capes == null ? List.of() : capes, false);
+    }
 
-        boolean hasActiveCape = capes.stream().anyMatch(cape -> "ACTIVE".equals(cape.state));
+    /// Re-renders the list. When `allInactive` is true, every cape is shown as
+    /// inactive regardless of its stored state, used for a `DELETE` that returned
+    /// no body.
+    private void renderList(List<MinecraftProfileResponseCape> capes, boolean allInactive) {
+        currentCapes = capes;
+        boolean hasActive = !allInactive && capes.stream().anyMatch(cape -> "ACTIVE".equals(cape.state));
 
         listBox.clear();
-        listBox.add(buildNoCapeItem(!hasActiveCape));
+        listBox.add(buildNoCapeItem(!hasActive));
         for (MinecraftProfileResponseCape cape : capes) {
-            listBox.add(buildCapeItem(cape));
+            listBox.add(buildCapeItem(cape, !allInactive && "ACTIVE".equals(cape.state)));
         }
     }
 
@@ -115,55 +155,86 @@ public final class MicrosoftAccountCapePane extends StackPane {
         AdvancedListItem item = new AdvancedListItem();
         item.setTitle(i18n("account.cape.none"));
         item.setActive(active);
-        item.setOnAction(e -> confirmCapeChange(i18n("account.cape.remove.confirm"), () -> applyCape(null)));
+        item.setOnAction(e -> requestCapeChange(null));
         return item;
     }
 
     /// Builds the list entry for one cape with a lazily loaded preview.
-    private AdvancedListItem buildCapeItem(MinecraftProfileResponseCape cape) {
+    private AdvancedListItem buildCapeItem(MinecraftProfileResponseCape cape, boolean active) {
         AdvancedListItem item = new AdvancedListItem();
         item.setTitle(StringUtils.isBlank(cape.alias) ? cape.id : cape.alias);
-        boolean active = "ACTIVE".equals(cape.state);
         item.setSubtitle(i18n(active ? "account.cape.active" : "account.cape.inactive"));
         item.setActive(active);
         ImageView preview = createPreview();
         item.setLeftGraphic(preview);
-        item.setOnAction(e -> confirmCapeChange(i18n("account.cape.set.confirm"), () -> applyCape(cape.id)));
+        item.setOnAction(e -> requestCapeChange(cape.id));
         bindPreview(preview, cape.url);
         return item;
     }
 
-    /// Asks the user to confirm before mutating the active cape, then runs `commit`.
-    private void confirmCapeChange(String message, Runnable commit) {
-        Controllers.confirm(message, i18n("account.cape.manage"), commit, null);
-    }
-
-    /// Applies a cape change in the background and reloads the list afterwards.
+    /// Records a cape change request, coalescing rapid clicks through the debounce timer.
     ///
     /// @param capeId the cape to activate, or `null` to remove the active cape
-    private void applyCape(@Nullable String capeId) {
+    private void requestCapeChange(@Nullable String capeId) {
+        hasPendingChange = true;
+        pendingCapeId = capeId;
+        debounce.playFromStart();
+    }
+
+    /// Runs the pending cape change after the debounce delay expires.
+    ///
+    /// Factors is ignored while a change is already in flight; the in-flight
+    /// completion re-arms the debounce and applies the newest pending selection.
+    private void runPendingChange() {
+        if (!hasPendingChange || changingCape.get()) {
+            return;
+        }
+        @Nullable String capeId = pendingCapeId;
+        if (!changingCape.compareAndSet(false, true)) {
+            return;
+        }
+        hasPendingChange = false;
+        applyChange(capeId);
+    }
+
+    /// Applies one cape change in the background, then renders the returned state.
+    private void applyChange(@Nullable String capeId) {
         spinnerPane.showSpinner();
-        Task.runAsync(() -> {
+        Task.supplyAsync(() -> {
                     if (capeId == null) {
-                        account.hideCape();
+                        return account.hideCape();
                     } else {
-                        account.showCape(capeId);
+                        return account.showCape(capeId);
                     }
                 })
-                .whenComplete(Schedulers.javafx(), exception -> {
-                    spinnerPane.hideSpinner();
-                    if (exception != null) {
-                        Controllers.showToast(Accounts.localizeErrorMessage(exception));
+                .whenComplete(Schedulers.javafx(), (capes, exception) -> {
+                    changingCape.set(false);
+                    handleChangeResult(capes, exception);
+                    if (hasPendingChange) {
+                        // A newer selection arrived while this request was in flight.
+                        debounce.playFromStart();
                     }
-                    reload();
                 })
                 .start();
     }
 
+    /// Updates the UI from a completed cape change. It never reloads the profile.
+    private void handleChangeResult(@Nullable List<MinecraftProfileResponseCape> capes, @Nullable Exception exception) {
+        spinnerPane.hideSpinner();
+        if (exception != null) {
+            // A rate-limited or otherwise failed change must not trigger a reload.
+            Controllers.showToast(Accounts.localizeErrorMessage(exception));
+            return;
+        }
+        if (capes == null) {
+            // DELETE returned no body: keep owned capes, clear ACTIVE locally.
+            renderList(currentCapes, true);
+        } else {
+            renderList(capes, false);
+        }
+    }
+
     /// Creates a sized, aligned preview view for a cape front face.
-    ///
-    /// The view keeps the 10:16 cape aspect ratio, so the extracted front face
-    /// is never stretched into a square.
     private static ImageView createPreview() {
         ImageView view = new ImageView();
         view.setFitWidth(CAPE_PREVIEW_WIDTH);
