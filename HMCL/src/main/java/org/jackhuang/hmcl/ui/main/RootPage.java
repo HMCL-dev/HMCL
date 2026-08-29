@@ -147,10 +147,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             AdvancedListItem downloadItem = new AdvancedListItem();
             downloadItem.setLeftIcon(SVG.DOWNLOAD);
             downloadItem.setTitle(i18n("download"));
-            downloadItem.setOnAction(e -> {
-                Controllers.getDownloadPage().showGameDownloads();
-                Controllers.navigate(Controllers.getDownloadPage());
-            });
+            downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(downloadItem, Controllers::prepareDownloadPage);
             }
