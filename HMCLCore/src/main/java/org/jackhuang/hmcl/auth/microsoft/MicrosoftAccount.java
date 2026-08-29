@@ -216,7 +216,7 @@ public final class MicrosoftAccount extends OAuthAccount {
         boolean creator;
 
         synchronized (profileStateLock) {
-            // Re-check under the lock: a concurrent caller may have just completed.
+            /// Re-check under the lock: a concurrent caller may have just completed.
             if (System.currentTimeMillis() < minecraftServicesRateLimitUntil) {
                 MicrosoftService.MinecraftProfileResponse cached = cachedProfile;
                 if (cached != null) {
@@ -235,7 +235,7 @@ public final class MicrosoftAccount extends OAuthAccount {
             future = profileLoading;
         }
 
-        // Non-creators wait on the shared future outside the lock.
+        /// Non-creators wait on the shared future outside the lock.
         if (!creator) {
             return unwrapProfileFuture(future);
         }
@@ -249,7 +249,7 @@ public final class MicrosoftAccount extends OAuthAccount {
                     cachedProfileAt = System.currentTimeMillis();
                     result = fetched;
                 } else {
-                    // A mutation happened during this GET; prefer its newer result.
+                    /// A mutation happened during this GET; prefer its newer result.
                     result = cachedProfile != null ? cachedProfile : fetched;
                 }
                 profileLoading.complete(result);
@@ -352,7 +352,7 @@ public final class MicrosoftAccount extends OAuthAccount {
             commitMutation(profile);
             return capesOf(profile);
         }
-        // DELETE returned no body: keep owned capes locally; never re-GET here.
+        /// DELETE returned no body: keep owned capes locally; never re-GET here.
         return null;
     }
 

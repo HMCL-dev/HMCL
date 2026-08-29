@@ -95,8 +95,8 @@ public final class MicrosoftAccountCapePane extends StackPane {
         getChildren().setAll(layout);
         layout.setHeading(new Label(i18n("account.cape.manage")));
 
-        // Keep the list from touching the dialog's upper/lower edges: let the ScrollPane
-        // scroll inside a padded container instead of expanding to fit its content.
+        /// Keep the list from touching the dialog's upper/lower edges: let the ScrollPane
+        /// scroll inside a padded container instead of expanding to fit its content.
         listBox.setFitToHeight(false);
         StackPane listContent = new StackPane(listBox);
         listContent.setPadding(new Insets(12, 0, 12, 0));
@@ -212,7 +212,7 @@ public final class MicrosoftAccountCapePane extends StackPane {
                     changingCape.set(false);
                     handleChangeResult(capes, exception);
                     if (hasPendingChange) {
-                        // A newer selection arrived while this request was in flight.
+                        /// A newer selection arrived while this request was in flight.
                         debounce.playFromStart();
                     }
                 })
@@ -223,8 +223,8 @@ public final class MicrosoftAccountCapePane extends StackPane {
     private void handleChangeResult(@Nullable List<MinecraftProfileResponseCape> capes, @Nullable Exception exception) {
         spinnerPane.hideSpinner();
         if (exception != null) {
-            // A rate-limited change must not trigger a reload nor auto-apply a
-            // pending selection; drop it so the cooldown is not fought against.
+            /// A rate-limited change must not trigger a reload nor auto-apply a
+            /// pending selection; drop it so the cooldown is not fought against.
             if (exception instanceof MinecraftServicesRateLimitException) {
                 clearPendingChange();
             }
@@ -232,7 +232,7 @@ public final class MicrosoftAccountCapePane extends StackPane {
             return;
         }
         if (capes == null) {
-            // DELETE returned no body: keep owned capes, clear ACTIVE locally.
+            /// DELETE returned no body: keep owned capes, clear ACTIVE locally.
             renderList(currentCapes, true);
         } else {
             renderList(capes, false);
