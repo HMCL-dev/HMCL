@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -504,32 +503,6 @@ public abstract class DefaultGameRepository implements GameRepository {
             return true;
         } finally {
             refreshRepository();
-        }
-    }
-
-    @Override
-    public Optional<String> getGameVersion(GameInstanceManifest manifest) {
-        DefaultGameInstance instance = findSnapshotInstance(manifest.id());
-        if (instance != null && manifest.equals(instance.getManifest())) {
-            GameVersionNumber version = instance.getVersion();
-            if (version == GameVersionNumber.unknown()) {
-                return Optional.empty();
-            }
-            return Optional.of(version.toString());
-        }
-
-        try {
-            GameInstanceManifest resolved = resolve(manifest).launchManifest();
-            Path instanceJar = getInstanceJar(resolved);
-            Optional<String> gameVersion = GameVersion.minecraftVersion(instanceJar);
-            if (gameVersion.isEmpty()) {
-                LOG.warning("Cannot find out game version of " + manifest.id()
-                        + ", primary jar: " + instanceJar
-                        + ", jar exists: " + Files.exists(instanceJar));
-            }
-            return gameVersion;
-        } catch (NoSuchGameInstanceException e) {
-            return Optional.empty();
         }
     }
 

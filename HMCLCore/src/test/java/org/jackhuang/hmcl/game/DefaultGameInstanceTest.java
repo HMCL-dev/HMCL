@@ -189,24 +189,6 @@ public final class DefaultGameInstanceTest {
         assertEquals(GameVersionNumber.asGameVersion("1.21.1"), updated.getVersion());
     }
 
-    /// Version lookup for an explicit manifest does not reuse a same-id instance with different content.
-    @Test
-    public void testExplicitManifestDoesNotReuseDifferentCachedManifest(@TempDir Path tempDirectory) throws IOException {
-        TestRepository repository = new TestRepository(tempDirectory);
-        GameInstanceID instanceId = new GameInstanceID("instance");
-        GameInstanceID cachedJarId = new GameInstanceID("cached-jar");
-        GameInstanceID requestedJarId = new GameInstanceID("requested-jar");
-        writeVersionJar(repository.getLayout().getInstanceJarFile(cachedJarId), "1.20.1");
-        writeVersionJar(repository.getLayout().getInstanceJarFile(requestedJarId), "1.21.1");
-
-        GameInstanceManifest cachedManifest = new GameInstanceManifest(instanceId).withJar(cachedJarId);
-        TestGameInstance cachedInstance = repository.publish(instanceId, cachedManifest);
-        assertEquals(GameVersionNumber.asGameVersion("1.20.1"), cachedInstance.getVersion());
-
-        GameInstanceManifest requestedManifest = cachedManifest.withJar(requestedJarId);
-        assertEquals(Optional.of("1.21.1"), repository.getGameVersion(requestedManifest));
-    }
-
     /// A cached game download can be materialized at an explicit destination.
     @Test
     public void testGameDownloadMaterializesExplicitDestination(@TempDir Path tempDirectory)
