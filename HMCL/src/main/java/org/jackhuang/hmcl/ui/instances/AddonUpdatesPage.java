@@ -153,7 +153,6 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                 localAddonManager.getDirectory(),
                 objects.stream()
                         .filter(AddonUpdateObject::isEnabled)
-                        .map(AddonUpdateObject::getData)
                         .toList()
         );
         Controllers.taskDialog(
@@ -188,7 +187,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             for (int i = 0; i < objects.size(); i++) {
                 csvTable.set(0, i + 1, objects.get(i).fileName.get());
                 csvTable.set(1, i + 1, objects.get(i).currentVersion.get());
-                csvTable.set(2, i + 1, objects.get(i).targetVersion.get());
+                csvTable.set(2, i + 1, objects.get(i).targetVersion.getValue());
                 csvTable.set(3, i + 1, objects.get(i).source.get());
             }
 
@@ -211,26 +210,26 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
     private static final class AddonUpdateObject {
         final LocalAddonFile.AddonUpdate data;
-        final BooleanProperty enabled = new SimpleBooleanProperty();
-        final StringProperty fileName = new SimpleStringProperty();
-        final StringProperty currentVersion = new SimpleStringProperty();
-        final StringProperty targetVersion = new SimpleStringProperty();
-        final StringProperty source = new SimpleStringProperty();
+        final ObjectProperty<RemoteAddon.Version> targetVersionObject;
+        final BooleanProperty enabled;
+        final StringProperty fileName;
+        final StringProperty currentVersion;
+        final ObservableValue<String> targetVersion;
+        final StringProperty source;
 
         public AddonUpdateObject(LocalAddonFile.AddonUpdate data) {
             this.data = data;
+            this.targetVersionObject = new SimpleObjectProperty<>(data.latestAvailableVersion());
 
-            enabled.set(!data.localAddonFile().isDisabled());
-            fileName.set(data.localAddonFile().getFileName());
-            currentVersion.set(data.currentVersion().version());
-            targetVersion.set(data.targetVersion().version());
-            switch (data.currentVersion().self().getSource()) {
-                case CURSEFORGE:
-                    source.set(i18n("addon.curseforge"));
-                    break;
-                case MODRINTH:
-                    source.set(i18n("addon.modrinth"));
-            }
+            enabled = new SimpleBooleanProperty(!data.localAddonFile().isDisabled());
+
+            fileName = new SimpleStringProperty(data.localAddonFile().getFileName());
+            currentVersion = new SimpleStringProperty(data.currentVersion().version());
+            targetVersion = this.targetVersionObject.map(RemoteAddon.Version::version);
+            source = switch (data.currentVersion().self().getSource()) {
+                case CURSEFORGE -> new SimpleStringProperty(i18n("addon.curseforge"));
+                case MODRINTH -> new SimpleStringProperty(i18n("addon.modrinth"));
+            };
         }
 
         public LocalAddonFile.AddonUpdate getData() {
@@ -253,48 +252,32 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             return fileName.get();
         }
 
-        public StringProperty fileNameProperty() {
+        public ReadOnlyStringProperty fileNameProperty() {
             return fileName;
-        }
-
-        public void setFileName(String fileName) {
-            this.fileName.set(fileName);
         }
 
         public String getCurrentVersion() {
             return currentVersion.get();
         }
 
-        public StringProperty currentVersionProperty() {
+        public ReadOnlyStringProperty currentVersionProperty() {
             return currentVersion;
         }
 
-        public void setCurrentVersion(String currentVersion) {
-            this.currentVersion.set(currentVersion);
-        }
-
         public String getTargetVersion() {
-            return targetVersion.get();
+            return targetVersion.getValue();
         }
 
-        public StringProperty targetVersionProperty() {
+        public ObservableValue<String> targetVersionProperty() {
             return targetVersion;
-        }
-
-        public void setTargetVersion(String targetVersion) {
-            this.targetVersion.set(targetVersion);
         }
 
         public String getSource() {
             return source.get();
         }
 
-        public StringProperty sourceProperty() {
+        public ReadOnlyStringProperty sourceProperty() {
             return source;
-        }
-
-        public void setSource(String source) {
-            this.source.set(source);
         }
     }
 
@@ -303,7 +286,6 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         public AddonChangelog(AddonUpdateObject object) {
             List<RemoteAddon.Version> availableVersions = object.data.availableVersions();
-            RemoteAddon.Version targetVersion = object.data.targetVersion();
 
             Label headingLabel = new Label(i18n("addon.changelog"));
             this.setHeading(new HBox(8, headingLabel));
@@ -314,7 +296,8 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             // Version selector ComboBox
             JFXComboBox<RemoteAddon.Version> versionComboBox = new JFXComboBox<>();
             versionComboBox.getItems().setAll(availableVersions);
-            versionComboBox.getSelectionModel().select(targetVersion);
+            versionComboBox.getSelectionModel().select(object.targetVersionObject.get());
+            FXUtils.onChange(versionComboBox.getSelectionModel().selectedItemProperty(), object.targetVersionObject::set);
             versionComboBox.setConverter(FXUtils.stringConverter(RemoteAddon.Version::name));
             HBox.setHgrow(versionComboBox, Priority.ALWAYS);
 
@@ -393,7 +376,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         private void loadVersionPageUrl(AddonUpdateObject object, JFXHyperlink button) {
             Task.supplyAsync(() -> {
                 RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
-                return repo == null ? null : repo.getVersionPageUrl(object.data.targetVersion());
+                return repo == null ? null : repo.getVersionPageUrl(object.targetVersionObject.get());
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null && StringUtils.isNotBlank(result)) {
                     button.setExternalLink(result);
@@ -409,21 +392,21 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         private final Collection<Task<?>> dependents;
         private final List<LocalAddonFile> failedAddons = new ArrayList<>();
 
-        AddonUpdateTask(Path addonDirectory, List<LocalAddonFile.AddonUpdate> addons) {
+        AddonUpdateTask(Path addonDirectory, List<AddonUpdateObject> addons) {
             setStage("addon.check_update.confirm");
             getProperties().put("total", addons.size());
 
             this.dependents = new ArrayList<>();
-            for (LocalAddonFile.AddonUpdate addon : addons) {
-                LocalAddonFile local = addon.localAddonFile();
-                RemoteAddon.Version remote = addon.targetVersion();
+            for (var addon : addons) {
+                LocalAddonFile local = addon.data.localAddonFile();
+                RemoteAddon.Version remote = addon.targetVersionObject.get();
                 boolean isDisabled = local.isDisabled();
                 String originalFileName = local.getFile().getFileName().toString();
 
                 dependents.add(Task
                         .runAsync(Schedulers.javafx(), () -> local.setOld(true))
                         .thenComposeAsync(() -> {
-                            String fileName = addon.useRemoteFileName() ? remote.file().filename() : originalFileName;
+                            String fileName = addon.data.useRemoteFileName() ? remote.file().filename() : originalFileName;
                             if (isDisabled)
                                 fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
 

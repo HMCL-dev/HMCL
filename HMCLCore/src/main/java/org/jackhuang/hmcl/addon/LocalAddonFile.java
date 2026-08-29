@@ -64,10 +64,12 @@ public abstract class LocalAddonFile {
             RemoteAddon.Type repoType,
             LocalAddonFile localAddonFile,
             RemoteAddon.Version currentVersion,
-            RemoteAddon.Version targetVersion,
-            boolean useRemoteFileName,
-            List<RemoteAddon.Version> availableVersions
+            List<RemoteAddon.Version> availableVersions,
+            boolean useRemoteFileName
     ) {
+        public RemoteAddon.Version latestAvailableVersion() {
+            return availableVersions.getFirst();
+        }
     }
 
     public static class Description {
