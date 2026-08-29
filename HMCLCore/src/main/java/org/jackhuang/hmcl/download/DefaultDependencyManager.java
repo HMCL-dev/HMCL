@@ -118,7 +118,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// @throws IllegalArgumentException if `updateTarget` belongs to another repository
     /// @throws IllegalStateException    if the target conflicts with the selected operation, cannot
     ///                                  be reserved, or another repository draft is open
-    protected final DefaultGameRepositoryDraft openGameBuilderDraft(
+    protected DefaultGameRepositoryDraft openGameBuilderDraft(
             GameInstanceManifest initialManifest,
             @Nullable DefaultGameInstance updateTarget) {
         if (updateTarget != null) {
@@ -320,12 +320,14 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         }
 
         Path modsDirectory = instance.getModsDirectory();
-        return Task.supplyAsync(() -> baseManifest.removeComponent(componentVersion.getComponentType()))
-                .thenComposeAsync(manifest -> componentVersion
-                        .getInstallTask(this, manifest, modsDirectory)
-                        .thenApplyAsync(patch -> patch == null
-                                ? manifest
-                                : manifest.addPatch(patch).reconstructByPatches()))
+        return Task.composeAsync(() -> {
+                    GameInstanceManifest manifest = baseManifest.removeComponent(componentVersion.getComponentType());
+                    return componentVersion
+                            .getInstallTask(this, manifest, modsDirectory)
+                            .thenApplyAsync(patch -> patch == null
+                                    ? manifest
+                                    : manifest.addPatch(patch).reconstructByPatches());
+                })
                 .withStage("hmcl.install.%s:%s".formatted(componentVersion.getComponentType().getPatchId(), componentVersion.getSelfVersion()));
     }
 
