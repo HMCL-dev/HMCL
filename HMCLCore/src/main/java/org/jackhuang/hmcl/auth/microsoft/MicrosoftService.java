@@ -55,6 +55,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class MicrosoftService {
     private static final String SCOPE = "XboxLive.signin offline_access";
+    private static final String CAPES_ACTIVE_ENDPOINT = "https://api.minecraftservices.com/minecraft/profile/capes/active";
     private static final ThreadPoolExecutor POOL = threadPool("MicrosoftProfileProperties", true, 2, 10,
             TimeUnit.SECONDS);
 
@@ -216,6 +217,14 @@ public class MicrosoftService {
         }
     }
 
+    /// Extracts the skin and active cape textures from a Minecraft Services profile.
+    ///
+    /// The cape texture is only emitted when the profile contains a cape whose
+    /// `state` is `ACTIVE`, following the server-reported state instead of any
+    /// locally fabricated value.
+    ///
+    /// @param profile the profile returned by `GET /minecraft/profile`
+    /// @return the texture map, possibly without a `CAPE` entry when no active cape exists
     public static Optional<Map<TextureType, Texture>> getTextures(MinecraftProfileResponse profile) {
         Objects.requireNonNull(profile);
 
@@ -224,9 +233,12 @@ public class MicrosoftService {
         if (!profile.skins.isEmpty()) {
             textures.put(TextureType.SKIN, new Texture(profile.skins.get(0).url, null));
         }
-        // if (!profile.capes.isEmpty()) {
-        // textures.put(TextureType.CAPE, new Texture(profile.capes.get(0).url, null);
-        // }
+        if (profile.capes != null) {
+            profile.capes.stream()
+                    .filter(cape -> "ACTIVE".equals(cape.state))
+                    .findFirst()
+                    .ifPresent(cape -> textures.put(TextureType.CAPE, new Texture(cape.url, null)));
+        }
 
         return Optional.of(textures);
     }
@@ -298,6 +310,48 @@ public class MicrosoftService {
             }
         } catch (IOException | JsonParseException | URISyntaxException e) {
             throw new AuthenticationException(e);
+        }
+    }
+
+    /// Activates an owned cape for the given Minecraft access token.
+    ///
+    /// Sends `PUT /minecraft/profile/capes/active` with the JSON body
+    /// `{"capeId":"..."}`. A non-2xx response is reported as a
+    /// [ServerDisconnectException] whose cause chain carries the HTTP status
+    /// code, so callers can distinguish `401 Unauthorized` from other failures.
+    ///
+    /// @param accessToken the Minecraft Services access token
+    /// @param capeId      the server-side cape ID to activate
+    /// @throws AuthenticationException on network failure or a non-2xx response
+    public void showCape(String accessToken, String capeId) throws AuthenticationException {
+        requireNonNull(accessToken);
+        requireNonNull(capeId);
+        try {
+            HttpRequest.PUT(CAPES_ACTIVE_ENDPOINT)
+                    .json(mapOf(pair("capeId", capeId)))
+                    .authorization("Bearer " + accessToken)
+                    .accept("application/json")
+                    .getString();
+        } catch (IOException e) {
+            throw new ServerDisconnectException(e);
+        }
+    }
+
+    /// Removes the active cape for the given Minecraft access token.
+    ///
+    /// Sends `DELETE /minecraft/profile/capes/active` without a request body.
+    ///
+    /// @param accessToken the Minecraft Services access token
+    /// @throws AuthenticationException on network failure or a non-2xx response
+    public void hideCape(String accessToken) throws AuthenticationException {
+        requireNonNull(accessToken);
+        try {
+            HttpRequest.DELETE(CAPES_ACTIVE_ENDPOINT)
+                    .authorization("Bearer " + accessToken)
+                    .accept("application/json")
+                    .getString();
+        } catch (IOException e) {
+            throw new ServerDisconnectException(e);
         }
     }
 
@@ -438,8 +492,18 @@ public class MicrosoftService {
         }
     }
 
-    public static class MinecraftProfileResponseCape {
+    public static class MinecraftProfileResponseCape implements Validation {
+        public String id;
+        public String state;
+        public String url;
+        public String alias;
 
+        @Override
+        public void validate() throws JsonParseException, TolerableValidationException {
+            Validation.requireNonNull(id, "id cannot be null");
+            Validation.requireNonNull(state, "state cannot be null");
+            Validation.requireNonNull(url, "url cannot be null");
+        }
     }
 
     @JsonSerializable

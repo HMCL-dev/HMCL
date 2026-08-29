@@ -23,9 +23,12 @@ import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
+import java.net.HttpURLConnection;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -81,22 +84,32 @@ public final class MicrosoftAccount extends OAuthAccount {
                     && service.validate(session.notAfter(), session.tokenType(), session.accessToken())) {
                 authenticated = true;
             } else {
-                MicrosoftSession acquiredSession = service.refresh(session);
-                if (!Objects.equals(acquiredSession.profile().id(), session.profile().id())) {
-                    throw new ServerResponseMalformedException("Selected profile changed");
-                }
-                if (!acquiredSession.hasProfileName()) {
-                    throw new ServerResponseMalformedException("Profile name is missing");
-                }
-
-                session = acquiredSession;
-
-                authenticated = true;
-                invalidate();
+                refreshSession();
             }
         }
 
         return session.toAuthInfo();
+    }
+
+    /// Refreshes the Minecraft access token using the stored refresh token.
+    ///
+    /// This is the shared token-refresh path used both by {@link #logIn()} and
+    /// by the cape operations when the server rejects the current access token.
+    /// It never opens a browser and therefore does not perform OAuth itself.
+    ///
+    /// @throws AuthenticationException when the refresh fails or the selected profile changes
+    private void refreshSession() throws AuthenticationException {
+        MicrosoftSession acquiredSession = service.refresh(session);
+        if (!Objects.equals(acquiredSession.profile().id(), session.profile().id())) {
+            throw new ServerResponseMalformedException("Selected profile changed");
+        }
+        if (!acquiredSession.hasProfileName()) {
+            throw new ServerResponseMalformedException("Profile name is missing");
+        }
+
+        session = acquiredSession;
+        authenticated = true;
+        invalidate();
     }
 
     @Override
@@ -134,6 +147,98 @@ public final class MicrosoftAccount extends OAuthAccount {
     @Override
     public void uploadSkin(boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
         service.uploadSkin(session.accessToken(), isSlim, file);
+    }
+
+    /// Returns every cape owned by this account, as reported by Minecraft Services.
+    ///
+    /// The token is handled internally: the session is made valid first and,
+    /// when the server reports `401 Unauthorized`, the session is refreshed once
+    /// and the profile is re-fetched.
+    ///
+    /// @return the cape list (possibly empty); it is not mutable
+    /// @throws AuthenticationException when the profile cannot be loaded
+    public List<MicrosoftService.MinecraftProfileResponseCape> getCapes() throws AuthenticationException {
+        logIn();
+        try {
+            return readCapes();
+        } catch (AuthenticationException e) {
+            if (isUnauthorized(e)) {
+                refreshSession();
+                return readCapes();
+            }
+            throw e;
+        }
+    }
+
+    /// Activates an owned cape for this account.
+    ///
+    /// @param capeId the server-side cape ID to activate
+    /// @throws AuthenticationException on failure, or when the server rejects the token
+    public void showCape(String capeId) throws AuthenticationException {
+        requireNonNull(capeId);
+
+        logIn();
+        try {
+            service.showCape(session.accessToken(), capeId);
+        } catch (AuthenticationException e) {
+            if (isUnauthorized(e)) {
+                refreshSession();
+                service.showCape(session.accessToken(), capeId);
+            } else {
+                throw e;
+            }
+        }
+        clearProfileCache();
+    }
+
+    /// Removes this account's active cape.
+    ///
+    /// @throws AuthenticationException on failure, or when the server rejects the token
+    public void hideCape() throws AuthenticationException {
+        logIn();
+        try {
+            service.hideCape(session.accessToken());
+        } catch (AuthenticationException e) {
+            if (isUnauthorized(e)) {
+                refreshSession();
+                service.hideCape(session.accessToken());
+            } else {
+                throw e;
+            }
+        }
+        clearProfileCache();
+    }
+
+    /// Reads the current cape list straight from the Minecraft Services profile.
+    private List<MicrosoftService.MinecraftProfileResponseCape> readCapes() throws AuthenticationException {
+        return service.getCompleteProfile(session.getAuthorization())
+                .map(profile -> profile.capes)
+                .filter(Objects::nonNull)
+                .map(capes -> capes.stream().filter(Objects::nonNull).toList())
+                .orElse(List.of());
+    }
+
+    /// Invalidates the cached profile so the UI re-fetches the server state after a cape change.
+    private void clearProfileCache() {
+        service.getProfileRepository().invalidate(profileID);
+        invalidate();
+    }
+
+    /// Reports whether the exception chain contains a `401 Unauthorized` HTTP response.
+    ///
+    /// The Minecraft Services cape endpoints are contacted through [MicrosoftService],
+    /// which wraps a non-2xx HTTP status into [ServerDisconnectException] while keeping
+    /// the original [ResponseCodeException] in the cause chain.
+    private static boolean isUnauthorized(Throwable exception) {
+        Throwable cause = exception;
+        while (cause != null) {
+            if (cause instanceof ResponseCodeException responseCodeException
+                    && responseCodeException.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
     }
 
     @Override
