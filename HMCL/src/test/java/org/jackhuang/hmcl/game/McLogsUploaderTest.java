@@ -24,8 +24,11 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -86,26 +89,45 @@ public final class McLogsUploaderTest {
         assertTrue(truncated.contains("-line-" + (all.length - 1)));
     }
 
-    /// Verifies that multi-byte characters survive byte truncation intact (no replacement characters).
+    /// Verifies that byte truncation never splits a multi-byte character, for every possible byte limit.
     @Test
-    public void keepsMultibyteCharactersIntact() {
-        String tail = "崩溃日志" + "\uD83D\uDCDD"; // Chinese + emoji
-        String content = "a".repeat(10 * 1024 * 1024) + tail;
+    public void truncateNeverProducesReplacementCharacters() {
+        String content = "é汉😀日ア" + "abcd"; // 2-byte, 3-byte and 4-byte characters mixed with ASCII
+        byte[] all = content.getBytes(UTF_8);
 
-        String truncated = McLogsUploader.truncate(content);
-
-        assertFalse(truncated.contains("\uFFFD"));
-        assertTrue(truncated.endsWith(tail));
+        for (int limit = 1; limit <= all.length; limit++) {
+            String result = FileUtils.truncateUtf8ToByteLimit(content, limit);
+            assertFalse(result.contains("\uFFFD"), "limit=" + limit);
+            assertTrue(result.getBytes(UTF_8).length <= limit, "limit=" + limit);
+        }
     }
 
-    /// Verifies that only the tail of an oversized file is read (the result is larger than the limit by the
-    /// alignment guard, which a whole-file-read-then-truncate implementation would never produce).
+    /// Verifies that a file smaller than the limit is read in full.
     @Test
-    public void readsTailInsteadOfWholeFile(@TempDir Path tempDir) throws IOException {
-        int maxBytes = 1024 * 1024;
-        Path file = tempDir.resolve("large.log");
-        String marker = "TAIL-MARKER-END";
-        byte[] head = new byte[maxBytes + 64 * 1024];
+    public void readsWholeFileWhenSmall(@TempDir Path tempDir) throws IOException {
+        Path file = tempDir.resolve("small.log");
+        Files.write(file, "hello log".getBytes(UTF_8));
+
+        assertEquals("hello log", FileUtils.readTextTailMaybeNativeEncoding(file, 1024));
+    }
+
+    /// Verifies that a file exactly at the limit is read in full.
+    @Test
+    public void readsFileExactlyAtLimit(@TempDir Path tempDir) throws IOException {
+        int maxBytes = 1024;
+        Path file = tempDir.resolve("exact.log");
+        Files.write(file, "a".repeat(maxBytes).getBytes(UTF_8));
+
+        assertEquals("a".repeat(maxBytes), FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes));
+    }
+
+    /// Verifies that a file larger than the limit keeps its tail within the byte limit.
+    @Test
+    public void readsTailWhenLargerThanLimit(@TempDir Path tempDir) throws IOException {
+        int maxBytes = 1024;
+        String marker = "END-MARKER";
+        Path file = tempDir.resolve("medium.log");
+        byte[] head = new byte[maxBytes + 512];
         Arrays.fill(head, (byte) 'a');
         try (OutputStream out = Files.newOutputStream(file)) {
             out.write(head);
@@ -114,95 +136,210 @@ public final class McLogsUploaderTest {
 
         String tail = FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes);
 
-        assertTrue(tail.getBytes(UTF_8).length > maxBytes);
+        assertTrue(tail.getBytes(UTF_8).length <= maxBytes);
         assertTrue(tail.endsWith(marker));
     }
 
-    /// Verifies that a UTF-8 multi-byte character is never split when only the tail is read.
+    /// Verifies that a 100 MiB file is read by seeking to its tail instead of loading it whole.
     @Test
-    public void neverSplitsUtf8Characters(@TempDir Path tempDir) throws IOException {
-        int maxBytes = 10_000;
-        Path file = tempDir.resolve("cjk.log");
-        byte[] cjk = "汉".repeat(10_000).getBytes(UTF_8); // 30_000 bytes, 3 bytes each
-        try (OutputStream out = Files.newOutputStream(file)) {
-            out.write(cjk);
-            out.write("-END".getBytes(UTF_8));
+    public void readsTailOfLargeFileBySeeking(@TempDir Path tempDir) throws IOException {
+        int maxBytes = 1024 * 1024;
+        String marker = "CRASH-AT-END";
+        Path file = tempDir.resolve("sparse.log");
+        try (FileChannel channel = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
+            channel.position(100L * 1024 * 1024);
+            channel.write(ByteBuffer.wrap(marker.getBytes(UTF_8)));
         }
 
         String tail = FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes);
 
-        assertFalse(tail.contains("\uFFFD"));
-        assertTrue(tail.endsWith("-END"));
-        assertTrue(tail.startsWith("汉"));
+        assertTrue(tail.getBytes(UTF_8).length <= maxBytes);
+        assertTrue(tail.endsWith(marker));
     }
 
-    /// Verifies that an empty file yields an empty result.
+    /// Verifies that an empty file reads as an empty string.
     @Test
     public void readsEmptyFile(@TempDir Path tempDir) throws IOException {
-        Path file = Files.createFile(tempDir.resolve("empty.log"));
+        Path file = tempDir.resolve("empty.log");
+        Files.write(file, new byte[0]);
 
         assertEquals("", FileUtils.readTextTailMaybeNativeEncoding(file, 1024));
     }
 
-    /// Verifies that a missing file raises IOException, which the uploader turns into a fallback.
+    /// Verifies that a missing file surfaces an exception rather than crashing.
     @Test
     public void failsOnMissingFile(@TempDir Path tempDir) {
-        Path file = tempDir.resolve("missing.log");
-
-        assertThrows(IOException.class, () -> FileUtils.readTextTailMaybeNativeEncoding(file, 1024));
+        assertThrows(IOException.class,
+                () -> FileUtils.readTextTailMaybeNativeEncoding(tempDir.resolve("missing.log"), 1024));
     }
 
-    /// Verifies that access and refresh token arguments are masked, wherever their value appears.
+    /// Verifies that a UTF-8 cut in the middle of a 3-byte character is aligned to a character boundary.
+    @Test
+    public void neverSplitsUtf8Characters(@TempDir Path tempDir) throws IOException {
+        int maxBytes = 10_000;
+        Path file = tempDir.resolve("chinese.log");
+        Files.write(file, ("汉".repeat(10_000) + "-END").getBytes(UTF_8));
+
+        String tail = FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes);
+
+        assertTrue(tail.getBytes(UTF_8).length <= maxBytes);
+        assertFalse(tail.contains("\uFFFD"));
+        assertTrue(tail.startsWith("汉"));
+        assertTrue(tail.endsWith("-END"));
+    }
+
+    /// Verifies that the tail never opens with a truncated first line.
+    @Test
+    public void dropsTruncatedLeadingLine(@TempDir Path tempDir) throws IOException {
+        int maxBytes = 1024;
+        Path file = tempDir.resolve("lines.log");
+        byte[] head = "skipped-partial-line-".repeat(200).getBytes(UTF_8); // no newline
+        String tailContent = "\nCOMPLETE-LINE-1\nCOMPLETE-LINE-2";
+        try (OutputStream out = Files.newOutputStream(file)) {
+            out.write(head);
+            out.write(tailContent.getBytes(UTF_8));
+        }
+
+        String tail = FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes);
+
+        assertTrue(tail.startsWith("COMPLETE-LINE-1"));
+        assertTrue(tail.endsWith("COMPLETE-LINE-2"));
+    }
+
+    /// Verifies that credentials in command-line argument form have their values masked.
     @Test
     public void sanitizeMasksTokenArguments() {
-        String sanitized = McLogsUploader.sanitize(
-                "java --accessToken SECRET_VALUE_123 --version 8 && refresh_token=REFRESH_VALUE_456");
+        String content = String.join("\n",
+                "--accessToken abc123",
+                "--refresh_token refresh456",
+                "--clientToken client789",
+                "--session-token sessionABC");
 
-        assertFalse(sanitized.contains("SECRET_VALUE_123"));
-        assertFalse(sanitized.contains("REFRESH_VALUE_456"));
-        assertTrue(sanitized.contains("<access token>"));
+        String sanitized = McLogsUploader.sanitize(content);
+
+        assertFalse(sanitized.contains("abc123"));
+        assertFalse(sanitized.contains("refresh456"));
+        assertFalse(sanitized.contains("client789"));
+        assertFalse(sanitized.contains("sessionABC"));
+        assertTrue(sanitized.contains("--accessToken <access token>"));
     }
 
-    /// Verifies that JSON-style tokens are masked while the surrounding name is preserved.
+    /// Verifies that credentials in JSON form have their values masked, with and without surrounding spaces.
     @Test
     public void sanitizeMasksJsonStyleTokens() {
-        String sanitized = McLogsUploader.sanitize("{ \"accessToken\" : \"SECRET_VALUE_123\" }");
+        String content = "{\"accessToken\":\"SECRET_TOKEN_1\",\"refreshToken\" : \"SECRET_TOKEN_2\"}";
 
-        assertFalse(sanitized.contains("SECRET_VALUE_123"));
-        assertTrue(sanitized.contains("accessToken"));
-        assertTrue(sanitized.contains("<access token>"));
+        String sanitized = McLogsUploader.sanitize(content);
+
+        assertFalse(sanitized.contains("SECRET_TOKEN_1"));
+        assertFalse(sanitized.contains("SECRET_TOKEN_2"));
+        assertTrue(sanitized.contains("\"accessToken\":\"<access token>\""));
+        assertTrue(sanitized.contains("\"refreshToken\" : \"<access token>\""));
     }
 
-    /// Verifies that IPv4 addresses are masked but a trailing port remains visible.
+    /// Verifies that `authToken` and its hyphenated/underscored variants are masked.
+    @Test
+    public void sanitizeMasksAuthToken() {
+        String content = "authToken=ghp_S3cr3t\n--auth_token tkn123\n\"auth-token\": \"tkn-456\"";
+
+        String sanitized = McLogsUploader.sanitize(content);
+
+        assertFalse(sanitized.contains("ghp_S3cr3t"));
+        assertFalse(sanitized.contains("tkn123"));
+        assertFalse(sanitized.contains("tkn-456"));
+        assertTrue(sanitized.contains("authToken=<access token>"));
+    }
+
+    /// Verifies that valid IPv4 addresses are masked while keeping a trailing port.
     @Test
     public void sanitizeMasksIpv4Addresses() {
-        String sanitized = McLogsUploader.sanitize("Connecting to 192.168.1.1:25565");
+        String sanitized = McLogsUploader.sanitize(
+                "Connecting to 192.168.1.1:25565 and 127.0.0.1 and 255.255.255.255");
 
         assertFalse(sanitized.contains("192.168.1.1"));
+        assertFalse(sanitized.contains("127.0.0.1"));
+        assertFalse(sanitized.contains("255.255.255.255"));
         assertTrue(sanitized.contains("<IPv4>:25565"));
     }
 
-    /// Verifies that the current user's home directory is masked.
+    /// Verifies that invalid dotted numbers and unrelated dotted versions are left untouched.
+    @Test
+    public void sanitizeDoesNotTouchInvalidIpv4() {
+        String content = "256.1.1.1 and 1.2.3.999 and version 1.20.4";
+
+        String sanitized = McLogsUploader.sanitize(content);
+
+        assertTrue(sanitized.contains("256.1.1.1"));
+        assertTrue(sanitized.contains("1.2.3.999"));
+        assertTrue(sanitized.contains("1.20.4"));
+    }
+
+    /// Verifies that IPv6 addresses in full and compressed form are masked.
+    @Test
+    public void sanitizeMasksIpv6Addresses() {
+        String[] addresses = {"::1", "fe80::1", "2001:db8::1", "2001:db8:1234:5678::abcd"};
+
+        for (String address : addresses) {
+            String sanitized = McLogsUploader.sanitize("Connecting to [" + address + "]:25565");
+            assertFalse(sanitized.contains(address), address);
+            assertTrue(sanitized.contains("<IPv6>]:25565"), address);
+        }
+    }
+
+    /// Verifies that a MAC address, which is also colon-separated hex, is not mistaken for IPv6.
+    @Test
+    public void sanitizeDoesNotTouchMacAddress() {
+        String mac = "00:1A:2B:3C:4D:5E";
+
+        String sanitized = McLogsUploader.sanitize("Shaders: device " + mac);
+
+        assertTrue(sanitized.contains(mac));
+    }
+
+    /// Verifies that the current user's home directory, in either slash style, is masked.
     @Test
     public void sanitizeMasksUserHome() {
-        String home = System.getProperty("user.home");
+        String home = System.getProperty("user.home", "");
+        String content = home + "/.minecraft/logs/latest.log";
 
-        String sanitized = McLogsUploader.sanitize(home + "/.minecraft/logs/latest.log");
+        String sanitized = McLogsUploader.sanitize(content);
 
-        assertTrue(sanitized.contains("<user home>"));
         assertFalse(sanitized.contains(home));
+        assertTrue(sanitized.contains("<user home>"));
     }
 
-    /// Verifies that a successful response yields the documented URL.
+    /// Verifies that Unix-style paths are compared case-sensitively, so a sibling directory is kept intact.
+    @Test
+    public void redactPathVariantIsCaseSensitiveForUnix() {
+        assertEquals("<user home>/.minecraft",
+                McLogsUploader.redactPathVariant("/home/alice/.minecraft", "/home/alice", false));
+        assertEquals("/home/Alice/.minecraft",
+                McLogsUploader.redactPathVariant("/home/Alice/.minecraft", "/home/alice", false));
+    }
+
+    /// Verifies that Windows-style paths are compared case-insensitively.
+    @Test
+    public void redactPathVariantIsCaseInsensitiveForWindows() {
+        assertEquals("<user home>/.minecraft",
+                McLogsUploader.redactPathVariant("/home/Alice/.minecraft", "/home/alice", true));
+    }
+
+    /// Verifies that a macOS home directory style is supported.
+    @Test
+    public void redactPathVariantCoversMacOsHome() {
+        assertEquals("<user home>/Library/Application Support",
+                McLogsUploader.redactPathVariant("/Users/alice/Library/Application Support", "/Users/alice", false));
+    }
+
+    /// Verifies that a successful response returns the URL it contains.
     @Test
     public void parsesSuccessUrl() throws IOException {
-        String url = McLogsUploader.parseResponse(
-                "{\"success\":true,\"id\":\"WnMMikq\",\"url\":\"https://mclo.gs/WnMMikq\"}");
+        String url = McLogsUploader.parseResponse("{\"success\":true,\"url\":\"https://mclo.gs/abcd\"}");
 
-        assertEquals("https://mclo.gs/WnMMikq", url);
+        assertEquals("https://mclo.gs/abcd", url);
     }
 
-    /// Verifies that the URL is rebuilt from the id when the url field is absent.
+    /// Verifies that a successful response without an explicit URL falls back to the id.
     @Test
     public void rebuildsUrlFromId() throws IOException {
         String url = McLogsUploader.parseResponse("{\"success\":true,\"id\":\"WnMMikq\"}");
@@ -225,5 +362,12 @@ public final class McLogsUploaderTest {
     public void rejectsResponseWithoutUrl() {
         assertThrows(IOException.class,
                 () -> McLogsUploader.parseResponse("{\"success\":true}"));
+    }
+
+    /// Verifies that a malformed response body is treated as a failure instead of crashing.
+    @Test
+    public void treatsMalformedJsonAsFailure() {
+        assertThrows(IOException.class,
+                () -> McLogsUploader.parseResponse("this is not json"));
     }
 }

@@ -23,11 +23,11 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.logging.Logger;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -65,6 +65,9 @@ public final class McLogsUploader {
     /// Placeholder replacing IPv4 addresses before upload.
     private static final String IPV4_REDACTED = "<IPv4>";
 
+    /// Placeholder replacing IPv6 addresses before upload.
+    private static final String IPV6_REDACTED = "<IPv6>";
+
     /// Placeholder replacing the current user's home directory before upload.
     private static final String HOME_REDACTED = "<user home>";
 
@@ -75,14 +78,29 @@ public final class McLogsUploader {
     private static final Pattern IPV4_PATTERN = Pattern.compile(
             "\\b(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}\\b");
 
+    /// Matches IPv6 addresses in their full or `::`-compressed form, without touching MAC addresses or other
+    /// colon-separated hex sequences of the wrong length.
+    private static final Pattern IPV6_PATTERN = Pattern.compile(
+            "(?i)(?<![0-9a-f:])(?:"
+                    + "(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}"
+                    + "|(?:[0-9a-f]{1,4}:){1,7}:"
+                    + "|(?:[0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}"
+                    + "|(?:[0-9a-f]{1,4}:){1,5}(?::[0-9a-f]{1,4}){1,2}"
+                    + "|(?:[0-9a-f]{1,4}:){1,4}(?::[0-9a-f]{1,4}){1,3}"
+                    + "|(?:[0-9a-f]{1,4}:){1,3}(?::[0-9a-f]{1,4}){1,4}"
+                    + "|(?:[0-9a-f]{1,4}:){1,2}(?::[0-9a-f]{1,4}){1,5}"
+                    + "|[0-9a-f]{1,4}:(?::[0-9a-f]{1,4}){1,6}"
+                    + "|:(?:(?::[0-9a-f]{1,4}){1,7}|:)"
+                    + ")(?![0-9a-f:])");
+
     /// Matches `name=<value>`, `name: <value>` and `"name": "<value>"` credentials so only the value is masked.
     private static final Pattern TOKEN_PROPERTY_PATTERN = Pattern.compile(
-            "(?i)(access[_\\-]?token|refresh[_\\-]?token|client[_\\-]?token|session[_\\-]?token)"
+            "(?i)(access[_\\-]?token|refresh[_\\-]?token|client[_\\-]?token|session[_\\-]?token|auth[_\\-]?token)"
                     + "(\"?\\s*[:=]\\s*[\"']?)([^\\s\"';]+)");
 
     /// Matches `--name <value>` command-line credentials so only the value is masked.
     private static final Pattern TOKEN_ARGUMENT_PATTERN = Pattern.compile(
-            "(?i)(--(?:access[_\\-]?token|refresh[_\\-]?token|client[_\\-]?token|session[_\\-]?token)"
+            "(?i)(--(?:access[_\\-]?token|refresh[_\\-]?token|client[_\\-]?token|session[_\\-]?token|auth[_\\-]?token)"
                     + "\\s+)([^\\s\"']+)");
 
     /// Uploads the game log of a crashed game and resolves to the URL of the shared log.
@@ -146,7 +164,7 @@ public final class McLogsUploader {
     /// @param content the raw log content
     /// @return the truncated log content
     static String truncate(String content) {
-        return limitBytes(limitLines(content), MAX_BYTES);
+        return FileUtils.truncateUtf8ToByteLimit(limitLines(content), MAX_BYTES);
     }
 
     /// Keeps at most the last [MAX_LINES] lines, scanning backwards for newlines instead of splitting the
@@ -167,28 +185,9 @@ public final class McLogsUploader {
         return content.substring(fromIndex + 1);
     }
 
-    /// Drops leading bytes until the UTF-8 encoding of [content] fits into [maxBytes], keeping the tail and
-    /// never splitting a multi-byte character.
-    ///
-    /// @param content  the log content
-    /// @param maxBytes the byte limit
-    /// @return the byte-limited content
-    private static String limitBytes(String content, int maxBytes) {
-        byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
-        if (bytes.length <= maxBytes) {
-            return content;
-        }
-
-        int start = bytes.length - maxBytes;
-        while (start < bytes.length && (bytes[start] & 0xC0) == 0x80) {
-            start++;
-        }
-        return new String(bytes, start, bytes.length - start, StandardCharsets.UTF_8);
-    }
-
     /// Redacts potentially sensitive information before the log leaves the machine for a third-party service.
     ///
-    /// This first masks credential arguments and the user's home directory and IPv4 addresses, then lets
+    /// This masks credential arguments, the user's home directory and IP addresses, then lets
     /// {@link Logger#filterForbiddenToken(String)} replace any registered access token occurrences.
     ///
     /// @param content the raw log content
@@ -204,10 +203,14 @@ public final class McLogsUploader {
     private static String redactSensitiveData(String content) {
         content = redactUserHome(content);
         content = redactTokens(content);
-        return redactIpv4(content);
+        content = redactIpv4(content);
+        return redactIpv6(content);
     }
 
     /// Replaces the current user's home directory (in either slash style) with a placeholder.
+    ///
+    /// Windows paths are compared case-insensitively, while Unix and macOS paths are compared
+    /// case-sensitively, so a sibling directory differing only in letter case is never redacted.
     ///
     /// @param content the log content
     /// @return the content with the home directory redacted
@@ -217,10 +220,11 @@ public final class McLogsUploader {
             return content;
         }
 
-        content = redactPathVariant(content, home);
+        boolean caseInsensitive = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS;
+        content = redactPathVariant(content, home, caseInsensitive);
         String alternate = home.indexOf('\\') >= 0 ? home.replace('\\', '/') : home.replace('/', '\\');
         if (!alternate.equals(home)) {
-            content = redactPathVariant(content, alternate);
+            content = redactPathVariant(content, alternate, caseInsensitive);
         }
         return content;
     }
@@ -228,11 +232,13 @@ public final class McLogsUploader {
     /// Replaces [path] with a placeholder only when it is followed by a path separator, whitespace, quote or
     /// the end of the content, so a home directory is not matched as the prefix of a sibling directory.
     ///
-    /// @param content the log content
-    /// @param path    the path variant to redact
+    /// @param content         the log content
+    /// @param path            the path variant to redact
+    /// @param caseInsensitive whether the comparison should ignore letter case (Windows paths)
     /// @return the content with occurrences of [path] redacted
-    private static String redactPathVariant(String content, String path) {
-        Pattern pattern = Pattern.compile(Pattern.quote(path) + "(?=[/\\\\\\s\"']|\\z)", Pattern.CASE_INSENSITIVE);
+    static String redactPathVariant(String content, String path, boolean caseInsensitive) {
+        int flags = caseInsensitive ? Pattern.CASE_INSENSITIVE : 0;
+        Pattern pattern = Pattern.compile(Pattern.quote(path) + "(?=[/\\\\\\s\"']|\\z)", flags);
         return pattern.matcher(content).replaceAll(Matcher.quoteReplacement(HOME_REDACTED));
     }
 
@@ -254,13 +260,21 @@ public final class McLogsUploader {
         return IPV4_PATTERN.matcher(content).replaceAll(Matcher.quoteReplacement(IPV4_REDACTED));
     }
 
+    /// Masks IPv6 addresses, keeping any trailing port for diagnostics.
+    ///
+    /// @param content the log content
+    /// @return the content with IPv6 addresses redacted
+    private static String redactIpv6(String content) {
+        return IPV6_PATTERN.matcher(content).replaceAll(Matcher.quoteReplacement(IPV6_REDACTED));
+    }
+
     /// Parses the mclo.gs response into the URL of the uploaded log.
     ///
     /// @param responseJson the raw response body
     /// @return the mclo.gs URL of the uploaded log
     /// @throws IOException when the upload failed or the response is malformed
     static String parseResponse(String responseJson) throws IOException {
-        @Nullable JsonObject response = JsonUtils.fromJson(responseJson, JsonObject.class);
+        @Nullable JsonObject response = JsonUtils.fromMaybeMalformedJson(responseJson, JsonObject.class);
         boolean success = response != null && JsonUtils.getBoolean(response, "success", false);
         if (!success) {
             @Nullable String error = response != null ? JsonUtils.getString(response, "error") : null;
