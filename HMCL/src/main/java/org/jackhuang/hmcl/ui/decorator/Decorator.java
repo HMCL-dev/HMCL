@@ -867,6 +867,7 @@ public final class Decorator {
     private void playOpenAnimation() {
         if (!AnimationUtils.playWindowAnimation()) {
             stopWindowAnimation();
+            Controllers.trimHeap();
             return;
         }
 
@@ -881,7 +882,13 @@ public final class Decorator {
                         new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
                         new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
                         new KeyValue(root.scaleZProperty(), 1, Motion.EASE)));
-        playWindowAnimation(timeline, this::resetRootTransform);
+        playWindowAnimation(timeline, () -> {
+            resetRootTransform();
+
+            // Proactively triggering GC after the window open animation typically
+            // reduces physical memory usage after HMCL startup.
+            Controllers.trimHeap();
+        });
         // Apply the initial frame before WINDOW_SHOWING returns so the window cannot flash at full opacity.
         timeline.jumpTo(Duration.ZERO);
     }
@@ -1010,6 +1017,13 @@ public final class Decorator {
     private void setupInputRouting() {
         root.addEventFilter(KeyEvent.ANY, event -> {
             if (!(event.getTarget() instanceof Node target)) {
+                return;
+            }
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                    && event.getEventType() == KeyEvent.KEY_PRESSED
+                    && event.isMetaDown()
+                    && event.getCode() == KeyCode.Q) {
                 return;
             }
 

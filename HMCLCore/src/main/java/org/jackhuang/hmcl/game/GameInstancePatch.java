@@ -184,6 +184,11 @@ public record GameInstancePatch(
         return builder.toPatch();
     }
 
+    /// Returns a patch copy with the given id.
+    public GameInstancePatch withId(@Nullable GameComponentType type) {
+        return withId(type != null ? type.getPatchId() : null);
+    }
+
     /// Returns a patch copy with the given version.
     public GameInstancePatch withVersion(@Nullable String version) {
         if (Objects.equals(this.version, version)) {

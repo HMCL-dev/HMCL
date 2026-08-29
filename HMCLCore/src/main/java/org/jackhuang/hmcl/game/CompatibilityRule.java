@@ -76,10 +76,6 @@ public final class CompatibilityRule {
         return action == Action.ALLOW;
     }
 
-    public static boolean equals(Collection<CompatibilityRule> rules1, Collection<CompatibilityRule> rules2) {
-        return Objects.hashCode(rules1) == Objects.hashCode(rules2);
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -33,6 +33,7 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.*;
+import org.glavo.url.WebURL;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AccountFactory;
@@ -67,11 +68,11 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 import static javafx.beans.binding.Bindings.bindContent;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
-import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.classPropertyFor;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private static final Pattern USERNAME_CHECKER_PATTERN = Pattern.compile("^[A-Za-z0-9_]+$");
@@ -388,20 +389,45 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 add(lblServers, 0, rowIndex);
 
                 cboServers = new JFXComboBox<>();
-                cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
-                cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
+                cboServers.setConverter(stringConverter(it -> {
+                    String url = it.getUrl();
+
+                    try {
+                        WebURL parsed = WebURL.parseBrowserInput(url);
+                        if ("https".equals(parsed.getScheme())) {
+                            StringBuilder builder = new StringBuilder();
+                            builder.append(it.getName()).append(" (");
+
+                            builder.append(parsed.getHost());
+                            if (parsed.getPort() != 443) {
+                                builder.append(':').append(parsed.getPort());
+                            }
+
+                            if (!"/api/yggdrasil/".equals(parsed.getPath()))
+                                builder.append(parsed.getPath());
+                            builder.append(")");
+                            return builder.toString();
+                        }
+                    } catch (Exception e) {
+                        LOG.warning("Unparsable authlib-injector server url " + url, e);
+                    }
+                    return it.getName() + " (" + url + ")";
+                }));
                 bindContent(cboServers.getItems(), getAuthlibInjectorServers());
                 cboServers.getItems().addListener(onInvalidating(
                         () -> Platform.runLater( // the selection will not be updated as expected if we call it immediately
                                 cboServers.getSelectionModel()::selectFirst)));
                 cboServers.getSelectionModel().selectFirst();
-                cboServers.setPromptText(i18n("account.injector.empty"));
+
+                Label noServersLabel = new Label(i18n("account.injector.empty"));
                 BooleanBinding noServers = createBooleanBinding(cboServers.getItems()::isEmpty, cboServers.getItems());
-                classPropertyFor(cboServers, "jfx-combo-box-warning").bind(noServers);
-                classPropertyFor(cboServers, "jfx-combo-box").bind(noServers.not());
+
                 HBox.setHgrow(cboServers, Priority.ALWAYS);
                 HBox.setMargin(cboServers, new Insets(0, 10, 0, 0));
                 cboServers.setMaxWidth(Double.MAX_VALUE);
+                HBox.setHgrow(noServersLabel, Priority.ALWAYS);
+                HBox.setMargin(noServersLabel, new Insets(0, 10, 0, 0));
+                noServersLabel.setMaxWidth(Double.MAX_VALUE);
 
                 HBox linksContainer = new HBox();
                 linksContainer.setAlignment(Pos.CENTER);
@@ -419,7 +445,13 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());
                 });
 
-                HBox boxServers = new HBox(cboServers, linksContainer, btnAddServer);
+                noServersLabel.visibleProperty().bind(noServers);
+                noServersLabel.managedProperty().bind(noServers);
+                cboServers.visibleProperty().bind(noServers.not());
+                cboServers.managedProperty().bind(noServers.not());
+
+                HBox boxServers = new HBox(cboServers, noServersLabel, linksContainer, btnAddServer);
+                boxServers.setAlignment(Pos.CENTER_LEFT);
                 add(boxServers, 1, rowIndex);
 
                 rowIndex++;
