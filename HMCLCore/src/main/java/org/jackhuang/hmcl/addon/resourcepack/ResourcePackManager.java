@@ -365,7 +365,6 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             for (ResourcePackFile resourcePack : resourcePacks) {
                 if (resourcePack != null && resourcePack.manager == this) {
                     resourcePack.delete();
-                    localFiles.remove(resourcePack);
                     modified = true;
                 }
             }
