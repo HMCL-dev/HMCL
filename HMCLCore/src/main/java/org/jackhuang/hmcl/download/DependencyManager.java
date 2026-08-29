@@ -73,22 +73,30 @@ public interface DependencyManager {
 
     /// Creates a builder for installing a new game instance and optional components.
     ///
-    /// The target id must be absent when the builder starts the installation.
+    /// This operation opens an exclusive repository draft and reserves the target id immediately.
+    /// The returned builder must be closed if it is abandoned before [GameBuilder#buildAsync()]. A
+    /// synchronous failure from that method aborts the draft itself.
     ///
     /// @param instanceId the id of the new instance
     /// @return a new game builder
+    /// @throws IllegalStateException if the id is already registered, its root cannot be reserved,
+    ///                               or another repository draft is open
     GameBuilder newGameBuilder(GameInstanceID instanceId);
 
     /// Creates a builder for replacing the components of an existing game instance.
     ///
-    /// The instance selects update mode and fixes the target repository and id. The currently
-    /// published instance with that id is used when the builder starts the update, so the supplied
-    /// snapshot-bound object need not remain current. The resulting manifest is rebuilt from the
-    /// components configured on the builder; components that are not configured are not retained.
+    /// This operation opens an exclusive repository draft immediately. `instance` must be the exact
+    /// object in the current published snapshot; an instance invalidated by any intervening
+    /// repository publication is rejected. The returned builder must be closed if it is abandoned
+    /// before [GameBuilder#buildAsync()]; a synchronous failure from that method aborts the draft
+    /// itself. The resulting manifest is rebuilt from the configured components; components that
+    /// are not configured are not retained.
     ///
     /// @param instance the existing game instance to update
     /// @return a game builder targeting the existing instance
     /// @throws IllegalArgumentException if `instance` belongs to another repository
+    /// @throws IllegalStateException    if `instance` is no longer the exact published instance or
+    ///                                  another repository draft is open
     GameBuilder newGameBuilder(GameInstance instance);
 
     /// Returns a registered remote-version list.

@@ -52,7 +52,8 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
     /// @param dependencyManager the dependency manager for the target repository
     /// @param manifest          the remote server modpack manifest
     /// @param instanceId        the id of the new instance
-    /// @throws IllegalStateException if `instanceId` is already registered
+    /// @throws IllegalStateException if the target cannot be reserved or another repository draft
+    ///                               is open
     public ServerModpackRemoteInstallTask(
             DefaultDependencyManager dependencyManager,
             ServerModpackManifest manifest,
@@ -67,7 +68,8 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
     /// @param instance          the existing instance to update
     /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
     ///                                  modpack configuration, or records another provider type
-    /// @throws IllegalStateException    if `instance` is no longer registered
+    /// @throws IllegalStateException    if `instance` is not the exact currently published object
+    ///                                  or another repository draft is open
     public ServerModpackRemoteInstallTask(
             DefaultDependencyManager dependencyManager,
             ServerModpackManifest manifest,
@@ -81,6 +83,9 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
     /// @param manifest          the remote server modpack manifest
     /// @param instanceId        the target instance id
     /// @param updateTarget      the existing instance selecting update mode, or `null` for install
+    /// @throws IllegalArgumentException if an update target has no compatible configuration
+    /// @throws IllegalStateException    if the target cannot be reserved, an update target is not
+    ///                                  the exact published object, or another draft is open
     private ServerModpackRemoteInstallTask(
             DefaultDependencyManager dependencyManager,
             ServerModpackManifest manifest,
@@ -93,9 +98,6 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
         this.manifest = manifest;
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        GameBuilder builder = this.updateTarget == null
-                ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(this.updateTarget);
         if (this.updateTarget != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a Server modpack. Cannot update this instance.");
 
@@ -109,18 +111,22 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
 
-        builder.enableIsolation();
-        for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
-            @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
-            if (componentType != null)
-                builder.component(componentType, addon.getVersion());
-        }
-
-        dependents.add(builder.buildAsync());
         onDone().register(event -> {
             if (this.updateTarget == null && event.isFailed())
                 repository.removeInstanceFromDisk(instanceId);
         });
+
+        try (GameBuilder builder = this.updateTarget == null
+                ? dependencyManager.newGameBuilder(instanceId)
+                : dependencyManager.newGameBuilder(this.updateTarget)) {
+            builder.enableIsolation();
+            for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
+                @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
+                if (componentType != null)
+                    builder.component(componentType, addon.getVersion());
+            }
+            dependents.add(builder.buildAsync());
+        }
     }
 
     @Override

@@ -379,9 +379,11 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
                     instanceHolder.value = instanceId;
 
-                    return dependency.newGameBuilder(instanceId)
-                            .component(GameComponentType.GAME, gameVersion)
-                            .buildAsync();
+                    try (HMCLGameBuilder builder = dependency.newGameBuilder(instanceId)) {
+                        return builder
+                                .component(GameComponentType.GAME, gameVersion)
+                                .buildAsync();
+                    }
                 })
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {

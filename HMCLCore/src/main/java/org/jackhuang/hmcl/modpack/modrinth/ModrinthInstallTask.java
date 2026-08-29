@@ -73,7 +73,8 @@ public class ModrinthInstallTask extends Task<Void> {
     /// @param manifest          the Modrinth index
     /// @param instanceId        the id of the new instance
     /// @param iconUrl           the optional icon URL, or `null`
-    /// @throws IllegalStateException if `instanceId` is already registered
+    /// @throws IllegalStateException if the manifest declares an unsupported mod loader, the target
+    ///                               cannot be reserved, or another repository draft is open
     public ModrinthInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -94,7 +95,9 @@ public class ModrinthInstallTask extends Task<Void> {
     /// @param iconUrl           the optional icon URL, or `null`
     /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
     ///                                  modpack configuration, or records another provider type
-    /// @throws IllegalStateException    if `instance` is no longer registered
+    /// @throws IllegalStateException    if the manifest declares an unsupported mod loader,
+    ///                                  `instance` is not the exact currently published object, or
+    ///                                  another repository draft is open
     public ModrinthInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -114,6 +117,10 @@ public class ModrinthInstallTask extends Task<Void> {
     /// @param instanceId        the target instance id
     /// @param updateTarget      the existing instance selecting update mode, or `null` for install
     /// @param iconUrl           the optional icon URL, or `null`
+    /// @throws IllegalArgumentException if an update target has no compatible configuration
+    /// @throws IllegalStateException    if the manifest declares an unsupported mod loader, the
+    ///                                  target cannot be reserved, an update target is not the exact
+    ///                                  published object, or another draft is open
     private ModrinthInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -133,9 +140,6 @@ public class ModrinthInstallTask extends Task<Void> {
         this.run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        GameBuilder builder = this.updateTarget == null
-                ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(this.updateTarget);
         if (this.updateTarget != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a Modrinth modpack. Cannot update this instance.");
 
@@ -150,32 +154,6 @@ public class ModrinthInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
         this.config = config;
-
-        builder.enableIsolation();
-        builder.component(GameComponentType.GAME, manifest.getGameVersion());
-        for (Map.Entry<String, String> modLoader : manifest.getDependencies().entrySet()) {
-            switch (modLoader.getKey()) {
-                case "minecraft":
-                    break;
-                case "forge":
-                    builder.component(GameComponentType.FORGE, modLoader.getValue());
-                    break;
-                case "neoforge":
-                // https://github.com/HMCL-dev/HMCL/pull/5170
-                case "neo-forge":
-                    builder.component(GameComponentType.NEO_FORGE, modLoader.getValue());
-                    break;
-                case "fabric-loader":
-                    builder.component(GameComponentType.FABRIC, modLoader.getValue());
-                    break;
-                case "quilt-loader":
-                    builder.component(GameComponentType.QUILT, modLoader.getValue());
-                    break;
-                default:
-                    throw new IllegalStateException("Unsupported mod loader " + modLoader.getKey());
-            }
-        }
-        dependents.add(builder.buildAsync());
 
         onDone().register(event -> {
             @Nullable Exception ex = event.getTask().getException();
@@ -198,6 +176,36 @@ public class ModrinthInstallTask extends Task<Void> {
 
                 dependents.add(downloadIconTask = new CacheFileTask(dependencyManager.getDownloadProvider().injectURLWithCandidates(iconUrl)));
             }
+        }
+
+        try (GameBuilder builder = this.updateTarget == null
+                ? dependencyManager.newGameBuilder(instanceId)
+                : dependencyManager.newGameBuilder(this.updateTarget)) {
+            builder.enableIsolation();
+            builder.component(GameComponentType.GAME, manifest.getGameVersion());
+            for (Map.Entry<String, String> modLoader : manifest.getDependencies().entrySet()) {
+                switch (modLoader.getKey()) {
+                    case "minecraft":
+                        break;
+                    case "forge":
+                        builder.component(GameComponentType.FORGE, modLoader.getValue());
+                        break;
+                    case "neoforge":
+                    // https://github.com/HMCL-dev/HMCL/pull/5170
+                    case "neo-forge":
+                        builder.component(GameComponentType.NEO_FORGE, modLoader.getValue());
+                        break;
+                    case "fabric-loader":
+                        builder.component(GameComponentType.FABRIC, modLoader.getValue());
+                        break;
+                    case "quilt-loader":
+                        builder.component(GameComponentType.QUILT, modLoader.getValue());
+                        break;
+                    default:
+                        throw new IllegalStateException("Unsupported mod loader " + modLoader.getKey());
+                }
+            }
+            dependents.add(0, builder.buildAsync());
         }
     }
 

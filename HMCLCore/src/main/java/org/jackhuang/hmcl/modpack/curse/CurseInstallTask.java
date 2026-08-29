@@ -77,7 +77,8 @@ public final class CurseInstallTask extends Task<Void> {
     /// @param manifest          the CurseForge manifest
     /// @param instanceId        the id of the new instance
     /// @param iconUrl           the optional icon URL, or `null`
-    /// @throws IllegalStateException if `instanceId` is already registered
+    /// @throws IllegalStateException if the target cannot be reserved or another repository draft
+    ///                               is open
     public CurseInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -98,7 +99,8 @@ public final class CurseInstallTask extends Task<Void> {
     /// @param iconUrl           the optional icon URL, or `null`
     /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
     ///                                  modpack configuration, or records another provider type
-    /// @throws IllegalStateException    if `instance` is no longer registered
+    /// @throws IllegalStateException    if `instance` is not the exact currently published object
+    ///                                  or another repository draft is open
     public CurseInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -118,6 +120,9 @@ public final class CurseInstallTask extends Task<Void> {
     /// @param instanceId        the target instance id
     /// @param updateTarget      the existing instance selecting update mode, or `null` for install
     /// @param iconUrl           the optional icon URL, or `null`
+    /// @throws IllegalArgumentException if an update target has no compatible configuration
+    /// @throws IllegalStateException    if the target cannot be reserved, an update target is not
+    ///                                  the exact published object, or another draft is open
     private CurseInstallTask(
             DefaultDependencyManager dependencyManager,
             Path zipFile,
@@ -138,9 +143,6 @@ public final class CurseInstallTask extends Task<Void> {
         this.run = repository.getLayout().getInstanceRoot(instanceId);
 
         Path json = repository.getLayout().getModpackConfigurationFile(instanceId);
-        GameBuilder builder = this.updateTarget == null
-                ? dependencyManager.newGameBuilder(instanceId)
-                : dependencyManager.newGameBuilder(this.updateTarget);
         if (this.updateTarget != null && Files.notExists(json))
             throw new IllegalArgumentException("Instance " + instanceId + " is not a Curse modpack. Cannot update this instance.");
 
@@ -155,19 +157,6 @@ public final class CurseInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
         this.config = config;
-
-        builder.enableIsolation()
-                .component(GameComponentType.GAME, manifest.minecraft().gameVersion());
-        for (CurseManifestModLoader modLoader : manifest.minecraft().modLoaders()) {
-            if (modLoader.id().startsWith("forge-")) {
-                builder.component(GameComponentType.FORGE, modLoader.id().substring("forge-".length()));
-            } else if (modLoader.id().startsWith("fabric-")) {
-                builder.component(GameComponentType.FABRIC, modLoader.id().substring("fabric-".length()));
-            } else if (modLoader.id().startsWith("neoforge-")) {
-                builder.component(GameComponentType.NEO_FORGE, modLoader.id().substring("neoforge-".length()));
-            }
-        }
-        dependents.add(builder.buildAsync());
 
         onDone().register(event -> {
             @Nullable Exception ex = event.getTask().getException();
@@ -188,6 +177,23 @@ public final class CurseInstallTask extends Task<Void> {
                 iconExt = ext;
                 dependents.add(downloadIconTask = new CacheFileTask(dependencyManager.getDownloadProvider().injectURLWithCandidates(iconUrl)));
             }
+        }
+
+        try (GameBuilder builder = this.updateTarget == null
+                ? dependencyManager.newGameBuilder(instanceId)
+                : dependencyManager.newGameBuilder(this.updateTarget)) {
+            builder.enableIsolation()
+                    .component(GameComponentType.GAME, manifest.minecraft().gameVersion());
+            for (CurseManifestModLoader modLoader : manifest.minecraft().modLoaders()) {
+                if (modLoader.id().startsWith("forge-")) {
+                    builder.component(GameComponentType.FORGE, modLoader.id().substring("forge-".length()));
+                } else if (modLoader.id().startsWith("fabric-")) {
+                    builder.component(GameComponentType.FABRIC, modLoader.id().substring("fabric-".length()));
+                } else if (modLoader.id().startsWith("neoforge-")) {
+                    builder.component(GameComponentType.NEO_FORGE, modLoader.id().substring("neoforge-".length()));
+                }
+            }
+            dependents.add(0, builder.buildAsync());
         }
     }
 

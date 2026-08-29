@@ -312,29 +312,30 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 throw new IllegalStateException("Instance ID is not set");
             }
 
-            HMCLGameBuilder builder = dependencyManager.newGameBuilder(instanceId);
-            builder.component(GameComponentType.GAME, ((ComponentRemoteVersion) settings.get(GameComponentType.GAME.getPatchId())).getGameVersion());
+            try (HMCLGameBuilder builder = dependencyManager.newGameBuilder(instanceId)) {
+                builder.component(GameComponentType.GAME, ((ComponentRemoteVersion) settings.get(GameComponentType.GAME.getPatchId())).getGameVersion());
 
-            settings.asStringMap().forEach((key, value) -> {
-                if (!GameComponentType.GAME.getPatchId().equals(key)
-                        && value instanceof ComponentRemoteVersion remoteVersion)
-                    builder.component(remoteVersion);
-            });
+                settings.asStringMap().forEach((key, value) -> {
+                    if (!GameComponentType.GAME.getPatchId().equals(key)
+                            && value instanceof ComponentRemoteVersion remoteVersion)
+                        builder.component(remoteVersion);
+                });
 
-            boolean modded = GameComponentType.MOD_LOADERS.stream()
-                    .anyMatch(componentType ->
-                            settings.get(componentType.getPatchId()) instanceof ComponentRemoteVersion);
-            if (repository.shouldIsolateNewInstance(modded)) {
-                builder.enableIsolation();
-            }
-
-            Task<?> buildTask = builder.buildAsync();
-            buildTask.onDone().register(event -> {
-                if (!event.isFailed()) {
-                    runInFX(() -> repository.setSelectedInstance(repository.getInstance(instanceId)));
+                boolean modded = GameComponentType.MOD_LOADERS.stream()
+                        .anyMatch(componentType ->
+                                settings.get(componentType.getPatchId()) instanceof ComponentRemoteVersion);
+                if (repository.shouldIsolateNewInstance(modded)) {
+                    builder.enableIsolation();
                 }
-            });
-            return buildTask;
+
+                Task<?> buildTask = builder.buildAsync();
+                buildTask.onDone().register(event -> {
+                    if (!event.isFailed()) {
+                        runInFX(() -> repository.setSelectedInstance(repository.getInstance(instanceId)));
+                    }
+                });
+                return buildTask;
+            }
         }
 
         @Override

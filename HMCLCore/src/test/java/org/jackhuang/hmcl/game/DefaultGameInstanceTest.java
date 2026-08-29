@@ -401,10 +401,10 @@ public final class DefaultGameInstanceTest {
                 repository,
                 new MojangDownloadProvider(),
                 new DefaultCacheRepository(tempDirectory.resolve("cache")));
-        DefaultGameBuilder builder = dependencyManager.newGameBuilder(instanceId);
-        builder.component(GameComponentType.GAME, "1.21.1");
 
-        IllegalStateException exception = assertThrows(IllegalStateException.class, builder::buildAsync);
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> dependencyManager.newGameBuilder(instanceId));
 
         assertEquals("Game instance already exists: instance", exception.getMessage());
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
@@ -412,7 +412,7 @@ public final class DefaultGameInstanceTest {
         }
     }
 
-    /// An update builder rejects a target that disappeared before its draft opened.
+    /// An update builder rejects a target that disappeared before construction.
     @Test
     public void testGameBuilderRejectsMissingUpdateTarget(@TempDir Path tempDirectory)
             throws IOException {
@@ -425,13 +425,81 @@ public final class DefaultGameInstanceTest {
                 repository,
                 new MojangDownloadProvider(),
                 new DefaultCacheRepository(tempDirectory.resolve("cache")));
-        DefaultGameBuilder builder = dependencyManager.newGameBuilder(instance);
-        builder.component(GameComponentType.GAME, "1.21.1");
         repository.publishEmpty();
+
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> dependencyManager.newGameBuilder(instance));
+
+        assertEquals("Game instance no longer exists: instance", exception.getMessage());
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            assertTrue(draft.isOpen());
+        }
+    }
+
+    /// An update builder rejects a snapshot-bound instance replaced under the same id.
+    @Test
+    public void testGameBuilderRejectsChangedUpdateTarget(@TempDir Path tempDirectory)
+            throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        GameInstanceID instanceId = new GameInstanceID("instance");
+        TestGameInstance instance = repository.publish(
+                instanceId,
+                new GameInstanceManifest(instanceId));
+        repository.publish(instanceId, new GameInstanceManifest(instanceId));
+        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
+                repository,
+                new MojangDownloadProvider(),
+                new DefaultCacheRepository(tempDirectory.resolve("cache")));
+
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> dependencyManager.newGameBuilder(instance));
+
+        assertEquals("Game instance has changed: instance", exception.getMessage());
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            assertTrue(draft.isOpen());
+        }
+    }
+
+    /// Closing an unused builder releases its exclusive draft and prevents further configuration.
+    @Test
+    public void testGameBuilderCloseAbortsReservedDraft(@TempDir Path tempDirectory)
+            throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
+                repository,
+                new MojangDownloadProvider(),
+                new DefaultCacheRepository(tempDirectory.resolve("cache")));
+        DefaultGameBuilder builder = dependencyManager.newGameBuilder(new GameInstanceID("instance"));
+
+        assertThrows(IllegalStateException.class, repository::openDraft);
+        builder.close();
+        builder.close();
+
+        IllegalStateException exception = assertThrows(
+                IllegalStateException.class,
+                () -> builder.component(GameComponentType.GAME, "1.21.1"));
+        assertEquals("GameBuilder is closed", exception.getMessage());
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            assertTrue(draft.isOpen());
+        }
+    }
+
+    /// A synchronous build-configuration failure aborts the builder's reserved draft.
+    @Test
+    public void testGameBuilderBuildFailureAbortsReservedDraft(@TempDir Path tempDirectory)
+            throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
+                repository,
+                new MojangDownloadProvider(),
+                new DefaultCacheRepository(tempDirectory.resolve("cache")));
+        DefaultGameBuilder builder = dependencyManager.newGameBuilder(new GameInstanceID("instance"));
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, builder::buildAsync);
 
-        assertEquals("Game instance no longer exists: instance", exception.getMessage());
+        assertEquals("GameBuilder.gameVersion must be set", exception.getMessage());
         try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
             assertTrue(draft.isOpen());
         }
@@ -679,7 +747,7 @@ public final class DefaultGameInstanceTest {
             return instance;
         }
 
-        /// Publishes an empty snapshot to simulate removal during a builder's lifetime.
+        /// Publishes an empty snapshot to simulate removal before builder construction.
         private void publishEmpty() {
             publishSnapshot(newSnapshot());
         }
