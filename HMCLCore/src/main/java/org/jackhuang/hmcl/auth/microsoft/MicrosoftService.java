@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
@@ -58,7 +57,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class MicrosoftService {
     private static final String SCOPE = "XboxLive.signin offline_access";
     private static final String CAPES_ACTIVE_ENDPOINT = "https://api.minecraftservices.com/minecraft/profile/capes/active";
-    private static final int[] CAPE_RETRY_BACKOFF_MILLIS = {2000, 5000};
     private static final ThreadPoolExecutor POOL = threadPool("MicrosoftProfileProperties", true, 2, 10,
             TimeUnit.SECONDS);
 
@@ -322,9 +320,9 @@ public class MicrosoftService {
     /// `{"capeId":"..."}` and parses the returned profile, so callers can update
     /// the UI without issuing an additional `GET /minecraft/profile`.
     ///
-    /// An `HTTP 429` is retried at most twice with exponential-ish backoff
-    /// (2s, then 5s); other non-2xx responses are reported as a
-    /// [ServerDisconnectException] whose cause chain carries the status code.
+    /// A non-2xx response is reported as a [ServerDisconnectException] whose
+    /// cause chain carries the HTTP status code, so callers can distinguish
+    /// `401 Unauthorized` from `429 Too Many Requests`.
     ///
     /// @param accessToken the Minecraft Services access token
     /// @param capeId      the server-side cape ID to activate
@@ -334,14 +332,16 @@ public class MicrosoftService {
         requireNonNull(accessToken);
         requireNonNull(capeId);
         try {
-            String response = requestCapeWithBackoff(() -> HttpRequest.PUT(CAPES_ACTIVE_ENDPOINT)
+            String response = HttpRequest.PUT(CAPES_ACTIVE_ENDPOINT)
                     .json(mapOf(pair("capeId", capeId)))
                     .authorization("Bearer " + accessToken)
                     .accept("application/json")
-                    .getString());
+                    .getString();
             return JsonUtils.fromNonNullJson(response, MinecraftProfileResponse.class);
         } catch (JsonParseException e) {
             throw new ServerResponseMalformedException(e);
+        } catch (IOException e) {
+            throw new ServerDisconnectException(e);
         }
     }
 
@@ -356,47 +356,18 @@ public class MicrosoftService {
     public @Nullable MinecraftProfileResponse hideCape(String accessToken) throws AuthenticationException {
         requireNonNull(accessToken);
         try {
-            String response = requestCapeWithBackoff(() -> HttpRequest.DELETE(CAPES_ACTIVE_ENDPOINT)
+            String response = HttpRequest.DELETE(CAPES_ACTIVE_ENDPOINT)
                     .authorization("Bearer " + accessToken)
                     .accept("application/json")
-                    .getString());
+                    .getString();
             if (StringUtils.isBlank(response)) {
                 return null;
             }
             return JsonUtils.fromNonNullJson(response, MinecraftProfileResponse.class);
         } catch (JsonParseException e) {
             throw new ServerResponseMalformedException(e);
-        }
-    }
-
-    /// Runs a cape endpoint request, retrying `HTTP 429` with bounded backoff.
-    ///
-    /// @param request the HTTP request producing the response body
-    /// @return the raw JSON response body
-    /// @throws AuthenticationException on network failure or a non-retriable non-2xx response
-    private static String requestCapeWithBackoff(ExceptionalSupplier<String, IOException> request) throws AuthenticationException {
-        for (int attempt = 0; ; attempt++) {
-            try {
-                return request.get();
-            } catch (ResponseCodeException e) {
-                if (e.getResponseCode() == 429 && attempt < CAPE_RETRY_BACKOFF_MILLIS.length) {
-                    sleepBeforeRetry(CAPE_RETRY_BACKOFF_MILLIS[attempt], e);
-                    continue;
-                }
-                throw new ServerDisconnectException(e);
-            } catch (IOException e) {
-                throw new ServerDisconnectException(e);
-            }
-        }
-    }
-
-    /// Sleeps for the given backoff before retrying a rate-limited request.
-    private static void sleepBeforeRetry(long millis, IOException cause) throws ServerDisconnectException {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new ServerDisconnectException(cause);
+        } catch (IOException e) {
+            throw new ServerDisconnectException(e);
         }
     }
 
@@ -444,6 +415,12 @@ public class MicrosoftService {
     }
 
     public final static class NoXuiException extends AuthenticationException {
+    }
+
+    /// Thrown when Minecraft Services rejects a profile/cape request with
+    /// `HTTP 429` (Too Many Requests). Unlike `401`, this is not an
+    /// authentication problem and must never trigger a token refresh.
+    public final static class MinecraftServicesRateLimitException extends AuthenticationException {
     }
 
     private final static class XBoxLiveAuthenticationResponseDisplayClaims {

@@ -28,6 +28,7 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftService.MinecraftProfileResponseCape;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftService.MinecraftServicesRateLimitException;
 import org.jackhuang.hmcl.game.CapePreview;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -70,8 +71,6 @@ public final class MicrosoftAccountCapePane extends StackPane {
     private final AdvancedListBox listBox = new AdvancedListBox();
     private final SpinnerPane spinnerPane = new SpinnerPane();
 
-    /// Guards against concurrent `GET /minecraft/profile` reloads.
-    private final AtomicBoolean reloading = new AtomicBoolean(false);
     /// Guards against concurrent cape-change requests, so only one
     /// `PUT`/`DELETE` runs at a time.
     private final AtomicBoolean changingCape = new AtomicBoolean(false);
@@ -112,17 +111,12 @@ public final class MicrosoftAccountCapePane extends StackPane {
         reload();
     }
 
-    /// Reloads the cape list from the server. At most one reload runs at a time.
+    /// Reloads the cape list. Deduplication and rate-limit handling happen inside
+    /// [MicrosoftAccount], so no pane-level guard is needed here.
     private void reload() {
-        if (!reloading.compareAndSet(false, true)) {
-            return;
-        }
         spinnerPane.showSpinner();
         Task.supplyAsync(account::getCapes)
-                .whenComplete(Schedulers.javafx(), (capes, exception) -> {
-                    reloading.set(false);
-                    renderCapes(capes, exception);
-                })
+                .whenComplete(Schedulers.javafx(), this::renderCapes)
                 .start();
     }
 
@@ -222,7 +216,11 @@ public final class MicrosoftAccountCapePane extends StackPane {
     private void handleChangeResult(@Nullable List<MinecraftProfileResponseCape> capes, @Nullable Exception exception) {
         spinnerPane.hideSpinner();
         if (exception != null) {
-            // A rate-limited or otherwise failed change must not trigger a reload.
+            // A rate-limited change must not trigger a reload nor auto-apply a
+            // pending selection; drop it so the cooldown is not fought against.
+            if (exception instanceof MinecraftServicesRateLimitException) {
+                clearPendingChange();
+            }
             Controllers.showToast(Accounts.localizeErrorMessage(exception));
             return;
         }
@@ -232,6 +230,13 @@ public final class MicrosoftAccountCapePane extends StackPane {
         } else {
             renderList(capes, false);
         }
+    }
+
+    /// Cancels any queued cape change and stops the debounce timer.
+    private void clearPendingChange() {
+        hasPendingChange = false;
+        pendingCapeId = null;
+        debounce.stop();
     }
 
     /// Creates a sized, aligned preview view for a cape front face.
