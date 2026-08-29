@@ -22,7 +22,9 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.Lang;
@@ -67,7 +69,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
 
     @Override
     public String getTitle() {
-        return i18n("settings.tabs.installers");
+        return i18n("install.change_version") + " - " + this.instance.getId().id();
     }
 
     private String getVersion(GameComponentType type) {
