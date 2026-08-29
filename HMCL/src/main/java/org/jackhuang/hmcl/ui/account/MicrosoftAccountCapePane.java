@@ -26,8 +26,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftService.MinecraftProfileResponseCape;
-import org.jackhuang.hmcl.auth.yggdrasil.Texture;
-import org.jackhuang.hmcl.game.TexturesLoader;
+import org.jackhuang.hmcl.game.CapePreview;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -44,7 +43,6 @@ import java.util.List;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Dialog listing every cape owned by a Microsoft account and letting the user
 /// activate one of them or remove the active cape.
@@ -57,6 +55,11 @@ public final class MicrosoftAccountCapePane extends StackPane {
     private final MicrosoftAccount account;
     private final AdvancedListBox listBox = new AdvancedListBox();
     private final SpinnerPane spinnerPane = new SpinnerPane();
+
+    /// Preview display width in the list; the height is derived from the 10:16
+    /// cape aspect ratio so the front face is never stretched into a square.
+    private static final double CAPE_PREVIEW_WIDTH = 20;
+    private static final double CAPE_PREVIEW_HEIGHT = CAPE_PREVIEW_WIDTH / CapePreview.ASPECT_RATIO;
 
     public MicrosoftAccountCapePane(MicrosoftAccount account) {
         this.account = account;
@@ -120,10 +123,9 @@ public final class MicrosoftAccountCapePane extends StackPane {
     private AdvancedListItem buildCapeItem(MinecraftProfileResponseCape cape) {
         AdvancedListItem item = new AdvancedListItem();
         item.setTitle(StringUtils.isBlank(cape.alias) ? cape.id : cape.alias);
-        if ("ACTIVE".equals(cape.state)) {
-            item.setSubtitle(i18n("account.cape.active"));
-            item.setActive(true);
-        }
+        boolean active = "ACTIVE".equals(cape.state);
+        item.setSubtitle(i18n(active ? "account.cape.active" : "account.cape.inactive"));
+        item.setActive(active);
         ImageView preview = createPreview();
         item.setLeftGraphic(preview);
         item.setOnAction(e -> confirmCapeChange(i18n("account.cape.set.confirm"), () -> applyCape(cape.id)));
@@ -158,11 +160,14 @@ public final class MicrosoftAccountCapePane extends StackPane {
                 .start();
     }
 
-    /// Creates a sized, aligned preview view for a cape texture.
+    /// Creates a sized, aligned preview view for a cape front face.
+    ///
+    /// The view keeps the 10:16 cape aspect ratio, so the extracted front face
+    /// is never stretched into a square.
     private static ImageView createPreview() {
         ImageView view = new ImageView();
-        view.setFitWidth(AdvancedListItem.LEFT_ICON_SIZE);
-        view.setFitHeight(AdvancedListItem.LEFT_ICON_SIZE);
+        view.setFitWidth(CAPE_PREVIEW_WIDTH);
+        view.setFitHeight(CAPE_PREVIEW_HEIGHT);
         view.setSmooth(true);
         view.setPreserveRatio(true);
         BorderPane.setMargin(view, AdvancedListItem.LEFT_ICON_MARGIN);
@@ -171,19 +176,16 @@ public final class MicrosoftAccountCapePane extends StackPane {
         return view;
     }
 
-    /// Downloads and displays the cape texture preview in the background.
-    private static void bindPreview(ImageView view, String url) {
-        Task.supplyAsync(() -> {
-                    try {
-                        return TexturesLoader.loadTexture(new Texture(url, null));
-                    } catch (Throwable e) {
-                        LOG.warning("Failed to load cape texture " + url, e);
-                        return null;
-                    }
-                })
-                .whenComplete(Schedulers.javafx(), (loadedTexture, exception) -> {
-                    if (exception == null && loadedTexture != null) {
-                        view.setImage(loadedTexture.image());
+    /// Loads the cape front-face preview in the background and displays it.
+    ///
+    /// On any failure (download, decode, size) the view is simply left empty and
+    /// the item remains fully functional; the cape can still be selected by its
+    /// alias and switched through its `id`.
+    private static void bindPreview(ImageView view, @Nullable String url) {
+        Task.supplyAsync(() -> CapePreview.load(url))
+                .whenComplete(Schedulers.javafx(), (preview, exception) -> {
+                    if (exception == null && preview != null) {
+                        view.setImage(preview);
                     }
                 })
                 .start();
