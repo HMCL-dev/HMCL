@@ -206,11 +206,11 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
             leftVBox.prefWidthProperty().bind(hbox.widthProperty().divide(2));
             rightVBox.prefWidthProperty().bind(hbox.widthProperty().divide(2));
-            HBox.setHgrow(leftVBox, Priority.ALWAYS);
-            HBox.setHgrow(rightVBox, Priority.ALWAYS);
-
             leftVBox.setMaxWidth(Double.MAX_VALUE);
             rightVBox.setMaxWidth(Double.MAX_VALUE);
+
+            HBox.setHgrow(leftVBox, Priority.ALWAYS);
+            HBox.setHgrow(rightVBox, Priority.ALWAYS);
 
             String scanUri = "https://www.microsoft.com/link".equals(wait.verificationUri())
                     ? "https://www.microsoft.com/link?otc=" + wait.userCode()
