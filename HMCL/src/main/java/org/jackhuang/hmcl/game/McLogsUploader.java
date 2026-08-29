@@ -168,15 +168,16 @@ public final class McLogsUploader {
     }
 
     /// Keeps at most the last [MAX_LINES] lines, scanning backwards for newlines instead of splitting the
-    /// whole content into per-line strings.
+    /// whole content into per-line strings. A line is a newline-terminated segment: a single trailing newline
+    /// ends the last line without adding an empty one, while consecutive trailing newlines count as empty lines.
     ///
     /// @param content the log content
     /// @return the content limited to the last [MAX_LINES] lines
     private static String limitLines(String content) {
-        // A trailing newline terminates the last line rather than adding an empty one, so skip it before
-        // counting; otherwise exactly MAX_LINES lines ending in `\n` would lose their first line.
+        // A single trailing newline only terminates the last line, so skip at most one before counting;
+        // consecutive trailing newlines encode real empty lines and must keep their own line counts.
         int fromIndex = content.length();
-        while (fromIndex > 0 && content.charAt(fromIndex - 1) == '\n') {
+        if (fromIndex > 0 && content.charAt(fromIndex - 1) == '\n') {
             fromIndex--;
         }
 

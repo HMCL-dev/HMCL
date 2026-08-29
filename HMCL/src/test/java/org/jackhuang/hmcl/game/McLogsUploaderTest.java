@@ -372,16 +372,17 @@ public final class McLogsUploaderTest {
     }
 
     /// Verifies that the byte limit keeps the tail of an over-long single line, since no line start is
-    /// available within the read range, and that the very end of the line is preserved.
+    /// available within the read range, and that the very end of the line is preserved. The 20 MiB line is
+    /// sparse, so the test stays cheap while still exercising a logical single line well over the limit.
     @Test
     public void readsTailOfSingleOversizedLine(@TempDir Path tempDir) throws IOException {
         int maxBytes = 10 * 1024 * 1024;
         Path file = tempDir.resolve("single-long-line.log");
         String marker = "TAIL-MARKER";
-        byte[] line = new byte[20 * 1024 * 1024];
-        Arrays.fill(line, (byte) 'A');
-        Files.write(file, line);
-        Files.write(file, marker.getBytes(UTF_8), StandardOpenOption.APPEND);
+        try (FileChannel channel = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
+            channel.position(20L * 1024 * 1024);
+            channel.write(ByteBuffer.wrap(marker.getBytes(UTF_8)));
+        }
 
         String tail = FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes);
 
@@ -389,14 +390,14 @@ public final class McLogsUploaderTest {
         assertTrue(tail.endsWith(marker));
     }
 
-    /// Verifies that an over-long single line of multi-byte characters still keeps the file end without
-    /// producing invalid UTF-8.
+    /// Verifies that an over-long single line of mixed multi-byte characters (CJK + emoji) still keeps the
+    /// file end without producing invalid UTF-8.
     @Test
     public void readsTailOfOversizedMultibyteLineWithMarker(@TempDir Path tempDir) throws IOException {
         int maxBytes = 1024;
         Path file = tempDir.resolve("multibyte-long-line.log");
         String marker = "TAIL-MARKER";
-        byte[] line = "你".repeat(8 * maxBytes).getBytes(UTF_8); // 3 bytes per char, well over the limit
+        byte[] line = "你日😀".repeat(2048).getBytes(UTF_8); // 3+3+4 bytes per unit, well over the limit
         try (OutputStream out = Files.newOutputStream(file)) {
             out.write(line);
             out.write(marker.getBytes(UTF_8));
@@ -527,6 +528,48 @@ public final class McLogsUploaderTest {
         assertEquals("line-1", result[0]);               // "first-line" was dropped
         assertEquals("line-25000", result[result.length - 2]);
         assertTrue(result[result.length - 1].isEmpty()); // trailing newline is not a phantom line
+    }
+
+    /// Verifies that only one trailing newline is ignored; consecutive trailing newlines keep their empty
+    /// lines instead of being swallowed.
+    @Test
+    public void preservesConsecutiveTrailingNewlines() {
+        assertEquals("a\n\n", McLogsUploader.truncate("a\n\n"));
+        assertEquals("a\n\n\n", McLogsUploader.truncate("a\n\n\n"));
+    }
+
+    /// Verifies that trailing empty lines count towards the line limit, so the oldest real line is dropped
+    /// first while the newest empty lines are kept.
+    @Test
+    public void trailingEmptyLinesCountTowardsLineLimit() {
+        // 24,999 real lines + 2 trailing newlines = 25,000 lines; everything fits.
+        assertEquals(shortLog(24_999) + "\n\n", McLogsUploader.truncate(shortLog(24_999) + "\n\n"));
+
+        // 25,000 real lines + 2 trailing newlines = 25,001 lines; the oldest real line is dropped.
+        String result = McLogsUploader.truncate(shortLog(25_000) + "\n\n");
+        assertTrue(result.startsWith("line-1\n"));
+        assertTrue(result.endsWith("\n\n"));
+        assertFalse(result.contains("first-line"));
+        assertTrue(result.contains("line-24999"));
+    }
+
+    /// Verifies that non-positive byte limits are rejected before any file I/O.
+    @Test
+    public void rejectsNonPositiveMaxBytes(@TempDir Path tempDir) {
+        Path file = tempDir.resolve("any.log");
+        assertThrows(IllegalArgumentException.class,
+                () -> FileUtils.readTextTailMaybeNativeEncoding(file, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> FileUtils.readTextTailMaybeNativeEncoding(file, -1));
+    }
+
+    /// Verifies that a byte limit that would overflow the guard addition is rejected, so it can never turn
+    /// into a negative array length.
+    @Test
+    public void rejectsMaxBytesThatWouldOverflowGuard(@TempDir Path tempDir) {
+        Path file = tempDir.resolve("any.log");
+        assertThrows(IllegalArgumentException.class,
+                () -> FileUtils.readTextTailMaybeNativeEncoding(file, Integer.MAX_VALUE));
     }
 
     /// Builds a log with [lines] short lines, so the byte limit never kicks in. The first line is named

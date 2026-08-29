@@ -248,6 +248,10 @@ public final class FileUtils {
     /// character boundary (UTF-8 uses at most 4 bytes per character).
     private static final int TAIL_GUARD_BYTES = 16;
 
+    /// The largest [maxBytes] that still leaves room for the guard bytes without overflowing the int range
+    /// used for the tail buffer length.
+    private static final int MAX_TAIL_BYTES = Integer.MAX_VALUE - TAIL_GUARD_BYTES;
+
     /// How many leading bytes to sample when detecting the charset of a large file.
     private static final int CHARSET_SAMPLE_BYTES = 8192;
 
@@ -266,11 +270,21 @@ public final class FileUtils {
     /// the earliest allowed offset; if a single line is longer than [maxBytes], the returned text starts inside
     /// that line instead (a deliberate trade-off to keep the read size bounded) and still keeps the file end.
     ///
+    /// The guarantee holds for a file that is not modified concurrently: [file] is only measured once before
+    /// reading, so a file that grows past [maxBytes] in the meantime can make the whole-file branch exceed the
+    /// limit. Crash logs stop growing before upload, so this is not a concern in practice.
+    ///
     /// @param file     the file to read from
-    /// @param maxBytes the maximum number of bytes to keep from the tail; must be non-negative
+    /// @param maxBytes the maximum number of bytes to keep from the tail; must be in `(0, MAX_TAIL_BYTES]`
     /// @return the decoded tail content, at most [maxBytes] bytes long
-    /// @throws IOException if the file cannot be read
+    /// @throws IOException              if the file cannot be read
+    /// @throws IllegalArgumentException if [maxBytes] is not positive or leaves no room for the guard bytes
     public static String readTextTailMaybeNativeEncoding(Path file, int maxBytes) throws IOException {
+        if (maxBytes <= 0)
+            throw new IllegalArgumentException("maxBytes must be positive: " + maxBytes);
+        if (maxBytes > MAX_TAIL_BYTES)
+            throw new IllegalArgumentException("maxBytes must not exceed " + MAX_TAIL_BYTES + ": " + maxBytes);
+
         long size = Files.size(file);
         if (size <= maxBytes)
             return readTextMaybeNativeEncoding(file);
