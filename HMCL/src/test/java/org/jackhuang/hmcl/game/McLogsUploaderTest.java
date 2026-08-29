@@ -17,12 +17,18 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Tests for the mclo.gs log uploader's pure client-side logic.
@@ -34,6 +40,18 @@ public final class McLogsUploaderTest {
         String content = "a short log";
 
         assertEquals(content, McLogsUploader.truncate(content));
+    }
+
+    /// Verifies that the byte limit keeps the tail of an oversized log.
+    @Test
+    public void keepsTailBytesOverByteLimit() {
+        String marker = "END-OF-LOG";
+        String content = "a".repeat(10 * 1024 * 1024) + marker;
+
+        String truncated = McLogsUploader.truncate(content);
+
+        assertEquals(10 * 1024 * 1024, truncated.getBytes(UTF_8).length);
+        assertTrue(truncated.endsWith(marker));
     }
 
     /// Verifies that the line limit keeps the tail, where the crash details live.
@@ -52,16 +70,127 @@ public final class McLogsUploaderTest {
         assertEquals("line " + (all.length - 1), result[result.length - 1]);
     }
 
-    /// Verifies that the byte limit keeps the tail of an oversized log.
+    /// Verifies that both the line and byte limits are satisfied at once while the tail is kept.
     @Test
-    public void keepsTailBytesOverByteLimit() {
-        String marker = "END-OF-LOG";
-        String content = "a".repeat(10 * 1024 * 1024) + marker;
+    public void keepsTailWhenBothLimitsAreExceeded() {
+        String line = "0123456789".repeat(60); // ~600 bytes per line
+        String[] all = new String[25_000 + 7];
+        for (int i = 0; i < all.length; i++) {
+            all[i] = line + "-line-" + i;
+        }
+
+        String truncated = McLogsUploader.truncate(String.join("\n", all));
+
+        assertTrue(truncated.getBytes(UTF_8).length <= 10 * 1024 * 1024);
+        assertTrue(truncated.split("\n", -1).length <= 25_000);
+        assertTrue(truncated.contains("-line-" + (all.length - 1)));
+    }
+
+    /// Verifies that multi-byte characters survive byte truncation intact (no replacement characters).
+    @Test
+    public void keepsMultibyteCharactersIntact() {
+        String tail = "崩溃日志" + "\uD83D\uDCDD"; // Chinese + emoji
+        String content = "a".repeat(10 * 1024 * 1024) + tail;
 
         String truncated = McLogsUploader.truncate(content);
 
-        assertEquals(10 * 1024 * 1024, truncated.getBytes(StandardCharsets.UTF_8).length);
-        assertTrue(truncated.endsWith(marker));
+        assertFalse(truncated.contains("\uFFFD"));
+        assertTrue(truncated.endsWith(tail));
+    }
+
+    /// Verifies that only the tail of an oversized file is read (the result is larger than the limit by the
+    /// alignment guard, which a whole-file-read-then-truncate implementation would never produce).
+    @Test
+    public void readsTailInsteadOfWholeFile(@TempDir Path tempDir) throws IOException {
+        int maxBytes = 1024 * 1024;
+        Path file = tempDir.resolve("large.log");
+        String marker = "TAIL-MARKER-END";
+        byte[] head = new byte[maxBytes + 64 * 1024];
+        Arrays.fill(head, (byte) 'a');
+        try (OutputStream out = Files.newOutputStream(file)) {
+            out.write(head);
+            out.write(marker.getBytes(UTF_8));
+        }
+
+        String tail = FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes);
+
+        assertTrue(tail.getBytes(UTF_8).length > maxBytes);
+        assertTrue(tail.endsWith(marker));
+    }
+
+    /// Verifies that a UTF-8 multi-byte character is never split when only the tail is read.
+    @Test
+    public void neverSplitsUtf8Characters(@TempDir Path tempDir) throws IOException {
+        int maxBytes = 10_000;
+        Path file = tempDir.resolve("cjk.log");
+        byte[] cjk = "汉".repeat(10_000).getBytes(UTF_8); // 30_000 bytes, 3 bytes each
+        try (OutputStream out = Files.newOutputStream(file)) {
+            out.write(cjk);
+            out.write("-END".getBytes(UTF_8));
+        }
+
+        String tail = FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes);
+
+        assertFalse(tail.contains("\uFFFD"));
+        assertTrue(tail.endsWith("-END"));
+        assertTrue(tail.startsWith("汉"));
+    }
+
+    /// Verifies that an empty file yields an empty result.
+    @Test
+    public void readsEmptyFile(@TempDir Path tempDir) throws IOException {
+        Path file = Files.createFile(tempDir.resolve("empty.log"));
+
+        assertEquals("", FileUtils.readTextTailMaybeNativeEncoding(file, 1024));
+    }
+
+    /// Verifies that a missing file raises IOException, which the uploader turns into a fallback.
+    @Test
+    public void failsOnMissingFile(@TempDir Path tempDir) {
+        Path file = tempDir.resolve("missing.log");
+
+        assertThrows(IOException.class, () -> FileUtils.readTextTailMaybeNativeEncoding(file, 1024));
+    }
+
+    /// Verifies that access and refresh token arguments are masked, wherever their value appears.
+    @Test
+    public void sanitizeMasksTokenArguments() {
+        String sanitized = McLogsUploader.sanitize(
+                "java --accessToken SECRET_VALUE_123 --version 8 && refresh_token=REFRESH_VALUE_456");
+
+        assertFalse(sanitized.contains("SECRET_VALUE_123"));
+        assertFalse(sanitized.contains("REFRESH_VALUE_456"));
+        assertTrue(sanitized.contains("<access token>"));
+    }
+
+    /// Verifies that JSON-style tokens are masked while the surrounding name is preserved.
+    @Test
+    public void sanitizeMasksJsonStyleTokens() {
+        String sanitized = McLogsUploader.sanitize("{ \"accessToken\" : \"SECRET_VALUE_123\" }");
+
+        assertFalse(sanitized.contains("SECRET_VALUE_123"));
+        assertTrue(sanitized.contains("accessToken"));
+        assertTrue(sanitized.contains("<access token>"));
+    }
+
+    /// Verifies that IPv4 addresses are masked but a trailing port remains visible.
+    @Test
+    public void sanitizeMasksIpv4Addresses() {
+        String sanitized = McLogsUploader.sanitize("Connecting to 192.168.1.1:25565");
+
+        assertFalse(sanitized.contains("192.168.1.1"));
+        assertTrue(sanitized.contains("<IPv4>:25565"));
+    }
+
+    /// Verifies that the current user's home directory is masked.
+    @Test
+    public void sanitizeMasksUserHome() {
+        String home = System.getProperty("user.home");
+
+        String sanitized = McLogsUploader.sanitize(home + "/.minecraft/logs/latest.log");
+
+        assertTrue(sanitized.contains("<user home>"));
+        assertFalse(sanitized.contains(home));
     }
 
     /// Verifies that a successful response yields the documented URL.

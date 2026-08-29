@@ -304,6 +304,9 @@ public class GameCrashWindow extends Stage {
     ///
     /// @param uploadButtonPane the spinner pane wrapping the upload button, toggled while uploading
     private void uploadGameLogToMcLogs(SpinnerPane uploadButtonPane) {
+        if (uploadButtonPane.isLoading()) {
+            return;
+        }
         uploadButtonPane.showSpinner();
         McLogsUploader.uploadGameLog(gameInstance.getRunDirectory(), logs).whenCompleteAsync((url, exception) -> {
             uploadButtonPane.hideSpinner();

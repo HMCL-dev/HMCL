@@ -26,7 +26,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -238,20 +242,113 @@ public final class FileUtils {
         }
     }
 
+    /// How many extra leading bytes to keep when reading only a tail, so the cut can be aligned to a
+    /// character boundary (UTF-8 uses at most 4 bytes per character).
+    private static final int TAIL_GUARD_BYTES = 16;
+
+    /// Reads the whole file and decodes it with HMCL's charset-detection rules.
     public static String readTextMaybeNativeEncoding(Path file) throws IOException {
         byte[] bytes = Files.readAllBytes(file);
+        return new String(bytes, detectCharset(bytes));
+    }
 
+    /// Reads at most the last [maxBytes] bytes of [file], decoded with HMCL's charset-detection rules.
+    ///
+    /// Unlike {@link #readTextMaybeNativeEncoding(Path)}, a file larger than [maxBytes] is never read into
+    /// memory in full: only the tail is read, and the returned content stays within a few bytes of
+    /// [maxBytes]. The cut is aligned to a character boundary whenever the content is detected as UTF-8, so
+    /// multi-byte characters (CJK, emoji, ...) are never split into invalid sequences.
+    ///
+    /// @param file     the file to read from
+    /// @param maxBytes the maximum number of bytes to keep from the tail; must be non-negative
+    /// @return the decoded tail content
+    /// @throws IOException if the file cannot be read
+    public static String readTextTailMaybeNativeEncoding(Path file, long maxBytes) throws IOException {
+        long size = Files.size(file);
+        if (size <= maxBytes)
+            return readTextMaybeNativeEncoding(file);
+
+        byte[] tail = readTailBytes(file, size, maxBytes);
+        Charset charset = detectCharset(tail);
+        int leading = leadingCharacterBoundary(tail, charset);
+        return new String(tail, leading, tail.length - leading, charset);
+    }
+
+    /// Detects the charset of [bytes] using the same heuristics used by the text readers.
+    ///
+    /// @param bytes the bytes whose charset should be detected
+    /// @return the charset to decode [bytes] with
+    private static Charset detectCharset(byte[] bytes) {
         if (OperatingSystem.NATIVE_CHARSET == UTF_8)
-            return new String(bytes, UTF_8);
+            return UTF_8;
 
         EncodingDetector detector = EncodingDetector.MODERN_WEB;
         EncodingDetector.@Nullable Encoding bestEncoding = detector.detect(bytes).bestEncoding();
         @Nullable Charset detectedCharset = bestEncoding != null ? bestEncoding.approximateCharset() : null;
 
         if (detectedCharset != null && (detectedCharset == UTF_8 || detectedCharset == US_ASCII))
-            return new String(bytes, UTF_8);
+            return UTF_8;
         else
-            return new String(bytes, OperatingSystem.NATIVE_CHARSET);
+            return OperatingSystem.NATIVE_CHARSET;
+    }
+
+    /// Reads the last bytes of a file larger than [maxBytes], keeping a small guard so a UTF-8 cut can later
+    /// be aligned to a character boundary.
+    ///
+    /// @param file     the file to read from
+    /// @param size     the size of the file, obtained upfront
+    /// @param maxBytes the maximum number of bytes to keep from the tail
+    /// @return the raw tail bytes
+    /// @throws IOException if the file cannot be read
+    private static byte[] readTailBytes(Path file, long size, long maxBytes) throws IOException {
+        long offset = Math.max(0, size - maxBytes - TAIL_GUARD_BYTES);
+        int length = (int) Math.min(size - offset, maxBytes + TAIL_GUARD_BYTES);
+        byte[] tail = new byte[length];
+
+        try (InputStream input = Files.newInputStream(file)) {
+            IOUtils.skipNBytes(input, offset);
+            int read = 0;
+            while (read < length) {
+                int n = input.read(tail, read, length - read);
+                if (n < 0)
+                    break;
+                read += n;
+            }
+            return read == length ? tail : Arrays.copyOf(tail, read);
+        }
+    }
+
+    /// Returns the index within the guard window that starts on a character boundary.
+    ///
+    /// UTF-8 boundary bytes never start with `10xxxxxx`, so continuation bytes are skipped. Other charsets
+    /// are probed with a strict decoder; if none decodes cleanly the method falls back to `0` and a single
+    /// replacement character may appear (a rare native-encoding case).
+    ///
+    /// @param bytes   the bytes to align
+    /// @param charset the charset to decode with
+    /// @return the leading offset that keeps the first character intact
+    private static int leadingCharacterBoundary(byte[] bytes, Charset charset) {
+        int limit = Math.min(TAIL_GUARD_BYTES, bytes.length);
+        if (charset == UTF_8) {
+            int index = 0;
+            while (index < limit && (bytes[index] & 0xC0) == 0x80)
+                index++;
+            return index;
+        }
+
+        CharsetDecoder decoder = charset.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT);
+        for (int index = 0; index <= limit; index++) {
+            try {
+                decoder.reset();
+                decoder.decode(ByteBuffer.wrap(bytes, index, bytes.length - index));
+                return index;
+            } catch (CharacterCodingException ignored) {
+                // The byte at `index` is still a tail byte of a multi-byte character; try the next one.
+            }
+        }
+        return 0;
     }
 
     public static void deleteDirectory(Path directory) throws IOException {
