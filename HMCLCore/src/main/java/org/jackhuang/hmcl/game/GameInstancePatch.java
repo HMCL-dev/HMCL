@@ -17,11 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import org.jackhuang.hmcl.util.ImmutableSequencedMap;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.InstantTypeAdapter;
@@ -867,6 +863,28 @@ public record GameInstancePatch(
         return json;
     }
 
+    private static @Nullable @Unmodifiable List<Library> mergeLibraries(
+            @Nullable List<Library> patchLibraries,
+            @Nullable List<Library> parentLibraries) {
+        if (patchLibraries == null || patchLibraries.isEmpty()) {
+            return parentLibraries;
+        }
+        if (parentLibraries == null || parentLibraries.isEmpty()) {
+            return patchLibraries;
+        }
+
+        Map<String, Library> libraryMap = new LinkedHashMap<>();
+        for (Library library : parentLibraries) {
+            libraryMap.put(library.name(), library);
+        }
+
+        for (Library library : patchLibraries) {
+            libraryMap.put(library.name(), library);
+        }
+
+        return List.copyOf(libraryMap.values());
+    }
+
     GameInstanceManifest merge(GameInstanceManifest parent) {
         return new GameInstanceManifest(
                 parent.id(),
@@ -879,7 +897,7 @@ public record GameInstancePatch(
                 assets == null ? parent.assets() : assets,
                 complianceLevel,
                 javaVersion == null ? parent.javaVersion() : javaVersion,
-                Lang.merge(this.libraries, parent.libraries()),
+                mergeLibraries(this.libraries, parent.libraries()),
                 Lang.merge(parent.compatibilityRules(), this.compatibilityRules),
                 downloads == null ? parent.downloads() : downloads,
                 logging == null ? parent.logging() : logging,

@@ -31,6 +31,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jackhuang.hmcl.game.GameComponentType.GAME;
+
 public final class LegacyFabricInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
@@ -106,6 +108,18 @@ public final class LegacyFabricInstallTask extends Task<GameInstancePatch> {
         libraries.add(new Library(Artifact.fromDescriptor(legacyFabricInfo.getIntermediary().getMaven()), getMavenRepositoryByGroup(legacyFabricInfo.getIntermediary().getMaven()), null));
         libraries.add(new Library(Artifact.fromDescriptor(legacyFabricInfo.getLoader().getMaven()), getMavenRepositoryByGroup(legacyFabricInfo.getLoader().getMaven()), null));
 
+        var game = manifest.getPatches().stream().filter(it -> GAME.getPatchId().equals(it.id())).findFirst().orElse(null);
+        if (game != null) {
+            if (game.libraries() != null) {
+                var asms = game.libraries().stream().filter(it -> it.artifact().getGroup().equals("org.ow2.asm")).toList();
+
+                for (var lib : asms) {
+                    libraries.add(new Library(lib.artifact(), lib.url(), lib.downloads(), lib.checksums(), lib.extract(), lib.natives(), List.of(
+                            new CompatibilityRule(CompatibilityRule.Action.DISALLOW, null)
+                    ), lib.hint(), lib.hint()));
+                }
+            }
+        }
         return new GameInstancePatch(GameComponentType.LEGACY_FABRIC.getPatchId(), loaderVersion, GameInstancePatch.PRIORITY_LOADER, arguments, mainClass, libraries);
     }
 
