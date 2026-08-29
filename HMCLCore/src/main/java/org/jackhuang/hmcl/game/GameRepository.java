@@ -66,12 +66,6 @@ public interface GameRepository {
     /// @see GameRepositoryDraft
     GameRepositoryDraft openDraft();
 
-    /// Resolves inheritance into a normalized launch view and a patch-preserving standalone view.
-    ///
-    /// @param manifest the manifest to resolve
-    /// @return the resolved manifest view
-    GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException;
-
     /// Returns whether the instance exists in the current repository index.
     ///
     /// @param instanceId the instance id

@@ -176,24 +176,8 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
         return newSnapshot;
     }
 
-    /// Resolves official-layout inheritance and patches, then deduplicates launch libraries.
-    ///
-    /// Loader-specific argument repairs are applied later for a concrete launch attempt (for example
-    /// by [LaunchManifestNormalizer#repairForLaunch(GameInstanceManifest)]).
-    ///
-    /// @param manifest the manifest to resolve
-    /// @return the resolved manifest views
-    /// @throws NoSuchGameInstanceException if an inherited parent is missing from this snapshot
-    public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
-        GameInstanceManifest.Resolved resolved = resolve(manifest, new HashSet<>());
-        GameInstanceManifest launchManifest = uniqueLibraries(resolved.launchManifest());
-        if (launchManifest != resolved.launchManifest()) {
-            resolved = new GameInstanceManifest.Resolved(
-                    resolved.unresolved(),
-                    launchManifest,
-                    resolved.standaloneManifest());
-        }
-        return resolved;
+    public GameInstanceManifest resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
+        return resolve(manifest, new HashSet<>());
     }
 
     /// Resolves official-layout inheritance and patches without launch-library deduplication.
@@ -202,15 +186,10 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
     /// @param resolvedSoFar instance ids already visited in the inheritance chain
     /// @return the resolved manifest views
     /// @throws NoSuchGameInstanceException if an inherited parent is missing from this snapshot
-    private GameInstanceManifest.Resolved resolve(
+    private GameInstanceManifest resolve(
             GameInstanceManifest manifest,
             Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
         GameInstanceManifest launchManifest;
-        GameInstanceManifest standaloneManifest = manifest.isRoot()
-                ? manifest
-                : addPatches(
-                addPatches(new GameInstanceManifest(manifest.id()), List.of(manifest.toPatch())),
-                manifest.patches());
 
         if (manifest.inheritsFrom() == null) {
             if (manifest.isRoot()) {
@@ -235,12 +214,8 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
                 }
 
                 // It is supposed to auto-install a version in getVersion.
-                GameInstanceManifest.Resolved parentResolved =
-                        resolve(parentInstance.getManifest(), resolvedSoFar);
-                launchManifest = manifest.merge(parentResolved.launchManifest());
-                standaloneManifest = addPatches(
-                        addPatches(parentResolved.standaloneManifest(), List.of(manifest.toPatch())),
-                        manifest.patches());
+                GameInstanceManifest parentResolved = resolve(parentInstance.getManifest(), resolvedSoFar);
+                launchManifest = manifest.merge(parentResolved);
             }
         }
 
@@ -255,12 +230,7 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
         }
 
         launchManifest = launchManifest.withId(manifest.id()).withPatches(null);
-        standaloneManifest = standaloneManifest.withId(manifest.id());
-        if (launchManifest.jar() != null) {
-            standaloneManifest = standaloneManifest.withJar(launchManifest.jar());
-        }
-
-        return new GameInstanceManifest.Resolved(manifest, launchManifest, standaloneManifest);
+        return launchManifest;
     }
 
     /// Removes redundant library declarations while retaining rule-distinct variants.

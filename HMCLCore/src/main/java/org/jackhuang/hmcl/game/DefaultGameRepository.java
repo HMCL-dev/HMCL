@@ -556,11 +556,6 @@ public abstract class DefaultGameRepository implements GameRepository {
         });
     }
 
-    @Override
-    public GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException {
-        return getSnapshot().resolve(manifest);
-    }
-
     /// Creates an empty unsealed snapshot for the given layout.
     ///
     /// @param layout the layout for the new snapshot

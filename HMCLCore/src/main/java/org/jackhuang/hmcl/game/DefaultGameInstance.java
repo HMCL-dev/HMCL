@@ -57,7 +57,7 @@ public abstract class DefaultGameInstance implements GameInstance {
     /// `.jar` extension.
     protected final @Nullable Path manifestFile;
 
-    protected GameInstanceManifest.@Nullable Resolved resolvedManifest;
+    protected @Nullable GameInstanceManifest resolvedManifest;
 
     private @Nullable GameComponentAnalyzer analyzer;
 
@@ -158,7 +158,7 @@ public abstract class DefaultGameInstance implements GameInstance {
     }
 
     @Override
-    public GameInstanceManifest.Resolved getResolvedManifest() {
+    public GameInstanceManifest getLaunchManifest() {
         if (resolvedManifest == null) {
             resolvedManifest = snapshot.resolve(manifest);
         }
