@@ -60,8 +60,8 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private final TabHeader.Tab<WorldListPage> worldListTab = new TabHeader.Tab<>("worldList");
     private final TabHeader.Tab<SchematicsPage> schematicsTab = new TabHeader.Tab<>("schematicsTab");
     private final TabHeader.Tab<ResourcePackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
-    private final TabHeader.Tab<ShaderListPage> shaderListTab = new TabHeader.Tab<>("shaderListTab");
-    private final TransitionPane transitionPane = new TransitionPane();
+    private final TabHeader.Tab<ShaderPackListPage>   shaderListTab   = new TabHeader.Tab<>("shaderListTab");
+    private final TransitionPane                      transitionPane  = new TransitionPane();
     private final BooleanProperty currentInstanceUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<HMCLGameInstance.@Nullable Optional> instance =
             new SimpleObjectProperty<>(this, "instance");
@@ -91,7 +91,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         installerListTab.setNodeSupplier(() -> new InstallerListPage(instance));
         modListTab.setNodeSupplier(() -> new ModListPage(instance));
         resourcePackTab.setNodeSupplier(() -> new ResourcePackListPage(instance));
-        shaderListTab.setNodeSupplier(() -> new ShaderListPage(instance));
+        shaderListTab.setNodeSupplier(() -> new ShaderPackListPage(instance));
         worldListTab.setNodeSupplier(() -> new WorldListPage(instance));
         schematicsTab.setNodeSupplier(() -> new SchematicsPage(instance));
 

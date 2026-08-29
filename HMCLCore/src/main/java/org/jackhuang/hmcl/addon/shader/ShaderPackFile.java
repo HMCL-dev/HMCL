@@ -33,9 +33,9 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public sealed abstract class ShaderFile extends LocalAddonFile implements Comparable<ShaderFile> permits ShaderZipFile, ShaderFolder {
-    public static @Nullable ShaderFile fromFile(Path file) throws IOException {
-        return Files.isRegularFile(file) ? ShaderZipFile.load(file) : ShaderFolder.load(file);
+public sealed abstract class ShaderPackFile extends LocalAddonFile implements Comparable<ShaderPackFile> permits ShaderPackZipFile, ShaderPackFolder {
+    public static @Nullable ShaderPackFile fromFile(Path file) throws IOException {
+        return Files.isRegularFile(file) ? ShaderPackZipFile.load(file) : ShaderPackFolder.load(file);
     }
 
     public static boolean isFileShaderPack(Path file) {
@@ -57,14 +57,12 @@ public sealed abstract class ShaderFile extends LocalAddonFile implements Compar
     protected final String fileNameWithoutExtension;
     protected final ShaderLoaderType loaderType;
     protected final @Nullable ShaderPackMeta shaderPackMeta;
-    protected final @Nullable Image icon;
 
-    protected ShaderFile(Path file, ShaderLoaderType loaderType, @Nullable ShaderPackMeta shaderPackMeta, @Nullable Image icon) {
+    protected ShaderPackFile(Path file, ShaderLoaderType loaderType, @Nullable ShaderPackMeta shaderPackMeta) {
         this.file = file;
         this.fileNameWithoutExtension = FileUtils.getNameWithoutExtension(file);
         this.loaderType = loaderType;
         this.shaderPackMeta = shaderPackMeta;
-        this.icon = icon;
     }
 
     @Override
@@ -85,9 +83,7 @@ public sealed abstract class ShaderFile extends LocalAddonFile implements Compar
         return shaderPackMeta;
     }
 
-    public @Nullable Image getIcon() {
-        return icon;
-    }
+    public abstract @Nullable Image loadIcon();
 
     public @NotNull String getName() {
         return Optional.ofNullable(getMeta()).map(ShaderPackMeta::name).orElse(getFile().getFileName().toString());
@@ -115,7 +111,23 @@ public sealed abstract class ShaderFile extends LocalAddonFile implements Compar
     }
 
     @Override
-    public int compareTo(@NotNull ShaderFile other) {
+    public int compareTo(@NotNull ShaderPackFile other) {
         return fileNameWithoutExtension.compareTo(other.fileNameWithoutExtension);
+    }
+
+    @Override
+    public void onUpdated(String newFileNameWithExt) {
+        super.onUpdated(newFileNameWithExt);
+        var configPath = getFile().resolveSibling(getFile().getFileName() + ".txt");
+        var newConfigPath = getFile().resolveSibling(newFileNameWithExt + ".txt");
+        if (Files.isRegularFile(configPath)) {
+            try {
+                Files.move(configPath, newConfigPath);
+            } catch (IOException e) {
+                LOG.warning("Failed to rename shader config file " + configPath, e);
+            }
+        } else {
+            LOG.warning("Failed to rename shader config file " + configPath + " because the file doesn't exist");
+        }
     }
 }

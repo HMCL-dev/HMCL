@@ -41,7 +41,8 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
-import org.jackhuang.hmcl.addon.shader.ShaderFile;
+import org.jackhuang.hmcl.addon.shader.ShaderPackFile;
+import org.jackhuang.hmcl.addon.shader.ShaderPackManager;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -59,7 +60,6 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -72,18 +72,19 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class ShaderListPage extends ListPageBase<ShaderFile> {
+public class ShaderPackListPage extends ListPageBase<ShaderPackFile> {
 
     private final ReentrantLock lock = new ReentrantLock();
 
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private @Nullable HMCLGameInstance gameInstance;
 
-    private @Nullable Path shadersDir;
+    private Path shaderPackDir;
+    private ShaderPackManager shaderPackManager;
 
-    public ShaderListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+    public ShaderPackListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
         Objects.requireNonNull(instanceContext, "instanceContext");
-        FXUtils.applyDragListener(this, ShaderFile::isFileShaderPack, this::addFiles);
+        FXUtils.applyDragListener(this, ShaderPackFile::isFileShaderPack, this::addFiles);
 
         listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
             if (current != null) {
@@ -94,36 +95,32 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
 
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new ShaderListPageSkin(this);
+        return new ShaderPackListPageSkin(this);
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
         this.gameInstance = instance.instance();
         if (gameInstance == null) {
-            this.shadersDir = null;
+            this.shaderPackDir = null;
+            this.shaderPackManager = null;
             getItems().clear();
             return;
         }
 
-        this.shadersDir = gameInstance.getShadersDirectory();
+        this.shaderPackDir = gameInstance.getShadersDirectory();
+        this.shaderPackManager = gameInstance.getShaderPackManager();
 
         refresh();
     }
 
     public void refresh() {
-        if (shadersDir == null) return;
+        if (shaderPackManager == null) return;
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
             lock.lock();
-            try (var stream = Files.list(shadersDir)) {
-                return stream.map(file -> {
-                    try {
-                        return ShaderFile.fromFile(file);
-                    } catch (IOException e) {
-                        LOG.warning("Failed to load shader pack " + file, e);
-                        return null;
-                    }
-                }).filter(Objects::nonNull).toList();
+            try {
+                shaderPackManager.refresh();
+                return shaderPackManager.getLocalFiles();
             } finally {
                 lock.unlock();
             }
@@ -139,31 +136,22 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
     }
 
     public void addFiles(List<Path> files) {
-        if (shadersDir == null) return;
+        if (shaderPackManager == null) return;
+
         List<Path> failures = new ArrayList<>();
         Task.runAsync(() -> {
-            lock.lock();
-            try {
-                for (Path file : files) {
-                    if (ShaderFile.isFileShaderPack(file)) {
-                        try {
-                            FileUtils.copyTo(file, shadersDir);
-                        } catch (Exception e) {
-                            LOG.warning("Failed to add shader pack " + file, e);
-                            failures.add(file);
-                        }
-                    } else {
-                        LOG.warning("Failed to add shader pack", new IllegalArgumentException("File '" + file + "' is not a shader pack"));
-                        failures.add(file);
-                    }
+            for (Path file : files) {
+                try {
+                    shaderPackManager.importShaderPack(file);
+                } catch (Exception e) {
+                    LOG.warning("Failed to add shader pack " + file, e);
+                    failures.add(file);
                 }
-            } finally {
-                lock.unlock();
             }
         }).withRunAsync(Schedulers.javafx(), () -> {
             if (!failures.isEmpty()) {
                 StringBuilder failure = new StringBuilder(i18n("shaderpack.add.failed"));
-                for (Path file : failures) {
+                for (Path file: failures) {
                     failure.append("\n").append(file.toString());
                 }
                 Controllers.dialog(failure.toString(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
@@ -172,11 +160,9 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
         }).start();
     }
 
-    public void removeFiles(List<ShaderFile> selectedItems) {
+    public void removeFiles(List<ShaderPackFile> selectedItems) {
         try {
-            for (var shader : selectedItems) {
-                shader.delete();
-            }
+            shaderPackManager.removeShaderPacks(selectedItems);
         } catch (IOException e) {
             Controllers.dialog(i18n("shaderpack.delete.failed", e.getMessage()), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             LOG.warning("Failed to delete shader packs", e);
@@ -184,7 +170,7 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
         refresh();
     }
 
-    public void checkUpdates(Collection<ShaderFile> shaderPacks) {
+    public void checkUpdates(Collection<ShaderPackFile> shaderPacks) {
         HMCLGameInstance gameInstance = this.gameInstance;
         if (gameInstance == null) return;
 
@@ -201,7 +187,7 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
                     } else if (result.isEmpty()) {
                         Controllers.dialog(I18n.i18n("addon.check_update.empty"));
                     } else {
-                        Controllers.navigateForward(new AddonUpdatesPage(shadersDir, result));
+                        Controllers.navigateForward(new AddonUpdatesPage(shaderPackDir, result));
                     }
                 }).withStagesHints("update.checking"),
                 I18n.i18n("addon.check_update"), TaskCancellationAction.NORMAL);
@@ -224,16 +210,16 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
     }
 
     private void onOpenFolder() {
-        if (shadersDir != null) {
-            FXUtils.openFolder(shadersDir);
+        if (shaderPackDir != null) {
+            FXUtils.openFolder(shaderPackDir);
         }
     }
 
-    private static Image getOrCreateIcon(ShaderFile shaderFile) {
-        Image image = shaderFile.getIcon();
+    private static Image getOrCreateIcon(ShaderPackFile shaderPackFile) {
+        Image image = shaderPackFile.loadIcon();
         if (image == null || image.isError() || image.getWidth() <= 0 || image.getHeight() <= 0 ||
                 (Math.abs(image.getWidth() - image.getHeight()) >= 1)) {
-            image = switch (shaderFile.getLoaderType()) {
+            image = switch (shaderPackFile.getLoaderType()) {
                 case OPTIFINE_IRIS -> FXUtils.newBuiltinImage("/assets/img/opti-iris.png");
                 default -> ResourcePackListPage.UNKNOWN_PACK_IMAGE.get();
             };
@@ -241,8 +227,8 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
         return image;
     }
 
-    private static final class ShaderListPageSkin extends SkinBase<ShaderListPage> {
-        private final JFXListView<ShaderFile> listView;
+    private static final class ShaderPackListPageSkin extends SkinBase<ShaderPackListPage> {
+        private final JFXListView<ShaderPackFile> listView;
         private final JFXTextField searchField = new JFXTextField();
 
         private final TransitionPane toolbarPane = new TransitionPane();
@@ -252,7 +238,7 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
 
         private boolean isSearching;
 
-        public ShaderListPageSkin(ShaderListPage control) {
+        public ShaderPackListPageSkin(ShaderPackListPage control) {
             super(control);
 
             StackPane pane = new StackPane();
@@ -347,15 +333,15 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
                 ComponentList.setVgrow(center, Priority.ALWAYS);
                 center.loadingProperty().bind(control.loadingProperty());
 
-                listView.setCellFactory(x -> new ShaderListCell(listView));
+                listView.setCellFactory(x -> new ShaderPackListCell(listView));
                 listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
                 Bindings.bindContent(listView.getItems(), control.getItems());
 
                 listView.setOnContextMenuRequested(event -> {
-                    ShaderFile selectedItem = listView.getSelectionModel().getSelectedItem();
+                    ShaderPackFile selectedItem = listView.getSelectionModel().getSelectedItem();
                     if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
                         listView.getSelectionModel().clearSelection();
-                        Controllers.dialog(new ShaderInfoDialog(selectedItem));
+                        Controllers.dialog(new ShaderPackInfoDialog(selectedItem));
                     }
                 });
 
@@ -400,7 +386,7 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
                 }
 
                 // Do we need to search in the background thread?
-                for (ShaderFile item : getSkinnable().getItems()) {
+                for (ShaderPackFile item : getSkinnable().getItems()) {
                     var meta = item.getMeta();
                     if (predicate.test(item.getFile().getFileName().toString())
                             || predicate.test(item.getName())
@@ -413,14 +399,14 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
 
     }
 
-    private static final class ShaderListCell extends MDListCell<ShaderFile> {
+    private static final class ShaderPackListCell extends MDListCell<ShaderPackFile> {
 
         private final ImageContainer imageContainer = new ImageContainer(24);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
         private final JFXButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);
 
-        public ShaderListCell(JFXListView<ShaderFile> listView) {
+        public ShaderPackListCell(JFXListView<ShaderPackFile> listView) {
             super(listView);
 
             HBox root = new HBox(8);
@@ -439,7 +425,7 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
         }
 
         @Override
-        protected void updateControl(ShaderFile item, boolean empty) {
+        protected void updateControl(ShaderPackFile item, boolean empty) {
             if (empty || item == null) return;
 
             imageContainer.setImage(getOrCreateIcon(item));
@@ -457,13 +443,13 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
             btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(item.getFile()));
 
-            btnInfo.setOnAction(e -> Controllers.dialog(new ShaderInfoDialog(item)));
+            btnInfo.setOnAction(e -> Controllers.dialog(new ShaderPackInfoDialog(item)));
         }
     }
 
-    private static final class ShaderInfoDialog extends JFXDialogLayout {
+    private static final class ShaderPackInfoDialog extends JFXDialogLayout {
 
-        public ShaderInfoDialog(ShaderFile shaderFile) {
+        public ShaderPackInfoDialog(ShaderPackFile shaderPackFile) {
 
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
@@ -471,12 +457,12 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
             maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
 
             ImageContainer imageContainer = new ImageContainer(40);
-            imageContainer.setImage(getOrCreateIcon(shaderFile));
+            imageContainer.setImage(getOrCreateIcon(shaderPackFile));
 
             TwoLineListItem title = new TwoLineListItem();
-            title.setTitle(shaderFile.getFileName());
-            title.setSubtitle(shaderFile.getFile().getFileName().toString());
-            title.addTag(switch (shaderFile.getLoaderType()) {
+            title.setTitle(shaderPackFile.getFileName());
+            title.setSubtitle(shaderPackFile.getFile().getFileName().toString());
+            title.addTag(switch (shaderPackFile.getLoaderType()) {
                 case OPTIFINE_IRIS -> i18n("shaderpack.loader.optifine_iris");
                 case APERTURE -> i18n("shaderpack.loader.aperture");
             });
@@ -485,8 +471,8 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
             setHeading(titleContainer);
 
             Label description = new Label();
-            if (shaderFile.getMeta() != null && shaderFile.getMeta().description() != null)
-                description.setText(shaderFile.getMeta().description());
+            if (shaderPackFile.getMeta() != null && shaderPackFile.getMeta().description() != null)
+                description.setText(shaderPackFile.getMeta().description());
             description.setWrapText(true);
             FXUtils.copyOnDoubleClick(description);
 
@@ -510,7 +496,7 @@ public class ShaderListPage extends ListPageBase<ShaderFile> {
                 RemoteAddonRepository repository = item.getValue();
                 JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                 Task.runAsync(() -> {
-                    Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(shaderFile.getFile());
+                    Optional<RemoteAddon.Version> versionOptional = repository.getRemoteVersionByLocalFile(shaderPackFile.getFile());
                     if (versionOptional.isPresent()) {
                         RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                         FXUtils.runInFX(() -> {

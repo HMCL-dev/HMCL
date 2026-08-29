@@ -28,9 +28,9 @@ import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-final class ShaderFolder extends ShaderFile {
+final class ShaderPackFolder extends ShaderPackFile {
 
-    public static @Nullable ShaderFolder load(Path file) {
+    public static @Nullable ShaderPackFolder load(Path file) {
         Path shadersPath = file.resolve("shaders");
         if (!Files.isDirectory(shadersPath)) return null;
 
@@ -40,27 +40,24 @@ final class ShaderFolder extends ShaderFile {
         } catch (IOException e) {
             LOG.warning("Failed to load shader metadata", e);
         }
-        byte[] iconData = null;
-        Image icon = null;
-        try {
-            iconData = Files.readAllBytes(shadersPath.resolve("pack.png"));
-        } catch (IOException e) {
-            LOG.warning("Failed to read aperture shader icon", e);
-        }
-        if (iconData != null) {
-            try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
-                icon = new Image(inputStream, 64, 64, true, true);
-            } catch (Exception e) {
-                LOG.warning("Failed to load aperture shader icon", e);
-            }
-        }
+
         if (Files.isRegularFile(shadersPath.resolve("pack.ts"))) { // Aperture
-            return new ShaderFolder(file, ShaderLoaderType.APERTURE, meta, icon);
+            return new ShaderPackFolder(file, ShaderLoaderType.APERTURE, meta);
         }
-        return new ShaderFolder(file, ShaderLoaderType.OPTIFINE_IRIS, meta, icon);
+        return new ShaderPackFolder(file, ShaderLoaderType.OPTIFINE_IRIS, meta);
     }
 
-    private ShaderFolder(Path file, ShaderLoaderType loaderType, @Nullable ShaderPackMeta shaderPackMeta, @Nullable Image icon) {
-        super(file, loaderType, shaderPackMeta, icon);
+    private ShaderPackFolder(Path file, ShaderLoaderType loaderType, @Nullable ShaderPackMeta shaderPackMeta) {
+        super(file, loaderType, shaderPackMeta);
+    }
+
+    public @Nullable Image loadIcon() {
+        Path iconPath = getFile().resolve("shaders").resolve("pack.png");
+        try (var inputStream = new ByteArrayInputStream(Files.readAllBytes(iconPath))) {
+            return new Image(inputStream, 64, 64, true, true);
+        } catch (Exception e) {
+            LOG.warning("Failed to load shader pack icon in " + iconPath, e);
+        }
+        return null;
     }
 }

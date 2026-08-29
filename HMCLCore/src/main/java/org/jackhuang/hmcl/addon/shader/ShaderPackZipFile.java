@@ -37,9 +37,9 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-final class ShaderZipFile extends ShaderFile {
+final class ShaderPackZipFile extends ShaderPackFile {
 
-    public static @Nullable ShaderZipFile load(Path file) throws IOException {
+    public static @Nullable ShaderPackZipFile load(Path file) throws IOException {
         if (!Files.isRegularFile(file) || !file.toString().toLowerCase(Locale.ROOT).endsWith(".zip")) return null;
 
         try (var zipSystem = CompressingUtils.createReadOnlyZipFileSystem(file)) {
@@ -57,30 +57,35 @@ final class ShaderZipFile extends ShaderFile {
                 } catch (IOException e) {
                     LOG.warning("Failed to load aperture shader metadata", e);
                 }
-                byte[] iconData = null;
-                Image icon = null;
-                try {
-                    iconData = Files.readAllBytes(shadersPath.resolve("pack.png"));
-                } catch (IOException e) {
-                    LOG.warning("Failed to read aperture shader icon", e);
-                }
-                if (iconData != null) {
-                    try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
-                        icon = new Image(inputStream, 64, 64, true, true);
-                    } catch (Exception e) {
-                        LOG.warning("Failed to load aperture shader icon", e);
-                    }
-                }
+
+                String shadersEntry = shadersPath.toAbsolutePath().normalize().toString().substring(1) + '/';
                 if (Files.isRegularFile(shadersPath.resolve("pack.ts"))) { // Aperture
-                    return new ShaderZipFile(file, ShaderLoaderType.APERTURE, meta, icon);
+                    return new ShaderPackZipFile(file, shadersEntry, ShaderLoaderType.APERTURE, meta);
                 }
-                return new ShaderZipFile(file, ShaderLoaderType.OPTIFINE_IRIS, meta, icon);
+                return new ShaderPackZipFile(file, shadersEntry, ShaderLoaderType.OPTIFINE_IRIS, meta);
             }
         }
     }
 
-    private ShaderZipFile(Path file, ShaderLoaderType loaderType, @Nullable ShaderPackMeta shaderPackMeta, @Nullable Image icon) {
-        super(file, loaderType, shaderPackMeta, icon);
+    private final String shadersEntry;
+
+    private ShaderPackZipFile(Path file, String shadersEntry, ShaderLoaderType loaderType, @Nullable ShaderPackMeta shaderPackMeta) {
+        super(file, loaderType, shaderPackMeta);
+        this.shadersEntry = shadersEntry;
+    }
+
+    @Override
+    public @Nullable Image loadIcon() {
+        try (var tree = CompressingUtils.openZipTree(getFile())) {
+            var entry = tree.getEntry(shadersEntry + "pack.png");
+            if (entry == null) return null;
+            try (var inputStream = new ByteArrayInputStream(tree.readBinaryEntry(entry))) {
+                return new Image(inputStream, 64, 64, true, true);
+            }
+        } catch (Exception e) {
+            LOG.warning("Failed to load shader pack icon in file %s!/%s".formatted(getFile(), shadersEntry), e);
+        }
+        return null;
     }
 
     @Override
@@ -96,21 +101,5 @@ final class ShaderZipFile extends ShaderFile {
                 .toList();
         if (remoteVersions.isEmpty()) return null;
         return new AddonUpdate(source, RemoteAddon.Type.SHADER_PACK, this, currentVersion.get(), remoteVersions.get(0));
-    }
-
-    @Override
-    public void onUpdated(String newFileNameWithExt) {
-        super.onUpdated(newFileNameWithExt);
-        var configPath = getFile().resolveSibling(getFileName() + ".zip.txt");
-        var newConfigPath = getFile().resolveSibling(newFileNameWithExt + ".txt");
-        if (Files.isRegularFile(configPath)) {
-            try {
-                Files.move(configPath, newConfigPath);
-            } catch (IOException e) {
-                LOG.warning("Failed to rename shader config file " + configPath, e);
-            }
-        } else {
-            LOG.warning("Failed to rename shader config file " + configPath + " because the file doesn't exist");
-        }
     }
 }
