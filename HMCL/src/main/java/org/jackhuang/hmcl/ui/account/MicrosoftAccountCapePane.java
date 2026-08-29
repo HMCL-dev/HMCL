@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.account;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.animation.PauseTransition;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
@@ -94,7 +95,13 @@ public final class MicrosoftAccountCapePane extends StackPane {
         getChildren().setAll(layout);
         layout.setHeading(new Label(i18n("account.cape.manage")));
 
-        spinnerPane.setContent(listBox);
+        // Keep the list from touching the dialog's upper/lower edges: let the ScrollPane
+        // scroll inside a padded container instead of expanding to fit its content.
+        listBox.setFitToHeight(false);
+        StackPane listContent = new StackPane(listBox);
+        listContent.setPadding(new Insets(12, 0, 12, 0));
+
+        spinnerPane.setContent(listContent);
         spinnerPane.setPrefHeight(360);
         spinnerPane.setOnFailedAction(e -> reload());
 

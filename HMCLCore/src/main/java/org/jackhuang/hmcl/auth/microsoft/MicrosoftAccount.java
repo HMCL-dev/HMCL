@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -62,6 +64,19 @@ public final class MicrosoftAccount extends OAuthAccount {
     /// Timestamp until which all Minecraft Services profile/cape requests are
     /// blocked after a 429 response.
     private volatile long minecraftServicesRateLimitUntil;
+
+    /// Coordinates the profile cache, in-flight GET, mutation version, and
+    /// rate-limit cooldown so a stale GET can never overwrite a newer mutation.
+    private final Object profileStateLock = new Object();
+
+    /// Monotonic counter bumped by every successful cape mutation. Guarded by
+    /// `profileStateLock`. An in-flight GET records it before issuing HTTP and
+    /// only writes the cache when it is still unchanged afterwards.
+    private long mutationVersion;
+
+    /// In-flight profile GET, deduplicating concurrent loads. Guarded by
+    /// `profileStateLock`, and cleared by its creator once it completes.
+    private CompletableFuture<MicrosoftService.MinecraftProfileResponse> profileLoading;
 
     protected MicrosoftAccount(AccountID accountID, MicrosoftService service, MicrosoftSession session) {
         super(accountID);
@@ -170,14 +185,10 @@ public final class MicrosoftAccount extends OAuthAccount {
     /// Returns the Minecraft Services profile for this account, using a short-lived
     /// cache that also deduplicates concurrent calls and honors a rate-limit cooldown.
     ///
-    /// Consecutive callers within the TTL share the cached profile; concurrent
-    /// callers whose cache has expired share a single `GET /minecraft/profile`
-    /// because this method is synchronized on the account instance.
-    ///
     /// @return the profile
     /// @throws AuthenticationException when the profile cannot be loaded, or during a
     ///         429 cooldown when no cached profile exists
-    public synchronized MicrosoftService.MinecraftProfileResponse getMinecraftProfile() throws AuthenticationException {
+    public MicrosoftService.MinecraftProfileResponse getMinecraftProfile() throws AuthenticationException {
         long now = System.currentTimeMillis();
 
         if (now < minecraftServicesRateLimitUntil) {
@@ -193,7 +204,86 @@ public final class MicrosoftAccount extends OAuthAccount {
             return cached;
         }
 
-        return fetchProfile();
+        return loadProfileDeduped();
+    }
+
+    /// Loads the profile through a shared in-flight future so concurrent callers
+    /// issue a single `GET`, while a mutation version prevents a stale GET result
+    /// from overwriting a newer cape mutation.
+    private MicrosoftService.MinecraftProfileResponse loadProfileDeduped() throws AuthenticationException {
+        long versionAtStart;
+        CompletableFuture<MicrosoftService.MinecraftProfileResponse> future;
+        boolean creator;
+
+        synchronized (profileStateLock) {
+            // Re-check under the lock: a concurrent caller may have just completed.
+            if (System.currentTimeMillis() < minecraftServicesRateLimitUntil) {
+                MicrosoftService.MinecraftProfileResponse cached = cachedProfile;
+                if (cached != null) {
+                    return cached;
+                }
+                throw new MicrosoftService.MinecraftServicesRateLimitException();
+            }
+
+            versionAtStart = mutationVersion;
+            if (profileLoading == null) {
+                profileLoading = new CompletableFuture<>();
+                creator = true;
+            } else {
+                creator = false;
+            }
+            future = profileLoading;
+        }
+
+        // Non-creators wait on the shared future outside the lock.
+        if (!creator) {
+            return unwrapProfileFuture(future);
+        }
+
+        try {
+            MicrosoftService.MinecraftProfileResponse fetched = fetchProfile();
+            synchronized (profileStateLock) {
+                MicrosoftService.MinecraftProfileResponse result;
+                if (versionAtStart == mutationVersion) {
+                    cachedProfile = fetched;
+                    cachedProfileAt = System.currentTimeMillis();
+                    result = fetched;
+                } else {
+                    // A mutation happened during this GET; prefer its newer result.
+                    result = cachedProfile != null ? cachedProfile : fetched;
+                }
+                profileLoading.complete(result);
+                return result;
+            }
+        } catch (AuthenticationException e) {
+            synchronized (profileStateLock) {
+                profileLoading.completeExceptionally(e);
+            }
+            throw e;
+        } finally {
+            synchronized (profileStateLock) {
+                if (profileLoading == future) {
+                    profileLoading = null;
+                }
+            }
+        }
+    }
+
+    /// Waits for a shared profile future and unwraps its result or failure.
+    private static MicrosoftService.MinecraftProfileResponse unwrapProfileFuture(
+            CompletableFuture<MicrosoftService.MinecraftProfileResponse> future) throws AuthenticationException {
+        try {
+            return future.join();
+        } catch (CompletionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof AuthenticationException authenticationException) {
+                throw authenticationException;
+            }
+            if (cause instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            throw new ServerResponseMalformedException(cause);
+        }
     }
 
     /// Returns every cape owned by this account, as reported by Minecraft Services.
@@ -226,13 +316,13 @@ public final class MicrosoftAccount extends OAuthAccount {
                 profile = service.showCape(session.accessToken(), capeId);
             } else {
                 if (isRateLimited(e)) {
-                    enterRateLimitCooldown();
+                    enterRateLimitCooldown(e);
                     throw new MicrosoftService.MinecraftServicesRateLimitException();
                 }
                 throw e;
             }
         }
-        cacheProfile(profile);
+        commitMutation(profile);
         return capesOf(profile);
     }
 
@@ -252,41 +342,37 @@ public final class MicrosoftAccount extends OAuthAccount {
                 profile = service.hideCape(session.accessToken());
             } else {
                 if (isRateLimited(e)) {
-                    enterRateLimitCooldown();
+                    enterRateLimitCooldown(e);
                     throw new MicrosoftService.MinecraftServicesRateLimitException();
                 }
                 throw e;
             }
         }
         if (profile != null) {
-            cacheProfile(profile);
+            commitMutation(profile);
             return capesOf(profile);
         }
         // DELETE returned no body: keep owned capes locally; never re-GET here.
         return null;
     }
 
-    /// Fetches the profile from the server, refreshing a stale token once on 401
-    /// and applying a cooldown on 429. Callers must hold the account lock.
+    /// Performs the profile GET, refreshing a stale token once on 401 and applying a
+    /// cooldown on 429. The caller stores the result in the cache.
     private MicrosoftService.MinecraftProfileResponse fetchProfile() throws AuthenticationException {
         logIn();
-        MicrosoftService.MinecraftProfileResponse profile;
         try {
-            profile = readProfileFromServer();
+            return readProfileFromServer();
         } catch (AuthenticationException e) {
             if (isUnauthorized(e)) {
                 refreshSession();
-                profile = readProfileFromServer();
-            } else {
-                if (isRateLimited(e)) {
-                    enterRateLimitCooldown();
-                    throw new MicrosoftService.MinecraftServicesRateLimitException();
-                }
-                throw e;
+                return readProfileFromServer();
             }
+            if (isRateLimited(e)) {
+                enterRateLimitCooldown(e);
+                throw new MicrosoftService.MinecraftServicesRateLimitException();
+            }
+            throw e;
         }
-        cacheProfile(profile);
-        return profile;
     }
 
     /// Performs a single `GET /minecraft/profile` without caching or rate-limit logic.
@@ -295,10 +381,14 @@ public final class MicrosoftAccount extends OAuthAccount {
                 .orElseThrow(() -> new ServerResponseMalformedException("Empty Minecraft profile"));
     }
 
-    /// Stores the freshly fetched profile and its timestamp.
-    private void cacheProfile(MicrosoftService.MinecraftProfileResponse profile) {
-        cachedProfile = profile;
-        cachedProfileAt = System.currentTimeMillis();
+    /// Records a successful mutation, bumping the version so an in-flight stale
+    /// GET cannot overwrite it afterwards.
+    private void commitMutation(MicrosoftService.MinecraftProfileResponse profile) {
+        synchronized (profileStateLock) {
+            mutationVersion++;
+            cachedProfile = profile;
+            cachedProfileAt = System.currentTimeMillis();
+        }
     }
 
     /// Throws when the rate-limit cooldown is still active.
@@ -308,9 +398,29 @@ public final class MicrosoftAccount extends OAuthAccount {
         }
     }
 
-    /// Records a fixed cooldown after a 429 response.
-    private void enterRateLimitCooldown() {
-        minecraftServicesRateLimitUntil = System.currentTimeMillis() + RATE_LIMIT_COOLDOWN_MILLIS;
+    /// Records a cooldown after a 429 response, preferring the server's `Retry-After`
+    /// with a fixed fallback.
+    private void enterRateLimitCooldown(Throwable cause) {
+        minecraftServicesRateLimitUntil = System.currentTimeMillis() + rateLimitCooldownMillis(cause);
+    }
+
+    /// Computes the cooldown duration from the `Retry-After` header of a 429
+    /// response, falling back to the fixed cooldown when absent or unparseable.
+    private static long rateLimitCooldownMillis(Throwable exception) {
+        long cooldownMillis = RATE_LIMIT_COOLDOWN_MILLIS;
+        Throwable cause = exception;
+        while (cause != null) {
+            if (cause instanceof ResponseCodeException responseCodeException
+                    && responseCodeException.getResponseCode() == 429) {
+                Integer retryAfterSeconds = responseCodeException.getRetryAfterSeconds();
+                if (retryAfterSeconds != null && retryAfterSeconds > 0) {
+                    cooldownMillis = Math.max(cooldownMillis, retryAfterSeconds * 1000L);
+                }
+                break;
+            }
+            cause = cause.getCause();
+        }
+        return cooldownMillis;
     }
 
     /// Extracts the cape list from a Minecraft Services profile.
