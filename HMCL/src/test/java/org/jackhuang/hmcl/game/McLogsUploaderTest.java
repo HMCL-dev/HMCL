@@ -372,19 +372,41 @@ public final class McLogsUploaderTest {
     }
 
     /// Verifies that the byte limit keeps the tail of an over-long single line, since no line start is
-    /// available within the read range.
+    /// available within the read range, and that the very end of the line is preserved.
     @Test
     public void readsTailOfSingleOversizedLine(@TempDir Path tempDir) throws IOException {
         int maxBytes = 10 * 1024 * 1024;
         Path file = tempDir.resolve("single-long-line.log");
+        String marker = "TAIL-MARKER";
         byte[] line = new byte[20 * 1024 * 1024];
         Arrays.fill(line, (byte) 'A');
         Files.write(file, line);
+        Files.write(file, marker.getBytes(UTF_8), StandardOpenOption.APPEND);
 
         String tail = FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes);
 
         assertEquals(maxBytes, tail.getBytes(UTF_8).length);
-        assertEquals("A".repeat(maxBytes), tail);
+        assertTrue(tail.endsWith(marker));
+    }
+
+    /// Verifies that an over-long single line of multi-byte characters still keeps the file end without
+    /// producing invalid UTF-8.
+    @Test
+    public void readsTailOfOversizedMultibyteLineWithMarker(@TempDir Path tempDir) throws IOException {
+        int maxBytes = 1024;
+        Path file = tempDir.resolve("multibyte-long-line.log");
+        String marker = "TAIL-MARKER";
+        byte[] line = "你".repeat(8 * maxBytes).getBytes(UTF_8); // 3 bytes per char, well over the limit
+        try (OutputStream out = Files.newOutputStream(file)) {
+            out.write(line);
+            out.write(marker.getBytes(UTF_8));
+        }
+
+        String tail = FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes);
+
+        assertTrue(tail.getBytes(UTF_8).length <= maxBytes);
+        assertFalse(tail.contains("\uFFFD"));
+        assertTrue(tail.endsWith(marker));
     }
 
     /// Verifies that an over-long final line after normal lines is read from its tail.
@@ -483,15 +505,40 @@ public final class McLogsUploaderTest {
         String[] result = McLogsUploader.truncate(shortLog(25_001)).split("\n", -1);
 
         assertEquals(25_000, result.length);
-        assertEquals("line 1", result[0]);
+        assertEquals("line-1", result[0]);
+        assertEquals("line-25000", result[result.length - 1]);
     }
 
-    /// Builds a log with [lines] short lines, so the byte limit never kicks in.
+    /// Verifies that exactly MAX_LINES lines ending with a newline are kept whole: the trailing newline
+    /// terminates the last line rather than adding an empty one, so the first line must not be dropped.
+    @Test
+    public void keepsExactLineLimitWithTrailingNewline() {
+        String content = shortLog(25_000) + "\n";
+
+        assertEquals(content, McLogsUploader.truncate(content));
+    }
+
+    /// Verifies that one line over the limit with a trailing newline drops only the oldest line.
+    @Test
+    public void dropsOnlyOldestLineOverLimitWithTrailingNewline() {
+        String[] result = McLogsUploader.truncate(shortLog(25_001) + "\n").split("\n", -1);
+
+        assertEquals(25_001, result.length);             // 25,000 kept lines plus the empty trailing segment
+        assertEquals("line-1", result[0]);               // "first-line" was dropped
+        assertEquals("line-25000", result[result.length - 2]);
+        assertTrue(result[result.length - 1].isEmpty()); // trailing newline is not a phantom line
+    }
+
+    /// Builds a log with [lines] short lines, so the byte limit never kicks in. The first line is named
+    /// `first-line` and the rest `line-N`, so assertions never have to infer an off-by-one from `line 0`.
     private static String shortLog(int lines) {
-        String[] all = new String[lines];
+        StringBuilder builder = new StringBuilder();
         for (int i = 0; i < lines; i++) {
-            all[i] = "line " + i;
+            if (i > 0) {
+                builder.append('\n');
+            }
+            builder.append(i == 0 ? "first-line" : "line-" + i);
         }
-        return String.join("\n", all);
+        return builder.toString();
     }
 }

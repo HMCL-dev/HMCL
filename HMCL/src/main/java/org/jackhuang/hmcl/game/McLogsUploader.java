@@ -173,8 +173,16 @@ public final class McLogsUploader {
     /// @param content the log content
     /// @return the content limited to the last [MAX_LINES] lines
     private static String limitLines(String content) {
-        int remaining = MAX_LINES;
+        // A trailing newline terminates the last line rather than adding an empty one, so skip it before
+        // counting; otherwise exactly MAX_LINES lines ending in `\n` would lose their first line.
         int fromIndex = content.length();
+        while (fromIndex > 0 && content.charAt(fromIndex - 1) == '\n') {
+            fromIndex--;
+        }
+
+        // Walk back across MAX_LINES line terminators; fromIndex ends at the oldest newline to cut before,
+        // and the loop returns early (keeping everything) when there are fewer lines than the limit.
+        int remaining = MAX_LINES;
         while (remaining-- > 0) {
             int index = content.lastIndexOf('\n', fromIndex - 1);
             if (index < 0) {

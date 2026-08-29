@@ -262,15 +262,15 @@ public final class FileUtils {
     /// A file larger than [maxBytes] is never read into memory in full: the charset is detected from a small
     /// head sample, then only the tail is read by seeking straight to its offset. The returned text, when it is
     /// re-encoded with the detected charset, is guaranteed to be at most [maxBytes] bytes and never starts in
-    /// the middle of a multi-byte character. It starts at a line boundary whenever one is available within the
-    /// read range; if a single line is longer than the read range, the returned text starts inside that line
-    /// instead (a deliberate trade-off to keep the read size bounded). The very end of the file is kept.
+    /// the middle of a multi-byte character. It starts at a line boundary whenever a newline is available after
+    /// the earliest allowed offset; if a single line is longer than [maxBytes], the returned text starts inside
+    /// that line instead (a deliberate trade-off to keep the read size bounded) and still keeps the file end.
     ///
     /// @param file     the file to read from
-    /// @param maxBytes the maximum number of bytes to keep from the tail; must be non-negative and at most 2 GiB
+    /// @param maxBytes the maximum number of bytes to keep from the tail; must be non-negative
     /// @return the decoded tail content, at most [maxBytes] bytes long
     /// @throws IOException if the file cannot be read
-    public static String readTextTailMaybeNativeEncoding(Path file, long maxBytes) throws IOException {
+    public static String readTextTailMaybeNativeEncoding(Path file, int maxBytes) throws IOException {
         long size = Files.size(file);
         if (size <= maxBytes)
             return readTextMaybeNativeEncoding(file);
@@ -278,9 +278,11 @@ public final class FileUtils {
         Charset charset = detectCharset(readHead(file));
         byte[] tail = readTailBytes(file, size, maxBytes);
 
-        int start = alignToCharacterBoundary(tail, charset, 0);
+        // Anchor the start at the earliest allowed offset (`tail.length - maxBytes`), then align it onto a
+        // character boundary and a line start, in that order, so the byte limit and the line-start preference
+        // hold at once instead of trimming back over an already-found line boundary.
+        int start = alignToCharacterBoundary(tail, charset, tail.length - maxBytes);
         start = alignToLineStart(tail, start);
-        start = alignToByteLimit(tail, charset, start, maxBytes);
 
         // `start` is a character boundary and leaves at most `maxBytes` bytes, so this is a single decode.
         return new String(tail, start, tail.length - start, charset);
@@ -342,9 +344,9 @@ public final class FileUtils {
     /// @param maxBytes the maximum number of bytes to keep from the tail
     /// @return the raw tail bytes
     /// @throws IOException if the file cannot be read
-    private static byte[] readTailBytes(Path file, long size, long maxBytes) throws IOException {
+    private static byte[] readTailBytes(Path file, long size, int maxBytes) throws IOException {
         long offset = Math.max(0, size - maxBytes - TAIL_GUARD_BYTES);
-        int length = (int) Math.min(size - offset, maxBytes + TAIL_GUARD_BYTES);
+        int length = (int) Math.min(size - offset, (long) maxBytes + TAIL_GUARD_BYTES);
         byte[] tail = new byte[length];
 
         try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
@@ -381,13 +383,17 @@ public final class FileUtils {
         CharsetDecoder decoder = charset.newDecoder()
                 .onMalformedInput(CodingErrorAction.REPORT)
                 .onUnmappableCharacter(CodingErrorAction.REPORT);
-        CharBuffer singleCharacter = CharBuffer.allocate(1);
+        // Two chars hold any single code point (including a surrogate pair), so the output buffer itself
+        // never forces an OVERFLOW while a character is being emitted.
+        CharBuffer singleCharacter = CharBuffer.allocate(2);
         for (int index = from; index <= limit; index++) {
             decoder.reset();
             singleCharacter.clear();
             CoderResult result = decoder.decode(ByteBuffer.wrap(bytes, index, bytes.length - index),
                     singleCharacter, false);
-            if (!result.isMalformed() && !result.isUnmappable())
+            // UNDERFLOW and OVERFLOW both mean decoding made progress from `index` (a character was
+            // emitted), so `index` is a boundary; only MALFORMED / UNMAPPABLE mean it is a stray byte.
+            if (!result.isError())
                 return index;
         }
         return from;
@@ -408,21 +414,6 @@ public final class FileUtils {
                 return i + 1;
         }
         return start;
-    }
-
-    /// Moves [start] forward when the remaining bytes exceed [maxBytes], aligning to a character boundary so
-    /// the result stays within the byte limit without splitting a character.
-    ///
-    /// @param bytes    the tail bytes
-    /// @param charset  the charset [bytes] decode with
-    /// @param start    the current character boundary
-    /// @param maxBytes the byte limit
-    /// @return the adjusted start offset, leaving at most [maxBytes] bytes before the end of [bytes]
-    private static int alignToByteLimit(byte[] bytes, Charset charset, int start, long maxBytes) {
-        if (bytes.length - start <= maxBytes) {
-            return start;
-        }
-        return alignToCharacterBoundary(bytes, charset, bytes.length - (int) maxBytes);
     }
 
     public static void deleteDirectory(Path directory) throws IOException {
