@@ -89,14 +89,78 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
     @Override
     public DefaultGameBuilder newGameBuilder(GameInstanceID instanceId) {
-        return new DefaultGameBuilder(this, instanceId);
+        GameInstanceManifest initialManifest = new GameInstanceManifest(instanceId);
+        DefaultGameRepositoryDraft draft = openGameBuilderDraft(initialManifest, null);
+        return new DefaultGameBuilder(this, instanceId, null, draft, initialManifest);
     }
 
     @Override
     public DefaultGameBuilder newGameBuilder(GameInstance instance) {
         validateGameInstance(instance);
+        DefaultGameInstance updateTarget = (DefaultGameInstance) instance;
 
-        return new DefaultGameBuilder(this, (DefaultGameInstance) instance);
+        GameInstanceManifest initialManifest = new GameInstanceManifest(updateTarget.getId());
+        DefaultGameRepositoryDraft draft = openGameBuilderDraft(initialManifest, updateTarget);
+        return new DefaultGameBuilder(
+                this, updateTarget.getId(), updateTarget, draft, initialManifest);
+    }
+
+    /// Opens an exclusive draft and reserves a builder target in it.
+    ///
+    /// The exact `updateTarget` object must be present in the draft's base snapshot. An empty target
+    /// manifest is retained before this method returns. Any validation or reservation failure aborts
+    /// the draft before it is propagated.
+    ///
+    /// @param initialManifest the empty target manifest to reserve
+    /// @param updateTarget    the exact published instance with the same id required for an update,
+    ///                        or `null`
+    /// @return the open draft containing the reserved target
+    /// @throws IllegalArgumentException if `updateTarget` belongs to another repository
+    /// @throws IllegalStateException    if the target conflicts with the selected operation, cannot
+    ///                                  be reserved, or another repository draft is open
+    protected final DefaultGameRepositoryDraft openGameBuilderDraft(
+            GameInstanceManifest initialManifest,
+            @Nullable DefaultGameInstance updateTarget) {
+        if (updateTarget != null) {
+            validateGameInstance(updateTarget);
+        }
+
+        GameInstanceID instanceId = initialManifest.id();
+        DefaultGameRepositoryDraft draft = repository.openDraft();
+        try {
+            @Nullable DefaultGameInstance currentInstance = draft.getBaseSnapshot().findInstance(instanceId);
+            if (updateTarget == null) {
+                if (currentInstance != null) {
+                    throw new IllegalStateException("Game instance already exists: " + instanceId);
+                }
+            } else if (currentInstance == null) {
+                throw new IllegalStateException("Game instance no longer exists: " + instanceId);
+            } else if (currentInstance != updateTarget) {
+                throw new IllegalStateException("Game instance has changed: " + instanceId);
+            }
+            draft.put(initialManifest);
+            return draft;
+        } catch (IOException e) {
+            abortDraftAfterFailure(draft, e);
+            throw new IllegalStateException("Cannot reserve game instance " + instanceId, e);
+        } catch (RuntimeException | Error failure) {
+            abortDraftAfterFailure(draft, failure);
+            throw failure;
+        }
+    }
+
+    /// Aborts a draft and attaches a cleanup failure to the triggering failure.
+    ///
+    /// @param draft   the draft to abort
+    /// @param failure the triggering failure that receives any cleanup failure as suppressed
+    static void abortDraftAfterFailure(
+            DefaultGameRepositoryDraft draft,
+            Throwable failure) {
+        try {
+            draft.abort();
+        } catch (IOException cleanupFailure) {
+            failure.addSuppressed(cleanupFailure);
+        }
     }
 
     @Override
@@ -199,7 +263,10 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         return Task.supplyAsync(() -> baseManifest.removeComponent(componentVersion.getComponentType()))
                 .thenComposeAsync(manifest -> componentVersion
                         .getInstallTask(this, manifest, modsDirectory)
-                        .thenApplyAsync(patch -> patch == null ? manifest : manifest.addPatch(patch)))
+                        .thenApplyAsync(patch -> patch == null
+                                ? manifest
+                                : manifest.addPatch(patch).reconstructByPatches()
+                        ))
                 .withStage("hmcl.install.%s:%s".formatted(
                         componentVersion.getComponentType().getPatchId(),
                         componentVersion.getSelfVersion()));

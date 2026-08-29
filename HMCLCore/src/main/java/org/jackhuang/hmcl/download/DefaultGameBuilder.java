@@ -33,8 +33,9 @@ import java.util.Map;
 /// Installs a new game instance or replaces an existing instance in an exclusive
 /// [GameRepositoryDraft], then publishes the completed instance once.
 ///
-/// Construction immediately reserves the target in an exclusive draft. An update requires the
-/// supplied snapshot-bound instance to remain the exact currently published object.
+/// Each builder receives a target already reserved by its dependency manager in an exclusive
+/// draft. An update requires the supplied snapshot-bound instance to remain the exact currently
+/// published object when the manager creates the builder.
 ///
 /// Replacement starts from an empty manifest with the target id and installs only the configured
 /// components. It retains the existing run directory unless isolation is explicitly enabled.
@@ -65,34 +66,26 @@ public class DefaultGameBuilder extends GameBuilder {
     /// Whether instance isolation was requested for this build.
     protected boolean isolationEnabled;
 
-    /// Creates a builder for installing a new instance.
+    /// Creates a builder around a target already reserved by its dependency manager.
     ///
     /// @param dependencyManager the dependency manager for the target repository
-    /// @param instanceId        the id of the new instance
-    /// @throws IllegalStateException if the id is already registered, its root cannot be reserved,
-    ///                               or another repository draft is open
-    public DefaultGameBuilder(DefaultDependencyManager dependencyManager, GameInstanceID instanceId) {
+    /// @param instanceId        the id of the reserved instance and `initialManifest`
+    /// @param updateTarget      the exact update target retained by the draft, or `null` for install
+    /// @param draft             the open draft containing `initialManifest`; it must belong to
+    ///                          `dependencyManager`
+    /// @param initialManifest   the empty target manifest retained by `draft`; its id must equal
+    ///                          `instanceId`
+    protected DefaultGameBuilder(
+            DefaultDependencyManager dependencyManager,
+            GameInstanceID instanceId,
+            @Nullable DefaultGameInstance updateTarget,
+            DefaultGameRepositoryDraft draft,
+            GameInstanceManifest initialManifest) {
         this.dependencyManager = dependencyManager;
         this.instanceId = instanceId;
-        this.updateTarget = null;
-        this.initialManifest = new GameInstanceManifest(instanceId);
-        this.draft = openDraft(dependencyManager, instanceId, null, initialManifest);
-    }
-
-    /// Creates a builder for replacing the components of an existing instance.
-    ///
-    /// @param dependencyManager the dependency manager for the target repository
-    /// @param instance          the existing instance selecting update mode and the target id
-    /// @throws IllegalArgumentException if `instance` belongs to another repository
-    /// @throws IllegalStateException    if `instance` is no longer the exact published instance or
-    ///                                  another repository draft is open
-    public DefaultGameBuilder(DefaultDependencyManager dependencyManager, DefaultGameInstance instance) {
-        dependencyManager.validateGameInstance(instance);
-        this.dependencyManager = dependencyManager;
-        this.instanceId = instance.getId();
-        this.updateTarget = instance;
-        this.initialManifest = new GameInstanceManifest(instanceId);
-        this.draft = openDraft(dependencyManager, instanceId, instance, initialManifest);
+        this.updateTarget = updateTarget;
+        this.draft = draft;
+        this.initialManifest = initialManifest;
     }
 
     /// Returns the dependency manager used by this builder.
@@ -193,7 +186,7 @@ public class DefaultGameBuilder extends GameBuilder {
             draftTransferred = true;
             return buildTask;
         } catch (RuntimeException | Error failure) {
-            abortAfterSetupFailure(draft, failure);
+            DefaultDependencyManager.abortDraftAfterFailure(draft, failure);
             throw failure;
         }
     }
@@ -232,57 +225,6 @@ public class DefaultGameBuilder extends GameBuilder {
         }
         if (!draft.isOpen()) {
             throw new IllegalStateException("GameBuilder is closed");
-        }
-    }
-
-    /// Opens an exclusive draft, validates the exact update snapshot, and reserves the target.
-    ///
-    /// @param dependencyManager the dependency manager whose repository owns the draft
-    /// @param instanceId        the target instance id
-    /// @param updateTarget      the exact published instance required for an update, or `null`
-    /// @param initialManifest   the empty target manifest to retain in the draft
-    /// @return the open draft containing `initialManifest`
-    /// @throws IllegalStateException if the target conflicts with the selected operation or cannot
-    ///                               be reserved
-    private static DefaultGameRepositoryDraft openDraft(
-            DefaultDependencyManager dependencyManager,
-            GameInstanceID instanceId,
-            @Nullable DefaultGameInstance updateTarget,
-            GameInstanceManifest initialManifest) {
-        DefaultGameRepositoryDraft draft = dependencyManager.getGameRepository().openDraft();
-        try {
-            @Nullable DefaultGameInstance currentInstance = draft.getBaseSnapshot().findInstance(instanceId);
-            if (updateTarget == null) {
-                if (currentInstance != null) {
-                    throw new IllegalStateException("Game instance already exists: " + instanceId);
-                }
-            } else if (currentInstance == null) {
-                throw new IllegalStateException("Game instance no longer exists: " + instanceId);
-            } else if (currentInstance != updateTarget) {
-                throw new IllegalStateException("Game instance has changed: " + instanceId);
-            }
-            draft.put(initialManifest);
-            return draft;
-        } catch (IOException e) {
-            abortAfterSetupFailure(draft, e);
-            throw new IllegalStateException("Cannot reserve game instance " + instanceId, e);
-        } catch (RuntimeException | Error failure) {
-            abortAfterSetupFailure(draft, failure);
-            throw failure;
-        }
-    }
-
-    /// Aborts a draft after target validation or initial reservation fails.
-    ///
-    /// @param draft   the draft to abort
-    /// @param failure the setup failure that receives any cleanup failure as suppressed
-    private static void abortAfterSetupFailure(
-            DefaultGameRepositoryDraft draft,
-            Throwable failure) {
-        try {
-            draft.abort();
-        } catch (IOException cleanupFailure) {
-            failure.addSuppressed(cleanupFailure);
         }
     }
 

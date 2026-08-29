@@ -19,24 +19,25 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.download.DefaultGameBuilder;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 /// Builds game instances and applies HMCL-specific post-installation settings.
 @NotNullByDefault
 public class HMCLGameBuilder extends DefaultGameBuilder {
-    /// Creates a builder for installing a new HMCL instance.
+    /// Creates a builder around an HMCL target already reserved by its dependency manager.
     ///
     /// @param dependencyManager the dependency manager for the target repository
-    /// @param instanceId        the id of the new instance
-    public HMCLGameBuilder(HMCLDependencyManager dependencyManager, GameInstanceID instanceId) {
-        super(dependencyManager, instanceId);
-    }
-
-    /// Creates a builder for replacing the components of an existing HMCL instance.
-    ///
-    /// @param dependencyManager the dependency manager for the target repository
-    /// @param instance          the existing instance selecting update mode and the target id
-    public HMCLGameBuilder(HMCLDependencyManager dependencyManager, HMCLGameInstance instance) {
-        super(dependencyManager, instance);
+    /// @param instanceId        the id of the reserved instance
+    /// @param updateTarget      the exact update target retained by the draft, or `null` for install
+    /// @param draft             the open draft containing `initialManifest`
+    /// @param initialManifest   the empty target manifest retained by `draft`
+    HMCLGameBuilder(
+            HMCLDependencyManager dependencyManager,
+            GameInstanceID instanceId,
+            @Nullable HMCLGameInstance updateTarget,
+            DefaultGameRepositoryDraft draft,
+            GameInstanceManifest initialManifest) {
+        super(dependencyManager, instanceId, updateTarget, draft, initialManifest);
     }
 
     /// {@inheritDoc}

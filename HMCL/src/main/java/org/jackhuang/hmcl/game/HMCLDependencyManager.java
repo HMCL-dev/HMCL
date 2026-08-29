@@ -46,14 +46,20 @@ public class HMCLDependencyManager extends DefaultDependencyManager {
     /// {@inheritDoc}
     @Override
     public HMCLGameBuilder newGameBuilder(GameInstanceID instanceId) {
-        return new HMCLGameBuilder(this, instanceId);
+        GameInstanceManifest initialManifest = new GameInstanceManifest(instanceId);
+        DefaultGameRepositoryDraft draft = openGameBuilderDraft(initialManifest, null);
+        return new HMCLGameBuilder(this, instanceId, null, draft, initialManifest);
     }
 
     /// {@inheritDoc}
     @Override
     public HMCLGameBuilder newGameBuilder(GameInstance instance) {
         validateGameInstance(instance);
+        HMCLGameInstance updateTarget = (HMCLGameInstance) instance;
 
-        return new HMCLGameBuilder(this, (HMCLGameInstance) instance);
+        GameInstanceManifest initialManifest = new GameInstanceManifest(updateTarget.getId());
+        DefaultGameRepositoryDraft draft = openGameBuilderDraft(initialManifest, updateTarget);
+        return new HMCLGameBuilder(
+                this, updateTarget.getId(), updateTarget, draft, initialManifest);
     }
 }
