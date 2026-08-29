@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
+import com.sun.javafx.binding.StringConstant;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -86,18 +87,18 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         TableColumn<AddonUpdateObject, String> fileNameColumn = new TableColumn<>(i18n("addon.check_update.file"));
         fileNameColumn.setPrefWidth(180);
-        setupCellValueFactory(fileNameColumn, AddonUpdateObject::fileNameProperty);
+        setupCellValueFactory(fileNameColumn, AddonUpdateObject::fileNameValue);
 
         TableColumn<AddonUpdateObject, String> currentVersionColumn = new TableColumn<>(i18n("addon.check_update.current_version"));
         currentVersionColumn.setPrefWidth(180);
-        setupCellValueFactory(currentVersionColumn, AddonUpdateObject::currentVersionProperty);
+        setupCellValueFactory(currentVersionColumn, AddonUpdateObject::currentVersionValue);
 
         TableColumn<AddonUpdateObject, String> targetVersionColumn = new TableColumn<>(i18n("addon.check_update.target_version"));
         targetVersionColumn.setPrefWidth(180);
-        setupCellValueFactory(targetVersionColumn, AddonUpdateObject::targetVersionProperty);
+        setupCellValueFactory(targetVersionColumn, AddonUpdateObject::targetVersionValue);
 
         TableColumn<AddonUpdateObject, String> sourceColumn = new TableColumn<>(i18n("addon.check_update.source"));
-        setupCellValueFactory(sourceColumn, AddonUpdateObject::sourceProperty);
+        setupCellValueFactory(sourceColumn, AddonUpdateObject::sourceValue);
 
         TableColumn<AddonUpdateObject, String> changelogColumn = new TableColumn<>(i18n("addon.changelog"));
         {
@@ -185,10 +186,10 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             csvTable.set(3, 0, "Update Source");
 
             for (int i = 0; i < objects.size(); i++) {
-                csvTable.set(0, i + 1, objects.get(i).fileName.get());
-                csvTable.set(1, i + 1, objects.get(i).currentVersion.get());
-                csvTable.set(2, i + 1, objects.get(i).targetVersion.getValue());
-                csvTable.set(3, i + 1, objects.get(i).source.get());
+                csvTable.set(0, i + 1, objects.get(i).getFileName());
+                csvTable.set(1, i + 1, objects.get(i).getCurrentVersion());
+                csvTable.set(2, i + 1, objects.get(i).getTargetVersion());
+                csvTable.set(3, i + 1, objects.get(i).getSource());
             }
 
             csvTable.write(path);
@@ -212,10 +213,10 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         final LocalAddonFile.AddonUpdate data;
         final ObjectProperty<RemoteAddon.Version> targetVersionObject;
         final BooleanProperty enabled;
-        final StringProperty fileName;
-        final StringProperty currentVersion;
+        final ObservableValue<String> fileName;
+        final ObservableValue<String> currentVersion;
         final ObservableValue<String> targetVersion;
-        final StringProperty source;
+        final ObservableValue<String> source;
 
         public AddonUpdateObject(LocalAddonFile.AddonUpdate data) {
             this.data = data;
@@ -223,12 +224,12 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
             enabled = new SimpleBooleanProperty(!data.localAddonFile().isDisabled());
 
-            fileName = new SimpleStringProperty(data.localAddonFile().getFileName());
-            currentVersion = new SimpleStringProperty(data.currentVersion().version());
+            fileName = StringConstant.valueOf(data.localAddonFile().getFileName());
+            currentVersion = StringConstant.valueOf(data.currentVersion().version());
             targetVersion = this.targetVersionObject.map(RemoteAddon.Version::version);
             source = switch (data.currentVersion().self().getSource()) {
-                case CURSEFORGE -> new SimpleStringProperty(i18n("addon.curseforge"));
-                case MODRINTH -> new SimpleStringProperty(i18n("addon.modrinth"));
+                case CURSEFORGE -> StringConstant.valueOf(i18n("addon.curseforge"));
+                case MODRINTH -> StringConstant.valueOf(i18n("addon.modrinth"));
             };
         }
 
@@ -249,18 +250,18 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         }
 
         public String getFileName() {
-            return fileName.get();
+            return fileName.getValue();
         }
 
-        public ReadOnlyStringProperty fileNameProperty() {
+        public ObservableValue<String> fileNameValue() {
             return fileName;
         }
 
         public String getCurrentVersion() {
-            return currentVersion.get();
+            return currentVersion.getValue();
         }
 
-        public ReadOnlyStringProperty currentVersionProperty() {
+        public ObservableValue<String> currentVersionValue() {
             return currentVersion;
         }
 
@@ -268,15 +269,15 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             return targetVersion.getValue();
         }
 
-        public ObservableValue<String> targetVersionProperty() {
+        public ObservableValue<String> targetVersionValue() {
             return targetVersion;
         }
 
         public String getSource() {
-            return source.get();
+            return source.getValue();
         }
 
-        public ReadOnlyStringProperty sourceProperty() {
+        public ObservableValue<String> sourceValue() {
             return source;
         }
     }
