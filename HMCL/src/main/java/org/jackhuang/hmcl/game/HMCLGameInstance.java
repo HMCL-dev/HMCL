@@ -477,8 +477,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
             GameVersionNumber version = getVersion();
             if (version.isAprilFools())
                 return GameInstanceIconType.APRIL_FOOLS.getIcon();
-            else if (version instanceof GameVersionNumber.LegacySnapshot ||
-                    version instanceof GameVersionNumber.Release release && release.getEaType() != GameVersionNumber.Release.ReleaseType.GA)
+            else if (version instanceof GameVersionNumber.LegacySnapshot || version instanceof GameVersionNumber.Release release && release.getEaType() != GameVersionNumber.Release.ReleaseType.GA)
                 return GameInstanceIconType.COMMAND.getIcon();
             else if (version instanceof GameVersionNumber.Old)
                 return GameInstanceIconType.CRAFT_TABLE.getIcon();
@@ -582,8 +581,8 @@ public class HMCLGameInstance extends DefaultGameInstance {
             maxMemory = noJVMOptions
                     ? null
                     : Math.toIntExact(HMCLGameRepository.getAutoAllocatedMemory(
-                    SystemInfo.getPhysicalMemoryStatus().available(),
-                    javaVersion.getPlatform()) / 1024L / 1024L);
+                            SystemInfo.getPhysicalMemoryStatus().available(),
+                            javaVersion.getPlatform()) / 1024L / 1024L);
         } else {
             maxMemory = vs.getMaxMemory();
         }
@@ -706,14 +705,10 @@ public class HMCLGameInstance extends DefaultGameInstance {
                     JsonSchema.check(jsonObject, GameSettings.Instance.CURRENT_SCHEMA);
             switch (schemaResult.status()) {
                 case MISSING -> LOG.warning("Missing schema in instance game settings: " + file);
-                case INVALID ->
-                        LOG.warning("Invalid schema in instance game settings: %s, Actual: %s".formatted(file, schemaResult.invalidValue()));
-                case UNPARSEABLE ->
-                        LOG.warning("Unparseable schema in instance game settings: %s, Actual: %s".formatted(file, schemaResult.actual()));
-                case UNEXPECTED_ID ->
-                        LOG.warning("Unexpected instance game settings schema. Expected: %s, Actual: %s".formatted(GameSettings.Instance.CURRENT_SCHEMA, schemaResult.actual()));
-                case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA ->
-                        LOG.warning("Unsupported instance game settings schema. Expected: %s, Actual: %s".formatted(GameSettings.Instance.CURRENT_SCHEMA, schemaResult.actual()));
+                case INVALID -> LOG.warning("Invalid schema in instance game settings: %s, Actual: %s".formatted(file, schemaResult.invalidValue()));
+                case UNPARSEABLE -> LOG.warning("Unparseable schema in instance game settings: %s, Actual: %s".formatted(file, schemaResult.actual()));
+                case UNEXPECTED_ID -> LOG.warning("Unexpected instance game settings schema. Expected: %s, Actual: %s".formatted(GameSettings.Instance.CURRENT_SCHEMA, schemaResult.actual()));
+                case UNSUPPORTED_MAJOR, READ_ONLY_PRESERVE_SCHEMA -> LOG.warning("Unsupported instance game settings schema. Expected: %s, Actual: %s".formatted(GameSettings.Instance.CURRENT_SCHEMA, schemaResult.actual()));
                 case READ_WRITE, READ_WRITE_PRESERVE_SCHEMA -> {
                 }
             }
