@@ -415,25 +415,6 @@ public abstract class DefaultGameRepository implements GameRepository {
         return getSnapshot().getRegistered(id);
     }
 
-    /// Returns the instance recorded in the current snapshot for the given id.
-    ///
-    /// @param id the instance id
-    /// @return the instance, or `null` when absent from the current snapshot
-    protected @Nullable DefaultGameInstance findSnapshotInstance(GameInstanceID id) {
-        return getSnapshot().get(id);
-    }
-
-    @Override
-    public Path getInstanceJar(GameInstanceManifest manifest) {
-        GameInstanceManifest resolved = this.resolve(manifest).launchManifest();
-        GameInstanceID id = Optional.ofNullable(resolved.jar()).orElse(resolved.id());
-        DefaultGameInstance instance = findSnapshotInstance(id);
-        if (instance != null) {
-            return instance.getOwnJarFile();
-        }
-        return getLayout().getInstanceJarFile(id);
-    }
-
     @Override
     public boolean renameInstance(GameInstanceID from, GameInstanceID to) {
         try (DefaultGameRepositoryDraft draft = openDraft()) {
@@ -504,21 +485,6 @@ public abstract class DefaultGameRepository implements GameRepository {
         } finally {
             refreshRepository();
         }
-    }
-
-    /// Returns the stored instance manifest file for an instance.
-    ///
-    /// When the instance is loaded with a non-conventional path, that path is returned; otherwise
-    /// the layout default `versions/<id>/<id>.json` is used.
-    ///
-    /// @param instanceId the instance id
-    /// @return the manifest JSON path
-    public Path getInstanceJson(GameInstanceID instanceId) {
-        DefaultGameInstance instance = findSnapshotInstance(instanceId);
-        if (instance != null) {
-            return instance.getManifestFile();
-        }
-        return getLayout().getInstanceJson(instanceId);
     }
 
     /// Opens a draft for staging instance index changes and committing them once.

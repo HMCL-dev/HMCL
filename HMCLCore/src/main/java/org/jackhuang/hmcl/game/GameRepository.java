@@ -125,12 +125,6 @@ public interface GameRepository {
         return getLayout().getInstanceRoot(instanceId);
     }
 
-    /// Returns the primary client jar path for a manifest.
-    ///
-    /// @param manifest the manifest whose jar should be located
-    /// @return the primary client jar path
-    Path getInstanceJar(GameInstanceManifest manifest);
-
     /// Renames an instance and updates repository-managed references.
     ///
     /// @param from the current instance id

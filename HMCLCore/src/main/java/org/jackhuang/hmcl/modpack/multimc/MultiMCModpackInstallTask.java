@@ -376,7 +376,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                     true
             ));
 
-            Path instanceJar = repository.getInstanceJar(instanceManifest);
+            Path instanceJar = requireDraft().getBaseSnapshot().getLayout().getInstanceJarFile(instanceId);
             dependencies.add(new GameDownloadTask(dependencyManager, instanceManifest)
                     .thenAcceptAsync(cachedJar -> FileUtils.copyFile(cachedJar, instanceJar)));
         }

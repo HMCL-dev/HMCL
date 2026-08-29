@@ -545,7 +545,6 @@ public final class DefaultGameInstanceTest {
         assertEquals(GameVersionNumber.asGameVersion("1.20.1"), instance.getVersion());
         assertEquals(folderId, instance.getId());
         assertEquals(folderId, instance.getManifest().id());
-        assertEquals(json, repository.getInstanceJson(folderId));
     }
 
     /// Writes a minimal jar containing the version metadata consumed by [GameVersion].
