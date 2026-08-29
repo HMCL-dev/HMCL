@@ -68,7 +68,7 @@ public abstract class LocalAddonFile {
             boolean useRemoteFileName
     ) {
         public RemoteAddon.Version latestAvailableVersion() {
-            return availableVersions.getFirst();
+            return availableVersions.get(0);
         }
     }
 
