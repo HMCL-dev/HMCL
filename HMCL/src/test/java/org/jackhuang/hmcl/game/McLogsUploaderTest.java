@@ -370,4 +370,128 @@ public final class McLogsUploaderTest {
         assertThrows(IOException.class,
                 () -> McLogsUploader.parseResponse("this is not json"));
     }
+
+    /// Verifies that the byte limit keeps the tail of an over-long single line, since no line start is
+    /// available within the read range.
+    @Test
+    public void readsTailOfSingleOversizedLine(@TempDir Path tempDir) throws IOException {
+        int maxBytes = 10 * 1024 * 1024;
+        Path file = tempDir.resolve("single-long-line.log");
+        byte[] line = new byte[20 * 1024 * 1024];
+        Arrays.fill(line, (byte) 'A');
+        Files.write(file, line);
+
+        String tail = FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes);
+
+        assertEquals(maxBytes, tail.getBytes(UTF_8).length);
+        assertEquals("A".repeat(maxBytes), tail);
+    }
+
+    /// Verifies that an over-long final line after normal lines is read from its tail.
+    @Test
+    public void readsTailAfterOversizedFinalLine(@TempDir Path tempDir) throws IOException {
+        int maxBytes = 1024;
+        Path file = tempDir.resolve("mixed-long-line.log");
+        try (OutputStream out = Files.newOutputStream(file)) {
+            out.write("normal line\n".repeat(400).getBytes(UTF_8));
+            byte[] longLine = new byte[8 * maxBytes];
+            Arrays.fill(longLine, (byte) 'D');
+            out.write(longLine);
+        }
+
+        String tail = FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes);
+
+        assertEquals("D".repeat(maxBytes), tail);
+    }
+
+    /// Verifies that a single line exactly at the byte limit is returned in full.
+    @Test
+    public void readsSingleLineExactlyAtLimit(@TempDir Path tempDir) throws IOException {
+        int maxBytes = 1024;
+        Path file = tempDir.resolve("exact-line.log");
+        byte[] line = new byte[maxBytes];
+        Arrays.fill(line, (byte) 'B');
+        Files.write(file, line);
+
+        assertEquals("B".repeat(maxBytes), FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes));
+    }
+
+    /// Verifies that a single line just over the byte limit is truncated to exactly that limit.
+    @Test
+    public void readsSingleLineJustOverLimit(@TempDir Path tempDir) throws IOException {
+        int maxBytes = 1024;
+        Path file = tempDir.resolve("over-line.log");
+        byte[] line = new byte[maxBytes + 1];
+        Arrays.fill(line, (byte) 'C');
+        Files.write(file, line);
+
+        assertEquals("C".repeat(maxBytes), FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes));
+    }
+
+    /// Verifies that, when a newline follows an over-long line inside the read range, the tail starts at that
+    /// complete line instead.
+    @Test
+    public void readsCompleteLineAfterOversizedLine(@TempDir Path tempDir) throws IOException {
+        int maxBytes = 1024;
+        Path file = tempDir.resolve("long-then-line.log");
+        try (OutputStream out = Files.newOutputStream(file)) {
+            byte[] longLine = new byte[8 * maxBytes];
+            Arrays.fill(longLine, (byte) 'E');
+            out.write(longLine);
+            out.write("\nTAIL-MARKER".getBytes(UTF_8));
+        }
+
+        String tail = FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes);
+
+        assertEquals("TAIL-MARKER", tail);
+    }
+
+    /// Verifies that a UTF-8 BOM in the file head never leaks into the returned tail.
+    @Test
+    public void ignoresLeadingBomInTailRead(@TempDir Path tempDir) throws IOException {
+        int maxBytes = 1024;
+        Path file = tempDir.resolve("bom.log");
+        try (OutputStream out = Files.newOutputStream(file)) {
+            out.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}); // UTF-8 BOM
+            byte[] head = new byte[maxBytes + 100];
+            Arrays.fill(head, (byte) 'A');
+            out.write(head);
+            out.write("-END".getBytes(UTF_8));
+        }
+
+        String tail = FileUtils.readTextTailMaybeNativeEncoding(file, maxBytes);
+
+        assertFalse(tail.contains("\uFEFF"));
+        assertTrue(tail.endsWith("-END"));
+    }
+
+    /// Verifies that a log just under the line limit is kept whole.
+    @Test
+    public void keepsAllLinesBelowLineLimit() {
+        assertEquals(24_999, McLogsUploader.truncate(shortLog(24_999)).split("\n", -1).length);
+    }
+
+    /// Verifies that a log exactly at the line limit is kept whole.
+    @Test
+    public void keepsLinesAtExactLineLimit() {
+        assertEquals(25_000, McLogsUploader.truncate(shortLog(25_000)).split("\n", -1).length);
+    }
+
+    /// Verifies that a log one line over the limit drops only the earliest line.
+    @Test
+    public void dropsEarliestLineJustOverLineLimit() {
+        String[] result = McLogsUploader.truncate(shortLog(25_001)).split("\n", -1);
+
+        assertEquals(25_000, result.length);
+        assertEquals("line 1", result[0]);
+    }
+
+    /// Builds a log with [lines] short lines, so the byte limit never kicks in.
+    private static String shortLog(int lines) {
+        String[] all = new String[lines];
+        for (int i = 0; i < lines; i++) {
+            all[i] = "line " + i;
+        }
+        return String.join("\n", all);
+    }
 }

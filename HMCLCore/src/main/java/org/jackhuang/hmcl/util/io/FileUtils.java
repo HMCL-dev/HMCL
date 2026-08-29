@@ -27,10 +27,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -259,12 +260,14 @@ public final class FileUtils {
     /// Reads at most the last [maxBytes] bytes of [file], decoded with HMCL's charset-detection rules.
     ///
     /// A file larger than [maxBytes] is never read into memory in full: the charset is detected from a small
-    /// head sample, then only the tail is read by seeking straight to its offset. The returned text is
-    /// guaranteed to be at most [maxBytes] bytes after re-encoding with the detected charset, never starts in
-    /// the middle of a multi-byte character or a line, and always keeps the very end of the file.
+    /// head sample, then only the tail is read by seeking straight to its offset. The returned text, when it is
+    /// re-encoded with the detected charset, is guaranteed to be at most [maxBytes] bytes and never starts in
+    /// the middle of a multi-byte character. It starts at a line boundary whenever one is available within the
+    /// read range; if a single line is longer than the read range, the returned text starts inside that line
+    /// instead (a deliberate trade-off to keep the read size bounded). The very end of the file is kept.
     ///
     /// @param file     the file to read from
-    /// @param maxBytes the maximum number of bytes to keep from the tail; must be non-negative
+    /// @param maxBytes the maximum number of bytes to keep from the tail; must be non-negative and at most 2 GiB
     /// @return the decoded tail content, at most [maxBytes] bytes long
     /// @throws IOException if the file cannot be read
     public static String readTextTailMaybeNativeEncoding(Path file, long maxBytes) throws IOException {
@@ -275,21 +278,31 @@ public final class FileUtils {
         Charset charset = detectCharset(readHead(file));
         byte[] tail = readTailBytes(file, size, maxBytes);
 
-        int start = alignToCharacterBoundary(tail, charset);
+        int start = alignToCharacterBoundary(tail, charset, 0);
         start = alignToLineStart(tail, start);
+        start = alignToByteLimit(tail, charset, start, maxBytes);
 
-        String content = new String(tail, start, tail.length - start, charset);
-        return trimTailToByteLimit(content, charset, (int) maxBytes);
+        // `start` is a character boundary and leaves at most `maxBytes` bytes, so this is a single decode.
+        return new String(tail, start, tail.length - start, charset);
     }
 
     /// Truncates [content] so its UTF-8 encoding fits within [maxBytes], keeping the tail and never splitting
-    /// a multi-byte character.
+    /// a multi-byte character. Returns [content] unchanged when it already fits.
     ///
     /// @param content  the text to truncate
     /// @param maxBytes the UTF-8 byte limit
     /// @return [content], truncated to at most [maxBytes] UTF-8 bytes
     public static String truncateUtf8ToByteLimit(String content, int maxBytes) {
-        return trimTailToByteLimit(content, UTF_8, maxBytes);
+        byte[] bytes = content.getBytes(UTF_8);
+        if (bytes.length <= maxBytes) {
+            return content;
+        }
+
+        // Walk forward past UTF-8 continuation bytes so the cut never splits a multi-byte character.
+        int start = bytes.length - maxBytes;
+        while (start < bytes.length && (bytes[start] & 0xC0) == 0x80)
+            start++;
+        return new String(bytes, start, bytes.length - start, UTF_8);
     }
 
     /// Detects the charset of [bytes] using the same heuristics used by the text readers.
@@ -346,18 +359,20 @@ public final class FileUtils {
         }
     }
 
-    /// Returns the smallest index within the guard window that starts on a character boundary.
+    /// Returns the first character boundary at or after [from].
     ///
-    /// UTF-8 boundary bytes never start with `10xxxxxx`, so continuation bytes are skipped. Other charsets
-    /// are probed with a strict decoder over the leading window.
+    /// UTF-8 continuation bytes are `10xxxxxx`, so they are skipped directly. Other charsets have no such
+    /// marker; they are probed with a strict decoder that only needs to decode a single character, so aligning
+    /// a boundary never scans the whole tail buffer.
     ///
     /// @param bytes   the bytes to align
     /// @param charset the charset to decode with
-    /// @return the leading offset that keeps the first character intact
-    private static int alignToCharacterBoundary(byte[] bytes, Charset charset) {
-        int limit = Math.min(TAIL_GUARD_BYTES, bytes.length);
+    /// @param from    the offset to start searching from; may fall in the middle of a multi-byte character
+    /// @return the first offset `>= from` that starts a complete character
+    private static int alignToCharacterBoundary(byte[] bytes, Charset charset, int from) {
+        int limit = Math.min(from + TAIL_GUARD_BYTES, bytes.length);
         if (charset == UTF_8) {
-            int index = 0;
+            int index = from;
             while (index < limit && (bytes[index] & 0xC0) == 0x80)
                 index++;
             return index;
@@ -366,23 +381,27 @@ public final class FileUtils {
         CharsetDecoder decoder = charset.newDecoder()
                 .onMalformedInput(CodingErrorAction.REPORT)
                 .onUnmappableCharacter(CodingErrorAction.REPORT);
-        for (int index = 0; index <= limit; index++) {
-            try {
-                decoder.reset();
-                decoder.decode(ByteBuffer.wrap(bytes, index, bytes.length - index));
+        CharBuffer singleCharacter = CharBuffer.allocate(1);
+        for (int index = from; index <= limit; index++) {
+            decoder.reset();
+            singleCharacter.clear();
+            CoderResult result = decoder.decode(ByteBuffer.wrap(bytes, index, bytes.length - index),
+                    singleCharacter, false);
+            if (!result.isMalformed() && !result.isUnmappable())
                 return index;
-            } catch (CharacterCodingException ignored) {
-                // The byte at `index` is still a tail byte of a multi-byte character; try the next one.
-            }
         }
-        return 0;
+        return from;
     }
 
-    /// Skips to the start of the next line so the returned tail never opens with a truncated first line.
+    /// Skips to the start of the next line when one is inside the read range, so the returned tail opens with
+    /// a complete line whenever possible.
+    ///
+    /// When no newline is present (a single line longer than the read range), this returns [start] unchanged so
+    /// the read stays bounded; the result may then start in the middle of that over-long line.
     ///
     /// @param bytes the tail bytes
     /// @param start the first character boundary
-    /// @return the offset of the first byte of a complete line
+    /// @return the offset of the first byte of a complete line, or [start] when no newline follows
     private static int alignToLineStart(byte[] bytes, int start) {
         for (int i = start; i < bytes.length; i++) {
             if (bytes[i] == '\n')
@@ -391,42 +410,19 @@ public final class FileUtils {
         return start;
     }
 
-    /// Truncates [content] so its [charset] encoding fits within [maxBytes], keeping the tail and never
-    /// splitting a multi-byte character.
+    /// Moves [start] forward when the remaining bytes exceed [maxBytes], aligning to a character boundary so
+    /// the result stays within the byte limit without splitting a character.
     ///
-    /// @param content  the decoded content
-    /// @param charset  the charset [content] was decoded with
+    /// @param bytes    the tail bytes
+    /// @param charset  the charset [bytes] decode with
+    /// @param start    the current character boundary
     /// @param maxBytes the byte limit
-    /// @return [content], truncated to at most [maxBytes] bytes
-    private static String trimTailToByteLimit(String content, Charset charset, int maxBytes) {
-        byte[] bytes = content.getBytes(charset);
-        if (bytes.length <= maxBytes) {
-            return content;
+    /// @return the adjusted start offset, leaving at most [maxBytes] bytes before the end of [bytes]
+    private static int alignToByteLimit(byte[] bytes, Charset charset, int start, long maxBytes) {
+        if (bytes.length - start <= maxBytes) {
+            return start;
         }
-
-        int start = bytes.length - maxBytes;
-        if (charset == UTF_8) {
-            while (start < bytes.length && (bytes[start] & 0xC0) == 0x80)
-                start++;
-            return new String(bytes, start, bytes.length - start, UTF_8);
-        }
-
-        // Non-UTF-8 native encodings are rare; align with a strict decoder over the small over-run window so
-        // a multi-byte character is never split in two.
-        CharsetDecoder decoder = charset.newDecoder()
-                .onMalformedInput(CodingErrorAction.REPORT)
-                .onUnmappableCharacter(CodingErrorAction.REPORT);
-        int limit = Math.min(bytes.length, start + TAIL_GUARD_BYTES);
-        for (int index = start; index <= limit; index++) {
-            try {
-                decoder.reset();
-                decoder.decode(ByteBuffer.wrap(bytes, index, bytes.length - index));
-                return new String(bytes, index, bytes.length - index, charset);
-            } catch (CharacterCodingException ignored) {
-                // The byte at `index` is still a tail byte of a multi-byte character; try the next one.
-            }
-        }
-        return new String(bytes, start, bytes.length - start, charset);
+        return alignToCharacterBoundary(bytes, charset, bytes.length - (int) maxBytes);
     }
 
     public static void deleteDirectory(Path directory) throws IOException {
