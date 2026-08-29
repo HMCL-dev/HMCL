@@ -300,6 +300,37 @@ public class GameCrashWindow extends Stage {
                 }).thenApply(ignored -> logFile);
     }
 
+    /// Uploads the game log of the crashed game to mclo.gs and shows the resulting link.
+    ///
+    /// @param uploadButtonPane the spinner pane wrapping the upload button, toggled while uploading
+    private void uploadGameLogToMcLogs(SpinnerPane uploadButtonPane) {
+        uploadButtonPane.showSpinner();
+        McLogsUploader.uploadGameLog(gameInstance.getRunDirectory(), logs).whenCompleteAsync((url, exception) -> {
+            uploadButtonPane.hideSpinner();
+
+            if (exception == null) {
+                var dialog = new MessageDialogPane.Builder(
+                        i18n("game.crash.upload_mclogs.success"),
+                        i18n("message.success"),
+                        MessageDialogPane.MessageType.SUCCESS)
+                        .addHyperLink(url, url)
+                        .addAction(i18n("button.copy"), () -> FXUtils.copyText(url))
+                        .ok(null)
+                        .build();
+                DialogUtils.show(stackPane, dialog);
+            } else {
+                LOG.warning("Failed to upload the game log to mclo.gs", exception);
+                var dialog = new MessageDialogPane.Builder(
+                        i18n("game.crash.upload_mclogs.failed") + "\n" + StringUtils.getStackTrace(exception),
+                        i18n("message.error"),
+                        MessageDialogPane.MessageType.ERROR)
+                        .ok(null)
+                        .build();
+                DialogUtils.show(stackPane, dialog);
+            }
+        }, Schedulers.javafx());
+    }
+
     private final class View extends VBox {
 
         View() {
@@ -455,6 +486,13 @@ public class GameCrashWindow extends Stage {
                     }, Schedulers.javafx());
                 });
 
+                SpinnerPane uploadButtonPane = new SpinnerPane();
+                uploadButtonPane.getStyleClass().add("small-spinner-pane");
+
+                JFXButton uploadButton = FXUtils.newRaisedButton(i18n("game.crash.upload_mclogs"));
+                uploadButtonPane.setContent(uploadButton);
+                uploadButton.setOnAction(e -> uploadGameLogToMcLogs(uploadButtonPane));
+
                 JFXButton logButton = FXUtils.newRaisedButton(i18n("logwindow.title"));
                 logButton.setOnAction(e -> showLogWindow());
 
@@ -465,7 +503,7 @@ public class GameCrashWindow extends Stage {
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);
                 toolBar.getStyleClass().add("jfx-tool-bar");
-                toolBar.getChildren().setAll(exportButtonPane, logButton, helpButton);
+                toolBar.getChildren().setAll(exportButtonPane, uploadButtonPane, logButton, helpButton);
             }
 
             getChildren().setAll(titlePane, infoPane, moddedPane, gameDirPane, toolBar);
