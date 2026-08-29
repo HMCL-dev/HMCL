@@ -154,7 +154,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
             throw new IOException("Minecraft client JAR not found: " + minecraftJar);
         }
         Path installerFile = Objects.requireNonNull(dest);
-        String originalMainClass = dependencyManager.getGameRepository().resolve(manifest).launchManifest().mainClass();
+        String originalMainClass = manifest.mainClass();
         if (!GameComponentAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
             throw new UnsupportedInstallationException(UnsupportedInstallationException.UNSUPPORTED_LAUNCH_WRAPPER);
 

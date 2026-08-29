@@ -356,7 +356,7 @@ public record GameInstanceManifest(
     }
 
     public boolean isModifiable() {
-        return inheritsFrom == null && patches != null && !patches.isEmpty();
+        return inheritsFrom == null && patches != null && hasPatch(GameComponentType.GAME.getPatchId());
     }
 
     /// Returns the pending patches.
