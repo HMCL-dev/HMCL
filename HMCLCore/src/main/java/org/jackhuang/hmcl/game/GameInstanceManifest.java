@@ -701,25 +701,6 @@ public record GameInstanceManifest(
         return json;
     }
 
-    public GameInstanceManifest applyPatches() {
-        if (inheritsFrom != null) {
-            throw new IllegalStateException("Cannot resolve patches on a manifest that inherits from another manifest");
-        }
-
-        if (patches == null || patches.isEmpty()) {
-            return this;
-        }
-
-        GameInstanceManifest manifest = isRoot()
-                ? new GameInstanceManifest(id)
-                : this;
-        for (GameInstancePatch patch : Lang.toIterable(patches().stream()
-                .sorted(Comparator.comparing(GameInstancePatch::getPriority)))) {
-            manifest = patch.merge(manifest);
-        }
-        return this;
-    }
-
     public GameInstanceManifest removeComponent(GameComponentType type) {
         @Nullable GameInstancePatch patch = findPatch(type.getPatchId());
         if (patch == null) {

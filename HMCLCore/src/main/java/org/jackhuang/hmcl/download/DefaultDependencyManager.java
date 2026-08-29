@@ -260,13 +260,15 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
             GameInstanceManifest baseManifest,
             Path modsDirectory,
             ComponentRemoteVersion componentVersion) {
-        return Task.supplyAsync(() -> baseManifest.removeComponent(componentVersion.getComponentType()))
-                .thenComposeAsync(manifest -> componentVersion
-                        .getInstallTask(this, manifest, modsDirectory)
-                        .thenApplyAsync(patch -> patch == null
-                                ? manifest
-                                : manifest.addPatch(patch).reconstructByPatches()
-                        ))
+        return Task.composeAsync(() -> {
+                    GameInstanceManifest manifest = baseManifest.removeComponent(componentVersion.getComponentType());
+                    return componentVersion
+                            .getInstallTask(this, manifest, modsDirectory)
+                            .thenApplyAsync(patch -> patch == null
+                                    ? manifest
+                                    : manifest.addPatch(patch).reconstructByPatches()
+                            );
+                })
                 .withStage("hmcl.install.%s:%s".formatted(
                         componentVersion.getComponentType().getPatchId(),
                         componentVersion.getSelfVersion()));
@@ -320,15 +322,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         }
 
         Path modsDirectory = instance.getModsDirectory();
-        return Task.composeAsync(() -> {
-                    GameInstanceManifest manifest = baseManifest.removeComponent(componentVersion.getComponentType());
-                    return componentVersion
-                            .getInstallTask(this, manifest, modsDirectory)
-                            .thenApplyAsync(patch -> patch == null
-                                    ? manifest
-                                    : manifest.addPatch(patch).reconstructByPatches());
-                })
-                .withStage("hmcl.install.%s:%s".formatted(componentVersion.getComponentType().getPatchId(), componentVersion.getSelfVersion()));
+        return installUnpublishedComponentAsync(baseManifest, modsDirectory, componentVersion);
     }
 
     /// Resolves a remote component by id/version and installs it into the working manifest.
