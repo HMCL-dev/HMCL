@@ -39,9 +39,9 @@ import java.util.zip.ZipFile;
 
 public final class ForgeLegacyInstallTask extends Task<GameInstancePatch> {
     public static final Library MODLOADER_LIBRARY = new Library(new Artifact("modloader", "modloader", "1.1"));
-    public static final String MODLOADER_DOWNLOAD_URL = "https://github.com/HMCL-dev/metadata/raw/refs/heads/main/fmllibs/ModLoader%201.1.zip";
+    public static final String MODLOADER_DOWNLOAD_URL = "https://hmcl.glavo.site/metadata/fmllibs/ModLoader%201.1.zip";
     public static final Library MODLOADER_MP_LIBRARY = new Library(new Artifact("modloader", "modloader-mp", "1.1"));
-    public static final String MODLOADER_MP_DOWNLOAD_URL = "https://github.com/HMCL-dev/metadata/raw/refs/heads/main/fmllibs/ModLoaderMP%201.1%20v4.zip";
+    public static final String MODLOADER_MP_DOWNLOAD_URL = "https://hmcl.glavo.site/metadata/fmllibs/ModLoaderMP%201.1%20v4.zip";
 
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;

@@ -70,23 +70,23 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
                                 ForgeVersion version = root.number().get(v);
                                 if (version == null)
                                     continue;
-                                String jar = null;
+                                String installer = null;
                                 for (String[] file : version.files())
-                                    if (file.length > 1 && "installer".equals(file[1])) {
+                                    if (file.length > 1) {
                                         String classifier = version.mcversion() + "-" + version.version()
                                                 + (StringUtils.isNotBlank(version.branch()) ? "-" + version.branch() : "");
                                         String fileName = root.artifact() + "-" + classifier + "-" + file[1] + "." + file[0];
-                                        jar = root.webpath() + classifier + "/" + fileName;
+                                        installer = root.webpath() + classifier + "/" + fileName;
                                     }
 
-                                if (jar == null)
+                                if (installer == null)
                                     continue;
 
                                 versions.put(gameVersion, new ForgeRemoteVersion(
                                         toLookupVersion(version.mcversion()),
                                         version.version(),
                                         version.modified() > 0 ? Instant.ofEpochSecond(version.modified()) : null,
-                                        Collections.singletonList(jar)
+                                        Collections.singletonList(installer)
                                 ));
                             }
                         }
