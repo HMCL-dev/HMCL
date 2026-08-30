@@ -70,10 +70,6 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
         return new GameComponentAnalyzer(standaloneManifest, components, bootstrapVersion);
     }
 
-    public static GameComponentAnalyzer analyze(GameInstanceManifest.Resolved resolved, @Nullable GameVersionNumber gameVersion) {
-        return analyze(resolved.standaloneManifest(), resolved.launchManifest(), gameVersion);
-    }
-
     public static GameComponentAnalyzer analyze(GameInstanceManifest manifest, @Nullable GameVersionNumber gameVersion) {
         if (manifest.inheritsFrom() != null)
             throw new IllegalArgumentException("GameComponentAnalyzer can only analyze independent game version");

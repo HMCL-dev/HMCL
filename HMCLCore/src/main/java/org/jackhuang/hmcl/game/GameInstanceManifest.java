@@ -63,51 +63,6 @@ public record GameInstanceManifest(
         @Nullable @Unmodifiable JsonObject rawJson
 ) {
 
-    /// Resolved manifest views with inheritance folded.
-    ///
-    /// @param unresolved         the stored manifest supplied to resolution
-    /// @param launchManifest     the normalized final manifest data used by launch-time consumers
-    /// @param standaloneManifest the structural standalone manifest with pending patches preserved
-    @NotNullByDefault
-    public record Resolved(GameInstanceManifest unresolved,
-                           GameInstanceManifest launchManifest,
-                           GameInstanceManifest standaloneManifest) {
-
-        /// Creates a resolved manifest view.
-        public Resolved {
-            Objects.requireNonNull(launchManifest);
-            Objects.requireNonNull(standaloneManifest);
-
-            if (!launchManifest.id().equals(standaloneManifest.id())) {
-                throw new IllegalArgumentException("Resolved manifest views must have the same id");
-            }
-
-            if (launchManifest.inheritsFrom() != null) {
-                throw new IllegalArgumentException("Launch manifest cannot inherit from another manifest");
-            }
-            if (launchManifest.patches() != null && !launchManifest.patches().isEmpty()) {
-                throw new IllegalArgumentException("Launch manifest cannot contain pending patches");
-            }
-            if (standaloneManifest.inheritsFrom() != null) {
-                throw new IllegalArgumentException("Standalone manifest cannot inherit from another manifest");
-            }
-        }
-
-        public boolean isModded() {
-            String mainClass = launchManifest().mainClass();
-            if (mainClass == null || GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN.equals(mainClass)) {
-                return false;
-            }
-
-            for (String packageName : GameComponentAnalyzer.MOD_LOADER_MAIN_CLASSES_PACKAGES) {
-                if (mainClass.startsWith(packageName))
-                    return true;
-            }
-
-            return false;
-        }
-    }
-
     GameInstanceManifest merge(GameInstanceManifest parent) {
         return new GameInstanceManifest(
                 id,
