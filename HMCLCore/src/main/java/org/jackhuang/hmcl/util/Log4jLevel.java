@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,18 +49,21 @@ public enum Log4jLevel {
 
     public static final Pattern MINECRAFT_LOGGER = Pattern.compile("\\[(?<timestamp>[0-9:]+)] \\[[^/]+/(?<level>[^]]+)]");
     public static final Pattern MINECRAFT_LOGGER_CATEGORY = Pattern.compile("\\[(?<timestamp>[0-9:]+)] \\[[^/]+/(?<level>[^]]+)] \\[(?<category>[^]]+)]");
-    public static final String JAVA_SYMBOL = "([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$][a-zA-Z\\d_$]*";
     private static final String WRAPPED_PRINT_STREAM = "[java.lang.Throwable$WrappedPrintStream:println";
 
-    private static final String[] INFO_MARKERS = markers(
-            Level.INFO,
-            Level.CONFIG,
-            Level.FINE,
-            Level.FINER,
-            Level.FINEST
-    );
-    private static final String[] ERROR_MARKERS = markers(Level.SEVERE);
-    private static final String[] WARN_MARKERS = markers(Level.WARNING);
+    private static final String [] INFO_MARKERS = {
+            "[INFO]", "[INFORMATION]", "[信息]", "[情報]",
+            "[CONFIG]", "[KONFIGURATION]", "[설정]", "[配置]",
+            "[FINE]", "[FEIN]", "[普通]", "[详细]",
+            "[FINER]", "[FEINER]", "[詳細]", "[较详细]",
+            "[FINEST]", "[AM FEINSTEN]", "[最も詳細]", "[非常详细]"
+    };
+    private static final String [] ERROR_MARKERS = {
+            "[SEVERE]", "[SCHWERWIEGEND]", "[严重]", "[重大]"
+    };
+    private static final String [] WARN_MARKERS = {
+            "[WARNING]", "[WARNUNG]", "[警告]"
+    };
 
     public static Log4jLevel guessLevel(String line) {
         Log4jLevel level = null;
@@ -100,12 +102,6 @@ public enum Log4jLevel {
             level = FATAL;
         }
 
-        /*if (line.contains("Exception in thread")
-                || line.matches("\\s+at " + JAVA_SYMBOL)
-                || line.matches("Caused by: " + JAVA_SYMBOL)
-                || line.matches("([a-zA-Z_$][a-zA-Z\\d_$]*\\.)+[a-zA-Z_$]?[a-zA-Z\\d_$]*(Exception|Error|Throwable)")
-                || line.matches("... \\d+ more$"))
-            return ERROR;*/
         return level;
     }
 
@@ -134,16 +130,6 @@ public enum Log4jLevel {
         return ERROR;
     }
 
-    private static String[] markers(Level... levels) {
-        String[] markers = new String[levels.length * 2];
-        int i = 0;
-        for (Level level : levels) {
-            markers[i++] = '[' + level.getName() + ']';
-            markers[i++] = '[' + level.getLocalizedName() + ']';
-        }
-        return markers;
-    }
-
     private static boolean containsAny(String line, String[] markers) {
         for (String marker : markers) {
             if (line.contains(marker)) {
@@ -153,8 +139,8 @@ public enum Log4jLevel {
         return false;
     }
 
-    public static boolean isError(Log4jLevel a) {
-        return a != null && a.lessOrEqual(Log4jLevel.ERROR);
+    public static boolean isError(Log4jLevel level) {
+        return level != null && level.lessOrEqual(Log4jLevel.ERROR);
     }
 
     public static boolean guessLogLineError(String log) {
