@@ -273,9 +273,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (!Files.isRegularFile(file)) {
             return null;
         }
-        try {
-            return LauncherSettings.SETTINGS_GSON
-                    .fromJson(Files.readString(file), GameSettings.Instance.class);
+        try (var reader = Files.newBufferedReader(file)) {
+            return LauncherSettings.SETTINGS_GSON.fromJson(reader, GameSettings.Instance.class);
         } catch (Exception e) {
             LOG.warning("Failed to peek instance game settings: " + file, e);
             return null;
