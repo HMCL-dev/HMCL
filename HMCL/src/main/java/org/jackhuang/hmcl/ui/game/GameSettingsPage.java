@@ -807,7 +807,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 openGLRendererPane.setVisible(showOpenGL);
                 openGLRendererPane.setManaged(showOpenGL);
 
-                boolean showVulkan = GraphicsAPI.VULKAN.isSupported(version);
+                boolean showVulkan = isPresetSetting || GraphicsAPI.VULKAN.isSupported(version);
                 vulkanRendererPane.setVisible(showVulkan);
                 vulkanRendererPane.setManaged(showVulkan);
             };
