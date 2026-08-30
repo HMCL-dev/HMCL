@@ -189,23 +189,22 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
     private GameInstanceManifest resolve(
             GameInstanceManifest manifest,
             Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
-        GameInstanceManifest launchManifest;
+        GameInstanceManifest resolvedManifest;
 
         if (manifest.inheritsFrom() == null) {
             if (manifest.isRoot()) {
-                // TODO: Breaking change, require much testing on versions installed with external installer, other launchers, and all kinds of versions.
-                launchManifest = manifest.patches() != null
+                resolvedManifest = manifest.patches() != null
                         ? new GameInstanceManifest(manifest.id()).withPatches(manifest.patches())
                         : manifest;
             } else {
-                launchManifest = manifest;
+                resolvedManifest = manifest;
             }
-            launchManifest = launchManifest.withJar(manifest.jar() == null ? manifest.id() : manifest.jar());
+            resolvedManifest = resolvedManifest.withJar(manifest.jar() == null ? manifest.id() : manifest.jar());
         } else {
             // To maximize the compatibility.
             if (!resolvedSoFar.add(manifest.id())) {
                 LOG.warning("Found circular dependency instances: " + resolvedSoFar);
-                launchManifest = (manifest.jar() == null ? manifest.withJar(manifest.id()) : manifest)
+                resolvedManifest = (manifest.jar() == null ? manifest.withJar(manifest.id()) : manifest)
                         .withInheritsFrom(null);
             } else {
                 DefaultGameInstance parentInstance = instances.get(manifest.inheritsFrom());
@@ -215,9 +214,11 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
 
                 // It is supposed to auto-install a version in getVersion.
                 GameInstanceManifest parentResolved = resolve(parentInstance.getManifest(), resolvedSoFar);
-                launchManifest = manifest.merge(parentResolved);
+                resolvedManifest = manifest.merge(parentResolved);
             }
         }
+
+        var builder = new GameInstanceManifest.Builder(resolvedManifest);
 
         if (manifest.patches() != null && !manifest.patches().isEmpty()) {
             // Assume patches themselves do not have patches recursively.
@@ -225,12 +226,13 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
                     .sorted(Comparator.comparing(GameInstancePatch::getPriority))
                     .toList();
             for (GameInstancePatch patch : sortedPatches) {
-                launchManifest = patch.merge(launchManifest);
+                builder.merge(patch);
             }
         }
 
-        launchManifest = launchManifest.withId(manifest.id()).withPatches(null);
-        return launchManifest;
+        builder.setId(manifest.id());
+        builder.setPatches(null);
+        return builder.toManifest();
     }
 
     /// Removes redundant library declarations while retaining rule-distinct variants.
