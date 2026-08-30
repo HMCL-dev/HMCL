@@ -678,11 +678,12 @@ public record GameInstanceManifest(
         }
 
         var builder = new GameInstanceManifest.Builder();
-        builder.setId(id());
-        builder.setJar(jar() == null ? id() : jar());
         for (GameInstancePatch patch : patches()) {
             builder.merge(patch);
         }
+        builder.setId(id());
+        builder.setJar(jar() == null ? id() : jar());
+        builder.setRoot(true);
         builder.setPatches(patches());
         return builder.toManifest();
     }
