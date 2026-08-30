@@ -19,16 +19,22 @@ package org.jackhuang.hmcl;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.security.ProtectionDomain;
+import java.util.ArrayList;
+import java.util.List;
 
-@SuppressWarnings("JavaPrintToLogpoint")
 public final class HMCLLegacyForgeHelper {
     private HMCLLegacyForgeHelper() {
         throw new AssertionError();
     }
 
-    private static final String TARGET_URL = "http://files.minecraftforge.net/fmllibs/%s";
+    private static final List<String> TARGET_URL_LIST = new ArrayList<String>();
+
+    static {
+        TARGET_URL_LIST.add("http://files.minecraftforge.net/fmllibs/%s");
+        TARGET_URL_LIST.add("https://files.minecraftforge.net/fmllibs/%s");
+    }
 
     private static String newRootUrl = "https://hmcl.glavo.site/metadata/fmllibs/%s";
 
@@ -55,8 +61,13 @@ public final class HMCLLegacyForgeHelper {
             if ("cpw/mods/fml/relauncher/CoreFMLLibraries".equals(className) || "cpw.mods.fml.relauncher.CoreFMLLibraries".equals(className)) {
                 try {
                     System.out.println("[LegacyForgeHelper] Transforming " + className + " ...");
-                    byte[] modified = patchConstantPoolUtf8(classfileBuffer, TARGET_URL, newRootUrl);
-                    System.out.println("[LegacyForgeHelper] Successfully patched RootURL in " + className);
+
+                    byte[] modified = classfileBuffer;
+                    for (String target : TARGET_URL_LIST) {
+                        modified = patchConstantPoolUtf8(modified, target, newRootUrl);
+                        System.out.println("[LegacyForgeHelper] Successfully patched RootURL in " + className);
+                    }
+
                     return modified;
                 } catch (Throwable t) {
                     System.err.println("[LegacyForgeHelper] Failed to patch class");
@@ -90,11 +101,11 @@ public final class HMCLLegacyForgeHelper {
                 case 1: // CONSTANT_Utf8
                     int utf8LengthPos = pos;
                     int len = ((classBytes[pos++] & 0xFF) << 8) | (classBytes[pos++] & 0xFF);
-                    String str = new String(classBytes, pos, len, StandardCharsets.UTF_8);
+                    String str = new String(classBytes, pos, len, Charset.forName("UTF-8"));
                     pos += len;
 
                     if (targetStr.equals(str)) {
-                        byte[] replacementBytes = replacementStr.getBytes(StandardCharsets.UTF_8);
+                        byte[] replacementBytes = replacementStr.getBytes(Charset.forName("UTF-8"));
                         if (replacementBytes.length > 65535) {
                             throw new IllegalArgumentException("Replacement URL is too long (max 65535 bytes)");
                         }
