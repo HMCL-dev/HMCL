@@ -101,6 +101,10 @@ public final class UpdateHandler {
     public static void updateFrom(RemoteVersion version) {
         checkFxUserThread();
 
+        if (PackageManagerIntegration.isPackageManaged()) {
+            return;
+        }
+
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && !OperatingSystem.isWindows7OrLater()) {
             Controllers.dialog(i18n("fatal.apply_update_need_win7", Metadata.PUBLISH_URL), i18n("message.error"), MessageType.ERROR);
             return;
