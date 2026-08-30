@@ -170,7 +170,7 @@ public final class GameLibrariesTask extends Task<Void> {
                     case "modloader-mp" -> ForgeLegacyInstallTask.MODLOADER_MP_DOWNLOAD_URL;
                     default -> null;
                 };
-                if (url != null) {
+                if (url != null && shouldDownloadLibrary(gameRepository, manifest,library, integrityCheck)) {
                     var fileDownloadTask = new FileDownloadTask(url, file, null);
                     fileDownloadTask.setCacheRepository(dependencyManager.getCacheRepository());
                     fileDownloadTask.setCaching(true);

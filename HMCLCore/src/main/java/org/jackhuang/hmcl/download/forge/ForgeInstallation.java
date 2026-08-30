@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
-import org.jackhuang.hmcl.addon.meta.ForgeOldModMetadata;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.download.VersionMismatchException;
@@ -30,21 +29,16 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import static org.jackhuang.hmcl.download.UnsupportedInstallationException.CLEANROOM_NOT_COMPATIBLE_WITH_FORGE;
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ForgeInstallation {
     private ForgeInstallation() {
@@ -61,7 +55,7 @@ public final class ForgeInstallation {
     /// @throws VersionMismatchException if the installer targets another Minecraft version
     public static ForgeInstallerType detectForgeInstallerType(String gameVersion, Path installer) throws IOException, VersionMismatchException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            if ((Files.isRegularFile(fs.getPath("fmlversion.properties"))) && !Files.isRegularFile(fs.getPath("install_profile.json"))) {
+            if ((Files.isRegularFile(fs.getPath("fmlversion.properties")) || Files.isRegularFile(fs.getPath("forgeversion.properties"))) && !Files.isRegularFile(fs.getPath("install_profile.json"))) {
                 return ForgeInstallerType.LEGACY_FML;
             }
 
@@ -107,7 +101,8 @@ public final class ForgeInstallation {
 
             switch (type) {
                 case LEGACY_MODLOADER, LEGACY_FML -> {
-                    return new ForgeLegacyInstallTask(dependencyManager, manifest, tryGetLegacyForgeVersion(installer), installer, type);
+                    var forgeProfile = ForgeLegacyInstallProfile.parse(installer);
+                    return new ForgeLegacyInstallTask(dependencyManager, manifest, forgeProfile != null ? forgeProfile.forgeVersion() : null, installer, type);
                 }
                 case OLD -> {
                     checkCleanroomCompatibility(dependencyManager, manifest, gameVersion);
@@ -143,32 +138,6 @@ public final class ForgeInstallation {
 
     private static String modifyVersion(String gameVersion, String version) {
         return removePrefix(removeSuffix(removePrefix(removeSuffix(removePrefix(version.replace(gameVersion, "").trim(), "-"), "-"), "_"), "_"), "forge-");
-    }
-
-    public static @Nullable String tryGetLegacyForgeVersion(Path path) {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(path)) {
-            if (Files.isRegularFile(fs.getPath("mod_MinecraftForge.info"))) {
-                ForgeOldModMetadata metadata = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("mod_MinecraftForge.info")), ForgeOldModMetadata.class);
-                return metadata.getVersion();
-            }
-
-            if (Files.isRegularFile(fs.getPath("forgeversion.properties"))) {
-                Properties properties = new Properties();
-                properties.load(Files.newInputStream(fs.getPath("forgeversion.properties")));
-                List<String> list = new ArrayList<>();
-                list.add(properties.getProperty("forge.major.number"));
-                list.add(properties.getProperty("forge.minor.number"));
-                list.add(properties.getProperty("forge.revision.number"));
-                list.add(properties.getProperty("forge.build.number"));
-                return String.join(".", list);
-            }
-
-            return null;
-
-        } catch (IOException e) {
-            LOG.warning("Failed to get legacy forge version", e);
-            return null;
-        }
     }
 
     public static String toLookupVersion(String gameVersion) {
