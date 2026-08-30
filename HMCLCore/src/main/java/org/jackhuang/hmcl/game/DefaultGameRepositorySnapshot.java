@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.util.SimpleMultimap;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -237,68 +234,6 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
         builder.setId(manifest.id());
         builder.setPatches(null);
         return builder.toManifest();
-    }
-
-    /// Removes redundant library declarations while retaining rule-distinct variants.
-    ///
-    /// When two libraries share the same `groupId:artifactId` and equal compatibility rules, the
-    /// newer version wins. When versions are equal and the coordinate objects compare equal, the
-    /// declaration with the longer serialized JSON is kept (more metadata is treated as richer).
-    /// Equal id and version with unequal coordinate payloads (for example distinct `text2speech`
-    /// library vs native entries) are both retained.
-    private static GameInstanceManifest uniqueLibraries(GameInstanceManifest manifest) {
-        List<Library> libraries = new ArrayList<>();
-        SimpleMultimap<String, Integer, List<Integer>> indexes =
-                new SimpleMultimap<>(HashMap::new, ArrayList::new);
-
-        for (Library library : manifest.getLibraries()) {
-            String id = library.groupId() + ":" + library.artifactId();
-
-            if (!indexes.containsKey(id)) {
-                indexes.put(id, libraries.size());
-                libraries.add(library);
-                continue;
-            }
-
-            boolean duplicate = false;
-            for (int otherIndex : indexes.get(id)) {
-                Library other = libraries.get(otherIndex);
-                // Rules differ: keep both (platform-specific variants).
-                if (Objects.hashCode(library.rules()) != Objects.hashCode(other.rules())) {
-                    continue;
-                }
-
-                // Rules equal: drop the older version.
-                int comparison = VersionNumber.compare(library.version(), other.version());
-                if (comparison > 0) {
-                    libraries.set(otherIndex, library);
-                } else if (comparison == 0) {
-                    // Same library id and version: collapse true duplicates.
-                    if (library.equals(other)) {
-                        String otherSerialized = JsonUtils.GSON.toJson(other);
-                        String serialized = JsonUtils.GSON.toJson(library);
-                        // Prefer the entry with more serialized metadata when coordinates equal.
-                        if (serialized.length() > otherSerialized.length()) {
-                            libraries.set(otherIndex, library);
-                        }
-                    } else {
-                        // Same id/version but not equal (e.g. text2speech jar vs natives): keep both.
-                        continue;
-                    }
-                }
-                duplicate = true;
-                break;
-            }
-
-            if (!duplicate) {
-                indexes.put(id, libraries.size());
-                libraries.add(library);
-            }
-        }
-
-        return libraries.size() == manifest.getLibraries().size()
-                ? manifest
-                : manifest.withLibraries(libraries);
     }
 
 }
