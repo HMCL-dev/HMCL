@@ -30,7 +30,7 @@ public final class HMCLLegacyForgeHelper {
 
     private static final String TARGET_URL = "http://files.minecraftforge.net/fmllibs/%s";
 
-    private static String newRootUrl = "https://https://hmcl.glavo.site/metadata/fmllibs/%s";
+    private static String newRootUrl = "https://hmcl.glavo.site/metadata/fmllibs/%s";
 
     public static void premain(String agentArgs, Instrumentation inst) {
         if (agentArgs != null && !agentArgs.trim().isEmpty()) {
