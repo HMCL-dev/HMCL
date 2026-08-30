@@ -158,7 +158,7 @@ public abstract class DefaultGameInstance implements GameInstance {
     }
 
     @Override
-    public GameInstanceManifest getLaunchManifest() {
+    public GameInstanceManifest getResolvedManifest() {
         if (resolvedManifest == null) {
             resolvedManifest = snapshot.resolve(manifest);
         }
@@ -168,7 +168,7 @@ public abstract class DefaultGameInstance implements GameInstance {
     @Override
     public GameComponentAnalyzer getAnalyzer() {
         if (analyzer == null) {
-            analyzer = GameComponentAnalyzer.analyze(manifest.isModifiable() ? manifest : getLaunchManifest(), getVersion());
+            analyzer = GameComponentAnalyzer.analyze(manifest.isModifiable() ? manifest : getResolvedManifest(), getVersion());
         }
         return analyzer;
     }
@@ -261,7 +261,7 @@ public abstract class DefaultGameInstance implements GameInstance {
     /// instance's own jar is returned from [#getOwnJarFile()].
     @Override
     public Path getInstanceJarFile() {
-        GameInstanceManifest launchManifest = getLaunchManifest();
+        GameInstanceManifest launchManifest = getResolvedManifest();
         GameInstanceID jarId = Optional.ofNullable(launchManifest.jar()).orElse(launchManifest.id());
         if (!jarId.equals(id)) {
             DefaultGameInstance other = snapshot.findInstance(jarId);

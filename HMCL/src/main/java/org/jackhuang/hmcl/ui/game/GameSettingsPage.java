@@ -2818,7 +2818,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
 
         if (JavaManager.isInitialized()) {
             GameVersionNumber gameVersionNumber = currentGameVersion();
-            GameInstanceManifest manifest = gameInstance != null ? gameInstance.getLaunchManifest() : null;
+            GameInstanceManifest manifest = gameInstance != null ? gameInstance.getResolvedManifest() : null;
 
             try {
                 JavaRuntime java = effectiveSetting != null

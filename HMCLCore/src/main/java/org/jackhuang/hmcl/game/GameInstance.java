@@ -56,7 +56,7 @@ public interface GameInstance {
     /// Returns the manifest used by launch-time consumers.
     ///
     /// @return the launch manifest
-    GameInstanceManifest getLaunchManifest();
+    GameInstanceManifest getResolvedManifest();
 
     GameComponentAnalyzer getAnalyzer();
 
