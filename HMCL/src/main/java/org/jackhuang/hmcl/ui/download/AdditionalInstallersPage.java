@@ -69,7 +69,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
 
     @Override
     public String getTitle() {
-        return i18n("install.change_version") + " - " + this.instance.getId().id();
+        return i18n("install.change_version.title", instance.getId().id());
     }
 
     private String getVersion(GameComponentType type) {
