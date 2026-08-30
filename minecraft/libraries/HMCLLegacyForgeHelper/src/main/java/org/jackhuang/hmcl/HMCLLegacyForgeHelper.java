@@ -21,20 +21,14 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.nio.charset.Charset;
 import java.security.ProtectionDomain;
-import java.util.ArrayList;
-import java.util.List;
 
+@SuppressWarnings("JavaPrintToLogpoint")
 public final class HMCLLegacyForgeHelper {
     private HMCLLegacyForgeHelper() {
         throw new AssertionError();
     }
 
-    private static final List<String> TARGET_URL_LIST = new ArrayList<String>();
-
-    static {
-        TARGET_URL_LIST.add("http://files.minecraftforge.net/fmllibs/%s");
-        TARGET_URL_LIST.add("https://files.minecraftforge.net/fmllibs/%s");
-    }
+    private static final String TARGET_URL = "http://files.minecraftforge.net/fmllibs/%s";
 
     private static String newRootUrl = "https://hmcl.glavo.site/metadata/fmllibs/%s";
 
@@ -61,13 +55,8 @@ public final class HMCLLegacyForgeHelper {
             if ("cpw/mods/fml/relauncher/CoreFMLLibraries".equals(className) || "cpw.mods.fml.relauncher.CoreFMLLibraries".equals(className)) {
                 try {
                     System.out.println("[LegacyForgeHelper] Transforming " + className + " ...");
-
-                    byte[] modified = classfileBuffer;
-                    for (String target : TARGET_URL_LIST) {
-                        modified = patchConstantPoolUtf8(modified, target, newRootUrl);
-                        System.out.println("[LegacyForgeHelper] Successfully patched RootURL in " + className);
-                    }
-
+                    byte[] modified = patchConstantPoolUtf8(classfileBuffer, TARGET_URL, newRootUrl);
+                    System.out.println("[LegacyForgeHelper] Successfully patched RootURL in " + className);
                     return modified;
                 } catch (Throwable t) {
                     System.err.println("[LegacyForgeHelper] Failed to patch class");
