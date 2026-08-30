@@ -170,4 +170,20 @@ public final class ForgeInstallation {
             return null;
         }
     }
+
+    public static String toLookupVersion(String gameVersion) {
+        return switch (gameVersion) {
+            case "1.7.10-pre4" -> "1.7.10_pre4";
+            case "1.4" -> "1.4.0";
+            default -> gameVersion;
+        };
+    }
+
+    public static String fromLookupVersion(String gameVersion) {
+        return switch (gameVersion) {
+            case "1.7.10_pre4" -> "1.7.10-pre4";
+            case "1.4.0" -> "1.4";
+            default -> gameVersion;
+        };
+    }
 }

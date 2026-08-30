@@ -29,6 +29,9 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
 
+import static org.jackhuang.hmcl.download.forge.ForgeInstallation.fromLookupVersion;
+import static org.jackhuang.hmcl.download.forge.ForgeInstallation.toLookupVersion;
+
 /**
  *
  * @author huangyuhui
@@ -43,14 +46,6 @@ public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
     @Override
     public boolean hasType() {
         return false;
-    }
-
-    private static String toLookupVersion(String gameVersion) {
-        return "1.7.10-pre4".equals(gameVersion) ? "1.7.10_pre4" : gameVersion;
-    }
-
-    private static String fromLookupVersion(String lookupVersion) {
-        return "1.7.10_pre4".equals(lookupVersion) ? "1.7.10-pre4" : lookupVersion;
     }
 
     @Override
