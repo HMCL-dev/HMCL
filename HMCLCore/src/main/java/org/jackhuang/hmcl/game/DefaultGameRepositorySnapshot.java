@@ -188,7 +188,7 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
     /// @throws NoSuchGameInstanceException if an inherited parent is missing from this snapshot
     private GameInstanceManifest resolve(
             GameInstanceManifest manifest,
-            Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
+            @Nullable Set<GameInstanceID> resolvedSoFar) throws NoSuchGameInstanceException {
         GameInstanceManifest resolvedManifest;
 
         if (manifest.inheritsFrom() == null) {
@@ -201,6 +201,10 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
             }
             resolvedManifest = resolvedManifest.withJar(manifest.jar() == null ? manifest.id() : manifest.jar());
         } else {
+            if (resolvedSoFar == null) {
+                resolvedSoFar = new HashSet<>();
+            }
+
             // To maximize the compatibility.
             if (!resolvedSoFar.add(manifest.id())) {
                 LOG.warning("Found circular dependency instances: " + resolvedSoFar);
@@ -297,27 +301,4 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
                 : manifest.withLibraries(libraries);
     }
 
-    private static GameInstanceManifest addPatches(GameInstanceManifest manifest, @Nullable List<GameInstancePatch> additional) {
-        if (additional == null || additional.isEmpty()) {
-            return manifest;
-        }
-
-        Set<String> patchIds = new HashSet<>();
-        for (GameInstancePatch patch : additional) {
-            if (patch.id() != null) {
-                patchIds.add(patch.id());
-            }
-        }
-
-        List<GameInstancePatch> patches = new ArrayList<>();
-        if (manifest.patches() != null) {
-            for (GameInstancePatch patch : manifest.patches()) {
-                if (patch.id() == null || !patchIds.contains(patch.id())) {
-                    patches.add(patch);
-                }
-            }
-        }
-        patches.addAll(additional);
-        return manifest.withPatches(patches);
-    }
 }
