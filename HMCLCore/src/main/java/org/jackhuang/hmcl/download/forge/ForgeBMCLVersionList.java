@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
@@ -128,6 +129,7 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
     }
 
     @Immutable
+    @JsonSerializable
     public record ForgeVersion(String branch, int build, String mcversion, String modified, String version,
                                List<File> files) implements Validation {
 
@@ -150,6 +152,7 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
         }
 
         @Immutable
+        @JsonSerializable
         public record File(String format, String category, String hash) {
             public File() {
                 this("", "", "");
