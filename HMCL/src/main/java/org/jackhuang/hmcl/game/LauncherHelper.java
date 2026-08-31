@@ -82,6 +82,19 @@ public final class LauncherHelper {
 
     private static final String LWJGL_3_4_1_TIP = "lwjgl3.4.1-ffm";
 
+    /// Crash rules that mean the crash really was caused by a Java version mismatch.
+    ///
+    /// Reused from [CrashReportAnalyzer] rather than matching log text here, so patterns
+    /// added upstream apply automatically.
+    private static final Set<CrashReportAnalyzer.Rule> JAVA_MISMATCH_CRASH_RULES = EnumSet.of(
+            CrashReportAnalyzer.Rule.JAVA_VERSION_IS_TOO_HIGH,
+            CrashReportAnalyzer.Rule.JDK_9,
+            CrashReportAnalyzer.Rule.NEED_JDK11,
+            CrashReportAnalyzer.Rule.MODLAUNCHER_8,
+            CrashReportAnalyzer.Rule.TOO_OLD_JAVA,
+            CrashReportAnalyzer.Rule.MAC_JDK_8U261
+    );
+
     private final HMCLGameInstance gameInstance;
     private Account account;
     private Path scriptFile;
