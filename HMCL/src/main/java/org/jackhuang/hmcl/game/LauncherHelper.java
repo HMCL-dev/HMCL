@@ -470,8 +470,7 @@ public final class LauncherHelper {
 
                     // The user already accepted this exact combination, and the game has not
                     // crashed because of Java since. Do not ask again.
-                    if (setting.isJavaMismatchAcknowledged(
-                            compatibility.actualMajor(), compatibility.targetMajor()))
+                    if (isJavaMismatchAcknowledged(gameInstance, compatibility))
                         return Task.completed(java);
 
                     CompletableFuture<JavaRuntime> future = new CompletableFuture<>();
@@ -493,8 +492,8 @@ public final class LauncherHelper {
                             () -> {
                                 // The user accepted the risk. Remember it per instance so
                                 // this does not come back on every launch.
-                                setting.acknowledgeJavaMismatch(
-                                        compatibility.actualMajor(), compatibility.targetMajor());
+                                writeJavaMismatchAcknowledgement(gameInstance,
+                                        compatibility.actualMajor() + ":" + compatibility.targetMajor());
                                 future.complete(java);
                             });
 
@@ -780,6 +779,36 @@ public final class LauncherHelper {
         }
 
         return task.withStage("launch.state.java");
+    }
+
+    /// The acknowledged Java version mismatch for this instance, in the form
+    /// {@code actualMajor:expectedMajor}, or an empty string when there is none.
+    ///
+    /// Read through {@link HMCLGameInstance#getSettings} rather than the effective settings:
+    /// {@link GameSettings.Effective#getInstance} is null for every instance that has no
+    /// instance-specific settings file, which is the common case.
+    private static String readJavaMismatchAcknowledgement(HMCLGameInstance gameInstance) {
+        GameSettings.Instance instance = gameInstance.getSettings();
+        if (instance == null)
+            return "";
+
+        String value = instance.javaMismatchAcknowledgedProperty().getValue();
+        return value != null ? value : "";
+    }
+
+    /// Records the Java version mismatch the user accepted.
+    ///
+    /// {@link HMCLGameInstance#getSettingsOrCreate} creates the instance settings file when
+    /// it does not exist yet, which is what makes this persist for instances that had none.
+    private static void writeJavaMismatchAcknowledgement(HMCLGameInstance gameInstance, String value) {
+        GameSettings.Instance instance = gameInstance.getSettingsOrCreate();
+        if (instance != null)
+            instance.javaMismatchAcknowledgedProperty().setValue(value);
+    }
+
+    private static boolean isJavaMismatchAcknowledged(HMCLGameInstance gameInstance, JavaCompatibility compatibility) {
+        return (compatibility.actualMajor() + ":" + compatibility.targetMajor())
+                .equals(readJavaMismatchAcknowledgement(gameInstance));
     }
 
     /// Returns an installed runtime whose major version matches {@code major}, or null if
@@ -1162,7 +1191,7 @@ public final class LauncherHelper {
         private void revokeJavaMismatchAcknowledgement(List<Log> logs) {
             // Nothing to revoke. This is also the common case, and it avoids running the
             // crash analysis on every launch for users who never dismissed the warning.
-            if (!setting.hasJavaMismatchAcknowledgement())
+            if (readJavaMismatchAcknowledgement(gameInstance).isEmpty())
                 return;
 
             String rawLog = logs.stream().map(Log::getLog).collect(Collectors.joining("\n"));
@@ -1172,7 +1201,7 @@ public final class LauncherHelper {
                     .anyMatch(JAVA_MISMATCH_CRASH_RULES::contains);
 
             if (causedByJava)
-                setting.clearJavaMismatchAcknowledgement();
+                writeJavaMismatchAcknowledgement(gameInstance, "");
         }
 
     private static final Queue<WeakReference<ManagedProcess>> PROCESSES = new ConcurrentLinkedQueue<>();
