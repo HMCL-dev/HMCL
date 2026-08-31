@@ -472,6 +472,7 @@ public final class LauncherHelper {
                             MessageType.WARNING,
                             () -> switchToExpectedJava(gameInstance, compatibility, preferred, future, breakAction),
                             () -> future.complete(java));
+                    return result;
                 }
 
                 // Reset invalid java version
