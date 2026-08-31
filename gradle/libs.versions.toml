@@ -28,7 +28,7 @@ uuid-tools = "0.2.0"
 commonmark = "0.27.1"
 
 # testing
-junit = "6.0.1"
+junit = "6.1.3"
 jimfs = "1.3.0"
 
 # plugins
