@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -111,8 +112,7 @@ public final class FavoritesManager {
         }
     }
 
-    @Unmodifiable
-    public List<Favorites> getFavorites() {
+    public @Unmodifiable List<Favorites> getFavorites() {
         lock.lock();
         try {
             if (!loaded) throw new IllegalStateException("Favorites not loaded");
@@ -122,8 +122,7 @@ public final class FavoritesManager {
         }
     }
 
-    @NotNull
-    public Favorites getOrCreate(String name) {
+    public @NotNull Favorites getOrCreate(String name) {
         lock.lock();
         try {
             return favoritesMap.computeIfAbsent(name, n -> new Favorites(this, n, new LinkedHashSet<>()));
@@ -132,14 +131,26 @@ public final class FavoritesManager {
         }
     }
 
+    public @Nullable Favorites get(String name) {
+        lock.lock();
+        try {
+            return favoritesMap.get(name);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean has(String name) {
+        return get(name) != null;
+    }
+
     public static final class Favorites {
 
         private final FavoritesManager manager;
         private final String name;
 
         private final LinkedHashSet<Item> items;
-        private transient final ArrayList<RemoteAddon> resolvedAddons = new ArrayList<>();
-        private transient final HashMap<Item, RemoteAddon> cache = new HashMap<>();
+        private transient final LinkedHashMap<Item, RemoteAddon> resolvedAddons = new LinkedHashMap<>();
         private transient DownloadProvider lastProvider = null;
 
         private final ReentrantLock lock;
@@ -148,7 +159,9 @@ public final class FavoritesManager {
             this.manager = manager;
             this.lock = manager.lock;
             this.name = name;
-            this.items = new LinkedHashSet<>(items);
+            this.items = items.stream()
+                    .filter(item -> item.projectId() != null && item.source() != null)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
         }
 
         public String getName() {
@@ -165,23 +178,25 @@ public final class FavoritesManager {
             }
         }
 
-        @Unmodifiable
-        public List<RemoteAddon> getResolvedAddons() {
+        public @Unmodifiable Map<Item, RemoteAddon> getResolvedAddons() {
             lock.lock();
             try {
-                return List.copyOf(resolvedAddons);
+                return Collections.unmodifiableMap(new LinkedHashMap<>(resolvedAddons));
             } finally {
                 lock.unlock();
             }
         }
 
         private void resolve0(DownloadProvider downloadProvider) {
-            resolvedAddons.clear();
+            Map<Item, RemoteAddon> cache;
             if (downloadProvider != lastProvider) {
-                cache.clear();
+                cache = Map.of();
                 lastProvider = downloadProvider;
+            } else {
+                cache = Map.copyOf(resolvedAddons);
             }
-            List<RemoteAddon> result = new ArrayList<>(items.size());
+            resolvedAddons.clear();
+            Map<Item, RemoteAddon> result = new LinkedHashMap<>(items.size());
             for (var item : items) {
                 RemoteAddon addon;
                 if (cache.containsKey(item)) {
@@ -191,13 +206,13 @@ public final class FavoritesManager {
                         addon = item.resolve(downloadProvider);
                     } catch (IOException e) {
                         LOG.warning("Failed to resolve favorite item: " + item, e);
+                        result.put(item, null);
                         continue;
                     }
                 }
-                cache.put(item, addon);
-                result.add(addon);
+                result.put(item, addon);
             }
-            resolvedAddons.addAll(result);
+            resolvedAddons.putAll(result);
         }
 
         public void resolve(DownloadProvider downloadProvider) {
@@ -234,7 +249,7 @@ public final class FavoritesManager {
     }
 
     @JsonSerializable
-    public record Item(@Nullable String projectId, @Nullable RemoteAddon.Source source) {
+    public record Item(@SerializedName("id") String projectId, @SerializedName("src") RemoteAddon.Source source) {
 
         public static Item fromAddon(RemoteAddon addon) {
             return new Item(addon.projectId(), addon.source());
@@ -244,6 +259,5 @@ public final class FavoritesManager {
             if (projectId == null || source == null) return RemoteAddon.BROKEN;
             return source.getCommonRepo().getAddonById(downloadProvider, projectId);
         }
-
     }
 }

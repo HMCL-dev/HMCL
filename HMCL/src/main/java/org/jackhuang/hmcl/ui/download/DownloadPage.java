@@ -77,7 +77,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TabHeader.Tab<DownloadListPage> shaderTab = new TabHeader.Tab<>("shaderTab");
     private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
-    private final TabHeader.Tab<AddonFavoritesPage> favoritesPageTab = new TabHeader.Tab<>("favoritesTab");
+    private final TabHeader.Tab<AddonFavoritesListPage> favoritesPageTab = new TabHeader.Tab<>("favoritesTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
 
@@ -105,7 +105,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack(FOR_RESOURCE_PACK, true)));
         shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack(FOR_SHADER, true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteAddonRepository.WORLDS)));
-        favoritesPageTab.setNodeSupplier(loadVersionFor(AddonFavoritesPage::new));
+        favoritesPageTab.setNodeSupplier(loadVersionFor(AddonFavoritesListPage::new));
         tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab, favoritesPageTab);
 
         GameDirectoryManager.registerVersionsListener(this::loadVersions);
@@ -133,7 +133,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             T node = nodeSupplier.get();
             if (node instanceof DownloadListPage page) {
                 page.loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()));
-            } else if (node instanceof AddonFavoritesPage page) {
+            } else if (node instanceof AddonFavoritesListPage page) {
                 page.loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()));
             }
             return node;
