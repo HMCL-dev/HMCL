@@ -943,45 +943,6 @@ public sealed abstract class GameSettings extends ObservableSetting {
             target.javaTypeProperty().setValue(JavaVersionType.AUTO);
         }
 
-        /// Checks whether any Java version mismatch has been acknowledged.
-        ///
-        /// Used to skip crash analysis when there is nothing to revoke, which is the common
-        /// case and keeps the per-launch cost at zero for users who never dismissed a warning.
-        public boolean hasJavaMismatchAcknowledgement() {
-            return !acknowledgedValue().isEmpty();
-        }
-
-        /// Checks whether the user already accepted launching this instance on
-        /// {@code actualMajor} while it expects {@code expectedMajor}.
-        public boolean isJavaMismatchAcknowledged(int actualMajor, int expectedMajor) {
-            return (actualMajor + ":" + expectedMajor).equals(acknowledgedValue());
-        }
-
-        /// Records that the user accepted the risk of a newer Java version.
-        ///
-        /// Stored per instance so the warning is not shown again while the situation is
-        /// unchanged and the game keeps starting normally.
-        public void acknowledgeJavaMismatch(int actualMajor, int expectedMajor) {
-            if (instance != null)
-                instance.javaMismatchAcknowledgedProperty().setValue(actualMajor + ":" + expectedMajor);
-        }
-
-        /// Forgets the acknowledgement so the warning is shown again on the next launch.
-        ///
-        /// Called when the game crashed because of a Java version mismatch: the user accepted
-        /// the risk, and it did materialise.
-        public void clearJavaMismatchAcknowledgement() {
-            if (instance != null)
-                instance.javaMismatchAcknowledgedProperty().setValue("");
-        }
-
-        private String acknowledgedValue() {
-            if (instance == null)
-                return "";
-            String value = instance.javaMismatchAcknowledgedProperty().getValue();
-            return value != null ? value : "";
-        }
-
         /// Finds the effective Java runtime.
         public @Nullable JavaRuntime getJava(@Nullable GameVersionNumber gameVersion, @Nullable GameInstanceManifest manifest) throws InterruptedException {
             JavaVersionType javaVersionType = getInheritable(GameSettings::javaTypeProperty);
