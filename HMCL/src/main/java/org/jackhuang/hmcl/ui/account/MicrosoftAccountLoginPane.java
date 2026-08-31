@@ -29,9 +29,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.control.Label;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.shape.SVGPath;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
@@ -141,20 +139,22 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         setBody(rootContainer);
         rootContainer.setAlignment(Pos.TOP_CENTER);
 
-        if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
-            var snapshotHint = new HintPane(MessageDialogPane.MessageType.WARNING);
+        StackPane warningPane = new StackPane();
+
+        if (!IntegrityChecker.isOfficial()) {
+            var unofficialHintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+            unofficialHintPane.setSegment(i18n("unofficial.hint"));
+            warningPane.getChildren().add(unofficialHintPane);
+        } else if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
+            HintPane snapshotHint = new HintPane(MessageDialogPane.MessageType.WARNING);
             snapshotHint.setSegment(i18n("account.methods.microsoft.snapshot"));
-            rootContainer.getChildren().add(snapshotHint);
+            warningPane.getChildren().add(snapshotHint);
             btnLogin.setDisable(true);
             loginButtonSpinner.setLoading(false);
             return;
         }
 
-        if (!IntegrityChecker.isOfficial()) {
-            var unofficialHintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-            unofficialHintPane.setSegment(i18n("unofficial.hint"));
-            rootContainer.getChildren().add(unofficialHintPane);
-        }
+        rootContainer.getChildren().add(warningPane);
 
         if (currentStep instanceof Step.Init) {
             btnLogin.setOnAction(e -> this.step.set(new Step.StartAuthorizationCodeLogin()));
@@ -198,6 +198,20 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         } else if (currentStep instanceof Step.WaitForScanQrCode wait) {
             loginButtonSpinner.setLoading(true);
 
+            VBox leftVBox = new VBox(6);
+            leftVBox.setAlignment(Pos.CENTER);
+            VBox rightVBox = new VBox(6);
+
+            HBox hbox = new HBox(leftVBox, rightVBox);
+
+            leftVBox.prefWidthProperty().bind(hbox.widthProperty().divide(2));
+            rightVBox.prefWidthProperty().bind(hbox.widthProperty().divide(2));
+            leftVBox.setMaxWidth(Double.MAX_VALUE);
+            rightVBox.setMaxWidth(Double.MAX_VALUE);
+
+            HBox.setHgrow(leftVBox, Priority.ALWAYS);
+            HBox.setHgrow(rightVBox, Priority.ALWAYS);
+
             String scanUri = "https://www.microsoft.com/link".equals(wait.verificationUri())
                     ? "https://www.microsoft.com/link?otc=" + wait.userCode()
                     : wait.verificationUri();
@@ -225,7 +239,10 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             FXUtils.onClicked(codeBox, () -> FXUtils.copyText(wait.userCode()));
             codeBox.setMaxWidth(USE_PREF_SIZE);
 
-            rootContainer.getChildren().addAll(deviceHint, new Group(qrCode), codeBox);
+            leftVBox.getChildren().setAll(new Group(qrCode), codeBox);
+            rightVBox.getChildren().setAll(warningPane, deviceHint);
+
+            rootContainer.getChildren().setAll(hbox);
         } else if (currentStep instanceof Step.DeviceLoginCompleted) {
             loginButtonSpinner.setLoading(true);
 
