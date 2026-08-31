@@ -132,12 +132,12 @@ public final class LegacyGameSettingsMigrator {
             HMCLGameRepository repository,
             GameInstanceID instanceId,
             @Nullable GameSettingsPresetID parent) {
-        Path instanceRoot = repository.getInstanceRoot(instanceId);
+        Path instanceRoot = repository.getLayout().getInstanceRoot(instanceId);
         Path file = instanceRoot.resolve(LEGACY_INSTANCE_SETTINGS_FILENAME);
         if (!Files.exists(file)) {
             return null;
         }
-        Path receiptLocation = repository.getInstanceStateDirectory(instanceId)
+        Path receiptLocation = repository.getLayout().getInstanceStateDirectory(instanceId)
                 .resolve(LEGACY_INSTANCE_SETTINGS_MIGRATION_RECEIPT_FILENAME);
         if (MigrationReceipt.matches(receiptLocation, file)) {
             LOG.info("Skipping already migrated legacy version setting " + file);
@@ -271,7 +271,7 @@ public final class LegacyGameSettingsMigrator {
                     GameSettings.PROPERTY_NOT_PATCH_NATIVES,
                     GameSettings.PROPERTY_USE_CUSTOM_NATIVES,
                     GameSettings.PROPERTY_NATIVES_DIRECTORY,
-                    GameSettings.PROPERTY_USE_NATIVE_GLFW,
+                    GameSettings.PROPERTY_USE_NATIVE_GLFW_OR_SDL,
                     GameSettings.PROPERTY_USE_NATIVE_OPENAL
             ));
         }
@@ -342,7 +342,7 @@ public final class LegacyGameSettingsMigrator {
         boolean useCustomNatives = isLegacyCustomNativesDirectory(source);
         target.useCustomNativesProperty().setValue(useCustomNatives);
         target.nativesDirectoryProperty().setValue(useCustomNatives ? JsonUtils.getString(source, "nativesDir", "") : "");
-        target.useNativeGLFWProperty().setValue(JsonUtils.getBoolean(source, "useNativeGLFW", false));
+        target.useNativeGLFWorSDLProperty().setValue(JsonUtils.getBoolean(source, "useNativeGLFW", false));
         target.useNativeOpenALProperty().setValue(JsonUtils.getBoolean(source, "useNativeOpenAL", false));
     }
 

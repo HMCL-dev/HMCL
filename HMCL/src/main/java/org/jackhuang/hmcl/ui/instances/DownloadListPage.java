@@ -38,9 +38,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
@@ -68,12 +66,12 @@ import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 
-public class DownloadListPage extends Control implements DecoratorPage, GameInstancePage.GameInstanceLoadable {
+public class DownloadListPage extends Control implements DecoratorPage {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final boolean instanceSelection;
-    private final ObjectProperty<HMCLGameRepository.InstanceReference> instanceReference = new SimpleObjectProperty<>();
+    private final ObjectProperty<HMCLGameInstance.Optional> instanceReference = new SimpleObjectProperty<>();
     private final IntegerProperty pageOffset = new SimpleIntegerProperty(0);
     private final IntegerProperty pageCount = new SimpleIntegerProperty(-1);
     private final ListProperty<RemoteAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
@@ -111,9 +109,8 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
         return actions;
     }
 
-    @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
-        this.instanceReference.set(new HMCLGameRepository.InstanceReference(repository, instanceId));
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        this.instanceReference.set(instance);
 
         setLoading(false);
         setFailed(false);
@@ -124,10 +121,12 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
         }
 
         if (instanceSelection) {
-            instances.setAll(repository.getDisplayInstanceManifests()
-                    .map(GameInstanceManifest::id)
+            HMCLGameRepository repository = instance.repository();
+            instances.setAll(repository.getDisplayInstances()
+                    .map(DefaultGameInstance::getId)
                     .toList());
-            selectedInstance.set(repository.getSelectedInstance());
+            @Nullable HMCLGameInstance repositorySelection = repository.getSelectedInstance();
+            selectedInstance.set(repositorySelection != null ? repositorySelection.getId() : null);
         }
     }
 
@@ -166,11 +165,13 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
 
         int currentSearchID = searchID = searchID + 1;
         Task.supplyAsync(() -> {
-            HMCLGameRepository.InstanceReference instanceReference = this.instanceReference.get();
-            if (instanceReference.instanceId() == null) {
+            HMCLGameInstance.Optional instanceReference = this.instanceReference.get();
+            @Nullable HMCLGameInstance instance = instanceReference.instance();
+            if (instance == null) {
                 return userGameVersion;
             } else {
-                return instanceReference.repository().getGameVersion(instanceReference.instanceId()).orElse("");
+                GameVersionNumber version = instance.getVersion();
+                return version != GameVersionNumber.unknown() ? version.toString() : "";
             }
         }).thenApplyAsync(
                 gameVersion -> repository.search(downloadProvider, gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteAddonRepository.SortOrder.DESC)
@@ -217,10 +218,10 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
         }
     }
 
-    protected HMCLGameRepository.InstanceReference getInstanceReference() {
+    protected HMCLGameInstance.Optional getInstanceOptional() {
         if (instanceSelection) {
             @Nullable GameInstanceID instanceId = selectedInstance.get();
-            return new HMCLGameRepository.InstanceReference(instanceReference.get().repository(), instanceId);
+            return HMCLGameInstance.Optional.of(instanceReference.get().repository(), instanceId);
         } else {
             return instanceReference.get();
         }
@@ -570,7 +571,7 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
                         FXUtils.onClicked(wrapper, () -> {
                             RemoteAddon item = getItem();
                             if (item != null)
-                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getInstanceReference(), getSkinnable().callback));
+                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getInstanceOptional(), getSkinnable().callback));
                         });
 
                         setPrefWidth(0);
@@ -581,17 +582,18 @@ public class DownloadListPage extends Control implements DecoratorPage, GameInst
 
                     @Override
                     protected void updateItem(RemoteAddon item, boolean empty) {
+                        this.graphic.releaseRippleImmediately();
                         super.updateItem(item, empty);
                         if (empty || item == null) {
                             setGraphic(null);
                         } else {
                             setPadding(
-                                getIndex() == getListView().getItems().size() - 1
-                                    ? LAST_PADDING
-                                    : PADDING
+                                    getIndex() == getListView().getItems().size() - 1
+                                            ? LAST_PADDING
+                                            : PADDING
                             );
 
-                            ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(item.slug());
+                            ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(getSkinnable().repository.getType()).getModByCurseForgeId(item.slug());
                             content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : item.title());
                             String description = item.description();
                             if (description != null) {

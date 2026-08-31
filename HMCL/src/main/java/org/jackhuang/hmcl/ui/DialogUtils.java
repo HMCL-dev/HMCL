@@ -49,17 +49,31 @@ public final class DialogUtils {
 
     public static final String PROPERTY_DIALOG_SHOW_LATER = DialogUtils.class.getName() + ".dialog.showLater";
 
+    /// Shows content in the main-window dialog stack owned by `decorator`.
+    ///
+    /// @param decorator the main-window decorator
+    /// @param content   the dialog content
     public static void show(Decorator decorator, Node content) {
-        if (decorator.getDrawerWrapper() == null) {
-            Platform.runLater(() -> show(decorator, content));
+        StackPane dialogContainer = decorator.getDialogContainer();
+        if (decorator.getRoot().getScene() == null) {
+            Platform.runLater(() -> showInDecorator(decorator, dialogContainer, content));
             return;
         }
 
-        show(decorator.getDrawerWrapper(), content, (dialog) -> {
+        showInDecorator(decorator, dialogContainer, content);
+    }
+
+    /// Shows content in a decorator's resolved dialog container.
+    ///
+    /// @param decorator     the main-window decorator
+    /// @param dialogContainer the container resolved before any deferred execution
+    /// @param content       the dialog content
+    private static void showInDecorator(Decorator decorator, StackPane dialogContainer, Node content) {
+        show(dialogContainer, content, dialog -> {
             JFXDialogPane pane = (JFXDialogPane) dialog.getContent();
             decorator.capableDraggingWindow(dialog);
             decorator.forbidDraggingWindow(pane);
-            dialog.setDialogContainer(decorator.getDrawerWrapper());
+            dialog.setDialogContainer(dialogContainer);
         });
     }
 
@@ -125,12 +139,18 @@ public final class DialogUtils {
         }
     }
 
+    /// Queues content in the main-window dialog stack owned by `decorator`.
+    ///
+    /// @param decorator the main-window decorator
+    /// @param content   the dialog content
     public static void showLater(Decorator decorator, Node content) {
-        if (decorator.getDrawerWrapper() == null) {
-            Platform.runLater(() -> showLater(decorator, content));
+        StackPane dialogContainer = decorator.getDialogContainer();
+        Runnable showDialogAction = () -> showInDecorator(decorator, dialogContainer, content);
+        if (decorator.getRoot().getScene() == null) {
+            Platform.runLater(() -> showLater(dialogContainer, showDialogAction));
             return;
         }
-        showLater(decorator.getDrawerWrapper(), () -> show(decorator, content));
+        showLater(dialogContainer, showDialogAction);
     }
 
     @SuppressWarnings("unchecked")
