@@ -445,7 +445,33 @@ public final class LauncherHelper {
         } else if (javaVersionType == JavaVersionType.AUTO || javaVersionType == JavaVersionType.VERSION) {
             task = getJavaTask.thenComposeAsync(Schedulers.javafx(), java -> {
                 if (java != null) {
-                    return Task.completed(java);
+                    // Only warn when HMCL made the decision. When the user picked a specific
+                    // Java version, they know what they selected and own the consequence.
+                    if (javaVersionType != JavaVersionType.AUTO)
+                        return Task.completed(java);
+
+                    JavaCompatibility compatibility =
+                            JavaCompatibilityEvaluator.evaluate(gameVersion, manifest, java, analyzer);
+                    if (compatibility.isOk())
+                        return Task.completed(java);
+
+                    CompletableFuture<JavaRuntime> future = new CompletableFuture<>();
+                    Task<JavaRuntime> result = Task.fromCompletableFuture(future);
+                    Runnable breakAction = () -> future.completeExceptionally(
+                            new CancellationException("Launch operation was cancelled by user"));
+
+                    // Resolved before the dialog is shown: JavaManager.getAllJava() blocks
+                    // until the initial Java scan finishes, so it must not run inside a
+                    // JavaFX callback or it will freeze the UI.
+                    JavaRuntime preferred = findInstalledJava(compatibility.targetMajor());
+
+                    Controllers.confirm(
+                            i18n("launch.advice.modded_java", compatibility.targetMajor(), gameVersion)
+                                    + "\n\n" + i18n("launch.advice.switch_java", compatibility.targetMajor()),
+                            i18n("message.warning"),
+                            MessageType.WARNING,
+                            () -> switchToExpectedJava(gameInstance, compatibility, preferred, future, breakAction),
+                            () -> future.complete(java));
                 }
 
                 // Reset invalid java version
@@ -727,6 +753,59 @@ public final class LauncherHelper {
         }
 
         return task.withStage("launch.state.java");
+    }
+
+    /// Returns an installed runtime whose major version matches {@code major}, or null if
+    /// none is installed.
+    ///
+    /// {@link JavaManager#getAllJava} blocks until the initial Java scan completes, so this
+    /// is resolved before the confirmation dialog is shown rather than inside its callback.
+    private static @Nullable JavaRuntime findInstalledJava(int major) {
+        try {
+            for (JavaRuntime installed : JavaManager.getAllJava()) {
+                if (installed.getParsedVersion() == major)
+                    return installed;
+            }
+        } catch (InterruptedException e) {
+            // Preserve the interrupt so the shutdown path can observe it.
+            Thread.currentThread().interrupt();
+        }
+        return null;
+    }
+
+    /// Switches to, or downloads, the Java version the instance is expected to run on.
+    ///
+    /// Note: this deliberately does not call `setting.setJavaAutoSelected()`. Silently
+    /// rewriting the user's Java selection mode is what makes this warning disappear
+    /// permanently on subsequent launches.
+    private static void switchToExpectedJava(
+            HMCLGameInstance gameInstance,
+            JavaCompatibility compatibility,
+            @Nullable JavaRuntime preferred,
+            CompletableFuture<JavaRuntime> future,
+            Runnable breakAction) {
+
+        if (preferred != null) {
+            future.complete(preferred);
+            return;
+        }
+
+        GameJavaVersion target = GameJavaVersion.get(compatibility.targetMajor());
+        if (target == null) {
+            // No published runtime for this major version, so there is nothing to offer.
+            breakAction.run();
+            return;
+        }
+
+        downloadJava(target, gameInstance.getRepository())
+                .whenCompleteAsync((downloaded, throwable) -> {
+                    if (throwable == null) {
+                        future.complete(downloaded);
+                    } else {
+                        LOG.warning("Failed to download java", throwable);
+                        breakAction.run();
+                    }
+                }, Schedulers.javafx());
     }
 
     private static CompletableFuture<JavaRuntime> downloadJava(GameJavaVersion javaVersion, HMCLGameRepository repository) {
