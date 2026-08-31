@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.game;
 
-import org.jackhuang.hmcl.game.HMCLGameInstance;
-
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXSlider;
@@ -809,7 +807,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 openGLRendererPane.setVisible(showOpenGL);
                 openGLRendererPane.setManaged(showOpenGL);
 
-                boolean showVulkan = GraphicsAPI.VULKAN.isSupported(version);
+                boolean showVulkan = isPresetSetting || GraphicsAPI.VULKAN.isSupported(version);
                 vulkanRendererPane.setVisible(showVulkan);
                 vulkanRendererPane.setManaged(showVulkan);
             };
@@ -841,10 +839,10 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             nativeLibrarySettings.getContent().add(noNativesPatchPane);
             noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
 
-            var useNativeGLFWPane = createIndependentBooleanButton(GameSettings::useNativeGLFWProperty);
-            nativeLibrarySettings.getContent().add(useNativeGLFWPane);
-            useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
-            useNativeGLFWPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
+            var useNativeGLFWORsdlPane = createIndependentBooleanButton(GameSettings::useNativeGLFWorSDLProperty);
+            nativeLibrarySettings.getContent().add(useNativeGLFWORsdlPane);
+            useNativeGLFWORsdlPane.setTitle(i18n("settings.advanced.use_native_glfw_or_sdl"));
+            useNativeGLFWORsdlPane.setSubtitle(i18n("settings.advanced.linux_freebsd_only"));
 
             var useNativeOpenALPane = createIndependentBooleanButton(GameSettings::useNativeOpenALProperty);
             nativeLibrarySettings.getContent().add(useNativeOpenALPane);

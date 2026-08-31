@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
+import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
@@ -30,6 +31,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -40,6 +42,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+
+import static org.jackhuang.hmcl.download.UnsupportedInstallationException.CLEANROOM_NOT_COMPATIBLE_WITH_FORGE;
 
 public final class CleanroomInstallTask extends Task<GameInstancePatch> {
 
@@ -166,15 +170,23 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
     /// @throws IOException              if the installer profile is missing, malformed, or not a
     ///                                  Cleanroom profile
     /// @throws VersionMismatchException if the installer targets another Minecraft version
+    /// @throws UnsupportedInstallationException if the manifest already contains Forge
     public static Task<GameInstancePatch> install(
             DefaultDependencyManager dependencyManager,
             GameInstanceManifest manifest,
             String gameVersion,
-            Path installer) throws IOException, VersionMismatchException {
+            Path installer) throws IOException, VersionMismatchException, UnsupportedInstallationException {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             String installProfileText = Files.readString(fs.getPath("install_profile.json"));
             Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
             if (GameComponentType.CLEANROOM.getPatchId().equals(installProfile.get("profile"))) {
+                GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(
+                        dependencyManager.getGameRepository().resolve(manifest),
+                        GameVersionNumber.asGameVersion(gameVersion));
+                if (analyzer.has(GameComponentType.FORGE)) {
+                    throw new UnsupportedInstallationException(CLEANROOM_NOT_COMPATIBLE_WITH_FORGE);
+                }
+
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
                 if (!gameVersion.equals(profile.getMinecraft()))
                     throw new VersionMismatchException(profile.getMinecraft(), gameVersion);

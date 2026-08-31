@@ -311,7 +311,7 @@ public final class MultiMCInstancePatch {
             jarModFileNames = Lang.merge(patch.getJarMods().stream().map(library -> library.filename()).collect(Collectors.toList()), jarModFileNames);
         }
 
-        mainClass = Lang.requireNonNullElse(mainClass, "net.minecraft.client.Minecraft");
+        mainClass = Objects.requireNonNullElse(mainClass, "net.minecraft.client.Minecraft");
 
         if (minecraftArguments == null) {
             minecraftArguments = new ArrayList<>();

@@ -280,6 +280,10 @@ public final class StringUtils {
         return suffixes.stream().anyMatch(str::endsWith);
     }
 
+    public static boolean startsWithIgnoreCase(String str, String prefix) {
+        return str.regionMatches(true, 0, prefix, 0, prefix.length());
+    }
+
     public static Predicate<@Nullable String> compileQuery(String queryString) throws PatternSyntaxException {
         Predicate<@Nullable String> predicate;
         if (queryString.startsWith("regex:")) {

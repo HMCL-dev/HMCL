@@ -256,7 +256,7 @@ public class LaunchOptions implements Serializable {
         return renderer;
     }
 
-    public boolean isUseNativeGLFW() {
+    public boolean isUseNativeGLFWorSDL() {
         return useNativeGLFW;
     }
 
@@ -471,7 +471,7 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setUseNativeGLFW(boolean useNativeGLFW) {
+        public Builder setUseNativeGLFWorSDL(boolean useNativeGLFW) {
             options.useNativeGLFW = useNativeGLFW;
             return this;
         }

@@ -74,9 +74,10 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         var hints = new ArrayList<Task.StagesHint>();
         for (Object value : settings.asStringMap().values()) {
             if (value instanceof RemoteVersion remoteVersion) {
+                hints.add(new Task.StagesHint("hmcl.install.libraries"));
+
                 hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", remoteVersion.getComponentType().getPatchId(), remoteVersion.getSelfVersion())));
                 if (remoteVersion.getComponentType() == GameComponentType.GAME) {
-                    hints.add(new Task.StagesHint("hmcl.install.libraries"));
                     hints.add(new Task.StagesHint("hmcl.install.assets"));
                 }
             }
@@ -104,14 +105,14 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     public Node createPage(WizardController controller, int step, SettingsMap settings) {
         switch (step) {
             case 0:
-                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + componentType)), gameInstance.getVersion().toString(), downloadProvider, componentType, () -> {
+                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + componentType.getPatchId())), gameInstance.getVersion().toString(), downloadProvider, componentType, () -> {
                     if (oldLibraryVersion == null) {
                         controller.onFinish();
                     } else if (componentType == GameComponentType.GAME) {
                         String newGameVersion = ((RemoteVersion) settings.get(componentType.getPatchId())).getSelfVersion();
                         controller.onNext(new AdditionalInstallersPage(gameInstance, newGameVersion, controller, downloadProvider));
                     } else {
-                        Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + componentType), oldLibraryVersion, ((RemoteVersion) settings.get(componentType.getPatchId())).getSelfVersion()),
+                        Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + componentType.getPatchId()), oldLibraryVersion, ((RemoteVersion) settings.get(componentType.getPatchId())).getSelfVersion()),
                                 i18n("install.change_version"), controller::onFinish, controller::onCancel);
                     }
                 });
@@ -161,6 +162,8 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             }
         } else if (exception instanceof UnsupportedInstallationException unsupportedInstallationException) {
             switch (unsupportedInstallationException.getReason()) {
+                case UnsupportedInstallationException.CLEANROOM_NOT_COMPATIBLE_WITH_FORGE ->
+                    Controllers.dialog(i18n("install.failed.cleanroom_not_compatible_with_forge"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
                 case UnsupportedInstallationException.FORGE_1_17_OPTIFINE_H1_PRE2 ->
                     Controllers.dialog(i18n("install.failed.optifine_forge_1.17"), i18n("install.failed"), MessageDialogPane.MessageType.ERROR, next);
                 default ->

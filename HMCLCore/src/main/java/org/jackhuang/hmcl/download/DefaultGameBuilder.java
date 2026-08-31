@@ -111,7 +111,7 @@ public class DefaultGameBuilder extends GameBuilder {
                     GameInstanceManifest.Resolved resolved = draft.getBaseSnapshot().resolve(manifest);
                     return new GameDownloadTask(dependencyManager, resolved.launchManifest())
                             .thenApplyAsync(minecraftJar -> {
-                                draft.put(resolved.standaloneManifest());
+                                draft.put(resolved.launchManifest().withPatches(manifest.patches()));
                                 draft.putPrimaryJar(id, minecraftJar);
                                 return draft.commit().getInstance(id);
                             });
