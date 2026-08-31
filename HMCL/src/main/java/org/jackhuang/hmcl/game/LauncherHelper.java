@@ -468,6 +468,12 @@ public final class LauncherHelper {
                     if (compatibility.isOk())
                         return Task.completed(java);
 
+                    // The user already accepted this exact combination, and the game has not
+                    // crashed because of Java since. Do not ask again.
+                    if (setting.isJavaMismatchAcknowledged(
+                            compatibility.actualMajor(), compatibility.targetMajor()))
+                        return Task.completed(java);
+
                     CompletableFuture<JavaRuntime> future = new CompletableFuture<>();
                     Task<JavaRuntime> result = Task.fromCompletableFuture(future);
                     Runnable breakAction = () -> future.completeExceptionally(
@@ -484,7 +490,14 @@ public final class LauncherHelper {
                             i18n("message.warning"),
                             MessageType.WARNING,
                             () -> switchToExpectedJava(gameInstance, compatibility, preferred, future, breakAction),
-                            () -> future.complete(java));
+                            () -> {
+                                // The user accepted the risk. Remember it per instance so
+                                // this does not come back on every launch.
+                                setting.acknowledgeJavaMismatch(
+                                        compatibility.actualMajor(), compatibility.targetMajor());
+                                future.complete(java);
+                            });
+
                     return result;
                 }
 
@@ -1128,6 +1141,7 @@ public final class LauncherHelper {
 
             if (exitType != ExitType.NORMAL) {
                 gameInstance.markLaunchedAbnormally();
+                revokeJavaMismatchAcknowledgement(logs);
                 runLater(() -> new GameCrashWindow(process, exitType, gameInstance, launchOptions, logs).show());
             }
 
@@ -1135,6 +1149,31 @@ public final class LauncherHelper {
         }
 
     }
+
+/// Revokes the accepted Java version mismatch when the crash was actually caused by a
+        /// Java version mismatch, so the next launch warns the user again.
+        ///
+        /// Crashes from unrelated causes leave the acknowledgement intact: the user accepted
+        /// the risk and it did not materialise, so asking again would be nagging.
+        ///
+        /// The acknowledgement is stored as {@code actualMajor:expectedMajor} rather than a
+        /// flag, so a change of either version (a newer Java, an updated instance) asks again
+        /// instead of staying silent forever.
+        private void revokeJavaMismatchAcknowledgement(List<Log> logs) {
+            // Nothing to revoke. This is also the common case, and it avoids running the
+            // crash analysis on every launch for users who never dismissed the warning.
+            if (!setting.hasJavaMismatchAcknowledgement())
+                return;
+
+            String rawLog = logs.stream().map(Log::getLog).collect(Collectors.joining("\n"));
+
+            boolean causedByJava = CrashReportAnalyzer.analyze(rawLog).stream()
+                    .map(CrashReportAnalyzer.Result::rule)
+                    .anyMatch(JAVA_MISMATCH_CRASH_RULES::contains);
+
+            if (causedByJava)
+                setting.clearJavaMismatchAcknowledgement();
+        }
 
     private static final Queue<WeakReference<ManagedProcess>> PROCESSES = new ConcurrentLinkedQueue<>();
 
