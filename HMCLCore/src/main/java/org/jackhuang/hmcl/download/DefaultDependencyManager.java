@@ -212,18 +212,20 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 if (mark == null || mark.version() == null)
                     break optifine;
 
-                String fullVersion = mark.version();
+                @Nullable GameInstancePatch patch = original.findPatch(GameComponentType.OPTIFINE);
+                String fullVersion;
                 String patchVersion;
-
-                Matcher matcher = GameComponentAnalyzer.OPTIFINE_VERSION_PATTERN.matcher(fullVersion);
-                if (matcher.matches()) {
-                    patchVersion = matcher.group("optifine");
+                if (patch != null && patch.version() != null) {
+                    patchVersion = patch.version();
+                    fullVersion = gameVersion + "_" + patchVersion;
                 } else {
-                    @Nullable GameInstancePatch patch = manifest.findPatch(GameComponentType.OPTIFINE.getPatchId());
-                    if (patch != null && patch.version() != null)
-                        patchVersion = patch.version();
-                    else
+                    fullVersion = mark.version();
+                    Matcher matcher = GameComponentAnalyzer.OPTIFINE_VERSION_PATTERN.matcher(fullVersion);
+                    if (matcher.matches()) {
+                        patchVersion = matcher.group("optifine");
+                    } else {
                         break optifine;
+                    }
                 }
 
                 boolean needsReInstallation = manifest.getLibraries().stream()

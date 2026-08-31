@@ -537,23 +537,41 @@ public abstract class DefaultGameRepository implements GameRepository {
             GameInstanceID instanceId,
             ExceptionalFunction<GameInstance, Task<GameInstanceManifest>, E> updater) {
         return Task.composeAsync(() -> {
-            @SuppressWarnings("resource")
-            GameRepositoryDraft draft = openDraft();
-            return updater.apply(draft.getBaseSnapshot().getInstance(instanceId))
-                    .thenApplyAsync(manifest -> {
-                        if (!instanceId.equals(manifest.id())) {
-                            throw new IllegalArgumentException(
-                                    "Instance updater changed id from " + instanceId + " to " + manifest.id());
-                        }
-                        draft.put(manifest);
-                        draft.commit();
-                        return manifest;
-                    }).whenComplete(exception -> {
-                        if (draft.isOpen()) {
-                            draft.abort();
-                        }
-                    });
+            DefaultGameRepositoryDraft draft = openDraft();
+            try {
+                return Objects.requireNonNull(
+                                updater.apply(draft.getBaseSnapshot().getInstance(instanceId)),
+                                "Instance updater returned null")
+                        .thenApplyAsync(manifest -> {
+                            if (!instanceId.equals(manifest.id())) {
+                                throw new IllegalArgumentException(
+                                        "Instance updater changed id from " + instanceId + " to " + manifest.id());
+                            }
+                            draft.put(manifest);
+                            draft.commit();
+                            return manifest;
+                        }).whenComplete(exception -> {
+                            if (draft.isOpen()) {
+                                draft.abort();
+                            }
+                        });
+            } catch (Throwable exception) {
+                abortDraftAfterFailure(draft, exception);
+                throw exception;
+            }
         });
+    }
+
+    /// Aborts a draft after task construction fails and preserves any cleanup failure.
+    ///
+    /// @param draft   the draft to abort
+    /// @param failure the failure that prevented task construction
+    private static void abortDraftAfterFailure(DefaultGameRepositoryDraft draft, Throwable failure) {
+        try {
+            draft.abort();
+        } catch (Exception cleanupFailure) {
+            failure.addSuppressed(cleanupFailure);
+        }
     }
 
     /// Creates an empty unsealed snapshot for the given layout.

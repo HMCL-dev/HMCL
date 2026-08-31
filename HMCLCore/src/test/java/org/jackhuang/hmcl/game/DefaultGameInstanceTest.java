@@ -92,6 +92,46 @@ public final class DefaultGameInstanceTest {
         assertEquals(repaired, LaunchManifestNormalizer.repairForLaunch(repaired));
     }
 
+    /// Repairs a missing patch-installed OptiFine library using the patch's self version.
+    @Test
+    public void testPatchCompletionUsesStoredOptiFineVersion(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("cache"));
+        CapturingDependencyManager dependencyManager = new CapturingDependencyManager(repository, cacheRepository);
+        GameInstanceID instanceId = new GameInstanceID("instance");
+        String gameVersion = "1.21.1";
+        String optiFineVersion = "HD_U_I9";
+        GameInstancePatch gamePatch = new GameInstancePatch(
+                GameComponentType.GAME.getPatchId(),
+                gameVersion,
+                GameInstancePatch.PRIORITY_MC,
+                null,
+                GameComponentAnalyzer.VANILLA_MAIN,
+                List.of());
+        GameInstancePatch optiFinePatch = new GameInstancePatch(
+                GameComponentType.OPTIFINE.getPatchId(),
+                optiFineVersion,
+                GameInstancePatch.PRIORITY_LOADER,
+                null,
+                null,
+                List.of(new Library("optifine", "OptiFine", gameVersion + "_" + optiFineVersion)));
+        GameInstanceManifest storedManifest = new GameInstanceManifest(instanceId)
+                .withRoot(true)
+                .withPatches(List.of(gamePatch, optiFinePatch))
+                .reconstructByPatches();
+        writeVersionJar(repository.getLayout().getInstanceJarFile(instanceId), gameVersion);
+        TestGameInstance instance = repository.publish(instanceId, storedManifest);
+
+        Task<?> repair = dependencyManager.checkPatchCompletionAsync(
+                instance,
+                LaunchManifestNormalizer.repairForLaunch(instance.getResolvedManifest()),
+                true);
+
+        assertTrue(repair.executor().test());
+        assertEquals(gameVersion, dependencyManager.requestedGameVersion);
+        assertEquals(optiFineVersion, dependencyManager.requestedComponentVersion);
+    }
+
     /// Saving a manifest preserves its root flag and pending patches without baking in normalization.
     @Test
     public void testSavePreservesManifestPatchStructure(@TempDir Path tempDirectory) throws Exception {
@@ -738,6 +778,48 @@ public final class DefaultGameInstanceTest {
         /// @return the new snapshot
         private DefaultGameRepositorySnapshot newSnapshot() {
             return createSnapshot(getLayout());
+        }
+    }
+
+    /// Dependency manager that records remote component repair requests.
+    @NotNullByDefault
+    private static final class CapturingDependencyManager extends DefaultDependencyManager {
+
+        /// Minecraft version passed to the captured repair request.
+        private @Nullable String requestedGameVersion;
+
+        /// Component version passed to the captured repair request.
+        private @Nullable String requestedComponentVersion;
+
+        /// Creates a capturing manager for the test repository.
+        ///
+        /// @param repository      the target repository
+        /// @param cacheRepository the test download cache
+        private CapturingDependencyManager(
+                DefaultGameRepository repository,
+                DefaultCacheRepository cacheRepository) {
+            super(repository, new MojangDownloadProvider(), cacheRepository);
+        }
+
+        /// Records the requested remote version without performing a network lookup.
+        ///
+        /// @param instance         the registered instance being modified
+        /// @param baseManifest     the working manifest for this step
+        /// @param gameVersion      the Minecraft version used for the lookup
+        /// @param componentType    the component list id
+        /// @param componentVersion the component version id
+        /// @return a completed task containing `baseManifest`
+        @Override
+        public Task<GameInstanceManifest> installComponentRemoteAsync(
+                GameInstance instance,
+                GameInstanceManifest baseManifest,
+                String gameVersion,
+                GameComponentType componentType,
+                String componentVersion) {
+            assertEquals(GameComponentType.OPTIFINE, componentType);
+            requestedGameVersion = gameVersion;
+            requestedComponentVersion = componentVersion;
+            return Task.completed(baseManifest);
         }
     }
 

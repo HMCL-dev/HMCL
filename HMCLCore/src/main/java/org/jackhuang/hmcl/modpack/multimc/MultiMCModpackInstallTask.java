@@ -376,7 +376,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                     true
             ));
 
-            Path instanceJar = requireDraft().getBaseSnapshot().getLayout().getInstanceJarFile(instanceId);
+            Path instanceJar = getPrimaryJarFile();
             dependencies.add(new GameDownloadTask(dependencyManager, instanceManifest)
                     .thenAcceptAsync(cachedJar -> FileUtils.copyFile(cachedJar, instanceJar)));
         }
@@ -411,7 +411,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                 Path root = getRootPath(fs).resolve("jarmods");
 
                 try (FileSystem mc = CompressingUtils.writable(
-                        repository.getLayout().getInstanceRoot(instanceId).resolve(instanceId + ".jar")
+                        getPrimaryJarFile()
                 ).setAutoDetectEncoding(true).build()) {
                     for (String fileName : files) {
                         try (FileSystem jm = CompressingUtils.readonly(root.resolve(fileName)).setAutoDetectEncoding(true).build()) {
@@ -423,6 +423,21 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         }
 
         requireDraft().commit();
+    }
+
+    /// Returns the primary JAR path retained by the current draft.
+    ///
+    /// Updates use the existing manifest's sibling JAR, while new installations use the layout's
+    /// conventional path.
+    ///
+    /// @return the primary JAR destination
+    private Path getPrimaryJarFile() {
+        if (updateTarget == null) {
+            return repository.getLayout().getInstanceJarFile(instanceId);
+        }
+
+        Path manifestFile = updateTarget.getManifestFile();
+        return manifestFile.resolveSibling(FileUtils.getNameWithoutExtension(manifestFile) + ".jar");
     }
 
     /// Returns the open draft associated with this task.

@@ -311,7 +311,7 @@ public record GameInstanceManifest(
     }
 
     public boolean isModifiable() {
-        return inheritsFrom == null && patches != null && hasPatch(GameComponentType.GAME.getPatchId());
+        return inheritsFrom == null && patches != null && hasPatch(GameComponentType.GAME);
     }
 
     /// Returns the pending patches.
@@ -324,10 +324,10 @@ public record GameInstanceManifest(
     /// Finds a patch by its id.
     ///
     /// @return the patch with the given id, or `null` if no such patch exists.
-    public @Nullable GameInstancePatch findPatch(String patchId) {
+    public @Nullable GameInstancePatch findPatch(GameComponentType type) {
         if (patches != null) {
             for (GameInstancePatch patch : patches) {
-                if (patchId.equals(patch.id())) {
+                if (type.getPatchId().equals(patch.id())) {
                     return patch;
                 }
             }
@@ -556,8 +556,8 @@ public record GameInstanceManifest(
     }
 
     /// Returns whether this manifest has a patch with the given id.
-    public boolean hasPatch(String patchId) {
-        return findPatch(patchId) != null;
+    public boolean hasPatch(GameComponentType type) {
+        return findPatch(type) != null;
     }
 
     /// Converts this manifest into a hidden patch entry for preserving resolved inheritance.
@@ -657,7 +657,7 @@ public record GameInstanceManifest(
     }
 
     public GameInstanceManifest removeComponent(GameComponentType type) {
-        @Nullable GameInstancePatch patch = findPatch(type.getPatchId());
+        @Nullable GameInstancePatch patch = findPatch(type);
         if (patch == null) {
             return this;
         }

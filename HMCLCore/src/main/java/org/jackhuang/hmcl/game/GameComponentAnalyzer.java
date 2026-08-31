@@ -137,7 +137,7 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
     /// Otherwise, we must guess how are these libraries mixed.
     /// Maybe a guessing implementation will be provided in the future. But by now, we simply set it to JUST\_EXISTED.
     public boolean isClear(GameComponentType type) {
-        return manifest.hasPatch(type.getPatchId());
+        return manifest.hasPatch(type);
     }
 
     @Override
