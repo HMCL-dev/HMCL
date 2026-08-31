@@ -477,7 +477,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
             GameVersionNumber version = getVersion();
             if (version.isAprilFools())
                 return GameInstanceIconType.APRIL_FOOLS.getIcon();
-            else if (version instanceof GameVersionNumber.LegacySnapshot)
+            else if (version instanceof GameVersionNumber.LegacySnapshot || version instanceof GameVersionNumber.Release release && release.getEaType() != GameVersionNumber.Release.ReleaseType.GA)
                 return GameInstanceIconType.COMMAND.getIcon();
             else if (version instanceof GameVersionNumber.Old)
                 return GameInstanceIconType.CRAFT_TABLE.getIcon();
