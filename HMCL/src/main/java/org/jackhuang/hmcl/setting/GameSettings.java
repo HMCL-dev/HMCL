@@ -159,6 +159,21 @@ public sealed abstract class GameSettings extends ObservableSetting {
             return icon;
         }
 
+        /// The Java version mismatch the user has accepted for this instance, in the form
+        /// {@code actualMajor:expectedMajor}.
+        ///
+        /// An instance-scoped property rather than an inheritable one: inheritable properties
+        /// are only readable on an instance once the name is listed in
+        /// [getOverrideProperties], and that set is maintained by the settings UI, not by
+        /// [SettingProperty#setValue].
+        @SerializedName("javaMismatchAcknowledged")
+        private final SettingProperty<String> javaMismatchAcknowledged = newSettingProperty("javaMismatchAcknowledged", "");
+
+        /// Returns the acknowledged Java version mismatch property.
+        public SettingProperty<String> javaMismatchAcknowledgedProperty() {
+            return javaMismatchAcknowledged;
+        }
+
         /// Setting property names overridden by this instance.
         @SerializedName("overrideProperties")
         private final ObservableSet<String> overrideProperties = FXCollections.observableSet();
@@ -350,23 +365,6 @@ public sealed abstract class GameSettings extends ObservableSetting {
     /// Returns the Java selection mode property.
     public InheritableProperty<JavaVersionType> javaTypeProperty() {
         return javaType;
-    }
-
-    /// Property name for the Java version mismatch the user has accepted, in the form
-    /// {@code actualMajor:expectedMajor}.
-    public static final String PROPERTY_JAVA_MISMATCH_ACKNOWLEDGED = "javaMismatchAcknowledged";
-
-    /// The Java version mismatch the user has accepted for this instance, in the form
-    /// {@code actualMajor:expectedMajor}.
-    ///
-    /// When it matches the current situation, the warning is suppressed. Cleared when the
-    /// game crashes because of a Java version mismatch, so the user is asked again.
-    @SerializedName(PROPERTY_JAVA_MISMATCH_ACKNOWLEDGED)
-    private final InheritableProperty<String> javaMismatchAcknowledged = newInheritableProperty(PROPERTY_JAVA_MISMATCH_ACKNOWLEDGED, "");
-
-    /// Returns the acknowledged Java version mismatch property.
-    public InheritableProperty<String> javaMismatchAcknowledgedProperty() {
-        return javaMismatchAcknowledged;
     }
 
     /// Property name for the user input used by `VERSION` Java selection mode.
@@ -950,15 +948,13 @@ public sealed abstract class GameSettings extends ObservableSetting {
         /// Used to skip crash analysis when there is nothing to revoke, which is the common
         /// case and keeps the per-launch cost at zero for users who never dismissed a warning.
         public boolean hasJavaMismatchAcknowledgement() {
-            String value = getInheritable(GameSettings::javaMismatchAcknowledgedProperty);
-            return value != null && !value.isEmpty();
+            return !acknowledgedValue().isEmpty();
         }
 
         /// Checks whether the user already accepted launching this instance on
         /// {@code actualMajor} while it expects {@code expectedMajor}.
         public boolean isJavaMismatchAcknowledged(int actualMajor, int expectedMajor) {
-            return (actualMajor + ":" + expectedMajor)
-                    .equals(getInheritable(GameSettings::javaMismatchAcknowledgedProperty));
+            return (actualMajor + ":" + expectedMajor).equals(acknowledgedValue());
         }
 
         /// Records that the user accepted the risk of a newer Java version.
@@ -966,8 +962,8 @@ public sealed abstract class GameSettings extends ObservableSetting {
         /// Stored per instance so the warning is not shown again while the situation is
         /// unchanged and the game keeps starting normally.
         public void acknowledgeJavaMismatch(int actualMajor, int expectedMajor) {
-            GameSettings target = instance != null ? instance : preset;
-            target.javaMismatchAcknowledgedProperty().setValue(actualMajor + ":" + expectedMajor);
+            if (instance != null)
+                instance.javaMismatchAcknowledgedProperty().setValue(actualMajor + ":" + expectedMajor);
         }
 
         /// Forgets the acknowledgement so the warning is shown again on the next launch.
@@ -975,8 +971,15 @@ public sealed abstract class GameSettings extends ObservableSetting {
         /// Called when the game crashed because of a Java version mismatch: the user accepted
         /// the risk, and it did materialise.
         public void clearJavaMismatchAcknowledgement() {
-            GameSettings target = instance != null ? instance : preset;
-            target.javaMismatchAcknowledgedProperty().setValue("");
+            if (instance != null)
+                instance.javaMismatchAcknowledgedProperty().setValue("");
+        }
+
+        private String acknowledgedValue() {
+            if (instance == null)
+                return "";
+            String value = instance.javaMismatchAcknowledgedProperty().getValue();
+            return value != null ? value : "";
         }
 
         /// Finds the effective Java runtime.
