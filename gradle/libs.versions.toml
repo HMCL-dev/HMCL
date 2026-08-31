@@ -25,7 +25,7 @@ nayuki-qrcodegen = "1.8.0"
 jwebp = "0.2.0"
 weburl = "0.2.0"
 uuid-tools = "0.2.0"
-commonmark = "0.27.1"
+commonmark = "0.30.0"
 
 # testing
 junit = "6.1.3"
