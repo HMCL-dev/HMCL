@@ -1177,9 +1177,7 @@ public final class LauncherHelper {
             checkExit();
         }
 
-    }
-
-/// Revokes the accepted Java version mismatch when the crash was actually caused by a
+        /// Revokes the accepted Java version mismatch when the crash was actually caused by a
         /// Java version mismatch, so the next launch warns the user again.
         ///
         /// Crashes from unrelated causes leave the acknowledgement intact: the user accepted
@@ -1203,6 +1201,8 @@ public final class LauncherHelper {
             if (causedByJava)
                 writeJavaMismatchAcknowledgement(gameInstance, "");
         }
+
+    }
 
     private static final Queue<WeakReference<ManagedProcess>> PROCESSES = new ConcurrentLinkedQueue<>();
 
