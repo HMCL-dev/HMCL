@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /// Installs or updates an HMCL modpack using the mode selected at construction.
@@ -129,8 +128,8 @@ public final class HMCLModpackInstallTask extends Task<Void> {
             }
         });
 
-        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/minecraft"), it -> !"pack.json".equals(it), config));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(this.instanceId)).withStage("hmcl.modpack"));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), List.of("/minecraft"), it -> !"pack.json".equals(it), config));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), List.of("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(this.instanceId)).withStage("hmcl.modpack"));
 
         try (GameBuilder builder = this.updateTarget == null
                 ? dependency.newGameBuilder(this.instanceId)
