@@ -28,8 +28,8 @@ import java.util.List;
 /// instance expects.
 ///
 /// This is a pure function: no IO, no UI, no settings access. That is what keeps it
-/// decoupled from [org.jackhuang.hmcl.java.JavaManager] (which picks a runtime) and
-/// from the launch flow (which decides what to do about a deviation).
+/// decoupled from {@code JavaManager} (which picks a runtime) and from the launch flow
+/// (which decides what to do about a deviation).
 ///
 /// ### Why this does not hardcode version ranges
 ///
