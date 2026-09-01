@@ -15,30 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.addon.mod;
-
-import org.jackhuang.hmcl.addon.LoaderType;
+package org.jackhuang.hmcl.addon;
 
 import java.util.Set;
 
-public enum ModLoaderType implements LoaderType {
-    UNKNOWN,
-    FORGE("forge"),
-    CLEANROOM("cleanroom"),
-    NEO_FORGE("neoforge"),
-    FABRIC("fabric"),
-    QUILT("quilt"),
-    LITE_LOADER("liteloader"),
-    LEGACY_FABRIC("legacy-fabric");
+/// For mods and shaders
+public interface LoaderType {
 
-    private final Set<String> names;
+    Set<String> names();
 
-    ModLoaderType(String... names) {
-        this.names = Set.of(names);
-    }
-
-    @Override
-    public Set<String> names() {
-        return names;
-    }
 }

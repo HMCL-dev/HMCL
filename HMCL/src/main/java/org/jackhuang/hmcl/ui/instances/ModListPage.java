@@ -262,7 +262,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         .composeAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
                             return version != GameVersionNumber.unknown()
-                                    ? new AddonCheckUpdatesTask<>(
+                                    ? new AddonCheckUpdatesTask(
                                             DownloadProviders.getDownloadProvider(), version.toString(), mods)
                                     : null;
                         })
@@ -273,7 +273,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             } else if (result.isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage<>(modManager, result));
+                                Controllers.navigateForward(new AddonUpdatesPage(modManager.getDirectory(), result));
                             }
                         })
                         .withStagesHints("update.checking"),

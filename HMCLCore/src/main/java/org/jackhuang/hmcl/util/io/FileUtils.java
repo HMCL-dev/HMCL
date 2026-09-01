@@ -468,6 +468,14 @@ public final class FileUtils {
             Files.delete(file);
     }
 
+    public static void forceDeleteIfExists(Path file)
+            throws IOException {
+        if (Files.isDirectory(file))
+            deleteDirectory(file);
+        else
+            Files.deleteIfExists(file);
+    }
+
     public static void copyFile(Path srcFile, Path destFile)
             throws IOException {
         Objects.requireNonNull(srcFile, "Source must not be null");
@@ -481,6 +489,16 @@ public final class FileUtils {
             throw new IOException("Destination '" + destFile + "' exists but is read-only");
 
         Files.copy(srcFile, destFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    public static void copyTo(Path src, Path destDir) throws IOException {
+        Objects.requireNonNull(src, "Source must not be null");
+        Objects.requireNonNull(destDir, "Destination directory must not be null");
+        Path dest = destDir.resolve(src.getFileName());
+        if (Files.isDirectory(src))
+            copyDirectory(src, dest);
+        else
+            copyFile(src, dest);
     }
 
     public static List<Path> listFilesByExtension(Path file, String extension) {
