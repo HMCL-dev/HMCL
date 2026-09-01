@@ -37,8 +37,8 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -50,17 +50,18 @@ import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
-import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
-import org.jetbrains.annotations.Nullable;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
+import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -146,8 +147,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     private void onAddJavaHome(Path file) {
         Task.composeAsync(() -> {
             Path releaseFile = file.resolve("release");
-            if (Files.notExists(releaseFile))
-                throw new IOException("Missing release file " + releaseFile);
+            if (Files.notExists(releaseFile)) throw new IOException("Missing release file " + releaseFile);
             return JavaManager.getAddJavaTask(file.resolve("bin").resolve(OperatingSystem.CURRENT_OS.getJavaExecutable()));
         }).whenComplete(Schedulers.javafx(), exception -> {
             if (exception != null) {
@@ -169,8 +169,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             }
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
-                Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller ->
-                        new JavaInstallPage(controller::onFinish, result.getValue(), null, null, result.getKey(), file)));
+                Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller -> new JavaInstallPage(controller::onFinish, result.getValue(), null, null, result.getKey(), file)));
             } else {
                 if (exception instanceof UnsupportedPlatformException) {
                     Controllers.dialog(i18n("java.install.failed.unsupported_platform"), null, MessageDialogPane.MessageType.WARNING);
@@ -194,11 +193,10 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     private static final class JavaPageSkin extends ToolbarListPageSkin<JavaRuntime, JavaManagementPage> {
 
         JavaPageSkin(JavaManagementPage skinnable) {
-            super(skinnable);
-        }
+            super(skinnable, false);
 
-        @Override
-        protected List<Node> initializeToolbar(JavaManagementPage skinnable) {
+            listView.setCellFactory(x -> new JavaItemCell(listView));
+
             ArrayList<Node> res = new ArrayList<>(4);
 
             res.add(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, JavaManager::refresh));
@@ -217,12 +215,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             }
             res.add(disableJava);
 
-            return res;
-        }
-
-        @Override
-        protected ListCell<JavaRuntime> createListCell(JFXListView<JavaRuntime> listView) {
-            return new JavaItemCell(listView);
+            setupSkin(res.toArray(new Node[0]), null);
         }
     }
 
@@ -263,8 +256,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 revealButton.setOnAction(e -> {
                     JavaRuntime java = getItem();
-                    if (java != null)
-                        onReveal(java);
+                    if (java != null) onReveal(java);
                 });
                 FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
@@ -272,8 +264,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 removeButton.getStyleClass().add("toggle-icon4");
                 removeButton.setOnAction(e -> {
                     JavaRuntime java = getItem();
-                    if (java != null)
-                        onRemove(java);
+                    if (java != null) onRemove(java);
                 });
                 FXUtils.installFastTooltip(removeButton, removeTooltip);
 
@@ -314,7 +305,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
                 if (oldItem != item) {
                     content.getTags().clear();
-                    content.addTag(item.getArchitecture().getDisplayName());                    
+                    content.addTag(item.getArchitecture().getDisplayName());
                 }
 
                 SVG newRemoveIcon = item.isManaged() ? SVG.DELETE_FOREVER : SVG.DELETE;
@@ -332,11 +323,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         private void onReveal(JavaRuntime java) {
             Path target;
             Path parent = java.getBinary().getParent();
-            if (parent != null
-                    && parent.getParent() != null
-                    && parent.getFileName() != null
-                    && parent.getFileName().toString().equals("bin")
-                    && Files.exists(parent.getParent().resolve("release"))) {
+            if (parent != null && parent.getParent() != null && parent.getFileName() != null && parent.getFileName().toString().equals("bin") && Files.exists(parent.getParent().resolve("release"))) {
                 target = parent.getParent();
             } else {
                 target = java.getBinary();
@@ -347,30 +334,20 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         private void onRemove(JavaRuntime java) {
             if (java.isManaged()) {
-                Controllers.confirm(
-                        i18n("java.uninstall.confirm"),
-                        i18n("message.warning"),
-                        () -> Controllers.taskDialog(JavaManager.getUninstallJavaTask(java), i18n("java.uninstall"), TaskCancellationAction.NORMAL),
-                        null
-                );
+                Controllers.confirm(i18n("java.uninstall.confirm"), i18n("message.warning"), () -> Controllers.taskDialog(JavaManager.getUninstallJavaTask(java), i18n("java.uninstall"), TaskCancellationAction.NORMAL), null);
             } else {
                 if (SettingsManager.isUserSettingsReadOnly()) {
                     return;
                 }
-                Controllers.confirm(
-                        i18n("java.disable.confirm"),
-                        i18n("message.warning"),
-                        () -> {
-                            String path = java.getBinary().toString();
-                            SettingsManager.userSettings().getUserJava().remove(path);
-                            SettingsManager.userSettings().getDisabledJava().add(path);
-                            try {
-                                JavaManager.removeJava(java);
-                            } catch (InterruptedException ignored) {
-                            }
-                        },
-                        null
-                );
+                Controllers.confirm(i18n("java.disable.confirm"), i18n("message.warning"), () -> {
+                    String path = java.getBinary().toString();
+                    SettingsManager.userSettings().getUserJava().remove(path);
+                    SettingsManager.userSettings().getDisabledJava().add(path);
+                    try {
+                        JavaManager.removeJava(java);
+                    } catch (InterruptedException ignored) {
+                    }
+                }, null);
             }
         }
     }
