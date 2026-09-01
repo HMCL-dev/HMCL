@@ -175,10 +175,12 @@ public final class Instances {
         GameInstanceManifest manifest;
         try {
             manifest = JsonUtils.fromJsonFile(file, GameInstanceManifest.class);
-            if (manifest == null) {
+            if (manifest == null)
                 throw new IllegalArgumentException("Missing game manifest");
-            }
+            if (manifest.inheritsFrom() != null)
+                throw new IllegalArgumentException("Game manifest inherits from another manifest");
         } catch (Exception e) {
+            LOG.warning("Failed to read game manifest from " + file, e);
             Controllers.dialog(i18n("install.new_game.malformed_json"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             return;
         }
