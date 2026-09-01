@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.modpack.ModpackInstallTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -34,8 +35,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 
-/// Installs or updates an HMCL modpack using the mode selected at construction.
+/// Installs or updates an HMCL modpack by rebuilding its recognized game components.
+@NotNullByDefault
 public final class HMCLModpackInstallTask extends Task<Void> {
     private final Path zipFile;
     private final GameInstanceID instanceId;
@@ -55,8 +58,6 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     /// @param zipFile    the HMCL modpack archive
     /// @param modpack    the parsed modpack metadata
     /// @param instanceId the id of the new instance
-    /// @throws IllegalStateException if the target cannot be reserved or another repository draft
-    ///                               is open
     public HMCLModpackInstallTask(
             HMCLGameRepository repository,
             Path zipFile,
@@ -73,8 +74,6 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     /// @param instance   the existing instance to update
     /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
     ///                                  modpack configuration, or records another provider type
-    /// @throws IllegalStateException    if `instance` is not the exact currently published object
-    ///                                  or another repository draft is open
     public HMCLModpackInstallTask(
             HMCLGameRepository repository,
             Path zipFile,
@@ -90,9 +89,8 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     /// @param modpack      the parsed modpack metadata
     /// @param instanceId   the target instance id
     /// @param updateTarget the existing instance selecting update mode, or `null` for install
-    /// @throws IllegalArgumentException if an update target has no compatible configuration
-    /// @throws IllegalStateException    if the target cannot be reserved, an update target is not
-    ///                                  the exact published object, or another draft is open
+    /// @throws IllegalArgumentException if an update target belongs to another repository or has
+    ///                                  no compatible configuration
     private HMCLModpackInstallTask(
             HMCLGameRepository repository,
             Path zipFile,
@@ -105,6 +103,9 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         this.instanceId = instanceId;
         this.updateTarget = updateTarget;
         this.modpack = modpack;
+        if (this.updateTarget != null) {
+            dependency.validateGameInstance(this.updateTarget);
+        }
 
         Path run = repository.getLayout().getInstanceRoot(this.instanceId);
         Path json = repository.getLayout().getModpackConfigurationFile(this.instanceId);
@@ -130,15 +131,6 @@ public final class HMCLModpackInstallTask extends Task<Void> {
 
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), List.of("/minecraft"), it -> !"pack.json".equals(it), config));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), List.of("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(this.instanceId)).withStage("hmcl.modpack"));
-
-        try (GameBuilder builder = this.updateTarget == null
-                ? dependency.newGameBuilder(this.instanceId)
-                : dependency.newGameBuilder(this.updateTarget)) {
-            dependents.add(0, builder
-                    .enableIsolation()
-                    .component(GameComponentType.GAME, modpack.getGameVersion())
-                    .buildAsync());
-        }
     }
 
     @Override
@@ -151,32 +143,43 @@ public final class HMCLModpackInstallTask extends Task<Void> {
         return dependents;
     }
 
-    /// {@inheritDoc}
+    /// Reads the legacy pack manifest and schedules one builder for all recognized components.
+    ///
+    /// The pack manifest is used only for component detection. The builder creates a new
+    /// patch-structured manifest instead of attempting to mutate the legacy flattened manifest.
     @Override
     public void execute() throws Exception {
         String json = CompressingUtils.readTextZipEntry(zipFile, "minecraft/pack.json");
-        GameInstanceManifest originalManifest = JsonUtils.GSON.fromJson(json, GameInstanceManifest.class).withId(instanceId).withJar(null);
+        GameInstanceManifest originalManifest = JsonUtils.fromNonNullJson(json, GameInstanceManifest.class)
+                .withId(instanceId)
+                .withJar(null);
         GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(originalManifest, null);
 
-        dependencies.add(repository.updateInstanceAsync(instanceId, publishedInstance -> {
-            Task<GameInstanceManifest> libraryTask = Task.completed(originalManifest);
-            // Forge and OptiFine libraries must be regenerated by their installers.
+        try (GameBuilder builder = updateTarget == null
+                ? dependency.newGameBuilder(instanceId)
+                : dependency.newGameBuilder(updateTarget)) {
+            builder.enableIsolation();
+
+            String gameVersion = modpack.getGameVersion();
+            builder.component(GameComponentType.GAME, gameVersion);
             for (GameComponentAnalyzer.Mark mark : analyzer) {
                 if (mark.componentType() == GameComponentType.GAME) {
                     continue;
                 }
-                String componentVersion = mark.version();
-                if (componentVersion == null) {
-                    continue;
+
+                @Nullable String componentVersion = mark.version();
+                if (componentVersion != null) {
+                    if (mark.componentType() == GameComponentType.OPTIFINE) {
+                        Matcher matcher = GameComponentAnalyzer.OPTIFINE_VERSION_PATTERN.matcher(componentVersion);
+                        if (matcher.matches()) {
+                            componentVersion = matcher.group("optifine");
+                        }
+                    }
+                    builder.component(mark.componentType(), componentVersion);
                 }
-                libraryTask = libraryTask.thenComposeAsync(manifest -> dependency.installComponentRemoteAsync(
-                        publishedInstance,
-                        manifest,
-                        modpack.getGameVersion(),
-                        mark.componentType(),
-                        componentVersion));
             }
-            return libraryTask;
-        }));
+            dependencies.add(builder.buildAsync());
+        }
     }
+
 }
