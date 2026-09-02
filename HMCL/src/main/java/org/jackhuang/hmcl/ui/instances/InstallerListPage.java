@@ -17,13 +17,12 @@
  */
 package org.jackhuang.hmcl.ui.instances;
 
-import javafx.application.Platform;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameComponentAnalyzer;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -36,25 +35,30 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.*;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class InstallerListPage extends ListPageBase<InstallerItem> implements GameInstancePage.GameInstanceLoadable {
-    private HMCLGameRepository repository;
-    private GameInstanceID instanceId;
-    private GameInstanceManifest manifest;
-    private String gameVersion;
+public class InstallerListPage extends ListPageBase<InstallerItem> {
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
+    private @Nullable HMCLGameInstance gameInstance;
 
-    {
-        FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "exe").contains(FileUtils.getExtension(it)), mods -> {
+    /// Creates an installer list that reloads when `instanceContext` changes.
+    ///
+    /// @param instanceContext the parent page's instance property
+    public InstallerListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+        Objects.requireNonNull(instanceContext, "instanceContext");
+        FXUtils.applyDragListener(this, it -> Set.of("jar", "exe").contains(FileUtils.getExtension(it)), mods -> {
             if (!mods.isEmpty())
                 doInstallOffline(mods.get(0));
         });
+
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+            if (current != null) {
+                loadInstance(current);
+            }
+        }));
     }
 
     @Override
@@ -62,78 +66,76 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
         return new InstallerListPageSkin();
     }
 
-    @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
-        this.repository = repository;
-        this.instanceId = instanceId;
-        this.manifest = repository.getInstanceManifest(instanceId);
-        this.gameVersion = null;
-
-        CompletableFuture.supplyAsync(() -> {
-            gameVersion = repository.getGameVersion(manifest).orElse(null);
-
-            return LibraryAnalyzer.analyze(repository.getResolvedInstanceManifest(instanceId), gameVersion);
-        }).thenAcceptAsync(analyzer -> {
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        HMCLGameInstance gameInstance = instance.instance();
+        this.gameInstance = gameInstance;
+        if (gameInstance == null) {
             itemsProperty().clear();
+            return;
+        }
 
-            InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameVersion, InstallerItem.Style.LIST_ITEM);
+        HMCLGameRepository repository = gameInstance.getRepository();
 
-            // Conventional libraries: game, fabric, legacyfabric, forge, cleanroom, neoforge, liteloader, optifine
-            for (InstallerItem item : group.getLibraries()) {
-                String libraryId = item.getLibraryId();
+        itemsProperty().clear();
+        InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameInstance.getVersion(), InstallerItem.Style.LIST_ITEM);
 
-                // Skip fabric-api and quilt-api and legacyfabric-api
-                if (libraryId.endsWith("-api")) {
-                    continue;
-                }
+        // Conventional libraries: game, fabric, legacyfabric, forge, cleanroom, neoforge, liteloader, optifine
+        for (InstallerItem component : group.getComponents()) {
 
-                String libraryVersion = analyzer.getVersion(libraryId).orElse(null);
-
-                if (libraryVersion != null) {
-                    item.versionProperty().set(new InstallerItem.InstalledState(
-                            libraryVersion,
-                            analyzer.getLibraryStatus(libraryId) != LibraryAnalyzer.LibraryMark.LibraryStatus.CLEAR,
-                            false
-                    ));
-                } else {
-                    item.versionProperty().set(null);
-                }
-
-                item.setOnInstall(() -> {
-                    Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(repository, gameVersion, manifest, libraryId, libraryVersion));
-                });
-
-                item.setOnRemove(() -> repository.getDependency().removeLibraryAsync(manifest, libraryId)
-                        .thenComposeAsync(repository::saveAsync)
-                        .withComposeAsync(repository.refreshAsync())
-                        .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.instanceId))
-                        .start());
-
-                itemsProperty().add(item);
+            // Skip fabric-api and quilt-api and legacyfabric-api
+            if (component.getComponentType().getPatchId().endsWith("-api")) {
+                continue;
             }
 
-            // other third-party libraries which are unable to manage.
-            for (LibraryAnalyzer.LibraryMark mark : analyzer) {
-                String libraryId = mark.getLibraryId();
-                String libraryVersion = mark.getLibraryVersion();
-                if ("mcbbs".equals(libraryId))
-                    continue;
+            @Nullable String libraryVersion = gameInstance.getComponentVersion(component.getComponentType());
 
-                // we have done this library above.
-                if (LibraryAnalyzer.LibraryType.fromPatchId(libraryId) != null)
-                    continue;
-
-                InstallerItem installerItem = new InstallerItem(libraryId, InstallerItem.Style.LIST_ITEM);
-                installerItem.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, false));
-                installerItem.setOnRemove(() -> repository.getDependency().removeLibraryAsync(manifest, libraryId)
-                        .thenComposeAsync(repository::saveAsync)
-                        .withComposeAsync(repository.refreshAsync())
-                        .withRunAsync(Schedulers.javafx(), () -> loadInstance(this.repository, this.instanceId))
-                        .start());
-
-                itemsProperty().add(installerItem);
+            if (libraryVersion != null) {
+                component.versionProperty().set(new InstallerItem.InstalledState(
+                        libraryVersion,
+                        !gameInstance.getAnalyzer().isClear(component.getComponentType()),
+                        false
+                ));
+            } else {
+                component.versionProperty().set(null);
             }
-        }, Platform::runLater);
+
+            component.setOnInstall(() -> {
+                Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(gameInstance, component.getComponentType(), libraryVersion));
+            });
+
+            component.setOnRemove(() -> repository.updateInstanceAsync(
+                            gameInstance.getId(),
+                            publishedInstance -> repository.getDependency().removeComponentAsync(
+                                    publishedInstance,
+                                    component.getComponentType()))
+                    .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
+                    .start());
+
+            itemsProperty().add(component);
+        }
+
+        // other third-party libraries which are unable to manage.
+        for (GameComponentAnalyzer.Mark mark : gameInstance.getAnalyzer()) {
+            // we have done this library above.
+
+            InstallerItem installerItem = new InstallerItem(mark.componentType(), InstallerItem.Style.LIST_ITEM);
+            installerItem.versionProperty().set(new InstallerItem.InstalledState(mark.version(), false, false));
+            installerItem.setOnRemove(() -> repository.updateInstanceAsync(
+                            gameInstance.getId(),
+                            publishedInstance -> repository.getDependency().removeComponentAsync(
+                                    publishedInstance,
+                                    mark.componentType()))
+                    .withRunAsync(Schedulers.javafx(), this::reloadCurrentInstance)
+                    .start());
+
+            itemsProperty().add(installerItem);
+        }
+    }
+
+    private void reloadCurrentInstance() {
+        if (gameInstance != null) {
+            loadInstance(HMCLGameInstance.Optional.of(gameInstance.getRepository(), gameInstance.getId()));
+        }
     }
 
     public void installOffline() {
@@ -144,16 +146,21 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ga
     }
 
     private void doInstallOffline(Path file) {
-        Task<?> task = repository.getDependency().installLibraryAsync(manifest, file)
-                .thenComposeAsync(repository::saveAsync)
-                .thenComposeAsync(repository.refreshAsync());
+        if (gameInstance == null || !gameInstance.getManifest().isModifiable()) {
+            return;
+        }
+
+        HMCLGameRepository repository = gameInstance.getRepository();
+        Task<?> task = repository.updateInstanceAsync(
+                gameInstance.getId(),
+                publishedInstance -> repository.getDependency().installComponentLocalAsync(publishedInstance, file));
         task.setName(i18n("install.installer.install_offline"));
         TaskExecutor executor = task.executor(new TaskListener() {
             @Override
             public void onStop(boolean success, TaskExecutor executor) {
                 runInFX(() -> {
                     if (success) {
-                        loadInstance(repository, instanceId);
+                        reloadCurrentInstance();
                         Controllers.dialog(i18n("install.success"));
                     } else {
                         if (executor.getException() == null)

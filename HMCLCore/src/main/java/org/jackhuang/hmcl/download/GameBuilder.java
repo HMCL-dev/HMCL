@@ -17,62 +17,85 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.task.Task;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNullByDefault;
 
-import java.util.*;
+import java.util.EnumMap;
 
-/**
- * The builder which provide a task to build Minecraft environment.
- *
- * @author huangyuhui
- */
-public abstract class GameBuilder {
+/// Configures the components used to install or update a game instance.
+///
+/// A builder owns an exclusive repository draft from construction until it is closed or transfers
+/// that draft to the task returned by [#buildAsync()]. Builders are single-use and are not
+/// thread-safe.
+///
+/// @author huangyuhui
+@NotNullByDefault
+public abstract class GameBuilder implements AutoCloseable {
 
-    protected @Nullable GameInstanceID name;
-    protected String gameVersion = "";
-    protected final Map<String, String> toolVersions = new HashMap<>();
-    protected final Set<RemoteVersion> remoteVersions = new HashSet<>();
+    /// Components to install, keyed by their manifest patch type.
+    protected final EnumMap<GameComponentType, Object /* String | RemoteVersion */> components = new EnumMap<>(GameComponentType.class);
 
-    public GameInstanceID getName() {
-        return name;
-    }
+    /// Enables instance isolation for the built instance.
+    ///
+    /// Component-provided run-directory files, such as loader-provided mods, are installed under
+    /// the instance root. The concrete builder must also ensure subsequent launches use that same
+    /// directory.
+    ///
+    /// @return this builder
+    /// @throws IllegalStateException if this builder is closed or has already created its build task
+    @Contract("-> this")
+    public abstract GameBuilder enableIsolation();
 
-    /**
-     * The new game version name, for .minecraft/&lt;version name&gt;.
-     *
-     * @param name the name of new game version.
-     */
-    public GameBuilder name(GameInstanceID name) {
-        this.name = Objects.requireNonNull(name);
+    /// Configures a component by its remote version id.
+    ///
+    /// Reconfiguring the same component type replaces its previous value.
+    ///
+    /// @param componentType the component type
+    /// @param version       the remote version id
+    /// @return this builder
+    /// @throws IllegalStateException if this builder is closed or has already created its build task
+    @Contract("_, _ -> this")
+    public GameBuilder component(GameComponentType componentType, String version) {
+        checkOpen();
+        components.put(componentType, version);
         return this;
     }
 
-    public GameBuilder gameVersion(String version) {
-        this.gameVersion = Objects.requireNonNull(version);
+    /// Configures a component using an already resolved remote version.
+    ///
+    /// Reconfiguring the same component type replaces its previous value.
+    ///
+    /// @param remoteVersion the remote component version
+    /// @return this builder
+    /// @throws IllegalStateException if this builder is closed or has already created its build task
+    @Contract("_ -> this")
+    public GameBuilder component(ComponentRemoteVersion remoteVersion) {
+        checkOpen();
+        components.put(remoteVersion.getComponentType(), remoteVersion);
         return this;
     }
 
-    /**
-     * @param id the core library id. i.e. "forge", "liteloader", "optifine"
-     * @param version the version of the core library. For documents, you can first try [VersionList.versions]
-     */
-    public GameBuilder version(String id, String version) {
-        if ("game".equals(id))
-            gameVersion(version);
-        else
-            toolVersions.put(id, version);
-        return this;
-    }
-
-    public GameBuilder version(RemoteVersion remoteVersion) {
-        remoteVersions.add(remoteVersion);
-        return this;
-    }
-
-    /**
-     * @return the task that can build the whole Minecraft environment
-     */
+    /// Creates the task that installs the configured components and publishes the target instance.
+    ///
+    /// This operation may be invoked once. On success, ownership of the builder's exclusive
+    /// repository draft is transferred to the returned task. Closing the builder after that
+    /// transfer has no effect. If this method fails before returning a task, the draft is aborted.
+    ///
+    /// @return the instance build task
     public abstract Task<?> buildAsync();
+
+    /// Abandons this builder and aborts its exclusive repository draft unless ownership has already
+    /// been transferred to a build task.
+    ///
+    /// This operation has no effect after a successful [#buildAsync()] call or after the builder has
+    /// already been closed.
+    @Override
+    public abstract void close();
+
+    /// Ensures this builder still accepts configuration or task creation.
+    ///
+    /// @throws IllegalStateException if this builder is closed or has already created its build task
+    protected abstract void checkOpen();
 }

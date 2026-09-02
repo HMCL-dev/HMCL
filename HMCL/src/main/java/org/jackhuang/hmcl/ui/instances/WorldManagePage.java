@@ -24,8 +24,7 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -36,13 +35,11 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.ChunkBaseApp;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -54,8 +51,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     private final World world;
     private final Path backupsDir;
-    private final HMCLGameRepository repository;
-    private final GameInstanceID instanceId;
+    private final HMCLGameInstance gameInstance;
     private final boolean supportQuickPlay;
     private FileChannel sessionLockChannel;
 
@@ -70,11 +66,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DataPackListPage> dataPackTab = new TabHeader.Tab<>("dataPackListPage");
 
-    public WorldManagePage(World world, HMCLGameRepository repository, GameInstanceID instanceId) {
+    public WorldManagePage(World world, HMCLGameInstance gameInstance) {
         this.world = world;
-        this.backupsDir = repository.getBackupsDirectory(instanceId);
-        this.repository = repository;
-        this.instanceId = instanceId;
+        this.gameInstance = gameInstance;
+        this.backupsDir = gameInstance.getBackupsDirectory();
 
         updateSessionLockChannel();
 
@@ -91,8 +86,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
 
-        Optional<String> gameVersion = repository.getGameVersion(instanceId);
-        supportQuickPlay = World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion));
+        supportQuickPlay = World.supportQuickPlay(gameInstance.getVersion());
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
@@ -151,11 +145,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public void launch() {
         fireEvent(new PageCloseEvent());
-        Instances.launchAndEnterWorld(repository, instanceId, world.getFileName());
+        Instances.launchAndEnterWorld(gameInstance, world.getFileName());
     }
 
     public void generateLaunchScript() {
-        Instances.generateLaunchScriptForQuickEnterWorld(repository, instanceId, world.getFileName());
+        Instances.generateLaunchScriptForQuickEnterWorld(gameInstance, world.getFileName());
     }
 
     @Override
