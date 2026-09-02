@@ -159,6 +159,21 @@ public sealed abstract class GameSettings extends ObservableSetting {
             return icon;
         }
 
+        /// The Java version mismatch the user has accepted for this instance, in the form
+        /// {@code actualMajor:expectedMajor}.
+        ///
+        /// An instance-scoped property rather than an inheritable one: inheritable properties
+        /// are only readable on an instance once the name is listed in
+        /// [getOverrideProperties], and that set is maintained by the settings UI, not by
+        /// [SettingProperty#setValue].
+        @SerializedName("javaMismatchAcknowledged")
+        private final SettingProperty<String> javaMismatchAcknowledged = newSettingProperty("javaMismatchAcknowledged", "");
+
+        /// Returns the acknowledged Java version mismatch property.
+        public SettingProperty<String> javaMismatchAcknowledgedProperty() {
+            return javaMismatchAcknowledged;
+        }
+
         /// Setting property names overridden by this instance.
         @SerializedName("overrideProperties")
         private final ObservableSet<String> overrideProperties = FXCollections.observableSet();
