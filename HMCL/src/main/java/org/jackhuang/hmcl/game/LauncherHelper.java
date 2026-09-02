@@ -481,14 +481,14 @@ public final class LauncherHelper {
                     // Resolved before the dialog is shown: JavaManager.getAllJava() blocks
                     // until the initial Java scan finishes, so it must not run inside a
                     // JavaFX callback or it will freeze the UI.
-                    JavaRuntime preferred = findInstalledJava(compatibility.targetMajor());
+                    JavaRuntime preferred = findInstalledJava(gameVersion, compatibility.targetMajor());
 
                     Controllers.confirm(
                             i18n("launch.advice.modded_java", compatibility.targetMajor(), gameVersion)
                                     + "\n\n" + i18n("launch.advice.switch_java", compatibility.targetMajor()),
                             i18n("message.warning"),
                             MessageType.WARNING,
-                            () -> switchToExpectedJava(gameInstance, compatibility, preferred, future, breakAction),
+                            () -> switchToExpectedJava(gameInstance, compatibility, preferred, java, future, breakAction),
                             () -> {
                                 // The user accepted the risk. Remember it per instance so
                                 // this does not come back on every launch.
@@ -811,22 +811,54 @@ public final class LauncherHelper {
                 .equals(readJavaMismatchAcknowledgement(gameInstance));
     }
 
-    /// Returns an installed runtime whose major version matches {@code major}, or null if
-    /// none is installed.
+    /// Returns an installed runtime that can run this instance on the expected Java version,
+    /// or null if there is none. See [pickInstalledJava] for the selection rules.
     ///
     /// {@link JavaManager#getAllJava} blocks until the initial Java scan completes, so this
     /// is resolved before the confirmation dialog is shown rather than inside its callback.
-    private static @Nullable JavaRuntime findInstalledJava(int major) {
+    private static @Nullable JavaRuntime findInstalledJava(@Nullable GameVersionNumber gameVersion, int major) {
         try {
-            for (JavaRuntime installed : JavaManager.getAllJava()) {
-                if (installed.getParsedVersion() == major)
-                    return installed;
-            }
+            return pickInstalledJava(JavaManager.getAllJava(), gameVersion, major);
         } catch (InterruptedException e) {
             // Preserve the interrupt so the shutdown path can observe it.
             Thread.currentThread().interrupt();
+            return null;
+        }
+    }
+
+    /// Picks the runtime to offer from {@code candidates}: matching major version, and an
+    /// architecture that can actually run this instance.
+    ///
+    /// The architecture filter mirrors {@link JavaManager#findSuitableJava}: AUTO picked the
+    /// current runtime for a reason, and offering a 32-bit runtime on a 64-bit system (or a
+    /// non-x86 one for the versions that need it on Windows/macOS ARM64) would trade a
+    /// warning for a game that cannot allocate its heap.
+    static @Nullable JavaRuntime pickInstalledJava(
+            Collection<JavaRuntime> candidates, @Nullable GameVersionNumber gameVersion, int major) {
+
+        boolean forceX86 = Architecture.SYSTEM_ARCH == Architecture.ARM64
+                && (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+                && (gameVersion == null || gameVersion.compareTo("1.6") < 0);
+
+        for (JavaRuntime candidate : candidates) {
+            if (forceX86 ? !candidate.getArchitecture().isX86()
+                    : candidate.getArchitecture() != Architecture.SYSTEM_ARCH)
+                continue;
+
+            if (candidate.getParsedVersion() == major)
+                return candidate;
         }
         return null;
+    }
+
+    /// The Mojang runtime to download for {@code major} on {@code platform}, or null when
+    /// Mojang publishes none for it.
+    static @Nullable GameJavaVersion resolveDownloadableJava(Platform platform, int major) {
+        GameJavaVersion target = GameJavaVersion.get(major);
+        if (target == null)
+            return null;
+
+        return GameJavaVersion.getSupportedVersions(platform).contains(target) ? target : null;
     }
 
     /// Switches to, or downloads, the Java version the instance is expected to run on.
@@ -838,6 +870,7 @@ public final class LauncherHelper {
             HMCLGameInstance gameInstance,
             JavaCompatibility compatibility,
             @Nullable JavaRuntime preferred,
+            @Nullable JavaRuntime currentJava,
             CompletableFuture<JavaRuntime> future,
             Runnable breakAction) {
 
@@ -846,10 +879,17 @@ public final class LauncherHelper {
             return;
         }
 
-        GameJavaVersion target = GameJavaVersion.get(compatibility.targetMajor());
+        // Mojang does not publish a runtime for every platform (Linux ARM64, for instance).
+        // Starting a download there can only fail, and failing it cancels a launch the user
+        // already agreed to, so keep the runtime they have instead.
+        GameJavaVersion target = resolveDownloadableJava(SYSTEM_PLATFORM, compatibility.targetMajor());
         if (target == null) {
-            // No published runtime for this major version, so there is nothing to offer.
-            breakAction.run();
+            LOG.warning("No downloadable Java " + compatibility.targetMajor() + " for " + SYSTEM_PLATFORM
+                    + ", keeping the current runtime");
+            if (currentJava != null)
+                future.complete(currentJava);
+            else
+                breakAction.run();
             return;
         }
 
@@ -1150,6 +1190,12 @@ public final class LauncherHelper {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
+
+                // A batch that holds a single log is handed to the FX thread with runLater
+                // and is never waited for, so the last line can still be sitting in the event
+                // queue here. Flush it, or the exception that ended the game is missing from
+                // `logs` when the crash is analysed below.
+                flushPendingFxEvents();
             }
 
             launchingLatch.countDown();
@@ -1170,7 +1216,7 @@ public final class LauncherHelper {
 
             if (exitType != ExitType.NORMAL) {
                 gameInstance.markLaunchedAbnormally();
-                revokeJavaMismatchAcknowledgement(logs);
+                revokeJavaMismatchAcknowledgement();
                 runLater(() -> new GameCrashWindow(process, exitType, gameInstance, launchOptions, logs).show());
             }
 
@@ -1186,13 +1232,19 @@ public final class LauncherHelper {
         /// The acknowledgement is stored as {@code actualMajor:expectedMajor} rather than a
         /// flag, so a change of either version (a newer Java, an updated instance) asks again
         /// instead of staying silent forever.
-        private void revokeJavaMismatchAcknowledgement(List<Log> logs) {
+        private void revokeJavaMismatchAcknowledgement() {
             // Nothing to revoke. This is also the common case, and it avoids running the
             // crash analysis on every launch for users who never dismissed the warning.
             if (readJavaMismatchAcknowledgement(gameInstance).isEmpty())
                 return;
 
-            String rawLog = logs.stream().map(Log::getLog).collect(Collectors.joining("\n"));
+            String rawLog;
+            lock.lock();
+            try {
+                rawLog = logs.stream().map(Log::getLog).collect(Collectors.joining("\n"));
+            } finally {
+                lock.unlock();
+            }
 
             boolean causedByJava = CrashReportAnalyzer.analyze(rawLog).stream()
                     .map(CrashReportAnalyzer.Result::rule)
@@ -1200,6 +1252,26 @@ public final class LauncherHelper {
 
             if (causedByJava)
                 writeJavaMismatchAcknowledgement(gameInstance, "");
+        }
+
+        /// Waits until every task queued on the JavaFX application thread so far has run.
+        ///
+        /// [javafx.application.Platform#runLater] executes tasks in submission order, so a
+        /// task submitted now runs after every task submitted before it.
+        ///
+        /// `javafx.application.Platform` is spelled out because the on-demand import of
+        /// `org.jackhuang.hmcl.util.platform` already owns the simple name `Platform` here.
+        private void flushPendingFxEvents() {
+            if (javafx.application.Platform.isFxApplicationThread())
+                return;
+
+            CountDownLatch latch = new CountDownLatch(1);
+            runLater(latch::countDown);
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
 
     }
@@ -1214,8 +1286,4 @@ public final class LauncherHelper {
         return PROCESSES.size();
     }
 
-    public static void stopManagedProcesses() {
-        while (!PROCESSES.isEmpty())
-            Optional.ofNullable(PROCESSES.poll()).map(WeakReference::get).ifPresent(ManagedProcess::stop);
-    }
 }
