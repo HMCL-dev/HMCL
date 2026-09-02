@@ -138,6 +138,14 @@ public record Library(
         this(artifact, url, downloads, null, null, null, null, null, null);
     }
 
+    public Library(String group, String name, String version) {
+        this(group, name, version, null);
+    }
+
+    public Library(String group, String name, String version, @Nullable String classifier) {
+        this(new Artifact(group, name, version, classifier));
+    }
+
     public String groupId() {
         return artifact.getGroup();
     }
