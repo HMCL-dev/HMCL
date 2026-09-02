@@ -25,7 +25,11 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLDependencyManager;
+import org.jackhuang.hmcl.game.HMCLGameBuilder;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -44,25 +48,21 @@ import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.instances.DownloadListPage;
-import org.jackhuang.hmcl.ui.instances.GameInstancePage;
 import org.jackhuang.hmcl.ui.instances.HMCLLocalizedDownloadListPage;
 import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.FileNameSet;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -95,7 +95,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     public DownloadPage(GameInstanceID uploadInstance) {
         newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
-                "game", versionPageNavigator::onGameSelected)));
+                GameComponentType.GAME, versionPageNavigator::onGameSelected)));
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
             DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((downloadProvider, repository, __, modpack, file) -> {
                 Instances.downloadModpackImpl(downloadProvider, repository, uploadInstance, modpack, file);
@@ -135,35 +135,31 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private static <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
         return () -> {
             T node = nodeSupplier.get();
-            if (node instanceof GameInstancePage.GameInstanceLoadable loadable) {
-                loadable.loadInstance(GameDirectoryManager.getSelectedRepository(), null);
+            if (node instanceof DownloadListPage page) {
+                page.loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()));
             }
             return node;
         };
     }
 
     public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file, String subdirectoryName) {
-        if (instanceId == null) {
-            instanceId = repository.getSelectedInstance();
+        @Nullable HMCLGameInstance instance = instanceId != null
+                ? repository.findInstance(instanceId)
+                : repository.getSelectedInstance();
+        Path runDirectory = instance != null ? instance.getRunDirectory() : repository.getBaseDirectory();
+
+        var targetPath = runDirectory.resolve(subdirectoryName);
+
+        FileNameSet existingPaths;
+        try {
+            existingPaths = FileNameSet.list(targetPath, null);
+        } catch (Exception e) {
+            LOG.warning("Failed to list folders in " + targetPath, e);
+            existingPaths = new FileNameSet(false);
         }
-
-        Path runDirectory = instanceId != null && repository.hasInstance(instanceId) ? repository.getRunDirectory(instanceId) : repository.getBaseDirectory();
-
-        Set<String> existingFiles;
-
-        try (var list = Files.list(runDirectory.resolve(subdirectoryName))) {
-            existingFiles = list.map(Path::getFileName)
-                    .map(Path::toString)
-                    .collect(Collectors.toSet());
-        } catch (IOException e) {
-            LOG.warning("Failed to list files in " + runDirectory.resolve(subdirectoryName), e);
-            existingFiles = Set.of();
-        }
-
-        Set<String> finalExistingFiles = existingFiles;
 
         Controllers.prompt(i18n("archive.file.name"), (result, handler) -> {
-            Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
+            Path dest = targetPath.resolve(result);
 
             Controllers.taskDialog(Task.composeAsync(() -> {
                 var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(file.file().url()), dest);
@@ -179,7 +175,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 }
             }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
             handler.resolve();
-        }, file.file().filename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("game_directory.already_exists"), (it) -> !finalExistingFiles.contains(it)));
+        }, file.file().filename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("game_directory.already_exists"), existingPaths::notContains));
 
     }
 
@@ -189,19 +185,19 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             if (repository.getGameDirectory() == GameDirectoryManager.getSelectedGameDirectory()) {
                 listenerHolder.add(FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), version -> {
                     if (modTab.isInitialized()) {
-                        modTab.getNode().loadInstance(repository, null);
+                        modTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
                     }
                     if (modpackTab.isInitialized()) {
-                        modpackTab.getNode().loadInstance(repository, null);
+                        modpackTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
                     }
                     if (resourcePackTab.isInitialized()) {
-                        resourcePackTab.getNode().loadInstance(repository, null);
+                        resourcePackTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
                     }
                     if (shaderTab.isInitialized()) {
-                        shaderTab.getNode().loadInstance(repository, null);
+                        shaderTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
                     }
                     if (worldTab.isInitialized()) {
-                        worldTab.getNode().loadInstance(repository, null);
+                        worldTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
                     }
                 }));
             }
@@ -288,7 +284,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     private static class VanillaInstallWizardProvider implements WizardProvider {
         private final HMCLGameRepository repository;
-        private final DefaultDependencyManager dependencyManager;
+        private final HMCLDependencyManager dependencyManager;
         private final DownloadProvider downloadProvider;
         private final GameRemoteVersion gameVersion;
 
@@ -303,27 +299,43 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         public void start(SettingsMap settings) {
             settings.put(ModpackPage.GAME_DIRECTORY, repository.getGameDirectory());
             settings.put(ModpackPage.REPOSITORY, repository);
-            settings.put(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion);
+            settings.put(GameComponentType.GAME.getPatchId(), gameVersion);
         }
 
-        private Task<Void> finishVersionDownloadingAsync(SettingsMap settings) {
-            GameBuilder builder = dependencyManager.newGameBuilder();
-
+        /// Builds the selected instance and selects it after successful completion.
+        ///
+        /// @param settings the installer selections and target instance id
+        /// @return the builder task with its stage hints preserved as the outermost task wrapper
+        private Task<?> finishVersionDownloadingAsync(SettingsMap settings) {
             GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
-            builder.name(instanceId);
-            builder.gameVersion(((RemoteVersion) settings.get(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())).getGameVersion());
+            if (instanceId == null) {
+                throw new IllegalStateException("Instance ID is not set");
+            }
 
-            settings.asStringMap().forEach((key, value) -> {
-                if (!LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(key)
-                        && value instanceof RemoteVersion remoteVersion)
-                    builder.version(remoteVersion);
-            });
+            try (HMCLGameBuilder builder = dependencyManager.newGameBuilder(instanceId)) {
+                builder.component(GameComponentType.GAME, ((ComponentRemoteVersion) settings.get(GameComponentType.GAME.getPatchId())).getGameVersion());
 
-            repository.applyDefaultIsolationSettingForNewInstance(instanceId, settings.isInstallingModdedVersion());
-            return builder.buildAsync().whenComplete(any -> {
-                repository.refresh();
-                repository.applyDefaultIsolationSetting(instanceId);
-            }).thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(instanceId));
+                settings.asStringMap().forEach((key, value) -> {
+                    if (!GameComponentType.GAME.getPatchId().equals(key)
+                            && value instanceof ComponentRemoteVersion remoteVersion)
+                        builder.component(remoteVersion);
+                });
+
+                boolean modded = GameComponentType.MOD_LOADERS.stream()
+                        .anyMatch(componentType ->
+                                settings.get(componentType.getPatchId()) instanceof ComponentRemoteVersion);
+                if (repository.shouldIsolateNewInstance(modded)) {
+                    builder.enableIsolation();
+                }
+
+                Task<?> buildTask = builder.buildAsync();
+                buildTask.onDone().register(event -> {
+                    if (!event.isFailed()) {
+                        runInFX(() -> repository.setSelectedInstance(repository.getInstance(instanceId)));
+                    }
+                });
+                return buildTask;
+            }
         }
 
         @Override
@@ -339,7 +351,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         public Node createPage(WizardController controller, int step, SettingsMap settings) {
             switch (step) {
                 case 0:
-                    return new InstallersPage(controller, repository, ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);
+                    return new InstallersPage(controller, repository, ((ComponentRemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);
                 default:
                     throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
             }

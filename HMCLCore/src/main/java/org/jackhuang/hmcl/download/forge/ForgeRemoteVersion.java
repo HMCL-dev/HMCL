@@ -18,16 +18,17 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
-public class ForgeRemoteVersion extends RemoteVersion {
+public class ForgeRemoteVersion extends ComponentRemoteVersion {
     /**
      * Constructor.
      *
@@ -36,11 +37,11 @@ public class ForgeRemoteVersion extends RemoteVersion {
      * @param url         the installer or universal jar original URL.
      */
     public ForgeRemoteVersion(String gameVersion, String selfVersion, Instant releaseDate, List<String> url) {
-        super(LibraryAnalyzer.LibraryType.FORGE.getPatchId(), gameVersion, selfVersion, releaseDate, url);
+        super(GameComponentType.FORGE, gameVersion, selfVersion, releaseDate, url);
     }
 
     @Override
-    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
-        return new ForgeInstallTask(dependencyManager, baseVersion, this);
+    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseManifest, Path modsDirectory) {
+        return new ForgeInstallTask(dependencyManager, baseManifest, this);
     }
 }

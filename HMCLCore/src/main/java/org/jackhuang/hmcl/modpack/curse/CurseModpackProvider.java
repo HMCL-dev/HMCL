@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.modpack.Modpack;
@@ -44,16 +45,16 @@ public final class CurseModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, GameInstanceID instanceId) {
-        return new CurseCompletionTask(dependencyManager, instanceId);
+    public Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance) {
+        return new CurseCompletionTask(dependencyManager, instance);
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, GameInstanceID instanceId, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException {
+    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException {
         if (!(modpack.getManifest() instanceof CurseManifest curseManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), instanceId, new CurseInstallTask(dependencyManager, zipFile, modpack, curseManifest, instanceId, null));
+        return new ModpackUpdateTask(instance, new CurseInstallTask(dependencyManager, zipFile, modpack, curseManifest, instance, null));
     }
 
     @Override
