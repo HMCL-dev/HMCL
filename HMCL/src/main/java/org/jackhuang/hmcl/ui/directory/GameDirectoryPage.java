@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.ui.construct.LineFileChooserButton;
 import org.jackhuang.hmcl.ui.construct.LineToggleButton;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -207,8 +208,8 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
         });
     }
 
-    /// Saves the edited game directory or adds a new entry to the appropriate game directory store.
-    private void onSave() {
+    @FXThread
+    private void doSave() {
         if (gameDirectory != null) {
             LocalizedText name = LocalizedText.plain(txtGameDirectoryName.getText());
             PortablePath path = StringUtils.isNotBlank(getLocation()) ? createPortableLocation() : gameDirectory.getPath();
@@ -254,6 +255,14 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
         }
 
         fireEvent(new PageCloseEvent());
+    }
+
+    /// Saves the edited game directory or adds a new entry to the appropriate game directory store.
+    @FXThread
+    private void onSave() {
+        if (Objects.equals(Path.of(getLocation()).getRoot(), Path.of(getLocation()))) {
+            Controllers.confirm(i18n("game_directory.root"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING, this::doSave, null);
+        } else doSave();
     }
 
     /// Creates the portable path for the current location according to the relative-path toggle.

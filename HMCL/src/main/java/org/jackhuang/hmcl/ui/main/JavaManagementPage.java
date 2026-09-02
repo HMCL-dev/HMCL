@@ -298,9 +298,14 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         @Override
         protected void updateItem(JavaRuntime item, boolean empty) {
             JavaRuntime oldItem = getItem();
+            boolean oldEmpty = isEmpty();
+
+            super.updateItem(item, empty);
+
+            if (oldItem == item && oldEmpty == empty) return;
 
             this.graphic.releaseRippleImmediately();
-            super.updateItem(item, empty);
+
             if (empty || item == null) {
                 setGraphic(null);
             } else {
