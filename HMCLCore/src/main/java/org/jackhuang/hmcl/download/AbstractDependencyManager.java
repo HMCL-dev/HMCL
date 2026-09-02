@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.GameComponentType;
+
 /**
  *
  * @author huangyuhui
@@ -29,7 +31,7 @@ public abstract class AbstractDependencyManager implements DependencyManager {
     public abstract DefaultCacheRepository getCacheRepository();
 
     @Override
-    public VersionList<?> getVersionList(String id) {
-        return getDownloadProvider().getVersionListById(id);
+    public ComponentVersionList<?> getVersionList(GameComponentType componentType) {
+        return getDownloadProvider().getVersionList(componentType);
     }
 }

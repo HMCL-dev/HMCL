@@ -29,7 +29,6 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
-import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -70,7 +69,7 @@ public final class GameListCell extends ListCell<GameListItem> {
                         fireEvent(new ActionEvent());
                         GameListItem item = GameListCell.this.getItem();
                         if (item != null) {
-                            item.getRepository().setSelectedInstance(new GameInstanceID(item.getId()));
+                            item.getRepository().setSelectedInstance(item.getGameInstance());
                         }
                     }
                 }

@@ -18,17 +18,18 @@
 package org.jackhuang.hmcl.download.fabric;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.task.Task;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
-public class FabricAPIRemoteVersion extends RemoteVersion {
+public class FabricAPIRemoteVersion extends ComponentRemoteVersion {
     private final String fullVersion;
     private final RemoteAddon.Version version;
 
@@ -40,7 +41,7 @@ public class FabricAPIRemoteVersion extends RemoteVersion {
      * @param urls        the installer or universal jar original URL.
      */
     FabricAPIRemoteVersion(String gameVersion, String selfVersion, String fullVersion, Instant datePublished, RemoteAddon.Version version, List<String> urls) {
-        super(LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId(), gameVersion, selfVersion, datePublished, urls);
+        super(GameComponentType.FABRIC_API, gameVersion, selfVersion, datePublished, urls);
 
         this.fullVersion = fullVersion;
         this.version = version;
@@ -56,12 +57,15 @@ public class FabricAPIRemoteVersion extends RemoteVersion {
     }
 
     @Override
-    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
-        return new FabricAPIInstallTask(dependencyManager, baseVersion, this);
+    public Task<GameInstancePatch> getInstallTask(
+            DefaultDependencyManager dependencyManager,
+            GameInstanceManifest baseManifest,
+            Path modsDirectory) {
+        return new FabricAPIInstallTask(dependencyManager, baseManifest, this, modsDirectory);
     }
 
     @Override
-    public int compareTo(RemoteVersion o) {
+    public int compareTo(ComponentRemoteVersion o) {
         if (!(o instanceof FabricAPIRemoteVersion)) return 0;
         return -this.getReleaseDate().compareTo(o.getReleaseDate());
     }
