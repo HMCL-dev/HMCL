@@ -99,7 +99,9 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                 component.versionProperty().set(null);
             }
 
-            component.setOnInstall(() -> Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(gameInstance, component.getComponentType(), libraryVersion)));
+            component.setOnInstall(() -> {
+                Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(gameInstance, component.getComponentType(), libraryVersion));
+            });
 
             component.setOnRemove(() -> repository.updateInstanceAsync(
                             gameInstance.getId(),
