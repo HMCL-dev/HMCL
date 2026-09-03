@@ -29,6 +29,7 @@ import javafx.beans.property.*;
 import javafx.css.*;
 import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.event.WeakEventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
 import javafx.scene.Node;
@@ -44,6 +45,7 @@ import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
+import org.jackhuang.hmcl.util.Holder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +79,15 @@ public class JFXDialog extends StackPane {
     private Region content;
     private Transition animation;
 
-    private final EventHandler<? super MouseEvent> closeHandler = e -> close();
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
+    private final Holder<?> closeHandlerHolder;
+    private final WeakEventHandler<? super MouseEvent> closeHandler;
+
+    {
+        EventHandler<? super MouseEvent> realCloseHandler = e -> close();
+        closeHandler = new WeakEventHandler<>(realCloseHandler);
+        closeHandlerHolder = new Holder<>(realCloseHandler);
+    }
 
     /// creates empty JFXDialog control with CENTER animation type
     public JFXDialog() {
