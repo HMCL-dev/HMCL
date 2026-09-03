@@ -157,8 +157,7 @@ public final class LauncherHelper {
         HMCLGameRepository repository = repository();
         DefaultDependencyManager dependencyManager = repository.getDependency();
         // Resolve already deduplicated libraries; apply loader-specific argument repairs for this launch.
-        var launchManifest = new AtomicReference<>(LaunchManifestNormalizer.repairForLaunch(
-                gameInstance.getResolvedManifest().launchManifest()));
+        var launchManifest = new AtomicReference<>(LaunchManifestNormalizer.repairForLaunch(gameInstance.getResolvedManifest()));
         boolean integrityCheck = gameInstance.unmarkLaunchedAbnormally();
         CountDownLatch launchingLatch = new CountDownLatch(1);
         List<String> javaAgents = new ArrayList<>(0);
