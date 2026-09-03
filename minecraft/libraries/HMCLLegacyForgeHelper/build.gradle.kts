@@ -1,8 +1,10 @@
+import java.io.RandomAccessFile
+
 version = "1.0"
 
 tasks.compileJava {
-    sourceCompatibility = "1.6"
-    targetCompatibility = "1.6"
+    sourceCompatibility = "1.8"
+    targetCompatibility = "1.8"
 }
 
 tasks.jar {
@@ -18,7 +20,20 @@ tasks.jar {
 }
 
 tasks.compileJava {
-    javaCompiler.set(javaToolchains.compilerFor {
-        languageVersion.set(JavaLanguageVersion.of(8))
-    })
+    doLast {
+        val outputDir = destinationDirectory.get().asFile
+        outputDir.walkTopDown()
+            .filter { it.isFile && it.extension == "class" }
+            .forEach { file ->
+                RandomAccessFile(file, "rw").use { raf ->
+                    if (raf.length() >= 8) {
+                        val magic = raf.readInt()
+                        if (magic == 0xCAFEBABE.toInt()) {
+                            raf.seek(6)
+                            raf.writeShort(50)
+                        }
+                    }
+                }
+            }
+    }
 }
