@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -139,6 +138,14 @@ public record Library(
         this(artifact, url, downloads, null, null, null, null, null, null);
     }
 
+    public Library(String group, String name, String version) {
+        this(group, name, version, null);
+    }
+
+    public Library(String group, String name, String version, @Nullable String classifier) {
+        this(new Artifact(group, name, version, classifier));
+    }
+
     public String groupId() {
         return artifact.getGroup();
     }
@@ -241,7 +248,7 @@ public record Library(
             }
         }
 
-        String repo = Lang.requireNonNullElse(url, Constants.DEFAULT_LIBRARY_URL);
+        String repo = Objects.requireNonNullElse(url, Constants.DEFAULT_LIBRARY_URL);
         if (!repo.endsWith("/")) {
             repo += '/';
         }
