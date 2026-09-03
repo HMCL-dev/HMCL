@@ -135,6 +135,7 @@ final class MainWindowPane extends StackPane {
         HBox rightButtonsContainer = createWindowButtons();
         AnchorPane buttonsLayer = new AnchorPane(rightButtonsContainer);
         buttonsLayer.setPickOnBounds(false);
+        buttonsLayer.getStyleClass().add("jfx-tool-bar");
         AnchorPane.setTopAnchor(rightButtonsContainer, 0D);
         AnchorPane.setRightAnchor(rightButtonsContainer, 0D);
         buttonsPlaceholder.heightProperty().bind(rightButtonsContainer.heightProperty());
