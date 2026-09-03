@@ -826,7 +826,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             container.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
-            content.getTitleLabel().setTextOverrun(OverrunStyle.ELLIPSIS);
             setSelectable();
 
             imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
