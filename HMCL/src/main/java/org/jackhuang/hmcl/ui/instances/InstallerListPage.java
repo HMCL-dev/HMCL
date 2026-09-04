@@ -35,10 +35,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -52,7 +49,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
     /// @param instanceContext the parent page's instance property
     public InstallerListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
         Objects.requireNonNull(instanceContext, "instanceContext");
-        FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "exe").contains(FileUtils.getExtension(it)), mods -> {
+        FXUtils.applyDragListener(this, it -> Set.of("jar", "exe").contains(FileUtils.getExtension(it)), mods -> {
             if (!mods.isEmpty())
                 doInstallOffline(mods.get(0));
         });
@@ -70,7 +67,8 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
-        this.gameInstance = instance.instance();
+        HMCLGameInstance gameInstance = instance.instance();
+        this.gameInstance = gameInstance;
         if (gameInstance == null) {
             itemsProperty().clear();
             return;
@@ -116,8 +114,11 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
             itemsProperty().add(component);
         }
 
+        var currentItems = getItems().stream().map(InstallerItem::getComponentType).toList();
         // other third-party libraries which are unable to manage.
         for (GameComponentAnalyzer.Mark mark : gameInstance.getAnalyzer()) {
+            if (currentItems.contains(mark.componentType())) continue;
+
             // we have done this library above.
 
             InstallerItem installerItem = new InstallerItem(mark.componentType(), InstallerItem.Style.LIST_ITEM);
@@ -148,14 +149,14 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
     }
 
     private void doInstallOffline(Path file) {
-        if (gameInstance == null) {
+        if (gameInstance == null || !gameInstance.getManifest().isModifiable()) {
             return;
         }
 
         HMCLGameRepository repository = gameInstance.getRepository();
         Task<?> task = repository.updateInstanceAsync(
                 gameInstance.getId(),
-                publishedInstance -> repository.getDependency().installComponentAsync(publishedInstance, file));
+                publishedInstance -> repository.getDependency().installComponentLocalAsync(publishedInstance, file));
         task.setName(i18n("install.installer.install_offline"));
         TaskExecutor executor = task.executor(new TaskListener() {
             @Override

@@ -66,11 +66,6 @@ public final class Lang {
         return map;
     }
 
-    @SafeVarargs
-    public static <T> List<T> immutableListOf(T... elements) {
-        return Collections.unmodifiableList(Arrays.asList(elements));
-    }
-
     public static boolean test(ExceptionalRunnable<?> r) {
         try {
             r.run();
@@ -126,12 +121,6 @@ public final class Lang {
         return operator.apply(a, b);
     }
 
-    public static <T> List<T> removingDuplicates(List<T> list) {
-        LinkedHashSet<T> set = new LinkedHashSet<>(list.size());
-        set.addAll(list);
-        return new ArrayList<>(set);
-    }
-
     /**
      * Join two collections into one list.
      *
@@ -147,10 +136,6 @@ public final class Lang {
         if (b != null)
             result.addAll(b);
         return result;
-    }
-
-    public static <T> List<T> copyList(List<T> list) {
-        return list == null ? null : list.isEmpty() ? null : new ArrayList<>(list);
     }
 
     public static <T> int indexWhere(List<T> list, Predicate<T> predicate) {
@@ -349,16 +334,11 @@ public final class Lang {
         };
     }
 
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    public static <T> Stream<T> toStream(Optional<T> optional) {
-        return optional.map(Stream::of).orElseGet(Stream::empty);
-    }
-
     public static <T> Iterable<T> toIterable(Enumeration<T> enumeration) {
         if (enumeration == null) {
             throw new NullPointerException();
         }
-        return () -> new Iterator<T>() {
+        return () -> new Iterator<>() {
             public boolean hasNext() {
                 return enumeration.hasMoreElements();
             }

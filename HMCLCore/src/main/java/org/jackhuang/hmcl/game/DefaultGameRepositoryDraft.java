@@ -91,6 +91,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         return repository;
     }
 
+    @Override
     public DefaultGameRepositorySnapshot getBaseSnapshot() {
         return baseSnapshot;
     }
@@ -214,8 +215,10 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
                 && !manifests.containsKey(id)
                 && baseSnapshot.get(id) == null
                 && !createdIds.contains(id)) {
-            Path root = baseSnapshot.getLayout().getInstanceRoot(id);
-            if (!repository.mayClaimDraftInstanceRoot(id, root)) {
+            Path root = baseSnapshot.getLayout().getInstanceRoot(id)
+                    .toAbsolutePath()
+                    .normalize();
+            if (!Files.notExists(root)) {
                 throw new FileAlreadyExistsException(root.toString(), null,
                         "An unregistered instance directory already exists");
             }
@@ -362,17 +365,18 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         return committedSnapshot;
     }
 
-    /// Creates and initializes roots reserved for instances added by this draft.
+    /// Creates roots reserved for instances added by this draft.
     ///
-    /// @throws IOException if a root or repository-specific initial data cannot be created
+    /// @throws IOException if a root cannot be created
     private void materializeCreatedInstanceRoots() throws IOException {
         for (GameInstanceID id : createdIds) {
             if (!manifests.containsKey(id)) {
                 continue;
             }
-            Path root = baseSnapshot.getLayout().getInstanceRoot(id);
+            Path root = baseSnapshot.getLayout().getInstanceRoot(id)
+                    .toAbsolutePath()
+                    .normalize();
             Files.createDirectories(root);
-            repository.initializeDraftInstanceRoot(id, root);
         }
     }
 
@@ -454,7 +458,9 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             GameInstanceID id,
             Path target,
             String description) throws IOException {
-        Path expectedRoot = baseSnapshot.getLayout().getInstanceRoot(id);
+        Path expectedRoot = baseSnapshot.getLayout().getInstanceRoot(id)
+                .toAbsolutePath()
+                .normalize();
         if (target.equals(expectedRoot) || !target.startsWith(expectedRoot)) {
             throw new IOException(description + " path escapes instance root: " + target);
         }

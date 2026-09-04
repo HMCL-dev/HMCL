@@ -40,7 +40,6 @@ import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.CircularArrayList;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
@@ -52,10 +51,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
@@ -324,7 +320,7 @@ public final class LogWindow extends Stage {
                         listView.scrollTo(listView.getItems().size() - 1);
                 });
 
-                listView.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT)
+                listView.setStyle("-fx-font-family: \"" + Objects.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT)
                         + "\"; -fx-font-size: " + settings().logFontSizeProperty().get() + "px;");
                 listView.setCellFactory(x -> new ListCell<>() {
                     {
