@@ -786,9 +786,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
         protected void updateControl(Item item, boolean empty) {
             if (empty || item == null) return;
 
-            if (oldItem == item && oldEmpty == empty) return;
-
-            graphics.releaseRippleImmediately();
             iconImageView.setImage(null);
 
             isFileProperty.set(item instanceof SchematicItem);
