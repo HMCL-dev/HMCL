@@ -21,7 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
-import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -184,11 +184,18 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     @FXThread
     private void loadJava(Collection<JavaRuntime> javaRuntimes) {
         if (javaRuntimes != null) {
-            this.setItems(FXCollections.observableArrayList(javaRuntimes));
+            replaceJavaRuntimes(this.getItems(), javaRuntimes);
             this.setLoading(false);
         } else {
             this.setLoading(true);
         }
+    }
+
+    static void replaceJavaRuntimes(ObservableList<JavaRuntime> items, Collection<JavaRuntime> javaRuntimes) {
+        // JavaRuntime equality is path-based. setAll can therefore retain a stale item when the
+        // Java installation at an existing path has been upgraded.
+        items.clear();
+        items.addAll(javaRuntimes);
     }
 
     private static final class JavaPageSkin extends ToolbarListPageSkin<JavaRuntime, JavaManagementPage> {
