@@ -76,8 +76,6 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     private final @Nullable RemoteAddon.Type type;
     private final int section;
 
-    private boolean cacheEnabled = false;
-
     public CurseForgeRemoteAddonRepository() {
         this.type = null;
         this.section = -1;
@@ -324,17 +322,13 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         }
     }
 
-    private final Map<String, List<CurseAddon.LatestFile>> latestFilesCache = new HashMap<>();
-
     private List<CurseAddon.LatestFile> getLatestFiles(DownloadProvider downloadProvider, String addonId) throws IOException {
-        if (cacheEnabled && latestFilesCache.containsKey(addonId)) return latestFilesCache.get(addonId);
         SEMAPHORE.acquireUninterruptibly();
         try {
             List<CurseAddon.LatestFile> data = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + addonId + "/files",
                     pair("pageSize", "10000")))
                     .getJson(Response.typeOf(listTypeOf(CurseAddon.LatestFile.class)))
                     .data();
-            if (cacheEnabled) latestFilesCache.put(addonId, data);
             return data;
         } finally {
             SEMAPHORE.release();

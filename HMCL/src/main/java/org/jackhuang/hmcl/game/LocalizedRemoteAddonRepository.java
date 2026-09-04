@@ -140,7 +140,7 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
 
     @Override
     public RemoteAddon resolveDependency(DownloadProvider downloadProvider, String id) throws IOException {
-        return getBackedRemoteModRepository().resolveDependency(downloadProvider, id);
+        return getBackedRepository().resolveDependency(downloadProvider, id);
     }
 
     @Override

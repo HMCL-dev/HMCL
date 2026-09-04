@@ -117,8 +117,6 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
     private final @Nullable RemoteAddon.Type type;
 
-    private boolean cacheEnabled = false;
-
     private ModrinthRemoteAddonRepository() {
         this.projectType = null;
         this.type = null;
@@ -292,10 +290,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         throw new UnsupportedOperationException();
     }
 
-    private final Map<String, List<ProjectVersion>> projectVersionsCache = new HashMap<>();
-
     private List<ProjectVersion> getProjectVersions(DownloadProvider downloadProvider, String id) throws IOException {
-        if (cacheEnabled && projectVersionsCache.containsKey(id)) return projectVersionsCache.get(id);
         SEMAPHORE.acquireUninterruptibly();
         try {
             id = StringUtils.removePrefix(id, "local-");
@@ -305,9 +300,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
             for (URI candidate : candidates) {
                 try {
-                    List<ProjectVersion> data = HttpRequest.GET(candidate.toString()).getJson(listTypeOf(ProjectVersion.class));
-                    if (cacheEnabled) projectVersionsCache.put(id, data);
-                    return data;
+                    return HttpRequest.GET(candidate.toString()).getJson(listTypeOf(ProjectVersion.class));
                 } catch (IOException e) {
                     IOException wrapper = new IOException("Failed to get remote versions: " + candidate, e);
                     if (candidates.size() == 1) {
