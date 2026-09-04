@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.LaunchOptions;
-import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 
 import java.io.IOException;
@@ -131,7 +130,10 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
 
         @Override
         public Arguments getLaunchArguments(LaunchOptions options) {
-            return new Arguments().addJVMArguments("-javaagent:" + artifact.location().toString() + "=" + server.getUrl(), "-Dauthlibinjector.side=client", "-Dauthlibinjector.yggdrasil.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta.getBytes(UTF_8)));
+            return new Arguments().addJVMArguments(
+                    "-javaagent:" + artifact.location().toString() + "=" + server.getUrl(),
+                    "-Dauthlibinjector.side=client",
+                    "-Dauthlibinjector.yggdrasil.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta.getBytes(UTF_8)));
         }
     }
 
@@ -149,11 +151,6 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
 
     public AuthlibInjectorServer getServer() {
         return server;
-    }
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder(this).append("accountID", getAccountID()).append("profileID", profileID).append("loginName", getLoginName()).append("server", getServer().getUrl()).toString();
     }
 
     public static Set<TextureType> getUploadableTextures(CompleteGameProfile profile) {
