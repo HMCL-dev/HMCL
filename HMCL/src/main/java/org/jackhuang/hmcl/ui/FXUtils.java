@@ -61,7 +61,6 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.glavo.url.WebURL;
@@ -1145,20 +1144,6 @@ public final class FXUtils {
             @Override
             public T fromString(String string) {
                 throw new UnsupportedOperationException();
-            }
-        };
-    }
-
-    public static <T> Callback<ListView<T>, ListCell<T>> jfxListCellFactory(Function<T, Node> graphicBuilder) {
-        return view -> new JFXListCell<>() {
-            @Override
-            public void updateItem(T item, boolean empty) {
-                super.updateItem(item, empty);
-
-                if (!empty) {
-                    setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-                    setGraphic(graphicBuilder.apply(item));
-                }
             }
         };
     }

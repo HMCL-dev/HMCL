@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download.neoforge;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
@@ -29,7 +29,7 @@ import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemoteVersion> {
+public final class NeoForgeOfficialVersionList extends ComponentVersionList<NeoForgeRemoteVersion> {
     private final DownloadProvider downloadProvider;
 
     public NeoForgeOfficialVersionList(DownloadProvider downloadProvider) {

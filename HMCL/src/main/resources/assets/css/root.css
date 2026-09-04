@@ -1939,7 +1939,7 @@
 }
 
 .line-select-button .menu-container:selected .subtitle-label {
-    -fx-text-fill: -monet-primary-container;
+    -fx-text-fill: -monet-primary-transparent-80;
 }
 
 .line-toggle-button .jfx-toggle-button {
