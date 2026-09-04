@@ -170,7 +170,7 @@ public final class HTMLRenderer {
     private void applyStyle(Text text) {
         if (code) {
             text.getStyleClass().add("html-code");
-            text.setStyle("-fx-font-family: \"%s\";".formatted(Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT)));
+            text.setStyle("-fx-font-family: \"%s\";".formatted(Objects.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT)));
             return;
         }
 
@@ -454,7 +454,7 @@ public final class HTMLRenderer {
                     appendAutoLineBreak("\n\n");
             }
             case "hr" -> {
-                appendAutoLineBreak("\n");
+                appendAutoLineBreak("\n\n");
                 this.children.add(new Separator());
             }
         }
@@ -512,16 +512,34 @@ public final class HTMLRenderer {
                 }
             }
         }
-        int size = children.size();
-        for (int i = 0; i < size; i++) {
-            var child = children.get(i);
-            if (child instanceof AutoLineBreak || (child instanceof Text txt && isSpacing(txt.getText()))) {
-                // do nothing
-            } else {
-                children.subList(0, i).clear();
-                break;
+
+        {
+            // Remove empty lines at the beginning
+            int size = children.size();
+            for (int i = 0; i < size; i++) {
+                var child = children.get(i);
+                if (child instanceof AutoLineBreak || child instanceof Text txt && isSpacing(txt.getText())) {
+                    // NO-OP
+                } else {
+                    this.children.subList(0, i).clear();
+                    break;
+                }
             }
         }
+        {
+            // Remove empty lines and spaces at the end
+            int size = children.size();
+            for (int i = size - 1; i > -1; i--) {
+                var child = children.get(i);
+                if (child instanceof AutoLineBreak || child instanceof Text txt && isSpacing(txt.getText())) {
+                    // NO-OP
+                } else {
+                    this.children.subList(i + 1, size).clear();
+                    break;
+                }
+            }
+        }
+
         return this;
     }
 
@@ -537,6 +555,7 @@ public final class HTMLRenderer {
                 InvalidationListener listener = __ -> img.setFitWidth(Math.min(textFlow.getWidth() * 0.9, img.getImage() == null ? 0D : img.getImage().getWidth()));
                 textFlow.widthProperty().addListener(listener);
                 img.imageProperty().addListener(listener);
+                listener.invalidated(null);
             } else if (node instanceof TableView<?> table) {
                 table.prefWidthProperty().bind(textFlow.widthProperty().multiply(0.8));
             } else if (node instanceof CodeFlow codeFlow) {
