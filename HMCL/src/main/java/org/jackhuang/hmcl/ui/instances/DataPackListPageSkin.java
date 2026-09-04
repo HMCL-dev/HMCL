@@ -265,7 +265,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             this.packInfo = packInfo;
             this.activeProperty = packInfo.activeProperty();
 
-            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadImage, this::getDefaultImage);
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
         String getTitle() {
@@ -280,11 +280,11 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             return packInfo;
         }
 
-        private Image getDefaultImage() {
+        private Image getDefaultIcon() {
             return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
         }
 
-        private Image loadImage() {
+        private Image loadIcon() {
             Image image = null;
             Path imagePath;
             if (this.getPackInfo().isDirectory()) {
@@ -309,7 +309,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                     Math.abs(image.getWidth() - image.getHeight()) < 1) {
                 return image;
             } else {
-                return getDefaultImage();
+                return getDefaultIcon();
             }
         }
     }

@@ -505,7 +505,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             this.file = pair.key();
             this.enabled = new SimpleBooleanProperty(this, "enabled", pair.value());
 
-            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadImage, this::getDefaultImage);
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
         public ResourcePackFile getFile() {
@@ -516,16 +516,16 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             return enabled;
         }
 
-        private Image getDefaultImage() {
+        private Image getDefaultIcon() {
             return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
         }
 
-        private Image loadImage() {
+        private Image loadIcon() {
             Image icon = file.loadIcon();
             if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1) {
                 return icon;
             }
-            return getDefaultImage();
+            return getDefaultIcon();
         }
     }
 
