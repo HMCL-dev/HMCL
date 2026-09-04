@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.util.i18n;
 
 import org.jackhuang.hmcl.addon.LoaderType;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.Either;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -81,7 +81,7 @@ public final class I18n {
         return getTranslator().formatSpeed(bytes);
     }
 
-    public static String getDisplayVersion(RemoteVersion version) {
+    public static String getDisplayVersion(ComponentRemoteVersion version) {
         return getTranslator().getDisplayVersion(version);
     }
 

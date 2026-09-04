@@ -18,24 +18,33 @@
 package org.jackhuang.hmcl.addon.mod;
 
 import org.jackhuang.hmcl.addon.LoaderType;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
+@NotNullByDefault
 public enum ModLoaderType implements LoaderType {
-    UNKNOWN,
-    FORGE("forge"),
-    CLEANROOM("cleanroom"),
-    NEO_FORGE("neoforge"),
-    FABRIC("fabric"),
-    QUILT("quilt"),
-    LITE_LOADER("liteloader"),
-    LEGACY_FABRIC("legacy-fabric");
+    UNKNOWN(null),
+    FORGE("INST_FORGE", "forge"),
+    CLEANROOM("INST_CLEANROOM", "cleanroom"),
+    NEO_FORGE("INST_NEOFORGE", "neoforge"),
+    FABRIC("INST_FABRIC", "fabric"),
+    QUILT("INST_QUILT", "quilt"),
+    LITE_LOADER("INST_LITELOADER", "liteloader"),
+    LEGACY_FABRIC("INST_LEGACYFABRIC", "legacy-fabric");
 
+    private final @Nullable String envVarName;
     private final Set<String> names;
 
-    ModLoaderType(String... names) {
+    ModLoaderType(@Nullable String envVarName, String... names) {
+        this.envVarName = envVarName;
         this.names = Set.of(names);
+    }
+
+    public @Nullable String getEnvVarName() {
+        return envVarName;
     }
 
     @Override
@@ -43,5 +52,4 @@ public enum ModLoaderType implements LoaderType {
     public Set<String> names() {
         return names;
     }
-
 }

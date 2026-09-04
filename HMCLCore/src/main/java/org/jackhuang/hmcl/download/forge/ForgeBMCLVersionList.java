@@ -18,11 +18,10 @@
 package org.jackhuang.hmcl.download.forge;
 
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -31,17 +30,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> {
+public final class ForgeBMCLVersionList extends ComponentVersionList<ForgeRemoteVersion> {
     private final String apiRoot;
 
     /**
@@ -73,7 +69,7 @@ public final class ForgeBMCLVersionList extends VersionList<ForgeRemoteVersion> 
         if ("1.7.10-pre4".equals(gameVersion)) {
             return "prerelease";
         }
-        return Lang.requireNonNullElse(branch, "");
+        return Objects.requireNonNullElse(branch, "");
     }
 
     @Override

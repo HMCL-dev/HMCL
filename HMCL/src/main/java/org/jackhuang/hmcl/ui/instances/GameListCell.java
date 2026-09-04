@@ -29,7 +29,6 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
-import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -40,7 +39,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class GameListCell extends ListCell<GameListItem> {
 
-    private final Region graphic;
+    private final RipplerContainer graphic;
 
     private final ImageContainer imageView;
     private final TwoLineListItem content;
@@ -70,7 +69,7 @@ public final class GameListCell extends ListCell<GameListItem> {
                         fireEvent(new ActionEvent());
                         GameListItem item = GameListCell.this.getItem();
                         if (item != null) {
-                            item.getRepository().setSelectedInstance(new GameInstanceID(item.getId()));
+                            item.getRepository().setSelectedInstance(item.getGameInstance());
                         }
                     }
                 }
@@ -162,7 +161,14 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     @Override
     public void updateItem(GameListItem item, boolean empty) {
+        GameListItem oldItem = getItem();
+        boolean oldEmpty = isEmpty();
+
         super.updateItem(item, empty);
+
+        if (oldItem == item && oldEmpty == empty) return;
+
+        this.graphic.releaseRippleImmediately();
 
         this.imageView.imageProperty().unbind();
         this.content.titleProperty().unbind();

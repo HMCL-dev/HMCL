@@ -227,7 +227,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     }
 
     private static final class JavaItemCell extends ListCell<JavaRuntime> {
-        private final Node graphic;
+        private final RipplerContainer graphic;
         private final Label label = new Label();
         private final TwoLineListItem content;
 
@@ -298,7 +298,14 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         @Override
         protected void updateItem(JavaRuntime item, boolean empty) {
             JavaRuntime oldItem = getItem();
+            boolean oldEmpty = isEmpty();
+
             super.updateItem(item, empty);
+
+            if (oldItem == item && oldEmpty == empty) return;
+
+            this.graphic.releaseRippleImmediately();
+
             if (empty || item == null) {
                 setGraphic(null);
             } else {

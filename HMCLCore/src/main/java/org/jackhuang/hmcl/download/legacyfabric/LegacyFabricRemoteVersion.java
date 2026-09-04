@@ -18,15 +18,16 @@
 package org.jackhuang.hmcl.download.legacyfabric;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
 
+import java.nio.file.Path;
 import java.util.List;
 
-public class LegacyFabricRemoteVersion extends RemoteVersion {
+public class LegacyFabricRemoteVersion extends ComponentRemoteVersion {
     /**
      * Constructor.
      *
@@ -35,11 +36,11 @@ public class LegacyFabricRemoteVersion extends RemoteVersion {
      * @param urls        the installer or universal jar original URL.
      */
     LegacyFabricRemoteVersion(String gameVersion, String selfVersion, List<String> urls) {
-        super(LibraryAnalyzer.LibraryType.LEGACY_FABRIC.getPatchId(), gameVersion, selfVersion, null, urls);
+        super(GameComponentType.LEGACY_FABRIC, gameVersion, selfVersion, null, urls);
     }
 
     @Override
-    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
-        return new LegacyFabricInstallTask(dependencyManager, baseVersion, this);
+    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseManifest, Path modsDirectory) {
+        return new LegacyFabricInstallTask(dependencyManager, baseManifest, this);
     }
 }
