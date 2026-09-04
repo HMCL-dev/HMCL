@@ -642,4 +642,12 @@ public final class Controllers {
 
         FXUtils.shutdown();
     }
+
+    public static final boolean AUTO_TRIM_HEAP = !"false".equalsIgnoreCase(System.getenv("HMCL_AUTO_TRIM_HEAP"));
+
+    public static void trimHeap() {
+        if (AUTO_TRIM_HEAP) {
+            System.gc();
+        }
+    }
 }

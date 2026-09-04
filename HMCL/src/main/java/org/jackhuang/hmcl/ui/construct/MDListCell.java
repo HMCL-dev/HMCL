@@ -56,10 +56,11 @@ public abstract class MDListCell<T> extends ListCell<T> {
         T oldItem = getItem();
         boolean oldEmpty = isEmpty();
 
-        ripplerContainer.releaseRippleImmediately();
         super.updateItem(item, empty);
 
         if (oldItem == item && oldEmpty == empty) return;
+
+        ripplerContainer.releaseRippleImmediately();
 
         updateControl(item, empty);
         if (empty || item == null) {

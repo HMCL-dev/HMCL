@@ -17,17 +17,11 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
-import static java.util.Collections.emptyMap;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
-
+import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
+import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.io.HttpRequest;
@@ -36,19 +30,16 @@ import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.annotations.JsonAdapter;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 
-import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
+import static java.util.Collections.emptyMap;
+import static org.jackhuang.hmcl.util.Lang.tryCast;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @JsonAdapter(AuthlibInjectorServer.Deserializer.class)
 @NotNullByDefault
@@ -208,6 +199,29 @@ public class AuthlibInjectorServer implements Observable {
 
     public void invalidateMetadataCache() {
         metadataRefreshed = false;
+    }
+
+    public String getDisplayHostUrl() {
+        String url = this.getUrl();
+
+        try {
+            WebURL parsed = WebURL.parseBrowserInput(url);
+            if ("https".equals(parsed.getScheme())) {
+                StringBuilder builder = new StringBuilder();
+                builder.append(parsed.getHost());
+                if (parsed.getPort() != 443) {
+                    builder.append(':').append(parsed.getPort());
+                }
+
+                if (!"/api/yggdrasil/".equals(parsed.getPath()))
+                    builder.append(parsed.getPath());
+
+                return builder.toString();
+            }
+        } catch (Exception e) {
+            LOG.warning("Unparsable authlib-injector server url " + url, e);
+        }
+        return url;
     }
 
     @Override
