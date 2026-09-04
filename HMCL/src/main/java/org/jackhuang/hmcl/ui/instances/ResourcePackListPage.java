@@ -540,8 +540,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
         private final JFXButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);
 
-        private ResourcePackInfoObject object = null;
-
         private BooleanProperty booleanProperty = null;
 
         public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, ResourcePackListPage page) {
@@ -557,7 +555,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             checkBox = new JFXCheckBox() {
                 @Override
                 public void fire() {
-                    if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && !isSelected() && object != null && !object.getFile().isCompatible()) {
+                    if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && !isSelected() && getItem() != null && !getItem().getFile().isCompatible()) {
                         Controllers.confirm(
                                 i18n("resourcepack.warning.manipulate"),
                                 i18n("message.info"),
@@ -572,7 +570,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 }
             };
             checkBox.setOnAction(e -> {
-                if (object != null) object.file.setEnabled(checkBox.isSelected());
+                if (getItem() != null) getItem().getFile().setEnabled(checkBox.isSelected());
             });
 
             HBox.setHgrow(content, Priority.ALWAYS);
@@ -592,7 +590,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
             if (empty || item == null) return;
 
-            this.object = item;
             ResourcePackFile file = item.getFile();
             item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(itemProperty()));
 

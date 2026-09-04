@@ -56,7 +56,7 @@ public final class HMCLModpackProvider implements ModpackProvider {
             throw new IllegalArgumentException("HMCLModpackProvider requires HMCLGameRepository");
         }
 
-        return new ModpackUpdateTask(instance, new HMCLModpackInstallTask(repository, zipFile, modpack, instance.getId()));
+        return new ModpackUpdateTask(instance, new HMCLModpackInstallTask(repository, zipFile, modpack, instance));
     }
 
     @Override
