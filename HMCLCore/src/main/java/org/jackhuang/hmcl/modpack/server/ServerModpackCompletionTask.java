@@ -153,7 +153,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
             }
         }
 
-        Path rootPath = instance.getInstanceRoot().toAbsolutePath().normalize();
+        Path rootPath = instance.getRunDirectory().toAbsolutePath().normalize();
         Map<String, ModpackConfiguration.FileInformation> files = manifest.getManifest().getFiles().stream()
                 .collect(Collectors.toMap(ModpackConfiguration.FileInformation::getPath,
                         Function.identity()));
