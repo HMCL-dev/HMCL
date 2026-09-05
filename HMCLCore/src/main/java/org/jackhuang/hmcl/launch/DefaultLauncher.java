@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.launch;
 
 import org.glavo.uuid.UUIDs;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Lang;
@@ -148,7 +149,9 @@ public class DefaultLauncher extends Launcher {
         if (!options.isNoGeneratedJVMArgs()) {
             appendJvmArgs(res);
 
-            res.addDefault("-Dminecraft.client.jar=", FileUtils.getAbsolutePath(instance.getRepository().getInstanceJar(manifest)));
+            Path clientJar = instance.getInstanceJarFile();
+
+            res.addDefault("-Dminecraft.client.jar=", FileUtils.getAbsolutePath(clientJar));
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                 res.addDefault("-Xdock:name=", "Minecraft " + manifest.id());
@@ -278,11 +281,11 @@ public class DefaultLauncher extends Launcher {
             libraryClasspath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
         }
 
-        Path jar = instance.getRepository().getInstanceJar(manifest);
+        Path jar = instance.getInstanceJarFile();
         if (!Files.isRegularFile(jar))
             throw new IOException("Minecraft jar does not exist");
         Set<String> classpath = new LinkedHashSet<>(libraryClasspath);
-        classpath.add(FileUtils.getAbsolutePath(jar.toAbsolutePath()));
+        classpath.add(FileUtils.getAbsolutePath(jar));
 
         // Provided Minecraft arguments
         Path gameAssets = instance.getActualAssetDirectory(manifest.getAssetIndex().getId());
@@ -633,7 +636,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${resolution_height}", options.getHeight().toString()),
                 pair("${library_directory}", FileUtils.getAbsolutePath(instance.getLayout().getLibrariesDirectory())),
                 pair("${classpath_separator}", File.pathSeparator),
-                pair("${primary_jar}", FileUtils.getAbsolutePath(instance.getRepository().getInstanceJar(manifest))),
+                pair("${primary_jar}", FileUtils.getAbsolutePath(instance.getInstanceJarFile())),
                 pair("${language}", Locale.getDefault().toLanguageTag()),
 
                 // defined by HMCL
@@ -643,7 +646,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${libraries_directory}", FileUtils.getAbsolutePath(instance.getLayout().getLibrariesDirectory())),
                 // file_separator is used in -DignoreList
                 pair("${file_separator}", File.separator),
-                pair("${primary_jar_name}", FileUtils.getName(instance.getRepository().getInstanceJar(manifest)))
+                pair("${primary_jar_name}", FileUtils.getName(instance.getInstanceJarFile()))
         );
     }
 
@@ -797,29 +800,14 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        if (instance.hasComponent(GameComponentType.FORGE)) {
-            env.put("INST_FORGE", "1");
+        for (ModLoaderType modLoader : instance.getModLoaders()) {
+            if (modLoader.getEnvVarName() != null) {
+                env.put(modLoader.getEnvVarName(), "1");
+            }
         }
-        if (instance.hasComponent(GameComponentType.CLEANROOM)) {
-            env.put("INST_CLEANROOM", "1");
-        }
-        if (instance.hasComponent(GameComponentType.NEO_FORGE)) {
-            env.put("INST_NEOFORGE", "1");
-        }
-        if (instance.hasComponent(GameComponentType.LITELOADER)) {
-            env.put("INST_LITELOADER", "1");
-        }
-        if (instance.hasComponent(GameComponentType.FABRIC)) {
-            env.put("INST_FABRIC", "1");
-        }
+
         if (instance.hasComponent(GameComponentType.OPTIFINE)) {
             env.put("INST_OPTIFINE", "1");
-        }
-        if (instance.hasComponent(GameComponentType.QUILT)) {
-            env.put("INST_QUILT", "1");
-        }
-        if (instance.hasComponent(GameComponentType.LEGACY_FABRIC)) {
-            env.put("INST_LEGACYFABRIC", "1");
         }
 
         env.putAll(options.getEnvironmentVariables());

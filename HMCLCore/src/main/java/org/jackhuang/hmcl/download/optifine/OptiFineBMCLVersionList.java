@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download.optifine;
 
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -33,7 +33,7 @@ import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 /**
  * @author huangyuhui
  */
-public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVersion> {
+public final class OptiFineBMCLVersionList extends ComponentVersionList<OptiFineRemoteVersion> {
     private final String apiRoot;
 
     /**

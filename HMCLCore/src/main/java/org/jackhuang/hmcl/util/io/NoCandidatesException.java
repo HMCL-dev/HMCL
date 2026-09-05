@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,23 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.download;
+package org.jackhuang.hmcl.util.io;
 
-import org.jackhuang.hmcl.game.GameComponentType;
+import java.io.IOException;
 
-/**
- *
- * @author huangyuhui
- */
-public abstract class AbstractDependencyManager implements DependencyManager {
+public class NoCandidatesException extends IOException {
 
-    public abstract DownloadProvider getDownloadProvider();
-
-    @Override
-    public abstract DefaultCacheRepository getCacheRepository();
-
-    @Override
-    public ComponentVersionList<?> getVersionList(GameComponentType componentType) {
-        return getDownloadProvider().getVersionList(componentType);
+    public NoCandidatesException() {
+        super("No candidates found");
     }
 }
