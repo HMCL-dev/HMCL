@@ -461,6 +461,7 @@
 .launch-pane > .jfx-button.menu-button {
     -fx-max-width: 27px;
     -fx-min-width: 27px;
+    -fx-font-size: 15px;
     -fx-background-radius: 0 4px 4px 0;
 }
 
