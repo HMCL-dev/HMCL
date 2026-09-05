@@ -461,7 +461,6 @@
 .launch-pane > .jfx-button.menu-button {
     -fx-max-width: 27px;
     -fx-min-width: 27px;
-    -fx-font-size: 15px;
     -fx-background-radius: 0 4px 4px 0;
 }
 
@@ -471,7 +470,7 @@
     -fx-padding: 0;
 }
 
-.launch-pane > .jfx-button, .jfx-button * {
+.launch-pane > .launch-button .label {
     -fx-text-fill: -monet-on-primary-container;
     -fx-font-size: 14px;
 }
