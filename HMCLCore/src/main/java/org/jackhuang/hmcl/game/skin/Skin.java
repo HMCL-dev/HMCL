@@ -15,16 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.auth.yggdrasil;
+package org.jackhuang.hmcl.game.skin;
 
-import org.jackhuang.hmcl.util.Immutable;
+import javafx.scene.image.Image;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-
-@Immutable
-public record Texture(@Nullable String url, @Nullable Map<String, String> metadata) {
-    public Texture() {
-        this(null, null);
-    }
+public record Skin(@NotNull SkinModel model, @NotNull Image skin, @Nullable Image cape) {
 }

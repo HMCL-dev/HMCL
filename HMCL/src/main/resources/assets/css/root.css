@@ -97,6 +97,23 @@
     -fx-pref-width: 200;
 }
 
+.microsoft-skin-manage .scroll-wrapper {
+    -fx-border-color: -monet-outline;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-border-width: 1;
+}
+
+.microsoft-skin-manage .cape-item {
+    -fx-padding: 8;
+    -fx-border-color: -monet-outline;
+    -fx-border-width: 0 1 0 0;
+}
+
+.microsoft-skin-manage .cape-item .jfx-radio-button {
+    -fx-font-size: 11px;
+}
+
 .bold {
     -fx-font-weight: bold;
 }
