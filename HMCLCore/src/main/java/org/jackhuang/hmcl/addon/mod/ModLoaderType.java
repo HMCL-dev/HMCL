@@ -17,27 +17,39 @@
  */
 package org.jackhuang.hmcl.addon.mod;
 
+import org.jackhuang.hmcl.addon.LoaderType;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.Set;
 
 @NotNullByDefault
-public enum ModLoaderType {
+public enum ModLoaderType implements LoaderType {
     UNKNOWN(null),
-    FORGE("INST_FORGE"),
-    CLEANROOM("INST_CLEANROOM"),
-    NEO_FORGE("INST_NEOFORGE"),
-    FABRIC("INST_FABRIC"),
-    QUILT("INST_QUILT"),
-    LITE_LOADER("INST_LITELOADER"),
-    LEGACY_FABRIC("INST_LEGACYFABRIC");
+    FORGE("INST_FORGE", "forge"),
+    CLEANROOM("INST_CLEANROOM", "cleanroom"),
+    NEO_FORGE("INST_NEOFORGE", "neoforge"),
+    FABRIC("INST_FABRIC", "fabric"),
+    QUILT("INST_QUILT", "quilt"),
+    LITE_LOADER("INST_LITELOADER", "liteloader"),
+    LEGACY_FABRIC("INST_LEGACYFABRIC", "legacy-fabric");
 
     private final @Nullable String envVarName;
+    private final Set<String> names;
 
-    ModLoaderType(@Nullable String envVarName) {
+    ModLoaderType(@Nullable String envVarName, String... names) {
         this.envVarName = envVarName;
+        this.names = Set.of(names);
     }
 
     public @Nullable String getEnvVarName() {
         return envVarName;
+    }
+
+    @Override
+    @Unmodifiable
+    public Set<String> names() {
+        return names;
     }
 }
