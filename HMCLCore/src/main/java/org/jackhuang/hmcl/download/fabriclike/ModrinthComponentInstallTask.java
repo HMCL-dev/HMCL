@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.download.modrinth;
+package org.jackhuang.hmcl.download.fabriclike;
 
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.game.GameInstancePatch;

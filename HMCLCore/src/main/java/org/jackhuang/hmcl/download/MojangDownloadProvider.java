@@ -19,11 +19,11 @@ package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.cleanroom.CleanroomVersionList;
 import org.jackhuang.hmcl.download.fabric.FabricVersionList;
+import org.jackhuang.hmcl.download.fabriclike.ModrinthComponentVersionList;
 import org.jackhuang.hmcl.download.forge.ForgeVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
 import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList;
-import org.jackhuang.hmcl.download.modrinth.ModrinthComponentVersionList;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeOfficialVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
