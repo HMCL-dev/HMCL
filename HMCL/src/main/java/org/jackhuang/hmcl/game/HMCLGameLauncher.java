@@ -31,8 +31,11 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -169,9 +172,27 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     protected void appendJvmArgs(CommandBuilder result) {
         super.appendJvmArgs(result);
 
-        if (options.isAllowAutoAgent()
-                && !options.isNoGeneratedJVMArgs()
-                && !options.isNoGeneratedOptimizingJVMArgs()
+        if (this.instance.getVersion().compareTo("1.6") < 0 && this.instance.hasComponent(GameComponentType.FORGE)) {
+            LOG.info("Attempting to patch game with legacy-forge-helper");
+            try {
+                result.add("-javaagent:" + extractLegacyForgeHelper());
+            } catch (Exception e) {
+                LOG.warning("Failed to extract legacy-forge-helper", e);
+            }
+        }
+
+        if (this.instance.getVersion().compareTo("1.2") < 0 && this.instance.hasComponent(GameComponentType.FORGE)) {
+            LOG.info("Attempting to patch game with modloader-helper");
+            try {
+                result.add("-javaagent:" + extractModLoaderHelper());
+            } catch (Exception e) {
+                LOG.warning("Failed to extract modloader-helper", e);
+            }
+        }
+
+        if (!options.isAllowAutoAgent() && !options.isNoGeneratedJVMArgs()) return;
+
+        if (!options.isNoGeneratedOptimizingJVMArgs()
                 && NativePatcher.needPatchMemoryUtil(manifest, options.getJava().getParsedVersion())) {
             LOG.info("Attempting to patch game with lwjgl-unsafe-agent");
             try {
@@ -220,4 +241,69 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         return agentPath;
     }
 
+    private Path extractLegacyForgeHelper() throws IOException {
+        Library library = new Library(new Artifact("org.jackhuang.hmcl", "legacy-forge-helper", "1.0"));
+        String fileName = "HMCLLegacyForgeHelper-1.0.jar";
+
+        Path agentPath = instance.getLayout().getLibraryFile(instance.getId(), library).toAbsolutePath().normalize();
+        if (agentPath.toString().contains("=")) {
+            throw new IOException("Invalid library path: " + agentPath);
+        }
+
+        byte[] bytes;
+        try (InputStream input = DefaultLauncher.class.getResourceAsStream("/assets/game/" + fileName)) {
+            if (input == null) {
+                throw new IOException("/assets/game/" + fileName + " not found");
+            }
+
+            bytes = input.readAllBytes();
+        }
+
+        if (Files.isRegularFile(agentPath)) {
+            try {
+                if (Files.size(agentPath) == bytes.length) {
+                    return agentPath;
+                }
+            } catch (IOException e) {
+                LOG.warning("Failed to check size of " + agentPath, e);
+            }
+        }
+
+        Files.createDirectories(agentPath.getParent());
+        FileUtils.saveSafely(agentPath, output -> output.write(bytes));
+        return agentPath;
+    }
+
+    private Path extractModLoaderHelper() throws IOException {
+        Library library = new Library(new Artifact("org.jackhuang.hmcl", "modloader-helper", "1.0"));
+        String fileName = "HMCLModLoaderHelper-1.0.jar";
+
+        Path agentPath = instance.getLayout().getLibraryFile(instance.getId(), library).toAbsolutePath().normalize();
+        if (agentPath.toString().contains("=")) {
+            throw new IOException("Invalid library path: " + agentPath);
+        }
+
+        byte[] bytes;
+        try (InputStream input = DefaultLauncher.class.getResourceAsStream("/assets/game/" + fileName)) {
+            if (input == null) {
+                throw new IOException("/assets/game/" + fileName + " not found");
+            }
+
+            bytes = input.readAllBytes();
+        }
+
+        if (Files.isRegularFile(agentPath)) {
+            try {
+                if (Files.size(agentPath) == bytes.length) {
+                    return agentPath;
+                }
+            } catch (IOException e) {
+                LOG.warning("Failed to check size of " + agentPath, e);
+            }
+        }
+
+        Files.createDirectories(agentPath.getParent());
+        FileUtils.saveSafely(agentPath, output -> output.write(bytes));
+        return agentPath;
+    }
 }

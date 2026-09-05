@@ -143,7 +143,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
 
     public void installOffline() {
         FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.modloader.installer"), "*.jar", "*.exe"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.modloader.installer"), "*.jar", "*.exe", "*.zip"));
         Path file = Controllers.showOpenDialog(chooser);
         if (file != null) doInstallOffline(file);
     }

@@ -36,6 +36,7 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
 import org.jackhuang.hmcl.download.fabric.FabricAPIInstallTask;
 import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
+import org.jackhuang.hmcl.download.forge.ForgeLegacyInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeOldInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
@@ -172,7 +173,7 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("install.installer.install", i18n("install.installer.cleanroom")));
                 } else if (task instanceof LegacyFabricInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.legacyfabric")));
-                } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
+                } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask || task instanceof ForgeLegacyInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
                 } else if (task instanceof NeoForgeInstallTask || task instanceof NeoForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.neoforge")));
