@@ -51,6 +51,10 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
     private Task<GameInstancePatch> dependency;
 
     public ForgeInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, ForgeRemoteVersion remoteVersion) {
+        if (!manifest.isModifiable()) {
+            throw new IllegalArgumentException("Manifest is not modifiable");
+        }
+
         this.dependencyManager = dependencyManager;
         this.manifest = manifest;
         this.remote = remoteVersion;
@@ -95,7 +99,8 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void execute() throws IOException, VersionMismatchException, UnsupportedInstallationException {
-        String originalMainClass = dependencyManager.getGameRepository().resolve(manifest).launchManifest().mainClass();
+        String originalMainClass = manifest.mainClass();
+
         if (GameVersionNumber.compare("1.13", remote.getGameVersion()) <= 0) {
             // Forge 1.13 is not compatible with fabric.
             if (!GameComponentAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
