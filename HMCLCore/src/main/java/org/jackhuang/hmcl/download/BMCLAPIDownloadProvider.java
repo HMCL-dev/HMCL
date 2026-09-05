@@ -18,16 +18,14 @@
 package org.jackhuang.hmcl.download;
 
 import org.jackhuang.hmcl.download.cleanroom.CleanroomVersionList;
-import org.jackhuang.hmcl.download.fabric.FabricAPIVersionList;
 import org.jackhuang.hmcl.download.fabric.FabricVersionList;
+import org.jackhuang.hmcl.download.fabriclike.ModrinthComponentVersionList;
 import org.jackhuang.hmcl.download.forge.ForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
-import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricAPIVersionList;
 import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderBMCLVersionList;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
-import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.util.Pair;
@@ -46,16 +44,16 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     private final String apiRoot;
     private final GameVersionList game;
     private final FabricVersionList fabric;
-    private final FabricAPIVersionList fabricApi;
+    private final ModrinthComponentVersionList fabricApi;
     private final ForgeBMCLVersionList forge;
     private final CleanroomVersionList cleanroom;
     private final LegacyFabricVersionList legacyFabric;
-    private final LegacyFabricAPIVersionList legacyFabricApi;
+    private final ModrinthComponentVersionList legacyFabricApi;
     private final NeoForgeBMCLVersionList neoforge;
     private final LiteLoaderBMCLVersionList liteLoader;
     private final OptiFineBMCLVersionList optifine;
     private final QuiltVersionList quilt;
-    private final QuiltAPIVersionList quiltApi;
+    private final ModrinthComponentVersionList quiltApi;
     private final List<Pair<String, String>> replacement;
     private final List<Pair<String, String>> fallbackReplacement;
 
@@ -63,16 +61,16 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
         this.apiRoot = apiRoot;
         this.game = new GameVersionList(this);
         this.fabric = new FabricVersionList(this);
-        this.fabricApi = new FabricAPIVersionList(this);
+        this.fabricApi = new ModrinthComponentVersionList(this, GameComponentType.FABRIC_API, "P7dR8mSH");
         this.forge = new ForgeBMCLVersionList(apiRoot);
         this.cleanroom = new CleanroomVersionList(this);
         this.neoforge = new NeoForgeBMCLVersionList(apiRoot);
         this.liteLoader = new LiteLoaderBMCLVersionList(this);
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
         this.quilt = new QuiltVersionList(this);
-        this.quiltApi = new QuiltAPIVersionList(this);
+        this.quiltApi = new ModrinthComponentVersionList(this, GameComponentType.QUILT_API, "qvIfYCYJ");
         this.legacyFabric = new LegacyFabricVersionList(this);
-        this.legacyFabricApi = new LegacyFabricAPIVersionList(this);
+        this.legacyFabricApi = new ModrinthComponentVersionList(this, GameComponentType.LEGACY_FABRIC_API, "9CJED7xi");
 
         this.replacement = List.of(
                 pair("https://bmclapi2.bangbang93.com", apiRoot),

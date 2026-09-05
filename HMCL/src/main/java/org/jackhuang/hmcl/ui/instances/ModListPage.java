@@ -43,12 +43,12 @@ import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
-import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
-import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
@@ -75,7 +75,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -739,7 +738,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                                     String loaderName = switch (modLoaderType) {
                                         case FORGE -> i18n("install.installer.forge");
                                         case CLEANROOM -> i18n("install.installer.cleanroom");
-                                        case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
+                                        case LEGACY_FABRIC -> i18n("install.installer.legacy-fabric");
                                         case NEO_FORGE -> i18n("install.installer.neoforge");
                                         case FABRIC -> i18n("install.installer.fabric");
                                         case LITE_LOADER -> i18n("install.installer.liteloader");
@@ -894,7 +893,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 warning.add(i18n("mods.warning.loader_mismatch"));
                 switch (dataItem.getModInfo().getModLoaderType()) {
                     case FORGE -> content.addTagWarning(i18n("install.installer.forge"));
-                    case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacyfabric"));
+                    case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacy-fabric"));
                     case CLEANROOM -> content.addTagWarning(i18n("install.installer.cleanroom"));
                     case NEO_FORGE -> content.addTagWarning(i18n("install.installer.neoforge"));
                     case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));

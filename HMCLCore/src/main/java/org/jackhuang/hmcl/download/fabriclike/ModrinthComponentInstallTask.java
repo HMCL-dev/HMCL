@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,10 +15,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.download.fabric;
+package org.jackhuang.hmcl.download.fabriclike;
 
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -29,30 +28,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * <b>Note</b>: Fabric should be installed first.
- *
- * @author huangyuhui
- */
-public final class FabricAPIInstallTask extends Task<GameInstancePatch> {
-
-    private final DefaultDependencyManager dependencyManager;
-    private final GameInstanceManifest manifest;
-    private final FabricAPIRemoteVersion remote;
+public class ModrinthComponentInstallTask extends Task<GameInstancePatch> {
+    private final ModrinthComponentRemoteVersion remote;
     private final Path modsDirectory;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    /// @param dependencyManager the dependency manager
-    /// @param manifest           the manifest being installed into
     /// @param remoteVersion      the Fabric API remote version
     /// @param modsDirectory      the target mods directory (must already be resolved by the caller)
-    public FabricAPIInstallTask(
-            DefaultDependencyManager dependencyManager,
-            GameInstanceManifest manifest,
-            FabricAPIRemoteVersion remoteVersion,
+    public ModrinthComponentInstallTask(
+            ModrinthComponentRemoteVersion remoteVersion,
             Path modsDirectory) {
-        this.dependencyManager = dependencyManager;
-        this.manifest = manifest;
         this.remote = remoteVersion;
         this.modsDirectory = modsDirectory;
     }
@@ -71,8 +56,12 @@ public final class FabricAPIInstallTask extends Task<GameInstancePatch> {
     public void execute() throws IOException {
         dependencies.add(new FileDownloadTask(
                 remote.getVersion().file().url(),
-                modsDirectory.resolve("fabric-api-" + remote.getVersion().version() + ".jar"),
+                modsDirectory.resolve(remote.getVersion().file().filename()),
                 remote.getVersion().file().getIntegrityCheck())
         );
+    }
+
+    public RemoteAddon.Version getVersion() {
+        return remote.getVersion();
     }
 }

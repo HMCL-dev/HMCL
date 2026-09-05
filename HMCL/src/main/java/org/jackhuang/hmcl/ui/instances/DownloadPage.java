@@ -29,11 +29,13 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -481,7 +483,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 content.addTag(i18n("install.installer.quilt"));
                                 break;
                             case LEGACY_FABRIC:
-                                content.addTag(i18n("install.installer.legacyfabric"));
+                                content.addTag(i18n("install.installer.legacy-fabric"));
                                 break;
                         }
                     }
