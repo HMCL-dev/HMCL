@@ -91,6 +91,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         return repository;
     }
 
+    @Override
     public DefaultGameRepositorySnapshot getBaseSnapshot() {
         return baseSnapshot;
     }
@@ -217,7 +218,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
             Path root = baseSnapshot.getLayout().getInstanceRoot(id)
                     .toAbsolutePath()
                     .normalize();
-            if (!repository.mayClaimDraftInstanceRoot(id, root)) {
+            if (!Files.notExists(root)) {
                 throw new FileAlreadyExistsException(root.toString(), null,
                         "An unregistered instance directory already exists");
             }
@@ -364,9 +365,9 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
         return committedSnapshot;
     }
 
-    /// Creates and initializes roots reserved for instances added by this draft.
+    /// Creates roots reserved for instances added by this draft.
     ///
-    /// @throws IOException if a root or repository-specific initial data cannot be created
+    /// @throws IOException if a root cannot be created
     private void materializeCreatedInstanceRoots() throws IOException {
         for (GameInstanceID id : createdIds) {
             if (!manifests.containsKey(id)) {
@@ -376,7 +377,6 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
                     .toAbsolutePath()
                     .normalize();
             Files.createDirectories(root);
-            repository.initializeDraftInstanceRoot(id, root);
         }
     }
 

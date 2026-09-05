@@ -18,22 +18,23 @@
 package org.jackhuang.hmcl.download.cleanroom;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
-public class CleanroomRemoteVersion extends RemoteVersion {
+public class CleanroomRemoteVersion extends ComponentRemoteVersion {
     public CleanroomRemoteVersion(String gameVersion, String selfVersion, Instant releaseDate, List<String> url) {
         super(GameComponentType.CLEANROOM, gameVersion, selfVersion, releaseDate, url);
     }
 
     @Override
-    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
-        return new CleanroomInstallTask(dependencyManager, baseVersion, this);
+    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseManifest, Path modsDirectory) {
+        return new CleanroomInstallTask(dependencyManager, baseManifest, this);
     }
 }

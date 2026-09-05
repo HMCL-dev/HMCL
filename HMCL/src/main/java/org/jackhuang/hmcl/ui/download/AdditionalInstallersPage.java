@@ -18,7 +18,13 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
@@ -51,7 +57,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
             component.setOnRemove(() -> {
                 controller.getSettings().put(
                         component.getComponentType().getPatchId(),
-                        new UpdateInstallerWizardProvider.RemoveVersionAction(component.getComponentType()));
+                        new UpdateInstallerWizardProvider.RemoveComponentAction(component.getComponentType()));
                 reload();
             });
         }
@@ -70,7 +76,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
     /// @return the localized page title
     @Override
     public String getTitle() {
-        return i18n("settings.tabs.installers");
+        return i18n("install.change_version.title", instance.getId().id());
     }
 
     /// Returns the selected version of a component, or `null` if no version is selected.
@@ -79,8 +85,8 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
     /// @return the selected component version, or `null`
     private @Nullable String getVersion(GameComponentType type) {
         return Optional.ofNullable(controller.getSettings().get(type.getPatchId()))
-                .flatMap(it -> Lang.tryCast(it, RemoteVersion.class))
-                .map(RemoteVersion::getSelfVersion).orElse(null);
+                .flatMap(it -> Lang.tryCast(it, ComponentRemoteVersion.class))
+                .map(ComponentRemoteVersion::getSelfVersion).orElse(null);
     }
 
     /// Refreshes component states from the changes selected in the wizard.
