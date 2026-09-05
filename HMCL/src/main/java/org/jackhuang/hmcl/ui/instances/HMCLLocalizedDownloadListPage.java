@@ -94,7 +94,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         }
 
         @Override
-        protected RemoteAddonRepository getBackedRemoteModRepository() {
+        protected RemoteAddonRepository getBackedRepository() {
             if ("addon.modrinth".equals(downloadSource.get())) {
                 return modrinth;
             } else {
@@ -103,7 +103,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         }
 
         @Override
-        protected SortType getBackedRemoteModRepositorySortOrder() {
+        protected SortType getBackedRepositorySortOrder() {
             if ("addon.modrinth".equals(downloadSource.get())) {
                 return SortType.NAME;
             } else {
@@ -115,6 +115,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         public RemoteAddon.Type getType() {
             return type;
         }
+
     }
 
     @Override

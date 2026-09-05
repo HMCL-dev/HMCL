@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.addon;
 
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -27,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -42,7 +45,7 @@ public abstract class LocalAddonFile {
     public abstract String getFileName();
 
     public boolean isDisabled() {
-        return FileUtils.getName(getFile()).endsWith(LocalAddonManager.DISABLED_EXTENSION);
+        return FileUtils.getName(getFile()).toLowerCase(Locale.ROOT).endsWith(LocalAddonManager.DISABLED_EXTENSION);
     }
 
     public abstract void markDisabled() throws IOException;
@@ -52,6 +55,25 @@ public abstract class LocalAddonFile {
     public abstract boolean keepOldFiles();
 
     public abstract void delete() throws IOException;
+
+    private long cfFingerprint = -1L;
+    private String sha1 = null;
+
+    /// Calculates file fingerprint for CurseForge.
+    ///
+    /// @return file fingerprint used by CurseForge, non-negative
+    public long calculateFingerprintCurseForge() throws IOException {
+        if (cfFingerprint < 0) cfFingerprint = CurseForgeRemoteAddonRepository.calculateFingerprint(getFile());
+        return cfFingerprint;
+    }
+
+    /// Calculates SHA-1 hash for Modrinth.
+    ///
+    /// @return SHA-1 hash used by Modrinth
+    public String calculateSha1Modrinth() throws IOException {
+        if (sha1 == null) sha1 = DigestUtils.digestToString("SHA-1", getFile());
+        return sha1;
+    }
 
     @Nullable
     public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
