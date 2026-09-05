@@ -21,23 +21,38 @@ import javafx.scene.Node;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
+import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.setting.TriPreference;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
+import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameInstanceIconDialog extends DialogPane {
+
+    public static final Path INSTANCE_ICONS_DIR = Metadata.HMCL_LOCAL_HOME.resolve("instance_icons");
+
+    private static final SimpleDateFormat fileNameFormat = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss_");
+
     private final HMCLGameInstance gameInstance;
     private final Runnable onFinish;
     private final GameSettings.@Nullable Instance setting;
@@ -68,6 +83,18 @@ public class GameInstanceIconDialog extends DialogPane {
                 createIcon(GameInstanceIconType.FURNACE),
                 createIcon(GameInstanceIconType.QUILT)
         );
+        if (Files.isDirectory(INSTANCE_ICONS_DIR)) {
+            try (var stream = Files.list(INSTANCE_ICONS_DIR)) {
+                pane.getChildren().addAll(
+                        stream.filter(p -> Files.isRegularFile(p) && FXUtils.IMAGE_EXTENSIONS.contains(FileUtils.getExtension(p).toLowerCase(Locale.ROOT)))
+                                .map(this::createIcon)
+                                .filter(Objects::nonNull)
+                                .toList()
+                );
+            } catch (Exception e) {
+                LOG.warning("Failed to load custom instance icons at " + INSTANCE_ICONS_DIR, e);
+            }
+        }
     }
 
     private void exploreIcon() {
@@ -75,17 +102,52 @@ public class GameInstanceIconDialog extends DialogPane {
         chooser.getExtensionFilters().add(FXUtils.getImageExtensionFilter());
         Path selectedFile = Controllers.showOpenDialog(chooser);
         if (selectedFile != null) {
-            try {
-                gameInstance.setIconFile(selectedFile);
-
-                if (setting != null) {
-                    setting.iconProperty().setValue(GameInstanceIconType.DEFAULT);
-                }
-
-                onAccept();
-            } catch (IOException | IllegalArgumentException e) {
-                LOG.error("Failed to set icon file: " + selectedFile, e);
+            TriPreference pref = SettingsManager.settings().saveCustomGameIconsProperty().get();
+            if (pref == TriPreference.CONFIRM_EACH_TIME && !INSTANCE_ICONS_DIR.equals(selectedFile.getParent())) {
+                Controllers.askTriPreference(
+                        i18n("settings.icon.save"),
+                        (b) -> setCustomIcon(selectedFile, b),
+                        (p) -> SettingsManager.settings().saveCustomGameIconsProperty().set(p)
+                );
+            } else {
+                setCustomIcon(selectedFile, pref == TriPreference.ALWAYS);
             }
+        }
+    }
+
+    private Path saveIcon(Path selectedFile) throws IOException {
+        String date = fileNameFormat.format(new Date());
+        Path dest = INSTANCE_ICONS_DIR.resolve(date + selectedFile.getFileName());
+        {
+            int i = 1;
+            String nameBase = date + FileUtils.getNameWithoutExtension(selectedFile);
+            String ext = FileUtils.getExtension(selectedFile);
+            while (Files.exists(dest)) {
+                dest = INSTANCE_ICONS_DIR.resolve(nameBase + "_" + i + "." + ext);
+                i++;
+            }
+        }
+        FileUtils.copyFile(selectedFile, dest);
+        return dest;
+    }
+
+    private void setCustomIcon(Path selectedFile, boolean save) {
+        try {
+            Path dest;
+            if (INSTANCE_ICONS_DIR.equals(selectedFile.getParent()) || !save) {
+                dest = selectedFile;
+            } else {
+                dest = saveIcon(selectedFile);
+            }
+            gameInstance.setIconFile(dest);
+
+            if (setting != null) {
+                setting.iconProperty().setValue(GameInstanceIconType.DEFAULT);
+            }
+
+            onAccept();
+        } catch (IOException | IllegalArgumentException e) {
+            LOG.error("Failed to set instance icon file: " + selectedFile, e);
         }
     }
 
@@ -108,6 +170,32 @@ public class GameInstanceIconDialog extends DialogPane {
         FXUtils.onClicked(container, () -> {
             if (setting != null) {
                 setting.iconProperty().setValue(type);
+                onAccept();
+            }
+        });
+        return container;
+    }
+
+    private Node createIcon(Path path) {
+        ImageContainer imageContainer;
+        try {
+            imageContainer = new ImageContainer(32, FXUtils.loadImage(path, 64, 64, true, true));
+        } catch (Exception e) {
+            LOG.warning("Failed to load custom instance icon at " + path, e);
+            return null;
+        }
+        imageContainer.setMouseTransparent(true);
+        RipplerContainer container = new RipplerContainer(imageContainer);
+        FXUtils.setLimitWidth(container, 36);
+        FXUtils.setLimitHeight(container, 36);
+        FXUtils.onClicked(container, () -> {
+            try {
+                gameInstance.setIconFile(path);
+            } catch (IOException e) {
+                LOG.error("Failed to set icon file: " + path, e);
+            }
+            if (setting != null) {
+                setting.iconProperty().setValue(GameInstanceIconType.DEFAULT);
                 onAccept();
             }
         });

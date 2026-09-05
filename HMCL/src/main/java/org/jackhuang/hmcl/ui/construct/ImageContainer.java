@@ -64,6 +64,11 @@ public class ImageContainer extends StackPane {
         this.getChildren().setAll(imageView);
     }
 
+    public ImageContainer(double size, Image image) {
+        this(size);
+        setImage(image);
+    }
+
     private void updateCornerRadius(double radius) {
         clip.setArcWidth(radius);
         clip.setArcHeight(radius);
