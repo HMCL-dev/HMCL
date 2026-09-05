@@ -41,6 +41,10 @@ public class DialogPane extends JFXDialogLayout {
     private final JFXProgressBar progressBar = new JFXProgressBar();
 
     public DialogPane() {
+        this(false);
+    }
+
+    public DialogPane(boolean closeOnly) {
         Label titleLabel = new Label();
         titleLabel.textProperty().bind(title);
         setHeading(titleLabel);
@@ -58,12 +62,17 @@ public class DialogPane extends JFXDialogLayout {
         acceptPane.getStyleClass().add("small-spinner-pane");
         acceptPane.setContent(acceptButton);
 
-        cancelButton.setText(i18n("button.cancel"));
+        cancelButton.setText(closeOnly ? i18n("button.close") : i18n("button.cancel"));
         cancelButton.setOnAction(e -> onCancel());
         cancelButton.getStyleClass().add("dialog-cancel");
         onEscPressed(this, cancelButton::fire);
 
-        setActions(warningLabel, acceptPane, cancelButton);
+        if (closeOnly) {
+            setActions(warningLabel, cancelButton);
+        } else {
+            setActions(warningLabel, acceptPane, cancelButton);
+        }
+
     }
 
     protected JFXProgressBar getProgressBar() {

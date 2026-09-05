@@ -43,6 +43,8 @@ public class GameInstanceIconDialog extends DialogPane {
     private final GameSettings.@Nullable Instance setting;
 
     public GameInstanceIconDialog(HMCLGameInstance gameInstance, Runnable onFinish) {
+        super(true);
+
         this.gameInstance = gameInstance;
         this.onFinish = onFinish;
         this.setting = gameInstance.getSettingsOrCreate();
