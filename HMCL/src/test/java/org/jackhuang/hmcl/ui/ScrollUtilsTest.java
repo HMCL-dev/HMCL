@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Tests pixel-based smooth scroll target calculations.
 @NotNullByDefault
@@ -35,6 +37,15 @@ public final class ScrollUtilsTest {
         assertEquals(4.0, ScrollUtils.pixelScrollScale(mouseWheelEvent, 1.0, 1.0), 0.000001);
         assertEquals(4.0, ScrollUtils.pixelScrollScale(trackPadEvent, 1.0, 1.0), 0.000001);
         assertEquals(4.0 / 7.0, ScrollUtils.pixelScrollScale(trackPadEvent, 1.0, 7.0), 0.000001);
+    }
+
+    /// Verifies that touch and inertial input remain on the platform's immediate scrolling path.
+    @Test
+    public void bypassesSmoothTransitionForPlatformGestures() {
+        assertTrue(ScrollUtils.shouldSmoothScroll(pixelScrollEvent(-32.0)));
+        assertFalse(ScrollUtils.shouldSmoothScroll(pixelScrollEvent(-5.0, true, false, 0)));
+        assertFalse(ScrollUtils.shouldSmoothScroll(pixelScrollEvent(-5.0, false, false, 1)));
+        assertFalse(ScrollUtils.shouldSmoothScroll(pixelScrollEvent(-5.0, false, true, 0)));
     }
 
     /// Verifies that a platform pixel delta is mapped through a custom normalized range.
@@ -80,6 +91,17 @@ public final class ScrollUtilsTest {
     /// @param deltaY the platform vertical delta
     /// @return the scroll event
     private static ScrollEvent pixelScrollEvent(double deltaY) {
+        return pixelScrollEvent(deltaY, false, false, 0);
+    }
+
+    /// Creates a vertical pixel-unit scroll event with the supplied gesture metadata.
+    ///
+    /// @param deltaY     the platform vertical delta
+    /// @param direct     whether the device directly manipulates the content
+    /// @param inertia    whether the event continues a completed gesture
+    /// @param touchCount the number of touch points producing the event
+    /// @return the scroll event
+    private static ScrollEvent pixelScrollEvent(double deltaY, boolean direct, boolean inertia, int touchCount) {
         return new ScrollEvent(
                 ScrollEvent.SCROLL,
                 0.0,
@@ -90,8 +112,8 @@ public final class ScrollUtilsTest {
                 false,
                 false,
                 false,
-                false,
-                false,
+                direct,
+                inertia,
                 0.0,
                 deltaY,
                 0.0,
@@ -100,7 +122,7 @@ public final class ScrollUtilsTest {
                 0.0,
                 ScrollEvent.VerticalTextScrollUnits.NONE,
                 0.0,
-                0,
+                touchCount,
                 null
         );
     }

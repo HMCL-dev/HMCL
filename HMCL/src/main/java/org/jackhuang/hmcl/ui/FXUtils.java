@@ -21,6 +21,7 @@ import com.jfoenix.controls.*;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.PauseTransition;
+import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -425,12 +426,32 @@ public final class FXUtils {
         cell.minWidthProperty().bind(widthProperty);
     }
 
+    /// Configures smooth wheel scrolling and pointer-based panning for a scroll pane.
+    ///
+    /// Linux and BSD JavaFX backends may expose touchscreen drags as ordinary mouse drags. When JavaFX does not
+    /// advertise touch support, panning is therefore enabled if the property is writable, even if animations are disabled.
+    ///
+    /// @param scrollPane the scroll pane to configure
     public static void smoothScrolling(ScrollPane scrollPane) {
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
+                && !Platform.isSupported(ConditionalFeature.INPUT_TOUCH)
+                && !scrollPane.pannableProperty().isBound())
+            scrollPane.setPannable(true);
         if (AnimationUtils.isAnimationEnabled())
             ScrollUtils.addSmoothScrolling(scrollPane);
     }
 
+    /// Configures smooth wheel scrolling and pointer-based panning for a virtual flow.
+    ///
+    /// Linux and BSD JavaFX backends may expose touchscreen drags as ordinary mouse drags. When JavaFX does not
+    /// advertise touch support, panning is therefore enabled if the property is writable, even if animations are disabled.
+    ///
+    /// @param virtualFlow the virtual flow to configure
     public static void smoothScrolling(VirtualFlow<?> virtualFlow) {
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
+                && !Platform.isSupported(ConditionalFeature.INPUT_TOUCH)
+                && !virtualFlow.pannableProperty().isBound())
+            virtualFlow.setPannable(true);
         if (AnimationUtils.isAnimationEnabled())
             ScrollUtils.addSmoothScrolling(virtualFlow);
     }

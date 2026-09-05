@@ -202,7 +202,11 @@ final class ScrollUtils {
         ///
         /// @param event the scroll event delivered to the pane
         private void handleScroll(ScrollEvent event) {
-            if (event.isDirect() || !isEventTargetForScrollPane(scrollPane, event.getTarget())) {
+            if (!isEventTargetForScrollPane(scrollPane, event.getTarget())) {
+                return;
+            }
+            if (!shouldSmoothScroll(event)) {
+                stopAnimation();
                 return;
             }
 
@@ -381,9 +385,12 @@ final class ScrollUtils {
         ///
         /// @param event the scroll event delivered to the flow
         private void handleScroll(ScrollEvent event) {
-            if (event.isDirect()
-                    || !virtualFlow.isVertical()
+            if (!virtualFlow.isVertical()
                     || !isEventTargetForVirtualFlow(virtualFlow, event.getTarget())) {
+                return;
+            }
+            if (!shouldSmoothScroll(event)) {
+                stopAnimation();
                 return;
             }
 
@@ -577,6 +584,17 @@ final class ScrollUtils {
             current = current.getParent();
         }
         return current == virtualFlow;
+    }
+
+    /// Returns whether an event should use the custom smooth scrolling transition.
+    ///
+    /// Touch gestures are also identified by their touch count because some platform backends do not reliably mark
+    /// their scroll events as direct. Inertia is already generated as a timed gesture and must not be animated again.
+    ///
+    /// @param event the scroll event to classify
+    /// @return `true` for wheel and non-inertial indirect scrolling
+    static boolean shouldSmoothScroll(ScrollEvent event) {
+        return !event.isDirect() && event.getTouchCount() == 0 && !event.isInertia();
     }
 
     /// Returns the scale applied to a platform pixel-unit scroll delta.
