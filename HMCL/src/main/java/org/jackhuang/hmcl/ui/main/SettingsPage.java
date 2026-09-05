@@ -43,8 +43,6 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.tukaani.xz.XZInputStream;
@@ -162,33 +160,6 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("update")), updatePaneList);
-            }
-
-            {
-                ComponentList languagePaneList = new ComponentList();
-
-                {
-                    var chooseLanguagePane = new LineSelectButton<SupportedLocale>();
-                    chooseLanguagePane.setTitle(i18n("settings.launcher.language"));
-                    chooseLanguagePane.setSubtitle(i18n("settings.take_effect_after_restart"));
-
-                    SupportedLocale currentLocale = I18n.getLocale();
-                    chooseLanguagePane.setNullSafeConverter(locale -> {
-                        if (locale.isDefault())
-                            return locale.getDisplayName(currentLocale);
-                        else if (locale.isSameLanguage(currentLocale))
-                            return locale.getDisplayName(locale);
-                        else
-                            return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
-                    });
-                    chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
-                    chooseLanguagePane.valueProperty().bindBidirectional(settings().languageProperty());
-
-                    languagePaneList.getContent().add(chooseLanguagePane);
-
-                }
-
-                rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.language")), languagePaneList);
             }
 
             {

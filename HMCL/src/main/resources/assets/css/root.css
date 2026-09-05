@@ -447,12 +447,12 @@
     -fx-min-width: 200px;
     -fx-border-width: 0 3px 0 0;
     -fx-border-color: linear-gradient(
-        to bottom, 
-        transparent 0%, 
-        transparent 20%, 
+        to bottom,
+        transparent 0%,
+        transparent 20%,
         -monet-on-surface-variant 20%,
         -monet-on-surface-variant 80%,
-        transparent 80%, 
+        transparent 80%,
         transparent 100%
     );
     -fx-background-radius: 4px 0 0 4px;
@@ -1948,6 +1948,10 @@
 
 .update-pane:active .subtitle-label {
     -fx-text-fill: -monet-tertiary;
+}
+
+.line-radio-button .line-component-container {
+    -fx-padding: 10 16 10 4;
 }
 
 /*******************************************************************************
