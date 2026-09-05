@@ -80,5 +80,9 @@ public abstract class MDListCell<T> extends ListCell<T> {
         });
     }
 
+    protected void onClicked(Runnable action) {
+        FXUtils.onClicked(ripplerContainer, action);
+    }
+
     protected abstract void updateControl(T item, boolean empty);
 }
