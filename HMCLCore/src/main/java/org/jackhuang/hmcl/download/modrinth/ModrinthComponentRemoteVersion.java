@@ -15,21 +15,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.download.fabric;
+package org.jackhuang.hmcl.download.modrinth;
 
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
-import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.task.Task;
 
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
-public class FabricAPIRemoteVersion extends ComponentRemoteVersion {
+public class ModrinthComponentRemoteVersion extends ComponentRemoteVersion {
     private final String fullVersion;
     private final RemoteAddon.Version version;
 
@@ -40,8 +40,8 @@ public class FabricAPIRemoteVersion extends ComponentRemoteVersion {
      * @param selfVersion the version string of the remote version.
      * @param urls        the installer or universal jar original URL.
      */
-    FabricAPIRemoteVersion(String gameVersion, String selfVersion, String fullVersion, Instant datePublished, RemoteAddon.Version version, List<String> urls) {
-        super(GameComponentType.FABRIC_API, gameVersion, selfVersion, datePublished, urls);
+    ModrinthComponentRemoteVersion(GameComponentType type, String gameVersion, String selfVersion, String fullVersion, Instant datePublished, RemoteAddon.Version version, List<String> urls) {
+        super(type, gameVersion, selfVersion, datePublished, urls);
 
         this.fullVersion = fullVersion;
         this.version = version;
@@ -61,12 +61,12 @@ public class FabricAPIRemoteVersion extends ComponentRemoteVersion {
             DefaultDependencyManager dependencyManager,
             GameInstanceManifest baseManifest,
             Path modsDirectory) {
-        return new FabricAPIInstallTask(dependencyManager, baseManifest, this, modsDirectory);
+        return new ModrinthComponentInstallTask(this, modsDirectory);
     }
 
     @Override
     public int compareTo(ComponentRemoteVersion o) {
-        if (!(o instanceof FabricAPIRemoteVersion)) return 0;
+        if (!(o instanceof ModrinthComponentRemoteVersion)) return 0;
         return -this.getReleaseDate().compareTo(o.getReleaseDate());
     }
 }

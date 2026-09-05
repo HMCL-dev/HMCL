@@ -34,7 +34,6 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
-import org.jackhuang.hmcl.download.fabric.FabricAPIInstallTask;
 import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeOldInstallTask;
@@ -43,10 +42,10 @@ import org.jackhuang.hmcl.download.game.GameInstallTask;
 import org.jackhuang.hmcl.download.java.mojang.MojangJavaDownloadTask;
 import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricInstallTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
+import org.jackhuang.hmcl.download.modrinth.ModrinthComponentInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeOldInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
-import org.jackhuang.hmcl.download.quilt.QuiltAPIInstallTask;
 import org.jackhuang.hmcl.download.quilt.QuiltInstallTask;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
 import org.jackhuang.hmcl.java.JavaInstallTask;
@@ -171,7 +170,7 @@ public final class TaskListPane extends StackPane {
                 } else if (task instanceof CleanroomInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.cleanroom")));
                 } else if (task instanceof LegacyFabricInstallTask) {
-                    task.setName(i18n("install.installer.install", i18n("install.installer.legacyfabric")));
+                    task.setName(i18n("install.installer.install", i18n("install.installer.legacy-fabric")));
                 } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
                 } else if (task instanceof NeoForgeInstallTask || task instanceof NeoForgeOldInstallTask) {
@@ -182,12 +181,10 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("install.installer.install", i18n("install.installer.optifine")));
                 } else if (task instanceof FabricInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.fabric")));
-                } else if (task instanceof FabricAPIInstallTask) {
-                    task.setName(i18n("install.installer.install", i18n("install.installer.fabric-api")));
+                } else if (task instanceof ModrinthComponentInstallTask modrinthComponentInstallTask) {
+                    task.setName(i18n("install.installer.install", i18n("install.installer." + modrinthComponentInstallTask.getVersion().projectId())));
                 } else if (task instanceof QuiltInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.quilt")));
-                } else if (task instanceof QuiltAPIInstallTask) {
-                    task.setName(i18n("install.installer.install", i18n("install.installer.quilt-api")));
                 } else if (task instanceof CurseCompletionTask || task instanceof ModrinthCompletionTask || task instanceof ServerModpackCompletionTask || task instanceof McbbsModpackCompletionTask) {
                     task.setName(i18n("modpack.completion"));
                 } else if (task instanceof ModpackInstallTask) {
@@ -453,8 +450,8 @@ public final class TaskListPane extends StackPane {
                 case "hmcl.install.optifine" ->         i18n("install.installer.install", i18n("install.installer.optifine") + " " + stageValue);
                 case "hmcl.install.fabric" ->           i18n("install.installer.install", i18n("install.installer.fabric") + " " + stageValue);
                 case "hmcl.install.fabric-api" ->       i18n("install.installer.install", i18n("install.installer.fabric-api") + " " + stageValue);
-                case "hmcl.install.legacyfabric" ->     i18n("install.installer.install", i18n("install.installer.legacyfabric") + " " + stageValue);
-                case "hmcl.install.legacyfabric-api" -> i18n("install.installer.install", i18n("install.installer.legacyfabric-api") + " " + stageValue);
+                case "hmcl.install.legacyfabric" ->     i18n("install.installer.install", i18n("install.installer.legacy-fabric") + " " + stageValue);
+                case "hmcl.install.legacyfabric-api" -> i18n("install.installer.install", i18n("install.installer.legacy-fabric-api") + " " + stageValue);
                 case "hmcl.install.quilt" ->            i18n("install.installer.install", i18n("install.installer.quilt") + " " + stageValue);
                 case "hmcl.install.quilt-api" ->        i18n("install.installer.install", i18n("install.installer.quilt-api") + " " + stageValue);
                 default -> i18n(stageKey);

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,23 +15,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.download.fabric;
+package org.jackhuang.hmcl.download.modrinth;
 
-import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.download.ComponentVersionList;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.util.Collections;
 
-public class FabricAPIVersionList extends ComponentVersionList<FabricAPIRemoteVersion> {
+public class ModrinthComponentVersionList extends ComponentVersionList<ModrinthComponentRemoteVersion> {
 
     private final DownloadProvider downloadProvider;
+    private final GameComponentType type;
+    private final String mrId;
 
-    public FabricAPIVersionList(DownloadProvider downloadProvider) {
+    public ModrinthComponentVersionList(DownloadProvider downloadProvider, GameComponentType type,String mrId) {
         this.downloadProvider = downloadProvider;
+        this.type = type;
+        this.mrId = mrId;
     }
 
     @Override
@@ -42,10 +47,9 @@ public class FabricAPIVersionList extends ComponentVersionList<FabricAPIRemoteVe
     @Override
     public Task<?> refreshAsync() {
         return Task.runAsync(() -> {
-            for (RemoteAddon.Version modVersion : Lang.toIterable(ModrinthRemoteAddonRepository.MODS.getRemoteVersionsById(downloadProvider, "P7dR8mSH"))) {
+            for (RemoteAddon.Version modVersion : Lang.toIterable(ModrinthRemoteAddonRepository.MODS.getRemoteVersionsById(downloadProvider, mrId))) {
                 for (String gameVersion : modVersion.gameVersions()) {
-                    versions.put(gameVersion, new FabricAPIRemoteVersion(gameVersion, modVersion.version(), modVersion.name(), modVersion.datePublished(), modVersion,
-                            Collections.singletonList(modVersion.file().url())));
+                    versions.put(gameVersion, new ModrinthComponentRemoteVersion(type, gameVersion, modVersion.version(), modVersion.name(), modVersion.datePublished(), modVersion, Collections.singletonList(modVersion.file().url())));
                 }
             }
         });
