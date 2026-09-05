@@ -440,7 +440,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                                  @SerializedName("author_id") String authorId,
                                  @SerializedName("date_published") Instant datePublished, int downloads,
                                  @SerializedName("changelog_url") String changelogUrl,
-                                 List<ProjectVersionFile> files) implements RemoteAddon.IVersion {
+                                 List<ProjectVersionFile> files) {
         private static final Map<String, RemoteAddon.@Nullable DependencyType> DEPENDENCY_TYPE = mapOf(
                 pair("required", RemoteAddon.DependencyType.REQUIRED),
                 pair("optional", RemoteAddon.DependencyType.OPTIONAL),
@@ -448,29 +448,20 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                 pair("incompatible", RemoteAddon.DependencyType.INCOMPATIBLE)
         );
 
-        @Override
-        public RemoteAddon.Source getSource() {
-            return RemoteAddon.Source.MODRINTH;
-        }
-
         public Optional<RemoteAddon.Version> toVersion() {
-            RemoteAddon.VersionType type;
-            if ("release".equals(versionType)) {
-                type = RemoteAddon.VersionType.Release;
-            } else if ("beta".equals(versionType)) {
-                type = RemoteAddon.VersionType.Beta;
-            } else if ("alpha".equals(versionType)) {
-                type = RemoteAddon.VersionType.Alpha;
-            } else {
-                type = RemoteAddon.VersionType.Release;
-            }
+            RemoteAddon.VersionType type = switch (versionType) {
+                case "release" -> RemoteAddon.VersionType.Release;
+                case "beta" -> RemoteAddon.VersionType.Beta;
+                case "alpha" -> RemoteAddon.VersionType.Alpha;
+                default -> RemoteAddon.VersionType.Release;
+            };
 
             if (files.isEmpty()) {
                 return Optional.empty();
             }
 
             return Optional.of(new RemoteAddon.Version(
-                    this,
+                    RemoteAddon.Source.MODRINTH,
                     id,
                     projectId,
                     name,
