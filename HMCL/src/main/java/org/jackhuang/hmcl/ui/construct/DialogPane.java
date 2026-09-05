@@ -41,6 +41,9 @@ public class DialogPane extends JFXDialogLayout {
     private final JFXProgressBar progressBar = new JFXProgressBar();
 
     public DialogPane() {
+        this(false);
+    }
+    public DialogPane(boolean cancelOnly) {
         Label titleLabel = new Label();
         titleLabel.textProperty().bind(title);
         setHeading(titleLabel);
@@ -63,7 +66,12 @@ public class DialogPane extends JFXDialogLayout {
         cancelButton.getStyleClass().add("dialog-cancel");
         onEscPressed(this, cancelButton::fire);
 
-        setActions(warningLabel, acceptPane, cancelButton);
+        if (cancelOnly) {
+            setActions(warningLabel, cancelButton);
+        } else {
+            setActions(warningLabel, acceptPane, cancelButton);
+        }
+
     }
 
     protected JFXProgressBar getProgressBar() {
