@@ -47,10 +47,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
@@ -328,6 +325,10 @@ public final class Decorator {
     /// @return the stable main-window pane used as the dialog container
     public StackPane getDialogContainer() {
         return mainWindowPane;
+    }
+
+    public Pane getMask() {
+        return mainWindowPane.getMask();
     }
 
     /// Returns the navigation stack rendered by the main window.

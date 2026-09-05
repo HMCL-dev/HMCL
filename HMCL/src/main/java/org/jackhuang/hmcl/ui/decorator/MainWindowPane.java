@@ -75,6 +75,9 @@ final class MainWindowPane extends StackPane {
     /// The transition container used when the title-bar state changes.
     private final TransitionPane navBarPane;
 
+    /// The mask layer that covers the stage when changing color scheme.
+    private final Pane mask;
+
     /// Retains listener delegates that are registered through weak listener wrappers.
     @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder holder = new WeakListenerHolder();
@@ -133,7 +136,17 @@ final class MainWindowPane extends StackPane {
 
         decorator.capableDraggingWindow(titleBar);
 
-        getChildren().setAll(backgroundNode, frame);
+        mask = new StackPane();
+        mask.setBackground(new Background(new BackgroundFill(Color.gray(0.5D), null, null)));
+        mask.setVisible(false);
+        mask.setOpacity(0D);
+        mask.setPickOnBounds(false);
+
+        getChildren().setAll(backgroundNode, frame, mask);
+    }
+
+    public Pane getMask() {
+        return mask;
     }
 
     /// Updates the content-corner shape for an edge-to-edge window state.

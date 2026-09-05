@@ -17,17 +17,25 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import com.jfoenix.transitions.CachedTransition;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.animation.Transition;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
+import javafx.util.Duration;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorScheme;
 import org.jackhuang.hmcl.theme.ResolvedTheme;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.Themes;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.animation.Motion;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -54,9 +62,46 @@ public final class StyleSheets {
         stylesheets = FXCollections.observableList(Arrays.asList(array));
 
         FontManager.fontProperty().addListener(o -> stylesheets.set(FONT_STYLE_SHEET_INDEX, getFontStyleSheet()));
+
+        Transition animation;
+        if (!SettingsManager.settings().isAnimationDisabled()) {
+            var mask = Controllers.getDecorator().getMask();
+            animation = new CachedTransition(mask, new Timeline(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(mask.visibleProperty(), false, Motion.LINEAR)
+                    ),
+                    new KeyFrame(Duration.millis(10),
+                            new KeyValue(mask.visibleProperty(), true, Motion.LINEAR),
+                            new KeyValue(mask.opacityProperty(), 0D, Motion.EMPHASIZED_DECELERATE)
+                    ),
+                    new KeyFrame(Motion.LONG2,
+                            new KeyValue(mask.visibleProperty(), true, Motion.LINEAR),
+                            new KeyValue(mask.opacityProperty(), 1D, Motion.EMPHASIZED_DECELERATE)
+                    ))
+            ) {
+                {
+                    setCycleDuration(Motion.MEDIUM2);
+                    setDelay(Duration.ZERO);
+                }
+            };
+        } else {
+            animation = null;
+        }
         Themes.colorSchemeProperty().addListener(o -> {
-            stylesheets.set(THEME_STYLE_SHEET_INDEX, getThemeStyleSheet());
-            stylesheets.set(BRIGHTNESS_SHEET_INDEX, getBrightnessStyleSheet());
+            if (animation != null) {
+                animation.setRate(1D);
+                animation.setOnFinished(e -> {
+                    stylesheets.set(THEME_STYLE_SHEET_INDEX, getThemeStyleSheet());
+                    stylesheets.set(BRIGHTNESS_SHEET_INDEX, getBrightnessStyleSheet());
+                    animation.setOnFinished(null);
+                    animation.setRate(-1D);
+                    animation.play();
+                });
+                animation.play();
+            } else {
+                stylesheets.set(THEME_STYLE_SHEET_INDEX, getThemeStyleSheet());
+                stylesheets.set(BRIGHTNESS_SHEET_INDEX, getBrightnessStyleSheet());
+            }
         });
     }
 
