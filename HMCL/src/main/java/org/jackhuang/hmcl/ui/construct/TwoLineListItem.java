@@ -23,17 +23,18 @@ import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.ui.FXUtils;
 
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
 
-    private final HBox firstLine;
+    private final Pane firstLine;
     private HBox secondLine;
 
     private final Label lblTitle;
@@ -45,10 +46,18 @@ public class TwoLineListItem extends VBox {
 
         lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
+        lblTitle.setWrapText(true);
+        lblTitle.setMinWidth(0);
 
-        this.firstLine = new HBox(lblTitle);
+        this.firstLine = new Pane(lblTitle);
         firstLine.getStyleClass().add("first-line");
-        firstLine.setAlignment(Pos.CENTER_LEFT);
+        firstLine.setMaxWidth(Double.MAX_VALUE);
+        firstLine.setMinWidth(0);
+        firstLine.prefWidthProperty().bind(widthProperty());
+        firstLine.minHeightProperty().bind(lblTitle.heightProperty());
+        firstLine.prefHeightProperty().bind(lblTitle.heightProperty());
+
+        widthProperty().addListener((obs, old, val) -> firstLine.requestLayout());
 
         this.getChildren().setAll(firstLine);
     }
@@ -145,7 +154,7 @@ public class TwoLineListItem extends VBox {
         subtitleProperty().set(subtitle);
     }
 
-    public HBox getFirstLine() {
+    public Pane getFirstLine() {
         return firstLine;
     }
 
@@ -164,20 +173,26 @@ public class TwoLineListItem extends VBox {
         if (tags == null) {
             tags = FXCollections.observableArrayList();
 
-            var tagsBox = new HBox(8);
+            var tagsBox = new FlowPane(Orientation.HORIZONTAL, 8, 4);
             tagsBox.getStyleClass().add("tags");
-            tagsBox.setAlignment(Pos.CENTER_LEFT);
+            tagsBox.setAlignment(Pos.CENTER_RIGHT);
             tagsBox.setMinWidth(0);
-            HBox.setHgrow(tagsBox, Priority.ALWAYS);
             Bindings.bindContent(tagsBox.getChildren(), tags);
             var isNotEmpty = Bindings.isNotEmpty(tags);
             tagsBox.managedProperty().bind(isNotEmpty);
             tagsBox.visibleProperty().bind(isNotEmpty);
 
-            FXUtils.setOverflowHidden(tagsBox);
-
-            lblTitle.setMinWidth(Label.USE_PREF_SIZE);
             firstLine.getChildren().setAll(lblTitle, tagsBox);
+
+            tagsBox.layoutXProperty().bind(
+                    firstLine.widthProperty().subtract(tagsBox.widthProperty())
+            );
+
+            lblTitle.maxWidthProperty().bind(
+                    firstLine.widthProperty().subtract(tagsBox.widthProperty()).subtract(8)
+            );
+
+            firstLine.widthProperty().addListener((obs, old, val) -> firstLine.requestLayout());
         }
         return tags;
     }
