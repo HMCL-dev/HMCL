@@ -95,7 +95,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
     private ModManager modManager;
     private @Nullable HMCLGameInstance gameInstance;
-    private String gameVersion;
+    String gameVersion;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
@@ -185,16 +185,27 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return;
         }
 
+        var gameVersionNumber = GameVersionNumber.asGameVersion(gameVersion);
+
         for (GameComponentType type : GameComponentType.MOD_LOADERS) {
             if (type.isModLoader() && analyzer.has(type)) {
                 ModLoaderType modLoaderType = type.getModLoaderType();
                 if (modLoaderType != null) {
                     supportedLoaders.add(modLoaderType);
-
-                    if (modLoaderType == ModLoaderType.CLEANROOM)
-                        supportedLoaders.add(ModLoaderType.FORGE);
                 }
             }
+        }
+
+        if (analyzer.has(GameComponentType.CLEANROOM)) {
+            supportedLoaders.add(ModLoaderType.FORGE);
+        }
+
+        if (analyzer.has(GameComponentType.FORGE) // No cleanroom because LiteLoader cannot run on Java 21
+                && modManager.hasLiteLoaderAsMod()
+                && !gameVersionNumber.isAtLeast("1.13", "17w43a")
+                // LiteLoader indicates that it supports 1.5.2 as well in this way, but it actually does nothing
+                && gameVersionNumber.isAtLeast("1.6.1", "13w36a" /* 1.7-snapshot-1 */)) {
+            supportedLoaders.add(ModLoaderType.LITE_LOADER);
         }
 
         if (analyzer.has(GameComponentType.NEO_FORGE) && "1.20.1".equals(gameVersion)) {
@@ -888,18 +899,47 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             content.setSubtitle(joiner.toString());
 
-            if (modLoaderType == ModLoaderType.UNKNOWN) {
-                content.addTagWarning(i18n("mods.unknown"));
-            } else if (!page.supportedLoaders.contains(modLoaderType)) {
-                warning.add(i18n("mods.warning.loader_mismatch"));
-                switch (dataItem.getModInfo().getModLoaderType()) {
-                    case FORGE -> content.addTagWarning(i18n("install.installer.forge"));
-                    case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacyfabric"));
-                    case CLEANROOM -> content.addTagWarning(i18n("install.installer.cleanroom"));
-                    case NEO_FORGE -> content.addTagWarning(i18n("install.installer.neoforge"));
-                    case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));
-                    case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
-                    case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
+            {
+                Set<ModLoaderType> modFileLoaders = EnumSet.noneOf(ModLoaderType.class);
+                GameVersionNumber gameVersionNumber = GameVersionNumber.asGameVersion(Optional.ofNullable(page.gameVersion));
+                // Uses 1.7 snapshot as there's no snapshots for 1.6 after its first release
+                boolean wrongCoreModDir = !gameVersionNumber.isAtLeast("1.6.1", "13w36a")
+                        && modInfo.getCoreModInfo().isLegacy()
+                        && !"coremods".equals(modInfo.getSubfolderName());
+
+                if (modLoaderType != ModLoaderType.UNKNOWN) modFileLoaders.add(modLoaderType);
+                modFileLoaders.addAll(modInfo.getCoreModInfo().getModLoaders(gameVersionNumber));
+
+                if (modFileLoaders.stream().anyMatch(page.supportedLoaders::contains)) {
+                    if (modInfo.isCoreMod()) {
+                        if (wrongCoreModDir) {
+                            content.addTagWarning("CoreMod");
+                            warning.add(i18n("mods.coremods.check_dir"));
+                        } else {
+                            content.addTag("CoreMod");
+                        }
+                    }
+                } else {
+                    if (modFileLoaders.isEmpty()) {
+                        content.addTagWarning(i18n("mods.unknown"));
+                    } else {
+                        warning.add(i18n("mods.warning.loader_mismatch"));
+                        for (var loaderType : modFileLoaders) {
+                            switch (loaderType) {
+                                case FORGE -> content.addTagWarning(i18n("install.installer.forge"));
+                                case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacyfabric"));
+                                case CLEANROOM -> content.addTagWarning(i18n("install.installer.cleanroom"));
+                                case NEO_FORGE -> content.addTagWarning(i18n("install.installer.neoforge"));
+                                case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));
+                                case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
+                                case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
+                            }
+                        }
+                    }
+                    if (modInfo.isCoreMod()) {
+                        content.addTagWarning("CoreMod");
+                        if (wrongCoreModDir) warning.add(i18n("mods.coremods.check_dir"));
+                    }
                 }
             }
 

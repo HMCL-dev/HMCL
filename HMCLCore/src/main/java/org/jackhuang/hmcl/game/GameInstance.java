@@ -135,6 +135,12 @@ public interface GameInstance {
         return getRunDirectory().resolve("mods");
     }
 
+    default @Nullable Path getCoreModsDirectory() {
+        return getVersion().isAtLeast("1.6.1", "13w36a")
+                ? null
+                : getRunDirectory().resolve("coremods");
+    }
+
     /// Returns the directory containing resource packs used by this instance.
     ///
     /// @return the resource pack directory below the run directory
