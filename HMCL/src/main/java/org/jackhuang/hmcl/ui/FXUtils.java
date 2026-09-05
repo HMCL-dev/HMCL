@@ -109,10 +109,7 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.ToIntFunction;
+import java.util.function.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1196,6 +1193,18 @@ public final class FXUtils {
             if (e.getButton() == MouseButton.SECONDARY) {
                 action.run();
                 e.consume();
+            }
+        });
+    }
+
+    public static void addMacOSCloseWindowHandler(Stage stage, @Nullable Supplier<Boolean> restriction) {
+        stage.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                    && event.isMetaDown()
+                    && event.getCode() == KeyCode.W
+                    && (restriction == null || restriction.get())) {
+                stage.close();
+                event.consume();
             }
         });
     }
