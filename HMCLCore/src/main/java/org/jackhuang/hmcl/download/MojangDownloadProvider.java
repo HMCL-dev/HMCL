@@ -67,7 +67,6 @@ public class MojangDownloadProvider implements DownloadProvider {
         this.quiltApi = new ModrinthComponentVersionList(this, GameComponentType.QUILT_API, "qvIfYCYJ");
         this.legacyFabric = new LegacyFabricVersionList(this);
         this.legacyFabricApi = new ModrinthComponentVersionList(this, GameComponentType.LEGACY_FABRIC_API, "9CJED7xi");
-        ;
     }
 
     @Override
