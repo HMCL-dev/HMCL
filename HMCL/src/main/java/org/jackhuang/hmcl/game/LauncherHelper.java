@@ -82,6 +82,24 @@ public final class LauncherHelper {
 
     private static final String LWJGL_3_4_1_TIP = "lwjgl3.4.1-ffm";
 
+    /// Crash rules that mean the runtime was newer than the game can handle, so
+    /// downgrading is the fix.
+    ///
+    /// Reused from [CrashReportAnalyzer] rather than matching log text here, so patterns
+    /// added upstream apply automatically.
+    private static final Set<CrashReportAnalyzer.Rule> JAVA_TOO_NEW_CRASH_RULES = EnumSet.of(
+            CrashReportAnalyzer.Rule.JAVA_VERSION_IS_TOO_HIGH,
+            CrashReportAnalyzer.Rule.JDK_9,
+            CrashReportAnalyzer.Rule.MODLAUNCHER_8
+    );
+
+    /// Crash rules that mean the runtime was older than something in the instance needs,
+    /// so upgrading is the fix.
+    private static final Set<CrashReportAnalyzer.Rule> JAVA_TOO_OLD_CRASH_RULES = EnumSet.of(
+            CrashReportAnalyzer.Rule.NEED_JDK11,
+            CrashReportAnalyzer.Rule.TOO_OLD_JAVA
+    );
+
     private final HMCLGameInstance gameInstance;
     private Account account;
     private Path scriptFile;
@@ -444,7 +462,46 @@ public final class LauncherHelper {
         } else if (javaVersionType == JavaVersionType.AUTO || javaVersionType == JavaVersionType.VERSION) {
             task = getJavaTask.thenComposeAsync(Schedulers.javafx(), java -> {
                 if (java != null) {
-                    return Task.completed(java);
+                    // Only warn when HMCL made the decision. When the user picked a specific
+                    // Java version, they know what they selected and own the consequence.
+                    if (javaVersionType != JavaVersionType.AUTO)
+                        return Task.completed(java);
+
+                    JavaCompatibility compatibility =
+                            JavaCompatibilityEvaluator.evaluate(gameVersion, manifest, java, analyzer);
+                    if (compatibility.isOk())
+                        return Task.completed(java);
+
+                    // The user already accepted this exact combination, and the game has not
+                    // crashed because of Java since. Do not ask again.
+                    if (isJavaMismatchAcknowledged(gameInstance, compatibility))
+                        return Task.completed(java);
+
+                    CompletableFuture<JavaRuntime> future = new CompletableFuture<>();
+                    Task<JavaRuntime> result = Task.fromCompletableFuture(future);
+                    Runnable breakAction = () -> future.completeExceptionally(
+                            new CancellationException("Launch operation was cancelled by user"));
+
+                    // Resolved before the dialog is shown: JavaManager.getAllJava() blocks
+                    // until the initial Java scan finishes, so it must not run inside a
+                    // JavaFX callback or it will freeze the UI.
+                    JavaRuntime preferred = findInstalledJava(gameVersion, compatibility.targetMajor());
+
+                    Controllers.confirm(
+                            i18n("launch.advice.modded_java", compatibility.targetMajor(), gameVersion)
+                                    + "\n\n" + i18n("launch.advice.switch_java", compatibility.targetMajor()),
+                            i18n("message.warning"),
+                            MessageType.WARNING,
+                            () -> switchToExpectedJava(gameInstance, compatibility, preferred, java, future, breakAction),
+                            () -> {
+                                // The user accepted the risk. Remember it per instance so
+                                // this does not come back on every launch.
+                                writeJavaMismatchAcknowledgement(gameInstance,
+                                        compatibility.actualMajor() + ":" + compatibility.targetMajor());
+                                future.complete(java);
+                            });
+
+                    return result;
                 }
 
                 // Reset invalid java version
@@ -726,6 +783,179 @@ public final class LauncherHelper {
         }
 
         return task.withStage("launch.state.java");
+    }
+
+    /// The acknowledged Java version mismatch for this instance, in the form
+    /// {@code actualMajor:expectedMajor}, or an empty string when there is none.
+    ///
+    /// Read through {@link HMCLGameInstance#getSettings} rather than the effective settings:
+    /// {@link GameSettings.Effective#getInstance} is null for every instance that has no
+    /// instance-specific settings file, which is the common case.
+    private static String readJavaMismatchAcknowledgement(HMCLGameInstance gameInstance) {
+        GameSettings.Instance instance = gameInstance.getSettings();
+        if (instance == null)
+            return "";
+
+        String value = instance.javaMismatchAcknowledgedProperty().getValue();
+        return value != null ? value : "";
+    }
+
+    /// Records the Java version mismatch the user accepted.
+    ///
+    /// {@link HMCLGameInstance#getSettingsOrCreate} creates the instance settings file when
+    /// it does not exist yet, which is what makes this persist for instances that had none.
+    private static void writeJavaMismatchAcknowledgement(HMCLGameInstance gameInstance, String value) {
+        GameSettings.Instance instance = gameInstance.getSettingsOrCreate();
+        if (instance != null)
+            instance.javaMismatchAcknowledgedProperty().setValue(value);
+    }
+
+    private static boolean isJavaMismatchAcknowledged(HMCLGameInstance gameInstance, JavaCompatibility compatibility) {
+        return (compatibility.actualMajor() + ":" + compatibility.targetMajor())
+                .equals(readJavaMismatchAcknowledgement(gameInstance));
+    }
+
+    /// Splits an acknowledgement of the form {@code actualMajor:expectedMajor} back into
+    /// its two numbers, or null when there is nothing acknowledged or it cannot be read.
+    private static @Nullable int[] parseJavaMismatchAcknowledgement(HMCLGameInstance gameInstance) {
+        String value = readJavaMismatchAcknowledgement(gameInstance);
+        int colon = value.indexOf(':');
+        if (colon < 0)
+            return null;
+
+        try {
+            return new int[]{
+                    Integer.parseInt(value.substring(0, colon)),
+                    Integer.parseInt(value.substring(colon + 1))
+            };
+        } catch (NumberFormatException e) {
+            LOG.warning("Unreadable Java mismatch acknowledgement: " + value);
+            return null;
+        }
+    }
+
+    /// Whether a crash matching {@code rule} should revoke an acknowledgement that
+    /// accepted a runtime {@code acceptedNewerRuntime} than the instance expects.
+    ///
+    /// Only a crash asking for that same direction revokes. One asking for the opposite
+    /// means the accepted runtime was already the closer of the two, and revoking would
+    /// tell the user to move further from what the game actually needs.
+    private static boolean revokesAcknowledgement(CrashReportAnalyzer.Rule rule, boolean acceptedNewerRuntime) {
+        // One broken build of one runtime, not a mismatch: it says nothing about direction,
+        // so it always revokes.
+        if (rule == CrashReportAnalyzer.Rule.MAC_JDK_8U261)
+            return true;
+
+        if (acceptedNewerRuntime)
+            return JAVA_TOO_NEW_CRASH_RULES.contains(rule);
+
+        return JAVA_TOO_OLD_CRASH_RULES.contains(rule);
+    }
+
+    /// Returns an installed runtime that can run this instance on the expected Java version,
+    /// or null if there is none. See [pickInstalledJava] for the selection rules.
+    ///
+    /// This runs on the JavaFX thread, and [JavaManager#getAllJava] blocks until the first
+    /// Java scan finishes, so the scan is probed rather than awaited: before it completes
+    /// this returns null and the caller falls back to offering a download.
+    private static @Nullable JavaRuntime findInstalledJava(@Nullable GameVersionNumber gameVersion, int major) {
+        if (!JavaManager.isInitialized())
+            return null;
+
+        try {
+            return pickInstalledJava(JavaManager.getAllJava(), gameVersion, major);
+        } catch (InterruptedException e) {
+            // Preserve the interrupt so the shutdown path can observe it.
+            Thread.currentThread().interrupt();
+            Thread.currentThread().interrupt();
+            return null;
+        }
+    }
+
+    /// Picks the runtime to offer from {@code candidates}: matching major version, and an
+    /// architecture that can actually run this instance.
+    ///
+    /// The architecture filter mirrors {@link JavaManager#findSuitableJava}: AUTO picked the
+    /// current runtime for a reason, and offering a 32-bit runtime on a 64-bit system (or a
+    /// non-x86 one for the versions that need it on Windows/macOS ARM64) would trade a
+    /// warning for a game that cannot allocate its heap.
+    static @Nullable JavaRuntime pickInstalledJava(
+            Collection<JavaRuntime> candidates, @Nullable GameVersionNumber gameVersion, int major) {
+
+        boolean forceX86 = Architecture.SYSTEM_ARCH == Architecture.ARM64
+                && (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+                && (gameVersion == null || gameVersion.compareTo("1.6") < 0);
+
+        for (JavaRuntime candidate : candidates) {
+            if (forceX86 ? !candidate.getArchitecture().isX86()
+                    : candidate.getArchitecture() != Architecture.SYSTEM_ARCH)
+                continue;
+
+            if (candidate.getParsedVersion() == major)
+                return candidate;
+        }
+        return null;
+    }
+
+    /// The Mojang runtime to download for {@code major} on {@code platform}, or null when
+    /// Mojang publishes none for it.
+    static @Nullable GameJavaVersion resolveDownloadableJava(Platform platform, int major) {
+        GameJavaVersion target = GameJavaVersion.get(major);
+        if (target == null)
+            return null;
+
+        return GameJavaVersion.getSupportedVersions(platform).contains(target) ? target : null;
+    }
+
+    /// Switches to, or downloads, the Java version the instance is expected to run on.
+    ///
+    /// Note: this deliberately does not call `setting.setJavaAutoSelected()`. Silently
+    /// rewriting the user's Java selection mode is what makes this warning disappear
+    /// permanently on subsequent launches.
+    private static void switchToExpectedJava(
+            HMCLGameInstance gameInstance,
+            JavaCompatibility compatibility,
+            @Nullable JavaRuntime preferred,
+            @Nullable JavaRuntime currentJava,
+            CompletableFuture<JavaRuntime> future,
+            Runnable breakAction) {
+
+        if (preferred != null) {
+            future.complete(preferred);
+            return;
+        }
+
+        // Nothing to switch to, so this lands on the same outcome as declining the
+            // switch: record it too, or a prompt that can never be satisfied comes back
+            // on every launch. On the platforms that reach this branch the game is usually
+            // unlaunchable for reasons no Java switch can fix (LWJGL pre-3.3 has no ARM64
+            // natives), and a crash like that does not match the Java rules, so the
+            // acknowledgement is not revoked and the user is not nagged.
+        GameJavaVersion target = resolveDownloadableJava(SYSTEM_PLATFORM, compatibility.targetMajor());
+        if (target == null) {
+            LOG.warning("No downloadable Java " + compatibility.targetMajor() + " for " + SYSTEM_PLATFORM
+                    + ", keeping the current runtime");
+            // Nothing to switch to, so this lands on the same outcome as declining the
+            // switch. Record it as an accepted mismatch too, or the same prompt that
+            // cannot be satisfied comes back on every launch.
+            writeJavaMismatchAcknowledgement(gameInstance,
+                    compatibility.actualMajor() + ":" + compatibility.targetMajor());
+            if (currentJava != null)
+                future.complete(currentJava);
+            else
+                breakAction.run();
+            return;
+        }
+
+        downloadJava(target, gameInstance.getRepository())
+                .whenCompleteAsync((downloaded, throwable) -> {
+                    if (throwable == null) {
+                        future.complete(downloaded);
+                    } else {
+                        LOG.warning("Failed to download java", throwable);
+                        breakAction.run();
+                    }
+                }, Schedulers.javafx());
     }
 
     private static CompletableFuture<JavaRuntime> downloadJava(GameJavaVersion javaVersion, HMCLGameRepository repository) {
@@ -1014,6 +1244,12 @@ public final class LauncherHelper {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
+
+                // A batch that holds a single log is handed to the FX thread with runLater
+                // and is never waited for, so the last line can still be sitting in the event
+                // queue here. Flush it, or the exception that ended the game is missing from
+                // `logs` when the crash is analysed below.
+                flushPendingFxEvents();
             }
 
             launchingLatch.countDown();
@@ -1034,10 +1270,66 @@ public final class LauncherHelper {
 
             if (exitType != ExitType.NORMAL) {
                 gameInstance.markLaunchedAbnormally();
+                revokeJavaMismatchAcknowledgement();
                 runLater(() -> new GameCrashWindow(process, exitType, gameInstance, launchOptions, logs).show());
             }
 
             checkExit();
+        }
+
+        /// Revokes the accepted Java version mismatch when the crash was actually caused by a
+        /// Java version mismatch, so the next launch warns the user again.
+        ///
+        /// Crashes from unrelated causes leave the acknowledgement intact: the user accepted
+        /// the risk and it did not materialise, so asking again would be nagging.
+        ///
+        /// The acknowledgement is stored as {@code actualMajor:expectedMajor} rather than a
+        /// flag, so a change of either version (a newer Java, an updated instance) asks again
+        /// instead of staying silent forever.
+        private void revokeJavaMismatchAcknowledgement() {
+            int[] accepted = parseJavaMismatchAcknowledgement(gameInstance);
+            // Nothing to revoke. This is also the common case, and it avoids running the
+            // crash analysis on every launch for users who never dismissed the warning.
+            if (accepted == null)
+                return;
+
+            // accepted[0] is the runtime in use, accepted[1] the one the instance expects.
+            boolean acceptedNewerRuntime = accepted[0] > accepted[1];
+
+            String rawLog;
+            lock.lock();
+            try {
+                rawLog = logs.stream().map(Log::getLog).collect(Collectors.joining("\n"));
+            } finally {
+                lock.unlock();
+            }
+
+            boolean causedByJava = CrashReportAnalyzer.analyze(rawLog).stream()
+                    .map(CrashReportAnalyzer.Result::rule)
+                    .anyMatch(rule -> revokesAcknowledgement(rule, acceptedNewerRuntime));
+
+            if (causedByJava)
+                writeJavaMismatchAcknowledgement(gameInstance, "");
+        }
+
+        /// Waits until every task queued on the JavaFX application thread so far has run.
+        ///
+        /// [javafx.application.Platform#runLater] executes tasks in submission order, so a
+        /// task submitted now runs after every task submitted before it.
+        ///
+        /// `javafx.application.Platform` is spelled out because the on-demand import of
+        /// `org.jackhuang.hmcl.util.platform` already owns the simple name `Platform` here.
+        private void flushPendingFxEvents() {
+            if (javafx.application.Platform.isFxApplicationThread())
+                return;
+
+            CountDownLatch latch = new CountDownLatch(1);
+            runLater(latch::countDown);
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
 
     }
@@ -1052,8 +1344,4 @@ public final class LauncherHelper {
         return PROCESSES.size();
     }
 
-    public static void stopManagedProcesses() {
-        while (!PROCESSES.isEmpty())
-            Optional.ofNullable(PROCESSES.poll()).map(WeakReference::get).ifPresent(ManagedProcess::stop);
-    }
 }
