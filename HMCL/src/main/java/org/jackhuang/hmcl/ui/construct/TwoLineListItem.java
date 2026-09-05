@@ -25,6 +25,7 @@ import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -45,6 +46,7 @@ public class TwoLineListItem extends VBox {
 
         lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
+        lblTitle.setTextOverrun(OverrunStyle.ELLIPSIS);
 
         this.firstLine = new HBox(lblTitle);
         firstLine.getStyleClass().add("first-line");
@@ -167,8 +169,12 @@ public class TwoLineListItem extends VBox {
             var tagsBox = new HBox(8);
             tagsBox.getStyleClass().add("tags");
             tagsBox.setAlignment(Pos.CENTER_LEFT);
+
+            // grow lazily after title has been placed
+            tagsBox.setPrefWidth(0);
             tagsBox.setMinWidth(0);
-            HBox.setHgrow(tagsBox, Priority.ALWAYS);
+            HBox.setHgrow(tagsBox, Priority.SOMETIMES);
+
             Bindings.bindContent(tagsBox.getChildren(), tags);
             var isNotEmpty = Bindings.isNotEmpty(tags);
             tagsBox.managedProperty().bind(isNotEmpty);
@@ -176,7 +182,8 @@ public class TwoLineListItem extends VBox {
 
             FXUtils.setOverflowHidden(tagsBox);
 
-            lblTitle.setMinWidth(Label.USE_PREF_SIZE);
+            HBox.setHgrow(lblTitle, Priority.ALWAYS);
+            lblTitle.setMinWidth(0);
             firstLine.getChildren().setAll(lblTitle, tagsBox);
         }
         return tags;

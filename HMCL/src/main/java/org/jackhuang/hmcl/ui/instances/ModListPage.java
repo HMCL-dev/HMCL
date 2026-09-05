@@ -685,6 +685,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             modInfo.loadIcon(imageContainer, null);
 
             TwoLineListItem title = new TwoLineListItem();
+            title.getTitleLabel().setWrapText(true);
             if (modInfo.getModTranslations() != null && I18n.isUseChinese())
                 title.setTitle(modInfo.getModTranslations().getDisplayName());
             else
