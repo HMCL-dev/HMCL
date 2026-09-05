@@ -36,52 +36,47 @@ import java.util.Optional;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackZipFile extends ResourcePackFile {
-    private final PackMcMeta meta;
-    private final @Nullable Image icon;
+    private final PackMcMeta.PackInfo info;
 
     public ResourcePackZipFile(ResourcePackManager manager, Path path) throws IOException {
         super(manager, path);
 
-        PackMcMeta metaTemp = null;
-        byte[] iconData = null;
-
+        PackMcMeta meta = null;
         try (var zipFileTree = CompressingUtils.openZipTree(path)) {
             try {
-                metaTemp = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
+                meta = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
             } catch (Exception e) {
                 LOG.warning("Failed to parse resource pack meta", e);
             }
+        }
+        this.info = meta != null ? meta.pack() : null;
+    }
 
+    @Override
+    public PackMcMeta.PackInfo getPackInfo() {
+        return info;
+    }
+
+    @Override
+    public @Nullable Image loadIcon() {
+        byte[] iconData = null;
+        try (var zipFileTree = CompressingUtils.openZipTree(getFile())) {
             var iconEntry = zipFileTree.getEntry("/pack.png");
             if (iconEntry != null) {
-                try {
-                    iconData = zipFileTree.readBinaryEntry(iconEntry);
-                } catch (Exception e) {
-                    LOG.warning("Failed to load resource pack icon", e);
-                }
+                iconData = zipFileTree.readBinaryEntry(iconEntry);
             }
+        } catch (Exception e) {
+            LOG.warning("Failed to load resource pack icon", e);
         }
-        this.meta = metaTemp;
 
-        Image iconTemp = null;
         if (iconData != null) {
             try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
-                iconTemp = new Image(inputStream, 64, 64, true, true);
+                return new Image(inputStream, 64, 64, true, true);
             } catch (Exception e) {
                 LOG.warning("Failed to load resource pack icon", e);
             }
         }
-        this.icon = iconTemp;
-    }
-
-    @Override
-    public PackMcMeta getMeta() {
-        return meta;
-    }
-
-    @Override
-    public @Nullable Image getIcon() {
-        return icon;
+        return null;
     }
 
     @Override
