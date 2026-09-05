@@ -70,7 +70,7 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
         this.quilt = new QuiltVersionList(this);
         this.quiltApi = new ModrinthComponentVersionList(this, GameComponentType.QUILT_API, "qvIfYCYJ");
         this.legacyFabric = new LegacyFabricVersionList(this);
-        this.legacyFabricApi = new ModrinthComponentVersionList(this, GameComponentType.LEGACY_FABRIC_API, "9CJED7xi");;
+        this.legacyFabricApi = new ModrinthComponentVersionList(this, GameComponentType.LEGACY_FABRIC_API, "9CJED7xi");
 
         this.replacement = List.of(
                 pair("https://bmclapi2.bangbang93.com", apiRoot),

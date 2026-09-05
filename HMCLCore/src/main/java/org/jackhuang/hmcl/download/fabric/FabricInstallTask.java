@@ -129,7 +129,6 @@ public class FabricInstallTask extends Task<GameInstancePatch> {
         return new GameInstancePatch(GameComponentType.FABRIC.getPatchId(), loaderVersion, GameInstancePatch.PRIORITY_LOADER, arguments, mainClass, libraries);
     }
 
-
     protected String getMavenRepositoryByGroup(String maven) {
         return "https://maven.fabricmc.net/";
     }

@@ -47,11 +47,8 @@ public final class LegacyFabricVersionList extends FabricLikeVersionList<LegacyF
         return new LegacyFabricRemoteVersion(gameVersion, loaderVersion, urls);
     }
 
-
     @Override
     protected String normalizeVersion(String version) {
-        return version.startsWith("2point0_")
-                ? "2.0_" + version.substring("2point0_".length())
-                : version;
+        return version.startsWith("2point0_") ? "2.0_" + version.substring("2point0_".length()) : version;
     }
 }
