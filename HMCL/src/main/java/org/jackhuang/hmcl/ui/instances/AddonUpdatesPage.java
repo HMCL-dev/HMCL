@@ -21,7 +21,6 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
-import com.sun.javafx.binding.StringConstant;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -87,18 +86,18 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         TableColumn<AddonUpdateObject, String> fileNameColumn = new TableColumn<>(i18n("addon.check_update.file"));
         fileNameColumn.setPrefWidth(180);
-        setupCellValueFactory(fileNameColumn, AddonUpdateObject::fileNameValue);
+        setupCellValueFactory(fileNameColumn, AddonUpdateObject::fileNameProperty);
 
         TableColumn<AddonUpdateObject, String> currentVersionColumn = new TableColumn<>(i18n("addon.check_update.current_version"));
         currentVersionColumn.setPrefWidth(180);
-        setupCellValueFactory(currentVersionColumn, AddonUpdateObject::currentVersionValue);
+        setupCellValueFactory(currentVersionColumn, AddonUpdateObject::currentVersionProperty);
 
         TableColumn<AddonUpdateObject, String> targetVersionColumn = new TableColumn<>(i18n("addon.check_update.target_version"));
         targetVersionColumn.setPrefWidth(180);
-        setupCellValueFactory(targetVersionColumn, AddonUpdateObject::targetVersionValue);
+        setupCellValueFactory(targetVersionColumn, AddonUpdateObject::targetVersionProperty);
 
         TableColumn<AddonUpdateObject, String> sourceColumn = new TableColumn<>(i18n("addon.check_update.source"));
-        setupCellValueFactory(sourceColumn, AddonUpdateObject::sourceValue);
+        setupCellValueFactory(sourceColumn, AddonUpdateObject::sourceProperty);
 
         TableColumn<AddonUpdateObject, String> changelogColumn = new TableColumn<>(i18n("addon.changelog"));
         {
@@ -211,26 +210,26 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
     private static final class AddonUpdateObject {
         final LocalAddonFile.AddonUpdate data;
-        final ObjectProperty<RemoteAddon.Version> targetVersionObject;
-        final BooleanProperty enabled;
-        final ObservableValue<String> fileName;
-        final ObservableValue<String> currentVersion;
-        final ObservableValue<String> targetVersion;
-        final ObservableValue<String> source;
+        final ObjectProperty<RemoteAddon.Version> targetVersionObject = new SimpleObjectProperty<>();
+        final BooleanProperty enabled = new SimpleBooleanProperty();
+        final StringProperty fileName = new SimpleStringProperty();
+        final StringProperty currentVersion = new SimpleStringProperty();
+        final StringProperty targetVersion = new SimpleStringProperty();
+        final StringProperty source = new SimpleStringProperty();
 
         public AddonUpdateObject(LocalAddonFile.AddonUpdate data) {
             this.data = data;
-            this.targetVersionObject = new SimpleObjectProperty<>(data.latestAvailableVersion());
+            this.targetVersionObject.set(data.latestAvailableVersion());
 
-            enabled = new SimpleBooleanProperty(!data.localAddonFile().isDisabled());
-
-            fileName = StringConstant.valueOf(data.localAddonFile().getFileName());
-            currentVersion = StringConstant.valueOf(data.currentVersion().version());
-            targetVersion = this.targetVersionObject.map(RemoteAddon.Version::version);
-            source = switch (data.currentVersion().self().getSource()) {
-                case CURSEFORGE -> StringConstant.valueOf(i18n("addon.curseforge"));
-                case MODRINTH -> StringConstant.valueOf(i18n("addon.modrinth"));
-            };
+            enabled.set(!data.localAddonFile().isDisabled());
+            fileName.set(data.localAddonFile().getFileName());
+            currentVersion.set(data.currentVersion().version());
+            targetVersion.set(targetVersionObject.get().version());
+            FXUtils.onChange(targetVersionObject, (value) -> targetVersion.set(value.version()));
+            switch (data.currentVersion().self().getSource()) {
+                case CURSEFORGE -> source.set(i18n("addon.curseforge"));
+                case MODRINTH -> source.set(i18n("addon.modrinth"));
+            }
         }
 
         public LocalAddonFile.AddonUpdate getData() {
@@ -250,35 +249,51 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         }
 
         public String getFileName() {
-            return fileName.getValue();
+            return fileName.get();
         }
 
-        public ObservableValue<String> fileNameValue() {
+        public StringProperty fileNameProperty() {
             return fileName;
         }
 
-        public String getCurrentVersion() {
-            return currentVersion.getValue();
+        public void setFileName(String fileName) {
+            this.fileName.set(fileName);
         }
 
-        public ObservableValue<String> currentVersionValue() {
+        public String getCurrentVersion() {
+            return currentVersion.get();
+        }
+
+        public StringProperty currentVersionProperty() {
             return currentVersion;
         }
 
-        public String getTargetVersion() {
-            return targetVersion.getValue();
+        public void setCurrentVersion(String currentVersion) {
+            this.currentVersion.set(currentVersion);
         }
 
-        public ObservableValue<String> targetVersionValue() {
+        public String getTargetVersion() {
+            return targetVersion.get();
+        }
+
+        public StringProperty targetVersionProperty() {
             return targetVersion;
         }
 
-        public String getSource() {
-            return source.getValue();
+        public void setTargetVersion(String targetVersion) {
+            this.targetVersion.set(targetVersion);
         }
 
-        public ObservableValue<String> sourceValue() {
+        public String getSource() {
+            return source.get();
+        }
+
+        public StringProperty sourceProperty() {
             return source;
+        }
+
+        public void setSource(String source) {
+            this.source.set(source);
         }
     }
 
