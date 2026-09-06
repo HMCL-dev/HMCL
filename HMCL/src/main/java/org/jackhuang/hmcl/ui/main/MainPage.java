@@ -44,8 +44,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.ComponentVersionList;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -259,6 +259,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             if (tooltip != null)
                                 Tooltip.uninstall(launchButton, tooltip);
                         }
+                        launchButton.setOnAction((e) -> {
+                            throw new AssertionError();
+                        });
                     }
                 });
 

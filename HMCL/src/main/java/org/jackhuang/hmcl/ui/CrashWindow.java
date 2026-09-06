@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -29,6 +30,7 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.countly.CrashReport;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.util.Lazy;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -36,20 +38,18 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  * @author huangyuhui
  */
 public class CrashWindow extends Stage {
+    private static final Lazy<CrashWindow> instance = new Lazy<>(CrashWindow::new);
+    private final TextArea textArea = new TextArea();
 
-    public CrashWindow(CrashReport report) {
+    private CrashWindow() {
         Label lblCrash = new Label();
-        if (report.getThrowable() instanceof InternalError)
-            lblCrash.setText(i18n("launcher.crash.java_internal_error"));
-        else if (UpdateChecker.isOutdated())
-            lblCrash.setText(i18n("launcher.crash.hmcl_out_dated"));
-        else
-            lblCrash.setText(i18n("launcher.crash"));
         lblCrash.setWrapText(true);
 
-        TextArea textArea = new TextArea();
-        textArea.setText(report.getDisplayText());
-        textArea.setEditable(false);
+        if (UpdateChecker.isOutdated()) {
+            lblCrash.setText(i18n("launcher.crash.hmcl_out_dated"));
+        } else {
+            lblCrash.setText(i18n("launcher.crash"));
+        }
 
         Button btnContact = new Button();
         btnContact.setText(i18n("launcher.contact"));
@@ -72,7 +72,16 @@ public class CrashWindow extends Stage {
         FXUtils.setIcon(this);
         setTitle(i18n("message.error"));
 
-        setOnCloseRequest(e -> javafx.application.Platform.exit());
+        setOnCloseRequest(e -> Platform.exit());
     }
 
+    public static CrashWindow getInstance() {
+        return instance.get();
+    }
+
+    public void addCrashReport(CrashReport report) {
+        textArea.setText(textArea.getText() + "\n\n" + report.getDisplayText());
+        textArea.setEditable(false);
+        this.requestFocus();
+    }
 }
