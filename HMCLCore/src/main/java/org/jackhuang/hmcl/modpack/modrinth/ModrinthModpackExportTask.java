@@ -93,7 +93,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
 
         boolean isDisabled = modManager.isDisabled(file);
         if (isDisabled) {
-            relativePath = modManager.enableMod(Paths.get(relativePath)).toString();
+            relativePath = modManager.enableMod(Paths.get(relativePath)).toString().replace(File.separatorChar, '/');
         }
 
         Optional<RemoteAddon.Version> modrinthVersion = Optional.empty();
