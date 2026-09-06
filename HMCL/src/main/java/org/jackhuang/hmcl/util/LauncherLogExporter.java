@@ -43,8 +43,6 @@ public final class LauncherLogExporter {
         throw new AssertionError();
     }
 
-
-
     public static Path exportLogsAsZip() throws IOException {
         String nameBase = "hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
         List<Path> recentLogFiles = LOG.findRecentLogFiles(5);
@@ -117,7 +115,6 @@ public final class LauncherLogExporter {
 
         return outputFile;
     }
-
 
     private static String getEntryName(Set<String> entryNames, String name) {
         if (entryNames.add(name)) {

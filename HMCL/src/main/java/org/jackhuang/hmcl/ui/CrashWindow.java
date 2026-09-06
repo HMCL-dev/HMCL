@@ -41,7 +41,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author huangyuhui
  */
-public class CrashWindow extends Stage {
+public final class CrashWindow extends Stage {
     private static final Lazy<CrashWindow> instance = new Lazy<>(CrashWindow::new);
 
     public static CrashWindow getInstance() {
@@ -108,7 +108,6 @@ public class CrashWindow extends Stage {
 
         setOnCloseRequest(e -> Platform.exit());
     }
-
 
     public void addCrashReport(CrashReport report) {
         textArea.setText(textArea.getText() + "\n\n" + report.getDisplayText());
