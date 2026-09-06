@@ -293,6 +293,32 @@ public abstract class DefaultGameRepository implements GameRepository {
                         LOG.warning("Failed to load instance", e);
                     }
                 }
+
+                for (DefaultGameInstance instance : newSnapshot.getInstances()) {
+                    if (instance.getManifest().inheritsFrom() == null) {
+                        continue;
+                    }
+
+                    DefaultGameInstance current = instance;
+                    while (current.getManifest().inheritsFrom() != null) {
+                        GameInstanceID parentId = current.getManifest().inheritsFrom();
+                        DefaultGameInstance parent = newSnapshot.get(parentId);
+                        if (parent == null) {
+                            LOG.warning("Instance " + current.getId() + " inherits from missing instance " + parentId);
+
+                            for (DefaultGameInstance toRemoved = instance; toRemoved != null; ) {
+                                newSnapshot.remove(toRemoved.getId());
+                                toRemoved = toRemoved.getManifest().inheritsFrom() != null
+                                        ? newSnapshot.get(toRemoved.getManifest().inheritsFrom())
+                                        : null;
+                            }
+
+                            break;
+                        }
+                        current = parent;
+                    }
+                }
+
             } catch (IOException e) {
                 LOG.warning("Failed to load instance from " + instancesDir, e);
             }
