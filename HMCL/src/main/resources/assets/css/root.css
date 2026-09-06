@@ -745,6 +745,7 @@
 
 .jfx-tool-bar-button {
     -fx-text-fill: -monet-on-surface;
+    -fx-font-size: 14px;
     -fx-toggle-icon4-size: 37px;
     -fx-pref-height: -fx-toggle-icon4-size;
     -fx-max-height: -fx-toggle-icon4-size;
