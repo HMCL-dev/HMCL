@@ -259,9 +259,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             if (tooltip != null)
                                 Tooltip.uninstall(launchButton, tooltip);
                         }
-                        launchButton.setOnAction((e) -> {
-                            throw new AssertionError();
-                        });
                     }
                 });
 
