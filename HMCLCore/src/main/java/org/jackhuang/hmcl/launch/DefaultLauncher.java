@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.launch;
 
 import org.glavo.uuid.UUIDs;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Lang;
@@ -799,29 +800,14 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        if (instance.hasComponent(GameComponentType.FORGE)) {
-            env.put("INST_FORGE", "1");
+        for (ModLoaderType modLoader : instance.getModLoaders()) {
+            if (modLoader.getEnvVarName() != null) {
+                env.put(modLoader.getEnvVarName(), "1");
+            }
         }
-        if (instance.hasComponent(GameComponentType.CLEANROOM)) {
-            env.put("INST_CLEANROOM", "1");
-        }
-        if (instance.hasComponent(GameComponentType.NEO_FORGE)) {
-            env.put("INST_NEOFORGE", "1");
-        }
-        if (instance.hasComponent(GameComponentType.LITELOADER)) {
-            env.put("INST_LITELOADER", "1");
-        }
-        if (instance.hasComponent(GameComponentType.FABRIC)) {
-            env.put("INST_FABRIC", "1");
-        }
+
         if (instance.hasComponent(GameComponentType.OPTIFINE)) {
             env.put("INST_OPTIFINE", "1");
-        }
-        if (instance.hasComponent(GameComponentType.QUILT)) {
-            env.put("INST_QUILT", "1");
-        }
-        if (instance.hasComponent(GameComponentType.LEGACY_FABRIC)) {
-            env.put("INST_LEGACYFABRIC", "1");
         }
 
         env.putAll(options.getEnvironmentVariables());

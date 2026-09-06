@@ -114,8 +114,11 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
             itemsProperty().add(component);
         }
 
+        var currentItems = getItems().stream().map(InstallerItem::getComponentType).toList();
         // other third-party libraries which are unable to manage.
         for (GameComponentAnalyzer.Mark mark : gameInstance.getAnalyzer()) {
+            if (currentItems.contains(mark.componentType())) continue;
+
             // we have done this library above.
 
             InstallerItem installerItem = new InstallerItem(mark.componentType(), InstallerItem.Style.LIST_ITEM);

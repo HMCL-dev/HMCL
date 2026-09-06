@@ -15,29 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.addon.mod;
+package org.jackhuang.hmcl.util.io;
 
-import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
+import java.io.IOException;
 
-@NotNullByDefault
-public enum ModLoaderType {
-    UNKNOWN(null),
-    FORGE("INST_FORGE"),
-    CLEANROOM("INST_CLEANROOM"),
-    NEO_FORGE("INST_NEOFORGE"),
-    FABRIC("INST_FABRIC"),
-    QUILT("INST_QUILT"),
-    LITE_LOADER("INST_LITELOADER"),
-    LEGACY_FABRIC("INST_LEGACYFABRIC");
+public class NoCandidatesException extends IOException {
 
-    private final @Nullable String envVarName;
-
-    ModLoaderType(@Nullable String envVarName) {
-        this.envVarName = envVarName;
-    }
-
-    public @Nullable String getEnvVarName() {
-        return envVarName;
+    public NoCandidatesException() {
+        super("No candidates found");
     }
 }
