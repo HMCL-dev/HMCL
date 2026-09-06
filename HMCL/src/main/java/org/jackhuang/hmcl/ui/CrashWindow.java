@@ -20,9 +20,7 @@ package org.jackhuang.hmcl.ui;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -30,15 +28,26 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.countly.CrashReport;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
+import org.jackhuang.hmcl.util.LauncherLogExporter;
 import org.jackhuang.hmcl.util.Lazy;
+import org.jackhuang.hmcl.util.StringUtils;
+
+import java.io.IOException;
+import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huangyuhui
  */
 public class CrashWindow extends Stage {
     private static final Lazy<CrashWindow> instance = new Lazy<>(CrashWindow::new);
+
+    public static CrashWindow getInstance() {
+        return instance.get();
+    }
+
     private final TextArea textArea = new TextArea();
 
     private CrashWindow() {
@@ -51,12 +60,37 @@ public class CrashWindow extends Stage {
             lblCrash.setText(i18n("launcher.crash"));
         }
 
+        StackPane exportPane = new StackPane();
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        FXUtils.setLimitHeight(progressIndicator, 20);
+
+        Button btnExport = new Button();
+        exportPane.getChildren().setAll(btnExport);
+        btnExport.setText(i18n("settings.launcher.launcher_log.export"));
+        btnExport.setOnAction(event -> {
+            exportPane.getChildren().setAll(progressIndicator);
+            try {
+                Path path = LauncherLogExporter.exportLogsAsZip();
+                FXUtils.showFileInExplorer(path);
+                Alert alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", path));
+                alert.setTitle(i18n("settings.launcher.launcher_log.export"));
+                alert.showAndWait();
+            } catch (IOException e) {
+                LOG.warning("Failed to export launcher logs", e);
+                Alert alert = new Alert(Alert.AlertType.WARNING, i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(e));
+                alert.setTitle(i18n("message.error"));
+                alert.setContentText(StringUtils.getStackTrace(e));
+                alert.showAndWait();
+            }
+            exportPane.getChildren().setAll(btnExport);
+        });
+
         Button btnContact = new Button();
         btnContact.setText(i18n("launcher.contact"));
         btnContact.setOnAction(event -> FXUtils.openLink(Metadata.CONTACT_URL));
-        HBox box = new HBox();
+        HBox box = new HBox(8);
         box.setStyle("-fx-padding: 8px;");
-        box.getChildren().add(btnContact);
+        box.getChildren().setAll(exportPane, btnContact);
         box.setAlignment(Pos.CENTER_RIGHT);
 
         BorderPane pane = new BorderPane();
@@ -75,9 +109,6 @@ public class CrashWindow extends Stage {
         setOnCloseRequest(e -> Platform.exit());
     }
 
-    public static CrashWindow getInstance() {
-        return instance.get();
-    }
 
     public void addCrashReport(CrashReport report) {
         textArea.setText(textArea.getText() + "\n\n" + report.getDisplayText());
