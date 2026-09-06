@@ -99,7 +99,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         TableColumn<AddonUpdateObject, String> sourceColumn = new TableColumn<>(i18n("addon.check_update.source"));
         setupCellValueFactory(sourceColumn, AddonUpdateObject::sourceProperty);
 
-        TableColumn<AddonUpdateObject, String> changelogColumn = new TableColumn<>(i18n("addon.changelog"));
+        TableColumn<AddonUpdateObject, String> changelogColumn = new TableColumn<>(i18n("addon.select_target_version"));
         {
             var oldCellFactory = changelogColumn.getCellFactory();
             changelogColumn.setCellFactory(param -> {
@@ -303,7 +303,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         public AddonChangelog(AddonUpdateObject object) {
             List<RemoteAddon.Version> availableVersions = object.data.availableVersions();
 
-            Label headingLabel = new Label(i18n("addon.changelog"));
+            Label headingLabel = new Label(i18n("addon.select_target_version"));
             this.setHeading(new HBox(8, headingLabel));
 
             VBox box = new VBox(8);
@@ -333,9 +333,14 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             loadChangelog(object, versionComboBox.getSelectionModel().getSelectedItem(), spinnerPane, scrollPane);
             spinnerPane.setOnFailedAction(e -> loadChangelog(object, versionComboBox.getSelectionModel().getSelectedItem(), spinnerPane, scrollPane));
 
+            JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
+            versionPageBtn.setDisable(true);
+            loadVersionPageUrl(object, versionPageBtn);
+
             versionComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVersion, newVersion) -> {
                 if (newVersion != null) {
                     loadChangelog(object, newVersion, spinnerPane, scrollPane);
+                    loadVersionPageUrl(object, versionPageBtn);
                 }
             });
 
@@ -344,10 +349,6 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
 
             this.setBody(box);
-
-            JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
-            versionPageBtn.setDisable(true);
-            loadVersionPageUrl(object, versionPageBtn);
 
             JFXButton closeButton = new JFXButton(i18n("button.ok"));
             closeButton.getStyleClass().add("dialog-accept");
@@ -376,6 +377,12 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                         "238222".equals(version.projectId())
                 );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                RemoteAddon.Version currentVersion = object.targetVersionObject.get();
+                if (currentVersion != null && !currentVersion.versionId().equals(version.versionId())) {
+                    // Version changed while loading, discard this result. Why's there no 'Task.interrupt()'
+                    return;
+                }
+
                 if (exception == null) {
                     String html = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
                     changelogCache.put(version.versionId(), html);
