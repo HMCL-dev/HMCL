@@ -58,7 +58,7 @@ public final class StringUtils {
     }
 
     public static String getStackTrace(StackTraceElement[] elements) {
-        StringBuilder builder = new StringBuilder(512);
+        StringBuilder builder = new StringBuilder();
         for (StackTraceElement element : elements)
             builder.append("\tat ").append(element).append(System.lineSeparator());
         return builder.toString();
