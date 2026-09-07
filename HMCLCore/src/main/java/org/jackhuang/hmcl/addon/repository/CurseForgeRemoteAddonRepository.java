@@ -25,13 +25,12 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.MurmurHash2;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.HttpRequest;
-import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -124,6 +123,11 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         return (int) Math.ceil((double) Math.min(response.pagination.totalCount, 10000) / pageSize);
     }
 
+    /// Searches the configured section, preserving the order returned by the server.
+    ///
+    /// @throws UnsupportedOperationException if this repository has no configured section
+    /// @throws NoCandidatesException if no response is obtained and no I/O failure was recorded
+    /// @throws IOException if all candidate requests fail with I/O errors
     @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
         if (type == null) throw new UnsupportedOperationException();
@@ -146,9 +150,9 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             query.put("index", Integer.toString(pageOffset * pageSize));
             query.put("pageSize", Integer.toString(pageSize));
 
-            Response<List<CurseAddon>> response = null;
+            @Nullable Response<List<CurseAddon>> response = null;
 
-            IOException exception = null;
+            @Nullable IOException exception = null;
             List<URI> candidates = downloadProvider.injectURLWithCandidates(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", query));
             for (URI candidate : candidates) {
                 LOG.info("Fetching " + candidate);
@@ -172,7 +176,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             if (response != null)
                 return new SearchResult(response.data().stream().map(CurseAddon::toAddon), calculateTotalPages(response, pageSize));
 
-            throw exception != null ? exception : new IOException("No candidates found");
+            throw exception != null ? exception : new NoCandidatesException();
         } finally {
             SEMAPHORE.release();
         }
@@ -266,6 +270,19 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             return response.data.toAddon();
         } finally {
             SEMAPHORE.release();
+        }
+    }
+
+    @Override
+    public RemoteAddon resolveDependency(DownloadProvider downloadProvider, String id) throws IOException {
+        try {
+            return getAddonById(downloadProvider, id);
+        } catch (IOException e) {
+            if (e instanceof NoCandidatesException) throw e;
+            if (e instanceof FileNotFoundException
+                    || e instanceof ResponseCodeException rce && rce.getResponseCode() == 404)
+                return RemoteAddon.BROKEN;
+            throw e;
         }
     }
 

@@ -17,13 +17,27 @@
  */
 package org.jackhuang.hmcl.addon.mod;
 
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+
+@NotNullByDefault
 public enum ModLoaderType {
-    UNKNOWN,
-    FORGE,
-    CLEANROOM,
-    NEO_FORGE,
-    FABRIC,
-    QUILT,
-    LITE_LOADER,
-    LEGACY_FABRIC
+    UNKNOWN(null),
+    FORGE("INST_FORGE"),
+    CLEANROOM("INST_CLEANROOM"),
+    NEO_FORGE("INST_NEOFORGE"),
+    FABRIC("INST_FABRIC"),
+    QUILT("INST_QUILT"),
+    LITE_LOADER("INST_LITELOADER"),
+    LEGACY_FABRIC("INST_LEGACYFABRIC");
+
+    private final @Nullable String envVarName;
+
+    ModLoaderType(@Nullable String envVarName) {
+        this.envVarName = envVarName;
+    }
+
+    public @Nullable String getEnvVarName() {
+        return envVarName;
+    }
 }

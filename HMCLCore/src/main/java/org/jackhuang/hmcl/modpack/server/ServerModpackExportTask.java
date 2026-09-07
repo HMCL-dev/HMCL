@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.modpack.server;
 
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.game.GameComponentAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -29,6 +29,8 @@ import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,18 +39,27 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Exports one registered game instance as an HMCL server modpack archive.
+@NotNullByDefault
 public class ServerModpackExportTask extends Task<Void> {
-    private final DefaultGameRepository repository;
-    private final GameInstanceID instanceId;
+    /// The fixed instance snapshot exported by this task.
+    private final DefaultGameInstance instance;
+
+    /// The validated export configuration.
     private final ModpackExportInfo exportInfo;
+
+    /// The archive written by this task.
     private final Path modpackFile;
 
-    public ServerModpackExportTask(DefaultGameRepository repository, GameInstanceID instanceId, ModpackExportInfo exportInfo, Path modpackFile) {
-        this.repository = repository;
-        this.instanceId = instanceId;
+    /// Creates a server modpack export task.
+    ///
+    /// @param instance    the registered instance snapshot to export
+    /// @param exportInfo  the export configuration
+    /// @param modpackFile the archive to write
+    public ServerModpackExportTask(DefaultGameInstance instance, ModpackExportInfo exportInfo, Path modpackFile) {
+        this.instance = instance;
         this.exportInfo = exportInfo.validate();
         this.modpackFile = modpackFile;
 
@@ -63,14 +74,16 @@ public class ServerModpackExportTask extends Task<Void> {
         });
     }
 
+    /// {@inheritDoc}
     @Override
     public void execute() throws Exception {
+        var instanceId = instance.getId();
         ArrayList<String> blackList = new ArrayList<>(ModAdviser.MODPACK_BLACK_LIST);
         blackList.add(instanceId + ".jar");
         blackList.add(instanceId + ".json");
         LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
         try (Zipper zip = new Zipper(modpackFile)) {
-            Path runDirectory = repository.getRunDirectory(instanceId);
+            Path runDirectory = instance.getRunDirectory();
             List<ModpackConfiguration.FileInformation> files = new ArrayList<>();
             zip.putDirectory(runDirectory, "overrides", path -> {
                 if (Modpack.acceptFile(path, blackList, exportInfo.getWhitelist())) {
@@ -85,28 +98,27 @@ public class ServerModpackExportTask extends Task<Void> {
                 }
             });
 
-            String gameVersion = repository.getGameVersion(instanceId)
-                    .orElseThrow(() -> new IOException("Cannot parse the version of " + instanceId));
-            LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(repository.getResolvedInstanceManifest(instanceId), gameVersion);
+            GameVersionNumber version = instance.getVersion();
+            if (version == GameVersionNumber.unknown()) {
+                throw new IOException("Cannot parse the version of " + instanceId);
+            }
+            String gameVersion = version.toString();
             List<ServerModpackManifest.Addon> addons = new ArrayList<>();
-            addons.add(new ServerModpackManifest.Addon(MINECRAFT.getPatchId(), gameVersion));
-            analyzer.getVersion(FORGE).ifPresent(forgeVersion ->
-                    addons.add(new ServerModpackManifest.Addon(FORGE.getPatchId(), forgeVersion)));
-            analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion ->
-                    addons.add(new ServerModpackManifest.Addon(NEO_FORGE.getPatchId(), neoForgeVersion)));
-            analyzer.getVersion(LITELOADER).ifPresent(liteLoaderVersion ->
-                    addons.add(new ServerModpackManifest.Addon(LITELOADER.getPatchId(), liteLoaderVersion)));
-            analyzer.getVersion(OPTIFINE).ifPresent(optifineVersion ->
-                    addons.add(new ServerModpackManifest.Addon(OPTIFINE.getPatchId(), optifineVersion)));
-            analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->
-                    addons.add(new ServerModpackManifest.Addon(FABRIC.getPatchId(), fabricVersion)));
-            analyzer.getVersion(QUILT).ifPresent(quiltVersion ->
-                    addons.add(new ServerModpackManifest.Addon(QUILT.getPatchId(), quiltVersion)));
+            addons.add(new ServerModpackManifest.Addon(GameComponentType.GAME.getPatchId(), gameVersion));
+
+            for (GameComponentAnalyzer.Mark mark : instance.getAnalyzer()) {
+                if ((mark.componentType().isModLoader() || mark.componentType() == GameComponentType.OPTIFINE)
+                        && mark.version() != null) {
+                    addons.add(new ServerModpackManifest.Addon(mark.componentType().getPatchId(), mark.version()));
+                }
+            }
+
             ServerModpackManifest manifest = new ServerModpackManifest(exportInfo.getName(), exportInfo.getAuthor(), exportInfo.getVersion(), exportInfo.getDescription(), StringUtils.removeSuffix(exportInfo.getFileApi(), "/"), files, addons);
             zip.putTextFile(JsonUtils.GSON.toJson(manifest), "server-manifest.json");
         }
     }
 
+    /// Export options supported by the server modpack format.
     public static final ModpackExportInfo.Options OPTION = new ModpackExportInfo.Options()
             .requireAuthor()
             .requireFileApi(false);
