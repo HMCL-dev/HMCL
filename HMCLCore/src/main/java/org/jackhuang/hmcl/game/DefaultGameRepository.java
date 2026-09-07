@@ -22,6 +22,7 @@ import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.scene.effect.Bloom;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
@@ -294,14 +295,30 @@ public abstract class DefaultGameRepository implements GameRepository {
                     }
                 }
 
+                // Remove invalid instances.
+                // TODO: In the future we could retain these instances and show their status in the UI.
+
+                HashSet<GameInstanceID> visited = null;
+                loop:
                 for (DefaultGameInstance instance : newSnapshot.getInstances()) {
                     if (instance.getManifest().inheritsFrom() == null) {
                         continue;
                     }
 
+                    if (visited != null)
+                        visited.clear();
+                    else
+                        visited = new HashSet<>();
+
                     DefaultGameInstance current = instance;
+                    visited.add(current.getId());
                     while (current.getManifest().inheritsFrom() != null) {
                         GameInstanceID parentId = current.getManifest().inheritsFrom();
+                        if (!visited.add(parentId)) {
+                            // DefaultGameRepositorySnapshot.resolve can handle circular references
+                            continue loop;
+                        }
+
                         DefaultGameInstance parent = newSnapshot.get(parentId);
                         if (parent == null) {
                             LOG.warning("Instance " + current.getId() + " inherits from missing instance " + parentId);
