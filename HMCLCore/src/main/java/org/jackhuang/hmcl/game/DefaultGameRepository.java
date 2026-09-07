@@ -294,47 +294,7 @@ public abstract class DefaultGameRepository implements GameRepository {
                     }
                 }
 
-                // Remove invalid instances.
-                // TODO: In the future we could retain these instances and show their status in the UI.
-
-                HashSet<GameInstanceID> visited = null;
-                loop:
-                for (DefaultGameInstance instance : newSnapshot.getInstances()) {
-                    if (instance.getManifest().inheritsFrom() == null) {
-                        continue;
-                    }
-
-                    if (visited != null)
-                        visited.clear();
-                    else
-                        visited = new HashSet<>();
-
-                    DefaultGameInstance current = instance;
-                    visited.add(current.getId());
-                    while (current.getManifest().inheritsFrom() != null) {
-                        GameInstanceID parentId = current.getManifest().inheritsFrom();
-                        if (!visited.add(parentId)) {
-                            // DefaultGameRepositorySnapshot.resolve can handle circular references
-                            continue loop;
-                        }
-
-                        DefaultGameInstance parent = newSnapshot.get(parentId);
-                        if (parent == null) {
-                            LOG.warning("Instance " + current.getId() + " inherits from missing instance " + parentId);
-
-                            for (DefaultGameInstance toRemoved = instance; toRemoved != null; ) {
-                                newSnapshot.remove(toRemoved.getId());
-                                toRemoved = toRemoved.getManifest().inheritsFrom() != null
-                                        ? newSnapshot.get(toRemoved.getManifest().inheritsFrom())
-                                        : null;
-                            }
-
-                            break;
-                        }
-                        current = parent;
-                    }
-                }
-
+                newSnapshot.removeInvalidInstances();
             } catch (IOException e) {
                 LOG.warning("Failed to load instance from " + instancesDir, e);
             }
