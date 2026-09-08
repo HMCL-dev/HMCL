@@ -62,7 +62,7 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     /// The snapshot member this manager serves.
     protected final DefaultGameInstance instance;
 
-    protected boolean loaded = false;
+    protected volatile boolean loaded = false;
 
     /// Creates a manager bound to the given instance.
     ///
@@ -82,6 +82,16 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     ///
     /// @return the addon directory path
     public abstract Path getDirectory();
+
+    /// Marks the local file list as invalid.
+    public void invalidate() {
+        lock.lock();
+        try {
+            loaded = false;
+        } finally {
+            lock.unlock();
+        }
+    }
 
     /// Reloads local addon files from disk into [#localFiles].
     ///
