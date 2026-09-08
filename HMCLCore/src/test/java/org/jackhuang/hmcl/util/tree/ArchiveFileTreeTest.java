@@ -54,7 +54,7 @@ public final class ArchiveFileTreeTest {
         try (var tree = openTree(directory)) {
             // A TAR directory flag does not require its name to end in a slash.
             var entry = new TarArchiveEntry(name, TarConstants.LF_DIR);
-            assertTimeoutPreemptively(Duration.ofSeconds(2), () -> tree.addEntry(entry));
+            assertTimeoutPreemptively(Duration.ofSeconds(2), () -> ArchiveFileTree.addEntry(tree.getRoot(), entry));
             assertTrue(tree.getRoot().getFiles().isEmpty());
             if (name.startsWith("a/")) {
                 assertEquals(1, tree.getRoot().getSubDirs().size());
@@ -70,7 +70,7 @@ public final class ArchiveFileTreeTest {
     public void testNormalizedFilePath(@TempDir Path directory) throws IOException {
         try (var tree = openTree(directory)) {
             var entry = new TarArchiveEntry("./a//./file.txt");
-            tree.addEntry(entry);
+            ArchiveFileTree.addEntry(tree.getRoot(), entry);
             assertSame(entry, tree.getEntry("a/file.txt"));
             assertTrue(tree.getRoot().getFiles().isEmpty());
         }
@@ -82,8 +82,8 @@ public final class ArchiveFileTreeTest {
     public void testFileConflictSkipsEntry(String name, @TempDir Path directory) throws IOException {
         try (var tree = openTree(directory)) {
             var existing = new TarArchiveEntry("a");
-            tree.addEntry(existing);
-            tree.addEntry(new TarArchiveEntry(name));
+            ArchiveFileTree.addEntry(tree.getRoot(), existing);
+            ArchiveFileTree.addEntry(tree.getRoot(), new TarArchiveEntry(name));
             assertSame(existing, tree.getEntry("a"));
             assertEquals(1, tree.getRoot().getFiles().size());
             assertTrue(tree.getRoot().getSubDirs().isEmpty());
@@ -95,8 +95,8 @@ public final class ArchiveFileTreeTest {
     @ValueSource(strings = {"a/", "a/file.txt"})
     public void testDirectoryConflictSkipsFile(String name, @TempDir Path directory) throws IOException {
         try (var tree = openTree(directory)) {
-            tree.addEntry(new TarArchiveEntry(name));
-            tree.addEntry(new TarArchiveEntry("a"));
+            ArchiveFileTree.addEntry(tree.getRoot(), new TarArchiveEntry(name));
+            ArchiveFileTree.addEntry(tree.getRoot(), new TarArchiveEntry("a"));
             assertNotNull(tree.getDirectory("a"));
             assertTrue(tree.getRoot().getFiles().isEmpty());
             if (name.endsWith("file.txt"))
@@ -109,8 +109,8 @@ public final class ArchiveFileTreeTest {
     public void testDuplicateFileIsSkipped(@TempDir Path directory) throws IOException {
         try (var tree = openTree(directory)) {
             var existing = new TarArchiveEntry("file.txt");
-            tree.addEntry(existing);
-            tree.addEntry(new TarArchiveEntry("file.txt"));
+            ArchiveFileTree.addEntry(tree.getRoot(), existing);
+            ArchiveFileTree.addEntry(tree.getRoot(), new TarArchiveEntry("file.txt"));
             assertSame(existing, tree.getEntry("file.txt"));
             assertEquals(1, tree.getRoot().getFiles().size());
         }
@@ -121,11 +121,11 @@ public final class ArchiveFileTreeTest {
     @ValueSource(strings = {"../file.txt", "a/../file.txt"})
     public void testParentDirectorySkipsEntry(String name, @TempDir Path directory) throws IOException {
         try (var tree = openTree(directory)) {
-            tree.addEntry(new TarArchiveEntry(name));
+            ArchiveFileTree.addEntry(tree.getRoot(), new TarArchiveEntry(name));
             assertNull(tree.getEntry("file.txt"));
             assertNull(tree.getEntry("a/file.txt"));
             var valid = new TarArchiveEntry("valid.txt");
-            tree.addEntry(valid);
+            ArchiveFileTree.addEntry(tree.getRoot(), valid);
             assertSame(valid, tree.getEntry("valid.txt"));
         }
     }
