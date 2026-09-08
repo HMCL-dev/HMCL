@@ -116,6 +116,8 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
             boolean isLastPart = end < 0 || end == name.length() - 1;
             String item = end >= 0 ? name.substring(start, end) : name.substring(start);
 
+            start = end + 1;
+
             if (isLastPart && !entry.isDirectory()) {
                 if (dir.getSubDirs().containsKey(item)) {
                     throw new IOException("A file and a directory have the same name: " + entry.getName());
@@ -155,8 +157,6 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
                     LOG.warning("A file and a directory have the same name: " + entry.getName());
                 break;
             }
-
-            start = end + 1;
         }
     }
 
