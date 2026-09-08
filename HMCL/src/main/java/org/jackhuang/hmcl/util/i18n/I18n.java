@@ -17,11 +17,11 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
-import org.jackhuang.hmcl.addon.LoaderType;
+import org.jackhuang.hmcl.addon.AddonLoader;
+import org.jackhuang.hmcl.addon.AddonLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
-import org.jackhuang.hmcl.util.Either;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.translator.Translator;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -128,7 +128,7 @@ public final class I18n {
         return MinecraftWiki.getWikiLink(locale, remoteVersion);
     }
 
-    public static @Nullable String translateLoaderType(LoaderType loaderType) {
+    public static String translateLoaderType(AddonLoaderType loaderType) {
         if (loaderType instanceof ModLoaderType modLoaderType) {
             return switch (modLoaderType) {
                 case FORGE -> i18n("install.installer.forge");
@@ -138,17 +138,18 @@ public final class I18n {
                 case LITE_LOADER -> i18n("install.installer.liteloader");
                 case QUILT -> i18n("install.installer.quilt");
                 case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
-                default -> null;
+                default -> modLoaderType.displayName();
             };
         }
-        return null;
+        return loaderType.displayName();
     }
 
-    public static @Nullable String translateLoaderType(Either<LoaderType, String> loader) {
-        return loader.fold(
-                I18n::translateLoaderType,
-                s -> "bungeecord".equalsIgnoreCase(s) ? "BungeeCord" : StringUtils.capitalizeWords(s)
-        );
+    public static String translateLoaderName(AddonLoader loader) {
+        if (loader.type() != null)
+            return translateLoaderType(loader.type());
+        else return "bungeecord".equalsIgnoreCase(loader.name())
+                ? "BungeeCord"
+                : StringUtils.capitalizeWords(loader.name());
     }
 
     public static boolean hasKey(String key) {

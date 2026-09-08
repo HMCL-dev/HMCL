@@ -41,7 +41,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.addon.LoaderType;
+import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
@@ -737,8 +737,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                             FXUtils.runInFX(() -> {
                                 Set<String> tags = new LinkedHashSet<>();
-                                for (Either<LoaderType, String> loader : versionOptional.get().loaders()) {
-                                    String tag = I18n.translateLoaderType(loader);
+                                for (AddonLoader loader : versionOptional.get().loaders()) {
+                                    String tag = I18n.translateLoaderName(loader);
                                     if (tag != null) tags.add(tag);
                                 }
                                 title.addTagsIfNotExist(tags);

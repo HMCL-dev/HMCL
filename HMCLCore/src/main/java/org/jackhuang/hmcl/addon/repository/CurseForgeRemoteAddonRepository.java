@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.addon.repository;
 
 import com.google.gson.reflect.TypeToken;
-import org.jackhuang.hmcl.addon.LoaderType;
+import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
@@ -614,7 +614,10 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                             return RemoteAddon.Dependency.ofGeneral(RELATION_TYPE.get(dependency.relationType()), RemoteAddon.Source.CURSEFORGE, Integer.toString(dependency.modId()));
                         }).distinct().filter(Objects::nonNull).collect(Collectors.toList()),
                         gameVersions.stream().filter(GameVersionNumber::isKnown).toList(),
-                        gameVersions.stream().filter(LoaderType::mightBeLoader).map(LoaderType::toEither).toList()
+                        gameVersions.stream()
+                                .filter(AddonLoader::mightBeLoader)
+                                .map(AddonLoader::of)
+                                .toList()
                 );
             }
         }

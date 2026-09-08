@@ -18,20 +18,13 @@
 package org.jackhuang.hmcl.addon;
 
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
-import org.jackhuang.hmcl.util.Either;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Locale;
-import java.util.Set;
-
-/// For mods and shaders
-public interface LoaderType {
-
-    @Unmodifiable
-    Set<String> names();
-
-    static boolean mightBeLoader(String str) {
+@NotNullByDefault
+public record AddonLoader(String name, @Nullable AddonLoaderType type) {
+    public static boolean mightBeLoader(String str) {
         if (StringUtils.isBlank(str)
                 || !StringUtils.isASCII(str)
                 || "client".equalsIgnoreCase(str) || "server".equalsIgnoreCase(str))
@@ -44,12 +37,16 @@ public interface LoaderType {
         return true;
     }
 
-    static Either<LoaderType, String> toEither(String loader) {
-        String l = loader.toLowerCase(Locale.ROOT);
-        for (var m : ModLoaderType.values()) {
-            if (m.names().contains(l)) return Either.left(m);
+    public static AddonLoader of(String name) {
+        for (var type : ModLoaderType.values()) {
+            for (String loaderName : type.names()) {
+                if (name.equalsIgnoreCase(loaderName)) {
+                    return new AddonLoader(name, type);
+                }
+            }
+
         }
-        return Either.right(loader);
+        return new AddonLoader(name, ModLoaderType.UNKNOWN);
     }
 
 }

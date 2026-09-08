@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.util.Either;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -224,7 +223,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
 
     public record Version(IVersion self, String versionId, String projectId, String name, String version,
                           Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
-                          List<String> gameVersions, List<Either<LoaderType, String>> loaders) {
+                          List<String> gameVersions, List<AddonLoader> loaders) {
     }
 
     public record File(Map<String, String> hashes, String url, String filename) {

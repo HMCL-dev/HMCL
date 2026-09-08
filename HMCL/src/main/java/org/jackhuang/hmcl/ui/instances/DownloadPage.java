@@ -29,7 +29,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.addon.LoaderType;
+import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
@@ -282,9 +282,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 resolve:
                                 for (RemoteAddon.Version addonVersion : addonVersions) {
                                     if (getSkinnable().type == RemoteAddon.Type.MOD) {
-                                        for (Either<LoaderType, String> loader : addonVersion.loaders()) {
-                                            //noinspection SuspiciousMethodCalls
-                                            if (loader.left() instanceof ModLoaderType && targetLoaders.contains(loader.left())) {
+                                        for (AddonLoader loader : addonVersion.loaders()) {
+                                            if (loader.type() instanceof ModLoaderType modLoaderType && targetLoaders.contains(modLoaderType)) {
                                                 list.getContent().addAll(
                                                         ComponentList.createComponentListTitle(i18n("addon.download.recommend", gameVersion)),
                                                         new AddonItem(control.addon, addonVersion, control)
@@ -463,9 +462,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     Set<String> tags = new LinkedHashSet<>();
-                    for (Either<LoaderType, String> loader : dataItem.loaders()) {
-                        String tag = I18n.translateLoaderType(loader);
-                        if (tag != null) tags.add(tag);
+                    for (AddonLoader loader : dataItem.loaders()) {
+                        tags.add(I18n.translateLoaderName(loader));
                     }
                     content.addTags(tags);
 
