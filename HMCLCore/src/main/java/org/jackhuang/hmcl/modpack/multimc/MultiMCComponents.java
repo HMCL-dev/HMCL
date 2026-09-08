@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.modpack.multimc;
 
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.net.URI;
@@ -66,21 +66,21 @@ public final class MultiMCComponents {
         return builder.toString();
     }
 
-    private static final Map<String, LibraryAnalyzer.LibraryType> ID_TYPE = new HashMap<>();
+    private static final Map<String, GameComponentType> ID_TYPE = new HashMap<>();
 
     static {
-        ID_TYPE.put("net.minecraft", LibraryAnalyzer.LibraryType.MINECRAFT);
-        ID_TYPE.put("net.minecraftforge", LibraryAnalyzer.LibraryType.FORGE);
-        ID_TYPE.put("net.neoforged", LibraryAnalyzer.LibraryType.NEO_FORGE);
-        ID_TYPE.put("com.mumfrey.liteloader", LibraryAnalyzer.LibraryType.LITELOADER);
-        ID_TYPE.put("net.fabricmc.fabric-loader", LibraryAnalyzer.LibraryType.FABRIC);
-        ID_TYPE.put("org.quiltmc.quilt-loader", LibraryAnalyzer.LibraryType.QUILT);
+        ID_TYPE.put("net.minecraft", GameComponentType.GAME);
+        ID_TYPE.put("net.minecraftforge", GameComponentType.FORGE);
+        ID_TYPE.put("net.neoforged", GameComponentType.NEO_FORGE);
+        ID_TYPE.put("com.mumfrey.liteloader", GameComponentType.LITELOADER);
+        ID_TYPE.put("net.fabricmc.fabric-loader", GameComponentType.FABRIC);
+        ID_TYPE.put("org.quiltmc.quilt-loader", GameComponentType.QUILT);
     }
 
-    private static final Map<LibraryAnalyzer.LibraryType, String> TYPE_ID =
+    private static final Map<GameComponentType, String> TYPE_ID =
             ID_TYPE.entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
 
-    private static final Collection<Map.Entry<String, LibraryAnalyzer.LibraryType>> PAIRS = Collections.unmodifiableCollection(ID_TYPE.entrySet());
+    private static final Collection<Map.Entry<String, GameComponentType>> PAIRS = Collections.unmodifiableCollection(ID_TYPE.entrySet());
 
     static {
         if (TYPE_ID.isEmpty()) {
@@ -88,15 +88,15 @@ public final class MultiMCComponents {
         }
     }
 
-    public static String getComponent(LibraryAnalyzer.LibraryType type) {
+    public static String getComponent(GameComponentType type) {
         return TYPE_ID.get(type);
     }
 
-    public static LibraryAnalyzer.LibraryType getComponent(String type) {
+    public static GameComponentType getComponent(String type) {
         return ID_TYPE.get(type);
     }
 
-    public static Collection<Map.Entry<String, LibraryAnalyzer.LibraryType>> getPairs() {
+    public static Collection<Map.Entry<String, GameComponentType>> getPairs() {
         return PAIRS;
     }
 

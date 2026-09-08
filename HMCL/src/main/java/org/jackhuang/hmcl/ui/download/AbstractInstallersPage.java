@@ -28,9 +28,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -41,6 +40,7 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -58,37 +58,37 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
 
     public AbstractInstallersPage(WizardController controller, String gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
-        this.group = new InstallerItem.InstallerItemGroup(gameVersion, getInstallerItemStyle());
+        this.group = new InstallerItem.InstallerItemGroup(GameVersionNumber.asGameVersion(gameVersion), getInstallerItemStyle());
 
-        for (InstallerItem library : group.getLibraries()) {
-            String libraryId = library.getLibraryId();
-            if (libraryId.equals(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())) continue;
-            library.setOnInstall(() -> {
+        for (InstallerItem component : group.getComponents()) {
+            GameComponentType type = component.getComponentType();
+            if (type == GameComponentType.GAME) continue;
+            component.setOnInstall(() -> {
                 if (!Boolean.TRUE.equals(state().getShownTips().get(FABRIC_QUILT_API_TIP))
-                        && (LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId().equals(libraryId)
-                        || LibraryAnalyzer.LibraryType.QUILT_API.getPatchId().equals(libraryId)
-                        || LibraryAnalyzer.LibraryType.LEGACY_FABRIC_API.getPatchId().equals(libraryId))) {
+                        && (type == GameComponentType.FABRIC_API
+                        || type == GameComponentType.QUILT_API
+                        || type == GameComponentType.LEGACY_FABRIC_API)) {
                     Controllers.dialog(new MessageDialogPane.Builder(
-                            i18n("install.installer.fabric-quilt-api.warning", i18n("install.installer." + libraryId)),
+                            i18n("install.installer.fabric-quilt-api.warning", i18n("install.installer." + type.getPatchId())),
                             i18n("message.warning"),
                             MessageDialogPane.MessageType.WARNING
                     ).ok(null).addCancel(i18n("button.do_not_show_again"), () -> state().getShownTips().put(FABRIC_QUILT_API_TIP, true)).build());
                 }
 
-                if (!(library.resolvedStateProperty().get() instanceof InstallerItem.IncompatibleState))
+                if (!(component.resolvedStateProperty().get() instanceof InstallerItem.IncompatibleState))
                     controller.onNext(
                             new VersionsPage(
                                     controller,
-                                    i18n("install.installer.choose", i18n("install.installer." + libraryId)),
+                                    i18n("install.installer.choose", i18n("install.installer." + type.getPatchId())),
                                     gameVersion,
                                     downloadProvider,
-                                    libraryId,
+                                    type,
                                     () -> controller.onPrev(false, Navigation.NavigationDirection.PREVIOUS)
                             ), Navigation.NavigationDirection.NEXT
                     );
             });
-            library.setOnRemove(() -> {
-                controller.getSettings().remove(libraryId);
+            component.setOnRemove(() -> {
+                controller.getSettings().remove(type.getPatchId());
                 reload();
             });
         }
@@ -166,16 +166,16 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             }
 
             {
-                InstallerItem[] libraries = control.group.getLibraries();
+                InstallerItem[] components = control.group.getComponents();
 
-                FlowPane libraryPane = new FlowPane(16, 16, libraries);
+                FlowPane libraryPane = new FlowPane(16, 16, components);
                 ScrollPane scrollPane = new ScrollPane(libraryPane);
                 scrollPane.setFitToWidth(true);
                 scrollPane.setFitToHeight(true);
                 BorderPane.setMargin(scrollPane, new Insets(16, 0, 16, 0));
                 root.setCenter(scrollPane);
 
-                if (libraries.length <= 8)
+                if (components.length <= 8)
                     scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             }
 

@@ -19,17 +19,10 @@ package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.game.GameInstanceJsonDownloadTask;
-import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.DownloadInfo;
-import org.jackhuang.hmcl.game.DownloadType;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.GameInstancePatch;
-import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -116,7 +109,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
                 return;
             }
 
-            Path jar = gameRepository.getArtifactFile(manifest, processor.getJar());
+            Path jar = gameRepository.getLayout().getArtifactFile(processor.getJar());
             if (!Files.isRegularFile(jar))
                 throw new FileNotFoundException("Game processor file not found, should be downloaded in preprocess");
 
@@ -134,7 +127,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
 
             List<String> classpath = new ArrayList<>(processor.getClasspath().size() + 1);
             for (Artifact artifact : processor.getClasspath()) {
-                Path file = gameRepository.getArtifactFile(manifest, artifact);
+                Path file = gameRepository.getLayout().getArtifactFile(artifact);
                 if (!Files.isRegularFile(file))
                     throw new Exception("Game processor dependency missing");
                 classpath.add(file.toString());
@@ -196,6 +189,8 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository gameRepository;
     private final GameInstanceManifest manifest;
+    /// Source vanilla client JAR copied before processors are invoked.
+    private final Path minecraftJar;
     private final Path installer;
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
@@ -206,12 +201,25 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
     private final String selfVersion;
 
     private Path tempDir;
-    private AtomicInteger processorDoneCount = new AtomicInteger(0);
+    private final AtomicInteger processorDoneCount = new AtomicInteger(0);
 
-    public ForgeNewInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, String selfVersion, Path installer) {
+    /// Creates a Forge processor installation task.
+    ///
+    /// @param dependencyManager repository-scoped download services
+    /// @param manifest          working manifest receiving the Forge patch
+    /// @param minecraftJar      source vanilla client JAR copied for processor use
+    /// @param selfVersion       Forge version recorded in the returned patch
+    /// @param installer         Forge installer JAR
+    public ForgeNewInstallTask(
+            DefaultDependencyManager dependencyManager,
+            GameInstanceManifest manifest,
+            Path minecraftJar,
+            String selfVersion,
+            Path installer) {
         this.dependencyManager = dependencyManager;
         this.gameRepository = dependencyManager.getGameRepository();
         this.manifest = manifest;
+        this.minecraftJar = minecraftJar;
         this.installer = installer;
         this.selfVersion = selfVersion;
 
@@ -268,7 +276,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
         else if (StringUtils.isSurrounded(literal, "'", "'"))
             return StringUtils.removeSurrounding(literal, "'");
         else if (StringUtils.isSurrounded(literal, "[", "]"))
-            return gameRepository.getArtifactFile(manifest, Artifact.fromDescriptor(StringUtils.removeSurrounding(literal, "[", "]"))).toString();
+            return gameRepository.getLayout().getArtifactFile(Artifact.fromDescriptor(StringUtils.removeSurrounding(literal, "[", "]"))).toString();
         else
             return plainConverter.apply(replaceTokens(var, literal));
     }
@@ -302,7 +310,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
             for (Library library : profile.getLibraries()) {
                 Path file = fs.getPath("maven").resolve(library.getPath());
                 if (Files.exists(file)) {
-                    Path dest = gameRepository.getLibraryFile(manifest, library);
+                    Path dest = gameRepository.getLayout().getLibraryFile(manifest.id(), library);
                     FileUtils.copyFile(file, dest);
                 }
             }
@@ -310,7 +318,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
             if (profile.getPath().isPresent()) {
                 Path mainJar = profile.getPath().get().getPath(fs.getPath("maven"));
                 if (Files.exists(mainJar)) {
-                    Path dest = gameRepository.getArtifactFile(manifest, profile.getPath().get());
+                    Path dest = gameRepository.getLayout().getArtifactFile(profile.getPath().get());
                     FileUtils.copyFile(mainJar, dest);
                 }
             }
@@ -387,7 +395,13 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void execute() throws Exception {
+        if (!Files.isRegularFile(minecraftJar)) {
+            throw new FileNotFoundException("Minecraft client JAR not found: " + minecraftJar);
+        }
         tempDir = Files.createTempDirectory("forge_installer");
+        // External processors must not receive the shared cache path.
+        Path isolatedMinecraftJar = tempDir.resolve("minecraft.jar");
+        FileUtils.copyFile(minecraftJar, isolatedMinecraftJar);
 
         Map<String, String> vars = new HashMap<>();
 
@@ -409,11 +423,11 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
         }
 
         vars.put("SIDE", "client");
-        vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(gameRepository.getInstanceJar(manifest)));
-        vars.put("MINECRAFT_VERSION", FileUtils.getAbsolutePath(gameRepository.getInstanceJar(manifest)));
+        vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(isolatedMinecraftJar));
+        vars.put("MINECRAFT_VERSION", profile.getMinecraft());
         vars.put("ROOT", FileUtils.getAbsolutePath(gameRepository.getBaseDirectory()));
         vars.put("INSTALLER", installer.toAbsolutePath().toString());
-        vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLibrariesDirectory(manifest)));
+        vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLayout().getLibrariesDirectory()));
 
         updateProgress(0, processors.size());
 
@@ -424,11 +438,11 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
 
         dependencies.add(
                 processorsTask.thenComposeAsync(
-                        dependencyManager.checkLibraryCompletionAsync(forgeVersion, true)));
+                        dependencyManager.checkComponentCompletionAsync(forgeVersion, true)));
 
         setResult(GameInstancePatch.fromManifest(
                 forgeVersion,
-                LibraryAnalyzer.LibraryType.FORGE.getPatchId(),
+                GameComponentType.FORGE.getPatchId(),
                 selfVersion,
                 GameInstancePatch.PRIORITY_LOADER));
     }
