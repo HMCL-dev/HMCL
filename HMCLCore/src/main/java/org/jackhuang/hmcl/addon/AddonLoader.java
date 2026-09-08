@@ -46,7 +46,7 @@ public record AddonLoader(String name, @Nullable AddonLoaderType type) {
             }
 
         }
-        return new AddonLoader(name, ModLoaderType.UNKNOWN);
+        return new AddonLoader(name, null);
     }
 
 }
