@@ -117,14 +117,16 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
             String item = end >= 0 ? name.substring(start, end) : name.substring(start);
 
             if (isLastPart && !entry.isDirectory()) {
-                if (dir.subDirs.containsKey(item)) {
+                if (dir.getSubDirs().containsKey(item)) {
                     throw new IOException("A file and a directory have the same name: " + entry.getName());
                 }
 
-                if (dir.files.containsKey(item)) {
+                if (dir.getFiles().containsKey(item)) {
                     throw new IOException("Duplicate entry: " + entry.getName());
                 }
 
+                if (dir.files == null)
+                    dir.files = new HashMap<>();
                 dir.files.put(item, entry);
                 break;
             }
@@ -136,10 +138,13 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
                 continue;
             }
 
-            if (dir.files.containsKey(item)) {
+            if (dir.getFiles().containsKey(item)) {
                 LOG.warning("A file and a directory have the same name: " + entry.getName());
                 continue;
             }
+
+            if (dir.subDirs == null)
+                dir.subDirs = new HashMap<>();
 
             dir = dir.subDirs.computeIfAbsent(item, Dir::new);
 
@@ -230,8 +235,8 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
         private final String name;
         private E entry;
 
-        final Map<String, Dir<E>> subDirs = new HashMap<>();
-        final Map<String, E> files = new HashMap<>();
+        @Nullable HashMap<String, Dir<E>> subDirs;
+        @Nullable HashMap<String, E> files;
 
         public Dir(String name) {
             this.name = name;
@@ -250,11 +255,11 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
         }
 
         public @NotNull @UnmodifiableView Map<String, Dir<E>> getSubDirs() {
-            return subDirs;
+            return subDirs != null ? subDirs : Map.of();
         }
 
         public @NotNull @UnmodifiableView Map<String, E> getFiles() {
-            return files;
+            return files != null ? files : Map.of();
         }
     }
 }
