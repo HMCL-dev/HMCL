@@ -53,7 +53,6 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
     }
 
     protected final R reader;
-    protected final Dir<E> root = new Dir<>("");
 
     public ArchiveFileTree(R reader) {
         this.reader = reader;
@@ -63,11 +62,10 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
         return reader;
     }
 
-    public Dir<E> getRoot() {
-        return root;
-    }
+    public abstract Dir<E> getRoot();
 
     public @Nullable E getEntry(@NotNull String entryPath) {
+        Dir<E> root = getRoot();
         Dir<E> dir = root;
         if (entryPath.indexOf('/') < 0) {
             return dir.getFiles().get(entryPath);
@@ -91,7 +89,7 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
     }
 
     public @Nullable Dir<E> getDirectory(@NotNull String dirPath) {
-        Dir<E> dir = root;
+        Dir<E> dir = getRoot();
         if (dirPath.isEmpty()) {
             return dir;
         }
@@ -112,7 +110,7 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
     /// Parent directories created before a skipped entry is detected remain in the tree.
     ///
     /// @param entry the archive entry to add
-    protected void addEntry(@NotNull E entry) throws IOException {
+    protected static <E extends ArchiveEntry> void addEntry(Dir<E> root, @NotNull E entry) {
         String name = entry.getName();
         Dir<E> dir = root;
 
