@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Constants;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -28,7 +27,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 
 /// A class that describes a Minecraft dependency.
 ///
@@ -136,6 +138,14 @@ public record Library(
         this(artifact, url, downloads, null, null, null, null, null, null);
     }
 
+    public Library(String group, String name, String version) {
+        this(group, name, version, null);
+    }
+
+    public Library(String group, String name, String version, @Nullable String classifier) {
+        this(new Artifact(group, name, version, classifier));
+    }
+
     public String groupId() {
         return artifact.getGroup();
     }
@@ -193,9 +203,12 @@ public record Library(
             return true;
         }
 
-        return downloads != null
-                && downloads.classifiers() != null
-                && downloads.classifiers().keySet().stream().anyMatch(s -> s.startsWith("native"));
+        if (downloads != null && downloads.classifiers() != null
+                && downloads.classifiers().keySet().stream().anyMatch(s -> s.startsWith("native"))) {
+            return true;
+        }
+
+        return this.artifact().getClassifier() != null && this.artifact().getClassifier().startsWith("natives-");
     }
 
     public @Nullable LibraryDownloadInfo getRawDownloadInfo() {
@@ -235,7 +248,7 @@ public record Library(
             }
         }
 
-        String repo = Lang.requireNonNullElse(url, Constants.DEFAULT_LIBRARY_URL);
+        String repo = Objects.requireNonNullElse(url, Constants.DEFAULT_LIBRARY_URL);
         if (!repo.endsWith("/")) {
             repo += '/';
         }

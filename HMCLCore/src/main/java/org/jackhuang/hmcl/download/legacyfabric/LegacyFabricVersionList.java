@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download.legacyfabric;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
-public final class LegacyFabricVersionList extends VersionList<LegacyFabricRemoteVersion> {
+public final class LegacyFabricVersionList extends ComponentVersionList<LegacyFabricRemoteVersion> {
     private final DownloadProvider downloadProvider;
 
     public LegacyFabricVersionList(DownloadProvider downloadProvider) {

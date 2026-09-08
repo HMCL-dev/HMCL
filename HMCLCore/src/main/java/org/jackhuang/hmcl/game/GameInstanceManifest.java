@@ -63,51 +63,6 @@ public record GameInstanceManifest(
         @Nullable @Unmodifiable JsonObject rawJson
 ) {
 
-    /// Resolved manifest views with inheritance folded.
-    ///
-    /// @param unresolved         the stored manifest supplied to resolution
-    /// @param launchManifest     the normalized final manifest data used by launch-time consumers
-    /// @param standaloneManifest the structural standalone manifest with pending patches preserved
-    @NotNullByDefault
-    public record Resolved(GameInstanceManifest unresolved,
-                           GameInstanceManifest launchManifest,
-                           GameInstanceManifest standaloneManifest) {
-
-        /// Creates a resolved manifest view.
-        public Resolved {
-            Objects.requireNonNull(launchManifest);
-            Objects.requireNonNull(standaloneManifest);
-
-            if (!launchManifest.id().equals(standaloneManifest.id())) {
-                throw new IllegalArgumentException("Resolved manifest views must have the same id");
-            }
-
-            if (launchManifest.inheritsFrom() != null) {
-                throw new IllegalArgumentException("Launch manifest cannot inherit from another manifest");
-            }
-            if (launchManifest.patches() != null && !launchManifest.patches().isEmpty()) {
-                throw new IllegalArgumentException("Launch manifest cannot contain pending patches");
-            }
-            if (standaloneManifest.inheritsFrom() != null) {
-                throw new IllegalArgumentException("Standalone manifest cannot inherit from another manifest");
-            }
-        }
-
-        public boolean isModded() {
-            String mainClass = launchManifest().mainClass();
-            if (mainClass == null || GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN.equals(mainClass)) {
-                return false;
-            }
-
-            for (String packageName : GameComponentAnalyzer.MOD_LOADER_MAIN_CLASSES_PACKAGES) {
-                if (mainClass.startsWith(packageName))
-                    return true;
-            }
-
-            return false;
-        }
-    }
-
     GameInstanceManifest merge(GameInstanceManifest parent) {
         return new GameInstanceManifest(
                 id,
@@ -355,11 +310,29 @@ public record GameInstanceManifest(
         return root != null && root;
     }
 
+    public boolean isModifiable() {
+        return inheritsFrom == null && patches != null && hasPatch(GameComponentType.GAME);
+    }
+
     /// Returns the pending patches.
     ///
     /// @return the pending patches, or an empty list when absent
     public List<GameInstancePatch> getPatches() {
         return patches == null ? List.of() : patches;
+    }
+
+    /// Finds a patch by its id.
+    ///
+    /// @return the patch with the given id, or `null` if no such patch exists.
+    public @Nullable GameInstancePatch findPatch(GameComponentType type) {
+        if (patches != null) {
+            for (GameInstancePatch patch : patches) {
+                if (type.getPatchId().equals(patch.id())) {
+                    return patch;
+                }
+            }
+        }
+        return null;
     }
 
     /// Returns logging metadata.
@@ -565,18 +538,9 @@ public record GameInstanceManifest(
 
     /// Returns a manifest copy with additional patches.
     public GameInstanceManifest addPatch(GameInstancePatch additional) {
-        return addPatches(List.of(additional));
-    }
-
-    /// Returns a manifest copy with additional patches.
-    public GameInstanceManifest addPatches(@Nullable List<GameInstancePatch> additional) {
         Set<String> patchIds = new HashSet<>();
-        if (additional != null) {
-            for (GameInstancePatch patch : additional) {
-                if (patch.id() != null) {
-                    patchIds.add(patch.id());
-                }
-            }
+        if (additional.id() != null) {
+            patchIds.add(additional.id());
         }
 
         List<GameInstancePatch> patches = new ArrayList<>();
@@ -587,15 +551,13 @@ public record GameInstanceManifest(
                 }
             }
         }
-        if (additional != null) {
-            patches.addAll(additional);
-        }
+        patches.add(additional);
         return withPatches(patches);
     }
 
     /// Returns whether this manifest has a patch with the given id.
-    public boolean hasPatch(String patchId) {
-        return patches != null && patches.stream().anyMatch(patch -> patchId.equals(patch.id()));
+    public boolean hasPatch(GameComponentType type) {
+        return findPatch(type) != null;
     }
 
     /// Converts this manifest into a hidden patch entry for preserving resolved inheritance.
@@ -694,7 +656,39 @@ public record GameInstanceManifest(
         return json;
     }
 
-    private static final class Builder {
+    public GameInstanceManifest removeComponent(GameComponentType type) {
+        @Nullable GameInstancePatch patch = findPatch(type);
+        if (patch == null) {
+            return this;
+        }
+
+        return this.withPatches(getPatches()
+                .stream()
+                .filter(it -> it != patch)
+                .toList()).reconstructByPatches();
+    }
+
+    public GameInstanceManifest reconstructByPatches() {
+        if (inheritsFrom() != null || !isRoot()) {
+            throw new IllegalArgumentException("Cannot reconstruct a manifest that inherits from another or is not root");
+        }
+
+        if (patches() == null || patches().isEmpty()) {
+            return this;
+        }
+
+        var builder = new GameInstanceManifest.Builder();
+        for (GameInstancePatch patch : patches()) {
+            builder.merge(patch);
+        }
+        builder.setId(id());
+        builder.setJar(jar() == null ? id() : jar());
+        builder.setRoot(true);
+        builder.setPatches(patches());
+        return builder.toManifest();
+    }
+
+    public static final class Builder {
         // @formatter:off
         private @Nullable GameInstanceID id;
         private @Nullable String minecraftArguments;
@@ -720,10 +714,10 @@ public record GameInstanceManifest(
         private @Nullable JsonObject rawJson;
         // @formatter:on
 
-        Builder() {
+        public Builder() {
         }
 
-        Builder(GameInstanceManifest manifest) {
+        public Builder(GameInstanceManifest manifest) {
             this.id = manifest.id;
             this.minecraftArguments = manifest.minecraftArguments;
             this.arguments = manifest.arguments;
@@ -907,7 +901,36 @@ public record GameInstanceManifest(
             }
         }
 
-        GameInstanceManifest toManifest() {
+        public void merge(GameInstancePatch patch) {
+            if (patch.minecraftArguments() != null)
+                this.minecraftArguments = patch.minecraftArguments();
+            this.arguments = Arguments.merge(this.arguments, patch.arguments());
+            if (patch.mainClass() != null)
+                this.mainClass = patch.mainClass();
+            if (patch.assetIndex() != null)
+                this.assetIndex = patch.assetIndex();
+            if (patch.assets() != null)
+                this.assets = patch.assets();
+            if (patch.complianceLevel() != null)
+                this.complianceLevel = patch.complianceLevel();
+            if (patch.javaVersion() != null)
+                this.javaVersion = patch.javaVersion();
+            this.libraries = Lang.merge(this.libraries, patch.libraries());
+            this.compatibilityRules = Lang.merge(this.compatibilityRules, patch.compatibilityRules());
+            if (patch.downloads() != null)
+                this.downloads = patch.downloads();
+            if (patch.logging() != null)
+                this.logging = patch.logging();
+            if (patch.type() != null)
+                this.type = patch.type();
+            if (patch.time() != null)
+                this.time = patch.time();
+            if (patch.releaseTime() != null)
+                this.releaseTime = patch.releaseTime();
+            this.minimumLauncherVersion = Lang.merge(this.minimumLauncherVersion, patch.minimumLauncherVersion(), Math::max);
+        }
+
+        public GameInstanceManifest toManifest() {
             if (id == null) {
                 throw new IllegalStateException("id is null");
             }

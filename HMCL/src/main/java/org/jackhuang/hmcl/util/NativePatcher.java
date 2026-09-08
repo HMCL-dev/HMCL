@@ -17,13 +17,13 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -97,17 +97,17 @@ public final class NativePatcher {
             return manifest.withLibraries(newLibraries);
         }
 
-        final boolean useNativeGLFW = settings.getInheritable(GameSettings::useNativeGLFWProperty);
+        final boolean useNativeGLFWorSDL = settings.getInheritable(GameSettings::useNativeGLFWorSDLProperty);
         final boolean useNativeOpenAL = settings.getInheritable(GameSettings::useNativeOpenALProperty);
 
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
-                && (useNativeGLFW || useNativeOpenAL) && gameVersion.compareTo("1.19") >= 0) {
+                && (useNativeGLFWorSDL || useNativeOpenAL) && gameVersion.compareTo("1.19") >= 0) {
 
             manifest = manifest.withLibraries(manifest.getLibraries().stream()
                     .filter(library -> {
                         if (library.classifier() != null && library.classifier().startsWith("natives")
                                 && "org.lwjgl".equals(library.groupId())) {
-                            if ((useNativeGLFW && "lwjgl-glfw".equals(library.artifactId()))
+                            if ((useNativeGLFWorSDL && ("lwjgl-glfw".equals(library.artifactId()) || library.artifactId().contains("sdl")))
                                     || (useNativeOpenAL && "lwjgl-openal".equals(library.artifactId()))) {
                                 LOG.info("Filter out " + library.name());
                                 return false;

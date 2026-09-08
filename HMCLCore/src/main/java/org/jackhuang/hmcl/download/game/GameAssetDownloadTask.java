@@ -55,7 +55,7 @@ public final class GameAssetDownloadTask extends Task<Void> {
     /// @param manifest the game version
     public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, GameInstanceManifest manifest, boolean forceDownloadingIndex, boolean integrityCheck) {
         this.dependencyManager = dependencyManager;
-        this.manifest = dependencyManager.getGameRepository().resolve(manifest).launchManifest();
+        this.manifest = manifest;
         this.assetIndexInfo = this.manifest.getAssetIndex();
         GameRepository gameRepository = dependencyManager.getGameRepository();
         String assetId = assetIndexInfo.getId();

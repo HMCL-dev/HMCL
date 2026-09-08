@@ -20,9 +20,11 @@ package org.jackhuang.hmcl.ui.download;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.Lang;
@@ -52,7 +54,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
             component.setOnRemove(() -> {
                 controller.getSettings().put(
                         component.getComponentType().getPatchId(),
-                        new UpdateInstallerWizardProvider.RemoveVersionAction(component.getComponentType()));
+                        new UpdateInstallerWizardProvider.RemoveComponentAction(component.getComponentType()));
                 reload();
             });
         }
@@ -67,13 +69,13 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
 
     @Override
     public String getTitle() {
-        return i18n("settings.tabs.installers");
+        return i18n("install.change_version.title", instance.getId().id());
     }
 
     private String getVersion(GameComponentType type) {
         return Optional.ofNullable(controller.getSettings().get(type.getPatchId()))
-                .flatMap(it -> Lang.tryCast(it, RemoteVersion.class))
-                .map(RemoteVersion::getSelfVersion).orElse(null);
+                .flatMap(it -> Lang.tryCast(it, ComponentRemoteVersion.class))
+                .map(ComponentRemoteVersion::getSelfVersion).orElse(null);
     }
 
     @Override
@@ -85,7 +87,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
             GameComponentType componentType = component.getComponentType();
             String version = instance.getComponentVersion(component.getComponentType());
             String libraryVersion = Lang.requireNonNullElse(getVersion(componentType), version);
-            boolean alreadyInstalled = version != null && !(controller.getSettings().get(componentType.getPatchId()) instanceof UpdateInstallerWizardProvider.RemoveVersionAction);
+            boolean alreadyInstalled = version != null && !(controller.getSettings().get(componentType.getPatchId()) instanceof UpdateInstallerWizardProvider.RemoveComponentAction);
             if (component.getComponentType() != GameComponentType.GAME && gameVersionChanged && getVersion(componentType) == null && alreadyInstalled) {
                 // For third-party libraries, if game version is being changed, and the library is not being reinstalled,
                 // warns the user that we should update the library.

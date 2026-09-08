@@ -26,13 +26,12 @@ import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.MurmurHash2;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.HttpRequest;
-import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -178,7 +177,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             }
 
             if (response == null) {
-                throw exception != null ? exception : new IOException("No candidates found");
+                throw exception != null ? exception : new NoCandidatesException();
             }
 
             // https://github.com/HMCL-dev/HMCL/issues/1549
@@ -295,6 +294,19 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             return response.data.toAddon();
         } finally {
             SEMAPHORE.release();
+        }
+    }
+
+    @Override
+    public RemoteAddon resolveDependency(DownloadProvider downloadProvider, String id) throws IOException {
+        try {
+            return getAddonById(downloadProvider, id);
+        } catch (IOException e) {
+            if (e instanceof NoCandidatesException) throw e;
+            if (e instanceof FileNotFoundException
+                    || e instanceof ResponseCodeException rce && rce.getResponseCode() == 404)
+                return RemoteAddon.BROKEN;
+            throw e;
         }
     }
 

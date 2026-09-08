@@ -439,14 +439,14 @@ public final class GameDirectoriesTest {
         }
     }
 
-    /// Tests that an unpublished isolated installation resolves paths without a [HMCLGameInstance].
+    /// Tests that a default isolation decision is persisted after a new instance is published.
     @Test
-    public void newIsolatedInstallationUsesVersionRootBeforePublication(@TempDir Path tempDirectory)
+    public void newInstancePersistsDefaultIsolationDecisionAfterPublication(@TempDir Path tempDirectory)
             throws Exception {
         GameSettingsPresetID defaultPresetId =
                 GameSettingsPresetID.parse("game-settings-preset:123e4567-e89b-12d3-a456-426614174002");
         GameSettings.Preset defaultPreset = new GameSettings.Preset(defaultPresetId);
-        defaultPreset.defaultIsolationTypeProperty().setValue(DefaultIsolationType.MODDED);
+        defaultPreset.defaultIsolationTypeProperty().setValue(DefaultIsolationType.ALWAYS);
         GameSettingsPresets presets = new GameSettingsPresets();
         presets.getPresets().setAll(defaultPreset);
 
@@ -465,18 +465,22 @@ public final class GameDirectoriesTest {
             GameInstanceID id = new GameInstanceID("1.21.11-fabric");
 
             assertFalse(repository.hasInstance(id));
+            boolean isolated = repository.shouldIsolateNewInstance(false);
+            assertTrue(isolated);
 
-            repository.applyDefaultIsolationSettingForNewInstance(id, true);
             try (GameRepositoryDraft draft = repository.openDraft()) {
                 draft.put(new GameInstanceManifest(id));
                 assertFalse(repository.hasInstance(id));
-                assertEquals(
-                        repository.getLayout().getInstanceRoot(id),
-                        repository.getRunDirectoryForInstallation(id));
                 draft.commit();
             }
 
             HMCLGameInstance instance = repository.getInstance(id);
+            if (isolated) {
+                instance.enableIsolation();
+            }
+            FileSaver.waitForAllSaves();
+            repository.refresh();
+            instance = repository.getInstance(id);
             assertEquals(repository.getLayout().getInstanceRoot(id), instance.getRunDirectory());
             assertEquals(repository.getLayout().getInstanceRoot(id).resolve("mods"), instance.getModsDirectory());
             GameSettings.Instance instanceSettings = Objects.requireNonNull(instance.getSettings());
