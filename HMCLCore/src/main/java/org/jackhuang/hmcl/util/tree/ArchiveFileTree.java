@@ -106,7 +106,13 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
         return dir;
     }
 
-    protected void addEntry(E entry) throws IOException {
+    /// Adds an entry, creating missing parent directories.
+    /// Empty and `.` directory components are skipped. Entries with `..` directory
+    /// components, duplicate files, and file/directory conflicts are skipped with a warning.
+    /// Parent directories created before a skipped entry is detected remain in the tree.
+    ///
+    /// @param entry the archive entry to add
+    protected void addEntry(@NotNull E entry) throws IOException {
         String name = entry.getName();
         Dir<E> dir = root;
 
@@ -116,15 +122,18 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
             boolean isLastPart = end < 0 || end == name.length() - 1;
             String item = end >= 0 ? name.substring(start, end) : name.substring(start);
 
-            start = end + 1;
+            // A final component may be skipped, so the cursor must still reach the end.
+            start = end < 0 ? name.length() : end + 1;
 
             if (isLastPart && !entry.isDirectory()) {
                 if (dir.getSubDirs().containsKey(item)) {
-                    throw new IOException("A file and a directory have the same name: " + entry.getName());
+                    LOG.warning("A file and a directory have the same name: " + name);
+                    return;
                 }
 
                 if (dir.getFiles().containsKey(item)) {
-                    throw new IOException("Duplicate entry: " + entry.getName());
+                    LOG.warning("Duplicate entry: " + entry.getName());
+                    return;
                 }
 
                 if (dir.files.isEmpty())
@@ -137,12 +146,12 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
                 continue;
             if (item.equals("..")) {
                 LOG.warning("Invalid entry name: " + name);
-                continue;
+                return;
             }
 
             if (dir.getFiles().containsKey(item)) {
-                LOG.warning("A file and a directory have the same name: " + entry.getName());
-                continue;
+                LOG.warning("A file and a directory have the same name: " + name);
+                return;
             }
 
             if (dir.subDirs.isEmpty())
