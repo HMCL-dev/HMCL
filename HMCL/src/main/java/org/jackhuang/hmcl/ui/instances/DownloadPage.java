@@ -526,7 +526,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class AddonVersion extends JFXDialogLayout {
-        public AddonVersion(RemoteAddon mod, RemoteAddon.Version version, DownloadPage selfPage) {
+        public AddonVersion(RemoteAddon addon, RemoteAddon.Version version, DownloadPage selfPage) {
             RemoteAddon.Type type = selfPage.type;
 
             String title = switch (type) {
@@ -540,7 +540,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
-            var addonItem = new AddonItem(mod, version, selfPage);
+            var addonItem = new AddonItem(addon, version, selfPage);
             addonItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
             box.getChildren().setAll(addonItem);
 
@@ -557,8 +557,8 @@ public class DownloadPage extends Control implements DecoratorPage {
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             ComponentList dependenciesList = new ComponentList();
-            loadDependencies(version, selfPage, spinnerPane, dependenciesList);
-            spinnerPane.setOnFailedAction(e -> loadDependencies(version, selfPage, spinnerPane, dependenciesList));
+            loadDependencies(type, version, selfPage, spinnerPane, dependenciesList);
+            spinnerPane.setOnFailedAction(e -> loadDependencies(type, version, selfPage, spinnerPane, dependenciesList));
 
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             scrollPane.setContent(dependenciesList);
@@ -581,7 +581,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     if (type == RemoteAddon.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                         fireEvent(new DialogCloseEvent());
                     }
-                    selfPage.download(mod, version);
+                    selfPage.download(addon, version);
                 });
             }
 
@@ -610,7 +610,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             onEscPressed(this, cancelButton::fire);
         }
 
-        private void loadDependencies(RemoteAddon.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
+        private void loadDependencies(RemoteAddon.Type thisAddonType, RemoteAddon.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
             spinnerPane.setLoading(true);
             Task.composeAsync(() -> {
                 // TODO: Massive tasks may cause OOM.
@@ -632,10 +632,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     queue.add(Task.supplyAsync(Schedulers.io(), () -> {
-                                var addon = dependency.load(selfPage.getDownloadProvider());
-                                if (addon == RemoteAddon.BROKEN) return Pair.pair(addon, false);
-                                return Pair.pair(addon, addon.checkInstalled(
-                                        selfPage.repository.getRemoteVersionsById(selfPage.getDownloadProvider(), addon.id()),
+                                var depAddon = dependency.load(selfPage.getDownloadProvider());
+                                if (depAddon == RemoteAddon.BROKEN || thisAddonType == RemoteAddon.Type.MODPACK) return Pair.pair(depAddon, false);
+                                return Pair.pair(depAddon, depAddon.checkInstalled(
+                                        selfPage.repository.getRemoteVersionsById(selfPage.getDownloadProvider(), depAddon.id()),
                                         selfPage.getInstanceOptional().instance()
                                 ));
                             })
