@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -124,15 +123,18 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         var release = new Lazy<>(() -> updates.releaseUpdates().stream().map(AddonUpdateObject::new).toList());
 
         objects = FXCollections.observableArrayList();
-        List<Subscription> subscriptions = new ArrayList<>();
-        BooleanProperty showPreview = new SimpleBooleanProperty(SettingsManager.settings().defaultUpdateAddonsToPreviewProperty().get());
-        FXUtils.onChangeAndOperate(showPreview, preview -> {
-            if (preview) objects.setAll(common.get());
-            else objects.setAll(release.get());
-            subscriptions.forEach(Subscription::unsubscribe);
-            subscriptions.clear();
-            subscriptions.addAll(FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(AddonUpdateObject::enabledProperty).toArray(BooleanProperty[]::new)));
-        });
+
+        BooleanProperty showPreview = new SimpleBooleanProperty();
+        {
+            List<Subscription> subscriptions = new ArrayList<>();
+            FXUtils.onChangeAndOperate(showPreview, preview -> {
+                if (preview) objects.setAll(common.get());
+                else objects.setAll(release.get());
+                subscriptions.forEach(Subscription::unsubscribe);
+                subscriptions.clear();
+                subscriptions.addAll(FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(AddonUpdateObject::enabledProperty).toArray(BooleanProperty[]::new)));
+            });
+        }
 
         TableView<AddonUpdateObject> table = new TableView<>(objects);
         table.setEditable(true);

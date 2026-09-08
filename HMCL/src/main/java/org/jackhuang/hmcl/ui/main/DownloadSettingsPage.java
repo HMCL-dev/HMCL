@@ -102,11 +102,7 @@ public class DownloadSettingsPage extends StackPane {
                 defaultAddonSourcePane.setItems("modrinth", "curseforge");
                 defaultAddonSourcePane.valueProperty().bindBidirectional(settings().defaultAddonSourceProperty());
 
-                var updateAddonsToPreviewButton = new LineToggleButton();
-                updateAddonsToPreviewButton.setTitle(i18n("settings.launcher.default_update_addons_to_preview"));
-                updateAddonsToPreviewButton.selectedProperty().bindBidirectional(settings().defaultUpdateAddonsToPreviewProperty());
-
-                gameContent.getContent().setAll(versionListSourcePane, downloadSourcePane, defaultAddonSourcePane, updateAddonsToPreviewButton);
+                gameContent.getContent().setAll(versionListSourcePane, downloadSourcePane, defaultAddonSourcePane);
             }
 
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.game_content")), gameContent);
