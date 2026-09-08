@@ -361,6 +361,7 @@ public final class DefaultGameRepositoryDraft implements GameRepositoryDraft {
                     : repository.createInstance(committedSnapshot, manifest.id(), manifest);
             committedSnapshot.put(updated);
         }
+        committedSnapshot.removeInvalidInstances();
         committedSnapshot.seal();
         return committedSnapshot;
     }
