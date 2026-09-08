@@ -49,6 +49,7 @@ public enum GameInstanceIconType {
             case FORGE -> GameInstanceIconType.FORGE;
             case NEO_FORGE -> GameInstanceIconType.NEO_FORGE;
             case FABRIC -> GameInstanceIconType.FABRIC;
+            case LEGACY_FABRIC -> GameInstanceIconType.LEGACY_FABRIC;
             case QUILT -> GameInstanceIconType.QUILT;
             case LITE_LOADER -> GameInstanceIconType.CHICKEN;
             case CLEANROOM -> GameInstanceIconType.CLEANROOM;

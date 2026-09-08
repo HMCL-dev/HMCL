@@ -29,6 +29,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
@@ -50,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -306,8 +308,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 resolve:
                                 for (RemoteAddon.Version addonVersion : addonVersions) {
                                     if (getSkinnable().type == RemoteAddon.Type.MOD) {
-                                        for (ModLoaderType loader : addonVersion.loaders()) {
-                                            if (targetLoaders.contains(loader)) {
+                                        for (AddonLoader loader : addonVersion.loaders()) {
+                                            if (loader.type() instanceof ModLoaderType modLoaderType && targetLoaders.contains(modLoaderType)) {
                                                 list.getContent().addAll(
                                                         ComponentList.createComponentListTitle(i18n("addon.download.recommend", gameVersion)),
                                                         new AddonItem(control.addon, addonVersion, control)
@@ -416,21 +418,15 @@ public class DownloadPage extends Control implements DecoratorPage {
             });
             setNode(IDX_LEADING, pane);
 
-            if (addon != RemoteAddon.BROKEN) {
-                ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(addon.type()).getModByCurseForgeId(addon.slug());
-                content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
-                content.setSubtitle(addon.description());
-                for (String category : addon.categories()) {
-                    if (page.shouldDisplayCategory(category))
-                        content.addTag(page.getLocalizedCategory(category, null));
-                }
-                if (StringUtils.isNotBlank(addon.iconUrl())) {
-                    imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.iconUrl(), 80, 80, true, true));
-                }
-            } else {
-                content.setTitle(i18n("addon.broken_dependency.title"));
-                content.setSubtitle(i18n("addon.broken_dependency.desc"));
-                imageView.setImage(FXUtils.newBuiltinImage("/assets/img/icon@4x.png"));
+            ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(addon.type()).getModByCurseForgeId(addon.slug());
+            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
+            content.setSubtitle(addon.description());
+            for (String category : addon.categories()) {
+                if (page.shouldDisplayCategory(category))
+                    content.addTag(page.getLocalizedCategory(category, null));
+            }
+            if (StringUtils.isNotBlank(addon.iconUrl())) {
+                imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.iconUrl(), 80, 80, true, true));
             }
         }
     }
@@ -484,31 +480,11 @@ public class DownloadPage extends Control implements DecoratorPage {
                         graphicPane.getChildren().setAll(icon);
                     }
 
-                    for (ModLoaderType modLoaderType : dataItem.loaders()) {
-                        switch (modLoaderType) {
-                            case FORGE:
-                                content.addTag(i18n("install.installer.forge"));
-                                break;
-                            case CLEANROOM:
-                                content.addTag(i18n("install.installer.cleanroom"));
-                                break;
-                            case NEO_FORGE:
-                                content.addTag(i18n("install.installer.neoforge"));
-                                break;
-                            case FABRIC:
-                                content.addTag(i18n("install.installer.fabric"));
-                                break;
-                            case LITE_LOADER:
-                                content.addTag(i18n("install.installer.liteloader"));
-                                break;
-                            case QUILT:
-                                content.addTag(i18n("install.installer.quilt"));
-                                break;
-                            case LEGACY_FABRIC:
-                                content.addTag(i18n("install.installer.legacyfabric"));
-                                break;
-                        }
+                    Set<String> tags = new LinkedHashSet<>();
+                    for (AddonLoader loader : dataItem.loaders()) {
+                        tags.add(I18n.translateLoaderName(loader));
                     }
+                    content.addTags(tags);
 
                     descPane.getChildren().setAll(graphicPane, content);
                 }
@@ -564,6 +540,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             scrollPane.setContent(dependenciesList);
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
+            FXUtils.onChangeAndOperate(scrollPane.widthProperty(), d -> FXUtils.setLimitWidth(dependenciesList, d.doubleValue()));
             FXUtils.smoothScrolling(scrollPane);
             FXUtils.setOverflowHidden(scrollPane, 8);
             spinnerPane.setContent(scrollPane);
@@ -614,9 +591,12 @@ public class DownloadPage extends Control implements DecoratorPage {
             Task.composeAsync(() -> {
                 // TODO: Massive tasks may cause OOM.
                 EnumMap<RemoteAddon.DependencyType, Pair<Label, List<DependencyAddonItem>>> dependencies = new EnumMap<>(RemoteAddon.DependencyType.class);
+                AtomicBoolean hasBroken = new AtomicBoolean(false);
                 List<Task<?>> queue = new ArrayList<>(version.dependencies().size());
                 for (RemoteAddon.Dependency dependency : version.dependencies()) {
-                    if (dependency.getType() == RemoteAddon.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteAddon.DependencyType.BROKEN) {
+                    if (dependency.getType() == RemoteAddon.DependencyType.INCOMPATIBLE) continue;
+                    if (dependency.getType() == RemoteAddon.DependencyType.BROKEN) {
+                        hasBroken.set(true);
                         continue;
                     }
 
@@ -631,24 +611,39 @@ public class DownloadPage extends Control implements DecoratorPage {
                             .setSignificance(Task.TaskSignificance.MINOR)
                             .thenAcceptAsync(Schedulers.javafx(), dep -> {
                                 if (dep == RemoteAddon.BROKEN) {
+                                    hasBroken.set(true);
                                     return;
                                 }
                                 DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep, selfPage.instanceReference);
+                                var listener = FXUtils.onWeakChangeAndOperate(dependenciesList.widthProperty(), d -> FXUtils.setLimitWidth(dependencyAddonItem, d.doubleValue()));
+                                dependencyAddonItem.getProperties().put("DependencyAddonItem.width", listener);
                                 dependencies.get(dependency.getType()).value().add(dependencyAddonItem);
                             })
                             .setSignificance(Task.TaskSignificance.MINOR));
                 }
 
-                return Task.allOf(queue).thenSupplyAsync(() ->
-                        dependencies.values().stream().flatMap(types ->
-                                Stream.concat(
-                                        Stream.of(types.key()),
-                                        types.value().stream().sorted(Comparator.comparing(item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)))
-                        ).toList()
-                );
+                return Task.allOf(queue).thenSupplyAsync(() -> {
+                    var dependenciesStream = dependencies.values().stream().flatMap(types -> {
+                        if (types.value().isEmpty()) return Stream.of();
+                        return Stream.concat(
+                                Stream.of(types.key()),
+                                types.value().stream().sorted(Comparator.comparing(item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)));
+                    });
+                    if (!hasBroken.get()) {
+                        return dependenciesStream;
+                    } else {
+                        Label warning = new Label(i18n("addon.dependencies.has_broken"));
+                        warning.setWrapText(true);
+                        warning.setPadding(new Insets(0, 8, 0, 8));
+                        return Stream.concat(
+                                Stream.of(warning),
+                                dependenciesStream
+                        );
+                    }
+                });
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
-                    dependenciesList.getContent().setAll(result);
+                    dependenciesList.getContent().setAll(result.toList());
                     spinnerPane.setFailedReason(null);
                 } else {
                     dependenciesList.getContent().setAll();

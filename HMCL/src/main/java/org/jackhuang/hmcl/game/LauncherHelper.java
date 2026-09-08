@@ -157,8 +157,7 @@ public final class LauncherHelper {
         HMCLGameRepository repository = repository();
         DefaultDependencyManager dependencyManager = repository.getDependency();
         // Resolve already deduplicated libraries; apply loader-specific argument repairs for this launch.
-        var launchManifest = new AtomicReference<>(LaunchManifestNormalizer.repairForLaunch(
-                gameInstance.getResolvedManifest().launchManifest()));
+        var launchManifest = new AtomicReference<>(LaunchManifestNormalizer.repairForLaunch(gameInstance.getResolvedManifest()));
         boolean integrityCheck = gameInstance.unmarkLaunchedAbnormally();
         CountDownLatch launchingLatch = new CountDownLatch(1);
         List<String> javaAgents = new ArrayList<>(0);
@@ -976,7 +975,7 @@ public final class LauncherHelper {
             Log4jLevel level = isErrorStream && !log.startsWith("[authlib-injector]") ? Log4jLevel.ERROR : null;
             if (showLogs) {
                 if (level == null)
-                    level = Lang.requireNonNullElse(Log4jLevel.guessLevel(log), Log4jLevel.INFO);
+                    level = Objects.requireNonNullElse(Log4jLevel.guessLevel(log), Log4jLevel.INFO);
                 logBuffer.add(new Log(log, level));
             } else {
                 lock.lock();

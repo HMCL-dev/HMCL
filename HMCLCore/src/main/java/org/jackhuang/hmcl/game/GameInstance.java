@@ -53,17 +53,10 @@ public interface GameInstance {
     /// @return the unresolved stored manifest
     GameInstanceManifest getManifest();
 
-    /// Returns the eagerly resolved manifest views captured with this instance.
-    ///
-    /// @return the resolved manifest views
-    GameInstanceManifest.Resolved getResolvedManifest();
-
     /// Returns the manifest used by launch-time consumers.
     ///
     /// @return the launch manifest
-    default GameInstanceManifest getLaunchManifest() {
-        return getResolvedManifest().launchManifest();
-    }
+    GameInstanceManifest getResolvedManifest();
 
     GameComponentAnalyzer getAnalyzer();
 
