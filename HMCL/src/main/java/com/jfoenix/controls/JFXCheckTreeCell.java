@@ -17,6 +17,7 @@
  */
 package com.jfoenix.controls;
 
+import com.jfoenix.skins.JFXCheckBoxSkin;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.CheckBoxTreeItem;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 ///
 /// The checkbox's selected and indeterminate states are bidirectionally bound to
 /// the current tree item. Reusing or clearing the cell removes the old bindings.
+/// Installing a checkbox skin or switching tree items applies the selection state
+/// immediately, without playing a selection animation.
 /// Ordinary tree items retain the display provided by [JFXTreeCell].
 /// Empty cells and `null` values display neither content nor a checkbox.
 ///
@@ -50,7 +53,15 @@ public class JFXCheckTreeCell<T> extends JFXTreeCell<T> {
         checkBox.setFocusTraversable(false);
         graphic.setAlignment(Pos.CENTER_LEFT);
         graphic.setPickOnBounds(false);
+        checkBox.skinProperty().addListener(observable -> finishSelectionAnimation());
         treeItemProperty().addListener(observable -> updateDisplay(getItem(), isEmpty()));
+    }
+
+    /// Finishes animations from the previous item and immediately displays the current state.
+    private void finishSelectionAnimation() {
+        if (checkBox.getSkin() instanceof JFXCheckBoxSkin skin) {
+            skin.finishSelectionAnimation();
+        }
     }
 
     /// Adds the checkbox to the inherited display and updates its selection bindings.
@@ -75,6 +86,7 @@ public class JFXCheckTreeCell<T> extends JFXTreeCell<T> {
                 checkBox.setSelected(false);
                 checkBox.setIndeterminate(false);
             }
+            finishSelectionAnimation();
         }
 
         if (treeItem != null) {
