@@ -164,7 +164,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             Controllers.taskDialog(Task.composeAsync(() ->
                     new FileDownloadTask(downloadProvider.injectURLWithCandidates(file.file().url()), dest).setName(file.name())
             ).whenComplete(Schedulers.io(), exception -> {
-                if (exception != null && instance != null) {
+                if (exception == null && instance != null) {
                     var manager = instance.getManagerForType(type);
                     if (manager != null) manager.invalidate();
                 }
