@@ -293,6 +293,8 @@ public abstract class DefaultGameRepository implements GameRepository {
                         LOG.warning("Failed to load instance", e);
                     }
                 }
+
+                newSnapshot.removeInvalidInstances();
             } catch (IOException e) {
                 LOG.warning("Failed to load instance from " + instancesDir, e);
             }
