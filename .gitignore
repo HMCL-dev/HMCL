@@ -4,6 +4,8 @@
 hs_err_pid*
 *.hprof
 
+*.jfr
+
 .gradle
 gradle.properties
 
