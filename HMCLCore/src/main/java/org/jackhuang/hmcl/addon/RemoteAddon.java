@@ -47,7 +47,7 @@ public record RemoteAddon(String id, String slug, String author, String title, S
                 try {
                     Set<?> localHashes = manager.getHashes(source());
                     return remoteVersions.map(Version::hash).anyMatch(localHashes::contains);
-                } catch (IOException e) {
+                } catch (Exception e) {
                     LOG.warning("Failed to check if addon %s on %s is installed".formatted(id(), source()), e);
                 }
             }
