@@ -17,12 +17,13 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.SimpleMultimap;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /// Launch-manifest library and argument adjustments used at resolve time and launch time.
 ///
@@ -50,7 +51,7 @@ public final class LaunchManifestNormalizer {
         }
 
         GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, null);
-        GameInstanceManifest repaired = manifest;
+        GameInstanceManifest repaired = uniqueLibraries(manifest);
         @Nullable String mainClass = repaired.mainClass();
 
         if (GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN.equals(mainClass)) {
@@ -69,8 +70,14 @@ public final class LaunchManifestNormalizer {
             // DefaultLauncher when building the process command).
             repaired = repairBootstrapLauncher(repaired, analyzer);
         }
-        // Vanilla and Fabric/Quilt need no loader-specific argument repair here.
 
+        if (analyzer.has(GameComponentType.LEGACY_FABRIC)) {
+            // LegacyFabric adds higher-version ASM dependencies such as org.ow2.asm:asm,
+            // which conflict with the original org.ow2.asm:asm-all and cause launch failure.
+            repaired = repairDuplicateAsm(repaired, analyzer);
+        }
+
+        // Vanilla and Fabric/Quilt need no loader-specific argument repair here.
         return removeLegacyLog4jPatch(repaired);
     }
 
@@ -87,7 +94,7 @@ public final class LaunchManifestNormalizer {
         @Nullable String mainClass = null;
 
         // Re-add LiteLoader tweaker when Forge overwrote the argument list (unless ModLauncher is in use).
-        if (analyzer.has(GameComponentType.LITELOADER) && !analyzer.hasModLauncher()) {
+        if (analyzer.has(GameComponentType.LITELOADER) && !analyzer.hasForgeModLauncher()) {
             builder.replaceTweakClass(
                     GameComponentAnalyzer.LITELOADER_TWEAKER,
                     GameComponentAnalyzer.LITELOADER_TWEAKER,
@@ -107,7 +114,7 @@ public final class LaunchManifestNormalizer {
                             !reorderTweakClass,
                             reorderTweakClass);
                 }
-            } else if (analyzer.hasModLauncher()) {
+            } else if (analyzer.hasForgeModLauncher()) {
                 // Prefer ModLauncher over LaunchWrapper when both are present.
                 mainClass = GameComponentAnalyzer.MOD_LAUNCHER_MAIN;
                 for (String optiFineTweaker : GameComponentAnalyzer.OPTIFINE_TWEAKERS) {
@@ -128,7 +135,7 @@ public final class LaunchManifestNormalizer {
         }
 
         boolean hasForge = analyzer.has(GameComponentType.FORGE);
-        boolean hasModLauncher = analyzer.hasModLauncher();
+        boolean hasModLauncher = analyzer.hasForgeModLauncher();
         for (String forgeTweaker : GameComponentAnalyzer.FORGE_TWEAKERS) {
             if (!hasForge) {
                 builder.removeTweakClass(forgeTweaker);
@@ -215,6 +222,21 @@ public final class LaunchManifestNormalizer {
         return builder.build();
     }
 
+    /// LegacyFabric adds higher-version ASM dependencies such as org.ow2.asm:asm,
+    /// which conflict with the original org.ow2.asm:asm-all and cause launch failure.
+    private static GameInstanceManifest repairDuplicateAsm(GameInstanceManifest manifest, GameComponentAnalyzer analyzer) {
+        if (!analyzer.has(GameComponentType.LEGACY_FABRIC)) {
+            return manifest;
+        }
+
+        List<Library> libraries = manifest.getLibraries();
+
+        boolean hasAsm = libraries.stream().anyMatch(it -> it.is("org.ow2.asm", "asm"));
+        return hasAsm
+                ? manifest.withLibraries(libraries.stream().filter(it -> !it.is("org.ow2.asm", "asm-all")).toList())
+                : manifest;
+    }
+
     /// Returns whether a comma-separated list contains the exact requested value.
     private static boolean containsCommaSeparatedValue(String values, String target) {
         for (String value : values.split(",")) {
@@ -244,4 +266,67 @@ public final class LaunchManifestNormalizer {
         }
         return manifest;
     }
+
+    /// Removes redundant library declarations while retaining rule-distinct variants.
+    ///
+    /// When two libraries share the same `groupId:artifactId` and equal compatibility rules, the
+    /// newer version wins. When versions are equal and the coordinate objects compare equal, the
+    /// declaration with the longer serialized JSON is kept (more metadata is treated as richer).
+    /// Equal id and version with unequal coordinate payloads (for example distinct `text2speech`
+    /// library vs native entries) are both retained.
+    private static GameInstanceManifest uniqueLibraries(GameInstanceManifest manifest) {
+        List<Library> libraries = new ArrayList<>();
+        SimpleMultimap<String, Integer, List<Integer>> indexes =
+                new SimpleMultimap<>(HashMap::new, ArrayList::new);
+
+        for (Library library : manifest.getLibraries()) {
+            String id = library.groupId() + ":" + library.artifactId();
+
+            if (!indexes.containsKey(id)) {
+                indexes.put(id, libraries.size());
+                libraries.add(library);
+                continue;
+            }
+
+            boolean duplicate = false;
+            for (int otherIndex : indexes.get(id)) {
+                Library other = libraries.get(otherIndex);
+                // Rules differ: keep both (platform-specific variants).
+                if (Objects.hashCode(library.rules()) != Objects.hashCode(other.rules())) {
+                    continue;
+                }
+
+                // Rules equal: drop the older version.
+                int comparison = VersionNumber.compare(library.version(), other.version());
+                if (comparison > 0) {
+                    libraries.set(otherIndex, library);
+                } else if (comparison == 0) {
+                    // Same library id and version: collapse true duplicates.
+                    if (library.equals(other)) {
+                        String otherSerialized = JsonUtils.GSON.toJson(other);
+                        String serialized = JsonUtils.GSON.toJson(library);
+                        // Prefer the entry with more serialized metadata when coordinates equal.
+                        if (serialized.length() > otherSerialized.length()) {
+                            libraries.set(otherIndex, library);
+                        }
+                    } else {
+                        // Same id/version but not equal (e.g. text2speech jar vs natives): keep both.
+                        continue;
+                    }
+                }
+                duplicate = true;
+                break;
+            }
+
+            if (!duplicate) {
+                indexes.put(id, libraries.size());
+                libraries.add(library);
+            }
+        }
+
+        return libraries.size() == manifest.getLibraries().size()
+                ? manifest
+                : manifest.withLibraries(libraries);
+    }
+
 }

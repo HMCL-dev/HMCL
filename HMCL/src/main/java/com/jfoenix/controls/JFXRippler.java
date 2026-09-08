@@ -417,7 +417,6 @@ public class JFXRippler extends StackPane {
                     if (overlayRect != null) {
                         overlayRect.inAnimation.stop();
                         if (!forceOverlay) {
-                            overlayRect.outAnimation.stop();
                             overlayRect.setOpacity(0D);
                         }
                     }

@@ -310,6 +310,38 @@ public final class DefaultGameRepositoryDraftTest {
         }
     }
 
+    /// Releases the draft when the target disappears before the updater is invoked.
+    @Test
+    public void testUpdateInstanceAsyncAbortsDraftWhenTargetIsMissing(@TempDir Path tempDirectory) throws Exception {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("missing");
+
+        Task<?> update = repository.updateInstanceAsync(id, workingInstance ->
+                Task.completed(workingInstance.getManifest()));
+        assertFalse(update.executor().test());
+
+        try (DefaultGameRepositoryDraft ignored = repository.openDraft()) {
+            assertTrue(ignored.isOpen());
+        }
+    }
+
+    /// Releases the draft when the updater throws before returning its task.
+    @Test
+    public void testUpdateInstanceAsyncAbortsDraftWhenUpdaterThrows(@TempDir Path tempDirectory) throws Exception {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        repository.save(new GameInstanceManifest(id));
+
+        Task<?> update = repository.updateInstanceAsync(id, workingInstance -> {
+            throw new IOException("Simulated updater failure");
+        });
+        assertFalse(update.executor().test());
+
+        try (DefaultGameRepositoryDraft ignored = repository.openDraft()) {
+            assertTrue(ignored.isOpen());
+        }
+    }
+
     /// Minimal repository implementation for draft tests.
     @NotNullByDefault
     private static class TestRepository extends DefaultGameRepository {

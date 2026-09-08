@@ -23,7 +23,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import org.jackhuang.hmcl.util.ImmutableSequencedMap;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.InstantTypeAdapter;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.LowerCaseEnumTypeAdapter;
@@ -867,29 +866,4 @@ public record GameInstancePatch(
         return json;
     }
 
-    GameInstanceManifest merge(GameInstanceManifest parent) {
-        return new GameInstanceManifest(
-                parent.id(),
-                minecraftArguments == null ? parent.minecraftArguments() : minecraftArguments,
-                Arguments.merge(parent.arguments(), arguments),
-                mainClass == null ? parent.mainClass() : mainClass,
-                null, // inheritsFrom
-                parent.jar(),
-                assetIndex == null ? parent.assetIndex() : assetIndex,
-                assets == null ? parent.assets() : assets,
-                complianceLevel,
-                javaVersion == null ? parent.javaVersion() : javaVersion,
-                Lang.merge(this.libraries, parent.libraries()),
-                Lang.merge(parent.compatibilityRules(), this.compatibilityRules),
-                downloads == null ? parent.downloads() : downloads,
-                logging == null ? parent.logging() : logging,
-                type == null ? parent.type() : type,
-                time == null ? parent.time() : time,
-                releaseTime == null ? parent.releaseTime() : releaseTime,
-                Lang.merge(minimumLauncherVersion, parent.minimumLauncherVersion(), Math::max),
-                true,
-                hidden,
-                parent.patches(),
-                null);
-    }
 }

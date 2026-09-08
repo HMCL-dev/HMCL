@@ -51,7 +51,7 @@ public final class ServerModpackProvider implements ModpackProvider {
         if (!(modpack.getManifest() instanceof ServerModpackManifest serverModpackManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(instance, new ServerModpackLocalInstallTask(dependencyManager, zipFile, modpack, serverModpackManifest, instance.getId()));
+        return new ModpackUpdateTask(instance, new ServerModpackLocalInstallTask(dependencyManager, zipFile, modpack, serverModpackManifest, instance));
     }
 
     @Override

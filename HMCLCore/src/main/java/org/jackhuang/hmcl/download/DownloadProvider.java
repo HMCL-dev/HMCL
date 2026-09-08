@@ -66,7 +66,7 @@ public interface DownloadProvider {
     /// @param componentType the component type of specific version list that this download provider provides. i.e. "fabric", "forge", "liteloader", "game", "optifine"
     /// @return the version list
     /// @throws IllegalArgumentException if the version list does not exist
-    VersionList<?> getVersionList(GameComponentType componentType);
+    ComponentVersionList<?> getVersionList(GameComponentType componentType);
 
     /// The maximum download concurrency that this download provider supports.
     ///

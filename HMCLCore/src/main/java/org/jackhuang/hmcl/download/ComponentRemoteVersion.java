@@ -29,12 +29,10 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * The remote version.
- *
- * @author huangyuhui
- */
-public class RemoteVersion implements Comparable<RemoteVersion> {
+/// The remote version.
+///
+/// @author huangyuhui
+public abstract class ComponentRemoteVersion implements Comparable<ComponentRemoteVersion> {
 
     private final GameComponentType componentType;
     private final String gameVersion;
@@ -43,25 +41,21 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
     private final List<String> urls;
     private final Type type;
 
-    /**
-     * Constructor.
-     *
-     * @param gameVersion the Minecraft version that this remote version suits.
-     * @param selfVersion the version string of the remote version.
-     * @param urls        the installer or universal jar original URL.
-     */
-    public RemoteVersion(GameComponentType componentType, String gameVersion, String selfVersion, Instant releaseDate, List<String> urls) {
+    /// Constructor.
+    ///
+    /// @param gameVersion the Minecraft version that this remote version suits.
+    /// @param selfVersion the version string of the remote version.
+    /// @param urls        the installer or universal jar original URL.
+    public ComponentRemoteVersion(GameComponentType componentType, String gameVersion, String selfVersion, Instant releaseDate, List<String> urls) {
         this(componentType, gameVersion, selfVersion, releaseDate, Type.UNCATEGORIZED, urls);
     }
 
-    /**
-     * Constructor.
-     *
-     * @param gameVersion the Minecraft version that this remote version suits.
-     * @param selfVersion the version string of the remote version.
-     * @param urls        the installer or universal jar URL.
-     */
-    public RemoteVersion(GameComponentType componentType, String gameVersion, String selfVersion, Instant releaseDate, Type type, List<String> urls) {
+    /// Constructor.
+    ///
+    /// @param gameVersion the Minecraft version that this remote version suits.
+    /// @param selfVersion the version string of the remote version.
+    /// @param urls        the installer or universal jar URL.
+    public ComponentRemoteVersion(GameComponentType componentType, String gameVersion, String selfVersion, Instant releaseDate, Type type, List<String> urls) {
         this.componentType = Objects.requireNonNull(componentType);
         this.gameVersion = Objects.requireNonNull(gameVersion);
         this.selfVersion = Objects.requireNonNull(selfVersion);
@@ -98,30 +92,21 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
         return type;
     }
 
-    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
-        throw new UnsupportedOperationException(this + " cannot be installed yet");
-    }
-
-    /// Creates an install task with an explicit mods directory for libraries that download into the
+    /// Creates an installation task with an explicit mods directory for libraries that download into the
     /// instance run tree (for example Fabric/Quilt API).
     ///
-    /// The default implementation ignores `modsDirectory` and delegates to
-    /// [#getInstallTask(DefaultDependencyManager, GameInstanceManifest)].
-    ///
     /// @param dependencyManager the dependency manager
-    /// @param baseVersion       the manifest being installed into
+    /// @param baseManifest       the manifest being installed into
     /// @param modsDirectory     the mods directory of the target instance run directory
-    /// @return the install task
-    public Task<GameInstancePatch> getInstallTask(
+    /// @return the installation task
+    public abstract Task<GameInstancePatch> getInstallTask(
             DefaultDependencyManager dependencyManager,
-            GameInstanceManifest baseVersion,
-            Path modsDirectory) {
-        return getInstallTask(dependencyManager, baseVersion);
-    }
+            GameInstanceManifest baseManifest,
+            Path modsDirectory);
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof RemoteVersion && Objects.equals(selfVersion, ((RemoteVersion) obj).selfVersion);
+        return obj instanceof ComponentRemoteVersion && Objects.equals(selfVersion, ((ComponentRemoteVersion) obj).selfVersion);
     }
 
     @Override
@@ -138,7 +123,7 @@ public class RemoteVersion implements Comparable<RemoteVersion> {
     }
 
     @Override
-    public int compareTo(RemoteVersion o) {
+    public int compareTo(ComponentRemoteVersion o) {
         // newer versions are smaller than older versions
         return VersionNumber.asVersion(o.selfVersion).compareTo(VersionNumber.asVersion(selfVersion));
     }

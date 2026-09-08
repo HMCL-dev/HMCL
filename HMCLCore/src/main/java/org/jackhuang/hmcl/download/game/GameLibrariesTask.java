@@ -62,7 +62,7 @@ public final class GameLibrariesTask extends Task<Void> {
      * @param manifest          the game version
      */
     public GameLibrariesTask(AbstractDependencyManager dependencyManager, GameInstanceManifest manifest, boolean integrityCheck) {
-        this(dependencyManager, manifest, integrityCheck, dependencyManager.getGameRepository().resolve(manifest).launchManifest().getLibraries());
+        this(dependencyManager, manifest, integrityCheck, manifest.getLibraries());
     }
 
     /**
