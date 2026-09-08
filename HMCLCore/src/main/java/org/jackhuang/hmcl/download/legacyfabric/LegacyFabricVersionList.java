@@ -18,73 +18,37 @@
 package org.jackhuang.hmcl.download.legacyfabric;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.ComponentVersionList;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.gson.JsonSerializable;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.download.fabriclike.FabricLikeVersionList;
 
-import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
-
-public final class LegacyFabricVersionList extends ComponentVersionList<LegacyFabricRemoteVersion> {
-    private final DownloadProvider downloadProvider;
-
+public final class LegacyFabricVersionList extends FabricLikeVersionList<LegacyFabricRemoteVersion> {
     public LegacyFabricVersionList(DownloadProvider downloadProvider) {
-        this.downloadProvider = downloadProvider;
+        super(downloadProvider);
     }
 
     @Override
-    public boolean hasType() {
-        return false;
+    protected String getLoaderMetaURL() {
+        return "https://meta.legacyfabric.net/v2/versions/loader";
     }
 
     @Override
-    public Task<?> refreshAsync() {
-        return Task.runAsync(() -> {
-            List<String> gameVersions = getGameVersions(GAME_META_URL);
-            List<String> loaderVersions = getGameVersions(LOADER_META_URL);
-
-            lock.writeLock().lock();
-
-            try {
-                for (String metaGameVersion : gameVersions) {
-                    String gameVersion = normalizeVersion(metaGameVersion);
-                    for (String loaderVersion : loaderVersions) {
-                        versions.put(gameVersion, new LegacyFabricRemoteVersion(gameVersion, loaderVersion,
-                                Collections.singletonList(getLaunchMetaUrl(metaGameVersion, loaderVersion))));
-                    }
-                }
-            } finally {
-                lock.writeLock().unlock();
-            }
-        });
+    protected String getGameMetaURL() {
+        return "https://meta.legacyfabric.net/v2/versions/game";
     }
 
-    private static final String LOADER_META_URL = "https://meta.legacyfabric.net/v2/versions/loader";
-    private static final String GAME_META_URL = "https://meta.legacyfabric.net/v2/versions/game";
-
-    private List<String> getGameVersions(String metaUrl) throws IOException {
-        String json = NetworkUtils.doGet(downloadProvider.injectURLWithCandidates(metaUrl));
-        return JsonUtils.GSON.fromJson(json, listTypeOf(GameVersion.class))
-                .stream().map(GameVersion::version).collect(Collectors.toList());
-    }
-
-    private static String normalizeVersion(String version) {
-        return version.startsWith("2point0_")
-                ? "2.0_" + version.substring("2point0_".length())
-                : version;
-    }
-
-    private static String getLaunchMetaUrl(String gameVersion, String loaderVersion) {
+    @Override
+    protected String getLaunchMetaUrl(String gameVersion, String loaderVersion) {
         return String.format("https://meta.legacyfabric.net/v2/versions/loader/%s/%s", gameVersion, loaderVersion);
     }
 
-    @JsonSerializable
-    private record GameVersion(String version, String maven, boolean stable) {
+    @Override
+    protected LegacyFabricRemoteVersion createRemoteVersion(String gameVersion, String loaderVersion, List<String> urls) {
+        return new LegacyFabricRemoteVersion(gameVersion, loaderVersion, urls);
+    }
+
+    @Override
+    protected String normalizeVersion(String version) {
+        return version.startsWith("2point0_") ? "2.0_" + version.substring("2point0_".length()) : version;
     }
 }

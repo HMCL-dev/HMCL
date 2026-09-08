@@ -17,209 +17,37 @@
  */
 package org.jackhuang.hmcl.download.quilt;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.UnsupportedInstallationException;
-import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.task.GetTask;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.gson.JsonSerializable;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-
-import static org.jackhuang.hmcl.download.UnsupportedInstallationException.FABRIC_NOT_COMPATIBLE_WITH_FORGE;
+import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
+import org.jackhuang.hmcl.game.Artifact;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
+import org.jackhuang.hmcl.game.GameInstancePatch;
 
 /**
  * <b>Note</b>: Quilt should be installed first.
  *
  * @author huangyuhui
  */
-public final class QuiltInstallTask extends Task<GameInstancePatch> {
+public final class QuiltInstallTask extends FabricInstallTask {
 
-    private final DefaultDependencyManager dependencyManager;
-    private final GameInstanceManifest manifest;
-    private final QuiltRemoteVersion remote;
-    private final GetTask launchMetaTask;
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
+    public QuiltInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, ComponentRemoteVersion remoteVersion) {
+        super(dependencyManager, manifest, remoteVersion);
+    }
 
-    public QuiltInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, QuiltRemoteVersion remoteVersion) {
-        this.dependencyManager = dependencyManager;
-        this.manifest = manifest;
-        this.remote = remoteVersion;
-
-        launchMetaTask = new GetTask(dependencyManager.getDownloadProvider().injectURLsWithCandidates(remoteVersion.getUrls()));
-        launchMetaTask.setCacheRepository(dependencyManager.getCacheRepository());
+    protected GameInstancePatch getPatch(FabricInfo legacyFabricInfo, String gameVersion, String loaderVersion) {
+        var patch = super.getPatch(legacyFabricInfo, gameVersion, loaderVersion);
+        return patch.withId(GameComponentType.LEGACY_FABRIC.getPatchId());
     }
 
     @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    @Override
-    public void preExecute() throws Exception {
-        if (!Objects.equals(GameComponentAnalyzer.VANILLA_MAIN, manifest.mainClass()))
-            throw new UnsupportedInstallationException(FABRIC_NOT_COMPATIBLE_WITH_FORGE);
-    }
-
-    @Override
-    public Collection<Task<?>> getDependents() {
-        return Collections.singleton(launchMetaTask);
-    }
-
-    @Override
-    public Collection<Task<?>> getDependencies() {
-        return dependencies;
-    }
-
-    @Override
-    public boolean isRelyingOnDependencies() {
-        return false;
-    }
-
-    @Override
-    public void execute() {
-        setResult(getPatch(JsonUtils.GSON.fromJson(launchMetaTask.getResult(), QuiltInfo.class), remote.getSelfVersion()));
-
-        dependencies.add(new org.jackhuang.hmcl.download.game.GameLibrariesTask(dependencyManager, manifest, true, getResult().getLibraries()));
-    }
-
-    /// Creates the Quilt patch represented by the installer metadata.
-    private static GameInstancePatch getPatch(QuiltInfo quiltInfo, String loaderVersion) {
-        JsonObject launcherMeta = quiltInfo.launcherMeta;
-        Arguments arguments = new Arguments();
-
-        String mainClass;
-        if (!launcherMeta.get("mainClass").isJsonObject()) {
-            mainClass = launcherMeta.get("mainClass").getAsString();
-        } else {
-            mainClass = launcherMeta.get("mainClass").getAsJsonObject().get("client").getAsString();
-        }
-
-        if (launcherMeta.has("launchwrapper")) {
-            String clientTweaker = launcherMeta.get("launchwrapper").getAsJsonObject().get("tweakers").getAsJsonObject().get("client").getAsJsonArray().get(0).getAsString();
-            arguments = arguments.addGameArguments("--tweakClass", clientTweaker);
-        }
-
-        JsonObject librariesObject = launcherMeta.getAsJsonObject("libraries");
-        List<Library> libraries = new ArrayList<>();
-
-        // "common, server" is hard coded in fabric installer.
-        // Don't know the purpose of ignoring client libraries.
-        for (String side : new String[]{"common", "server"}) {
-            for (JsonElement element : librariesObject.getAsJsonArray(side)) {
-                libraries.add(JsonUtils.GSON.fromJson(element, Library.class));
-            }
-        }
-
-        // libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.hashed.maven), getMavenRepositoryByGroup(quiltInfo.hashed.maven), null));
-        if (quiltInfo.intermediary != null) {
-            libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.intermediary.maven), getMavenRepositoryByGroup(quiltInfo.intermediary.maven), null));
-        }
-        libraries.add(new Library(Artifact.fromDescriptor(quiltInfo.loader.maven), getMavenRepositoryByGroup(quiltInfo.loader.maven), null));
-
-        return new GameInstancePatch(GameComponentType.QUILT.getPatchId(), loaderVersion, GameInstancePatch.PRIORITY_LOADER, arguments, mainClass, libraries);
-    }
-
-    private static String getMavenRepositoryByGroup(String maven) {
+    protected String getMavenRepositoryByGroup(String maven) {
         Artifact artifact = Artifact.fromDescriptor(maven);
-        switch (artifact.getGroup()) {
-            case "net.fabricmc":
-                return "https://maven.fabricmc.net/";
-            case "org.quiltmc":
-                return "https://maven.quiltmc.org/repository/release/";
-            default:
-                return "https://maven.fabricmc.net/";
-        }
-    }
-
-    @JsonSerializable
-    public static class QuiltInfo {
-        private final LoaderInfo loader;
-        private final @Nullable IntermediaryInfo hashed;
-        private final @Nullable IntermediaryInfo intermediary;
-        private final JsonObject launcherMeta;
-
-        public QuiltInfo(LoaderInfo loader, @Nullable IntermediaryInfo hashed, @Nullable IntermediaryInfo intermediary, JsonObject launcherMeta) {
-            this.loader = loader;
-            this.hashed = hashed;
-            this.intermediary = intermediary;
-            this.launcherMeta = launcherMeta;
-        }
-
-        public LoaderInfo getLoader() {
-            return loader;
-        }
-
-        public @Nullable IntermediaryInfo getHashed() {
-            return hashed;
-        }
-
-        public @Nullable IntermediaryInfo getIntermediary() {
-            return intermediary;
-        }
-
-        public JsonObject getLauncherMeta() {
-            return launcherMeta;
-        }
-    }
-
-    @JsonSerializable
-    public static class LoaderInfo {
-        private final String separator;
-        private final int build;
-        private final String maven;
-        private final String version;
-        private final boolean stable;
-
-        public LoaderInfo(String separator, int build, String maven, String version, boolean stable) {
-            this.separator = separator;
-            this.build = build;
-            this.maven = maven;
-            this.version = version;
-            this.stable = stable;
-        }
-
-        public String getSeparator() {
-            return separator;
-        }
-
-        public int getBuild() {
-            return build;
-        }
-
-        public String getMaven() {
-            return maven;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public boolean isStable() {
-            return stable;
-        }
-    }
-
-    @JsonSerializable
-    public static class IntermediaryInfo {
-        private final String maven;
-        private final String version;
-
-        public IntermediaryInfo(String maven, String version) {
-            this.maven = maven;
-            this.version = version;
-        }
-
-        public String getMaven() {
-            return maven;
-        }
-
-        public String getVersion() {
-            return version;
-        }
+        return switch (artifact.getGroup()) {
+            case "net.fabricmc" -> "https://maven.fabricmc.net/";
+            case "org.quiltmc" -> "https://maven.quiltmc.org/repository/release/";
+            default -> "https://maven.fabricmc.net/";
+        };
     }
 }
