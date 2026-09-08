@@ -21,6 +21,7 @@ import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -101,6 +102,15 @@ public final class ZipFileTree extends ArchiveFileTree<ZipArchiveReader, ZipArch
 
             posixView.setPermissions(permissions);
         }
+    }
+
+    @Override
+    public @Nullable ZipArchiveEntry getEntry(@NotNull String entryPath) {
+        ZipArchiveEntry entry = reader.getEntry(entryPath);
+        if (entry != null)
+            return entry;
+
+        return super.getEntry(entryPath);
     }
 
     @Override

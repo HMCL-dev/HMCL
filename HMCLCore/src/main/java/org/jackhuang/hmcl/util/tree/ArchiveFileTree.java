@@ -125,7 +125,7 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
                     throw new IOException("Duplicate entry: " + entry.getName());
                 }
 
-                if (dir.files == null)
+                if (dir.files.isEmpty())
                     dir.files = new HashMap<>();
                 dir.files.put(item, entry);
                 break;
@@ -143,7 +143,7 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
                 continue;
             }
 
-            if (dir.subDirs == null)
+            if (dir.subDirs.isEmpty())
                 dir.subDirs = new HashMap<>();
 
             dir = dir.subDirs.computeIfAbsent(item, Dir::new);
@@ -235,8 +235,8 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
         private final String name;
         private E entry;
 
-        @Nullable HashMap<String, Dir<E>> subDirs;
-        @Nullable HashMap<String, E> files;
+        Map<String, Dir<E>> subDirs = Map.of();
+        Map<String, E> files = Map.of();
 
         public Dir(String name) {
             this.name = name;
@@ -255,11 +255,11 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
         }
 
         public @NotNull @UnmodifiableView Map<String, Dir<E>> getSubDirs() {
-            return subDirs != null ? subDirs : Map.of();
+            return subDirs;
         }
 
         public @NotNull @UnmodifiableView Map<String, E> getFiles() {
-            return files != null ? files : Map.of();
+            return files;
         }
     }
 }
