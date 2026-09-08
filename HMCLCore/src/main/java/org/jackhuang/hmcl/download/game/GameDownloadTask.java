@@ -53,7 +53,7 @@ public final class GameDownloadTask extends Task<Path> {
             DefaultDependencyManager dependencyManager,
             GameInstanceManifest manifest) {
         this.dependencyManager = dependencyManager;
-        this.manifest = dependencyManager.getGameRepository().resolve(manifest).launchManifest();
+        this.manifest = manifest;
 
         setSignificance(TaskSignificance.MODERATE);
     }

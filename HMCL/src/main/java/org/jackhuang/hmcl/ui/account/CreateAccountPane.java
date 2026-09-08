@@ -387,8 +387,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 add(lblServers, 0, rowIndex);
 
                 cboServers = new JFXComboBox<>();
-                cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
-                cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
+                cboServers.setConverter(stringConverter(it -> String.format("%s (%s)", it.getName(), it.getDisplayHostUrl())));
                 bindContent(cboServers.getItems(), getAuthlibInjectorServers());
                 cboServers.getItems().addListener(onInvalidating(
                         () -> Platform.runLater( // the selection will not be updated as expected if we call it immediately

@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.ui.download;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -52,11 +52,11 @@ public class InstallersPage extends AbstractInstallersPage {
 
     @Override
     public String getTitle() {
-        return ((RemoteVersion) controller.getSettings().get("game")).getGameVersion();
+        return ((ComponentRemoteVersion) controller.getSettings().get("game")).getGameVersion();
     }
 
     private String getVersion(String id) {
-        return I18n.getDisplayVersion((RemoteVersion) controller.getSettings().get(id));
+        return I18n.getDisplayVersion((ComponentRemoteVersion) controller.getSettings().get(id));
     }
 
     protected void reload() {

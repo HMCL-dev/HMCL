@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
@@ -35,7 +36,7 @@ import java.util.List;
  * @author huangyuhui
  */
 @Immutable
-public final class GameRemoteVersion extends RemoteVersion {
+public final class GameRemoteVersion extends ComponentRemoteVersion {
 
     private final ReleaseType type;
 
@@ -49,12 +50,12 @@ public final class GameRemoteVersion extends RemoteVersion {
     }
 
     @Override
-    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseVersion) {
-        return new GameInstallTask(dependencyManager, baseVersion, this);
+    public Task<GameInstancePatch> getInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest baseManifest, Path modsDirectory) {
+        return new GameInstallTask(dependencyManager, baseManifest, this);
     }
 
     @Override
-    public int compareTo(RemoteVersion o) {
+    public int compareTo(ComponentRemoteVersion o) {
         if (!(o instanceof GameRemoteVersion)) {
             return 0;
         }

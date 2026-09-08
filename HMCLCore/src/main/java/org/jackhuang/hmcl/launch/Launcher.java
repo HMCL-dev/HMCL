@@ -31,7 +31,7 @@ import java.nio.file.Path;
 /// The [GameInstance] identifies the instance being launched (paths, repository layout, version
 /// cache). [#manifest] is the effective launch-time manifest after maintenance and native
 /// patching; it must not be assumed equal to [GameInstance#getManifest()] or
-/// [GameInstance#getLaunchManifest()].
+/// [GameInstance#getResolvedManifest()].
 public abstract class Launcher {
 
     /// The instance being launched.
