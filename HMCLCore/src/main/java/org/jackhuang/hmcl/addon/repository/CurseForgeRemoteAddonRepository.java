@@ -521,6 +521,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             }
 
             return new RemoteAddon(
+                    Integer.toString(id),
                     slug,
                     "",
                     name,
@@ -529,7 +530,8 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                     links.websiteUrl,
                     iconUrl,
                     this,
-                    toAddonType(classId)
+                    toAddonType(classId),
+                    RemoteAddon.Source.CURSEFORGE
             );
         }
 
