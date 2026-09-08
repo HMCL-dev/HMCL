@@ -228,6 +228,10 @@ public final class World {
         return getGameVersion() != null && getGameVersion().isAtLeast("1.13", "17w43a");
     }
 
+    public boolean supportStructures() {
+        return getGameVersion() != null && getGameVersion().isAtLeast("1.10", "16w20a");
+    }
+
     public boolean supportQuickPlay() {
         return getGameVersion() != null && getGameVersion().isAtLeast("1.20", "23w14a");
     }

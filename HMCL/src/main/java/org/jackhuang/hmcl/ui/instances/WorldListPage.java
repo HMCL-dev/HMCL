@@ -49,9 +49,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Arrays;
@@ -163,28 +160,7 @@ public final class WorldListPage extends ListPageBase<World> {
     }
 
     private void installWorld(Path zipFile) {
-        // Only accept one world file because user is required to confirm the new world name
-        // Or too many input dialogs are popped.
-        Task.supplyAsync(() -> new World(zipFile))
-                .whenComplete(Schedulers.javafx(), world -> {
-                    Controllers.prompt(i18n("world.name.enter"), (name, handler) -> {
-                        Task.runAsync(() -> world.install(savesDir, name))
-                                .whenComplete(Schedulers.javafx(), () -> {
-                                    handler.resolve();
-                                    refresh();
-                                }, e -> {
-                                    if (e instanceof FileAlreadyExistsException)
-                                        handler.reject(i18n("world.add.failed", i18n("world.add.already_exists")));
-                                    else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
-                                        handler.reject(i18n("world.add.failed", i18n("install.new_game.malformed")));
-                                    else
-                                        handler.reject(i18n("world.add.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
-                                }).start();
-                    }, world.getWorldName(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
-                }, e -> {
-                    LOG.warning("Unable to parse world file " + zipFile, e);
-                    Controllers.dialog(i18n("world.add.invalid"));
-                }).start();
+        WorldManageUIUtils.installWorld(zipFile, savesDir, this::refresh);
     }
 
     private void showManagePage(World world) {
@@ -299,6 +275,15 @@ public final class WorldListPage extends ListPageBase<World> {
                 root.setRight(right);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
+                var btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
+                right.getChildren().add(btnReveal);
+                FXUtils.installFastTooltip(btnReveal, i18n("button.reveal_dir"));
+                btnReveal.setOnAction(event -> {
+                    World world = getItem();
+                    if (world != null)
+                        page.reveal(world);
+                });
+
                 btnLaunch = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
                 btnLaunch.visibleProperty().bind(page.supportQuickPlayProperty());
                 btnLaunch.managedProperty().bind(btnLaunch.visibleProperty());
@@ -367,7 +352,7 @@ public final class WorldListPage extends ListPageBase<World> {
                     btnLaunch.setDisable(false);
                 }
 
-                content.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
+                content.setSubtitle(world.getFileName() + " | " + i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
 
                 setGraphic(graphic);
             }
@@ -422,11 +407,6 @@ public final class WorldListPage extends ListPageBase<World> {
                     exportMenuItem,
                     deleteMenuItem,
                     duplicateMenuItem
-            );
-
-            popupMenu.getContent().addAll(
-                    new MenuSeparator(),
-                    new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.world"), () -> page.reveal(world), popup)
             );
 
             JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);

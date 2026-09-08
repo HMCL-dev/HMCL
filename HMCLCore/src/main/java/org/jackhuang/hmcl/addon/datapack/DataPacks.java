@@ -40,14 +40,14 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class DataPack {
+public class DataPacks {
     private static final String DISABLED_EXT = "disabled";
     private static final String ZIP_EXT = "zip";
 
     private final Path path;
     private final ObservableList<Pack> packs = FXCollections.observableArrayList();
 
-    public DataPack(Path path) {
+    public DataPacks(Path path) {
         this.path = path;
     }
 
@@ -249,14 +249,14 @@ public class DataPack {
         private final BooleanProperty activeProperty;
         private final String id;
         private final LocalAddonFile.Description description;
-        private final DataPack parentDataPack;
+        private final DataPacks parentDataPacks;
 
-        public Pack(Path path, boolean isDirectory, String id, LocalAddonFile.Description description, DataPack parentDataPack) {
+        public Pack(Path path, boolean isDirectory, String id, LocalAddonFile.Description description, DataPacks parentDataPacks) {
             this.path = path;
             this.isDirectory = isDirectory;
             this.id = id;
             this.description = description;
-            this.parentDataPack = parentDataPack;
+            this.parentDataPacks = parentDataPacks;
 
             this.statusFile = initializeStatusFile(path, isDirectory);
             this.activeProperty = initializeActiveProperty();
@@ -314,8 +314,8 @@ public class DataPack {
             return description;
         }
 
-        public DataPack getParentDataPack() {
-            return parentDataPack;
+        public DataPacks getParentDataPack() {
+            return parentDataPacks;
         }
 
         public BooleanProperty activeProperty() {
