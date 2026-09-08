@@ -297,6 +297,9 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
                 return;
             }
 
+            // Updating the text makes the skin reattach the current graphic to the cell.
+            // Clear it before moving the checkbox graphic into the content container.
+            setText(null);
             @Nullable Node graphic = getGraphic();
             if (graphic != null) {
                 content.getChildren().add(graphic);
@@ -307,7 +310,6 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
                 comment.setText(treeItem.comment);
                 content.getChildren().add(comment);
             }
-            setText(null);
             setGraphic(content);
         }
     }
