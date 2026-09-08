@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
-import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -31,7 +31,7 @@ import java.util.Map;
 /**
  * @author huangyuhui
  */
-public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemoteVersion> {
+public final class LiteLoaderBMCLVersionList extends ComponentVersionList<LiteLoaderRemoteVersion> {
     private final BMCLAPIDownloadProvider downloadProvider;
 
     public LiteLoaderBMCLVersionList(BMCLAPIDownloadProvider downloadProvider) {
@@ -73,7 +73,7 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
                         if (v == null)
                             return;
                         versions.put(gameVersion, new LiteLoaderRemoteVersion(
-                                gameVersion, v.version, RemoteVersion.Type.UNCATEGORIZED,
+                                gameVersion, v.version, ComponentRemoteVersion.Type.UNCATEGORIZED,
                                 Collections.singletonList(NetworkUtils.withQuery(
                                         downloadProvider.getApiRoot() + "/liteloader/download",
                                         Collections.singletonMap("version", v.version)

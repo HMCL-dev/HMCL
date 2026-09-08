@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 
@@ -36,6 +37,9 @@ public final class Metadata {
     public static final String NAME = "HMCL";
     public static final String FULL_NAME = "Hello Minecraft! Launcher";
     public static final String VERSION = System.getProperty("hmcl.version.override", JarUtils.getAttribute("hmcl.version", "@develop@"));
+
+    /// Explicit Application User Model ID used for Windows taskbar grouping and pinning.
+    public static final String WINDOWS_APP_USER_MODEL_ID = "org.jackhuang.hmcl";
 
     public static final String TITLE = NAME + " " + VERSION;
     public static final String FULL_TITLE = FULL_NAME + " v" + VERSION;
@@ -130,4 +134,32 @@ public final class Metadata {
                 return null;
         }
     }
+
+    /// Directory under [HMCL_LOCAL_HOME] that holds a launcher-bundled modpack for automatic install.
+    public static final String BUNDLED_MODPACK_DIRECTORY_NAME = "modpack";
+
+    /// Returns the directory for a launcher-bundled modpack (`[HMCL_LOCAL_HOME]/modpack`).
+    public static Path getBundledModpackDirectory() {
+        return HMCL_LOCAL_HOME.resolve(BUNDLED_MODPACK_DIRECTORY_NAME);
+    }
+
+    /// Returns the bundled modpack package under [getBundledModpackDirectory], if present.
+    ///
+    /// Prefers `modpack.zip` over `modpack.mrpack` when both exist. Presence of the package is the
+    /// signal to offer automatic install; the file is removed after a successful install.
+    ///
+    /// @return the modpack path, or `null` when no package is present
+    public static @Nullable Path findBundledModpackFile() {
+        Path directory = getBundledModpackDirectory();
+        Path zipModpack = directory.resolve("modpack.zip");
+        if (Files.isRegularFile(zipModpack)) {
+            return zipModpack;
+        }
+        Path mrpackModpack = directory.resolve("modpack.mrpack");
+        if (Files.isRegularFile(mrpackModpack)) {
+            return mrpackModpack;
+        }
+        return null;
+    }
+
 }

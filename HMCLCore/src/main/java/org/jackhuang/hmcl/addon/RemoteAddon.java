@@ -32,19 +32,19 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 public record RemoteAddon(String slug, String author, String title, String description, List<String> categories,
-                          String pageUrl, String iconUrl, IMod data, RemoteAddonRepository.Type repoType) {
+                          String pageUrl, String iconUrl, IAddon data, @Nullable Type type) {
 
-    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IMod() {
+    public static final RemoteAddon BROKEN = new RemoteAddon("", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", new IAddon() {
         @Override
-        public List<RemoteAddon> loadDependencies(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+        public List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
 
         @Override
-        public Stream<Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException {
+        public Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException {
             throw new IOException();
         }
-    }, RemoteAddonRepository.Type.MOD);
+    }, Type.MOD);
 
     public enum VersionType {
         Release,
@@ -67,23 +67,23 @@ public record RemoteAddon(String slug, String author, String title, String descr
 
         private final DependencyType type;
 
-        private final RemoteAddonRepository remoteAddonRepository;
+        private final @Nullable Source source;
 
-        private final String id;
+        private final @Nullable String id;
 
         private transient RemoteAddon remoteAddon = null;
 
-        private Dependency(DependencyType type, RemoteAddonRepository remoteAddonRepository, String modid) {
+        private Dependency(DependencyType type, @Nullable Source source, @Nullable String id) {
             this.type = type;
-            this.remoteAddonRepository = remoteAddonRepository;
-            this.id = modid;
+            this.source = source;
+            this.id = id;
         }
 
-        public static Dependency ofGeneral(DependencyType type, RemoteAddonRepository remoteAddonRepository, String modid) {
+        public static Dependency ofGeneral(DependencyType type, Source source, String id) {
             if (type == DependencyType.BROKEN) {
                 return ofBroken();
             } else {
-                return new Dependency(type, remoteAddonRepository, modid);
+                return new Dependency(type, source, id);
             }
         }
 
@@ -98,10 +98,12 @@ public record RemoteAddon(String slug, String author, String title, String descr
             return this.type;
         }
 
-        public RemoteAddonRepository getRemoteModRepository() {
-            return this.remoteAddonRepository;
+        @Nullable
+        public Source getSource() {
+            return this.source;
         }
 
+        @Nullable
         public String getId() {
             return this.id;
         }
@@ -111,7 +113,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
                 if (this.type == DependencyType.BROKEN) {
                     this.remoteAddon = RemoteAddon.BROKEN;
                 } else {
-                    this.remoteAddon = this.remoteAddonRepository.resolveDependency(downloadProvider, this.id);
+                    this.remoteAddon = this.source.getCommonRepo().resolveDependency(downloadProvider, this.id);
                 }
             }
             return this.remoteAddon;
@@ -125,14 +127,14 @@ public record RemoteAddon(String slug, String author, String title, String descr
             Dependency that = (Dependency) o;
 
             if (type != that.type) return false;
-            if (!remoteAddonRepository.equals(that.remoteAddonRepository)) return false;
+            if (source != that.source) return false;
             return id.equals(that.id);
         }
 
         @Override
         public int hashCode() {
             int result = type.hashCode();
-            result = 31 * result + remoteAddonRepository.hashCode();
+            result = 31 * result + source.hashCode();
             result = 31 * result + id.hashCode();
             return result;
         }
@@ -140,6 +142,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
 
     public enum Source {
         CURSEFORGE(
+                CurseForgeRemoteAddonRepository.COMMON,
                 CurseForgeRemoteAddonRepository.MODS,
                 CurseForgeRemoteAddonRepository.RESOURCE_PACKS,
                 CurseForgeRemoteAddonRepository.SHADERS,
@@ -148,6 +151,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
                 CurseForgeRemoteAddonRepository.CUSTOMIZATIONS
         ),
         MODRINTH(
+                ModrinthRemoteAddonRepository.COMMON,
                 ModrinthRemoteAddonRepository.MODS,
                 ModrinthRemoteAddonRepository.RESOURCE_PACKS,
                 ModrinthRemoteAddonRepository.SHADER_PACKS,
@@ -156,15 +160,16 @@ public record RemoteAddon(String slug, String author, String title, String descr
                 null
         );
 
-        public final RemoteAddonRepository modRepo;
-        public final RemoteAddonRepository resourcePackRepo;
-        public final RemoteAddonRepository shaderPackRepo;
-        public final RemoteAddonRepository worldRepo;
-        public final RemoteAddonRepository modpackRepo;
-        public final RemoteAddonRepository customizationRepo;
+        private final RemoteAddonRepository commonRepo;
+        private final RemoteAddonRepository modRepo;
+        private final RemoteAddonRepository resourcePackRepo;
+        private final RemoteAddonRepository shaderPackRepo;
+        private final RemoteAddonRepository worldRepo;
+        private final RemoteAddonRepository modpackRepo;
+        private final RemoteAddonRepository customizationRepo;
 
         @Nullable
-        public RemoteAddonRepository getRepoForType(RemoteAddonRepository.Type type) {
+        public RemoteAddonRepository getRepoForType(Type type) {
             return switch (type) {
                 case MOD -> modRepo;
                 case RESOURCE_PACK -> resourcePackRepo;
@@ -175,7 +180,12 @@ public record RemoteAddon(String slug, String author, String title, String descr
             };
         }
 
+        public RemoteAddonRepository getCommonRepo() {
+            return commonRepo;
+        }
+
         Source(
+                RemoteAddonRepository commonRepo,
                 RemoteAddonRepository modRepo,
                 RemoteAddonRepository resourcePackRepo,
                 RemoteAddonRepository shaderPackRepo,
@@ -183,6 +193,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
                 RemoteAddonRepository modpackRepo,
                 RemoteAddonRepository customizationRepo
         ) {
+            this.commonRepo = commonRepo;
             this.modRepo = modRepo;
             this.resourcePackRepo = resourcePackRepo;
             this.shaderPackRepo = shaderPackRepo;
@@ -192,17 +203,26 @@ public record RemoteAddon(String slug, String author, String title, String descr
         }
     }
 
-    public interface IMod {
-        List<RemoteAddon> loadDependencies(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException;
+    public enum Type {
+        MOD,
+        MODPACK,
+        RESOURCE_PACK,
+        SHADER_PACK,
+        WORLD,
+        CUSTOMIZATION
+    }
 
-        Stream<Version> loadVersions(RemoteAddonRepository modRepository, DownloadProvider downloadProvider) throws IOException;
+    public interface IAddon {
+        List<RemoteAddon> loadDependencies(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException;
+
+        Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException;
     }
 
     public interface IVersion {
-        Source getType();
+        Source getSource();
     }
 
-    public record Version(IVersion self, String modid, String name, String version, String changelog,
+    public record Version(IVersion self, String versionId, String projectId, String name, String version,
                           Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
                           List<String> gameVersions, List<ModLoaderType> loaders) {
     }

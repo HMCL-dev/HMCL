@@ -39,7 +39,7 @@ public final class FontComboBox extends JFXComboBox<String> {
 
         styleProperty().bind(Bindings.concat("-fx-font-family: \"", valueProperty(), "\""));
 
-        setCellFactory(listView -> new JFXListCell<String>() {
+        setCellFactory(listView -> new JFXListCell<>() {
             @Override
             public void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);

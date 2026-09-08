@@ -49,17 +49,17 @@ public final class GameAssetDownloadTask extends Task<Void> {
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final List<Task<?>> dependencies = new ArrayList<>();
 
-    /**
-     * Constructor.
-     *
-     * @param dependencyManager the dependency manager that can provides {@link GameRepository}
-     * @param manifest the game version
-     */
+    /// Constructor.
+    ///
+    /// @param dependencyManager the dependency manager that can provides [GameRepository]
+    /// @param manifest the game version
     public GameAssetDownloadTask(AbstractDependencyManager dependencyManager, GameInstanceManifest manifest, boolean forceDownloadingIndex, boolean integrityCheck) {
         this.dependencyManager = dependencyManager;
-        this.manifest = manifest.resolve(dependencyManager.getGameRepository());
+        this.manifest = manifest;
         this.assetIndexInfo = this.manifest.getAssetIndex();
-        this.assetIndexFile = dependencyManager.getGameRepository().getIndexFile(manifest.id(), assetIndexInfo.getId());
+        GameRepository gameRepository = dependencyManager.getGameRepository();
+        String assetId = assetIndexInfo.getId();
+        this.assetIndexFile = gameRepository.getLayout().getAssetIndexFile(assetId);
         this.integrityCheck = integrityCheck;
 
         setStage("hmcl.install.assets");
@@ -90,7 +90,8 @@ public final class GameAssetDownloadTask extends Task<Void> {
             if (isCancelled())
                 throw new InterruptedException();
 
-            Path file = dependencyManager.getGameRepository().getAssetObject(manifest.id(), assetIndexInfo.getId(), assetObject);
+            GameRepository gameRepository = dependencyManager.getGameRepository();
+            Path file = gameRepository.getLayout().getAssetObject(assetObject);
             boolean download = !Files.isRegularFile(file);
             try {
                 if (!download && integrityCheck && !assetObject.validateChecksum(file, true))

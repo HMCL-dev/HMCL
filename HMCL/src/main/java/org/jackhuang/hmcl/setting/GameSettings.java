@@ -643,6 +643,19 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return vulkanRenderer;
     }
 
+    /// Property name for high performance GPU preference.
+    public static final String PROPERTY_HIGH_PERFORMANCE = "highPerformance";
+
+    /// Whether to launch games with high-performance GPU.
+    @SerializedName(PROPERTY_HIGH_PERFORMANCE)
+    private final InheritableProperty<Boolean> highPerformance =
+            newInheritableProperty(PROPERTY_HIGH_PERFORMANCE, false);
+
+    /// Returns the high performance GPU preference property.
+    public InheritableProperty<Boolean> highPerformanceProperty() {
+        return highPerformance;
+    }
+
     /// Property name for customized environment variables.
     public static final String PROPERTY_ENVIRONMENT_VARIABLES = "environmentVariables";
 
@@ -800,15 +813,15 @@ public sealed abstract class GameSettings extends ObservableSetting {
     }
 
     /// Property name for using native GLFW.
-    public static final String PROPERTY_USE_NATIVE_GLFW = "useNativeGLFW";
+    public static final String PROPERTY_USE_NATIVE_GLFW_OR_SDL = "useNativeGLFW";
 
     /// If `true`, HMCL will use native GLFW.
-    @SerializedName(PROPERTY_USE_NATIVE_GLFW)
-    private final InheritableProperty<Boolean> useNativeGLFW = newInheritableProperty(PROPERTY_USE_NATIVE_GLFW, false);
+    @SerializedName(PROPERTY_USE_NATIVE_GLFW_OR_SDL)
+    private final InheritableProperty<Boolean> useNativeGLFWorSDL = newInheritableProperty(PROPERTY_USE_NATIVE_GLFW_OR_SDL, false);
 
     /// Returns the native GLFW property.
-    public InheritableProperty<Boolean> useNativeGLFWProperty() {
-        return useNativeGLFW;
+    public InheritableProperty<Boolean> useNativeGLFWorSDLProperty() {
+        return useNativeGLFWorSDL;
     }
 
     /// Property name for using native OpenAL.
