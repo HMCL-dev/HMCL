@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.task;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import org.jackhuang.hmcl.util.CacheRepository;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -37,6 +39,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -70,6 +73,48 @@ public final class FetchTaskTest {
             assertFalse(task.test());
             assertEquals("original", Files.readString(target, UTF_8));
         }
+    }
+
+    /// Ensures matching content is published and reused by its expected SHA-1.
+    @Test
+    public void cacheFileTaskUsesExpectedSha1(@TempDir Path tempDir) throws IOException {
+        byte[] data = "cached content".getBytes(UTF_8);
+        String sha1 = DigestUtils.digestToString(CacheRepository.SHA1, data);
+        URI uri = URI.create("https://example.invalid/file");
+        CacheRepository repository = newRepository(tempDir);
+        CacheFileTask first = new CacheFileTask(List.of(uri), sha1);
+        first.setCacheRepository(repository);
+
+        try (FetchTask.Context context = first.getContext(null, false, null)) {
+            context.write(data, 0, data.length);
+            context.withResult(true);
+        }
+
+        Path cached = Objects.requireNonNull(first.getResult());
+        assertArrayEquals(data, Files.readAllBytes(cached));
+
+        CacheFileTask second = new CacheFileTask(List.of(uri), sha1);
+        second.setCacheRepository(repository);
+        assertEquals(FetchTask.EnumCheckETag.CACHED, second.shouldCheckETag());
+        assertEquals(cached, second.getResult());
+    }
+
+    /// Ensures mismatched content is not published under an expected SHA-1.
+    @Test
+    public void cacheFileTaskRejectsMismatchedSha1(@TempDir Path tempDir) throws IOException {
+        byte[] data = "unexpected content".getBytes(UTF_8);
+        String expectedSha1 = "0000000000000000000000000000000000000000";
+        CacheRepository repository = newRepository(tempDir);
+        CacheFileTask task = new CacheFileTask(
+                List.of(URI.create("https://example.invalid/file")), expectedSha1);
+        task.setCacheRepository(repository);
+        FetchTask.Context context = task.getContext(null, false, null);
+        context.write(data, 0, data.length);
+        context.withResult(true);
+
+        assertThrows(ChecksumMismatchException.class, context::close);
+        assertTrue(repository.checkExistentFile(
+                null, CacheRepository.SHA1, expectedSha1).isEmpty());
     }
 
     /// Ensures a mismatched Content-Range response is rejected before appending bytes.
