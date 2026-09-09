@@ -237,7 +237,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             }
 
             var coreModsDir = instance.getCoreModsDirectory();
-            if (coreModsDir != null) {
+            if (coreModsDir != null && Files.isDirectory(coreModsDir)) {
                 try (DirectoryStream<Path> coreModsDirectoryStream = Files.newDirectoryStream(coreModsDir)) {
                     for (Path item : coreModsDirectoryStream) {
                         addModInfo(item, true);
