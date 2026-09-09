@@ -335,12 +335,12 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
             JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
             versionPageBtn.setDisable(true);
-            loadVersionPageUrl(object, versionPageBtn);
+            loadVersionPageUrl(object, versionPageBtn, versionComboBox.getSelectionModel().getSelectedItem());
 
             versionComboBox.getSelectionModel().selectedItemProperty().addListener((obs, oldVersion, newVersion) -> {
                 if (newVersion != null) {
                     loadChangelog(object, newVersion, spinnerPane, scrollPane);
-                    loadVersionPageUrl(object, versionPageBtn);
+                    loadVersionPageUrl(object, versionPageBtn, newVersion);
                 }
             });
 
@@ -396,15 +396,23 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             }).start();
         }
 
-        private void loadVersionPageUrl(AddonUpdateObject object, JFXHyperlink button) {
+        private void loadVersionPageUrl(AddonUpdateObject object, JFXHyperlink button, RemoteAddon.Version version) {
+            button.setDisable(true);
             Task.supplyAsync(() -> {
                 RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
-                return repo == null ? null : repo.getVersionPageUrl(object.targetVersionObject.get());
+                return repo == null ? null : repo.getVersionPageUrl(version);
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                RemoteAddon.Version currentVersion = object.targetVersionObject.get();
+                if (currentVersion != null && !currentVersion.versionId().equals(version.versionId())) {
+                    // Version changed while loading, discard this result
+                    return;
+                }
+
                 if (exception == null && StringUtils.isNotBlank(result)) {
                     button.setExternalLink(result);
                     button.setDisable(false);
                 } else {
+                    button.setDisable(true);
                     LOG.warning("Failed to load addon version page url", exception);
                 }
             }).start();
