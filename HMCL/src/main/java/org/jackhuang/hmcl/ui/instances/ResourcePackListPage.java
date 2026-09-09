@@ -627,6 +627,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             imageContainer.setImage(packInfoObject.getIcon());
 
             TwoLineListItem title = new TwoLineListItem();
+            title.getTitleLabel().setWrapText(true);
             title.setTitle(pack.getFileName());
             title.setSubtitle(pack.getFileNameWithExtension());
             var compatibility = pack.getCompatibility();

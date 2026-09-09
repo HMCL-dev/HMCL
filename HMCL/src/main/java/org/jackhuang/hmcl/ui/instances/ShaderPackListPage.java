@@ -37,6 +37,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
@@ -460,6 +461,7 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackFile> {
             imageContainer.setImage(getOrCreateIcon(shaderPackFile));
 
             TwoLineListItem title = new TwoLineListItem();
+            title.getTitleLabel().setWrapText(true);
             title.setTitle(shaderPackFile.getFileName());
             title.setSubtitle(shaderPackFile.getFile().getFileName().toString());
             title.addTag(switch (shaderPackFile.getLoaderType()) {
@@ -500,6 +502,13 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackFile> {
                     if (versionOptional.isPresent()) {
                         RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                         FXUtils.runInFX(() -> {
+                            Set<String> tags = new LinkedHashSet<>();
+                            for (AddonLoader loader : versionOptional.get().loaders()) {
+                                String tag = I18n.translateLoaderName(loader);
+                                if (tag != null) tags.add(tag);
+                            }
+                            title.addTagsIfNotExist(tags);
+
                             button.setExternalLink(remoteAddon.pageUrl());
                             button.setDisable(false);
                         });

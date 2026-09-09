@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.i18n;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.shader.ShaderLoaderType;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -139,6 +140,12 @@ public final class I18n {
                 case QUILT -> i18n("install.installer.quilt");
                 case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
                 default -> modLoaderType.displayName();
+            };
+        } else if (loaderType instanceof ShaderLoaderType shaderLoaderType) {
+            return switch (shaderLoaderType) {
+                case OPTIFINE_IRIS -> i18n("shaderpack.loader.optifine_iris");
+                case APERTURE -> i18n("shaderpack.loader.aperture");
+                default -> shaderLoaderType.displayName();
             };
         }
         return loaderType.displayName();

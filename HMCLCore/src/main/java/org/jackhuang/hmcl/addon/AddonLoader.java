@@ -17,13 +17,13 @@
  */
 package org.jackhuang.hmcl.addon;
 
-import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 @NotNullByDefault
 public record AddonLoader(String name, @Nullable AddonLoaderType type) {
+
     public static boolean mightBeLoader(String str) {
         if (StringUtils.isBlank(str)
                 || !StringUtils.isASCII(str)
@@ -38,15 +38,7 @@ public record AddonLoader(String name, @Nullable AddonLoaderType type) {
     }
 
     public static AddonLoader of(String name) {
-        for (var type : ModLoaderType.values()) {
-            for (String loaderName : type.names()) {
-                if (name.equalsIgnoreCase(loaderName)) {
-                    return new AddonLoader(name, type);
-                }
-            }
-
-        }
-        return new AddonLoader(name, null);
+        return new AddonLoader(name, AddonLoaderType.of(name));
     }
 
 }
