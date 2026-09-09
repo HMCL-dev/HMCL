@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.addon;
 
-import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
@@ -232,10 +231,24 @@ public record RemoteAddon(String id, String slug, String author, String title, S
         Source getSource();
     }
 
-    /// @param hash unsigned long for CurseForge, or SHA-1 string for Modrinth
+    /// Describes an addon release, its download file, dependencies, and loader labels.
+    ///
+    /// @param self the repository-specific version metadata
+    /// @param versionId the version identifier assigned by the repository
+    /// @param projectId the project identifier assigned by the repository
+    /// @param name the display name of the release
+    /// @param version the repository's version string or file name
+    /// @param datePublished the publication time
+    /// @param versionType the release channel
+    /// @param file the file selected for downloading
+    /// @param dependencies the dependencies associated with the release
+    /// @param gameVersions the supported game version strings
+    /// @param loaders the loader labels, including names without a recognized loader type
+    /// @param hash the CurseForge unsigned fingerprint stored as a [Long], or the Modrinth
+    ///             SHA-1 string; may be null if the Modrinth file metadata omits SHA-1
     public record Version(IVersion self, String versionId, String projectId, String name, String version,
                           Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
-                          List<String> gameVersions, List<ModLoaderType> loaders, Object hash) {
+                          List<String> gameVersions, List<AddonLoader> loaders, @Nullable Object hash) {
     }
 
     public record File(Map<String, String> hashes, String url, String filename) {
