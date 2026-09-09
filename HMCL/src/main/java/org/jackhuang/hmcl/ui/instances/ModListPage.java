@@ -890,7 +890,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             {
                 Set<ModLoaderType> modFileLoaders = EnumSet.noneOf(ModLoaderType.class);
-                GameVersionNumber gameVersionNumber = GameVersionNumber.asGameVersion(Optional.ofNullable(page.gameVersion));
+                GameVersionNumber gameVersionNumber = page.gameInstance != null ? page.gameInstance.getVersion() : GameVersionNumber.unknown();
                 // Uses 1.7 snapshot as there's no snapshots for 1.6 after its first release
                 boolean wrongCoreModDir = !gameVersionNumber.isAtLeast("1.6.1", "13w36a")
                         && modInfo.getCoreModInfo().isLegacy()
