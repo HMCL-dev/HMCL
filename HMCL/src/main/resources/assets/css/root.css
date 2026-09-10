@@ -1093,6 +1093,10 @@
     -fx-border-width: 0 0 1 0;
 }
 
+.md-list-cell:last {
+    -fx-border-width: 0;
+}
+
 .md-list-cell:selected {
     -fx-background-color: -monet-secondary-container;
 }

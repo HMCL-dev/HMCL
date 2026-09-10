@@ -18,13 +18,13 @@
 package org.jackhuang.hmcl.modpack.curse;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
-import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
-import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -38,9 +38,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -61,6 +62,9 @@ public final class CurseCompletionTask extends Task<Void> {
     /// The manifest supplied by the caller or loaded from disk, if available.
     private @Nullable CurseManifest manifest;
 
+    /// Keys of optional files the user chose not to install; `null` means install all.
+    private @Nullable Set<String> excludedFiles;
+
     /// Download tasks produced during [#execute()].
     private List<Task<?>> dependencies = List.of();
 
@@ -78,7 +82,7 @@ public final class CurseCompletionTask extends Task<Void> {
     /// @param dependencyManager the dependency manager
     /// @param instance          the registered instance to complete
     public CurseCompletionTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance) {
-        this(dependencyManager, instance, null);
+        this(dependencyManager, instance, null, null);
     }
 
     /// Creates a task that completes the installed CurseForge modpack using an optional manifest.
@@ -86,21 +90,33 @@ public final class CurseCompletionTask extends Task<Void> {
     /// @param dependencyManager the dependency manager
     /// @param instance          the registered instance to complete
     /// @param manifest          the CurseForge manifest, or `null` to read it from disk
+    /// @param excludedFiles     keys of optional files the user chose not to install; `null` means install all.
+    ///                          When non-null, must not contain `null` elements.
     public CurseCompletionTask(
             DefaultDependencyManager dependencyManager,
             DefaultGameInstance instance,
-            @Nullable CurseManifest manifest) {
+            @Nullable CurseManifest manifest,
+            @Nullable Set<String> excludedFiles) {
         dependencyManager.validateGameInstance(instance);
         this.dependency = dependencyManager;
         this.instance = instance;
         this.modManager = instance.getModManager();
         this.manifest = manifest;
+        this.excludedFiles = excludedFiles == null ? null : Set.copyOf(excludedFiles);
 
         if (manifest == null)
             try {
-                Path manifestFile = instance.getInstanceRoot().resolve("manifest.json");
+                Path root = instance.getInstanceRoot();
+                Path manifestFile = root.resolve("manifest.json");
                 if (Files.exists(manifestFile))
                     this.manifest = JsonUtils.fromJsonFile(manifestFile, CurseManifest.class);
+                Path excludedFile = root.resolve("excluded.json");
+                if (Files.exists(excludedFile)) {
+                    this.excludedFiles = Set.copyOf(Objects.requireNonNull(
+                            JsonUtils.fromJsonFile(excludedFile, JsonUtils.listTypeOf(String.class))));
+                } else {
+                    this.excludedFiles = null;
+                }
             } catch (Exception e) {
                 LOG.warning("Unable to read CurseForge modpack manifest.json", e);
             }
@@ -148,8 +164,13 @@ public final class CurseCompletionTask extends Task<Void> {
                                 return file;
                             }
                         })
-                        .collect(Collectors.toList()));
+                        .toList());
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), newManifest);
+        if (excludedFiles != null) {
+            JsonUtils.writeToJsonFile(
+                    root.resolve("excluded.json"),
+                    List.copyOf(excludedFiles));
+        }
 
         Path versionRoot = instance.getInstanceRoot();
         Path resourcePacksRoot = versionRoot.resolve("resourcepacks");
@@ -158,6 +179,7 @@ public final class CurseCompletionTask extends Task<Void> {
         dependencies = newManifest.files()
                 .stream().parallel()
                 .filter(f -> f.fileName() != null)
+                .filter(f -> excludedFiles == null || !excludedFiles.contains(f.key()))
                 .flatMap(f -> {
                     try {
                         Path path = guessFilePath(f, dependency.getDownloadProvider(), resourcePacksRoot, shaderPacksRoot);
@@ -168,7 +190,7 @@ public final class CurseCompletionTask extends Task<Void> {
                         var task = new FileDownloadTask(f.url(), path);
                         task.setCacheRepository(dependency.getCacheRepository());
                         task.setCaching(true);
-                        return Stream.of(task.withCounter("hmcl.modpack.download"));
+                        return Stream.<Task<?>>of(task.withCounter("hmcl.modpack.download"));
                     } catch (IOException e) {
                         LOG.warning("Could not query api.curseforge.com for mod: " + f.projectID() + ", " + f.fileID(), e);
                         return Stream.empty(); // Ignore this file.
@@ -176,7 +198,7 @@ public final class CurseCompletionTask extends Task<Void> {
                         updateProgress(finished.incrementAndGet(), newManifest.files().size());
                     }
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         if (!dependencies.isEmpty()) {
             getProperties().put("total", dependencies.size());
