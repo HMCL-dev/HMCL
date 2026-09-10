@@ -372,6 +372,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         private void loadChangelog(AddonUpdateObject object, RemoteAddon.Version version, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             if (version == null) return;
+            // will anyone actually change selected version 10000000+ times?
             int requestId = ++changelogRequestId;
             spinnerPane.setLoading(true);
             RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
