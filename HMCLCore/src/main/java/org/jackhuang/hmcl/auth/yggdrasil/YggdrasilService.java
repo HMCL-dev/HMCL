@@ -19,17 +19,22 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
+import org.jackhuang.hmcl.game.friend.*;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.InstantTypeAdapter;
+import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.gson.ValidationTypeAdapterFactory;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpMultipartRequest;
+import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +42,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -45,8 +51,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.unmodifiableList;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.fromJson;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class YggdrasilService {
 
@@ -111,8 +118,8 @@ public class YggdrasilService {
         YggdrasilSession response = handleAuthenticationResponse(request(provider.getRefreshmentURL(), request), clientToken);
 
         if (characterToSelect != null) {
-            if (response.getSelectedProfile() == null ||
-                    !response.getSelectedProfile().getId().equals(characterToSelect.getId())) {
+            if (response.selectedProfile() == null ||
+                    !response.selectedProfile().getId().equals(characterToSelect.getId())) {
                 throw new ServerResponseMalformedException("Failed to select character");
             }
         }
@@ -168,7 +175,7 @@ public class YggdrasilService {
 
     /**
      * Get complete game profile.
-     *
+     * <p>
      * Game profile provided from authentication is not complete (no skin data in properties).
      *
      * @param uuid the uuid that the character corresponding to.
@@ -193,7 +200,9 @@ public class YggdrasilService {
                 throw new ServerResponseMalformedException(e);
             }
             TextureResponse texturePayload = fromJson(new String(decodedBinary, UTF_8), TextureResponse.class);
-            return Optional.ofNullable(texturePayload.textures);
+            if (texturePayload != null) {
+                return Optional.ofNullable(texturePayload.textures);
+            } else return Optional.empty();
         } else {
             return Optional.empty();
         }
@@ -227,6 +236,35 @@ public class YggdrasilService {
         }
     }
 
+    public FriendResponse getFriendList(String accessToken) throws IOException {
+        var url = provider.getFriendsURL().toString();
+
+        return HttpRequest.GET(url)
+                .authorization("Bearer " + accessToken)
+                .retry(5)
+                .accept("application/json").getJson(FriendResponse.class);
+    }
+
+    public FriendResponse updateFriend(String accessToken, @Nullable String name, @Nullable UUID uuid, EnumUpdateType updateType) throws IOException {
+        var url = provider.getFriendsURL().toString();
+
+        return HttpRequest.PUT(url)
+                .json(new FriendUpdateRequst(name, uuid != null ? uuid.toString() : null, updateType), GSON)
+                .authorization("Bearer " + accessToken)
+                .retry(5)
+                .accept("application/json").getJson(FriendResponse.class);
+    }
+
+    public PresenceResponse getPresence(String accessToken, @NotNull EnumPresenceStatus status) throws IOException {
+        var url = provider.getPresenceURL().toString();
+
+        return HttpRequest.POST(url)
+                .json(new PresenceRequst(status), GSON)
+                .authorization("Bearer " + accessToken)
+                .retry(5)
+                .accept("application/json").getJson(PresenceResponse.class);
+    }
+
     private static String request(URI uri, Object payload) throws AuthenticationException {
         try {
             if (payload == null)
@@ -235,14 +273,6 @@ public class YggdrasilService {
                 return NetworkUtils.doPost(uri, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
-        }
-    }
-
-    private static <T> T fromJson(String text, Class<T> typeOfT) throws ServerResponseMalformedException {
-        try {
-            return GSON.fromJson(text, typeOfT);
-        } catch (JsonParseException e) {
-            throw new ServerResponseMalformedException(text, e);
         }
     }
 
@@ -266,6 +296,8 @@ public class YggdrasilService {
 
     private static final Gson GSON = new GsonBuilder()
             .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
+            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
+            .registerTypeAdapter(Instant.class, InstantTypeAdapter.INSTANCE)
             .create();
 
     public static final String PURCHASE_URL = "https://www.xbox.com/games/store/minecraft-java-bedrock-edition-for-pc/9nxp44l49shj";

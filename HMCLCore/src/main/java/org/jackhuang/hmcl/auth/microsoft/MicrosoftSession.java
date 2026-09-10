@@ -43,10 +43,6 @@ public record MicrosoftSession(String tokenType, String accessToken, long notAft
         if (accessToken != null) Logger.registerAccessToken(accessToken);
     }
 
-    public String getAuthorization() {
-        return String.format("%s %s", tokenType(), accessToken());
-    }
-
     /// Returns whether the stored session contains a usable Minecraft profile name.
     public boolean hasProfileName() {
         return profile != null && StringUtils.isNotBlank(profile.name());
