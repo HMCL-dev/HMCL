@@ -23,7 +23,6 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -64,13 +63,13 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -599,13 +598,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final LocalModFile localModFile;
         private final @Nullable ModTranslations.Mod modTranslations;
 
-        private SoftReference<CompletableFuture<Image>> iconCache;
+        private final ItemPropertyAsyncCache<Image, ModInfoObject> iconCache;
 
         ModInfoObject(LocalModFile localModFile) {
             this.localModFile = localModFile;
             this.active = localModFile.activeProperty();
 
             this.modTranslations = ModTranslations.MOD.getMod(localModFile.getId(), localModFile.getName());
+
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
         public LocalModFile getModInfo() {
@@ -616,7 +617,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return modTranslations;
         }
 
-        @FXThread
+        private Image getDefaultIcon() {
+            return GameInstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
+        }
+
         private Image loadIcon() {
             List<String> iconPaths = new ArrayList<>();
 
@@ -639,34 +643,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 LOG.warning("Failed to load mod icons", e);
             }
 
-            return GameInstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
-        }
-
-        public void loadIcon(ImageContainer imageContainer, @Nullable WeakReference<ObjectProperty<ModInfoObject>> current) {
-            SoftReference<CompletableFuture<Image>> iconCache = this.iconCache;
-            CompletableFuture<Image> imageFuture;
-            if (iconCache != null && (imageFuture = iconCache.get()) != null) {
-                Image image = imageFuture.getNow(null);
-                if (image != null) {
-                    imageContainer.setImage(image);
-                    return;
-                }
-            } else {
-                imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
-                this.iconCache = new SoftReference<>(imageFuture);
-            }
-            imageContainer.setImage(GameInstanceIconType.getIconType(localModFile.getModLoaderType()).getIcon());
-            imageFuture.thenAcceptAsync(image -> {
-                if (current != null) {
-                    ObjectProperty<ModInfoObject> infoObjectProperty = current.get();
-                    if (infoObjectProperty == null || infoObjectProperty.get() != this) {
-                        // The current ListCell has already switched to another object
-                        return;
-                    }
-                }
-
-                imageContainer.setImage(image);
-            }, Schedulers.javafx());
+            return getDefaultIcon();
         }
     }
 
@@ -683,7 +660,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             var imageContainer = new ImageContainer(40);
             titleContainer.setAlignment(Pos.CENTER_LEFT);
-            modInfo.loadIcon(imageContainer, null);
+            modInfo.iconCache.attachValue(imageContainer.imageProperty(), null);
 
             TwoLineListItem title = new TwoLineListItem();
             title.getTitleLabel().setWrapText(true);
@@ -845,7 +822,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
 
-            dataItem.loadIcon(imageContainer, new WeakReference<>(this.itemProperty()));
+            dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
 
             String displayName = modInfo.getName();
             if (modTranslations != null && I18n.isUseChinese()) {
