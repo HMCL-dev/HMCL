@@ -65,6 +65,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     public void start(SettingsMap settings) {
     }
 
+    /// Creates a task that updates components and synchronizes the client JAR with the resulting manifest.
     @Override
     public Object finish(SettingsMap settings) {
         settings.put("title", i18n("install.change_version.process"));
@@ -83,7 +84,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             }
         }
 
-        return gameInstance.getRepository().updateInstanceAsync(gameInstance.getId(), publishedInstance -> {
+        return dependencyManager.updateInstanceAsync(gameInstance.getId(), publishedInstance -> {
             Task<GameInstanceManifest> update = Task.supplyAsync(publishedInstance::getManifest);
             for (Object value : settings.asStringMap().values()) {
                 if (value instanceof ComponentRemoteVersion remoteVersion) {

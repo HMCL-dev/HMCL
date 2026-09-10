@@ -70,8 +70,14 @@ public final class LaunchManifestNormalizer {
             // DefaultLauncher when building the process command).
             repaired = repairBootstrapLauncher(repaired, analyzer);
         }
-        // Vanilla and Fabric/Quilt need no loader-specific argument repair here.
 
+        if (analyzer.has(GameComponentType.LEGACY_FABRIC)) {
+            // LegacyFabric adds higher-version ASM dependencies such as org.ow2.asm:asm,
+            // which conflict with the original org.ow2.asm:asm-all and cause launch failure.
+            repaired = repairDuplicateAsm(repaired, analyzer);
+        }
+
+        // Vanilla and Fabric/Quilt need no loader-specific argument repair here.
         return removeLegacyLog4jPatch(repaired);
     }
 
@@ -214,6 +220,21 @@ public final class LaunchManifestNormalizer {
             }
         }
         return builder.build();
+    }
+
+    /// LegacyFabric adds higher-version ASM dependencies such as org.ow2.asm:asm,
+    /// which conflict with the original org.ow2.asm:asm-all and cause launch failure.
+    private static GameInstanceManifest repairDuplicateAsm(GameInstanceManifest manifest, GameComponentAnalyzer analyzer) {
+        if (!analyzer.has(GameComponentType.LEGACY_FABRIC)) {
+            return manifest;
+        }
+
+        List<Library> libraries = manifest.getLibraries();
+
+        boolean hasAsm = libraries.stream().anyMatch(it -> it.is("org.ow2.asm", "asm"));
+        return hasAsm
+                ? manifest.withLibraries(libraries.stream().filter(it -> !it.is("org.ow2.asm", "asm-all")).toList())
+                : manifest;
     }
 
     /// Returns whether a comma-separated list contains the exact requested value.

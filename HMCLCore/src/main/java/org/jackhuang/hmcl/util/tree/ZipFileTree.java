@@ -19,8 +19,8 @@ package org.jackhuang.hmcl.util.tree;
 
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
-import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,23 +37,26 @@ import java.util.Set;
  */
 public final class ZipFileTree extends ArchiveFileTree<ZipArchiveReader, ZipArchiveEntry> {
     private final boolean closeReader;
+    private @Nullable Dir<ZipArchiveEntry> root;
 
-    public ZipFileTree(ZipArchiveReader file) throws IOException {
+    public ZipFileTree(ZipArchiveReader file) {
         this(file, true);
     }
 
-    public ZipFileTree(ZipArchiveReader file, boolean closeReader) throws IOException {
+    public ZipFileTree(ZipArchiveReader file, boolean closeReader) {
         super(file);
         this.closeReader = closeReader;
-        try {
-            for (ZipArchiveEntry zipArchiveEntry : file.getEntries()) {
-                addEntry(zipArchiveEntry);
+    }
+
+    @Override
+    public Dir<ZipArchiveEntry> getRoot() {
+        if (root == null) {
+            root = new Dir<>("");
+            for (ZipArchiveEntry zipArchiveEntry : reader.getEntries()) {
+                addEntry(root, zipArchiveEntry);
             }
-        } catch (Throwable e) {
-            if (closeReader)
-                IOUtils.closeQuietly(file, e);
-            throw e;
         }
+        return root;
     }
 
     @Override
@@ -101,6 +104,15 @@ public final class ZipFileTree extends ArchiveFileTree<ZipArchiveReader, ZipArch
 
             posixView.setPermissions(permissions);
         }
+    }
+
+    @Override
+    public @Nullable ZipArchiveEntry getEntry(@NotNull String entryPath) {
+        ZipArchiveEntry entry = reader.getEntry(entryPath);
+        if (entry != null)
+            return entry;
+
+        return super.getEntry(entryPath);
     }
 
     @Override

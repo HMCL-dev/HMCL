@@ -19,9 +19,9 @@ package org.jackhuang.hmcl.addon.repository;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Immutable;
@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.NoCandidatesException;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,11 +146,11 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
     private static String convertSortType(SortType sortType) {
         return switch (sortType) {
+            case RELEVANCY -> "relevance";
+            case POPULARITY -> "follows";
             case DATE_CREATED -> "newest";
-            case POPULARITY, NAME, AUTHOR -> "relevance";
             case LAST_UPDATED -> "updated";
             case TOTAL_DOWNLOADS -> "downloads";
-            default -> throw new IllegalArgumentException("Unsupported sort type " + sortType);
         };
     }
 
@@ -204,7 +205,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                 }
             }
 
-            throw exception != null ? exception : new IOException("No candidates found");
+            throw exception != null ? exception : new NoCandidatesException();
         } finally {
             SEMAPHORE.release();
         }
@@ -258,7 +259,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                 }
             }
 
-            throw exception != null ? exception : new IOException("No candidates found");
+            throw exception != null ? exception : new NoCandidatesException();
         } finally {
             SEMAPHORE.release();
         }
@@ -268,13 +269,19 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     public RemoteAddon resolveDependency(DownloadProvider downloadProvider, String id) throws IOException {
         try {
             return getAddonById(downloadProvider, id);
-        } catch (ResponseCodeException e) {
-            if (e.getResponseCode() == 502 || e.getResponseCode() == 404) {
+        } catch (IOException e) {
+            if (e instanceof NoCandidatesException) throw e;
+            List<Throwable> l = new ArrayList<>(List.of(e));
+            l.addAll(List.of(e.getSuppressed()));
+            if (l.stream().allMatch(t -> {
+                var cause = t.getCause();
+                return cause == null
+                        || cause instanceof FileNotFoundException
+                        || cause instanceof ResponseCodeException rce && rce.getResponseCode() == 404;
+            })) { // Which means the file does not exist
                 return RemoteAddon.BROKEN;
             }
             throw e;
-        } catch (FileNotFoundException e) {
-            return RemoteAddon.BROKEN;
         }
     }
 
@@ -310,7 +317,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                 }
             }
 
-            throw exception != null ? exception : new IOException("No candidates found");
+            throw exception != null ? exception : new NoCandidatesException();
         } finally {
             SEMAPHORE.release();
         }
@@ -483,15 +490,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                         return RemoteAddon.Dependency.ofGeneral(DEPENDENCY_TYPE.get(dependency.dependencyType), RemoteAddon.Source.MODRINTH, dependency.projectId);
                     }).filter(Objects::nonNull).collect(Collectors.toList()),
                     gameVersions,
-                    loaders.stream().flatMap(loader -> {
-                        if ("fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FABRIC);
-                        else if ("forge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FORGE);
-                        else if ("legacy-fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LEGACY_FABRIC);
-                        else if ("neoforge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.NEO_FORGE);
-                        else if ("quilt".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.QUILT);
-                        else if ("liteloader".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LITE_LOADER);
-                        else return Stream.empty();
-                    }).collect(Collectors.toList())
+                    loaders.stream().map(AddonLoader::of).toList()
             ));
         }
     }
