@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -63,7 +62,7 @@ public final class GetTask extends FetchTask<String> {
     }
 
     @Override
-    protected Context getContext(@Nullable HttpResponse<?> response, boolean checkETag, String bmclapiHash) {
+    protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) {
         long length = -1;
         if (response != null)
             length = response.headers().firstValueAsLong("content-length").orElse(-1L);
@@ -92,7 +91,7 @@ public final class GetTask extends FetchTask<String> {
                 setResult(result);
 
                 if (checkETag) {
-                    repository.cacheText(UrlResponseInfo.of(response), result);
+                    repository.cacheText(response, result);
                 }
             }
         };

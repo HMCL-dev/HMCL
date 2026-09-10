@@ -19,11 +19,10 @@ package org.jackhuang.hmcl.download.neoforge;
 
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.download.game.VersionJsonDownloadTask;
+import org.jackhuang.hmcl.download.game.GameInstanceJsonDownloadTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -57,7 +56,7 @@ import java.util.zip.ZipException;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.fromNonNullJson;
 
-public class NeoForgeOldInstallTask extends Task<Version> {
+public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
 
     private class ProcessorTask extends Task<Void> {
 
@@ -110,7 +109,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
                 return;
             }
 
-            Path jar = gameRepository.getArtifactFile(version, processor.getJar());
+            Path jar = gameRepository.getLayout().getArtifactFile(processor.getJar());
             if (!Files.isRegularFile(jar))
                 throw new FileNotFoundException("Game processor file not found, should be downloaded in preprocess");
 
@@ -128,7 +127,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
 
             List<String> classpath = new ArrayList<>(processor.getClasspath().size() + 1);
             for (Artifact artifact : processor.getClasspath()) {
-                Path file = gameRepository.getArtifactFile(version, artifact);
+                Path file = gameRepository.getLayout().getArtifactFile(artifact);
                 if (!Files.isRegularFile(file))
                     throw new Exception("Game processor dependency missing");
                 classpath.add(file.toString());
@@ -173,23 +172,38 @@ public class NeoForgeOldInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository gameRepository;
-    private final Version version;
+    private final GameInstanceManifest manifest;
+    /// Source vanilla client JAR copied before processors are invoked.
+    private final Path minecraftJar;
     private final Path installer;
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     private ForgeNewInstallProfile profile;
     private List<Processor> processors;
-    private Version neoForgeVersion;
+    private GameInstanceManifest neoForgeVersion;
     private final String selfVersion;
 
     private Path tempDir;
     private AtomicInteger processorDoneCount = new AtomicInteger(0);
 
-    NeoForgeOldInstallTask(DefaultDependencyManager dependencyManager, Version version, String selfVersion, Path installer) {
+    /// Creates a legacy NeoForge processor installation task.
+    ///
+    /// @param dependencyManager repository-scoped download services
+    /// @param manifest          working manifest receiving the NeoForge patch
+    /// @param minecraftJar      source vanilla client JAR copied for processor use
+    /// @param selfVersion       NeoForge version recorded in the returned patch
+    /// @param installer         NeoForge installer JAR
+    NeoForgeOldInstallTask(
+            DefaultDependencyManager dependencyManager,
+            GameInstanceManifest manifest,
+            Path minecraftJar,
+            String selfVersion,
+            Path installer) {
         this.dependencyManager = dependencyManager;
         this.gameRepository = dependencyManager.getGameRepository();
-        this.version = version;
+        this.manifest = manifest;
+        this.minecraftJar = minecraftJar;
         this.installer = installer;
         this.selfVersion = selfVersion;
 
@@ -246,7 +260,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
         else if (StringUtils.isSurrounded(literal, "'", "'"))
             return StringUtils.removeSurrounding(literal, "'");
         else if (StringUtils.isSurrounded(literal, "[", "]"))
-            return gameRepository.getArtifactFile(version, Artifact.fromDescriptor(StringUtils.removeSurrounding(literal, "[", "]"))).toString();
+            return gameRepository.getLayout().getArtifactFile(Artifact.fromDescriptor(StringUtils.removeSurrounding(literal, "[", "]"))).toString();
         else
             return plainConverter.apply(replaceTokens(var, literal));
     }
@@ -275,12 +289,12 @@ public class NeoForgeOldInstallTask extends Task<Version> {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             profile = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
             processors = profile.getProcessors();
-            neoForgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.getJson())), Version.class);
+            neoForgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.getJson())), GameInstanceManifest.class);
 
             for (Library library : profile.getLibraries()) {
                 Path file = fs.getPath("maven").resolve(library.getPath());
                 if (Files.exists(file)) {
-                    Path dest = gameRepository.getLibraryFile(version, library);
+                    Path dest = gameRepository.getLayout().getLibraryFile(manifest.id(), library);
                     FileUtils.copyFile(file, dest);
                 }
             }
@@ -288,7 +302,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
             if (profile.getPath().isPresent()) {
                 Path mainJar = profile.getPath().get().getPath(fs.getPath("maven"));
                 if (Files.exists(mainJar)) {
-                    Path dest = gameRepository.getArtifactFile(version, profile.getPath().get());
+                    Path dest = gameRepository.getLayout().getArtifactFile(profile.getPath().get());
                     FileUtils.copyFile(mainJar, dest);
                 }
             }
@@ -296,7 +310,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
             throw new ArtifactMalformedException("Malformed forge installer file", ex);
         }
 
-        dependents.add(new GameLibrariesTask(dependencyManager, version, true, profile.getLibraries()));
+        dependents.add(new GameLibrariesTask(dependencyManager, manifest, true, profile.getLibraries()));
     }
 
     private Map<String, String> parseOptions(List<String> args, Map<String, String> vars) {
@@ -333,9 +347,9 @@ public class NeoForgeOldInstallTask extends Task<Version> {
             return null;
 
         LOG.info("Patching DOWNLOAD_MOJMAPS task");
-        return new VersionJsonDownloadTask(version, dependencyManager)
+        return new GameInstanceJsonDownloadTask(version, dependencyManager)
                 .thenComposeAsync(json -> {
-                    DownloadInfo mappings = fromNonNullJson(json, Version.class)
+                    DownloadInfo mappings = fromNonNullJson(json, GameInstanceManifest.class)
                             .getDownloads().get(DownloadType.CLIENT_MAPPINGS);
                     if (mappings == null) {
                         throw new Exception("client_mappings download info not found");
@@ -365,7 +379,13 @@ public class NeoForgeOldInstallTask extends Task<Version> {
 
     @Override
     public void execute() throws Exception {
+        if (!Files.isRegularFile(minecraftJar)) {
+            throw new FileNotFoundException("Minecraft client JAR not found: " + minecraftJar);
+        }
         tempDir = Files.createTempDirectory("neoforge_installer");
+        // External processors must not receive the shared cache path.
+        Path isolatedMinecraftJar = tempDir.resolve("minecraft.jar");
+        FileUtils.copyFile(minecraftJar, isolatedMinecraftJar);
 
         Map<String, String> vars = new HashMap<>();
 
@@ -387,11 +407,11 @@ public class NeoForgeOldInstallTask extends Task<Version> {
         }
 
         vars.put("SIDE", "client");
-        vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(gameRepository.getVersionJar(version)));
-        vars.put("MINECRAFT_VERSION", FileUtils.getAbsolutePath(gameRepository.getVersionJar(version)));
+        vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(isolatedMinecraftJar));
+        vars.put("MINECRAFT_VERSION", profile.getMinecraft());
         vars.put("ROOT", FileUtils.getAbsolutePath(gameRepository.getBaseDirectory()));
         vars.put("INSTALLER", installer.toAbsolutePath().toString());
-        vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLibrariesDirectory(version)));
+        vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLayout().getLibrariesDirectory()));
 
         updateProgress(0, processors.size());
 
@@ -402,12 +422,13 @@ public class NeoForgeOldInstallTask extends Task<Version> {
 
         dependencies.add(
                 processorsTask.thenComposeAsync(
-                        dependencyManager.checkLibraryCompletionAsync(neoForgeVersion, true)));
+                        dependencyManager.checkComponentCompletionAsync(neoForgeVersion, true)));
 
-        setResult(neoForgeVersion
-                .setPriority(Version.PRIORITY_LOADER)
-                .setId(LibraryAnalyzer.LibraryType.NEO_FORGE.getPatchId())
-                .setVersion(selfVersion));
+        setResult(GameInstancePatch.fromManifest(
+                neoForgeVersion,
+                GameComponentType.NEO_FORGE.getPatchId(),
+                selfVersion,
+                GameInstancePatch.PRIORITY_LOADER));
     }
 
     @Override

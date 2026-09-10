@@ -46,7 +46,7 @@ public final class MicrosoftAccount extends OAuthAccount {
         super(accountID);
         this.service = requireNonNull(service);
         this.session = requireNonNull(session);
-        this.profileID = requireNonNull(session.getProfile().id());
+        this.profileID = requireNonNull(session.profile().id());
     }
 
     protected MicrosoftAccount(MicrosoftService service, OAuth.GrantFlow flow) throws AuthenticationException {
@@ -54,35 +54,35 @@ public final class MicrosoftAccount extends OAuthAccount {
         this.service = requireNonNull(service);
 
         MicrosoftSession acquiredSession = service.authenticate(flow);
-        if (acquiredSession.getProfile() == null) {
+        if (acquiredSession.profile() == null) {
             session = service.refresh(acquiredSession);
         } else {
             session = acquiredSession;
         }
 
-        profileID = session.getProfile().id();
+        profileID = session.profile().id();
         authenticated = true;
     }
 
     @Override
     public String getProfileName() {
-        return session.getProfile().name();
+        return session.profile().name();
     }
 
     @Override
     public UUID getProfileID() {
-        return session.getProfile().id();
+        return session.profile().id();
     }
 
     @Override
     public AuthInfo logIn() throws AuthenticationException {
-        if (!authenticated || !session.hasProfileName() || System.currentTimeMillis() > session.getNotAfter()) {
+        if (!authenticated || !session.hasProfileName() || System.currentTimeMillis() > session.notAfter()) {
             if (session.hasProfileName()
-                    && service.validate(session.getNotAfter(), session.getTokenType(), session.getAccessToken())) {
+                    && service.validate(session.notAfter(), session.tokenType(), session.accessToken())) {
                 authenticated = true;
             } else {
                 MicrosoftSession acquiredSession = service.refresh(session);
-                if (!Objects.equals(acquiredSession.getProfile().id(), session.getProfile().id())) {
+                if (!Objects.equals(acquiredSession.profile().id(), session.profile().id())) {
                     throw new ServerResponseMalformedException("Selected profile changed");
                 }
                 if (!acquiredSession.hasProfileName()) {
@@ -102,11 +102,11 @@ public final class MicrosoftAccount extends OAuthAccount {
     @Override
     public AuthInfo logInWhenCredentialsExpired() throws AuthenticationException {
         MicrosoftSession acquiredSession = service.authenticate(OAuth.GrantFlow.DEVICE);
-        if (!Objects.equals(profileID, acquiredSession.getProfile().id())) {
-            throw new WrongAccountException(profileID, acquiredSession.getProfile().id());
+        if (!Objects.equals(profileID, acquiredSession.profile().id())) {
+            throw new WrongAccountException(profileID, acquiredSession.profile().id());
         }
 
-        if (acquiredSession.getProfile() == null) {
+        if (acquiredSession.profile() == null) {
             session = service.refresh(acquiredSession);
         } else {
             session = acquiredSession;
@@ -133,7 +133,7 @@ public final class MicrosoftAccount extends OAuthAccount {
 
     @Override
     public void uploadSkin(boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
-        service.uploadSkin(session.getAccessToken(), isSlim, file);
+        service.uploadSkin(session.accessToken(), isSlim, file);
     }
 
     @Override

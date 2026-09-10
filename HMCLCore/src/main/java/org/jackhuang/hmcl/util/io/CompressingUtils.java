@@ -137,14 +137,14 @@ public final class CompressingUtils {
     }
 
     public static ZipArchiveReader openZipFile(Path zipFile, Charset charset) throws IOException {
-        return new ZipArchiveReader(zipFile, charset);
+        return new ZipArchiveReader(zipFile, charset, true, true);
     }
 
     public static ZipArchiveReader openZipFileWithPossibleEncoding(Path zipFile, Charset possibleEncoding) throws IOException {
         if (possibleEncoding == null)
             possibleEncoding = StandardCharsets.UTF_8;
 
-        ZipArchiveReader zipReader = new ZipArchiveReader(Files.newByteChannel(zipFile));
+        ZipArchiveReader zipReader = new ZipArchiveReader(zipFile, possibleEncoding, true, true);
 
         Charset suitableEncoding;
         try {
@@ -161,7 +161,7 @@ public final class CompressingUtils {
         }
 
         zipReader.close();
-        return new ZipArchiveReader(Files.newByteChannel(zipFile), suitableEncoding);
+        return new ZipArchiveReader(zipFile, suitableEncoding, true, true);
     }
 
     public static final class Builder {

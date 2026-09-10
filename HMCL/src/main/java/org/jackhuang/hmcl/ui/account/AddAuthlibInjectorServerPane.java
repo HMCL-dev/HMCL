@@ -87,8 +87,22 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
                 actions.getChildren().setAll(cancel, nextPane);
             }
 
-            addServerPane.setBody(txtServerUrl);
-            addServerPane.setActions(lblCreationWarning, actions);
+            VBox body = new VBox();
+            body.setSpacing(8);
+
+            lblCreationWarning.setMinWidth(0);
+            lblCreationWarning.setPrefWidth(0);
+            lblCreationWarning.maxWidthProperty().bind(body.widthProperty());
+            lblCreationWarning.visibleProperty().bind(lblCreationWarning.textProperty().isNotEmpty());
+            lblCreationWarning.managedProperty().bind(lblCreationWarning.visibleProperty());
+
+            body.getChildren().addAll(
+                txtServerUrl,
+                lblCreationWarning
+            );
+
+            addServerPane.setBody(body);
+            addServerPane.setActions(actions);
 
             txtServerUrl.getValidators().addAll(new RequiredValidator(), new URLValidator());
             FXUtils.setValidateWhileTextChanged(txtServerUrl, true);
@@ -154,7 +168,6 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
         this.setContent(addServerPane, ContainerAnimations.NONE);
 
-        lblCreationWarning.maxWidthProperty().bind(((FlowPane) lblCreationWarning.getParent()).widthProperty());
         nextPane.hideSpinner();
 
         onEscPressed(this, this::onAddCancel);

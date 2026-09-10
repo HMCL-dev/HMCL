@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
@@ -179,7 +178,7 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     @Override
-    protected Context getContext(@Nullable HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
+    protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
         Path temp = Files.createTempFile(null, null);
 
         String algorithm;
@@ -271,7 +270,7 @@ public class FileDownloadTask extends FetchTask<Void> {
                     }
 
                     if (checkETag) {
-                        repository.cacheRemoteFile(UrlResponseInfo.of(response), file);
+                        repository.cacheRemoteFile(response, file);
                     }
                 } finally {
                     if (!moved) {

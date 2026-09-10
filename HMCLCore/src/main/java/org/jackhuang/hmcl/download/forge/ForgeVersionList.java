@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -33,7 +33,7 @@ import java.util.Map;
  *
  * @author huangyuhui
  */
-public final class ForgeVersionList extends VersionList<ForgeRemoteVersion> {
+public final class ForgeVersionList extends ComponentVersionList<ForgeRemoteVersion> {
     private final DownloadProvider downloadProvider;
 
     public ForgeVersionList(DownloadProvider downloadProvider) {

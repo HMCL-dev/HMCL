@@ -28,7 +28,7 @@ public abstract class BasicArgb8888Director<ResultT> implements Argb8888Director
         }
         for (int i = 0; i < length; i++) {
             final int alpha = 0xff & bytes[position + i];
-            palette.argbArray[i] = alpha << 24 | palette.argbArray[i] & 0x00FFFFFF;
+            palette.argbArray()[i] = alpha << 24 | palette.argbArray()[i] & 0x00FFFFFF;
         }
     }
 

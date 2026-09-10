@@ -22,47 +22,9 @@ import com.google.gson.annotations.SerializedName;
 /**
  * @author Glavo
  */
-public final class DiscoRemoteFileInfo {
-    @SerializedName("filename")
-    private final String fileName;
-
-    @SerializedName("direct_download_uri")
-    private final String directDownloadUri;
-
-    @SerializedName("checksum_type")
-    private final String checksumType;
-
-    @SerializedName("checksum")
-    private final String checksum;
-
-    @SerializedName("checksum_uri")
-    private final String checksumUri;
-
-    public DiscoRemoteFileInfo(String fileName, String directDownloadUri, String checksumType, String checksum, String checksumUri) {
-        this.fileName = fileName;
-        this.directDownloadUri = directDownloadUri;
-        this.checksumType = checksumType;
-        this.checksum = checksum;
-        this.checksumUri = checksumUri;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public String getDirectDownloadUri() {
-        return directDownloadUri;
-    }
-
-    public String getChecksumType() {
-        return checksumType;
-    }
-
-    public String getChecksum() {
-        return checksum;
-    }
-
-    public String getChecksumUri() {
-        return checksumUri;
-    }
+public record DiscoRemoteFileInfo(@SerializedName("filename") String fileName,
+                                  @SerializedName("direct_download_uri") String directDownloadUri,
+                                  @SerializedName("checksum_type") String checksumType,
+                                  @SerializedName("checksum") String checksum,
+                                  @SerializedName("checksum_uri") String checksumUri) {
 }

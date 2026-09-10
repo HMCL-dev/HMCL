@@ -24,16 +24,7 @@ import org.jackhuang.hmcl.util.gson.JsonType;
 import java.util.Collections;
 import java.util.Map;
 
-public final class MojangJavaRemoteFiles {
-    private final Map<String, Remote> files;
-
-    public MojangJavaRemoteFiles(Map<String, Remote> files) {
-        this.files = files;
-    }
-
-    public Map<String, Remote> getFiles() {
-        return files;
-    }
+public record MojangJavaRemoteFiles(Map<String, Remote> files) {
 
     @JsonType(
             property = "type",

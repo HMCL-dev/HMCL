@@ -12,31 +12,20 @@ import com.jfoenix.controls.JFXRippler.RipplerPos;
 import com.jfoenix.transitions.CachedTransition;
 import com.jfoenix.transitions.JFXFillTransition;
 import com.jfoenix.utils.JFXNodeUtils;
-import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
-import javafx.animation.Transition;
+import javafx.animation.*;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.VPos;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.skin.CheckBoxSkin;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderStroke;
-import javafx.scene.layout.BorderStrokeStyle;
-import javafx.scene.layout.BorderWidths;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 
 public class JFXCheckBoxSkin extends CheckBoxSkin {
     private final StackPane box = new StackPane();
@@ -180,21 +169,41 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         };
     }
 
-    private void playSelectAnimation(Boolean selection) {
-        if (selection == null) {
-            selection = false;
-        }
-
+    /// Animates a selection change, or applies it immediately when animations are disabled.
+    private void playSelectAnimation(boolean selection) {
         JFXCheckBox control = (JFXCheckBox) this.getSkinnable();
-        this.transition.setRate(selection ? 1.0 : -1.0);
-        this.select.setRate(selection ? 1.0 : -1.0);
-        this.transition.play();
-        this.select.play();
+
         this.box.setBorder(new Border(new BorderStroke(
                 selection ? control.getCheckedColor() : Themes.getColorScheme().getOnSurfaceVariant(),
                 BorderStrokeStyle.SOLID,
                 new CornerRadii(2.0),
                 new BorderWidths(this.lineThick))));
+
+        if (!AnimationUtils.isAnimationEnabled()) {
+            finishSelectionAnimation();
+            return;
+        }
+
+        this.transition.setRate(selection ? 1.0 : -1.0);
+        this.select.setRate(selection ? 1.0 : -1.0);
+        this.transition.play();
+        this.select.play();
+    }
+
+    /// Stops selection animations and immediately displays the checkbox's current selected state.
+    ///
+    /// The check mark, fill, and border are updated even if no animation is running.
+    /// This also suppresses the initial selection animation on the first layout.
+    /// The skin must not have been disposed.
+    public void finishSelectionAnimation() {
+        transition.stop();
+        select.stop();
+        invalid = false;
+        boolean selected = getSkinnable().isSelected();
+        mark.setVisible(selected);
+        mark.setScaleX(selected ? 1.0 : 0.0);
+        mark.setScaleY(selected ? 1.0 : 0.0);
+        updateColors();
     }
 
     private void createFillTransition() {
