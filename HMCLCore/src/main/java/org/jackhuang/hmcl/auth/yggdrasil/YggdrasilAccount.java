@@ -36,7 +36,6 @@ public abstract class YggdrasilAccount extends ClassicAccount {
     protected final UUID profileID;
     protected final String loginName;
 
-    private boolean authenticated = false;
     private YggdrasilSession session;
 
     protected YggdrasilAccount(AccountID accountID, YggdrasilService service, String loginName, YggdrasilSession session) {
@@ -72,7 +71,6 @@ public abstract class YggdrasilAccount extends ClassicAccount {
         }
 
         profileID = session.getSelectedProfile().getId();
-        authenticated = true;
 
         addProfilePropertiesListener();
     }
@@ -101,9 +99,11 @@ public abstract class YggdrasilAccount extends ClassicAccount {
         return session.getSelectedProfile().getId();
     }
 
+    /// Returns authentication information after validating the current token.
+    /// Refreshes the session if the profile name is missing or the token is invalid.
     @Override
     public synchronized AuthInfo logIn() throws AuthenticationException {
-        if (!authenticated || !session.hasProfileName() || !service.validate(session.getAccessToken(), session.getClientToken())) {
+        if (!session.hasProfileName() || !service.validate(session.getAccessToken(), session.getClientToken())) {
             YggdrasilSession acquiredSession;
             try {
                 acquiredSession = service.refresh(session.getAccessToken(), session.getClientToken(), null);
@@ -124,7 +124,6 @@ public abstract class YggdrasilAccount extends ClassicAccount {
 
             session = acquiredSession;
 
-            authenticated = true;
             invalidate();
         }
         return session.toAuthInfo();
@@ -156,7 +155,6 @@ public abstract class YggdrasilAccount extends ClassicAccount {
             session = acquiredSession;
         }
 
-        authenticated = true;
         invalidate();
         return session.toAuthInfo();
     }
@@ -191,7 +189,6 @@ public abstract class YggdrasilAccount extends ClassicAccount {
 
     @Override
     public void clearCache() {
-        authenticated = false;
         service.getProfileRepository().invalidate(profileID);
     }
 
