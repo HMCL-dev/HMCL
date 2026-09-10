@@ -56,6 +56,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -299,7 +300,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
     }
 
     private static final class AddonChangelog extends JFXDialogLayout {
-        private final Map<String, String> changelogCache = new HashMap<>();
+        private final Map<String, String> changelogCache = new ConcurrentHashMap<>();
         /// ID of the most recently started changelog request. Only the result of this request may update the UI.
         @FXThread
         private int changelogRequestId = 0;
