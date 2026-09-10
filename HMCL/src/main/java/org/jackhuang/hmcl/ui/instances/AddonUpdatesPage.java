@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
@@ -299,6 +300,12 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
     private static final class AddonChangelog extends JFXDialogLayout {
         private final Map<String, String> changelogCache = new HashMap<>();
+        /// ID of the most recently started changelog request. Only the result of this request may update the UI.
+        @FXThread
+        private int changelogRequestId = 0;
+        /// ID of the most recently started version page request. Only the result of this request may update the UI.
+        @FXThread
+        private int versionPageRequestId = 0;
 
         public AddonChangelog(AddonUpdateObject object) {
             List<RemoteAddon.Version> availableVersions = object.data.availableVersions();
@@ -364,6 +371,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         private void loadChangelog(AddonUpdateObject object, RemoteAddon.Version version, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             if (version == null) return;
+            int requestId = ++changelogRequestId;
             spinnerPane.setLoading(true);
             RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
             Task.supplyAsync(() -> {
@@ -377,9 +385,10 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                         "238222".equals(version.projectId())
                 );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                RemoteAddon.Version currentVersion = object.targetVersionObject.get();
-                if (currentVersion != null && !currentVersion.versionId().equals(version.versionId())) {
-                    // Version changed while loading, discard this result. Why's there no 'Task.interrupt()'
+                if (requestId != changelogRequestId) {
+                    // A newer request has been started, discard this stale result
+                    // NOTE: comparing version might not be enough: selecting A -> B -> A makes two
+                    // requests for the same version, and the older one may finish last.
                     return;
                 }
 
@@ -398,13 +407,13 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         private void loadVersionPageUrl(AddonUpdateObject object, JFXHyperlink button, RemoteAddon.Version version) {
             button.setDisable(true);
+            int requestId = ++versionPageRequestId;
             Task.supplyAsync(() -> {
                 RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
                 return repo == null ? null : repo.getVersionPageUrl(version);
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                RemoteAddon.Version currentVersion = object.targetVersionObject.get();
-                if (currentVersion != null && !currentVersion.versionId().equals(version.versionId())) {
-                    // Version changed while loading, discard this result
+                if (requestId != versionPageRequestId) {
+                    // A newer request has been started, discard this stale result
                     return;
                 }
 
