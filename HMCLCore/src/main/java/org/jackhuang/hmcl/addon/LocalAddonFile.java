@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.addon;
 
-import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -56,21 +55,12 @@ public abstract class LocalAddonFile {
 
     public abstract void delete() throws IOException;
 
-    private volatile transient long cfFingerprint = -1L;
     private volatile transient String sha1 = null;
 
-    /// Calculates file fingerprint for CurseForge.
+    /// Calculates SHA-1 hash.
     ///
-    /// @return file fingerprint used by CurseForge, non-negative
-    public long calculateFingerprintCurseForge() throws IOException {
-        if (cfFingerprint < 0) cfFingerprint = CurseForgeRemoteAddonRepository.calculateFingerprint(getFile());
-        return cfFingerprint;
-    }
-
-    /// Calculates SHA-1 hash for Modrinth.
-    ///
-    /// @return SHA-1 hash used by Modrinth
-    public String calculateSha1Modrinth() throws IOException {
+    /// @return SHA-1 hash of this file
+    public String calculateSha1() throws IOException {
         if (sha1 == null) sha1 = DigestUtils.digestToString("SHA-1", getFile());
         return sha1;
     }

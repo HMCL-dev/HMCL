@@ -185,7 +185,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     }
 
     /// Calculates the CurseForge fingerprint without retaining the filtered file in memory.
-    public static long calculateFingerprint(Path file) throws IOException {
+    static long calculateFingerprint(Path file) throws IOException {
         try (SeekableByteChannel channel = Files.newByteChannel(file, StandardOpenOption.READ)) {
             long startPosition = channel.position();
 

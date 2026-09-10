@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -40,12 +41,14 @@ public record RemoteAddon(String id, String slug, String author, String title, S
     public static final RemoteAddon BROKEN = new RemoteAddon("", "", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", null, null);
 
     public boolean checkInstalled(Stream<RemoteAddon.Version> remoteVersions, @Nullable DefaultGameInstance gameInstance) {
-        if (gameInstance != null && type() != null && source() != null) {
+        if (gameInstance != null && type() != null) {
             LocalAddonManager<?> manager = gameInstance.getManagerForType(type());
             if (manager != null) {
                 try {
-                    Set<?> localHashes = manager.getHashes(source());
-                    return remoteVersions.map(Version::hash).anyMatch(localHashes::contains);
+                    Set<?> localHashes = manager.getSha1Hashes();
+                    return remoteVersions.map(v -> v.file.hashes.get("sha1"))
+                            .filter(StringUtils::isNotBlank)
+                            .anyMatch(localHashes::contains);
                 } catch (Exception e) {
                     LOG.warning("Failed to check if addon %s on %s is installed".formatted(id(), source()), e);
                 }

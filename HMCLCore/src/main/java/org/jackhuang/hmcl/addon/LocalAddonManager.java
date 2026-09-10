@@ -119,39 +119,15 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
         }
     }
 
-    /// @return hashes for finding versions in the given remote addon source
-    public Set<?> getHashes(RemoteAddon.Source source) throws IOException {
-        return switch (source) {
-            case MODRINTH -> getModrinthSha1Hashes();
-            case CURSEFORGE -> getCurseForgeFingerprints();
-        };
-    }
-
-    private Set<Long> getCurseForgeFingerprints() throws IOException {
+    /// @return SHA-1 hashes for finding versions in the given remote addon source
+    public Set<?> getSha1Hashes() throws IOException {
         lock.lock();
         try {
             if (!loaded)
                 refresh();
             return localFiles.parallelStream().filter(localAddonFile -> !localAddonFile.isDisabled()).map(localAddonFile -> {
                 try {
-                    return localAddonFile.calculateFingerprintCurseForge();
-                } catch (IOException e) {
-                    return -1L;
-                }
-            }).filter(l -> l >= 0).collect(Collectors.toSet());
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    private Set<String> getModrinthSha1Hashes() throws IOException {
-        lock.lock();
-        try {
-            if (!loaded)
-                refresh();
-            return localFiles.parallelStream().filter(localAddonFile -> !localAddonFile.isDisabled()).map(localAddonFile -> {
-                try {
-                    return localAddonFile.calculateSha1Modrinth();
+                    return localAddonFile.calculateSha1();
                 } catch (IOException e) {
                     return null;
                 }
