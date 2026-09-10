@@ -127,8 +127,8 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     /// Searches the configured section, preserving the order returned by the server.
     ///
     /// @throws UnsupportedOperationException if this repository has no configured section
-    /// @throws NoCandidatesException if no response is obtained and no I/O failure was recorded
-    /// @throws IOException if all candidate requests fail with I/O errors
+    /// @throws NoCandidatesException         if no response is obtained and no I/O failure was recorded
+    /// @throws IOException                   if all candidate requests fail with I/O errors
     @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
         if (type == null) throw new UnsupportedOperationException();
@@ -583,6 +583,22 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                     default -> RemoteAddon.VersionType.Release;
                 };
 
+                Map<String, String> knownHashes;
+                if (hashes != null) {
+                    knownHashes = new HashMap<>();
+                    for (LatestFileHash hash : hashes) {
+                        if (hash.value != null) {
+                            switch (hash.algo) {
+                                case 1 -> knownHashes.put("sha1", hash.value);
+                                case 2 -> knownHashes.put("md5", hash.value);
+                            }
+                        }
+                    }
+                    knownHashes = knownHashes.isEmpty() ? null : Map.copyOf(knownHashes);
+                } else {
+                    knownHashes = null;
+                }
+
                 return new RemoteAddon.Version(
                         this,
                         Integer.toString(id()),
@@ -591,15 +607,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                         fileName(),
                         fileDate(),
                         versionType,
-                        new RemoteAddon.File(hashes == null ? Collections.emptyMap() : hashes.stream().collect(Collectors.toMap(
-                                hash -> switch (hash.algo()) {
-                                    case 1 -> "sha1";
-                                    case 2 -> "md5";
-                                    default -> "algo" + hash.algo();
-                                },
-                                LatestFileHash::value,
-                                (a, b) -> a
-                        )), downloadUrl(), fileName()),
+                        new RemoteAddon.File(knownHashes, downloadUrl(), fileName()),
                         dependencies.stream().map(dependency -> {
                             if (!RELATION_TYPE.containsKey(dependency.relationType())) {
                                 throw new IllegalStateException("Broken datas.");
