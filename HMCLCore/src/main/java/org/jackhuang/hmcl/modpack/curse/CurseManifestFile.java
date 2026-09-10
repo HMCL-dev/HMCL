@@ -19,11 +19,17 @@ package org.jackhuang.hmcl.modpack.curse;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+
+import static org.jackhuang.hmcl.util.Pair.pair;
 
 /// @author huangyuhui
 @JsonSerializable
@@ -32,11 +38,14 @@ public record CurseManifestFile(@SerializedName("projectID") int projectID,
                                 @SerializedName("fileName") String fileName,
                                 @SerializedName("url") String url,
                                 @SerializedName("required") boolean required,
-                                @SerializedName("hashes") java.util.Map<String, String> hashes) implements Validation {
+                                @SerializedName("hashes") Map<String, String> hashes) implements Validation {
 
-    public CurseManifestFile(int projectID, int fileID, String fileName, String url, boolean required) {
-        this(projectID, fileID, fileName, url, required, null);
-    }
+    private static final List<Pair<String, String>> HASH_ALGORITHMS = List.of(
+            pair("sha1", "SHA-1"),
+            pair("sha256", "SHA-256"),
+            pair("sha512", "SHA-512"),
+            pair("md5", "MD5")
+    );
 
     @Override
     public void validate() throws JsonParseException {
@@ -57,16 +66,14 @@ public record CurseManifestFile(@SerializedName("projectID") int projectID,
     }
 
     @Nullable
-    public org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck getIntegrityCheck() {
+    public FileDownloadTask.IntegrityCheck getIntegrityCheck() {
         if (hashes == null || hashes.isEmpty()) return null;
-        if (hashes.containsKey("sha1")) {
-            return new org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck("SHA-1", hashes.get("sha1"));
-        } else if (hashes.containsKey("md5")) {
-            return new org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck("MD5", hashes.get("md5"));
-        } else if (hashes.containsKey("sha256")) {
-            return new org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck("SHA-256", hashes.get("sha256"));
-        } else if (hashes.containsKey("sha512")) {
-            return new org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck("SHA-512", hashes.get("sha512"));
+
+        for (Pair<String, String> algorithm : HASH_ALGORITHMS) {
+            String hash = hashes.get(algorithm.key());
+            if (hash != null) {
+                return new FileDownloadTask.IntegrityCheck(algorithm.value(), hash);
+            }
         }
         return null;
     }
@@ -79,7 +86,7 @@ public record CurseManifestFile(@SerializedName("projectID") int projectID,
         return new CurseManifestFile(projectID, fileID, fileName, url, required, hashes);
     }
 
-    public CurseManifestFile withHashes(java.util.Map<String, String> hashes) {
+    public CurseManifestFile withHashes(Map<String, String> hashes) {
         return new CurseManifestFile(projectID, fileID, fileName, url, required, hashes);
     }
 

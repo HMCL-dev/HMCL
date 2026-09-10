@@ -131,40 +131,20 @@ public final class CurseCompletionTask extends Task<Void> {
                 manifest.files().parallelStream()
                         .map(file -> {
                             updateProgress(finished.incrementAndGet(), manifest.files().size());
-                            boolean mandatory = StringUtils.isBlank(file.fileName()) || file.url() == null;
-                            boolean needHashes = file.hashes() == null || file.hashes().isEmpty();
-                            if (mandatory || needHashes) {
-                                RemoteAddon.File remoteFile = null;
-                                Exception lastException = null;
-                                for (int attempt = 0; attempt < 3; attempt++) {
-                                    try {
-                                        remoteFile = CurseForgeRemoteAddonRepository.MODS.getAddonFile(Integer.toString(file.projectID()), Integer.toString(file.fileID()));
-                                        break;
-                                    } catch (FileNotFoundException fof) {
-                                        LOG.warning("Could not query api.curseforge.com for deleted mods: " + file.projectID() + ", " + file.fileID(), fof);
-                                        if (mandatory) {
-                                            notFound.set(true);
-                                        }
-                                        return file;
-                                    } catch (IOException | JsonParseException e) {
-                                        lastException = e;
-                                        if (attempt < 2) {
-                                            try {
-                                                Thread.sleep(500L * (attempt + 1));
-                                            } catch (InterruptedException ignored) {
-                                                Thread.currentThread().interrupt();
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                                if (remoteFile != null) {
-                                    return file.withFileName(remoteFile.filename()).withURL(remoteFile.url()).withHashes(remoteFile.hashes());
-                                } else {
-                                    LOG.warning("Unable to fetch the file info projectID=" + file.projectID() + ", fileID=" + file.fileID(), lastException);
-                                    if (mandatory) {
-                                        allNameKnown.set(false);
-                                    }
+                            if (StringUtils.isBlank(file.fileName()) || file.url() == null) {
+                                try {
+                                    RemoteAddon.File remoteFile = CurseForgeRemoteAddonRepository.MODS.getAddonFile(Integer.toString(file.projectID()), Integer.toString(file.fileID()));
+                                    return file
+                                            .withFileName(remoteFile.filename())
+                                            .withURL(remoteFile.url())
+                                            .withHashes(remoteFile.hashes());
+                                } catch (FileNotFoundException fof) {
+                                    LOG.warning("Could not query api.curseforge.com for deleted mods: " + file.projectID() + ", " + file.fileID(), fof);
+                                    notFound.set(true);
+                                    return file;
+                                } catch (IOException | JsonParseException e) {
+                                    LOG.warning("Unable to fetch the file name projectID=" + file.projectID() + ", fileID=" + file.fileID(), e);
+                                    allNameKnown.set(false);
                                     return file;
                                 }
                             } else {
@@ -183,21 +163,7 @@ public final class CurseCompletionTask extends Task<Void> {
                 .filter(f -> f.fileName() != null)
                 .flatMap(f -> {
                     try {
-                        Path path = null;
-                        for (int attempt = 0; attempt < 3; attempt++) {
-                            try {
-                                path = guessFilePath(f, dependency.getDownloadProvider(), resourcePacksRoot, shaderPacksRoot);
-                                break;
-                            } catch (IOException e) {
-                                if (attempt == 2) throw e;
-                                try {
-                                    Thread.sleep(500L * (attempt + 1));
-                                } catch (InterruptedException ignored) {
-                                    Thread.currentThread().interrupt();
-                                    break;
-                                }
-                            }
-                        }
+                        Path path = guessFilePath(f, dependency.getDownloadProvider(), resourcePacksRoot, shaderPacksRoot);
                         if (path == null) {
                             return Stream.empty();
                         }

@@ -56,6 +56,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     private static final String PREFIX = "https://api.curseforge.com";
     private static final String BASE = "https://www.curseforge.com";
     private static final Semaphore SEMAPHORE = new Semaphore(16);
+    private static final int DEFAULT_RETRY_COUNT = 3;
 
     public static final String API_KEY = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));
 
@@ -158,6 +159,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                 LOG.info("Fetching " + candidate);
                 try {
                     response = withApiKey(HttpRequest.GET(candidate.toString()))
+                            .retry(DEFAULT_RETRY_COUNT)
                             .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
                     break;
                 } catch (IOException e) {
@@ -249,6 +251,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         try {
             Response<FingerprintMatchesResult> response = withApiKey(HttpRequest.POST(PREFIX + "/v1/fingerprints/432"))
                     .json(mapOf(pair("fingerprints", Collections.singletonList(hash))))
+                    .retry(DEFAULT_RETRY_COUNT)
                     .getJson(Response.typeOf(FingerprintMatchesResult.class));
 
             if (response.data().exactMatches() == null || response.data().exactMatches().isEmpty()) {
@@ -266,6 +269,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         SEMAPHORE.acquireUninterruptibly();
         try {
             Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id))
+                    .retry(DEFAULT_RETRY_COUNT)
                     .getJson(Response.typeOf(CurseAddon.class));
             return response.data.toAddon();
         } finally {
@@ -291,6 +295,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         SEMAPHORE.acquireUninterruptibly();
         try {
             Response<CurseAddon.LatestFile> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, projectId, fileId)))
+                    .retry(DEFAULT_RETRY_COUNT)
                     .getJson(Response.typeOf(CurseAddon.LatestFile.class));
             return response.data().toVersion().file();
         } finally {
@@ -304,6 +309,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         try {
             Response<List<CurseAddon.LatestFile>> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
                     pair("pageSize", "10000")))
+                    .retry(DEFAULT_RETRY_COUNT)
                     .getJson(Response.typeOf(listTypeOf(CurseAddon.LatestFile.class)));
             return response.data().stream().map(CurseAddon.LatestFile::toVersion);
         } finally {
@@ -316,6 +322,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         SEMAPHORE.acquireUninterruptibly();
         try {
             Response<String> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s/changelog", PREFIX, addonId, versionId)))
+                    .retry(DEFAULT_RETRY_COUNT)
                     .getJson(Response.typeOf(String.class));
             return response.data();
         } finally {
@@ -328,6 +335,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         SEMAPHORE.acquireUninterruptibly();
         try {
             Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + version.projectId()))
+                    .retry(DEFAULT_RETRY_COUNT)
                     .getJson(Response.typeOf(CurseAddon.class));
             var addon = response.data();
             var classId = addon.classId();
@@ -356,6 +364,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         SEMAPHORE.acquireUninterruptibly();
         try {
             Response<List<Category>> categories = withApiKey(HttpRequest.GET(PREFIX + "/v1/categories", pair("gameId", "432")))
+                    .retry(DEFAULT_RETRY_COUNT)
                     .getJson(Response.typeOf(listTypeOf(Category.class)));
             return reorganizeCategories(categories.data(), section).stream().map(Category::toCategory);
         } finally {
