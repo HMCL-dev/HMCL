@@ -31,12 +31,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public sealed abstract class ResourcePackFile extends LocalAddonFile implements Comparable<ResourcePackFile> permits ResourcePackFolder, ResourcePackZipFile {
-    static @Nullable ResourcePackFile fromFile(ResourcePackManager manager, Path path) throws IOException {
+    static ResourcePackFile fromFile(ResourcePackManager manager, Path path) {
         return Files.isRegularFile(path) ? ResourcePackZipFile.load(manager, path) : ResourcePackFolder.load(manager, path);
     }
 
@@ -54,20 +53,18 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
 
     protected final ResourcePackManager manager;
     protected Path file;
-    protected final PackMcMeta meta;
-    protected final Image icon;
+    protected final PackMcMeta.PackInfo packInfo;
 
     protected final String fileName;
     protected final String fileNameWithExtension;
 
     private Compatibility compatibility = null;
 
-    protected ResourcePackFile(ResourcePackManager manager, Path file, @NotNull PackMcMeta meta, @Nullable Image icon) {
+    protected ResourcePackFile(ResourcePackManager manager, Path file, @Nullable PackMcMeta.PackInfo packInfo) {
         super();
         this.manager = manager;
         this.file = file;
-        this.meta = Objects.requireNonNull(meta);
-        this.icon = icon;
+        this.packInfo = packInfo;
 
         this.fileName = StringUtils.parseColorEscapes(FileUtils.getNameWithoutExtension(file));
         this.fileNameWithExtension = file.getFileName().toString();
@@ -124,20 +121,18 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
     public void markDisabled() {
     }
 
-    public @NotNull PackMcMeta getMeta() {
-        return meta;
-    }
-
-    // 64 * 64
-    public @Nullable Image getIcon() {
-        return icon;
+    public @Nullable PackMcMeta.PackInfo getPackInfo() {
+        return packInfo;
     }
 
     @Nullable
     public LocalAddonFile.Description getDescription() {
-        if (getMeta().pack() == null) return null;
-        return getMeta().pack().description();
+        if (getPackInfo() == null) return null;
+        return getPackInfo().description();
     }
+
+    // 64*64
+    public abstract @Nullable Image loadIcon();
 
     @Override
     public int compareTo(@NotNull ResourcePackFile other) {

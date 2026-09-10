@@ -36,41 +36,41 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackZipFile extends ResourcePackFile {
 
-    public static @Nullable ResourcePackZipFile load(ResourcePackManager manager, Path path) throws IOException {
+    public static ResourcePackZipFile load(ResourcePackManager manager, Path path) {
         PackMcMeta meta = null;
-        byte[] iconData = null;
-
         try (var zipFileTree = CompressingUtils.openZipTree(path)) {
-            try {
-                meta = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
-            } catch (Exception e) {
-                LOG.warning("Failed to parse resource pack meta", e);
-            }
-            if (meta == null) return null;
-
-            var iconEntry = zipFileTree.getEntry("/pack.png");
-            if (iconEntry != null) {
-                try {
-                    iconData = zipFileTree.readBinaryEntry(iconEntry);
-                } catch (Exception e) {
-                    LOG.warning("Failed to load resource pack icon", e);
-                }
-            }
+            meta = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
+        } catch (Exception e) {
+            LOG.warning("Failed to parse resource pack meta", e);
         }
 
-        Image icon = null;
+        return new ResourcePackZipFile(manager, path, meta != null ? meta.pack() : null);
+    }
+
+    private ResourcePackZipFile(ResourcePackManager manager, Path path, PackMcMeta.PackInfo info) {
+        super(manager, path, info);
+    }
+
+    @Override
+    public @Nullable Image loadIcon() {
+        byte[] iconData = null;
+        try (var zipFileTree = CompressingUtils.openZipTree(getFile())) {
+            var iconEntry = zipFileTree.getEntry("/pack.png");
+            if (iconEntry != null) {
+                iconData = zipFileTree.readBinaryEntry(iconEntry);
+            }
+        } catch (Exception e) {
+            LOG.warning("Failed to load resource pack icon", e);
+        }
+
         if (iconData != null) {
             try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
-                icon = new Image(inputStream, 64, 64, true, true);
+                return new Image(inputStream, 64, 64, true, true);
             } catch (Exception e) {
                 LOG.warning("Failed to load resource pack icon", e);
             }
         }
-        return new ResourcePackZipFile(manager, path, meta, icon);
-    }
-
-    private ResourcePackZipFile(ResourcePackManager manager, Path path, PackMcMeta meta, @Nullable Image icon) {
-        super(manager, path, meta, icon);
+        return null;
     }
 
     @Override

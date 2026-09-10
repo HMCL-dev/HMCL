@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.addon.pack.PackMcMeta;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -30,33 +29,37 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackFolder extends ResourcePackFile {
 
-    public static @Nullable ResourcePackFolder load(ResourcePackManager manager, Path path) {
+    public static ResourcePackFolder load(ResourcePackManager manager, Path path) {
         PackMcMeta meta = null;
         try {
             meta = PackMcMeta.fromNonNullJsonFile(path.resolve("pack.mcmeta"));
         } catch (Exception e) {
             LOG.warning("Failed to parse resource pack meta", e);
         }
-        if (meta == null) return null;
 
+        return new ResourcePackFolder(manager, path, meta != null ? meta.pack() : null);
+    }
+
+    private ResourcePackFolder(ResourcePackManager manager, Path path, PackMcMeta.PackInfo info) {
+        super(manager, path, info);
+    }
+
+    @Override
+    public @Nullable Image loadIcon() {
         byte[] iconData = null;
-        Image icon = null;
         try {
-            iconData = Files.readAllBytes(path.resolve("pack.png"));
-        } catch (IOException e) {
-            LOG.warning("Failed to read resource pack icon", e);
+            iconData = Files.readAllBytes(getFile().resolve("pack.png"));
+        } catch (Exception e) {
+            LOG.warning("Failed to load resource pack icon", e);
         }
+
         if (iconData != null) {
             try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
-                icon = new Image(inputStream, 64, 64, true, true);
+                return new Image(inputStream, 64, 64, true, true);
             } catch (Exception e) {
                 LOG.warning("Failed to load resource pack icon", e);
             }
         }
-        return new ResourcePackFolder(manager, path, meta, icon);
-    }
-
-    private ResourcePackFolder(ResourcePackManager manager, Path path, PackMcMeta meta, @Nullable Image icon) {
-        super(manager, path, meta, icon);
+        return null;
     }
 }

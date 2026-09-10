@@ -516,7 +516,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
 
         Image getIcon() {
-            Image image = file.getIcon();
+            Image image = file.loadIcon();
             if (image == null || image.isError() || image.getWidth() <= 0 || image.getHeight() <= 0 ||
                     (Math.abs(image.getWidth() - image.getHeight()) >= 1)) {
                 image = UNKNOWN_PACK_IMAGE.get();
