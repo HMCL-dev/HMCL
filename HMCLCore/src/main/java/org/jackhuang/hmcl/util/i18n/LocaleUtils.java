@@ -18,6 +18,10 @@
 package org.jackhuang.hmcl.util.i18n;
 
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.platform.NativeUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.windows.Kernel32;
+import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -27,6 +31,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -41,59 +48,74 @@ public final class LocaleUtils {
 
     public static final Locale SYSTEM_DEFAULT = Locale.getDefault();
 
+    public static final boolean IS_CHINA_MAINLAND = isChinaMainland();
+
+    private static boolean isChinaMainland() {
+        if ("Asia/Shanghai".equals(ZoneId.systemDefault().getId()))
+            return true;
+
+        // Check if the time zone is UTC+8
+        if (ZonedDateTime.now().getOffset().getTotalSeconds() == Duration.ofHours(8).toSeconds()) {
+            if ("CN".equals(LocaleUtils.SYSTEM_DEFAULT.getCountry()))
+                return true;
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
+                Kernel32 kernel32 = Kernel32.INSTANCE;
+
+                // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
+                if (kernel32 != null && kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION) == 45) // China
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
     public static final Locale LOCALE_ZH_HANS = Locale.forLanguageTag("zh-Hans");
     public static final Locale LOCALE_ZH_HANT = Locale.forLanguageTag("zh-Hant");
 
     public static final String DEFAULT_LANGUAGE_KEY = "default";
 
-    private static final Map<String, String> subLanguageToParent = new HashMap<>();
-    private static final Map<String, String> iso3To2 = new HashMap<>();
+    private static final Map<String, String> PARENT_LANGUAGE = loadCSV("sublanguages.csv");
+    private static final Map<String, String> NORMALIZED_TAG = loadCSV("language_aliases.csv");
+    private static final Map<String, String> DEFAULT_SCRIPT = loadCSV("default_script.csv");
+    private static final Map<String, String> PREFERRED_LANGUAGE = Map.of("zh", "cmn");
+    private static final Set<String> RTL_SCRIPTS = Set.of("Qabs", "Arab", "Hebr");
+    private static final Set<String> CHINESE_TRADITIONAL_REGIONS = Set.of("TW", "HK", "MO");
 
-    static {
-        try (InputStream input = LocaleUtils.class.getResourceAsStream("/assets/lang/sublanguages.csv")) {
-            if (input != null) {
-                new String(input.readAllBytes()).lines()
-                        .filter(line -> !line.startsWith("#") && !line.isBlank())
-                        .forEach(line -> {
-                            String[] languages = line.split(",");
-                            if (languages.length < 2)
-                                LOG.warning("Invalid line in sublanguages.csv: " + line);
-
-                            String parent = languages[0];
-                            for (int i = 1; i < languages.length; i++) {
-                                subLanguageToParent.put(languages[i], parent);
-                            }
-                        });
-            }
-        } catch (Throwable e) {
-            LOG.warning("Failed to load sublanguages.csv", e);
+    /// Load CSV files located in `/assets/lang/`.
+    /// Each line in these files contains at least two elements.
+    ///
+    /// For example, if a file contains `value0,value1,value2`, the return value will be `{value1=value0, value2=value0}`.
+    private static Map<String, String> loadCSV(String fileName) {
+        InputStream resource = LocaleUtils.class.getResourceAsStream("/assets/lang/" + fileName);
+        if (resource == null) {
+            LOG.warning("Can't find file: " + fileName);
+            return Map.of();
         }
 
-        // Line Format:
-        // (?<iso2>[a-z]{2}),(?<iso3>[a-z]{3})
-        try (InputStream input = LocaleUtils.class.getResourceAsStream("/assets/lang/iso_languages.csv")) {
-            if (input != null) {
-                int lineLength = 2 + 1 + 3;
+        HashMap<String, String> result = new HashMap<>();
+        try (resource) {
+            new String(resource.readAllBytes(), StandardCharsets.UTF_8).lines().forEach(line -> {
+                if (line.startsWith("#") || line.isBlank())
+                    return;
 
-                byte[] bytes = input.readAllBytes();
-                for (int offset = 0; offset < bytes.length; ) {
-                    if (offset > bytes.length - lineLength)
-                        break;
-
-                    if (bytes[offset + 2] != ',')
-                        throw new IOException("iso_languages.csv format invalid");
-
-                    String iso2 = new String(bytes, offset, 2, StandardCharsets.US_ASCII);
-                    String iso3 = new String(bytes, offset + 3, 3, StandardCharsets.US_ASCII);
-
-                    iso3To2.put(iso3, iso2);
-
-                    offset += (lineLength + 1);
+                String[] items = line.split(",");
+                if (items.length < 2) {
+                    LOG.warning("Invalid line in " + fileName + ": " + line);
+                    return;
                 }
-            }
+
+                String parent = items[0];
+                for (int i = 1; i < items.length; i++) {
+                    result.put(items[i], parent);
+                }
+            });
         } catch (Throwable e) {
-            LOG.warning("Failed to load iso_languages.csv", e);
+            LOG.warning("Failed to load " + fileName, e);
         }
+
+        return Map.copyOf(result);
     }
 
     private static Locale getInstance(String language, String script, String region,
@@ -116,6 +138,31 @@ public final class LocaleUtils {
                 : locale.stripExtensions().toLanguageTag();
     }
 
+    public static boolean isEnglish(Locale locale) {
+        return "en".equals(getRootLanguage(locale));
+    }
+
+    public static boolean isChinese(Locale locale) {
+        return "zh".equals(getRootLanguage(locale));
+    }
+
+    // ---
+
+    /// Normalize the language code to the code in the IANA Language Subtag Registry.
+    /// Typically, it normalizes ISO 639 alpha-3 codes to ISO 639 alpha-2 codes.
+    public static @NotNull String normalizeLanguage(String language) {
+        return language.isEmpty()
+                ? "en"
+                : NORMALIZED_TAG.getOrDefault(language, language);
+    }
+
+    /// If `language` is a sublanguage of a [macrolanguage](https://en.wikipedia.org/wiki/ISO_639_macrolanguage),
+    /// return the macrolanguage; otherwise, return `null`.
+    public static @Nullable String getParentLanguage(String language) {
+        return PARENT_LANGUAGE.get(language);
+    }
+
+    /// @see #getRootLanguage(String)
     public static @NotNull String getRootLanguage(Locale locale) {
         return getRootLanguage(locale.getLanguage());
     }
@@ -126,39 +173,54 @@ public final class LocaleUtils {
     /// - If `language` is empty, return `en`;
     /// - Otherwise, return the `language`.
     public static @NotNull String getRootLanguage(String language) {
-        if (language.isEmpty()) return "en";
-        if (language.length() <= 2)
-            return language;
-
-        String iso2 = mapToISO2Language(language);
-        if (iso2 != null)
-            return iso2;
+        language = normalizeLanguage(language);
 
         String parent = getParentLanguage(language);
         return parent != null ? parent : language;
+    }
+
+    /// If `language` is a macrolanguage, try to map it to the most commonly used individual language.
+    ///
+    /// For example, if `language` is `zh`, this method will return `cmn`.
+    public static @NotNull String getPreferredLanguage(String language) {
+        language = normalizeLanguage(language);
+        return PREFERRED_LANGUAGE.getOrDefault(language, language);
     }
 
     /// Get the script of the locale. If the script is empty and the language is Chinese,
     /// the script will be inferred based on the language, the region and the variant.
     public static @NotNull String getScript(Locale locale) {
         if (locale.getScript().isEmpty()) {
-            if (isEnglish(locale)) {
-                if ("UD".equals(locale.getCountry())) {
-                    return "Qabs";
-                }
+            if (!locale.getVariant().isEmpty()) {
+                String script = DEFAULT_SCRIPT.get(locale.getVariant());
+                if (script != null)
+                    return script;
             }
 
-            if (isChinese(locale)) {
-                if (CHINESE_LATN_VARIANTS.contains(locale.getVariant()))
-                    return "Latn";
-                if (locale.getLanguage().equals("lzh") || CHINESE_TRADITIONAL_REGIONS.contains(locale.getCountry()))
-                    return "Hant";
-                else
-                    return "Hans";
+            if ("UD".equals(locale.getCountry())) {
+                return "Qabs";
             }
+
+            String script = DEFAULT_SCRIPT.get(normalizeLanguage(locale.getLanguage()));
+            if (script != null)
+                return script;
+
+            if (isChinese(locale)) {
+                return CHINESE_TRADITIONAL_REGIONS.contains(locale.getCountry())
+                        ? "Hant"
+                        : "Hans";
+            }
+
+            return "";
         }
 
         return locale.getScript();
+    }
+
+    public static @NotNull TextDirection getTextDirection(Locale locale) {
+        return RTL_SCRIPTS.contains(getScript(locale))
+                ? TextDirection.RIGHT_TO_LEFT
+                : TextDirection.LEFT_TO_RIGHT;
     }
 
     private static final ConcurrentMap<Locale, List<Locale>> CANDIDATE_LOCALES = new ConcurrentHashMap<>();
@@ -167,13 +229,8 @@ public final class LocaleUtils {
         return CANDIDATE_LOCALES.computeIfAbsent(locale, LocaleUtils::createCandidateLocaleList);
     }
 
-    // -------------
-
     private static List<Locale> createCandidateLocaleList(Locale locale) {
-        String language = locale.getLanguage();
-        if (language.isEmpty())
-            return List.of(Locale.ENGLISH, Locale.ROOT);
-
+        String language = getPreferredLanguage(locale.getLanguage());
         String script = getScript(locale);
         String region = locale.getCountry();
         List<String> variants = locale.getVariant().isEmpty()
@@ -182,18 +239,7 @@ public final class LocaleUtils {
 
         ArrayList<Locale> result = new ArrayList<>();
         do {
-            String currentLanguage;
-
-            if (language.length() <= 2) {
-                currentLanguage = language;
-            } else {
-                String iso2 = mapToISO2Language(language);
-                currentLanguage = iso2 != null
-                        ? iso2
-                        : language;
-            }
-
-            addCandidateLocales(result, currentLanguage, script, region, variants);
+            addCandidateLocales(result, language, script, region, variants);
         } while ((language = getParentLanguage(language)) != null);
 
         result.add(Locale.ROOT);
@@ -336,31 +382,6 @@ public final class LocaleUtils {
         }
 
         return Map.of();
-    }
-
-    // ---
-
-    /// Map ISO 639 alpha-3 language codes to ISO 639 alpha-2 language codes.
-    /// Returns `null` if there is no corresponding ISO 639 alpha-2 language code.
-    public static @Nullable String mapToISO2Language(String iso3Language) {
-        return iso3To2.get(iso3Language);
-    }
-
-    /// If `language` is a sublanguage of a [macrolanguage](https://en.wikipedia.org/wiki/ISO_639_macrolanguage),
-    /// return the macrolanguage; otherwise, return `null`.
-    public static @Nullable String getParentLanguage(String language) {
-        return subLanguageToParent.get(language);
-    }
-
-    public static boolean isEnglish(Locale locale) {
-        return "en".equals(getRootLanguage(locale));
-    }
-
-    public static final Set<String> CHINESE_TRADITIONAL_REGIONS = Set.of("TW", "HK", "MO");
-    public static final Set<String> CHINESE_LATN_VARIANTS = Set.of("pinyin", "wadegile", "tongyong");
-
-    public static boolean isChinese(Locale locale) {
-        return "zh".equals(getRootLanguage(locale));
     }
 
     private LocaleUtils() {

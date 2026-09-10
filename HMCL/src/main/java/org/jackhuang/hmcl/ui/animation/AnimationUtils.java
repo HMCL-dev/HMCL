@@ -17,8 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.animation;
 
-import org.jackhuang.hmcl.setting.ConfigHolder;
+import javafx.scene.Node;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
 /**
  * @author Glavo
@@ -30,13 +32,12 @@ public final class AnimationUtils {
 
     /**
      * Trigger initialization of this class.
-     * Should be called from {@link org.jackhuang.hmcl.setting.Settings#init()}.
+     * Should be called after settings have been loaded.
      */
-    @SuppressWarnings("JavadocReference")
     public static void init() {
     }
 
-    private static final boolean ENABLED = !ConfigHolder.config().isAnimationDisabled();
+    private static final boolean ENABLED = !settings().isAnimationDisabled();
     private static final boolean PLAY_WINDOW_ANIMATION = ENABLED && !OperatingSystem.CURRENT_OS.isLinuxOrBSD();
 
     public static boolean isAnimationEnabled() {
@@ -45,5 +46,13 @@ public final class AnimationUtils {
 
     public static boolean playWindowAnimation() {
         return PLAY_WINDOW_ANIMATION;
+    }
+
+    public static void reset(Node node, boolean opaque) {
+        node.setTranslateX(0);
+        node.setTranslateY(0);
+        node.setScaleX(1);
+        node.setScaleY(1);
+        node.setOpacity(opaque ? 1 : 0);
     }
 }

@@ -18,8 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import org.glavo.chardet.DetectedCharset;
-import org.glavo.chardet.UniversalDetector;
+import kala.encdet.EncodingDetector;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -27,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributeView;
@@ -38,6 +39,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -99,7 +101,11 @@ public final class FileUtils {
     }
 
     public static String getNameWithoutExtension(Path file) {
-        return StringUtils.substringBeforeLast(getName(file), '.');
+        String name = getName(file);
+        if (Files.isDirectory(file)) {
+            return name;
+        }
+        return StringUtils.substringBeforeLast(name, '.');
     }
 
     public static String getExtension(String fileName) {
@@ -177,6 +183,7 @@ public final class FileUtils {
             if (!Character.isValidCodePoint(codePoint)
                     || Character.isISOControl(codePoint)
                     || codePoint == '/' || codePoint == '\0'
+                    || codePoint == ':'
                     // Unicode replacement character
                     || codePoint == 0xfffd
                     // Not Unicode character
@@ -185,7 +192,7 @@ public final class FileUtils {
 
             // https://learn.microsoft.com/windows/win32/fileio/naming-a-file
             if (os == OperatingSystem.WINDOWS &&
-                    (ch == '<' || ch == '>' || ch == ':' || ch == '"' || ch == '\\' || ch == '|' || ch == '?' || ch == '*')) {
+                    (ch == '<' || ch == '>' || ch == '"' || ch == '\\' || ch == '|' || ch == '?' || ch == '*')) {
                 return false;
             }
         }
@@ -208,6 +215,17 @@ public final class FileUtils {
         return true;
     }
 
+    /// @see #isNameValidForJar(OperatingSystem, String)
+    public static boolean isNameValidForJar(String name) {
+        return isNameValidForJar(OperatingSystem.CURRENT_OS, name);
+    }
+
+    /// Returns true if the given name is a valid jar file name on the given operating system,
+    /// and `false` otherwise.
+    public static boolean isNameValidForJar(OperatingSystem os, String name) {
+        return !name.contains("!") && isNameValid(os, name);
+    }
+
     /// Safely get the file size. Returns `0` if the file does not exist or the size cannot be obtained.
     public static long size(Path file) {
         try {
@@ -226,13 +244,11 @@ public final class FileUtils {
         if (OperatingSystem.NATIVE_CHARSET == UTF_8)
             return new String(bytes, UTF_8);
 
-        UniversalDetector detector = new UniversalDetector();
-        detector.handleData(bytes);
-        detector.dataEnd();
+        EncodingDetector detector = EncodingDetector.MODERN_WEB;
+        EncodingDetector.@Nullable Encoding bestEncoding = detector.detect(bytes).bestEncoding();
+        @Nullable Charset detectedCharset = bestEncoding != null ? bestEncoding.approximateCharset() : null;
 
-        DetectedCharset detectedCharset = detector.getDetectedCharset();
-        if (detectedCharset != null && detectedCharset.isSupported()
-                && (detectedCharset == DetectedCharset.UTF_8 || detectedCharset == DetectedCharset.US_ASCII))
+        if (detectedCharset != null && (detectedCharset == UTF_8 || detectedCharset == US_ASCII))
             return new String(bytes, UTF_8);
         else
             return new String(bytes, OperatingSystem.NATIVE_CHARSET);
@@ -491,8 +507,17 @@ public final class FileUtils {
     }
 
     public static void saveSafely(Path file, String content) throws IOException {
+        saveSafely(file, content, StandardCharsets.UTF_8);
+    }
+
+    public static void saveSafely(Path file, String content, @Nullable Charset charset) throws IOException {
+        Path parent = file.toAbsolutePath().getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+
         Path tmpFile = tmpSaveFile(file);
-        try (BufferedWriter writer = Files.newBufferedWriter(tmpFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
+        try (BufferedWriter writer = Files.newBufferedWriter(tmpFile, charset != null ? charset : StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
             writer.write(content);
         }
 
@@ -507,6 +532,11 @@ public final class FileUtils {
     }
 
     public static void saveSafely(Path file, ExceptionalConsumer<? super OutputStream, IOException> action) throws IOException {
+        Path parent = file.toAbsolutePath().getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+
         Path tmpFile = tmpSaveFile(file);
 
         try (OutputStream os = Files.newOutputStream(tmpFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
@@ -525,5 +555,26 @@ public final class FileUtils {
 
     public static String printFileStructure(Path path, int maxDepth) throws IOException {
         return DirectoryStructurePrinter.list(path, maxDepth);
+    }
+
+    public static EnumSet<PosixFilePermission> parsePosixFilePermission(int unixMode) {
+        EnumSet<PosixFilePermission> permissions = EnumSet.noneOf(PosixFilePermission.class);
+
+        // Owner permissions
+        if ((unixMode & 0400) != 0) permissions.add(PosixFilePermission.OWNER_READ);
+        if ((unixMode & 0200) != 0) permissions.add(PosixFilePermission.OWNER_WRITE);
+        if ((unixMode & 0100) != 0) permissions.add(PosixFilePermission.OWNER_EXECUTE);
+
+        // Group permissions
+        if ((unixMode & 0040) != 0) permissions.add(PosixFilePermission.GROUP_READ);
+        if ((unixMode & 0020) != 0) permissions.add(PosixFilePermission.GROUP_WRITE);
+        if ((unixMode & 0010) != 0) permissions.add(PosixFilePermission.GROUP_EXECUTE);
+
+        // Others permissions
+        if ((unixMode & 0004) != 0) permissions.add(PosixFilePermission.OTHERS_READ);
+        if ((unixMode & 0002) != 0) permissions.add(PosixFilePermission.OTHERS_WRITE);
+        if ((unixMode & 0001) != 0) permissions.add(PosixFilePermission.OTHERS_EXECUTE);
+
+        return permissions;
     }
 }

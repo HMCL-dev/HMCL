@@ -17,13 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.DefaultProperty;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ObjectBinding;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
@@ -33,86 +28,22 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.function.Supplier;
-
-@DefaultProperty("content")
-public class ComponentList extends Control {
-    private final StringProperty title = new SimpleStringProperty(this, "title", "Group");
-    private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle", "");
-    private final IntegerProperty depth = new SimpleIntegerProperty(this, "depth", 0);
-    private boolean hasSubtitle = false;
-    public final ObservableList<Node> content = FXCollections.observableArrayList();
-    private Supplier<List<? extends Node>> lazyInitializer;
+public class ComponentList extends Control implements NoPaddingComponent {
 
     public ComponentList() {
         getStyleClass().add("options-list");
     }
 
-    public ComponentList(Supplier<List<? extends Node>> lazyInitializer) {
-        this();
-        this.lazyInitializer = lazyInitializer;
-    }
-
-    public String getTitle() {
-        return title.get();
-    }
-
-    public StringProperty titleProperty() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title.set(title);
-    }
-
-    public String getSubtitle() {
-        return subtitle.get();
-    }
-
-    public StringProperty subtitleProperty() {
-        return subtitle;
-    }
-
-    public void setSubtitle(String subtitle) {
-        this.subtitle.set(subtitle);
-    }
-
-    public int getDepth() {
-        return depth.get();
-    }
-
-    public IntegerProperty depthProperty() {
-        return depth;
-    }
-
-    public void setDepth(int depth) {
-        this.depth.set(depth);
-    }
-
-    public boolean isHasSubtitle() {
-        return hasSubtitle;
-    }
-
-    public void setHasSubtitle(boolean hasSubtitle) {
-        this.hasSubtitle = hasSubtitle;
-    }
+    private final ObservableList<Node> content = FXCollections.observableArrayList();
 
     public ObservableList<Node> getContent() {
         return content;
-    }
-
-    void doLazyInit() {
-        if (lazyInitializer != null) {
-            this.getContent().setAll(lazyInitializer.get());
-            setNeedsLayout(true);
-            lazyInitializer = null;
-        }
     }
 
     @Override
@@ -130,63 +61,129 @@ public class ComponentList extends Control {
         private static final PseudoClass PSEUDO_CLASS_LAST = PseudoClass.getPseudoClass("last");
 
         private final ObservableList<Node> list;
-        private final ObjectBinding<Node> firstItem;
-        private final ObjectBinding<Node> lastItem;
 
         Skin(ComponentList control) {
             super(control);
 
             list = MappedObservableList.create(control.getContent(), node -> {
-                ComponentListCell cell = new ComponentListCell(node);
-                cell.getStyleClass().add("options-list-item");
-                if (node.getProperties().containsKey("ComponentList.vgrow")) {
-                    VBox.setVgrow(cell, (Priority) node.getProperties().get("ComponentList.vgrow"));
+                Pane wrapper;
+                if (node instanceof ComponentSublist sublist) {
+                    sublist.getStyleClass().remove("options-list");
+                    sublist.getStyleClass().add("options-sublist");
+                    wrapper = new ComponentSublistWrapper(sublist);
+                } else {
+                    wrapper = new ItemWrapper(node);
                 }
-                if (node.getProperties().containsKey("ComponentList.noPadding")) {
-                    cell.getStyleClass().add("no-padding");
+
+                wrapper.getStyleClass().add("options-list-item");
+                wrapper.visibleProperty().bind(node.visibleProperty());
+                wrapper.managedProperty().bind(node.managedProperty());
+                wrapper.visibleProperty().addListener(ignored -> updateStyle());
+                wrapper.managedProperty().addListener(ignored -> updateStyle());
+
+                if (node.getProperties().get("ComponentList.vgrow") instanceof Priority priority) {
+                    VBox.setVgrow(wrapper, priority);
                 }
-                return cell;
+
+                if (node instanceof NoPaddingComponent || node.getProperties().containsKey("ComponentList.noPadding")) {
+                    wrapper.getStyleClass().add("no-padding");
+                }
+                return wrapper;
             });
 
-            firstItem = Bindings.valueAt(list, 0);
-            firstItem.addListener((observable, oldValue, newValue) -> {
-                if (newValue != null)
-                    newValue.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, true);
-                if (oldValue != null)
-                    oldValue.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, false);
-            });
-            if (!list.isEmpty())
-                list.get(0).pseudoClassStateChanged(PSEUDO_CLASS_FIRST, true);
-
-            lastItem = Bindings.valueAt(list, Bindings.subtract(Bindings.size(list), 1));
-            lastItem.addListener((observable, oldValue, newValue) -> {
-                if (newValue != null)
-                    newValue.pseudoClassStateChanged(PSEUDO_CLASS_LAST, true);
-                if (oldValue != null)
-                    oldValue.pseudoClassStateChanged(PSEUDO_CLASS_LAST, false);
-            });
-            if (!list.isEmpty())
-                list.get(list.size() - 1).pseudoClassStateChanged(PSEUDO_CLASS_LAST, true);
+            updateStyle();
+            list.addListener((InvalidationListener) o -> updateStyle());
 
             VBox vbox = new VBox();
             vbox.setFillWidth(true);
             Bindings.bindContent(vbox.getChildren(), list);
             node = vbox;
         }
+
+        private Node prevFirstItem;
+        private Node prevLastItem;
+
+        private void updateStyle() {
+            Node firstItem;
+            Node lastItem;
+
+            firstItem = null;
+            lastItem = null;
+            for (Node item : list) {
+                if (!item.isVisible() || !item.isManaged()) {
+                    continue;
+                }
+
+                if (firstItem == null) {
+                    firstItem = item;
+                }
+                lastItem = item;
+            }
+
+            if (firstItem != prevFirstItem) {
+                if (prevFirstItem != null)
+                    prevFirstItem.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, false);
+                if (firstItem != null)
+                    firstItem.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, true);
+                prevFirstItem = firstItem;
+            }
+
+            if (lastItem != prevLastItem) {
+                if (prevLastItem != null)
+                    prevLastItem.pseudoClassStateChanged(PSEUDO_CLASS_LAST, false);
+                if (lastItem != null)
+                    lastItem.pseudoClassStateChanged(PSEUDO_CLASS_LAST, true);
+                prevLastItem = lastItem;
+            }
+        }
     }
 
     public static Node createComponentListTitle(String title) {
-        HBox node = new HBox();
+        return createComponentListTitle(title, null);
+    }
+
+    public static Node createComponentListTitle(String title, @Nullable String helpMessage) {
+        HBox node = new HBox(4);
         node.setAlignment(Pos.CENTER_LEFT);
         node.setPadding(new Insets(8, 0, 0, 0));
+
         {
             Label advanced = new Label(title);
             node.getChildren().setAll(advanced);
         }
+
+        if (helpMessage != null) {
+            var helpIcon = new StackPane(SVG.HELP.createIcon(16));
+            FXUtils.installFastTooltip(helpIcon, helpMessage);
+            node.getChildren().add(helpIcon);
+        }
+
         return node;
     }
 
     public static void setVgrow(Node node, Priority priority) {
         node.getProperties().put("ComponentList.vgrow", priority);
+    }
+
+    public static void setNoPadding(Node node) {
+        node.getProperties().put("ComponentList.noPadding", true);
+    }
+
+    /// Wrapper for a component list row.
+    private static final class ItemWrapper extends StackPane {
+        /// The row content displayed by this wrapper.
+        private final Node content;
+
+        /// Creates a row wrapper for the given content node.
+        private ItemWrapper(Node content) {
+            super(content);
+            this.content = content;
+        }
+
+        /// Propagates the child content bias so wrapped text can compute height from row width.
+        @Override
+        public Orientation getContentBias() {
+            return content.getContentBias();
+        }
     }
 }

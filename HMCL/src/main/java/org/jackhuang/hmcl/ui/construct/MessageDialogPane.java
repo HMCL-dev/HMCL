@@ -28,30 +28,35 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.util.Lang;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class MessageDialogPane extends HBox {
 
     public enum MessageType {
-        ERROR,
-        INFO,
-        WARNING,
-        QUESTION,
-        SUCCESS;
+        ERROR(SVG.ERROR),
+        INFO(SVG.INFO),
+        WARNING(SVG.WARNING),
+        QUESTION(SVG.HELP),
+        SUCCESS(SVG.CHECK_CIRCLE);
+
+        private final SVG icon;
+
+        MessageType(SVG icon) {
+            this.icon = icon;
+        }
+
+        public SVG getIcon() {
+            return icon;
+        }
 
         public String getDisplayName() {
             return i18n("message." + name().toLowerCase(Locale.ROOT));
@@ -63,7 +68,7 @@ public final class MessageDialogPane extends HBox {
     private @Nullable ButtonBase cancelButton;
 
     public MessageDialogPane(@NotNull String text, @Nullable String title, @NotNull MessageType type) {
-        this.setSpacing(8);
+        this.setSpacing(16);
         this.getStyleClass().add("jfx-dialog-layout");
 
         Label graphic = new Label();
@@ -71,34 +76,14 @@ public final class MessageDialogPane extends HBox {
         graphic.setTranslateY(10);
         graphic.setMinSize(40, 40);
         graphic.setMaxSize(40, 40);
-        SVG svg;
-        switch (type) {
-            case INFO:
-                svg = SVG.INFO;
-                break;
-            case ERROR:
-                svg = SVG.ERROR;
-                break;
-            case SUCCESS:
-                svg = SVG.CHECK_CIRCLE;
-                break;
-            case WARNING:
-                svg = SVG.WARNING;
-                break;
-            case QUESTION:
-                svg = SVG.HELP;
-                break;
-            default:
-                throw new IllegalArgumentException("Unrecognized message box message type " + type);
-        }
-        graphic.setGraphic(svg.createIcon(Theme.blackFill(), 40));
+        graphic.setGraphic(type.getIcon().createIcon(40));
 
         VBox vbox = new VBox();
         HBox.setHgrow(vbox, Priority.ALWAYS);
         {
             StackPane titlePane = new StackPane();
             titlePane.getStyleClass().addAll("jfx-layout-heading", "title");
-            titlePane.getChildren().setAll(new Label(title != null ? title : i18n("message.info")));
+            titlePane.getChildren().setAll(new Label(title != null ? title : type.getDisplayName()));
 
             StackPane content = new StackPane();
             content.getStyleClass().add("jfx-layout-body");
@@ -201,6 +186,7 @@ public final class MessageDialogPane extends HBox {
 
         public Builder addCancel(String cancelText, @Nullable Runnable cancel) {
             JFXButton btnCancel = new JFXButton(cancelText);
+            btnCancel.setButtonType(JFXButton.ButtonType.FLAT);
             btnCancel.getStyleClass().add("dialog-cancel");
             if (cancel != null) {
                 btnCancel.setOnAction(e -> cancel.run());
@@ -226,36 +212,6 @@ public final class MessageDialogPane extends HBox {
             dialog.addButton(actionButton);
 
             addCancel(cancel);
-            return this;
-        }
-
-        public Builder cancelOnTimeout(long timeoutMs) {
-            if (dialog.getCancelButton() == null) {
-                throw new IllegalStateException("Call ok/yesOrNo/actionOrCancel before calling cancelOnTimeout");
-            }
-
-            ButtonBase cancelButton = dialog.getCancelButton();
-            String originalText = cancelButton.getText();
-
-            Timer timer = Lang.getTimer();
-            timer.scheduleAtFixedRate(new TimerTask() {
-                long timeout = timeoutMs;
-
-                @Override
-                public void run() {
-                    if (timeout <= 0) {
-                        cancel();
-                        runInFX(() -> {
-                            cancelButton.fire();
-                        });
-                        return;
-                    }
-                    timeout -= 1000;
-                    long currentTimeout = timeout;
-                    runInFX(() -> cancelButton.setText(originalText + " (" + (currentTimeout / 1000) + ")"));
-                }
-            }, 1000, 1000);
-
             return this;
         }
 

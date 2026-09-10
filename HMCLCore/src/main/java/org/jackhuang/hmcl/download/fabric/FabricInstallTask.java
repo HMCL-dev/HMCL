@@ -20,14 +20,12 @@ package org.jackhuang.hmcl.download.fabric;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
-import org.jackhuang.hmcl.game.Arguments;
-import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.download.game.GameLibrariesTask;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
@@ -40,17 +38,21 @@ import static org.jackhuang.hmcl.download.UnsupportedInstallationException.FABRI
  *
  * @author huangyuhui
  */
-public final class FabricInstallTask extends Task<Version> {
+public final class FabricInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest manifest;
     private final FabricRemoteVersion remote;
     private final GetTask launchMetaTask;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public FabricInstallTask(DefaultDependencyManager dependencyManager, Version version, FabricRemoteVersion remoteVersion) {
+    public FabricInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, FabricRemoteVersion remoteVersion) {
+        if (!manifest.isModifiable()) {
+            throw new IllegalArgumentException("Manifest is not modifiable");
+        }
+
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.manifest = manifest;
         this.remote = remoteVersion;
 
         launchMetaTask = new GetTask(dependencyManager.getDownloadProvider().injectURLsWithCandidates(remoteVersion.getUrls()));
@@ -64,7 +66,7 @@ public final class FabricInstallTask extends Task<Version> {
 
     @Override
     public void preExecute() throws Exception {
-        if (!Objects.equals("net.minecraft.client.main.Main", version.resolve(dependencyManager.getGameRepository()).getMainClass()))
+        if (!Objects.equals(GameComponentAnalyzer.VANILLA_MAIN, manifest.mainClass()))
             throw new UnsupportedInstallationException(FABRIC_NOT_COMPATIBLE_WITH_FORGE);
     }
 
@@ -91,10 +93,10 @@ public final class FabricInstallTask extends Task<Version> {
 
         setResult(getPatch(fabricInfo, remote.getGameVersion(), remote.getSelfVersion()));
 
-        dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
+        dependencies.add(new GameLibrariesTask(dependencyManager, manifest, true, getResult().getLibraries()));
     }
 
-    private Version getPatch(FabricInfo fabricInfo, String gameVersion, String loaderVersion) {
+    private GameInstancePatch getPatch(FabricInfo fabricInfo, String gameVersion, String loaderVersion) {
         JsonObject launcherMeta = fabricInfo.launcherMeta;
         Arguments arguments = new Arguments();
 
@@ -124,9 +126,10 @@ public final class FabricInstallTask extends Task<Version> {
         libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.intermediary.maven), "https://maven.fabricmc.net/", null));
         libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.loader.maven), "https://maven.fabricmc.net/", null));
 
-        return new Version(LibraryAnalyzer.LibraryType.FABRIC.getPatchId(), loaderVersion, Version.PRIORITY_LOADER, arguments, mainClass, libraries);
+        return new GameInstancePatch(GameComponentType.FABRIC.getPatchId(), loaderVersion, GameInstancePatch.PRIORITY_LOADER, arguments, mainClass, libraries);
     }
 
+    @JsonSerializable
     public static class FabricInfo {
         private final LoaderInfo loader;
         private final IntermediaryInfo intermediary;
@@ -151,6 +154,7 @@ public final class FabricInstallTask extends Task<Version> {
         }
     }
 
+    @JsonSerializable
     public static class LoaderInfo {
         private final String separator;
         private final int build;
@@ -187,6 +191,7 @@ public final class FabricInstallTask extends Task<Version> {
         }
     }
 
+    @JsonSerializable
     public static class IntermediaryInfo {
         private final String maven;
         private final String version;

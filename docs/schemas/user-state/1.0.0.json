@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.glavo.site/hmcl/user-state/1.0.0",
+  "title": "HMCL User State",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "$schema"
+  ],
+  "patternProperties": {
+    "^\\$schema$": {
+      "enum": [
+        "https://schemas.glavo.site/hmcl/user-state/1.0.0"
+      ]
+    }
+  },
+  "properties": {
+    "agreementVersion": {
+      "type": "integer"
+    },
+    "terracottaAgreementVersion": {
+      "type": "integer"
+    },
+    "platformPromptVersion": {
+      "type": "integer"
+    }
+  }
+}

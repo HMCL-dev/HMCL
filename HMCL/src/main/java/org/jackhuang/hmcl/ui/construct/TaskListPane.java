@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.download.forge.ForgeOldInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
 import org.jackhuang.hmcl.download.java.mojang.MojangJavaDownloadTask;
+import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricInstallTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeOldInstallTask;
@@ -49,21 +50,20 @@ import org.jackhuang.hmcl.download.quilt.QuiltAPIInstallTask;
 import org.jackhuang.hmcl.download.quilt.QuiltInstallTask;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
 import org.jackhuang.hmcl.java.JavaInstallTask;
-import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
-import org.jackhuang.hmcl.mod.ModpackInstallTask;
-import org.jackhuang.hmcl.mod.ModpackUpdateTask;
-import org.jackhuang.hmcl.mod.curse.CurseCompletionTask;
-import org.jackhuang.hmcl.mod.curse.CurseInstallTask;
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackCompletionTask;
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthCompletionTask;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthInstallTask;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackExportTask;
-import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
-import org.jackhuang.hmcl.mod.server.ServerModpackCompletionTask;
-import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
-import org.jackhuang.hmcl.mod.server.ServerModpackLocalInstallTask;
-import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
+import org.jackhuang.hmcl.modpack.ModpackInstallTask;
+import org.jackhuang.hmcl.modpack.ModpackUpdateTask;
+import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
+import org.jackhuang.hmcl.modpack.curse.CurseInstallTask;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackExportTask;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthCompletionTask;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthInstallTask;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthModpackExportTask;
+import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackInstallTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackLocalInstallTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
@@ -82,8 +82,8 @@ import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class TaskListPane extends StackPane {
-    private static final Insets DEFAULT_PROGRESS_NODE_PADDING = new Insets(0, 0, 8, 0);
-    private static final Insets STAGED_PROGRESS_NODE_PADDING = new Insets(0, 0, 8, 26);
+    private static final Insets DEFAULT_PROGRESS_NODE_PADDING = new Insets(0, 0, 4, 0);
+    private static final Insets STAGED_PROGRESS_NODE_PADDING = new Insets(0, 0, 4, 26);
 
     private TaskExecutor executor;
     private final JFXListView<Node> listView = new JFXListView<>();
@@ -91,8 +91,6 @@ public final class TaskListPane extends StackPane {
     private final Map<String, StageNode> stageNodes = new HashMap<>();
     private final ObjectProperty<Insets> progressNodePadding = new SimpleObjectProperty<>(Insets.EMPTY);
     private final DoubleProperty cellWidth = new SimpleDoubleProperty();
-
-    private Cell lastCell;
 
     public TaskListPane() {
         listView.setPadding(new Insets(12, 0, 0, 0));
@@ -107,13 +105,18 @@ public final class TaskListPane extends StackPane {
     }
 
     @FXThread
-    private void addStages(@NotNull Collection<String> stages) {
-        for (String stage : stages) {
-            stageNodes.computeIfAbsent(stage, s -> {
-                StageNode node = new StageNode(stage);
+    private void addStagesHints(@NotNull Collection<Task.StagesHint> hints) {
+        for (Task.StagesHint hint : hints) {
+            StageNode node = stageNodes.get(hint.stage());
+
+            if (node == null) {
+                node = new StageNode(hint.stage());
+                stageNodes.put(hint.stage(), node);
                 listView.getItems().add(node);
-                return node;
-            });
+            }
+            for (String stage : hint.aliases()) {
+                stageNodes.put(stage, node);
+            }
         }
     }
 
@@ -130,7 +133,7 @@ public final class TaskListPane extends StackPane {
                 Platform.runLater(() -> {
                     stageNodes.clear();
                     listView.getItems().clear();
-                    addStages(executor.getStages());
+                    addStagesHints(executor.getHints());
                     updateProgressNodePadding();
                 });
             }
@@ -139,7 +142,7 @@ public final class TaskListPane extends StackPane {
             public void onReady(Task<?> task) {
                 if (task instanceof Task.StagesHintTask) {
                     Platform.runLater(() -> {
-                        addStages(((Task<?>.StagesHintTask) task).getStages());
+                        addStagesHints(((Task<?>.StagesHintTask) task).getHints());
                         updateProgressNodePadding();
                     });
                 }
@@ -166,6 +169,8 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("install.installer.install", i18n("install.installer.game")));
                 } else if (task instanceof CleanroomInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.cleanroom")));
+                } else if (task instanceof LegacyFabricInstallTask) {
+                    task.setName(i18n("install.installer.install", i18n("install.installer.legacyfabric")));
                 } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
                 } else if (task instanceof NeoForgeInstallTask || task instanceof NeoForgeOldInstallTask) {
@@ -273,6 +278,7 @@ public final class TaskListPane extends StackPane {
 
     private final class Cell extends ListCell<Node> {
         private static final double STATUS_ICON_SIZE = 14;
+        private static final Insets PROGRESS_BAR_MARGIN = new Insets(2, 0, 0, 0);
 
         private final BorderPane pane = new BorderPane();
         private final StackPane left = new StackPane();
@@ -304,34 +310,30 @@ public final class TaskListPane extends StackPane {
             bar.minWidthProperty().bind(barWidth);
             bar.prefWidthProperty().bind(barWidth);
             bar.maxWidthProperty().bind(barWidth);
+            BorderPane.setMargin(bar, PROGRESS_BAR_MARGIN);
 
             setGraphic(pane);
         }
 
         private void updateLeftIcon(StageNode.Status status) {
-            left.getChildren().setAll(status.svg.createIcon(Theme.blackFill(), STATUS_ICON_SIZE));
+            left.getChildren().setAll(status.svg.createIcon(STATUS_ICON_SIZE));
         }
 
         @Override
         protected void updateItem(Node item, boolean empty) {
             super.updateItem(item, empty);
 
-            // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-            if (this == lastCell && !isVisible())
-                return;
-            lastCell = this;
-
             pane.paddingProperty().unbind();
             title.textProperty().unbind();
             message.textProperty().unbind();
-            bar.progressProperty().unbind();
 
+            bar.setSmoothProgress(false);
+            bar.progressProperty().unbind();
             StageNode prevStageNode;
             if (prevStageNodeRef != null && (prevStageNode = prevStageNodeRef.get()) != null)
                 prevStageNode.status.removeListener(statusChangeListener);
 
-            if (item instanceof ProgressListNode) {
-                var progressListNode = (ProgressListNode) item;
+            if (item instanceof ProgressListNode progressListNode) {
                 title.setText(progressListNode.title);
                 message.textProperty().bind(progressListNode.message);
                 bar.progressProperty().bind(progressListNode.progress);
@@ -340,8 +342,7 @@ public final class TaskListPane extends StackPane {
                 pane.setLeft(null);
                 pane.setRight(message);
                 pane.setBottom(bar);
-            } else if (item instanceof StageNode) {
-                var stageNode = (StageNode) item;
+            } else if (item instanceof StageNode stageNode) {
                 title.textProperty().bind(stageNode.title);
                 message.setText("");
                 bar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
@@ -365,6 +366,8 @@ public final class TaskListPane extends StackPane {
                 pane.setRight(null);
                 pane.setBottom(null);
             }
+
+            bar.setSmoothProgress(true);
         }
     }
 
@@ -400,6 +403,8 @@ public final class TaskListPane extends StackPane {
     }
 
     private static final class StageNode extends Node {
+        private int runningTasksCount = 0;
+
         private enum Status {
             WAITING(SVG.MORE_HORIZ),
             RUNNING(SVG.ARROW_FORWARD),
@@ -434,23 +439,25 @@ public final class TaskListPane extends StackPane {
 
             // CHECKSTYLE:OFF
             // @formatter:off
-            switch (stageKey) {
-                case "hmcl.modpack":            message = i18n("install.modpack"); break;
-                case "hmcl.modpack.download":   message = i18n("launch.state.modpack"); break;
-                case "hmcl.install.assets":     message = i18n("assets.download"); break;
-                case "hmcl.install.libraries":  message = i18n("libraries.download"); break;
-                case "hmcl.install.game":       message = i18n("install.installer.install", i18n("install.installer.game") + " " + stageValue); break;
-                case "hmcl.install.forge":      message = i18n("install.installer.install", i18n("install.installer.forge") + " " + stageValue); break;
-                case "hmcl.install.cleanroom":  message = i18n("install.installer.install", i18n("install.installer.cleanroom") + " " + stageValue); break;
-                case "hmcl.install.neoforge":   message = i18n("install.installer.install", i18n("install.installer.neoforge") + " " + stageValue); break;
-                case "hmcl.install.liteloader": message = i18n("install.installer.install", i18n("install.installer.liteloader") + " " + stageValue); break;
-                case "hmcl.install.optifine":   message = i18n("install.installer.install", i18n("install.installer.optifine") + " " + stageValue); break;
-                case "hmcl.install.fabric":     message = i18n("install.installer.install", i18n("install.installer.fabric") + " " + stageValue); break;
-                case "hmcl.install.fabric-api": message = i18n("install.installer.install", i18n("install.installer.fabric-api") + " " + stageValue); break;
-                case "hmcl.install.quilt":      message = i18n("install.installer.install", i18n("install.installer.quilt") + " " + stageValue); break;
-                case "hmcl.install.quilt-api":  message = i18n("install.installer.install", i18n("install.installer.quilt-api") + " " + stageValue); break;
-                default:                        message = i18n(stageKey); break;
-            }
+            message = switch (stageKey) {
+                case "hmcl.modpack" ->                  i18n("install.modpack");
+                case "hmcl.modpack.download" ->         i18n("launch.state.modpack");
+                case "hmcl.install.assets" ->           i18n("assets.download");
+                case "hmcl.install.libraries" ->        i18n("libraries.download");
+                case "hmcl.install.game" ->             i18n("install.installer.install", i18n("install.installer.game") + " " + stageValue);
+                case "hmcl.install.forge" ->            i18n("install.installer.install", i18n("install.installer.forge") + " " + stageValue);
+                case "hmcl.install.cleanroom" ->        i18n("install.installer.install", i18n("install.installer.cleanroom") + " " + stageValue);
+                case "hmcl.install.neoforge" ->         i18n("install.installer.install", i18n("install.installer.neoforge") + " " + stageValue);
+                case "hmcl.install.liteloader" ->       i18n("install.installer.install", i18n("install.installer.liteloader") + " " + stageValue);
+                case "hmcl.install.optifine" ->         i18n("install.installer.install", i18n("install.installer.optifine") + " " + stageValue);
+                case "hmcl.install.fabric" ->           i18n("install.installer.install", i18n("install.installer.fabric") + " " + stageValue);
+                case "hmcl.install.fabric-api" ->       i18n("install.installer.install", i18n("install.installer.fabric-api") + " " + stageValue);
+                case "hmcl.install.legacyfabric" ->     i18n("install.installer.install", i18n("install.installer.legacyfabric") + " " + stageValue);
+                case "hmcl.install.legacyfabric-api" -> i18n("install.installer.install", i18n("install.installer.legacyfabric-api") + " " + stageValue);
+                case "hmcl.install.quilt" ->            i18n("install.installer.install", i18n("install.installer.quilt") + " " + stageValue);
+                case "hmcl.install.quilt-api" ->        i18n("install.installer.install", i18n("install.installer.quilt-api") + " " + stageValue);
+                default -> i18n(stageKey);
+            };
             // @formatter:on
             // CHECKSTYLE:ON
 
@@ -458,17 +465,23 @@ public final class TaskListPane extends StackPane {
         }
 
         private void begin() {
-            if (status.get() == Status.WAITING) {
+            runningTasksCount++;
+            if (status.get() == Status.WAITING || status.get() == Status.SUCCESS) {
                 status.set(Status.RUNNING);
             }
         }
 
-        public void fail() {
-            status.set(Status.FAILED);
+        public void succeed() {
+            runningTasksCount = Math.max(0, runningTasksCount - 1);
+
+            if (runningTasksCount == 0) {
+                status.set(Status.SUCCESS);
+            }
         }
 
-        public void succeed() {
-            status.set(Status.SUCCESS);
+        public void fail() {
+            runningTasksCount = Math.max(0, runningTasksCount - 1);
+            status.set(Status.FAILED);
         }
 
         public void count() {
@@ -495,12 +508,10 @@ public final class TaskListPane extends StackPane {
 
         private ProgressListNode(Task<?> task) {
             this.title = task.getName();
-            message.bind(task.messageProperty());
             progress.bind(task.progressProperty());
         }
 
         public void unbind() {
-            message.unbind();
             progress.unbind();
         }
 

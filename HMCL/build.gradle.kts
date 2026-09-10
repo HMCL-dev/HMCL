@@ -1,8 +1,14 @@
+import org.jackhuang.hmcl.gradle.TerracottaConfigUpgradeTask
+import org.jackhuang.hmcl.gradle.ci.GitHubActionUtils
+import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
 import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
 import org.jackhuang.hmcl.gradle.l10n.CreateLanguageList
 import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
 import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
+import org.jackhuang.hmcl.gradle.pack.CreateDeb
+import org.jackhuang.hmcl.gradle.pack.ReleaseType
+import org.jackhuang.hmcl.gradle.utils.PropertiesUtils
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -16,45 +22,57 @@ plugins {
     alias(libs.plugins.shadow)
 }
 
-val isOfficial = System.getenv("HMCL_SIGNATURE_KEY") != null
-        || (System.getenv("GITHUB_REPOSITORY_OWNER") == "HMCL-dev" && System.getenv("GITHUB_BASE_REF")
-    .isNullOrEmpty())
+val projectConfig = PropertiesUtils.load(rootProject.file("config/project.properties").toPath())
 
-val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
-    val offset = System.getenv("BUILD_NUMBER_OFFSET")?.toInt() ?: 0
-    if (number != null) {
-        (number - offset).toString()
-    } else {
-        val shortCommit = System.getenv("GITHUB_SHA")?.lowercase()?.substring(0, 7)
-        val prefix = if (isOfficial) "dev" else "unofficial"
-        if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "SNAPSHOT"
-    }
-}
-val versionRoot = System.getenv("VERSION_ROOT") ?: "3.6"
+val isOfficial = JenkinsUtils.IS_ON_CI || GitHubActionUtils.IS_ON_OFFICIAL_REPO
+
 val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" else "unofficial"
+val versionRoot = System.getenv("VERSION_ROOT") ?: projectConfig.getProperty("versionRoot") ?: "3"
 
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
-val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
 
-val launcherExe = System.getenv("HMCL_LAUNCHER_EXE")
+val launcherExe = System.getenv("HMCL_LAUNCHER_EXE") ?: ""
 
-version = "$versionRoot.$buildNumber"
+val buildNumber = System.getenv("BUILD_NUMBER")?.toInt()
+if (buildNumber != null) {
+    version = if (JenkinsUtils.IS_ON_CI && versionType == "dev") {
+        "$versionRoot.0.$buildNumber"
+    } else {
+        "$versionRoot.$buildNumber"
+    }
+} else {
+    val shortCommit = System.getenv("GITHUB_SHA")?.lowercase()?.substring(0, 7)
+    version = if (shortCommit.isNullOrBlank()) {
+        "$versionRoot.SNAPSHOT"
+    } else if (isOfficial) {
+        "$versionRoot.dev-$shortCommit"
+    } else {
+        "$versionRoot.unofficial-$shortCommit"
+    }
+}
 
-val embedResources by configurations.registering
+val embedResources = configurations.register("embedResources")
 
 dependencies {
     implementation(project(":HMCLCore"))
     implementation(project(":HMCLBoot"))
     implementation("libs:JFoenix")
-    implementation(libs.twelvemonkeys.imageio.webp)
+    implementation(libs.jwebp)
+    implementation(libs.fxsvgimage)
     implementation(libs.java.info)
+    implementation(libs.monet.fx)
+    implementation(libs.nayuki.qrcodegen)
+    implementation(libs.uuid.tools)
 
-    if (launcherExe == null) {
+    testImplementation(libs.jimfs)
+
+    if (launcherExe.isBlank()) {
         implementation(libs.hmclauncher)
     }
 
     embedResources(libs.authlib.injector)
+    embedResources(libs.lwjgl.unsafe.agent)
 }
 
 fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
@@ -108,24 +126,47 @@ tasks.checkstyleMain {
     exclude("**/org/jackhuang/hmcl/ui/image/apng/**")
 }
 
+val addOpens = listOf(
+    "java.base/java.lang",
+    "java.base/java.lang.reflect",
+    "java.base/jdk.internal.loader",
+    "javafx.base/com.sun.javafx.binding",
+    "javafx.base/com.sun.javafx.event",
+    "javafx.base/com.sun.javafx.runtime",
+    "javafx.base/javafx.beans.property",
+    "javafx.graphics/javafx.css",
+    "javafx.graphics/javafx.stage",
+    "javafx.graphics/javafx.scene",
+    "javafx.graphics/com.sun.glass.ui",
+    "javafx.graphics/com.sun.javafx.stage",
+    "javafx.graphics/com.sun.javafx.util",
+    "javafx.graphics/com.sun.prism",
+    "javafx.controls/com.sun.javafx.scene.control",
+    "javafx.controls/com.sun.javafx.scene.control.behavior",
+    "javafx.graphics/com.sun.javafx.tk.quantum",
+    "javafx.controls/javafx.scene.control.skin",
+    "jdk.attach/sun.tools.attach",
+)
+
 tasks.compileJava {
-    options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
+    options.compilerArgs.addAll(addOpens.map { "--add-exports=$it=ALL-UNNAMED" })
 }
 
 val hmclProperties = buildList {
     add("hmcl.version" to project.version.toString())
+    add("hmcl.add-opens" to addOpens.joinToString(" "))
     System.getenv("GITHUB_SHA")?.let {
         add("hmcl.version.hash" to it)
     }
     add("hmcl.version.type" to versionType)
     add("hmcl.microsoft.auth.id" to microsoftAuthId)
-    add("hmcl.microsoft.auth.secret" to microsoftAuthSecret)
     add("hmcl.curseforge.apikey" to curseForgeApiKey)
     add("hmcl.authlib-injector.version" to libs.authlib.injector.get().version!!)
+    add("hmcl.lwjgl-unsafe-agent.version" to libs.lwjgl.unsafe.agent.get().version!!)
 }
 
 val hmclPropertiesFile = layout.buildDirectory.file("hmcl.properties")
-val createPropertiesFile by tasks.registering {
+val createPropertiesFile = tasks.register("createPropertiesFile") {
     outputs.file(hmclPropertiesFile)
     hmclProperties.forEach { (k, v) -> inputs.property(k, v) }
 
@@ -139,22 +180,6 @@ val createPropertiesFile by tasks.registering {
         }
     }
 }
-
-val addOpens = listOf(
-    "java.base/java.lang",
-    "java.base/java.lang.reflect",
-    "java.base/jdk.internal.loader",
-    "javafx.base/com.sun.javafx.binding",
-    "javafx.base/com.sun.javafx.event",
-    "javafx.base/com.sun.javafx.runtime",
-    "javafx.graphics/javafx.css",
-    "javafx.graphics/com.sun.javafx.stage",
-    "javafx.graphics/com.sun.prism",
-    "javafx.controls/com.sun.javafx.scene.control",
-    "javafx.controls/com.sun.javafx.scene.control.behavior",
-    "javafx.controls/javafx.scene.control.skin",
-    "jdk.attach/sun.tools.attach",
-)
 
 tasks.jar {
     enabled = false
@@ -175,7 +200,7 @@ tasks.shadowJar {
     exclude("META-INF/services/javax.imageio.spi.ImageInputStreamSpi")
 
     listOf(
-        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*", "freebsd-*", "linux-*", "darwin-*",
+        "aix-*", "sunos-*", "openbsd-*", "dragonflybsd-*", "freebsd-*", "linux-*",
         "*-ppc", "*-ppc64le", "*-s390x", "*-armel",
     ).forEach { exclude("com/sun/jna/$it/**") }
 
@@ -192,10 +217,11 @@ tasks.shadowJar {
         "Main-Class" to "org.jackhuang.hmcl.Main",
         "Multi-Release" to "true",
         "Add-Opens" to addOpens.joinToString(" "),
-        "Enable-Native-Access" to "ALL-UNNAMED"
+        "Enable-Native-Access" to "ALL-UNNAMED",
+        "Enable-Final-Field-Mutation" to "ALL-UNNAMED",
     )
 
-    if (launcherExe != null) {
+    if (launcherExe.isNotBlank()) {
         into("assets") {
             from(file(launcherExe))
         }
@@ -223,22 +249,29 @@ tasks.processResources {
         from(upsideDownTranslate.map { it.outputFile })
         from(createLocaleNamesResourceBundle.map { it.outputDirectory })
     }
+
+    inputs.property("terracotta_version", libs.versions.terracotta)
+    doLast {
+        upgradeTerracottaConfig.get().checkValid()
+    }
 }
 
-val makeExecutables by tasks.registering {
+fun artifactFile(ext: String) = jarPath.resolveSibling(jarPath.nameWithoutExtension + '.' + ext)
+
+val makeExecutables = tasks.register("makeExecutables") {
     val extensions = listOf("exe", "sh")
 
     dependsOn(tasks.jar)
 
     inputs.file(jarPath)
-    outputs.files(extensions.map { File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + it) })
+    outputs.files(extensions.map { artifactFile(it) })
 
     doLast {
         val jarContent = jarPath.readBytes()
 
         ZipFile(jarPath).use { zipFile ->
             for (extension in extensions) {
-                val output = File(jarPath.parentFile, jarPath.nameWithoutExtension + '.' + extension)
+                val output = artifactFile(extension)
                 val entry = zipFile.getEntry("assets/HMCLauncher.$extension")
                     ?: throw GradleException("HMCLauncher.$extension not found")
 
@@ -253,8 +286,32 @@ val makeExecutables by tasks.registering {
     }
 }
 
+val makeDeb = tasks.register("makeDeb", CreateDeb::class) {
+    dependsOn(makeExecutables)
+
+    val debFile = layout.file(provider { artifactFile("deb") })
+
+    val debChannel = when (versionType) {
+        "stable" -> ReleaseType.STABLE
+        "dev" -> ReleaseType.DEVELOPMENT
+        else -> ReleaseType.NIGHTLY
+    }
+
+    version.set(project.version.toString())
+    releaseType.set(debChannel)
+    launcherClassName.set("org.jackhuang.hmcl.Launcher")
+    appShFile.set(layout.file(provider { artifactFile("sh") }))
+    iconFile.set(layout.projectDirectory.file("image/hmcl.png"))
+    outputFile.set(debFile)
+
+    doLast {
+        createChecksum(debFile.get().asFile)
+    }
+}
+
 tasks.build {
     dependsOn(makeExecutables)
+    dependsOn(makeDeb)
 }
 
 fun parseToolOptions(options: String?): MutableList<String> {
@@ -325,7 +382,7 @@ tasks.register<JavaExec>("run") {
     classpath = files(jarPath)
     workingDir = rootProject.rootDir
 
-    val vmOptions = parseToolOptions(System.getenv("HMCL_JAVA_OPTS"))
+    val vmOptions = parseToolOptions(System.getenv("HMCL_JAVA_OPTS") ?: "-Xmx1g")
     if (vmOptions.none { it.startsWith("-Dhmcl.offline.auth.restricted=") })
         vmOptions += "-Dhmcl.offline.auth.restricted=false"
 
@@ -345,6 +402,28 @@ tasks.register<JavaExec>("run") {
     }
 }
 
+// terracotta
+
+val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgradeTerracottaConfig") {
+    val destination = layout.projectDirectory.file("src/main/resources/assets/terracotta.json")
+    val source = layout.projectDirectory.file("terracotta-template.json");
+
+    classifiers.set(
+        listOf(
+            "windows-x86_64", "windows-arm64",
+            "macos-x86_64", "macos-arm64",
+            "linux-x86_64", "linux-arm64", "linux-loongarch64", "linux-riscv64",
+            "freebsd-x86_64"
+        )
+    )
+
+    version.set(libs.versions.terracotta)
+    downloadURL.set($$"https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz")
+
+    templateFile.set(source)
+    outputFile.set(destination)
+}
+
 // Check Translations
 
 tasks.register<CheckTranslations>("checkTranslations") {
@@ -360,19 +439,19 @@ tasks.register<CheckTranslations>("checkTranslations") {
 
 val generatedDir = layout.buildDirectory.dir("generated")
 
-val upsideDownTranslate by tasks.registering(UpsideDownTranslate::class) {
+val upsideDownTranslate = tasks.register<UpsideDownTranslate>("upsideDownTranslate") {
     inputFile.set(layout.projectDirectory.file("src/main/resources/assets/lang/I18N.properties"))
     outputFile.set(generatedDir.map { it.file("generated/i18n/I18N_en_Qabs.properties") })
 }
 
-val createLanguageList by tasks.registering(CreateLanguageList::class) {
+val createLanguageList = tasks.register<CreateLanguageList>("createLanguageList") {
     resourceBundleDir.set(layout.projectDirectory.dir("src/main/resources/assets/lang"))
     resourceBundleBaseName.set("I18N")
     additionalLanguages.set(listOf("en-Qabs"))
     outputFile.set(generatedDir.map { it.file("languages.json") })
 }
 
-val createLocaleNamesResourceBundle by tasks.registering(CreateLocaleNamesResourceBundle::class) {
+val createLocaleNamesResourceBundle = tasks.register<CreateLocaleNamesResourceBundle>("createLocaleNamesResourceBundle") {
     dependsOn(createLanguageList)
 
     languagesFile.set(createLanguageList.flatMap { it.outputFile })

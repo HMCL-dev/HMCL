@@ -23,8 +23,8 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.EnumSet;
 
 /**
@@ -38,6 +38,9 @@ public final class Metadata {
     public static final String FULL_NAME = "Hello Minecraft! Launcher";
     public static final String VERSION = System.getProperty("hmcl.version.override", JarUtils.getAttribute("hmcl.version", "@develop@"));
 
+    /// Explicit Application User Model ID used for Windows taskbar grouping and pinning.
+    public static final String WINDOWS_APP_USER_MODEL_ID = "org.jackhuang.hmcl";
+
     public static final String TITLE = NAME + " " + VERSION;
     public static final String FULL_TITLE = FULL_NAME + " v" + VERSION;
 
@@ -46,9 +49,9 @@ public final class Metadata {
     public static final int RECOMMENDED_JAVA_VERSION = 21;
 
     public static final String PUBLISH_URL = "https://hmcl.huangyuhui.net";
-    public static final String ABOUT_URL = PUBLISH_URL + "/about";
     public static final String DOWNLOAD_URL = PUBLISH_URL + "/download";
     public static final String HMCL_UPDATE_URL = System.getProperty("hmcl.update_source.override", PUBLISH_URL + "/api/update_link");
+    public static final String MANUAL_UPDATE_URL = "https://github.com/HMCL-dev/HMCL/releases";
 
     public static final String DOCS_URL = "https://docs.hmcl.net";
     public static final String CONTACT_URL = DOCS_URL + "/help.html";
@@ -59,34 +62,38 @@ public final class Metadata {
     public static final String BUILD_CHANNEL = JarUtils.getAttribute("hmcl.version.type", "nightly");
     public static final String GITHUB_SHA = JarUtils.getAttribute("hmcl.version.hash", null);
 
-    public static final Path CURRENT_DIRECTORY = Paths.get(System.getProperty("user.dir")).toAbsolutePath().normalize();
+    public static final Path CURRENT_DIRECTORY = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize();
     public static final Path MINECRAFT_DIRECTORY = OperatingSystem.getWorkingDirectory("minecraft");
-    public static final Path HMCL_GLOBAL_DIRECTORY;
-    public static final Path HMCL_CURRENT_DIRECTORY;
+    public static final Path HMCL_USER_HOME;
+    public static final Path HMCL_LOCAL_HOME;
     public static final Path DEPENDENCIES_DIRECTORY;
 
     static {
-        String hmclHome = System.getProperty("hmcl.home");
-        if (hmclHome == null) {
+        String hmclHome = System.getProperty("hmcl.home", System.getenv("HMCL_USER_HOME"));
+        if (StringUtils.isBlank(hmclHome)) {
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 String xdgData = System.getenv("XDG_DATA_HOME");
                 if (StringUtils.isNotBlank(xdgData)) {
-                    HMCL_GLOBAL_DIRECTORY = Paths.get(xdgData, "hmcl").toAbsolutePath().normalize();
+                    HMCL_USER_HOME = Path.of(xdgData, "hmcl").toAbsolutePath().normalize();
                 } else {
-                    HMCL_GLOBAL_DIRECTORY = Paths.get(System.getProperty("user.home"), ".local", "share", "hmcl").toAbsolutePath().normalize();
+                    HMCL_USER_HOME = Path.of(System.getProperty("user.home"), ".local", "share", "hmcl").toAbsolutePath().normalize();
                 }
             } else {
-                HMCL_GLOBAL_DIRECTORY = OperatingSystem.getWorkingDirectory("hmcl");
+                HMCL_USER_HOME = OperatingSystem.getWorkingDirectory("hmcl");
             }
         } else {
-            HMCL_GLOBAL_DIRECTORY = Paths.get(hmclHome).toAbsolutePath().normalize();
+            HMCL_USER_HOME = Path.of(hmclHome).toAbsolutePath().normalize();
         }
 
-        String hmclCurrentDir = System.getProperty("hmcl.dir");
-        HMCL_CURRENT_DIRECTORY = hmclCurrentDir != null
-                ? Paths.get(hmclCurrentDir).toAbsolutePath().normalize()
+        String hmclCurrentDir = System.getProperty("hmcl.dir", System.getenv("HMCL_LOCAL_HOME"));
+        HMCL_LOCAL_HOME = StringUtils.isNotBlank(hmclCurrentDir)
+                ? Path.of(hmclCurrentDir).toAbsolutePath().normalize()
                 : CURRENT_DIRECTORY.resolve(".hmcl");
-        DEPENDENCIES_DIRECTORY = HMCL_CURRENT_DIRECTORY.resolve("dependencies");
+
+        String hmclDependencies = System.getProperty("hmcl.dependencies.dir", System.getenv("HMCL_DEPENDENCIES_DIR"));
+        DEPENDENCIES_DIRECTORY = StringUtils.isNotBlank(hmclDependencies)
+                ? Path.of(hmclDependencies).toAbsolutePath().normalize()
+                : HMCL_LOCAL_HOME.resolve("dependencies");
     }
 
     public static boolean isStable() {
@@ -127,4 +134,32 @@ public final class Metadata {
                 return null;
         }
     }
+
+    /// Directory under [HMCL_LOCAL_HOME] that holds a launcher-bundled modpack for automatic install.
+    public static final String BUNDLED_MODPACK_DIRECTORY_NAME = "modpack";
+
+    /// Returns the directory for a launcher-bundled modpack (`[HMCL_LOCAL_HOME]/modpack`).
+    public static Path getBundledModpackDirectory() {
+        return HMCL_LOCAL_HOME.resolve(BUNDLED_MODPACK_DIRECTORY_NAME);
+    }
+
+    /// Returns the bundled modpack package under [getBundledModpackDirectory], if present.
+    ///
+    /// Prefers `modpack.zip` over `modpack.mrpack` when both exist. Presence of the package is the
+    /// signal to offer automatic install; the file is removed after a successful install.
+    ///
+    /// @return the modpack path, or `null` when no package is present
+    public static @Nullable Path findBundledModpackFile() {
+        Path directory = getBundledModpackDirectory();
+        Path zipModpack = directory.resolve("modpack.zip");
+        if (Files.isRegularFile(zipModpack)) {
+            return zipModpack;
+        }
+        Path mrpackModpack = directory.resolve("modpack.mrpack");
+        if (Files.isRegularFile(mrpackModpack)) {
+            return mrpackModpack;
+        }
+        return null;
+    }
+
 }

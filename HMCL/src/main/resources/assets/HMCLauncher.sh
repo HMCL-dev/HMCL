@@ -37,6 +37,8 @@ case "$(uname -m)" in
     _HMCL_ARCH="riscv64";;
   loongarch64)
     _HMCL_ARCH="loongarch64";;
+  mips64)
+    _HMCL_ARCH="mips64el";;
   *)
     _HMCL_ARCH="unknown";;
 esac
@@ -55,7 +57,7 @@ fi
 if [ -n "${HMCL_JAVA_OPTS+x}" ]; then
   _HMCL_VM_OPTIONS=${HMCL_JAVA_OPTS}
 else
-  _HMCL_VM_OPTIONS="-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15"
+  _HMCL_VM_OPTIONS="-XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15 -XX:G1PeriodicGCInterval=900000 -XX:G1PeriodicGCSystemLoadThreshold=0.6 -XX:+UseStringDeduplication"
 fi
 
 function show_warning_console() {

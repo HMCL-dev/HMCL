@@ -88,7 +88,7 @@ public interface TabControl {
 
             setSelectedIndex(index);
 
-            Tab tab = getModelItem(index);
+            Tab<?> tab = getModelItem(index);
             if (tab != null) {
                 setSelectedItem(tab);
             }
@@ -106,7 +106,7 @@ public interface TabControl {
             final int itemCount = getItemCount();
 
             for (int i = 0; i < itemCount; i++) {
-                final Tab value = getModelItem(i);
+                final Tab<?> value = getModelItem(i);
                 if (value != null && value.equals(tab)) {
                     select(i);
                     return;
@@ -174,7 +174,7 @@ public interface TabControl {
         }
     }
 
-    class Tab<T extends Node> {
+    final class Tab<T extends Node> {
         private final StringProperty id = new SimpleStringProperty(this, "id");
         private final StringProperty text = new SimpleStringProperty(this, "text");
         private final ReadOnlyBooleanWrapper selected = new ReadOnlyBooleanWrapper(this, "selected");

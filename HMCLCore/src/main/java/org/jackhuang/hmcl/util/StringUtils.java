@@ -17,9 +17,29 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.commonmark.ext.autolink.AutolinkExtension;
+import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
+import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.ext.ins.InsExtension;
+import org.commonmark.node.IndentedCodeBlock;
+import org.commonmark.node.Node;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.NodeRenderer;
+import org.commonmark.renderer.html.HtmlNodeRendererContext;
+import org.commonmark.renderer.html.HtmlRenderer;
+import org.commonmark.renderer.html.HtmlWriter;
+
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * @author huangyuhui
@@ -87,7 +107,7 @@ public final class StringUtils {
                         builder.append(str, start, i);
                     }
                     builder.append(' ');
-                    i = whitespaceEnd ;
+                    i = whitespaceEnd;
                     continue;
                 }
             }
@@ -106,6 +126,25 @@ public final class StringUtils {
             return str;
 
         return Character.toUpperCase(str.charAt(0)) + str.substring(1);
+    }
+
+    public static @Nullable String capitalizeWords(@Nullable String str) {
+        if (str == null || str.isEmpty())
+            return str;
+        String[] words = str.replace('-', ' ').replace('_', ' ').split(" ");
+        for (int i = 0; i < words.length; i++) {
+            words[i] = capitalizeFirst(words[i]);
+        }
+        return String.join(" ", words);
+    }
+
+    public static boolean containsDigit(String str) {
+        int l = str.length();
+        for (int i = 0; i < l; i++) {
+            char c = str.charAt(i);
+            if ('0' <= c && c <= '9') return true;
+        }
+        return false;
     }
 
     public static String substringBeforeLast(String str, char delimiter) {
@@ -252,6 +291,30 @@ public final class StringUtils {
         return false;
     }
 
+    public static boolean startsWithAny(String str, Collection<String> prefixes) {
+        return prefixes.stream().anyMatch(str::startsWith);
+    }
+
+    public static boolean endsWithAny(String str, Collection<String> suffixes) {
+        return suffixes.stream().anyMatch(str::endsWith);
+    }
+
+    public static boolean startsWithIgnoreCase(String str, String prefix) {
+        return str.regionMatches(true, 0, prefix, 0, prefix.length());
+    }
+
+    public static Predicate<@Nullable String> compileQuery(String queryString) throws PatternSyntaxException {
+        Predicate<@Nullable String> predicate;
+        if (queryString.startsWith("regex:")) {
+            Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
+            predicate = s -> s != null && pattern.matcher(s).find();
+        } else {
+            String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
+            predicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+        }
+        return predicate;
+    }
+
     public static boolean containsChinese(String str) {
         for (int i = 0; i < str.length(); i++) {
             char ch = str.charAt(i);
@@ -259,6 +322,71 @@ public final class StringUtils {
                 return true;
         }
         return false;
+    }
+
+    public static boolean containsEmoji(String str) {
+        for (int i = 0; i < str.length(); ) {
+            int ch = str.codePointAt(i);
+
+            if (ch >= 0x1F300 && ch <= 0x1FAFF)
+                return true;
+
+            i += Character.charCount(ch);
+        }
+
+        return false;
+    }
+
+    /// Check if the code point is a full-width character.
+    public static boolean isFullWidth(int codePoint) {
+        return codePoint >= '\uff10' && codePoint <= '\uff19'       // full-width digits
+                || codePoint >= '\uff21' && codePoint <= '\uff3a'   // full-width uppercase letters
+                || codePoint >= '\uff41' && codePoint <= '\uff5a'   // full-width lowercase letters
+                || codePoint == '\uff08'                            // full-width left parenthesis
+                || codePoint == '\uff09'                            // full-width right parenthesis
+                || codePoint == '\uff0c'                            // full-width comma
+                || codePoint == '\uff05'                            // full-width percent sign
+                || codePoint == '\uff0e'                            // full-width period
+                || codePoint == '\u3000'                            // full-width ideographic space
+                || codePoint == '\uff03';                           // full-width number sign
+    }
+
+    /// Convert full-width characters to half-width characters.
+    public static String toHalfWidth(String str) {
+        int i = 0;
+        while (i < str.length()) {
+            int cp = str.codePointAt(i);
+
+            if (isFullWidth(cp)) {
+                break;
+            }
+
+            i += Character.charCount(cp);
+        }
+
+        if (i == str.length())
+            return str;
+
+        var builder = new StringBuilder(str.length());
+        builder.append(str, 0, i);
+        while (i < str.length()) {
+            int c = str.codePointAt(i);
+
+            if (c >= '\uff10' && c <= '\uff19') builder.append((char) (c - 0xfee0));
+            else if (c >= '\uff21' && c <= '\uff3a') builder.append((char) (c - 0xfee0));
+            else if (c >= '\uff41' && c <= '\uff5a') builder.append((char) (c - 0xfee0));
+            else if (c == '\uff08') builder.append('(');
+            else if (c == '\uff09') builder.append(')');
+            else if (c == '\uff0c') builder.append(',');
+            else if (c == '\uff05') builder.append('%');
+            else if (c == '\uff0e') builder.append('.');
+            else if (c == '\u3000') builder.append(' ');
+            else if (c == '\uff03') builder.append('#');
+            else builder.appendCodePoint(c);
+
+            i += Character.charCount(c);
+        }
+        return builder.toString();
     }
 
     private static boolean isVarNameStart(char ch) {
@@ -396,7 +524,62 @@ public final class StringUtils {
         if (original.indexOf('\u00A7') < 0)
             return original;
 
-        return original.replaceAll("\u00A7[0-9a-gklmnor]", "");
+        return original.replaceAll("\u00A7[0-9a-fk-or]", "");
+    }
+
+    private static final Pattern COLOR_CODE_PATTERN = Pattern.compile("\u00A7([0-9a-fk-or])");
+    private static final String FORMAT_CODE = "format_code";
+
+    public static List<Pair<String, String>> parseMinecraftColorCodes(String original) {
+        List<Pair<String, String>> pairs = new ArrayList<>();
+        if (isBlank(original)) {
+            return pairs;
+        }
+        Matcher matcher = COLOR_CODE_PATTERN.matcher(original);
+        String currentColor = "";
+        int lastIndex = 0;
+
+        while (matcher.find()) {
+            String text = original.substring(lastIndex, matcher.start());
+            if (!text.isEmpty()) {
+                pairs.add(new Pair<>(text, currentColor));
+            }
+
+            char code = matcher.group(1).charAt(0);
+            String newColor = switch (code) {
+                case '0' -> "black";
+                case '1' -> "dark_blue";
+                case '2' -> "dark_green";
+                case '3' -> "dark_aqua";
+                case '4' -> "dark_red";
+                case '5' -> "dark_purple";
+                case '6' -> "gold";
+                case '7' -> "gray";
+                case '8' -> "dark_gray";
+                case '9' -> "blue";
+                case 'a' -> "green";
+                case 'b' -> "aqua";
+                case 'c' -> "red";
+                case 'd' -> "light_purple";
+                case 'e' -> "yellow";
+                case 'f' -> "white";
+                case 'k', 'l', 'm', 'n', 'o' -> FORMAT_CODE;
+                case 'r' -> "";
+                default -> null;
+            };
+
+            if (newColor != null && !newColor.equals(FORMAT_CODE)) {
+                currentColor = newColor;
+            }
+
+            lastIndex = matcher.end();
+        }
+
+        if (lastIndex < original.length()) {
+            String remainingText = original.substring(lastIndex);
+            pairs.add(new Pair<>(remainingText, currentColor));
+        }
+        return pairs;
     }
 
     public static String parseEscapeSequence(String str) {
@@ -423,12 +606,17 @@ public final class StringUtils {
         return builder.toString();
     }
 
+    public static String escapeXmlAttribute(String str) {
+        return str
+                .replace("&", "&amp;")
+                .replace("\"", "&quot;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("'", "&apos;");
+    }
+
     public static String repeats(char ch, int repeat) {
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < repeat; i++) {
-            result.append(ch);
-        }
-        return result.toString();
+        return String.valueOf(ch).repeat(Math.max(0, repeat));
     }
 
     public static String truncate(String str, int limit) {
@@ -449,14 +637,94 @@ public final class StringUtils {
         return true;
     }
 
+    public static boolean isAlphabetic(char ch) {
+        return ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z';
+    }
+
+    public static boolean isAlphabetic(String str) {
+        int length = str.length();
+        for (int i = 0; i < length; i++) {
+            if (!isAlphabetic(str.charAt(i))) return false;
+        }
+        return true;
+    }
+
     public static boolean isAlphabeticOrNumber(String str) {
         int length = str.length();
         for (int i = 0; i < length; i++) {
             char ch = str.charAt(i);
-            if (!(ch >= '0' && ch <= '9') && !(ch >= 'a' && ch <= 'z') && !(ch >= 'A' && ch <= 'Z'))
+            if (!(ch >= '0' && ch <= '9') && !isAlphabetic(ch))
                 return false;
         }
         return true;
+    }
+
+    /// Turns `List.of("a", "b", "c")` into `["a", "b", "c"]`
+    @Contract(pure = true)
+    public static String serializeStringList(List<String> list) {
+        if (list == null) return "[]";
+        return JsonUtils.UGLY_GSON.toJson(list.stream().filter(Objects::nonNull).toList(), JsonUtils.listTypeOf(String.class).getType());
+    }
+
+    /// Turns `["a", "b", "c"]` into `List.of("a", "b", "c")`
+    @Contract(pure = true)
+    public static List<String> deserializeStringList(String json) {
+        if (json == null || json.isBlank()) return List.of();
+        return JsonUtils.fromNonNullJson(json, JsonUtils.listTypeOf(String.class));
+    }
+
+    private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().extensions(List.of(
+            InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
+    )).build();
+
+    private static final HtmlRenderer HTML_RENDERER_RAW_INDENTED_BLOCK = HtmlRenderer.builder()
+            .extensions(List.of(InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()))
+            .nodeRendererFactory(IndentedBlockRawRenderer::new)
+            .build();
+
+    private static final Parser MD_PARSER = Parser.builder().extensions(List.of(
+            AutolinkExtension.create(), InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
+    )).build();
+
+    public static @Nullable String convertToHtml(String str, boolean rawIndentedBlocks) {
+        if (str == null) return null;
+        if (isBlank(str)) return "";
+
+        if (rawIndentedBlocks)
+            return HTML_RENDERER_RAW_INDENTED_BLOCK.render(MD_PARSER.parse(str));
+        return HTML_RENDERER.render(MD_PARSER.parse(str));
+    }
+
+    private static final class IndentedBlockRawRenderer implements NodeRenderer {
+
+        private final HtmlWriter html;
+
+        public IndentedBlockRawRenderer(HtmlNodeRendererContext context) {
+            this.html = context.getWriter();
+        }
+
+        @Override
+        public Set<Class<? extends Node>> getNodeTypes() {
+            return Set.of(IndentedCodeBlock.class);
+        }
+
+        @Override
+        public void render(Node node) {
+            IndentedCodeBlock block = (IndentedCodeBlock) node;
+            html.line();
+            html.raw(block.getLiteral());
+            html.line();
+        }
+
+    }
+
+    public static OptionalInt toInt(String s) {
+        if (isBlank(s)) return OptionalInt.empty();
+        try {
+            return OptionalInt.of(Integer.parseInt(s));
+        } catch (NumberFormatException e) {
+            return OptionalInt.empty();
+        }
     }
 
     public static class LevCalculator {

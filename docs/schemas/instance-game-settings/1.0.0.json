@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.glavo.site/hmcl/instance-game-settings/1.0.0",
+  "title": "HMCL Instance Game Settings",
+  "allOf": [
+    {
+      "$ref": "#/$defs/gameSettings"
+    },
+    {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "$schema"
+      ],
+      "patternProperties": {
+        "^\\$schema$": {
+          "enum": [
+            "https://schemas.glavo.site/hmcl/instance-game-settings/1.0.0"
+          ]
+        }
+      },
+      "properties": {
+        "parent": {
+          "$ref": "#/$defs/gameSettingsPresetID"
+        },
+        "icon": {
+          "enum": [
+            "DEFAULT",
+            "GRASS",
+            "CHEST",
+            "CHICKEN",
+            "COMMAND",
+            "OPTIFINE",
+            "CRAFT_TABLE",
+            "FABRIC",
+            "FORGE",
+            "NEO_FORGE",
+            "FURNACE",
+            "QUILT",
+            "APRIL_FOOLS",
+            "CLEANROOM",
+            "LEGACY_FABRIC"
+          ]
+        },
+        "overrideProperties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "gameSettings": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "javaType": {
+          "enum": [
+            "AUTO",
+            "VERSION",
+            "DETECTED",
+            "CUSTOM"
+          ]
+        },
+        "customJavaVersion": {
+          "type": "string"
+        },
+        "customJavaPath": {
+          "type": "string"
+        },
+        "detectedJava": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "version": {
+              "type": "string"
+            },
+            "pathHash": {
+              "type": "string"
+            }
+          }
+        },
+        "jvmOptions": {
+          "type": "string"
+        },
+        "noJVMOptions": {
+          "type": "boolean"
+        },
+        "noOptimizingJVMOptions": {
+          "type": "boolean"
+        },
+        "notCheckJVM": {
+          "type": "boolean"
+        },
+        "notCheckGame": {
+          "type": "boolean"
+        },
+        "autoMemory": {
+          "type": "boolean"
+        },
+        "minMemory": {
+          "type": "integer"
+        },
+        "maxMemory": {
+          "type": "integer"
+        },
+        "permSize": {
+          "type": "string"
+        },
+        "windowType": {
+          "enum": [
+            "WINDOWED",
+            "FULLSCREEN",
+            "MAXIMIZED"
+          ]
+        },
+        "width": {
+          "type": "number"
+        },
+        "height": {
+          "type": "number"
+        },
+        "runningDirectory": {
+          "type": "string"
+        },
+        "processPriority": {
+          "enum": [
+            "LOW",
+            "BELOW_NORMAL",
+            "NORMAL",
+            "ABOVE_NORMAL",
+            "HIGH"
+          ]
+        },
+        "launcherVisibility": {
+          "enum": [
+            "CLOSE",
+            "HIDE",
+            "KEEP",
+            "HIDE_AND_REOPEN"
+          ]
+        },
+        "allowAutoAgent": {
+          "type": "boolean"
+        },
+        "disableAutoGameOptions": {
+          "type": "boolean"
+        },
+        "gameArguments": {
+          "type": "string"
+        },
+        "graphicsBackend": {
+          "enum": [
+            "DEFAULT",
+            "OPENGL",
+            "VULKAN"
+          ]
+        },
+        "openGLRenderer": {
+          "type": "string"
+        },
+        "vulkanRenderer": {
+          "type": "string"
+        },
+        "environmentVariables": {
+          "type": "string"
+        },
+        "commandWrapper": {
+          "type": "string"
+        },
+        "preLaunchCommand": {
+          "type": "string"
+        },
+        "postExitCommand": {
+          "type": "string"
+        },
+        "quickPlay": {
+          "enum": [
+            "NONE",
+            "MULTIPLAYER",
+            "SINGLEPLAYER",
+            "REALMS"
+          ]
+        },
+        "quickPlayMultiplayer": {
+          "type": "string"
+        },
+        "quickPlaySingleplayer": {
+          "type": "string"
+        },
+        "quickPlayRealms": {
+          "type": "string"
+        },
+        "showLogs": {
+          "type": "boolean"
+        },
+        "enableDebugLogOutput": {
+          "type": "boolean"
+        },
+        "notPatchNatives": {
+          "type": "boolean"
+        },
+        "useCustomNatives": {
+          "type": "boolean"
+        },
+        "nativesDirectory": {
+          "type": "string"
+        },
+        "useNativeGLFW": {
+          "type": "boolean"
+        },
+        "useNativeOpenAL": {
+          "type": "boolean"
+        }
+      }
+    },
+    "gameSettingsPresetID": {
+      "type": "string",
+      "pattern": "^game-settings-preset:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    }
+  }
+}

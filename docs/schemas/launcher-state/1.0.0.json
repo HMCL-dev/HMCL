@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.glavo.site/hmcl/launcher-state/1.0.0",
+  "title": "HMCL Launcher State",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "$schema"
+  ],
+  "patternProperties": {
+    "^\\$schema$": {
+      "enum": [
+        "https://schemas.glavo.site/hmcl/launcher-state/1.0.0"
+      ]
+    }
+  },
+  "properties": {
+    "x": {
+      "type": "number"
+    },
+    "y": {
+      "type": "number"
+    },
+    "width": {
+      "type": "number"
+    },
+    "height": {
+      "type": "number"
+    },
+    "promptedVersion": {
+      "type": "string"
+    },
+    "shownTips": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

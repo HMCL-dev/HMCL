@@ -18,21 +18,23 @@
 package org.jackhuang.hmcl.util.tree;
 
 import kala.compress.archivers.ArchiveEntry;
-import kala.compress.archivers.zip.ZipArchiveReader;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
 import java.util.*;
 
-/**
- * @author Glavo
- */
-public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Closeable {
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
+/// @author Glavo
+public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Closeable {
 
     public static ArchiveFileTree<?, ?> open(Path file) throws IOException {
         Path namePath = file.getFileName();
@@ -42,7 +44,7 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
 
         String name = namePath.toString();
         if (name.endsWith(".jar") || name.endsWith(".zip")) {
-            return new ZipFileTree(new ZipArchiveReader(file));
+            return CompressingUtils.openZipTree(file);
         } else if (name.endsWith(".tar") || name.endsWith(".tar.gz") || name.endsWith(".tgz")) {
             return TarFileTree.open(file);
         } else {
@@ -50,61 +52,182 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
         }
     }
 
-    protected final F file;
-    protected final Dir<E> root = new Dir<>("");
+    protected final R reader;
 
-    public ArchiveFileTree(F file) {
-        this.file = file;
+    public ArchiveFileTree(R reader) {
+        this.reader = reader;
     }
 
-    public F getFile() {
-        return file;
+    public R getReader() {
+        return reader;
     }
 
-    public Dir<E> getRoot() {
-        return root;
+    public abstract Dir<E> getRoot();
+
+    public @Nullable E getEntry(@NotNull String entryPath) {
+        Dir<E> root = getRoot();
+        Dir<E> dir = root;
+        if (entryPath.indexOf('/') < 0) {
+            return dir.getFiles().get(entryPath);
+        } else {
+            String[] path = entryPath.split("/");
+            if (path.length == 0)
+                return root.getEntry();
+
+            for (int i = 0; i < path.length - 1; i++) {
+                String item = path[i];
+                if (item.isEmpty())
+                    continue;
+                dir = dir.getSubDirs().get(item);
+                if (dir == null)
+                    return null;
+            }
+
+            String fileName = path[path.length - 1];
+            return dir.getFiles().get(fileName);
+        }
     }
 
-    protected void addEntry(E entry) throws IOException {
-        String[] path = entry.getName().split("/");
+    public @Nullable Dir<E> getDirectory(@NotNull String dirPath) {
+        Dir<E> dir = getRoot();
+        if (dirPath.isEmpty()) {
+            return dir;
+        }
+        String[] path = dirPath.split("/");
+        for (String item : path) {
+            if (item.isEmpty())
+                continue;
+            dir = dir.getSubDirs().get(item);
+            if (dir == null)
+                return null;
+        }
+        return dir;
+    }
 
+    /// Adds an entry, creating missing parent directories.
+    /// Empty and `.` directory components are skipped. Entries with `..` directory
+    /// components, duplicate files, and file/directory conflicts are skipped with a warning.
+    /// Parent directories created before a skipped entry is detected remain in the tree.
+    ///
+    /// @param entry the archive entry to add
+    protected static <E extends ArchiveEntry> void addEntry(Dir<E> root, @NotNull E entry) {
+        String name = entry.getName();
         Dir<E> dir = root;
 
-        for (int i = 0, end = entry.isDirectory() ? path.length : path.length - 1; i < end; i++) {
-            String item = path[i];
-            if (item.equals("."))
-                continue;
-            if (item.equals("..") || item.isEmpty())
-                throw new IOException("Invalid entry: " + entry.getName());
+        int start = 0;
+        while (start < name.length()) {
+            int end = name.indexOf('/', start);
+            boolean isLastPart = end < 0 || end == name.length() - 1;
+            String item = end >= 0 ? name.substring(start, end) : name.substring(start);
 
-            if (dir.files.containsKey(item)) {
-                throw new IOException("A file and a directory have the same name: " + entry.getName());
+            // A final component may be skipped, so the cursor must still reach the end.
+            start = end < 0 ? name.length() : end + 1;
+
+            if (isLastPart && !entry.isDirectory()) {
+                if (dir.getSubDirs().containsKey(item)) {
+                    LOG.warning("A file and a directory have the same name: " + name);
+                    return;
+                }
+
+                if (dir.getFiles().containsKey(item)) {
+                    LOG.warning("Duplicate entry: " + entry.getName());
+                    return;
+                }
+
+                if (dir.files.isEmpty())
+                    dir.files = new HashMap<>();
+                dir.files.put(item, entry);
+                break;
             }
+
+            if (item.equals(".") || item.isEmpty())
+                continue;
+            if (item.equals("..")) {
+                LOG.warning("Invalid entry name: " + name);
+                return;
+            }
+
+            if (dir.getFiles().containsKey(item)) {
+                LOG.warning("A file and a directory have the same name: " + name);
+                return;
+            }
+
+            if (dir.subDirs.isEmpty())
+                dir.subDirs = new HashMap<>();
 
             dir = dir.subDirs.computeIfAbsent(item, Dir::new);
-        }
 
-        if (entry.isDirectory()) {
-            if (dir.entry != null) {
-                throw new IOException("Duplicate entry: " + entry.getName());
+            if (isLastPart) {
+                if (dir.entry == null)
+                    dir.entry = entry;
+                else if (!dir.entry.isDirectory())
+                    LOG.warning("A file and a directory have the same name: " + entry.getName());
+                break;
             }
-            dir.entry = entry;
-        } else {
-            String fileName = path[path.length - 1];
-
-            if (dir.subDirs.containsKey(fileName)) {
-                throw new IOException("A file and a directory have the same name: " + entry.getName());
-            }
-
-            if (dir.files.containsKey(fileName)) {
-                throw new IOException("Duplicate entry: " + entry.getName());
-            }
-
-            dir.files.put(fileName, entry);
         }
     }
 
     public abstract InputStream getInputStream(E entry) throws IOException;
+
+    public @NotNull InputStream getInputStream(String entryPath) throws IOException {
+        E entry = getEntry(entryPath);
+        if (entry == null)
+            throw new FileNotFoundException("Entry not found: " + entryPath);
+        return getInputStream(entry);
+    }
+
+    public BufferedReader getBufferedReader(@NotNull E entry) throws IOException {
+        return new BufferedReader(new InputStreamReader(getInputStream(entry), StandardCharsets.UTF_8));
+    }
+
+    public @NotNull BufferedReader getBufferedReader(String entryPath) throws IOException {
+        E entry = getEntry(entryPath);
+        if (entry == null)
+            throw new FileNotFoundException("Entry not found: " + entryPath);
+        return getBufferedReader(entry);
+    }
+
+    public byte[] readBinaryEntry(@NotNull E entry) throws IOException {
+        try (InputStream input = getInputStream(entry)) {
+            return input.readAllBytes();
+        }
+    }
+
+    public String readTextEntry(@NotNull String entryPath) throws IOException {
+        E entry = getEntry(entryPath);
+        if (entry == null)
+            throw new FileNotFoundException("Entry not found: " + entryPath);
+        return readTextEntry(entry);
+    }
+
+    public String readTextEntry(@NotNull E entry) throws IOException {
+        return new String(readBinaryEntry(entry), StandardCharsets.UTF_8);
+    }
+
+    protected void copyAttributes(@NotNull E source, @NotNull Path targetFile) throws IOException {
+        FileTime lastModifiedTime = source.getLastModifiedTime();
+        if (lastModifiedTime != null)
+            Files.setLastModifiedTime(targetFile, lastModifiedTime);
+    }
+
+    public void extractTo(@NotNull String entryPath, @NotNull Path targetFile) throws IOException {
+        E entry = getEntry(entryPath);
+        if (entry == null)
+            throw new FileNotFoundException("Entry not found: " + entryPath);
+
+        extractTo(entry, targetFile);
+    }
+
+    public void extractTo(@NotNull E entry, @NotNull Path targetFile) throws IOException {
+        try (InputStream input = getInputStream(entry)) {
+            Files.copy(input, targetFile, StandardCopyOption.REPLACE_EXISTING);
+        }
+        try {
+            copyAttributes(entry, targetFile);
+        } catch (Throwable e) {
+            LOG.warning("Failed to copy attributes to " + targetFile, e);
+        }
+    }
 
     public abstract boolean isLink(E entry);
 
@@ -119,8 +242,8 @@ public abstract class ArchiveFileTree<F, E extends ArchiveEntry> implements Clos
         private final String name;
         private E entry;
 
-        final Map<String, Dir<E>> subDirs = new HashMap<>();
-        final Map<String, E> files = new HashMap<>();
+        Map<String, Dir<E>> subDirs = Map.of();
+        Map<String, E> files = Map.of();
 
         public Dir(String name) {
             this.name = name;

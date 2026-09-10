@@ -23,13 +23,15 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Optional;
 
-public final class RemoteVersion {
+public record RemoteVersion(UpdateChannel channel, String version, String url, Type type, IntegrityCheck integrityCheck,
+                            boolean preview, boolean force) {
 
-    public static RemoteVersion fetch(UpdateChannel channel, String url) throws IOException {
+    public static RemoteVersion fetch(UpdateChannel channel, boolean preview, String url) throws IOException {
         try {
             JsonObject response = JsonUtils.fromNonNullJson(NetworkUtils.doGet(url), JsonObject.class);
             String version = Optional.ofNullable(response.get("version")).map(JsonElement::getAsString).orElseThrow(() -> new IOException("version is missing"));
@@ -37,7 +39,7 @@ public final class RemoteVersion {
             String jarHash = Optional.ofNullable(response.get("jarsha1")).map(JsonElement::getAsString).orElse(null);
             boolean force = Optional.ofNullable(response.get("force")).map(JsonElement::getAsBoolean).orElse(false);
             if (jarUrl != null && jarHash != null) {
-                return new RemoteVersion(channel, version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash), force);
+                return new RemoteVersion(channel, version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash), preview, force);
             } else {
                 throw new IOException("No download url is available");
             }
@@ -46,48 +48,8 @@ public final class RemoteVersion {
         }
     }
 
-    private final UpdateChannel channel;
-    private final String version;
-    private final String url;
-    private final Type type;
-    private final IntegrityCheck integrityCheck;
-    private final boolean force;
-
-    public RemoteVersion(UpdateChannel channel, String version, String url, Type type, IntegrityCheck integrityCheck, boolean force) {
-        this.channel = channel;
-        this.version = version;
-        this.url = url;
-        this.type = type;
-        this.integrityCheck = integrityCheck;
-        this.force = force;
-    }
-
-    public UpdateChannel getChannel() {
-        return channel;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public Type getType() {
-        return type;
-    }
-
-    public IntegrityCheck getIntegrityCheck() {
-        return integrityCheck;
-    }
-
-    public boolean isForce() {
-        return force;
-    }
-
     @Override
-    public String toString() {
+    public @NotNull String toString() {
         return "[" + version + " from " + url + "]";
     }
 

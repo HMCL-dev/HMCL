@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
@@ -28,9 +29,7 @@ import javafx.scene.control.Label;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
-import org.jackhuang.hmcl.ui.skin.SkinCanvas;
-import org.jackhuang.hmcl.ui.skin.animation.SkinAniRunning;
-import org.jackhuang.hmcl.ui.skin.animation.SkinAniWavingArms;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.Skin;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
@@ -39,6 +38,9 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.skin.SkinCanvas;
+import org.jackhuang.hmcl.ui.skin.animation.SkinAniRunning;
+import org.jackhuang.hmcl.ui.skin.animation.SkinAniWavingArms;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.file.Path;
@@ -47,8 +49,8 @@ import java.util.UUID;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class OfflineAccountSkinPane extends StackPane {
     private final OfflineAccount account;
@@ -72,11 +74,11 @@ public class OfflineAccountSkinPane extends StackPane {
 
         BorderPane pane = new BorderPane();
 
-        SkinCanvas canvas = new SkinCanvas(TexturesLoader.getDefaultSkinImage(), 300, 300, true);
+        SkinCanvas canvas = new SkinCanvas(TexturesLoader.getDefaultSkinImage(), 260, 260, true);
         StackPane canvasPane = new StackPane(canvas);
-        canvasPane.setPrefWidth(300);
-        canvasPane.setPrefHeight(300);
-        pane.setCenter(canvas);
+        canvasPane.setPrefWidth(260);
+        canvasPane.setPrefHeight(260);
+        pane.setCenter(canvasPane);
         canvas.getAnimationPlayer().addSkinAnimation(new SkinAniWavingArms(100, 2000, 7.5, canvas), new SkinAniRunning(100, 100, 30, canvas));
         canvas.enableRotation(.5);
 
@@ -98,17 +100,18 @@ public class OfflineAccountSkinPane extends StackPane {
         });
 
         StackPane skinOptionPane = new StackPane();
-        skinOptionPane.setMaxWidth(300);
-        VBox optionPane = new VBox(skinItem, skinOptionPane);
-        pane.setRight(optionPane);
+        pane.setRight(skinOptionPane);
 
-        skinSelector.maxWidthProperty().bind(skinOptionPane.maxWidthProperty().multiply(0.7));
-        capeSelector.maxWidthProperty().bind(skinOptionPane.maxWidthProperty().multiply(0.7));
+        skinSelector.setMaxWidth(Double.MAX_VALUE);
+        capeSelector.setMaxWidth(Double.MAX_VALUE);
+        modelCombobox.setMaxWidth(Double.MAX_VALUE);
+        cslApiField.setMaxWidth(Double.MAX_VALUE);
 
         layout.setBody(pane);
 
         cslApiField.setPromptText(i18n("account.skin.type.csl_api.location.hint"));
         cslApiField.setValidators(new URLValidator());
+        FXUtils.setValidateWhileTextChanged(cslApiField, true);
 
         skinItem.loadChildren(Arrays.asList(
                 new MultiFileItem.Option<>(i18n("message.default"), Skin.Type.DEFAULT),
@@ -126,65 +129,113 @@ public class OfflineAccountSkinPane extends StackPane {
             skinItem.setSelectedData(Skin.Type.DEFAULT);
             modelCombobox.setValue(TextureModel.WIDE);
         } else {
-            skinItem.setSelectedData(account.getSkin().getType());
-            cslApiField.setText(account.getSkin().getCslApi());
-            modelCombobox.setValue(account.getSkin().getTextureModel());
-            skinSelector.setValue(account.getSkin().getLocalSkinPath());
-            capeSelector.setValue(account.getSkin().getLocalCapePath());
+            skinItem.setSelectedData(account.getSkin().type());
+            cslApiField.setText(account.getSkin().cslApi());
+            modelCombobox.setValue(account.getSkin().textureModel());
+            skinSelector.setValue(account.getSkin().localSkinPath());
+            capeSelector.setValue(account.getSkin().localCapePath());
         }
 
-        skinBinding = FXUtils.observeWeak(() -> {
-            getSkin().load(account.getUsername())
+        PauseTransition pauseTransition = new PauseTransition(Duration.seconds(1));
+
+        Runnable loadSkin = () -> {
+            getSkin().load(account.getProfileName())
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to load skin", exception);
                             Controllers.showToast(i18n("message.failed"));
                         } else {
-                            UUID uuid = this.account.getUUID();
-                            if (result == null || result.getSkin() == null && result.getCape() == null) {
+                            UUID uuid = this.account.getProfileID();
+                            if (result == null || result.skin() == null && result.cape() == null) {
                                 canvas.updateSkin(
-                                        TexturesLoader.getDefaultSkin(uuid).getImage(),
+                                        TexturesLoader.getDefaultSkin(uuid).image(),
                                         TexturesLoader.getDefaultModel(uuid) == TextureModel.SLIM,
                                         null
                                 );
                                 return;
                             }
                             canvas.updateSkin(
-                                    result.getSkin() != null ? result.getSkin().getImage() : TexturesLoader.getDefaultSkin(uuid).getImage(),
-                                    result.getModel() == TextureModel.SLIM,
-                                    result.getCape() != null ? result.getCape().getImage() : null);
+                                    result.skin() != null ? result.skin().image() : TexturesLoader.getDefaultSkin(uuid).image(),
+                                    result.model() == TextureModel.SLIM,
+                                    result.cape() != null ? result.cape().image() : null);
                         }
                     }).start();
+        };
+
+        pauseTransition.setOnFinished(e -> loadSkin.run());
+
+        skinBinding = FXUtils.observeWeak(() -> {
+            Skin.Type selectedType = skinItem.getSelectedData();
+
+            if (selectedType == Skin.Type.CUSTOM_SKIN_LOADER_API) {
+                if (!cslApiField.validate()) {
+                    pauseTransition.stop();
+                    return;
+                }
+                pauseTransition.playFromStart();
+            } else {
+                pauseTransition.stop();
+                loadSkin.run();
+            }
         }, skinItem.selectedDataProperty(), cslApiField.textProperty(), modelCombobox.valueProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
 
-        FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
-            GridPane gridPane = new GridPane();
-            gridPane.setPadding(new Insets(0, 0, 0, 10));
-            gridPane.setHgap(16);
-            gridPane.setVgap(8);
-            gridPane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
+        VBox right = new VBox();
+        right.setPadding(new Insets(0, 0, 0, 10));
+        right.setSpacing(12);
+        right.setPrefWidth(230);
+        HBox.setHgrow(right, Priority.ALWAYS);
 
-            switch (selectedData) {
-                case DEFAULT:
-                case STEVE:
-                case ALEX:
-                    break;
-                case LITTLE_SKIN:
-                    HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
-                    hint.setText(i18n("account.skin.type.little_skin.hint"));
-                    gridPane.addRow(0, hint);
-                    break;
-                case LOCAL_FILE:
-                    gridPane.addRow(0, new Label(i18n("account.skin.model")), modelCombobox);
-                    gridPane.addRow(1, new Label(i18n("account.skin")), skinSelector);
-                    gridPane.addRow(2, new Label(i18n("account.cape")), capeSelector);
-                    break;
-                case CUSTOM_SKIN_LOADER_API:
-                    gridPane.addRow(0, new Label(i18n("account.skin.type.csl_api.location")), cslApiField);
-                    break;
+        HBox body = new HBox(20);
+        skinItem.setPrefWidth(170);
+        skinItem.setMinWidth(170);
+        body.getChildren().add(skinItem);
+
+        skinOptionPane.getChildren().setAll(body);
+
+        FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
+            right.getChildren().clear();
+
+            if (selectedData != null) {
+                switch (selectedData) {
+                    case DEFAULT:
+                    case STEVE:
+                    case ALEX:
+                        break;
+
+                    case LITTLE_SKIN:
+                        HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
+                        hint.setText(i18n("account.skin.type.little_skin.hint"));
+
+                        hint.setMaxWidth(Double.MAX_VALUE);
+
+                        right.getChildren().add(hint);
+                        break;
+
+                    case LOCAL_FILE:
+                        right.getChildren().addAll(
+                            new Label(i18n("account.skin.model")),
+                            modelCombobox,
+                            new Label(i18n("account.skin")),
+                            skinSelector,
+                            new Label(i18n("account.cape")),
+                            capeSelector
+                        );
+                        break;
+
+                    case CUSTOM_SKIN_LOADER_API:
+                        right.getChildren().addAll(
+                            new Label(i18n("account.skin.type.csl_api.location")),
+                            cslApiField
+                        );
+                        break;
+                }
             }
 
-            skinOptionPane.getChildren().setAll(gridPane);
+            if (right.getChildren().isEmpty()) {
+                body.getChildren().remove(right);
+            } else if (!body.getChildren().contains(right)) {
+                body.getChildren().add(right);
+            }
         });
 
         JFXButton acceptButton = new JFXButton(i18n("button.ok"));
@@ -200,6 +251,10 @@ public class OfflineAccountSkinPane extends StackPane {
         cancelButton.getStyleClass().add("dialog-cancel");
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
         onEscPressed(this, cancelButton::fire);
+
+        acceptButton.disableProperty().bind(
+                skinItem.selectedDataProperty().isEqualTo(Skin.Type.CUSTOM_SKIN_LOADER_API)
+                        .and(cslApiField.activeValidatorProperty().isNotNull()));
 
         layout.setActions(littleSkinLink, acceptButton, cancelButton);
     }

@@ -69,7 +69,7 @@ public class ClassicAccountLoginDialog extends StackPane {
             VBox body = new VBox(15);
             body.setPadding(new Insets(15, 0, 0, 0));
 
-            Label usernameLabel = new Label(oldAccount.getUsername());
+            Label usernameLabel = new Label(oldAccount.getLoginName());
 
             txtPassword = new JFXPasswordField();
             txtPassword.setOnAction(e -> onAccept());

@@ -15,16 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 package org.jackhuang.hmcl.util.tree;
 
 import kala.compress.archivers.tar.TarArchiveEntry;
 import kala.compress.archivers.tar.TarArchiveReader;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributeView;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -60,31 +62,11 @@ public final class TarFileTree extends ArchiveFileTree<TarArchiveReader, TarArch
 
     private final Path tempFile;
     private final Thread shutdownHook;
+    private @Nullable Dir<TarArchiveEntry> root;
 
-    public TarFileTree(TarArchiveReader file, Path tempFile) throws IOException {
+    public TarFileTree(TarArchiveReader file, Path tempFile) {
         super(file);
         this.tempFile = tempFile;
-        try {
-            for (TarArchiveEntry entry : file.getEntries()) {
-                addEntry(entry);
-            }
-        } catch (Throwable e) {
-            try {
-                file.close();
-            } catch (Throwable e2) {
-                e.addSuppressed(e2);
-            }
-
-            if (tempFile != null) {
-                try {
-                    Files.deleteIfExists(tempFile);
-                } catch (Throwable e2) {
-                    e.addSuppressed(e2);
-                }
-            }
-
-            throw e;
-        }
 
         if (tempFile != null) {
             this.shutdownHook = new Thread(() -> {
@@ -99,8 +81,33 @@ public final class TarFileTree extends ArchiveFileTree<TarArchiveReader, TarArch
     }
 
     @Override
+    public Dir<TarArchiveEntry> getRoot() {
+        if (root == null) {
+            root = new Dir<>("");
+            for (TarArchiveEntry entry : reader.getEntries()) {
+                addEntry(root, entry);
+            }
+        }
+
+        return root;
+    }
+
+    @Override
+    protected void copyAttributes(@NotNull TarArchiveEntry source, @NotNull Path targetFile) throws IOException {
+        var fileAttributeView = Files.getFileAttributeView(targetFile, BasicFileAttributeView.class);
+        if (fileAttributeView == null)
+            return;
+
+        fileAttributeView.setTimes(
+                source.getLastModifiedTime(),
+                source.getLastAccessTime(),
+                source.getCreationTime()
+        );
+    }
+
+    @Override
     public InputStream getInputStream(TarArchiveEntry entry) throws IOException {
-        return file.getInputStream(entry);
+        return reader.getInputStream(entry);
     }
 
     @Override
@@ -121,7 +128,7 @@ public final class TarFileTree extends ArchiveFileTree<TarArchiveReader, TarArch
     @Override
     public void close() throws IOException {
         try {
-            file.close();
+            reader.close();
         } finally {
             if (tempFile != null) {
                 Runtime.getRuntime().removeShutdownHook(shutdownHook);

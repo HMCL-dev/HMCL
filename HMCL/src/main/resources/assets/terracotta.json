@@ -1,0 +1,90 @@
+{
+  "__comment__": "THIS FILE IS MACHINE GENERATED! DO NOT EDIT!",
+  "version_latest": "0.4.2",
+  "packages": {
+    "windows-x86_64": {
+      "hash": "6a98f524d4f00373696517306af8aa50d01d55ce4eadb27e9e4bc2f882707a0b5f20d5d4c33371d1459dcf5bf144ffed9beb414202d9ccf32b11dbbfcf19d650",
+      "files": {
+        "VCRUNTIME140.DLL": "3d4b24061f72c0e957c7b04a0c4098c94c8f1afb4a7e159850b9939c7210d73398be6f27b5ab85073b4e8c999816e7804fef0f6115c39cd061f4aaeb4dcda8cf",
+        "terracotta-0.4.2-windows-x86_64.exe": "6e98d1f2380ed22fb5a2dd4aafce6c773e9cf69100c8bb8e49e7d6983756bdb9a31f80e06bcfbe5a2742144fe806d3d687dec54d8f09d87c659341f99dd9fd80"
+      }
+    },
+    "windows-arm64": {
+      "hash": "fc1077247014ac0c712469498bde2ef7f6d881d5fcb7bdd5e11ebe20218fed365be19afdb8d453a79d77b729f866058522b910741767f4df947faa891434b463",
+      "files": {
+        "VCRUNTIME140.DLL": "5cb5ce114614101d260f4754c09e8a0dd57e4da885ebb96b91e274326f3e1dd95ed0ade9f542f1922fad0ed025e88a1f368e791e1d01fae69718f0ec3c7b98c8",
+        "terracotta-0.4.2-windows-arm64.exe": "30a15c5c53e5817c5a3634532172559327474741d3b2c7ef4e8a30acc6f59cdcf3570bf5f583e3cbe9e2abc8253e977c1abda1e9f36c88c4e99240da257347d0"
+      }
+    },
+    "macos-x86_64": {
+      "hash": "a762e4b2d6f84e899292b9e3856d009411a516d3c47f54575f843ce082f63dff2baa68ba0faa844b8b64fb12e91017386f15f5e7f975f8ee605bf8d4217cb091",
+      "files": {
+        "terracotta-0.4.2-macos-x86_64": "24efb85390eff88a538ed7e503fb1488e5e622730ca30c741a0e8b4c8f4e8d4868a2f9f38da8de540aeb535af2fd1e41c7081dae9c700e8a1a03b6c540218164",
+        "terracotta-0.4.2-macos-x86_64.pkg": "0f80437061231018ec0f860f875aba02cae9e0b36d21f2db8e99d25948806e1119f7844a4d4acca01d6124d7079718762cdebe3756b005a55632de7029fe0d24"
+      }
+    },
+    "macos-arm64": {
+      "hash": "09e444fea2d9fd19f3e5cb62e29055228345be163924cbd408d947646fafed1012cf48508ee6a155ede3d571e2ffaa72d09ceeb1493c8a60feb05e0699f19ba3",
+      "files": {
+        "terracotta-0.4.2-macos-arm64": "8e59a9d78acd57702dc044d6f2799c6af586b075a262f7d4dbbf0876e1af8d8271e04783c24ff820b801e3b14cd0190ab8403d097f3f2d98b6d911f95ed1e972",
+        "terracotta-0.4.2-macos-arm64.pkg": "b0b72f8883767c359f0700e958bd859dd5932c4674fbdf2a32f7de189fb9f54822d4825a754dc856416c8760338eb8ffca80b40c0a57c608fbe6ae9928888993"
+      }
+    },
+    "linux-x86_64": {
+      "hash": "d326ad95815d04568d485b5038e40ffc47ca54292fa0925eee6f5cea014024f901d661708aac2a743037b990882ad82b4d0b7bb03dc3b2fe720dbf0f3efe1c98",
+      "files": {
+        "terracotta-0.4.2-linux-x86_64": "fac328ba8957a711b03557bb913940f22d61b76608cd203fdf51024b6f94b19f5bc91c9b8a9fa80baf6968e1e6873c1880fd4cf54a2f8e3c6cf1e6ac161f8d0c"
+      }
+    },
+    "linux-arm64": {
+      "hash": "57c08f48d9535e93ad547d2dfc852d267992cc164a7208b42a2da0a6cbc2f21862f610e02a746b4b67150f4dec26b86a4f96eb9bd2f58d124d5b40ba50c6d55e",
+      "files": {
+        "terracotta-0.4.2-linux-arm64": "d807744c2041c98686e4b505324713badea7a0f31e8810be49ae053a63fb6dfc474ac58d678fb93eea0dd5cccff7372d9ec6135a1046f4b306cad35cd90ecacd"
+      }
+    },
+    "linux-loongarch64": {
+      "hash": "a19f4ad4fa1fd2f3c1c867f8743178ab0524d1634d63e122ffc080623e4f14207ecab58830fa0d888696ef28ce4cfa189e6ffbe92c6e1aa1836652617a96a801",
+      "files": {
+        "terracotta-0.4.2-linux-loongarch64": "7d4896b275207def0861e544cf2afc9501c1946f1bc8bb2bad9ef4510dd915eabb63eeedff725e69565cdf5c27c146b52dd75d24115d5141909c0865f89cd7b9"
+      }
+    },
+    "linux-riscv64": {
+      "hash": "ef3dfcf3c64dfcaf94adc518f0184d017a32a924f67ef33ffb8128f20669cf177cd345df3be8c00225a275bd44f70657b94fb43c60afeb21238000ac7a7f1721",
+      "files": {
+        "terracotta-0.4.2-linux-riscv64": "afddc55f16f5cf3103548d13f7a3238964c8899dba8eb0e1fdc9e354da65e91fa4486de4b8680a7a3d9326eacf18c1ddb6b5b1f9459908f35f77b36f769172ea"
+      }
+    },
+    "freebsd-x86_64": {
+      "hash": "a4d02ebbb1419f4e9265f5b24060432799151a27e0d1871690d2f3a51f40bcfd6d92c176001a15a62caa9bf31ea1b67a7b2da10e3351bfcdd36bfac1377d08d9",
+      "files": {
+        "terracotta-0.4.2-freebsd-x86_64": "a50da02752cef73d21804b26eb02261568ed3053c8fef1074014d50226843810f71e6eda39a53af3bad8e173cec40826631a4c8877af460d14a307f1b0a62519"
+      }
+    }
+  },
+  "downloads": [
+    "https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz"
+  ],
+  "downloads_CN": [
+    "https://gitee.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz",
+    "https://cnb.cool/HMCL-Terracotta/Terracotta/-/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz",
+    "https://alist.8mi.tech/d/mirror/HMCL-Terracotta/Auto/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz"
+  ],
+  "links": [
+    {
+      "desc": {
+        "default": "GitHub Release",
+        "zh": "GitHub 发布页",
+        "zh-Hant": "GitHub 發布頁"
+      },
+      "link": "https://github.com/burningtnt/Terracotta/releases/tag/v${version}"
+    },
+    {
+      "desc": {
+        "default": "Tencent QQ Group",
+        "zh": "QQ 群",
+        "zh-Hant": "QQ 群"
+      },
+      "link": "https://qm.qq.com/cgi-bin/qm/qr?k\u003dnIf5u5xQ3LXEP4ZEmLQtfjtpppjgHfI5\u0026jump_from\u003dwebapi\u0026authKey\u003dsXStlPuGzhD1JyAhyExd2OwjzZkRf3x7bAEb/j1xNX1wrQcDdg71qPrhumIm6pyf"
+    }
+  ]
+}

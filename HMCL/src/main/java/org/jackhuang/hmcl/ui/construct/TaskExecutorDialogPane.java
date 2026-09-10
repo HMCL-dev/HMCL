@@ -21,16 +21,18 @@ import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.task.*;
+import javafx.scene.layout.*;
+import org.jackhuang.hmcl.task.FetchTask;
+import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -40,6 +42,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class TaskExecutorDialogPane extends BorderPane {
     private TaskExecutor executor;
     private TaskCancellationAction onCancel;
+    @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private final Consumer<FetchTask.SpeedEvent> speedEventHandler;
 
     private final Label lblTitle;
@@ -48,6 +51,8 @@ public class TaskExecutorDialogPane extends BorderPane {
     private final TaskListPane taskListPane;
 
     public TaskExecutorDialogPane(@NotNull TaskCancellationAction cancel) {
+        this.getStyleClass().add("task-executor-dialog-layout");
+
         FXUtils.setLimitWidth(this, 500);
         FXUtils.setLimitHeight(this, 300);
 
@@ -64,42 +69,33 @@ public class TaskExecutorDialogPane extends BorderPane {
             center.getChildren().setAll(lblTitle, taskListPane);
         }
 
-        BorderPane bottom = new BorderPane();
-        this.setBottom(bottom);
+        HBox bottom = new HBox();
+        bottom.setAlignment(Pos.CENTER_LEFT);
         bottom.setPadding(new Insets(0, 8, 8, 8));
+        bottom.setSpacing(8);
+        this.setBottom(bottom);
         {
             lblProgress = new Label();
-            bottom.setLeft(lblProgress);
-
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
             btnCancel = new JFXButton(i18n("button.cancel"));
-            bottom.setRight(btnCancel);
+            btnCancel.getStyleClass().add("dialog-cancel");
+            bottom.getChildren().setAll(lblProgress, spacer, btnCancel);
         }
 
         setCancel(cancel);
 
+        btnCancel.setDisable(onCancel.getCancellationAction() == null);
         btnCancel.setOnAction(e -> {
-            Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
-            if (onCancel.getCancellationAction() != null) {
-                onCancel.getCancellationAction().accept(this);
-            }
+            if (executor != null)
+                executor.cancel();
+            onCancel.getCancellationAction().accept(this);
         });
 
-        speedEventHandler = speedEvent -> {
-            String unit = "B/s";
-            double speed = speedEvent.getSpeed();
-            if (speed > 1024) {
-                speed /= 1024;
-                unit = "KiB/s";
-            }
-            if (speed > 1024) {
-                speed /= 1024;
-                unit = "MiB/s";
-            }
-            double finalSpeed = speed;
-            String finalUnit = unit;
-            Platform.runLater(() -> lblProgress.setText(String.format("%.1f %s", finalSpeed, finalUnit)));
-        };
-        FileDownloadTask.speedEvent.channel(FetchTask.SpeedEvent.class).registerWeak(speedEventHandler);
+        speedEventHandler = FetchTask.SPEED_EVENT.registerWeak(speedEvent -> {
+            String message = I18n.formatSpeed(speedEvent.getSpeed());
+            Platform.runLater(() -> lblProgress.setText(message));
+        });
 
         onEscPressed(this, btnCancel::fire);
     }
@@ -118,7 +114,15 @@ public class TaskExecutorDialogPane extends BorderPane {
                 executor.addTaskListener(new TaskListener() {
                     @Override
                     public void onStop(boolean success, TaskExecutor executor) {
-                        Platform.runLater(() -> fireEvent(new DialogCloseEvent()));
+                        Platform.runLater(() -> {
+                            fireEvent(new DialogCloseEvent());
+
+                            if (Controllers.AUTO_TRIM_HEAP) {
+                                // Trim heap memory when tasks finish, allowing GC to return memory to the OS faster,
+                                // prevent excessive peak memory from consuming system resources.
+                                Platform.runLater(Controllers::trimHeap);
+                            }
+                        });
                     }
                 });
         }

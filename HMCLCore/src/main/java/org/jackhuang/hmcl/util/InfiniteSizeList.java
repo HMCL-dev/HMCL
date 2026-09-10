@@ -15,12 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 package org.jackhuang.hmcl.util;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 public final class InfiniteSizeList<T> extends ArrayList<T> {
@@ -105,7 +105,7 @@ public final class InfiniteSizeList<T> extends ArrayList<T> {
 
     @SuppressWarnings("unchecked")
     private void allocate0(int index) {
-        this.addAll(Lang.immutableListOf((T[])new Object[index + 1 - super.size()]));
+        this.addAll(Arrays.asList((T[]) new Object[index + 1 - super.size()]));
     }
 
     @Override

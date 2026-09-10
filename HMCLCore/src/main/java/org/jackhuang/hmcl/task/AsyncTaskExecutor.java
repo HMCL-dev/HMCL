@@ -65,7 +65,10 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     return success;
                 })
                 .exceptionally(e -> {
-                    Lang.handleUncaughtException(resolveException(e));
+                    Throwable resolved = resolveException(e);
+                    if (resolved instanceof OutOfMemoryError)
+                        taskListeners.forEach(it -> it.onStop(false, this));
+                    Lang.handleUncaughtException(resolved);
                     return false;
                 });
         return this;
@@ -92,7 +95,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
             throw new IllegalStateException("Cannot cancel a not started TaskExecutor");
         }
 
-        cancelled.set(true);
+        cancelled = true;
     }
 
     private CompletableFuture<?> executeTasksExceptionally(Task<?> parentTask, Collection<? extends Task<?>> tasks) {
@@ -101,8 +104,6 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
         return CompletableFuture.completedFuture(null)
                 .thenComposeAsync(unused -> {
-                    totTask.addAndGet(tasks.size());
-
                     if (isCancelled()) {
                         for (Task<?> task : tasks) task.setException(new CancellationException());
                         return CompletableFuture.runAsync(this::checkCancellation);
@@ -164,7 +165,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     }
 
                     task.setResult(result);
-                    task.onDone().fireEvent(new TaskEvent(this, task, false));
+                    task.fireDoneEvent(this, false);
                     taskListeners.forEach(it -> it.onFinished(task));
 
                     task.setState(Task.TaskState.SUCCEEDED);
@@ -173,14 +174,13 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                 })
                 .exceptionally(throwable -> {
                     Throwable resolved = resolveException(throwable);
-                    if (resolved instanceof Exception) {
-                        Exception e = (Exception) resolved;
+                    if (resolved instanceof Exception e) {
                         if (e instanceof InterruptedException || e instanceof CancellationException) {
                             task.setException(null);
                             if (task.getSignificance().shouldLog()) {
                                 LOG.trace("Task aborted: " + task.getName());
                             }
-                            task.onDone().fireEvent(new TaskEvent(this, task, true));
+                            task.fireDoneEvent(this, true);
                             taskListeners.forEach(it -> it.onFailed(task, e));
                         } else {
                             task.setException(e);
@@ -188,11 +188,13 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                             if (task.getSignificance().shouldLog()) {
                                 LOG.trace("Task failed: " + task.getName(), e);
                             }
-                            task.onDone().fireEvent(new TaskEvent(this, task, true));
+                            task.fireDoneEvent(this, true);
                             taskListeners.forEach(it -> it.onFailed(task, e));
                         }
 
                         task.setState(Task.TaskState.FAILED);
+                    } else if (resolved instanceof OutOfMemoryError e) {
+                        handleOutOfMemoryError(task, e);
                     }
 
                     throw new CompletionException(resolved); // rethrow error
@@ -278,7 +280,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                         LOG.trace("Task finished: " + task.getName());
                     }
 
-                    task.onDone().fireEvent(new TaskEvent(this, task, false));
+                    task.fireDoneEvent(this, false);
                     taskListeners.forEach(it -> it.onFinished(task));
 
                     task.setState(Task.TaskState.SUCCEEDED);
@@ -300,10 +302,12 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                                 LOG.trace("Task failed: " + task.getName(), e);
                             }
                         }
-                        task.onDone().fireEvent(new TaskEvent(this, task, true));
+                        task.fireDoneEvent(this, true);
                         taskListeners.forEach(it -> it.onFailed(task, e));
 
                         task.setState(Task.TaskState.FAILED);
+                    } else if (resolved instanceof OutOfMemoryError e) {
+                        handleOutOfMemoryError(task, e);
                     }
 
                     throw new CompletionException(resolved); // rethrow error
@@ -311,11 +315,21 @@ public final class AsyncTaskExecutor extends TaskExecutor {
     }
 
     private <T> CompletableFuture<T> executeTask(Task<?> parentTask, Task<T> task) {
-        if (task instanceof CompletableFutureTask<?>) {
-            return executeCompletableFutureTask(parentTask, (CompletableFutureTask<T>) task);
+        if (task instanceof CompletableFutureTask<T> completableFutureTask) {
+            return executeCompletableFutureTask(parentTask, completableFutureTask);
         } else {
             return executeNormalTask(parentTask, task);
         }
+    }
+
+    /// Completes the failed task lifecycle while preserving the original error for the global handler.
+    private void handleOutOfMemoryError(Task<?> task, OutOfMemoryError error) {
+        Exception taskException = new Exception(error);
+        task.setException(taskException);
+        exception = taskException;
+        task.fireDoneEvent(this, true);
+        taskListeners.forEach(it -> it.onFailed(task, error));
+        task.setState(Task.TaskState.FAILED);
     }
 
     private void checkCancellation() {

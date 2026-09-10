@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.gradle.mod;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
+import org.glavo.url.WebURL;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
@@ -33,7 +34,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -52,35 +52,22 @@ public abstract class ParseModDataTask extends DefaultTask {
     @OutputFile
     public abstract RegularFileProperty getOutputFile();
 
-    // ---
-
     private static final Logger LOGGER = Logging.getLogger(ParseModDataTask.class);
 
     private static final String S = ";";
     private static final String MOD_SEPARATOR = ",";
 
     private static final Pattern[] CURSEFORGE_PATTERNS = {
-            Pattern.compile("^/(minecraft|Minecraft|minecraft-bedrock)/(mc-mods|data-packs|modpacks|customization|mc-addons|texture-packs|customization/configuration|addons)/+(?<modid>[\\w-]+)(/(.*?))?$"),
+            Pattern.compile("^/(minecraft|Minecraft|minecraft-bedrock)/(mc-mods|data-packs|modpacks|customization|mc-addons|texture-packs|customization/configuration|addons|scripts|bukkit-plugins)/+(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/projects/(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/mc-mods/minecraft/(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/legacy/mc-mods/minecraft/(\\d+)-(?<modid>[\\w-]+)"),
     };
 
-    private static String parseCurseforge(String url) {
-        URI res = URI.create(url);
-
-        if (!"http".equals(res.getScheme()) && !"https".equals(res.getScheme())) {
-            return "";
-        }
-
-        for (Pattern pattern : CURSEFORGE_PATTERNS) {
-            Matcher matcher = pattern.matcher(res.getPath());
-            if (matcher.matches()) {
-                return matcher.group("modid");
-            }
-        }
-
-        return "";
+    private static String parseName(String name) {
+        return name.replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">");
     }
 
     private static final Pattern MCMOD_PATTERN =
@@ -94,7 +81,33 @@ public abstract class ParseModDataTask extends DefaultTask {
         return "";
     }
 
-    private static final Set<String> skip = Set.of(
+    private static String cleanChineseName(String chineseName) {
+        if (chineseName == null || chineseName.isBlank())
+            return "";
+
+        chineseName = chineseName.trim();
+
+        StringBuilder builder = new StringBuilder(chineseName.length());
+        int[] codePoints = chineseName.codePoints().toArray();
+        for (int i = 0; i < codePoints.length; i++) {
+            int ch = codePoints[i];
+            int prev = i > 0 ? codePoints[i - 1] : 0;
+
+            switch (ch) {
+                case '（' -> {
+                    if (Character.isWhitespace(prev) || prev == '！' || prev == '。')
+                        builder.append('(');
+                    else
+                        builder.append(" (");
+                }
+                case '）' -> builder.append(')');
+                default -> builder.appendCodePoint(ch);
+            }
+        }
+        return builder.toString().trim();
+    }
+
+    private static final Set<String> SKIP = Set.of(
             "Minecraft",
             "The Building Game"
     );
@@ -105,7 +118,6 @@ public abstract class ParseModDataTask extends DefaultTask {
         Path outputFile = getOutputFile().get().getAsFile().toPath().toAbsolutePath();
 
         Files.createDirectories(outputFile.getParent());
-
 
         List<ModData> modDatas;
         try (BufferedReader reader = Files.newBufferedReader(inputFile)) {
@@ -121,23 +133,23 @@ public abstract class ParseModDataTask extends DefaultTask {
                     "# Copyright (C) 2025. All Rights Reserved.\n" +
                     "#\n");
             for (ModData mod : modDatas) {
-                String chineseName = mod.name.main;
-                String subName = mod.name.sub;
-                String abbr = mod.name.abbr;
+                String chineseName = parseName(mod.name.main);
+                String subName = parseName(mod.name.sub);
+                String abbr = parseName(mod.name.abbr);
 
-                if (chineseName == null)
-                    chineseName = "";
+                chineseName = chineseName == null ? "" : cleanChineseName(chineseName);
                 if (subName == null)
                     subName = "";
                 if (abbr == null)
                     abbr = "";
 
-                if (skip.contains(subName)) {
+                if (SKIP.contains(subName)) {
                     continue;
                 }
 
                 if (chineseName.contains(S) || subName.contains(S)) {
-                    throw new GradleException("Error: " + chineseName);
+                    LOGGER.warn("Error chinese name: {}", chineseName);
+                    continue;
                 }
 
                 String curseforgeId = "";
@@ -148,13 +160,40 @@ public abstract class ParseModDataTask extends DefaultTask {
                 List<ModData.Link> mcmodLinks = links.get("mcmod");
 
                 if (curseforgeLinks != null && !curseforgeLinks.isEmpty()) {
+                    boolean reportError = true;
+
                     for (ModData.Link link : curseforgeLinks) {
-                        curseforgeId = parseCurseforge(link.url);
+                        WebURL res = WebURL.parse(link.url);
+
+                        if (!"http".equals(res.getScheme()) && !"https".equals(res.getScheme())) {
+                            curseforgeId = "";
+                            break;
+                        }
+
+                        if (Set.of(
+                                "files.xmdhs.com",
+                                "edge.forgecdn.net",
+                                "minecraft.curseforge.com",
+                                "mediafilez.forgecdn.net"
+                        ).contains(res.getHost())) {
+                            reportError = false;
+                            curseforgeId = "";
+                            break;
+                        }
+
+                        for (Pattern pattern : CURSEFORGE_PATTERNS) {
+                            Matcher matcher = pattern.matcher(res.getPath());
+                            if (matcher.matches()) {
+                                curseforgeId = matcher.group("modid");
+                                break;
+                            }
+                        }
+
                         if (!curseforgeId.isEmpty()) {
                             break;
                         }
                     }
-                    if (curseforgeId.isEmpty()) {
+                    if (curseforgeId.isEmpty() && reportError) {
                         LOGGER.warn("Error curseforge: {}", chineseName);
                     }
                 }
@@ -169,11 +208,13 @@ public abstract class ParseModDataTask extends DefaultTask {
                 List<String> modId = new ArrayList<>();
                 if (mod.modid != null) {
                     for (String id : mod.modid) {
-                        if (id.contains(MOD_SEPARATOR)) {
+                        String cleanId = parseName(id.trim());
+
+                        if (cleanId.contains(MOD_SEPARATOR) || cleanId.contains(S)) {
                             throw new GradleException("Error modid: " + id);
                         }
 
-                        modId.add(id);
+                        modId.add(cleanId);
                     }
                 }
 
@@ -207,7 +248,6 @@ public abstract class ParseModDataTask extends DefaultTask {
         public static final class Links {
             public Map<String, List<Link>> list;
         }
-
 
         public static final class ModIdDeserializer implements JsonDeserializer<List<String>> {
             private static final Type STRING_LIST = TypeToken.getParameterized(List.class, String.class).getType();

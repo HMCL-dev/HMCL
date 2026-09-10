@@ -17,10 +17,16 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.addon.AddonLoader;
+import org.jackhuang.hmcl.addon.AddonLoaderType;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.translator.Translator;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,39 +49,44 @@ public final class I18n {
         return locale;
     }
 
+    public static boolean isUpsideDown() {
+        return LocaleUtils.getScript(locale.getDisplayLocale()).equals("Qabs");
+    }
+
     public static boolean isUseChinese() {
-        return LocaleUtils.isChinese(locale.getLocale());
+        return LocaleUtils.isChinese(locale.getDisplayLocale());
     }
 
     public static ResourceBundle getResourceBundle() {
         return locale.getResourceBundle();
     }
 
-    public static String i18n(String key, Object... formatArgs) {
+    public static Translator getTranslator() {
+        return locale.getTranslator();
+    }
+
+    public static String i18n(@PropertyKey(resourceBundle = "assets.lang.I18N") String key, Object... formatArgs) {
         return locale.i18n(key, formatArgs);
     }
 
-    public static String i18n(String key) {
+    public static String i18n(@PropertyKey(resourceBundle = "assets.lang.I18N") String key) {
         return locale.i18n(key);
     }
 
     public static String formatDateTime(TemporalAccessor time) {
-        return locale.formatDateTime(time);
+        return getTranslator().formatDateTime(time);
     }
 
-    public static String getDisplaySelfVersion(RemoteVersion version) {
-        if (locale.getLocale().getLanguage().equals("lzh")) {
-            if (version instanceof GameRemoteVersion)
-                return WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion(version.getSelfVersion()));
-            else
-                return WenyanUtils.translateGenericVersion(version.getSelfVersion());
-        }
+    public static String formatSpeed(long bytes) {
+        return getTranslator().formatSpeed(bytes);
+    }
 
-        if (LocaleUtils.isEnglish(locale.getLocale()) && "Qabs".equals(LocaleUtils.getScript(locale.getLocale()))) {
-            return UpsideDownUtils.translate(version.getSelfVersion());
-        }
+    public static String getDisplayVersion(ComponentRemoteVersion version) {
+        return getTranslator().getDisplayVersion(version);
+    }
 
-        return version.getSelfVersion();
+    public static String getDisplayVersion(GameVersionNumber version) {
+        return getTranslator().getDisplayVersion(version);
     }
 
     /// Find the builtin localized resource with given name and suffix.
@@ -115,6 +126,30 @@ public final class I18n {
 
     public static String getWikiLink(GameRemoteVersion remoteVersion) {
         return MinecraftWiki.getWikiLink(locale, remoteVersion);
+    }
+
+    public static String translateLoaderType(AddonLoaderType loaderType) {
+        if (loaderType instanceof ModLoaderType modLoaderType) {
+            return switch (modLoaderType) {
+                case FORGE -> i18n("install.installer.forge");
+                case CLEANROOM -> i18n("install.installer.cleanroom");
+                case NEO_FORGE -> i18n("install.installer.neoforge");
+                case FABRIC -> i18n("install.installer.fabric");
+                case LITE_LOADER -> i18n("install.installer.liteloader");
+                case QUILT -> i18n("install.installer.quilt");
+                case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
+                default -> modLoaderType.displayName();
+            };
+        }
+        return loaderType.displayName();
+    }
+
+    public static String translateLoaderName(AddonLoader loader) {
+        if (loader.type() != null)
+            return translateLoaderType(loader.type());
+        else return "bungeecord".equalsIgnoreCase(loader.name())
+                ? "BungeeCord"
+                : StringUtils.capitalizeWords(loader.name());
     }
 
     public static boolean hasKey(String key) {

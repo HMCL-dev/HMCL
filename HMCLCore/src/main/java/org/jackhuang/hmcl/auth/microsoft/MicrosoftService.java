@@ -20,12 +20,17 @@ package org.jackhuang.hmcl.auth.microsoft;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
-import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.*;
@@ -69,10 +74,10 @@ public class MicrosoftService {
         return profileRepository;
     }
 
-    public MicrosoftSession authenticate() throws AuthenticationException {
+    public MicrosoftSession authenticate(OAuth.GrantFlow flow) throws AuthenticationException {
         try {
-            OAuth.Result result = OAuth.MICROSOFT.authenticate(OAuth.GrantFlow.DEVICE, new OAuth.Options(SCOPE, callback));
-            return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
+            OAuth.Result result = OAuth.MICROSOFT.authenticate(flow, new OAuth.Options(SCOPE, callback));
+            return authenticateViaLiveAccessToken(result.accessToken(), result.refreshToken());
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         } catch (JsonParseException e) {
@@ -82,8 +87,8 @@ public class MicrosoftService {
 
     public MicrosoftSession refresh(MicrosoftSession oldSession) throws AuthenticationException {
         try {
-            OAuth.Result result = OAuth.MICROSOFT.refresh(oldSession.getRefreshToken(), new OAuth.Options(SCOPE, callback));
-            return authenticateViaLiveAccessToken(result.getAccessToken(), result.getRefreshToken());
+            OAuth.Result result = OAuth.MICROSOFT.refresh(oldSession.refreshToken(), new OAuth.Options(SCOPE, callback));
+            return authenticateViaLiveAccessToken(result.accessToken(), result.refreshToken());
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         } catch (JsonParseException e) {
@@ -245,7 +250,16 @@ public class MicrosoftService {
                 .createConnection();
         int responseCode = conn.getResponseCode();
         if (responseCode == HTTP_NOT_FOUND) {
-            throw new NoMinecraftJavaEditionProfileException();
+            MinecraftLicense license = HttpRequest.GET("https://api.minecraftservices.com/entitlements/license")
+                    .authorization(tokenType, accessToken)
+                    .getJson(MinecraftLicense.class);
+            boolean hasMinecraftLicense = license != null && license.items() != null && license.items().stream()
+                    .anyMatch(item -> "game_minecraft".equals(item.name()));
+            if (!hasMinecraftLicense) {
+                throw new MinecraftJavaEditionLicenseNotFoundException();
+            } else {
+                throw new MinecraftJavaEditionProfileNotFoundException();
+            }
         } else if (responseCode != 200) {
             throw new ResponseCodeException("https://api.minecraftservices.com/minecraft/profile", responseCode);
         }
@@ -257,7 +271,7 @@ public class MicrosoftService {
     public Optional<CompleteGameProfile> getCompleteGameProfile(UUID uuid) throws AuthenticationException {
         Objects.requireNonNull(uuid);
 
-        return Optional.ofNullable(GSON.fromJson(request("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid), null), CompleteGameProfile.class));
+        return Optional.ofNullable(GSON.fromJson(request("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDs.toCompactString(uuid), null), CompleteGameProfile.class));
     }
 
     public void uploadSkin(String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
@@ -321,16 +335,19 @@ public class MicrosoftService {
         public static final long ADD_FAMILY = 2148916238L;
     }
 
-    public static class XBox400Exception extends AuthenticationException {
+    public final static class XBox400Exception extends AuthenticationException {
     }
 
-    public static class NoMinecraftJavaEditionProfileException extends AuthenticationException {
+    public final static class MinecraftJavaEditionProfileNotFoundException extends AuthenticationException {
     }
 
-    public static class NoXuiException extends AuthenticationException {
+    public final static class MinecraftJavaEditionLicenseNotFoundException extends AuthenticationException {
     }
 
-    private static class XBoxLiveAuthenticationResponseDisplayClaims {
+    public final static class NoXuiException extends AuthenticationException {
+    }
+
+    private final static class XBoxLiveAuthenticationResponseDisplayClaims {
         List<Map<Object, Object>> xui;
     }
 
@@ -356,7 +373,7 @@ public class MicrosoftService {
      * XErr Candidates: 2148916233 = missing XBox account 2148916238 = child account
      * not linked to a family
      */
-    private static class XBoxLiveAuthenticationResponse extends MicrosoftErrorResponse {
+    private final static class XBoxLiveAuthenticationResponse extends MicrosoftErrorResponse {
         @SerializedName("IssueInstant")
         String issueInstant;
 
@@ -370,7 +387,7 @@ public class MicrosoftService {
         XBoxLiveAuthenticationResponseDisplayClaims displayClaims;
     }
 
-    private static class MinecraftLoginWithXBoxResponse {
+    private final static class MinecraftLoginWithXBoxResponse {
         @SerializedName("username")
         String username;
 
@@ -387,14 +404,14 @@ public class MicrosoftService {
         int expiresIn;
     }
 
-    private static class MinecraftStoreResponseItem {
+    private final static class MinecraftStoreResponseItem {
         @SerializedName("name")
         String name;
         @SerializedName("signature")
         String signature;
     }
 
-    private static class MinecraftStoreResponse extends MinecraftErrorResponse {
+    private final static class MinecraftStoreResponse extends MinecraftErrorResponse {
         @SerializedName("items")
         List<MinecraftStoreResponseItem> items;
 
@@ -405,7 +422,7 @@ public class MicrosoftService {
         String keyId;
     }
 
-    public static class MinecraftProfileResponseSkin implements Validation {
+    public final static class MinecraftProfileResponseSkin implements Validation {
         public String id;
         public String state;
         public String url;
@@ -425,8 +442,24 @@ public class MicrosoftService {
 
     }
 
+    @JsonSerializable
+    public record MinecraftLicense(
+            @SerializedName("items") List<MinecraftLicenseItem> items,
+            @SerializedName("signature") String signature,
+            @SerializedName("keyId") String keyId
+    ) {
+    }
+
+    @JsonSerializable
+    public record MinecraftLicenseItem(
+            @SerializedName("name") String name,
+            @SerializedName("signature") String signature
+    ) {
+    }
+
     public static class MinecraftProfileResponse extends MinecraftErrorResponse implements Validation {
         @SerializedName("id")
+        @JsonAdapter(UnhyphenatedUUIDTypeAdapter.class)
         UUID id;
         @SerializedName("name")
         String name;
@@ -453,7 +486,6 @@ public class MicrosoftService {
     }
 
     private static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
             .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
             .create();
 

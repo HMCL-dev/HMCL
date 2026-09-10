@@ -18,18 +18,19 @@
 package org.jackhuang.hmcl.gradle.l10n;
 
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.jackhuang.hmcl.gradle.utils.PropertiesUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,10 +54,7 @@ public abstract class UpsideDownTranslate extends DefaultTask {
         Path inputFile = getInputFile().get().getAsFile().toPath();
         Path outputFile = getOutputFile().get().getAsFile().toPath();
 
-        Properties english = new Properties();
-        try (var reader = Files.newBufferedReader(inputFile)) {
-            english.load(reader);
-        }
+        Properties english = PropertiesUtils.load(inputFile);
 
         Properties output = new Properties();
         Translator translator = new Translator();
@@ -75,29 +73,31 @@ public abstract class UpsideDownTranslate extends DefaultTask {
     }
 
     static final class Translator {
-        private static final Map<Integer, Integer> MAPPER = new LinkedHashMap<>();
+        private static final Map<Integer, Integer> MAPPER = loadMap();
 
-        private static void putChars(char baseChar, String upsideDownChars) {
-            for (int i = 0; i < upsideDownChars.length(); i++) {
-                MAPPER.put(baseChar + i, (int) upsideDownChars.charAt(i));
+        private static Map<Integer, Integer> loadMap() {
+            var map = new LinkedHashMap<Integer, Integer>();
+
+            InputStream inputStream = UpsideDownTranslate.class.getResourceAsStream("upside_down.txt");
+            if (inputStream != null) {
+                try (inputStream) {
+                    new String(inputStream.readAllBytes(), StandardCharsets.UTF_8).lines().forEach(line -> {
+                        if (line.isBlank() || line.startsWith("#"))
+                            return;
+
+                        if (line.length() != 2) {
+                            throw new GradleException("Invalid line: " + line);
+                        }
+
+                        map.put((int) line.charAt(0), (int) line.charAt(1));
+                    });
+                } catch (IOException e) {
+                    throw new GradleException("Failed to load upside_down.txt", e);
+                }
+            } else {
+                throw new GradleException("upside_down.txt not found");
             }
-        }
-
-        private static void putChars(String baseChars, String upsideDownChars) {
-            if (baseChars.length() != upsideDownChars.length()) {
-                throw new IllegalArgumentException("baseChars and upsideDownChars must have same length");
-            }
-
-            for (int i = 0; i < baseChars.length(); i++) {
-                MAPPER.put((int) baseChars.charAt(i), (int) upsideDownChars.charAt(i));
-            }
-        }
-
-        static {
-            putChars('a', "ɐqɔpǝɟbɥıظʞןɯuodbɹsʇnʌʍxʎz");
-            putChars('A', "ⱯᗺƆᗡƎℲ⅁HIſʞꞀWNOԀὉᴚS⟘∩ΛMXʎZ");
-            putChars('0', "0ƖᘔƐㄣϛ9ㄥ86");
-            putChars("_,;.?!/\\'", "‾'⸵˙¿¡/\\,");
+            return Collections.unmodifiableMap(map);
         }
 
         private static final Pattern FORMAT_PATTERN = Pattern.compile("^%(\\d\\$)?(\\d+)?(\\.\\d+)?([sdf])");

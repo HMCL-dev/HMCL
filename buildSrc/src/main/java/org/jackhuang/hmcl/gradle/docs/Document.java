@@ -103,12 +103,8 @@ public record Document(DocumentFileTree directory,
 
                         if (line == null)
                             throw new IOException("Missing end line for macro: " + macroName);
-                        else if (line.startsWith("<!-- #END")) {
-                            if (line.equals(endLine)) {
-                                break;
-                            } else {
-                                throw new IOException("Invalid macro end line: " + line);
-                            }
+                        else if (line.equals(endLine)) {
+                            break;
                         } else {
                             lines.add(line);
                         }

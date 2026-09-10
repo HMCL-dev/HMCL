@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
-import java.net.Proxy;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -31,6 +30,7 @@ import java.util.*;
  */
 public class LaunchOptions implements Serializable {
 
+    private GameInstanceID instanceId;
     private Path gameDir;
     private JavaRuntime java;
     private String versionName;
@@ -47,24 +47,29 @@ public class LaunchOptions implements Serializable {
     private Integer width;
     private Integer height;
     private boolean fullscreen;
-    private String serverIp;
+    private QuickPlayOption quickPlayOption;
     private String wrapper;
-    private Proxy.Type proxyType;
-    private String proxyHost;
-    private int proxyPort;
-    private String proxyUser;
-    private String proxyPass;
+    private ProxyOption proxyOption;
     private boolean noGeneratedJVMArgs;
     private boolean noGeneratedOptimizingJVMArgs;
     private String preLaunchCommand;
     private String postExitCommand;
-    private NativesDirectoryType nativesDirType;
+    private boolean useCustomNatives;
     private String nativesDir;
     private ProcessPriority processPriority = ProcessPriority.NORMAL;
+    private GraphicsAPI graphicsBackend = GraphicsAPI.DEFAULT;
     private Renderer renderer = Renderer.DEFAULT;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
+    private boolean useHighPerformanceGPU;
+    private boolean enableDebugLogOutput;
+    private boolean allowAutoAgent;
+    private boolean disableAutoGameOptions;
     private boolean daemon;
+
+    public GameInstanceID getInstanceId() {
+        return instanceId;
+    }
 
     /**
      * The game directory
@@ -180,11 +185,11 @@ public class LaunchOptions implements Serializable {
         return fullscreen;
     }
 
-    /**
-     * The server ip that will connect to when enter game main menu.
-     */
-    public String getServerIp() {
-        return serverIp;
+    /// The quick play option.
+    ///
+    /// @see <a href="https://minecraft.wiki/w/Quick_Play">Quick Play - Minecraft Wiki</a>
+    public QuickPlayOption getQuickPlayOption() {
+        return quickPlayOption;
     }
 
     /**
@@ -194,30 +199,8 @@ public class LaunchOptions implements Serializable {
         return wrapper;
     }
 
-    public Proxy.Type getProxyType() {
-        return proxyType;
-    }
-
-    public String getProxyHost() {
-        return proxyHost;
-    }
-
-    public int getProxyPort() {
-        return proxyPort;
-    }
-
-    /**
-     * The user name of the proxy, optional.
-     */
-    public String getProxyUser() {
-        return proxyUser;
-    }
-
-    /**
-     * The password of the proxy, optional
-     */
-    public String getProxyPass() {
-        return proxyPass;
+    public ProxyOption getProxyOption() {
+        return proxyOption;
     }
 
     /**
@@ -248,17 +231,12 @@ public class LaunchOptions implements Serializable {
         return postExitCommand;
     }
 
-    /**
-     * 0 - ./minecraft/versions/&lt;version&gt;/natives
-     * 1 - custom natives directory
-     */
-    public NativesDirectoryType getNativesDirType() {
-        return nativesDirType;
+    /// Whether native libraries are supplied and managed outside HMCL.
+    public boolean isUseCustomNatives() {
+        return useCustomNatives;
     }
 
-    /**
-     * Path to the natives directory, optional
-     */
+    /// Path to the natives directory, or blank for the default directory.
     public String getNativesDir() {
         return nativesDir;
     }
@@ -270,16 +248,37 @@ public class LaunchOptions implements Serializable {
         return processPriority;
     }
 
-    public Renderer getRenderer() {
+    public @NotNull GraphicsAPI getGraphicsBackend() {
+        return graphicsBackend;
+    }
+
+    public @NotNull Renderer getRenderer() {
         return renderer;
     }
 
-    public boolean isUseNativeGLFW() {
+    public boolean isUseNativeGLFWorSDL() {
         return useNativeGLFW;
     }
 
     public boolean isUseNativeOpenAL() {
         return useNativeOpenAL;
+    }
+
+    public boolean isUseHighPerformanceGPU() {
+        return useHighPerformanceGPU;
+    }
+
+    public boolean isEnableDebugLogOutput() {
+        return enableDebugLogOutput;
+    }
+
+    public boolean isAllowAutoAgent() {
+        return allowAutoAgent;
+    }
+
+    /// Returns whether automatic game options generation is disabled.
+    public boolean isDisableAutoGameOptions() {
+        return disableAutoGameOptions;
     }
 
     /**
@@ -320,6 +319,11 @@ public class LaunchOptions implements Serializable {
 
         public List<String> getJavaAgents() {
             return options.javaAgents;
+        }
+
+        public Builder setInstanceId(GameInstanceID instanceId) {
+            options.instanceId = instanceId;
+            return this;
         }
 
         public Builder setGameDir(Path gameDir) {
@@ -407,8 +411,8 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setServerIp(String serverIp) {
-            options.serverIp = serverIp;
+        public Builder setQuickPlayOption(QuickPlayOption quickPlayOption) {
+            options.quickPlayOption = quickPlayOption;
             return this;
         }
 
@@ -417,28 +421,8 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setProxyType(Proxy.Type proxyType) {
-            options.proxyType = proxyType;
-            return this;
-        }
-
-        public Builder setProxyHost(String proxyHost) {
-            options.proxyHost = proxyHost;
-            return this;
-        }
-
-        public Builder setProxyPort(int proxyPort) {
-            options.proxyPort = proxyPort;
-            return this;
-        }
-
-        public Builder setProxyUser(String proxyUser) {
-            options.proxyUser = proxyUser;
-            return this;
-        }
-
-        public Builder setProxyPass(String proxyPass) {
-            options.proxyPass = proxyPass;
+        public Builder setProxyOption(ProxyOption proxyOption) {
+            options.proxyOption = proxyOption;
             return this;
         }
 
@@ -462,8 +446,8 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setNativesDirType(NativesDirectoryType nativesDirType) {
-            options.nativesDirType = nativesDirType;
+        public Builder setUseCustomNatives(boolean useCustomNatives) {
+            options.useCustomNatives = useCustomNatives;
             return this;
         }
 
@@ -477,12 +461,17 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setRenderer(@NotNull Renderer renderer) {
-            options.renderer = renderer;
+        public Builder setGraphicsBackend(GraphicsAPI backend) {
+            options.graphicsBackend = Objects.requireNonNullElse(backend, GraphicsAPI.DEFAULT);
             return this;
         }
 
-        public Builder setUseNativeGLFW(boolean useNativeGLFW) {
+        public Builder setRenderer(Renderer renderer) {
+            options.renderer = Objects.requireNonNullElse(renderer, Renderer.DEFAULT);
+            return this;
+        }
+
+        public Builder setUseNativeGLFWorSDL(boolean useNativeGLFW) {
             options.useNativeGLFW = useNativeGLFW;
             return this;
         }
@@ -492,10 +481,29 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
+        public Builder setUseHighPerformanceGPU(boolean useHighPerformanceGPU) {
+            options.useHighPerformanceGPU = useHighPerformanceGPU;
+            return this;
+        }
+
         public Builder setDaemon(boolean daemon) {
             options.daemon = daemon;
             return this;
         }
 
+        public Builder setEnableDebugLogOutput(boolean u) {
+            options.enableDebugLogOutput = u;
+            return this;
+        }
+
+        public Builder setAllowAutoAgent(boolean allowAutoAgent) {
+            options.allowAutoAgent = allowAutoAgent;
+            return this;
+        }
+
+        public Builder setDisableAutoGameOptions(boolean disableAutoGameOptions) {
+            options.disableAutoGameOptions = disableAutoGameOptions;
+            return this;
+        }
     }
 }
