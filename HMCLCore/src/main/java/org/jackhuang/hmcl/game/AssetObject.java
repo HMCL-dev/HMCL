@@ -17,48 +17,24 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.gson.Validation;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
-/**
- *
- * @author huangyuhui
- */
-public final class AssetObject implements Validation {
-
-    private final String hash;
-    private final long size;
-
-    public AssetObject() {
-        this("", 0);
-    }
-
-    public AssetObject(String hash, long size) {
-        this.hash = hash;
-        this.size = size;
-    }
-
-    public String getHash() {
-        return hash;
-    }
-
-    public long getSize() {
-        return size;
+/// @author huangyuhui
+@JsonSerializable
+public record AssetObject(String hash, long size) {
+    public AssetObject {
+        if (StringUtils.isBlank(hash) || hash.length() < 2) {
+            throw new IllegalArgumentException("Invalid asset hash: " + hash);
+        }
     }
 
     public String getLocation() {
         return hash.substring(0, 2) + "/" + hash;
-    }
-
-    @Override
-    public void validate() throws JsonParseException {
-        if (StringUtils.isBlank(hash) || hash.length() < 2)
-            throw new JsonParseException("AssetObject hash cannot be blank.");
     }
 
     public boolean validateChecksum(Path file, boolean defaultValue) throws IOException {

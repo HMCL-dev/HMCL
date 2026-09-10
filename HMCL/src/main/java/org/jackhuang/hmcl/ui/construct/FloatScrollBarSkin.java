@@ -23,8 +23,8 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.NumberBinding;
-import javafx.beans.value.ChangeListener;
 import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
@@ -43,11 +43,10 @@ import org.jackhuang.hmcl.util.MathUtils;
 public class FloatScrollBarSkin implements Skin<ScrollBar> {
     private ScrollBar scrollBar;
     private Region group;
-    private Rectangle track = new Rectangle();
-    private Rectangle thumb = new Rectangle();
+    private final Rectangle track = new Rectangle();
+    private final Rectangle thumb = new Rectangle();
 
-    @SuppressWarnings({"FieldCanBeLocal", "FieldMayBeFinal"})
-    private ChangeListener<Boolean> thumbHoverListener;
+    private BooleanBinding hoverOrPressed;
     private Animation thumbHoverAnimation;
 
     public FloatScrollBarSkin(final ScrollBar scrollBar) {
@@ -214,7 +213,8 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
             }
         };
 
-        this.thumbHoverListener = FXUtils.onWeakChangeAndOperate(thumb.hoverProperty(), newValue -> {
+        this.hoverOrPressed = thumb.hoverProperty().or(thumb.pressedProperty());
+        FXUtils.onChangeAndOperate(hoverOrPressed, newValue -> {
             if (thumbHoverAnimation != null) {
                 thumbHoverAnimation.stop();
                 thumbHoverAnimation = null;
@@ -249,7 +249,7 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
             thumbHoverAnimation.stop();
             thumbHoverAnimation = null;
         }
-        thumbHoverListener = null;
+        hoverOrPressed = null;
         scrollBar = null;
         group = null;
     }

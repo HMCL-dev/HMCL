@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.resourcepack;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.junit.jupiter.api.Test;
 
-import static org.jackhuang.hmcl.resourcepack.ResourcePackManager.isMcVersionSupported;
-import static org.jackhuang.hmcl.resourcepack.ResourcePackManager.isMcVersionSupportsNewOptionsFormat;
+import static org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager.isMcVersionSupported;
+import static org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager.isMcVersionSupportsNewOptionsFormat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

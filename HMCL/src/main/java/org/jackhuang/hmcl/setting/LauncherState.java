@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.setting;
 
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import javafx.beans.Observable;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -52,6 +53,15 @@ public final class LauncherState extends ObservableSetting implements JsonSchema
     public LauncherState() {
         tracker.markDirty(schema);
         register();
+    }
+
+    /// Returns whether the changed field should trigger automatic persistence immediately.
+    @Override
+    public boolean shouldSaveImmediately(Observable observable) {
+        return observable != x
+                && observable != y
+                && observable != width
+                && observable != height;
     }
 
     /// The schema used by this launcher state file.

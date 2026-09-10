@@ -168,7 +168,7 @@ public final class HMCLJavaRepository implements JavaRepository {
             update.put("component", gameJavaVersion.component());
 
             Map<String, JavaLocalFiles.Local> files = new LinkedHashMap<>();
-            result.remoteFiles().getFiles().forEach((path, file) -> {
+            result.remoteFiles().files().forEach((path, file) -> {
                 if (file instanceof MojangJavaRemoteFiles.RemoteFile) {
                     DownloadInfo downloadInfo = ((MojangJavaRemoteFiles.RemoteFile) file).getDownloads().get("raw");
                     if (downloadInfo != null) {
@@ -190,12 +190,12 @@ public final class HMCLJavaRepository implements JavaRepository {
     public Task<JavaRuntime> getInstallJavaTask(Platform platform, String name, Map<String, Object> update, Path archiveFile) {
         Path javaDir = getJavaDir(platform, name);
         return new JavaInstallTask(javaDir, update, archiveFile).thenApplyAsync(result -> {
-            if (!result.getInfo().getPlatform().equals(platform))
-                throw new IOException("Platform is mismatch: expected " + platform + " but got " + result.getInfo().getPlatform());
+            if (!result.info().getPlatform().equals(platform))
+                throw new IOException("Platform is mismatch: expected " + platform + " but got " + result.info().getPlatform());
 
             Path executable = javaDir.resolve("bin").resolve(platform.getOperatingSystem().getJavaExecutable()).toRealPath();
             JsonUtils.writeToJsonFile(getManifestFile(platform, name), result);
-            return JavaRuntime.of(executable, result.getInfo(), true);
+            return JavaRuntime.of(executable, result.info(), true);
         });
     }
 

@@ -70,7 +70,7 @@ public class JFXComboBox<T> extends ComboBox<T> {
 
     private void initialize() {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
-        this.setCellFactory(listView -> new JFXListCell<T>() {
+        this.setCellFactory(listView -> new JFXListCell<>() {
             @Override
             public void updateItem(T item, boolean empty) {
                 super.updateItem(item, empty);
@@ -80,7 +80,7 @@ public class JFXComboBox<T> extends ComboBox<T> {
 
         // had to refactor the code out of the skin class to allow
         // customization of the button cell
-        this.setButtonCell(new ListCell<T>() {
+        this.setButtonCell(new ListCell<>() {
             {
                 // fixed clearing the combo box value is causing
                 // java prompt text to be shown because the button cell is not updated

@@ -17,17 +17,46 @@
  */
 package org.jackhuang.hmcl.util.io;
 
-import java.net.URI;
+import java.io.IOException;
+import java.net.*;
 import java.net.http.HttpHeaders;
-import java.net.http.HttpResponse;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
+/// Response URI and headers captured from a URL response.
+///
 /// @author Glavo
-public record UrlResponseInfo(URI uri, HttpHeaders headers) {
-    public static UrlResponseInfo of(HttpResponse<?> httpResponse) {
-        return new UrlResponseInfo(httpResponse.uri(), httpResponse.headers());
+public record UrlResponseInfo(int responseCode, URI uri, HttpHeaders headers) {
+    /// Creates response metadata from a URL connection.
+    public static UrlResponseInfo of(HttpURLConnection connection) throws IOException {
+        return new UrlResponseInfo(connection.getResponseCode(), toURI(connection.getURL()), headers(connection));
     }
 
-    public static UrlResponseInfo of(URI uri, HttpResponse.ResponseInfo info) {
-        return new UrlResponseInfo(uri, info.headers());
+    /// Converts a response URL into a URI.
+    private static URI toURI(URL url) throws IOException {
+        try {
+            return url.toURI();
+        } catch (URISyntaxException e) {
+            throw new IOException("Invalid response URL: " + url, e);
+        }
+    }
+
+    /// Copies named header fields from a URL connection.
+    private static HttpHeaders headers(URLConnection connection) {
+        Map<String, List<String>> headerFields = connection.getHeaderFields();
+        if (headerFields == null || headerFields.isEmpty()) {
+            return HttpHeaders.of(Map.of(), (k, v) -> true);
+        }
+
+        LinkedHashMap<String, List<String>> headers = new LinkedHashMap<>();
+        for (Map.Entry<String, List<String>> entry : headerFields.entrySet()) {
+            String name = entry.getKey();
+            List<String> values = entry.getValue();
+            if (name != null && values != null) {
+                headers.put(name, List.copyOf(values));
+            }
+        }
+        return HttpHeaders.of(headers, (name, value) -> true);
     }
 }

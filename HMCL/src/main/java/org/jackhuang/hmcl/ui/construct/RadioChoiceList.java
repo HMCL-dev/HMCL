@@ -75,6 +75,9 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
     /// The reverse lookup from rendered toggles to choices.
     private final Map<Toggle, Choice<T>> choiceByToggle = new IdentityHashMap<>();
 
+    /// Whether the current selection update should keep the list empty instead of selecting the fallback.
+    private boolean clearingSelection;
+
     /// Creates an empty radio choice list.
     public RadioChoiceList() {
         getStyleClass().addAll("radio-choice-list", "multi-file-item");
@@ -82,11 +85,21 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
 
         group.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
             Choice<T> choice = newValue != null ? choiceByToggle.get(newValue) : null;
-            selectedChoice.set(choice);
             selectedValue.set(choice != null ? choice.getValue() : null);
+            selectedChoice.set(choice);
         });
 
-        selectedValue.addListener((observable, oldValue, newValue) -> selectValue(newValue));
+        selectedValue.addListener((observable, oldValue, newValue) -> {
+            if (!clearingSelection) {
+                selectValue(newValue);
+            }
+        });
+    }
+
+    /// Replaces the displayed choices.
+    @SafeVarargs
+    public final void setChoices(Choice<T>... choices) {
+        setChoices(List.of(choices));
     }
 
     /// Replaces the displayed choices.
@@ -112,9 +125,17 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
 
     /// Clears the selected choice.
     public void clearSelection() {
-        Toggle selectedToggle = group.getSelectedToggle();
-        if (selectedToggle != null) {
-            selectedToggle.setSelected(false);
+        clearingSelection = true;
+        try {
+            Toggle selectedToggle = group.getSelectedToggle();
+            if (selectedToggle != null) {
+                selectedToggle.setSelected(false);
+            } else {
+                selectedChoice.set(null);
+                selectedValue.set(null);
+            }
+        } finally {
+            clearingSelection = false;
         }
     }
 

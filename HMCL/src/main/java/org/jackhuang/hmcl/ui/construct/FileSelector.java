@@ -120,7 +120,7 @@ public class FileSelector extends HBox {
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().addAll(getExtensionFilters());
         chooser.setTitle(StringUtils.isBlank(chooserTitle) ? i18n("selector.choose_file") : chooserTitle);
-        Path file = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+        Path file = Controllers.showOpenDialog(chooser);
         if (file != null) {
             String path = FileUtils.getAbsolutePath(file);
             customField.setText(path);
@@ -131,7 +131,7 @@ public class FileSelector extends HBox {
     private void openDirectoryChooser(JFXTextField customField) {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle(StringUtils.isBlank(chooserTitle) ? i18n("selector.choose_directory") : chooserTitle);
-        Path dir = FileUtils.toPath(chooser.showDialog(Controllers.getStage()));
+        Path dir = Controllers.showDialog(chooser);
         if (dir != null) {
             String path = FileUtils.getAbsolutePath(dir);
             customField.setText(path);
