@@ -594,9 +594,9 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                             }
                         }
                     }
-                    knownHashes = knownHashes.isEmpty() ? null : Map.copyOf(knownHashes);
+                    knownHashes = Map.copyOf(knownHashes);
                 } else {
-                    knownHashes = null;
+                    knownHashes = Map.of();
                 }
 
                 return new RemoteAddon.Version(
