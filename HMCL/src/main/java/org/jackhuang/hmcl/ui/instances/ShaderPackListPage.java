@@ -57,10 +57,12 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -73,7 +75,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class ShaderPackListPage extends ListPageBase<ShaderPackFile> {
+public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPackInfoObject> {
 
     private final ReentrantLock lock = new ReentrantLock();
 
@@ -121,7 +123,7 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackFile> {
             lock.lock();
             try {
                 shaderPackManager.refresh();
-                return shaderPackManager.getLocalFiles();
+                return shaderPackManager.getLocalFiles().stream().map(ShaderPackInfoObject::new).toList();
             } finally {
                 lock.unlock();
             }
@@ -161,9 +163,9 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackFile> {
         }).start();
     }
 
-    public void removeFiles(List<ShaderPackFile> selectedItems) {
+    private void removeSelected(List<ShaderPackInfoObject> selectedItems) {
         try {
-            shaderPackManager.removeShaderPacks(selectedItems);
+            shaderPackManager.removeShaderPacks(selectedItems.stream().map(ShaderPackInfoObject::getFile).toList());
         } catch (IOException e) {
             Controllers.dialog(i18n("shaderpack.delete.failed", e.getMessage()), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             LOG.warning("Failed to delete shader packs", e);
@@ -216,20 +218,38 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackFile> {
         }
     }
 
-    private static Image getOrCreateIcon(ShaderPackFile shaderPackFile) {
-        Image image = shaderPackFile.loadIcon();
-        if (image == null || image.isError() || image.getWidth() <= 0 || image.getHeight() <= 0 ||
-                (Math.abs(image.getWidth() - image.getHeight()) >= 1)) {
-            image = switch (shaderPackFile.getLoaderType()) {
+    public static final class ShaderPackInfoObject {
+        private final ShaderPackFile file;
+
+        private final ItemPropertyAsyncCache<Image, ShaderPackInfoObject> iconCache;
+
+        public ShaderPackInfoObject(ShaderPackFile file) {
+            this.file = file;
+
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
+        }
+
+        public ShaderPackFile getFile() {
+            return file;
+        }
+
+        private Image getDefaultIcon() {
+            return switch (file.getLoaderType()) {
                 case OPTIFINE_IRIS -> FXUtils.newBuiltinImage("/assets/img/opti-iris.png");
-                default -> ResourcePackListPage.UNKNOWN_PACK_IMAGE.get();
+                default -> FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
             };
         }
-        return image;
+
+        private Image loadIcon() {
+            Image icon = file.loadIcon();
+            if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1)
+                return icon;
+            return getDefaultIcon();
+        }
     }
 
     private static final class ShaderPackListPageSkin extends SkinBase<ShaderPackListPage> {
-        private final JFXListView<ShaderPackFile> listView;
+        private final JFXListView<ShaderPackInfoObject> listView;
         private final JFXTextField searchField = new JFXTextField();
 
         private final TransitionPane toolbarPane = new TransitionPane();
@@ -257,11 +277,11 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackFile> {
                 toolbarSelecting.getChildren().setAll(
                         createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
                             Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () ->
-                                            control.removeFiles(listView.getSelectionModel().getSelectedItems()),
+                                            control.removeSelected(listView.getSelectionModel().getSelectedItems()),
                                     null);
                         }),
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
-                                control.checkUpdates(listView.getSelectionModel().getSelectedItems().stream().toList())
+                                control.checkUpdates(listView.getSelectionModel().getSelectedItems().stream().map(ShaderPackInfoObject::getFile).toList())
                         ),
                         createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
                                 listView.getSelectionModel().selectAll()),
@@ -302,7 +322,7 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackFile> {
                         createToolbarButton2(i18n("shaderpack.add"), SVG.ADD, control::onAddFiles),
                         createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, control::onOpenFolder),
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
-                                control.checkUpdates(listView.getItems().stream().toList())
+                                control.checkUpdates(listView.getItems().stream().map(ShaderPackInfoObject::getFile).toList())
                         ),
                         createToolbarButton2(i18n("download"), SVG.DOWNLOAD, control::onDownload),
                         createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
@@ -339,7 +359,7 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackFile> {
                 Bindings.bindContent(listView.getItems(), control.getItems());
 
                 listView.setOnContextMenuRequested(event -> {
-                    ShaderPackFile selectedItem = listView.getSelectionModel().getSelectedItem();
+                    ShaderPackInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
                     if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
                         listView.getSelectionModel().clearSelection();
                         Controllers.dialog(new ShaderPackInfoDialog(selectedItem));
@@ -387,10 +407,11 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackFile> {
                 }
 
                 // Do we need to search in the background thread?
-                for (ShaderPackFile item : getSkinnable().getItems()) {
-                    var meta = item.getMeta();
-                    if (predicate.test(item.getFile().getFileName().toString())
-                            || predicate.test(item.getName())
+                for (ShaderPackInfoObject item : getSkinnable().getItems()) {
+                    var file = item.getFile();
+                    var meta = file.getMeta();
+                    if (predicate.test(file.getFile().getFileName().toString())
+                            || predicate.test(file.getName())
                             || (meta != null && (predicate.test(meta.version()) || predicate.test(meta.description())))) {
                         listView.getItems().add(item);
                     }
@@ -400,14 +421,14 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackFile> {
 
     }
 
-    private static final class ShaderPackListCell extends MDListCell<ShaderPackFile> {
+    private static final class ShaderPackListCell extends MDListCell<ShaderPackInfoObject> {
 
         private final ImageContainer imageContainer = new ImageContainer(24);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
         private final JFXButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);
 
-        public ShaderPackListCell(JFXListView<ShaderPackFile> listView) {
+        public ShaderPackListCell(JFXListView<ShaderPackInfoObject> listView) {
             super(listView);
 
             HBox root = new HBox(8);
@@ -426,23 +447,25 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackFile> {
         }
 
         @Override
-        protected void updateControl(ShaderPackFile item, boolean empty) {
+        protected void updateControl(ShaderPackInfoObject item, boolean empty) {
             if (empty || item == null) return;
 
-            imageContainer.setImage(getOrCreateIcon(item));
+            ShaderPackFile file = item.file;
+
+            item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(itemProperty()));
 
             content.getTags().clear();
-            content.setTitle(item.getFileName());
-            content.setSubtitle(item.getMeta() == null || item.getMeta().name() == null ? "" : item.getMeta().name());
-            content.addTag(switch (item.getLoaderType()) {
+            content.setTitle(file.getFileName());
+            content.setSubtitle(file.getMeta() == null || file.getMeta().name() == null ? "" : file.getMeta().name());
+            content.addTag(switch (file.getLoaderType()) {
                 case OPTIFINE_IRIS -> i18n("shaderpack.loader.optifine_iris");
                 case APERTURE -> i18n("shaderpack.loader.aperture");
             });
-            if (item.getMeta() != null && item.getMeta().version() != null)
-                content.addTag(item.getMeta().version());
+            if (file.getMeta() != null && file.getMeta().version() != null)
+                content.addTag(file.getMeta().version());
 
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
-            btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(item.getFile()));
+            btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(file.getFile()));
 
             btnInfo.setOnAction(e -> Controllers.dialog(new ShaderPackInfoDialog(item)));
         }
@@ -450,7 +473,8 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackFile> {
 
     private static final class ShaderPackInfoDialog extends JFXDialogLayout {
 
-        public ShaderPackInfoDialog(ShaderPackFile shaderPackFile) {
+        public ShaderPackInfoDialog(ShaderPackInfoObject infoObject) {
+            ShaderPackFile shaderPackFile = infoObject.file;
 
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
@@ -458,7 +482,7 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackFile> {
             maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
 
             ImageContainer imageContainer = new ImageContainer(40);
-            imageContainer.setImage(getOrCreateIcon(shaderPackFile));
+            infoObject.iconCache.attachValue(imageContainer.imageProperty(), null);
 
             TwoLineListItem title = new TwoLineListItem();
             title.getTitleLabel().setWrapText(true);
