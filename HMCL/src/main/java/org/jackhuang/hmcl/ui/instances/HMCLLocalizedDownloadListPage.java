@@ -103,15 +103,6 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         }
 
         @Override
-        protected SortType getBackedRemoteModRepositorySortOrder() {
-            if ("addon.modrinth".equals(downloadSource.get())) {
-                return SortType.NAME;
-            } else {
-                return SortType.POPULARITY;
-            }
-        }
-
-        @Override
         public RemoteAddon.Type getType() {
             return type;
         }

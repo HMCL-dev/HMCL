@@ -39,8 +39,6 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
 
     protected abstract RemoteAddonRepository getBackedRemoteModRepository();
 
-    protected abstract SortType getBackedRemoteModRepositorySortOrder();
-
     @Override
     public String getApiBaseUrl() {
         return getBackedRemoteModRepository().getApiBaseUrl();
@@ -80,8 +78,8 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
             SearchResult searchResult = null;
             List<RemoteAddon> remoteAddons = List.of();
             for (String englishSearchFilter : englishSearchFiltersSet) {
-                searchResult = getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, englishSearchFilter, getBackedRemoteModRepositorySortOrder(), sortOrder);
-                remoteAddons = searchResult.getUnsortedResults().toList();
+                searchResult = getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, englishSearchFilter, SortType.RELEVANCY, sortOrder);
+                remoteAddons = searchResult.results().toList();
                 if (!remoteAddons.isEmpty()) {
                     break;
                 }
@@ -100,7 +98,7 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
                     searchResultArray[englishIndex--] = remoteAddon;
                 }
             }
-            totalPages = searchResult.getTotalPages();
+            totalPages = searchResult.totalPages();
         }
 
         StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
