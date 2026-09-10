@@ -30,19 +30,19 @@ import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 
-public record Texture(String hash, Image image) {
-    public Texture(String hash, Image image) {
+public record HashedTexture(String hash, Image image) {
+    public HashedTexture(String hash, Image image) {
         this.hash = requireNonNull(hash);
         this.image = requireNonNull(image);
     }
 
-    private static final Map<String, Texture> textures = new HashMap<>();
+    private static final Map<String, HashedTexture> textures = new HashMap<>();
 
     public static boolean hasTexture(String hash) {
         return textures.containsKey(hash);
     }
 
-    public static Texture getTexture(String hash) {
+    public static HashedTexture getTexture(String hash) {
         return textures.get(hash);
     }
 
@@ -89,7 +89,7 @@ public record Texture(String hash, Image image) {
         array[offset + 3] = (byte) (x >> 0 & 0xff);
     }
 
-    public static Texture loadTexture(InputStream in) throws IOException {
+    public static HashedTexture loadTexture(InputStream in) throws IOException {
         if (in == null) return null;
         Image img;
         try (InputStream is = in) {
@@ -102,17 +102,17 @@ public record Texture(String hash, Image image) {
         return loadTexture(img);
     }
 
-    public static Texture loadTexture(Image image) {
+    public static HashedTexture loadTexture(Image image) {
         if (image == null) return null;
 
         String hash = computeTextureHash(image);
 
-        Texture existent = textures.get(hash);
+        HashedTexture existent = textures.get(hash);
         if (existent != null) {
             return existent;
         }
 
-        Texture texture = new Texture(hash, image);
+        HashedTexture texture = new HashedTexture(hash, image);
         existent = textures.putIfAbsent(hash, texture);
 
         if (existent != null) {

@@ -43,7 +43,7 @@ public class AccountAdvancedListItem extends AdvancedListItem {
     private final Canvas canvas;
     private boolean tooltipInstalled;
 
-    private final ObjectProperty<Account> account = new SimpleObjectProperty<Account>() {
+    private final ObjectProperty<Account> account = new SimpleObjectProperty<>() {
 
         @Override
         protected void invalidated() {
