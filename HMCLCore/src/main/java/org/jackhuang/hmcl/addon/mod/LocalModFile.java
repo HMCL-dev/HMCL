@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.addon.meta.CoreModInfo;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -113,12 +112,6 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     @Override
     public Path getFile() {
         return file;
-    }
-
-    public @Nullable String getSubfolderName() {
-        var parent = getFile().getParent();
-        if (parent.equals(getModManager().getDirectory())) return null;
-        return parent.getFileName().toString();
     }
 
     public ModLoaderType getModLoaderType() {

@@ -331,6 +331,15 @@ public abstract class DefaultGameInstance implements GameInstance {
         }
     }
 
+    // Uses 1.7 snapshot as there's no snapshots for 1.6 after its first release
+    private final boolean usesLegacyCoremodsDir = !getVersion().isAtLeast("1.6.1", "13w36a");
+
+    /// {@inheritDoc}
+    @Override
+    public @Nullable Path getCoreModsDirectory() {
+        return usesLegacyCoremodsDir ? getRunDirectory().resolve("coremods") : null;
+    }
+
     /// Reconstructs virtual and legacy resource layouts for an asset index when required.
     ///
     /// @param assetId the asset index ID

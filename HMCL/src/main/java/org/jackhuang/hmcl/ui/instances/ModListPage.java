@@ -899,12 +899,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             content.setSubtitle(joiner.toString());
 
             {
-                GameVersionNumber gameVersionNumber = page.gameInstance != null ? page.gameInstance.getVersion() : GameVersionNumber.unknown();
+                var instance = modInfo.getModManager().getInstance();
+                GameVersionNumber gameVersionNumber = instance.getVersion();
                 boolean coreModLoaderMismatches = modInfo.getCoreModInfo().getModLoaders(gameVersionNumber).stream().noneMatch(page.supportedLoaders::contains);
-                // Uses 1.7 snapshot as there's no snapshots for 1.6 after its first release
-                boolean wrongCoreModDir = !gameVersionNumber.isAtLeast("1.6.1", "13w36a")
+                boolean wrongCoreModDir = instance.getCoreModsDirectory() != null
                         && modInfo.getCoreModInfo().isLegacy()
-                        && !"coremods".equals(modInfo.getSubfolderName());
+                        && modInfo.getFile().getParent().equals(instance.getCoreModsDirectory());
 
                 if (modLoaderType == ModLoaderType.UNKNOWN) {
                     if (modInfo.isCoreMod()) {
