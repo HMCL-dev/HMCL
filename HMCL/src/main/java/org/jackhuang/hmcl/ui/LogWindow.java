@@ -100,6 +100,8 @@ public final class LogWindow extends Stage {
         }
 
         this.gameProcess = gameProcess;
+
+        FXUtils.addMacOSCloseWindowHandler(this, () -> !gameProcess.isRunning());
     }
 
     public void logLine(Log log) {
