@@ -53,7 +53,7 @@ public final class MultiMCModpackProvider implements ModpackProvider {
         if (!(modpack.getManifest() instanceof MultiMCInstanceConfiguration multiMCInstanceConfiguration))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(instance, new MultiMCModpackInstallTask(dependencyManager, zipFile, modpack, multiMCInstanceConfiguration, instance.getId()));
+        return new ModpackUpdateTask(instance, new MultiMCModpackInstallTask(dependencyManager, zipFile, modpack, multiMCInstanceConfiguration, instance));
     }
 
     private static String getRootEntryName(ZipArchiveReader file) throws IOException {

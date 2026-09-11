@@ -24,14 +24,11 @@ import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackExportTask;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthModpackExportTask;
-import org.jackhuang.hmcl.modpack.multimc.MultiMCInstanceConfiguration;
-import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -96,9 +93,6 @@ public final class ExportWizardProvider implements WizardProvider {
                 switch (modpackType) {
                     case ModpackTypeSelectionPage.MODPACK_TYPE_MCBBS:
                         exportTask = exportAsMcbbs(exportInfo, dest);
-                        break;
-                    case ModpackTypeSelectionPage.MODPACK_TYPE_MULTIMC:
-                        exportTask = exportAsMultiMC(exportInfo, dest);
                         break;
                     case ModpackTypeSelectionPage.MODPACK_TYPE_SERVER:
                         exportTask = exportAsServer(exportInfo, dest);
@@ -174,55 +168,6 @@ public final class ExportWizardProvider implements WizardProvider {
             @Override
             public void execute() {
                 dependency = new McbbsModpackExportTask(resolveCurrentGameInstance(), exportInfo, modpackFile);
-            }
-
-            @Override
-            public Collection<Task<?>> getDependencies() {
-                return Collections.singleton(dependency);
-            }
-        };
-    }
-
-    private Task<?> exportAsMultiMC(ModpackExportInfo exportInfo, Path modpackFile) {
-        return new Task<Void>() {
-            @Nullable Task<?> dependency;
-
-            {
-                setSignificance(TaskSignificance.MODERATE);
-            }
-
-            @Override
-            public void execute() {
-                HMCLGameInstance instance = resolveCurrentGameInstance();
-                GameSettings.Effective setting = instance.getEffectiveSettings();
-                dependency = new MultiMCModpackExportTask(instance, exportInfo.getWhitelist(),
-                        new MultiMCInstanceConfiguration(
-                                "OneSix",
-                                exportInfo.getName() + "-" + exportInfo.getVersion(),
-                                null,
-                                Lang.toIntOrNull(setting.getInheritable(GameSettings::permSizeProperty)),
-                                setting.getInheritable(GameSettings::commandWrapperProperty),
-                                setting.getInheritable(GameSettings::preLaunchCommandProperty),
-                                null,
-                                exportInfo.getDescription(),
-                                null,
-                                exportInfo.getJavaArguments(),
-                                setting.getInheritable(GameSettings::windowTypeProperty) == GameWindowType.FULLSCREEN,
-                                setting.getWidth(),
-                                setting.getHeight(),
-                                null,
-                                exportInfo.getMinMemory(),
-                                setting.getInheritable(GameSettings::showLogsProperty),
-                                /* showConsoleOnError */ true,
-                                /* autoCloseConsole */ false,
-                                /* overrideMemory */ true,
-                                /* overrideJavaLocation */ false,
-                                /* overrideJavaArgs */ true,
-                                /* overrideConsole */ true,
-                                /* overrideCommands */ true,
-                                /* overrideWindow */ true,
-                                /* iconKey */ null // TODO
-                        ), modpackFile);
             }
 
             @Override

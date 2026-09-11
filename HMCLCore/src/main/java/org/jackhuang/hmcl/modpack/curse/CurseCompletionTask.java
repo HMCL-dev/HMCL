@@ -134,7 +134,10 @@ public final class CurseCompletionTask extends Task<Void> {
                             if (StringUtils.isBlank(file.fileName()) || file.url() == null) {
                                 try {
                                     RemoteAddon.File remoteFile = CurseForgeRemoteAddonRepository.MODS.getAddonFile(Integer.toString(file.projectID()), Integer.toString(file.fileID()));
-                                    return file.withFileName(remoteFile.filename()).withURL(remoteFile.url());
+                                    return file
+                                            .withFileName(remoteFile.filename())
+                                            .withURL(remoteFile.url())
+                                            .withHashes(remoteFile.hashes());
                                 } catch (FileNotFoundException fof) {
                                     LOG.warning("Could not query api.curseforge.com for deleted mods: " + file.projectID() + ", " + file.fileID(), fof);
                                     notFound.set(true);
@@ -165,7 +168,7 @@ public final class CurseCompletionTask extends Task<Void> {
                             return Stream.empty();
                         }
 
-                        var task = new FileDownloadTask(f.url(), path);
+                        var task = new FileDownloadTask(f.url(), path, f.getIntegrityCheck());
                         task.setCacheRepository(dependency.getCacheRepository());
                         task.setCaching(true);
                         return Stream.of(task.withCounter("hmcl.modpack.download"));

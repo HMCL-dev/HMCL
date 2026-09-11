@@ -813,15 +813,15 @@ public sealed abstract class GameSettings extends ObservableSetting {
     }
 
     /// Property name for using native GLFW.
-    public static final String PROPERTY_USE_NATIVE_GLFW = "useNativeGLFW";
+    public static final String PROPERTY_USE_NATIVE_GLFW_OR_SDL = "useNativeGLFW";
 
     /// If `true`, HMCL will use native GLFW.
-    @SerializedName(PROPERTY_USE_NATIVE_GLFW)
-    private final InheritableProperty<Boolean> useNativeGLFW = newInheritableProperty(PROPERTY_USE_NATIVE_GLFW, false);
+    @SerializedName(PROPERTY_USE_NATIVE_GLFW_OR_SDL)
+    private final InheritableProperty<Boolean> useNativeGLFWorSDL = newInheritableProperty(PROPERTY_USE_NATIVE_GLFW_OR_SDL, false);
 
     /// Returns the native GLFW property.
-    public InheritableProperty<Boolean> useNativeGLFWProperty() {
-        return useNativeGLFW;
+    public InheritableProperty<Boolean> useNativeGLFWorSDLProperty() {
+        return useNativeGLFWorSDL;
     }
 
     /// Property name for using native OpenAL.

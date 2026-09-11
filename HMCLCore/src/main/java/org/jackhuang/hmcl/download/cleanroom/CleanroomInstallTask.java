@@ -180,9 +180,7 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
             String installProfileText = Files.readString(fs.getPath("install_profile.json"));
             Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
             if (GameComponentType.CLEANROOM.getPatchId().equals(installProfile.get("profile"))) {
-                GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(
-                        dependencyManager.getGameRepository().resolve(manifest),
-                        GameVersionNumber.asGameVersion(gameVersion));
+                GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, GameVersionNumber.asGameVersion(gameVersion));
                 if (analyzer.has(GameComponentType.FORGE)) {
                     throw new UnsupportedInstallationException(CLEANROOM_NOT_COMPATIBLE_WITH_FORGE);
                 }

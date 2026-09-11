@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -34,7 +34,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  *
  * @author huangyuhui
  */
-public final class GameVersionList extends VersionList<GameRemoteVersion> {
+public final class GameVersionList extends ComponentVersionList<GameRemoteVersion> {
     private final DownloadProvider downloadProvider;
 
     public GameVersionList(DownloadProvider downloadProvider) {
