@@ -21,6 +21,8 @@ import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.binding.BooleanExpression;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -143,6 +145,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         loadMods(gameInstance.getModManager());
     }
 
+    private final BooleanProperty hasLiteLoaderAsMod = new SimpleBooleanProperty(this, "hasLiteLoaderAsMod");
+
     private void loadMods(ModManager modManager) {
         setLoading(true);
 
@@ -164,6 +168,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             if (this.modManager != modManager) {
                 return;
             }
+
+            hasLiteLoaderAsMod.unbind();
+            hasLiteLoaderAsMod.bind(modManager.liteLoaderAsModFiles().stream().map(LocalModFile::activeProperty).map(BooleanBinding::booleanExpression).reduce(
+                    new SimpleBooleanProperty(),
+                    BooleanExpression::or
+            ));
 
             updateSupportedLoaders(modManager);
 
@@ -202,7 +212,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
 
         if (analyzer.has(GameComponentType.FORGE) // No cleanroom because LiteLoader cannot run on Java 21
-                && modManager.hasLiteLoaderAsMod()
+                && hasLiteLoaderAsMod.get()
                 && !gameVersionNumber.isAtLeast("1.13", "17w43a")
                 // LiteLoader indicates that it supports 1.5.2 as well in this way, but it actually does nothing
                 && gameVersionNumber.isAtLeast("1.6.1", "13w36a" /* 1.7-snapshot-1 */)) {
@@ -889,37 +899,38 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             content.setSubtitle(joiner.toString());
 
             {
-                Set<ModLoaderType> modFileLoaders = EnumSet.noneOf(ModLoaderType.class);
                 GameVersionNumber gameVersionNumber = page.gameInstance != null ? page.gameInstance.getVersion() : GameVersionNumber.unknown();
+                boolean coreModLoaderMismatches = modInfo.getCoreModInfo().getModLoaders(gameVersionNumber).stream().noneMatch(page.supportedLoaders::contains);
                 // Uses 1.7 snapshot as there's no snapshots for 1.6 after its first release
                 boolean wrongCoreModDir = !gameVersionNumber.isAtLeast("1.6.1", "13w36a")
                         && modInfo.getCoreModInfo().isLegacy()
                         && !"coremods".equals(modInfo.getSubfolderName());
 
-                if (modLoaderType != ModLoaderType.UNKNOWN) modFileLoaders.add(modLoaderType);
-                modFileLoaders.addAll(modInfo.getCoreModInfo().getModLoaders(gameVersionNumber));
-
-                if (modFileLoaders.stream().anyMatch(page.supportedLoaders::contains)) {
+                if (modLoaderType == ModLoaderType.UNKNOWN) {
                     if (modInfo.isCoreMod()) {
+                        boolean warnCoreMod = false;
+                        if (coreModLoaderMismatches) {
+                            warnCoreMod = true;
+                            warning.add(i18n("mods.coremods.loader_mismatch"));
+                        }
                         if (wrongCoreModDir) {
-                            content.addTagWarning("CoreMod");
+                            warnCoreMod = true;
                             warning.add(i18n("mods.coremods.check_dir"));
-                        } else {
-                            content.addTag("CoreMod");
                         }
-                    }
-                } else {
-                    if (modFileLoaders.isEmpty()) {
-                        content.addTagWarning(i18n("mods.unknown"));
+                        if (warnCoreMod) content.addTagWarning("CoreMod");
+                        else content.addTag("CoreMod");
                     } else {
-                        warning.add(i18n("mods.warning.loader_mismatch"));
-                        for (var loaderType : modFileLoaders) {
-                            content.addTagWarning(I18n.translateLoaderType(loaderType));
-                        }
+                        content.addTagWarning(i18n("mods.unknown"));
                     }
+                } else if (!page.supportedLoaders.contains(modLoaderType)) {
+                    content.addTagWarning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType()));
                     if (modInfo.isCoreMod()) {
                         content.addTagWarning("CoreMod");
+                        if (coreModLoaderMismatches) warning.add((i18n("mods.coremods.loader_mismatch")));
+                        warning.add(i18n("mods.coremods.supported_only_as_coremod"));
                         if (wrongCoreModDir) warning.add(i18n("mods.coremods.check_dir"));
+                    } else {
+                        warning.add(i18n("mods.warning.loader_mismatch"));
                     }
                 }
             }
