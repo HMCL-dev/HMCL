@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.modpack;
 
-import org.jackhuang.hmcl.util.Lang;
-
-import java.io.File;
 import java.util.List;
 
 /**
@@ -41,7 +38,7 @@ public interface ModAdviser {
         HIDDEN
     }
 
-    List<String> MODPACK_BLACK_LIST = Lang.immutableListOf(
+    List<String> MODPACK_BLACK_LIST = List.of(
         "regex:(.*?)\\.log",
         "regex:.*\\.dat_old$", "regex:.*\\.old$", // Backup files
         "regex:.*\\.BakaCoreInfo$", // BakaXL
@@ -67,14 +64,14 @@ public interface ModAdviser {
         "mods/.connector" // Sinytra Connector
     );
 
-    List<String> MODPACK_SUGGESTED_BLACK_LIST = Lang.immutableListOf(
+    List<String> MODPACK_SUGGESTED_BLACK_LIST = List.of(
             "fonts", // BetterFonts
             "saves", "servers.dat", "options.txt", // Minecraft
             "blueprints" /* BuildCraft */,
             "optionsof.txt" /* OptiFine */,
             "journeymap" /* JourneyMap */,
             "optionsshaders.txt",
-            "mods" + File.separator + "VoxelMods");
+            "mods/VoxelMods");
 
     static ModAdviser.ModSuggestion suggestMod(String fileName, boolean isDirectory) {
         if (match(MODPACK_BLACK_LIST, fileName, isDirectory))
@@ -85,10 +82,11 @@ public interface ModAdviser {
             return ModAdviser.ModSuggestion.SUGGESTED;
     }
 
+    /// @param fileName must be "rel_path_to_dir/" for directories or "rel_path_to_file" for files, regardless of the operating system
     static boolean match(List<String> l, String fileName, boolean isDirectory) {
         for (String s : l)
             if (isDirectory) {
-                if (fileName.startsWith(s + File.separator))
+                if (fileName.startsWith(s + '/'))
                     return true;
             } else {
                 if (s.startsWith("regex:")) {

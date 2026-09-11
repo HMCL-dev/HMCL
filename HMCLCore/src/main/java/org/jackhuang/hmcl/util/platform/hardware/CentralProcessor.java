@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
@@ -111,23 +112,13 @@ public final class CentralProcessor {
         return builder.toString();
     }
 
-    public static final class Cores {
-        public final int physical;
-        public final int logical;
-        public final int packages;
-
+    public record Cores(int physical, int logical, int packages) {
         public Cores(int logical) {
             this(logical, logical, 1);
         }
 
-        public Cores(int physical, int logical, int packages) {
-            this.physical = physical;
-            this.logical = logical;
-            this.packages = packages;
-        }
-
         @Override
-        public String toString() {
+        public @NotNull String toString() {
             return String.format("Cores[physical=%d, logical=%d, packages=%d]", physical, logical, packages);
         }
     }
@@ -158,7 +149,7 @@ public final class CentralProcessor {
             return this;
         }
 
-        public HardwareVendor getVendor() {
+        public @Nullable HardwareVendor getVendor() {
             return vendor;
         }
 
@@ -167,7 +158,7 @@ public final class CentralProcessor {
             return this;
         }
 
-        public Cores getCores() {
+        public @Nullable Cores getCores() {
             return cores;
         }
 

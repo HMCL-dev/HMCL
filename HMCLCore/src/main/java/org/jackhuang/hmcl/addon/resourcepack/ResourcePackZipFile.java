@@ -36,52 +36,47 @@ import java.util.Optional;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackZipFile extends ResourcePackFile {
-    private final PackMcMeta meta;
-    private final @Nullable Image icon;
+    private final PackMcMeta.PackInfo info;
 
     public ResourcePackZipFile(ResourcePackManager manager, Path path) throws IOException {
         super(manager, path);
 
-        PackMcMeta metaTemp = null;
-        byte[] iconData = null;
-
+        PackMcMeta meta = null;
         try (var zipFileTree = CompressingUtils.openZipTree(path)) {
             try {
-                metaTemp = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
+                meta = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
             } catch (Exception e) {
                 LOG.warning("Failed to parse resource pack meta", e);
             }
+        }
+        this.info = meta != null ? meta.pack() : null;
+    }
 
+    @Override
+    public PackMcMeta.PackInfo getPackInfo() {
+        return info;
+    }
+
+    @Override
+    public @Nullable Image loadIcon() {
+        byte[] iconData = null;
+        try (var zipFileTree = CompressingUtils.openZipTree(getFile())) {
             var iconEntry = zipFileTree.getEntry("/pack.png");
             if (iconEntry != null) {
-                try {
-                    iconData = zipFileTree.readBinaryEntry(iconEntry);
-                } catch (Exception e) {
-                    LOG.warning("Failed to load resource pack icon", e);
-                }
+                iconData = zipFileTree.readBinaryEntry(iconEntry);
             }
+        } catch (Exception e) {
+            LOG.warning("Failed to load resource pack icon", e);
         }
-        this.meta = metaTemp;
 
-        Image iconTemp = null;
         if (iconData != null) {
             try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
-                iconTemp = new Image(inputStream, 64, 64, true, true);
+                return new Image(inputStream, 64, 64, true, true);
             } catch (Exception e) {
                 LOG.warning("Failed to load resource pack icon", e);
             }
         }
-        this.icon = iconTemp;
-    }
-
-    @Override
-    public PackMcMeta getMeta() {
-        return meta;
-    }
-
-    @Override
-    public @Nullable Image getIcon() {
-        return icon;
+        return null;
     }
 
     @Override
@@ -91,17 +86,17 @@ final class ResourcePackZipFile extends ResourcePackFile {
 
     @Override
     public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
-        RemoteAddonRepository repository = source.getRepoForType(RemoteAddonRepository.Type.RESOURCE_PACK);
+        RemoteAddonRepository repository = source.getRepoForType(RemoteAddon.Type.RESOURCE_PACK);
         if (repository == null) return null;
         Optional<RemoteAddon.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
         if (currentVersion.isEmpty()) return null;
-        List<RemoteAddon.Version> remoteVersions = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().modid())
+        List<RemoteAddon.Version> remoteVersions = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().projectId())
                 .filter(version -> version.gameVersions().contains(gameVersion))
                 .filter(version -> version.datePublished().compareTo(currentVersion.get().datePublished()) > 0)
                 .sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed())
                 .toList();
         if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(this, currentVersion.get(), remoteVersions.get(0), false);
+        return new AddonUpdate(source, RemoteAddon.Type.RESOURCE_PACK, this, currentVersion.get(), remoteVersions.get(0), false);
     }
 }
 

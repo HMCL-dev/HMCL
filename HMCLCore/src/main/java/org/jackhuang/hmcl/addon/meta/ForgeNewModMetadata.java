@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
@@ -103,12 +104,13 @@ public final class ForgeNewModMetadata {
         @JsonAdapter(AuthorDeserializer.class)
         private final String authors;
         private final String description;
+        private final String logoFile;
 
         public Mod() {
-            this("", "", "", "", "", "", "");
+            this("", "", "", "", "", "", "", "");
         }
 
-        public Mod(String modId, String version, String displayName, String side, String displayURL, String authors, String description) {
+        public Mod(String modId, String version, String displayName, String side, String displayURL, String authors, String description, String logoFile) {
             this.modId = modId;
             this.version = version;
             this.displayName = displayName;
@@ -116,6 +118,7 @@ public final class ForgeNewModMetadata {
             this.displayURL = displayURL;
             this.authors = authors;
             this.description = description;
+            this.logoFile = logoFile;
         }
 
         public String getModId() {
@@ -144,6 +147,10 @@ public final class ForgeNewModMetadata {
 
         public String getDescription() {
             return description;
+        }
+
+        public String getLogoFile() {
+            return logoFile;
         }
 
         static final class AuthorDeserializer implements JsonDeserializer<String> {
@@ -235,10 +242,12 @@ public final class ForgeNewModMetadata {
 
         ModLoaderType type = analyzeLoader(tomlParseResult, mod.getModId(), modLoaderType);
 
+        String logoPath = StringUtils.isNotBlank(mod.getLogoFile()) ? mod.getLogoFile() : metadata.getLogoFile();
+
         return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalAddonFile.Description(mod.getDescription()),
                 mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                 mod.getDisplayURL(),
-                metadata.getLogoFile());
+                logoPath);
     }
 
     private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType) throws IOException {

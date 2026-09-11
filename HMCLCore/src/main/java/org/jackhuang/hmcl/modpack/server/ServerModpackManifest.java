@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.modpack.server;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackManifest;
@@ -32,8 +34,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 
 public class ServerModpackManifest implements ModpackManifest, Validation {
     private final String name;
@@ -122,12 +122,12 @@ public class ServerModpackManifest implements ModpackManifest, Validation {
     }
 
     public Modpack toModpack(Charset encoding) throws IOException {
-        String gameVersion = addons.stream().filter(x -> MINECRAFT.getPatchId().equals(x.id)).findAny()
+        String gameVersion = addons.stream().filter(x -> GameComponentType.GAME.getPatchId().equals(x.id)).findAny()
                 .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
         return new Modpack(name, author, version, gameVersion, description, encoding, this) {
             @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl) {
-                return new ServerModpackLocalInstallTask(dependencyManager, zipFile, this, ServerModpackManifest.this, name);
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, GameInstanceID instanceId, String iconUrl) {
+                return new ServerModpackLocalInstallTask(dependencyManager, zipFile, this, ServerModpackManifest.this, instanceId);
             }
         };
     }

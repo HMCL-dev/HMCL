@@ -18,11 +18,11 @@
 package org.jackhuang.hmcl.download.fabric;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
-public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
+public final class FabricVersionList extends ComponentVersionList<FabricRemoteVersion> {
     private final DownloadProvider downloadProvider;
 
     public FabricVersionList(DownloadProvider downloadProvider) {
@@ -68,39 +68,14 @@ public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
     private List<String> getGameVersions(String metaUrl) throws IOException {
         String json = NetworkUtils.doGet(downloadProvider.injectURLWithCandidates(metaUrl));
         return JsonUtils.GSON.fromJson(json, listTypeOf(GameVersion.class))
-                .stream().map(GameVersion::getVersion).collect(Collectors.toList());
+                .stream().map(GameVersion::version).collect(Collectors.toList());
     }
 
     private static String getLaunchMetaUrl(String gameVersion, String loaderVersion) {
         return String.format("https://meta.fabricmc.net/v2/versions/loader/%s/%s", gameVersion, loaderVersion);
     }
 
-    private static class GameVersion {
-        private final String version;
-        private final String maven;
-        private final boolean stable;
-
-        public GameVersion() {
-            this("", null, false);
-        }
-
-        public GameVersion(String version, String maven, boolean stable) {
-            this.version = version;
-            this.maven = maven;
-            this.stable = stable;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        @Nullable
-        public String getMaven() {
-            return maven;
-        }
-
-        public boolean isStable() {
-            return stable;
-        }
+    @JsonSerializable
+    private record GameVersion(String version, String maven, boolean stable) {
     }
 }

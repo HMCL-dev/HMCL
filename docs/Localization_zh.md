@@ -23,6 +23,7 @@ HMCL 为多种语言提供本地化支持。
 | 西班牙语    | `es`      | `es`      | `_es`      | `es_es`                                     | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
 | 俄语      | `ru`      | `ru`      | `_ru`      | `ru_ru`                                     | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
 | 乌克兰语    | `uk`      | `uk`      | `_uk`      | `uk_ua`                                     | 次要     |                                           |
+| 德语      | `de`      | `de`      | `_de`      | `de_de`                                     | 次要     | [BANSAFAn](https://github.com/BANSAFAn)   |
 
 <details>
 <summary>关于语言标签</summary>

@@ -52,8 +52,6 @@ public final class EntryPoint {
 
         checkWine();
 
-        setupJavaFXVMOptions();
-
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
             System.getProperties().putIfAbsent("apple.awt.application.appearance", "system");
             if (!isInsideMacAppBundle())
@@ -72,71 +70,6 @@ public final class EntryPoint {
         FileSaver.shutdown();
         LOG.shutdown();
         System.exit(exitCode);
-    }
-
-    private static void setupJavaFXVMOptions() {
-        if ("true".equalsIgnoreCase(System.getenv("HMCL_FORCE_GPU"))) {
-            LOG.info("HMCL_FORCE_GPU: true");
-            System.getProperties().putIfAbsent("prism.forceGPU", "true");
-        }
-
-        String animationFrameRate = System.getenv("HMCL_ANIMATION_FRAME_RATE");
-        if (animationFrameRate != null) {
-            LOG.info("HMCL_ANIMATION_FRAME_RATE: " + animationFrameRate);
-
-            try {
-                if (Integer.parseInt(animationFrameRate) <= 0)
-                    throw new NumberFormatException(animationFrameRate);
-
-                System.getProperties().putIfAbsent("javafx.animation.pulse", animationFrameRate);
-            } catch (NumberFormatException e) {
-                LOG.warning("Invalid animation frame rate: " + animationFrameRate);
-            }
-        }
-
-        String uiScale = System.getProperty("hmcl.uiScale", System.getenv("HMCL_UI_SCALE"));
-        if (uiScale != null) {
-            uiScale = uiScale.trim();
-
-            LOG.info("HMCL_UI_SCALE: " + uiScale);
-
-            try {
-                float scaleValue;
-                if (uiScale.endsWith("%")) {
-                    scaleValue = Integer.parseInt(uiScale.substring(0, uiScale.length() - 1)) / 100.0f;
-                } else if (uiScale.endsWith("dpi") || uiScale.endsWith("DPI")) {
-                    scaleValue = Integer.parseInt(uiScale.substring(0, uiScale.length() - 3)) / 96.0f;
-                } else {
-                    scaleValue = Float.parseFloat(uiScale);
-                }
-
-                float lowerBound;
-                float upperBound;
-
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    // JavaFX behavior may be abnormal when the DPI scaling factor is too high
-                    lowerBound = 0.25f;
-                    upperBound = 4f;
-                } else {
-                    lowerBound = 0.01f;
-                    upperBound = 10f;
-                }
-
-                if (scaleValue >= lowerBound && scaleValue <= upperBound) {
-                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                        System.getProperties().putIfAbsent("glass.win.uiScale", uiScale);
-                    } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                        LOG.warning("macOS does not support setting UI scale, so it will be ignored");
-                    } else {
-                        System.getProperties().putIfAbsent("glass.gtk.uiScale", uiScale);
-                    }
-                } else {
-                    LOG.warning("UI scale out of range: " + uiScale);
-                }
-            } catch (Throwable e) {
-                LOG.warning("Invalid UI scale: " + uiScale);
-            }
-        }
     }
 
     private static void createHMCLDirectories() {
@@ -225,15 +158,8 @@ public final class EntryPoint {
 
     private static void checkWine() {
         if (OperatingSystem.isRunningUnderWine()) {
-            SwingUtils.initLookAndFeel();
             LOG.warning("HMCL is running under Wine or its distributions!");
-
-            int result = JOptionPane.showOptionDialog(null, i18n("fatal.wine_warning"), i18n("message.warning"), JOptionPane.OK_CANCEL_OPTION,
-                    JOptionPane.WARNING_MESSAGE, null, null, null);
-
-            if (result == JOptionPane.CANCEL_OPTION || result == JOptionPane.CLOSED_OPTION) {
-                exit(1);
-            }
+            showWarning(i18n("fatal.wine_warning"));
         }
     }
 
@@ -273,10 +199,21 @@ public final class EntryPoint {
         }
     }
 
+    static void showWarning(String message) {
+        SwingUtils.initLookAndFeel();
+
+        int result = JOptionPane.showOptionDialog(null, message, i18n("message.warning"), JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.WARNING_MESSAGE, null, null, null);
+
+        if (result == JOptionPane.CANCEL_OPTION || result == JOptionPane.CLOSED_OPTION) {
+            exit(1);
+        }
+    }
+
     /**
      * Indicates that a fatal error has occurred, and that the application cannot start.
      */
-    private static void showErrorAndExit(String message) {
+    static void showErrorAndExit(String message) {
         SwingUtils.showErrorDialog(message);
         exit(1);
     }

@@ -27,14 +27,8 @@ import org.jackhuang.hmcl.util.gson.Validation;
  *
  * @author huangyuhui
  */
-public final class LoggingInfo implements Validation {
-
-    @SerializedName("file")
-    private final IdDownloadInfo file;
-    @SerializedName("argument")
-    private final String argument;
-    @SerializedName("type")
-    private final String type;
+public record LoggingInfo(@SerializedName("file") IdDownloadInfo file, @SerializedName("argument") String argument,
+                          @SerializedName("type") String type) implements Validation {
 
     public LoggingInfo() {
         this(new IdDownloadInfo());
@@ -46,24 +40,6 @@ public final class LoggingInfo implements Validation {
 
     public LoggingInfo(IdDownloadInfo file, String argument) {
         this(file, argument, "");
-    }
-
-    public LoggingInfo(IdDownloadInfo file, String argument, String type) {
-        this.file = file;
-        this.argument = argument;
-        this.type = type;
-    }
-
-    public IdDownloadInfo getFile() {
-        return file;
-    }
-
-    public String getArgument() {
-        return argument;
-    }
-
-    public String getType() {
-        return type;
     }
 
     @Override

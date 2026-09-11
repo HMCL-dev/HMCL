@@ -97,7 +97,7 @@ public class OfflineAccount extends Account {
     }
 
     protected boolean loadAuthlibInjector(Skin skin) {
-        return skin != null && skin.getType() != Skin.Type.DEFAULT;
+        return skin != null && skin.type() != Skin.Type.DEFAULT;
     }
 
     public AuthInfo logInWithoutSkin() throws AuthenticationException {
@@ -169,7 +169,7 @@ public class OfflineAccount extends Account {
             }
 
             return new Arguments().addJVMArguments(
-                    "-javaagent:" + artifact.getLocation().toString() + "=" + "http://localhost:" + server.getListeningPort(),
+                    "-javaagent:" + artifact.location().toString() + "=" + "http://localhost:" + server.getListeningPort(),
                     "-Dauthlibinjector.side=client"
             );
         }

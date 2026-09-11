@@ -34,7 +34,6 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.setting.StyleSheets;
@@ -44,7 +43,6 @@ import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -73,17 +71,15 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class GameCrashWindow extends Stage {
-    private final Version version;
+    private final HMCLGameInstance gameInstance;
     private final String memory;
     private final String total_memory;
     private final String java;
-    private final LibraryAnalyzer analyzer;
     private final TextFlow reasonTextFlow = new TextFlow(new Text(i18n("game.crash.reason.unknown")));
     private final BooleanProperty loading = new SimpleBooleanProperty();
     private final TextFlow feedbackTextFlow = new TextFlow();
 
     private final ManagedProcess managedProcess;
-    private final DefaultGameRepository repository;
     private final ProcessListener.ExitType exitType;
     private final LaunchOptions launchOptions;
     private final View view;
@@ -91,16 +87,14 @@ public class GameCrashWindow extends Stage {
 
     private final List<Log> logs;
 
-    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, Version version, LaunchOptions launchOptions, List<Log> logs) {
+    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, HMCLGameInstance gameInstance, LaunchOptions launchOptions, List<Log> logs) {
         Themes.applyNativeDarkMode(this);
 
         this.managedProcess = managedProcess;
         this.exitType = exitType;
-        this.repository = repository;
-        this.version = version;
+        this.gameInstance = gameInstance;
         this.launchOptions = launchOptions;
         this.logs = logs;
-        this.analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
 
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " " + i18n("settings.memory.unit.mib")).orElse("-");
 
@@ -142,7 +136,8 @@ public class GameCrashWindow extends Stage {
 
             return pair(CrashReportAnalyzer.analyze(rawLog), crashReport != null ? CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport) : new HashSet<>());
         }), Task.supplyAsync(() -> {
-            Path latestLog = repository.getRunDirectory(version.getId()).resolve("logs/latest.log");
+            Path runDirectory = gameInstance.getRunDirectory();
+            Path latestLog = runDirectory.resolve("logs/latest.log");
             if (!Files.isReadable(latestLog)) {
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
             }
@@ -167,7 +162,7 @@ public class GameCrashWindow extends Stage {
                 Set<String> keywords = new HashSet<>();
                 for (Pair<Set<CrashReportAnalyzer.Result>, Set<String>> pair : (List<Pair<Set<CrashReportAnalyzer.Result>, Set<String>>>) (List<?>) taskResult) {
                     for (CrashReportAnalyzer.Result result : pair.getKey()) {
-                        results.put(result.getRule(), result);
+                        results.put(result.rule(), result);
                     }
                     keywords.addAll(pair.getValue());
                 }
@@ -184,22 +179,22 @@ public class GameCrashWindow extends Stage {
 
                 for (CrashReportAnalyzer.Result result : results.values()) {
                     String message;
-                    switch (result.getRule()) {
+                    switch (result.rule()) {
                         case TOO_OLD_JAVA:
-                            message = i18n("game.crash.reason.too_old_java", CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.getMatcher().group("expected"))));
+                            message = i18n("game.crash.reason.too_old_java", CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.matcher().group("expected"))));
                             break;
                         case MOD_RESOLUTION_CONFLICT:
                         case MOD_RESOLUTION_MISSING:
                         case MOD_RESOLUTION_COLLECTION:
-                            message = i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
-                                    translateFabricModId(result.getMatcher().group("sourcemod")),
-                                    parseFabricModId(result.getMatcher().group("destmod")),
-                                    parseFabricModId(result.getMatcher().group("destmod")));
+                            message = i18n("game.crash.reason." + result.rule().name().toLowerCase(Locale.ROOT),
+                                    translateFabricModId(result.matcher().group("sourcemod")),
+                                    parseFabricModId(result.matcher().group("destmod")),
+                                    parseFabricModId(result.matcher().group("destmod")));
                             break;
                         case MOD_RESOLUTION_MISSING_MINECRAFT:
-                            message = i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
-                                    translateFabricModId(result.getMatcher().group("mod")),
-                                    result.getMatcher().group("version"));
+                            message = i18n("game.crash.reason." + result.rule().name().toLowerCase(Locale.ROOT),
+                                    translateFabricModId(result.matcher().group("mod")),
+                                    result.matcher().group("version"));
                             break;
                         case MOD_FOREST_OPTIFINE:
                         case TWILIGHT_FOREST_OPTIFINE:
@@ -207,15 +202,15 @@ public class GameCrashWindow extends Stage {
                         case JADE_FOREST_OPTIFINE:
                         case NEOFORGE_FOREST_OPTIFINE:
                             message = i18n("game.crash.reason.mod", "OptiFine");
-                            LOG.info("Crash cause: " + result.getRule() + ": " + i18n("game.crash.reason.mod", "OptiFine"));
+                            LOG.info("Crash cause: " + result.rule() + ": " + i18n("game.crash.reason.mod", "OptiFine"));
                             break;
                         default:
-                            message = i18n("game.crash.reason." + result.getRule().name().toLowerCase(Locale.ROOT),
-                                    Arrays.stream(result.getRule().getGroupNames()).map(groupName -> result.getMatcher().group(groupName))
+                            message = i18n("game.crash.reason." + result.rule().name().toLowerCase(Locale.ROOT),
+                                    Arrays.stream(result.rule().getGroupNames()).map(groupName -> result.matcher().group(groupName))
                                             .toArray());
                             break;
                     }
-                    LOG.info("Crash cause: " + result.getRule() + ": " + message);
+                    LOG.info("Crash cause: " + result.rule() + ": " + message);
                     segments.addAll(FXUtils.parseSegment(message, Controllers::onHyperlinkAction));
                     segments.add(new Text("\n\n"));
                 }
@@ -291,7 +286,7 @@ public class GameCrashWindow extends Stage {
                                 }
                             });
 
-                    return LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs,
+                    return LogExporter.exportLogs(logFile, gameInstance, launchOptions, logs,
                             new CommandBuilder().addAll(managedProcess.getCommands()).toString(),
                             path -> {
                                 try {
@@ -342,10 +337,10 @@ public class GameCrashWindow extends Stage {
                 launcher.setTitle(i18n("launcher"));
                 launcher.setSubtitle(Metadata.VERSION);
 
-                TwoLineListItem version = new TwoLineListItem();
-                version.getStyleClass().setAll("two-line-item-second-large");
-                version.setTitle(i18n("game.version"));
-                version.setSubtitle(GameCrashWindow.this.version.getId());
+                TwoLineListItem instance = new TwoLineListItem();
+                instance.getStyleClass().setAll("two-line-item-second-large");
+                instance.setTitle(i18n("game.version"));
+                instance.setSubtitle(GameCrashWindow.this.gameInstance.getId().toString());
 
                 TwoLineListItem total_memory = new TwoLineListItem();
                 total_memory.getStyleClass().setAll("two-line-item-second-large");
@@ -365,14 +360,14 @@ public class GameCrashWindow extends Stage {
                 TwoLineListItem os = new TwoLineListItem();
                 os.getStyleClass().setAll("two-line-item-second-large");
                 os.setTitle(i18n("system.operating_system"));
-                os.setSubtitle(Lang.requireNonNullElse(OperatingSystem.OS_RELEASE_NAME, OperatingSystem.SYSTEM_NAME));
+                os.setSubtitle(Objects.requireNonNullElse(OperatingSystem.OS_RELEASE_NAME, OperatingSystem.SYSTEM_NAME));
 
                 TwoLineListItem arch = new TwoLineListItem();
                 arch.getStyleClass().setAll("two-line-item-second-large");
                 arch.setTitle(i18n("system.architecture"));
                 arch.setSubtitle(Architecture.SYSTEM_ARCH.getDisplayName());
 
-                infoPane.getChildren().setAll(launcher, version, total_memory, memory, java, os, arch);
+                infoPane.getChildren().setAll(launcher, instance, total_memory, memory, java, os, arch);
             }
 
             HBox moddedPane = new HBox(8);
@@ -380,15 +375,13 @@ public class GameCrashWindow extends Stage {
                 moddedPane.setPadding(new Insets(8));
                 moddedPane.setAlignment(Pos.CENTER_LEFT);
 
-                for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
-                    if (!type.getPatchId().isEmpty()) {
-                        analyzer.getVersion(type).ifPresent(ver -> {
-                            TwoLineListItem item = new TwoLineListItem();
-                            item.getStyleClass().setAll("two-line-item-second-large");
-                            item.setTitle(i18n("install.installer." + type.getPatchId()));
-                            item.setSubtitle(ver);
-                            moddedPane.getChildren().add(item);
-                        });
+                for (GameComponentAnalyzer.Mark mark : gameInstance.getAnalyzer()) {
+                    if (mark.version() != null) {
+                        TwoLineListItem item = new TwoLineListItem();
+                        item.getStyleClass().setAll("two-line-item-second-large");
+                        item.setTitle(i18n("install.installer." + mark.componentType().getPatchId()));
+                        item.setSubtitle(mark.version());
+                        moddedPane.getChildren().add(item);
                     }
                 }
             }

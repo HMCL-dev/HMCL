@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.modpack;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.task.Task;
 
 import java.nio.charset.Charset;
@@ -119,7 +120,7 @@ public abstract class Modpack {
         return this;
     }
 
-    public abstract Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl);
+    public abstract Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, GameInstanceID instanceId, String iconUrl);
 
     public static boolean acceptFile(String path, List<String> blackList, List<String> whiteList) {
         if (path.isEmpty())
