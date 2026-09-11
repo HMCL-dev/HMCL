@@ -169,11 +169,8 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         };
     }
 
-    private void playSelectAnimation(Boolean selection) {
-        if (selection == null) {
-            selection = false;
-        }
-
+    /// Animates a selection change, or applies it immediately when animations are disabled.
+    private void playSelectAnimation(boolean selection) {
         JFXCheckBox control = (JFXCheckBox) this.getSkinnable();
 
         this.box.setBorder(new Border(new BorderStroke(
@@ -183,17 +180,7 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
                 new BorderWidths(this.lineThick))));
 
         if (!AnimationUtils.isAnimationEnabled()) {
-            if (selection) {
-                this.mark.setVisible(true);
-                this.mark.setScaleX(1.0);
-                this.mark.setScaleY(1.0);
-                JFXNodeUtils.updateBackground(box.getBackground(), box, control.getCheckedColor());
-            } else {
-                this.mark.setVisible(false);
-                this.mark.setScaleX(0.0);
-                this.mark.setScaleY(0.0);
-                JFXNodeUtils.updateBackground(box.getBackground(), box, Color.TRANSPARENT);
-            }
+            finishSelectionAnimation();
             return;
         }
 
@@ -201,6 +188,22 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         this.select.setRate(selection ? 1.0 : -1.0);
         this.transition.play();
         this.select.play();
+    }
+
+    /// Stops selection animations and immediately displays the checkbox's current selected state.
+    ///
+    /// The check mark, fill, and border are updated even if no animation is running.
+    /// This also suppresses the initial selection animation on the first layout.
+    /// The skin must not have been disposed.
+    public void finishSelectionAnimation() {
+        transition.stop();
+        select.stop();
+        invalid = false;
+        boolean selected = getSkinnable().isSelected();
+        mark.setVisible(selected);
+        mark.setScaleX(selected ? 1.0 : 0.0);
+        mark.setScaleY(selected ? 1.0 : 0.0);
+        updateColors();
     }
 
     private void createFillTransition() {

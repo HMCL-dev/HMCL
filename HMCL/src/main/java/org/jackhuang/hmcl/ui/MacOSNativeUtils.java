@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.ui;
 
 import com.sun.jna.Pointer;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.util.platform.macos.ObjectiveCRuntime;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,8 +58,30 @@ public final class MacOSNativeUtils {
         return pointer == null || Pointer.nativeValue(pointer) == 0;
     }
 
+    private static final ReadOnlyBooleanProperty autoBrightness = Themes.autoBrightnessProperty();
+
+    static {
+        FXUtils.onChange(autoBrightness, b -> setAppearance(Themes.darkModeProperty().get()));
+    }
+
     public static void setAppearance(boolean dark) {
-        setAppearance(dark, false);
+        if (autoBrightness.get()) {
+            clearAppearance();
+        } else {
+            setAppearance(dark, false);
+        }
+    }
+
+    public static void clearAppearance() {
+        if (nsApp == null) return;
+
+        try {
+            var objc = ObjectiveCRuntime.INSTANCE;
+            Pointer setSel = objc.sel_registerName("setAppearance:");
+            objc.objc_msgSend(nsApp, setSel, Pointer.NULL);
+        } catch (Throwable t) {
+            LOG.warning("Failed to set macOS appearance", t);
+        }
     }
 
     public static void setAppearance(boolean dark, boolean highContrast) {

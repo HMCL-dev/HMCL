@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,25 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.event;
+package org.jackhuang.hmcl.util.io;
 
-import org.jetbrains.annotations.NotNullByDefault;
+import java.io.IOException;
 
-/// This event gets fired when loading versions in a .minecraft folder.
-///
-/// This event is fired on the [org.jackhuang.hmcl.event.EventBus#EVENT_BUS]
-///
-/// @author huangyuhui
-@NotNullByDefault
-public final class RefreshingInstancesEvent extends Event {
+public class NoCandidatesException extends IOException {
 
-    /// Constructor.
-    public RefreshingInstancesEvent(Object source) {
-        super(source);
-    }
-
-    @Override
-    public boolean hasResult() {
-        return true;
+    public NoCandidatesException() {
+        super("No candidates found");
     }
 }

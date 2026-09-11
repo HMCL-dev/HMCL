@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
@@ -120,21 +121,20 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public VersionList<?> getVersionListById(String id) {
-        return switch (id) {
-            case "game" -> game;
-            case "fabric" -> fabric;
-            case "fabric-api" -> fabricApi;
-            case "forge" -> forge;
-            case "cleanroom" -> cleanroom;
-            case "neoforge" -> neoforge;
-            case "liteloader" -> liteLoader;
-            case "optifine" -> optifine;
-            case "quilt" -> quilt;
-            case "quilt-api" -> quiltApi;
-            case "legacyfabric" -> legacyFabric;
-            case "legacyfabric-api" -> legacyFabricApi;
-            default -> throw new IllegalArgumentException("Unrecognized version list id: " + id);
+    public ComponentVersionList<?> getVersionList(GameComponentType componentType) {
+        return switch (componentType) {
+            case GAME -> game;
+            case FABRIC -> fabric;
+            case FABRIC_API -> fabricApi;
+            case FORGE -> forge;
+            case CLEANROOM -> cleanroom;
+            case NEO_FORGE -> neoforge;
+            case LITELOADER -> liteLoader;
+            case OPTIFINE -> optifine;
+            case QUILT -> quilt;
+            case QUILT_API -> quiltApi;
+            case LEGACY_FABRIC -> legacyFabric;
+            case LEGACY_FABRIC_API -> legacyFabricApi;
         };
     }
 
