@@ -186,7 +186,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return;
         }
 
-        var gameVersionNumber = GameVersionNumber.asGameVersion(gameVersion);
+        var gameVersionNumber = modManager.getInstance().getVersion();
 
         for (GameComponentType type : GameComponentType.MOD_LOADERS) {
             if (type.isModLoader() && analyzer.has(type)) {
