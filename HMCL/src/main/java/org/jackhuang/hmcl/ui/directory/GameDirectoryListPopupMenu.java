@@ -18,10 +18,9 @@
 package org.jackhuang.hmcl.ui.directory;
 
 import com.jfoenix.controls.JFXPopup;
-import javafx.scene.Node;
+import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
@@ -39,7 +38,7 @@ public final class GameDirectoryListPopupMenu {
     ///
     /// @param owner the UI node used as the popup anchor
     /// @param gameDirectory the game directory to edit when the action is triggered
-    public static void show(Node owner, GameDirectory gameDirectory) {
+    public static void show(Region owner, GameDirectory gameDirectory) {
         PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
         menu.getContent().add(new IconedMenuItem(
@@ -47,7 +46,6 @@ public final class GameDirectoryListPopupMenu {
                 i18n("button.edit"),
                 () -> Controllers.navigate(new GameDirectoryPage(gameDirectory)),
                 popup));
-        JFXPopup.PopupVPosition vPosition = FXUtils.determineOptimalPopupPosition(owner, popup);
-        popup.show(owner, vPosition, JFXPopup.PopupHPosition.LEFT, 0, 0);
+        popup.show(owner, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, owner.getWidth(), 0);
     }
 }
