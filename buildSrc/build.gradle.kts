@@ -8,11 +8,15 @@ repositories {
 }
 
 dependencies {
+    implementation(libs.jetbrains.annotations)
     implementation(libs.gson)
     implementation(libs.jna)
     implementation(libs.kala.compress.tar)
     implementation(libs.kala.compress.ar)
     implementation(libs.weburl)
+
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 java {
@@ -22,6 +26,10 @@ java {
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.processResources {
