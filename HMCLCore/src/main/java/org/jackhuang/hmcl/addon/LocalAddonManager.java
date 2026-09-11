@@ -152,11 +152,10 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
             Path newPath;
             if (old) {
                 newPath = backupFile(addonFile.getFile());
-                localFiles.remove(addonFile);
             } else {
                 newPath = restoreFile(addonFile.getFile());
-                localFiles.add(addonFile);
             }
+            loaded = false;
             return newPath;
         } finally {
             lock.unlock();
