@@ -58,9 +58,7 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import javafx.stage.FileChooser;
-import javafx.stage.Screen;
-import javafx.stage.Stage;
+import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.glavo.url.WebURL;
@@ -1197,13 +1195,13 @@ public final class FXUtils {
         });
     }
 
-    public static void addMacOSCloseWindowHandler(Stage stage, @Nullable Supplier<Boolean> restriction) {
-        stage.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+    public static void addMacOSCloseWindowHandler(Window window, @Nullable Supplier<Boolean> restriction) {
+        window.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
                     && event.isMetaDown()
                     && event.getCode() == KeyCode.W
                     && (restriction == null || restriction.get())) {
-                stage.close();
+                window.fireEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSE_REQUEST));
                 event.consume();
             }
         });
