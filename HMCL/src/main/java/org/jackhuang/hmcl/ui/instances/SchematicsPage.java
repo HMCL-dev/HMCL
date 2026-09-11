@@ -58,7 +58,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.FileNameSet;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.SynchronizedLazy;
+import org.jackhuang.hmcl.util.SynchronizedExceptionalLazy;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -85,20 +85,20 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
-    private static final SynchronizedLazy<RemoteAddon> litematicaLazy = new SynchronizedLazy<>(() -> {
+    private static final SynchronizedExceptionalLazy<RemoteAddon> litematicaLazy = new SynchronizedExceptionalLazy<>(() -> {
         try {
             return ModrinthRemoteAddonRepository.MODS.getAddonById(DownloadProviders.getDownloadProvider(), "litematica");
         } catch (IOException e) {
             LOG.warning("Failed to fetch litematica", e);
-            return null;
+            throw e;
         }
     });
-    private static final SynchronizedLazy<RemoteAddon> forgematicaLazy = new SynchronizedLazy<>(() -> {
+    private static final SynchronizedExceptionalLazy<RemoteAddon> forgematicaLazy = new SynchronizedExceptionalLazy<>(() -> {
         try {
             return ModrinthRemoteAddonRepository.MODS.getAddonById(DownloadProviders.getDownloadProvider(), "forgematica");
         } catch (IOException e) {
             LOG.warning("Failed to fetch forgematica", e);
-            return null;
+            throw e;
         }
     });
 
@@ -177,7 +177,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
     public void downloadLitematica() {
         if (downloadTarget.get() != null && gameInstance != null) {
-            var modDownloads = Controllers.getDownloadPage().showModDownloads();
+            var modDownloads = HMCLLocalizedDownloadListPage.ofModrinthMod(org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD, true);
             modDownloads.selectInstance(gameInstance.getId());
             Controllers.navigate(new DownloadPage(
                     modDownloads,
