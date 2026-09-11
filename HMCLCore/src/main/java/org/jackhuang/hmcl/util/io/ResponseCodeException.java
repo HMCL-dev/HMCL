@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 import java.net.URI;
 
@@ -25,6 +27,7 @@ public final class ResponseCodeException extends IOException {
     private final String uri;
     private final int responseCode;
     private final String data;
+    private final @Nullable Integer retryAfterSeconds;
 
     public ResponseCodeException(URI uri, int responseCode) {
         this(uri.toString(), responseCode);
@@ -39,10 +42,7 @@ public final class ResponseCodeException extends IOException {
     }
 
     public ResponseCodeException(String uri, int responseCode) {
-        super("Unable to request url " + uri + ", response code: " + responseCode);
-        this.uri = uri;
-        this.responseCode = responseCode;
-        this.data = null;
+        this(uri, responseCode, null, null);
     }
 
     public ResponseCodeException(String uri, int responseCode, Throwable cause) {
@@ -50,13 +50,21 @@ public final class ResponseCodeException extends IOException {
         this.uri = uri;
         this.responseCode = responseCode;
         this.data = null;
+        this.retryAfterSeconds = null;
     }
 
     public ResponseCodeException(String uri, int responseCode, String data) {
+        this(uri, responseCode, data, null);
+    }
+
+    /// Creates a response-code exception carrying the server-provided `Retry-After`
+    /// duration, when available.
+    public ResponseCodeException(String uri, int responseCode, String data, @Nullable Integer retryAfterSeconds) {
         super("Unable to request url " + uri + ", response code: " + responseCode + ", data: " + data);
         this.uri = uri;
         this.responseCode = responseCode;
         this.data = data;
+        this.retryAfterSeconds = retryAfterSeconds;
     }
 
     public String getUri() {
@@ -69,5 +77,10 @@ public final class ResponseCodeException extends IOException {
 
     public String getData() {
         return data;
+    }
+
+    /// Returns the `Retry-After` duration in seconds, or `null` when absent/unparseable.
+    public @Nullable Integer getRetryAfterSeconds() {
+        return retryAfterSeconds;
     }
 }

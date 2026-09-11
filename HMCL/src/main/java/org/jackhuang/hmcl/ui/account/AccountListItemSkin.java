@@ -159,6 +159,13 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerUpload.getStyleClass().add("small-spinner-pane");
         right.getChildren().add(spinnerUpload);
 
+        if (skinnable.getAccount() instanceof MicrosoftAccount microsoftAccount) {
+            JFXButton btnCape = FXUtils.newToggleButton4(SVG.CAPE);
+            btnCape.setOnAction(e -> Controllers.dialog(new MicrosoftAccountCapePane(microsoftAccount)));
+            FXUtils.installFastTooltip(btnCape, i18n("account.cape.manage"));
+            right.getChildren().add(btnCape);
+        }
+
         JFXButton btnCopyUUID = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
         btnCopyUUID.setOnAction(e -> FXUtils.copyText(skinnable.getAccount().getProfileID().toString()));
         FXUtils.installFastTooltip(btnCopyUUID, i18n("account.copy_uuid"));

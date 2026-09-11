@@ -569,6 +569,8 @@ public final class Accounts {
             return i18n("account.methods.microsoft.error.no_character");
         } else if (exception instanceof MicrosoftService.NoXuiException) {
             return i18n("account.methods.microsoft.error.add_family");
+        } else if (exception instanceof MicrosoftService.MinecraftServicesRateLimitException) {
+            return i18n("account.cape.rate_limited");
         } else if (exception instanceof OAuthServer.MicrosoftAuthenticationNotSupportedException) {
             return i18n("account.methods.microsoft.snapshot");
         } else if (exception instanceof OAuthAccount.WrongAccountException) {

@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -128,12 +129,28 @@ public abstract class HttpRequest {
         int code = con.getResponseCode();
         if (code / 100 != 2) {
             if (!ignoreHttpCode && !toleratedHttpCodes.contains(code)) {
+                Integer retryAfter = readRetryAfterSeconds(con);
                 try {
-                    throw new ResponseCodeException(this.url, code, NetworkUtils.readFullyAsString(con));
+                    throw new ResponseCodeException(this.url, code, NetworkUtils.readFullyAsString(con), retryAfter);
                 } catch (IOException e) {
                     throw new ResponseCodeException(this.url, code, e);
                 }
             }
+        }
+    }
+
+    /// Reads the `Retry-After` header as a non-negative second count, or `null`
+    /// when it is absent or not a plain integer.
+    private static @Nullable Integer readRetryAfterSeconds(HttpURLConnection con) {
+        String value = con.getHeaderField("Retry-After");
+        if (value == null) {
+            return null;
+        }
+        try {
+            int seconds = Integer.parseInt(value.trim());
+            return seconds > 0 ? seconds : null;
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 
