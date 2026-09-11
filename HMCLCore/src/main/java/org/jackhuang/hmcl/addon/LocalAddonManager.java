@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.addon;
 
 import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
@@ -120,18 +122,20 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     }
 
     /// @return SHA-1 hashes for finding versions in the given remote addon source
-    public Set<?> getSha1Hashes() throws IOException {
+    public Set<String> getSha1Hashes() throws Exception {
         lock.lock();
         try {
             if (!loaded)
                 refresh();
-            return localFiles.parallelStream().filter(localAddonFile -> !localAddonFile.isDisabled()).map(localAddonFile -> {
-                try {
-                    return localAddonFile.calculateSha1();
-                } catch (IOException e) {
-                    return null;
-                }
-            }).filter(Objects::nonNull).collect(Collectors.toSet());
+            var task = Task.allOf(
+                    localFiles.stream().filter(file -> !file.isDisabled())
+                            .map(file -> Task.supplyAsync(file::calculateSha1).setExecutor(Schedulers.io()).setSignificance(Task.TaskSignificance.MINOR))
+                            .toList()
+            ).setSignificance(Task.TaskSignificance.MINOR);
+            task.test();
+            if (task.getException() != null)
+                throw task.getException();
+            return task.getResult().stream().filter(Objects::nonNull).collect(Collectors.toSet());
         } finally {
             lock.unlock();
         }

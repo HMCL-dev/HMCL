@@ -45,7 +45,7 @@ public record RemoteAddon(String id, String slug, String author, String title, S
             LocalAddonManager<?> manager = gameInstance.getManagerForType(type());
             if (manager != null) {
                 try {
-                    Set<?> localHashes = manager.getSha1Hashes();
+                    Set<String> localHashes = manager.getSha1Hashes();
                     return remoteVersions.map(v -> v.file.hashes.get("sha1"))
                             .filter(StringUtils::isNotBlank)
                             .anyMatch(localHashes::contains);

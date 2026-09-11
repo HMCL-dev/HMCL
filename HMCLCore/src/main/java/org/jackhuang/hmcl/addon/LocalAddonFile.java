@@ -59,9 +59,15 @@ public abstract class LocalAddonFile {
 
     /// Calculates SHA-1 hash.
     ///
-    /// @return SHA-1 hash of this file
-    public String calculateSha1() throws IOException {
-        if (sha1 == null) sha1 = DigestUtils.digestToString("SHA-1", getFile());
+    /// @return SHA-1 hash of this file, or null on failure
+    public @Nullable String calculateSha1() {
+        if (sha1 == null) {
+            try {
+                sha1 = DigestUtils.digestToString("SHA-1", getFile());
+            } catch (IOException e) {
+                return null;
+            }
+        }
         return sha1;
     }
 
