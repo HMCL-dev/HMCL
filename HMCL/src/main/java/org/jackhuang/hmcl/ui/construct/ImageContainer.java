@@ -64,6 +64,33 @@ public class ImageContainer extends StackPane {
         this.getChildren().setAll(imageView);
     }
 
+    public ImageContainer(Image image, double maxWidth, double maxHeight) {
+        this.getStyleClass().add(DEFAULT_STYLE_CLASS);
+
+        double width = maxWidth;
+        double height = width / image.getWidth() * image.getHeight();
+        if (height > maxHeight) {
+            height = maxHeight;
+            width = height / image.getHeight() * image.getWidth();
+        }
+
+        FXUtils.setLimitWidth(this, width);
+        FXUtils.setLimitHeight(this, height);
+
+        imageView.setPreserveRatio(true);
+        FXUtils.limitSize(imageView, width, height);
+        StackPane.setAlignment(imageView, Pos.CENTER);
+
+        clip.setWidth(width);
+        clip.setHeight(height);
+        updateCornerRadius(getCornerRadius());
+        this.setClip(clip);
+
+        setImage(image);
+
+        this.getChildren().setAll(imageView);
+    }
+
     private void updateCornerRadius(double radius) {
         clip.setArcWidth(radius);
         clip.setArcHeight(radius);

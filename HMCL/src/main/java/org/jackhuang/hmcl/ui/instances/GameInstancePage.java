@@ -60,6 +60,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private final TabHeader.Tab<WorldListPage> worldListTab = new TabHeader.Tab<>("worldList");
     private final TabHeader.Tab<SchematicsPage> schematicsTab = new TabHeader.Tab<>("schematicsTab");
     private final TabHeader.Tab<ResourcePackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
+    private final TabHeader.Tab<ScreenshotsPage> screenshotsTab = new TabHeader.Tab<>("screenshotsTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentInstanceUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<HMCLGameInstance.@Nullable Optional> instance =
@@ -92,8 +93,9 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         resourcePackTab.setNodeSupplier(() -> new ResourcePackListPage(instance));
         worldListTab.setNodeSupplier(() -> new WorldListPage(instance));
         schematicsTab.setNodeSupplier(() -> new SchematicsPage(instance));
+        screenshotsTab.setNodeSupplier(() -> new ScreenshotsPage(instance));
 
-        tab = new TabHeader(transitionPane, gameSettingsTab, installerListTab, modListTab, resourcePackTab, worldListTab, schematicsTab);
+        tab = new TabHeader(transitionPane, gameSettingsTab, installerListTab, modListTab, resourcePackTab, worldListTab, schematicsTab, screenshotsTab);
         tab.select(gameSettingsTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
@@ -348,7 +350,8 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         .addNavigationDrawerTab(control.tab, control.modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                         .addNavigationDrawerTab(control.tab, control.resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
                         .addNavigationDrawerTab(control.tab, control.worldListTab, i18n("world.manage"), SVG.PUBLIC)
-                        .addNavigationDrawerTab(control.tab, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
+                        .addNavigationDrawerTab(control.tab, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL)
+                        .addNavigationDrawerTab(control.tab, control.screenshotsTab, i18n("screenshots.manage"), SVG.SCREENSHOT_MONITOR, SVG.SCREENSHOT_MONITOR_FILL);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);
 
                 PopupMenu browseList = new PopupMenu();
