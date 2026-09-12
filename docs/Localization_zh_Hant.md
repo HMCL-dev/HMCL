@@ -16,7 +16,7 @@ HMCL 為多種語言提供在地化支援。
 |-------------|-----------|----------------|--------------------|---------------------------------------------------|----------|-------------------------------------------|
 | 英語        | `en`      | `default`      | (空)               | `en_us`                                           | **主要** | [Glavo](https://github.com/Glavo)         |  
 | 英語 (顛倒) | `en-Qabs` | `en-Qabs`      | `en_Qabs`          | `en_ud`                                           | 自動     |                                           |  
-| 中文 (簡體) | `zh-Hans` | `zh-Hans`      | `_zh_Hant`         | `zh_cn`                                           | **主要** | [Glavo](https://github.com/Glavo)         |
+| 中文 (簡體) | `zh-Hans` | `zh-Hans`      | `_zh_Hans`         | `zh_cn`                                           | **主要** | [Glavo](https://github.com/Glavo)         |
 | 中文 (繁體) | `zh-Hant` | `zh-Hant`      | `_zh_Hant`         | `zh_tw` <br/> `zh_hk`                             | **主要** | [Glavo](https://github.com/Glavo)         |
 | 中文 (文言) | `lzh`     | `lzh`          | `_lzh`             | `lzh`                                             | 次要     |                                           |
 | 日語        | `ja`      | `ja`           | `_ja`              | `ja_jp`                                           | 次要     |                                           |
