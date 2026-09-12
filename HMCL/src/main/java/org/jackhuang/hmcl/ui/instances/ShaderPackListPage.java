@@ -456,12 +456,12 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
 
             content.getTags().clear();
             content.setTitle(file.getFileName());
-            content.setSubtitle(file.getMeta() == null || file.getMeta().name() == null ? "" : file.getMeta().name());
+            content.setSubtitle(file.getMeta().description() == null ? "" : file.getMeta().description());
             content.addTag(switch (file.getShaderLoaderType()) {
                 case OPTIFINE_IRIS -> i18n("shaderpack.loader.optifine_iris");
                 case APERTURE -> i18n("shaderpack.loader.aperture");
             });
-            if (file.getMeta() != null && file.getMeta().version() != null)
+            if (file.getMeta().version() != null)
                 content.addTag(file.getMeta().version());
 
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));

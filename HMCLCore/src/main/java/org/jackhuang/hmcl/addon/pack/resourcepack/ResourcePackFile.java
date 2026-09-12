@@ -36,7 +36,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public sealed abstract class ResourcePackFile extends LocalAddonFile implements Comparable<ResourcePackFile> permits ResourcePackFolder, ResourcePackZipFile {
 
-    static ResourcePackFile fromFile(ResourcePackManager manager, Path path) {
+    static @Nullable ResourcePackFile fromFile(ResourcePackManager manager, Path path) {
+        if (!isFileResourcePack(path)) return null;
         return Files.isRegularFile(path) ? ResourcePackZipFile.load(manager, path) : ResourcePackFolder.load(manager, path);
     }
 
