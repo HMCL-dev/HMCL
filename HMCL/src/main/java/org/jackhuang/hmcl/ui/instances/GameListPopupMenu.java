@@ -73,7 +73,9 @@ public final class GameListPopupMenu extends StackPane {
     public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
                             double initOffsetX, double initOffsetY,
                             List<HMCLGameInstance> instances) {
-        showAndGetPopup(owner, vAlign, hAlign, initOffsetX, initOffsetY, instances);
+        if (!hideShowing(owner)) {
+            showAndGetPopup(owner, vAlign, hAlign, initOffsetX, initOffsetY, instances);
+        }
     }
 
     /// Shows and returns an instance selection popup relative to its owner.
@@ -101,7 +103,6 @@ public final class GameListPopupMenu extends StackPane {
     }
 
     private final JFXListView<GameItem> listView = new JFXListView<>();
-    private final BooleanBinding isEmpty = Bindings.isEmpty(listView.getItems());
 
     public GameListPopupMenu() {
         this.setMaxHeight(365);
@@ -117,9 +118,8 @@ public final class GameListPopupMenu extends StackPane {
         Label placeholder = new Label(i18n("instance.empty"));
         placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
 
-        FXUtils.onChangeAndOperate(isEmpty, empty -> {
-            getChildren().setAll(empty ? placeholder : listView);
-        });
+        BooleanBinding isEmpty = Bindings.isEmpty(listView.getItems());
+        FXUtils.onChangeAndOperate(isEmpty, empty -> getChildren().setAll(empty ? placeholder : listView));
     }
 
     public ObservableList<GameItem> getItems() {
