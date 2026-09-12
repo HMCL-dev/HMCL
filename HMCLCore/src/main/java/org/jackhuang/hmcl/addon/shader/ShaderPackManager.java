@@ -62,7 +62,7 @@ public class ShaderPackManager extends LocalAddonManager<ShaderPackFile> {
     }
 
     private void addShaderPackInfo(Path file) throws IOException {
-        ShaderPackFile shaderPackFile = ShaderPackFile.fromFile(file);
+        ShaderPackFile shaderPackFile = ShaderPackFile.fromFile(this, file);
         if (shaderPackFile != null) localFiles.add(shaderPackFile);
     }
 
@@ -107,5 +107,17 @@ public class ShaderPackManager extends LocalAddonManager<ShaderPackFile> {
         }
 
         loaded = false;
+    }
+
+    public void updateConfigFileName(ShaderPackFile pack, String newFileNameWithExt) {
+        var configPath = pack.getFile().resolveSibling(pack.getFileNameWithExtension() + ".txt");
+        if (Files.isRegularFile(configPath)) {
+            var newConfigPath = pack.getFile().resolveSibling(newFileNameWithExt + ".txt");
+            try {
+                Files.move(configPath, newConfigPath);
+            } catch (IOException e) {
+                LOG.warning("Failed to rename shader config file " + configPath, e);
+            }
+        }
     }
 }

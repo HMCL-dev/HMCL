@@ -76,7 +76,7 @@ final class ResourcePackZipFile extends ResourcePackFile {
     @Override
     public void onUpdated(String newFileNameWithExt) {
         super.onUpdated(newFileNameWithExt);
-        manager.rename(getFileNameWithExtension(), newFileNameWithExt);
+        manager.updateOptions(getFileNameWithExtension(), newFileNameWithExt);
     }
 
     @Override

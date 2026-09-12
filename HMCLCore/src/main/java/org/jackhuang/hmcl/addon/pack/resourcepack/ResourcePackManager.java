@@ -517,7 +517,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         }
     }
 
-    public boolean rename(String oldName, String newName) {
+    public boolean updateOptions(String oldName, String newName) {
         String oldNameNewFormat = "file/" + oldName;
         String newNameNewFormat = "file/" + newName;
         boolean modified = false;

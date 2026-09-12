@@ -20,22 +20,24 @@ package org.jackhuang.hmcl.addon.shader;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+@NotNullByDefault
 public sealed abstract class ShaderPackFile extends LocalAddonFile implements Comparable<ShaderPackFile> permits ShaderPackZipFile, ShaderPackFolder {
-    public static @Nullable ShaderPackFile fromFile(Path file) throws IOException {
-        return Files.isRegularFile(file) ? ShaderPackZipFile.load(file) : ShaderPackFolder.load(file);
+    public static @Nullable ShaderPackFile fromFile(ShaderPackManager manager, Path file) throws IOException {
+        return Files.isRegularFile(file) ? ShaderPackZipFile.load(manager, file) : ShaderPackFolder.load(manager, file);
     }
 
     public static boolean isFileShaderPack(Path file) {
@@ -53,16 +55,22 @@ public sealed abstract class ShaderPackFile extends LocalAddonFile implements Co
         return false;
     }
 
+    protected final ShaderPackManager manager;
     protected Path file;
-    protected final String fileNameWithoutExtension;
     protected final ShaderLoaderType loaderType;
-    protected final @Nullable ShaderPackMeta shaderPackMeta;
+    protected final ShaderPackMeta meta;
 
-    protected ShaderPackFile(Path file, ShaderLoaderType loaderType, @Nullable ShaderPackMeta shaderPackMeta) {
+    protected final String fileName;
+    protected final String fileNameWithExtension;
+
+    protected ShaderPackFile(ShaderPackManager manager, Path file, ShaderLoaderType loaderType, @Nullable ShaderPackMeta meta) {
+        this.manager = manager;
         this.file = file;
-        this.fileNameWithoutExtension = FileUtils.getNameWithoutExtension(file);
         this.loaderType = loaderType;
-        this.shaderPackMeta = shaderPackMeta;
+        this.meta = Objects.requireNonNullElse(meta, ShaderPackMeta.EMPTY);
+
+        this.fileName = FileUtils.getNameWithoutExtension(file);
+        this.fileNameWithExtension = file.getFileName().toString();
     }
 
     @Override
@@ -72,21 +80,25 @@ public sealed abstract class ShaderPackFile extends LocalAddonFile implements Co
 
     @Override
     public String getFileName() {
-        return fileNameWithoutExtension;
+        return fileName;
+    }
+
+    public String getFileNameWithExtension() {
+        return fileNameWithExtension;
     }
 
     public ShaderLoaderType getLoaderType() {
         return loaderType;
     }
 
-    public @Nullable ShaderPackMeta getMeta() {
-        return shaderPackMeta;
+    public ShaderPackMeta getMeta() {
+        return meta;
     }
 
     public abstract @Nullable Image loadIcon();
 
-    public @NotNull String getName() {
-        return Optional.ofNullable(getMeta()).map(ShaderPackMeta::name).orElse(getFile().getFileName().toString());
+    public String getName() {
+        return StringUtils.isBlank(getMeta().name()) ? getFile().getFileName().toString() : getMeta().name();
     }
 
     @Override
@@ -111,23 +123,13 @@ public sealed abstract class ShaderPackFile extends LocalAddonFile implements Co
     }
 
     @Override
-    public int compareTo(@NotNull ShaderPackFile other) {
-        return fileNameWithoutExtension.compareTo(other.fileNameWithoutExtension);
+    public int compareTo(ShaderPackFile other) {
+        return fileName.compareTo(other.fileName);
     }
 
     @Override
     public void onUpdated(String newFileNameWithExt) {
         super.onUpdated(newFileNameWithExt);
-        var configPath = getFile().resolveSibling(getFile().getFileName() + ".txt");
-        var newConfigPath = getFile().resolveSibling(newFileNameWithExt + ".txt");
-        if (Files.isRegularFile(configPath)) {
-            try {
-                Files.move(configPath, newConfigPath);
-            } catch (IOException e) {
-                LOG.warning("Failed to rename shader config file " + configPath, e);
-            }
-        } else {
-            LOG.warning("Failed to rename shader config file " + configPath + " because the file doesn't exist");
-        }
+        manager.updateConfigFileName(this, newFileNameWithExt);
     }
 }

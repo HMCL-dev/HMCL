@@ -21,11 +21,11 @@ import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,51 +39,72 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ShaderPackZipFile extends ShaderPackFile {
 
-    public static @Nullable ShaderPackZipFile load(Path file) throws IOException {
+    public static @Nullable ShaderPackZipFile load(ShaderPackManager manager, Path file) throws IOException {
         if (!Files.isRegularFile(file) || !file.toString().toLowerCase(Locale.ROOT).endsWith(".zip")) return null;
 
-        try (var zipSystem = CompressingUtils.createReadOnlyZipFileSystem(file)) {
-            Path root = zipSystem.getRootDirectories().iterator().next();
-            try (Stream<Path> stream = Files.walk(root)) {
-                Path shadersPath = stream
-                        .filter(path -> path.endsWith("shaders"))
-                        .filter(Files::isDirectory)
-                        .findFirst().orElse(null);
-                if (shadersPath == null) return null;
+        try (var zipFileSystem = CompressingUtils.createReadOnlyZipFileSystem(file)) {
+            Path root = zipFileSystem.getRootDirectories().iterator().next();
 
+            aperture:
+            {
+                Path metaPath = root.resolve("pack.json");
+                if (!Files.isRegularFile(metaPath)
+                        || !Files.isDirectory(root.resolve("src"))
+                        || !Files.isDirectory(root.resolve("slang"))) {
+                    break aperture;
+                }
+                ShaderPackMeta meta = null;
+                try {
+                    meta = JsonUtils.fromJsonFile(JsonUtils.LENIENT_GSON, metaPath, ShaderPackMeta.class);
+                } catch (IOException e) {
+                    LOG.warning("Failed to load shader metadata", e);
+                }
+                if (meta == null || StringUtils.isBlank(meta.apertureApiVersion())) break aperture;
+
+                String iconPath = root.resolve("pack.png").toAbsolutePath().normalize().toString();
+                return new ShaderPackZipFile(manager, file, iconPath, ShaderLoaderType.APERTURE, meta);
+            }
+
+            {
+                // Optifine & Iris
+                Path shadersPath;
+                try (Stream<Path> stream = Files.walk(root)) {
+                    shadersPath = stream
+                            .filter(path -> path.endsWith("shaders"))
+                            .filter(Files::isDirectory)
+                            .findFirst().orElse(null);
+                    if (shadersPath == null) return null;
+                }
                 ShaderPackMeta meta = null;
                 try {
                     meta = JsonUtils.fromJsonFile(JsonUtils.LENIENT_GSON, shadersPath.resolve("pack.json"), ShaderPackMeta.class);
                 } catch (IOException e) {
-                    LOG.warning("Failed to load aperture shader metadata", e);
+                    LOG.warning("Failed to load shader metadata", e);
                 }
 
-                String shadersEntry = shadersPath.toAbsolutePath().normalize().toString().substring(1) + '/';
-                if (Files.isRegularFile(shadersPath.resolve("pack.ts"))) { // Aperture
-                    return new ShaderPackZipFile(file, shadersEntry, ShaderLoaderType.APERTURE, meta);
-                }
-                return new ShaderPackZipFile(file, shadersEntry, ShaderLoaderType.OPTIFINE_IRIS, meta);
+                String iconPath = shadersPath.resolve("pack.png").toAbsolutePath().normalize().toString();
+                return new ShaderPackZipFile(manager, file, iconPath, ShaderLoaderType.OPTIFINE_IRIS, meta);
             }
         }
     }
 
-    private final String shadersEntry;
+    private final String iconPath;
 
-    private ShaderPackZipFile(Path file, String shadersEntry, ShaderLoaderType loaderType, @Nullable ShaderPackMeta shaderPackMeta) {
-        super(file, loaderType, shaderPackMeta);
-        this.shadersEntry = shadersEntry;
+    private ShaderPackZipFile(ShaderPackManager manager, Path file, String iconPath, ShaderLoaderType loaderType, @Nullable ShaderPackMeta shaderPackMeta) {
+        super(manager, file, loaderType, shaderPackMeta);
+        this.iconPath = iconPath;
     }
 
     @Override
     public @Nullable Image loadIcon() {
-        try (var tree = CompressingUtils.openZipTree(getFile())) {
-            var entry = tree.getEntry(shadersEntry + "pack.png");
-            if (entry == null) return null;
-            try (var inputStream = new ByteArrayInputStream(tree.readBinaryEntry(entry))) {
+        try (var zipFileSystem = CompressingUtils.createReadOnlyZipFileSystem(getFile())) {
+            var path = zipFileSystem.getPath(iconPath);
+            if (!Files.isRegularFile(path)) return null;
+            try (var inputStream = Files.newInputStream(zipFileSystem.getPath(iconPath))) {
                 return new Image(inputStream, 64, 64, true, true);
             }
         } catch (Exception e) {
-            LOG.warning("Failed to load shader pack icon in file %s!/%s".formatted(getFile(), shadersEntry), e);
+            LOG.warning("Failed to load shader pack icon at %s!/%s".formatted(getFile(), iconPath), e);
         }
         return null;
     }
