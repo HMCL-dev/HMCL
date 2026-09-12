@@ -298,19 +298,22 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
-                            return version != GameVersionNumber.unknown()
-                                    ? new AddonCheckUpdatesTask<>(
-                                            DownloadProviders.getDownloadProvider(), version.toString(), mods)
-                                    : null;
+                            if (version != GameVersionNumber.unknown()) {
+                                return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), mods);
+                            } else {
+                                LOG.warning("Failed to check for updates, due to unable to get instance game version");
+                                return null;
+                            }
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception instanceof CancellationException) return;
                             if (exception != null || result == null) {
                                 Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
-                            } else if (result.isEmpty()) {
+                                if (exception != null) LOG.warning("Failed to check for updates", exception);
+                            } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage<>(modManager, result));
+                                Controllers.navigateForward(new AddonUpdatesPage(modManager.getDirectory(), result));
                             }
                         })
                         .withStagesHints("update.checking"),
