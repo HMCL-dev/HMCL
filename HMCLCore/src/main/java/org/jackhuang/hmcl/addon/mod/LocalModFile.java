@@ -195,7 +195,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
 
     @Override
     protected AddonUpdate.UpdateConditions getUpdateConditions() {
-        return new AddonUpdate.UpdateConditions(RemoteAddon.Type.MOD, List.of(v -> v.loaders().contains(getModLoaderType())));
+        return new AddonUpdate.UpdateConditions(RemoteAddon.Type.MOD, List.of(v -> v.loaders().stream().anyMatch(it -> it.type() == getModLoaderType())));
     }
 
     @Override

@@ -35,52 +35,6 @@ public interface RemoteAddonRepository {
 
     String getBaseUrl();
 
-    enum SortType {
-        POPULARITY,
-        NAME,
-        DATE_CREATED,
-        LAST_UPDATED,
-        AUTHOR,
-        TOTAL_DOWNLOADS
-    }
-
-    enum SortOrder {
-        ASC,
-        DESC
-    }
-
-    class SearchResult {
-        private final Stream<RemoteAddon> sortedResults;
-
-        private final Stream<RemoteAddon> unsortedResults;
-
-        private final int totalPages;
-
-        public SearchResult(Stream<RemoteAddon> sortedResults, Stream<RemoteAddon> unsortedResults, int totalPages) {
-            this.sortedResults = sortedResults;
-            this.unsortedResults = unsortedResults;
-            this.totalPages = totalPages;
-        }
-
-        public SearchResult(Stream<RemoteAddon> sortedResults, int pages) {
-            this.sortedResults = sortedResults;
-            this.unsortedResults = sortedResults;
-            this.totalPages = pages;
-        }
-
-        public Stream<RemoteAddon> getResults() {
-            return this.sortedResults;
-        }
-
-        public Stream<RemoteAddon> getUnsortedResults() {
-            return this.unsortedResults;
-        }
-
-        public int getTotalPages() {
-            return this.totalPages;
-        }
-    }
-
     SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder)
             throws IOException;
 
@@ -105,5 +59,21 @@ public interface RemoteAddonRepository {
     Stream<Category> getCategories() throws IOException;
 
     record Category(Object self, String id, List<Category> subcategories) {
+    }
+
+    enum SortType {
+        RELEVANCY,
+        POPULARITY,
+        DATE_CREATED,
+        LAST_UPDATED,
+        TOTAL_DOWNLOADS
+    }
+
+    enum SortOrder {
+        ASC,
+        DESC
+    }
+
+    record SearchResult(Stream<RemoteAddon> results, int totalPages) {
     }
 }

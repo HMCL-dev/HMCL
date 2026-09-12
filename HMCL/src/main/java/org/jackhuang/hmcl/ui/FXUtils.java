@@ -58,9 +58,7 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import javafx.stage.FileChooser;
-import javafx.stage.Screen;
-import javafx.stage.Stage;
+import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import javafx.util.Subscription;
@@ -110,10 +108,7 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.ToIntFunction;
+import java.util.function.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1194,6 +1189,18 @@ public final class FXUtils {
             if (e.getButton() == MouseButton.SECONDARY) {
                 action.run();
                 e.consume();
+            }
+        });
+    }
+
+    public static void addMacOSCloseWindowHandler(Window window, @Nullable Supplier<Boolean> restriction) {
+        window.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                    && event.isMetaDown()
+                    && event.getCode() == KeyCode.W
+                    && (restriction == null || restriction.get())) {
+                window.fireEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSE_REQUEST));
+                event.consume();
             }
         });
     }
