@@ -62,17 +62,6 @@ HMCL will derive a search list from the current language tag and search for reso
 We recommend always providing a default resource (with the `default` key and empty file suffix) when providing localization resources,
 to ensure all users can load resources properly.
 
-We also recommend using broader language tags for localization resources whenever possible,
-so users are less likely to fall back to the default resource.
-
-For example, if you provide a Simplified Chinese localization resource, 
-we recommend using `zh` as the localization key instead of the more specific `zh-Hans`,
-so it will apply to all Chinese users and avoid falling back to the default resource for them.
-
-If you want to provide both Simplified and Traditional Chinese resources, 
-it is recommended to use the broader `zh` as the key for the resource with more users (as the default Chinese resource),
-and use the more specific `zh-Hans`/`zh-Hant` as the key for the resource with fewer users.
-
 </details>
 
 HMCL requires all pull requests that update documentation and localization resources to also update the resources
