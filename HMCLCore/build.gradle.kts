@@ -44,8 +44,7 @@ dependencies {
 tasks.processResources {
     listOf(
         "HMCLTransformerDiscoveryService",
-        "HMCLMultiMCBootstrap",
-        "HMCLModLoaderHelper"
+        "HMCLMultiMCBootstrap"
     ).map { project(":$it").tasks["jar"] as Jar }.forEach { task ->
         dependsOn(task)
 
