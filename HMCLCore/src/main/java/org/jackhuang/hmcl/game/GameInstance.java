@@ -135,6 +135,11 @@ public interface GameInstance {
         return getRunDirectory().resolve("mods");
     }
 
+    /// Returns the directory containing legacy (1.5-) coremods used by this instance.
+    ///
+    /// @return the coremods directory below the run directory, or null if [#getVersion()] is at least 1.6.1.
+    @Nullable Path getCoreModsDirectory();
+
     /// Returns the directory containing resource packs used by this instance.
     ///
     /// @return the resource pack directory below the run directory
