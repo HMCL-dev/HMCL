@@ -1,7 +1,7 @@
 # 平臺支援狀態
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-[English](PLATFORM.md) | **中文** ([简体](PLATFORM_zh.md), **繁體**)
+[English](PLATFORM.md) | **中文** ([简体](PLATFORM_zh_Hans.md), **繁體**)
 <!-- #END LANGUAGE_SWITCHER -->
 
 ## 啟動器相容性

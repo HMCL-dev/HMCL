@@ -24,8 +24,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.SetChangeListener;
@@ -80,6 +79,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -283,6 +283,9 @@ public final class Themes {
             colorScheme
     );
 
+    /// Whether the current color scheme brightness is inherited from system.
+    private static final ReadOnlyBooleanWrapper autoBrightness = new ReadOnlyBooleanWrapper();
+
     /// The current JavaFX launcher background and its node opacity.
     private static final ReadOnlyObjectWrapper<LauncherBackground> background = new ReadOnlyObjectWrapper<>(
             new LauncherBackground(
@@ -380,6 +383,35 @@ public final class Themes {
     }
 
     static {
+        Supplier<@Nullable Brightness> effectiveBrightnessSupplier = () -> {
+            try {
+                return ThemePackManager.resolveCurrentThemeBrightness(ThemePackManager.currentResolveContext());
+            } catch (IOException | RuntimeException e) {
+                return null;
+            }
+        };
+        InvalidationListener autoBrightnessListener = o -> {
+            boolean auto;
+            if (settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
+                String val = settings().themeBrightnessModeProperty().get();
+                auto = val == null || switch (val.trim().toLowerCase(Locale.ROOT)) {
+                    case "light", "dark" -> false;
+                    default -> true;
+                };
+            } else {
+                auto = effectiveBrightnessSupplier.get() == null;
+            }
+            autoBrightness.set(auto);
+        };
+        settings().selectedThemeProperty().addListener(autoBrightnessListener);
+        settings().getThemeAppearanceOverrides().addListener(autoBrightnessListener);
+        settings().themeBrightnessModeProperty().addListener(autoBrightnessListener);
+        settings().backgroundTypeProperty().addListener(autoBrightnessListener);
+        if (FXUtils.DARK_MODE != null) {
+            FXUtils.DARK_MODE.addListener(autoBrightnessListener);
+        }
+        autoBrightnessListener.invalidated(null);
+
         ChangeListener<ResolvedTheme> listener = (observable, oldValue, newValue) -> {
             if (!Objects.equals(oldValue, newValue)) {
                 colorScheme.set(newValue.toColorScheme());
@@ -433,7 +465,7 @@ public final class Themes {
         }
 
         String themeBrightnessMode = settings().themeBrightnessModeProperty().get();
-        return switch (Objects.toString(themeBrightnessMode, "").toLowerCase(Locale.ROOT).trim()) {
+        return switch (Objects.toString(themeBrightnessMode, "").trim().toLowerCase(Locale.ROOT)) {
             case "light" -> Brightness.LIGHT;
             case "dark" -> Brightness.DARK;
             default -> getAutomaticBrightness();
@@ -444,24 +476,16 @@ public final class Themes {
     ///
     /// @return the effective launcher brightness
     public static Brightness getCurrentBrightness() {
+        Brightness contextBrightness = getThemeConditionBrightness();
         if (!settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
-            Brightness contextBrightness = getThemeConditionBrightness();
             try {
                 return Objects.requireNonNullElse(
                         ThemePackManager.resolveCurrentThemeBrightness(ThemeResolveContext.current(contextBrightness)),
                         contextBrightness);
-            } catch (IOException | RuntimeException e) {
-                return contextBrightness;
+            } catch (IOException | RuntimeException ignored) {
             }
         }
-
-        String themeBrightnessMode = settings().themeBrightnessModeProperty().get();
-        return switch (Objects.toString(themeBrightnessMode, "").toLowerCase(Locale.ROOT).trim()) {
-            case "auto" -> getAutomaticBrightness();
-            case "dark" -> Brightness.DARK;
-            case "light" -> Brightness.LIGHT;
-            default -> getAutomaticBrightness();
-        };
+        return contextBrightness;
     }
 
     /// Returns the brightness requested by the current system or platform settings.
@@ -1117,6 +1141,11 @@ public final class Themes {
     /// Returns whether the current color scheme uses dark brightness.
     public static BooleanBinding darkModeProperty() {
         return darkMode;
+    }
+
+    /// Returns whether the current color scheme brightness is inherited from system.
+    public static ReadOnlyBooleanProperty autoBrightnessProperty() {
+        return autoBrightness.getReadOnlyProperty();
     }
 
     /// Applies native dark-mode integration to a JavaFX stage where the platform supports it.

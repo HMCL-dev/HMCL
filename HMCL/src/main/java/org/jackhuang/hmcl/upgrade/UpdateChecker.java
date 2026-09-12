@@ -25,6 +25,7 @@ import javafx.beans.value.ObservableBooleanValue;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -54,6 +55,7 @@ public final class UpdateChecker {
             },
             latestVersion);
     private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
+    private static final ReadOnlyObjectWrapper<@Nullable Throwable> error = new ReadOnlyObjectWrapper<>();
 
     public static void init() {
         requestCheckUpdate(UpdateChannel.getChannel(), settings().acceptPreviewUpdateProperty().get());
@@ -83,9 +85,13 @@ public final class UpdateChecker {
         return checkingUpdate.getReadOnlyProperty();
     }
 
+    public static ReadOnlyObjectProperty<@Nullable Throwable> errorProperty() {
+        return error.getReadOnlyProperty();
+    }
+
     private static RemoteVersion checkUpdate(UpdateChannel channel, boolean preview) throws IOException {
         if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
-            throw new IOException("Self verification failed");
+            throw new SelfVerificationException();
         }
 
         var query = new LinkedHashMap<String, String>();
@@ -109,16 +115,23 @@ public final class UpdateChecker {
 
             thread(() -> {
                 RemoteVersion result = null;
+                Throwable t = null;
                 try {
                     result = checkUpdate(channel, preview);
                     LOG.info("Latest version (" + channel + ", preview=" + preview + ") is " + result);
                 } catch (Throwable e) {
+                    t = e;
                     LOG.warning("Failed to check for update", e);
                 }
+                Throwable throwable = t;
 
                 RemoteVersion finalResult = result;
                 Platform.runLater(() -> {
-                    if (finalResult != null) {
+                    if (throwable != null) {
+                        latestVersion.set(null);
+                        error.set(throwable);
+                    } else {
+                        error.set(null);
                         latestVersion.set(finalResult);
                     }
                     checkingUpdate.set(false);
