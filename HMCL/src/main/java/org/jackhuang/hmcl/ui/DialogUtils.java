@@ -55,12 +55,13 @@ public final class DialogUtils {
     /// @param content   the dialog content
     public static void show(Decorator decorator, Node content) {
         StackPane dialogContainer = decorator.getDialogContainer();
+        StackPane dialogOverlayPane = decorator.getDialogOverlayPane();
         if (decorator.getRoot().getScene() == null) {
-            Platform.runLater(() -> showInDecorator(decorator, dialogContainer, content));
+            Platform.runLater(() -> showInDecorator(decorator, dialogContainer, content, dialogOverlayPane));
             return;
         }
 
-        showInDecorator(decorator, dialogContainer, content);
+        showInDecorator(decorator, dialogContainer, content, dialogOverlayPane);
     }
 
     /// Shows content in a decorator's resolved dialog container.
@@ -68,8 +69,9 @@ public final class DialogUtils {
     /// @param decorator     the main-window decorator
     /// @param dialogContainer the container resolved before any deferred execution
     /// @param content       the dialog content
-    private static void showInDecorator(Decorator decorator, StackPane dialogContainer, Node content) {
-        show(dialogContainer, content, dialog -> {
+    /// @param dialogOverlayPane the dialog overlay pane
+    private static void showInDecorator(Decorator decorator, StackPane dialogContainer, Node content, StackPane dialogOverlayPane) {
+        show(dialogContainer, content, dialogOverlayPane, dialog -> {
             JFXDialogPane pane = (JFXDialogPane) dialog.getContent();
             decorator.capableDraggingWindow(dialog);
             decorator.forbidDraggingWindow(pane);
@@ -78,24 +80,24 @@ public final class DialogUtils {
     }
 
     public static void show(StackPane container, Node content) {
-        show(container, content, null);
+        show(container, content, null, null);
     }
 
-    public static void show(StackPane container, Node content, @Nullable Consumer<JFXDialog> onDialogCreated) {
+    public static void show(StackPane container, Node content, @Nullable StackPane overlayPane, @Nullable Consumer<JFXDialog> onDialogCreated) {
         FXUtils.checkFxUserThread();
 
         JFXDialog dialog = (JFXDialog) container.getProperties().get(PROPERTY_DIALOG_INSTANCE);
         JFXDialogPane dialogPane = (JFXDialogPane) container.getProperties().get(PROPERTY_DIALOG_PANE_INSTANCE);
 
         if (dialog == null) {
-            dialog = new JFXDialog(AnimationUtils.isAnimationEnabled()
-                    ? JFXDialog.DialogTransition.CENTER
-                    : JFXDialog.DialogTransition.NONE);
             dialogPane = new JFXDialogPane();
-
-            dialog.setContent(dialogPane);
-            dialog.setDialogContainer(container);
-            dialog.setOverlayClose(false);
+            dialog = new JFXDialog(
+                    container,
+                    dialogPane,
+                    overlayPane,
+                    AnimationUtils.isAnimationEnabled() ? JFXDialog.DialogTransition.CENTER : JFXDialog.DialogTransition.NONE,
+                    false
+            );
 
             container.getProperties().put(PROPERTY_DIALOG_INSTANCE, dialog);
             container.getProperties().put(PROPERTY_DIALOG_PANE_INSTANCE, dialogPane);
@@ -145,7 +147,8 @@ public final class DialogUtils {
     /// @param content   the dialog content
     public static void showLater(Decorator decorator, Node content) {
         StackPane dialogContainer = decorator.getDialogContainer();
-        Runnable showDialogAction = () -> showInDecorator(decorator, dialogContainer, content);
+        StackPane dialogOverlayPane = decorator.getDialogOverlayPane();
+        Runnable showDialogAction = () -> showInDecorator(decorator, dialogContainer, content, dialogOverlayPane);
         if (decorator.getRoot().getScene() == null) {
             Platform.runLater(() -> showLater(dialogContainer, showDialogAction));
             return;
