@@ -70,11 +70,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage {
     public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_MOD =
-            (downloadProvider, repository, version, mod, file) -> download(downloadProvider, repository, version, file, "mods");
+            (downloadProvider, repository, version, mod, file) -> download(downloadProvider, repository, version, file, "mods", RemoteAddon.Type.MOD);
     public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_RESOURCE_PACK =
-            (downloadProvider, repository, version, pack, file) -> download(downloadProvider, repository, version, file, "resourcepacks");
+            (downloadProvider, repository, version, pack, file) -> download(downloadProvider, repository, version, file, "resourcepacks", RemoteAddon.Type.RESOURCE_PACK);
     public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_SHADER =
-            (downloadProvider, repository, version, shader, file) -> download(downloadProvider, repository, version, file, "shaderpacks");
+            (downloadProvider, repository, version, shader, file) -> download(downloadProvider, repository, version, file, "shaderpacks", RemoteAddon.Type.SHADER_PACK);
 
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
     private final TabHeader tab;
@@ -142,7 +142,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         };
     }
 
-    public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file, String subdirectoryName) {
+    public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file, String subdirectoryName, RemoteAddon.Type type) {
         @Nullable HMCLGameInstance instance = instanceId != null
                 ? repository.findInstance(instanceId)
                 : repository.getSelectedInstance();
@@ -161,10 +161,13 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         Controllers.prompt(i18n("archive.file.name"), (result, handler) -> {
             Path dest = targetPath.resolve(result);
 
-            Controllers.taskDialog(Task.composeAsync(() -> {
-                var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(file.file().url()), dest);
-                task.setName(file.name());
-                return task;
+            Controllers.taskDialog(Task.composeAsync(() ->
+                    new FileDownloadTask(downloadProvider.injectURLWithCandidates(file.file().url()), dest).setName(file.name())
+            ).whenComplete(Schedulers.io(), exception -> {
+                if (exception == null && instance != null) {
+                    var manager = instance.getManagerForType(type);
+                    if (manager != null) manager.invalidate();
+                }
             }).whenComplete(Schedulers.javafx(), exception -> {
                 if (exception != null) {
                     if (!(exception instanceof CancellationException)) {

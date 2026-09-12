@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.addon;
 
 import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
@@ -27,11 +29,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 /// Manages local addon files for a single [DefaultGameInstance] snapshot member.
 ///
@@ -58,11 +58,13 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     /// Lock guarding [#localFiles] and subclass mutable state.
     protected final ReentrantLock lock = new ReentrantLock();
 
-    /// Loaded local addon files for the bound instance.
+    /// Loaded local addon files for the bound instance, should be updated only in [#refresh()]
     protected final Set<@NotNull T> localFiles = new LinkedHashSet<>();
 
     /// The snapshot member this manager serves.
     protected final DefaultGameInstance instance;
+
+    protected volatile boolean loaded = false;
 
     /// Creates a manager bound to the given instance.
     ///
@@ -83,8 +85,19 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     /// @return the addon directory path
     public abstract Path getDirectory();
 
+    /// Marks the local file list as invalid.
+    public void invalidate() {
+        lock.lock();
+        try {
+            loaded = false;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     /// Reloads local addon files from disk into [#localFiles].
     ///
+    /// @implSpec This should be the only place that updates [#localFiles].
     /// @throws IOException if the directory cannot be listed or a required instance path cannot be read
     public abstract void refresh() throws IOException;
 
@@ -100,7 +113,29 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     public @Unmodifiable List<T> getLocalFiles() throws IOException {
         lock.lock();
         try {
+            if (!loaded)
+                refresh();
             return localFiles.stream().sorted(getComparator()).toList();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /// @return SHA-1 hashes for finding versions in the given remote addon source
+    public Set<String> getSha1Hashes() throws Exception {
+        lock.lock();
+        try {
+            if (!loaded)
+                refresh();
+            var task = Task.allOf(
+                    localFiles.stream().filter(file -> !file.isDisabled())
+                            .map(file -> Task.supplyAsync(file::calculateSha1).setExecutor(Schedulers.io()).setSignificance(Task.TaskSignificance.MINOR))
+                            .toList()
+            ).setSignificance(Task.TaskSignificance.MINOR);
+            task.test();
+            if (task.getException() != null)
+                throw task.getException();
+            return task.getResult().stream().filter(Objects::nonNull).collect(Collectors.toSet());
         } finally {
             lock.unlock();
         }
@@ -111,21 +146,20 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     /// When `old` is `true`, the file is renamed with [#OLD_EXTENSION] and removed from
     /// [#localFiles]. When `old` is `false`, the suffix is removed and the file is re-added.
     ///
-    /// @param modFile the local addon file to update
+    /// @param addonFile the local addon file to update
     /// @param old     whether the file should be treated as a backup
     /// @return the path after the rename
     /// @throws IOException if the file cannot be moved
-    public Path setOld(T modFile, boolean old) throws IOException {
+    public Path setOld(T addonFile, boolean old) throws IOException {
         lock.lock();
         try {
             Path newPath;
             if (old) {
-                newPath = backupFile(modFile.getFile());
-                localFiles.remove(modFile);
+                newPath = backupFile(addonFile.getFile());
             } else {
-                newPath = restoreFile(modFile.getFile());
-                localFiles.add(modFile);
+                newPath = restoreFile(addonFile.getFile());
             }
+            loaded = false;
             return newPath;
         } finally {
             lock.unlock();

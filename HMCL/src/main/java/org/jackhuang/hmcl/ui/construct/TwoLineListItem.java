@@ -30,6 +30,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -164,7 +165,8 @@ public class TwoLineListItem extends VBox {
         return lblSubtitle;
     }
 
-    private static Label createTag(String tag, PseudoClass pseudoClass) {
+    /// Creates a tag label and activates the pseudo-class when it is non-null.
+    private static Label createTag(@Nullable String tag, @Nullable PseudoClass pseudoClass) {
         var tagLabel = new Label(tag);
         tagLabel.getStyleClass().add("tag");
         tagLabel.setMinWidth(Label.USE_PREF_SIZE);
@@ -202,7 +204,8 @@ public class TwoLineListItem extends VBox {
         return tags;
     }
 
-    public void addTag(String tag, PseudoClass pseudoClass) {
+    /// Appends a tag and activates the pseudo-class when it is non-null.
+    public void addTag(@Nullable String tag, @Nullable PseudoClass pseudoClass) {
         getTags().add(createTag(tag, pseudoClass));
     }
 
@@ -210,10 +213,17 @@ public class TwoLineListItem extends VBox {
         addTag(tag, null);
     }
 
+    /// Prepends a tag and activates the pseudo-class when it is non-null.
+    public void addTagFirst(@Nullable String tag, @Nullable PseudoClass pseudoClass) {
+        getTags().add(0, createTag(tag, pseudoClass));
+    }
+
+    /// Appends tags in iteration order, retaining duplicate text.
     public void addTags(Collection<String> tags) {
         getTags().addAll(tags.stream().map(tag -> createTag(tag, null)).toList());
     }
 
+    /// Appends each distinct tag text absent from the current labels, in iteration order.
     public void addTagsIfNotExist(Collection<String> tags) {
         var current = getTags().stream().map(Label::getText).collect(Collectors.toSet());
         var target = new LinkedHashSet<>(tags);

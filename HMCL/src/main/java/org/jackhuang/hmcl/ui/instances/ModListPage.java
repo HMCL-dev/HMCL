@@ -112,7 +112,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     LOG.warning("Unable to parse mod file " + it, e);
                 }
             });
-            loadMods(modManager);
+            refresh();
         });
 
         listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
@@ -252,7 +252,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             if (!failed.isEmpty())
                 prompt.add(i18n("mods.add.failed", String.join(", ", failed)));
             Controllers.dialog(String.join("\n", prompt), i18n("mods.add"));
-            loadMods(modManager);
+            refresh();
         }).start();
     }
 
@@ -262,7 +262,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     .filter(Objects::nonNull)
                     .map(ModInfoObject::getModInfo)
                     .toArray(LocalModFile[]::new));
-            loadMods(modManager);
+            refresh();
         } catch (IOException ignore) {
             // Fail to remove mods if the game is running or the mod is absent.
         }
