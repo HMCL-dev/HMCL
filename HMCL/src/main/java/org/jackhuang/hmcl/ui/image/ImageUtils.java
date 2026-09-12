@@ -28,6 +28,11 @@ import org.girod.javafx.svgimage.LoaderParameters;
 import org.girod.javafx.svgimage.SVGImage;
 import org.girod.javafx.svgimage.SVGLoader;
 import org.girod.javafx.svgimage.ScaleQuality;
+import org.glavo.avif.AvifFrame;
+import org.glavo.avif.AvifImage;
+import org.glavo.avif.AvifImageInfo;
+import org.glavo.avif.AvifSequenceInfo;
+import org.glavo.avif.javafx.AvifFXImage;
 import org.glavo.webp.WebPImage;
 import org.glavo.webp.WebPImageLoadOptions;
 import org.glavo.webp.javafx.WebPFXImage;
@@ -42,6 +47,7 @@ import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
 import org.jackhuang.hmcl.ui.image.internal.AnimationImageImpl;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -77,6 +83,59 @@ public final class ImageUtils {
     public static final ImageLoader WEBP = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         var options = new WebPImageLoadOptions(requestedWidth, requestedHeight, preserveRatio, smooth);
         return new WebPFXImage(WebPImage.read(input, options));
+    };
+
+    public static final ImageLoader AVIF = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
+        AvifImage image = AvifImage.read(input);
+        AvifImageInfo info = image.info();
+
+        final int width = info.width();
+        final int height = info.height();
+
+        // A request is only honored when both dimensions are given and at least one differs
+        // from the decoded size; otherwise the image is returned at its native resolution.
+        boolean doScale = requestedWidth > 0 && requestedHeight > 0
+                && (requestedWidth != width || requestedHeight != height);
+
+        int targetWidth = requestedWidth;
+        int targetHeight = requestedHeight;
+        if (doScale && preserveRatio) {
+            double scaleX = (double) requestedWidth / width;
+            double scaleY = (double) requestedHeight / height;
+            double scale = Math.min(scaleX, scaleY);
+
+            targetWidth = (int) (width * scale);
+            targetHeight = (int) (height * scale);
+        }
+
+        if (!doScale)
+            return new AvifFXImage(image);
+
+        List<AvifFrame> frames = image.frames();
+        if (frames.size() > 1) {
+            @Nullable AvifSequenceInfo sequenceInfo = info.sequenceInfo();
+            AvifFrame firstFrame = frames.get(0);
+            int sourceWidth = firstFrame.width();
+            int sourceHeight = firstFrame.height();
+
+            int[][] framePixels = new int[frames.size()][];
+            for (int i = 0; i < frames.size(); i++) {
+                framePixels[i] = scale(frames.get(i).intPixels(),
+                        sourceWidth, sourceHeight,
+                        targetWidth, targetHeight);
+            }
+
+            return new AnimationImageImpl(targetWidth, targetHeight, framePixels,
+                avifFrameDurations(sequenceInfo, frames.size()),
+                avifCycleCount(sequenceInfo));
+        }
+
+        int[] pixels = scale(image.firstFrame().intPixels(), width, height, targetWidth, targetHeight);
+
+        WritableImage result = new WritableImage(targetWidth, targetHeight);
+        result.getPixelWriter().setPixels(0, 0, targetWidth, targetHeight,
+                PixelFormat.getIntArgbInstance(), pixels, 0, targetWidth);
+        return result;
     };
 
     public static final ImageLoader SVG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
@@ -181,6 +240,7 @@ public final class ImageUtils {
 
     public static final Map<String, ImageLoader> EXT_TO_LOADER = Map.of(
             "webp", WEBP,
+            "avif", AVIF,
             "svg", SVG,
             "apng", APNG
     );
@@ -727,6 +787,76 @@ public final class ImageUtils {
             argb[i] = (a << 24) | (r << 16) | (g << 8) | b;
         }
         return argb;
+    }
+
+    // AVIF
+
+    /// Computes per-frame display durations, in milliseconds, for an AVIF animation.
+    ///
+    /// When `sequenceInfo` supplies usable per-frame timing (see [#hasUsableAvifSequenceTiming]),
+    /// that timing is converted to milliseconds; otherwise a uniform 30 frames-per-second
+    /// fallback is used. This mirrors the behavior of `org.glavo.avif.javafx.AvifFXImage`.
+    ///
+    /// @param sequenceInfo sequence timing metadata, or `null` if unavailable
+    /// @param frameCount   number of frames in the animation
+    /// @return an array of `frameCount` frame durations, in milliseconds
+    private static int @Unmodifiable [] avifFrameDurations(@Nullable AvifSequenceInfo sequenceInfo, int frameCount) {
+        int[] durations = new int[frameCount];
+
+        if (hasUsableAvifSequenceTiming(sequenceInfo, frameCount)) {
+            // hasUsableAvifSequenceTiming(...) returning true guarantees sequenceInfo is non-null.
+
+            int[] frameDurations = sequenceInfo.frameDurations();
+            int mediaTimescale = sequenceInfo.mediaTimescale();
+            for (int i = 0; i < frameCount; i++) {
+                durations[i] = (int) (frameDurations[i] * 1000.0 / mediaTimescale);
+            }
+        } else {
+            Arrays.fill(durations, 1000 / 30);
+        }
+
+        return durations;
+    }
+
+    /// Returns whether `sequenceInfo` supplies per-frame timing that can be trusted to
+    /// drive an animation.
+    ///
+    /// @param sequenceInfo sequence timing metadata, or `null` if unavailable
+    /// @param frameCount   number of decoded frames
+    /// @return whether `sequenceInfo` is non-`null`, has a positive
+    ///         [AvifSequenceInfo#mediaTimescale()], its frame-duration array length matches
+    ///         `frameCount`, and at least one duration is positive
+    private static boolean hasUsableAvifSequenceTiming(@Nullable AvifSequenceInfo sequenceInfo, int frameCount) {
+        if (sequenceInfo == null || sequenceInfo.mediaTimescale() <= 0)
+            return false;
+
+        int[] frameDurations = sequenceInfo.frameDurations();
+        if (frameDurations.length != frameCount)
+            return false;
+
+        for (int frameDuration : frameDurations) {
+            if (frameDuration > 0)
+                return true;
+        }
+        return false;
+    }
+
+    /// Computes the [Timeline] cycle count corresponding to an AVIF sequence's repeat count.
+    ///
+    /// @param sequenceInfo sequence timing metadata, or `null` if unavailable
+    /// @return [Timeline#INDEFINITE] if `sequenceInfo` is `null` or its repeat count is
+    ///         [AvifSequenceInfo#REPETITION_COUNT_UNKNOWN] or [AvifSequenceInfo#REPETITION_COUNT_INFINITE];
+    ///         otherwise the repeat count plus one
+    private static int avifCycleCount(@Nullable AvifSequenceInfo sequenceInfo) {
+        if (sequenceInfo == null)
+            return Timeline.INDEFINITE;
+
+        int repetitionCount = sequenceInfo.repetitionCount();
+        if (repetitionCount == AvifSequenceInfo.REPETITION_COUNT_UNKNOWN
+                || repetitionCount == AvifSequenceInfo.REPETITION_COUNT_INFINITE) {
+            return Timeline.INDEFINITE;
+        }
+        return repetitionCount == Integer.MAX_VALUE ? Integer.MAX_VALUE : repetitionCount + 1;
     }
 
     /// Prevents instantiation.
