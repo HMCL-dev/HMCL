@@ -1,7 +1,7 @@
 # 在地化
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-[English](Localization.md) | **中文** ([简体](Localization_zh.md), **繁體**)
+[English](Localization.md) | **中文** ([简体](Localization_zh_Hans.md), **繁體**)
 <!-- #END LANGUAGE_SWITCHER -->
 
 HMCL 為多種語言提供在地化支援。
