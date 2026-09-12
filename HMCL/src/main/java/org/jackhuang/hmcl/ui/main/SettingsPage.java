@@ -38,10 +38,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.upgrade.RemoteVersion;
-import org.jackhuang.hmcl.upgrade.UpdateChannel;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
-import org.jackhuang.hmcl.upgrade.UpdateHandler;
+import org.jackhuang.hmcl.upgrade.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -122,10 +119,18 @@ public final class SettingsPage extends ScrollPane {
                             updateButton.setManaged(outdated);
                             updatePane.pseudoClassStateChanged(PseudoClass.getPseudoClass("active"), outdated);
 
-                            if (UpdateChecker.isOutdated()) {
+                            if (outdated) {
                                 lblUpdateSubProperty.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().version()));
                             } else if (UpdateChecker.isCheckingUpdate()) {
                                 lblUpdateSubProperty.set(i18n("update.checking"));
+                            } else if (UpdateChecker.errorProperty().get() != null) {
+                                Throwable t = UpdateChecker.errorProperty().get();
+                                if (t instanceof SelfVerificationException) {
+                                    lblUpdateSubProperty.set(i18n("update.unverified"));
+                                } else {
+                                    String msg = t.getClass().getSimpleName() + ": " + t.getLocalizedMessage();
+                                    lblUpdateSubProperty.set(i18n("update.check_failed", msg));
+                                }
                             } else {
                                 lblUpdateSubProperty.set(i18n("update.latest"));
                             }
@@ -133,6 +138,7 @@ public final class SettingsPage extends ScrollPane {
                         UpdateChecker.latestVersionProperty().addListener(new WeakInvalidationListener(updateListener));
                         UpdateChecker.outdatedProperty().addListener(new WeakInvalidationListener(updateListener));
                         UpdateChecker.checkingUpdateProperty().addListener(new WeakInvalidationListener(updateListener));
+                        UpdateChecker.errorProperty().addListener(new WeakInvalidationListener(updateListener));
                         updateListener.invalidated(null);
                     }
 

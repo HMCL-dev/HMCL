@@ -18,17 +18,17 @@
 package org.jackhuang.hmcl.ui.export;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXCheckTreeCell;
 import com.jfoenix.controls.JFXTreeView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.CheckBoxTreeItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -66,13 +67,14 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
     private final ModAdviser adviser;
     private @Nullable ModpackFileTreeItem rootNode;
 
+    /// Creates a file-selection page and starts loading the instance's exportable files.
     public ModpackFileSelectionPage(WizardController controller, HMCLGameInstance gameInstance, ModAdviser adviser) {
         this.controller = controller;
         this.gameInstance = gameInstance;
         this.adviser = adviser;
-        GameInstanceID instanceId = gameInstance.getId();
 
         JFXTreeView<String> treeView = new JFXTreeView<>();
+        treeView.setCellFactory(__ -> new ModpackFileTreeCell());
         treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
         onEscPressed(treeView, () -> controller.onPrev(true));
 
@@ -196,14 +198,16 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         return node;
     }
 
-    private void getFilesNeeded(ModpackFileTreeItem node, String basePath, List<String> list) {
+    /// Appends selected paths relative to `minecraft/`, traversing partially selected directories.
+    /// A `null` node contributes no paths.
+    private void getFilesNeeded(@Nullable ModpackFileTreeItem node, String basePath, List<String> list) {
         if (node == null) return;
         if (node.isSelected() || node.isIndeterminate()) {
             if (basePath.length() > "minecraft/".length())
                 list.add(StringUtils.substringAfter(basePath, "minecraft/"));
             for (TreeItem<String> child : node.getChildren()) {
                 if (child instanceof ModpackFileTreeItem mChild) {
-                    getFilesNeeded(mChild, basePath + "/" + mChild.getFileName(), list);
+                    getFilesNeeded(mChild, basePath + "/" + mChild.getValue(), list);
                 }
             }
         }
@@ -244,39 +248,69 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
             pair("minecraft/scripts", i18n("modpack.files.scripts"))
     );
 
+    /// Stores a file name, optional explanation, and hierarchical selection state.
+    @NotNullByDefault
     private static final class ModpackFileTreeItem extends CheckBoxTreeItem<String> {
 
-        private final String fileName;
+        /// The localized explanation for a recognized path, or `null` if none exists.
+        private final @Nullable String comment;
 
+        /// Creates an item whose value is the file name; only the `minecraft` root starts expanded.
         public ModpackFileTreeItem(String fileName, String basePath) {
-            this.fileName = fileName;
-
-            HBox graphic = new HBox();
-            JFXCheckBox checkBox = new JFXCheckBox();
-            checkBox.selectedProperty().bindBidirectional(this.selectedProperty());
-            checkBox.indeterminateProperty().bindBidirectional(this.indeterminateProperty());
-            graphic.getChildren().add(checkBox);
-
-            {
-                Label text = new Label(fileName);
-                text.setMouseTransparent(true);
-                graphic.getChildren().add(text);
-            }
-            if (TRANSLATION.containsKey(basePath)) {
-                Label comment = new Label(TRANSLATION.get(basePath));
-                comment.setStyle("-fx-text-fill: -monet-on-surface-variant;");
-                comment.setMouseTransparent(true);
-                graphic.getChildren().add(comment);
-            }
-            graphic.setPickOnBounds(false);
+            super(fileName);
+            this.comment = TRANSLATION.get(basePath);
             this.setExpanded("minecraft".equals(basePath));
-            this.setValue(""); // To disable the default display of text
-            this.setGraphic(graphic);
+        }
+    }
+
+    /// Renders file names and localized explanations alongside the bound checkbox.
+    @NotNullByDefault
+    private static final class ModpackFileTreeCell extends JFXCheckTreeCell<String> {
+
+        /// Contains the inherited checkbox graphic followed by the file labels.
+        private final HBox content = new HBox();
+
+        /// Displays the current file name.
+        private final Label fileName = new Label();
+
+        /// Displays the current path's optional explanation.
+        private final Label comment = new Label();
+
+        /// Creates reusable labels whose mouse events pass through to the cell.
+        private ModpackFileTreeCell() {
+            fileName.setMouseTransparent(true);
+            comment.setStyle("-fx-text-fill: -monet-on-surface-variant;");
+            comment.setMouseTransparent(true);
+            content.setAlignment(Pos.CENTER_LEFT);
+            content.setPickOnBounds(false);
         }
 
-        public String getFileName() {
-            return fileName;
-        }
+        /// Refreshes the file labels and removes content when the cell is cleared.
+        @Override
+        protected void updateDisplay(@Nullable String item, boolean empty) {
+            content.getChildren().clear();
+            super.updateDisplay(item, empty);
 
+            fileName.setText(null);
+            comment.setText(null);
+            if (empty || item == null) {
+                return;
+            }
+
+            // Updating the text makes the skin reattach the current graphic to the cell.
+            // Clear it before moving the checkbox graphic into the content container.
+            setText(null);
+            @Nullable Node graphic = getGraphic();
+            if (graphic != null) {
+                content.getChildren().add(graphic);
+            }
+            fileName.setText(item);
+            content.getChildren().add(fileName);
+            if (getTreeItem() instanceof ModpackFileTreeItem treeItem && treeItem.comment != null) {
+                comment.setText(treeItem.comment);
+                content.getChildren().add(comment);
+            }
+            setGraphic(content);
+        }
     }
 }

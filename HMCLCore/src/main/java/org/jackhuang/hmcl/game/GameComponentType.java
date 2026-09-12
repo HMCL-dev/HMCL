@@ -83,6 +83,7 @@ public enum GameComponentType {
     },
     FORGE("forge", ModLoaderType.FORGE) {
         private final Pattern FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
+        private final Set<String> ARTIFACTS = Set.of("forge", "fmlloader", "minecraftforge");
 
         @Override
         protected @Nullable String getComponentVersion(GameInstanceManifest manifest, String libraryVersion) {
@@ -95,13 +96,17 @@ public enum GameComponentType {
 
         @Override
         protected boolean matchLibrary(Library library, List<Library> libraries) {
-            for (Library l : libraries) {
-                if (NEO_FORGE.matchLibrary(l, libraries)) {
-                    return false;
+            if ("net.minecraftforge".equals(library.groupId()) && ARTIFACTS.contains(library.artifactId())) {
+                for (Library l : libraries) {
+                    if (NEO_FORGE.matchLibrary(l, libraries)) {
+                        return false;
+                    }
                 }
+
+                return true;
             }
 
-            return "net.minecraftforge".equals(library.groupId()) && ("forge".equals(library.artifactId()) || "fmlloader".equals(library.artifactId()));
+            return false;
         }
     },
     CLEANROOM("cleanroom", ModLoaderType.CLEANROOM) {

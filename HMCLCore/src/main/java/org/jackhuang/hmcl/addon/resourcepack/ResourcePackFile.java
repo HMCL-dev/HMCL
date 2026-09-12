@@ -114,16 +114,16 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
 
     @Nullable
     @Contract(pure = true)
-    public abstract PackMcMeta getMeta();
+    public abstract PackMcMeta.PackInfo getPackInfo();
 
     @Nullable
     public LocalAddonFile.Description getDescription() {
-        if (getMeta() == null || getMeta().pack() == null) return null;
-        return getMeta().pack().description();
+        if (getPackInfo() == null) return null;
+        return getPackInfo().description();
     }
 
     // 64*64
-    public abstract @Nullable Image getIcon();
+    public abstract @Nullable Image loadIcon();
 
     @Override
     public int compareTo(@NotNull ResourcePackFile other) {
