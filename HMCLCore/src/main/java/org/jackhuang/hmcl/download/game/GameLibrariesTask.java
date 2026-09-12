@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,7 +144,14 @@ public final class GameLibrariesTask extends Task<Void> {
         int progress = 0;
         GameRepository gameRepository = dependencyManager.getGameRepository();
 
-        @Nullable var analyzer = gameRepository.getInstance(manifest.id()).getAnalyzer();
+        @Nullable GameComponentAnalyzer analyzer = null;
+
+        try {
+            analyzer = gameRepository.getInstance(manifest.id()).getAnalyzer();
+        } catch (Exception e) {
+            LOG.warning("Failed to analyze instance", e);
+        }
+
         for (Library library : libraries) {
             boolean handled = false;
 
@@ -154,7 +160,7 @@ public final class GameLibrariesTask extends Task<Void> {
             }
 
             // https://github.com/HMCL-dev/HMCL/issues/3975
-            if (analyzer.has(ModLoaderType.FORGE)) {
+            if (analyzer != null && analyzer.has(ModLoaderType.FORGE)) {
                 List<FMLLib> fmlLibs = getFMLLibs(library.version());
                 if (fmlLibs != null) {
                     Path libDir = gameRepository.getBaseDirectory().resolve("lib")
@@ -176,9 +182,7 @@ public final class GameLibrariesTask extends Task<Void> {
             if ("optifine".equals(library.groupId()) && Files.exists(file)) {
                 if (Files.exists(file) && libraries.stream().filter(it -> it.is("optifine", "OptiFine"))
                         .anyMatch(it -> it.version().startsWith("1.20.4_"))) {
-                    @Nullable String forgeVersion = GameComponentAnalyzer.analyze(manifest, GameVersionNumber.asGameVersion("1.20.4"))
-                            .getVersion(GameComponentType.FORGE);
-                    if (forgeVersion != null && GameComponentAnalyzer.FORGE_OPTIFINE_BROKEN_RANGE.contains(VersionNumber.asVersion(forgeVersion))) {
+                    if (analyzer != null && analyzer.getVersion(GameComponentType.FORGE) != null && GameComponentAnalyzer.FORGE_OPTIFINE_BROKEN_RANGE.contains(VersionNumber.asVersion(analyzer.getVersion(GameComponentType.FORGE)))) {
                         try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(file)) {
                             Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
                         } catch (IOException e) {

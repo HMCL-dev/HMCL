@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -317,7 +318,7 @@ public final class DefaultGameInstanceTest {
         };
 
         var executor = task.executor();
-        assertTrue(executor.test(), () -> String.valueOf(executor.getException()));
+        assertTrue(executor.test(), () -> StringUtils.getStackTrace(executor.getException()));
         assertTrue(Files.isRegularFile(minecraftJar));
     }
 
