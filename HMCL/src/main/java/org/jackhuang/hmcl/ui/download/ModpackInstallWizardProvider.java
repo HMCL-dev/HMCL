@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -92,6 +93,9 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
 
         if (isManuallyCreated) {
+            if (selected == null || name == null || charset == null) {
+                return null;
+            }
             return ModpackHelper.getInstallManuallyCreatedModpackTask(selected, name, charset);
         }
 
@@ -145,7 +149,18 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             }
         });
 
-        return finishModpackInstallingAsync(settings);
+        ModpackHelper.LauncherWrapper wrapper = settings.get(LocalModpackPage.MODPACK_WRAPPER);
+        try {
+            Task<?> task = finishModpackInstallingAsync(settings);
+            if (task != null && wrapper != null) {
+                ModpackHelper.LauncherWrapper ownedWrapper = wrapper;
+                wrapper = null;
+                task = task.whenComplete(Schedulers.defaultScheduler(), ignored -> IOUtils.closeQuietly(ownedWrapper));
+            }
+            return task;
+        } finally {
+            IOUtils.closeQuietly(wrapper);
+        }
     }
 
     private static Node createModpackInstallPage(WizardController controller) {
