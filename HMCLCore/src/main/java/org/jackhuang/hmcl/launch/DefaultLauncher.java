@@ -282,6 +282,16 @@ public class DefaultLauncher extends Launcher {
             libraryClasspath.removeIf(c -> c.contains("platform-3.4.0"));
         }
 
+        if (instance.hasComponent(GameComponentType.FORGE) && instance.getVersion().compareTo("1.2") < 0) {
+            var path = instance.getLayout().getLibrariesDirectory().resolve("modloader").resolve("temp");
+            decompressModloader(path);
+            // modloader/modloader
+            // modloader/modloader-mp
+
+            libraryClasspath.removeIf(c -> c.contains("modloader" + File.separator + "modloader"));
+            libraryClasspath.add(FileUtils.getAbsolutePath(path));
+        }
+
         Path jar = instance.getInstanceJarFile();
         if (!Files.isRegularFile(jar))
             throw new IOException("Minecraft jar does not exist");
@@ -489,6 +499,19 @@ public class DefaultLauncher extends Launcher {
         } catch (IOException e) {
             throw new NotDecompressingNativesException(e);
         }
+    }
+
+    public void decompressModloader(Path destination) throws IOException {
+        LOG.info("Decompress modloader to " + destination);
+
+
+        FileUtils.cleanDirectoryQuietly(destination);
+        for (Library library : manifest.getLibraries())
+            if (library.groupId().equals("modloader"))
+                new Unzipper(instance.getLayout().getLibraryFile(instance.getId(), library), destination)
+                        .setReplaceExistentFile(false)
+                        .unzip();
+
     }
 
     /// Returns the detected Minecraft version string for this instance, if known.

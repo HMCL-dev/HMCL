@@ -31,8 +31,11 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -168,10 +171,9 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     @Override
     protected void appendJvmArgs(CommandBuilder result) {
         super.appendJvmArgs(result);
+        if (!options.isAllowAutoAgent() && !options.isNoGeneratedJVMArgs()) return;
 
-        if (options.isAllowAutoAgent()
-                && !options.isNoGeneratedJVMArgs()
-                && !options.isNoGeneratedOptimizingJVMArgs()
+        if (!options.isNoGeneratedOptimizingJVMArgs()
                 && NativePatcher.needPatchMemoryUtil(manifest, options.getJava().getParsedVersion())) {
             LOG.info("Attempting to patch game with lwjgl-unsafe-agent");
             try {
@@ -219,5 +221,4 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         FileUtils.saveSafely(agentPath, output -> output.write(bytes));
         return agentPath;
     }
-
 }

@@ -17,19 +17,25 @@
  */
 package org.jackhuang.hmcl.download.game;
 
+import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
+import org.jackhuang.hmcl.download.forge.ForgeLegacyInstallTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -37,6 +43,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -124,7 +131,7 @@ public final class GameLibrariesTask extends Task<Void> {
             return true;
 
         try {
-            return !DigestUtils.digestToString("SHA-1", file).equalsIgnoreCase(fmlLib.sha1);
+            return !DigestUtils.digestToString("SHA-1", file).equalsIgnoreCase(fmlLib.checksum);
         } catch (IOException e) {
             LOG.warning("Unable to calc hash value of file " + file, e);
             return true;
@@ -136,21 +143,31 @@ public final class GameLibrariesTask extends Task<Void> {
     public void execute() throws IOException {
         int progress = 0;
         GameRepository gameRepository = dependencyManager.getGameRepository();
+
+        @Nullable GameComponentAnalyzer analyzer = null;
+
+        try {
+            analyzer = gameRepository.getInstance(manifest.id()).getAnalyzer();
+        } catch (Exception e) {
+            LOG.warning("Failed to analyze instance", e);
+        }
+
         for (Library library : libraries) {
+            boolean handled = false;
+
             if (!library.appliesToCurrentEnvironment()) {
                 continue;
             }
 
             // https://github.com/HMCL-dev/HMCL/issues/3975
-            if (library.is("net.minecraftforge", "minecraftforge")
-                    && gameRepository instanceof DefaultGameRepository defaultGameRepository) {
+            if (analyzer != null && analyzer.has(ModLoaderType.FORGE)) {
                 List<FMLLib> fmlLibs = getFMLLibs(library.version());
                 if (fmlLibs != null) {
-                    Path libDir = defaultGameRepository.getBaseDirectory().resolve("lib")
+                    Path libDir = gameRepository.getBaseDirectory().resolve("lib")
                             .toAbsolutePath().normalize();
 
                     for (FMLLib fmlLib : fmlLibs) {
-                        Path file = libDir.resolve(fmlLib.name);
+                        Path file = libDir.resolve(fmlLib.filename);
                         if (shouldDownloadFMLLib(fmlLib, file)) {
                             List<URI> uris = dependencyManager.getDownloadProvider()
                                     .injectURLWithCandidates(fmlLib.downloadUrl());
@@ -165,9 +182,7 @@ public final class GameLibrariesTask extends Task<Void> {
             if ("optifine".equals(library.groupId()) && Files.exists(file)) {
                 if (Files.exists(file) && libraries.stream().filter(it -> it.is("optifine", "OptiFine"))
                         .anyMatch(it -> it.version().startsWith("1.20.4_"))) {
-                    @Nullable String forgeVersion = GameComponentAnalyzer.analyze(manifest, GameVersionNumber.asGameVersion("1.20.4"))
-                            .getVersion(GameComponentType.FORGE);
-                    if (forgeVersion != null && GameComponentAnalyzer.FORGE_OPTIFINE_BROKEN_RANGE.contains(VersionNumber.asVersion(forgeVersion))) {
+                    if (analyzer != null && analyzer.getVersion(GameComponentType.FORGE) != null && GameComponentAnalyzer.FORGE_OPTIFINE_BROKEN_RANGE.contains(VersionNumber.asVersion(analyzer.getVersion(GameComponentType.FORGE)))) {
                         try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(file)) {
                             Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
                         } catch (IOException e) {
@@ -183,6 +198,7 @@ public final class GameLibrariesTask extends Task<Void> {
                             "Bundled HMCLMultiMCBootstrap is missing.")) {
                         Files.createDirectories(file.getParent());
                         Files.copy(input, file, StandardCopyOption.REPLACE_EXISTING);
+                        handled = true;
                     }
                 }
             } else if (library.is("org.jackhuang.hmcl", "transformer-discovery-service")) {
@@ -192,10 +208,26 @@ public final class GameLibrariesTask extends Task<Void> {
                         "Bundled HMCLTransformerDiscoveryService is missing.")) {
                     Files.createDirectories(file.getParent());
                     Files.copy(input, file, StandardCopyOption.REPLACE_EXISTING);
+                    handled = true;
+                }
+            } else if (library.groupId().equals("modloader")) {
+                String url = switch (library.artifactId()) {
+                    case "modloader" -> ForgeLegacyInstallTask.MODLOADER_DOWNLOAD_URL;
+                    case "modloader-mp" -> ForgeLegacyInstallTask.MODLOADER_MP_DOWNLOAD_URL;
+                    default -> null;
+                };
+                if (url != null && shouldDownloadLibrary(gameRepository, manifest, library, integrityCheck)) {
+                    var fileDownloadTask = new FileDownloadTask(url, file, null);
+                    fileDownloadTask.setCacheRepository(dependencyManager.getCacheRepository());
+                    fileDownloadTask.setCaching(true);
+                    fileDownloadTask.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
+                    dependencies.add(fileDownloadTask.withCounter("hmcl.install.libraries"));
+
+                    handled = true;
                 }
             }
 
-            if (shouldDownloadLibrary(gameRepository, manifest, library, integrityCheck) && (library.hasDownloadURL() || !"optifine".equals(library.groupId()))) {
+            if (!handled && shouldDownloadLibrary(gameRepository, manifest, library, integrityCheck) && (library.hasDownloadURL() || !"optifine".equals(library.groupId()))) {
                 dependencies.add(new LibraryDownloadTask(dependencyManager, file, library).withCounter("hmcl.install.libraries"));
             } else {
                 dependencyManager.getCacheRepository().tryCacheLibrary(library, file);
@@ -211,30 +243,34 @@ public final class GameLibrariesTask extends Task<Void> {
     }
 
     private static @Nullable List<FMLLib> getFMLLibs(String forgeVersion) {
-        if (forgeVersion == null)
-            return null;
+        //noinspection DataFlowIssue
+        try (Reader input = new InputStreamReader(
+                GameLibrariesTask.class.getResourceAsStream("/assets/game/fmllibs.json"))) {
+            var fmlLibs = JsonUtils.GSON.fromJson(input, new TypeToken<Map<String, List<FMLLib>>>() {
+            });
 
-        // Minecraft 1.5.2
-        if (forgeVersion.startsWith("7.8.1.")) {
-            return List.of(
-                    new FMLLib("argo-small-3.2.jar", "58912ea2858d168c50781f956fa5b59f0f7c6b51"),
-                    new FMLLib("guava-14.0-rc3.jar", "931ae21fa8014c3ce686aaa621eae565fefb1a6a",
-                            "https://repo1.maven.org/maven2/com/google/guava/guava/14.0-rc3/guava-14.0-rc3.jar"),
-                    new FMLLib("asm-all-4.1.jar", "054986e962b88d8660ae4566475658469595ef58",
-                            "https://repo1.maven.org/maven2/org/ow2/asm/asm-all/4.1/asm-all-4.1.jar"),
-                    new FMLLib("bcprov-jdk15on-148.jar", "960dea7c9181ba0b17e8bab0c06a43f0a5f04e65",
-                            "https://repo1.maven.org/maven2/org/bouncycastle/bcprov-jdk15on/1.48/bcprov-jdk15on-1.48.jar"),
-                    new FMLLib("deobfuscation_data_1.5.2.zip", "446e55cd986582c70fcf12cb27bc00114c5adfd9"),
-                    new FMLLib("scala-library.jar", "458d046151ad179c85429ed7420ffb1eaf6ddf85")
-            );
+            if (forgeVersion.startsWith("4."))
+                return fmlLibs.get("1.3.x");
+            else if (forgeVersion.startsWith("6.") || forgeVersion.startsWith("5."))
+                return fmlLibs.get("1.4.x");
+            else if (forgeVersion.startsWith("7.7.0.5"))
+                return fmlLibs.get("1.5");
+            else if (forgeVersion.startsWith("7.7.0.6") || forgeVersion.startsWith("7.7.1.") || forgeVersion.startsWith("7.7.2."))
+                return fmlLibs.get("1.5.1");
+            else if (forgeVersion.startsWith("7.8."))
+                return fmlLibs.get("1.5.2");
+        } catch (Throwable e) {
+            LOG.warning("Failed to load fmllibs", e);
         }
+
 
         return null;
     }
 
-    private record FMLLib(String name, String sha1, String downloadUrl) {
-        FMLLib(String name, String sha1) {
-            this(name, sha1, "https://hmcl.glavo.site/metadata/fmllibs/" + name);
+    @JsonSerializable
+    private record FMLLib(String filename, String checksum) {
+        public String downloadUrl() {
+            return "https://hmcl.glavo.site/metadata/fmllibs/" + filename;
         }
     }
 }

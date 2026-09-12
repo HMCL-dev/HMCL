@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.download.forge.ForgeLegacyInstallProfile;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -34,12 +36,20 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
     private static GameComponentAnalyzer analyze(
             GameInstanceManifest standaloneManifest,
             GameInstanceManifest launchManifest,
-            @Nullable GameVersionNumber gameVersion) {
+            @Nullable GameVersionNumber gameVersion,
+            @Nullable Path jar) {
         var components = new EnumMap<GameComponentType, Mark>(GameComponentType.class);
         @Nullable String bootstrapVersion = null;
 
         if (gameVersion != null && !gameVersion.equals(GameVersionNumber.unknown())) {
             components.put(GameComponentType.GAME, new Mark(GameComponentType.GAME, gameVersion.toString(), true));
+        }
+
+        if (jar != null) {
+            var legacyForgeVersion = ForgeLegacyInstallProfile.parse(jar);
+            if (legacyForgeVersion != null) {
+                components.put(GameComponentType.FORGE, new Mark(GameComponentType.FORGE, legacyForgeVersion.forgeVersion(), true));
+            }
         }
 
         for (GameInstancePatch patch : standaloneManifest.getPatches()) {
@@ -74,7 +84,14 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
         if (manifest.inheritsFrom() != null)
             throw new IllegalArgumentException("GameComponentAnalyzer can only analyze independent game version");
 
-        return analyze(manifest, manifest, gameVersion);
+        return analyze(manifest, gameVersion, null);
+    }
+
+    public static GameComponentAnalyzer analyze(GameInstanceManifest manifest, @Nullable GameVersionNumber gameVersion, @Nullable Path jar) {
+        if (manifest.inheritsFrom() != null)
+            throw new IllegalArgumentException("GameComponentAnalyzer can only analyze independent game version");
+
+        return analyze(manifest, manifest, gameVersion, jar);
     }
 
     private final GameInstanceManifest manifest;
