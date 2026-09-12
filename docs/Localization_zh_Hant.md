@@ -12,18 +12,18 @@ HMCL 為多種語言提供在地化支援。
 
 目前，HMCL 為這些語言提供支援:
 
-| 語言      | 語言標籤      | 首選在地化機碼    | 首選在地化檔案後綴  | [遊戲語言檔案](https://minecraft.wiki/w/Language) | 支援狀態   | 志願者                                       | 
-|---------|-----------|-----------|------------|---------------------------------------------|--------|-------------------------------------------|
-| 英語      | `en`      | `default` | (空)        | `en_us`                                     | **主要** | [Glavo](https://github.com/Glavo)         |  
-| 英語 (顛倒) | `en-Qabs` | `en-Qabs` | `en_Qabs`  | `en_ud`                                     | 自動     |                                           |  
-| 中文 (簡體) | `zh-Hans` | `zh`      | `_zh`      | `zh_cn`                                     | **主要** | [Glavo](https://github.com/Glavo)         |
-| 中文 (繁體) | `zh-Hant` | `zh-Hant` | `_zh_Hant` | `zh_tw` <br/> `zh_hk`                       | **主要** | [Glavo](https://github.com/Glavo)         |
-| 中文 (文言) | `lzh`     | `lzh`     | `_lzh`     | `lzh`                                       | 次要     |                                           |
-| 日語      | `ja`      | `ja`      | `_ja`      | `ja_jp`                                     | 次要     |                                           |
-| 西班牙語    | `es`      | `es`      | `_es`      | `es_es`                                     | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
-| 俄語      | `ru`      | `ru`      | `_ru`      | `ru_ru`                                     | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
-| 烏克蘭語    | `uk`      | `uk`      | `_uk`      | `uk_ua`                                     | 次要     |                                           |
-| 德語      | `de`      | `de`      | `_de`      | `de_de`                                     | 次要     | [BANSAFAn](https://github.com/BANSAFAn)   |
+| 語言        | 語言標籤  | 首選在地化機碼 | 首選在地化檔案後綴 | [遊戲語言檔案](https://minecraft.wiki/w/Language) | 支援狀態 | 志願者                                    | 
+|-------------|-----------|----------------|--------------------|---------------------------------------------------|----------|-------------------------------------------|
+| 英語        | `en`      | `default`      | (空)               | `en_us`                                           | **主要** | [Glavo](https://github.com/Glavo)         |  
+| 英語 (顛倒) | `en-Qabs` | `en-Qabs`      | `en_Qabs`          | `en_ud`                                           | 自動     |                                           |  
+| 中文 (簡體) | `zh-Hans` | `zh-Hans`      | `_zh_Hant`         | `zh_cn`                                           | **主要** | [Glavo](https://github.com/Glavo)         |
+| 中文 (繁體) | `zh-Hant` | `zh-Hant`      | `_zh_Hant`         | `zh_tw` <br/> `zh_hk`                             | **主要** | [Glavo](https://github.com/Glavo)         |
+| 中文 (文言) | `lzh`     | `lzh`          | `_lzh`             | `lzh`                                             | 次要     |                                           |
+| 日語        | `ja`      | `ja`           | `_ja`              | `ja_jp`                                           | 次要     |                                           |
+| 西班牙語    | `es`      | `es`           | `_es`              | `es_es`                                           | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
+| 俄語        | `ru`      | `ru`           | `_ru`              | `ru_ru`                                           | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
+| 烏克蘭語    | `uk`      | `uk`           | `_uk`              | `uk_ua`                                           | 次要     |                                           |
+| 德語        | `de`      | `de`           | `_de`              | `de_de`                                           | 次要     | [BANSAFAn](https://github.com/BANSAFAn)   |
 
 <details>
 <summary>關於語言標籤</summary>
