@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.addon.shader;
 
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jetbrains.annotations.Nullable;
 
