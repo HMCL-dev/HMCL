@@ -128,6 +128,7 @@ tasks.checkstyleMain {
 
 val addOpens = listOf(
     "java.base/java.lang",
+    "java.base/java.util",
     "java.base/java.lang.reflect",
     "java.base/jdk.internal.loader",
     "javafx.base/com.sun.javafx.binding",
