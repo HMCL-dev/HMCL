@@ -12,18 +12,18 @@ HMCL 为多种语言提供本地化支持。
 
 目前，HMCL 为这些语言提供支持:
 
-| 语言      | 语言标签      | 首选本地化键    | 首选本地化文件后缀  | [游戏语言文件](https://minecraft.wiki/w/Language) | 支持状态   | 志愿者                                       | 
-|---------|-----------|-----------|------------|---------------------------------------------|--------|-------------------------------------------|
-| 英语      | `en`      | `default` | (空)        | `en_us`                                     | **主要** | [Glavo](https://github.com/Glavo)         |  
-| 英语 (颠倒) | `en-Qabs` | `en-Qabs` | `en_Qabs`  | `en_ud`                                     | 自动     |                                           |  
-| 中文 (简体) | `zh-Hans` | `zh`      | `_zh`      | `zh_cn`                                     | **主要** | [Glavo](https://github.com/Glavo)         |
-| 中文 (繁体) | `zh-Hant` | `zh-Hant` | `_zh_Hant` | `zh_tw` <br/> `zh_hk`                       | **主要** | [Glavo](https://github.com/Glavo)         |
-| 中文 (文言) | `lzh`     | `lzh`     | `_lzh`     | `lzh`                                       | 次要     |                                           |
-| 日语      | `ja`      | `ja`      | `_ja`      | `ja_jp`                                     | 次要     |                                           |
-| 西班牙语    | `es`      | `es`      | `_es`      | `es_es`                                     | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
-| 俄语      | `ru`      | `ru`      | `_ru`      | `ru_ru`                                     | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
-| 乌克兰语    | `uk`      | `uk`      | `_uk`      | `uk_ua`                                     | 次要     |                                           |
-| 德语      | `de`      | `de`      | `_de`      | `de_de`                                     | 次要     | [BANSAFAn](https://github.com/BANSAFAn)   |
+| 语言        | 语言标签  | 首选本地化键 | 首选本地化文件后缀 | [游戏语言文件](https://minecraft.wiki/w/Language) | 支持状态 | 志愿者                                    | 
+|-------------|-----------|--------------|--------------------|---------------------------------------------------|----------|-------------------------------------------|
+| 英语        | `en`      | `default`    | (空)               | `en_us`                                           | **主要** | [Glavo](https://github.com/Glavo)         |  
+| 英语 (颠倒) | `en-Qabs` | `en-Qabs`    | `en_Qabs`          | `en_ud`                                           | 自动     |                                           |  
+| 中文 (简体) | `zh-Hans` | `zh-Hans`    | `_zh_Hans`         | `zh_cn`                                           | **主要** | [Glavo](https://github.com/Glavo)         |
+| 中文 (繁体) | `zh-Hant` | `zh-Hant`    | `_zh_Hant`         | `zh_tw` <br/> `zh_hk`                             | **主要** | [Glavo](https://github.com/Glavo)         |
+| 中文 (文言) | `lzh`     | `lzh`        | `_lzh`             | `lzh`                                             | 次要     |                                           |
+| 日语        | `ja`      | `ja`         | `_ja`              | `ja_jp`                                           | 次要     |                                           |
+| 西班牙语    | `es`      | `es`         | `_es`              | `es_es`                                           | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
+| 俄语        | `ru`      | `ru`         | `_ru`              | `ru_ru`                                           | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
+| 乌克兰语    | `uk`      | `uk`         | `_uk`              | `uk_ua`                                           | 次要     |                                           |
+| 德语        | `de`      | `de`         | `_de`              | `de_de`                                           | 次要     | [BANSAFAn](https://github.com/BANSAFAn)   |
 
 <details>
 <summary>关于语言标签</summary>
@@ -58,14 +58,6 @@ HMCL 使用符合 IETF BCP 47 规范的语言标签。
 
 我们建议在提供本地化资源时，总是提供默认资源 (对应 `default` 本地化键和空的本地化文件后缀)，
 以确保所有用户都能正常加载资源。
-
-并且我们建议尽可能为本地化资源使用更宽泛的语言标签，使用户更不容易回退到默认资源上。
-
-例如，如果你提供了一份简体中文的本地化资源，那么我们推荐使用 `zh` 作为本地化键，而不是更具体的 `zh-Hans`，
-这样它会对于所有使用中文的用户生效，避免对于这些用户回退到默认资源上。
-
-如果你想同时提供简体中文和繁体中文的资源，那么推荐对用户占比更高的资源使用更宽泛的 `zh` 作为本地化键，使其作为默认的中文资源，
-而对用户占比更低的资源使用更具体的 `zh-Hans`/`zh-Hant` 作为本地化键。
 
 </details>
 
@@ -116,7 +108,7 @@ HMCL 的绝大多数文本都位于这个文件中，翻译此文件就能翻译
 `I18N.properties` 文件会遵循[资源回退机制](#资源回退机制)查询缺失的译文。
 也就是说，你可以逐条目进行翻译，而你尚未翻译的条目会自动回退到英语上。
 
-在翻译了一部分后，你可以[自行构建 HMCL](./Contributing_zh.md#构建-hmcl)，编译出的 HMCL 中就会包含你的译文。
+在翻译了一部分后，你可以[自行构建 HMCL](./Contributing_zh_Hans.md#构建-hmcl)，编译出的 HMCL 中就会包含你的译文。
 如果你的电脑默认环境不是该语言，你可以将环境变量 `HMCL_LANGUAGE` 指定为你刚刚从表格中找到的语言标签，
 HMCL 会自动切换至这个语言。
 
@@ -130,7 +122,7 @@ HMCL 的维护者会替你完成其他步骤。
 例如，对于 `README.md` 来说，不同语言的本地化版本命名如下:
 
 - 英语: `README.md`
-- 中文 (简体): `README_zh.md`
+- 中文 (简体): `README_zh_Hans.md`
 - 中文 (繁体): `README_zh_Hant.md`
 - 中文 (文言): `README_lzh.md`
 
@@ -159,7 +151,7 @@ HMCL 的维护者会替你完成其他步骤。
 {
     "meow": {
         "default": "Meow",
-        "zh": "喵呜",
+        "zh-Hans": "喵呜",
         "zh-Hant": "喵嗚"
     }
 }
@@ -310,7 +302,7 @@ HMCL 总是会将 `zh-CN` 加入所有中文环境的搜索列表中，将 `zh-T
 随后执行 `./gradlew updateDocuments`，这两行内容会被自动替换为类似这样的跳转链接:
 
 ```markdown
-**English** (**Standard**, [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
+**English** (**Standard**, [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh_Hans.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 ```
 
 关于宏的更多内容，请见 [MacroProcessor.java](../buildSrc/src/main/java/org/jackhuang/hmcl/gradle/docs/MacroProcessor.java)。

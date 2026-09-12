@@ -23,7 +23,6 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -41,6 +40,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
@@ -63,13 +63,13 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -551,13 +551,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final LocalModFile localModFile;
         private final @Nullable ModTranslations.Mod modTranslations;
 
-        private SoftReference<CompletableFuture<Image>> iconCache;
+        private final ItemPropertyAsyncCache<Image, ModInfoObject> iconCache;
 
         ModInfoObject(LocalModFile localModFile) {
             this.localModFile = localModFile;
             this.active = localModFile.activeProperty();
 
             this.modTranslations = ModTranslations.MOD.getMod(localModFile.getId(), localModFile.getName());
+
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
         public LocalModFile getModInfo() {
@@ -568,7 +570,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return modTranslations;
         }
 
-        @FXThread
+        private Image getDefaultIcon() {
+            return GameInstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
+        }
+
         private Image loadIcon() {
             List<String> iconPaths = new ArrayList<>();
 
@@ -591,34 +596,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 LOG.warning("Failed to load mod icons", e);
             }
 
-            return GameInstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
-        }
-
-        public void loadIcon(ImageContainer imageContainer, @Nullable WeakReference<ObjectProperty<ModInfoObject>> current) {
-            SoftReference<CompletableFuture<Image>> iconCache = this.iconCache;
-            CompletableFuture<Image> imageFuture;
-            if (iconCache != null && (imageFuture = iconCache.get()) != null) {
-                Image image = imageFuture.getNow(null);
-                if (image != null) {
-                    imageContainer.setImage(image);
-                    return;
-                }
-            } else {
-                imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
-                this.iconCache = new SoftReference<>(imageFuture);
-            }
-            imageContainer.setImage(GameInstanceIconType.getIconType(localModFile.getModLoaderType()).getIcon());
-            imageFuture.thenAcceptAsync(image -> {
-                if (current != null) {
-                    ObjectProperty<ModInfoObject> infoObjectProperty = current.get();
-                    if (infoObjectProperty == null || infoObjectProperty.get() != this) {
-                        // The current ListCell has already switched to another object
-                        return;
-                    }
-                }
-
-                imageContainer.setImage(image);
-            }, Schedulers.javafx());
+            return getDefaultIcon();
         }
     }
 
@@ -635,9 +613,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             var imageContainer = new ImageContainer(40);
             titleContainer.setAlignment(Pos.CENTER_LEFT);
-            modInfo.loadIcon(imageContainer, null);
+            modInfo.iconCache.attachValue(imageContainer.imageProperty(), null);
 
             TwoLineListItem title = new TwoLineListItem();
+            title.getTitleLabel().setWrapText(true);
             if (modInfo.getModTranslations() != null && I18n.isUseChinese())
                 title.setTitle(modInfo.getModTranslations().getDisplayName());
             else
@@ -688,25 +667,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         if (versionOptional.isPresent()) {
                             RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                             FXUtils.runInFX(() -> {
-                                for (ModLoaderType modLoaderType : versionOptional.get().loaders()) {
-                                    String loaderName = switch (modLoaderType) {
-                                        case FORGE -> i18n("install.installer.forge");
-                                        case CLEANROOM -> i18n("install.installer.cleanroom");
-                                        case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
-                                        case NEO_FORGE -> i18n("install.installer.neoforge");
-                                        case FABRIC -> i18n("install.installer.fabric");
-                                        case LITE_LOADER -> i18n("install.installer.liteloader");
-                                        case QUILT -> i18n("install.installer.quilt");
-                                        default -> null;
-                                    };
-                                    if (loaderName == null)
-                                        continue;
-                                    if (title.getTags()
-                                            .stream()
-                                            .noneMatch(it -> it.getText().equals(loaderName))) {
-                                        title.addTag(loaderName);
-                                    }
+                                Set<String> tags = new LinkedHashSet<>();
+                                for (AddonLoader loader : versionOptional.get().loaders()) {
+                                    String tag = I18n.translateLoaderName(loader);
+                                    if (tag != null) tags.add(tag);
                                 }
+                                title.addTagsIfNotExist(tags);
 
                                 button.setExternalLink(remoteAddon.pageUrl());
                                 button.setDisable(false);
@@ -809,7 +775,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
 
-            dataItem.loadIcon(imageContainer, new WeakReference<>(this.itemProperty()));
+            dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
 
             String displayName = modInfo.getName();
             if (modTranslations != null && I18n.isUseChinese()) {
@@ -845,15 +811,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 content.addTagWarning(i18n("mods.unknown"));
             } else if (!page.supportedLoaders.contains(modLoaderType)) {
                 warning.add(i18n("mods.warning.loader_mismatch"));
-                switch (dataItem.getModInfo().getModLoaderType()) {
-                    case FORGE -> content.addTagWarning(i18n("install.installer.forge"));
-                    case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacyfabric"));
-                    case CLEANROOM -> content.addTagWarning(i18n("install.installer.cleanroom"));
-                    case NEO_FORGE -> content.addTagWarning(i18n("install.installer.neoforge"));
-                    case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));
-                    case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
-                    case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
-                }
+                content.addTagWarning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType()));
             }
 
             String modVersion = modInfo.getVersion();
