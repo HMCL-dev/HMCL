@@ -431,8 +431,8 @@ tasks.register<CheckTranslations>("checkTranslations") {
     val dir = layout.projectDirectory.dir("src/main/resources/assets/lang")
 
     englishFile.set(dir.file("I18N.properties"))
-    simplifiedChineseFile.set(dir.file("I18N_zh_CN.properties"))
-    traditionalChineseFile.set(dir.file("I18N_zh.properties"))
+    simplifiedChineseFile.set(dir.file("I18N_zh_Hans.properties"))
+    traditionalChineseFile.set(dir.file("I18N_zh_Hant.properties"))
     classicalChineseFile.set(dir.file("I18N_lzh.properties"))
 }
 
