@@ -95,7 +95,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
     private ModManager modManager;
     private @Nullable HMCLGameInstance gameInstance;
-    private String gameVersion;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
@@ -137,8 +136,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return;
         }
 
-        this.gameVersion = gameInstance.getVersion().toString();
-
         loadMods(gameInstance.getModManager());
     }
 
@@ -164,7 +161,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 return;
             }
 
-            updateSupportedLoaders(modManager);
+            supportedLoaders.clear();
+            supportedLoaders.addAll(modManager.getSupportedLoaders());
 
             if (exception == null) {
                 getItems().setAll(list);
@@ -174,51 +172,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             }
             setLoading(false);
         }, Schedulers.javafx());
-    }
-
-    private void updateSupportedLoaders(ModManager modManager) {
-        supportedLoaders.clear();
-
-        GameComponentAnalyzer analyzer = modManager.getComponentAnalyzer();
-        if (analyzer == null) {
-            Collections.addAll(supportedLoaders, ModLoaderType.values());
-            return;
-        }
-
-        for (GameComponentType type : GameComponentType.MOD_LOADERS) {
-            if (type.isModLoader() && analyzer.has(type)) {
-                ModLoaderType modLoaderType = type.getModLoaderType();
-                if (modLoaderType != null) {
-                    supportedLoaders.add(modLoaderType);
-
-                    if (modLoaderType == ModLoaderType.CLEANROOM)
-                        supportedLoaders.add(ModLoaderType.FORGE);
-                }
-            }
-        }
-
-        if (analyzer.has(GameComponentType.NEO_FORGE) && "1.20.1".equals(gameVersion)) {
-            supportedLoaders.add(ModLoaderType.FORGE);
-        }
-
-        if (analyzer.has(GameComponentType.QUILT)) {
-            supportedLoaders.add(ModLoaderType.FABRIC);
-        }
-
-        if (analyzer.has(GameComponentType.LEGACY_FABRIC)) {
-            supportedLoaders.add(ModLoaderType.FABRIC);
-        }
-
-        if (analyzer.has(GameComponentType.FABRIC) && modManager.hasMod("kilt", ModLoaderType.FABRIC)) {
-            supportedLoaders.add(ModLoaderType.FORGE);
-            supportedLoaders.add(ModLoaderType.NEO_FORGE);
-        }
-
-        // Sinytra Connector
-        if (analyzer.has(GameComponentType.NEO_FORGE) && (modManager.hasMod("connector", ModLoaderType.NEO_FORGE) || modManager.hasMod("connectormod", ModLoaderType.NEO_FORGE))
-                || "1.20.1".equals(gameVersion) && analyzer.has(GameComponentType.FORGE) && modManager.hasMod("connectormod", ModLoaderType.FORGE)) {
-            supportedLoaders.add(ModLoaderType.FABRIC);
-        }
     }
 
     public void add() {

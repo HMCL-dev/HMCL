@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.addon.meta.*;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.NoSuchGameInstanceException;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -65,7 +66,9 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         READERS = map;
     }
 
+    private String gameVersion;
     private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
+    private final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
     private GameComponentAnalyzer analyzer;
 
     private boolean loaded = false;
@@ -83,7 +86,12 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     }
 
     public GameComponentAnalyzer getComponentAnalyzer() {
-        return analyzer;
+        lock.lock();
+        try {
+            return analyzer;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public LocalMod getLocalMod(String modId, ModLoaderType modLoaderType) {
@@ -100,6 +108,24 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         lock.lock();
         try {
             return localMods.containsKey(pair(modId, modLoaderType));
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public String getGameVersion() {
+        lock.lock();
+        try {
+            return gameVersion;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public EnumSet<ModLoaderType> getSupportedLoaders() {
+        lock.lock();
+        try {
+            return EnumSet.copyOf(supportedLoaders);
         } finally {
             lock.unlock();
         }
@@ -176,6 +202,18 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
     }
 
+    public void analyze() throws IOException {
+        lock.lock();
+        try {
+            gameVersion = instance.getVersion().toString();
+            analyzer = instance.getAnalyzer();
+        } catch (NoSuchGameInstanceException e) {
+            throw new IOException(e);
+        } finally {
+            lock.unlock();
+        }
+    }
+
     @Override
     public void refresh() throws IOException {
         lock.lock();
@@ -183,7 +221,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             localFiles.clear();
             localMods.clear();
 
-            analyzer = instance.getAnalyzer();
+            analyze();
 
             boolean supportSubfolders = analyzer.has(GameComponentType.FORGE)
                     || analyzer.has(GameComponentType.QUILT)
@@ -205,6 +243,9 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     }
                 }
             }
+
+            updateSupportedLoaders();
+
             loaded = true;
         } finally {
             lock.unlock();
@@ -251,6 +292,50 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     public void removeMods(LocalModFile... localModFiles) throws IOException {
         for (LocalModFile localModFile : localModFiles) {
             localModFile.delete();
+        }
+    }
+
+    private void updateSupportedLoaders() {
+        supportedLoaders.clear();
+
+        if (this.analyzer == null) {
+            Collections.addAll(supportedLoaders, ModLoaderType.values());
+            return;
+        }
+
+        for (GameComponentType type : GameComponentType.values()) {
+            if (type.isModLoader() && this.analyzer.has(type)) {
+                ModLoaderType modLoaderType = type.getModLoaderType();
+                if (modLoaderType != null) {
+                    supportedLoaders.add(modLoaderType);
+
+                    if (modLoaderType == ModLoaderType.CLEANROOM)
+                        supportedLoaders.add(ModLoaderType.FORGE);
+                }
+            }
+        }
+
+        if (this.analyzer.has(GameComponentType.NEO_FORGE) && "1.20.1".equals(gameVersion)) {
+            supportedLoaders.add(ModLoaderType.FORGE);
+        }
+
+        if (this.analyzer.has(GameComponentType.QUILT)) {
+            supportedLoaders.add(ModLoaderType.FABRIC);
+        }
+
+        if (this.analyzer.has(GameComponentType.LEGACY_FABRIC)) {
+            supportedLoaders.add(ModLoaderType.FABRIC);
+        }
+
+        if (this.analyzer.has(GameComponentType.FABRIC) && hasMod("kilt", ModLoaderType.FABRIC)) {
+            supportedLoaders.add(ModLoaderType.FORGE);
+            supportedLoaders.add(ModLoaderType.NEO_FORGE);
+        }
+
+        // Sinytra Connector
+        if (this.analyzer.has(GameComponentType.NEO_FORGE) && (hasMod("connector", ModLoaderType.NEO_FORGE) || hasMod("connectormod", ModLoaderType.NEO_FORGE))
+                || "1.20.1".equals(gameVersion) && this.analyzer.has(GameComponentType.FORGE) && hasMod("connectormod", ModLoaderType.FORGE)) {
+            supportedLoaders.add(ModLoaderType.FABRIC);
         }
     }
 
