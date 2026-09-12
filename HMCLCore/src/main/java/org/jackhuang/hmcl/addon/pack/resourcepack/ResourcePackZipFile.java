@@ -15,19 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.addon.resourcepack;
+package org.jackhuang.hmcl.addon.pack.resourcepack;
 
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.addon.meta.PackMcMeta;
+import org.jackhuang.hmcl.addon.pack.PackMcMeta;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
@@ -36,25 +35,20 @@ import java.util.Optional;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackZipFile extends ResourcePackFile {
-    private final PackMcMeta.PackInfo info;
 
-    public ResourcePackZipFile(ResourcePackManager manager, Path path) throws IOException {
-        super(manager, path);
-
+    public static ResourcePackZipFile load(ResourcePackManager manager, Path path) {
         PackMcMeta meta = null;
         try (var zipFileTree = CompressingUtils.openZipTree(path)) {
-            try {
-                meta = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
-            } catch (Exception e) {
-                LOG.warning("Failed to parse resource pack meta", e);
-            }
+            meta = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
+        } catch (Exception e) {
+            LOG.warning("Failed to parse resource pack meta", e);
         }
-        this.info = meta != null ? meta.pack() : null;
+
+        return new ResourcePackZipFile(manager, path, meta != null ? meta.pack() : null);
     }
 
-    @Override
-    public PackMcMeta.PackInfo getPackInfo() {
-        return info;
+    private ResourcePackZipFile(ResourcePackManager manager, Path path, PackMcMeta.PackInfo info) {
+        super(manager, path, info);
     }
 
     @Override
@@ -80,8 +74,9 @@ final class ResourcePackZipFile extends ResourcePackFile {
     }
 
     @Override
-    public void delete() throws IOException {
-        Files.deleteIfExists(file);
+    public void onUpdated(String newFileNameWithExt) {
+        super.onUpdated(newFileNameWithExt);
+        manager.updateOptions(getFileNameWithExtension(), newFileNameWithExt);
     }
 
     @Override
@@ -96,7 +91,7 @@ final class ResourcePackZipFile extends ResourcePackFile {
                 .sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed())
                 .toList();
         if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(source, RemoteAddon.Type.RESOURCE_PACK, this, currentVersion.get(), remoteVersions.get(0), false);
+        return new AddonUpdate(source, RemoteAddon.Type.RESOURCE_PACK, this, currentVersion.get(), remoteVersions.get(0));
     }
 }
 

@@ -15,30 +15,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.addon;
+package org.jackhuang.hmcl.addon.shader;
 
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.addon.AddonLoaderType;
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.Set;
 
 @NotNullByDefault
-public record AddonLoader(String name, @Nullable AddonLoaderType type) {
+public enum ShaderLoaderType implements AddonLoaderType {
+    OPTIFINE_IRIS("Optifine/Iris", "optifine", "iris"),
+    APERTURE("Aperture", "aperture");
 
-    public static boolean mightBeLoader(String str) {
-        if (StringUtils.isBlank(str)
-                || !StringUtils.isASCII(str)
-                || "client".equalsIgnoreCase(str) || "server".equalsIgnoreCase(str))
-            return false;
-        int l = str.length();
-        for (int i = 0; i < l; i++) {
-            char c = str.charAt(i);
-            if (c != '-' && c != ' ' && c != '_' && !StringUtils.isAlphabetic(c)) return false;
-        }
-        return true;
+    private final String displayName;
+    private final Set<String> names;
+
+    ShaderLoaderType(String displayName, String... names) {
+        this.displayName = displayName;
+        this.names = Set.of(names);
     }
 
-    public static AddonLoader of(String name) {
-        return new AddonLoader(name, AddonLoaderType.of(name));
+    @Override
+    public String displayName() {
+        return displayName;
     }
 
+    @Override
+    public @Unmodifiable Set<String> names() {
+        return names;
+    }
 }
