@@ -122,7 +122,7 @@ HMCL 的維護者會替你完成其他步驟。
 例如，對於 `README.md` 來說，不同語言的在地化版本命名如下:
 
 - 英語: `README.md`
-- 中文 (簡體): `README_zh.md`
+- 中文 (簡體): `README_zh_Hans.md`
 - 中文 (繁體): `README_zh_Hant.md`
 - 中文 (文言): `README_lzh.md`
 
@@ -151,7 +151,7 @@ HMCL 的維護者會替你完成其他步驟。
 {
     "meow": {
         "default": "Meow",
-        "zh": "喵呜",
+        "zh-Hans": "喵呜",
         "zh-Hant": "喵嗚"
     }
 }

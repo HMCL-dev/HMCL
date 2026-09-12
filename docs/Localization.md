@@ -132,9 +132,9 @@ All documentation and localization resource files follow the naming rule `<resou
 For example, for `README.md`, the localized versions in different languages are named as follows:
 
 - English: `README.md`
-- Chinese (Simplified): `README_zh.md`
+- Chinese (Simplified):  `README_zh_Hans.md`
 - Chinese (Traditional): `README_zh_Hant.md`
-- Chinese (Classical): `README_lzh.md`
+- Chinese (Classical):   `README_lzh.md`
 
 In addition to localized files, HMCL also supports localizing certain text fields in JSON. Localized text in JSON uses the following format:
 
@@ -161,7 +161,7 @@ It can be rewritten as localized text:
 {
     "meow": {
         "default": "Meow",
-        "zh": "喵呜",
+        "zh-Hans": "喵呜",
         "zh-Hant": "喵嗚"
     }
 }
