@@ -17,8 +17,12 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import org.jackhuang.hmcl.addon.AddonLoader;
+import org.jackhuang.hmcl.addon.AddonLoaderType;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.translator.Translator;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -122,6 +126,30 @@ public final class I18n {
 
     public static String getWikiLink(GameRemoteVersion remoteVersion) {
         return MinecraftWiki.getWikiLink(locale, remoteVersion);
+    }
+
+    public static String translateLoaderType(AddonLoaderType loaderType) {
+        if (loaderType instanceof ModLoaderType modLoaderType) {
+            return switch (modLoaderType) {
+                case FORGE -> i18n("install.installer.forge");
+                case CLEANROOM -> i18n("install.installer.cleanroom");
+                case NEO_FORGE -> i18n("install.installer.neoforge");
+                case FABRIC -> i18n("install.installer.fabric");
+                case LITE_LOADER -> i18n("install.installer.liteloader");
+                case QUILT -> i18n("install.installer.quilt");
+                case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
+                default -> modLoaderType.displayName();
+            };
+        }
+        return loaderType.displayName();
+    }
+
+    public static String translateLoaderName(AddonLoader loader) {
+        if (loader.type() != null)
+            return translateLoaderType(loader.type());
+        else return "bungeecord".equalsIgnoreCase(loader.name())
+                ? "BungeeCord"
+                : StringUtils.capitalizeWords(loader.name());
     }
 
     public static boolean hasKey(String key) {

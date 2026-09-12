@@ -25,10 +25,15 @@ import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
+
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.stream.Collectors;
 
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
@@ -45,6 +50,7 @@ public class TwoLineListItem extends VBox {
 
         lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
+        lblTitle.setTextOverrun(OverrunStyle.ELLIPSIS);
 
         this.firstLine = new HBox(lblTitle);
         firstLine.getStyleClass().add("first-line");
@@ -158,6 +164,15 @@ public class TwoLineListItem extends VBox {
         return lblSubtitle;
     }
 
+    private static Label createTag(String tag, PseudoClass pseudoClass) {
+        var tagLabel = new Label(tag);
+        tagLabel.getStyleClass().add("tag");
+        tagLabel.setMinWidth(Label.USE_PREF_SIZE);
+        if (pseudoClass != null)
+            tagLabel.pseudoClassStateChanged(pseudoClass, true);
+        return tagLabel;
+    }
+
     private ObservableList<Label> tags;
 
     public ObservableList<Label> getTags() {
@@ -167,8 +182,12 @@ public class TwoLineListItem extends VBox {
             var tagsBox = new HBox(8);
             tagsBox.getStyleClass().add("tags");
             tagsBox.setAlignment(Pos.CENTER_LEFT);
+
+            // grow lazily after title has been placed
+            tagsBox.setPrefWidth(0);
             tagsBox.setMinWidth(0);
-            HBox.setHgrow(tagsBox, Priority.ALWAYS);
+            HBox.setHgrow(tagsBox, Priority.SOMETIMES);
+
             Bindings.bindContent(tagsBox.getChildren(), tags);
             var isNotEmpty = Bindings.isNotEmpty(tags);
             tagsBox.managedProperty().bind(isNotEmpty);
@@ -176,23 +195,30 @@ public class TwoLineListItem extends VBox {
 
             FXUtils.setOverflowHidden(tagsBox);
 
-            lblTitle.setMinWidth(Label.USE_PREF_SIZE);
+            HBox.setHgrow(lblTitle, Priority.ALWAYS);
+            lblTitle.setMinWidth(0);
             firstLine.getChildren().setAll(lblTitle, tagsBox);
         }
         return tags;
     }
 
     public void addTag(String tag, PseudoClass pseudoClass) {
-        var tagLabel = new Label(tag);
-        tagLabel.getStyleClass().add("tag");
-        tagLabel.setMinWidth(Label.USE_PREF_SIZE);
-        if (pseudoClass != null)
-            tagLabel.pseudoClassStateChanged(pseudoClass, true);
-        getTags().add(tagLabel);
+        getTags().add(createTag(tag, pseudoClass));
     }
 
     public void addTag(String tag) {
         addTag(tag, null);
+    }
+
+    public void addTags(Collection<String> tags) {
+        getTags().addAll(tags.stream().map(tag -> createTag(tag, null)).toList());
+    }
+
+    public void addTagsIfNotExist(Collection<String> tags) {
+        var current = getTags().stream().map(Label::getText).collect(Collectors.toSet());
+        var target = new LinkedHashSet<>(tags);
+        target.removeAll(current);
+        addTags(target);
     }
 
     private static final PseudoClass WARNING_PSEUDO_CLASS = PseudoClass.getPseudoClass("warning");
