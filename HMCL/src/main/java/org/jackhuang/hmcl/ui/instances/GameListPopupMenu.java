@@ -103,6 +103,7 @@ public final class GameListPopupMenu extends StackPane {
     }
 
     private final JFXListView<GameItem> listView = new JFXListView<>();
+    private final BooleanBinding isEmpty = Bindings.isEmpty(listView.getItems());
 
     public GameListPopupMenu() {
         this.setMaxHeight(365);
@@ -118,7 +119,6 @@ public final class GameListPopupMenu extends StackPane {
         Label placeholder = new Label(i18n("instance.empty"));
         placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
 
-        BooleanBinding isEmpty = Bindings.isEmpty(listView.getItems());
         FXUtils.onChangeAndOperate(isEmpty, empty -> getChildren().setAll(empty ? placeholder : listView));
     }
 
