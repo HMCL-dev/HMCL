@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.game;
 
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.download.forge.ForgeLegacyInstallTask;
 import org.jackhuang.hmcl.game.*;
@@ -143,6 +144,8 @@ public final class GameLibrariesTask extends Task<Void> {
     public void execute() throws IOException {
         int progress = 0;
         GameRepository gameRepository = dependencyManager.getGameRepository();
+
+        @Nullable var analyzer = gameRepository.getInstance(manifest.id()).getAnalyzer();
         for (Library library : libraries) {
             boolean handled = false;
 
@@ -151,7 +154,7 @@ public final class GameLibrariesTask extends Task<Void> {
             }
 
             // https://github.com/HMCL-dev/HMCL/issues/3975
-            if (library.is("net.minecraftforge", "minecraftforge") || library.is("net.minecraftforge", "forge")) {
+            if (analyzer.has(ModLoaderType.FORGE)) {
                 List<FMLLib> fmlLibs = getFMLLibs(library.version());
                 if (fmlLibs != null) {
                     Path libDir = gameRepository.getBaseDirectory().resolve("lib")
