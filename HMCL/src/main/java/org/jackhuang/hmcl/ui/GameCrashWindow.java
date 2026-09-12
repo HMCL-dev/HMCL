@@ -114,6 +114,8 @@ public class GameCrashWindow extends Stage {
         setTitle(i18n("game.crash.title"));
         FXUtils.setIcon(this);
 
+        FXUtils.addMacOSCloseWindowHandler(this, null);
+
         analyzeCrashReport();
     }
 
