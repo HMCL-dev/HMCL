@@ -29,7 +29,6 @@ import com.jfoenix.transitions.JFXKeyFrame;
 import com.jfoenix.transitions.JFXKeyValue;
 import javafx.animation.Interpolator;
 import javafx.geometry.Insets;
-import javafx.scene.Cursor;
 import javafx.scene.control.skin.ToggleButtonSkin;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
@@ -86,7 +85,6 @@ public class JFXToggleButtonSkin extends ToggleButtonSkin {
 
         final StackPane main = new StackPane();
         main.getChildren().setAll(line, rippler);
-        main.setCursor(Cursor.HAND);
 
         // show focus traversal effect
         getSkinnable().armedProperty().addListener((o, oldVal, newVal) -> {

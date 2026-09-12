@@ -41,7 +41,6 @@ import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Side;
 import javafx.geometry.VPos;
-import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.skin.TabPaneSkin;
@@ -1126,7 +1125,6 @@ public class JFXTabPaneSkin extends TabPaneSkin {
             StackPane container = new StackPane(arrowButton);
             container.getStyleClass().add("container");
             container.setPadding(new Insets(7));
-            container.setCursor(Cursor.HAND);
 
             container.setOnMousePressed(press -> {
                 offsetProperty.set(header.scrollOffset);
