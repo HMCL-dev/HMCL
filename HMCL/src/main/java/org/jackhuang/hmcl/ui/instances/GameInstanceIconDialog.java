@@ -201,12 +201,12 @@ public class GameInstanceIconDialog extends JFXDialogLayout {
         FXUtils.onClicked(container, () -> {
             try {
                 gameInstance.setIconFile(path);
+                if (setting != null) {
+                    setting.iconProperty().setValue(GameInstanceIconType.DEFAULT);
+                    onAccept();
+                }
             } catch (IOException e) {
                 LOG.error("Failed to set icon file: " + path, e);
-            }
-            if (setting != null) {
-                setting.iconProperty().setValue(GameInstanceIconType.DEFAULT);
-                onAccept();
             }
         });
         return container;
