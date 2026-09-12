@@ -153,18 +153,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             }
 
             // fifth item in left sidebar
-            AdvancedListItem launcherSettingsItem = new AdvancedListItem();
-            launcherSettingsItem.setLeftIcon(SVG.SETTINGS);
-            launcherSettingsItem.setTitle(i18n("settings"));
-            launcherSettingsItem.setOnAction(e -> {
-                Controllers.getSettingsPage().showGameSettings(GameDirectoryManager.getSelectedRepository());
-                Controllers.navigate(Controllers.getSettingsPage());
-            });
-            if (AnimationUtils.isAnimationEnabled()) {
-                FXUtils.prepareOnMouseEnter(launcherSettingsItem, Controllers::prepareSettingsPage);
-            }
-
-            // sixth item in left sidebar
             AdvancedListItem terracottaItem = new AdvancedListItem();
             terracottaItem.setLeftIcon(SVG.GRAPH2);
             terracottaItem.setTitle(i18n("terracotta"));
@@ -186,6 +174,18 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     Controllers.dialog(message, null, MessageDialogPane.MessageType.WARNING);
                 }
             });
+
+            // sixth item in left sidebar
+            AdvancedListItem launcherSettingsItem = new AdvancedListItem();
+            launcherSettingsItem.setLeftIcon(SVG.SETTINGS);
+            launcherSettingsItem.setTitle(i18n("settings"));
+            launcherSettingsItem.setOnAction(e -> {
+                Controllers.getSettingsPage().showGameSettings(GameDirectoryManager.getSelectedRepository());
+                Controllers.navigate(Controllers.getSettingsPage());
+            });
+            if (AnimationUtils.isAnimationEnabled()) {
+                FXUtils.prepareOnMouseEnter(launcherSettingsItem, Controllers::prepareSettingsPage);
+            }
 
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
