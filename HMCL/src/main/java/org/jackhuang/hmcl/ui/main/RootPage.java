@@ -195,9 +195,9 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     .add(gameListItem)
                     .add(gameItem)
                     .add(downloadItem)
+                    .add(terracottaItem)
                     .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
                     .add(launcherSettingsItem)
-                    .add(terracottaItem)
                     .addNavigationDrawerItem(i18n("contact.chat"), SVG.CHAT, () -> {
                         Controllers.getSettingsPage().showFeedback();
                         Controllers.navigate(Controllers.getSettingsPage());
