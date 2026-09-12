@@ -107,7 +107,7 @@ public final class NativePatcher {
                     .filter(library -> {
                         if (library.classifier() != null && library.classifier().startsWith("natives")
                                 && "org.lwjgl".equals(library.groupId())) {
-                            if ((useNativeGLFWorSDL && ("lwjgl-glfw".equals(library.artifactId()) || library.artifactId().contains("sdl")))
+                            if ((useNativeGLFWorSDL && ("lwjgl-glfw".equals(library.artifactId()) || "lwjgl-sdl".equals(library.artifactId())))
                                     || (useNativeOpenAL && "lwjgl-openal".equals(library.artifactId()))) {
                                 LOG.info("Filter out " + library.name());
                                 return false;
