@@ -71,7 +71,7 @@ final class ShaderPackFolder extends ShaderPackFile {
     }
 
     public @Nullable Image loadIcon() {
-        Path iconPath = switch (getLoaderType()) {
+        Path iconPath = switch (getShaderLoaderType()) {
             case APERTURE -> getFile().resolve("pack.png");
             case OPTIFINE_IRIS -> getFile().resolve("shaders").resolve("pack.png");
         };

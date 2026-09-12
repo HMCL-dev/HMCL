@@ -117,6 +117,7 @@ final class ShaderPackZipFile extends ShaderPackFile {
         if (currentVersion.isEmpty()) return null;
         List<RemoteAddon.Version> remoteVersions = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().projectId())
                 .filter(version -> version.gameVersions().contains(gameVersion)) //TODO loader
+                .filter(version -> version.loaders().stream().anyMatch(it -> it.type() == getShaderLoaderType()))
                 .filter(version -> version.datePublished().compareTo(currentVersion.get().datePublished()) > 0)
                 .sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed())
                 .toList();

@@ -234,7 +234,7 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
         }
 
         private Image getDefaultIcon() {
-            return switch (file.getLoaderType()) {
+            return switch (file.getShaderLoaderType()) {
                 case OPTIFINE_IRIS -> FXUtils.newBuiltinImage("/assets/img/opti-iris.png");
                 default -> FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
             };
@@ -457,7 +457,7 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
             content.getTags().clear();
             content.setTitle(file.getFileName());
             content.setSubtitle(file.getMeta() == null || file.getMeta().name() == null ? "" : file.getMeta().name());
-            content.addTag(switch (file.getLoaderType()) {
+            content.addTag(switch (file.getShaderLoaderType()) {
                 case OPTIFINE_IRIS -> i18n("shaderpack.loader.optifine_iris");
                 case APERTURE -> i18n("shaderpack.loader.aperture");
             });
@@ -488,7 +488,7 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
             title.getTitleLabel().setWrapText(true);
             title.setTitle(shaderPackFile.getFileName());
             title.setSubtitle(shaderPackFile.getFile().getFileName().toString());
-            title.addTag(switch (shaderPackFile.getLoaderType()) {
+            title.addTag(switch (shaderPackFile.getShaderLoaderType()) {
                 case OPTIFINE_IRIS -> i18n("shaderpack.loader.optifine_iris");
                 case APERTURE -> i18n("shaderpack.loader.aperture");
             });

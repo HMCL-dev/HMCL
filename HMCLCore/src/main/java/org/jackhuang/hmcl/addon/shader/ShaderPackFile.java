@@ -87,7 +87,7 @@ public sealed abstract class ShaderPackFile extends LocalAddonFile implements Co
         return fileNameWithExtension;
     }
 
-    public ShaderLoaderType getLoaderType() {
+    public ShaderLoaderType getShaderLoaderType() {
         return loaderType;
     }
 
