@@ -170,8 +170,20 @@ public class JFXPopup extends PopupControl {
 
     @Override
     public void hide() {
+        if (!(getSkin() instanceof JFXPopupSkin skin)) {
+            super.hide();
+            return;
+        }
+
+        if (isShowing()) {
+            skin.animateClose(this::hideImmediately);
+        } else {
+            skin.init();
+        }
+    }
+
+    private void hideImmediately() {
         super.hide();
-        ((JFXPopupSkin) getSkin()).init();
     }
 
     /***************************************************************************
