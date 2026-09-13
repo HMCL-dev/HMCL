@@ -38,17 +38,13 @@ final class LinuxPackageFiles {
     /// Bundled executable shell artifact produced by `makeExecutables`.
     private final String appFileName;
 
-    /// Package manager name exposed to the launcher process.
-    private final String packageManager;
-
     /// Launcher class name written to the desktop entry's `StartupWMClass` field.
     private final String launcherClassName;
 
-    /// Creates package path helpers for one release channel, package manager, and launcher class.
-    LinuxPackageFiles(ReleaseType releaseType, String appFileName, String packageManager, String launcherClassName) {
+    /// Creates package path helpers for one release channel and launcher class.
+    LinuxPackageFiles(ReleaseType releaseType, String appFileName, String launcherClassName) {
         this.releaseType = releaseType;
         this.appFileName = appFileName;
-        this.packageManager = packageManager;
         this.launcherClassName = launcherClassName;
     }
 
@@ -77,9 +73,6 @@ final class LinuxPackageFiles {
         return """
                 #!/usr/bin/env bash
                 cd "$HOME"
-                if [ -z "${HMCL_PACKAGE_MANAGED:-}" ]; then
-                    export HMCL_PACKAGE_MANAGED="%s"
-                fi
                 if [ -z "${HMCL_USER_HOME:-}" ]; then
                     if [ -z "${XDG_DATA_HOME:-}" ]; then
                         export HMCL_USER_HOME="$HOME/.local/share/hmcl"
@@ -94,7 +87,7 @@ final class LinuxPackageFiles {
                     export HMCL_DEPENDENCIES_DIR="$HMCL_USER_HOME/dependencies"
                 fi
                 exec %s "$@"
-                """.formatted(packageManager, releaseType.getName(), targetPath());
+                """.formatted(releaseType.getName(), targetPath());
     }
 
     /// Creates the desktop entry that points to the channel-specific command.

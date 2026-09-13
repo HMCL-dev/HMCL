@@ -117,7 +117,6 @@ public abstract class CreateDeb extends DefaultTask {
         return new LinuxPackageFiles(
                 getCurrentType(),
                 getAppShFile().getAsFile().get().getName(),
-                "deb",
                 getLauncherClassName().get()
         );
     }

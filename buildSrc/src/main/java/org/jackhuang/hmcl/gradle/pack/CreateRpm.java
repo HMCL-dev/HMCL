@@ -145,7 +145,6 @@ public abstract class CreateRpm extends DefaultTask {
         LinuxPackageFiles files = new LinuxPackageFiles(
                 releaseType,
                 appShFile.getFileName().toString(),
-                "rpm",
                 launcherClassName
         );
 

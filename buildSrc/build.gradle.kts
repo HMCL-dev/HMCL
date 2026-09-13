@@ -15,9 +15,6 @@ dependencies {
     implementation(libs.weburl)
     implementation(libs.eclipse.packager.rpm)
     compileOnly(libs.jetbrains.annotations)
-
-    testImplementation(libs.junit.jupiter)
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 java {
@@ -27,10 +24,6 @@ java {
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
-}
-
-tasks.test {
-    useJUnitPlatform()
 }
 
 tasks.processResources {
