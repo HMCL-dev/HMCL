@@ -24,6 +24,7 @@ import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
 import javafx.scene.layout.HBox;
@@ -31,6 +32,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.GameProcessManager;
 import org.jackhuang.hmcl.game.GameProcessManager.GameProcessHolder;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.PageAware;
@@ -46,10 +48,17 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// @author Calboot
 public class GameProcessPage extends ListPageBase<GameProcessHolder> implements DecoratorPage, PageAware {
 
-    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("game.process")));
+    private final ReadOnlyObjectWrapper<State> state;
 
     public GameProcessPage() {
         Bindings.bindContent(getItems(), GameProcessManager.displayedHolders);
+
+        Label titleLabel = new Label();
+        titleLabel.textProperty().bind(GameProcessManager.aliveProcessCount.asString(i18n("game.process") + " (%d)"));
+        titleLabel.textFillProperty().bind(Themes.titleFillProperty());
+        titleLabel.getStyleClass().add("jfx-decorator-title");
+        titleLabel.setMinWidth(0);
+        state = new ReadOnlyObjectWrapper<>(State.fromTitleNode(titleLabel));
     }
 
     @Override

@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.GameProcessManager;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.Accounts;
@@ -155,7 +156,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // fifth item in left sidebar
             AdvancedListItem gameProcessItem = new AdvancedListItem();
             gameProcessItem.setLeftIcon(SVG.TERMINAL);
-            gameProcessItem.setTitle(i18n("game.process"));
+            gameProcessItem.titleProperty().bind(GameProcessManager.aliveProcessCount.asString(i18n("game.process") + " (%d)"));
             gameProcessItem.setOnAction(e -> Controllers.navigate(Controllers.getGameProcessPage()));
 
             // sixth item in left sidebar
