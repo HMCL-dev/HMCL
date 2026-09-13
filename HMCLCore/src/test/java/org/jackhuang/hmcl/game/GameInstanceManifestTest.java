@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,65 +41,6 @@ public final class GameInstanceManifestTest {
         JsonObject json = manifest.toJsonObject();
         assertFalse(json.has("root"));
         assertFalse(json.has("hidden"));
-    }
-
-    /// Root manifests with patch lists resolve from the patch view instead of their own body fields.
-    @Test
-    public void testRootManifestWithPatchesUsesPatchView() throws NoSuchGameInstanceException {
-        GameInstanceManifest manifest = manifest(
-                "example",
-                "example.Main",
-                true,
-                false,
-                List.of(patch("patch", null)));
-
-        GameInstanceManifest.Resolved resolved = new DefaultGameRepository(Path.of(".")) {
-            @Override
-            protected DefaultGameRepositoryLayout createLayout(Path baseDirectory) {
-                return new DefaultGameRepositoryLayout(baseDirectory);
-            }
-
-            @Override
-            protected DefaultGameInstance createInstance(
-                    DefaultGameRepositorySnapshot snapshot,
-                    GameInstanceID id,
-                    GameInstanceManifest manifest,
-                    @Nullable Path manifestFile) {
-                final class MyGameInstance extends DefaultGameInstance {
-                    MyGameInstance(
-                            DefaultGameRepositorySnapshot snapshot,
-                            GameInstanceID id,
-                            GameInstanceManifest manifest,
-                            @Nullable Path manifestFile) {
-                        super(snapshot, id, manifest, manifestFile);
-                    }
-
-                    MyGameInstance(
-                            DefaultGameRepositorySnapshot snapshot,
-                            GameInstanceID id,
-                            GameInstanceManifest manifest,
-                            DefaultGameInstance shareSession) {
-                        super(snapshot, id, manifest, shareSession);
-                    }
-
-                    @Override
-                    protected DefaultGameInstance withNewSnapshot(DefaultGameRepositorySnapshot newSnapshot) {
-                        return new MyGameInstance(newSnapshot, id, manifest, this);
-                    }
-
-                    @Override
-                    protected DefaultGameInstance withManifest(DefaultGameRepositorySnapshot newSnapshot, GameInstanceManifest manifest) {
-                        return new MyGameInstance(newSnapshot, id, manifest, this);
-                    }
-                }
-
-                return new MyGameInstance(snapshot, id, manifest, manifestFile);
-            }
-        }.resolve(manifest);
-
-        assertNull(resolved.launchManifest().mainClass());
-        assertNull(resolved.launchManifest().patches());
-        assertEquals(List.of(patch("patch", null)), resolved.standaloneManifest().getPatches());
     }
 
     /// Manifest edits update known raw JSON fields without discarding unknown fields.

@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
 ///
 /// ```
 /// <!-- #BEGIN LANGUAGE_SWITCHER -->
-/// **English** | 中文 ([简体](FOO_zh.md), [繁體](FOO_zh_Hant.md)) | [日本語](FOO_ja.md)
+/// **English** | 中文 ([简体](FOO_zh_Hans.md), [繁體](FOO_zh_Hant.md)) | [日本語](FOO_ja.md)
 /// <!-- #END LANGUAGE_SWITCHER -->
 /// ```
 ///

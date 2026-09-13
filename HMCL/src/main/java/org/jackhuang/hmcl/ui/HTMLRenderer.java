@@ -170,7 +170,7 @@ public final class HTMLRenderer {
     private void applyStyle(Text text) {
         if (code) {
             text.getStyleClass().add("html-code");
-            text.setStyle("-fx-font-family: \"%s\";".formatted(Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT)));
+            text.setStyle("-fx-font-family: \"%s\";".formatted(Objects.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT)));
             return;
         }
 
