@@ -79,7 +79,9 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
     }
 
     public void onPageShown() {
+        setLoading(true);
         GameProcessManager.setDisplay(true);
+        setLoading(false);
     }
 
     public void onPageHidden() {
