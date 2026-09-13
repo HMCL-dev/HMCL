@@ -950,7 +950,7 @@ public final class LauncherHelper {
                 }
             }
 
-            GameProcessManager.addProcessListener(this);
+            GameProcessManager.add(this);
         }
 
         private void finishLaunch() {

@@ -23,7 +23,9 @@ import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.LogWindow;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
+import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.util.FXThread;
 
 import java.lang.ref.WeakReference;
@@ -38,17 +40,48 @@ public final class GameProcessManager {
     }
 
     @FXThread
-    public static final Map<String, Integer> idToLaunchedCount = new HashMap<>();
+    private static final Map<String, Integer> idToLaunchedCount = new HashMap<>();
 
     @FXThread
-    public static final List<GameProcessHolder> processHolders = new ArrayList<>();
+    private static final List<GameProcessHolder> processHolders = new ArrayList<>();
 
-    public static void cleanupProcessListeners() {
-        FXUtils.runInFX(() -> processHolders.removeIf(holder -> holder.exited.get()));
+    @FXThread
+    public static final ObservableList<GameProcessHolder> displayedHolders = FXCollections.observableArrayList();
+
+    @FXThread
+    private static final BooleanProperty display = new SimpleBooleanProperty() {
+        @Override
+        public void invalidated() {
+            if (display.get()) {
+                updateDisplay();
+            } else {
+                displayedHolders.clear();
+            }
+        }
+    };
+
+    @FXThread
+    public static void setDisplay(boolean display) {
+        GameProcessManager.display.set(display);
     }
 
-    public static void addProcessListener(LauncherHelper.HMCLProcessListener processListener) {
-        FXUtils.runInFX(() -> processHolders.add(new GameProcessHolder(processListener)));
+    public static void updateDisplay() {
+        FXUtils.runInFX(() -> {
+            processHolders.removeIf(holder -> holder.exited.get());
+            displayedHolders.setAll(processHolders);
+        });
+    }
+
+    public static void add(LauncherHelper.HMCLProcessListener processListener) {
+        FXUtils.runInFX(() -> {
+            var holder = new GameProcessHolder(processListener);
+            processHolders.add(0, holder);
+            if (display.get()) displayedHolders.add(0, holder);
+        });
+    }
+
+    private static void remove(GameProcessHolder holder) {
+        FXUtils.runInFX(() -> processHolders.remove(holder));
     }
 
     public static final class GameProcessHolder {
@@ -59,6 +92,7 @@ public final class GameProcessManager {
         private final WeakListenerHolder holder = new WeakListenerHolder();
 
         private final String id;
+        private final HMCLGameInstance instance;
 
         private final ObservableList<Log> logs = FXCollections.observableArrayList();
         private final ReadOnlyStringWrapper lastLogLine = new ReadOnlyStringWrapper("");
@@ -66,6 +100,7 @@ public final class GameProcessManager {
 
         private GameProcessHolder(LauncherHelper.HMCLProcessListener processListener) {
             this.listenerRef = new WeakReference<>(processListener);
+            this.instance = processListener.getGameInstance();
             {
                 String id = processListener.getGameInstance().getId().id();
                 int i = idToLaunchedCount.computeIfAbsent(id, k -> 0) + 1;
@@ -87,9 +122,7 @@ public final class GameProcessManager {
             }
             holder.onWeakChangeAndOperate(processListener.exitedProperty(), b -> {
                 if (b) {
-                    var currentLogs = processListener.getLogWindow().getLogs();
-                    this.lastLogLine.set(currentLogs.get(currentLogs.size() - 1).getLog()); // I don't know why but this is necessary
-                    processHolders.remove(this);
+                    remove(this);
                     this.exited.set(true);
                 }
             });
@@ -103,6 +136,10 @@ public final class GameProcessManager {
             return id;
         }
 
+        public HMCLGameInstance getInstance() {
+            return instance;
+        }
+
         public ObservableList<Log> getLogs() {
             return logs;
         }
@@ -113,6 +150,26 @@ public final class GameProcessManager {
 
         public ReadOnlyBooleanProperty exitedProperty() {
             return exited.getReadOnlyProperty();
+        }
+
+        public void relaunch() {
+            if (exitedProperty().get()) Instances.launch(getInstance());
+        }
+
+        public void showLogWindow() {
+            var listener = getListenerRef().get();
+            if (listener != null) {
+                listener.getLogWindow().show();
+            } else {
+                LogWindow logWindow = new LogWindow();
+                logWindow.logLines(getLogs());
+                logWindow.show();
+            }
+        }
+
+        public void terminate() {
+            var listener = getListenerRef().get();
+            if (listener != null) listener.getProcess().stop();
         }
     }
 

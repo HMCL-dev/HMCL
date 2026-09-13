@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -48,7 +49,7 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("game.process")));
 
     public GameProcessPage() {
-
+        Bindings.bindContent(getItems(), GameProcessManager.displayedHolders);
     }
 
     @Override
@@ -64,19 +65,16 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
     @Override
     public void refresh() {
         setLoading(true);
-        GameProcessManager.cleanupProcessListeners();
-        getItems().setAll(GameProcessManager.processHolders);
+        GameProcessManager.updateDisplay();
         setLoading(false);
     }
 
-    @Override
     public void onPageShown() {
-        refresh();
+        GameProcessManager.setDisplay(true);
     }
 
-    @Override
     public void onPageHidden() {
-        getItems().clear();
+        GameProcessManager.setDisplay(false);
     }
 
     private static final class GameProcessPageSkin extends ToolbarListPageSkin<GameProcessHolder, GameProcessPage> {
@@ -101,6 +99,7 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
     private static final class GameProcessCell extends MDListCell<GameProcessHolder> {
 
         private final TwoLineListItem content = new TwoLineListItem();
+        private final JFXButton relaunchButton = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
         private final JFXButton logWindowButton = FXUtils.newToggleButton4(SVG.TERMINAL);
         private final JFXButton terminateButton = FXUtils.newToggleButton4(SVG.SHUTDOWN);
 
@@ -113,10 +112,21 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
 
+            FXUtils.installFastTooltip(relaunchButton, i18n("game.process.relaunch"));
             FXUtils.installFastTooltip(logWindowButton, i18n("game.process.show_log"));
             FXUtils.installFastTooltip(terminateButton, i18n("game.process.terminate"));
 
-            container.getChildren().setAll(content, logWindowButton, terminateButton);
+            relaunchButton.setOnAction(event -> {
+                if (getItem() != null && !isEmpty()) getItem().relaunch();
+            });
+            logWindowButton.setOnAction(event -> {
+                if (getItem() != null && !isEmpty()) getItem().showLogWindow();
+            });
+            terminateButton.setOnAction(event -> {
+                if (getItem() != null && !isEmpty()) getItem().terminate();
+            });
+
+            container.getChildren().setAll(content, relaunchButton, logWindowButton, terminateButton);
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
         }
@@ -124,8 +134,7 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
         @Override
         protected void updateControl(GameProcessHolder item, boolean empty) {
             if (item == null || empty) {
-                logWindowButton.setOnAction(null);
-                terminateButton.setOnAction(null);
+                relaunchButton.disableProperty().unbind();
                 terminateButton.disableProperty().unbind();
                 return;
             }
@@ -133,20 +142,7 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
             content.setTitle(item.getId());
             content.subtitleProperty().bind(item.lastLogLineProperty());
 
-            logWindowButton.setOnAction(event -> {
-                var listener = item.getListenerRef().get();
-                if (listener != null) {
-                    listener.getLogWindow().show();
-                } else {
-                    LogWindow logWindow = new LogWindow();
-                    logWindow.logLines(item.getLogs());
-                    logWindow.show();
-                }
-            });
-            terminateButton.setOnAction(event -> {
-                var listener = item.getListenerRef().get();
-                if (listener != null) listener.getProcess().stop();
-            });
+            relaunchButton.disableProperty().bind(item.exitedProperty().not());
             terminateButton.disableProperty().bind(item.exitedProperty());
         }
     }
