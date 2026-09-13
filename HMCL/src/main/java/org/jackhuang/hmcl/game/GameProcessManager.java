@@ -33,6 +33,7 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
 
+/// Manager of game processes launched by HMCL.
 ///
 /// @author Calboot
 public final class GameProcessManager {
