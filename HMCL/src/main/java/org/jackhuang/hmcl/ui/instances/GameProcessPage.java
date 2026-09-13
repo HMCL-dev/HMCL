@@ -77,6 +77,12 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
         GameProcessManager.setDisplay(false);
     }
 
+    private void terminateSelected(Collection<GameProcessHolder> selectedItems) {
+        for (GameProcessHolder item : selectedItems) {
+            item.terminate();
+        }
+    }
+
     private static final class GameProcessPageSkin extends ToolbarListPageSkin<GameProcessHolder, GameProcessPage> {
 
         public GameProcessPageSkin(GameProcessPage skinnable) {
@@ -86,7 +92,8 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
         @Override
         protected List<Node> initializeToolbar(GameProcessPage skinnable) {
             return List.of(
-                    ToolbarListPageSkin.createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh)
+                    ToolbarListPageSkin.createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    ToolbarListPageSkin.createToolbarButton2(i18n("game.process.terminate_all"), SVG.SHUTDOWN, () -> skinnable.terminateSelected(skinnable.getItems()))
             );
         }
 
