@@ -106,6 +106,7 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
     private static final class GameProcessCell extends MDListCell<GameProcessHolder> {
 
         private final TwoLineListItem content = new TwoLineListItem();
+        private final JFXButton settingsButton = FXUtils.newToggleButton4(SVG.SETTINGS);
         private final JFXButton relaunchButton = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
         private final JFXButton logWindowButton = FXUtils.newToggleButton4(SVG.TERMINAL);
         private final JFXButton terminateButton = FXUtils.newToggleButton4(SVG.SHUTDOWN);
@@ -123,6 +124,9 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
             FXUtils.installFastTooltip(logWindowButton, i18n("game.process.show_log"));
             FXUtils.installFastTooltip(terminateButton, i18n("game.process.terminate"));
 
+            settingsButton.setOnAction(event -> {
+                if (getItem() != null && !isEmpty()) getItem().openSettings();
+            });
             relaunchButton.setOnAction(event -> {
                 if (getItem() != null && !isEmpty()) getItem().relaunch();
             });
@@ -133,7 +137,7 @@ public class GameProcessPage extends ListPageBase<GameProcessHolder> implements 
                 if (getItem() != null && !isEmpty()) getItem().terminate();
             });
 
-            container.getChildren().setAll(content, relaunchButton, logWindowButton, terminateButton);
+            container.getChildren().setAll(content, settingsButton, relaunchButton, logWindowButton, terminateButton);
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
         }
