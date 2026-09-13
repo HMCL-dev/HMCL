@@ -19,11 +19,7 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
-import javafx.beans.InvalidationListener;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -32,38 +28,24 @@ import javafx.scene.control.Skin;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.game.LauncherHelper;
-import org.jackhuang.hmcl.game.Log;
+import org.jackhuang.hmcl.game.GameProcessManager;
+import org.jackhuang.hmcl.game.GameProcessManager.GameProcessHolder;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.FXThread;
 
-import java.lang.ref.WeakReference;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class GameProcessPage extends ListPageBase<GameProcessPage.GameProcessHolder> implements DecoratorPage, PageAware {
+/// Page for managing running game processes.
+///
+/// @author Calboot
+public class GameProcessPage extends ListPageBase<GameProcessHolder> implements DecoratorPage, PageAware {
 
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("game.process")));
-
-    @FXThread
-    private static final Map<String, Integer> idToLaunchedCount = new HashMap<>();
-
-    @FXThread
-    private static final List<GameProcessHolder> processHolders = new ArrayList<>();
-
-    @FXThread
-    private static void cleanupProcessListeners() {
-        processHolders.removeIf(holder -> holder.exited.get());
-    }
-
-    public static void addProcessListener(LauncherHelper.HMCLProcessListener processListener) {
-        FXUtils.runInFX(() -> processHolders.add(new GameProcessHolder(processListener)));
-    }
 
     public GameProcessPage() {
 
@@ -82,8 +64,8 @@ public class GameProcessPage extends ListPageBase<GameProcessPage.GameProcessHol
     @Override
     public void refresh() {
         setLoading(true);
-        cleanupProcessListeners();
-        getItems().setAll(processHolders);
+        GameProcessManager.cleanupProcessListeners();
+        getItems().setAll(GameProcessManager.processHolders);
         setLoading(false);
     }
 
@@ -95,51 +77,6 @@ public class GameProcessPage extends ListPageBase<GameProcessPage.GameProcessHol
     @Override
     public void onPageHidden() {
         getItems().clear();
-    }
-
-    public static final class GameProcessHolder {
-
-        @SuppressWarnings({"unused", "FieldCanBeLocal"})
-        private final WeakReference<LauncherHelper.HMCLProcessListener> listenerRef;
-
-        @SuppressWarnings("FieldCanBeLocal")
-        private final WeakListenerHolder holder = new WeakListenerHolder();
-
-        private final String title;
-
-        private final ObservableList<Log> logs = FXCollections.observableArrayList();
-        private final StringProperty lastLogLine = new SimpleStringProperty("");
-        private final BooleanProperty exited = new SimpleBooleanProperty();
-
-        private GameProcessHolder(LauncherHelper.HMCLProcessListener processListener) {
-            this.listenerRef = new WeakReference<>(processListener);
-            {
-                String id = processListener.getGameInstance().getId().id();
-                int i = idToLaunchedCount.computeIfAbsent(id, k -> 0) + 1;
-                idToLaunchedCount.put(id, i);
-                this.title = id + " #" + i;
-            }
-           {
-                Bindings.bindContent(logs, processListener.getLogWindow().getLogs());
-                if (!logs.isEmpty()) {
-                    lastLogLine.set(logs.get(logs.size() - 1).getLog());
-                }
-                logs.addListener((InvalidationListener) o -> {
-                    if (!logs.isEmpty()) {
-                        lastLogLine.set(logs.get(logs.size() - 1).getLog());
-                    } else {
-                        lastLogLine.set("");
-                    }
-                });
-            }
-            holder.onWeakChangeAndOperate(processListener.exitedProperty(), b -> {
-                if (b) {
-                    var currentLogs = processListener.getLogWindow().getLogs();
-                    this.lastLogLine.set(currentLogs.get(currentLogs.size() - 1).getLog()); // I don't know why but this is necessary
-                    this.exited.set(true);
-                }
-            });
-        }
     }
 
     private static final class GameProcessPageSkin extends ToolbarListPageSkin<GameProcessHolder, GameProcessPage> {
@@ -193,24 +130,24 @@ public class GameProcessPage extends ListPageBase<GameProcessPage.GameProcessHol
                 return;
             }
 
-            content.setTitle(item.title);
-            content.subtitleProperty().bind(item.lastLogLine);
+            content.setTitle(item.getId());
+            content.subtitleProperty().bind(item.lastLogLineProperty());
 
             logWindowButton.setOnAction(event -> {
-                var listener = item.listenerRef.get();
+                var listener = item.getListenerRef().get();
                 if (listener != null) {
                     listener.getLogWindow().show();
                 } else {
                     LogWindow logWindow = new LogWindow();
-                    logWindow.logLines(item.logs);
+                    logWindow.logLines(item.getLogs());
                     logWindow.show();
                 }
             });
             terminateButton.setOnAction(event -> {
-                var listener = item.listenerRef.get();
+                var listener = item.getListenerRef().get();
                 if (listener != null) listener.getProcess().stop();
             });
-            terminateButton.disableProperty().bind(item.exited);
+            terminateButton.disableProperty().bind(item.exitedProperty());
         }
     }
 

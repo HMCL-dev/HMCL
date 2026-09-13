@@ -45,7 +45,6 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
-import org.jackhuang.hmcl.ui.instances.GameProcessPage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -951,7 +950,7 @@ public final class LauncherHelper {
                 }
             }
 
-            GameProcessPage.addProcessListener(this);
+            GameProcessManager.addProcessListener(this);
         }
 
         private void finishLaunch() {

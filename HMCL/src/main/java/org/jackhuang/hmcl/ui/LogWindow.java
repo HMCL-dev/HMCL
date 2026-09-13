@@ -45,7 +45,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -136,8 +135,8 @@ public final class LogWindow extends Stage {
         autoScroll();
     }
 
-    public @Unmodifiable ObservableList<Log> getLogs() {
-        return FXCollections.unmodifiableObservableList(impl.listView.getItems());
+    public ObservableList<Log> getLogs() {
+        return impl.listView.getItems();
     }
 
     private void shakeLogs() {
