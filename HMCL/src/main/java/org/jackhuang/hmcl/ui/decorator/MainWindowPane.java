@@ -131,6 +131,7 @@ final class MainWindowPane extends StackPane {
 
         dialogOverlayPane = new StackPane();
         dialogOverlayPane.setVisible(false);
+        decorator.capableDraggingWindow(dialogOverlayPane);
 
         StackPane rightButtonsContainer = createWindowButtons();
         rightButtonsContainer.getStyleClass().add("jfx-tool-bar");
