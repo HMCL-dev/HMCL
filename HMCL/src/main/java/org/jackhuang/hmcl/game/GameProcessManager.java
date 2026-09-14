@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.game;
 
-import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.*;
@@ -27,7 +26,9 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.LogWindow;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.instances.Instances;
+import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.FXThread;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -87,7 +88,8 @@ public final class GameProcessManager {
 
     public static final class GameProcessHolder {
 
-        private final WeakReference<LauncherHelper.HMCLProcessListener> listenerRef;
+        private final WeakReference<ManagedProcess> processRef;
+        private WeakReference<LogWindow> logWindowRef;
 
         @SuppressWarnings("FieldCanBeLocal")
         private final WeakListenerHolder holder = new WeakListenerHolder();
@@ -95,31 +97,21 @@ public final class GameProcessManager {
         private final String id;
         private final HMCLGameInstance instance;
 
-        private final ObservableList<Log> logs = FXCollections.observableArrayList();
-        private final ReadOnlyStringWrapper lastLogLine = new ReadOnlyStringWrapper("");
+        private final CircularArrayList<Log> logs;
+        private final ReadOnlyStringWrapper lastLogLine = new ReadOnlyStringWrapper(null);
         private final ReadOnlyBooleanWrapper exited = new ReadOnlyBooleanWrapper();
 
         private GameProcessHolder(LauncherHelper.HMCLProcessListener processListener) {
-            this.listenerRef = new WeakReference<>(processListener);
+            this.processRef = new WeakReference<>(processListener.getProcess());
+            this.logWindowRef = new WeakReference<>(processListener.getLogWindow());
             this.instance = processListener.getGameInstance();
+            this.logs = processListener.getLogs();
+            this.lastLogLine.bind(processListener.getLogWindow().lastLogLineProperty());
             {
                 String id = processListener.getGameInstance().getId().id();
                 int i = idToLaunchedCount.computeIfAbsent(id, k -> 0) + 1;
                 idToLaunchedCount.put(id, i);
                 this.id = id + " #" + i;
-            }
-            {
-                Bindings.bindContent(logs, processListener.getLogWindow().getLogs());
-                if (!logs.isEmpty()) {
-                    lastLogLine.set(logs.get(logs.size() - 1).getLog());
-                }
-                logs.addListener((InvalidationListener) o -> {
-                    if (!logs.isEmpty()) {
-                        lastLogLine.set(logs.get(logs.size() - 1).getLog());
-                    } else {
-                        lastLogLine.set("");
-                    }
-                });
             }
             holder.onWeakChangeAndOperate(processListener.exitedProperty(), b -> {
                 if (b) {
@@ -150,19 +142,22 @@ public final class GameProcessManager {
         }
 
         public void showLogWindow() {
-            var listener = listenerRef.get();
-            if (listener != null) {
-                listener.getLogWindow().show();
-            } else {
-                LogWindow logWindow = new LogWindow();
+            LogWindow logWindow;
+            LogWindow cached;
+            if ((cached = logWindowRef.get()) == null) {
+                logWindow = new LogWindow();
                 logWindow.logLines(logs);
-                logWindow.show();
+                logWindowRef = new WeakReference<>(logWindow);
+            } else {
+                logWindow = cached;
             }
+            logWindow.show();
+            logWindow.requestFocus();
         }
 
         public void terminate() {
-            var listener = listenerRef.get();
-            if (listener != null) listener.getProcess().stop();
+            var process = processRef.get();
+            if (process != null) process.stop();
         }
     }
 

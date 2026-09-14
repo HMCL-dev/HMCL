@@ -69,6 +69,7 @@ public final class LogWindow extends Stage {
     private static final Log4jLevel[] LEVELS = {Log4jLevel.FATAL, Log4jLevel.ERROR, Log4jLevel.WARN, Log4jLevel.INFO, Log4jLevel.DEBUG};
 
     private final CircularArrayList<Log> logs;
+    private final ReadOnlyStringWrapper lastLogLine = new ReadOnlyStringWrapper();
     private final Map<Log4jLevel, SimpleIntegerProperty> levelCountMap = new EnumMap<>(Log4jLevel.class);
     private final Map<Log4jLevel, SimpleBooleanProperty> levelShownMap = new EnumMap<>(Log4jLevel.class);
 
@@ -112,6 +113,7 @@ public final class LogWindow extends Stage {
     public void logLine(Log log) {
         Log4jLevel level = log.getLevel();
         logs.add(log);
+        lastLogLine.set(log.getLog());
         if (levelShownMap.get(level).get())
             impl.listView.getItems().add(log);
 
@@ -125,6 +127,7 @@ public final class LogWindow extends Stage {
         for (Log log : logs) {
             Log4jLevel level = log.getLevel();
             this.logs.add(log);
+            this.lastLogLine.set(log.getLog());
             if (levelShownMap.get(level).get())
                 impl.listView.getItems().add(log);
 
@@ -135,8 +138,8 @@ public final class LogWindow extends Stage {
         autoScroll();
     }
 
-    public ObservableList<Log> getLogs() {
-        return impl.listView.getItems();
+    public ReadOnlyStringProperty lastLogLineProperty() {
+        return lastLogLine.getReadOnlyProperty();
     }
 
     private void shakeLogs() {

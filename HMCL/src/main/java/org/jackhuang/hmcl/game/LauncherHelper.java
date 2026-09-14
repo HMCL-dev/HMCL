@@ -100,7 +100,7 @@ public final class LauncherHelper {
         this.setting = gameInstance.getEffectiveSettings();
         this.launcherVisibility = setting.getInheritable(GameSettings::launcherVisibilityProperty);
         this.showLogs = setting.getInheritable(GameSettings::showLogsProperty);
-        this.launchingStepsPane.setTitle(i18n("instance.launch"));
+        this.launchingStepsPane.setTitle(i18n("instance.launch") + " - " + gameInstance.getId().id());
     }
 
     public HMCLGameInstance getGameInstance() {
@@ -869,6 +869,10 @@ public final class LauncherHelper {
 
         public LogWindow getLogWindow() {
             return logWindow;
+        }
+
+        public CircularArrayList<Log> getLogs() {
+            return logs;
         }
 
         public HMCLGameInstance getGameInstance() {
