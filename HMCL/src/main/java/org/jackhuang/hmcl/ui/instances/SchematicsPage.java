@@ -177,8 +177,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
     public void downloadLitematica() {
         if (downloadTarget.get() != null && gameInstance != null) {
-            var modDownloads = HMCLLocalizedDownloadListPage.ofModrinthMod(org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD, true);
-            modDownloads.selectInstance(gameInstance.getId());
+            var modDownloads = HMCLLocalizedDownloadListPage.ofModrinthMod(org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD, false);
+            modDownloads.loadInstance(HMCLGameInstance.Optional.of(gameInstance));
             Controllers.navigate(new DownloadPage(
                     modDownloads,
                     downloadTarget.get(),
@@ -467,7 +467,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
                 preLoad();
                 for (var dir : dirChildren) {
-                    dir.preLoad();
+                    try {
+                        dir.preLoad();
+                    } catch (IOException e) {
+                        LOG.warning("Failed to pre-load schematics in " + dir.path, e);
+                    }
                     this.children.add(dir);
                 }
                 try (Stream<Path> stream = Files.list(path)) {
