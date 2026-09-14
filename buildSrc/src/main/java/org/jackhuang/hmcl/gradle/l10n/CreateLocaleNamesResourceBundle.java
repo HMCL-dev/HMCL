@@ -48,8 +48,6 @@ public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
     private static String mapToFileName(String base, String ext, Locale locale) {
         if (locale.equals(Locale.ENGLISH))
             return base + "." + ext;
-        else if (locale.toLanguageTag().equals("zh-Hans"))
-            return base + "_zh." + ext;
         else
             return base + "_" + locale.toLanguageTag().replace('-', '_') + "." + ext;
     }
