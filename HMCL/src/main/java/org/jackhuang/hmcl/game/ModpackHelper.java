@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
+
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
@@ -42,13 +43,16 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -118,6 +123,80 @@ public final class ModpackHelper {
         throw new UnsupportedModpackException(file.toString());
     }
 
+    /// Owns the launcher wrapper file system and the embedded modpack path within it.
+    ///
+    /// The owner is safe to close repeatedly and from competing terminal paths.
+    public static final class LauncherWrapper implements Closeable {
+        /// Embedded modpack path backed by the wrapper file system.
+        private final Path innerPath;
+
+        /// Wrapper file system, atomically cleared by the first close operation.
+        private final AtomicReference<@Nullable FileSystem> wrapperFsRef;
+
+        /// Creates an owner for an embedded modpack path and its backing file system.
+        ///
+        /// @param innerPath embedded modpack path
+        /// @param wrapperFs backing wrapper file system
+        private LauncherWrapper(Path innerPath, FileSystem wrapperFs) {
+            this.innerPath = innerPath;
+            this.wrapperFsRef = new AtomicReference<>(wrapperFs);
+        }
+
+        /// Returns the embedded modpack path.
+        ///
+        /// The path is valid only until this owner is closed.
+        public Path innerPath() {
+            return innerPath;
+        }
+
+        /// Closes the backing wrapper file system if it is still open.
+        @Override
+        public void close() throws IOException {
+            @Nullable FileSystem wrapperFs = wrapperFsRef.getAndSet(null);
+            if (wrapperFs != null) {
+                wrapperFs.close();
+            }
+        }
+    }
+
+    /// Opens an embedded `modpack.zip` or `modpack.mrpack` at the root of a launcher ZIP.
+    ///
+    /// The caller must close a returned wrapper after it has finished using the embedded
+    /// path. If both entries exist, `modpack.zip` takes precedence.
+    ///
+    /// @param file launcher ZIP to inspect
+    /// @param charset charset used to decode ZIP entry names
+    /// @return the wrapper owner, or `null` if neither entry is a regular file or an I/O error occurs
+    @Nullable
+    public static LauncherWrapper unwrapIfLauncherWrapper(Path file, Charset charset) {
+        @Nullable FileSystem outerFs = null;
+        try {
+            outerFs = CompressingUtils.createReadOnlyZipFileSystem(file, charset);
+            for (String innerName : new String[]{"modpack.zip", "modpack.mrpack"}) {
+                Path entryPath = outerFs.getPath("/" + innerName);
+                if (Files.isRegularFile(entryPath)) {
+                    LauncherWrapper result = new LauncherWrapper(entryPath, outerFs);
+                    outerFs = null;
+                    return result;
+                }
+            }
+        } catch (IOException ignored) {
+        } finally {
+            IOUtils.closeQuietly(outerFs);
+        }
+        return null;
+    }
+
+    /// Finds a game directory at the archive root or within its first two directory levels.
+    ///
+    /// A matching directory contains a `versions` subdirectory and is either the archive
+    /// root or named `.minecraft`. The archive is closed before this method returns.
+    ///
+    /// @param modpackName modpack name used when reporting an unsupported layout
+    /// @param zipPath archive to inspect
+    /// @return the slash-separated relative directory path, or an empty string for the root
+    /// @throws IOException if the archive cannot be opened or read
+    /// @throws UnsupportedModpackException if no matching directory is found
     public static String findMinecraftDirectoryInManuallyCreatedModpack(String modpackName, Path zipPath)
             throws IOException, UnsupportedModpackException {
 
