@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -196,6 +197,26 @@ public final class ModpackHelper {
     }
 
     public static Task<?> getInstallTask(HMCLGameRepository repository, Path zipFile, GameInstanceID instanceId, Modpack modpack, @Nullable String iconUrl) {
+        return getInstallTask(repository, zipFile, instanceId, modpack, iconUrl, null);
+    }
+
+    /// Creates an install task that respects optional-file selection.
+    ///
+    /// @param repository      the target repository
+    /// @param zipFile         the modpack archive
+    /// @param instanceId      the new instance id
+    /// @param modpack         the parsed modpack
+    /// @param iconUrl         the optional icon URL, or `null`
+    /// @param excludedFiles keys of optional files the user chose not to install; `null` means install all.
+    ///                        When non-null, must not contain `null` elements.
+    /// @return the install task
+    public static Task<?> getInstallTask(
+            HMCLGameRepository repository,
+            Path zipFile,
+            GameInstanceID instanceId,
+            Modpack modpack,
+            @Nullable String iconUrl,
+            @Nullable Set<String> excludedFiles) {
         ExceptionalRunnable<?> success = () -> {
             repository.refresh();
             repository.getInstance(instanceId).enableIsolation();
@@ -209,17 +230,17 @@ public final class ModpackHelper {
         };
 
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl)
+            return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMultiMCPostInstallTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), instanceId))
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
-            return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl)
+            return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMcbbsPostInstallTask(repository, (McbbsModpackManifest) modpack.getManifest(), instanceId))
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else
-            return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl)
+            return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
@@ -240,17 +261,38 @@ public final class ModpackHelper {
     }
 
     public static Task<?> getUpdateTask(HMCLGameRepository repository, Path zipFile, Charset charset, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
+        return getUpdateTask(repository, zipFile, charset, instanceId, configuration, null);
+    }
+
+    /// Creates an update task that respects optional-file selection.
+    ///
+    /// @param repository      the target repository
+    /// @param zipFile         the modpack archive
+    /// @param charset         the archive encoding
+    /// @param instanceId      the instance to update
+    /// @param configuration   the existing modpack configuration
+    /// @param excludedFiles keys of optional files the user chose not to install; `null` means install all.
+    ///                        When non-null, must not contain `null` elements.
+    /// @return the update task
+    public static Task<?> getUpdateTask(
+            HMCLGameRepository repository,
+            Path zipFile,
+            Charset charset,
+            GameInstanceID instanceId,
+            ModpackConfiguration<?> configuration,
+            @Nullable Set<String> excludedFiles)
+            throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile, charset);
         ModpackProvider provider = getProviderByType(configuration.getType());
         if (provider == null) {
             throw new UnsupportedModpackException();
         }
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack)
+            return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack, excludedFiles)
                     .thenComposeAsync(() -> createMultiMCPostUpdateTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), instanceId))
                     .thenComposeAsync(repository.refreshAsync());
         else
-            return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack)
+            return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack, excludedFiles)
                     .thenComposeAsync(repository.refreshAsync());
     }
 
