@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXPopup;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -57,6 +58,7 @@ public final class AccountListPopupMenu extends StackPane {
 
             for (Account account : Accounts.getAccounts()) {
                 AccountAdvancedListItem item = new AccountAdvancedListItem(account);
+                if (Accounts.getSelectedAccount() == account) item.setActive(true);
                 item.setOnAction(e -> {
                     Accounts.setSelectedAccount(account);
                     if (getScene().getWindow() instanceof JFXPopup popup)
@@ -64,6 +66,9 @@ public final class AccountListPopupMenu extends StackPane {
                 });
                 box.add(item);
             }
+
+            // https://github.com/HMCL-dev/HMCL/issues/5343
+            Platform.runLater(() -> box.setVvalue(0.0));
         };
         listener.invalidated(null);
         Accounts.getAccounts().addListener(new WeakInvalidationListener(listener));

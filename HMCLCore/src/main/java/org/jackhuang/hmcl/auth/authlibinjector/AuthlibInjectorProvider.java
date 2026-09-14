@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
+import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilProvider;
-import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
 import java.net.URI;
 import java.util.UUID;
@@ -54,12 +54,12 @@ public class AuthlibInjectorProvider implements YggdrasilProvider {
 
     @Override
     public URI getSkinUploadURL(UUID uuid) throws UnsupportedOperationException {
-        return URI.create(apiRoot + "api/user/profile/" + UUIDTypeAdapter.fromUUID(uuid) + "/skin");
+        return URI.create(apiRoot + "api/user/profile/" + UUIDs.toCompactString(uuid) + "/skin");
     }
 
     @Override
     public URI getProfilePropertiesURL(UUID uuid) throws AuthenticationException {
-        return URI.create(apiRoot + "sessionserver/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid));
+        return URI.create(apiRoot + "sessionserver/session/minecraft/profile/" + UUIDs.toCompactString(uuid));
     }
 
     @Override

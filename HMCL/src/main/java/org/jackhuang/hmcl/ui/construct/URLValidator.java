@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.NamedArg;
 import javafx.scene.control.TextInputControl;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -54,12 +54,7 @@ public class URLValidator extends ValidatorBase {
         if (StringUtils.isBlank(textField.getText()))
             hasErrors.set(!nullable);
         else {
-            try {
-                NetworkUtils.toURI(textField.getText());
-                hasErrors.set(false);
-            } catch (IllegalArgumentException e) {
-                hasErrors.set(true);
-            }
+            hasErrors.set(WebURL.tryParseBrowserInput(textField.getText()) == null);
         }
     }
 }

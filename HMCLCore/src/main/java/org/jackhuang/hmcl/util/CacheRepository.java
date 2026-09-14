@@ -23,13 +23,16 @@ import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -48,7 +51,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.gson.JsonUtils.*;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.GSON;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class CacheRepository {
@@ -101,7 +104,7 @@ public class CacheRepository {
     }
 
     protected boolean fileExists(String algorithm, String hash) {
-        if (hash == null) return false;
+        if (!DigestUtils.isSha1Digest(hash)) return false;
         Path file = getFile(algorithm, hash);
         if (Files.exists(file)) {
             try {
@@ -114,13 +117,23 @@ public class CacheRepository {
         }
     }
 
+    private void checkHash(String hash) throws IOException {
+        if (!DigestUtils.isSha1Digest(hash)) {
+            throw new IOException("Not SHA-1 checksum: " + hash);
+        }
+    }
+
     public void tryCacheFile(Path path, String algorithm, String hash) throws IOException {
+        checkHash(hash);
+
         Path cache = getFile(algorithm, hash);
         if (Files.isRegularFile(cache)) return;
         FileUtils.copyFile(path, cache);
     }
 
     public Path cacheFile(Path path, String algorithm, String hash) throws IOException {
+        checkHash(hash);
+
         Path cache = getFile(algorithm, hash);
         FileUtils.copyFile(path, cache);
         return cache;
@@ -228,20 +241,20 @@ public class CacheRepository {
         //     conn.setRequestProperty("If-Modified-Since", eTagItem.getRemoteLastModified());
     }
 
-    public Path cacheRemoteFile(HttpResponse<?> response, Path downloaded) throws IOException {
-        return cacheData(response, () -> {
+    public Path cacheRemoteFile(UrlResponseInfo info, Path downloaded) throws IOException {
+        return cacheData(info, () -> {
             String hash = DigestUtils.digestToString(SHA1, downloaded);
             Path cached = cacheFile(downloaded, SHA1, hash);
             return new CacheResult(hash, cached);
         });
     }
 
-    public Path cacheText(HttpResponse<?> response, String text) throws IOException {
-        return cacheBytes(response, text.getBytes(UTF_8));
+    public Path cacheText(UrlResponseInfo info, String text) throws IOException {
+        return cacheBytes(info, text.getBytes(UTF_8));
     }
 
-    public Path cacheBytes(HttpResponse<?> response, byte[] bytes) throws IOException {
-        return cacheData(response, () -> {
+    public Path cacheBytes(UrlResponseInfo info, byte[] bytes) throws IOException {
+        return cacheData(info, () -> {
             String hash = DigestUtils.digestToString(SHA1, bytes);
             Path cached = getFile(SHA1, hash);
             Files.createDirectories(cached.getParent());
@@ -252,15 +265,15 @@ public class CacheRepository {
 
     private static final Pattern MAX_AGE = Pattern.compile("(s-maxage|max-age)=(?<time>[0-9]+)");
 
-    private Path cacheData(HttpResponse<?> response, ExceptionalSupplier<CacheResult, IOException> cacheSupplier) throws IOException {
-        String eTag = response.headers().firstValue("etag").orElse(null);
+    private Path cacheData(UrlResponseInfo info, ExceptionalSupplier<CacheResult, IOException> cacheSupplier) throws IOException {
+        String eTag = info.headers().firstValue("etag").orElse(null);
         if (StringUtils.isBlank(eTag)) return null;
-        URI uri = NetworkUtils.dropQuery(response.uri());
+        URI uri = NetworkUtils.dropQuery(info.uri());
         long expires = 0L;
 
         expires:
         try {
-            String cacheControl = response.headers().firstValue("cache-control").orElse(null);
+            String cacheControl = info.headers().firstValue("cache-control").orElse(null);
             if (StringUtils.isNotBlank(cacheControl)) {
                 if (cacheControl.contains("no-store"))
                     return null;
@@ -273,7 +286,7 @@ public class CacheRepository {
                 }
             }
 
-            String expiresHeader = response.headers().firstValue("expires").orElse(null);
+            String expiresHeader = info.headers().firstValue("expires").orElse(null);
             if (StringUtils.isNotBlank(expiresHeader)) {
                 expires = ZonedDateTime.parse(expiresHeader.trim(), DateTimeFormatter.RFC_1123_DATE_TIME)
                         .toInstant().toEpochMilli();
@@ -282,7 +295,7 @@ public class CacheRepository {
             LOG.warning("Failed to parse expires time", e);
         }
 
-        String lastModified = response.headers().firstValue("last-modified").orElse(null);
+        String lastModified = info.headers().firstValue("last-modified").orElse(null);
 
         CacheResult cacheResult = cacheSupplier.get();
         ETagItem eTagItem = new ETagItem(uri.toString(),
@@ -373,46 +386,24 @@ public class CacheRepository {
         }
     }
 
-    private static final class ETagIndex {
-        private final Collection<ETagItem> eTag;
-
+    private record ETagIndex(Collection<ETagItem> eTag) {
         public ETagIndex() {
-            this.eTag = new HashSet<>();
+            this(new HashSet<>());
         }
 
-        public ETagIndex(Collection<ETagItem> eTags) {
-            this.eTag = new HashSet<>(eTags);
+        private ETagIndex(Collection<ETagItem> eTag) {
+            this.eTag = new HashSet<>(eTag);
         }
     }
 
-    private static final class ETagItem {
-        private final String url;
-        private final String eTag;
-        private final String hash;
-        @SerializedName("local")
-        private final long localLastModified;
-        @SerializedName("remote")
-        private final String remoteLastModified;
-        private final long expires;
+    private record ETagItem(String url, String eTag, String hash, @SerializedName("local") long localLastModified,
+                            @SerializedName("remote") String remoteLastModified, long expires) {
 
         /**
          * For Gson.
          */
         public ETagItem() {
             this(null, null, null, 0, null, 0L);
-        }
-
-        public ETagItem(String url, String eTag, String hash, long localLastModified, String remoteLastModified, long expires) {
-            this.url = url;
-            this.eTag = eTag;
-            this.hash = hash;
-            this.localLastModified = localLastModified;
-            this.remoteLastModified = remoteLastModified;
-            this.expires = expires;
-        }
-
-        public long getExpires() {
-            return expires;
         }
 
         public int compareTo(ETagItem other) {
@@ -428,24 +419,7 @@ public class CacheRepository {
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            return o instanceof ETagItem that
-                    && localLastModified == that.localLastModified
-                    && Objects.equals(url, that.url)
-                    && Objects.equals(eTag, that.eTag)
-                    && Objects.equals(hash, that.hash)
-                    && Objects.equals(remoteLastModified, that.remoteLastModified)
-                    && this.expires == that.expires;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(url, eTag, hash, localLastModified, remoteLastModified, expires);
-        }
-
-        @Override
-        public String toString() {
+        public @NotNull String toString() {
             return "ETagItem[" +
                     "url='" + url + '\'' +
                     ", eTag='" + eTag + '\'' +

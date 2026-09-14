@@ -27,8 +27,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.ModpackHelper;
-import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
+import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -42,9 +43,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -97,8 +96,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         graphic.setMouseTransparent(true);
         graphic.setLeft(new TwoLineListItem(i18n("modpack.choose." + type), i18n("modpack.choose." + type + ".detail")));
 
-        SVGPath arrow = new SVGPath();
-        arrow.setContent(SVG.ARROW_FORWARD.getPath());
+        SVGPath arrow = SVG.ARROW_FORWARD.createIcon();
         BorderPane.setAlignment(arrow, Pos.CENTER);
         graphic.setRight(arrow);
 
@@ -113,9 +111,8 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("modpack.choose"));
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip", "*.mrpack"));
-        Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
+        Path selectedFile = Controllers.showOpenDialog(chooser);
         if (selectedFile == null) {
-            Platform.runLater(controller::onEnd);
             return;
         }
 
@@ -159,15 +156,15 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                             TaskCancellationAction.NORMAL
                     );
                 }
-            } catch (IOException e) {
-                handler.reject(e.getMessage());
+            } catch (Exception e) {
+                handler.reject(i18n("message.failed"));
             }
         }, "", new URLValidator());
     }
 
     public void onChooseRepository() {
         String modPackName = controller.getSettings().get(MODPACK_NAME);
-        DownloadPage downloadPage = new DownloadPage(modPackName);
+        DownloadPage downloadPage = new DownloadPage(modPackName != null ? new GameInstanceID(modPackName) : null);
         downloadPage.showModpackDownloads();
         Controllers.navigate(downloadPage);
     }

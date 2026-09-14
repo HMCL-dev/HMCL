@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.LineButton;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -72,7 +73,7 @@ public final class AboutPage extends SpinnerPane {
 
         ComponentList legal = new ComponentList();
         {
-            var copyright = LineButton.createExternalLinkButton(Metadata.ABOUT_URL);
+            var copyright = new LineButton();
             copyright.setLargeTitle(true);
             copyright.setTitle(i18n("about.copyright"));
             copyright.setSubtitle(i18n("about.copyright.statement"));
@@ -136,14 +137,17 @@ public final class AboutPage extends SpinnerPane {
                 if (obj.has("image")) {
                     JsonElement image = obj.get("image");
                     if (image.isJsonPrimitive()) {
-                        button.setLeading(loadImage(image.getAsString()));
+                        var imageView = new ImageContainer(32, 32);
+                        imageView.setImage(loadImage(image.getAsString()));
+                        imageView.setMouseTransparent(true);
+
+
+                        button.setLeading(imageView);
                     } else if (image.isJsonObject()) {
-                        holder.add(FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> {
-                            button.setLeading(darkMode
-                                    ? loadImage(image.getAsJsonObject().get("dark").getAsString())
-                                    : loadImage(image.getAsJsonObject().get("light").getAsString())
-                            );
-                        }));
+                        holder.add(FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> button.setLeading(darkMode
+                                ? loadImage(image.getAsJsonObject().get("dark").getAsString())
+                                : loadImage(image.getAsJsonObject().get("light").getAsString())
+                        )));
                     }
                 }
 

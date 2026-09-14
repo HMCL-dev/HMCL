@@ -33,25 +33,19 @@ import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
  */
 @JsonAdapter(RuledArgument.Serializer.class)
 @Immutable
-public class RuledArgument implements Argument {
-
-    private final List<CompatibilityRule> rules;
-    private final List<String> value;
+public record RuledArgument(List<CompatibilityRule> rules, List<String> value) implements Argument {
 
     public RuledArgument() {
         this(null, null);
     }
 
-    public RuledArgument(List<CompatibilityRule> rules, List<String> args) {
-        this.rules = rules;
-        this.value = args;
-    }
-
-    public List<CompatibilityRule> getRules() {
+    @Override
+    public List<CompatibilityRule> rules() {
         return Collections.unmodifiableList(rules);
     }
 
-    public List<String> getValue() {
+    @Override
+    public List<String> value() {
         return Collections.unmodifiableList(value);
     }
 

@@ -23,8 +23,10 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -34,7 +36,7 @@ import org.jackhuang.hmcl.util.Lang;
 import javax.net.ssl.SSLException;
 import java.io.IOException;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -85,8 +87,22 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
                 actions.getChildren().setAll(cancel, nextPane);
             }
 
-            addServerPane.setBody(txtServerUrl);
-            addServerPane.setActions(lblCreationWarning, actions);
+            VBox body = new VBox();
+            body.setSpacing(8);
+
+            lblCreationWarning.setMinWidth(0);
+            lblCreationWarning.setPrefWidth(0);
+            lblCreationWarning.maxWidthProperty().bind(body.widthProperty());
+            lblCreationWarning.visibleProperty().bind(lblCreationWarning.textProperty().isNotEmpty());
+            lblCreationWarning.managedProperty().bind(lblCreationWarning.visibleProperty());
+
+            body.getChildren().addAll(
+                txtServerUrl,
+                lblCreationWarning
+            );
+
+            addServerPane.setBody(body);
+            addServerPane.setActions(actions);
 
             txtServerUrl.getValidators().addAll(new RequiredValidator(), new URLValidator());
             FXUtils.setValidateWhileTextChanged(txtServerUrl, true);
@@ -115,7 +131,7 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
                 GridPane.setRowIndex(lblServerName, 1);
 
                 lblServerWarning = new Label(i18n("account.injector.http"));
-                lblServerWarning.setStyle("-fx-text-fill: red;");
+                lblServerWarning.setStyle("-fx-text-fill: -monet-error;");
                 GridPane.setColumnIndex(lblServerWarning, 0);
                 GridPane.setRowIndex(lblServerWarning, 2);
                 lblServerWarning.managedProperty().bind(lblServerWarning.visibleProperty());
@@ -152,7 +168,6 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
         this.setContent(addServerPane, ContainerAnimations.NONE);
 
-        lblCreationWarning.maxWidthProperty().bind(((FlowPane) lblCreationWarning.getParent()).widthProperty());
         nextPane.hideSpinner();
 
         onEscPressed(this, this::onAddCancel);
@@ -221,8 +236,21 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
     }
 
     private void onAddFinish() {
-        if (!config().getAuthlibInjectorServers().contains(serverBeingAdded)) {
-            config().getAuthlibInjectorServers().add(serverBeingAdded);
+        if (SettingsManager.isAuthlibInjectorServersReadOnly()) {
+            Controllers.confirmBackupAndOverwrite(i18n("account.injector.server.storage.read_only"), () -> {
+                SettingsManager.forceOverwriteAuthlibInjectorServers();
+                addServerAndClose();
+            });
+            return;
+        }
+
+        addServerAndClose();
+    }
+
+    /// Adds the resolved authlib-injector server and closes the dialog.
+    private void addServerAndClose() {
+        if (!getAuthlibInjectorServers().contains(serverBeingAdded)) {
+            getAuthlibInjectorServers().add(serverBeingAdded);
         }
         fireEvent(new DialogCloseEvent());
     }

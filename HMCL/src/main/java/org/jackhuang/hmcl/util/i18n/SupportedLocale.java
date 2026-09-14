@@ -91,7 +91,7 @@ public final class SupportedLocale {
 
     SupportedLocale() {
         this.isDefault = true;
-        this.name = "def"; // TODO: Change to "default" after updating the Config format
+        this.name = "default";
 
         String language = System.getenv("HMCL_LANGUAGE");
         if (StringUtils.isBlank(language)) {
@@ -310,13 +310,7 @@ public final class SupportedLocale {
             if (in.peek() == JsonToken.NULL)
                 return DEFAULT;
 
-            String language = in.nextString();
-            return getLocaleByName(switch (language) {
-                // TODO: Remove these compatibility codes after updating the Config format
-                case "zh_CN" -> "zh-Hans"; // For compatibility
-                case "zh" -> "zh-Hant";    // For compatibility
-                default -> language;
-            });
+            return getLocaleByName(in.nextString());
         }
     }
 }

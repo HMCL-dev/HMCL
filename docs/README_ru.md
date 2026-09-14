@@ -25,7 +25,7 @@
 ---
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | **русский** | [українська](README_uk.md)
+English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh_Hans.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | **русский** | [українська](README_uk.md)
 <!-- #END LANGUAGE_SWITCHER -->
 
 ## Введение
@@ -38,11 +38,31 @@ HMCL обладает отличной кроссплатформенность�
 
 ## Загрузка
 
-Скачайте последнюю версию с [официального сайта](https://hmcl.huangyuhui.net/download).
+Вы можете скачать HMCL из следующих источников:
 
-Также вы можете найти последнюю версию HMCL в [релизах на GitHub](https://github.com/HMCL-dev/HMCL/releases).
+- [Официальный сайт HMCL](https://hmcl.huangyuhui.net/download)
+- [GitHub Release](https://github.com/HMCL-dev/HMCL/releases)
+- [CNB Release](https://cnb.cool/HMCL-dev/HMCL/-/releases)
 
-Хотя это не обязательно, рекомендуется скачивать релизы только с указанных выше официальных сайтов.
+## Участие
+
+HMCL — это открытый проект, развиваемый сообществом. Мы рады любому вкладу в код и предложениям.
+
+Вы можете помочь разработке HMCL следующими способами:
+
+- Сообщайте об ошибках или предлагайте новые функции, [создав issue](https://github.com/HMCL-dev/HMCL/issues/new/choose) на GitHub.
+- Вносите код, сделав fork репозитория на GitHub и [отправив pull request](https://github.com/HMCL-dev/HMCL/compare).
+
+Перед участием прочитайте [руководство для участников](./Contributing.md), в котором описано следующее:
+
+- [Как собрать и запустить HMCL из исходного кода](./Contributing.md#build-hmcl)
+- [Как изменять поведение HMCL с помощью параметров отладки](./Contributing.md#debug-options)
+
+## Участники
+
+С 2015 года в разработке HMCL участвовали более 120 человек. Спасибо за ваш труд!
+
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## Лицензия
 

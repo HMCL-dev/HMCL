@@ -25,9 +25,9 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Profiles;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -39,12 +39,12 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.main.MainPage;
-import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
-import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.ui.instances.GameListPopupMenu;
+import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
+import static org.jackhuang.hmcl.setting.SettingsManager.userState;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
@@ -56,7 +56,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
     private final TransitionPane transitionPane = new TransitionPane();
 
     @SuppressWarnings("unused")
-    private ChangeListener<String> instanceChangeListenerHolder;
+    private @Nullable ChangeListener<@Nullable HMCLGameInstance> instanceChangeListenerHolder;
 
     public TerracottaPage() {
         statusPage.setNodeSupplier(TerracottaControllerPage::new);
@@ -79,29 +79,30 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
 
         AdvancedListBox toolbar = new AdvancedListBox()
                 .add(accountListItem)
-                .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
-                    Profile profile = Profiles.getSelectedProfile();
-                    Versions.launch(profile, profile.getSelectedVersion(), launcherHelper -> {
+                .addNavigationDrawerItem(i18n("instance.launch"), SVG.ROCKET_LAUNCH, () -> {
+                    var repository = GameDirectoryManager.getSelectedRepository();
+                    Instances.launch(repository.getSelectedInstance(), launcherHelper -> {
                         launcherHelper.setKeep();
                         launcherHelper.setDisableOfflineSkin();
                     });
                 }, item -> {
-                    instanceChangeListenerHolder = FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(),
-                            instanceName -> item.setSubtitle(StringUtils.isNotBlank(instanceName) ? instanceName : i18n("version.empty"))
+                    instanceChangeListenerHolder = FXUtils.onWeakChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(),
+                            instance -> item.setSubtitle(instance != null ? instance.getId().toString() : i18n("instance.empty"))
                     );
 
                     MainPage mainPage = Controllers.getRootPage().getMainPage();
-                    FXUtils.onScroll(item, mainPage.getVersions(), list -> {
-                        String currentId = mainPage.getCurrentGame();
+                    FXUtils.onScroll(item, mainPage.getInstances(), list -> {
+                        @Nullable HMCLGameInstance currentGame = mainPage.getCurrentGame();
+                        @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
                         return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-                    }, it -> mainPage.getProfile().setSelectedVersion(it.getId()));
+                    }, instance -> instance.getRepository().setSelectedInstance(instance));
 
                     FXUtils.onSecondaryButtonClicked(item, () -> GameListPopupMenu.show(item,
                             JFXPopup.PopupVPosition.BOTTOM,
                             JFXPopup.PopupHPosition.LEFT,
                             item.getWidth(),
                             0,
-                            mainPage.getProfile(), mainPage.getVersions()));
+                            mainPage.getInstances()));
                 })
                 .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
@@ -114,9 +115,10 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
     public void onPageShown() {
         tab.onPageShown();
 
-        if (globalConfig().getTerracottaAgreementVersion() < TERRACOTTA_AGREEMENT_VERSION) {
+        if (SettingsManager.userState().terracottaAgreementVersionProperty().get() < TERRACOTTA_AGREEMENT_VERSION) {
             Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5, MessageDialogPane.MessageType.INFO, () -> {
-                globalConfig().setTerracottaAgreementVersion(TERRACOTTA_AGREEMENT_VERSION);
+                UserState userState = userState();
+                userState.terracottaAgreementVersionProperty().set(TERRACOTTA_AGREEMENT_VERSION);
             }, () -> fireEvent(new PageCloseEvent()));
         }
     }

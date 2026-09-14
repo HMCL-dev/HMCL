@@ -20,20 +20,21 @@ package org.jackhuang.hmcl.upgrade;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import javafx.application.Platform;
-
 import org.jackhuang.hmcl.EntryPoint;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.UpgradeDialog;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -43,13 +44,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.checkFxUserThread;
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class UpdateHandler {
     private UpdateHandler() {
@@ -125,6 +128,27 @@ public final class UpdateHandler {
                             throw new IOException("Current JAR is not verified");
                         }
 
+                        var latch = new CountDownLatch(1);
+                        Platform.runLater(() -> {
+                            try {
+                                SettingsManager.savePendingChanges();
+                            } finally {
+                                latch.countDown();
+                            }
+                        });
+
+                        try {
+                            latch.await();
+                        } catch (InterruptedException ignored) {
+                            // Ignore
+                        }
+
+                        try {
+                            FileSaver.waitForAllSaves();
+                        } catch (InterruptedException ignored) {
+                            // Ignore
+                        }
+
                         requestUpdate(downloaded, getCurrentLocation());
                         EntryPoint.exit(0);
                     } catch (IOException e) {
@@ -135,9 +159,7 @@ public final class UpdateHandler {
                 } else {
                     Exception e = executor.getException();
                     LOG.warning("Failed to update to " + version, e);
-                    if (e instanceof CancellationException) {
-                        Platform.runLater(() -> Controllers.showToast(i18n("message.cancelled")));
-                    } else {
+                    if (!(e instanceof CancellationException)) {
                         Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageType.ERROR));
                     }
                 }
@@ -150,7 +172,7 @@ public final class UpdateHandler {
 
         Path self = getCurrentLocation();
         if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
-            throw new IOException("Self verification failed");
+            throw new SelfVerificationException();
         }
         ExecutableHeaderHelper.copyWithHeader(self, target);
 
@@ -197,11 +219,33 @@ public final class UpdateHandler {
         commandline.add("-jar");
         commandline.add(jar.toAbsolutePath().toString());
         commandline.addAll(Arrays.asList(appArgs));
-        LOG.info("Starting process: " + commandline);
+        LOG.info("Starting process: " + maskCommandline(commandline));
         new ProcessBuilder(commandline)
                 .directory(Paths.get("").toAbsolutePath().toFile())
                 .inheritIO()
                 .start();
+    }
+
+    private static String maskCommandline(List<String> commandline) {
+        return commandline.stream().map(str -> {
+            if (str.startsWith("-D")) {
+                int eqIdx = str.indexOf('=');
+                if (eqIdx != -1) {
+                    String key = str.substring(2, eqIdx);
+                    String value = str.substring(eqIdx + 1);
+                    if (key.contains("http.proxy") ||
+                            key.startsWith("https.proxy") ||
+                            key.startsWith("socksProxy") ||
+                            key.equals("hmcl.microsoft.auth.id") ||
+                            key.equals("hmcl.curseforge.apikey")
+                    ) {
+                        return "-D" + key + "=" + (value.isEmpty() ? "" : value.charAt(0) + "*".repeat(value.length() - 1));
+                    }
+                }
+            }
+
+            return str;
+        }).collect(Collectors.joining(" "));
     }
 
     private static Optional<Path> tryRename(Path path, String newVersion) {
@@ -263,7 +307,7 @@ public final class UpdateHandler {
     private static boolean isFirstLaunchAfterUpgrade() {
         Path currentPath = JarUtils.thisJarPath();
         if (currentPath != null) {
-            Path updated = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("HMCL-" + Metadata.VERSION + ".jar");
+            Path updated = Metadata.HMCL_USER_HOME.resolve("HMCL-" + Metadata.VERSION + ".jar");
             if (currentPath.equals(updated.toAbsolutePath())) {
                 return true;
             }
@@ -272,7 +316,7 @@ public final class UpdateHandler {
     }
 
     private static void breakForceUpdateFeature() {
-        Path hmclVersionJson = Metadata.HMCL_GLOBAL_DIRECTORY.resolve("hmclver.json");
+        Path hmclVersionJson = Metadata.HMCL_USER_HOME.resolve("hmclver.json");
         if (Files.isRegularFile(hmclVersionJson)) {
             try {
                 Map<?, ?> content = new Gson().fromJson(Files.readString(hmclVersionJson), Map.class);

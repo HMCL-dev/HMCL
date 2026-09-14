@@ -118,7 +118,7 @@ public final class MemoryStatusBar extends Control {
             }
 
             PhysicalMemoryStatus status = getSkinnable().getMemoryStatus();
-            double total = status.getTotal();
+            double total = status.total();
             double used = status.getUsed();
             double allocated = getSkinnable().getMemoryAllocated();
 

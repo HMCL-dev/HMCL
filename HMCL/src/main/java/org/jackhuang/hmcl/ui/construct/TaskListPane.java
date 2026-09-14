@@ -50,21 +50,20 @@ import org.jackhuang.hmcl.download.quilt.QuiltAPIInstallTask;
 import org.jackhuang.hmcl.download.quilt.QuiltInstallTask;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
 import org.jackhuang.hmcl.java.JavaInstallTask;
-import org.jackhuang.hmcl.mod.MinecraftInstanceTask;
-import org.jackhuang.hmcl.mod.ModpackInstallTask;
-import org.jackhuang.hmcl.mod.ModpackUpdateTask;
-import org.jackhuang.hmcl.mod.curse.CurseCompletionTask;
-import org.jackhuang.hmcl.mod.curse.CurseInstallTask;
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackCompletionTask;
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthCompletionTask;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthInstallTask;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackExportTask;
-import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
-import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
-import org.jackhuang.hmcl.mod.server.ServerModpackCompletionTask;
-import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
-import org.jackhuang.hmcl.mod.server.ServerModpackLocalInstallTask;
+import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
+import org.jackhuang.hmcl.modpack.ModpackInstallTask;
+import org.jackhuang.hmcl.modpack.ModpackUpdateTask;
+import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
+import org.jackhuang.hmcl.modpack.curse.CurseInstallTask;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackExportTask;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthCompletionTask;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthInstallTask;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthModpackExportTask;
+import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackInstallTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackLocalInstallTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
@@ -204,7 +203,7 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("install.installing") + ": " + i18n("modpack.type.server"));
                 } else if (task instanceof HMCLModpackInstallTask) {
                     task.setName(i18n("modpack.installing.given", i18n("modpack.type.hmcl")));
-                } else if (task instanceof McbbsModpackExportTask || task instanceof MultiMCModpackExportTask || task instanceof ServerModpackExportTask || task instanceof ModrinthModpackExportTask) {
+                } else if (task instanceof McbbsModpackExportTask || task instanceof ServerModpackExportTask || task instanceof ModrinthModpackExportTask) {
                     task.setName(i18n("modpack.export"));
                 } else if (task instanceof MinecraftInstanceTask) {
                     task.setName(i18n("modpack.scan"));

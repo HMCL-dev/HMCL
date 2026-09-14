@@ -9,20 +9,10 @@ package org.jackhuang.hmcl.ui.image.apng.argb8888;
  * to be compatible with the input array used to build Android Bitmap objects, though of course
  * its use is not limited to that.
  */
-public final class Argb8888Bitmap {
-    public final int[] array;
-    public final int width;
-    public final int height;
+public record Argb8888Bitmap(int[] array, int width, int height) {
 
     public Argb8888Bitmap(int width, int height) {
         this(new int[width * height], width, height);
-    }
-
-    public Argb8888Bitmap(int[] array, int width, int height) {//}, int x, int y) {
-        this.array = array;
-        this.width = width;
-        this.height = height;
-//        this.x = y;
     }
 
     /**
@@ -37,7 +27,7 @@ public final class Argb8888Bitmap {
      *               from the original bitmap).
      * @return new bitmap object sharing the same data array.
      */
-    public Argb8888Bitmap makeView(int width, int height) {//}, int x, int y) {
+    public Argb8888Bitmap makeView(int width, int height) {
         if ((width * height) > (this.width * this.height)) {
             throw new IllegalArgumentException(String.format(
                     "Requested width and height (%d x %d) exceeds maximum pixels allowed by host bitmap (%d x %d",

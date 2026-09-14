@@ -44,25 +44,9 @@ public interface DecoratorPage extends Refreshable {
         ((Node) this).getStyleClass().add("content-background");
     }
 
-    class State {
-        private final String title;
-        private final Node titleNode;
-        private final boolean backable;
-        private final boolean refreshable;
-        private final boolean animate;
-        private final double leftPaneWidth;
-
+    record State(String title, Node titleNode, boolean backable, boolean refreshable, boolean animate, double leftPaneWidth) {
         public State(String title, Node titleNode, boolean backable, boolean refreshable, boolean animate) {
             this(title, titleNode, backable, refreshable, animate, 0);
-        }
-
-        public State(String title, Node titleNode, boolean backable, boolean refreshable, boolean animate, double leftPaneWidth) {
-            this.title = title;
-            this.titleNode = titleNode;
-            this.backable = backable;
-            this.refreshable = refreshable;
-            this.animate = animate;
-            this.leftPaneWidth = leftPaneWidth;
         }
 
         public static State fromTitle(String title) {
@@ -75,30 +59,6 @@ public interface DecoratorPage extends Refreshable {
 
         public static State fromTitleNode(Node titleNode) {
             return new State(null, titleNode, true, false, true);
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public Node getTitleNode() {
-            return titleNode;
-        }
-
-        public boolean isBackable() {
-            return backable;
-        }
-
-        public boolean isRefreshable() {
-            return refreshable;
-        }
-
-        public boolean isAnimate() {
-            return animate;
-        }
-
-        public double getLeftPaneWidth() {
-            return leftPaneWidth;
         }
     }
 }

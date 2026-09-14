@@ -25,11 +25,12 @@ import javafx.beans.value.ObservableBooleanValue;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -43,20 +44,21 @@ public final class UpdateChecker {
                 RemoteVersion latest = latestVersion.get();
                 if (latest == null || isDevelopmentVersion(Metadata.VERSION)) {
                     return false;
-                } else if (latest.isForce()
+                } else if (latest.force()
                         || Metadata.isNightly()
-                        || latest.getChannel() == UpdateChannel.NIGHTLY
-                        || latest.getChannel() != UpdateChannel.getChannel()) {
-                    return !latest.getVersion().equals(Metadata.VERSION);
+                        || latest.channel() == UpdateChannel.NIGHTLY
+                        || latest.channel() != UpdateChannel.getChannel()) {
+                    return !latest.version().equals(Metadata.VERSION);
                 } else {
-                    return VersionNumber.compare(Metadata.VERSION, latest.getVersion()) < 0;
+                    return VersionNumber.compare(Metadata.VERSION, latest.version()) < 0;
                 }
             },
             latestVersion);
     private static final ReadOnlyBooleanWrapper checkingUpdate = new ReadOnlyBooleanWrapper(false);
+    private static final ReadOnlyObjectWrapper<@Nullable Throwable> error = new ReadOnlyObjectWrapper<>();
 
     public static void init() {
-        requestCheckUpdate(UpdateChannel.getChannel(), config().isAcceptPreviewUpdate());
+        requestCheckUpdate(UpdateChannel.getChannel(), settings().acceptPreviewUpdateProperty().get());
     }
 
     public static RemoteVersion getLatestVersion() {
@@ -83,9 +85,13 @@ public final class UpdateChecker {
         return checkingUpdate.getReadOnlyProperty();
     }
 
+    public static ReadOnlyObjectProperty<@Nullable Throwable> errorProperty() {
+        return error.getReadOnlyProperty();
+    }
+
     private static RemoteVersion checkUpdate(UpdateChannel channel, boolean preview) throws IOException {
         if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
-            throw new IOException("Self verification failed");
+            throw new SelfVerificationException();
         }
 
         var query = new LinkedHashMap<String, String>();
@@ -109,19 +115,26 @@ public final class UpdateChecker {
 
             thread(() -> {
                 RemoteVersion result = null;
+                Throwable t = null;
                 try {
                     result = checkUpdate(channel, preview);
                     LOG.info("Latest version (" + channel + ", preview=" + preview + ") is " + result);
                 } catch (Throwable e) {
+                    t = e;
                     LOG.warning("Failed to check for update", e);
                 }
+                Throwable throwable = t;
 
                 RemoteVersion finalResult = result;
                 Platform.runLater(() -> {
-                    checkingUpdate.set(false);
-                    if (finalResult != null) {
+                    if (throwable != null) {
+                        latestVersion.set(null);
+                        error.set(throwable);
+                    } else {
+                        error.set(null);
                         latestVersion.set(finalResult);
                     }
+                    checkingUpdate.set(false);
                 });
             }, "Update Checker", true);
         });

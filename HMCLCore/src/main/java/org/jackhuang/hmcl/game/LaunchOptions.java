@@ -30,6 +30,7 @@ import java.util.*;
  */
 public class LaunchOptions implements Serializable {
 
+    private GameInstanceID instanceId;
     private Path gameDir;
     private JavaRuntime java;
     private String versionName;
@@ -53,14 +54,22 @@ public class LaunchOptions implements Serializable {
     private boolean noGeneratedOptimizingJVMArgs;
     private String preLaunchCommand;
     private String postExitCommand;
-    private NativesDirectoryType nativesDirType;
+    private boolean useCustomNatives;
     private String nativesDir;
     private ProcessPriority processPriority = ProcessPriority.NORMAL;
+    private GraphicsAPI graphicsBackend = GraphicsAPI.DEFAULT;
     private Renderer renderer = Renderer.DEFAULT;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
+    private boolean useHighPerformanceGPU;
     private boolean enableDebugLogOutput;
+    private boolean allowAutoAgent;
+    private boolean disableAutoGameOptions;
     private boolean daemon;
+
+    public GameInstanceID getInstanceId() {
+        return instanceId;
+    }
 
     /**
      * The game directory
@@ -222,17 +231,12 @@ public class LaunchOptions implements Serializable {
         return postExitCommand;
     }
 
-    /**
-     * 0 - ./minecraft/versions/&lt;version&gt;/natives
-     * 1 - custom natives directory
-     */
-    public NativesDirectoryType getNativesDirType() {
-        return nativesDirType;
+    /// Whether native libraries are supplied and managed outside HMCL.
+    public boolean isUseCustomNatives() {
+        return useCustomNatives;
     }
 
-    /**
-     * Path to the natives directory, optional
-     */
+    /// Path to the natives directory, or blank for the default directory.
     public String getNativesDir() {
         return nativesDir;
     }
@@ -244,11 +248,15 @@ public class LaunchOptions implements Serializable {
         return processPriority;
     }
 
-    public Renderer getRenderer() {
+    public @NotNull GraphicsAPI getGraphicsBackend() {
+        return graphicsBackend;
+    }
+
+    public @NotNull Renderer getRenderer() {
         return renderer;
     }
 
-    public boolean isUseNativeGLFW() {
+    public boolean isUseNativeGLFWorSDL() {
         return useNativeGLFW;
     }
 
@@ -256,8 +264,21 @@ public class LaunchOptions implements Serializable {
         return useNativeOpenAL;
     }
 
+    public boolean isUseHighPerformanceGPU() {
+        return useHighPerformanceGPU;
+    }
+
     public boolean isEnableDebugLogOutput() {
         return enableDebugLogOutput;
+    }
+
+    public boolean isAllowAutoAgent() {
+        return allowAutoAgent;
+    }
+
+    /// Returns whether automatic game options generation is disabled.
+    public boolean isDisableAutoGameOptions() {
+        return disableAutoGameOptions;
     }
 
     /**
@@ -298,6 +319,11 @@ public class LaunchOptions implements Serializable {
 
         public List<String> getJavaAgents() {
             return options.javaAgents;
+        }
+
+        public Builder setInstanceId(GameInstanceID instanceId) {
+            options.instanceId = instanceId;
+            return this;
         }
 
         public Builder setGameDir(Path gameDir) {
@@ -420,8 +446,8 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setNativesDirType(NativesDirectoryType nativesDirType) {
-            options.nativesDirType = nativesDirType;
+        public Builder setUseCustomNatives(boolean useCustomNatives) {
+            options.useCustomNatives = useCustomNatives;
             return this;
         }
 
@@ -435,18 +461,28 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setRenderer(@NotNull Renderer renderer) {
-            options.renderer = renderer;
+        public Builder setGraphicsBackend(GraphicsAPI backend) {
+            options.graphicsBackend = Objects.requireNonNullElse(backend, GraphicsAPI.DEFAULT);
             return this;
         }
 
-        public Builder setUseNativeGLFW(boolean useNativeGLFW) {
+        public Builder setRenderer(Renderer renderer) {
+            options.renderer = Objects.requireNonNullElse(renderer, Renderer.DEFAULT);
+            return this;
+        }
+
+        public Builder setUseNativeGLFWorSDL(boolean useNativeGLFW) {
             options.useNativeGLFW = useNativeGLFW;
             return this;
         }
 
         public Builder setUseNativeOpenAL(boolean useNativeOpenAL) {
             options.useNativeOpenAL = useNativeOpenAL;
+            return this;
+        }
+
+        public Builder setUseHighPerformanceGPU(boolean useHighPerformanceGPU) {
+            options.useHighPerformanceGPU = useHighPerformanceGPU;
             return this;
         }
 
@@ -457,6 +493,16 @@ public class LaunchOptions implements Serializable {
 
         public Builder setEnableDebugLogOutput(boolean u) {
             options.enableDebugLogOutput = u;
+            return this;
+        }
+
+        public Builder setAllowAutoAgent(boolean allowAutoAgent) {
+            options.allowAutoAgent = allowAutoAgent;
+            return this;
+        }
+
+        public Builder setDisableAutoGameOptions(boolean disableAutoGameOptions) {
+            options.disableAutoGameOptions = disableAutoGameOptions;
             return this;
         }
     }

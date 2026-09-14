@@ -57,7 +57,7 @@ public abstract class DecoratorTransitionPage extends Control implements Decorat
         if (to instanceof DecoratorPage) {
             state.bind(Bindings.createObjectBinding(() -> {
                 State state = ((DecoratorPage) to).stateProperty().get();
-                return new State(state.getTitle(), state.getTitleNode(), backable.get(), state.isRefreshable(), true, leftPaneWidth.get());
+                return new State(state.title(), state.titleNode(), backable.get(), state.refreshable(), true, leftPaneWidth.get());
             }, ((DecoratorPage) to).stateProperty()));
         } else {
             state.unbind();

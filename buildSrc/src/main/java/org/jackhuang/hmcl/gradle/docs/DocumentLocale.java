@@ -39,7 +39,7 @@ public enum DocumentLocale {
             return "uʍoᗡ ǝpᴉsd∩";
         }
     },
-    SIMPLIFIED_CHINESE(Locale.forLanguageTag("zh-Hans"), "zh"),
+    SIMPLIFIED_CHINESE("zh-Hans"),
     TRADITIONAL_CHINESE("zh-Hant") {
         @Override
         public List<DocumentLocale> getCandidates() {

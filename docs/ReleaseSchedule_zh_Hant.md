@@ -1,7 +1,7 @@
 # Hello Minecraft! Launcher 發布計劃
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-[English](ReleaseSchedule.md) | **中文** ([简体](ReleaseSchedule_zh.md), **繁體**)
+[English](ReleaseSchedule.md) | **中文** ([简体](ReleaseSchedule_zh_Hans.md), **繁體**)
 <!-- #END LANGUAGE_SWITCHER -->
 
 本文介紹了自 2025 年 10 月起的 HMCL 版本發布計劃。
@@ -41,23 +41,39 @@ HMCL 具有兩個主要發布管道：**穩定版管道**和**開發版管道**�
 ## 發布模型
 
 ```mermaid
+---
+displayMode: compact
+---
 gantt
     title HMCL 版本生命週期 (範例)
-    section 3.9
-        開發階段: a1, 2025-11-15, 30d
-        預覽階段: a2, after a1, 16d
-        穩定版發布: milestone, after a2, 0d
-        維護階段: a3, after a2, 31d
-    section 3.10
-        開發階段: b1, after a1, 31d
-        預覽階段: b2, after b1, 16d
-        穩定版發布: milestone, after b2, 0d
-        維護階段: b3, after b2, 31d
     section 3.11
-        開發階段: c1, after b1, 31d
-        預覽階段: c2, after c1, 16d
-        穩定版發布: milestone, after c2, 0d
+        today: vert, 2026-02-20, 0d
+        開發階段: done, c1, after b1, 31d
+        預覽階段: active, c2, after c1, 16d
         維護階段: c3, after c2, 30d
+        3.11.0.118: milestone, after b1, 0d
+        3.11.0.119: milestone, 2026-02-01, 0d
+        3.11.1: milestone, after c1, 0d
+    section 3.10
+        開發階段: done, b1, after a1, 31d
+        預覽階段: done, b2, after b1, 16d
+        維護階段: active, b3, after b2, 31d
+        3.10.0.116: milestone, after a1, 0d
+        3.10.0.117: milestone, 2025-12-30, 0d
+        3.10.1: milestone, after b1, 0d
+        3.10.2: milestone, 2026-01-23, 0d
+        3.10.3: milestone, after b2, 0d
+        3.10.4: milestone, 2026-02-11, 0d
+    section 3.9
+        開發階段: done, a1, 2025-11-15, 30d
+        預覽階段: done, a2, after a1, 16d
+        維護階段: done, a3, after a2, 31d
+        3.9.0.114: milestone, 2025-11-15, 0d
+        3.9.0.115: milestone, 2025-11-30, 0d
+        3.9.1: milestone, after a1, 0d
+        3.9.2: milestone, 2025-12-23, 0d
+        3.9.3: milestone, after a2, 0d
+        3.9.4: milestone, 2026-01-11, 0d
 ```
 
 通常情況下，我們每個月發布一個版本分支，每個版本分支 `x.y` 生命週期為兩個半月。

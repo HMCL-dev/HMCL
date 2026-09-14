@@ -20,11 +20,12 @@ package org.jackhuang.hmcl.task;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.UrlResponseInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -61,13 +62,18 @@ public final class GetTask extends FetchTask<String> {
     }
 
     @Override
-    protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) {
+    protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) {
         long length = -1;
         if (response != null)
             length = response.headers().firstValueAsLong("content-length").orElse(-1L);
         final var baos = new ByteArrayOutputStream(length <= 0 ? 8192 : (int) length);
 
         return new Context() {
+            @Override
+            public void reset() throws IOException {
+                baos.reset();
+            }
+
             @Override
             public void write(byte[] buffer, int offset, int len) {
                 baos.write(buffer, offset, len);

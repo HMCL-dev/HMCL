@@ -18,14 +18,14 @@
 package org.jackhuang.hmcl.download.cleanroom;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 
 import java.time.Instant;
 import java.util.Collections;
 
-public final class CleanroomVersionList extends VersionList<CleanroomRemoteVersion> {
+public final class CleanroomVersionList extends ComponentVersionList<CleanroomRemoteVersion> {
     private final DownloadProvider downloadProvider;
     private static final String LOADER_LIST_URL = "https://hmcl.glavo.site/metadata/cleanroom/index.json";
     private static final String INSTALLER_URL = "https://hmcl.glavo.site/metadata/cleanroom/files/cleanroom-%s-installer.jar";

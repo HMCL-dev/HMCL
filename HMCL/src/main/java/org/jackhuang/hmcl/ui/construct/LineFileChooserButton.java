@@ -20,11 +20,11 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.Scene;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
+import javafx.stage.Window;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -57,7 +57,9 @@ public class LineFileChooserButton extends LineButton {
     public void fire() {
         super.fire();
 
-        Stage owner = Controllers.getStage(); // TODO: Allow user to set owner stage
+        Scene scene = this.getScene();
+
+        Window owner = scene != null ? scene.getWindow() : null; // TODO: Allow user to set owner stage
         String windowTitle = getFileChooserTitle();
 
         Path initialDirectory = null;

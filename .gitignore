@@ -4,7 +4,10 @@
 hs_err_pid*
 *.hprof
 
+*.jfr
+
 .gradle
+gradle.properties
 
 *.lck
 *.1
@@ -16,6 +19,8 @@ NVIDIA
 minecraft-exported-crash-info*
 hmcl-exported-logs-*
 terracotta-log-*
+hmcl-mod-update-list-*
+*.hmcl-theme
 /.java/
 /.local/
 /.cache/
@@ -43,6 +48,7 @@ language-subtag-registry
 # eclipse
 /bin/
 /HMCL/bin/
+/HMCLBoot/bin/
 /HMCLCore/bin/
 /minecraft/libraries/HMCLTransformerDiscoveryService/bin/
 /minecraft/libraries/HMCLMultiMCBootstrap/bin/
@@ -65,3 +71,9 @@ language-subtag-registry
 /hmcl.json
 /.hmcl.json
 /.hmcl/
+
+# AI
+/.gemini/
+!/.gemini/config.yaml
+.codex
+/.gradle-*/

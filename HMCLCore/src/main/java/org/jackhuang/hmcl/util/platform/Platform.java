@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 public record Platform(OperatingSystem os, Architecture arch) {
     public static final Platform UNKNOWN = new Platform(OperatingSystem.UNKNOWN, Architecture.UNKNOWN);
 
@@ -41,8 +44,23 @@ public record Platform(OperatingSystem os, Architecture arch) {
     public static final Platform CURRENT_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.CURRENT_ARCH);
     public static final Platform SYSTEM_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.SYSTEM_ARCH);
 
-    public static boolean isCompatibleWithX86Java() {
-        return Architecture.SYSTEM_ARCH.isX86() || SYSTEM_PLATFORM.equals(MACOS_ARM64) || SYSTEM_PLATFORM.equals(WINDOWS_ARM64);
+    private static final boolean SUPPORTED_TRANSLATION_X86_64;
+
+    static {
+        if (SYSTEM_PLATFORM.equals(WINDOWS_ARM64)) {
+            SUPPORTED_TRANSLATION_X86_64 = OperatingSystem.SYSTEM_BUILD_NUMBER >= 21277;
+        } else if (SYSTEM_PLATFORM.equals(MACOS_ARM64)) {
+            SUPPORTED_TRANSLATION_X86_64 = Files.isRegularFile(Path.of("/usr/libexec/rosetta/runtime"));
+        } else {
+            SUPPORTED_TRANSLATION_X86_64 = false;
+        }
+    }
+
+    /// Returns `true` if the current platform architecture is not x86-64,
+    /// but can support executing x86-64 applications through translation;
+    /// otherwise, returns `false`.
+    public static boolean isSupportedTranslationX86_64() {
+        return SUPPORTED_TRANSLATION_X86_64;
     }
 
     public static Platform getPlatform(OperatingSystem os, Architecture arch) {

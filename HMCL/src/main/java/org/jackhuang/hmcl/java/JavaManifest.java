@@ -34,33 +34,7 @@ import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
  * @author Glavo
  */
 @JsonAdapter(JavaManifest.Serializer.class)
-public final class JavaManifest {
-
-    private final JavaInfo info;
-
-    @Nullable
-    private final Map<String, Object> update;
-
-    @Nullable
-    private final Map<String, JavaLocalFiles.Local> files;
-
-    public JavaManifest(JavaInfo info, @Nullable Map<String, Object> update, @Nullable Map<String, JavaLocalFiles.Local> files) {
-        this.info = info;
-        this.update = update;
-        this.files = files;
-    }
-
-    public JavaInfo getInfo() {
-        return info;
-    }
-
-    public Map<String, Object> getUpdate() {
-        return update;
-    }
-
-    public Map<String, JavaLocalFiles.Local> getFiles() {
-        return files;
-    }
+public record JavaManifest(JavaInfo info, @Nullable Map<String, Object> update, @Nullable Map<String, JavaLocalFiles.Local> files) {
 
     public static final class Serializer implements JsonSerializer<JavaManifest>, JsonDeserializer<JavaManifest> {
 
@@ -69,16 +43,16 @@ public final class JavaManifest {
         @Override
         public JsonElement serialize(JavaManifest src, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject res = new JsonObject();
-            res.addProperty("os.name", src.getInfo().getPlatform().getOperatingSystem().getCheckedName());
-            res.addProperty("os.arch", src.getInfo().getPlatform().getArchitecture().getCheckedName());
-            res.addProperty("java.version", src.getInfo().getVersion());
-            res.addProperty("java.vendor", src.getInfo().getVendor());
+            res.addProperty("os.name", src.info().getPlatform().getOperatingSystem().getCheckedName());
+            res.addProperty("os.arch", src.info().getPlatform().getArchitecture().getCheckedName());
+            res.addProperty("java.version", src.info().getVersion());
+            res.addProperty("java.vendor", src.info().getVendor());
 
-            if (src.getUpdate() != null)
-                res.add("update", context.serialize(src.getUpdate()));
+            if (src.update() != null)
+                res.add("update", context.serialize(src.update()));
 
-            if (src.getFiles() != null)
-                res.add("files", context.serialize(src.getFiles(), LOCAL_FILES_TYPE));
+            if (src.files() != null)
+                res.add("files", context.serialize(src.files(), LOCAL_FILES_TYPE));
 
             return res;
         }

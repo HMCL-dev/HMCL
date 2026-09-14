@@ -32,6 +32,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WeakChangeListener;
+import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
@@ -44,6 +45,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.skin.TableViewSkin;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -56,12 +58,10 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import javafx.stage.FileChooser;
-import javafx.stage.Screen;
-import javafx.stage.Stage;
-import javafx.util.Callback;
+import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -73,15 +73,16 @@ import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.image.ImageLoader;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
+import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.Jsoup;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -91,10 +92,7 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -294,11 +292,6 @@ public final class FXUtils {
         return originalListener;
     }
 
-    public static void runLaterIf(BooleanSupplier condition, Runnable runnable) {
-        if (condition.getAsBoolean()) Platform.runLater(() -> runLaterIf(condition, runnable));
-        else runnable.run();
-    }
-
     public static void limitSize(ImageView imageView, double maxWidth, double maxHeight) {
         imageView.setPreserveRatio(true);
         onChangeAndOperate(imageView.imageProperty(), image -> {
@@ -376,10 +369,6 @@ public final class FXUtils {
             ((JFXPasswordField) field).validate();
         } else
             throw new IllegalArgumentException("Only JFXTextField and JFXPasswordField allowed");
-    }
-
-    public static boolean getValidateWhileTextChanged(Node field) {
-        return field.getProperties().containsKey("FXUtils.validation");
     }
 
     public static Rectangle setOverflowHidden(Region region) {
@@ -475,25 +464,31 @@ public final class FXUtils {
     private static final Duration TOOLTIP_SLOW_SHOW_DELAY = Duration.millis(500);
     private static final Duration TOOLTIP_SHOW_DURATION = Duration.millis(5000);
 
+    @FXThread
     public static void installTooltip(Node node, Duration showDelay, Duration showDuration, Duration hideDelay, Tooltip tooltip) {
+        checkFxUserThread();
         tooltip.setShowDelay(showDelay);
         tooltip.setShowDuration(showDuration);
         tooltip.setHideDelay(hideDelay);
         Tooltip.install(node, tooltip);
     }
 
+    @FXThread
     public static void installFastTooltip(Node node, Tooltip tooltip) {
-        runInFX(() -> installTooltip(node, TOOLTIP_FAST_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
+        installTooltip(node, TOOLTIP_FAST_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip);
     }
 
+    @FXThread
     public static void installFastTooltip(Node node, String tooltip) {
         installFastTooltip(node, new Tooltip(tooltip));
     }
 
+    @FXThread
     public static void installSlowTooltip(Node node, Tooltip tooltip) {
-        runInFX(() -> installTooltip(node, TOOLTIP_SLOW_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
+        installTooltip(node, TOOLTIP_SLOW_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip);
     }
 
+    @FXThread
     public static void installSlowTooltip(Node node, String tooltip) {
         installSlowTooltip(node, new Tooltip(tooltip));
     }
@@ -733,116 +728,6 @@ public final class FXUtils {
         }
     }
 
-    private static final class EnumBidirectionalBinding<E extends Enum<E>> implements InvalidationListener, WeakListener {
-        private final WeakReference<JFXComboBox<E>> comboBoxRef;
-        private final WeakReference<Property<E>> propertyRef;
-        private final int hashCode;
-
-        private boolean updating = false;
-
-        private EnumBidirectionalBinding(JFXComboBox<E> comboBox, Property<E> property) {
-            this.comboBoxRef = new WeakReference<>(comboBox);
-            this.propertyRef = new WeakReference<>(property);
-            this.hashCode = System.identityHashCode(comboBox) ^ System.identityHashCode(property);
-        }
-
-        @Override
-        public void invalidated(Observable sourceProperty) {
-            if (!updating) {
-                final JFXComboBox<E> comboBox = comboBoxRef.get();
-                final Property<E> property = propertyRef.get();
-
-                if (comboBox == null || property == null) {
-                    if (comboBox != null) {
-                        comboBox.getSelectionModel().selectedItemProperty().removeListener(this);
-                    }
-
-                    if (property != null) {
-                        property.removeListener(this);
-                    }
-                } else {
-                    updating = true;
-                    try {
-                        if (property == sourceProperty) {
-                            E newValue = property.getValue();
-                            comboBox.getSelectionModel().select(newValue);
-                        } else {
-                            E newValue = comboBox.getSelectionModel().getSelectedItem();
-                            property.setValue(newValue);
-                        }
-                    } finally {
-                        updating = false;
-                    }
-                }
-            }
-        }
-
-        @Override
-        public boolean wasGarbageCollected() {
-            return comboBoxRef.get() == null || propertyRef.get() == null;
-        }
-
-        @Override
-        public int hashCode() {
-            return hashCode;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (!(o instanceof EnumBidirectionalBinding))
-                return false;
-
-            EnumBidirectionalBinding<?> that = (EnumBidirectionalBinding<?>) o;
-
-            final JFXComboBox<E> comboBox = this.comboBoxRef.get();
-            final Property<E> property = this.propertyRef.get();
-
-            final JFXComboBox<?> thatComboBox = that.comboBoxRef.get();
-            final Property<?> thatProperty = that.propertyRef.get();
-
-            if (comboBox == null || property == null || thatComboBox == null || thatProperty == null)
-                return false;
-
-            return comboBox == thatComboBox && property == thatProperty;
-        }
-    }
-
-    /**
-     * Bind combo box selection with given enum property bidirectionally.
-     * You should <b>only and always</b> use {@code bindEnum} as well as {@code unbindEnum} at the same time.
-     *
-     * @param comboBox the combo box being bound with {@code property}.
-     * @param property the property being bound with {@code combo box}.
-     * @see #unbindEnum(JFXComboBox, Property)
-     * @see ExtendedProperties#selectedItemPropertyFor(ComboBox)
-     */
-    public static <T extends Enum<T>> void bindEnum(JFXComboBox<T> comboBox, Property<T> property) {
-        EnumBidirectionalBinding<T> binding = new EnumBidirectionalBinding<>(comboBox, property);
-
-        comboBox.getSelectionModel().selectedItemProperty().removeListener(binding);
-        property.removeListener(binding);
-
-        comboBox.getSelectionModel().select(property.getValue());
-        comboBox.getSelectionModel().selectedItemProperty().addListener(binding);
-        property.addListener(binding);
-    }
-
-    /**
-     * Unbind combo box selection with given enum property bidirectionally.
-     * You should <b>only and always</b> use {@code bindEnum} as well as {@code unbindEnum} at the same time.
-     *
-     * @param comboBox the combo box being bound with the property which can be inferred by {@code bindEnum}.
-     * @see #bindEnum(JFXComboBox, Property)
-     * @see ExtendedProperties#selectedItemPropertyFor(ComboBox)
-     */
-    public static <T extends Enum<T>> void unbindEnum(JFXComboBox<T> comboBox, Property<T> property) {
-        EnumBidirectionalBinding<T> binding = new EnumBidirectionalBinding<>(comboBox, property);
-        comboBox.getSelectionModel().selectedItemProperty().removeListener(binding);
-        property.removeListener(binding);
-    }
-
     private static final class PaintBidirectionalBinding implements InvalidationListener, WeakListener {
         private final WeakReference<ColorPicker> colorPickerRef;
         private final WeakReference<Property<Paint>> propertyRef;
@@ -937,146 +822,6 @@ public final class FXUtils {
         property.addListener(binding);
     }
 
-    private static final class WindowsSizeBidirectionalBinding implements InvalidationListener, WeakListener {
-        private final WeakReference<JFXComboBox<String>> comboBoxRef;
-        private final WeakReference<IntegerProperty> widthPropertyRef;
-        private final WeakReference<IntegerProperty> heightPropertyRef;
-
-        private final int hashCode;
-
-        private boolean updating = false;
-
-        private WindowsSizeBidirectionalBinding(JFXComboBox<String> comboBox,
-                                                IntegerProperty widthProperty,
-                                                IntegerProperty heightProperty) {
-            this.comboBoxRef = new WeakReference<>(comboBox);
-            this.widthPropertyRef = new WeakReference<>(widthProperty);
-            this.heightPropertyRef = new WeakReference<>(heightProperty);
-            this.hashCode = System.identityHashCode(comboBox)
-                    ^ System.identityHashCode(widthProperty)
-                    ^ System.identityHashCode(heightProperty);
-        }
-
-        @Override
-        public void invalidated(Observable observable) {
-            if (!updating) {
-                var comboBox = this.comboBoxRef.get();
-                var widthProperty = this.widthPropertyRef.get();
-                var heightProperty = this.heightPropertyRef.get();
-
-                if (comboBox == null || widthProperty == null || heightProperty == null) {
-                    if (comboBox != null) {
-                        comboBox.focusedProperty().removeListener(this);
-                        comboBox.sceneProperty().removeListener(this);
-                    }
-                    if (widthProperty != null)
-                        widthProperty.removeListener(this);
-                    if (heightProperty != null)
-                        heightProperty.removeListener(this);
-                } else {
-                    updating = true;
-                    try {
-                        int width = widthProperty.get();
-                        int height = heightProperty.get();
-
-                        if (observable instanceof ReadOnlyProperty<?>
-                                && ((ReadOnlyProperty<?>) observable).getBean() == comboBox) {
-                            String value = comboBox.valueProperty().get();
-                            if (value == null)
-                                value = "";
-                            int idx = value.indexOf('x');
-                            if (idx < 0)
-                                idx = value.indexOf('*');
-
-                            if (idx < 0) {
-                                LOG.warning("Bad window size: " + value);
-                                comboBox.setValue(width + "x" + height);
-                                return;
-                            }
-
-                            String widthStr = value.substring(0, idx).trim();
-                            String heightStr = value.substring(idx + 1).trim();
-
-                            int newWidth;
-                            int newHeight;
-                            try {
-                                newWidth = Integer.parseInt(widthStr);
-                                newHeight = Integer.parseInt(heightStr);
-                            } catch (NumberFormatException e) {
-                                LOG.warning("Bad window size: " + value);
-                                comboBox.setValue(width + "x" + height);
-                                return;
-                            }
-
-                            widthProperty.set(newWidth);
-                            heightProperty.set(newHeight);
-                        } else {
-                            comboBox.setValue(width + "x" + height);
-                        }
-                    } finally {
-                        updating = false;
-                    }
-                }
-            }
-        }
-
-        @Override
-        public boolean wasGarbageCollected() {
-            return this.comboBoxRef.get() == null
-                    || this.widthPropertyRef.get() == null
-                    || this.heightPropertyRef.get() == null;
-        }
-
-        @Override
-        public int hashCode() {
-            return hashCode;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (!(obj instanceof WindowsSizeBidirectionalBinding))
-                return false;
-
-            var that = (WindowsSizeBidirectionalBinding) obj;
-
-            var comboBox = this.comboBoxRef.get();
-            var widthProperty = this.widthPropertyRef.get();
-            var heightProperty = this.heightPropertyRef.get();
-
-            var thatComboBox = that.comboBoxRef.get();
-            var thatWidthProperty = that.widthPropertyRef.get();
-            var thatHeightProperty = that.heightPropertyRef.get();
-
-            if (comboBox == null || widthProperty == null || heightProperty == null
-                    || thatComboBox == null || thatWidthProperty == null || thatHeightProperty == null) {
-                return false;
-            }
-
-            return comboBox == thatComboBox
-                    && widthProperty == thatWidthProperty
-                    && heightProperty == thatHeightProperty;
-        }
-    }
-
-    public static void bindWindowsSize(JFXComboBox<String> comboBox, IntegerProperty widthProperty, IntegerProperty heightProperty) {
-        comboBox.setValue(widthProperty.get() + "x" + heightProperty.get());
-        var binding = new WindowsSizeBidirectionalBinding(comboBox, widthProperty, heightProperty);
-        comboBox.focusedProperty().addListener(binding);
-        comboBox.sceneProperty().addListener(binding);
-        widthProperty.addListener(binding);
-        heightProperty.addListener(binding);
-    }
-
-    public static void unbindWindowsSize(JFXComboBox<String> comboBox, IntegerProperty widthProperty, IntegerProperty heightProperty) {
-        var binding = new WindowsSizeBidirectionalBinding(comboBox, widthProperty, heightProperty);
-        comboBox.focusedProperty().removeListener(binding);
-        comboBox.sceneProperty().removeListener(binding);
-        widthProperty.removeListener(binding);
-        heightProperty.removeListener(binding);
-    }
-
     public static void bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
         int itemCount = children.length;
         int childSelectedCount = 0;
@@ -1151,27 +896,42 @@ public final class FXUtils {
     public static Image loadImage(Path path,
                                   int requestedWidth, int requestedHeight,
                                   boolean preserveRatio, boolean smooth) throws Exception {
-        try (var input = new BufferedInputStream(Files.newInputStream(path))) {
-            String ext = FileUtils.getExtension(path).toLowerCase(Locale.ROOT);
+        String fileName = path.getFileName().toString();
+        return loadImage(
+                Files.newInputStream(path),
+                fileName,
+                requestedWidth,
+                requestedHeight,
+                preserveRatio,
+                smooth);
+    }
+
+    public static Image loadImage(InputStream input, String fileName) throws Exception {
+        return loadImage(input, fileName, 0, 0, false, false);
+    }
+
+    public static Image loadImage(InputStream input, String fileName,
+                                  int requestedWidth, int requestedHeight,
+                                  boolean preserveRatio, boolean smooth) throws Exception {
+        try (var bufferedInput = new BufferedInputStream(input)) {
+            String ext = FileUtils.getExtension(fileName).toLowerCase(Locale.ROOT);
             ImageLoader loader = ImageUtils.EXT_TO_LOADER.get(ext);
             if (loader == null && !ImageUtils.DEFAULT_EXTS.contains(ext)) {
-                input.mark(ImageUtils.HEADER_BUFFER_SIZE);
-                byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
-                input.reset();
+                bufferedInput.mark(ImageUtils.HEADER_BUFFER_SIZE);
+                byte[] headerBuffer = bufferedInput.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
+                bufferedInput.reset();
                 loader = ImageUtils.guessLoader(headerBuffer);
             }
             if (loader == null)
                 loader = ImageUtils.DEFAULT;
-            return loader.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
+            return loader.load(bufferedInput, requestedWidth, requestedHeight, preserveRatio, smooth);
         }
     }
 
-    public static Image loadImage(String url) throws Exception {
-        URI uri = NetworkUtils.toURI(url);
-
-        URLConnection connection = NetworkUtils.createConnection(uri);
-        if (connection instanceof HttpURLConnection)
-            connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
+    public static Image loadImage(WebURL url) throws Exception {
+        URLConnection connection = NetworkUtils.createConnection(url);
+        if (connection instanceof HttpURLConnection httpConnection)
+            connection = NetworkUtils.resolveConnection(httpConnection);
 
         try (BufferedInputStream input = new BufferedInputStream(connection.getInputStream())) {
             String contentType = Objects.requireNonNull(connection.getContentType(), "");
@@ -1383,20 +1143,6 @@ public final class FXUtils {
         };
     }
 
-    public static <T> Callback<ListView<T>, ListCell<T>> jfxListCellFactory(Function<T, Node> graphicBuilder) {
-        return view -> new JFXListCell<T>() {
-            @Override
-            public void updateItem(T item, boolean empty) {
-                super.updateItem(item, empty);
-
-                if (!empty) {
-                    setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-                    setGraphic(graphicBuilder.apply(item));
-                }
-            }
-        };
-    }
-
     public static ColumnConstraints getColumnFillingWidth() {
         ColumnConstraints constraint = new ColumnConstraints();
         constraint.setFillWidth(true);
@@ -1445,6 +1191,18 @@ public final class FXUtils {
             if (e.getButton() == MouseButton.SECONDARY) {
                 action.run();
                 e.consume();
+            }
+        });
+    }
+
+    public static void addMacOSCloseWindowHandler(Window window, @Nullable Supplier<Boolean> restriction) {
+        window.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                    && event.isMetaDown()
+                    && event.getCode() == KeyCode.W
+                    && (restriction == null || restriction.get())) {
+                window.fireEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSE_REQUEST));
+                event.consume();
             }
         });
     }
@@ -1585,9 +1343,8 @@ public final class FXUtils {
     }
 
     /**
-     * Intelligently determines the popup position to prevent the menu from exceeding screen boundaries.
-     * Supports multi-monitor setups by detecting the current screen where the component is located.
-     * Now handles first-time popup display by forcing layout measurement.
+     * Intelligently determines the popup position to prevent the menu from exceeding screen boundaries,
+     * window boundaries, and clipping containers like ScrollPane.
      *
      * @param root          the root node to calculate position relative to
      * @param popupInstance the popup instance to position
@@ -1596,8 +1353,10 @@ public final class FXUtils {
     public static JFXPopup.PopupVPosition determineOptimalPopupPosition(Node root, JFXPopup popupInstance) {
         // Get the screen bounds in screen coordinates
         Bounds screenBounds = root.localToScreen(root.getBoundsInLocal());
+        if (screenBounds == null) {
+            return JFXPopup.PopupVPosition.TOP; // Fallback
+        }
 
-        // Convert Bounds to Rectangle2D for getScreensForRectangle method
         Rectangle2D boundsRect = new Rectangle2D(
                 screenBounds.getMinX(), screenBounds.getMinY(),
                 screenBounds.getWidth(), screenBounds.getHeight()
@@ -1608,13 +1367,36 @@ public final class FXUtils {
         Screen currentScreen = screens.isEmpty() ? Screen.getPrimary() : screens.get(0);
         Rectangle2D visualBounds = currentScreen.getVisualBounds();
 
-        double screenHeight = visualBounds.getHeight();
-        double screenMinY = visualBounds.getMinY();
-        double itemScreenY = screenBounds.getMinY();
+        // 1. Initial bounds based on the physical Screen limits
+        double clipMinY = visualBounds.getMinY();
+        double clipMaxY = visualBounds.getMaxY();
 
-        // Calculate available space relative to the current screen
-        double availableSpaceAbove = itemScreenY - screenMinY;
-        double availableSpaceBelow = screenMinY + screenHeight - itemScreenY - root.getBoundsInLocal().getHeight();
+        // 2. Constrain by Window (Stage) bounds so it doesn't overflow the application window
+        if (root.getScene() != null && root.getScene().getWindow() != null) {
+            javafx.stage.Window window = root.getScene().getWindow();
+            clipMinY = Math.max(clipMinY, window.getY());
+            clipMaxY = Math.min(clipMaxY, window.getY() + window.getHeight());
+        }
+
+        // 3. Constrain by parent ScrollPanes to handle clipping within the UI layout
+        Node parent = root.getParent();
+        while (parent != null) {
+            if (parent instanceof ScrollPane) {
+                Bounds spBounds = parent.localToScreen(parent.getBoundsInLocal());
+                if (spBounds != null) {
+                    clipMinY = Math.max(clipMinY, spBounds.getMinY());
+                    clipMaxY = Math.min(clipMaxY, spBounds.getMaxY());
+                }
+            }
+            parent = parent.getParent();
+        }
+
+        double itemScreenY = screenBounds.getMinY();
+        double itemScreenMaxY = screenBounds.getMaxY();
+
+        // Calculate available space relative to the narrowest calculated clipping bounds
+        double availableSpaceAbove = itemScreenY - clipMinY;
+        double availableSpaceBelow = clipMaxY - itemScreenMaxY;
 
         // Get popup content and ensure it's properly measured
         Region popupContent = popupInstance.getPopupContent();
@@ -1630,8 +1412,7 @@ public final class FXUtils {
             menuHeight = popupContent.getHeight();
             if (menuHeight <= 0) {
                 // Fallback: estimate based on number of menu items
-                // Each menu item is roughly 36px height + separators + padding
-                menuHeight = 300; // Conservative estimate for the current menu structure
+                menuHeight = 300;
             }
         } else {
             menuHeight = popupContent.getHeight();
@@ -1640,9 +1421,12 @@ public final class FXUtils {
         // Add some margin for safety
         menuHeight += 20;
 
-        return (availableSpaceAbove > menuHeight && availableSpaceBelow < menuHeight)
-                ? JFXPopup.PopupVPosition.BOTTOM  // Show menu below the button, expanding downward
-                : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding upward
+        // Logic: if there isn't enough space below, AND there is more space above, open upwards.
+        if (availableSpaceBelow < menuHeight && availableSpaceAbove > availableSpaceBelow) {
+            return JFXPopup.PopupVPosition.BOTTOM;  // Show menu above the button, expanding upward
+        } else {
+            return JFXPopup.PopupVPosition.TOP;     // Show menu below the button, expanding downward
+        }
     }
 
     public static void useJFXContextMenu(TextInputControl control) {
@@ -1654,6 +1438,7 @@ public final class FXUtils {
 
         control.setOnContextMenuRequested(e -> {
             boolean hasNoSelection = control.getSelectedText().isEmpty();
+            boolean isPassword = control instanceof PasswordField;
 
             IconedMenuItem undo = new IconedMenuItem(SVG.UNDO, i18n("menu.undo"), control::undo, popup);
             IconedMenuItem redo = new IconedMenuItem(SVG.REDO, i18n("menu.redo"), control::redo, popup);
@@ -1667,9 +1452,9 @@ public final class FXUtils {
 
             undo.setDisable(!control.isUndoable());
             redo.setDisable(!control.isRedoable());
-            cut.setDisable(hasNoSelection);
+            cut.setDisable(hasNoSelection || isPassword);
             delete.setDisable(hasNoSelection);
-            copy.setDisable(hasNoSelection);
+            copy.setDisable(hasNoSelection || isPassword);
             paste.setDisable(!Clipboard.getSystemClipboard().hasString());
             selectall.setDisable(control.getText() == null || control.getText().isEmpty());
 
@@ -1679,4 +1464,62 @@ public final class FXUtils {
             e.consume();
         });
     }
+
+    public static TextFlow renderAddonChangelog(String changelogHtml, String baseUri) {
+        var textFlow = new HTMLRenderer(Controllers::openUriOrCopy).appendNode(Jsoup.parse(changelogHtml, baseUri)).mergeLineBreaks().render();
+        textFlow.getStyleClass().add("addon-changelog");
+        return textFlow;
+    }
+
+    /// Be cautious when dealing with large amounts of data
+    public static <S> TableView<S> newAutoHeightTable(ObservableList<S> items) {
+        return new AutoHeightTableView<>(items);
+    }
+
+    private static final class AutoHeightTableView<S> extends TableView<S> {
+
+        public AutoHeightTableView() {
+            super();
+        }
+
+        public AutoHeightTableView(ObservableList<S> items) {
+            super(items);
+        }
+
+        @Override
+        protected Skin<?> createDefaultSkin() {
+            return new AutoSizeSkin<>(this);
+        }
+
+        private static final class AutoSizeSkin<S> extends TableViewSkin<S> {
+
+            private final VirtualFlow<TableRow<S>> flow;
+
+            public AutoSizeSkin(TableView<S> control) {
+                super(control);
+                this.flow = getVirtualFlow();
+            }
+
+            @Override
+            protected double computePrefHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
+                double fixedCellSize = getSkinnable().getFixedCellSize();
+                double w = width - rightInset - leftInset;
+                int itemCount = getItemCount();
+                double headerHeight = getTableHeaderRow().prefHeight(w);
+
+                double prefHeight = topInset + bottomInset + headerHeight;
+                if (fixedCellSize > 0 || itemCount == 0) return prefHeight + fixedCellSize * itemCount;
+                int i = 0;
+                TableRow<S> r;
+                while (i < itemCount && !(r = flow.getCell(i)).isEmpty() && r.getItem() != null) {
+                    prefHeight += r.prefHeight(w);
+                    i++;
+                }
+                return prefHeight;
+            }
+
+        }
+
+    }
+
 }

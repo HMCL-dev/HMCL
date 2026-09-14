@@ -269,7 +269,14 @@ public final class SelfDependencyPatcher {
             AtomicBoolean isCancelled = new AtomicBoolean();
             AtomicBoolean showDetails = new AtomicBoolean();
 
-            ProgressFrame dialog = new ProgressFrame(i18n("download.javafx"));
+            ProgressFrame dialog;
+            try {
+                dialog = new SwingProgressFrame(i18n("download.javafx"));
+            } catch (HeadlessException e) {
+                LOG.warning("Failed to open dialog", e);
+                dialog = new FakeProgressFrame();
+            }
+
             dialog.setProgressMaximum(dependencies.size() + 1);
             dialog.setProgress(count);
             dialog.setOnCancel(() -> isCancelled.set(true));
@@ -296,9 +303,10 @@ public final class SelfDependencyPatcher {
                     DependencyDescriptor dependency = dependencies.get(i);
 
                     final String url = repository.resolveDependencyURL(dependency);
+                    ProgressFrame finalDialog = dialog;
                     SwingUtilities.invokeLater(() -> {
-                        dialog.setCurrent(dependency.module);
-                        dialog.incrementProgress();
+                        finalDialog.setCurrent(dependency.module);
+                        finalDialog.incrementProgress();
                     });
 
                     LOG.info("Downloading " + url);
@@ -382,14 +390,32 @@ public final class SelfDependencyPatcher {
         }
     }
 
-    public static class ProgressFrame extends JDialog {
+    public sealed interface ProgressFrame {
+        void setCurrent(String component);
+
+        void setProgressMaximum(int total);
+
+        void setProgress(int n);
+
+        void incrementProgress();
+
+        void setOnCancel(Runnable action);
+
+        void setOnChangeSource(Runnable action);
+
+        void setVisible(boolean visible);
+
+        void dispose();
+    }
+
+    public static final class SwingProgressFrame extends JDialog implements ProgressFrame {
 
         private final JProgressBar progressBar;
         private final JLabel progressText;
         private final JButton btnChangeSource;
         private final JButton btnCancel;
 
-        public ProgressFrame(String title) {
+        public SwingProgressFrame(String title) {
             JPanel panel = new JPanel();
 
             setResizable(false);
@@ -451,6 +477,41 @@ public final class SelfDependencyPatcher {
 
         public void setOnChangeSource(Runnable action) {
             btnChangeSource.addActionListener(e -> action.run());
+        }
+    }
+
+    public static final class FakeProgressFrame implements ProgressFrame {
+
+        @Override
+        public void setCurrent(String component) {
+        }
+
+        @Override
+        public void setProgressMaximum(int total) {
+        }
+
+        @Override
+        public void setProgress(int n) {
+        }
+
+        @Override
+        public void incrementProgress() {
+        }
+
+        @Override
+        public void setOnCancel(Runnable action) {
+        }
+
+        @Override
+        public void setOnChangeSource(Runnable action) {
+        }
+
+        @Override
+        public void setVisible(boolean visible) {
+        }
+
+        @Override
+        public void dispose() {
         }
     }
 }

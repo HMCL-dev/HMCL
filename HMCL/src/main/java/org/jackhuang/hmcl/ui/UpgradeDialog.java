@@ -22,6 +22,8 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXSpinner;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -34,8 +36,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Node;
 
-import java.net.URL;
-
 import static org.jackhuang.hmcl.Metadata.CHANGELOG_URL;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -44,22 +44,22 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class UpgradeDialog extends JFXDialogLayout {
 
     public UpgradeDialog(RemoteVersion remoteVersion, Runnable updateRunnable) {
-        maxWidthProperty().bind(Controllers.getScene().widthProperty().multiply(0.7));
-        maxHeightProperty().bind(Controllers.getScene().heightProperty().multiply(0.7));
+        maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
+        maxHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
 
         setHeading(new Label(i18n("update.changelog")));
         setBody(new JFXSpinner());
 
-        String url = CHANGELOG_URL + remoteVersion.getChannel().channelName + ".html";
+        String url = CHANGELOG_URL + remoteVersion.channel().channelName + ".html";
 
         Task.supplyAsync(Schedulers.io(), () -> {
-            VersionNumber targetVersion = VersionNumber.asVersion(remoteVersion.getVersion());
+            VersionNumber targetVersion = VersionNumber.asVersion(remoteVersion.version());
             VersionNumber currentVersion = VersionNumber.asVersion(Metadata.VERSION);
             if (targetVersion.compareTo(currentVersion) <= 0)
                 // Downgrade update, no need to display changelog
                 return null;
 
-            Document document = Jsoup.parse(new URL(url), 30 * 1000);
+            Document document = Jsoup.parse(WebURL.toURL(url), 30 * 1000);
             Node node = document.selectFirst("h1[data-version=\"%s\"]".formatted(targetVersion));
 
             if (node == null || !"h1".equals(node.nodeName())) {

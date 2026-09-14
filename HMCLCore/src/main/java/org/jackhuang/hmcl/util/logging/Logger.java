@@ -24,7 +24,10 @@ import org.tukaani.xz.XZOutputStream;
 
 import java.io.*;
 import java.lang.System.Logger.Level;
-import java.nio.file.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -67,7 +70,7 @@ public final class Logger {
     static final String PACKAGE_PREFIX = "org.jackhuang.hmcl.";
     static final String CLASS_NAME = Logger.class.getName();
 
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault());
+    public static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault());
 
     private final BlockingQueue<LogEvent> queue = new LinkedBlockingQueue<>();
     private final StringBuilder builder = new StringBuilder(512);

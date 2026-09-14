@@ -35,11 +35,11 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.mod.ModpackExportInfo;
-import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.modpack.ModpackExportInfo;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -47,7 +47,6 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
@@ -56,7 +55,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_SERVER;
@@ -65,9 +64,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModpackInfoPage extends Control implements WizardPage {
     private final WizardController controller;
-    private final HMCLGameRepository gameRepository;
+    private final HMCLGameInstance gameInstance;
     private final ModpackExportInfo.Options options;
-    private final String versionName;
     private final boolean canIncludeLauncher;
 
     private final ModpackExportInfo exportInfo = new ModpackExportInfo();
@@ -88,22 +86,21 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     private final SimpleBooleanProperty noCreateRemoteFiles = new SimpleBooleanProperty();
     private final SimpleBooleanProperty skipCurseForgeRemoteFiles = new SimpleBooleanProperty();
 
-    public ModpackInfoPage(WizardController controller, HMCLGameRepository gameRepository, String version) {
+    public ModpackInfoPage(WizardController controller, HMCLGameInstance gameInstance) {
         this.controller = controller;
-        this.gameRepository = gameRepository;
+        this.gameInstance = gameInstance;
         this.options = controller.getSettings().get(MODPACK_INFO_OPTION);
-        this.versionName = version;
 
         if (this.options == null)
             throw new IllegalArgumentException("Settings.MODPACK_INFO_OPTION is required");
 
-        name.set(version);
-        author.set(Optional.ofNullable(Accounts.getSelectedAccount()).map(Account::getUsername).orElse(""));
+        name.set(gameInstance.getId().toString());
+        author.set(Optional.ofNullable(Accounts.getSelectedAccount()).map(Account::getProfileName).orElse(""));
 
-        VersionSetting versionSetting = gameRepository.getVersionSetting(versionName);
-        minMemory.set(Optional.ofNullable(versionSetting.getMinMemory()).orElse(0));
-        launchArguments.set(versionSetting.getMinecraftArgs());
-        javaArguments.set(versionSetting.getJavaArgs());
+        GameSettings.Effective versionSetting = gameInstance.getEffectiveSettings();
+        minMemory.set(Optional.ofNullable(versionSetting.getInheritable(GameSettings::minMemoryProperty)).orElse(0));
+        launchArguments.set(versionSetting.getInheritable(GameSettings::gameArgumentsProperty));
+        javaArguments.set(versionSetting.getInheritable(GameSettings::jvmOptionsProperty));
 
         canIncludeLauncher = JarUtils.thisJarPath() != null;
     }
@@ -118,7 +115,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
             fileChooser.setInitialFileName(name.get() + ".zip");
         }
-        Path file = FileUtils.toPath(fileChooser.showSaveDialog(Controllers.getStage()));
+        Path file = Controllers.showSaveDialog(fileChooser);
         if (file == null) {
             controller.onEnd();
             return;
@@ -213,7 +210,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     var instanceNamePane = new LineTextPane();
                     {
                         instanceNamePane.setTitle(i18n("modpack.wizard.step.initialization.exported_version"));
-                        instanceNamePane.setText(skinnable.versionName);
+                        instanceNamePane.setText(skinnable.gameInstance.getId().toString());
 
                         list.getContent().add(instanceNamePane);
                     }
@@ -316,9 +313,9 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     if (skinnable.options.isRequireAuthlibInjectorServer()) {
                         var serversSelectButton = new LineSelectButton<AuthlibInjectorServer>();
                         serversSelectButton.setTitle(i18n("account.injector.server"));
-                        serversSelectButton.setConverter(AuthlibInjectorServer::getName);
+                        serversSelectButton.setNullSafeConverter(AuthlibInjectorServer::getName);
                         serversSelectButton.setDescriptionConverter(AuthlibInjectorServer::getUrl);
-                        serversSelectButton.itemsProperty().set(config().getAuthlibInjectorServers());
+                        serversSelectButton.itemsProperty().set(getAuthlibInjectorServers());
 
                         skinnable.authlibInjectorServer.bind(Bindings.createStringBinding(() -> {
                             AuthlibInjectorServer selected = serversSelectButton.getValue();

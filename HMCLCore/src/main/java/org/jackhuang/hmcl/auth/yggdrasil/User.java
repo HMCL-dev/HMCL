@@ -32,30 +32,10 @@ import org.jetbrains.annotations.Nullable;
  * @author huang
  */
 @Immutable
-public final class User implements Validation {
-
-    private final String id;
-
-    @Nullable
-    @JsonAdapter(PropertyMapSerializer.class)
-    private final Map<String, String> properties;
+public record User(String id, @JsonAdapter(PropertyMapSerializer.class) @Nullable Map<String, String> properties) implements Validation {
 
     public User(String id) {
         this(id, null);
-    }
-
-    public User(String id, @Nullable Map<String, String> properties) {
-        this.id = id;
-        this.properties = properties;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    @Nullable
-    public Map<String, String> getProperties() {
-        return properties;
     }
 
     @Override
