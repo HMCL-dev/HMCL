@@ -29,19 +29,8 @@ import java.util.Objects;
 @JsonSerializable
 public record ForgeOldInstallProfile(@SerializedName("install") ForgeInstallManifest install,
                                      @SerializedName("versionInfo") GameInstanceManifest versionInfo) {
-
     public ForgeOldInstallProfile {
         Objects.requireNonNull(install, "install");
         Objects.requireNonNull(versionInfo, "versionInfo");
-    }
-
-    @Override
-    public ForgeInstallManifest install() {
-        return install;
-    }
-
-    @Override
-    public GameInstanceManifest versionInfo() {
-        return versionInfo;
     }
 }
