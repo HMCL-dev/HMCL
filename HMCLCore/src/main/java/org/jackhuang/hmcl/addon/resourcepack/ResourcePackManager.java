@@ -312,14 +312,14 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     private void addResourcePackInfo(Path file) throws IOException {
         ResourcePackFile resourcePack = ResourcePackFile.fromFile(this, file);
-        if (resourcePack != null) localFiles.add(resourcePack);
+        if (resourcePack != null) addLocalFile(resourcePack);
     }
 
     @Override
     public void refresh() throws IOException {
         lock.lock();
         try {
-            localFiles.clear();
+            clearLocalFiles();
 
             if (Files.isDirectory(resourcePackDirectory)) {
                 try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(resourcePackDirectory)) {
@@ -386,7 +386,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             for (ResourcePackFile resourcePack : resourcePacks) {
                 if (resourcePack != null && resourcePack.manager == this) {
                     resourcePack.delete();
-                    localFiles.remove(resourcePack);
+                    removeLocalFile(resourcePack);
                     modified = true;
                 }
             }

@@ -23,9 +23,8 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
-import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
-import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.addon.mod.ModMetadata;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -124,8 +123,8 @@ public final class ForgeOldModMetadata {
         return authors;
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
-        ZipArchiveEntry mcmod = tree.getEntry("mcmod.info");
+    public static ModMetadata fromFile(Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
+        ZipArchiveEntry mcmod = tree.getEntryFlat("mcmod.info");
         if (mcmod == null)
             throw new IOException("File " + modFile + " is not a Forge mod.");
 
@@ -157,7 +156,7 @@ public final class ForgeOldModMetadata {
             authors = String.join(", ", metadata.getAuthorList());
         if (StringUtils.isBlank(authors))
             authors = metadata.getCredits();
-        return new LocalModFile(modManager, modManager.getLocalMod(metadata.getModId(), ModLoaderType.FORGE), modFile, metadata.getName(), new LocalAddonFile.Description(metadata.getDescription()),
+        return new ModMetadata(metadata.getModId(), ModLoaderType.FORGE, metadata.getName(), new LocalAddonFile.Description(metadata.getDescription()),
                 authors, metadata.getVersion(), metadata.getGameVersion(),
                 StringUtils.isBlank(metadata.getUrl()) ? metadata.getUpdateUrl() : metadata.url,
                 metadata.getLogoFile());

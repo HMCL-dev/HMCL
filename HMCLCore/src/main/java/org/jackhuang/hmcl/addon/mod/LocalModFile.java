@@ -52,6 +52,9 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     private final String logoPath;
     private final BooleanProperty activeProperty;
 
+    /// Hash code derived from [#fileName] once, since instances are stored in hash-based sets.
+    private final int cachedHashCode;
+
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
         this(modManager, mod, file, name, description, "", "", "", "", "");
     }
@@ -88,6 +91,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         };
 
         fileName = FileUtils.getNameWithoutExtension(LocalAddonManager.getLocalAddonName(file));
+        cachedHashCode = Objects.hash(fileName);
 
         if (isOld()) {
             mod.getOldFiles().add(this);
@@ -222,6 +226,6 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
 
     @Override
     public int hashCode() {
-        return Objects.hash(getFileName());
+        return cachedHashCode;
     }
 }

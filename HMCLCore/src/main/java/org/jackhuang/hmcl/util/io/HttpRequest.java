@@ -257,11 +257,32 @@ public abstract class HttpRequest {
         return DELETE(NetworkUtils.withQuery(url, mapOf(query)));
     }
 
+    /// The response code a rate-limited request is rejected with.
+    ///
+    /// Unlike the other `4xx` codes this one means the request was never processed, so repeating it
+    /// can succeed.
+    private static final int HTTP_TOO_MANY_REQUESTS = 429;
+
+    /// Returns whether a failed request is worth repeating.
+    ///
+    /// Any other `4xx` response is the server's answer about the request itself, so sending it again
+    /// returns the same answer and costs an extra round trip each time.
+    ///
+    /// @param code the HTTP response code
+    /// @return true if the request should be retried
+    private static boolean isRetryableResponseCode(int code) {
+        return code / 100 != 4 || code == HTTP_TOO_MANY_REQUESTS;
+    }
+
     private static String getStringWithRetry(ExceptionalSupplier<String, IOException> supplier, int retryTimes) throws IOException {
         Throwable exception = null;
         for (int i = 0; i < retryTimes; i++) {
             try {
                 return supplier.get();
+            } catch (ResponseCodeException e) {
+                if (!isRetryableResponseCode(e.getResponseCode()))
+                    throw e;
+                exception = e;
             } catch (Throwable e) {
                 exception = e;
             }

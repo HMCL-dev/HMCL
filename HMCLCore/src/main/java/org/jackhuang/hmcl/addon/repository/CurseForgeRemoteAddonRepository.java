@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.MurmurHash2;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.*;
+import org.jackhuang.hmcl.util.logging.PerfLog;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +58,16 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     private static final String BASE = "https://www.curseforge.com";
     private static final Semaphore SEMAPHORE = new Semaphore(16);
     private static final int DEFAULT_RETRY_COUNT = 3;
+
+    /// Maximum number of addon ids sent in one batch request.
+    ///
+    /// The response repeats each mod in full, including its complete file history, so the body grows
+    /// much faster than the id count does. Chunking keeps a single response from dominating the heap
+    /// on modpacks with thousands of entries.
+    ///
+    /// A modpack manifest of a few hundred entries is the common case, and it now fits in one request
+    /// rather than two, which takes a full round trip off [#getAddonClassIds].
+    private static final int BATCH_REQUEST_SIZE = 500;
 
     public static final String API_KEY = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));
 
@@ -266,7 +277,9 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
     @Override
     public RemoteAddon getAddonById(DownloadProvider downloadProvider, String id) throws IOException {
+        long perfWaitStart = System.nanoTime();
         SEMAPHORE.acquireUninterruptibly();
+        long perfRequestStart = System.nanoTime();
         try {
             Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id))
                     .retry(DEFAULT_RETRY_COUNT)
@@ -274,6 +287,10 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             return response.data.toAddon();
         } finally {
             SEMAPHORE.release();
+            // Splitting the permit wait from the request itself tells apart a saturated concurrency
+            // limit from a slow remote API.
+            PerfLog.invocation("cf.getAddonById.permits", perfRequestStart - perfWaitStart);
+            PerfLog.invocation("cf.getAddonById", System.nanoTime() - perfRequestStart);
         }
     }
 
@@ -292,7 +309,9 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
 
     @Override
     public RemoteAddon.File getAddonFile(String projectId, String fileId) throws IOException {
+        long perfWaitStart = System.nanoTime();
         SEMAPHORE.acquireUninterruptibly();
+        long perfRequestStart = System.nanoTime();
         try {
             Response<CurseAddon.LatestFile> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, projectId, fileId)))
                     .retry(DEFAULT_RETRY_COUNT)
@@ -300,7 +319,57 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             return response.data().toVersion().file();
         } finally {
             SEMAPHORE.release();
+            PerfLog.invocation("cf.getAddonFile.permits", perfRequestStart - perfWaitStart);
+            PerfLog.invocation("cf.getAddonFile", System.nanoTime() - perfRequestStart);
         }
+    }
+
+    /// Resolves the class id of several addons using as few requests as possible.
+    ///
+    /// `POST /v1/mods` answers for many ids at once, whereas a caller that needs the class id of
+    /// every manifest entry would otherwise send one `GET /v1/mods/{id}` per entry. The class id is
+    /// all that `CurseCompletionTask` needs from an addon, so the much larger per-addon response is
+    /// downloaded once instead of hundreds of times.
+    ///
+    /// Addons the server does not return are absent from the result rather than an error, so callers
+    /// must keep a fallback for missing entries.
+    ///
+    /// @param addonIds the addon ids to resolve
+    /// @return the class id of every addon the server returned, keyed by addon id
+    /// @throws IOException if a batch request fails
+    public Map<String, Integer> getAddonClassIds(Collection<String> addonIds) throws IOException {
+        List<String> ids = addonIds.stream().distinct().toList();
+        Map<String, Integer> result = new HashMap<>(ids.size());
+
+        for (int start = 0; start < ids.size(); start += BATCH_REQUEST_SIZE) {
+            List<Integer> chunk = ids.subList(start, Math.min(start + BATCH_REQUEST_SIZE, ids.size()))
+                    .stream()
+                    .map(Integer::parseInt)
+                    .toList();
+
+            long perfWaitStart = System.nanoTime();
+            SEMAPHORE.acquireUninterruptibly();
+            long perfRequestStart = System.nanoTime();
+            try {
+                Response<List<CurseAddon>> response = withApiKey(HttpRequest.POST(PREFIX + "/v1/mods"))
+                        .json(mapOf(pair("modIds", chunk)))
+                        .retry(DEFAULT_RETRY_COUNT)
+                        .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
+
+                if (response.data() != null) {
+                    for (CurseAddon addon : response.data()) {
+                        result.put(Integer.toString(addon.id()), addon.classId());
+                    }
+                }
+            } finally {
+                SEMAPHORE.release();
+                PerfLog.invocation("cf.getClassIds.permits", perfRequestStart - perfWaitStart);
+                PerfLog.invocation("cf.getClassIds", System.nanoTime() - perfRequestStart);
+                PerfLog.count("cf.getClassIds.addons", chunk.size());
+            }
+        }
+
+        return result;
     }
 
     @Override

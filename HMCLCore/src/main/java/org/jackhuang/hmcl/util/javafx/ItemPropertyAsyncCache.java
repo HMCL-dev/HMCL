@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.javafx;
 
 import javafx.beans.property.ObjectProperty;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.util.logging.PerfLog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +52,8 @@ public abstract class ItemPropertyAsyncCache<T, B> {
     protected abstract void setFuture(@NotNull CompletableFuture<T> imageFuture);
 
     public final void attachValue(ObjectProperty<T> property, @Nullable WeakReference<ObjectProperty<B>> current) {
+        long perfRequested = PerfLog.now();
+
         CompletableFuture<T> future = getFuture();
         if (future != null) {
             T value = future.getNow(null);
@@ -73,6 +76,10 @@ public abstract class ItemPropertyAsyncCache<T, B> {
             }
 
             property.set(image);
+
+            // The timestamp of this sample is the moment the real icon replaced the placeholder,
+            // which is what a user waits for before the list looks completely rendered.
+            PerfLog.sample("icon.appliedMs", PerfLog.ms(PerfLog.now() - perfRequested));
         }, Schedulers.javafx());
     }
 

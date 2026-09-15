@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.task;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.logging.PerfLog;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -243,7 +244,17 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     return CompletableFuture.runAsync(wrap(() -> {
                         task.setState(Task.TaskState.RUNNING);
                         taskListeners.forEach(it -> it.onRunning(task));
-                        task.execute();
+
+                        long perfToken = PerfLog.taskStart();
+                        Throwable perfError = null;
+                        try {
+                            task.execute();
+                        } catch (Throwable e) {
+                            perfError = e;
+                            throw e;
+                        } finally {
+                            PerfLog.taskEnd(task.getName(), perfToken, perfError);
+                        }
                     }), task.getExecutor()).whenComplete((unused, throwable) -> {
                         task.setState(Task.TaskState.EXECUTED);
                         rethrow(throwable);

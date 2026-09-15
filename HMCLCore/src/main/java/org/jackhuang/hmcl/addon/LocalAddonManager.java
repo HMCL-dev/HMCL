@@ -20,7 +20,9 @@ package org.jackhuang.hmcl.addon;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.logging.PerfLog;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
@@ -59,7 +61,20 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     protected final ReentrantLock lock = new ReentrantLock();
 
     /// Loaded local addon files for the bound instance.
+    ///
+    /// Every mutation must go through [#addLocalFile(Object)], [#removeLocalFile(Object)] or
+    /// [#clearLocalFiles()], because only those methods invalidate the cached sorted view returned
+    /// by [#getLocalFiles()]. Mutating this set directly yields a stale, silently wrong list.
     protected final Set<@NotNull T> localFiles = new LinkedHashSet<>();
+
+    /// Cached result of [#getLocalFiles()], or `null` when it must be recomputed.
+    private @Nullable List<T> sortedCache;
+
+    /// Value of [#localFilesVersion] the [#sortedCache] was computed from.
+    private int sortedCacheVersion;
+
+    /// Bumped on every mutation of [#localFiles] to invalidate [#sortedCache].
+    private int localFilesVersion;
 
     /// The snapshot member this manager serves.
     protected final DefaultGameInstance instance;
@@ -93,16 +108,56 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     /// @return the sort order for local addon files
     public abstract Comparator<T> getComparator();
 
+    /// Adds a file to [#localFiles], invalidating the cached sorted view.
+    ///
+    /// @param file the file to add
+    protected final void addLocalFile(T file) {
+        if (localFiles.add(file))
+            localFilesVersion++;
+    }
+
+    /// Removes a file from [#localFiles], invalidating the cached sorted view.
+    ///
+    /// @param file the file to remove
+    protected final void removeLocalFile(T file) {
+        if (localFiles.remove(file))
+            localFilesVersion++;
+    }
+
+    /// Removes every file from [#localFiles], invalidating the cached sorted view.
+    protected final void clearLocalFiles() {
+        if (!localFiles.isEmpty()) {
+            localFiles.clear();
+            localFilesVersion++;
+        }
+    }
+
     /// Returns the currently loaded local addon files, sorted by [#getComparator()].
+    ///
+    /// The sorted result is cached and only recomputed after [#localFiles] changes, so repeated
+    /// calls between two mutations cost nothing beyond a lock acquisition.
     ///
     /// @return an unmodifiable sorted list of local addon files
     /// @throws IOException if loading is required and fails
     public @Unmodifiable List<T> getLocalFiles() throws IOException {
-        lock.lock();
+        long perfStart = System.nanoTime();
         try {
-            return localFiles.stream().sorted(getComparator()).toList();
+            lock.lock();
+            try {
+                List<T> cache = sortedCache;
+                if (cache == null || sortedCacheVersion != localFilesVersion) {
+                    cache = localFiles.stream().sorted(getComparator()).toList();
+                    sortedCache = cache;
+                    sortedCacheVersion = localFilesVersion;
+                }
+                return cache;
+            } finally {
+                lock.unlock();
+            }
         } finally {
-            lock.unlock();
+            // The measured time includes the wait for [#lock], which is what makes contention with
+            // an in-flight scan visible.
+            PerfLog.invocation("addon.getLocalFiles", System.nanoTime() - perfStart);
         }
     }
 
@@ -121,10 +176,10 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
             Path newPath;
             if (old) {
                 newPath = backupFile(modFile.getFile());
-                localFiles.remove(modFile);
+                removeLocalFile(modFile);
             } else {
                 newPath = restoreFile(modFile.getFile());
-                localFiles.add(modFile);
+                addLocalFile(modFile);
             }
             return newPath;
         } finally {

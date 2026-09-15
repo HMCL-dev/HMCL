@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.tree;
 
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
+import org.jackhuang.hmcl.util.logging.PerfLog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,10 +52,12 @@ public final class ZipFileTree extends ArchiveFileTree<ZipArchiveReader, ZipArch
     @Override
     public Dir<ZipArchiveEntry> getRoot() {
         if (root == null) {
+            long perfStart = System.nanoTime();
             root = new Dir<>("");
             for (ZipArchiveEntry zipArchiveEntry : reader.getEntries()) {
                 addEntry(root, zipArchiveEntry);
             }
+            PerfLog.invocation("zip.getRoot", System.nanoTime() - perfStart);
         }
         return root;
     }
@@ -113,6 +116,26 @@ public final class ZipFileTree extends ArchiveFileTree<ZipArchiveReader, ZipArch
             return entry;
 
         return super.getEntry(entryPath);
+    }
+
+    /// Looks up an entry by exact name without ever building the directory tree.
+    ///
+    /// [#getEntry(String)] falls back to [ArchiveFileTree#getRoot()], which materializes a tree of
+    /// every entry in the archive. For archives holding thousands of entries that fallback is far
+    /// more expensive than the lookup itself, and it runs whenever a name is absent - exactly the
+    /// case callers probing for optional entries hit.
+    ///
+    /// [ZipArchiveReader] indexes the whole central directory by name at construction time, so its
+    /// lookup is exact and a `null` result is authoritative. Callers that only probe for a known
+    /// entry name, such as the mod metadata readers, should prefer this method.
+    ///
+    /// @param entryPath the entry name, optionally prefixed with `/`
+    /// @return the entry, or `null` when the archive has no entry with that name
+    public @Nullable ZipArchiveEntry getEntryFlat(@NotNull String entryPath) {
+        ZipArchiveEntry entry = reader.getEntry(entryPath);
+        if (entry == null && entryPath.startsWith("/"))
+            entry = reader.getEntry(entryPath.substring(1));
+        return entry;
     }
 
     @Override

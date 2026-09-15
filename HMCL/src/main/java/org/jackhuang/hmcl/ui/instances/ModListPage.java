@@ -64,6 +64,7 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
+import org.jackhuang.hmcl.util.logging.PerfLog;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -143,6 +144,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     private void loadMods(ModManager modManager) {
+        long perfSubmitted = PerfLog.now();
         setLoading(true);
 
         if (this.modManager != modManager) {
@@ -150,21 +152,33 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
         this.modManager = modManager;
         CompletableFuture.supplyAsync(() -> {
+            long perfScanStart = PerfLog.now();
             lock.lock();
             try {
                 modManager.refresh();
-                return modManager.getLocalFiles().stream().map(ModInfoObject::new).toList();
+                long perfScanned = PerfLog.now();
+
+                List<ModInfoObject> items = modManager.getLocalFiles().stream().map(ModInfoObject::new).toList();
+
+                PerfLog.event("mod.list.build",
+                        "items=" + items.size()
+                                + " ioDispatchMs=" + PerfLog.ms(perfScanStart - perfSubmitted)
+                                + " scanMs=" + PerfLog.ms(perfScanned - perfScanStart)
+                                + " mapMs=" + PerfLog.ms(PerfLog.now() - perfScanned));
+                return items;
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } finally {
                 lock.unlock();
             }
         }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
+            long perfUiStart = PerfLog.now();
             if (this.modManager != modManager) {
                 return;
             }
 
             updateSupportedLoaders(modManager);
+            long perfLoaders = PerfLog.now();
 
             if (exception == null) {
                 getItems().setAll(list);
@@ -172,7 +186,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 LOG.warning("Failed to load mods", exception);
                 getItems().clear();
             }
+            long perfSetAll = PerfLog.now();
+
             setLoading(false);
+
+            PerfLog.event("mod.list.ui",
+                    "items=" + (list == null ? -1 : list.size())
+                            + " fxQueueMs=" + PerfLog.ms(perfUiStart - perfSubmitted)
+                            + " loadersMs=" + PerfLog.ms(perfLoaders - perfUiStart)
+                            + " setAllMs=" + PerfLog.ms(perfSetAll - perfLoaders));
         }, Schedulers.javafx());
     }
 
@@ -604,7 +626,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             this.localModFile = localModFile;
             this.active = localModFile.activeProperty();
 
+            long perfTranslationStart = PerfLog.now();
             this.modTranslations = ModTranslations.MOD.getMod(localModFile.getId(), localModFile.getName());
+            PerfLog.invocation("mod.list.translationLookup", PerfLog.now() - perfTranslationStart);
 
             this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
@@ -622,6 +646,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
 
         private Image loadIcon() {
+            long perfStart = PerfLog.now();
+            try {
+                return loadIconImpl();
+            } finally {
+                PerfLog.invocation("mod.list.loadIcon", PerfLog.now() - perfStart);
+            }
+        }
+
+        private Image loadIconImpl() {
             List<String> iconPaths = new ArrayList<>();
 
             if (StringUtils.isNotBlank(this.localModFile.getLogoPath())) {
@@ -805,6 +838,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         @Override
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
+            long perfStart = PerfLog.now();
+            try {
+                updateControlImpl(dataItem, empty);
+            } finally {
+                PerfLog.invocation("mod.list.cellUpdate", PerfLog.now() - perfStart);
+            }
+        }
+
+        private void updateControlImpl(ModInfoObject dataItem, boolean empty) {
             pseudoClassStateChanged(WARNING, false);
             if (warningTooltip != null) {
                 Tooltip.uninstall(this, warningTooltip);

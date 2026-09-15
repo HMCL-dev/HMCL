@@ -30,6 +30,8 @@ import java.nio.charset.*;
 import java.nio.file.*;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipException;
 
 /**
@@ -162,6 +164,144 @@ public final class CompressingUtils {
 
         zipReader.close();
         return new ZipArchiveReader(zipFile, suitableEncoding, true, true);
+    }
+
+    /// Resolves the charset [#openZipFileWithPossibleEncoding] would decode `zipFile` with,
+    /// without leaving a reader open.
+    ///
+    /// Callers that decompress one archive from several threads need the charset before they open a
+    /// reader per thread, so it has to be settled up front, and a throw-away reader is cheaper than
+    /// re-running the detection once per thread.
+    ///
+    /// The result reproduces [#openZipFileWithPossibleEncoding] exactly, including the branch where
+    /// the detection settles on UTF-8: that method returns the reader it had already opened with
+    /// `possibleEncoding` instead of reopening with UTF-8, so an archive whose names are not valid
+    /// `possibleEncoding` but are valid UTF-8 is decoded with `possibleEncoding` all the same. That
+    /// is reported here rather than "fixed" so that a parallel extraction writes the same file names
+    /// the sequential one did.
+    ///
+    /// @param zipFile          the archive
+    /// @param possibleEncoding the charset the caller expects, or `null` for UTF-8
+    /// @return the charset [#openZipFileWithPossibleEncoding] would end up decoding the archive with
+    /// @throws IOException if detection found no charset that decodes the entry names
+    public static Charset resolveZipEncoding(Path zipFile, Charset possibleEncoding) throws IOException {
+        if (possibleEncoding == null)
+            possibleEncoding = StandardCharsets.UTF_8;
+
+        try (ZipArchiveReader zipReader = new ZipArchiveReader(zipFile, possibleEncoding, true, true)) {
+            return resolveZipEncoding(zipReader, possibleEncoding);
+        }
+    }
+
+    private static Charset resolveZipEncoding(ZipArchiveReader zipReader, Charset possibleEncoding) throws IOException {
+        if (possibleEncoding != StandardCharsets.UTF_8 && CompressingUtils.testEncoding(zipReader, possibleEncoding)) {
+            return possibleEncoding;
+        }
+
+        Charset suitableEncoding = CompressingUtils.findSuitableEncoding(zipReader);
+
+        // Mirrors the early return in [#openZipFileWithPossibleEncoding]: on this path that method
+        // hands back the reader it opened with `possibleEncoding` rather than reopening the archive
+        // with the detected UTF-8, so `possibleEncoding` is what the archive is actually read with.
+        if (suitableEncoding == StandardCharsets.UTF_8)
+            return possibleEncoding;
+
+        return suitableEncoding;
+    }
+
+    /// Upper bound on the readers opened over one archive when its entries are processed in parallel.
+    public static final int MAX_PARALLEL_READERS = 8;
+
+    /// Entry counts below this stay on the calling thread, where starting a worker costs more than
+    /// the entries it would pick up.
+    public static final int PARALLEL_READER_THRESHOLD = 32;
+
+    /// Picks how many readers should share the work of one archive.
+    ///
+    /// @param itemCount the number of entries to process
+    /// @return `1` to stay on the calling thread, otherwise the worker count
+    public static int readerThreads(int itemCount) {
+        if (itemCount < PARALLEL_READER_THRESHOLD) {
+            return 1;
+        }
+        return Math.max(1, Math.min(Runtime.getRuntime().availableProcessors(), MAX_PARALLEL_READERS));
+    }
+
+    /// Runs `work` for every index below `itemCount`, spreading them over readers opened on `zipFile`.
+    ///
+    /// [ZipArchiveReader] seeks through a single channel, so one reader cannot serve two threads.
+    /// Each worker opens its own reader instead; the central directory is parsed once per worker,
+    /// which is negligible next to the entry data the workers read.
+    ///
+    /// Workers stop picking up new indices as soon as one of them fails, and the first failure is
+    /// the one rethrown, so a caller sees the same exception a sequential loop would have raised.
+    ///
+    /// @param zipFile          the archive to read
+    /// @param charset          the charset every reader decodes entry names with
+    /// @param threads          the worker count; `1` runs everything on the calling thread
+    /// @param itemCount        the number of indices `work` accepts
+    /// @param threadNamePrefix prefix for the worker threads, for stack traces
+    /// @param work             the action to run for one index
+    /// @throws IOException the first failure a worker reported
+    public static void forEachParallel(Path zipFile, Charset charset, int threads, int itemCount,
+                                       String threadNamePrefix, ZipIndexWork work) throws IOException {
+        if (itemCount <= 0) {
+            return;
+        }
+
+        if (threads <= 1) {
+            try (ZipArchiveReader reader = openZipFile(zipFile, charset)) {
+                for (int index = 0; index < itemCount; index++) {
+                    work.run(reader, index);
+                }
+            }
+            return;
+        }
+
+        AtomicInteger next = new AtomicInteger();
+        AtomicReference<IOException> failure = new AtomicReference<>();
+
+        Thread[] workers = new Thread[threads];
+        for (int i = 0; i < threads; i++) {
+            workers[i] = new Thread(() -> {
+                try (ZipArchiveReader reader = openZipFile(zipFile, charset)) {
+                    for (int index = next.getAndIncrement(); index < itemCount; index = next.getAndIncrement()) {
+                        if (failure.get() != null) {
+                            return;
+                        }
+                        work.run(reader, index);
+                    }
+                } catch (IOException e) {
+                    failure.compareAndSet(null, e);
+                } catch (Throwable e) {
+                    failure.compareAndSet(null, new IOException("Failed to read " + zipFile, e));
+                }
+            }, threadNamePrefix + i);
+            workers[i].start();
+        }
+
+        for (Thread worker : workers) {
+            try {
+                worker.join();
+            } catch (InterruptedException e) {
+                failure.compareAndSet(null, new IOException("Interrupted while reading " + zipFile, e));
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        IOException error = failure.get();
+        if (error != null) {
+            throw error;
+        }
+    }
+
+    /// The unit of work [#forEachParallel] runs.
+    @FunctionalInterface
+    public interface ZipIndexWork {
+        /// @param reader the calling worker's own reader over the archive
+        /// @param index  the index to process
+        /// @throws IOException if the entry cannot be read or written
+        void run(ZipArchiveReader reader, int index) throws IOException;
     }
 
     public static final class Builder {
