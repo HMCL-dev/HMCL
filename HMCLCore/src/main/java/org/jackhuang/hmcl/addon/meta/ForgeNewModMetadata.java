@@ -25,10 +25,8 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.annotations.JsonAdapter;
 import kala.compress.archivers.zip.ZipArchiveEntry;
-import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
-import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
@@ -177,43 +175,42 @@ public final class ForgeNewModMetadata {
         }
     }
 
-    public static LocalModFile fromForgeFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException {
-        return fromFile(modManager, modFile, tree, ModLoaderType.FORGE);
+    public static LocalModFile.Metadata fromForgeFile(Path modFile, ZipFileTree tree) throws IOException {
+        return fromFile(modFile, tree, ModLoaderType.FORGE);
     }
 
-    public static LocalModFile fromNeoForgeFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException {
-        return fromFile(modManager, modFile, tree, ModLoaderType.NEO_FORGE);
+    public static LocalModFile.Metadata fromNeoForgeFile(Path modFile, ZipFileTree tree) throws IOException {
+        return fromFile(modFile, tree, ModLoaderType.NEO_FORGE);
     }
 
-    private static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType) throws IOException {
+    private static LocalModFile.Metadata fromFile(Path modFile, ZipFileTree tree, ModLoaderType modLoaderType) throws IOException {
         if (modLoaderType != ModLoaderType.FORGE && modLoaderType != ModLoaderType.NEO_FORGE) {
             throw new IOException("Invalid mod loader: " + modLoaderType);
         }
 
         if (modLoaderType == ModLoaderType.NEO_FORGE) {
             try {
-                return fromFile0("META-INF/neoforge.mods.toml", modLoaderType, modManager, modFile, tree);
+                return fromFile0("META-INF/neoforge.mods.toml", modLoaderType, modFile, tree);
             } catch (Exception ignored) {
             }
         }
 
         try {
-            return fromFile0("META-INF/mods.toml", modLoaderType, modManager, modFile, tree);
+            return fromFile0("META-INF/mods.toml", modLoaderType, modFile, tree);
         } catch (Exception ignored) {
         }
 
         try {
-            return fromEmbeddedMod(modManager, modFile, tree, modLoaderType);
+            return fromEmbeddedMod(modFile, tree, modLoaderType);
         } catch (Exception ignored) {
         }
 
         throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
     }
 
-    private static LocalModFile fromFile0(
+    private static LocalModFile.Metadata fromFile0(
             String tomlPath,
             ModLoaderType modLoaderType,
-            ModManager modManager,
             Path modFile,
             ZipFileTree tree) throws IOException, JsonParseException {
         ZipArchiveEntry modToml = tree.getEntry(tomlPath);
@@ -244,13 +241,13 @@ public final class ForgeNewModMetadata {
 
         String logoPath = StringUtils.isNotBlank(mod.getLogoFile()) ? mod.getLogoFile() : metadata.getLogoFile();
 
-        return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalAddonFile.Description(mod.getDescription()),
+        return new LocalModFile.Metadata(mod.getModId(), type, mod.getDisplayName(), mod.getDescription(),
                 mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                 mod.getDisplayURL(),
                 logoPath);
     }
 
-    private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType) throws IOException {
+    private static LocalModFile.Metadata fromEmbeddedMod(Path modFile, ZipFileTree tree, ModLoaderType modLoaderType) throws IOException {
         ZipArchiveEntry manifestFile = tree.getEntry("META-INF/MANIFEST.MF");
         if (manifestFile == null)
             throw new IOException("Missing MANIFEST.MF in file " + modFile);
@@ -300,7 +297,7 @@ public final class ForgeNewModMetadata {
             for (ZipArchiveEntry embeddedModFile : embeddedModFiles) {
                 tree.extractTo(embeddedModFile, tempFile);
                 try (ZipFileTree embeddedTree = CompressingUtils.openZipTree(tempFile)) {
-                    return fromFile(modManager, modFile, embeddedTree, modLoaderType);
+                    return fromFile(modFile, embeddedTree, modLoaderType);
                 } catch (Exception ignored) {
                 }
             }

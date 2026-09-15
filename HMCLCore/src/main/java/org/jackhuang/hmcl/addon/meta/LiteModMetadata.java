@@ -19,10 +19,8 @@ package org.jackhuang.hmcl.addon.meta;
 
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveEntry;
-import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
-import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
@@ -110,14 +108,14 @@ public final class LiteModMetadata {
         return updateURI;
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
+    public static LocalModFile.Metadata fromFile(Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
         ZipArchiveEntry entry = tree.getEntry("litemod.json");
         if (entry == null)
             throw new IOException("File " + modFile + " is not a LiteLoader mod.");
         LiteModMetadata metadata = JsonUtils.fromJsonFully(tree.getInputStream(entry), LiteModMetadata.class);
         if (metadata == null)
             throw new IOException("Mod " + modFile + " `litemod.json` is malformed.");
-        return new LocalModFile(modManager, modManager.getLocalMod(metadata.getName(), ModLoaderType.LITE_LOADER), modFile, metadata.getName(), new LocalAddonFile.Description(metadata.getDescription()), metadata.getAuthor(),
+        return new LocalModFile.Metadata(metadata.getName(), ModLoaderType.LITE_LOADER, metadata.getName(), metadata.getDescription(), metadata.getAuthor(),
                 metadata.getVersion(), metadata.getGameVersion(), metadata.getUpdateURI(), "");
     }
 

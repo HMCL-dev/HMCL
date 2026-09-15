@@ -20,10 +20,8 @@ package org.jackhuang.hmcl.addon.meta;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveEntry;
-import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
-import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
@@ -71,7 +69,7 @@ public final class QuiltModMetadata {
         this.quilt_loader = quiltLoader;
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
+    public static LocalModFile.Metadata fromFile(Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
         ZipArchiveEntry path = tree.getEntry("quilt.mod.json");
         if (path == null) {
             throw new IOException("File " + modFile + " is not a Quilt mod.");
@@ -82,12 +80,11 @@ public final class QuiltModMetadata {
             throw new IOException("File " + modFile + " is not a supported Quilt mod.");
         }
 
-        return new LocalModFile(
-                modManager,
-                modManager.getLocalMod(root.quilt_loader.id, ModLoaderType.QUILT),
-                modFile,
+        return new LocalModFile.Metadata(
+                root.quilt_loader.id,
+                ModLoaderType.QUILT,
                 root.quilt_loader.metadata.name,
-                new LocalAddonFile.Description(root.quilt_loader.metadata.description),
+                root.quilt_loader.metadata.description,
                 root.quilt_loader.metadata.contributors.entrySet().stream().map(entry -> String.format("%s (%s)", entry.getKey(), entry.getValue().getAsJsonPrimitive().getAsString())).collect(Collectors.joining(", ")),
                 root.quilt_loader.version,
                 "",
