@@ -108,12 +108,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     public @Unmodifiable Set<LocalModFile> liteLoaderAsModFiles() {
         lock.lock();
         try {
-            if (!hasMod("liteloader-forge", ModLoaderType.FORGE)) return Set.of();
-            Set<LocalModFile> files = new HashSet<>();
-            var mod = getLocalMod("liteloader-forge", ModLoaderType.FORGE);
-            files.addAll(mod.getFiles());
-            files.addAll(mod.getOldFiles());
-            return Set.copyOf(files);
+            return Set.copyOf(getLocalMod("liteloader-forge", ModLoaderType.FORGE).getFiles());
         } finally {
             lock.unlock();
         }

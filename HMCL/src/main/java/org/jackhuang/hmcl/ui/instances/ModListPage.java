@@ -144,7 +144,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         loadMods(gameInstance.getModManager());
     }
 
-    private final BooleanProperty hasLiteLoaderAsMod = new SimpleBooleanProperty(this, "hasLiteLoaderAsMod");
+    private final BooleanProperty hasLiteLoaderAsMod = new SimpleBooleanProperty(this, "hasLiteLoaderAsMod") {
+        @Override
+        public void invalidated() {
+            if (!isLoading()) Platform.runLater(() -> refresh());
+        }
+    };
 
     private void loadMods(ModManager modManager) {
         setLoading(true);
@@ -881,7 +886,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 boolean coreModLoaderMismatches = modInfo.getCoreModInfo().getModLoaders(gameVersionNumber).stream().noneMatch(page.supportedLoaders::contains);
                 boolean wrongCoreModDir = instance.getCoreModsDirectory() != null
                         && modInfo.getCoreModInfo().isLegacy()
-                        && modInfo.getFile().getParent().equals(instance.getCoreModsDirectory());
+                        && !modInfo.getFile().getParent().equals(instance.getCoreModsDirectory());
 
                 if (modLoaderType == ModLoaderType.UNKNOWN) {
                     if (modInfo.isCoreMod()) {
@@ -908,6 +913,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         if (wrongCoreModDir) warning.add(i18n("mods.coremods.check_dir"));
                     } else {
                         warning.add(i18n("mods.warning.loader_mismatch"));
+                    }
+                } else {
+                    if (modInfo.isCoreMod()) {
+                        if (wrongCoreModDir) {
+                            content.addTagWarning("CoreMod");
+                            warning.add(i18n("mods.coremods.check_dir"));
+                        } else {
+                            content.addTag("CoreMod");
+                        }
                     }
                 }
             }
