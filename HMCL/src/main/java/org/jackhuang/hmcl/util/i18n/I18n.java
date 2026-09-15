@@ -21,7 +21,39 @@ import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
+import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
+import org.jackhuang.hmcl.download.fabric.FabricAPIInstallTask;
+import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
+import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
+import org.jackhuang.hmcl.download.forge.ForgeOldInstallTask;
+import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
+import org.jackhuang.hmcl.download.game.GameInstallTask;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.download.java.mojang.MojangJavaDownloadTask;
+import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricInstallTask;
+import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
+import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
+import org.jackhuang.hmcl.download.neoforge.NeoForgeOldInstallTask;
+import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
+import org.jackhuang.hmcl.download.quilt.QuiltAPIInstallTask;
+import org.jackhuang.hmcl.download.quilt.QuiltInstallTask;
+import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
+import org.jackhuang.hmcl.java.JavaInstallTask;
+import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
+import org.jackhuang.hmcl.modpack.ModpackInstallTask;
+import org.jackhuang.hmcl.modpack.ModpackUpdateTask;
+import org.jackhuang.hmcl.modpack.curse.CurseCompletionTask;
+import org.jackhuang.hmcl.modpack.curse.CurseInstallTask;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackCompletionTask;
+import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackExportTask;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthCompletionTask;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthInstallTask;
+import org.jackhuang.hmcl.modpack.modrinth.ModrinthModpackExportTask;
+import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackInstallTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackLocalInstallTask;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.translator.Translator;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -150,6 +182,62 @@ public final class I18n {
         else return "bungeecord".equalsIgnoreCase(loader.name())
                 ? "BungeeCord"
                 : StringUtils.capitalizeWords(loader.name());
+    }
+
+    public static @Nullable String translateTaskName(Task<?> task) {
+        if (task instanceof GameAssetDownloadTask) {
+            task.setName(i18n("assets.download_all"));
+        } else if (task instanceof GameInstallTask) {
+            if (task.getInheritedStage() != null && task.getInheritedStage().startsWith("hmcl.install.game"))
+                return null;
+            task.setName(i18n("install.installer.install", i18n("install.installer.game")));
+        } else if (task instanceof CleanroomInstallTask) {
+            task.setName(i18n("install.installer.install", i18n("install.installer.cleanroom")));
+        } else if (task instanceof LegacyFabricInstallTask) {
+            task.setName(i18n("install.installer.install", i18n("install.installer.legacyfabric")));
+        } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
+            task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
+        } else if (task instanceof NeoForgeInstallTask || task instanceof NeoForgeOldInstallTask) {
+            task.setName(i18n("install.installer.install", i18n("install.installer.neoforge")));
+        } else if (task instanceof LiteLoaderInstallTask) {
+            task.setName(i18n("install.installer.install", i18n("install.installer.liteloader")));
+        } else if (task instanceof OptiFineInstallTask) {
+            task.setName(i18n("install.installer.install", i18n("install.installer.optifine")));
+        } else if (task instanceof FabricInstallTask) {
+            task.setName(i18n("install.installer.install", i18n("install.installer.fabric")));
+        } else if (task instanceof FabricAPIInstallTask) {
+            task.setName(i18n("install.installer.install", i18n("install.installer.fabric-api")));
+        } else if (task instanceof QuiltInstallTask) {
+            task.setName(i18n("install.installer.install", i18n("install.installer.quilt")));
+        } else if (task instanceof QuiltAPIInstallTask) {
+            task.setName(i18n("install.installer.install", i18n("install.installer.quilt-api")));
+        } else if (task instanceof CurseCompletionTask || task instanceof ModrinthCompletionTask || task instanceof ServerModpackCompletionTask || task instanceof McbbsModpackCompletionTask) {
+            task.setName(i18n("modpack.completion"));
+        } else if (task instanceof ModpackInstallTask) {
+            task.setName(i18n("modpack.installing"));
+        } else if (task instanceof ModpackUpdateTask) {
+            task.setName(i18n("modpack.update"));
+        } else if (task instanceof CurseInstallTask) {
+            task.setName(i18n("modpack.installing.given", i18n("modpack.type.curse")));
+        } else if (task instanceof MultiMCModpackInstallTask) {
+            task.setName(i18n("modpack.installing.given", i18n("modpack.type.multimc")));
+        } else if (task instanceof ModrinthInstallTask) {
+            task.setName(i18n("modpack.installing.given", i18n("modpack.type.modrinth")));
+        } else if (task instanceof ServerModpackLocalInstallTask) {
+            task.setName(i18n("install.installing") + ": " + i18n("modpack.type.server"));
+        } else if (task instanceof HMCLModpackInstallTask) {
+            task.setName(i18n("modpack.installing.given", "HMCL"));
+        } else if (task instanceof McbbsModpackExportTask || task instanceof ServerModpackExportTask || task instanceof ModrinthModpackExportTask) {
+            task.setName(i18n("modpack.export"));
+        } else if (task instanceof MinecraftInstanceTask) {
+            task.setName(i18n("modpack.scan"));
+        } else if (task instanceof MojangJavaDownloadTask) {
+            task.setName(i18n("download.java"));
+        } else if (task instanceof JavaInstallTask) {
+            task.setName(i18n("java.installing"));
+        }
+
+        return null;
     }
 
     public static boolean hasKey(String key) {
