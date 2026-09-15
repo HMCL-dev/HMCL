@@ -172,9 +172,15 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
             StackPane.setAlignment(saveButton, Pos.BOTTOM_RIGHT);
             saveButton.setPrefSize(100, 40);
             saveButton.setOnAction(e -> onSave());
+            String initialLocation = getLocation();
+            boolean initialUseRelativePath = toggleUseRelativePath.isSelected();
             saveButton.disableProperty().bind(Bindings.createBooleanBinding(
-                    () -> !txtGameDirectoryName.validate() || StringUtils.isBlank(getLocation()),
-                    txtGameDirectoryName.textProperty(), location));
+                    () -> !txtGameDirectoryName.validate() || StringUtils.isBlank(getLocation())
+                            || (gameDirectory != null
+                            && Objects.equals(txtGameDirectoryName.getText(), gameDirectoryDisplayName)
+                            && Objects.equals(getLocation(), initialLocation)
+                            && toggleUseRelativePath.isSelected() == initialUseRelativePath),
+                    txtGameDirectoryName.textProperty(), location, toggleUseRelativePath.selectedProperty()));
         }
 
         if (gameDirectory == null) {
