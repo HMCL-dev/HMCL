@@ -20,10 +20,8 @@ package org.jackhuang.hmcl.addon.meta;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import kala.compress.archivers.zip.ZipArchiveEntry;
-import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
-import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
@@ -60,13 +58,13 @@ public final class FabricModMetadata {
         this.contact = contact;
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
+    public static LocalModFile.Metadata fromFile(Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
         ZipArchiveEntry mcmod = tree.getEntry("fabric.mod.json");
         if (mcmod == null)
             throw new IOException("File " + modFile + " is not a Fabric mod.");
         FabricModMetadata metadata = JsonUtils.fromNonNullJsonFully(tree.getInputStream(mcmod), FabricModMetadata.class);
         String authors = metadata.authors == null ? "" : metadata.authors.stream().map(author -> author.name).collect(Collectors.joining(", "));
-        return new LocalModFile(modManager, modManager.getLocalMod(metadata.id, ModLoaderType.FABRIC), modFile, metadata.name, new LocalAddonFile.Description(metadata.description),
+        return new LocalModFile.Metadata(metadata.id, ModLoaderType.FABRIC, metadata.name, metadata.description,
                 authors, metadata.version, "", metadata.contact != null ? metadata.contact.getOrDefault("homepage", "") : "", metadata.icon);
     }
 
