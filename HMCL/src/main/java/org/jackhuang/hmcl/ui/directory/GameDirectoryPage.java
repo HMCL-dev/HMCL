@@ -125,10 +125,12 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                                 setMessage(i18n("game_directory.already_exists"));
                             }
 
+                            /// Rejects names used by other game directories, excluding the entry being edited.
                             @Override
                             protected void eval() {
                                 JFXTextField control = (JFXTextField) this.getSrcControl();
                                 hasErrors.set(GameDirectoryManager.getGameDirectories().stream()
+                                        .filter(existingGameDirectory -> existingGameDirectory != gameDirectory)
                                         .anyMatch(existingGameDirectory -> Objects.equals(
                                                 GameDirectoryManager.getGameDirectoryCustomName(existingGameDirectory), control.getText())));
                             }
@@ -175,38 +177,41 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                     txtGameDirectoryName.textProperty(), location));
         }
 
-        ChangeListener<String> locationChangeListener = (observable, oldValue, newValue) -> {
-            Path newPath;
-            try {
-                newPath = FileUtils.toAbsolute(Path.of(newValue));
-            } catch (InvalidPathException ignored) {
-                return;
-            }
-
-            if (!".minecraft".equals(FileUtils.getName(newPath)))
-                return;
-
-            Path parent = newPath.getParent();
-            if (parent == null)
-                return;
-
-            String suggestedName = FileUtils.getName(parent);
-            if (!suggestedName.isBlank()) {
-                txtGameDirectoryName.setText(suggestedName);
-            }
-        };
-        locationChangeListener.changed(null, this.location.get(), this.location.get());
-        locationProperty().addListener(locationChangeListener);
-
-        txtGameDirectoryName.textProperty().addListener(new ChangeListener<>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                if (txtGameDirectoryName.isFocused()) {
-                    txtGameDirectoryName.textProperty().removeListener(this);
-                    locationProperty().removeListener(locationChangeListener);
+        if (gameDirectory == null) {
+            ChangeListener<String> locationChangeListener = (observable, oldValue, newValue) -> {
+                Path newPath;
+                try {
+                    newPath = FileUtils.toAbsolute(Path.of(newValue));
+                } catch (InvalidPathException ignored) {
+                    return;
                 }
-            }
-        });
+
+                if (!".minecraft".equals(FileUtils.getName(newPath)))
+                    return;
+
+                @Nullable Path parent = newPath.getParent();
+                if (parent == null)
+                    return;
+
+                String suggestedName = FileUtils.getName(parent);
+                if (!suggestedName.isBlank()) {
+                    txtGameDirectoryName.setText(suggestedName);
+                }
+            };
+            locationChangeListener.changed(locationProperty(), this.location.get(), this.location.get());
+            locationProperty().addListener(locationChangeListener);
+
+            txtGameDirectoryName.textProperty().addListener(new ChangeListener<>() {
+                /// Stops automatic name suggestions after the user edits the name.
+                @Override
+                public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                    if (txtGameDirectoryName.isFocused()) {
+                        txtGameDirectoryName.textProperty().removeListener(this);
+                        locationProperty().removeListener(locationChangeListener);
+                    }
+                }
+            });
+        }
     }
 
     @FXThread
