@@ -21,16 +21,15 @@ import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
 import javafx.event.Event;
 import javafx.event.EventType;
-import javafx.scene.Node;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.EventPriority;
-import org.jackhuang.hmcl.event.RefreshedGameInstancesEvent;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.HMCLGameRepositorySnapshot;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -48,8 +47,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Optional;
-import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -65,10 +62,19 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private final TabHeader.Tab<ResourcePackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentInstanceUpgradable = new SimpleBooleanProperty();
-    private final ObjectProperty<HMCLGameRepository.InstanceReference> instanceReference = new SimpleObjectProperty<>();
+    private final ObjectProperty<HMCLGameInstance.@Nullable Optional> instance =
+            new SimpleObjectProperty<>(this, "instance");
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
-    private GameInstanceID preferredInstanceId = null;
+    /// Re-resolves the page context when its repository publishes a new snapshot.
+    private final ChangeListener<? super HMCLGameRepositorySnapshot> repositorySnapshotListener =
+            (observable, oldValue, newValue) -> checkSelectedInstance();
+
+    /// Repository currently observed for snapshot publications.
+    private @Nullable HMCLGameRepository observedRepository;
+
+    /// Last concrete instance displayed by this page.
+    private @Nullable GameInstanceID preferredInstanceId;
 
     public static class WorkingDirChangedEvent extends Event {
         public static final EventType<WorkingDirChangedEvent> EVENT_TYPE = new EventType<>(Event.ANY, "WORKING_DIR_CHANGED");
@@ -79,12 +85,13 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     public GameInstancePage() {
-        gameSettingsTab.setNodeSupplier(loadInstanceFor(() -> new GameSettingsPage<>(GameSettings.Instance.class)));
-        installerListTab.setNodeSupplier(loadInstanceFor(InstallerListPage::new));
-        modListTab.setNodeSupplier(loadInstanceFor(ModListPage::new));
-        resourcePackTab.setNodeSupplier(loadInstanceFor(ResourcePackListPage::new));
-        worldListTab.setNodeSupplier(loadInstanceFor(WorldListPage::new));
-        schematicsTab.setNodeSupplier(loadInstanceFor(SchematicsPage::new));
+        // Child tabs subscribe to instanceProperty() themselves and reload on change.
+        gameSettingsTab.setNodeSupplier(() -> new GameSettingsPage<>(GameSettings.Instance.class, instance));
+        installerListTab.setNodeSupplier(() -> new InstallerListPage(instance));
+        modListTab.setNodeSupplier(() -> new ModListPage(instance));
+        resourcePackTab.setNodeSupplier(() -> new ResourcePackListPage(instance));
+        worldListTab.setNodeSupplier(() -> new WorldListPage(instance));
+        schematicsTab.setNodeSupplier(() -> new SchematicsPage(instance));
 
         tab = new TabHeader(transitionPane, gameSettingsTab, installerListTab, modListTab, resourcePackTab, worldListTab, schematicsTab);
         tab.select(gameSettingsTab);
@@ -92,31 +99,64 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
         addEventHandler(WorkingDirChangedEvent.EVENT_TYPE, event -> {
-            if (this.instanceReference.get() != null) {
-                if (installerListTab.isInitialized())
-                    installerListTab.getNode().loadInstance(getRepository(), getInstanceId());
-                if (modListTab.isInitialized())
-                    modListTab.getNode().loadInstance(getRepository(), getInstanceId());
-                if (resourcePackTab.isInitialized())
-                    resourcePackTab.getNode().loadInstance(getRepository(), getInstanceId());
-                if (worldListTab.isInitialized())
-                    worldListTab.getNode().loadInstance(getRepository(), getInstanceId());
-                if (schematicsTab.isInitialized())
-                    schematicsTab.getNode().loadInstance(getRepository(), getInstanceId());
+            HMCLGameInstance.Optional current = this.instance.get();
+            if (current != null) {
+                // Re-resolve so subscribed tabs reload from the current snapshot.
+                this.instance.set(current.refreshed());
             }
         });
 
-        listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedGameInstancesEvent.class).registerWeak(event -> checkSelectedInstance(), EventPriority.HIGHEST));
+        // Page chrome that depends on the current instance.
+        listenerHolder.add(FXUtils.onWeakChange(instance, current -> {
+            observeRepository(current);
+            if (current == null) {
+                return;
+            }
+            HMCLGameInstance gameInstance = current.instance();
+            currentInstanceUpgradable.set(gameInstance != null && gameInstance.isModpack());
+            if (gameInstance != null) {
+                preferredInstanceId = gameInstance.getId();
+            }
+        }));
+    }
+
+    /// Observes snapshot publications for the repository associated with the current page context.
+    ///
+    /// @param current the current page context, or `null` when the page has no context
+    private void observeRepository(HMCLGameInstance.@Nullable Optional current) {
+        @Nullable HMCLGameRepository repository = current != null ? current.repository() : null;
+        if (repository == observedRepository) {
+            return;
+        }
+
+        if (observedRepository != null) {
+            observedRepository.snapshotProperty().removeListener(repositorySnapshotListener);
+        }
+        observedRepository = repository;
+        if (repository != null) {
+            repository.snapshotProperty().addListener(repositorySnapshotListener);
+        }
+    }
+
+    /// Returns the current instance context for this page and its tabs.
+    ///
+    /// Child tabs subscribe to this property and reload when it changes. The page only publishes
+    /// context; it does not push `loadInstance` into children.
+    ///
+    /// @return the observable instance context
+    public ReadOnlyObjectProperty<HMCLGameInstance.@Nullable Optional> instanceProperty() {
+        return instance;
     }
 
     private void checkSelectedInstance() {
         runInFX(() -> {
-            if (this.instanceReference.get() == null) return;
-            HMCLGameRepository repository = this.instanceReference.get().repository();
-            @Nullable GameInstanceID instanceId = this.instanceReference.get().instanceId();
-            if (instanceId == null || !repository.hasInstance(instanceId)) {
+            HMCLGameInstance.Optional current = this.instance.get();
+            if (current == null) return;
+            current = current.refreshed();
+            this.instance.set(current);
+            if (current.isEmpty()) {
                 if (preferredInstanceId != null) {
-                    loadInstance(preferredInstanceId, repository);
+                    loadInstance(preferredInstanceId, current.repository());
                 } else {
                     fireEvent(new PageCloseEvent());
                 }
@@ -124,56 +164,28 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         });
     }
 
-    private <T extends Node> Supplier<T> loadInstanceFor(Supplier<T> nodeSupplier) {
-        return () -> {
-            T node = nodeSupplier.get();
-            if (instanceReference.get() != null) {
-                if (node instanceof GameInstancePage.GameInstanceLoadable loadable) {
-                    @Nullable GameInstanceID instanceId = instanceReference.get().instanceId();
-                    loadable.loadInstance(instanceReference.get().repository(), instanceId);
-                }
-            }
-            return node;
-        };
-    }
-
     public void showInstanceSettings() {
         tab.select(gameSettingsTab, false);
     }
 
     public void setInstance(GameInstanceID instanceId, HMCLGameRepository repository) {
-        this.instanceReference.set(new HMCLGameRepository.InstanceReference(repository, instanceId));
+        this.instance.set(HMCLGameInstance.Optional.of(repository, instanceId));
     }
 
     public void loadInstance(GameInstanceID instanceId, HMCLGameRepository repository) {
         // If we jumped to game list page and deleted this version
         // and back to this page, we should return to main page.
-        if (this.instanceReference.get() != null && (!getRepository().isLoaded() ||
+        if (this.instance.get() != null && (!getRepository().isLoaded() ||
                 !getRepository().hasInstance(instanceId))) {
             Platform.runLater(() -> fireEvent(new PageCloseEvent()));
             return;
         }
 
-        setInstance(instanceId, repository);
-        preferredInstanceId = instanceId;
-
-        if (gameSettingsTab.isInitialized())
-            gameSettingsTab.getNode().loadInstance(repository, instanceId);
-        if (installerListTab.isInitialized())
-            installerListTab.getNode().loadInstance(repository, instanceId);
-        if (modListTab.isInitialized())
-            modListTab.getNode().loadInstance(repository, instanceId);
-        if (resourcePackTab.isInitialized())
-            resourcePackTab.getNode().loadInstance(repository, instanceId);
-        if (worldListTab.isInitialized())
-            worldListTab.getNode().loadInstance(repository, instanceId);
-        if (schematicsTab.isInitialized())
-            schematicsTab.getNode().loadInstance(repository, instanceId);
-        currentInstanceUpgradable.set(repository.isModpack(instanceId));
+        this.instance.set(HMCLGameInstance.Optional.of(repository, instanceId));
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
-        if (this.instanceReference.get() == null)
+        if (this.instance.get() == null)
             throw new IllegalStateException();
 
         // If we jumped to game list page and deleted this version
@@ -188,11 +200,18 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     private void onBrowse(String sub) {
-        FXUtils.openFolder(getRepository().getRunDirectory(getInstanceId()).resolve(sub));
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance == null) {
+            return;
+        }
+        FXUtils.openFolder(gameInstance.getRunDirectory().resolve(sub));
     }
 
     private void redownloadAssetIndex() {
-        Instances.updateGameAssets(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.updateGameAssets(gameInstance);
+        }
     }
 
     private void clearLibraries() {
@@ -209,9 +228,9 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private void clearAssets() {
         Path assetsDir = getRepository().getBaseDirectory().resolve("assets");
 
-        HMCLGameRepository.InstanceReference currentInstanceReference = instanceReference.get();
-        Path resourcesDir = currentInstanceReference != null
-                ? getRepository().getRunDirectory(currentInstanceReference.instanceId()).resolve("resources")
+        HMCLGameInstance.Optional current = instance.get();
+        Path resourcesDir = current != null && current.isPresent()
+                ? current.instance().getRunDirectory().resolve("resources")
                 : null;
 
         Task.runAsync(Schedulers.io(), () -> {
@@ -227,46 +246,79 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     private void clearJunkFiles() {
-        Instances.cleanInstance(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.cleanInstance(gameInstance);
+        }
     }
 
     private void testGame() {
-        Instances.testGame(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.testGame(gameInstance);
+        }
     }
 
     private void updateGame() {
-        Instances.updateInstance(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.updateInstance(gameInstance);
+        }
     }
 
     private void generateLaunchScript() {
-        Instances.generateLaunchScript(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.generateLaunchScript(gameInstance);
+        }
     }
 
     private void export() {
-        Instances.exportInstance(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.exportInstance(gameInstance);
+        }
     }
 
     private void rename() {
-        Instances.renameInstance(getRepository(), getInstanceId())
-                .thenApply(newInstanceId -> this.preferredInstanceId = new GameInstanceID(newInstanceId));
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.renameInstance(gameInstance)
+                    .thenApply(newInstanceId -> this.preferredInstanceId = new GameInstanceID(newInstanceId));
+        }
     }
 
     private void remove() {
-        Instances.deleteInstance(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.deleteInstance(gameInstance);
+        }
     }
 
     private void duplicate() {
-        Instances.duplicateInstance(getRepository(), getInstanceId());
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.duplicateInstance(gameInstance);
+        }
+    }
+
+    private @Nullable HMCLGameInstance requireGameInstance() {
+        HMCLGameInstance.Optional current = instance.get();
+        return current != null ? current.instance() : null;
     }
 
     public HMCLGameRepository getRepository() {
-        return Optional.ofNullable(instanceReference.get()).map(HMCLGameRepository.InstanceReference::repository).orElse(null);
+        HMCLGameInstance.Optional current = instance.get();
+        return current != null ? current.repository() : null;
     }
 
     public @Nullable GameInstanceID getInstanceId() {
-        return Optional.ofNullable(instanceReference.get())
-                .map(HMCLGameRepository.InstanceReference::instanceId)
-                .orElse(null);
+        HMCLGameInstance.Optional current = instance.get();
+        return current != null ? current.instanceId() : null;
+    }
+
+    public HMCLGameInstance.Optional getInstance() {
+        return instance.get();
     }
 
     @Override
@@ -350,7 +402,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
 
             control.state.bind(Bindings.createObjectBinding(() ->
                             State.fromTitle(i18n("instance.manage.manage.title", getSkinnable().getInstanceId()), -1),
-                    getSkinnable().instanceReference));
+                    getSkinnable().instance));
 
             //control.transitionPane.getStyleClass().add("gray-background");
             //FXUtils.setOverflowHidden(control.transitionPane, 8);
@@ -358,12 +410,4 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         }
     }
 
-    /// Loads page content for a game instance in a repository.
-    public interface GameInstanceLoadable {
-        /// Loads page content for the given repository and game instance.
-        ///
-        /// @param repository the repository containing the game instance
-        /// @param instanceId the game instance ID, or `null` when only repository context is available
-        void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId);
-    }
 }

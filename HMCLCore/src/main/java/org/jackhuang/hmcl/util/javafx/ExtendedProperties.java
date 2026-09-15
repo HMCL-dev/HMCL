@@ -22,8 +22,10 @@ import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
 import javafx.collections.ObservableList;
-import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.SelectionModel;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.util.Holder;
 
 import java.util.Objects;
@@ -32,7 +34,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 /**
@@ -120,38 +121,6 @@ public final class ExtendedProperties {
         property.addListener(new Holder<>(onTogglesChanged));
 
         return property;
-    }
-    // ====
-
-    // ==== CheckBox ====
-    @SuppressWarnings("unchecked")
-    public static ObjectProperty<Boolean> reversedSelectedPropertyFor(CheckBox checkbox) {
-        return (ObjectProperty<Boolean>) checkbox.getProperties().computeIfAbsent(
-                PROP_PREFIX + ".checkbox.reservedSelected",
-                any -> new MappedProperty<Boolean, Boolean>(checkbox, "ext.reservedSelected",
-                        checkbox.selectedProperty(), it -> !it, it -> !it));
-    }
-    // ====
-
-    // ==== General ====
-    @SuppressWarnings("unchecked")
-    public static ObjectProperty<Boolean> classPropertyFor(Node node, String cssClass) {
-        return (ObjectProperty<Boolean>) node.getProperties().computeIfAbsent(
-                PROP_PREFIX + ".cssClass." + cssClass,
-                any -> {
-                    ObservableList<String> classes = node.getStyleClass();
-                    return new ReadWriteComposedProperty<>(node, "extra.cssClass." + cssClass,
-                            createBooleanBinding(() -> classes.contains(cssClass), classes),
-                            state -> {
-                                if (state) {
-                                    if (!classes.contains(cssClass)) {
-                                        classes.add(cssClass);
-                                    }
-                                } else {
-                                    classes.remove(cssClass);
-                                }
-                            });
-                });
     }
     // ====
 

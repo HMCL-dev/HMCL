@@ -17,18 +17,25 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.task.Task;
+
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /// @author huangyuhui
 public final class AutoDownloadProvider implements DownloadProvider {
     private final List<DownloadProvider> versionListProviders;
     private final List<DownloadProvider> fileProviders;
-    private final ConcurrentMap<String, VersionList<?>> versionLists = new ConcurrentHashMap<>();
+    private final ConcurrentMap<GameComponentType, ComponentVersionList<?>> versionLists = new ConcurrentHashMap<>();
 
     public AutoDownloadProvider(
             List<DownloadProvider> versionListProviders,
@@ -94,11 +101,11 @@ public final class AutoDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public VersionList<?> getVersionListById(String id) {
-        return versionLists.computeIfAbsent(id, value -> {
-            VersionList<?>[] lists = new VersionList<?>[versionListProviders.size()];
+    public ComponentVersionList<?> getVersionList(GameComponentType componentType) {
+        return versionLists.computeIfAbsent(componentType, value -> {
+            ComponentVersionList<?>[] lists = new ComponentVersionList<?>[versionListProviders.size()];
             for (int i = 0; i < versionListProviders.size(); i++) {
-                lists[i] = versionListProviders.get(i).getVersionListById(value);
+                lists[i] = versionListProviders.get(i).getVersionList(value);
             }
             return new MultipleSourceVersionList(lists);
         });
@@ -112,5 +119,91 @@ public final class AutoDownloadProvider implements DownloadProvider {
     @Override
     public String toString() {
         return "AutoDownloadProvider[versionListProviders=%s, fileProviders=%s]".formatted(versionListProviders, fileProviders);
+    }
+
+    private static final class MultipleSourceVersionList extends ComponentVersionList<ComponentRemoteVersion> {
+        private final ComponentVersionList<?>[] backends;
+
+        MultipleSourceVersionList(ComponentVersionList<?>[] backends) {
+            this.backends = backends;
+
+            assert (backends.length >= 1);
+        }
+
+        @Override
+        public boolean hasType() {
+            boolean hasType = backends[0].hasType();
+            assert (Arrays.stream(backends).allMatch(versionList -> versionList.hasType() == hasType));
+            return hasType;
+        }
+
+        @Override
+        public Task<?> refreshAsync() {
+            throw new UnsupportedOperationException("MultipleSourceVersionList does not support loading the entire remote version list.");
+        }
+
+        private Task<?> refreshAsync(String gameVersion, int sourceIndex) {
+            ComponentVersionList<?> versionList = backends[sourceIndex];
+            Task<?> refreshTask = versionList.refreshAsync(gameVersion);
+
+            return new Task<>() {
+                private Task<?> nextTask = null;
+
+                {
+                    setSignificance(TaskSignificance.MODERATE);
+                    setName("MultipleSourceVersionList.refreshAsync(task=%s, index=%d, all=%d)".formatted(
+                            refreshTask.getName(), sourceIndex, backends.length)
+                    );
+                }
+
+                @Override
+                public Collection<Task<?>> getDependents() {
+                    return List.of(refreshTask);
+                }
+
+                @Override
+                public Collection<? extends Task<?>> getDependencies() {
+                    return nextTask != null ? List.of(nextTask) : List.of();
+                }
+
+                @Override
+                public boolean isRelyingOnDependents() {
+                    return false;
+                }
+
+                @Override
+                public void execute() throws Exception {
+                    if (isDependentsSucceeded()) {
+                        lock.writeLock().lock();
+                        try {
+                            versions.putAll(gameVersion, versionList.getVersions(gameVersion));
+                        } finally {
+                            lock.writeLock().unlock();
+                        }
+
+                        setResult(refreshTask.getResult());
+                    } else {
+                        Exception exception = refreshTask.getException();
+                        assert exception != null;
+
+                        if (sourceIndex == backends.length - 1) {
+                            LOG.warning("Failed to fetch versions list from all sources", exception);
+                            setSignificance(TaskSignificance.MINOR);
+                            throw exception;
+                        } else {
+                            LOG.warning("Failed to fetch versions list and try to fetch from other source", exception);
+                            nextTask = refreshAsync(gameVersion, sourceIndex + 1);
+                            nextTask.storeTo(this::setResult);
+                        }
+                    }
+                }
+            };
+        }
+
+        @Override
+        public Task<?> refreshAsync(String gameVersion) {
+            versions.clear(gameVersion);
+            return refreshAsync(gameVersion, 0);
+        }
     }
 }

@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
@@ -65,11 +64,11 @@ public final class LiteLoaderInstallTask extends Task<GameInstancePatch> {
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(null, remote.getUrls().get(0)))
         );
 
-        setResult(new GameInstancePatch(LibraryAnalyzer.LibraryType.LITELOADER.getPatchId(),
+        setResult(new GameInstancePatch(GameComponentType.LITELOADER.getPatchId(),
                 remote.getSelfVersion(),
                 60000,
                 new Arguments().addGameArguments("--tweakClass", "com.mumfrey.liteloader.launch.LiteLoaderTweaker"),
-                LibraryAnalyzer.LAUNCH_WRAPPER_MAIN,
+                GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN,
                 Lang.merge(remote.getLibraries(), Collections.singleton(library)))
                 .withLogging(Collections.emptyMap()) // Mods may log in malformed format, causing XML parser to crash. So we suppress using official log4j configuration
         );
