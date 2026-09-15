@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.modpack.curse;
 
-import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
@@ -26,11 +25,8 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.logging.PerfLog;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,17 +34,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
@@ -70,6 +60,9 @@ public final class CurseCompletionTask extends Task<Void> {
     /// The manifest supplied by the caller or loaded from disk, if available.
     private @Nullable CurseManifest manifest;
 
+    /// Metadata resolved ahead of this task, or `null` when it still has to be looked up.
+    private final @Nullable CurseManifestLookup lookup;
+
     /// Keys of optional files the user chose not to install; `null` means install all.
     private @Nullable Set<String> excludedFiles;
 
@@ -77,20 +70,20 @@ public final class CurseCompletionTask extends Task<Void> {
     private List<Task<?>> dependencies = List.of();
 
     /// Whether every manifest file name could be resolved.
-    private final AtomicBoolean allNameKnown = new AtomicBoolean(true);
+    private boolean allNameKnown = true;
+
+    /// Whether a manifest entry refers to a deleted remote file.
+    private boolean notFound = false;
 
     /// The number of manifest entries processed in the current phase.
     private final AtomicInteger finished = new AtomicInteger(0);
-
-    /// Whether a manifest entry refers to a deleted remote file.
-    private final AtomicBoolean notFound = new AtomicBoolean(false);
 
     /// Creates a task that completes the installed CurseForge modpack.
     ///
     /// @param dependencyManager the dependency manager
     /// @param instance          the registered instance to complete
     public CurseCompletionTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance) {
-        this(dependencyManager, instance, null, null);
+        this(dependencyManager, instance, null, null, null);
     }
 
     /// Creates a task that completes the installed CurseForge modpack using an optional manifest.
@@ -105,11 +98,30 @@ public final class CurseCompletionTask extends Task<Void> {
             DefaultGameInstance instance,
             @Nullable CurseManifest manifest,
             @Nullable Set<String> excludedFiles) {
+        this(dependencyManager, instance, manifest, excludedFiles, null);
+    }
+
+    /// Creates a task that completes the installed CurseForge modpack using resolved metadata.
+    ///
+    /// @param dependencyManager the dependency manager
+    /// @param instance          the registered instance to complete
+    /// @param manifest          the CurseForge manifest, or `null` to read it from disk
+    /// @param excludedFiles     keys of optional files the user chose not to install; `null` means
+    ///                          install all. When non-null, must not contain `null` elements.
+    /// @param lookup            metadata resolved by a [CurseManifestLookupTask] scheduled earlier,
+    ///                          or `null` to look it up now
+    public CurseCompletionTask(
+            DefaultDependencyManager dependencyManager,
+            DefaultGameInstance instance,
+            @Nullable CurseManifest manifest,
+            @Nullable Set<String> excludedFiles,
+            @Nullable CurseManifestLookup lookup) {
         dependencyManager.validateGameInstance(instance);
         this.dependency = dependencyManager;
         this.instance = instance;
         this.modManager = instance.getModManager();
         this.manifest = manifest;
+        this.lookup = lookup;
         this.excludedFiles = excludedFiles == null ? null : Set.copyOf(excludedFiles);
 
         if (manifest == null)
@@ -149,23 +161,17 @@ public final class CurseCompletionTask extends Task<Void> {
 
         Path root = instance.getInstanceRoot();
 
-        long perfStart = System.nanoTime();
+        // An installer that scheduled a [CurseManifestLookupTask] beside its own downloads hands
+        // the result in, and the lookups are then already paid for. The repair entry points, which
+        // have no installation to hang a task off, still resolve them here.
+        CurseManifestLookup lookup = this.lookup;
+        if (lookup == null)
+            lookup = CurseManifestLookupTask.resolve(manifest.files());
 
-        List<CurseManifestFile> manifestFiles = manifest.files();
-        ExecutorService executor = Schedulers.io();
+        allNameKnown = lookup.allNameKnown();
+        notFound = lookup.notFound();
 
-        // Neither lookup depends on the other: the class id batch is keyed by project id, which is
-        // known before a single file name has been resolved, and resolving a name never changes a
-        // project id. They are dispatched together because both are latency bound and draw on the
-        // same CurseForge request budget, so running them one after the other left that budget
-        // almost entirely unused while the shorter of the two was in flight.
-        Future<List<CurseManifestFile>> resolvedNames = executor.submit(() -> resolveFileNames(manifestFiles));
-
-        // Because in China, Curse is too difficult to visit,
-        // if failed, ignore it and retry next time.
-        Future<Map<String, Integer>> classIdLookup = executor.submit(() -> loadAddonClassIds(manifestFiles));
-
-        CurseManifest newManifest = manifest.setFiles(await(resolvedNames));
+        CurseManifest newManifest = manifest.setFiles(lookup.files());
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), newManifest);
         if (excludedFiles != null) {
             JsonUtils.writeToJsonFile(
@@ -173,12 +179,9 @@ public final class CurseCompletionTask extends Task<Void> {
                     List.copyOf(excludedFiles));
         }
 
-        long perfNameResolved = System.nanoTime();
-
         // The class id decides which directory a missing file belongs to. It is the same question for
-        // every entry, so it is asked once in a batch instead of once per entry.
-        Map<String, Integer> addonClassIds = await(classIdLookup);
-        long perfClassIds = System.nanoTime();
+        // every entry, so it was asked once in a batch instead of once per entry.
+        Map<String, Integer> addonClassIds = lookup.addonClassIds();
 
         Path versionRoot = instance.getInstanceRoot();
         Path resourcePacksRoot = versionRoot.resolve("resourcepacks");
@@ -208,121 +211,9 @@ public final class CurseCompletionTask extends Task<Void> {
                 })
                 .toList();
 
-        long perfEnd = System.nanoTime();
-        // `resolveNamesMs` and `classIdsMs` are consecutive slices of the same run, but the two
-        // lookups they bound overlap now, so the second slice measures how much longer the class id
-        // batch took rather than how much of the phase it owned.
-        PerfLog.event("curse.completion",
-                "manifestFiles=" + manifest.files().size()
-                        + " downloadTasks=" + dependencies.size()
-                        + " resolvedClassIds=" + addonClassIds.size()
-                        + " resolveNamesMs=" + (perfNameResolved - perfStart) / 1_000_000L
-                        + " classIdsMs=" + (perfClassIds - perfNameResolved) / 1_000_000L
-                        + " guessPathsMs=" + (perfEnd - perfClassIds) / 1_000_000L
-                        + " totalMs=" + (perfEnd - perfStart) / 1_000_000L);
-
         if (!dependencies.isEmpty()) {
             getProperties().put("total", dependencies.size());
             notifyPropertiesChanged();
-        }
-    }
-
-    /// Fills in the file name, url and hashes of every manifest entry that is missing them.
-    ///
-    /// Entries already carrying a name and a url are returned untouched; each of the others costs one
-    /// `GET /v1/mods/{projectId}/files/{fileId}`. Those requests are independent, so they are
-    /// dispatched to [Schedulers#io()] rather than spread over the common pool, whose parallelism is
-    /// capped at the processor count and left most of each request's latency uncovered.
-    /// [CurseForgeRemoteAddonRepository] still caps how many are actually in flight.
-    ///
-    /// Order is preserved, and a failing entry is logged and returned unchanged, so one unreachable
-    /// file does not abort the completion.
-    ///
-    /// @param files the manifest entries
-    /// @return one entry per input, in the same order
-    private List<CurseManifestFile> resolveFileNames(List<CurseManifestFile> files) throws Exception {
-        if (files.isEmpty())
-            return files;
-
-        CurseManifestFile[] resolved = new CurseManifestFile[files.size()];
-        ExecutorService executor = Schedulers.io();
-
-        List<Future<?>> pending = new ArrayList<>(files.size());
-        for (int i = 0; i < files.size(); i++) {
-            int index = i;
-            pending.add(executor.submit(() -> {
-                resolved[index] = resolveFileName(files.get(index));
-                updateProgress(finished.incrementAndGet(), files.size());
-            }));
-        }
-
-        for (Future<?> future : pending) {
-            await(future);
-        }
-
-        return Arrays.asList(resolved);
-    }
-
-    /// Resolves one manifest entry, returning it unchanged when CurseForge cannot answer.
-    ///
-    /// @param file the manifest entry
-    /// @return the entry enriched with the remote file name, url and hashes, or `file` itself
-    private CurseManifestFile resolveFileName(CurseManifestFile file) {
-        if (!StringUtils.isBlank(file.fileName()) && file.url() != null)
-            return file;
-
-        try {
-            RemoteAddon.File remoteFile = CurseForgeRemoteAddonRepository.MODS.getAddonFile(Integer.toString(file.projectID()), Integer.toString(file.fileID()));
-            return file
-                    .withFileName(remoteFile.filename())
-                    .withURL(remoteFile.url())
-                    .withHashes(remoteFile.hashes());
-        } catch (FileNotFoundException fof) {
-            LOG.warning("Could not query api.curseforge.com for deleted mods: " + file.projectID() + ", " + file.fileID(), fof);
-            notFound.set(true);
-            return file;
-        } catch (IOException | JsonParseException e) {
-            LOG.warning("Unable to fetch the file name projectID=" + file.projectID() + ", fileID=" + file.fileID(), e);
-            allNameKnown.set(false);
-            return file;
-        }
-    }
-
-    /// Waits for one dispatched job, rethrowing whatever it failed with.
-    ///
-    /// @param future the job to wait for
-    /// @param <R>    the job result type
-    /// @return the job's result
-    /// @throws Exception the failure the job reported, or `InterruptedException` if cancelled
-    private static <R> R await(Future<R> future) throws Exception {
-        try {
-            return future.get();
-        } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof Exception exception)
-                throw exception;
-            if (cause instanceof Error error)
-                throw error;
-            throw e;
-        }
-    }
-
-    /// Resolves the class id of every manifest entry with as few requests as possible.
-    ///
-    /// A failure is not fatal: entries without a class id fall back to the per-entry lookup in
-    /// [#guessFilePath] that the completion task used for every entry before.
-    ///
-    /// @param files the manifest entries
-    /// @return the class id of every entry the server answered for, keyed by project id
-    private Map<String, Integer> loadAddonClassIds(List<CurseManifestFile> files) {
-        try {
-            return CurseForgeRemoteAddonRepository.MODS.getAddonClassIds(
-                    files.stream()
-                            .map(file -> Integer.toString(file.projectID()))
-                            .toList());
-        } catch (IOException | JsonParseException e) {
-            LOG.warning("Unable to fetch CurseForge class ids in batch, falling back to per-entry lookups", e);
-            return Map.of();
         }
     }
 
@@ -372,9 +263,9 @@ public final class CurseCompletionTask extends Task<Void> {
     public void postExecute() throws Exception {
         // Let this task fail if the curse manifest has not been completed.
         // But continue other downloads.
-        if (notFound.get())
+        if (notFound)
             throw new ModpackCompletionException(new FileNotFoundException());
-        if (!allNameKnown.get() || !isDependenciesSucceeded())
+        if (!allNameKnown || !isDependenciesSucceeded())
             throw new ModpackCompletionException();
     }
 }

@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.addon;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.logging.PerfLog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -140,24 +139,17 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     /// @return an unmodifiable sorted list of local addon files
     /// @throws IOException if loading is required and fails
     public @Unmodifiable List<T> getLocalFiles() throws IOException {
-        long perfStart = System.nanoTime();
+        lock.lock();
         try {
-            lock.lock();
-            try {
-                List<T> cache = sortedCache;
-                if (cache == null || sortedCacheVersion != localFilesVersion) {
-                    cache = localFiles.stream().sorted(getComparator()).toList();
-                    sortedCache = cache;
-                    sortedCacheVersion = localFilesVersion;
-                }
-                return cache;
-            } finally {
-                lock.unlock();
+            List<T> cache = sortedCache;
+            if (cache == null || sortedCacheVersion != localFilesVersion) {
+                cache = localFiles.stream().sorted(getComparator()).toList();
+                sortedCache = cache;
+                sortedCacheVersion = localFilesVersion;
             }
+            return cache;
         } finally {
-            // The measured time includes the wait for [#lock], which is what makes contention with
-            // an in-flight scan visible.
-            PerfLog.invocation("addon.getLocalFiles", System.nanoTime() - perfStart);
+            lock.unlock();
         }
     }
 

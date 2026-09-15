@@ -64,21 +64,24 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
-import org.jackhuang.hmcl.util.logging.PerfLog;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
@@ -94,11 +97,49 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     private final ReentrantLock lock = new ReentrantLock();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
+    /// Icons decoded from mod files, keyed by the file state they were decoded from.
+    ///
+    /// A reload builds a fresh [ModInfoObject] for every mod, so an icon held on the item is thrown
+    /// away and read out of its jar again on the next reload. Holding it here instead lets the
+    /// replacement item reuse what the item it replaced had already decoded, which is what keeps a
+    /// reload from re-reading every visible jar. Entries are soft-referenced and pruned to the files
+    /// of the current reload, so neither memory nor the map itself grows with the number of reloads.
+    private final ConcurrentMap<Object, SoftReference<@Nullable CompletableFuture<Image>>> icons = new ConcurrentHashMap<>();
+
     private ModManager modManager;
     private @Nullable HMCLGameInstance gameInstance;
     private String gameVersion;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
+
+    /// Identifies the icon a mod file should show.
+    ///
+    /// The icon comes out of the mod jar, so it depends on the file and not on the list that is
+    /// displaying it. The file is identified by its path together with the size and modification
+    /// time its metadata was read at, so a file that is replaced or edited gets a fresh icon while
+    /// an untouched one keeps the icon already decoded for it.
+    ///
+    /// @param file         the mod file the icon is read from
+    /// @param size         the file size the icon was decoded at
+    /// @param lastModified the modification time the icon was decoded at
+    private record IconKey(Path file, long size, long lastModified) {
+    }
+
+    /// Describes the icon state of one mod file.
+    ///
+    /// @param modInfo the mod file
+    /// @return the key its icon is cached under
+    private static IconKey iconKeyOf(LocalModFile modInfo) {
+        Path file = modInfo.getFile();
+        try {
+            BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
+            return new IconKey(file, attributes.size(), attributes.lastModifiedTime().toMillis());
+        } catch (IOException e) {
+            // The file vanished between the scan and this call. A key is still needed, and the scan
+            // that produced this item will not offer the file again, so an unmatched one is enough.
+            return new IconKey(file, -1, -1);
+        }
+    }
 
     /// Creates a mod list that reloads when `instanceContext` changes.
     ///
@@ -144,7 +185,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     private void loadMods(ModManager modManager) {
-        long perfSubmitted = PerfLog.now();
         setLoading(true);
 
         if (this.modManager != modManager) {
@@ -152,19 +192,24 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
         this.modManager = modManager;
         CompletableFuture.supplyAsync(() -> {
-            long perfScanStart = PerfLog.now();
             lock.lock();
             try {
                 modManager.refresh();
-                long perfScanned = PerfLog.now();
 
-                List<ModInfoObject> items = modManager.getLocalFiles().stream().map(ModInfoObject::new).toList();
+                List<LocalModFile> files = modManager.getLocalFiles();
+                Set<Object> liveIcons = new HashSet<>(files.size() * 2);
+                List<ModInfoObject> items = files.stream()
+                        .map(file -> {
+                            IconKey key = iconKeyOf(file);
+                            liveIcons.add(key);
+                            return new ModInfoObject(file, icons, key);
+                        })
+                        .toList();
 
-                PerfLog.event("mod.list.build",
-                        "items=" + items.size()
-                                + " ioDispatchMs=" + PerfLog.ms(perfScanStart - perfSubmitted)
-                                + " scanMs=" + PerfLog.ms(perfScanned - perfScanStart)
-                                + " mapMs=" + PerfLog.ms(PerfLog.now() - perfScanned));
+                // Drop the icons of files this reload no longer shows, so neither the map nor the
+                // soft references it holds outlive the mods they were decoded for.
+                icons.keySet().retainAll(liveIcons);
+
                 return items;
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
@@ -172,13 +217,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 lock.unlock();
             }
         }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
-            long perfUiStart = PerfLog.now();
             if (this.modManager != modManager) {
                 return;
             }
 
             updateSupportedLoaders(modManager);
-            long perfLoaders = PerfLog.now();
 
             if (exception == null) {
                 getItems().setAll(list);
@@ -186,15 +229,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 LOG.warning("Failed to load mods", exception);
                 getItems().clear();
             }
-            long perfSetAll = PerfLog.now();
 
             setLoading(false);
-
-            PerfLog.event("mod.list.ui",
-                    "items=" + (list == null ? -1 : list.size())
-                            + " fxQueueMs=" + PerfLog.ms(perfUiStart - perfSubmitted)
-                            + " loadersMs=" + PerfLog.ms(perfLoaders - perfUiStart)
-                            + " setAllMs=" + PerfLog.ms(perfSetAll - perfLoaders));
         }, Schedulers.javafx());
     }
 
@@ -622,15 +658,21 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final ItemPropertyAsyncCache<Image, ModInfoObject> iconCache;
 
-        ModInfoObject(LocalModFile localModFile) {
+        /// Creates the item shown for one mod file.
+        ///
+        /// @param localModFile the mod file to display
+        /// @param icons        the page-wide icon cache the icon is taken from
+        /// @param iconKey      the key this file's icon is stored under in `icons`
+        ModInfoObject(
+                LocalModFile localModFile,
+                ConcurrentMap<Object, SoftReference<@Nullable CompletableFuture<Image>>> icons,
+                IconKey iconKey) {
             this.localModFile = localModFile;
             this.active = localModFile.activeProperty();
 
-            long perfTranslationStart = PerfLog.now();
             this.modTranslations = ModTranslations.MOD.getMod(localModFile.getId(), localModFile.getName());
-            PerfLog.invocation("mod.list.translationLookup", PerfLog.now() - perfTranslationStart);
 
-            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
+            this.iconCache = new ItemPropertyAsyncCache.Shared<>(this, icons, iconKey, this::loadIcon, this::getDefaultIcon);
         }
 
         public LocalModFile getModInfo() {
@@ -646,15 +688,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
 
         private Image loadIcon() {
-            long perfStart = PerfLog.now();
-            try {
-                return loadIconImpl();
-            } finally {
-                PerfLog.invocation("mod.list.loadIcon", PerfLog.now() - perfStart);
-            }
-        }
-
-        private Image loadIconImpl() {
             List<String> iconPaths = new ArrayList<>();
 
             if (StringUtils.isNotBlank(this.localModFile.getLogoPath())) {
@@ -838,15 +871,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         @Override
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
-            long perfStart = PerfLog.now();
-            try {
-                updateControlImpl(dataItem, empty);
-            } finally {
-                PerfLog.invocation("mod.list.cellUpdate", PerfLog.now() - perfStart);
-            }
-        }
-
-        private void updateControlImpl(ModInfoObject dataItem, boolean empty) {
             pseudoClassStateChanged(WARNING, false);
             if (warningTooltip != null) {
                 Tooltip.uninstall(this, warningTooltip);

@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.logging.PerfLog;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -386,8 +385,6 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     @Override
     public void refresh() throws IOException {
-        long perfStart = System.nanoTime();
-
         // The whole scan runs outside the manager lock so that concurrent readers are not blocked
         // while the mods directory is being read.
         GameComponentAnalyzer analyzer = instance.getAnalyzer();
@@ -399,14 +396,11 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                 || analyzer.has(GameComponentType.LITELOADER);
 
         List<Path> candidates = collectModFiles(supportSubfolders);
-        long perfCollected = System.nanoTime();
 
         List<ParsedMod> parsed = parseAll(candidates, partitions);
-        long perfParsed = System.nanoTime();
 
         // Only the merge below mutates shared state, and it is cheap: it allocates one LocalModFile
         // per parsed file and inserts it into the manager's collections.
-        int merged;
         lock.lock();
         try {
             clearLocalFiles();
@@ -420,21 +414,10 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                 mergeModInfo(mod.file(), mod.metadata());
             }
 
-            merged = localFiles.size();
             loaded = true;
         } finally {
             lock.unlock();
         }
-
-        long perfEnd = System.nanoTime();
-        PerfLog.event("mod.refresh",
-                "candidates=" + candidates.size()
-                        + " parsed=" + parsed.size()
-                        + " merged=" + merged
-                        + " collectMs=" + (perfCollected - perfStart) / 1_000_000L
-                        + " parseMs=" + (perfParsed - perfCollected) / 1_000_000L
-                        + " mergeMs=" + (perfEnd - perfParsed) / 1_000_000L
-                        + " totalMs=" + (perfEnd - perfStart) / 1_000_000L);
     }
 
     @Override

@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.*;
-import org.jackhuang.hmcl.util.logging.PerfLog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +92,6 @@ public abstract class FetchTask<T> extends Task<T> {
             case CHECK_E_TAG -> checkETag = true;
             case NOT_CHECK_E_TAG -> checkETag = false;
             default -> {
-                PerfLog.count("dl.cacheHits", 1L);
                 return;
             }
         }
@@ -574,9 +572,7 @@ public abstract class FetchTask<T> extends Task<T> {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                long speed = downloadSpeed.getAndSet(0);
-                SPEED_EVENT.fireEvent(new SpeedEvent(SPEED_EVENT, speed));
-                PerfLog.sample("dl.bytesPerSec", speed);
+                SPEED_EVENT.fireEvent(new SpeedEvent(SPEED_EVENT, downloadSpeed.getAndSet(0)));
             }
         }, 0, 1000);
     }
@@ -678,11 +674,6 @@ public abstract class FetchTask<T> extends Task<T> {
             DOWNLOAD_EXECUTOR = threadPool("Download", true, downloadExecutorConcurrency, 10, TimeUnit.SECONDS);
             SEMAPHORE = null;
         }
-
-        // A permit count pinned at zero means downloads are limited by the configured concurrency,
-        // while a high count means the bottleneck lies elsewhere.
-        PerfLog.gauge("dl.configuredConcurrency", FetchTask::getDownloadExecutorConcurrency);
-        PerfLog.gauge("dl.availablePermits", () -> SEMAPHORE == null ? -1L : SEMAPHORE.availablePermits());
     }
 
     @FXThread

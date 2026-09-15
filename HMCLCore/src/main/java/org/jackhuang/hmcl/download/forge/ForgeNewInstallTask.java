@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -45,6 +46,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -72,29 +74,36 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
         @Override
         public void execute() throws Exception {
             Map<String, String> outputs = new HashMap<>();
-            boolean miss = false;
-
             for (Map.Entry<String, String> entry : processor.getOutputs().entrySet()) {
-                String key = entry.getKey();
-                String value = entry.getValue();
-
-                key = parseLiteral(key, vars);
-                value = parseLiteral(value, vars);
+                String key = parseLiteral(entry.getKey(), vars);
+                String value = parseLiteral(entry.getValue(), vars);
 
                 if (key == null || value == null) {
                     throw new ArtifactMalformedException("Invalid forge installation configuration");
                 }
 
                 outputs.put(key, value);
+            }
 
-                Path artifact = Paths.get(key);
+            // Every file this step is supposed to produce: the ones the profile declares, plus the
+            // ones an earlier build of the same loader was seen to write. Upstream profiles declare
+            // outputs for only a minority of processors, so without the second source the remaining
+            // steps would keep rebuilding artifacts that already sit in the shared libraries.
+            LinkedHashMap<Path, String> targets = new LinkedHashMap<>();
+            for (Map.Entry<String, String> entry : outputs.entrySet())
+                targets.put(Paths.get(entry.getKey()), entry.getValue());
+            collectRecordedTargets(targets);
+
+            boolean miss = false;
+            for (Map.Entry<Path, String> entry : targets.entrySet()) {
+                Path artifact = entry.getKey();
                 if (Files.exists(artifact)) {
                     String code;
                     try (InputStream stream = Files.newInputStream(artifact)) {
                         code = (DigestUtils.digestToString("SHA-1", stream));
                     }
 
-                    if (!Objects.equals(code, value)) {
+                    if (!Objects.equals(code, entry.getValue())) {
                         Files.delete(artifact);
                         LOG.info("Found existing file is not valid: " + artifact);
 
@@ -105,7 +114,14 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
                 }
             }
 
-            if (!processor.getOutputs().isEmpty() && !miss) {
+            if (!targets.isEmpty() && !miss) {
+                // Fold the checksums just verified into the record this installation writes, or the
+                // next installation would have to rebuild this step all over again.
+                for (Map.Entry<Path, String> entry : targets.entrySet()) {
+                    @Nullable String targetKey = LoaderBuildManifest.keyOf(gameRepository, entry.getKey());
+                    if (targetKey != null)
+                        recordedOutputs.put(targetKey, entry.getValue());
+                }
                 return;
             }
 
@@ -183,6 +199,80 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
                     throw new ChecksumMismatchException("SHA-1", entry.getValue(), code);
                 }
             }
+
+            recordProducedFiles(args);
+        }
+
+        /// Adds the artifacts an earlier build of the same loader recorded for this step.
+        ///
+        /// @param targets collects path to expected SHA-1
+        private void collectRecordedTargets(Map<Path, String> targets) {
+            if (buildManifest == null)
+                return;
+
+            for (String operand : outputOperands(processor.getArgs())) {
+                @Nullable String path = parseLiteral(operand, vars);
+                if (path == null)
+                    continue;
+
+                Path file = toAbsolutePath(path);
+                if (file == null)
+                    continue;
+
+                @Nullable String sha1 = buildManifest.sha1Of(gameRepository, file);
+                if (sha1 != null)
+                    targets.put(file, sha1);
+            }
+        }
+
+        /// Records the checksum of every file this step wrote, so a later installation can tell
+        /// whether the step still has to run.
+        ///
+        /// @param args the arguments actually passed to the processor
+        private void recordProducedFiles(List<String> args) {
+            for (String path : outputOperands(args)) {
+                Path file = toAbsolutePath(path);
+                if (file == null || !Files.isRegularFile(file))
+                    continue;
+
+                @Nullable String key = LoaderBuildManifest.keyOf(gameRepository, file);
+                if (key == null)
+                    continue;
+
+                try {
+                    recordedOutputs.put(key, DigestUtils.digestToString("SHA-1", file));
+                } catch (Exception e) {
+                    LOG.warning("Failed to record loader build output " + file, e);
+                }
+            }
+        }
+
+        /// Returns the operands of the output flags in `args`, left unparsed.
+        ///
+        /// @param args processor arguments, either as written in the profile or already resolved
+        /// @return the operands naming files the processor writes
+        private static List<String> outputOperands(List<String> args) {
+            List<String> operands = new ArrayList<>();
+            for (int i = 0; i + 1 < args.size(); i++) {
+                if (OUTPUT_FLAGS.contains(args.get(i)))
+                    operands.add(args.get(i + 1));
+            }
+            return operands;
+        }
+
+        /// Resolves a path a processor named.
+        ///
+        /// Processors inherit the launcher's working directory, so a relative argument names a file
+        /// below it rather than below the repository.
+        ///
+        /// @param path the path as named in the processor arguments
+        /// @return the resolved path, or `null` when it cannot be parsed
+        private static @Nullable Path toAbsolutePath(String path) {
+            try {
+                return Path.of(path).toAbsolutePath().normalize();
+            } catch (InvalidPathException e) {
+                return null;
+            }
         }
     }
 
@@ -191,7 +281,10 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
     private final GameInstanceManifest manifest;
     /// Source vanilla client JAR copied before processors are invoked.
     private final Path minecraftJar;
-    private final Path installer;
+    /// Forge installer JAR, or `null` when [#buildManifest] proves the build already ran.
+    private final @Nullable Path installer;
+    /// Record of an earlier build of this loader, reused instead of rebuilding it.
+    private @Nullable LoaderBuildManifest buildManifest;
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
@@ -199,9 +292,25 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
     private List<Processor> processors;
     private GameInstanceManifest forgeVersion;
     private final String selfVersion;
+    /// Key the build record is stored under.
+    private final String buildKey;
+    /// Raw installer profile, kept because a successful build is recorded from it.
+    private String installProfileText;
+    /// Raw loader manifest, kept because a successful build is recorded from it.
+    private String versionJsonText;
+    /// SHA-1 of every file this build produced, keyed as in [LoaderBuildManifest].
+    private final Map<String, String> recordedOutputs = new LinkedHashMap<>();
 
     private Path tempDir;
     private final AtomicInteger processorDoneCount = new AtomicInteger(0);
+
+    /// Flags whose operand is a file a processor writes.
+    ///
+    /// The installers spell every produced file with one of these and every consumed file with
+    /// another flag, so following the flag is enough to tell an output from an input. `--srg` is
+    /// deliberately absent: `jarsplitter` reads it while `ForgeAutoRenamingTool` writes
+    /// `--output` instead.
+    private static final Set<String> OUTPUT_FLAGS = Set.of("--output", "--slim", "--extra", "--to");
 
     /// Creates a Forge processor installation task.
     ///
@@ -216,12 +325,40 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
             Path minecraftJar,
             String selfVersion,
             Path installer) {
+        this(dependencyManager, manifest, minecraftJar, selfVersion, installer, null, null);
+    }
+
+    /// Creates a loader processor installation task.
+    ///
+    /// @param dependencyManager repository-scoped download services
+    /// @param manifest          working manifest receiving the loader patch
+    /// @param minecraftJar      source vanilla client JAR copied for processor use
+    /// @param selfVersion       loader version recorded in the returned patch
+    /// @param installer         loader installer JAR, or `null` when `buildManifest` is supplied
+    /// @param buildManifest     record of an earlier build of this loader, or `null` to build;
+    ///                          a record that fails verification is discarded and the build runs
+    /// @param buildKey          the key `buildManifest` is stored under, or `null` to derive one
+    ///                          from a Forge build; NeoForge has to name its own because the
+    ///                          version it reports comes from the installer profile, which cannot
+    ///                          be read before deciding whether the installer must be fetched
+    public ForgeNewInstallTask(
+            DefaultDependencyManager dependencyManager,
+            GameInstanceManifest manifest,
+            Path minecraftJar,
+            String selfVersion,
+            @Nullable Path installer,
+            @Nullable LoaderBuildManifest buildManifest,
+            @Nullable String buildKey) {
         this.dependencyManager = dependencyManager;
         this.gameRepository = dependencyManager.getGameRepository();
         this.manifest = manifest;
         this.minecraftJar = minecraftJar;
         this.installer = installer;
         this.selfVersion = selfVersion;
+        this.buildManifest = buildManifest;
+        this.buildKey = buildKey != null
+                ? buildKey
+                : LoaderBuildManifest.buildKey(GameComponentType.FORGE.getPatchId(), selfVersion, "client");
 
         setSignificance(TaskSignificance.MAJOR);
     }
@@ -302,10 +439,36 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void preExecute() throws Exception {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            profile = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
+        // A record of this same build is still worth looking for when none was handed in, because
+        // the key names the loader version, so any earlier installation of this loader left one.
+        // A record that was handed in has already been verified against the same artifacts.
+        if (buildManifest == null) {
+            buildManifest = LoaderBuildManifest.load(gameRepository, buildKey);
+            if (buildManifest != null && !buildManifest.verify(gameRepository))
+                buildManifest = null;
+        }
+
+        if (buildManifest != null) {
+            // Every artifact this build would produce is on disk and unchanged, so the processors
+            // have nothing left to do. The profile and the loader manifest are read straight out of
+            // the record, which is why the installer JAR does not have to exist on this path.
+            installProfileText = buildManifest.getInstallProfile();
+            versionJsonText = buildManifest.getVersionJson();
+            profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
             processors = profile.getProcessors();
-            forgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.getJson())), GameInstanceManifest.class);
+            forgeVersion = JsonUtils.fromNonNullJson(versionJsonText, GameInstanceManifest.class);
+            return;
+        }
+
+        if (installer == null || !Files.isRegularFile(installer))
+            throw new IOException("Forge installer JAR not found: " + installer);
+
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
+            installProfileText = Files.readString(fs.getPath("install_profile.json"));
+            profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
+            processors = profile.getProcessors();
+            versionJsonText = Files.readString(fs.getPath(profile.getJson()));
+            forgeVersion = JsonUtils.fromNonNullJson(versionJsonText, GameInstanceManifest.class);
 
             for (Library library : profile.getLibraries()) {
                 Path file = fs.getPath("maven").resolve(library.getPath());
@@ -395,10 +558,25 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void execute() throws Exception {
+        tempDir = Files.createTempDirectory("forge_installer");
+
+        if (buildManifest != null) {
+            // The record proved every artifact this build produces is present and unchanged, so the
+            // processors have nothing left to do and only the launch manifest has to be returned.
+            // The libraries are still checked for completeness, because the step that downloads
+            // them was skipped along with the build.
+            dependencies.add(dependencyManager.checkComponentCompletionAsync(forgeVersion, true));
+            setResult(GameInstancePatch.fromManifest(
+                    forgeVersion,
+                    GameComponentType.FORGE.getPatchId(),
+                    selfVersion,
+                    GameInstancePatch.PRIORITY_LOADER));
+            return;
+        }
+
         if (!Files.isRegularFile(minecraftJar)) {
             throw new FileNotFoundException("Minecraft client JAR not found: " + minecraftJar);
         }
-        tempDir = Files.createTempDirectory("forge_installer");
         // External processors must not receive the shared cache path.
         Path isolatedMinecraftJar = tempDir.resolve("minecraft.jar");
         FileUtils.copyFile(minecraftJar, isolatedMinecraftJar);
@@ -454,6 +632,32 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void postExecute() throws Exception {
-        FileUtils.deleteDirectory(tempDir);
+        try {
+            if (buildManifest == null && installer != null && Files.isRegularFile(installer))
+                recordBuild();
+        } finally {
+            FileUtils.deleteDirectory(tempDir);
+        }
+    }
+
+    /// Writes the record of this build, so that installing the same loader again can skip it.
+    ///
+    /// The installers declare checksums for only a minority of their processors, so this record is
+    /// the only place a later installation can learn which files the remaining steps produce.
+    private void recordBuild() {
+        try {
+            if (recordedOutputs.isEmpty() || installProfileText == null || versionJsonText == null)
+                return;
+
+            LoaderBuildManifest.of(
+                    buildKey,
+                    DigestUtils.digestToString("SHA-1", installer),
+                    installProfileText,
+                    versionJsonText,
+                    recordedOutputs).save(gameRepository);
+            LOG.info("Recorded loader build " + selfVersion + " covering " + recordedOutputs.size() + " outputs");
+        } catch (Exception e) {
+            LOG.warning("Failed to record loader build " + selfVersion, e);
+        }
     }
 }

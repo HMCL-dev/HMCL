@@ -69,7 +69,10 @@ public final class CurseInstallTask extends Task<Void> {
 
     /// Scheduled icon download corresponding to [#iconExt], or `null` when absent.
     private @Nullable Task<Path> downloadIconTask;
-    private final List<Task<?>> dependents = new ArrayList<>(4);
+
+    /// CurseForge metadata resolved beside the game download, consumed by the completion task.
+    private final CurseManifestLookupTask lookupTask;
+    private final List<Task<?>> dependents = new ArrayList<>(5);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     /// Creates a task that installs a new CurseForge modpack instance.
@@ -192,6 +195,13 @@ public final class CurseInstallTask extends Task<Void> {
             }
         }
 
+        // Resolving every manifest entry's file name and class id costs one CurseForge round trip
+        // per entry and reads nothing from the instance, so it is scheduled beside the game
+        // download and the unpacking. Left to the completion task, those round trips all landed
+        // after the last file had been written, on the critical path of every installation.
+        lookupTask = new CurseManifestLookupTask(manifest.files());
+        dependents.add(lookupTask);
+
         try (GameBuilder builder = this.updateTarget == null
                 ? dependencyManager.newGameBuilder(instanceId)
                 : dependencyManager.newGameBuilder(this.updateTarget)) {
@@ -294,7 +304,13 @@ public final class CurseInstallTask extends Task<Void> {
             }
         }
 
-        // The game builder runs as a dependent and registers the instance before this phase.
-        dependencies.add(new CurseCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest, excludedFiles));
+        // The game builder runs as a dependent and registers the instance before this phase, and
+        // [#lookupTask] has finished by now, so its result is ready to be handed over.
+        dependencies.add(new CurseCompletionTask(
+                dependencyManager,
+                repository.getInstance(instanceId),
+                manifest,
+                excludedFiles,
+                lookupTask.getResult()));
     }
 }

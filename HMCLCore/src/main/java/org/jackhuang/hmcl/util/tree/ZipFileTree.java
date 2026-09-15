@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.tree;
 
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
-import org.jackhuang.hmcl.util.logging.PerfLog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,12 +51,10 @@ public final class ZipFileTree extends ArchiveFileTree<ZipArchiveReader, ZipArch
     @Override
     public Dir<ZipArchiveEntry> getRoot() {
         if (root == null) {
-            long perfStart = System.nanoTime();
             root = new Dir<>("");
             for (ZipArchiveEntry zipArchiveEntry : reader.getEntries()) {
                 addEntry(root, zipArchiveEntry);
             }
-            PerfLog.invocation("zip.getRoot", System.nanoTime() - perfStart);
         }
         return root;
     }

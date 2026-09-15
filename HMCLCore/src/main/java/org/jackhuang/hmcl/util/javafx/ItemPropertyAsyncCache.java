@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.javafx;
 
 import javafx.beans.property.ObjectProperty;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.logging.PerfLog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +26,7 @@ import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
 /// Cache for a property of an item of [javafx.scene.control.ListCell].
@@ -52,8 +52,6 @@ public abstract class ItemPropertyAsyncCache<T, B> {
     protected abstract void setFuture(@NotNull CompletableFuture<T> imageFuture);
 
     public final void attachValue(ObjectProperty<T> property, @Nullable WeakReference<ObjectProperty<B>> current) {
-        long perfRequested = PerfLog.now();
-
         CompletableFuture<T> future = getFuture();
         if (future != null) {
             T value = future.getNow(null);
@@ -76,10 +74,6 @@ public abstract class ItemPropertyAsyncCache<T, B> {
             }
 
             property.set(image);
-
-            // The timestamp of this sample is the moment the real icon replaced the placeholder,
-            // which is what a user waits for before the list looks completely rendered.
-            PerfLog.sample("icon.appliedMs", PerfLog.ms(PerfLog.now() - perfRequested));
         }, Schedulers.javafx());
     }
 
@@ -135,6 +129,53 @@ public abstract class ItemPropertyAsyncCache<T, B> {
         @Override
         protected void setFuture(@NotNull CompletableFuture<T> future) {
             this.cache = new SoftReference<>(future);
+        }
+    }
+
+    /// Implementation of [ItemPropertyAsyncCache] whose values outlive the item that asked for them.
+    ///
+    /// A cell item is rebuilt whenever its list is reloaded, but the value it decodes may depend only
+    /// on something that did not change, such as a file on disk. Holding the cache on the item would
+    /// therefore throw the value away and decode it again on every reload; holding it in a map the
+    /// caller owns, keyed by whatever the value actually depends on, lets a rebuilt item reuse it.
+    ///
+    /// Entries are [SoftReference]s, as in [Soft], so a large list does not pin every value in
+    /// memory. The caller is responsible for dropping keys that are no longer reachable, because
+    /// this class never removes an entry on its own.
+    ///
+    /// @param <T> {@inheritDoc}
+    /// @param <B> {@inheritDoc}
+    public static final class Shared<T, B> extends Base<T, B> {
+
+        private final ConcurrentMap<Object, SoftReference<@Nullable CompletableFuture<T>>> shared;
+        private final Object key;
+
+        ///
+        /// @param bean the item of list cell
+        /// @param shared the map holding the values, owned by the caller
+        /// @param key the key identifying the value; two items asking for the same key share it
+        /// @param valueSupplier supplier of the value
+        /// @param defaultSupplier supplier of the placeholder value
+        public Shared(
+                B bean,
+                ConcurrentMap<Object, SoftReference<@Nullable CompletableFuture<T>>> shared,
+                Object key,
+                Supplier<T> valueSupplier,
+                @Nullable Supplier<T> defaultSupplier) {
+            super(bean, valueSupplier, defaultSupplier);
+            this.shared = Objects.requireNonNull(shared);
+            this.key = Objects.requireNonNull(key);
+        }
+
+        @Override
+        protected @Nullable CompletableFuture<T> getFuture() {
+            SoftReference<@Nullable CompletableFuture<T>> reference = shared.get(key);
+            return reference != null ? reference.get() : null;
+        }
+
+        @Override
+        protected void setFuture(@NotNull CompletableFuture<T> future) {
+            shared.put(key, new SoftReference<>(future));
         }
     }
 }

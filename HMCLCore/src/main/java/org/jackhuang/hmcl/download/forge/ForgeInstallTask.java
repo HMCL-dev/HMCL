@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -50,10 +51,15 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
 
     private final DefaultDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
-    private Path installer;
+    /// Forge installer JAR, or `null` when [#buildManifest] shows the build already ran.
+    private @Nullable Path installer;
     private final ForgeRemoteVersion remote;
-    private FileDownloadTask dependent;
+    private @Nullable FileDownloadTask dependent;
     private Task<GameInstancePatch> dependency;
+    /// Record of an earlier build of this loader, reused instead of rebuilding it.
+    private @Nullable LoaderBuildManifest buildManifest;
+    /// Key [#buildManifest] is stored under, shared with the task that writes it.
+    private final String buildKey;
 
     public ForgeInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, ForgeRemoteVersion remoteVersion) {
         if (!manifest.isModifiable()) {
@@ -63,6 +69,8 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
         this.dependencyManager = dependencyManager;
         this.manifest = manifest;
         this.remote = remoteVersion;
+        this.buildKey = LoaderBuildManifest.buildKey(
+                GameComponentType.FORGE.getPatchId(), remoteVersion.getSelfVersion(), "client");
         setSignificance(TaskSignificance.MODERATE);
     }
 
@@ -73,6 +81,15 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void preExecute() throws Exception {
+        // Resolve the build record before scheduling the download, because a record that verifies
+        // means the build has already run and the installer JAR is not needed at all.
+        buildManifest = LoaderBuildManifest.load(dependencyManager.getGameRepository(), buildKey);
+        if (buildManifest != null && !buildManifest.verify(dependencyManager.getGameRepository()))
+            buildManifest = null;
+
+        if (buildManifest != null)
+            return;
+
         installer = Files.createTempFile("forge-installer", ".jar");
 
         dependent = new FileDownloadTask(
@@ -90,13 +107,14 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void postExecute() throws Exception {
-        Files.deleteIfExists(installer);
+        if (installer != null)
+            Files.deleteIfExists(installer);
         setResult(dependency.getResult());
     }
 
     @Override
     public Collection<Task<?>> getDependents() {
-        return Collections.singleton(dependent);
+        return dependent == null ? Collections.emptyList() : Collections.singleton(dependent);
     }
 
     @Override
@@ -113,14 +131,28 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
                 throw new UnsupportedInstallationException(UNSUPPORTED_LAUNCH_WRAPPER);
         }
 
-        if (detectForgeInstallerType(remote.getGameVersion(), installer)) {
+        if (buildManifest != null) {
+            // The record verified, so the processors are skipped and the profile is read from the
+            // record instead of from an installer JAR that was never downloaded.
             dependency = new GameDownloadTask(dependencyManager, manifest)
                     .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
                             dependencyManager,
                             manifest,
                             minecraftJar,
                             remote.getSelfVersion(),
-                            installer));
+                            null,
+                            buildManifest,
+                            buildKey));
+        } else if (detectForgeInstallerType(remote.getGameVersion(), installer)) {
+            dependency = new GameDownloadTask(dependencyManager, manifest)
+                    .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
+                            dependencyManager,
+                            manifest,
+                            minecraftJar,
+                            remote.getSelfVersion(),
+                            installer,
+                            null,
+                            buildKey));
         } else {
             dependency = new ForgeOldInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer);
         }

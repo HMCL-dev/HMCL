@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.util.io;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.logging.PerfLog;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -97,32 +96,22 @@ public final class Unzipper {
         Path destDir = this.dest.toAbsolutePath().normalize();
         Files.createDirectories(destDir);
 
-        long entryCount = 0L;
-        long perfStart = System.nanoTime();
-        int threads = 0;
-        try {
-            // Resolved up front because every worker opens its own reader over the same archive.
-            Charset charset = CompressingUtils.resolveZipEncoding(zipFile, encoding);
+        // Resolved up front because every worker opens its own reader over the same archive.
+        Charset charset = CompressingUtils.resolveZipEncoding(zipFile, encoding);
 
-            List<PendingFile> pending = new ArrayList<>();
-            try (ZipArchiveReader reader = CompressingUtils.openZipFile(zipFile, charset)) {
-                entryCount = plan(reader, destDir, pending);
-            }
-
-            if (entryCount == 0 && !"/".equals(subDirectory) && !terminateIfSubDirectoryNotExists) {
-                throw new NoSuchFileException("Subdirectory " + subDirectory + " does not exist in the zip file.");
-            }
-
-            threads = CompressingUtils.readerThreads(pending.size());
-            CompressingUtils.forEachParallel(zipFile, charset, threads, pending.size(), "Unzip-",
-                    (reader, index) -> extractEntry(reader, pending.get(index)));
-        } finally {
-            PerfLog.event("unzip", "zip=" + zipFile.getFileName()
-                    + " sub=" + subDirectory
-                    + " entries=" + entryCount
-                    + " threads=" + threads
-                    + " ms=" + (System.nanoTime() - perfStart) / 1_000_000L);
+        List<PendingFile> pending = new ArrayList<>();
+        long entryCount;
+        try (ZipArchiveReader reader = CompressingUtils.openZipFile(zipFile, charset)) {
+            entryCount = plan(reader, destDir, pending);
         }
+
+        if (entryCount == 0 && !"/".equals(subDirectory) && !terminateIfSubDirectoryNotExists) {
+            throw new NoSuchFileException("Subdirectory " + subDirectory + " does not exist in the zip file.");
+        }
+
+        int threads = CompressingUtils.readerThreads(pending.size());
+        CompressingUtils.forEachParallel(zipFile, charset, threads, pending.size(), "Unzip-",
+                (reader, index) -> extractEntry(reader, pending.get(index)));
     }
 
     /// Resolves what every accepted entry should become, without writing file contents yet.

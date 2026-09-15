@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.task;
 
 import javafx.application.Platform;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.logging.PerfLog;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
@@ -88,25 +87,7 @@ public final class Schedulers {
     }
 
     public static Executor javafx() {
-        if (!PerfLog.ENABLED)
-            return Platform::runLater;
-
-        // Measuring both the delay before the JavaFX thread picks a runnable up and the time that
-        // runnable occupies it exposes a saturated or blocked UI thread, which a task timeline
-        // alone cannot show.
-        return command -> {
-            long submittedAt = System.nanoTime();
-            Platform.runLater(() -> {
-                PerfLog.invocation("fx.queueWait", System.nanoTime() - submittedAt);
-
-                long startedAt = System.nanoTime();
-                try {
-                    command.run();
-                } finally {
-                    PerfLog.invocation("fx.runTime", System.nanoTime() - startedAt);
-                }
-            });
-        };
+        return Platform::runLater;
     }
 
     /// Default thread pool, equivalent to [ForkJoinPool#commonPool()].
