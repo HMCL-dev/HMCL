@@ -73,7 +73,7 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
         if (jar != null && !components.containsKey(GameComponentType.FORGE)) {
             var legacyForgeVersion = ForgeLegacyInstallProfile.parse(jar);
             if (legacyForgeVersion != null) {
-                components.put(GameComponentType.FORGE, new Mark(GameComponentType.FORGE, legacyForgeVersion.forgeVersion(), true));
+                components.put(GameComponentType.FORGE, new Mark(GameComponentType.FORGE, legacyForgeVersion.forgeVersion(), false));
             }
         }
 
