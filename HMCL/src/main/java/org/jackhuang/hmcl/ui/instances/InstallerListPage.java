@@ -35,10 +35,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -52,7 +49,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
     /// @param instanceContext the parent page's instance property
     public InstallerListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
         Objects.requireNonNull(instanceContext, "instanceContext");
-        FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "exe").contains(FileUtils.getExtension(it)), mods -> {
+        FXUtils.applyDragListener(this, it -> Set.of("jar", "exe").contains(FileUtils.getExtension(it)), mods -> {
             if (!mods.isEmpty())
                 doInstallOffline(mods.get(0));
         });
@@ -69,8 +66,10 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         return new InstallerListPageSkin();
     }
 
+    /// Rebuilds the component controls for the selected instance, or clears them if none is selected.
     public void loadInstance(HMCLGameInstance.Optional instance) {
-        this.gameInstance = instance.instance();
+        @Nullable HMCLGameInstance gameInstance = instance.instance();
+        this.gameInstance = gameInstance;
         if (gameInstance == null) {
             itemsProperty().clear();
             return;
@@ -105,7 +104,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                 Controllers.getDecorator().startWizard(new UpdateInstallerWizardProvider(gameInstance, component.getComponentType(), libraryVersion));
             });
 
-            component.setOnRemove(() -> repository.updateInstanceAsync(
+            component.setOnRemove(() -> repository.getDependency().updateInstanceAsync(
                             gameInstance.getId(),
                             publishedInstance -> repository.getDependency().removeComponentAsync(
                                     publishedInstance,
@@ -116,13 +115,16 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
             itemsProperty().add(component);
         }
 
+        var currentItems = getItems().stream().map(InstallerItem::getComponentType).toList();
         // other third-party libraries which are unable to manage.
         for (GameComponentAnalyzer.Mark mark : gameInstance.getAnalyzer()) {
+            if (currentItems.contains(mark.componentType())) continue;
+
             // we have done this library above.
 
             InstallerItem installerItem = new InstallerItem(mark.componentType(), InstallerItem.Style.LIST_ITEM);
             installerItem.versionProperty().set(new InstallerItem.InstalledState(mark.version(), false, false));
-            installerItem.setOnRemove(() -> repository.updateInstanceAsync(
+            installerItem.setOnRemove(() -> repository.getDependency().updateInstanceAsync(
                             gameInstance.getId(),
                             publishedInstance -> repository.getDependency().removeComponentAsync(
                                     publishedInstance,
@@ -147,15 +149,16 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
         if (file != null) doInstallOffline(file);
     }
 
+    /// Runs a local component installer for the current modifiable instance and displays its result.
     private void doInstallOffline(Path file) {
-        if (gameInstance == null) {
+        if (gameInstance == null || !gameInstance.getManifest().isModifiable()) {
             return;
         }
 
         HMCLGameRepository repository = gameInstance.getRepository();
-        Task<?> task = repository.updateInstanceAsync(
+        Task<?> task = repository.getDependency().updateInstanceAsync(
                 gameInstance.getId(),
-                publishedInstance -> repository.getDependency().installComponentAsync(publishedInstance, file));
+                publishedInstance -> repository.getDependency().installComponentLocalAsync(publishedInstance, file));
         task.setName(i18n("install.installer.install_offline"));
         TaskExecutor executor = task.executor(new TaskListener() {
             @Override

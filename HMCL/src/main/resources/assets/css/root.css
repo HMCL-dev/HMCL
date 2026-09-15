@@ -471,7 +471,7 @@
     -fx-padding: 0;
 }
 
-.launch-pane > .jfx-button, .jfx-button * {
+.launch-pane > .launch-button .label {
     -fx-text-fill: -monet-on-primary-container;
     -fx-font-size: 14px;
 }
@@ -745,6 +745,7 @@
 
 .jfx-tool-bar-button {
     -fx-text-fill: -monet-on-surface;
+    -fx-font-size: 14px;
     -fx-toggle-icon4-size: 37px;
     -fx-pref-height: -fx-toggle-icon4-size;
     -fx-max-height: -fx-toggle-icon4-size;

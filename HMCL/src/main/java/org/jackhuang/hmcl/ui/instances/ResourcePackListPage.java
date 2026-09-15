@@ -57,14 +57,14 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.Objects;
@@ -433,7 +433,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     ResourcePackInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
                     if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
                         listView.getSelectionModel().clearSelection();
-                        Controllers.dialog(new ResourcePackInfoDialog(control, selectedItem));
+                        Controllers.dialog(new ResourcePackInfoDialog(selectedItem));
                     }
                 });
 
@@ -494,13 +494,18 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
     }
 
-    public static class ResourcePackInfoObject {
+    public static final class ResourcePackInfoObject {
+
         private final ResourcePackFile file;
         private final BooleanProperty enabled;
+
+        private final ItemPropertyAsyncCache<Image, ResourcePackInfoObject> iconCache;
 
         public ResourcePackInfoObject(Pair<ResourcePackFile, Boolean> pair) {
             this.file = pair.key();
             this.enabled = new SimpleBooleanProperty(this, "enabled", pair.value());
+
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
         public ResourcePackFile getFile() {
@@ -511,13 +516,16 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             return enabled;
         }
 
-        Image getIcon() {
-            Image image = file.getIcon();
-            if (image == null || image.isError() || image.getWidth() <= 0 || image.getHeight() <= 0 ||
-                    (Math.abs(image.getWidth() - image.getHeight()) >= 1)) {
-                image = FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+        private Image getDefaultIcon() {
+            return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+        }
+
+        private Image loadIcon() {
+            Image icon = file.loadIcon();
+            if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1) {
+                return icon;
             }
-            return image;
+            return getDefaultIcon();
         }
     }
 
@@ -531,8 +539,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER);
         private final JFXButton btnInfo = FXUtils.newToggleButton4(SVG.INFO);
-
-        private ResourcePackInfoObject object = null;
 
         private BooleanProperty booleanProperty = null;
 
@@ -549,7 +555,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             checkBox = new JFXCheckBox() {
                 @Override
                 public void fire() {
-                    if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && !isSelected() && object != null && !object.getFile().isCompatible()) {
+                    if (!Boolean.TRUE.equals(SettingsManager.state().getShownTips().get(TIP_KEY)) && !isSelected() && getItem() != null && !getItem().getFile().isCompatible()) {
                         Controllers.confirm(
                                 i18n("resourcepack.warning.manipulate"),
                                 i18n("message.info"),
@@ -564,7 +570,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 }
             };
             checkBox.setOnAction(e -> {
-                if (object != null) object.file.setEnabled(checkBox.isSelected());
+                if (getItem() != null) getItem().getFile().setEnabled(checkBox.isSelected());
             });
 
             HBox.setHgrow(content, Priority.ALWAYS);
@@ -584,9 +590,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
             if (empty || item == null) return;
 
-            this.object = item;
             ResourcePackFile file = item.getFile();
-            imageContainer.setImage(item.getIcon());
+            item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(itemProperty()));
 
             content.getTags().clear();
             content.setTitle(file.getFileName());
@@ -598,7 +603,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
             btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(file.getFile()));
 
-            btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(this.page, item)));
+            btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(item)));
 
             if (booleanProperty != null) {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
@@ -617,7 +622,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     private static final class ResourcePackInfoDialog extends JFXDialogLayout {
 
-        ResourcePackInfoDialog(ResourcePackListPage page, ResourcePackInfoObject packInfoObject) {
+        ResourcePackInfoDialog(ResourcePackInfoObject packInfoObject) {
             ResourcePackFile pack = packInfoObject.getFile();
 
             HBox titleContainer = new HBox();
@@ -626,7 +631,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
 
             ImageContainer imageContainer = new ImageContainer(40);
-            imageContainer.setImage(packInfoObject.getIcon());
+            packInfoObject.iconCache.attachValue(imageContainer.imageProperty(), null);
 
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(pack.getFileName());
