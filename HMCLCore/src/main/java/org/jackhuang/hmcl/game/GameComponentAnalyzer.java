@@ -45,13 +45,6 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
             components.put(GameComponentType.GAME, new Mark(GameComponentType.GAME, gameVersion.toString(), true));
         }
 
-        if (jar != null) {
-            var legacyForgeVersion = ForgeLegacyInstallProfile.parse(jar);
-            if (legacyForgeVersion != null) {
-                components.put(GameComponentType.FORGE, new Mark(GameComponentType.FORGE, legacyForgeVersion.forgeVersion(), true));
-            }
-        }
-
         for (GameInstancePatch patch : standaloneManifest.getPatches()) {
             if (patch.isHidden() || patch.id() == null) continue;
 
@@ -74,6 +67,13 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
 
             if (bootstrapVersion == null && library.is("cpw.mods", "bootstraplauncher")) {
                 bootstrapVersion = library.version();
+            }
+        }
+
+        if (jar != null && !components.containsKey(GameComponentType.FORGE)) {
+            var legacyForgeVersion = ForgeLegacyInstallProfile.parse(jar);
+            if (legacyForgeVersion != null) {
+                components.put(GameComponentType.FORGE, new Mark(GameComponentType.FORGE, legacyForgeVersion.forgeVersion(), true));
             }
         }
 
