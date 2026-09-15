@@ -188,8 +188,6 @@ public final class I18n {
         if (task instanceof GameAssetDownloadTask) {
             task.setName(i18n("assets.download_all"));
         } else if (task instanceof GameInstallTask) {
-            if (task.getInheritedStage() != null && task.getInheritedStage().startsWith("hmcl.install.game"))
-                return null;
             task.setName(i18n("install.installer.install", i18n("install.installer.game")));
         } else if (task instanceof CleanroomInstallTask) {
             task.setName(i18n("install.installer.install", i18n("install.installer.cleanroom")));

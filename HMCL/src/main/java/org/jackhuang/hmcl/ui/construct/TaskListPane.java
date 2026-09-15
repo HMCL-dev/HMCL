@@ -33,6 +33,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.download.game.GameInstallTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
@@ -131,6 +132,12 @@ public final class TaskListPane extends StackPane {
             public void onRunning(Task<?> task) {
                 if (!task.getSignificance().shouldShow() || task.getName() == null)
                     return;
+
+                if (task instanceof GameInstallTask
+                        && task.getInheritedStage() != null
+                        && task.getInheritedStage().startsWith("hmcl.install.game")) {
+                    return;
+                }
 
                 @Nullable String localizedName = I18n.translateTaskName(task);
                 if (localizedName != null)
