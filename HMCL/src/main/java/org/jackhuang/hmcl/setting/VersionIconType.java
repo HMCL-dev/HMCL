@@ -47,6 +47,7 @@ public enum VersionIconType {
             case FORGE -> VersionIconType.FORGE;
             case NEO_FORGE -> VersionIconType.NEO_FORGE;
             case FABRIC -> VersionIconType.FABRIC;
+            case LEGACY_FABRIC -> VersionIconType.LEGACY_FABRIC;
             case QUILT -> VersionIconType.QUILT;
             case LITE_LOADER -> VersionIconType.CHICKEN;
             case CLEANROOM -> VersionIconType.CLEANROOM;
