@@ -52,7 +52,7 @@ public final class FavoritesManager {
     }
 
     private final Path file; // Any external changes to this file while the application is running might be lost
-    private final TreeMap<String, Favorites> favoritesMap = new TreeMap<>(String::compareToIgnoreCase);
+    private final TreeMap<String, Favorite> favoritesMap = new TreeMap<>(String::compareToIgnoreCase);
     private final ReentrantLock lock = new ReentrantLock();
     private boolean loaded;
 
@@ -82,7 +82,7 @@ public final class FavoritesManager {
             favoritesMap.clear();
             var map = Files.isRegularFile(file) ? JsonUtils.fromJsonFile(file, typeToken) : null;
             if (map != null)
-                map.forEach((name, items) -> favoritesMap.put(name, new Favorites(this, name, items)));
+                map.forEach((name, items) -> favoritesMap.put(name, new Favorite(this, name, items)));
             loaded = true;
         } catch (IOException | JsonSyntaxException e) {
             LOG.warning("Failed to load favorites file at " + file, e);
@@ -112,7 +112,7 @@ public final class FavoritesManager {
         }
     }
 
-    public @Unmodifiable List<Favorites> getFavorites() {
+    public @Unmodifiable List<Favorite> getFavorites() {
         lock.lock();
         try {
             if (!loaded) throw new IllegalStateException("Favorites not loaded");
@@ -122,16 +122,16 @@ public final class FavoritesManager {
         }
     }
 
-    public @NotNull Favorites getOrCreate(String name) {
+    public @NotNull FavoritesManager.Favorite getOrCreate(String name) {
         lock.lock();
         try {
-            return favoritesMap.computeIfAbsent(name, n -> new Favorites(this, n, new LinkedHashSet<>()));
+            return favoritesMap.computeIfAbsent(name, n -> new Favorite(this, n, new LinkedHashSet<>()));
         } finally {
             lock.unlock();
         }
     }
 
-    public @Nullable Favorites get(String name) {
+    public @Nullable FavoritesManager.Favorite get(String name) {
         lock.lock();
         try {
             return favoritesMap.get(name);
@@ -144,7 +144,7 @@ public final class FavoritesManager {
         return get(name) != null;
     }
 
-    public static final class Favorites {
+    public static final class Favorite {
 
         private final FavoritesManager manager;
         private final String name;
@@ -155,7 +155,7 @@ public final class FavoritesManager {
 
         private final ReentrantLock lock;
 
-        private Favorites(FavoritesManager manager, String name, LinkedHashSet<Item> items) {
+        private Favorite(FavoritesManager manager, String name, LinkedHashSet<Item> items) {
             this.manager = manager;
             this.lock = manager.lock;
             this.name = name;
