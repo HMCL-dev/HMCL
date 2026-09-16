@@ -19,13 +19,15 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableSet;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -66,7 +68,6 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
-    private final BooleanProperty installed = new SimpleBooleanProperty(false);
     private final RemoteAddonRepository repository;
     private final ModTranslations translations;
     private final RemoteAddon addon;
@@ -77,6 +78,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final RemoteAddon.Type type;
 
     private SimpleMultimap<String, RemoteAddon.Version, List<RemoteAddon.Version>> versions;
+    private final ObservableSet<RemoteAddon.Version> installed = FXCollections.observableSet();
 
     public DownloadPage(DownloadListPage page, RemoteAddon addon, HMCLGameInstance.Optional instanceReference, @Nullable DownloadCallback callback) {
         this.page = page;
@@ -102,7 +104,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 this.versions = result.key();
-                this.installed.set(result.value());
+                this.installed.clear();
+                this.installed.addAll(result.value());
 
                 loaded.set(true);
                 setFailed(false);
@@ -239,13 +242,13 @@ public class DownloadPage extends Control implements DecoratorPage {
                 content.getFirstLine().setMinWidth(0);
                 descriptionPane.getChildren().add(content);
 
-                if (control.installed.get()) {
+                if (!control.installed.isEmpty()) {
                     content.addTagFirst(i18n("addon.installed"), null);
                 } else {
-                    control.installed.addListener(new ChangeListener<>() {
+                    control.installed.addListener(new InvalidationListener() {
                         @Override
-                        public void changed(ObservableValue<? extends Boolean> o, Boolean __, Boolean newValue) {
-                            if (newValue) {
+                        public void invalidated(Observable observable) {
+                            if (!control.installed.isEmpty()) {
                                 content.addTagFirst(i18n("addon.installed"), null);
                                 control.installed.removeListener(this);
                             }
@@ -491,6 +494,21 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
                     content.addTags(tags);
 
+                    if (!selfPage.installed.isEmpty()) {
+                        if (selfPage.installed.contains(dataItem))
+                            content.addTagFirst(i18n("addon.installed"), null);
+                    } else {
+                        selfPage.installed.addListener(new InvalidationListener() {
+                            @Override
+                            public void invalidated(Observable observable) {
+                                if (selfPage.installed.contains(dataItem)) {
+                                    content.addTagFirst(i18n("addon.installed"), null);
+                                    selfPage.installed.removeListener(this);
+                                }
+                            }
+                        });
+                    }
+
                     descPane.getChildren().setAll(graphicPane, content);
                 }
 
@@ -614,7 +632,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     queue.add(Task.supplyAsync(Schedulers.io(), () -> {
                                 var depAddon = dependency.load(selfPage.getDownloadProvider());
-                                if (depAddon == RemoteAddon.BROKEN || thisAddonType == RemoteAddon.Type.MODPACK) return Pair.pair(depAddon, false);
+                                if (depAddon == RemoteAddon.BROKEN || thisAddonType == RemoteAddon.Type.MODPACK) return Pair.pair(depAddon, List.of());
                                 return Pair.pair(depAddon, depAddon.checkInstalled(
                                         selfPage.repository.getRemoteVersionsById(selfPage.getDownloadProvider(), depAddon.id()),
                                         selfPage.getInstanceOptional().instance()
@@ -626,7 +644,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                     hasBroken.set(true);
                                     return;
                                 }
-                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep.key(), selfPage.instanceReference, dep.value());
+                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep.key(), selfPage.instanceReference, !dep.value().isEmpty());
                                 var listener = FXUtils.onWeakChangeAndOperate(dependenciesList.widthProperty(), d -> FXUtils.setLimitWidth(dependencyAddonItem, d.doubleValue()));
                                 dependencyAddonItem.getProperties().put("DependencyAddonItem.width", listener);
                                 dependencies.get(dependency.getType()).value().add(dependencyAddonItem);

@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -31,6 +32,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -40,21 +42,22 @@ public record RemoteAddon(String id, String slug, String author, String title, S
 
     public static final RemoteAddon BROKEN = new RemoteAddon("", "", "", "RemoteAddon.BROKEN", "", Collections.emptyList(), "", "", null, null);
 
-    public boolean checkInstalled(Stream<RemoteAddon.Version> remoteVersions, @Nullable DefaultGameInstance gameInstance) {
+    public @Unmodifiable Set<RemoteAddon.Version> checkInstalled(Stream<RemoteAddon.Version> remoteVersions, @Nullable DefaultGameInstance gameInstance) {
         if (gameInstance != null && type() != null) {
             LocalAddonManager<?> manager = gameInstance.getManagerForType(type());
             if (manager != null) {
                 try {
                     Set<String> localHashes = manager.getSha1Hashes();
-                    return remoteVersions.map(v -> v.file.hashes.get("sha1"))
-                            .filter(StringUtils::isNotBlank)
-                            .anyMatch(localHashes::contains);
+                    return remoteVersions.filter(v -> {
+                        String sha1 = v.file.hashes.get("sha1");
+                        return StringUtils.isNotBlank(sha1) && localHashes.contains(sha1);
+                    }).collect(Collectors.toUnmodifiableSet());
                 } catch (Exception e) {
                     LOG.warning("Failed to check if addon %s on %s is installed".formatted(id(), source()), e);
                 }
             }
         }
-        return false;
+        return Set.of();
     }
 
     public enum VersionType {
