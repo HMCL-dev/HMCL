@@ -34,6 +34,8 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
@@ -97,12 +99,14 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
         instanceReference.set(instance);
+
         HMCLGameRepository repository = instance.repository();
         instances.setAll(repository.getDisplayInstances()
                 .map(DefaultGameInstance::getId)
                 .toList());
         @Nullable HMCLGameInstance repositorySelection = repository.getSelectedInstance();
         selectedInstance.set(repositorySelection != null ? repositorySelection.getId() : null);
+
         refresh();
     }
 
@@ -243,6 +247,13 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
 
             StackPane.setMargin(container, new Insets(8, 8, 8, 16));
             getContainer().getChildren().setAll(container);
+
+            addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+                if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+                    forwardButton.fire();
+                    e.consume();
+                }
+            });
         }
 
         @Override
@@ -322,7 +333,7 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
                 }
             };
 
-            listView.setCellFactory(x -> new FavoriteItemCell(iconLoader, listView));
+            listView.setCellFactory(x -> new FavoriteItemCell(skinnable.parentPage, iconLoader, listView));
         }
 
         @Override
@@ -341,10 +352,30 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
 
-        public FavoriteItemCell(RemoteImageLoader iconLoader, JFXListView<FavoriteItemObject> listView) {
+        private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
+
+        public FavoriteItemCell(AddonFavoritesListPage parentPage, RemoteImageLoader iconLoader, JFXListView<FavoriteItemObject> listView) {
             super(listView);
 
             this.iconLoader = iconLoader;
+
+            infoButton.setOnAction(e -> {
+                if (getItem() != null && !isEmpty() && getItem().addon != null) {
+                    var downloadListPage = HMCLLocalizedDownloadListPage.ofAddonWithSource(false, getItem().addon);
+                    if (downloadListPage == null) return;
+                    Controllers.navigate(new DownloadPage(
+                            downloadListPage,
+                            getItem().addon,
+                            HMCLGameInstance.Optional.of(parentPage.instanceReference.get().repository(), parentPage.selectedInstance.get()),
+                            switch (getItem().addon.type()) { // TODO remove this because we have a better way
+                                case MOD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD;
+                                case RESOURCE_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK;
+                                case SHADER_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_SHADER;
+                                default -> null;
+                            }
+                    ));
+                }
+            });
 
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
@@ -353,7 +384,7 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
             content.setMouseTransparent(true);
             setSelectable();
 
-            container.getChildren().setAll(imageContainer, content);
+            container.getChildren().setAll(imageContainer, content, infoButton);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
