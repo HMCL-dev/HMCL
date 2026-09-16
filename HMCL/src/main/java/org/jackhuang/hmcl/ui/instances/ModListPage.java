@@ -70,14 +70,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
@@ -93,11 +98,36 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     private final ReentrantLock lock = new ReentrantLock();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
+    /// Icons decoded from mod files, keyed by the file state and loader they were decoded from.
+    ///
+    /// A reload builds a fresh [ModInfoObject] for every mod, so an icon held on the item would be
+    /// decoded again on the next reload.
+    private final ConcurrentMap<Object, SoftReference<@Nullable CompletableFuture<Image>>> icons = new ConcurrentHashMap<>();
+
     private ModManager modManager;
     private @Nullable HMCLGameInstance gameInstance;
     private String gameVersion;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
+
+    /// A mod without a logo falls back to the icon of its loader, so the loader is part of the key.
+    private record IconKey(Path file, long size, long lastModified, ModLoaderType loaderType) {
+    }
+
+    private static IconKey iconKeyOf(LocalModFile modInfo) {
+        Path file = modInfo.getFile();
+        ModLoaderType loaderType = modInfo.getModLoaderType();
+        try {
+            BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
+            return new IconKey(file, attributes.size(), attributes.lastModifiedTime().toMillis(), loaderType);
+        } catch (IOException e) {
+            // The file vanished between the scan and this call; an unmatched key is enough.
+            return new IconKey(file, -1, -1, loaderType);
+        }
+    }
+
+    private record LoadedMods(List<ModInfoObject> items, Set<Object> iconKeys) {
+    }
 
     /// Creates a mod list that reloads when `instanceContext` changes.
     ///
@@ -153,13 +183,24 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             lock.lock();
             try {
                 modManager.refresh();
-                return modManager.getLocalFiles().stream().map(ModInfoObject::new).toList();
+
+                List<LocalModFile> files = modManager.getLocalFiles();
+                Set<Object> iconKeys = new HashSet<>(files.size() * 2);
+                List<ModInfoObject> items = files.stream()
+                        .map(file -> {
+                            IconKey key = iconKeyOf(file);
+                            iconKeys.add(key);
+                            return new ModInfoObject(file, icons, key);
+                        })
+                        .toList();
+
+                return new LoadedMods(items, iconKeys);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } finally {
                 lock.unlock();
             }
-        }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
+        }, Schedulers.io()).whenCompleteAsync((loaded, exception) -> {
             if (this.modManager != modManager) {
                 return;
             }
@@ -167,7 +208,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             updateSupportedLoaders(modManager);
 
             if (exception == null) {
-                getItems().setAll(list);
+                // Pruning on the loading thread would drop the icons of the list still displayed.
+                icons.keySet().retainAll(loaded.iconKeys());
+
+                getItems().setAll(loaded.items());
             } else {
                 LOG.warning("Failed to load mods", exception);
                 getItems().clear();
@@ -600,13 +644,16 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final ItemPropertyAsyncCache<Image, ModInfoObject> iconCache;
 
-        ModInfoObject(LocalModFile localModFile) {
+        ModInfoObject(
+                LocalModFile localModFile,
+                ConcurrentMap<Object, SoftReference<@Nullable CompletableFuture<Image>>> icons,
+                IconKey iconKey) {
             this.localModFile = localModFile;
             this.active = localModFile.activeProperty();
 
             this.modTranslations = ModTranslations.MOD.getMod(localModFile.getId(), localModFile.getName());
 
-            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
+            this.iconCache = new ItemPropertyAsyncCache.Shared<>(this, icons, iconKey, this::loadIcon, this::getDefaultIcon);
         }
 
         public LocalModFile getModInfo() {
@@ -627,6 +674,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             if (StringUtils.isNotBlank(this.localModFile.getLogoPath())) {
                 iconPaths.add(this.localModFile.getLogoPath());
             }
+            if (iconPaths.isEmpty())
+                return getDefaultIcon();
 
             try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(this.localModFile.getFile())) {
                 for (String path : iconPaths) {
@@ -641,6 +690,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 }
             } catch (Exception e) {
                 LOG.warning("Failed to load mod icons", e);
+                // Report the failure instead of returning the placeholder, which would be kept for
+                // as long as the file keeps its size and modification time.
+                throw new CompletionException(e);
             }
 
             return getDefaultIcon();

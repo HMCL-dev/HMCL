@@ -26,6 +26,7 @@ import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
 /// Cache for a property of an item of [javafx.scene.control.ListCell].
@@ -128,6 +129,49 @@ public abstract class ItemPropertyAsyncCache<T, B> {
         @Override
         protected void setFuture(@NotNull CompletableFuture<T> future) {
             this.cache = new SoftReference<>(future);
+        }
+    }
+
+    /// Implementation of [ItemPropertyAsyncCache] whose values outlive the item that asked for them.
+    ///
+    /// A cell item is rebuilt whenever its list is reloaded, so the caller keeps the values
+    /// instead, keyed by what they depend on.
+    ///
+    /// @param <T> {@inheritDoc}
+    /// @param <B> {@inheritDoc}
+    public static final class Shared<T, B> extends Base<T, B> {
+
+        private final ConcurrentMap<Object, SoftReference<@Nullable CompletableFuture<T>>> shared;
+        private final Object key;
+
+        /// @param shared the map holding the values, owned by the caller
+        /// @param key    the key identifying the value; two items asking for the same key share it
+        public Shared(
+                B bean,
+                ConcurrentMap<Object, SoftReference<@Nullable CompletableFuture<T>>> shared,
+                Object key,
+                Supplier<T> valueSupplier,
+                @Nullable Supplier<T> defaultSupplier) {
+            super(bean, valueSupplier, defaultSupplier);
+            this.shared = Objects.requireNonNull(shared);
+            this.key = Objects.requireNonNull(key);
+        }
+
+        @Override
+        protected @Nullable CompletableFuture<T> getFuture() {
+            SoftReference<@Nullable CompletableFuture<T>> reference = shared.get(key);
+            CompletableFuture<T> future = reference != null ? reference.get() : null;
+            if (future != null && future.isCompletedExceptionally()) {
+                // A failed load must not stick: forget it, so that the next load retries it.
+                shared.remove(key, reference);
+                return null;
+            }
+            return future;
+        }
+
+        @Override
+        protected void setFuture(@NotNull CompletableFuture<T> future) {
+            shared.put(key, new SoftReference<>(future));
         }
     }
 }

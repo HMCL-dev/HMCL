@@ -25,6 +25,8 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,6 +41,24 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class LocalModFile extends LocalAddonFile implements Comparable<LocalModFile> {
 
+    /// The metadata parsed from a mod file.
+    ///
+    /// The readers in `org.jackhuang.hmcl.addon.meta` return this instead of a [LocalModFile]:
+    /// constructing one reads and registers manager state, so its result cannot outlive a refresh.
+    @NotNullByDefault
+    public record Metadata(
+            String modId,
+            ModLoaderType loaderType,
+            @Nullable String name,
+            @Nullable String description,
+            @Nullable String authors,
+            @Nullable String version,
+            @Nullable String gameVersion,
+            @Nullable String url,
+            @Nullable String logoPath
+    ) {
+    }
+
     private Path file;
     private final ModManager modManager;
     private final LocalMod mod;
@@ -51,10 +71,6 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     private final String fileName;
     private final String logoPath;
     private final BooleanProperty activeProperty;
-
-    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
-        this(modManager, mod, file, name, description, "", "", "", "", "");
-    }
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
         super();
