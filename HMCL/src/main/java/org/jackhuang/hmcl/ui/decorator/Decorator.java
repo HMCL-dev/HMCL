@@ -325,9 +325,9 @@ public final class Decorator {
     ///
     /// @param edgeToEdge whether the attached stage is maximized or full-screen
     private void updateWindowDecoration(boolean edgeToEdge) {
-        edgeToEdge |= nativeDecorationEnabled;
-        root.setPadding(edgeToEdge ? Insets.EMPTY : SHADOW_INSETS);
-        shadowContainer.setEffect(edgeToEdge ? null : windowShadow);
+        boolean customShadow = !nativeDecorationEnabled && !edgeToEdge;
+        root.setPadding(customShadow ? SHADOW_INSETS : Insets.EMPTY);
+        shadowContainer.setEffect(customShadow ? windowShadow : null);
         mainWindowPane.setWindowEdgeToEdge(edgeToEdge);
     }
 
