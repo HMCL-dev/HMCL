@@ -137,7 +137,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             String message = i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().name()) + "\n";
             if (exception.getCause() instanceof ResponseCodeException rce) {
                 int responseCode = rce.getResponseCode();
-                String uri = rce.getUri();
+                String uri = rce.getUrl();
                 if (responseCode == 404)
                     message += i18n("download.code.404", uri);
                 else
@@ -146,18 +146,18 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                 message += StringUtils.getStackTrace(exception.getCause());
             }
             Controllers.dialog(message, i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
-        } else if (exception instanceof DownloadException) {
-            WebURL uri = ((DownloadException) exception).getUrl();
+        } else if (exception instanceof DownloadException de) {
+            WebURL url = de.getUrl();
             if (exception.getCause() instanceof SocketTimeoutException) {
-                Controllers.dialog(i18n("install.failed.downloading.timeout", uri), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                Controllers.dialog(i18n("install.failed.downloading.timeout", url), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
             } else if (exception.getCause() instanceof ResponseCodeException responseCodeException) {
                 if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
-                    Controllers.dialog(i18n("download.code." + responseCodeException.getResponseCode(), uri), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                    Controllers.dialog(i18n("download.code." + responseCodeException.getResponseCode(), url), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
                 } else {
-                    Controllers.dialog(i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                    Controllers.dialog(i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
                 }
             } else {
-                Controllers.dialog(i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                Controllers.dialog(i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
             }
         } else if (exception instanceof UnsupportedInstallationException unsupportedInstallationException) {
             switch (unsupportedInstallationException.getReason()) {

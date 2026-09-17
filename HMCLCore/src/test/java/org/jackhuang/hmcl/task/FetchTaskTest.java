@@ -101,7 +101,7 @@ public final class FetchTaskTest {
                 sendBytes(exchange, 200, exchange.getRequestURI().toASCIIString().getBytes(UTF_8));
             }
         })) {
-            TextFetchTask task = new TextFetchTask(server.uri());
+            TextFetchTask task = new TextFetchTask(server.url());
             task.setCacheRepository(newRepository(tempDir));
             task.setRetry(1);
             assertTrue(task.test());
@@ -119,7 +119,7 @@ public final class FetchTaskTest {
 
         try (TestHttpServer server = TestHttpServer.start(exchange -> sendBytes(exchange, 200, data))) {
             FileDownloadTask task = new FileDownloadTask(
-                    server.uri(),
+                    server.url(),
                     target,
                     new FileDownloadTask.IntegrityCheck("SHA-1", "0000000000000000000000000000000000000000")
             );
@@ -136,9 +136,9 @@ public final class FetchTaskTest {
     public void cacheFileTaskUsesExpectedSha1(@TempDir Path tempDir) throws IOException {
         byte[] data = "cached content".getBytes(UTF_8);
         String sha1 = DigestUtils.digestToString(CacheRepository.SHA1, data);
-        WebURL uri = WebURL.parse("https://example.invalid/file");
+        WebURL url = WebURL.parse("https://example.invalid/file");
         CacheRepository repository = newRepository(tempDir);
-        CacheFileTask first = new CacheFileTask(List.of(uri), sha1);
+        CacheFileTask first = new CacheFileTask(List.of(url), sha1);
         first.setCacheRepository(repository);
 
         try (FetchTask.Context context = first.getContext(null, false, null)) {
@@ -149,7 +149,7 @@ public final class FetchTaskTest {
         Path cached = Objects.requireNonNull(first.getResult());
         assertArrayEquals(data, Files.readAllBytes(cached));
 
-        CacheFileTask second = new CacheFileTask(List.of(uri), sha1);
+        CacheFileTask second = new CacheFileTask(List.of(url), sha1);
         second.setCacheRepository(repository);
         assertEquals(FetchTask.EnumCheckETag.CACHED, second.shouldCheckETag());
         assertEquals(cached, second.getResult());
@@ -201,7 +201,7 @@ public final class FetchTaskTest {
             }
         })) {
             Path target = tempDir.resolve("target.bin");
-            FileDownloadTask task = new FileDownloadTask(server.uri(), target);
+            FileDownloadTask task = new FileDownloadTask(server.url(), target);
             task.setCacheRepository(newRepository(tempDir));
             task.setRetry(3);
 
@@ -241,7 +241,7 @@ public final class FetchTaskTest {
             }
         })) {
             Path target = tempDir.resolve("target.bin");
-            FileDownloadTask task = new FileDownloadTask(server.uri(), target);
+            FileDownloadTask task = new FileDownloadTask(server.url(), target);
             task.setCacheRepository(newRepository(tempDir));
             task.setRetry(3);
 
@@ -288,7 +288,7 @@ public final class FetchTaskTest {
             }
         })) {
             Path target = tempDir.resolve("target.bin");
-            FileDownloadTask task = new FileDownloadTask(server.uri(), target);
+            FileDownloadTask task = new FileDownloadTask(server.url(), target);
             task.setCacheRepository(newRepository(tempDir));
             task.setRetry(3);
 
@@ -330,7 +330,7 @@ public final class FetchTaskTest {
                 }
             }
         })) {
-            TextFetchTask task = new TextFetchTask(server.uri());
+            TextFetchTask task = new TextFetchTask(server.url());
             task.setCacheRepository(newRepository(tempDir));
             task.setRetry(2);
 
@@ -343,8 +343,8 @@ public final class FetchTaskTest {
     /// Text fetch task that avoids JavaFX progress updates in isolated unit tests.
     private static final class TextFetchTask extends FetchTask<String> {
         /// Creates a text fetch task for one URL.
-        TextFetchTask(WebURL uri) {
-            super(List.of(uri));
+        TextFetchTask(WebURL url) {
+            super(List.of(url));
         }
 
         @Override
@@ -418,7 +418,7 @@ public final class FetchTaskTest {
         }
 
         /// Returns the file endpoint URL.
-        WebURL uri() {
+        WebURL url() {
             return WebURL.parse("http://127.0.0.1:" + server.getAddress().getPort() + "/file");
         }
 

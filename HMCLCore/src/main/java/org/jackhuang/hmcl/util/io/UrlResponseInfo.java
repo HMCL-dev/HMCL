@@ -30,10 +30,10 @@ import java.util.Map;
 /// Captures the status, URL, and headers of an HTTP response.
 ///
 /// @param responseCode the HTTP response status code
-/// @param uri the response URL
+/// @param url the response URL
 /// @param headers the response headers
 /// @author Glavo
-public record UrlResponseInfo(int responseCode, WebURL uri, HttpHeaders headers) {
+public record UrlResponseInfo(int responseCode, WebURL url, HttpHeaders headers) {
     /// Creates response metadata from a URL connection.
     public static UrlResponseInfo of(HttpURLConnection connection) throws IOException {
         return new UrlResponseInfo(connection.getResponseCode(), toWebURL(connection.getURL()), headers(connection));

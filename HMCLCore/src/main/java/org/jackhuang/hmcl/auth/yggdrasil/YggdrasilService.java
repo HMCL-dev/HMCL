@@ -229,12 +229,12 @@ public class YggdrasilService {
     }
 
     /// Performs a GET when the payload is null, or posts the payload as JSON otherwise.
-    private static String request(WebURL uri, @Nullable Object payload) throws AuthenticationException {
+    private static String request(WebURL url, @Nullable Object payload) throws AuthenticationException {
         try {
             if (payload == null)
-                return NetworkUtils.doGet(uri);
+                return NetworkUtils.doGet(url);
             else
-                return NetworkUtils.doPost(uri, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
+                return NetworkUtils.doPost(url, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         }

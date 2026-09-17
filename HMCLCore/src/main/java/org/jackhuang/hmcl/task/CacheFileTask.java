@@ -53,9 +53,9 @@ public final class CacheFileTask extends FetchTask<Path> {
 
     /// Creates a task for one URL using remote cache metadata.
     ///
-    /// @param uri the HTTP or HTTPS URL
-    public CacheFileTask(@NotNull WebURL uri) {
-        this(List.of(uri));
+    /// @param url the HTTP or HTTPS URL
+    public CacheFileTask(@NotNull WebURL url) {
+        this(List.of(url));
     }
 
     /// Creates a task for candidate URLs using remote cache metadata.
@@ -110,13 +110,13 @@ public final class CacheFileTask extends FetchTask<Path> {
         }
 
         // Check cache
-        for (WebURL uri : uris) {
+        for (WebURL url : urls) {
             try {
-                setResult(repository.getCachedRemoteFile(uri, true));
-                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                setResult(repository.getCachedRemoteFile(url, true));
+                LOG.info("Using cached file for " + NetworkUtils.dropQuery(url));
                 return EnumCheckETag.CACHED;
             } catch (CacheRepository.CacheExpiredException e) {
-                LOG.info("Cache expired for " + NetworkUtils.dropQuery(uri));
+                LOG.info("Cache expired for " + NetworkUtils.dropQuery(url));
             } catch (IOException ignored) {
             }
         }

@@ -1497,28 +1497,28 @@ public final class ThemePackManager {
             List<Path> temporaryFiles,
             ResolvedBackground background) throws IOException {
         String url = requireNonBlank(background.networkImageUrl(), "background.url");
-        WebURL uri = WebURL.parse(url);
-        if (!NetworkUtils.isHttpUri(uri)) {
+        WebURL webUrl = WebURL.parse(url);
+        if (!NetworkUtils.isHttpUri(webUrl)) {
             throw new IOException("Theme background URL must be HTTP or HTTPS: " + url);
         }
 
-        String entryName = "assets/wallpapers/" + networkBackgroundAssetName(uri);
+        String entryName = "assets/wallpapers/" + networkBackgroundAssetName(webUrl);
         if (background.networkImageCachePolicy() == NetworkBackgroundImageCachePolicy.ENABLED) {
             try {
-                @Nullable Path cachedFile = new CacheFileTask(uri).run();
+                @Nullable Path cachedFile = new CacheFileTask(webUrl).run();
                 if (cachedFile != null && Files.isRegularFile(cachedFile)) {
                     assets.add(new ThemePackAsset(cachedFile, entryName));
                     return new ThemeBackground.Image(entryName);
                 }
             } catch (Exception e) {
-                LOG.warning("Failed to cache theme background, falling back to direct download: " + uri, e);
+                LOG.warning("Failed to cache theme background, falling back to direct download: " + webUrl, e);
             }
         }
 
         Path temporaryFile = Files.createTempFile("hmcl-theme-background-", ".tmp");
         boolean success = false;
         try {
-            downloadNetworkBackground(uri, temporaryFile);
+            downloadNetworkBackground(webUrl, temporaryFile);
             assets.add(new ThemePackAsset(temporaryFile, entryName));
             temporaryFiles.add(temporaryFile);
             success = true;
@@ -1535,12 +1535,12 @@ public final class ThemePackManager {
     }
 
     /// Downloads one network background into a temporary file without installing it into the persistent image cache.
-    private static void downloadNetworkBackground(WebURL uri, Path outputFile) throws IOException {
-        HttpURLConnection connection = NetworkUtils.resolveConnection(NetworkUtils.createHttpConnection(uri));
+    private static void downloadNetworkBackground(WebURL url, Path outputFile) throws IOException {
+        HttpURLConnection connection = NetworkUtils.resolveConnection(NetworkUtils.createHttpConnection(url));
         try {
             int responseCode = connection.getResponseCode();
             if (responseCode / 100 != 2) {
-                throw new IOException("Failed to download theme background: HTTP " + responseCode + " " + uri);
+                throw new IOException("Failed to download theme background: HTTP " + responseCode + " " + url);
             }
 
             ContentEncoding contentEncoding = ContentEncoding.fromConnection(connection);
@@ -1554,8 +1554,8 @@ public final class ThemePackManager {
     }
 
     /// Returns a safe theme-pack asset file name for a downloaded network background.
-    private static String networkBackgroundAssetName(WebURL uri) {
-        String path = Objects.toString(uri.getPath(), "");
+    private static String networkBackgroundAssetName(WebURL url) {
+        String path = Objects.toString(url.getPath(), "");
         @Nullable Path fileNamePath = path.isBlank() ? null : Path.of(path).getFileName();
         String fileName = fileNamePath != null ? fileNamePath.toString() : "";
         String sanitized = sanitizePathSegment(fileName);

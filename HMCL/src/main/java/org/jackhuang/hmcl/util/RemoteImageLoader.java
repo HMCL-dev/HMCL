@@ -56,14 +56,14 @@ public abstract class RemoteImageLoader {
     /// Loads an image or assigns the placeholder when the URL is absent or invalid.
     @FXThread
     public void load(@NotNull WritableValue<Image> writableValue, @Nullable String url) {
-        @Nullable WebURL uri = NetworkUtils.toWebURLOrNull(url);
-        if (uri == null) {
+        @Nullable WebURL webUrl = NetworkUtils.toWebURLOrNull(url);
+        if (webUrl == null) {
             reverseLookup.remove(writableValue);
             writableValue.setValue(getPlaceholder());
             return;
         }
 
-        @Nullable WeakReference<@Nullable Image> reference = cache.get(uri);
+        @Nullable WeakReference<@Nullable Image> reference = cache.get(webUrl);
         if (reference != null) {
             @Nullable Image image = reference.get();
             if (image != null) {
@@ -71,22 +71,22 @@ public abstract class RemoteImageLoader {
                 writableValue.setValue(image);
                 return;
             }
-            cache.remove(uri);
+            cache.remove(webUrl);
         }
 
         writableValue.setValue(getPlaceholder());
 
         {
-            @Nullable List<WeakReference<WritableValue<Image>>> list = pendingRequests.get(uri);
+            @Nullable List<WeakReference<WritableValue<Image>>> list = pendingRequests.get(webUrl);
             if (list != null) {
                 list.add(new WeakReference<>(writableValue));
-                reverseLookup.put(writableValue, uri);
+                reverseLookup.put(writableValue, webUrl);
                 return;
             } else {
                 list = new ArrayList<>(1);
                 list.add(new WeakReference<>(writableValue));
-                pendingRequests.put(uri, list);
-                reverseLookup.put(writableValue, uri);
+                pendingRequests.put(webUrl, list);
+                reverseLookup.put(writableValue, webUrl);
             }
         }
 
@@ -95,16 +95,16 @@ public abstract class RemoteImageLoader {
             if (exception == null) {
                 image = result;
             } else {
-                LOG.warning("Failed to load image from " + uri, exception);
+                LOG.warning("Failed to load image from " + webUrl, exception);
                 image = getPlaceholder();
             }
 
-            cache.put(uri, new WeakReference<>(image));
-            @Nullable List<WeakReference<WritableValue<Image>>> list = pendingRequests.remove(uri);
+            cache.put(webUrl, new WeakReference<>(image));
+            @Nullable List<WeakReference<WritableValue<Image>>> list = pendingRequests.remove(webUrl);
             if (list != null) {
                 for (WeakReference<WritableValue<Image>> ref : list) {
                     @Nullable WritableValue<Image> target = ref.get();
-                    if (target != null && uri.equals(reverseLookup.get(target))) {
+                    if (target != null && webUrl.equals(reverseLookup.get(target))) {
                         reverseLookup.remove(target);
                         target.setValue(image);
                     }

@@ -337,12 +337,12 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
             @Unmodifiable List<WebURL> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/version/" + versionId);
             IOException exception = null;
 
-            for (WebURL uri : candidates) {
+            for (WebURL url : candidates) {
                 try {
-                    ProjectVersion version = HttpRequest.GET(uri.toString()).getJson(ProjectVersion.class);
+                    ProjectVersion version = HttpRequest.GET(url.toString()).getJson(ProjectVersion.class);
                     return version.changelog();
                 } catch (IOException e) {
-                    IOException wrapper = new IOException("Failed to get addon changelog: " + uri, e);
+                    IOException wrapper = new IOException("Failed to get addon changelog: " + url, e);
                     if (candidates.size() == 1) {
                         exception = wrapper;
                     } else {

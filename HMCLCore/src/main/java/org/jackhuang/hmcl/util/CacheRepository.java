@@ -171,14 +171,14 @@ public class CacheRepository {
 
     /// Returns an existing cache file for the URL, ignoring its query and fragment.
     ///
-    /// @param uri the remote URL
+    /// @param url the remote URL
     /// @param checkExpires whether to reject expired entries
     /// @throws IOException if the entry is missing, invalid, unreadable, or expired when checked
-    public Path getCachedRemoteFile(WebURL uri, boolean checkExpires) throws IOException {
+    public Path getCachedRemoteFile(WebURL url, boolean checkExpires) throws IOException {
         lock.readLock().lock();
         @Nullable ETagItem eTagItem;
         try {
-            eTagItem = index.get(NetworkUtils.dropQuery(uri));
+            eTagItem = index.get(NetworkUtils.dropQuery(url));
         } finally {
             lock.readLock().unlock();
         }
@@ -197,19 +197,19 @@ public class CacheRepository {
     }
 
     /// Removes the URL's index entry, ignoring its query and fragment; the cache file is retained.
-    public void removeRemoteEntry(WebURL uri) {
+    public void removeRemoteEntry(WebURL url) {
         lock.writeLock().lock();
         try {
-            index.remove(NetworkUtils.dropQuery(uri));
+            index.remove(NetworkUtils.dropQuery(url));
         } finally {
             lock.writeLock().unlock();
         }
     }
 
     /// Returns immutable conditional request headers for the URL's cached ETag, or an empty map.
-    public @NotNull @Unmodifiable Map<String, String> injectConnection(WebURL uri) {
+    public @NotNull @Unmodifiable Map<String, String> injectConnection(WebURL url) {
         try {
-            uri = NetworkUtils.dropQuery(uri);
+            url = NetworkUtils.dropQuery(url);
         } catch (IllegalArgumentException e) {
             return Map.of();
         }
@@ -217,7 +217,7 @@ public class CacheRepository {
         @Nullable ETagItem eTagItem;
         lock.readLock().lock();
         try {
-            eTagItem = index.get(uri);
+            eTagItem = index.get(url);
         } finally {
             lock.readLock().unlock();
         }
@@ -230,9 +230,9 @@ public class CacheRepository {
     }
 
     /// Adds a conditional request header if the URL has a cached ETag.
-    public void injectConnection(WebURL uri, HttpRequest.Builder requestBuilder) {
+    public void injectConnection(WebURL url, HttpRequest.Builder requestBuilder) {
         try {
-            uri = NetworkUtils.dropQuery(uri);
+            url = NetworkUtils.dropQuery(url);
         } catch (IllegalArgumentException e) {
             return;
         }
@@ -240,7 +240,7 @@ public class CacheRepository {
         @Nullable ETagItem eTagItem;
         lock.readLock().lock();
         try {
-            eTagItem = index.get(uri);
+            eTagItem = index.get(url);
         } finally {
             lock.readLock().unlock();
         }
@@ -278,7 +278,7 @@ public class CacheRepository {
     private Path cacheData(UrlResponseInfo info, ExceptionalSupplier<CacheResult, IOException> cacheSupplier) throws IOException {
         String eTag = info.headers().firstValue("etag").orElse(null);
         if (StringUtils.isBlank(eTag)) return null;
-        WebURL uri = NetworkUtils.dropQuery(info.uri());
+        WebURL url = NetworkUtils.dropQuery(info.url());
         long expires = 0L;
 
         expires:
@@ -308,7 +308,7 @@ public class CacheRepository {
         String lastModified = info.headers().firstValue("last-modified").orElse(null);
 
         CacheResult cacheResult = cacheSupplier.get();
-        ETagItem eTagItem = new ETagItem(uri.toString(),
+        ETagItem eTagItem = new ETagItem(url.toString(),
                 eTag,
                 cacheResult.hash,
                 Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(),
@@ -316,7 +316,7 @@ public class CacheRepository {
                 expires);
         lock.writeLock().lock();
         try {
-            index.compute(uri, updateEntity(eTagItem, true));
+            index.compute(url, updateEntity(eTagItem, true));
             saveETagIndex();
         } finally {
             lock.writeLock().unlock();
