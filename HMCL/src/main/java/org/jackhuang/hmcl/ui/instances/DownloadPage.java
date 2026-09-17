@@ -26,6 +26,8 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import javafx.geometry.Insets;
@@ -56,6 +58,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -78,7 +81,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final RemoteAddon.Type type;
 
     private SimpleMultimap<String, RemoteAddon.Version, List<RemoteAddon.Version>> versions;
-    private final ObservableSet<RemoteAddon.Version> installed = FXCollections.observableSet();
+    private Set<RemoteAddon.Version> installed;
 
     public DownloadPage(DownloadListPage page, RemoteAddon addon, HMCLGameInstance.Optional instanceReference, @Nullable DownloadCallback callback) {
         this.page = page;
@@ -104,8 +107,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 this.versions = result.key();
-                this.installed.clear();
-                this.installed.addAll(result.value());
+                this.installed = result.value();
 
                 loaded.set(true);
                 setFailed(false);
@@ -242,18 +244,19 @@ public class DownloadPage extends Control implements DecoratorPage {
                 content.getFirstLine().setMinWidth(0);
                 descriptionPane.getChildren().add(content);
 
-                if (!control.installed.isEmpty()) {
-                    content.addTagFirst(i18n("addon.installed"), null);
-                } else {
-                    control.installed.addListener(new InvalidationListener() {
+                {
+                    var installedListener = new InvalidationListener() {
                         @Override
                         public void invalidated(Observable observable) {
-                            if (!control.installed.isEmpty()) {
-                                content.addTagFirst(i18n("addon.installed"), null);
-                                control.installed.removeListener(this);
+                            if (control.loaded.get() && control.installed != null) {
+                                if (!control.installed.isEmpty())
+                                    content.addTagFirst(i18n("addon.installed"), null);
+                                observable.removeListener(this);
                             }
                         }
-                    });
+                    };
+                    control.loaded.addListener(installedListener);
+                    installedListener.invalidated(control.loaded);
                 }
 
                 if (getSkinnable().mod != null) {
@@ -493,20 +496,19 @@ public class DownloadPage extends Control implements DecoratorPage {
                         tags.add(I18n.translateLoaderName(loader));
                     }
                     content.addTags(tags);
-
-                    if (!selfPage.installed.isEmpty()) {
-                        if (selfPage.installed.contains(dataItem))
-                            content.addTagFirst(i18n("addon.installed"), null);
-                    } else {
-                        selfPage.installed.addListener(new InvalidationListener() {
+                    {
+                        var installedListener = new InvalidationListener() {
                             @Override
                             public void invalidated(Observable observable) {
-                                if (selfPage.installed.contains(dataItem)) {
-                                    content.addTagFirst(i18n("addon.installed"), null);
-                                    selfPage.installed.removeListener(this);
+                                if (selfPage.loaded.get() && selfPage.installed != null) {
+                                    if (selfPage.installed.contains(dataItem))
+                                        content.addTagFirst(i18n("addon.installed"), null);
+                                    observable.removeListener(this);
                                 }
                             }
-                        });
+                        };
+                        selfPage.loaded.addListener(installedListener);
+                        installedListener.invalidated(selfPage.loaded);
                     }
 
                     descPane.getChildren().setAll(graphicPane, content);
