@@ -105,7 +105,7 @@ public final class DownloadProviders {
 
     public static String localizeErrorMessage(Throwable exception) {
         if (exception instanceof DownloadException) {
-            WebURL uri = ((DownloadException) exception).getUri();
+            WebURL uri = ((DownloadException) exception).getUrl();
             if (exception.getCause() instanceof SocketTimeoutException) {
                 return i18n("install.failed.downloading.timeout", uri);
             } else if (exception.getCause() instanceof ResponseCodeException) {

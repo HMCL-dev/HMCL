@@ -364,18 +364,18 @@ public final class LauncherHelper {
                                     } else {
                                         message += StringUtils.getStackTrace(ex.getCause());
                                     }
-                                } else if (ex instanceof DownloadException) {
-                                    WebURL uri = ((DownloadException) ex).getUri();
+                                } else if (ex instanceof DownloadException de) {
+                                    WebURL url = de.getUrl();
                                     if (ex.getCause() instanceof SocketTimeoutException) {
-                                        message = i18n("install.failed.downloading.timeout", uri);
+                                        message = i18n("install.failed.downloading.timeout", url);
                                     } else if (ex.getCause() instanceof ResponseCodeException responseCodeException) {
                                         if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
-                                            message = i18n("download.code." + responseCodeException.getResponseCode(), uri);
+                                            message = i18n("download.code." + responseCodeException.getResponseCode(), url);
                                         } else {
-                                            message = i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(ex.getCause());
+                                            message = i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(ex.getCause());
                                         }
                                     } else {
-                                        message = i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(ex.getCause());
+                                        message = i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(ex.getCause());
                                     }
                                 } else if (ex instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
                                     message = i18n("assets.index.malformed");

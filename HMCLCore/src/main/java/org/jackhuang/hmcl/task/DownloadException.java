@@ -28,16 +28,16 @@ import static java.util.Objects.requireNonNull;
 public class DownloadException extends IOException {
 
     /// Candidate URL whose download failed.
-    private final WebURL uri;
+    private final WebURL url;
 
     /// Creates a failure for the candidate URL and a non-null cause.
-    public DownloadException(WebURL uri, @NotNull Throwable cause) {
-        super("Unable to download " + uri + ", " + cause.getMessage(), requireNonNull(cause));
-        this.uri = uri;
+    public DownloadException(WebURL url, @NotNull Throwable cause) {
+        super("Unable to download " + url + ", " + cause.getMessage(), requireNonNull(cause));
+        this.url = url;
     }
 
     /// Returns the candidate URL before any redirects.
-    public WebURL getUri() {
-        return uri;
+    public WebURL getUrl() {
+        return url;
     }
 }
