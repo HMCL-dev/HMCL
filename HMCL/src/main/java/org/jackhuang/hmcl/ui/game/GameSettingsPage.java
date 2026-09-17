@@ -829,10 +829,14 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             nativeLibrarySettings.getContent().add(nativesDirPane);
             nativesDirPane.setTitle(i18n("settings.advanced.natives_directory"));
             {
-                var txtNativesDir = new JFXTextField();
-                txtNativesDir.setPrefWidth(400);
-                nativesDirPane.setRight(txtNativesDir);
-                bindIndependentTextField(nativesDirPane, txtNativesDir, GameSettings::nativesDirectoryProperty);
+                var nativesDirSelector = new FileSelector()
+                        .setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
+                nativesDirSelector.setPrefWidth(400);
+                nativesDirPane.setRight(nativesDirSelector);
+                bindInheritableStringProperty(
+                        nativesDirPane,
+                        nativesDirSelector.valueProperty(),
+                        GameSettings::nativesDirectoryProperty);
             }
 
             var noNativesPatchPane = createIndependentBooleanButton(GameSettings::notPatchNativesProperty);
