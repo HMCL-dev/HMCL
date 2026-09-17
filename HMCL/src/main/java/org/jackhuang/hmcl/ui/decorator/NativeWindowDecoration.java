@@ -19,13 +19,14 @@ package org.jackhuang.hmcl.ui.decorator;
 
 import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
-import javafx.beans.property.ObjectProperty;
+import javafx.collections.ListChangeListener;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.control.Control;
+import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import org.jackhuang.hmcl.theme.Themes;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,10 +38,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Accesses the JavaFX 27 extended-window APIs without linking them on older runtimes.
 @NotNullByDefault
 final class NativeWindowDecoration {
+    /// Marks nodes whose title-content descendants are already observed for native hit testing.
+    private static final Object DRAG_CONFIGURED = new Object();
+
     /// The platform-supported extended stage style.
     final StageStyle style;
 
-    /// The header bar that reserves space for the system window buttons.
+    /// The header bar that supplies native dragging around the custom title content.
     final Region headerBar;
 
     /// Assigns the header bar's center content.
@@ -49,20 +53,17 @@ final class NativeWindowDecoration {
     /// Assigns a node's native header hit-test behavior.
     private final Method setDragType;
 
-    /// Returns the stage's system-button color-scheme property.
-    private final Method systemColorSchemeProperty;
+    /// Reads explicit native drag exclusions on title nodes.
+    private final Method getDragType;
+
+    /// Sets the system button height to zero to hide the platform-provided buttons.
+    private final Method setSystemButtonHeight;
 
     /// Marks only the specified node as draggable, preserving child control interaction.
     private final Object draggable;
 
     /// Excludes a node and its descendants from native dragging.
     private final Object notDraggable;
-
-    /// The light system-button color scheme.
-    private final Object light;
-
-    /// The dark system-button color scheme.
-    private final Object dark;
 
     /// Resolves all required public APIs and creates a detached header bar.
     ///
@@ -71,14 +72,12 @@ final class NativeWindowDecoration {
         style = (StageStyle) Objects.requireNonNull(StageStyle.class.getField("EXTENDED").get(null));
         Class<?> headerClass = Class.forName("javafx.scene.layout.HeaderBar");
         Class<?> dragClass = Class.forName("javafx.scene.layout.HeaderDragType");
-        Class<?> colorClass = Class.forName("javafx.application.ColorScheme");
         setCenter = headerClass.getMethod("setCenter", Node.class);
         setDragType = headerClass.getMethod("setDragType", Node.class, dragClass);
-        systemColorSchemeProperty = headerClass.getMethod("systemColorSchemeProperty", Stage.class);
+        getDragType = headerClass.getMethod("getDragType", Node.class);
+        setSystemButtonHeight = headerClass.getMethod("setSystemButtonHeight", Stage.class, double.class);
         draggable = Objects.requireNonNull(dragClass.getField("DRAGGABLE").get(null));
         notDraggable = Objects.requireNonNull(dragClass.getField("NONE").get(null));
-        light = Objects.requireNonNull(colorClass.getField("LIGHT").get(null));
-        dark = Objects.requireNonNull(colorClass.getField("DARK").get(null));
         headerBar = (Region) headerClass.getConstructor().newInstance();
     }
 
@@ -100,9 +99,15 @@ final class NativeWindowDecoration {
 
     /// Sets or removes the header content; the caller must first detach it from any other parent.
     ///
+    /// Configures native dragging on non-interactive descendants and observes later child additions.
+    /// Controls other than labels and nodes explicitly excluded from dragging retain ordinary input handling.
+    ///
     /// @param content the title-bar content, or `null` to detach it
     void setContent(@Nullable Node content) {
         try {
+            if (content != null) {
+                configureTitleDragging(content);
+            }
             setCenter.invoke(headerBar, content);
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Cannot update native header content", e);
@@ -123,18 +128,52 @@ final class NativeWindowDecoration {
         }
     }
 
-    /// Keeps the platform window buttons synchronized with the launcher color scheme.
+    /// Configures native hit testing for title content, including subsequently added descendants.
+    ///
+    /// Containers and label graphics may move the window. Other controls and nodes explicitly excluded with
+    /// [#setDraggable(Node, boolean)] retain ordinary input handling, including all of their descendants.
+    ///
+    /// @param node the title content to configure
+    private void configureTitleDragging(Node node) {
+        if (node.getProperties().putIfAbsent(DRAG_CONFIGURED, Boolean.TRUE) != null) {
+            return;
+        }
+        try {
+            if (getDragType.invoke(null, node) == notDraggable) {
+                return;
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Cannot read native header dragging", e);
+        }
+        if (node instanceof Control && !(node instanceof Label)) {
+            setDraggable(node, false);
+            return;
+        }
+
+        // Native hit testing starts at the deepest picked node; marking only its parent is insufficient.
+        setDraggable(node, true);
+        if (node instanceof Parent parent) {
+            parent.getChildrenUnmodifiable().addListener((ListChangeListener<Node>) change -> {
+                while (change.next()) {
+                    for (Node child : change.getAddedSubList()) {
+                        configureTitleDragging(child);
+                    }
+                }
+            });
+            for (Node child : parent.getChildrenUnmodifiable()) {
+                configureTitleDragging(child);
+            }
+        }
+    }
+
+    /// Hides platform-provided window buttons so the launcher can use its own controls.
     ///
     /// @param stage the extended stage to configure
-    @SuppressWarnings("unchecked")
     void configureStage(Stage stage) {
         try {
-            ObjectProperty<Object> colorScheme = (ObjectProperty<Object>)
-                    Objects.requireNonNull(systemColorSchemeProperty.invoke(null, stage));
-            colorScheme.bind(Bindings.createObjectBinding(
-                    () -> Themes.darkModeProperty().get() ? dark : light, Themes.darkModeProperty()));
+            setSystemButtonHeight.invoke(null, stage, 0.0);
         } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Cannot configure native window buttons", e);
+            throw new IllegalStateException("Cannot hide native window buttons", e);
         }
     }
 }

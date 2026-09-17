@@ -72,7 +72,7 @@ final class MainWindowPane extends StackPane {
     /// The title bar containing page navigation state.
     private final BorderPane titleBar;
 
-    /// The custom window buttons, whose minimize and close actions are hidden with native decoration.
+    /// The custom help, minimize, and close buttons shared by both decoration styles.
     private final HBox windowButtons;
 
     /// The transition container used when the title-bar state changes.
@@ -140,7 +140,7 @@ final class MainWindowPane extends StackPane {
         getChildren().setAll(backgroundNode, frame);
     }
 
-    /// Switches the title bar between custom window controls and the system header.
+    /// Moves the custom title bar into or out of the native dragging header.
     ///
     /// @param decoration the native header support, or `null` for custom decoration
     void setNativeDecoration(@Nullable NativeWindowDecoration decoration) {
@@ -151,11 +151,6 @@ final class MainWindowPane extends StackPane {
             decoration.setContent(titleBar);
             decoration.headerBar.backgroundProperty().bind(titleBar.backgroundProperty());
             frame.setTop(decoration.headerBar);
-        }
-        for (int i = 1; i < windowButtons.getChildren().size(); i++) {
-            Node button = windowButtons.getChildren().get(i);
-            button.setVisible(decoration == null);
-            button.setManaged(decoration == null);
         }
     }
 
