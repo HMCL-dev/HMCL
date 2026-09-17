@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.beans.InvalidationListener;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FetchTask;
@@ -29,7 +30,6 @@ import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import javax.net.ssl.SSLHandshakeException;
 import java.io.FileNotFoundException;
 import java.net.SocketTimeoutException;
-import java.net.URI;
 import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -105,7 +105,7 @@ public final class DownloadProviders {
 
     public static String localizeErrorMessage(Throwable exception) {
         if (exception instanceof DownloadException) {
-            URI uri = ((DownloadException) exception).getUri();
+            WebURL uri = ((DownloadException) exception).getUri();
             if (exception.getCause() instanceof SocketTimeoutException) {
                 return i18n("install.failed.downloading.timeout", uri);
             } else if (exception.getCause() instanceof ResponseCodeException) {

@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util;
 
 import javafx.beans.value.WritableValue;
 import javafx.scene.image.Image;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -27,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
-import java.net.URI;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -35,9 +35,12 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @author Glavo
 public abstract class RemoteImageLoader {
     private final DownloadProvider downloadProvider;
-    private final Map<URI, WeakReference<Image>> cache = new HashMap<>();
-    private final Map<URI, List<WeakReference<WritableValue<Image>>>> pendingRequests = new HashMap<>();
-    private final WeakHashMap<WritableValue<Image>, URI> reverseLookup = new WeakHashMap<>();
+    /// Loaded images indexed by normalized URL; image references do not prevent garbage collection.
+    private final Map<WebURL, WeakReference<@Nullable Image>> cache = new HashMap<>();
+    /// Image targets awaiting each URL's active load task.
+    private final Map<WebURL, List<WeakReference<WritableValue<Image>>>> pendingRequests = new HashMap<>();
+    /// Current requested URL for each target, used to discard obsolete load completions.
+    private final WeakHashMap<WritableValue<Image>, WebURL> reverseLookup = new WeakHashMap<>();
 
     public RemoteImageLoader(DownloadProvider downloadProvider) {
         this.downloadProvider = downloadProvider;
@@ -47,20 +50,22 @@ public abstract class RemoteImageLoader {
         return null;
     }
 
-    protected abstract @NotNull Task<Image> createLoadTask(@NotNull List<URI> uris);
+    /// Creates a task that loads an image from candidate URLs in attempt order.
+    protected abstract @NotNull Task<Image> createLoadTask(@NotNull List<WebURL> uris);
 
+    /// Loads an image or assigns the placeholder when the URL is absent or invalid.
     @FXThread
-    public void load(@NotNull WritableValue<Image> writableValue, String url) {
-        URI uri = NetworkUtils.toURIOrNull(url);
+    public void load(@NotNull WritableValue<Image> writableValue, @Nullable String url) {
+        @Nullable WebURL uri = NetworkUtils.toWebURLOrNull(url);
         if (uri == null) {
             reverseLookup.remove(writableValue);
             writableValue.setValue(getPlaceholder());
             return;
         }
 
-        WeakReference<Image> reference = cache.get(uri);
+        @Nullable WeakReference<@Nullable Image> reference = cache.get(uri);
         if (reference != null) {
-            Image image = reference.get();
+            @Nullable Image image = reference.get();
             if (image != null) {
                 reverseLookup.remove(writableValue);
                 writableValue.setValue(image);
@@ -72,7 +77,7 @@ public abstract class RemoteImageLoader {
         writableValue.setValue(getPlaceholder());
 
         {
-            List<WeakReference<WritableValue<Image>>> list = pendingRequests.get(uri);
+            @Nullable List<WeakReference<WritableValue<Image>>> list = pendingRequests.get(uri);
             if (list != null) {
                 list.add(new WeakReference<>(writableValue));
                 reverseLookup.put(writableValue, uri);
@@ -86,7 +91,7 @@ public abstract class RemoteImageLoader {
         }
 
         createLoadTask(downloadProvider.injectURLWithCandidates(url)).whenComplete(Schedulers.javafx(), (result, exception) -> {
-            Image image;
+            @Nullable Image image;
             if (exception == null) {
                 image = result;
             } else {
@@ -95,10 +100,10 @@ public abstract class RemoteImageLoader {
             }
 
             cache.put(uri, new WeakReference<>(image));
-            List<WeakReference<WritableValue<Image>>> list = pendingRequests.remove(uri);
+            @Nullable List<WeakReference<WritableValue<Image>>> list = pendingRequests.remove(uri);
             if (list != null) {
                 for (WeakReference<WritableValue<Image>> ref : list) {
-                    WritableValue<Image> target = ref.get();
+                    @Nullable WritableValue<Image> target = ref.get();
                     if (target != null && uri.equals(reverseLookup.get(target))) {
                         reverseLookup.remove(target);
                         target.setValue(image);

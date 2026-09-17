@@ -17,10 +17,10 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.game.GameComponentType;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.net.URI;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -29,18 +29,11 @@ import java.util.List;
 /// @author huangyuhui
 public interface DownloadProvider {
 
-    List<URI> getVersionListURLs();
+    /// Returns unmodifiable candidate URLs for the Minecraft version manifest, in attempt order.
+    @Unmodifiable List<WebURL> getVersionListURLs();
 
-    List<URI> getAssetObjectCandidates(String assetObjectLocation);
-
-    /// Inject into original URL provided by Mojang and Forge.
-    ///
-    /// Since there are many provided URLs that are written in JSONs and are unmodifiable,
-    /// this method provides a way to change them.
-    ///
-    /// @param baseURL original URL provided by Mojang and Forge.
-    /// @return the URL that is equivalent to `baseURL``, but belongs to your own service provider.
-    String injectURL(String baseURL);
+    /// Returns unmodifiable candidate URLs for an asset's relative object location, in attempt order.
+    @Unmodifiable List<WebURL> getAssetObjectCandidates(String assetObjectLocation);
 
     /// Inject into original URL provided by Mojang and Forge.
     ///
@@ -49,12 +42,20 @@ public interface DownloadProvider {
     ///
     /// @param baseURL original URL provided by Mojang and Forge.
     /// @return the URL that is equivalent to `baseURL`, but belongs to your own service provider.
-    default List<URI> injectURLWithCandidates(String baseURL) {
-        return List.of(NetworkUtils.toURI(injectURL(baseURL)));
+    String injectURL(String baseURL);
+
+    /// Returns unmodifiable download candidates for an original URL, in attempt order.
+    /// The default implementation parses the result of [#injectURL(String)].
+    ///
+    /// @param baseURL original URL provided by Mojang and Forge.
+    /// @return the candidate URLs
+    default @Unmodifiable List<WebURL> injectURLWithCandidates(String baseURL) {
+        return List.of(WebURL.parse(injectURL(baseURL)));
     }
 
-    default List<URI> injectURLsWithCandidates(List<String> urls) {
-        LinkedHashSet<URI> result = new LinkedHashSet<>();
+    /// Returns unmodifiable candidates for all URLs, preserving first occurrence order and removing duplicates.
+    default @Unmodifiable List<WebURL> injectURLsWithCandidates(List<String> urls) {
+        LinkedHashSet<WebURL> result = new LinkedHashSet<>();
         for (String url : urls) {
             result.addAll(injectURLWithCandidates(url));
         }

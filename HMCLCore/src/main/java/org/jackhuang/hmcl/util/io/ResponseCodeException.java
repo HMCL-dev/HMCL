@@ -17,27 +17,36 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import org.glavo.url.WebURL;
+import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
-import java.net.URI;
 
+/// Reports an unsuccessful HTTP response and its request address.
 public final class ResponseCodeException extends IOException {
 
+    /// Request address reported by the caller.
     private final String uri;
+    /// HTTP status code reported by the server.
     private final int responseCode;
-    private final String data;
+    /// Optional response text supplied by the caller.
+    private final @Nullable String data;
 
-    public ResponseCodeException(URI uri, int responseCode) {
+    /// Creates a failure for a URL and HTTP status code.
+    public ResponseCodeException(WebURL uri, int responseCode) {
         this(uri.toString(), responseCode);
     }
 
-    public ResponseCodeException(URI uri, int responseCode, Throwable cause) {
+    /// Creates a failure for a URL and HTTP status code with an optional cause.
+    public ResponseCodeException(WebURL uri, int responseCode, @Nullable Throwable cause) {
         this(uri.toString(), responseCode, cause);
     }
 
-    public ResponseCodeException(URI uri, int responseCode, String data) {
+    /// Creates a failure for a URL and HTTP status code with optional response text.
+    public ResponseCodeException(WebURL uri, int responseCode, @Nullable String data) {
         this(uri.toString(), responseCode, data);
     }
 
+    /// Creates a failure for a request address and HTTP status code.
     public ResponseCodeException(String uri, int responseCode) {
         super("Unable to request url " + uri + ", response code: " + responseCode);
         this.uri = uri;
@@ -45,29 +54,34 @@ public final class ResponseCodeException extends IOException {
         this.data = null;
     }
 
-    public ResponseCodeException(String uri, int responseCode, Throwable cause) {
+    /// Creates a failure for a request address and HTTP status code with an optional cause.
+    public ResponseCodeException(String uri, int responseCode, @Nullable Throwable cause) {
         super("Unable to request url " + uri + ", response code: " + responseCode, cause);
         this.uri = uri;
         this.responseCode = responseCode;
         this.data = null;
     }
 
-    public ResponseCodeException(String uri, int responseCode, String data) {
+    /// Creates a failure for a request address and HTTP status code with optional response text.
+    public ResponseCodeException(String uri, int responseCode, @Nullable String data) {
         super("Unable to request url " + uri + ", response code: " + responseCode + ", data: " + data);
         this.uri = uri;
         this.responseCode = responseCode;
         this.data = data;
     }
 
+    /// Returns the request address supplied by the caller.
     public String getUri() {
         return uri;
     }
 
+    /// Returns the HTTP status code.
     public int getResponseCode() {
         return responseCode;
     }
 
-    public String getData() {
+    /// Returns the supplied response text, or `null` if none was supplied.
+    public @Nullable String getData() {
         return data;
     }
 }

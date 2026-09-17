@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventManager;
@@ -24,10 +25,10 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.*;
@@ -42,15 +43,22 @@ import java.util.regex.Pattern;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Downloads candidate URLs in order, with retries, HTTP caching, and supported range resumption.
 public abstract class FetchTask<T> extends Task<T> {
 
     protected static final int DEFAULT_RETRY = 5;
 
-    protected final List<URI> uris;
+    /// Immutable snapshot of candidate URLs in attempt order.
+    protected final @Unmodifiable List<WebURL> uris;
     protected int retry = DEFAULT_RETRY;
     protected CacheRepository repository = CacheRepository.getInstance();
 
-    public FetchTask(@NotNull List<@NotNull URI> uris) {
+    /// Creates a download task with a snapshot of the candidate URLs.
+    ///
+    /// @param uris nonempty candidate URLs, with no null elements
+    /// @throws IllegalArgumentException if no candidates are supplied
+    /// @throws NullPointerException if the list or any element is null
+    public FetchTask(@NotNull List<@NotNull WebURL> uris) {
         Objects.requireNonNull(uris);
 
         this.uris = List.copyOf(uris);
@@ -72,7 +80,11 @@ public abstract class FetchTask<T> extends Task<T> {
         this.repository = repository;
     }
 
-    protected void beforeDownload(URI uri) throws IOException {
+    /// Invoked before each download attempt, after any cache lookup.
+    ///
+    /// @param uri the candidate URL before redirects
+    /// @throws IOException if the attempt cannot be prepared
+    protected void beforeDownload(WebURL uri) throws IOException {
     }
 
     protected abstract void useCachedResult(Path cachedFile) throws IOException;
@@ -96,12 +108,12 @@ public abstract class FetchTask<T> extends Task<T> {
             }
         }
 
-        ArrayList<DownloadException> exceptions = null;
+        @Nullable ArrayList<DownloadException> exceptions = null;
 
         if (SEMAPHORE != null)
             SEMAPHORE.acquire();
         try {
-            for (URI uri : uris) {
+            for (WebURL uri : uris) {
                 try {
                     if (NetworkUtils.isHttpUri(uri))
                         downloadHttp(uri, checkETag);
@@ -158,14 +170,16 @@ public abstract class FetchTask<T> extends Task<T> {
             return new HttpResumeContext(response.uri(), contentLength, strongETag, lastModified);
         }
 
-        private final URI uri;
+        /// Final response URL whose partial content is retained for resumption.
+        private final WebURL uri;
         private final long contentLength;
         private final @Nullable String strongETag;
         private final @Nullable String lastModified;
 
         long countUncompressed;
 
-        private HttpResumeContext(URI uri, long contentLength, @Nullable String strongETag, @Nullable String lastModified) {
+        /// Records the response URL, total byte length, and available validators for resumption.
+        private HttpResumeContext(WebURL uri, long contentLength, @Nullable String strongETag, @Nullable String lastModified) {
             this.uri = uri;
             this.contentLength = contentLength;
             this.strongETag = strongETag;
@@ -279,7 +293,8 @@ public abstract class FetchTask<T> extends Task<T> {
         }
     }
 
-    private void downloadHttp(URI uri, boolean checkETag) throws DownloadException, InterruptedException {
+    /// Downloads an HTTP candidate, following HTTP(S) redirects and retrying recoverable failures.
+    private void downloadHttp(WebURL uri, boolean checkETag) throws DownloadException, InterruptedException {
         if (checkETag) {
             // Handle cache
             try {
@@ -291,10 +306,10 @@ public abstract class FetchTask<T> extends Task<T> {
             }
         }
 
-        Context context = null;
-        HttpResumeContext resumeContext = null;
+        @Nullable Context context = null;
+        @Nullable HttpResumeContext resumeContext = null;
 
-        ArrayList<Exception> exceptions = null;
+        @Nullable ArrayList<Exception> exceptions = null;
 
         // If loading the cache fails, the cache should not be loaded again.
         boolean useCachedResult = true;
@@ -304,17 +319,17 @@ public abstract class FetchTask<T> extends Task<T> {
                     throw new InterruptedException();
                 }
 
-                List<URI> redirects = null;
+                @Nullable List<WebURL> redirects = null;
                 try {
                     beforeDownload(uri);
                     updateProgress(0);
 
-                    HttpURLConnection connection = null;
+                    @Nullable HttpURLConnection connection = null;
                     UrlResponseInfo responseInfo;
-                    String bmclapiHash;
+                    @Nullable String bmclapiHash;
                     int responseCode;
 
-                    URI currentURI = uri;
+                    WebURL currentURI = uri;
 
                     LinkedHashMap<String, String> headers = new LinkedHashMap<>();
                     headers.put("accept-encoding", "gzip");
@@ -352,15 +367,15 @@ public abstract class FetchTask<T> extends Task<T> {
                                     throw new IOException("Too much redirects");
                                 }
 
-                                String location = connection.getHeaderField("Location");
+                                @Nullable String location = connection.getHeaderField("Location");
                                 if (StringUtils.isBlank(location))
                                     throw new IOException("Redirected to an empty location");
 
-                                URI target = currentURI.resolve(NetworkUtils.encodeLocation(location));
+                                WebURL target = currentURI.resolve(location);
                                 redirects.add(target);
 
                                 if (!NetworkUtils.isHttpUri(target))
-                                    throw new IOException("Redirected to not http URI: " + target);
+                                    throw new IOException("Redirected to non-HTTP URL: " + target);
 
                                 currentURI = target;
                             } else {
@@ -375,7 +390,7 @@ public abstract class FetchTask<T> extends Task<T> {
                         }
                     } while (true);
 
-                    InputStream inputStream = null;
+                    @Nullable InputStream inputStream = null;
                     boolean responseBodyConsumed = false;
                     try {
                         if (resumeRequested && responseCode == 416) {
@@ -511,8 +526,9 @@ public abstract class FetchTask<T> extends Task<T> {
         }
     }
 
-    private void downloadNotHttp(URI uri) throws DownloadException, InterruptedException {
-        ArrayList<Exception> exceptions = null;
+    /// Downloads a non-HTTP candidate through its installed URL handler, retrying I/O failures.
+    private void downloadNotHttp(WebURL uri) throws DownloadException, InterruptedException {
+        @Nullable ArrayList<Exception> exceptions = null;
         for (int retryTime = 0; retryTime < retry; retryTime++) {
             if (isCancelled()) {
                 throw new InterruptedException();
@@ -548,7 +564,8 @@ public abstract class FetchTask<T> extends Task<T> {
         throw toDownloadException(uri, null, exceptions);
     }
 
-    private static DownloadException toDownloadException(URI uri, @Nullable Exception last, @Nullable ArrayList<Exception> exceptions) {
+    /// Wraps the final failure and attaches preceding failures as suppressed exceptions.
+    private static DownloadException toDownloadException(WebURL uri, @Nullable Exception last, @Nullable ArrayList<Exception> exceptions) {
         if (exceptions == null || exceptions.isEmpty()) {
             return new DownloadException(uri, last != null
                     ? last

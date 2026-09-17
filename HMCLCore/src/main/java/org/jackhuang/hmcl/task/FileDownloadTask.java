@@ -17,17 +17,16 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
@@ -41,11 +40,9 @@ import java.util.*;
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * A task that can download a file online.
- *
- * @author huangyuhui
- */
+/// A task that can download a file online.
+///
+/// @author huangyuhui
 public class FileDownloadTask extends FetchTask<Void> {
 
     public record IntegrityCheck(String algorithm, String checksum) {
@@ -66,63 +63,60 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     private final Path file;
-    private final IntegrityCheck integrityCheck;
+    /// Optional expected checksum for downloaded and cached content.
+    private final @Nullable IntegrityCheck integrityCheck;
     private boolean caching;
     private Path candidate;
     private final ArrayList<IntegrityCheckHandler> integrityCheckHandlers = new ArrayList<>();
 
-    /**
-     * @param uri  the URI of remote file.
-     * @param path the location that download to.
-     */
+    /// Creates a download task for an absolute URL string.
+    ///
+    /// @param uri  the URL of remote file.
+    /// @param path the location that download to.
     public FileDownloadTask(String uri, Path path) {
-        this(List.of(NetworkUtils.toURI(uri)), path, null);
+        this(List.of(WebURL.parse(uri)), path, null);
     }
 
-    /**
-     * @param uri            the URI of remote file.
-     * @param path           the location that download to.
-     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     */
-    public FileDownloadTask(String uri, Path path, IntegrityCheck integrityCheck) {
-        this(List.of(NetworkUtils.toURI(uri)), path, integrityCheck);
+    /// Creates a download task with an optional integrity check for an absolute URL string.
+    ///
+    /// @param uri            the URL of remote file.
+    /// @param path           the location that download to.
+    /// @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
+    public FileDownloadTask(String uri, Path path, @Nullable IntegrityCheck integrityCheck) {
+        this(List.of(WebURL.parse(uri)), path, integrityCheck);
     }
 
-    /**
-     * @param uri  the URI of remote file.
-     * @param path the location that download to.
-     */
-    public FileDownloadTask(URI uri, Path path) {
+    /// Creates a download task for one URL.
+    ///
+    /// @param uri  the URL of remote file.
+    /// @param path the location that download to.
+    public FileDownloadTask(WebURL uri, Path path) {
         this(uri, path, null);
     }
 
-    /**
-     * @param uri            the URI of remote file.
-     * @param path           the location that download to.
-     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     */
-    public FileDownloadTask(URI uri, Path path, IntegrityCheck integrityCheck) {
+    /// Creates a download task with an optional integrity check for one URL.
+    ///
+    /// @param uri            the URL of remote file.
+    /// @param path           the location that download to.
+    /// @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
+    public FileDownloadTask(WebURL uri, Path path, @Nullable IntegrityCheck integrityCheck) {
         this(List.of(uri), path, integrityCheck);
     }
 
-    /**
-     * Constructor.
-     *
-     * @param uris uris of remote file, will be attempted in order.
-     * @param file the location that download to.
-     */
-    public FileDownloadTask(List<URI> uris, Path file) {
+    /// Creates a download task with a snapshot of nonempty candidate URLs.
+    ///
+    /// @param uris candidate URLs of the remote file, attempted in order
+    /// @param file the location that download to.
+    public FileDownloadTask(List<WebURL> uris, Path file) {
         this(uris, file, null);
     }
 
-    /**
-     * Constructor.
-     *
-     * @param uris           uris of remote file, will be attempted in order.
-     * @param path           the location that download to.
-     * @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-     */
-    public FileDownloadTask(List<URI> uris, Path path, IntegrityCheck integrityCheck) {
+    /// Creates a download task with a snapshot of nonempty candidates and an optional integrity check.
+    ///
+    /// @param uris           candidate URLs of the remote file, attempted in order
+    /// @param path           the location that download to.
+    /// @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
+    public FileDownloadTask(List<WebURL> uris, Path path, @Nullable IntegrityCheck integrityCheck) {
         super(uris);
         this.file = path;
         this.integrityCheck = integrityCheck;
@@ -168,7 +162,7 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     @Override
-    protected void beforeDownload(URI uri) {
+    protected void beforeDownload(WebURL uri) {
         LOG.trace("Downloading " + uri + " to " + file);
     }
 
@@ -290,13 +284,11 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     public interface IntegrityCheckHandler {
-        /**
-         * Check whether the file is corrupted or not.
-         *
-         * @param filePath        the file locates in (maybe in temp directory)
-         * @param destinationPath for real file name
-         * @throws IOException if the file is corrupted
-         */
+        /// Check whether the file is corrupted or not.
+        ///
+        /// @param filePath        the file locates in (maybe in temp directory)
+        /// @param destinationPath for real file name
+        /// @throws IOException if the file is corrupted
         void checkIntegrity(Path filePath, Path destinationPath) throws IOException;
     }
 

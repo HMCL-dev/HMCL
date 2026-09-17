@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -44,24 +44,24 @@ public final class CacheFileTask extends FetchTask<Path> {
     /// Expected SHA-1 checksum, or `null` when the remote cache policy determines reuse.
     private final @Nullable String expectedSha1;
 
-    /// Creates a task for one URI string using remote cache metadata.
+    /// Creates a task for one URL string using remote cache metadata.
     ///
-    /// @param uri the HTTP or HTTPS URI string
+    /// @param uri the HTTP or HTTPS URL string
     public CacheFileTask(@NotNull String uri) {
-        this(NetworkUtils.toURI(uri));
+        this(WebURL.parse(uri));
     }
 
-    /// Creates a task for one URI using remote cache metadata.
+    /// Creates a task for one URL using remote cache metadata.
     ///
-    /// @param uri the HTTP or HTTPS URI
-    public CacheFileTask(@NotNull URI uri) {
+    /// @param uri the HTTP or HTTPS URL
+    public CacheFileTask(@NotNull WebURL uri) {
         this(List.of(uri));
     }
 
-    /// Creates a task for candidate URIs using remote cache metadata.
+    /// Creates a task for candidate URLs using remote cache metadata.
     ///
-    /// @param uris candidate download URIs in attempt order
-    public CacheFileTask(@NotNull List<@NotNull URI> uris) {
+    /// @param uris candidate download URLs in attempt order
+    public CacheFileTask(@NotNull List<@NotNull WebURL> uris) {
         super(uris);
         this.expectedSha1 = null;
         validateUris(uris);
@@ -70,10 +70,10 @@ public final class CacheFileTask extends FetchTask<Path> {
 
     /// Creates a task that returns content cached under a verified SHA-1 checksum.
     ///
-    /// @param uris         candidate download URIs in attempt order
+    /// @param uris         candidate download URLs in attempt order
     /// @param expectedSha1 the expected SHA-1 checksum
     public CacheFileTask(
-            @NotNull List<@NotNull URI> uris,
+            @NotNull List<@NotNull WebURL> uris,
             @NotNull String expectedSha1) {
         super(uris);
         if (!DigestUtils.isSha1Digest(expectedSha1)) {
@@ -84,10 +84,10 @@ public final class CacheFileTask extends FetchTask<Path> {
         setName(uris.get(0).toString());
     }
 
-    /// Verifies that all candidate URIs use HTTP or HTTPS.
+    /// Verifies that all candidate URLs use HTTP or HTTPS.
     ///
-    /// @param uris the candidate URIs
-    private static void validateUris(@NotNull List<@NotNull URI> uris) {
+    /// @param uris the candidate URLs
+    private static void validateUris(@NotNull List<@NotNull WebURL> uris) {
         if (!uris.stream().allMatch(NetworkUtils::isHttpUri)) {
             throw new IllegalArgumentException(uris.toString());
         }
@@ -110,7 +110,7 @@ public final class CacheFileTask extends FetchTask<Path> {
         }
 
         // Check cache
-        for (URI uri : uris) {
+        for (WebURL uri : uris) {
             try {
                 setResult(repository.getCachedRemoteFile(uri, true));
                 LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));

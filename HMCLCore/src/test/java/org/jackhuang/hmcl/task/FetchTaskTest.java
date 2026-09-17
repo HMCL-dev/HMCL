@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.task;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
@@ -32,13 +33,14 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.URI;
+import java.net.http.HttpHeaders;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -52,6 +54,60 @@ public final class FetchTaskTest {
     @org.junit.jupiter.api.BeforeAll
     public static void notifyFetchTaskInitialized() {
         FetchTask.notifyInitialized();
+    }
+
+    /// Ensures URL normalization survives cache-index persistence without merging escaped path separators.
+    @Test
+    public void cacheKeysPreserveEncodedPaths(@TempDir Path tempDir) throws IOException {
+        CacheRepository repository = newRepository(tempDir);
+        WebURL encoded = WebURL.parse("HTTPS://EXAMPLE.COM:443/a%2Fb?token=first#part");
+        WebURL separated = WebURL.parse("https://example.com/a/b?token=second");
+        HttpHeaders headers = HttpHeaders.of(Map.of("etag", List.of("\"version\"")), (name, value) -> true);
+        repository.cacheText(new UrlResponseInfo(200, encoded, headers), "encoded");
+        repository.cacheText(new UrlResponseInfo(200, separated, headers), "separated");
+
+        CacheRepository reloaded = new CacheRepository();
+        reloaded.changeDirectory(repository.getCommonDirectory());
+        assertEquals("encoded", Files.readString(reloaded.getCachedRemoteFile(
+                WebURL.parse("https://example.com/a%2Fb?token=changed"), false)));
+        assertEquals("separated", Files.readString(reloaded.getCachedRemoteFile(separated, false)));
+        assertEquals(Map.of("if-none-match", "\"version\""), reloaded.injectConnection(encoded));
+        reloaded.removeRemoteEntry(encoded);
+        assertThrows(IOException.class, () -> reloaded.getCachedRemoteFile(encoded, false));
+        assertEquals("separated", Files.readString(reloaded.getCachedRemoteFile(separated, false)));
+    }
+
+    /// Ensures non-HTTP downloads still accept file URLs with escaped path characters.
+    @Test
+    public void readsFileURL(@TempDir Path tempDir) throws IOException {
+        Path source = Files.writeString(tempDir.resolve("file with spaces.txt"), "file content");
+        TextFetchTask task = new TextFetchTask(WebURL.of(source.toUri()));
+        task.setCacheRepository(newRepository(tempDir));
+        task.setRetry(1);
+        assertTrue(task.test());
+        assertEquals("file content", task.getResult());
+    }
+
+    /// Ensures query-only redirects retain the current path and preserve literal query spaces.
+    @Test
+    public void resolvesQueryOnlyRedirect(@TempDir Path tempDir) throws IOException {
+        AtomicInteger requests = new AtomicInteger();
+        try (TestHttpServer server = TestHttpServer.start(exchange -> {
+            if (requests.getAndIncrement() == 0) {
+                exchange.getResponseHeaders().set("Location", "?token=a b&path=%2F");
+                exchange.sendResponseHeaders(302, -1);
+                exchange.close();
+            } else {
+                sendBytes(exchange, 200, exchange.getRequestURI().toASCIIString().getBytes(UTF_8));
+            }
+        })) {
+            TextFetchTask task = new TextFetchTask(server.uri());
+            task.setCacheRepository(newRepository(tempDir));
+            task.setRetry(1);
+            assertTrue(task.test());
+            assertEquals("/file?token=a%20b&path=%2F", task.getResult());
+            assertEquals(2, requests.get());
+        }
     }
 
     /// Ensures checksum failures are reported and do not replace an existing target file.
@@ -80,7 +136,7 @@ public final class FetchTaskTest {
     public void cacheFileTaskUsesExpectedSha1(@TempDir Path tempDir) throws IOException {
         byte[] data = "cached content".getBytes(UTF_8);
         String sha1 = DigestUtils.digestToString(CacheRepository.SHA1, data);
-        URI uri = URI.create("https://example.invalid/file");
+        WebURL uri = WebURL.parse("https://example.invalid/file");
         CacheRepository repository = newRepository(tempDir);
         CacheFileTask first = new CacheFileTask(List.of(uri), sha1);
         first.setCacheRepository(repository);
@@ -106,7 +162,7 @@ public final class FetchTaskTest {
         String expectedSha1 = "0000000000000000000000000000000000000000";
         CacheRepository repository = newRepository(tempDir);
         CacheFileTask task = new CacheFileTask(
-                List.of(URI.create("https://example.invalid/file")), expectedSha1);
+                List.of(WebURL.parse("https://example.invalid/file")), expectedSha1);
         task.setCacheRepository(repository);
         FetchTask.Context context = task.getContext(null, false, null);
         context.write(data, 0, data.length);
@@ -286,8 +342,8 @@ public final class FetchTaskTest {
 
     /// Text fetch task that avoids JavaFX progress updates in isolated unit tests.
     private static final class TextFetchTask extends FetchTask<String> {
-        /// Creates a text fetch task for one URI.
-        TextFetchTask(URI uri) {
+        /// Creates a text fetch task for one URL.
+        TextFetchTask(WebURL uri) {
             super(List.of(uri));
         }
 
@@ -361,9 +417,9 @@ public final class FetchTaskTest {
             return new TestHttpServer(server);
         }
 
-        /// Returns the file endpoint URI.
-        URI uri() {
-            return URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/file");
+        /// Returns the file endpoint URL.
+        WebURL uri() {
+            return WebURL.parse("http://127.0.0.1:" + server.getAddress().getPort() + "/file");
         }
 
         @Override

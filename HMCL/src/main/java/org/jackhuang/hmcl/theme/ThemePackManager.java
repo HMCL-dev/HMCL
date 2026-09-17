@@ -26,6 +26,7 @@ import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.monetfx.Contrast;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
@@ -36,8 +37,8 @@ import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.ContentEncoding;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -48,7 +49,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
@@ -1497,7 +1497,7 @@ public final class ThemePackManager {
             List<Path> temporaryFiles,
             ResolvedBackground background) throws IOException {
         String url = requireNonBlank(background.networkImageUrl(), "background.url");
-        URI uri = NetworkUtils.toURI(url);
+        WebURL uri = WebURL.parse(url);
         if (!NetworkUtils.isHttpUri(uri)) {
             throw new IOException("Theme background URL must be HTTP or HTTPS: " + url);
         }
@@ -1535,7 +1535,7 @@ public final class ThemePackManager {
     }
 
     /// Downloads one network background into a temporary file without installing it into the persistent image cache.
-    private static void downloadNetworkBackground(URI uri, Path outputFile) throws IOException {
+    private static void downloadNetworkBackground(WebURL uri, Path outputFile) throws IOException {
         HttpURLConnection connection = NetworkUtils.resolveConnection(NetworkUtils.createHttpConnection(uri));
         try {
             int responseCode = connection.getResponseCode();
@@ -1554,7 +1554,7 @@ public final class ThemePackManager {
     }
 
     /// Returns a safe theme-pack asset file name for a downloaded network background.
-    private static String networkBackgroundAssetName(URI uri) {
+    private static String networkBackgroundAssetName(WebURL uri) {
         String path = Objects.toString(uri.getPath(), "");
         @Nullable Path fileNamePath = path.isBlank() ? null : Path.of(path).getFileName();
         String fileName = fileNamePath != null ? fileNamePath.toString() : "";

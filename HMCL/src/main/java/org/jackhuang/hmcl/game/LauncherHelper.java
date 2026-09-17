@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.stage.Stage;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
@@ -39,8 +40,8 @@ import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
@@ -57,7 +58,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.SocketTimeoutException;
-import java.net.URI;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -365,7 +365,7 @@ public final class LauncherHelper {
                                         message += StringUtils.getStackTrace(ex.getCause());
                                     }
                                 } else if (ex instanceof DownloadException) {
-                                    URI uri = ((DownloadException) ex).getUri();
+                                    WebURL uri = ((DownloadException) ex).getUri();
                                     if (ex.getCause() instanceof SocketTimeoutException) {
                                         message = i18n("install.failed.downloading.timeout", uri);
                                     } else if (ex.getCause() instanceof ResponseCodeException responseCodeException) {

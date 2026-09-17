@@ -21,7 +21,6 @@ import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -54,8 +53,20 @@ public final class NetworkUtils {
     private NetworkUtils() {
     }
 
+    /// Resolves the URL host and returns whether it is a loopback address.
+    /// Returns `false` when the host is absent or cannot be resolved.
+    public static boolean isLoopbackAddress(WebURL uri) {
+        return isLoopbackHost(uri.getHost());
+    }
+
+    /// Resolves the host of a JDK URI, including addresses supplied by a proxy selector.
+    /// Returns `false` when the host is absent or cannot be resolved.
     public static boolean isLoopbackAddress(URI uri) {
-        String host = uri.getHost();
+        return isLoopbackHost(uri.getHost());
+    }
+
+    /// Returns whether the host resolves to a loopback address.
+    private static boolean isLoopbackHost(@Nullable String host) {
         if (StringUtils.isBlank(host))
             return false;
 
@@ -67,7 +78,8 @@ public final class NetworkUtils {
         }
     }
 
-    public static boolean isHttpUri(URI uri) {
+    /// Returns whether the URL uses HTTP or HTTPS.
+    public static boolean isHttpUri(WebURL uri) {
         return "http".equals(uri.getScheme()) || "https".equals(uri.getScheme());
     }
 
@@ -123,11 +135,18 @@ public final class NetworkUtils {
         return sb.toString();
     }
 
-    public static List<URI> withQuery(List<URI> list, Map<String, String> params) {
-        return list.stream().map(uri -> URI.create(withQuery(uri.toString(), params))).collect(Collectors.toList());
+    /// Returns URLs with their queries replaced by the form-encoded non-null parameters.
+    /// Fragments and existing path escapes are preserved. If no non-null parameters are supplied,
+    /// returns a copy of the list with the URLs unchanged.
+    public static List<WebURL> withQuery(List<WebURL> list, Map<String, @Nullable String> params) {
+        String query = withQuery("", params);
+        if (query.isEmpty())
+            return new ArrayList<>(list);
+        return list.stream().map(uri -> WebURL.newBuilder(uri).setRawQuery(query).build()).collect(Collectors.toList());
     }
 
-    public static List<Pair<String, String>> parseQuery(URI uri) {
+    /// Parses the URL query as form-encoded name/value pairs.
+    public static List<Pair<String, String>> parseQuery(WebURL uri) {
         return parseQuery(uri.getRawQuery());
     }
 
@@ -152,16 +171,13 @@ public final class NetworkUtils {
         return result;
     }
 
-    public static URI dropQuery(URI u) {
+    /// Returns the URL without its query or fragment, preserving encoded path delimiters.
+    public static WebURL dropQuery(WebURL u) {
         if (u.getRawQuery() == null && u.getRawFragment() == null) {
             return u;
         }
 
-        try {
-            return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), u.getPath(), null, null);
-        } catch (URISyntaxException e) {
-            throw new AssertionError("Unreachable", e);
-        }
+        return WebURL.newBuilder(u).setRawQuery(null).setRawFragment(null).build();
     }
 
     private static final List<Pair<String, String>> API_KEYS;
@@ -221,20 +237,12 @@ public final class NetworkUtils {
         return connection;
     }
 
-    public static URLConnection createConnection(URI uri) throws IOException {
-        return createConnection(WebURL.of(uri));
-    }
-
     public static HttpURLConnection createHttpConnection(WebURL url) throws IOException {
         return (HttpURLConnection) createConnection(url);
     }
 
     public static HttpURLConnection createHttpConnection(String url) throws IOException {
         return (HttpURLConnection) createConnection(WebURL.parse(url));
-    }
-
-    public static HttpURLConnection createHttpConnection(URI url) throws IOException {
-        return (HttpURLConnection) createConnection(url);
     }
 
     private static void encodeCodePoint(StringBuilder builder, int codePoint) {
@@ -349,10 +357,11 @@ public final class NetworkUtils {
     }
 
     public static String doGet(String uri) throws IOException {
-        return doGet(toURI(uri));
+        return doGet(WebURL.parse(uri));
     }
 
-    public static String doGet(URI uri) throws IOException {
+    /// Reads a URL as text, following HTTP redirects and decoding the response content.
+    public static String doGet(WebURL uri) throws IOException {
         URLConnection connection = createConnection(uri);
         if (connection instanceof HttpURLConnection httpURLConnection) {
             connection = resolveConnection(httpURLConnection);
@@ -360,9 +369,10 @@ public final class NetworkUtils {
         return readFullyAsString(connection);
     }
 
-    public static String doGet(List<URI> uris) throws IOException {
-        List<IOException> exceptions = null;
-        for (URI uri : uris) {
+    /// Tries candidate URLs in order until one succeeds, or throws their I/O failures.
+    public static String doGet(List<WebURL> uris) throws IOException {
+        @Nullable List<IOException> exceptions = null;
+        for (WebURL uri : uris) {
             try {
                 return doGet(uri);
             } catch (IOException e) {
@@ -386,11 +396,13 @@ public final class NetworkUtils {
         }
     }
 
-    public static String doPost(URI uri, String post) throws IOException {
+    /// Posts UTF-8 form content and reads the response as text.
+    public static String doPost(WebURL uri, String post) throws IOException {
         return doPost(uri, post, "application/x-www-form-urlencoded");
     }
 
-    public static String doPost(URI u, Map<String, String> params) throws IOException {
+    /// Form-encodes the parameters and posts them to the URL.
+    public static String doPost(WebURL u, @Nullable Map<String, String> params) throws IOException {
         StringBuilder sb = new StringBuilder();
         if (params != null) {
             for (Map.Entry<String, String> e : params.entrySet())
@@ -400,7 +412,8 @@ public final class NetworkUtils {
         return doPost(u, sb.toString());
     }
 
-    public static String doPost(URI uri, String post, String contentType) throws IOException {
+    /// Posts UTF-8 content with the given media type and reads the response as text.
+    public static String doPost(WebURL uri, String post, String contentType) throws IOException {
         byte[] bytes = post.getBytes(UTF_8);
 
         HttpURLConnection con = createHttpConnection(uri);
@@ -458,7 +471,8 @@ public final class NetworkUtils {
         }
     }
 
-    public static String detectFileName(URI uri) throws IOException {
+    /// Reads a successful HTTP response's filename from its disposition header or final URL.
+    public static String detectFileName(WebURL uri) throws IOException {
         HttpURLConnection conn = resolveConnection(createHttpConnection(uri));
         int code = conn.getResponseCode();
         if (code / 100 == 4)
@@ -484,19 +498,8 @@ public final class NetworkUtils {
         return URLDecoder.decode(toDecode, UTF_8);
     }
 
-    /// @throws IllegalArgumentException if the string is not a valid URI
-    public static @NotNull URI toURI(@NotNull String uri) {
-        return WebURL.toURI(uri);
-    }
-
-    public static @Nullable URI toURIOrNull(String uri) {
-        if (StringUtils.isNotBlank(uri)) {
-            try {
-                return toURI(uri);
-            } catch (Exception ignored) {
-            }
-        }
-
-        return null;
+    /// Parses an absolute URL, or returns `null` for null, blank, or invalid input.
+    public static @Nullable WebURL toWebURLOrNull(@Nullable String uri) {
+        return StringUtils.isBlank(uri) ? null : WebURL.tryParse(uri);
     }
 }
