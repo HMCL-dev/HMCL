@@ -72,6 +72,9 @@ final class MainWindowPane extends StackPane {
     /// The title bar containing page navigation state.
     private final BorderPane titleBar;
 
+    /// The custom window buttons, whose minimize and close actions are hidden with native decoration.
+    private final HBox windowButtons;
+
     /// The transition container used when the title-bar state changes.
     private final TransitionPane navBarPane;
 
@@ -112,14 +115,15 @@ final class MainWindowPane extends StackPane {
         center.getChildren().setAll(decorator.getNavigator());
         frame.setCenter(center);
 
-        HBox rightButtonsContainer = createWindowButtons();
+        windowButtons = createWindowButtons();
         titleBar = new BorderPane();
         titleBar.setPickOnBounds(false);
         titleBar.getStyleClass().add("jfx-tool-bar");
-        titleBar.setRight(rightButtonsContainer);
+        titleBar.setRight(windowButtons);
 
         navBarPane = new TransitionPane();
         titleBar.setCenter(navBarPane);
+        decorator.capableDraggingWindow(navBarPane);
         frame.setTop(titleBar);
 
         updateTitleBarBackground();
@@ -134,6 +138,25 @@ final class MainWindowPane extends StackPane {
         decorator.capableDraggingWindow(titleBar);
 
         getChildren().setAll(backgroundNode, frame);
+    }
+
+    /// Switches the title bar between custom window controls and the system header.
+    ///
+    /// @param decoration the native header support, or `null` for custom decoration
+    void setNativeDecoration(@Nullable NativeWindowDecoration decoration) {
+        frame.setTop(null);
+        if (decoration == null) {
+            frame.setTop(titleBar);
+        } else {
+            decoration.setContent(titleBar);
+            decoration.headerBar.backgroundProperty().bind(titleBar.backgroundProperty());
+            frame.setTop(decoration.headerBar);
+        }
+        for (int i = 1; i < windowButtons.getChildren().size(); i++) {
+            Node button = windowButtons.getChildren().get(i);
+            button.setVisible(decoration == null);
+            button.setManaged(decoration == null);
+        }
     }
 
     /// Updates the content-corner shape for an edge-to-edge window state.
@@ -171,6 +194,7 @@ final class MainWindowPane extends StackPane {
     private HBox createWindowButtons() {
         HBox buttons = new HBox();
         buttons.setAlignment(Pos.TOP_RIGHT);
+        decorator.capableDraggingWindow(buttons);
         buttons.setMaxSize(Region.USE_PREF_SIZE, 40);
 
         JFXButton helpButton = new JFXButton();
@@ -247,6 +271,7 @@ final class MainWindowPane extends StackPane {
     private Node createNavBar(DecoratorPage.State state) {
         HBox navBar = new HBox();
         navBar.setAlignment(Pos.CENTER_LEFT);
+        decorator.capableDraggingWindow(navBar);
 
         // Left navigation buttons
         if (state.backable()) {
@@ -275,6 +300,7 @@ final class MainWindowPane extends StackPane {
         StackPane titleArea = new StackPane();
         titleArea.setAlignment(Pos.CENTER_LEFT);
         titleArea.setMinWidth(0);
+        decorator.capableDraggingWindow(titleArea);
         HBox.setHgrow(titleArea, Priority.ALWAYS);
         if (state.titleNode() != null) {
             titleArea.getChildren().setAll(state.titleNode());
@@ -284,6 +310,7 @@ final class MainWindowPane extends StackPane {
             titleLabel.textFillProperty().bind(Themes.titleFillProperty());
             titleLabel.getStyleClass().add("jfx-decorator-title");
             titleLabel.setMinWidth(0);
+            titleLabel.setMouseTransparent(true);
             titleArea.getChildren().setAll(titleLabel);
         }
 
