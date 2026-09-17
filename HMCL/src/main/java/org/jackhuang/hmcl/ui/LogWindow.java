@@ -101,6 +101,8 @@ public final class LogWindow extends Stage {
 
         this.gameProcess = gameProcess;
 
+        setMinWidth(600);
+        setMinHeight(400);
         FXUtils.addMacOSCloseWindowHandler(this, () -> !gameProcess.isRunning());
     }
 
