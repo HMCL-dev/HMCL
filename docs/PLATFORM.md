@@ -1,7 +1,7 @@
 # Platform Support Status
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-**English** | 中文 ([简体](PLATFORM_zh.md), [繁體](PLATFORM_zh_Hant.md))
+**English** | 中文 ([简体](PLATFORM_zh_Hans.md), [繁體](PLATFORM_zh_Hant.md))
 <!-- #END LANGUAGE_SWITCHER -->
 
 ## Launcher Compatibility
@@ -117,18 +117,18 @@ Legend:
 
 <!-- #BEGIN BLOCK -->
 <!-- #PROPERTY NAME=GAME_COMPATIBILITY -->
-|                             | Windows                                           | Linux                      | macOS                                                                   | FreeBSD                     |
-|-----------------------------|:--------------------------------------------------|:---------------------------|:------------------------------------------------------------------------|:----------------------------|
-| x86-64                      | ✅️                                                | ✅️                         | ✅️                                                                      | 👌 (Minecraft 1.13~1.21.11) |
-| x86                         | ✅️ (~1.20.4)                                      | ✅️ (~1.20.4)               | /                                                                       | /                           |
-| ARM64                       | 👌 (Minecraft 1.8~1.18.2)<br/>✅ (Minecraft 1.19+) | 👌 (Minecraft 1.8~1.21.11) | 👌 (Minecraft 1.6~1.18.2)<br/>✅ (Minecraft 1.19+)<br/>✅ (use Rosetta 2) | ❔                           |
-| ARM32                       | /️                                                | 👌 (Minecraft 1.8~1.20.1)  | /                                                                       | /                           |
-| MIPS64el                    | /                                                 | 👌 (Minecraft 1.8~1.20.1)  | /                                                                       | /                           |
-| RISC-V 64                   | /                                                 | 👌 (Minecraft 1.13~1.21.5) | /                                                                       | /                           |
-| LoongArch64 (New World) | /                                                 | 👌 (Minecraft 1.6~1.21.11) | /                                                                       | /                           |
-| LoongArch64 (Old World) | /                                                 | 👌 (Minecraft 1.6~1.20.1)  | /                                                                       | /                           |
-| PowerPC-64 (Little-Endian)  | /                                                 | ❔                          | /                                                                       | /                           |
-| S390x                       | /                                                 | ❔                          | /                                                                       | /                           |
+|                             | Windows                                           | Linux                     | macOS                                                                   | FreeBSD                     |
+|-----------------------------|:--------------------------------------------------|:--------------------------|:------------------------------------------------------------------------|:----------------------------|
+| x86-64                      | ✅️                                                | ✅️                        | ✅️                                                                      | 👌 (Minecraft 1.13~26.2) |
+| x86                         | ✅️ (~1.20.4)                                      | ✅️ (~1.20.4)              | /                                                                       | /                           |
+| ARM64                       | 👌 (Minecraft 1.8~1.18.2)<br/>✅ (Minecraft 1.19+) | 👌 (Minecraft 1.8~26.2)   | 👌 (Minecraft 1.6~1.18.2)<br/>✅ (Minecraft 1.19+)<br/>✅ (use Rosetta 2) | ❔                           |
+| ARM32                       | /️                                                | 👌 (Minecraft 1.8~1.20.1) | /                                                                       | /                           |
+| MIPS64el                    | /                                                 | 👌 (Minecraft 1.8~1.20.1) | /                                                                       | /                           |
+| RISC-V 64                   | /                                                 | 👌 (Minecraft 1.13~26.2)  | /                                                                       | /                           |
+| LoongArch64 (New World) | /                                                 | 👌 (Minecraft 1.6~26.2)   | /                                                                       | /                           |
+| LoongArch64 (Old World) | /                                                 | 👌 (Minecraft 1.6~1.20.1) | /                                                                       | /                           |
+| PowerPC-64 (Little-Endian)  | /                                                 | ❔                        | /                                                                       | /                           |
+| S390x                       | /                                                 | ❔                        | /                                                                       | /                           |
 <!-- #END BLOCK -->
 
 Legend:
@@ -210,7 +210,7 @@ Legend:
     <tr>
       <td>RISC-V 64</td>
       <td>/</td>
-      <td>❔</td>
+      <td>✅️</td>
       <td>/</td>
       <td>/</td>
     </tr>

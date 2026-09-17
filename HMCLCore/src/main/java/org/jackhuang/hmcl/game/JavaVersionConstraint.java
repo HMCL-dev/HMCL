@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -273,5 +272,5 @@ public enum JavaVersionConstraint {
         return getJavaVersionRange(version, analyzer).contains(java.getVersionNumber());
     }
 
-    public static final List<JavaVersionConstraint> ALL = Lang.immutableListOf(values());
+    public static final List<JavaVersionConstraint> ALL = List.of(values());
 }

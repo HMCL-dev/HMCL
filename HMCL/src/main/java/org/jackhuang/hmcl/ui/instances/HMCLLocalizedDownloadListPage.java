@@ -35,6 +35,10 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MOD, CurseForgeRemoteAddonRepository.MODS, ModrinthRemoteAddonRepository.MODS);
     }
 
+    public static DownloadListPage ofModrinthMod(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MOD, null, ModrinthRemoteAddonRepository.MODS);
+    }
+
     public static DownloadListPage ofModPack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
         return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MODPACK, CurseForgeRemoteAddonRepository.MODPACKS, ModrinthRemoteAddonRepository.MODPACKS);
     }
@@ -99,15 +103,6 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
                 return modrinth;
             } else {
                 return curseForge;
-            }
-        }
-
-        @Override
-        protected SortType getBackedRemoteModRepositorySortOrder() {
-            if ("addon.modrinth".equals(downloadSource.get())) {
-                return SortType.NAME;
-            } else {
-                return SortType.POPULARITY;
             }
         }
 

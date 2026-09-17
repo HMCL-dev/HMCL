@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.util.i18n.translator;
 
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -221,7 +221,7 @@ public class Translator_lzh extends Translator {
     }
 
     @Override
-    public String getDisplayVersion(RemoteVersion remoteVersion) {
+    public String getDisplayVersion(ComponentRemoteVersion remoteVersion) {
         if (remoteVersion instanceof GameRemoteVersion)
             return translateGameVersion(GameVersionNumber.asGameVersion(remoteVersion.getSelfVersion()));
         else

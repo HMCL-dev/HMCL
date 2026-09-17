@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.nio.file.Path;
-import java.util.Optional;
 
 /// Provides indexed access to local game instances and the filesystem layout used by those instances.
 ///
@@ -66,12 +65,6 @@ public interface GameRepository {
     /// @throws IllegalStateException if this repository is already being modified
     /// @see GameRepositoryDraft
     GameRepositoryDraft openDraft();
-
-    /// Resolves inheritance into a normalized launch view and a patch-preserving standalone view.
-    ///
-    /// @param manifest the manifest to resolve
-    /// @return the resolved manifest view
-    GameInstanceManifest.Resolved resolve(GameInstanceManifest manifest) throws NoSuchGameInstanceException;
 
     /// Returns whether the instance exists in the current repository index.
     ///
@@ -125,18 +118,6 @@ public interface GameRepository {
     default Path getInstanceRoot(GameInstanceID instanceId) {
         return getLayout().getInstanceRoot(instanceId);
     }
-
-    /// Returns the primary client jar path for a manifest.
-    ///
-    /// @param manifest the manifest whose jar should be located
-    /// @return the primary client jar path
-    Path getInstanceJar(GameInstanceManifest manifest);
-
-    /// Detects the Minecraft game version associated with a manifest.
-    ///
-    /// @param manifest the manifest to inspect
-    /// @return the detected Minecraft game version, or empty if it cannot be determined
-    Optional<String> getGameVersion(GameInstanceManifest manifest);
 
     /// Renames an instance and updates repository-managed references.
     ///

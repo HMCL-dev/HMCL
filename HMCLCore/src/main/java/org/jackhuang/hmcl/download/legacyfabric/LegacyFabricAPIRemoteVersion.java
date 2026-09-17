@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.download.legacyfabric;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
@@ -29,7 +29,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
-public class LegacyFabricAPIRemoteVersion extends RemoteVersion {
+public class LegacyFabricAPIRemoteVersion extends ComponentRemoteVersion {
     private final String fullVersion;
     private final RemoteAddon.Version version;
 
@@ -59,13 +59,13 @@ public class LegacyFabricAPIRemoteVersion extends RemoteVersion {
     @Override
     public Task<GameInstancePatch> getInstallTask(
             DefaultDependencyManager dependencyManager,
-            GameInstanceManifest baseVersion,
+            GameInstanceManifest baseManifest,
             Path modsDirectory) {
-        return new LegacyFabricAPIInstallTask(dependencyManager, baseVersion, this, modsDirectory);
+        return new LegacyFabricAPIInstallTask(dependencyManager, baseManifest, this, modsDirectory);
     }
 
     @Override
-    public int compareTo(RemoteVersion o) {
+    public int compareTo(ComponentRemoteVersion o) {
         if (!(o instanceof LegacyFabricAPIRemoteVersion)) return 0;
         return -this.getReleaseDate().compareTo(o.getReleaseDate());
     }

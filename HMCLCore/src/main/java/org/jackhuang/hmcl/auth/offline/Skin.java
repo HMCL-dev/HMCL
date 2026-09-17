@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -40,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 public record Skin(Type type, String cslApi, TextureModel textureModel, String localSkinPath, String localCapePath) {
@@ -120,7 +120,7 @@ public record Skin(Type type, String cslApi, TextureModel textureModel, String l
             case CUSTOM_SKIN_LOADER_API:
                 String realCslApi = type == Type.LITTLE_SKIN
                         ? "https://littleskin.cn/csl"
-                        : NetworkUtils.addHttpsIfMissing(StringUtils.removeSuffix(Lang.requireNonNullElse(cslApi, ""), "/"));
+                        : NetworkUtils.addHttpsIfMissing(StringUtils.removeSuffix(Objects.requireNonNullElse(cslApi, ""), "/"));
                 return Task.composeAsync(() -> new GetTask(String.format("%s/%s.json", realCslApi, username)))
                         .thenComposeAsync(json -> {
                             SkinJson result = JsonUtils.GSON.fromJson(json, SkinJson.class);

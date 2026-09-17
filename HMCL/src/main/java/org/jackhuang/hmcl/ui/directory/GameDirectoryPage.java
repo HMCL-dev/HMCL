@@ -22,7 +22,10 @@ import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.RequiredFieldValidator;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
@@ -38,8 +41,13 @@ import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.LineFileChooserButton;
+import org.jackhuang.hmcl.ui.construct.LineToggleButton;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -117,10 +125,12 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                                 setMessage(i18n("game_directory.already_exists"));
                             }
 
+                            /// Rejects names used by other game directories, excluding the entry being edited.
                             @Override
                             protected void eval() {
                                 JFXTextField control = (JFXTextField) this.getSrcControl();
                                 hasErrors.set(GameDirectoryManager.getGameDirectories().stream()
+                                        .filter(existingGameDirectory -> existingGameDirectory != gameDirectory)
                                         .anyMatch(existingGameDirectory -> Objects.equals(
                                                 GameDirectoryManager.getGameDirectoryCustomName(existingGameDirectory), control.getText())));
                             }
@@ -162,46 +172,56 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
             StackPane.setAlignment(saveButton, Pos.BOTTOM_RIGHT);
             saveButton.setPrefSize(100, 40);
             saveButton.setOnAction(e -> onSave());
+            String initialLocation = getLocation();
+            boolean initialUseRelativePath = toggleUseRelativePath.isSelected();
             saveButton.disableProperty().bind(Bindings.createBooleanBinding(
-                    () -> !txtGameDirectoryName.validate() || StringUtils.isBlank(getLocation()),
-                    txtGameDirectoryName.textProperty(), location));
+                    () -> !txtGameDirectoryName.validate() || StringUtils.isBlank(getLocation())
+                            || (gameDirectory != null
+                            && Objects.equals(txtGameDirectoryName.getText(), gameDirectoryDisplayName)
+                            && Objects.equals(getLocation(), initialLocation)
+                            && toggleUseRelativePath.isSelected() == initialUseRelativePath),
+                    txtGameDirectoryName.textProperty(), location, toggleUseRelativePath.selectedProperty()));
         }
 
-        ChangeListener<String> locationChangeListener = (observable, oldValue, newValue) -> {
-            Path newPath;
-            try {
-                newPath = FileUtils.toAbsolute(Path.of(newValue));
-            } catch (InvalidPathException ignored) {
-                return;
-            }
-
-            if (!".minecraft".equals(FileUtils.getName(newPath)))
-                return;
-
-            Path parent = newPath.getParent();
-            if (parent == null)
-                return;
-
-            String suggestedName = FileUtils.getName(parent);
-            if (!suggestedName.isBlank()) {
-                txtGameDirectoryName.setText(suggestedName);
-            }
-        };
-        locationProperty().addListener(locationChangeListener);
-
-        txtGameDirectoryName.textProperty().addListener(new ChangeListener<>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                if (txtGameDirectoryName.isFocused()) {
-                    txtGameDirectoryName.textProperty().removeListener(this);
-                    locationProperty().removeListener(locationChangeListener);
+        if (gameDirectory == null) {
+            ChangeListener<String> locationChangeListener = (observable, oldValue, newValue) -> {
+                Path newPath;
+                try {
+                    newPath = FileUtils.toAbsolute(Path.of(newValue));
+                } catch (InvalidPathException ignored) {
+                    return;
                 }
-            }
-        });
+
+                if (!".minecraft".equals(FileUtils.getName(newPath)))
+                    return;
+
+                @Nullable Path parent = newPath.getParent();
+                if (parent == null)
+                    return;
+
+                String suggestedName = FileUtils.getName(parent);
+                if (!suggestedName.isBlank()) {
+                    txtGameDirectoryName.setText(suggestedName);
+                }
+            };
+            locationChangeListener.changed(locationProperty(), this.location.get(), this.location.get());
+            locationProperty().addListener(locationChangeListener);
+
+            txtGameDirectoryName.textProperty().addListener(new ChangeListener<>() {
+                /// Stops automatic name suggestions after the user edits the name.
+                @Override
+                public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                    if (txtGameDirectoryName.isFocused()) {
+                        txtGameDirectoryName.textProperty().removeListener(this);
+                        locationProperty().removeListener(locationChangeListener);
+                    }
+                }
+            });
+        }
     }
 
-    /// Saves the edited game directory or adds a new entry to the appropriate game directory store.
-    private void onSave() {
+    @FXThread
+    private void doSave() {
         if (gameDirectory != null) {
             LocalizedText name = LocalizedText.plain(txtGameDirectoryName.getText());
             PortablePath path = StringUtils.isNotBlank(getLocation()) ? createPortableLocation() : gameDirectory.getPath();
@@ -247,6 +267,14 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
         }
 
         fireEvent(new PageCloseEvent());
+    }
+
+    /// Saves the edited game directory or adds a new entry to the appropriate game directory store.
+    @FXThread
+    private void onSave() {
+        if (Objects.equals(Path.of(getLocation()).getRoot(), Path.of(getLocation()))) {
+            Controllers.confirm(i18n("game_directory.root"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING, this::doSave, null);
+        } else doSave();
     }
 
     /// Creates the portable path for the current location according to the relative-path toggle.

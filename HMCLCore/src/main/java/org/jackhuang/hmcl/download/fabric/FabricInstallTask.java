@@ -47,6 +47,10 @@ public final class FabricInstallTask extends Task<GameInstancePatch> {
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
     public FabricInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, FabricRemoteVersion remoteVersion) {
+        if (!manifest.isModifiable()) {
+            throw new IllegalArgumentException("Manifest is not modifiable");
+        }
+
         this.dependencyManager = dependencyManager;
         this.manifest = manifest;
         this.remote = remoteVersion;
@@ -62,7 +66,7 @@ public final class FabricInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void preExecute() throws Exception {
-        if (!Objects.equals(GameComponentAnalyzer.VANILLA_MAIN, dependencyManager.getGameRepository().resolve(manifest).launchManifest().mainClass()))
+        if (!Objects.equals(GameComponentAnalyzer.VANILLA_MAIN, manifest.mainClass()))
             throw new UnsupportedInstallationException(FABRIC_NOT_COMPATIBLE_WITH_FORGE);
     }
 

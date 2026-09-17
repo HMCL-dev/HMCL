@@ -63,6 +63,8 @@ public interface GameRepositoryDraft extends AutoCloseable {
     /// @return the repository
     GameRepository getRepository();
 
+    GameRepositorySnapshot getBaseSnapshot();
+
     /// Returns this draft's lifecycle state.
     ///
     /// @return the current state
