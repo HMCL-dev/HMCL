@@ -17,10 +17,11 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.task.Task;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 
@@ -44,12 +45,12 @@ public final class DownloadProviderWrapper implements DownloadProvider {
     }
 
     @Override
-    public List<URI> getAssetObjectCandidates(String assetObjectLocation) {
+    public @Unmodifiable List<WebURL> getAssetObjectCandidates(String assetObjectLocation) {
         return getProvider().getAssetObjectCandidates(assetObjectLocation);
     }
 
     @Override
-    public List<URI> getVersionListURLs() {
+    public @Unmodifiable List<WebURL> getVersionListURLs() {
         return getProvider().getVersionListURLs();
     }
 
@@ -59,12 +60,12 @@ public final class DownloadProviderWrapper implements DownloadProvider {
     }
 
     @Override
-    public List<URI> injectURLWithCandidates(String baseURL) {
+    public @Unmodifiable List<WebURL> injectURLWithCandidates(String baseURL) {
         return getProvider().injectURLWithCandidates(baseURL);
     }
 
     @Override
-    public List<URI> injectURLsWithCandidates(List<String> urls) {
+    public @Unmodifiable List<WebURL> injectURLsWithCandidates(List<String> urls) {
         return getProvider().injectURLsWithCandidates(urls);
     }
 

@@ -37,11 +37,12 @@ import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
-import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.game.*;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -57,7 +58,6 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -252,7 +252,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
             iconLoader = new RemoteImageLoader(control.downloadProvider) {
                 @Override
-                protected @NotNull Task<Image> createLoadTask(@NotNull List<URI> uris) {
+                protected @NotNull Task<Image> createLoadTask(@NotNull List<WebURL> uris) {
                     return FXUtils.getRemoteImageTask(uris, 80, 80, true, true);
                 }
             };

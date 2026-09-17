@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomVersionList;
 import org.jackhuang.hmcl.download.fabric.FabricAPIVersionList;
 import org.jackhuang.hmcl.download.fabric.FabricVersionList;
@@ -31,9 +32,8 @@ import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.net.URI;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -111,13 +111,13 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public List<URI> getVersionListURLs() {
-        return List.of(URI.create(apiRoot + "/mc/game/version_manifest.json"));
+    public @Unmodifiable List<WebURL> getVersionListURLs() {
+        return List.of(WebURL.parse(apiRoot + "/mc/game/version_manifest.json"));
     }
 
     @Override
-    public List<URI> getAssetObjectCandidates(String assetObjectLocation) {
-        return List.of(NetworkUtils.toURI(apiRoot + "/assets/" + assetObjectLocation));
+    public @Unmodifiable List<WebURL> getAssetObjectCandidates(String assetObjectLocation) {
+        return List.of(WebURL.parse(apiRoot + "/assets/" + assetObjectLocation));
     }
 
     @Override
@@ -153,20 +153,20 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public List<URI> injectURLWithCandidates(String baseURL) {
+    public @Unmodifiable List<WebURL> injectURLWithCandidates(String baseURL) {
         String injected = injectURL(replacement, baseURL);
         if (injected.equals(baseURL)) {
             String fallbackInjected = injectURL(fallbackReplacement, baseURL);
             if (fallbackInjected.equals(baseURL)) {
-                return List.of(NetworkUtils.toURI(baseURL));
+                return List.of(WebURL.parse(baseURL));
             } else {
                 return List.of(
-                        NetworkUtils.toURI(baseURL),
-                        NetworkUtils.toURI(fallbackInjected)
+                        WebURL.parse(baseURL),
+                        WebURL.parse(fallbackInjected)
                 );
             }
         } else {
-            return List.of(NetworkUtils.toURI(injected));
+            return List.of(WebURL.parse(injected));
         }
     }
 

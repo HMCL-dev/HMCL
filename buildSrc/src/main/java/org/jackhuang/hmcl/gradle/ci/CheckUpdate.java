@@ -79,8 +79,8 @@ public abstract class CheckUpdate extends DefaultTask {
 
     @TaskAction
     public void run() throws Exception {
-        String uri = getUri().get();
-        URI apiUri = URI.create(concatUri(uri, "api", "json"));
+        String url = getUri().get();
+        URI apiUri = URI.create(concatUri(url, "api", "json"));
         LOGGER.quiet("Fetching metadata from {}", apiUri);
 
         BuildMetadata buildMetadata;
@@ -113,7 +113,7 @@ public abstract class CheckUpdate extends DefaultTask {
 
                 buildMetadata = metadatas.get(metadatas.size() - 1);
             } else if (WORKFLOW_JOB.equals(jobType) || FREE_STYLE_PROJECT.equals(jobType)) {
-                buildMetadata = fetchBuildInfo(helper, uri);
+                buildMetadata = fetchBuildInfo(helper, url);
             } else {
                 throw new GradleException("Unsupported job type: " + jobType);
             }

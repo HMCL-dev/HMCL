@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download.game;
 
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -27,10 +28,10 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -152,7 +153,7 @@ public final class GameLibrariesTask extends Task<Void> {
                     for (FMLLib fmlLib : fmlLibs) {
                         Path file = libDir.resolve(fmlLib.name);
                         if (shouldDownloadFMLLib(fmlLib, file)) {
-                            List<URI> uris = dependencyManager.getDownloadProvider()
+                            @Unmodifiable List<WebURL> uris = dependencyManager.getDownloadProvider()
                                     .injectURLWithCandidates(fmlLib.downloadUrl());
                             dependencies.add(new FileDownloadTask(uris, file)
                                     .withCounter("hmcl.install.libraries"));
