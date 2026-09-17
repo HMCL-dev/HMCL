@@ -30,11 +30,11 @@ import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class AddonCheckUpdatesTask<T extends LocalAddonFile> extends Task<List<LocalAddonFile.AddonUpdate>> {
+public class AddonCheckUpdatesTask extends Task<List<LocalAddonFile.AddonUpdate>> {
     private final DownloadProvider downloadProvider;
     private final List<Task<LocalAddonFile.AddonUpdate>> dependents;
 
-    public AddonCheckUpdatesTask(DownloadProvider downloadProvider, String gameVersion, Collection<T> addons) {
+    public AddonCheckUpdatesTask(DownloadProvider downloadProvider, String gameVersion, Collection<? extends LocalAddonFile> addons) {
         this.downloadProvider = downloadProvider;
         dependents = addons.stream().map(addon ->
                 Task.supplyAsync(Schedulers.io(), () -> {
