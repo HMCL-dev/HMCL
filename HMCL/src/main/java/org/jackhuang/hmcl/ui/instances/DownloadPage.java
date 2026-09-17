@@ -26,10 +26,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableSet;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -58,7 +54,6 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -502,7 +497,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                             public void invalidated(Observable observable) {
                                 if (selfPage.loaded.get() && selfPage.installed != null) {
                                     if (selfPage.installed.contains(dataItem))
-                                        content.addTagFirst(i18n("addon.installed"), null);
+                                        content.addTag(i18n("addon.installed"), null);
                                     observable.removeListener(this);
                                 }
                             }
