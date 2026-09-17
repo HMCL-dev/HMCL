@@ -61,6 +61,9 @@ public final class CurseInstallTask extends Task<Void> {
     /// Previous modpack configuration when updating, or `null` for a new installation.
     private final @Nullable ModpackConfiguration<CurseManifest> config;
 
+    /// Keys of optional files the user chose not to install; `null` or empty means install all.
+    private final @Nullable Set<String> excludedFiles;
+
     /// Validated extension of the scheduled icon download, or `null` when no icon is scheduled.
     private @Nullable String iconExt;
 
@@ -77,6 +80,8 @@ public final class CurseInstallTask extends Task<Void> {
     /// @param manifest          the CurseForge manifest
     /// @param instanceId        the id of the new instance
     /// @param iconUrl           the optional icon URL, or `null`
+    /// @param excludedFiles   keys of optional files the user chose not to install; `null` or empty means
+    ///                          install all files. When non-null, must not contain `null` elements.
     /// @throws IllegalStateException if the target cannot be reserved or another repository draft
     ///                               is open
     public CurseInstallTask(
@@ -85,8 +90,9 @@ public final class CurseInstallTask extends Task<Void> {
             Modpack modpack,
             CurseManifest manifest,
             GameInstanceID instanceId,
-            @Nullable String iconUrl) {
-        this(dependencyManager, zipFile, modpack, manifest, instanceId, null, iconUrl);
+            @Nullable String iconUrl,
+            @Nullable Set<String> excludedFiles) {
+        this(dependencyManager, zipFile, modpack, manifest, instanceId, null, iconUrl, excludedFiles);
     }
 
     /// Creates a task that updates an existing CurseForge modpack instance.
@@ -97,6 +103,8 @@ public final class CurseInstallTask extends Task<Void> {
     /// @param manifest          the CurseForge manifest
     /// @param instance          the existing instance to update
     /// @param iconUrl           the optional icon URL, or `null`
+    /// @param excludedFiles   keys of optional files the user chose not to install; `null` or empty means
+    ///                          install all files. When non-null, must not contain `null` elements.
     /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
     ///                                  modpack configuration, or records another provider type
     /// @throws IllegalStateException    if `instance` is not the exact currently published object
@@ -107,8 +115,9 @@ public final class CurseInstallTask extends Task<Void> {
             Modpack modpack,
             CurseManifest manifest,
             DefaultGameInstance instance,
-            @Nullable String iconUrl) {
-        this(dependencyManager, zipFile, modpack, manifest, instance.getId(), instance, iconUrl);
+            @Nullable String iconUrl,
+            @Nullable Set<String> excludedFiles) {
+        this(dependencyManager, zipFile, modpack, manifest, instance.getId(), instance, iconUrl, excludedFiles);
     }
 
     /// Creates a CurseForge installation task in the mode selected by `updateTarget`.
@@ -120,6 +129,8 @@ public final class CurseInstallTask extends Task<Void> {
     /// @param instanceId        the target instance id
     /// @param updateTarget      the existing instance selecting update mode, or `null` for install
     /// @param iconUrl           the optional icon URL, or `null`
+    /// @param excludedFiles   keys of optional files the user chose not to install; `null` or empty means
+    ///                          install all files. When non-null, must not contain `null` elements.
     /// @throws IllegalArgumentException if an update target has no compatible configuration
     /// @throws IllegalStateException    if the target cannot be reserved, an update target is not
     ///                                  the exact published object, or another draft is open
@@ -130,7 +141,8 @@ public final class CurseInstallTask extends Task<Void> {
             CurseManifest manifest,
             GameInstanceID instanceId,
             @Nullable DefaultGameInstance updateTarget,
-            @Nullable String iconUrl) {
+            @Nullable String iconUrl,
+            @Nullable Set<String> excludedFiles) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
@@ -138,6 +150,7 @@ public final class CurseInstallTask extends Task<Void> {
         this.instanceId = instanceId;
         this.updateTarget = updateTarget;
         this.iconUrl = iconUrl;
+        this.excludedFiles = excludedFiles == null ? null : Set.copyOf(excludedFiles);
         this.repository = dependencyManager.getGameRepository();
 
         this.run = repository.getLayout().getInstanceRoot(instanceId);
@@ -282,6 +295,6 @@ public final class CurseInstallTask extends Task<Void> {
         }
 
         // The game builder runs as a dependent and registers the instance before this phase.
-        dependencies.add(new CurseCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest));
+        dependencies.add(new CurseCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest, excludedFiles));
     }
 }
