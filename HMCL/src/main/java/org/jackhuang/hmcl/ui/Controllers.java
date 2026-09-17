@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
@@ -96,6 +97,9 @@ public final class Controllers {
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     /// The coordinator for the main window's scene graph and navigation stack.
     private static @Nullable Decorator decorator;
+    /// Whether a transparency change has already queued a main-window style check.
+    private static boolean windowStyleUpdateQueued;
+
     private static DownloadPage downloadPage;
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
@@ -210,6 +214,63 @@ public final class Controllers {
         }
     }
 
+    /// Installs application identity and native lifecycle integration on a new main stage.
+    ///
+    /// @param stage the unshown main stage
+    private static void configureMainStage(Stage stage) {
+        stage.setOnCloseRequest(event -> Launcher.stopApplication());
+        FXUtils.setIcon(stage);
+        stage.setTitle(Metadata.FULL_TITLE);
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            Themes.applyNativeDarkMode(stage);
+        }
+        WindowsNativeUtils.installWindowsAppUserModelRelaunchProperties(stage);
+    }
+
+    /// Replaces the main stage when transparency requires a different decoration style.
+    ///
+    /// The retained scene, navigation, dialogs, normal bounds, and window state are preserved. A hidden window
+    /// remains hidden. This method must run on the JavaFX application thread after theme bindings have updated.
+    private static void updateMainWindowStyle() {
+        @Nullable Decorator currentDecorator = decorator;
+        if (currentDecorator == null || !currentDecorator.isStageStyleOutdated()) {
+            return;
+        }
+        @Nullable Stage previousStage = currentDecorator.getStage();
+        if (previousStage == null) {
+            return;
+        }
+
+        boolean showing = previousStage.isShowing();
+        boolean maximized = previousStage.isMaximized();
+        boolean fullScreen = previousStage.isFullScreen();
+        boolean iconified = previousStage.isIconified();
+        @Nullable Node focusOwner = previousStage.getScene().getFocusOwner();
+
+        Stage replacement = new Stage();
+        configureMainStage(replacement);
+        replacement.setTitle(previousStage.getTitle());
+        replacement.getIcons().setAll(previousStage.getIcons());
+        replacement.setOnCloseRequest(previousStage.getOnCloseRequest());
+        replacement.setResizable(previousStage.isResizable());
+        replacement.setAlwaysOnTop(previousStage.isAlwaysOnTop());
+        replacement.setFullScreenExitHint(previousStage.getFullScreenExitHint());
+        replacement.setFullScreenExitKeyCombination(previousStage.getFullScreenExitKeyCombination());
+
+        currentDecorator.detachStage();
+        previousStage.hide();
+        currentDecorator.attachStage(replacement);
+        replacement.setMaximized(maximized);
+        replacement.setFullScreen(fullScreen);
+        replacement.setIconified(iconified);
+        if (showing) {
+            replacement.show();
+        }
+        if (focusOwner != null) {
+            focusOwner.requestFocus();
+        }
+    }
+
     /// Initializes the main application stage, scene graph, and background services.
     ///
     /// @param stage the primary application stage, which must not have been shown
@@ -230,10 +291,19 @@ public final class Controllers {
             }
         }
 
-        stage.setOnCloseRequest(e -> Launcher.stopApplication());
+        configureMainStage(stage);
 
         decorator = new Decorator(getRootPage());
         Scene mainScene = decorator.attachStage(stage);
+        Themes.windowTransparentProperty().addListener((observable, oldValue, newValue) -> {
+            if (!windowStyleUpdateQueued) {
+                windowStyleUpdateQueued = true;
+                Platform.runLater(() -> {
+                    windowStyleUpdateQueued = false;
+                    updateMainWindowStyle();
+                });
+            }
+        });
         getRootPage().getMainPage().showUpdateProperty().bind(UpdateChecker.checkingUpdateProperty().not().and(UpdateChecker.outdatedProperty()));
         getRootPage().getMainPage().showUpdateDialogProperty().bind(
                 decorator.backableProperty().not()
@@ -250,9 +320,6 @@ public final class Controllers {
         Lang.thread(JavaManager::initialize, "Search Java", true);
 
         StyleSheets.init(mainScene);
-
-        FXUtils.setIcon(stage);
-        stage.setTitle(Metadata.FULL_TITLE);
 
         if (!Architecture.SYSTEM_ARCH.isX86() && SettingsManager.userState().platformPromptVersionProperty().get() < 1) {
             Runnable continueAction = () -> {
