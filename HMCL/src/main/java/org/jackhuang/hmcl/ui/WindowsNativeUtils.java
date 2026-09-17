@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.stage.WindowEvent;
@@ -24,9 +26,12 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
+import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.windows.Dwmapi;
 import org.jackhuang.hmcl.util.platform.windows.IPropertyStore;
 import org.jackhuang.hmcl.util.platform.windows.Shell32;
+import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 import org.jackhuang.hmcl.util.platform.windows.WinTypes;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +46,56 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
 public final class WindowsNativeUtils {
+
+    /// Marks stages that already reapply their rounded-corner preference after each showing.
+    private static final Object ROUNDED_CORNERS_INSTALLED = new Object();
+
+    /// Requests system-rounded corners for a non-transparent window on Windows 11 or later.
+    ///
+    /// The preference is applied immediately if the stage is showing and after every subsequent showing,
+    /// including when JavaFX recreates its native window. Repeated installation on the same stage has no effect.
+    /// Unsupported systems and unavailable native access leave the platform's default outline unchanged.
+    /// DWM may ignore the request according to window state and system policy; failures are logged.
+    ///
+    /// @param stage the stage to configure on the JavaFX application thread
+    public static void installRoundedWindowCorners(Stage stage) {
+        if (!OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11) || !NativeUtils.USE_JNA) {
+            return;
+        }
+        @Nullable Dwmapi dwmapi = Dwmapi.INSTANCE;
+        if (dwmapi == null || stage.getProperties().putIfAbsent(ROUNDED_CORNERS_INSTALLED, Boolean.TRUE) != null) {
+            return;
+        }
+
+        stage.addEventHandler(WindowEvent.WINDOW_SHOWN, event -> applyRoundedWindowCorners(stage, dwmapi));
+        if (stage.isShowing()) {
+            applyRoundedWindowCorners(stage, dwmapi);
+        }
+    }
+
+    /// Applies the rounded-corner preference to the current native window without changing its client area.
+    ///
+    /// @param stage the visible stage whose native handle is used
+    /// @param dwmapi the available DWM library
+    private static void applyRoundedWindowCorners(Stage stage, Dwmapi dwmapi) {
+        try {
+            OptionalLong handle = getWindowHandle(stage);
+            if (handle.isEmpty() || handle.getAsLong() == 0 || handle.getAsLong() == WinTypes.HANDLE.INVALID_VALUE) {
+                return;
+            }
+
+            int result = dwmapi.DwmSetWindowAttribute(
+                    new WinTypes.HANDLE(Pointer.createConstant(handle.getAsLong())),
+                    WinConstants.DWMWA_WINDOW_CORNER_PREFERENCE,
+                    new IntByReference(WinConstants.DWMWCP_ROUND),
+                    Integer.BYTES);
+            if (result < 0) {
+                LOG.warning("Failed to request native rounded corners: HRESULT 0x" + Integer.toHexString(result));
+            }
+        } catch (RuntimeException | LinkageError e) {
+            LOG.warning("Failed to request native rounded corners", e);
+        }
+    }
 
     public static OptionalLong getWindowHandle(Stage stage) {
         try {

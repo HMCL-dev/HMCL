@@ -63,7 +63,7 @@ final class MainWindowPane extends StackPane {
     /// The decorator whose state and actions are represented by this pane.
     private final Decorator decorator;
 
-    /// The clip that rounds normal window corners and becomes square while the window fills the screen.
+    /// The content clip, rounded only for normal windows with custom decoration.
     private final Rectangle clip = new Rectangle();
 
     /// The frame containing the title bar and current navigation page.
@@ -154,11 +154,13 @@ final class MainWindowPane extends StackPane {
         }
     }
 
-    /// Updates the content-corner shape for an edge-to-edge window state.
+    /// Enables or disables custom rounding of the content corners.
     ///
-    /// @param edgeToEdge whether the attached window is maximized or full-screen
-    void setWindowEdgeToEdge(boolean edgeToEdge) {
-        double arc = edgeToEdge ? 0.0 : ARC;
+    /// Native decoration uses square content bounds so the platform can shape the window outline.
+    ///
+    /// @param rounded whether to round the content corners
+    void setWindowCornersRounded(boolean rounded) {
+        double arc = rounded ? ARC : 0.0;
         clip.setArcWidth(arc);
         clip.setArcHeight(arc);
     }

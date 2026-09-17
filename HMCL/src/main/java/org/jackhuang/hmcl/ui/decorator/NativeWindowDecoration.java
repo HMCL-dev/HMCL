@@ -27,6 +27,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import org.jackhuang.hmcl.ui.WindowsNativeUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,7 +167,7 @@ final class NativeWindowDecoration {
         }
     }
 
-    /// Hides platform-provided window buttons so the launcher can use its own controls.
+    /// Hides platform-provided window buttons and requests native rounded corners on Windows 11.
     ///
     /// @param stage the extended stage to configure
     void configureStage(Stage stage) {
@@ -175,5 +176,6 @@ final class NativeWindowDecoration {
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Cannot hide native window buttons", e);
         }
+        WindowsNativeUtils.installRoundedWindowCorners(stage);
     }
 }

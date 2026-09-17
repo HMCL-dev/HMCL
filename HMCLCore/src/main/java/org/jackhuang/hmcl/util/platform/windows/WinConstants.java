@@ -116,6 +116,12 @@ public interface WinConstants {
     // https://learn.microsoft.com/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute
     int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
 
+    /// Selects the window's DWM rounded-corner preference on Windows 11 and later.
+    int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+
+    /// Requests rounded window corners when permitted by DWM policy.
+    int DWMWCP_ROUND = 2;
+
     // https://learn.microsoft.com/windows/win32/api/winreg/nf-winreg-regcreatekeyexw
     int REG_OPTION_NON_VOLATILE = 0x0000;
 }

@@ -325,10 +325,10 @@ public final class Decorator {
     ///
     /// @param edgeToEdge whether the attached stage is maximized or full-screen
     private void updateWindowDecoration(boolean edgeToEdge) {
-        boolean customShadow = !nativeDecorationEnabled && !edgeToEdge;
-        root.setPadding(customShadow ? SHADOW_INSETS : Insets.EMPTY);
-        shadowContainer.setEffect(customShadow ? windowShadow : null);
-        mainWindowPane.setWindowEdgeToEdge(edgeToEdge);
+        boolean customDecoration = !nativeDecorationEnabled && !edgeToEdge;
+        root.setPadding(customDecoration ? SHADOW_INSETS : Insets.EMPTY);
+        shadowContainer.setEffect(customDecoration ? windowShadow : null);
+        mainWindowPane.setWindowCornersRounded(customDecoration);
     }
 
     /// Returns the pane on which application dialogs are stacked.
