@@ -21,12 +21,14 @@ import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.DoubleBinding;
 import javafx.css.PseudoClass;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public abstract class MDListCell<T> extends ListCell<T> {
     private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
+    private static final PseudoClass LAST = PseudoClass.getPseudoClass("last");
 
     private final StackPane container = new StackPane();
     private final StackPane root = new StackPane();
@@ -58,7 +60,10 @@ public abstract class MDListCell<T> extends ListCell<T> {
 
         super.updateItem(item, empty);
 
-        if (oldItem == item && oldEmpty == empty) return;
+        if (oldItem == item && oldEmpty == empty) {
+            updateLastPseudoClass(empty);
+            return;
+        }
 
         ripplerContainer.releaseRippleImmediately();
 
@@ -68,6 +73,19 @@ public abstract class MDListCell<T> extends ListCell<T> {
         } else {
             setGraphic(root);
         }
+        updateLastPseudoClass(empty || item == null);
+    }
+
+    /// Updates the `:last` pseudo-class so the trailing divider can be suppressed in CSS.
+    ///
+    /// @param empty whether this cell is empty
+    private void updateLastPseudoClass(boolean empty) {
+        ListView<T> listView = getListView();
+        boolean last = !empty
+                && listView != null
+                && getIndex() >= 0
+                && getIndex() == listView.getItems().size() - 1;
+        root.pseudoClassStateChanged(LAST, last);
     }
 
     protected StackPane getContainer() {

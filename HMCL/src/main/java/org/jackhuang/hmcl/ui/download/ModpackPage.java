@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Pos;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameDirectory;
@@ -49,6 +50,7 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
     protected final JFXTextField txtModpackName;
     protected final JFXButton btnInstall;
     protected final JFXButton btnDescription;
+    protected final JFXButton btnOptionalFiles;
 
     protected ModpackPage(WizardController controller) {
         this.controller = controller;
@@ -66,7 +68,6 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
 
                 txtModpackName = new JFXTextField();
                 txtModpackName.setPrefWidth(300);
-                // BorderPane.setMargin(txtModpackName, new Insets(0, 0, 8, 32));
                 BorderPane.setAlignment(txtModpackName, Pos.CENTER_RIGHT);
                 archiveNamePane.setRight(txtModpackName);
             }
@@ -95,10 +96,19 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
                 btnDescription.setOnAction(e -> onDescribe());
                 descriptionPane.setLeft(btnDescription);
 
+                var installHBox = new HBox(8);
+                btnOptionalFiles = FXUtils.newRaisedButton(i18n("modpack.optional_files"));
+                btnOptionalFiles.setVisible(false);
+                btnOptionalFiles.setManaged(false);
+                installHBox.getChildren().add(btnOptionalFiles);
+
                 btnInstall = FXUtils.newRaisedButton(i18n("button.install"));
                 btnInstall.setOnAction(e -> onInstall());
-                btnInstall.disableProperty().bind(createBooleanBinding(() -> !txtModpackName.validate(), txtModpackName.textProperty()));
-                descriptionPane.setRight(btnInstall);
+                var nameInvalid = createBooleanBinding(() -> !txtModpackName.validate(), txtModpackName.textProperty());
+                btnInstall.disableProperty().bind(nameInvalid);
+                btnOptionalFiles.disableProperty().bind(nameInvalid);
+                installHBox.getChildren().add(btnInstall);
+                descriptionPane.setRight(installHBox);
             }
 
             componentList.getContent().setAll(
