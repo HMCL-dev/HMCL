@@ -400,6 +400,14 @@ public final class MainPage extends StackPane implements DecoratorPage {
         Controllers.taskDialog(task, i18n("instance.launch.empty.installing"), TaskCancellationAction.NORMAL);
     }
 
+    public void launchCurrentGame() {
+        if (getCurrentGame() != null) {
+            launch();
+        } else {
+            launchNoGame();
+        }
+    }
+
     private void onUpgrade() {
         RemoteVersion target = UpdateChecker.getLatestVersion();
         if (target == null) {
