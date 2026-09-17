@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.MissingResourceException;
 
@@ -31,6 +32,21 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
+
+    public static @Nullable DownloadListPage ofAddonWithSource(boolean instanceSelection, RemoteAddon addon) {
+        if (addon.type() == null || addon.source() == null) return null;
+        DownloadPage.DownloadCallback callback = switch (addon.type()) {
+            case MOD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD;
+            case RESOURCE_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK;
+            case SHADER_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_SHADER;
+            default -> null;
+        };
+        return switch (addon.source()) {
+            case MODRINTH -> new HMCLLocalizedDownloadListPage(callback, instanceSelection, addon.type(), null, ModrinthRemoteAddonRepository.MODS);
+            case CURSEFORGE -> new HMCLLocalizedDownloadListPage(callback, instanceSelection, addon.type(), CurseForgeRemoteAddonRepository.MODS, null);
+        };
+    }
+
     public static DownloadListPage ofMod(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
         return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MOD, CurseForgeRemoteAddonRepository.MODS, ModrinthRemoteAddonRepository.MODS);
     }
