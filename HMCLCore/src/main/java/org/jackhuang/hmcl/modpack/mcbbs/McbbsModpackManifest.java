@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 public class McbbsModpackManifest implements ModpackManifest, Validation {
     public static final String MANIFEST_TYPE = "minecraftModpack";
@@ -424,7 +425,12 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
                 .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
         return new Modpack(name, author, version, gameVersion, description, encoding, this) {
             @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, GameInstanceID instanceId, String iconUrl) {
+            public Task<?> getInstallTask(
+                    DefaultDependencyManager dependencyManager,
+                    Path zipFile,
+                    GameInstanceID instanceId,
+                    String iconUrl,
+                    @Nullable Set<String> excludedFiles) {
                 return new McbbsModpackLocalInstallTask(dependencyManager, zipFile, this, McbbsModpackManifest.this, instanceId);
             }
         };
