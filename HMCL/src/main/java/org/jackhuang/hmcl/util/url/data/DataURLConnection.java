@@ -27,20 +27,20 @@ import java.net.URLConnection;
  * @author Glavo
  */
 public final class DataURLConnection extends URLConnection {
-    private final DataUri dataUri;
+    private final DataURL dataUrl;
     private byte[] data;
     private InputStream inputStream;
 
-    DataURLConnection(URL url, DataUri dataUri) {
+    DataURLConnection(URL url, DataURL dataUrl) {
         super(url);
-        this.dataUri = dataUri;
+        this.dataUrl = dataUrl;
     }
 
     @Override
     public void connect() throws IOException {
         if (!connected) {
             connected = true;
-            data = dataUri.readBytes();
+            data = dataUrl.readBytes();
             inputStream = new ByteArrayInputStream(this.data);
         }
     }
@@ -53,7 +53,7 @@ public final class DataURLConnection extends URLConnection {
 
     @Override
     public String getContentType() {
-        return dataUri.getMediaType();
+        return dataUrl.getMediaType();
     }
 
     @Override
