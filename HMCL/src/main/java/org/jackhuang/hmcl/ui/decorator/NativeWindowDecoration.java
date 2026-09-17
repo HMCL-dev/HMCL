@@ -27,7 +27,8 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import org.jackhuang.hmcl.ui.WindowsNativeUtils;
+import org.jackhuang.hmcl.util.platform.OSVersion;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,10 +83,14 @@ final class NativeWindowDecoration {
         headerBar = (Region) headerClass.getConstructor().newInstance();
     }
 
-    /// Creates native decoration support on JavaFX 27 or later when supported by the platform.
+    /// Creates native decoration support on macOS or Windows 11 and later when JavaFX 27 or later supports it.
     ///
-    /// @return the resolved support, or `null` on older or unsupported runtimes
+    /// @return the resolved support, or `null` on other platforms or unsupported runtimes
     static @Nullable NativeWindowDecoration create() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS
+                && !OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11)) {
+            return null;
+        }
         try {
             int version = Integer.parseInt(System.getProperty("javafx.version", "0").split("[.\\-+]")[0]);
             if (version < 27 || !Platform.isSupported(ConditionalFeature.valueOf("EXTENDED_WINDOW"))) {
@@ -167,7 +172,7 @@ final class NativeWindowDecoration {
         }
     }
 
-    /// Hides platform-provided window buttons and requests native rounded corners on Windows 11.
+    /// Hides platform-provided window buttons.
     ///
     /// @param stage the extended stage to configure
     void configureStage(Stage stage) {
@@ -176,6 +181,5 @@ final class NativeWindowDecoration {
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Cannot hide native window buttons", e);
         }
-        WindowsNativeUtils.installRoundedWindowCorners(stage);
     }
 }
