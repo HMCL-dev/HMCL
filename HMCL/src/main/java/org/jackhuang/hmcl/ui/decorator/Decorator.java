@@ -804,7 +804,12 @@ public final class Decorator {
             }
         }
 
-        scene.setFill(nativeDecorationEnabled ? Color.WHITE : Color.TRANSPARENT);
+        if (nativeDecorationEnabled) {
+            scene.fillProperty().bind(Themes.colorSchemeProperty().getSurfaceContainer());
+        } else {
+            scene.fillProperty().unbind();
+            scene.setFill(Color.TRANSPARENT);
+        }
 
         if (newStage.getScene() != scene) {
             newStage.setScene(scene);
