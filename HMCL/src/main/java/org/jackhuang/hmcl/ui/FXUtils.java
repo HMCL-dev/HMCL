@@ -613,21 +613,21 @@ public final class FXUtils {
         if (link == null)
             return;
 
-        String uri = NetworkUtils.encodeLocation(link);
+        String url = NetworkUtils.encodeLocation(link);
         thread(() -> {
             try {
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    Runtime.getRuntime().exec(new String[]{"rundll32.exe", "url.dll,FileProtocolHandler", uri});
+                    Runtime.getRuntime().exec(new String[]{"rundll32.exe", "url.dll,FileProtocolHandler", url});
                     return;
                 } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                    Runtime.getRuntime().exec(new String[]{"open", uri});
+                    Runtime.getRuntime().exec(new String[]{"open", url});
                     return;
                 } else {
                     for (String browser : linuxBrowsers) {
                         Path path = SystemUtils.which(browser);
                         if (path != null) {
                             try {
-                                Runtime.getRuntime().exec(new String[]{path.toString(), uri});
+                                Runtime.getRuntime().exec(new String[]{path.toString(), url});
                                 return;
                             } catch (Throwable ignored) {
                             }
@@ -640,7 +640,7 @@ public final class FXUtils {
             }
 
             try {
-                java.awt.Desktop.getDesktop().browse(new URI(uri));
+                java.awt.Desktop.getDesktop().browse(new URI(url));
             } catch (Throwable e) {
                 LOG.warning("Failed to open link: " + link, e);
             }

@@ -36,8 +36,8 @@ import java.util.List;
 public final class GetTask extends FetchTask<String> {
 
     /// Creates a text download task for an absolute URL string.
-    public GetTask(String uri) {
-        this(WebURL.parse(uri));
+    public GetTask(String url) {
+        this(WebURL.parse(url));
     }
 
     /// Creates a text download task for one URL.

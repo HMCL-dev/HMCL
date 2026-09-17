@@ -137,11 +137,11 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             String message = i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().name()) + "\n";
             if (exception.getCause() instanceof ResponseCodeException rce) {
                 int responseCode = rce.getResponseCode();
-                String uri = rce.getUrl();
+                String url = rce.getUrl();
                 if (responseCode == 404)
-                    message += i18n("download.code.404", uri);
+                    message += i18n("download.code.404", url);
                 else
-                    message += i18n("download.failed", uri, responseCode);
+                    message += i18n("download.failed", url, responseCode);
             } else {
                 message += StringUtils.getStackTrace(exception.getCause());
             }

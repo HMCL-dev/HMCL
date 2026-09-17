@@ -46,9 +46,9 @@ public final class CacheFileTask extends FetchTask<Path> {
 
     /// Creates a task for one URL string using remote cache metadata.
     ///
-    /// @param uri the HTTP or HTTPS URL string
-    public CacheFileTask(@NotNull String uri) {
-        this(WebURL.parse(uri));
+    /// @param url the HTTP or HTTPS URL string
+    public CacheFileTask(@NotNull String url) {
+        this(WebURL.parse(url));
     }
 
     /// Creates a task for one URL using remote cache metadata.

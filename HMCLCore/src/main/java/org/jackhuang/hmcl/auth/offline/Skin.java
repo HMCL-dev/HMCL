@@ -186,8 +186,8 @@ public record Skin(Type type, String cslApi, TextureModel textureModel, String l
 
     private static class FetchBytesTask extends FetchTask<InputStream> {
 
-        public FetchBytesTask(String uri) {
-            super(List.of(WebURL.parse(uri)));
+        public FetchBytesTask(String url) {
+            super(List.of(WebURL.parse(url)));
         }
 
         @Override

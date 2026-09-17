@@ -34,13 +34,13 @@ import static org.junit.jupiter.api.Assertions.*;
 public final class DataURLTest {
 
     /// Parses a data URL and reads its text payload.
-    private static String readString(String uri) throws IOException {
-        return new DataURL(WebURL.parse(uri)).readString();
+    private static String readString(String url) throws IOException {
+        return new DataURL(WebURL.parse(url)).readString();
     }
 
     /// Parses a data URL and reads its byte payload.
-    private static byte[] readBytes(String uri) throws IOException {
-        return new DataURL(WebURL.parse(uri)).readBytes();
+    private static byte[] readBytes(String url) throws IOException {
+        return new DataURL(WebURL.parse(url)).readBytes();
     }
 
     /// Ensures percent-encoded and Base64 text payloads are decoded.

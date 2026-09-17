@@ -356,11 +356,11 @@ public final class LauncherHelper {
                                     message = i18n("launch.failed.download_library", ((LibraryDownloadException) ex).getLibrary().name()) + "\n";
                                     if (ex.getCause() instanceof ResponseCodeException rce) {
                                         int responseCode = rce.getResponseCode();
-                                        String uri = rce.getUrl();
+                                        String url = rce.getUrl();
                                         if (responseCode == 404)
-                                            message += i18n("download.code.404", uri);
+                                            message += i18n("download.code.404", url);
                                         else
-                                            message += i18n("download.failed", uri, responseCode);
+                                            message += i18n("download.failed", url, responseCode);
                                     } else {
                                         message += StringUtils.getStackTrace(ex.getCause());
                                     }
@@ -385,11 +385,11 @@ public final class LauncherHelper {
                                     message = i18n("account.failed.character_deleted");
                                 } else if (ex instanceof ResponseCodeException rce) {
                                     int responseCode = rce.getResponseCode();
-                                    String uri = rce.getUrl();
+                                    String url = rce.getUrl();
                                     if (responseCode == 404)
-                                        message = i18n("download.code.404", uri);
+                                        message = i18n("download.code.404", url);
                                     else
-                                        message = i18n("download.failed", uri, responseCode);
+                                        message = i18n("download.failed", url, responseCode);
                                 } else if (ex instanceof CommandTooLongException) {
                                     message = i18n("launch.failed.command_too_long");
                                 } else if (ex instanceof ExecutionPolicyLimitException) {

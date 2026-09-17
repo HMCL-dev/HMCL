@@ -499,7 +499,7 @@ public final class NetworkUtils {
     }
 
     /// Parses an absolute URL, or returns `null` for null, blank, or invalid input.
-    public static @Nullable WebURL toWebURLOrNull(@Nullable String uri) {
-        return StringUtils.isBlank(uri) ? null : WebURL.tryParse(uri);
+    public static @Nullable WebURL toWebURLOrNull(@Nullable String url) {
+        return StringUtils.isBlank(url) ? null : WebURL.tryParse(url);
     }
 }
