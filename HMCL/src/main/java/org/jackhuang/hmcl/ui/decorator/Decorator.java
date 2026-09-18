@@ -148,14 +148,17 @@ public final class Decorator {
     /// Whether the navigation close action should use the home icon.
     private final BooleanProperty showCloseAsHome = new SimpleBooleanProperty(this, "showCloseAsHome");
 
-    /// The width of the visible window content, excluding custom decoration insets.
+    /// The width of the visible window content, excluding native borders and custom shadow padding.
     private final DoubleProperty contentWidth = new SimpleDoubleProperty(this, "contentWidth");
 
-    /// The height of the visible window content, excluding custom decoration insets.
+    /// The height of the visible window content, excluding native borders and custom shadow padding.
     private final DoubleProperty contentHeight = new SimpleDoubleProperty(this, "contentHeight");
 
     /// The stage currently controlled by this decorator, or `null` while detached.
     private @Nullable Stage stage;
+
+    /// Tracks the attached stage's content geometry, or `null` while detached.
+    private @Nullable WindowBounds windowBounds;
 
     /// The title-bar state supplied by the current page, or `null` before navigation is initialized.
     private final ObjectProperty<DecoratorPage.@Nullable State> state = new SimpleObjectProperty<>(this, "state");
@@ -209,48 +212,6 @@ public final class Decorator {
         }
     };
 
-    /// Updates the changed visible-content bound and persists normal, non-iconified stage bounds.
-    private final InvalidationListener stageBoundsListener = observable -> {
-        @Nullable Stage currentStage = stage;
-        if (currentStage == null) {
-            return;
-        }
-
-        Insets insets = getWindowInsets();
-        boolean saveBounds = !currentStage.isIconified()
-                // https://github.com/HMCL-dev/HMCL/issues/4290
-                && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
-                || !currentStage.isFullScreen() && !currentStage.isMaximized());
-
-        if (observable == currentStage.xProperty()) {
-            if (saveBounds) {
-                double currentContentX = currentStage.getX() + insets.getLeft();
-                SettingsManager.state().setX(currentContentX / PRIMARY_SCREEN_BOUNDS.getWidth());
-            }
-        } else if (observable == currentStage.yProperty()) {
-            if (saveBounds) {
-                double currentContentY = currentStage.getY() + insets.getTop();
-                SettingsManager.state().setY(currentContentY / PRIMARY_SCREEN_BOUNDS.getHeight());
-            }
-        } else if (observable == currentStage.widthProperty()) {
-            double currentContentWidth = Math.max(
-                    MIN_CONTENT_WIDTH,
-                    currentStage.getWidth() - insets.getLeft() - insets.getRight());
-            contentWidth.set(currentContentWidth);
-            if (saveBounds) {
-                SettingsManager.state().setWidth(currentContentWidth);
-            }
-        } else if (observable == currentStage.heightProperty()) {
-            double currentContentHeight = Math.max(
-                    MIN_CONTENT_HEIGHT,
-                    currentStage.getHeight() - insets.getTop() - insets.getBottom());
-            contentHeight.set(currentContentHeight);
-            if (saveBounds) {
-                SettingsManager.state().setHeight(currentContentHeight);
-            }
-        }
-    };
-
     /// The direction used by the next title-bar transition.
     private Navigation.NavigationDirection navigationDirection = Navigation.NavigationDirection.START;
 
@@ -292,21 +253,21 @@ public final class Decorator {
         return root;
     }
 
-    /// Returns the insets reserved outside the main-window content.
+    /// Returns the space reserved inside the scene for custom window shadows.
     ///
     /// @return the custom shadow insets, or [Insets#EMPTY] with native decoration, maximization, or full-screen
     public Insets getWindowInsets() {
         return root.getPadding();
     }
 
-    /// Returns the visible window-content width property, excluding custom decoration insets.
+    /// Returns the visible window-content width property, excluding native borders and custom shadow padding.
     ///
     /// @return the current content-width property
     public ReadOnlyDoubleProperty contentWidthProperty() {
         return contentWidth;
     }
 
-    /// Returns the visible window-content height property, excluding custom decoration insets.
+    /// Returns the visible window-content height property, excluding native borders and custom shadow padding.
     ///
     /// @return the current content-height property
     public ReadOnlyDoubleProperty contentHeightProperty() {
@@ -694,13 +655,12 @@ public final class Decorator {
         return root.getScene();
     }
 
-    /// Applies the persisted content bounds and current decoration insets to `targetStage`.
+    /// Returns the persisted normal content rectangle without native borders or custom shadow padding.
     ///
     /// An off-screen persisted position is replaced with a position centered on the primary screen.
     ///
-    /// @param targetStage the stage receiving the initial outer bounds and minimum dimensions
-    private void initializeStageBounds(Stage targetStage) {
-        Insets insets = getWindowInsets();
+    /// @return the initial content bounds in JavaFX screen coordinates
+    private Rectangle2D initialContentBounds() {
         double initialContentWidth = Math.max(MIN_CONTENT_WIDTH, SettingsManager.state().getWidth());
         double initialContentHeight = Math.max(MIN_CONTENT_HEIGHT, SettingsManager.state().getHeight());
         double initialContentX = SettingsManager.state().getX() * PRIMARY_SCREEN_BOUNDS.getWidth();
@@ -723,14 +683,17 @@ public final class Decorator {
             initialContentY = (PRIMARY_SCREEN_BOUNDS.getHeight() - initialContentHeight) / 2;
         }
 
-        targetStage.setX(initialContentX - insets.getLeft());
-        targetStage.setY(initialContentY - insets.getTop());
-        targetStage.setWidth(initialContentWidth + insets.getLeft() + insets.getRight());
-        targetStage.setHeight(initialContentHeight + insets.getTop() + insets.getBottom());
-        targetStage.setMinWidth(MIN_CONTENT_WIDTH + insets.getLeft() + insets.getRight());
-        targetStage.setMinHeight(MIN_CONTENT_HEIGHT + insets.getTop() + insets.getBottom());
-        contentWidth.set(initialContentWidth);
-        contentHeight.set(initialContentHeight);
+        return new Rectangle2D(initialContentX, initialContentY, initialContentWidth, initialContentHeight);
+    }
+
+    /// Persists a normal content rectangle independently of the window's decoration style.
+    ///
+    /// @param bounds the content bounds in JavaFX screen coordinates
+    private void saveContentBounds(Rectangle2D bounds) {
+        SettingsManager.state().setX(bounds.getMinX() / PRIMARY_SCREEN_BOUNDS.getWidth());
+        SettingsManager.state().setY(bounds.getMinY() / PRIMARY_SCREEN_BOUNDS.getHeight());
+        SettingsManager.state().setWidth(bounds.getWidth());
+        SettingsManager.state().setHeight(bounds.getHeight());
     }
 
     /// Returns the preferred style for the current runtime, transparency, and theme brightness.
@@ -755,11 +718,10 @@ public final class Decorator {
     /// If the root has no scene, this method reuses `newStage`'s scene and replaces its root, or creates a
     /// transparent scene when the stage has none. If the retained scene belongs to another stage, it is detached
     /// from that stage before being installed on `newStage`. A newly attached stage receives the persisted normal
-    /// content bounds and minimum size adjusted for the normal decoration insets. Opaque windows use the system
-    /// decoration when supported, except for dark windows on Windows. Other windows use the custom transparent
-    /// decoration. Any active window animation
-    /// is cancelled and reset. Custom window animations run only with custom decoration. This method does
-    /// not show the stage.
+    /// content bounds. Native frame offsets and minimum size are resolved when the stage is shown.
+    /// Opaque windows use the system decoration when supported, except for dark windows on Windows. Other windows
+    /// use the custom transparent decoration. Any active window animation is cancelled and reset. Custom window
+    /// animations run only with custom decoration. This method does not show the stage.
     ///
     /// @param newStage the stage to attach, which must be accessed on the JavaFX application thread
     /// @return the scene installed on `newStage`
@@ -768,6 +730,10 @@ public final class Decorator {
     public Scene attachStage(Stage newStage) {
         FXUtils.checkFxUserThread();
         stopWindowAnimation();
+
+        if (stage != null && stage != newStage) {
+            detachStage();
+        }
 
         StageStyle style = preferredStageStyle();
         if (newStage.getStyle() != style) {
@@ -820,29 +786,17 @@ public final class Decorator {
 
         if (stage != newStage) {
             playRestoreMinimizeAnimation = false;
-            if (stage != null) {
-                stage.removeEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
-                stage.iconifiedProperty().removeListener(iconifiedListener);
-                stage.maximizedProperty().removeListener(stageDecorationListener);
-                stage.fullScreenProperty().removeListener(stageDecorationListener);
-                stage.xProperty().removeListener(stageBoundsListener);
-                stage.yProperty().removeListener(stageBoundsListener);
-                stage.widthProperty().removeListener(stageBoundsListener);
-                stage.heightProperty().removeListener(stageBoundsListener);
-            }
-
             updateWindowDecoration(false);
-            initializeStageBounds(newStage);
             stage = newStage;
-            updateWindowDecoration(newStage.isMaximized() || newStage.isFullScreen());
             newStage.addEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
             newStage.iconifiedProperty().addListener(iconifiedListener);
             newStage.maximizedProperty().addListener(stageDecorationListener);
             newStage.fullScreenProperty().addListener(stageDecorationListener);
-            newStage.xProperty().addListener(stageBoundsListener);
-            newStage.yProperty().addListener(stageBoundsListener);
-            newStage.widthProperty().addListener(stageBoundsListener);
-            newStage.heightProperty().addListener(stageBoundsListener);
+            windowBounds = new WindowBounds(newStage, root, initialContentBounds(),
+                    MIN_CONTENT_WIDTH, MIN_CONTENT_HEIGHT, this::saveContentBounds);
+            contentWidth.bind(windowBounds.contentWidthProperty());
+            contentHeight.bind(windowBounds.contentHeightProperty());
+            updateWindowDecoration(newStage.isMaximized() || newStage.isFullScreen());
         }
         root.setCursor(Cursor.DEFAULT);
         dragging = false;
@@ -859,15 +813,17 @@ public final class Decorator {
         FXUtils.checkFxUserThread();
         stopWindowAnimation();
 
+        if (windowBounds != null) {
+            windowBounds.close();
+            contentWidth.unbind();
+            contentHeight.unbind();
+            windowBounds = null;
+        }
         if (stage != null) {
             stage.removeEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
             stage.iconifiedProperty().removeListener(iconifiedListener);
             stage.maximizedProperty().removeListener(stageDecorationListener);
             stage.fullScreenProperty().removeListener(stageDecorationListener);
-            stage.xProperty().removeListener(stageBoundsListener);
-            stage.yProperty().removeListener(stageBoundsListener);
-            stage.widthProperty().removeListener(stageBoundsListener);
-            stage.heightProperty().removeListener(stageBoundsListener);
             if (stage.getScene() == root.getScene()) {
                 stage.setScene(null);
             }
