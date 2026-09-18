@@ -24,6 +24,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
@@ -97,7 +98,7 @@ public final class Controllers {
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     /// The coordinator for the main window's scene graph and navigation stack.
     private static @Nullable Decorator decorator;
-    /// Whether a transparency change has already queued a main-window style check.
+    /// Whether an appearance change has already queued a main-window style check.
     private static boolean windowStyleUpdateQueued;
 
     private static DownloadPage downloadPage;
@@ -227,7 +228,7 @@ public final class Controllers {
         WindowsNativeUtils.installWindowsAppUserModelRelaunchProperties(stage);
     }
 
-    /// Replaces the main stage when transparency requires a different decoration style.
+    /// Replaces the main stage when transparency or theme brightness requires a different decoration style.
     ///
     /// The retained scene, navigation, dialogs, normal bounds, and window state are preserved. A hidden window
     /// remains hidden. This method must run on the JavaFX application thread after theme bindings have updated.
@@ -295,7 +296,7 @@ public final class Controllers {
 
         decorator = new Decorator(getRootPage());
         Scene mainScene = decorator.attachStage(stage);
-        Themes.windowTransparentProperty().addListener((observable, oldValue, newValue) -> {
+        ChangeListener<Boolean> windowStyleListener = (observable, oldValue, newValue) -> {
             if (!windowStyleUpdateQueued) {
                 windowStyleUpdateQueued = true;
                 Platform.runLater(() -> {
@@ -303,7 +304,11 @@ public final class Controllers {
                     updateMainWindowStyle();
                 });
             }
-        });
+        };
+        Themes.windowTransparentProperty().addListener(windowStyleListener);
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            Themes.darkModeProperty().addListener(windowStyleListener);
+        }
         getRootPage().getMainPage().showUpdateProperty().bind(UpdateChecker.checkingUpdateProperty().not().and(UpdateChecker.outdatedProperty()));
         getRootPage().getMainPage().showUpdateDialogProperty().bind(
                 decorator.backableProperty().not()

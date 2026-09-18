@@ -733,15 +733,17 @@ public final class Decorator {
         contentHeight.set(initialContentHeight);
     }
 
-    /// Returns the preferred style for the current runtime and effective transparency setting.
+    /// Returns the preferred style for the current runtime, transparency, and theme brightness.
     ///
-    /// @return the system style when available and opaque, otherwise the custom transparent style
+    /// @return the system style when available and opaque, except for dark windows on Windows;
+    ///         otherwise the custom transparent style
     private StageStyle preferredStageStyle() {
         return nativeDecoration != null && !Themes.windowTransparentProperty().get()
+                && !(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Themes.darkModeProperty().get())
                 ? nativeDecoration.style : StageStyle.TRANSPARENT;
     }
 
-    /// Returns whether the current stage must be replaced to apply the effective transparency setting.
+    /// Returns whether the current stage must be replaced to apply the effective transparency and brightness.
     ///
     /// @return `true` if a stage is attached with a different style from the current preference
     public boolean isStageStyleOutdated() {
@@ -754,7 +756,8 @@ public final class Decorator {
     /// transparent scene when the stage has none. If the retained scene belongs to another stage, it is detached
     /// from that stage before being installed on `newStage`. A newly attached stage receives the persisted normal
     /// content bounds and minimum size adjusted for the normal decoration insets. Opaque windows use the system
-    /// decoration when supported; other windows use the custom transparent decoration. Any active window animation
+    /// decoration when supported, except for dark windows on Windows. Other windows use the custom transparent
+    /// decoration. Any active window animation
     /// is cancelled and reset. Custom window animations run only with custom decoration. This method does
     /// not show the stage.
     ///
