@@ -55,3 +55,9 @@ jobs:
         name: HMCL-${{ env.SHORT_SHA }}-deb
         path: HMCL/build/libs/HMCL-*.deb
         archive: false
+    - name: Upload RPM
+      uses: actions/upload-artifact@v7
+      with:
+        name: HMCL-${{ env.SHORT_SHA }}-rpm
+        path: HMCL/build/libs/HMCL-*.rpm
+        archive: false
