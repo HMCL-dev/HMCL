@@ -39,7 +39,8 @@ import java.util.function.Consumer;
 ///
 /// All access must occur on the JavaFX application thread. The scene and root must remain attached to the stage
 /// until [#close()] is called. Normal bounds are sampled after layout, and once more before hiding or detaching.
-/// Maximized, full-screen, and iconified bounds are not reported as normal bounds.
+/// Maximized bounds under [WindowState]'s policy, full-screen bounds, and iconified bounds are not reported
+/// as normal bounds. Transparent macOS windows retain normal bounds despite native zoom notifications.
 @NotNullByDefault
 final class WindowBounds implements AutoCloseable {
     /// The stage whose outer geometry is managed.
@@ -236,7 +237,7 @@ final class WindowBounds implements AutoCloseable {
         }
         contentWidth.set(width);
         contentHeight.set(height);
-        if (stage.isMaximized() || stage.isFullScreen()) {
+        if (WindowState.isMaximized(stage) || stage.isFullScreen()) {
             return;
         }
 
@@ -255,7 +256,7 @@ final class WindowBounds implements AutoCloseable {
 
     /// Samples the initial frame after peer creation and establishes native minimum dimensions.
     private void initializeFrameSize() {
-        if (!stage.isMaximized() && !stage.isFullScreen() && !stage.isIconified()) {
+        if (!WindowState.isMaximized(stage) && !stage.isFullScreen() && !stage.isIconified()) {
             frameWidth = Math.max(0, stage.getWidth() - scene.getWidth());
             frameHeight = Math.max(0, stage.getHeight() - scene.getHeight());
             frameScaleX = stage.getOutputScaleX();
@@ -268,7 +269,7 @@ final class WindowBounds implements AutoCloseable {
     ///
     /// @param observable the scene width or height property updated by JavaFX
     private void updateFrameSize(Observable observable) {
-        if (shown && !restoringPosition && !stage.isMaximized() && !stage.isFullScreen() && !stage.isIconified()) {
+        if (shown && !restoringPosition && !WindowState.isMaximized(stage) && !stage.isFullScreen() && !stage.isIconified()) {
             if (observable == scene.widthProperty()) {
                 frameWidth = Math.max(0, stage.getWidth() - scene.getWidth());
             } else {

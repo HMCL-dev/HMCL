@@ -27,6 +27,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.jackhuang.hmcl.JavaFXLauncher;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.BeforeAll;
@@ -155,7 +156,8 @@ final class WindowBoundsTest {
         Fixture fixture = onFxThread(Fixture::new);
         try {
             onFxThread(() -> {
-                fixture.replace(StageStyle.TRANSPARENT, false);
+                fixture.replace(OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                        ? nativeStyle() : StageStyle.TRANSPARENT, false);
                 return null;
             });
             awaitContent(fixture, INITIAL);
@@ -317,11 +319,11 @@ final class WindowBoundsTest {
             stage = new Stage(style);
             stage.setScene(scene);
             javafx.beans.InvalidationListener decorationListener = o ->
-                    root.setPadding(stage.isMaximized() || stage.isFullScreen() ? Insets.EMPTY : normalInsets);
+                    root.setPadding(WindowState.isMaximized(stage) || stage.isFullScreen() ? Insets.EMPTY : normalInsets);
             stage.maximizedProperty().addListener(decorationListener);
             stage.fullScreenProperty().addListener(decorationListener);
             bounds = new WindowBounds(stage, root, saved, 800, 490, value -> saved = value);
-            stage.setMaximized(maximized);
+            stage.setMaximized(maximized && WindowState.supportsMaximization(stage));
             stage.show();
         }
 

@@ -208,7 +208,7 @@ public final class Decorator {
     private final InvalidationListener stageDecorationListener = observable -> {
         @Nullable Stage currentStage = stage;
         if (currentStage != null) {
-            updateWindowDecoration(currentStage.isMaximized() || currentStage.isFullScreen());
+            updateWindowDecoration(WindowState.isMaximized(currentStage) || currentStage.isFullScreen());
         }
     };
 
@@ -255,7 +255,7 @@ public final class Decorator {
 
     /// Returns the space reserved inside the scene for custom window shadows.
     ///
-    /// @return the custom shadow insets, or [Insets#EMPTY] with native decoration, maximization, or full-screen
+    /// @return the custom shadow insets, or [Insets#EMPTY] with native decoration, supported maximization, or full-screen
     public Insets getWindowInsets() {
         return root.getPadding();
     }
@@ -284,7 +284,7 @@ public final class Decorator {
 
     /// Updates the shadow, outer insets, and content corner shape for an edge-to-edge window state.
     ///
-    /// @param edgeToEdge whether the attached stage is maximized or full-screen
+    /// @param edgeToEdge whether the attached stage is maximized under [WindowState]'s policy or full-screen
     private void updateWindowDecoration(boolean edgeToEdge) {
         boolean customDecoration = !nativeDecorationEnabled && !edgeToEdge;
         root.setPadding(customDecoration ? SHADOW_INSETS : Insets.EMPTY);
@@ -418,14 +418,14 @@ public final class Decorator {
     private void onTitleBarDoubleClick(MouseEvent event) {
         @Nullable Stage currentStage = stage;
         if (nativeDecorationEnabled
-                || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
                 || currentStage == null
+                || !WindowState.supportsMaximization(currentStage)
                 || event.getButton() != MouseButton.PRIMARY
                 || event.getClickCount() != 2) {
             return;
         }
 
-        currentStage.setMaximized(!currentStage.isMaximized());
+        currentStage.setMaximized(!WindowState.isMaximized(currentStage));
         event.consume();
     }
 
@@ -434,7 +434,7 @@ public final class Decorator {
     /// @param event the title-bar drag event
     private void onTitleBarDragged(MouseEvent event) {
         @Nullable Stage currentStage = stage;
-        if (nativeDecorationEnabled || currentStage == null || dragging || !currentStage.isMaximized()) {
+        if (nativeDecorationEnabled || currentStage == null || dragging || !WindowState.isMaximized(currentStage)) {
             return;
         }
 
@@ -516,7 +516,7 @@ public final class Decorator {
         if (nativeDecorationEnabled || currentStage == null
                 || currentStage.isIconified()
                 || currentStage.isFullScreen()
-                || currentStage.isMaximized()
+                || WindowState.isMaximized(currentStage)
                 || !currentStage.isResizable()) {
             root.setCursor(Cursor.DEFAULT);
             return;
@@ -582,7 +582,7 @@ public final class Decorator {
         if (nativeDecorationEnabled || currentStage == null
                 || currentStage.isIconified()
                 || currentStage.isFullScreen()
-                || currentStage.isMaximized()
+                || WindowState.isMaximized(currentStage)
                 || !event.isPrimaryButtonDown()
                 || event.isStillSincePress()) {
             return;
@@ -796,7 +796,7 @@ public final class Decorator {
                     MIN_CONTENT_WIDTH, MIN_CONTENT_HEIGHT, this::saveContentBounds);
             contentWidth.bind(windowBounds.contentWidthProperty());
             contentHeight.bind(windowBounds.contentHeightProperty());
-            updateWindowDecoration(newStage.isMaximized() || newStage.isFullScreen());
+            updateWindowDecoration(WindowState.isMaximized(newStage) || newStage.isFullScreen());
         }
         root.setCursor(Cursor.DEFAULT);
         dragging = false;

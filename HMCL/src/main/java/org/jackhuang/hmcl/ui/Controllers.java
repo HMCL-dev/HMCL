@@ -52,6 +52,7 @@ import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.Decorator;
+import org.jackhuang.hmcl.ui.decorator.WindowState;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
@@ -230,7 +231,7 @@ public final class Controllers {
 
     /// Replaces the main stage when transparency or theme brightness requires a different decoration style.
     ///
-    /// The retained scene, navigation, dialogs, normal bounds, and window state are preserved. A hidden window
+    /// The retained scene, navigation, dialogs, normal bounds, and supported window states are preserved. A hidden window
     /// remains hidden. This method must run on the JavaFX application thread after theme bindings have updated.
     private static void updateMainWindowStyle() {
         @Nullable Decorator currentDecorator = decorator;
@@ -243,7 +244,7 @@ public final class Controllers {
         }
 
         boolean showing = previousStage.isShowing();
-        boolean maximized = previousStage.isMaximized();
+        boolean maximized = WindowState.isMaximized(previousStage);
         boolean fullScreen = previousStage.isFullScreen();
         boolean iconified = previousStage.isIconified();
         @Nullable Node focusOwner = previousStage.getScene().getFocusOwner();
@@ -261,7 +262,7 @@ public final class Controllers {
         currentDecorator.detachStage();
         previousStage.hide();
         currentDecorator.attachStage(replacement);
-        replacement.setMaximized(maximized);
+        replacement.setMaximized(maximized && WindowState.supportsMaximization(replacement));
         replacement.setFullScreen(fullScreen);
         replacement.setIconified(iconified);
         if (showing) {
