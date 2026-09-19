@@ -23,8 +23,12 @@ import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.game.friend.*;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
@@ -34,7 +38,7 @@ import java.util.UUID;
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class MicrosoftAccount extends OAuthAccount {
+public final class MicrosoftAccount extends OAuthAccount implements FriendControl {
 
     protected final MicrosoftService service;
     protected UUID profileID;
@@ -153,7 +157,7 @@ public final class MicrosoftAccount extends OAuthAccount {
     }
 
     @Override
-    public ObjectBinding<Optional<Map<TextureType, Texture>>> getTextures() {
+    public @NotNull ObjectBinding<Optional<Map<TextureType, Texture>>> getTextures() {
         return BindingMapping.of(service.getProfileRepository().binding(getProfileID()))
                 .map(profile -> profile.flatMap(it -> {
                     try {
@@ -169,6 +173,21 @@ public final class MicrosoftAccount extends OAuthAccount {
     public void clearCache() {
         authenticated = false;
         service.getProfileRepository().invalidate(profileID);
+    }
+
+    @Override
+    public FriendResponse getFriendList() throws IOException {
+        return service.getFriendList(session.accessToken());
+    }
+
+    @Override
+    public FriendResponse updateFriend(@Nullable String name, @Nullable UUID uuid, @NotNull EnumUpdateType updateType) throws IOException {
+        return service.updateFriend(session.accessToken(), name, uuid, updateType);
+    }
+
+    @Override
+    public PresenceResponse getPresence(@NotNull EnumPresenceStatus selfPresence) throws IOException {
+        return service.getPresence(session.accessToken(), selfPresence);
     }
 
     @Override

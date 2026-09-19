@@ -57,6 +57,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.translator.Translator;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -64,7 +65,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.time.temporal.TemporalAccessor;
-import java.util.*;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 public final class I18n {
 
@@ -105,7 +107,7 @@ public final class I18n {
         return locale.i18n(key);
     }
 
-    public static String formatDateTime(TemporalAccessor time) {
+    public static String formatDateTime(@NotNull TemporalAccessor time) {
         return getTranslator().formatDateTime(time);
     }
 
