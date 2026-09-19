@@ -307,7 +307,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         /// @param settings the installer selections and target instance id
         /// @return the builder task with its stage hints preserved as the outermost task wrapper
         private Task<?> finishVersionDownloadingAsync(SettingsMap settings) {
-            GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
+            @Nullable GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
             if (instanceId == null) {
                 throw new IllegalStateException("Instance ID is not set");
             }
@@ -329,6 +329,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 }
 
                 Task<?> buildTask = builder.buildAsync();
+                settings.put(TaskCleanup.KEY, builder::abort);
                 buildTask.onDone().register(event -> {
                     if (!event.isFailed()) {
                         runInFX(() -> repository.setSelectedInstance(repository.getInstance(instanceId)));

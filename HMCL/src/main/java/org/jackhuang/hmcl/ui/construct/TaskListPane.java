@@ -33,12 +33,6 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
-import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
-import org.jackhuang.hmcl.download.fabriclike.ModrinthComponentInstallTask;
-import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
-import org.jackhuang.hmcl.download.forge.ForgeOldInstallTask;
-import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameInstallTask;
 import org.jackhuang.hmcl.download.java.mojang.MojangJavaDownloadTask;
 import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricInstallTask;
@@ -46,6 +40,7 @@ import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeOldInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
+import org.jackhuang.hmcl.download.quilt.QuiltAPIInstallTask;
 import org.jackhuang.hmcl.download.quilt.QuiltInstallTask;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
 import org.jackhuang.hmcl.java.JavaInstallTask;
@@ -70,7 +65,9 @@ import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.FXThread;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.Collection;
@@ -161,55 +158,15 @@ public final class TaskListPane extends StackPane {
                 if (!task.getSignificance().shouldShow() || task.getName() == null)
                     return;
 
-                if (task instanceof GameAssetDownloadTask) {
-                    task.setName(i18n("assets.download_all"));
-                } else if (task instanceof GameInstallTask) {
-                    if (task.getInheritedStage() != null && task.getInheritedStage().startsWith("hmcl.install.game"))
-                        return;
-                    task.setName(i18n("install.installer.install", i18n("install.installer.game")));
-                } else if (task instanceof CleanroomInstallTask) {
-                    task.setName(i18n("install.installer.install", i18n("install.installer.cleanroom")));
-                } else if (task instanceof LegacyFabricInstallTask) {
-                    task.setName(i18n("install.installer.install", i18n("install.installer.legacy-fabric")));
-                } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
-                    task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
-                } else if (task instanceof NeoForgeInstallTask || task instanceof NeoForgeOldInstallTask) {
-                    task.setName(i18n("install.installer.install", i18n("install.installer.neoforge")));
-                } else if (task instanceof LiteLoaderInstallTask) {
-                    task.setName(i18n("install.installer.install", i18n("install.installer.liteloader")));
-                } else if (task instanceof OptiFineInstallTask) {
-                    task.setName(i18n("install.installer.install", i18n("install.installer.optifine")));
-                } else if (task instanceof FabricInstallTask) {
-                    task.setName(i18n("install.installer.install", i18n("install.installer.fabric")));
-                } else if (task instanceof ModrinthComponentInstallTask modrinthComponentInstallTask) {
-                    task.setName(i18n("install.installer.install", i18n("install.installer." + modrinthComponentInstallTask.getVersion().projectId())));
-                } else if (task instanceof QuiltInstallTask) {
-                    task.setName(i18n("install.installer.install", i18n("install.installer.quilt")));
-                } else if (task instanceof CurseCompletionTask || task instanceof ModrinthCompletionTask || task instanceof ServerModpackCompletionTask || task instanceof McbbsModpackCompletionTask) {
-                    task.setName(i18n("modpack.completion"));
-                } else if (task instanceof ModpackInstallTask) {
-                    task.setName(i18n("modpack.installing"));
-                } else if (task instanceof ModpackUpdateTask) {
-                    task.setName(i18n("modpack.update"));
-                } else if (task instanceof CurseInstallTask) {
-                    task.setName(i18n("modpack.installing.given", i18n("modpack.type.curse")));
-                } else if (task instanceof MultiMCModpackInstallTask) {
-                    task.setName(i18n("modpack.installing.given", i18n("modpack.type.multimc")));
-                } else if (task instanceof ModrinthInstallTask) {
-                    task.setName(i18n("modpack.installing.given", i18n("modpack.type.modrinth")));
-                } else if (task instanceof ServerModpackLocalInstallTask) {
-                    task.setName(i18n("install.installing") + ": " + i18n("modpack.type.server"));
-                } else if (task instanceof HMCLModpackInstallTask) {
-                    task.setName(i18n("modpack.installing.given", i18n("modpack.type.hmcl")));
-                } else if (task instanceof McbbsModpackExportTask || task instanceof MultiMCModpackExportTask || task instanceof ServerModpackExportTask || task instanceof ModrinthModpackExportTask) {
-                    task.setName(i18n("modpack.export"));
-                } else if (task instanceof MinecraftInstanceTask) {
-                    task.setName(i18n("modpack.scan"));
-                } else if (task instanceof MojangJavaDownloadTask) {
-                    task.setName(i18n("download.java"));
-                } else if (task instanceof JavaInstallTask) {
-                    task.setName(i18n("java.installing"));
+                if (task instanceof GameInstallTask
+                        && task.getInheritedStage() != null
+                        && task.getInheritedStage().startsWith("hmcl.install.game")) {
+                    return;
                 }
+
+                @Nullable String localizedName = I18n.translateTaskName(task);
+                if (localizedName != null)
+                    task.setName(localizedName);
 
                 Platform.runLater(() -> {
                     ProgressListNode node = new ProgressListNode(task);

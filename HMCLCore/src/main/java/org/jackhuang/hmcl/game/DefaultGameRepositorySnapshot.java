@@ -160,6 +160,51 @@ public class DefaultGameRepositorySnapshot implements GameRepositorySnapshot {
         instances.remove(id);
     }
 
+    /// Remove invalid instances.
+    /// TODO: In the future we could retain these instances and show their status in the UI.
+    void removeInvalidInstances() {
+        checkMutable();
+
+        HashSet<GameInstanceID> visited = null;
+        loop:
+        for (DefaultGameInstance instance : List.copyOf(instances.values())) {
+            if (instance.getManifest().inheritsFrom() == null) {
+                continue;
+            }
+
+            if (visited != null)
+                visited.clear();
+            else
+                visited = new HashSet<>();
+
+            DefaultGameInstance current = instance;
+            visited.add(current.getId());
+            while (current.getManifest().inheritsFrom() != null) {
+                GameInstanceID parentId = current.getManifest().inheritsFrom();
+                if (!visited.add(parentId)) {
+                    // DefaultGameRepositorySnapshot.resolve can handle circular references
+                    continue loop;
+                }
+
+                DefaultGameInstance parent = instances.get(parentId);
+                if (parent == null) {
+                    LOG.warning("Instance " + current.getId() + " inherits from missing instance " + parentId);
+
+                    for (DefaultGameInstance toRemoved = instance; toRemoved != null; ) {
+                        instances.remove(toRemoved.getId());
+                        toRemoved = toRemoved.getManifest().inheritsFrom() != null
+                                ? instances.get(toRemoved.getManifest().inheritsFrom())
+                                : null;
+                    }
+
+                    break;
+                }
+                current = parent;
+            }
+        }
+
+    }
+
     /// Creates an unpublished mutable copy with instances rebound to the copy.
     ///
     /// The caller must call [#seal()] before retaining or publishing the result as a snapshot.

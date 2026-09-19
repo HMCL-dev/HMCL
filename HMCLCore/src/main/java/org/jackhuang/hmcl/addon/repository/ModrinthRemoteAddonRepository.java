@@ -19,9 +19,9 @@ package org.jackhuang.hmcl.addon.repository;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Immutable;
@@ -146,11 +146,11 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
     private static String convertSortType(SortType sortType) {
         return switch (sortType) {
+            case RELEVANCY -> "relevance";
+            case POPULARITY -> "follows";
             case DATE_CREATED -> "newest";
-            case POPULARITY, NAME, AUTHOR -> "relevance";
             case LAST_UPDATED -> "updated";
             case TOTAL_DOWNLOADS -> "downloads";
-            default -> throw new IllegalArgumentException("Unsupported sort type " + sortType);
         };
     }
 
@@ -213,8 +213,15 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
     @Override
     public Optional<RemoteAddon.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
-        String sha1 = DigestUtils.digestToString("SHA-1", file);
+        return getRemoteVersionBySHA1(DigestUtils.digestToString("SHA-1", file));
+    }
 
+    /// Looks up a Modrinth version by file SHA-1 hash.
+    ///
+    /// @param sha1 the SHA-1 digest of the file
+    /// @return the matching remote version, or empty when not found
+    /// @throws IOException if the Modrinth request fails for a reason other than 404 / missing file
+    public Optional<RemoteAddon.Version> getRemoteVersionBySHA1(String sha1) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             ProjectVersion projectVersion = HttpRequest.GET(PREFIX + "/v2/version_file/" + sha1,
@@ -490,15 +497,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                         return RemoteAddon.Dependency.ofGeneral(DEPENDENCY_TYPE.get(dependency.dependencyType), RemoteAddon.Source.MODRINTH, dependency.projectId);
                     }).filter(Objects::nonNull).collect(Collectors.toList()),
                     gameVersions,
-                    loaders.stream().flatMap(loader -> {
-                        if ("fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FABRIC);
-                        else if ("forge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FORGE);
-                        else if ("legacy-fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LEGACY_FABRIC);
-                        else if ("neoforge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.NEO_FORGE);
-                        else if ("quilt".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.QUILT);
-                        else if ("liteloader".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LITE_LOADER);
-                        else return Stream.empty();
-                    }).collect(Collectors.toList())
+                    loaders.stream().map(AddonLoader::of).toList()
             ));
         }
     }

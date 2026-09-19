@@ -30,8 +30,7 @@ import java.nio.file.Path;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackFolder extends ResourcePackFile {
-    private final PackMcMeta meta;
-    private final @Nullable Image icon;
+    private final PackMcMeta.PackInfo info;
 
     public ResourcePackFolder(ResourcePackManager manager, Path path) {
         super(manager, path);
@@ -42,33 +41,31 @@ final class ResourcePackFolder extends ResourcePackFile {
         } catch (Exception e) {
             LOG.warning("Failed to parse resource pack meta", e);
         }
-        this.meta = meta;
+        this.info = meta != null ? meta.pack() : null;
+    }
 
+    @Override
+    public PackMcMeta.PackInfo getPackInfo() {
+        return info;
+    }
+
+    @Override
+    public @Nullable Image loadIcon() {
         byte[] iconData = null;
-        Image iconTemp = null;
         try {
-            iconData = Files.readAllBytes(path.resolve("pack.png"));
-        } catch (IOException e) {
-            LOG.warning("Failed to read resource pack icon", e);
+            iconData = Files.readAllBytes(getFile().resolve("pack.png"));
+        } catch (Exception e) {
+            LOG.warning("Failed to load resource pack icon", e);
         }
+
         if (iconData != null) {
             try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
-                iconTemp = new Image(inputStream, 64, 64, true, true);
+                return new Image(inputStream, 64, 64, true, true);
             } catch (Exception e) {
                 LOG.warning("Failed to load resource pack icon", e);
             }
         }
-        this.icon = iconTemp;
-    }
-
-    @Override
-    public PackMcMeta getMeta() {
-        return meta;
-    }
-
-    @Override
-    public @Nullable Image getIcon() {
-        return icon;
+        return null;
     }
 
     @Override
