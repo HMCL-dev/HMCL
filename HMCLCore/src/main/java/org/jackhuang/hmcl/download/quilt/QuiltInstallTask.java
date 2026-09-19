@@ -19,26 +19,20 @@ package org.jackhuang.hmcl.download.quilt;
 
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
+import org.jackhuang.hmcl.download.fabriclike.FabricLikeInstallTask;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.GameInstancePatch;
 
 /**
  * <b>Note</b>: Quilt should be installed first.
  *
  * @author huangyuhui
  */
-public final class QuiltInstallTask extends FabricInstallTask {
+public final class QuiltInstallTask extends FabricLikeInstallTask {
 
     public QuiltInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, ComponentRemoteVersion remoteVersion) {
         super(dependencyManager, manifest, remoteVersion);
-    }
-
-    protected GameInstancePatch getPatch(FabricInfo legacyFabricInfo, String gameVersion, String loaderVersion) {
-        var patch = super.getPatch(legacyFabricInfo, gameVersion, loaderVersion);
-        return patch.withId(GameComponentType.LEGACY_FABRIC.getPatchId());
     }
 
     @Override
@@ -49,5 +43,9 @@ public final class QuiltInstallTask extends FabricInstallTask {
             case "org.quiltmc" -> "https://maven.quiltmc.org/repository/release/";
             default -> "https://maven.fabricmc.net/";
         };
+    }
+
+    protected GameComponentType getComponentType() {
+        return GameComponentType.QUILT;
     }
 }

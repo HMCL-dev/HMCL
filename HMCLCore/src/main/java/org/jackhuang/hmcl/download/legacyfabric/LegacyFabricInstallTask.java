@@ -19,21 +19,15 @@ package org.jackhuang.hmcl.download.legacyfabric;
 
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
+import org.jackhuang.hmcl.download.fabriclike.FabricLikeInstallTask;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.GameInstancePatch;
 
-public final class LegacyFabricInstallTask extends FabricInstallTask {
+public final class LegacyFabricInstallTask extends FabricLikeInstallTask {
 
     public LegacyFabricInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, ComponentRemoteVersion remoteVersion) {
         super(dependencyManager, manifest, remoteVersion);
-    }
-
-    protected GameInstancePatch getPatch(FabricInfo legacyFabricInfo, String gameVersion, String loaderVersion) {
-        var patch = super.getPatch(legacyFabricInfo, gameVersion, loaderVersion);
-        return patch.withId(GameComponentType.LEGACY_FABRIC.getPatchId());
     }
 
     @Override
@@ -44,5 +38,9 @@ public final class LegacyFabricInstallTask extends FabricInstallTask {
             case "net.legacyfabric" -> "https://maven.legacyfabric.net/";
             default -> "https://maven.fabricmc.net/";
         };
+    }
+
+    protected GameComponentType getComponentType() {
+        return GameComponentType.LEGACY_FABRIC;
     }
 }
