@@ -105,22 +105,22 @@ public abstract class YggdrasilAccount extends ClassicAccount {
     @Override
     public synchronized AuthInfo logIn() throws AuthenticationException {
         if (!session.hasProfileName() || !service.validate(session.getAccessToken(), session.getClientToken())) {
-                YggdrasilSession acquiredSession;
-                try {
-                    acquiredSession = service.refresh(session.getAccessToken(), session.getClientToken(), null);
-                } catch (RemoteAuthenticationException e) {
-                    if ("ForbiddenOperationException".equals(e.getRemoteName())) {
-                        throw new CredentialExpiredException(e);
-                    } else {
-                        throw e;
-                    }
+            YggdrasilSession acquiredSession;
+            try {
+                acquiredSession = service.refresh(session.getAccessToken(), session.getClientToken(), null);
+            } catch (RemoteAuthenticationException e) {
+                if ("ForbiddenOperationException".equals(e.getRemoteName())) {
+                    throw new CredentialExpiredException(e);
+                } else {
+                    throw e;
                 }
-                if (acquiredSession.getSelectedProfile() == null || !acquiredSession.getSelectedProfile().getId().equals(profileID)) {
-                    throw new ServerResponseMalformedException("Selected profile changed");
-                }
-                if (!acquiredSession.hasProfileName()) {
-                    throw new ServerResponseMalformedException("Profile name is missing");
-                }
+            }
+            if (acquiredSession.getSelectedProfile() == null || !acquiredSession.getSelectedProfile().getId().equals(profileID)) {
+                throw new ServerResponseMalformedException("Selected profile changed");
+            }
+            if (!acquiredSession.hasProfileName()) {
+                throw new ServerResponseMalformedException("Profile name is missing");
+            }
 
             session = acquiredSession;
 
