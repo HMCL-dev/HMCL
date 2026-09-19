@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -70,8 +69,6 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
     private final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
     private GameComponentAnalyzer analyzer;
-
-    private boolean loaded = false;
 
     /// Creates a mod manager for the given instance.
     ///
@@ -131,6 +128,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
     }
 
+    /// Call this only in [#refresh()]
     private void addModInfo(Path file) {
         String fileName = StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
         String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
@@ -143,14 +141,14 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
         Set<ModLoaderType> modLoaderTypes = instance.getModLoaders();
 
-        var supportedReaders = new ArrayList<ModMetadataReader>();
-        var unsupportedReaders = new ArrayList<ModMetadataReader>();
+        var preferredReaders = new ArrayList<ModMetadataReader>();
+        var alternativeReaders = new ArrayList<ModMetadataReader>();
 
         for (Pair<ModMetadataReader, ModLoaderType> reader : readersMap) {
             if (modLoaderTypes.contains(reader.getValue())) {
-                supportedReaders.add(reader.getKey());
+                preferredReaders.add(reader.getKey());
             } else {
-                unsupportedReaders.add(reader.getKey());
+                alternativeReaders.add(reader.getKey());
             }
         }
 
@@ -158,7 +156,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
         List<Exception> exceptions = new ArrayList<>();
         try (ZipFileTree tree = CompressingUtils.openZipTree(file)) {
-            for (ModMetadataReader reader : supportedReaders) {
+            for (ModMetadataReader reader : preferredReaders) {
                 try {
                     modInfo = reader.fromFile(this, file, tree);
                     break;
@@ -168,7 +166,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             }
 
             if (modInfo == null) {
-                for (ModMetadataReader reader : unsupportedReaders) {
+                for (ModMetadataReader reader : alternativeReaders) {
                     try {
                         modInfo = reader.fromFile(this, file, tree);
                         break;
@@ -230,15 +228,15 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
             if (Files.isDirectory(getDirectory())) {
                 try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getDirectory())) {
-                    for (Path subitem : modsDirectoryStream) {
-                        if (supportSubfolders && Files.isDirectory(subitem) && !".connector".equalsIgnoreCase(subitem.getFileName().toString())) {
-                            try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
-                                for (Path subsubitem : subitemDirectoryStream) {
-                                    addModInfo(subsubitem);
+                    for (Path item : modsDirectoryStream) {
+                        if (supportSubfolders && Files.isDirectory(item) && !".connector".equalsIgnoreCase(item.getFileName().toString())) {
+                            try (DirectoryStream<Path> subDirectoryStream = Files.newDirectoryStream(item)) {
+                                for (Path subItem : subDirectoryStream) {
+                                    addModInfo(subItem);
                                 }
                             }
                         } else {
-                            addModInfo(subitem);
+                            addModInfo(item);
                         }
                     }
                 }
@@ -257,42 +255,23 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         return LocalModFile::compareTo;
     }
 
-    public @Unmodifiable List<LocalModFile> getLocalFiles() throws IOException {
-        lock.lock();
-        try {
-            if (!loaded)
-                refresh();
-            return super.getLocalFiles();
-        } finally {
-            lock.unlock();
-        }
-    }
-
     public void addMod(Path file) throws IOException {
         if (!isFileNameMod(file))
             throw new IllegalArgumentException("File " + file + " is not a valid mod file.");
 
-        lock.lock();
-        try {
-            if (!loaded)
-                refresh();
+        Path modsDirectory = getDirectory();
+        Files.createDirectories(modsDirectory);
 
-            Path modsDirectory = getDirectory();
-            Files.createDirectories(modsDirectory);
-
-            Path newFile = modsDirectory.resolve(file.getFileName());
-            FileUtils.copyFile(file, newFile);
-
-            addModInfo(newFile);
-        } finally {
-            lock.unlock();
-        }
+        Path newFile = modsDirectory.resolve(file.getFileName());
+        FileUtils.copyFile(file, newFile);
+        loaded = false;
     }
 
     public void removeMods(LocalModFile... localModFiles) throws IOException {
         for (LocalModFile localModFile : localModFiles) {
             localModFile.delete();
         }
+        if (localModFiles.length > 0) loaded = false;
     }
 
     private void updateSupportedLoaders() {
@@ -373,6 +352,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             from.setOld(true);
             to.setOld(false);
             to.setActive(active);
+
+            loaded = false;
         } finally {
             lock.unlock();
         }
@@ -387,14 +368,18 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         Path disabled = file.resolveSibling(fileName + DISABLED_EXTENSION);
         if (Files.exists(file))
             Files.move(file, disabled, StandardCopyOption.REPLACE_EXISTING);
+
+        loaded = false;
         return disabled;
     }
 
     public Path enableMod(Path file) throws IOException {
         if (isOld(file)) return file;
         Path enabled = file.resolveSibling(StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION));
+        if (enabled.equals(file)) return file;
         if (Files.exists(file))
             Files.move(file, enabled, StandardCopyOption.REPLACE_EXISTING);
+        loaded = false;
         return enabled;
     }
 

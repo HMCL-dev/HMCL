@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.addon;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -42,7 +44,7 @@ public abstract class LocalAddonFile {
     public abstract String getFileName();
 
     public boolean isDisabled() {
-        return FileUtils.getName(getFile()).endsWith(LocalAddonManager.DISABLED_EXTENSION);
+        return FileUtils.getName(getFile()).toLowerCase(Locale.ROOT).endsWith(LocalAddonManager.DISABLED_EXTENSION);
     }
 
     public abstract void markDisabled() throws IOException;
@@ -52,6 +54,22 @@ public abstract class LocalAddonFile {
     public abstract boolean keepOldFiles();
 
     public abstract void delete() throws IOException;
+
+    private volatile transient String sha1 = null;
+
+    /// Calculates SHA-1 hash.
+    ///
+    /// @return SHA-1 hash of this file, or null on failure
+    public @Nullable String calculateSha1() {
+        if (sha1 == null) {
+            try {
+                sha1 = DigestUtils.digestToString("SHA-1", getFile());
+            } catch (IOException e) {
+                return null;
+            }
+        }
+        return sha1;
+    }
 
     @Nullable
     public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
