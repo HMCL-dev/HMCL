@@ -141,7 +141,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         loadMods(gameInstance.getModManager());
     }
 
-    private final BooleanProperty hasLiteLoaderAsMod = new SimpleBooleanProperty(this, "hasLiteLoaderAsMod") {
+    private final BooleanProperty hasLiteLoader = new SimpleBooleanProperty(this, "hasLiteLoader") {
         @Override
         public void invalidated() {
             if (!isLoading()) Platform.runLater(() -> refresh());
@@ -170,14 +170,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 return;
             }
 
-            hasLiteLoaderAsMod.unbind();
-            hasLiteLoaderAsMod.bind(modManager.liteLoaderAsModFiles().stream().map(LocalModFile::activeProperty).map(BooleanBinding::booleanExpression).reduce(
-                    new SimpleBooleanProperty(),
-                    BooleanExpression::or
-            ));
-
             supportedLoaders.clear();
             supportedLoaders.addAll(modManager.getSupportedLoaders());
+
+            hasLiteLoader.unbind();
+            hasLiteLoader.bind(new SimpleBooleanProperty(supportedLoaders.contains(ModLoaderType.LITE_LOADER))
+                    .or(modManager.liteLoaderAsModFiles().stream().map(LocalModFile::activeProperty).map(BooleanBinding::booleanExpression).reduce(
+                            new SimpleBooleanProperty(),
+                            BooleanExpression::or
+            )));
 
             if (exception == null) {
                 getItems().setAll(list);
