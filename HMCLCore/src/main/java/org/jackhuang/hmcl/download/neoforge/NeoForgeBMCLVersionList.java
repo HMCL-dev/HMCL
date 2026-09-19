@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.download.neoforge;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
@@ -30,7 +30,7 @@ import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
-public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVersion> {
+public final class NeoForgeBMCLVersionList extends ComponentVersionList<NeoForgeRemoteVersion> {
     private final String apiRoot;
 
     /**

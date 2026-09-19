@@ -82,7 +82,7 @@ public class MojangDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public VersionList<?> getVersionList(GameComponentType componentType) {
+    public ComponentVersionList<?> getVersionList(GameComponentType componentType) {
         return switch (componentType) {
             case GAME -> game;
             case FABRIC -> fabric;

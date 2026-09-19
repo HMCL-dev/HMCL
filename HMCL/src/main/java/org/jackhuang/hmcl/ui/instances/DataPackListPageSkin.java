@@ -22,7 +22,6 @@ import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -33,7 +32,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.addon.datapack.DataPack;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -43,16 +41,14 @@ import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -144,11 +140,13 @@ final class DataPackListPageSkin extends ToolbarListPageSkin<DataPackListPageSki
         private final BooleanProperty activeProperty;
         private final DataPack.Pack packInfo;
 
-        private SoftReference<CompletableFuture<Image>> iconCache;
+        private final ItemPropertyAsyncCache<Image, DataPackInfoObject> iconCache;
 
         DataPackInfoObject(DataPack.Pack packInfo) {
             this.packInfo = packInfo;
             this.activeProperty = packInfo.activeProperty();
+
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
         String getTitle() {
@@ -163,7 +161,11 @@ final class DataPackListPageSkin extends ToolbarListPageSkin<DataPackListPageSki
             return packInfo;
         }
 
-        Image loadIcon() {
+        private Image getDefaultIcon() {
+            return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+        }
+
+        private Image loadIcon() {
             Image image = null;
             Path imagePath;
             if (this.getPackInfo().isDirectory()) {
@@ -172,7 +174,6 @@ final class DataPackListPageSkin extends ToolbarListPageSkin<DataPackListPageSki
                     image = FXUtils.loadImage(imagePath, 64, 64, true, true);
                 } catch (Exception e) {
                     LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
-                    return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
                 }
             } else {
                 try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(getPackInfo().getPath())) {
@@ -182,7 +183,6 @@ final class DataPackListPageSkin extends ToolbarListPageSkin<DataPackListPageSki
                     }
                 } catch (Exception e) {
                     LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
-                    return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
                 }
             }
 
@@ -190,35 +190,8 @@ final class DataPackListPageSkin extends ToolbarListPageSkin<DataPackListPageSki
                     Math.abs(image.getWidth() - image.getHeight()) < 1) {
                 return image;
             } else {
-                return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+                return getDefaultIcon();
             }
-        }
-
-        public void loadIcon(ImageContainer imageContainer, @Nullable WeakReference<ObjectProperty<DataPackInfoObject>> current) {
-            SoftReference<CompletableFuture<Image>> iconCache = this.iconCache;
-            CompletableFuture<Image> imageFuture;
-            if (iconCache != null && (imageFuture = iconCache.get()) != null) {
-                Image image = imageFuture.getNow(null);
-                if (image != null) {
-                    imageContainer.setImage(image);
-                    return;
-                }
-            } else {
-                imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
-                this.iconCache = new SoftReference<>(imageFuture);
-            }
-            imageContainer.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
-            imageFuture.thenAcceptAsync(image -> {
-                if (current != null) {
-                    ObjectProperty<DataPackInfoObject> infoObjectProperty = current.get();
-                    if (infoObjectProperty == null || infoObjectProperty.get() != this) {
-                        // The current ListCell has already switched to another object
-                        return;
-                    }
-                }
-                imageContainer.setImage(image);
-            }, Schedulers.javafx());
-
         }
     }
 
@@ -258,7 +231,7 @@ final class DataPackListPageSkin extends ToolbarListPageSkin<DataPackListPageSki
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.activeProperty);
-            dataItem.loadIcon(imageContainer, new WeakReference<>(this.itemProperty()));
+            dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
         }
     }
 

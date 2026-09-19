@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.instances;
 
+import com.jfoenix.controls.JFXPopup;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -32,6 +33,8 @@ import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
+import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
+import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.directory.GameDirectoryListItem;
@@ -60,6 +63,16 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         gameDirectoryListItems = MappedObservableList.create(GameDirectoryManager.getGameDirectories(), gameDirectory -> {
             GameDirectoryListItem item = new GameDirectoryListItem(gameDirectory);
             FXUtils.setLimitWidth(item, 200);
+            FXUtils.onSecondaryButtonClicked(item, () -> {
+                PopupMenu menu = new PopupMenu();
+                JFXPopup popup = new JFXPopup(menu);
+                menu.getContent().add(new IconedMenuItem(
+                        SVG.EDIT,
+                        i18n("button.edit"),
+                        () -> Controllers.navigate(new GameDirectoryPage(gameDirectory)),
+                        popup));
+                popup.show(item, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, item.getWidth(), 0);
+            });
             return item;
         });
 
