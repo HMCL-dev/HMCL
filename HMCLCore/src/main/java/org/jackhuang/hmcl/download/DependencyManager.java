@@ -17,87 +17,92 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstance;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.CacheRepository;
 
-/**
- * Do everything that will connect to Internet.
- * Downloading Minecraft files.
- *
- * @author huangyuhui
- */
+/// Provides repository-scoped services for downloading and installing game components.
 public interface DependencyManager {
 
-    /**
-     * The relied game repository.
-     */
+    /// Returns the game repository used for path resolution and instance updates.
+    ///
+    /// @return the associated game repository
     GameRepository getGameRepository();
 
-    /**
-     * The cache repository
-     */
+    /// Returns the cache repository used by downloads.
+    ///
+    /// @return the associated cache repository
     CacheRepository getCacheRepository();
 
-    /**
-     * Check if the game is complete.
-     * Check libraries, assets files and so on.
-     *
-     * @return the task to check game completion.
-     */
-    Task<?> checkGameCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck);
+    /// Creates a task that completes the files required to launch an instance.
+    ///
+    /// The instance fixes snapshot-bound identity and storage paths. `manifest` is the effective
+    /// launch manifest and may differ from [GameInstance#getManifest()] after launch-time
+    /// maintenance or patching. The instance must belong to [#getGameRepository()].
+    ///
+    /// @param instance       the fixed registered instance being prepared
+    /// @param manifest       the effective launch manifest to inspect
+    /// @param integrityCheck whether existing files must be verified
+    /// @return the completion task
+    /// @throws IllegalArgumentException if `instance` belongs to another repository
+    Task<?> checkGameCompletionAsync(GameInstance instance, GameInstanceManifest manifest, boolean integrityCheck);
 
-    /**
-     * Check if libraries of this version in complete.
-     * If not, download missing libraries if possible.
-     *
-     * @return the task to check game completion.
-     */
-    Task<?> checkLibraryCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck);
+    /// Creates a task that completes the libraries declared by a manifest.
+    ///
+    /// @param manifest       the manifest whose libraries are checked
+    /// @param integrityCheck whether existing libraries must be verified
+    /// @return the library-completion task
+    Task<?> checkComponentCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck);
 
-    /**
-     * Check if patches of this version in complete.
-     * If not, reinstall the patch if possible.
-     *
-     * @param manifest the version to be checked
-     * @param integrityCheck check if some libraries are corrupt.
-     * @return the task to check patches completion.
-     */
-    Task<?> checkPatchCompletionAsync(GameInstanceManifest manifest, boolean integrityCheck);
+    /// Creates a task that repairs installable patches required by an instance.
+    ///
+    /// The stored and resolved manifests used to identify installed patches are read from
+    /// `instance`; `manifest` supplies the effective launch-time library set. The instance must
+    /// belong to [#getGameRepository()].
+    ///
+    /// @param instance       the fixed registered instance being prepared
+    /// @param manifest       the effective launch manifest to inspect
+    /// @param integrityCheck whether existing patch libraries must be verified
+    /// @return the patch-completion task
+    /// @throws IllegalArgumentException if `instance` belongs to another repository
+    Task<?> checkPatchCompletionAsync(GameInstance instance, GameInstanceManifest manifest, boolean integrityCheck);
 
-    /**
-     * The builder to build a brand new game then libraries such as Forge, LiteLoader and OptiFine.
-     */
-    GameBuilder newGameBuilder();
+    /// Creates a builder for installing a new game instance and optional components.
+    ///
+    /// This operation opens an exclusive repository draft and reserves the target id immediately.
+    /// The returned builder must be closed if it is abandoned before [GameBuilder#buildAsync()]. A
+    /// synchronous failure from that method aborts the draft itself.
+    ///
+    /// @param instanceId the id of the new instance
+    /// @return a new game builder
+    /// @throws IllegalStateException if the id is already registered, its root cannot be reserved,
+    ///                               or another repository draft is open
+    GameBuilder newGameBuilder(GameInstanceID instanceId);
 
-    /**
-     * Install a library to a version.
-     * **Note**: Installing a library may change the version.json.
-     *
-     * @param gameVersion the Minecraft version that the library relies on.
-     * @param baseVersion the version.json.
-     * @param libraryId the type of being installed library. i.e. "forge", "liteloader", "optifine"
-     * @param libraryVersion the version of being installed library.
-     * @return the task to install the specific library.
-     */
-    Task<?> installLibraryAsync(String gameVersion, GameInstanceManifest baseVersion, String libraryId, String libraryVersion);
+    /// Creates a builder for replacing the components of an existing game instance.
+    ///
+    /// This operation opens an exclusive repository draft immediately. `instance` must be the exact
+    /// object in the current published snapshot; an instance invalidated by any intervening
+    /// repository publication is rejected. The returned builder must be closed if it is abandoned
+    /// before [GameBuilder#buildAsync()]; a synchronous failure from that method aborts the draft
+    /// itself. The resulting manifest is rebuilt from the configured components; components that
+    /// are not configured are not retained.
+    ///
+    /// @param instance the existing game instance to update
+    /// @return a game builder targeting the existing instance
+    /// @throws IllegalArgumentException if `instance` belongs to another repository
+    /// @throws IllegalStateException    if `instance` is no longer the exact published instance or
+    ///                                  another repository draft is open
+    GameBuilder newGameBuilder(GameInstance instance);
 
-    /**
-     * Install a library to a version.
-     * **Note**: Installing a library may change the version.json.
-     *
-     * @param baseVersion the version.json.
-     * @param libraryVersion the remote version of being installed library.
-     * @return the task to install the specific library.
-     */
-    Task<?> installLibraryAsync(GameInstanceManifest baseVersion, RemoteVersion libraryVersion);
-
-    /**
-     * Get registered version list.
-     *
-     * @param id the id of version list. i.e. game, forge, liteloader, optifine
-     * @throws IllegalArgumentException if the version list of specific id is not found.
-     */
-    VersionList<?> getVersionList(String id);
+    /// Returns a registered remote-version list.
+    ///
+    /// @param componentType the component type, such as `game`, `forge`, or `optifine`
+    /// @return the registered version list
+    /// @throws IllegalArgumentException if no list is registered for `id`
+    ComponentVersionList<?> getVersionList(GameComponentType componentType);
 }

@@ -44,7 +44,6 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -114,7 +113,6 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip", "*.mrpack"));
         Path selectedFile = Controllers.showOpenDialog(chooser);
         if (selectedFile == null) {
-            Platform.runLater(controller::onEnd);
             return;
         }
 
@@ -158,8 +156,8 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                             TaskCancellationAction.NORMAL
                     );
                 }
-            } catch (IOException e) {
-                handler.reject(e.getMessage());
+            } catch (Exception e) {
+                handler.reject(i18n("message.failed"));
             }
         }, "", new URLValidator());
     }

@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.modpack.multimc;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
+
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Lang;
@@ -311,7 +311,7 @@ public final class MultiMCInstancePatch {
             jarModFileNames = Lang.merge(patch.getJarMods().stream().map(library -> library.filename()).collect(Collectors.toList()), jarModFileNames);
         }
 
-        mainClass = Lang.requireNonNullElse(mainClass, "net.minecraft.client.Minecraft");
+        mainClass = Objects.requireNonNullElse(mainClass, "net.minecraft.client.Minecraft");
 
         if (minecraftArguments == null) {
             minecraftArguments = new ArrayList<>();
@@ -413,7 +413,7 @@ public final class MultiMCInstancePatch {
 
         String gameVersion = null;
         for (MultiMCInstancePatch patch : patches) {
-            if (MultiMCComponents.getComponent(patch.getID()) == LibraryAnalyzer.LibraryType.MINECRAFT) {
+            if (MultiMCComponents.getComponent(patch.getID()) == GameComponentType.GAME) {
                 gameVersion = patch.getVersion();
                 break;
             }

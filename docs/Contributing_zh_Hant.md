@@ -1,7 +1,7 @@
 # 貢獻指南
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-[English](Contributing.md) | **中文** ([简体](Contributing_zh.md), **繁體**)
+[English](Contributing.md) | **中文** ([简体](Contributing_zh_Hans.md), **繁體**)
 <!-- #END LANGUAGE_SWITCHER -->
 
 ## 構建 HMCL

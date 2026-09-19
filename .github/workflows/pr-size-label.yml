@@ -21,8 +21,8 @@ jobs:
         uses: actions/checkout@v7
         with:
           sparse-checkout: |
-            .github/scripts
-          sparse-checkout-cone-mode: true
+            .github/scripts/pr-size-label.js
+          sparse-checkout-cone-mode: false
       - name: Label PR by filtered changed lines
         uses: actions/github-script@v9
         with:

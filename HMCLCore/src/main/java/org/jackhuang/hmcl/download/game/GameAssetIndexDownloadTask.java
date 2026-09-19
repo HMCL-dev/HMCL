@@ -19,10 +19,7 @@ package org.jackhuang.hmcl.download.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
-import org.jackhuang.hmcl.game.AssetIndex;
-import org.jackhuang.hmcl.game.AssetIndexInfo;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -70,7 +67,9 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
     @Override
     public void execute() {
         AssetIndexInfo assetIndexInfo = manifest.getAssetIndex();
-        Path assetIndexFile = dependencyManager.getGameRepository().getIndexFile(manifest.id(), assetIndexInfo.getId());
+        GameRepository gameRepository = dependencyManager.getGameRepository();
+        String assetId = assetIndexInfo.getId();
+        Path assetIndexFile = gameRepository.getLayout().getAssetIndexFile(assetId);
         boolean verifyHashCode = StringUtils.isNotBlank(assetIndexInfo.getSha1()) && assetIndexInfo.getUrl().contains(assetIndexInfo.getSha1());
 
         if (Files.exists(assetIndexFile) && !forceDownloading) {
