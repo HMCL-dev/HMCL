@@ -78,7 +78,6 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.ui.FXUtils.onClicked;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -148,7 +147,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new SchematicsPageSkin(this);
+        return new SchematicsPageSkin();
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
@@ -836,7 +835,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                     null
             );
 
-            // Breadcrumb bar
             var relPath = new HBox();
             relPath.getStyleClass().add("jfx-tool-bar-tip");
             relPath.setAlignment(Pos.CENTER_LEFT);
@@ -863,7 +861,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
             var relPathPane = new HBox(relPath);
             relPathPane.setPadding(new Insets(2));
-            root.getContent().add(relPathPane);
+            rootList.getContent().add(relPathPane);
         }
 
         @Override

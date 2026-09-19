@@ -51,7 +51,9 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -293,7 +295,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 ResourcePackInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
                 if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
                     listView.getSelectionModel().clearSelection();
-                    Controllers.dialog(new ResourcePackInfoDialog(control, selectedItem));
+                    Controllers.dialog(new ResourcePackInfoDialog(selectedItem));
                 }
             });
 
