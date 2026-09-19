@@ -15,30 +15,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.modpack;
+package org.jackhuang.hmcl.schematic;
 
-import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
-/// Format-specific modpack manifest metadata.
-@NotNullByDefault
-public interface ModpackManifest {
+public enum SchematicType {
+    LITEMATIC("litematic"),
+    NBT_STRUCTURE("nbt"),
+    SCHEM("schematic", "schem");
 
-    /// Returns the provider that understands this manifest.
-    ///
-    /// @return the modpack provider
-    ModpackProvider getProvider();
+    public static SchematicType getType(Path file) {
+        if (file == null || !Files.isRegularFile(file)) return null;
+        String ext = FileUtils.getExtension(file);
+        for (SchematicType type : values()) {
+            if (type.extensions.contains(ext)) return type;
+        }
+        return null;
+    }
 
-    /// Marker for manifests that expose optional file entries.
-    @NotNullByDefault
-    interface SupportOptional {
+    public final List<String> extensions;
 
-        /// Returns all files declared by this manifest, including required and optional ones.
-        ///
-        /// @return the modpack files
-        @Unmodifiable
-        List<? extends ModpackFile> getFiles();
+    SchematicType(String... ext) {
+        this.extensions = List.of(ext);
     }
 }

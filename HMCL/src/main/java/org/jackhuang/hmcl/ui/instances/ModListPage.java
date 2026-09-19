@@ -97,7 +97,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
     private ModManager modManager;
     private @Nullable HMCLGameInstance gameInstance;
-    String gameVersion;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
@@ -139,8 +138,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return;
         }
 
-        this.gameVersion = gameInstance.getVersion().toString();
-
         loadMods(gameInstance.getModManager());
     }
 
@@ -179,7 +176,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     BooleanExpression::or
             ));
 
-            updateSupportedLoaders(modManager);
+            supportedLoaders.clear();
+            supportedLoaders.addAll(modManager.getSupportedLoaders());
 
             if (exception == null) {
                 getItems().setAll(list);
@@ -189,62 +187,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             }
             setLoading(false);
         }, Schedulers.javafx());
-    }
-
-    private void updateSupportedLoaders(ModManager modManager) {
-        supportedLoaders.clear();
-
-        GameComponentAnalyzer analyzer = modManager.getComponentAnalyzer();
-        if (analyzer == null) {
-            Collections.addAll(supportedLoaders, ModLoaderType.values());
-            return;
-        }
-
-        var gameVersionNumber = modManager.getInstance().getVersion();
-
-        for (GameComponentType type : GameComponentType.MOD_LOADERS) {
-            if (type.isModLoader() && analyzer.has(type)) {
-                ModLoaderType modLoaderType = type.getModLoaderType();
-                if (modLoaderType != null) {
-                    supportedLoaders.add(modLoaderType);
-                }
-            }
-        }
-
-        if (analyzer.has(GameComponentType.CLEANROOM)) {
-            supportedLoaders.add(ModLoaderType.FORGE);
-        }
-
-        if (analyzer.has(GameComponentType.FORGE) // No cleanroom because LiteLoader cannot run on Java 21
-                && hasLiteLoaderAsMod.get()
-                && !gameVersionNumber.isAtLeast("1.13", "17w43a")
-                // LiteLoader indicates that it supports 1.5.2 as well in this way, but it actually does nothing
-                && gameVersionNumber.isAtLeast("1.6.1", "13w36a" /* 1.7-snapshot-1 */)) {
-            supportedLoaders.add(ModLoaderType.LITE_LOADER);
-        }
-
-        if (analyzer.has(GameComponentType.NEO_FORGE) && "1.20.1".equals(gameVersion)) {
-            supportedLoaders.add(ModLoaderType.FORGE);
-        }
-
-        if (analyzer.has(GameComponentType.QUILT)) {
-            supportedLoaders.add(ModLoaderType.FABRIC);
-        }
-
-        if (analyzer.has(GameComponentType.LEGACY_FABRIC)) {
-            supportedLoaders.add(ModLoaderType.FABRIC);
-        }
-
-        if (analyzer.has(GameComponentType.FABRIC) && modManager.hasMod("kilt", ModLoaderType.FABRIC)) {
-            supportedLoaders.add(ModLoaderType.FORGE);
-            supportedLoaders.add(ModLoaderType.NEO_FORGE);
-        }
-
-        // Sinytra Connector
-        if (analyzer.has(GameComponentType.NEO_FORGE) && (modManager.hasMod("connector", ModLoaderType.NEO_FORGE) || modManager.hasMod("connectormod", ModLoaderType.NEO_FORGE))
-                || "1.20.1".equals(gameVersion) && analyzer.has(GameComponentType.FORGE) && modManager.hasMod("connectormod", ModLoaderType.FORGE)) {
-            supportedLoaders.add(ModLoaderType.FABRIC);
-        }
     }
 
     public void add() {

@@ -213,8 +213,15 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
     @Override
     public Optional<RemoteAddon.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
-        String sha1 = DigestUtils.digestToString("SHA-1", file);
+        return getRemoteVersionBySHA1(DigestUtils.digestToString("SHA-1", file));
+    }
 
+    /// Looks up a Modrinth version by file SHA-1 hash.
+    ///
+    /// @param sha1 the SHA-1 digest of the file
+    /// @return the matching remote version, or empty when not found
+    /// @throws IOException if the Modrinth request fails for a reason other than 404 / missing file
+    public Optional<RemoteAddon.Version> getRemoteVersionBySHA1(String sha1) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             ProjectVersion projectVersion = HttpRequest.GET(PREFIX + "/v2/version_file/" + sha1,
