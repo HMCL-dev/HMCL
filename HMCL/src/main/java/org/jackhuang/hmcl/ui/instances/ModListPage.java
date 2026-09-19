@@ -21,6 +21,8 @@ import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.binding.BooleanExpression;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -139,6 +141,13 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         loadMods(gameInstance.getModManager());
     }
 
+    private final BooleanProperty hasLiteLoader = new SimpleBooleanProperty(this, "hasLiteLoader") {
+        @Override
+        public void invalidated() {
+            if (!isLoading()) Platform.runLater(() -> refresh());
+        }
+    };
+
     private void loadMods(ModManager modManager) {
         setLoading(true);
 
@@ -163,6 +172,13 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             supportedLoaders.clear();
             supportedLoaders.addAll(modManager.getSupportedLoaders());
+
+            hasLiteLoader.unbind();
+            hasLiteLoader.bind(new SimpleBooleanProperty(supportedLoaders.contains(ModLoaderType.LITE_LOADER))
+                    .or(modManager.liteLoaderAsModFiles().stream().map(LocalModFile::activeProperty).map(BooleanBinding::booleanExpression).reduce(
+                            new SimpleBooleanProperty(),
+                            BooleanExpression::or
+            )));
 
             if (exception == null) {
                 getItems().setAll(list);
@@ -807,11 +823,50 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             content.setSubtitle(joiner.toString());
 
-            if (modLoaderType == ModLoaderType.UNKNOWN) {
-                content.addTagWarning(i18n("mods.unknown"));
-            } else if (!page.supportedLoaders.contains(modLoaderType)) {
-                warning.add(i18n("mods.warning.loader_mismatch"));
-                content.addTagWarning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType()));
+            {
+                var instance = modInfo.getModManager().getInstance();
+                GameVersionNumber gameVersionNumber = instance.getVersion();
+                boolean coreModLoaderMismatches = modInfo.getCoreModInfo().getModLoaders(gameVersionNumber).stream().noneMatch(page.supportedLoaders::contains);
+                boolean wrongCoreModDir = instance.getCoreModsDirectory() != null
+                        && modInfo.getCoreModInfo().isLegacy()
+                        && !modInfo.getFile().getParent().equals(instance.getCoreModsDirectory());
+
+                if (modLoaderType == ModLoaderType.UNKNOWN) {
+                    if (modInfo.isCoreMod()) {
+                        boolean warnCoreMod = false;
+                        if (coreModLoaderMismatches) {
+                            warnCoreMod = true;
+                            warning.add(i18n("mods.coremods.loader_mismatch"));
+                        }
+                        if (wrongCoreModDir) {
+                            warnCoreMod = true;
+                            warning.add(i18n("mods.coremods.check_dir"));
+                        }
+                        if (warnCoreMod) content.addTagWarning("CoreMod");
+                        else content.addTag("CoreMod");
+                    } else {
+                        content.addTagWarning(i18n("mods.unknown"));
+                    }
+                } else if (!page.supportedLoaders.contains(modLoaderType)) {
+                    content.addTagWarning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType()));
+                    if (modInfo.isCoreMod()) {
+                        content.addTagWarning("CoreMod");
+                        if (coreModLoaderMismatches) warning.add((i18n("mods.coremods.loader_mismatch")));
+                        warning.add(i18n("mods.coremods.supported_only_as_coremod"));
+                        if (wrongCoreModDir) warning.add(i18n("mods.coremods.check_dir"));
+                    } else {
+                        warning.add(i18n("mods.warning.loader_mismatch"));
+                    }
+                } else {
+                    if (modInfo.isCoreMod()) {
+                        if (wrongCoreModDir) {
+                            content.addTagWarning("CoreMod");
+                            warning.add(i18n("mods.coremods.check_dir"));
+                        } else {
+                            content.addTag("CoreMod");
+                        }
+                    }
+                }
             }
 
             String modVersion = modInfo.getVersion();
