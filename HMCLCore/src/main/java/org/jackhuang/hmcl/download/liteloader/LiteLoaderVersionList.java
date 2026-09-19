@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.download.liteloader;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
+import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.HttpRequest;
@@ -35,7 +35,7 @@ import java.util.Objects;
 /**
  * @author huangyuhui
  */
-public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVersion> {
+public final class LiteLoaderVersionList extends ComponentVersionList<LiteLoaderRemoteVersion> {
 
     private final DownloadProvider downloadProvider;
 
@@ -99,7 +99,7 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
                 continue;
 
             versions.put(gameVersion, new LiteLoaderRemoteVersion(
-                    gameVersion, v.getVersion(), RemoteVersion.Type.RELEASE,
+                    gameVersion, v.getVersion(), ComponentRemoteVersion.Type.RELEASE,
                     Collections.singletonList(repository.getUrl() + "com/mumfrey/liteloader/" + gameVersion + "/" + v.getFile()),
                     v.getTweakClass(), v.getLibraries()
             ));
@@ -117,7 +117,7 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
         String buildNumber = Objects.requireNonNull(document.select("buildNumber"), "buildNumber").text();
 
         return new LiteLoaderRemoteVersion(
-                gameVersion, timestamp + "-" + buildNumber, RemoteVersion.Type.SNAPSHOT,
+                gameVersion, timestamp + "-" + buildNumber, ComponentRemoteVersion.Type.SNAPSHOT,
                 Collections.singletonList(String.format(SNAPSHOT_FILE, gameVersion, gameVersion, timestamp, buildNumber)),
                 v.getTweakClass(), v.getLibraries()
         );

@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl;
 
+import com.sun.jna.Pointer;
+import com.sun.jna.WString;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -39,6 +41,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WindowsNativeUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
@@ -46,12 +49,18 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.windows.Gdi32;
+import org.jackhuang.hmcl.util.platform.windows.Shell32;
+import org.jackhuang.hmcl.util.platform.windows.User32;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.net.CookieHandler;
@@ -61,9 +70,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -71,6 +82,7 @@ import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// The main JavaFX application entry point.
 public final class Launcher extends Application {
     public static final CookieManager COOKIE_MANAGER = new CookieManager();
 
@@ -135,6 +147,7 @@ public final class Launcher extends Application {
 
                 UpdateChecker.init();
 
+                WindowsNativeUtils.installWindowsAppUserModelRelaunchProperties(primaryStage);
                 primaryStage.show();
             });
         } catch (Throwable e) {
@@ -300,8 +313,8 @@ public final class Launcher extends Application {
             LOG.info("Current Directory: " + Metadata.CURRENT_DIRECTORY);
             LOG.info("HMCL User Home: " + Metadata.HMCL_USER_HOME);
             LOG.info("HMCL Local Home: " + Metadata.HMCL_LOCAL_HOME);
-            LOG.info("HMCL Jar Path: " + Lang.requireNonNullElse(JarUtils.thisJarPath(), "Not Found"));
-            LOG.info("HMCL Log File: " + Lang.requireNonNullElse(LOG.getLogFile(), "In Memory"));
+            LOG.info("HMCL Jar Path: " + Objects.requireNonNullElse(JarUtils.thisJarPath(), "Not Found"));
+            LOG.info("HMCL Log File: " + Objects.requireNonNullElse(LOG.getLogFile(), "In Memory"));
             LOG.info("JVM Max Memory: " + MEGABYTES.formatBytes(Runtime.getRuntime().maxMemory()));
             try {
                 for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
@@ -335,6 +348,7 @@ public final class Launcher extends Application {
             }
 
             setupJavaFXVMOptions();
+            setupWindowsAppUserModelID();
 
             launch(Launcher.class, args);
         } catch (Throwable e) { // Fucking JavaFX will suppress the exception and will break our crash reporter.
@@ -368,6 +382,27 @@ public final class Launcher extends Application {
         });
     }
 
+    /// Sets the process-level AppUserModelID on Windows so the launcher groups correctly on the taskbar.
+    private static void setupWindowsAppUserModelID() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
+            return;
+        if (!NativeUtils.USE_JNA || Shell32.INSTANCE == null)
+            return;
+
+        try {
+            int hr = Shell32.INSTANCE.SetCurrentProcessExplicitAppUserModelID(new WString(Metadata.WINDOWS_APP_USER_MODEL_ID));
+            if (hr < 0) {
+                LOG.warning("Failed to set AppUserModelID, HRESULT=0x" + Integer.toHexString(hr));
+            } else {
+                LOG.info("Set AppUserModelID: " + Metadata.WINDOWS_APP_USER_MODEL_ID);
+            }
+        } catch (Throwable e) {
+            LOG.warning("Failed to set AppUserModelID", e);
+        }
+    }
+
+    /// Sets JavaFX VM options before the toolkit starts.
+    /// On Wayland, the UI scale is auto-detected when the user did not configure one explicitly.
     private static void setupJavaFXVMOptions() {
         if ("true".equalsIgnoreCase(System.getenv("HMCL_FORCE_GPU"))) {
             LOG.info("HMCL_FORCE_GPU: true");
@@ -376,30 +411,72 @@ public final class Launcher extends Application {
 
         setUpAnimationFrameRate:
         {
+            if (System.getProperty("javafx.animation.pulse") != null) {
+                break setUpAnimationFrameRate;
+            }
+
             String animationFrameRate = System.getenv("HMCL_ANIMATION_FRAME_RATE");
             if (animationFrameRate != null) {
                 LOG.info("HMCL_ANIMATION_FRAME_RATE: " + animationFrameRate);
 
                 try {
-                    if (Integer.parseInt(animationFrameRate) <= 0)
+                    int value = Integer.parseInt(animationFrameRate);
+                    if (value <= 0)
                         throw new NumberFormatException(animationFrameRate);
 
-                    System.getProperties().putIfAbsent("javafx.animation.pulse", animationFrameRate);
+                    if (value != 60)
+                        System.setProperty("javafx.animation.pulse", animationFrameRate);
                 } catch (NumberFormatException e) {
                     LOG.warning("Invalid animation frame rate: " + animationFrameRate);
                 }
                 break setUpAnimationFrameRate;
             }
+
+            // To avoid prematurely loading FXUtils, we only check if animationDisabled has been explicitly set to true
+            if (Boolean.TRUE.equals(settings().animationDisabledProperty().get()))
+                break setUpAnimationFrameRate;
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (NativeUtils.USE_JNA && Gdi32.INSTANCE != null && User32.INSTANCE != null) {
+                    @Nullable Pointer pointer = User32.INSTANCE.GetDC(Pointer.NULL);
+                    if (pointer != null) {
+                        try {
+                            int refreshRate = Gdi32.INSTANCE.GetDeviceCaps(pointer, Gdi32.VREFRESH);
+
+                            if (refreshRate > 0) {
+                                LOG.info("Detected refresh rate: " + refreshRate + "Hz");
+
+                                if (refreshRate >= 90) {
+                                    System.getProperties().putIfAbsent("javafx.animation.pulse", String.valueOf(refreshRate));
+                                }
+                            }
+                        } finally {
+                            User32.INSTANCE.ReleaseDC(Pointer.NULL, pointer);
+                        }
+                    }
+                }
+            }
+        }
+
+        float uiScaleLowerBound;
+        float uiScaleUpperBound;
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            // JavaFX behavior may be abnormal when the DPI scaling factor is too high
+            uiScaleLowerBound = 0.25f;
+            uiScaleUpperBound = 4f;
+        } else {
+            uiScaleLowerBound = 0.01f;
+            uiScaleUpperBound = 10f;
         }
 
         String uiScale = System.getProperty("hmcl.uiScale", System.getenv("HMCL_UI_SCALE"));
-        if (uiScale != null) {
-            uiScale = uiScale.trim();
 
+        float scaleValue = Float.NaN;
+        if (uiScale != null && !(uiScale = uiScale.trim()).isEmpty()) {
             LOG.info("HMCL_UI_SCALE: " + uiScale);
 
             try {
-                float scaleValue;
                 if (uiScale.endsWith("%")) {
                     scaleValue = Integer.parseInt(uiScale.substring(0, uiScale.length() - 1)) / 100.0f;
                 } else if (uiScale.endsWith("dpi") || uiScale.endsWith("DPI")) {
@@ -407,32 +484,59 @@ public final class Launcher extends Application {
                 } else {
                     scaleValue = Float.parseFloat(uiScale);
                 }
-
-                float lowerBound;
-                float upperBound;
-
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    // JavaFX behavior may be abnormal when the DPI scaling factor is too high
-                    lowerBound = 0.25f;
-                    upperBound = 4f;
-                } else {
-                    lowerBound = 0.01f;
-                    upperBound = 10f;
-                }
-
-                if (scaleValue >= lowerBound && scaleValue <= upperBound) {
-                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                        System.getProperties().putIfAbsent("glass.win.uiScale", uiScale);
-                    } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                        LOG.warning("macOS does not support setting UI scale, so it will be ignored");
-                    } else {
-                        System.getProperties().putIfAbsent("glass.gtk.uiScale", uiScale);
-                    }
-                } else {
-                    LOG.warning("UI scale out of range: " + uiScale);
-                }
             } catch (Throwable e) {
                 LOG.warning("Invalid UI scale: " + uiScale);
+            }
+        } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            String xdgSessionType = Objects.requireNonNullElse(System.getenv("XDG_SESSION_TYPE"), "");
+            String xdgCurrentDesktop = Objects.requireNonNullElse(System.getenv("XDG_CURRENT_DESKTOP"), "");
+
+            if ("wayland".equals(xdgSessionType)
+                    && StringUtils.startsWithIgnoreCase(xdgCurrentDesktop, "KDE")) {
+                try {
+                    @Nullable Path xrdb = SystemUtils.which("xrdb");
+                    @Nullable String xftDpi = xrdb != null ? SystemUtils.run(List.of(FileUtils.getAbsolutePath(xrdb), "-query"), inputStream -> {
+                        @Nullable String dpiLine;
+
+                        try (var reader = new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET);
+                             BufferedReader bufferedReader = new BufferedReader(reader);
+                             Stream<String> lines = bufferedReader.lines()) {
+                            dpiLine = lines.filter(line -> line.trim().startsWith("Xft.dpi:"))
+                                    .findFirst().orElse(null);
+                        }
+
+                        return dpiLine != null
+                                ? dpiLine.substring("Xft.dpi:".length()).trim()
+                                : null;
+                    }, java.time.Duration.ofSeconds(1)) : null;
+
+                    if (xftDpi != null) {
+                        float dpiValue = Float.parseFloat(xftDpi);
+                        float scale = dpiValue / 96f;
+
+                        if (scale > 1 && scale <= 10) {
+                            LOG.info("Detected Xft.dpi: %s (%.1fx)".formatted(dpiValue, scale));
+                            scaleValue = scale;
+                            uiScale = Float.toString(scale);
+                        }
+                    }
+                } catch (Exception e) {
+                    LOG.warning("Failed to read Xft.dpi from xrdb", e);
+                }
+            }
+        }
+
+        if (Float.isFinite(scaleValue)) {
+            if (scaleValue >= uiScaleLowerBound && scaleValue <= uiScaleUpperBound) {
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    System.getProperties().putIfAbsent("glass.win.uiScale", uiScale);
+                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                    LOG.warning("macOS does not support setting UI scale, so it will be ignored");
+                } else {
+                    System.getProperties().putIfAbsent("glass.gtk.uiScale", uiScale);
+                }
+            } else {
+                LOG.warning("UI scale out of range: " + uiScale);
             }
         }
     }

@@ -28,10 +28,12 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Set;
 
 public final class HMCLModpackProvider implements ModpackProvider {
     public static final HMCLModpackProvider INSTANCE = new HMCLModpackProvider();
@@ -42,12 +44,17 @@ public final class HMCLModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, String version) {
+    public @Nullable Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance) {
         return null;
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException {
+    public Task<?> createUpdateTask(
+            DefaultDependencyManager dependencyManager,
+            DefaultGameInstance instance,
+            Path zipFile,
+            Modpack modpack,
+            @Nullable Set<String> excludedFiles) throws MismatchedModpackTypeException {
         if (!(modpack.getManifest() instanceof HMCLModpackManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
@@ -55,7 +62,7 @@ public final class HMCLModpackProvider implements ModpackProvider {
             throw new IllegalArgumentException("HMCLModpackProvider requires HMCLGameRepository");
         }
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new HMCLModpackInstallTask(repository, zipFile, modpack, name));
+        return new ModpackUpdateTask(instance, new HMCLModpackInstallTask(repository, zipFile, modpack, instance));
     }
 
     @Override
@@ -63,21 +70,26 @@ public final class HMCLModpackProvider implements ModpackProvider {
         String manifestJson = CompressingUtils.readTextZipEntry(file, "modpack.json");
         Modpack manifest = JsonUtils.fromNonNullJson(manifestJson, HMCLModpack.class).setEncoding(encoding);
         String gameJson = CompressingUtils.readTextZipEntry(file, "minecraft/pack.json");
-        Version game = JsonUtils.fromNonNullJson(gameJson, Version.class);
-        if (game.getJar() == null)
+        GameInstanceManifest game = JsonUtils.fromNonNullJson(gameJson, GameInstanceManifest.class);
+        if (game.jar() == null)
             if (StringUtils.isBlank(manifest.getVersion()))
                 throw new JsonParseException("Cannot recognize the game version of modpack " + file + ".");
             else
                 manifest.setManifest(HMCLModpackManifest.INSTANCE);
         else
-            manifest.setManifest(HMCLModpackManifest.INSTANCE).setGameVersion(game.getJar());
+            manifest.setManifest(HMCLModpackManifest.INSTANCE).setGameVersion(game.jar().id());
         return manifest;
     }
 
     private final static class HMCLModpack extends Modpack {
         @Override
-        public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl) {
-            return new HMCLModpackInstallTask((HMCLGameRepository) dependencyManager.getGameRepository(), zipFile, this, name);
+        public Task<?> getInstallTask(
+                DefaultDependencyManager dependencyManager,
+                Path zipFile,
+                GameInstanceID instanceId,
+                String iconUrl,
+                @Nullable Set<String> excludedFiles) {
+            return new HMCLModpackInstallTask((HMCLGameRepository) dependencyManager.getGameRepository(), zipFile, this, instanceId);
         }
     }
 

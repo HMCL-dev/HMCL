@@ -418,7 +418,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// @param themePack the installed theme pack to display
         private ThemePackInfoDialog(ThemePackManagementPage page, ThemePackManager.InstalledThemePack themePack) {
             ThemePackManifest manifest = themePack.manifest();
-            maxWidthProperty().bind(Controllers.windowWidthProperty().multiply(0.7));
+            maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
 
             HBox heading = new HBox(8);
             heading.setAlignment(Pos.CENTER_LEFT);
@@ -483,7 +483,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             scrollPane.setPrefViewportWidth(520);
             scrollPane.setPrefViewportHeight(Math.min(360, manifest.themes().size() * 86));
-            scrollPane.maxHeightProperty().bind(Controllers.windowHeightProperty().multiply(0.55));
+            scrollPane.maxHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.55));
 
             StackPane body = new StackPane(scrollPane);
             body.setPadding(new Insets(10, 0, 0, 0));
@@ -632,7 +632,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         private final ThemePackManagementPage page;
 
         /// Root graphic reused by this cell.
-        private final Region graphic;
+        private final RipplerContainer graphic;
 
         /// The text content shown for the current theme pack.
         private final TwoLineListItem content = new TwoLineListItem();
@@ -714,19 +714,21 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         @Override
         protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
             var currentItem = getItem();
+            boolean oldEmpty = isEmpty();
 
             super.updateItem(themePack, empty);
 
-            if (Objects.equals(getItem(), currentItem)) return;
+            if (Objects.equals(getItem(), currentItem) && oldEmpty == empty) return;
 
+            this.graphic.releaseRippleImmediately();
             content.getTags().clear();
             iconImage.setImage(null);
             iconFallback.setVisible(false);
+
             if (empty || themePack == null) {
                 setGraphic(null);
                 return;
             }
-
             setGraphic(graphic);
 
             ThemePackManifest manifest = themePack.manifest();

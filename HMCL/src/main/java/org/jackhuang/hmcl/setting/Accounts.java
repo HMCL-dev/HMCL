@@ -49,7 +49,6 @@ import java.util.regex.Pattern;
 import static javafx.collections.FXCollections.observableArrayList;
 import static org.jackhuang.hmcl.setting.SettingsManager.*;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
-import static org.jackhuang.hmcl.util.Lang.immutableListOf;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -71,7 +70,7 @@ public final class Accounts {
     public static final OfflineAccountFactory FACTORY_OFFLINE = new OfflineAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER);
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
     public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(OAUTH_CALLBACK));
-    public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
+    public static final List<AccountFactory<?>> FACTORIES = List.of(FACTORY_OFFLINE, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
 
     // ==== login type / account factory mapping ====
     private static final Map<String, AccountFactory<?>> type2factory = new HashMap<>();

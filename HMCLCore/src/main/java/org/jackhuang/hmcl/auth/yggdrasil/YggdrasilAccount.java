@@ -42,7 +42,6 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
     protected final UUID profileID;
     protected final String loginName;
 
-    private boolean authenticated = false;
     private YggdrasilSession session;
 
     protected YggdrasilAccount(AccountID accountID, YggdrasilService service, String loginName, YggdrasilSession session) {
@@ -75,7 +74,6 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
         }
 
         profileID = session.selectedProfile().getId();
-        authenticated = true;
 
         addProfilePropertiesListener();
     }
@@ -105,36 +103,32 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
         return session.selectedProfile().getId();
     }
 
+    /// Returns authentication information after validating the current token.
+    /// Refreshes the session if the profile name is missing or the token is invalid.
     @Override
     public synchronized AuthInfo logIn() throws AuthenticationException {
-        if (!authenticated || !session.hasProfileName()) {
-            if (session.hasProfileName() && service.validate(session.accessToken(), session.clientToken())) {
-                authenticated = true;
-            } else {
-                YggdrasilSession acquiredSession;
-                try {
-                    acquiredSession = service.refresh(session.accessToken(), session.clientToken(), null);
-                } catch (RemoteAuthenticationException e) {
-                    if ("ForbiddenOperationException".equals(e.getRemoteName())) {
-                        throw new CredentialExpiredException(e);
-                    } else {
-                        throw e;
-                    }
+        if (!session.hasProfileName() || !service.validate(session.accessToken(), session.clientToken())) {
+            YggdrasilSession acquiredSession;
+            try {
+                acquiredSession = service.refresh(session.accessToken(), session.clientToken(), null);
+            } catch (RemoteAuthenticationException e) {
+                if ("ForbiddenOperationException".equals(e.getRemoteName())) {
+                    throw new CredentialExpiredException(e);
+                } else {
+                    throw e;
                 }
-                if (acquiredSession.selectedProfile() == null || !acquiredSession.selectedProfile().getId().equals(profileID)) {
-                    throw new ServerResponseMalformedException("Selected profile changed");
-                }
-                if (!acquiredSession.hasProfileName()) {
-                    throw new ServerResponseMalformedException("Profile name is missing");
-                }
-
-                session = acquiredSession;
-
-                authenticated = true;
-                invalidate();
             }
-        }
+            if (acquiredSession.selectedProfile() == null || !acquiredSession.selectedProfile().getId().equals(profileID)) {
+                throw new ServerResponseMalformedException("Selected profile changed");
+            }
+            if (!acquiredSession.hasProfileName()) {
+                throw new ServerResponseMalformedException("Profile name is missing");
+            }
 
+            session = acquiredSession;
+
+            invalidate();
+        }
         return session.toAuthInfo();
     }
 
@@ -158,7 +152,6 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
             session = acquiredSession;
         }
 
-        authenticated = true;
         invalidate();
         return session.toAuthInfo();
     }
@@ -192,7 +185,6 @@ public abstract class YggdrasilAccount extends ClassicAccount implements FriendC
 
     @Override
     public void clearCache() {
-        authenticated = false;
         service.getProfileRepository().invalidate(profileID);
     }
 

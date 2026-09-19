@@ -159,9 +159,7 @@ public final class UpdateHandler {
                 } else {
                     Exception e = executor.getException();
                     LOG.warning("Failed to update to " + version, e);
-                    if (e instanceof CancellationException) {
-                        Platform.runLater(() -> Controllers.showToast(i18n("message.cancelled")));
-                    } else {
+                    if (!(e instanceof CancellationException)) {
                         Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageType.ERROR));
                     }
                 }
@@ -174,7 +172,7 @@ public final class UpdateHandler {
 
         Path self = getCurrentLocation();
         if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
-            throw new IOException("Self verification failed");
+            throw new SelfVerificationException();
         }
         ExecutableHeaderHelper.copyWithHeader(self, target);
 

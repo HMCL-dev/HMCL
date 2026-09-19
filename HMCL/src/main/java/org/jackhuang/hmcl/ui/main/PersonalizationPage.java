@@ -25,48 +25,29 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
+import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.ColorPicker;
-import javafx.scene.control.ContentDisplay;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import javafx.css.PseudoClass;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import javafx.stage.FileChooser;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.uuid.UUIDs;
-import org.jackhuang.hmcl.setting.BackgroundType;
-import org.jackhuang.hmcl.setting.FontManager;
-import org.jackhuang.hmcl.setting.LauncherSettings;
-import org.jackhuang.hmcl.setting.SettingsManager;
-import org.jackhuang.hmcl.setting.ThemeColorType;
-import org.jackhuang.hmcl.setting.UserSettings;
-import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
-import org.jackhuang.hmcl.theme.BuiltinBackground;
-import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
-import org.jackhuang.hmcl.theme.Theme;
-import org.jackhuang.hmcl.theme.ThemeColor;
-import org.jackhuang.hmcl.theme.ThemeColorSource;
-import org.jackhuang.hmcl.theme.ThemePackExporter;
-import org.jackhuang.hmcl.theme.ThemePackManifest;
-import org.jackhuang.hmcl.theme.ThemePackManager;
-import org.jackhuang.hmcl.theme.ThemeReference;
+import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.theme.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
@@ -347,20 +328,25 @@ public class PersonalizationPage extends StackPane {
         String defaultPackId = "com.example.hmcl.theme-pack." + UUIDs.toCompactString(UUIDs.generateV7(exportTimestamp));
         String defaultPackName = LocalDateTime.ofInstant(exportTimestamp, ZoneId.systemDefault()).format(EXPORTED_THEME_NAME_FORMATTER);
 
-        String userName = System.getProperty("user.name").trim();
-        String defaultAuthorName = StringUtils.isBlank(userName) ? "Unknown" : userName;
+        String accountName = null;
+        {
+            var currentAccount = Accounts.getSelectedAccount();
+            if (currentAccount != null) accountName = currentAccount.getProfileName();
+        }
+        if (StringUtils.isBlank(accountName)) accountName = System.getProperty("user.name").trim();
+        String defaultAuthorName = StringUtils.isBlank(accountName) ? "Unknown" : accountName;
 
         PromptDialogPane.Builder.StringQuestion packNameQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.name"),
-                "")
+                defaultPackName)
                 .setPromptText(defaultPackName);
         PromptDialogPane.Builder.StringQuestion versionQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.version"),
-                "")
+                ThemePackManager.CURRENT_THEME_PACK_VERSION)
                 .setPromptText(ThemePackManager.CURRENT_THEME_PACK_VERSION);
         PromptDialogPane.Builder.StringQuestion authorNameQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.author"),
-                "")
+                defaultAuthorName)
                 .setPromptText(defaultAuthorName);
 
         Controllers.prompt(new PromptDialogPane.Builder(i18n("theme_pack.export.title"), (questions, handler) -> handler.resolve())
@@ -449,7 +435,7 @@ public class PersonalizationPage extends StackPane {
             LineSelectButton<String> brightnessPane = new LineSelectButton<>();
             brightnessPane.setTitle(i18n("settings.launcher.brightness"));
             brightnessPane.setConverter(name -> i18n("settings.launcher.brightness."
-                    + Objects.requireNonNullElse(name, "auto")));
+                    + Objects.requireNonNullElse(name, "auto").trim().toLowerCase(Locale.ROOT)));
             brightnessPane.setItems(Arrays.asList("auto", "light", "dark"));
             bindThemeAppearanceLineSelectButton(
                     brightnessPane,
@@ -713,6 +699,17 @@ public class PersonalizationPage extends StackPane {
                 }
                 updatingBackground.value = true;
                 try {
+                    builtinBackgroundComboBox.setValue(Objects.requireNonNullElse(
+                            settings().builtinBackgroundIdProperty().get(),
+                            BuiltinBackground.FALLBACK.id()));
+                    customBackgroundOption.setPath(Objects.toString(
+                            settings().customBackgroundImagePathProperty().get(),
+                            ""));
+                    networkBackgroundOption.setText(Objects.toString(
+                            settings().networkBackgroundImageUrlProperty().get(),
+                            ""));
+                    paintBackgroundOption.setPaint(settings().customBackgroundPaintProperty().get());
+
                     boolean overridden = settings().getThemeAppearanceOverrides().contains(
                             LauncherSettings.THEME_APPEARANCE_BACKGROUND);
                     ThemePackManager.ResolvedBackground background;
@@ -1260,7 +1257,7 @@ public class PersonalizationPage extends StackPane {
 
                 Label lblLogFontDisplay = new Label("[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower.");
                 lblLogFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
-                        () -> Font.font(Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT), settings().logFontSizeProperty().get()),
+                        () -> Font.font(Objects.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT), settings().logFontSizeProperty().get()),
                         settings().logFontFamilyProperty(), settings().logFontSizeProperty()));
 
                 logFontPane.getChildren().add(lblLogFontDisplay);

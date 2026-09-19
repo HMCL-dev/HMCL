@@ -152,7 +152,7 @@ scientists-dream;145;;Scientific Dreams;;
 abandend;146;;AbandEnd;;
 tech-expansion;147;;Tech Expansion;;
 minefanstasyworld;148;;我的幻想世界;MineFantasyWorld;
-slightly-vanilla-flavoured;149;;Slightly Vanilla Flavoured;;
+slightly-vanilla-flavoured;149;;Slightly Flavoured / Slightly Vanilla Flavoured;;
 all-the-mods;150;;All the Mods;;ATM1
 crackpack-3;151;;Crackpack 3;;
 valhelsia-3;152;;Valhelsia 3;;
@@ -213,7 +213,7 @@ better-minecraft-plus;207;;Better Minecraft [PLUS];;
 parasites-by-forge-labs;208;;Parasites by Forge Labs;;
 create-live;209;;Create Live;;
 airaka-tech;211;;艾瑞卡科技;Airaka Tech;
-;212;;TeaCon;;
+;212;;TeaCon整合包;TeaCon;
 originssmp;213;;起源SMP;OriginsSMP;
 create-live-2;214;;Create Live 2;;
 origin-smp-copy;215;;Origin - SMP;;
@@ -252,7 +252,7 @@ better-minecraft-otv-edition;249;;Better Minecraft (OfflineTV Edition);;
 evolution-reset;250;;进化：重启;Evolution: Reset;ER
 the-nuclear-wasteland;251;;核荒原;The Nuclear Wasteland;
 blessed-or-cursed-expedition-to-infinite-force;252;;祝福或诅咒：无限力量之征;Blessed or Cursed: Expedition to Infinite Force;BoC
-;253;;边界生存;Border Survival;BSV
+;253;;边界生存：存世;Border Survival;BSV
 medieval-mc-forge-mmc1;255;;Medieval Minecraft;;MMC
 heavens-of-sorcery;256;;巫术天堂;Heavens of Sorcery;
 herodotus;257;;希罗多德;Herodotus-Authentic Edition:Official;HDS
@@ -498,7 +498,7 @@ other-body;504;;Other Body;;
 ;506;;莱姆星云;Lime Nebula;LN
 void-genesis;507;;Void Genesis;;
 create-flavored;508;;Create Flavored;;
-terrafirmagreg-vintage;509;;TerraFirmaGreg;;TFG
+terrafirmagreg-vintage;509;;群峦格雷;TerraFirmaGreg;TFG
 create-astral;510;;机械动力：星辰;Create: Astral;
 ;511;;起源创造;CreateOrigin;CO
 random-item-skyblock-recondite-i;512;;Random Item Island - Recondite I;;
@@ -516,7 +516,7 @@ pick-the-stars;523;;摘星;Pick The Stars;PTS
 earth-technology;524;;Earth Technology;;
 ;525;;核乐不为;;ZMC
 ftb-stoneblock-3;526;;FTB StoneBlock 3;;
-create-mod-plus;527;;Create +;;
+create-mod-plus;527;;Create+;;
 multiplayer-optimization;528;;RawDiamondMC的优化包;RawDiamondMC's optimization pack;MPO
 chroma-endless;529;;Chroma Endless;;
 ragnamod-vi-in-the-sky;530;;Ragnamod VI In The Sky;;
@@ -548,7 +548,7 @@ gregic-skies;555;;Gregic Skies;;
 ;557;;齿轮颂歌：暮光;Gear Carol;
 pluma;558;;Pluma, a Journey to the Future!;;Pluma
 all-the-mods-7-to-the-sky;559;;All the Mods 7 - To the Sky;;ATM7S
-;560;;月见苍穹传说;TskimiCanopyCraft;TSCC
+;560;;月见苍穹传说;TsukiCupolaCraft;TSCC
 ;561;;最后的战役：劫后余生;The Last Stand:Aftermath;LSA/TLS
 ;562;;小猪配平;Peppa Pig's Burning Broom;2P2B
 zerblands-remastered;563;;Zerblands-Remastered;;
@@ -672,7 +672,7 @@ a-new-technological-era;681;;A New Technological Era;;ANTE
 musketeer;683;;Musketeer - One for All;;
 ;684;;匠造之传;The Legend of Tinker;TLT
 ;685;;我的骑士：怪物大乱斗;;
-;686;;塔可努的原生优化整合包;TechNoob's Vanilla Boost Pack;TNVBP
+;686;;塔可努的原生优化整合包;TNF-Vanilla / TechNoob's Vanilla Boost Pack;TNVBP
 ;687;;灵茗屿空岛;LMY SKY;
 ;688;;红石生电优化;Redstone Survival Optimization;RSO
 ;689;;恐惧深渊;Abyss of Fear;AoF
@@ -734,7 +734,7 @@ life-in-the-village-3;740;;Life in the village 3;;LitV3
 cook-in-skyblock;746;;天空厨房;Cook in skyland;CiS
 ;747;;被恐惧支配 1;Dominated by Fear 1;DoF
 new-vanilla-newhome;748;;新的原版;New Vanilla;NVA
-;749;;峦屿梦星群;Terrafirma Rescue Unofficial;TFRU
+tfru;749;;峦屿梦星群;Terrafirma Rescue Unofficial;TFRU
 stoneopolis;750;;Stoneopolis;;
 ftb-skies-expert;751;;FTB Skies Expert;;
 wmshd-pack-what-mojang-should-have-done;752;;What Mojang Should Have Done;;WMSHD
@@ -806,7 +806,6 @@ la;818;;胶兽大冒险;Latex Advanture;LA
 mystics-monstrosity;819;;Mystic's Monstrosity;;
 ;820;;更完美的MC;More Perfect Minecraft;MPMC
 ;821;;动画世界：烂柯人;AnimateCraft: Lankeren;
-;822;;New Create;;NC
 land-of-memories;823;;回忆之地;;LOM
 ;824;;异世界冒险2;;
 ragnamod-vii;825;;Ragnamod VII;;
@@ -866,7 +865,7 @@ create-vanilla-exploration;879;;Vanilla Create Exploration;;
 progress;880;;Progress: Create;;
 aeon-automata;881;;Aeon Automata;;AA
 ;882;;被恐惧支配2：收容失效;Dominated by Fear 2 Containment Breach;DoF2
-tensioncraft;883;;剑拔弩张之时;;TC
+;883;;剑拔弩张之时;;TC
 project-architect-2;884;;Project Architect 2;;
 ;885;;接入铁路网络：我的世界铁路;MTR Railway Network Access;RNA-MTR
 create-mekanized;886;;Create: Mekanized;;
@@ -923,24 +922,23 @@ setgamedifficulty-reika;936;;SetGameDifficulty Reika;;
 epic-journey-gtceu;937;;Epic Journey GTCEu;;
 terrafirmacraft-leap-the-top;938;;飞渡群峦;TerraFirmaCraft:Leap The Top;TFC:LTT
 gregtech-skybound;939;;Gregtech: Skybound;;
-simple-tfc;940;;简单群峦;Simple TFC;
+simple-tfc;940;;简单群峦;Simple TFC;SPTFC
 ftb-presents-direwolf20-s14;941;;FTB Presents Direwolf20 1.21;;
 final-judgment-save-the-world;942;;Final Judgment:Save the world;;
 ;943;;极端世界：重置;Extreme World Reset;EWR
 explore-everything;944;;空岛：探索;Explore Everything;SEE
 epic-journey-gtceu-conquerors-edition;945;;Epic Journey GTCEu - Conqueror's Edition;;
 the-undead-blooms;946;;亡灵绽放 | 真菌孢子启示录 |;The Undead Blooms | Fungal Spore Apocalypse |;
-;947;;星地征程;Starland Journey;SJ
-;948;;希望与绝望-惊变100天;Hope and Despair;had
+;947;;星地征程;Starland Journey re;SJRE
+;948;;希望与绝望-惊变100天;Hope and Despair;HAD
 ;949;;梦篡光阴;Dreams Distort Overture;DDO
 ;950;;最后的光芒;The Last Light;TLL
 endil-expert-edition;951;;Endil's Expert Edition;;EEE
 peace-of-mind;952;;Peace of Mind;;
 distantly-optimized;953;;Distantly Optimized;;DO
 farming-experience;954;;Farming Experience;;
-hungry-for-tech-2;955;;Hungry For Tech 2;;
+hungry-for-tech-2;955;;渴望科技2;Hungry For Tech 2;
 remain;957;;Remain;;
-;958;;末日狂徒;;
 gregtania6-skyblock;959;;Gregtania6 Skyblock;;
 harmonious-engineering;960;;Harmonious Engineering;;
 valley-of-farming-and-ranching;961;;农牧物语;Valley of Farming and Ranching;
@@ -985,7 +983,7 @@ industrial-machines;1000;;Industrial Machines;;
 auto-terrafirmacraft-tfc-create;1001;;Auto-TerraFirmaCraft (TFC + Create);;ATFC
 ;1002;;时间之书：星的日记;The Book of Time: A Star's Journal;TASL
 ;1003;;特摄世界;Tokusatsu World;TW
-journey-of-reincarnation;1004;;转世之旅;Tensura: Journey of Reincarnation;
+;1004;;转世之旅;Tensura: Journey of Reincarnation;
 ;1005;;冒险与休闲;Adventure and Leisure;AL
 enigmatica10;1006;;Enigmatica 10;;E10
 mc-chocolate-edition;1007;;Chocolate Edition Minecraft;;
@@ -1002,7 +1000,7 @@ kumo-o-tagayasu;1017;;耕云钓月;Kumo O Tagayasu;KOTS
 ;1018;;无限战争4;Infinity War4;INF4
 ;1019;;群峦传说：工业长路;;
 ;1020;;自然冒险     新生;Nature Adventure Newborn;NAB
-hmbo;1021;;羽舲的基础优化;Hanekmio's Basis Optimization;
+asig;1021;;浅忆基础整合;Asai Integrated Modpack;
 create-star-valley;1022;;Create: Gears of History;;
 ;1023;;阿尔法计划;AlphaPlan;AP
 spell-dimension;1024;;咒次元;Spell Dimension;SD
@@ -1015,7 +1013,7 @@ terminal;1030;;终末;Terminal;
 isolated-crystal-3;1031;;异次元水晶 3;Isolated Crystal 3;
 ;1032;;机械动力：无限总是小于零;Create:Infinity Always Smaller Than Zero;CIASZ
 ;1033;;踪灭I-起源;;
-;1034;;踪灭II;;
+;1034;;踪灭II;Endtime II;
 rabbits-dawn-craft;1035;;某兔子的破晓之界;A Certain Rabbit's DawnCraft - Dawn of the Deep Soul;RDC
 ;1036;;铁砧天空;;ASKY
 grand-architect-journey;1037;;伟大工程巡礼;Grand Architecture Journey;GAJ
@@ -1075,7 +1073,7 @@ roguelike-adventures-and-dungeons-3;1090;;冒险与地牢3;Roguelike Adventures 
 wheelchair-gregtech;1093;;Wheelchair Gregtech;;
 egged-up;1094;;Egged Up;;
 ;1095;;香草纪元：食旅纪行;VanillaEra: FaresChron;VEFC
-;1096;;愚者;The Fool;TF
+the-fool;1096;;愚者;The Fool;TF
 ;1097;;时间之书2：星梦指南;BookofTime II Stardream Compass;BKSC
 ;1098;;群峦之上：无垠伊土;EndlessFirma;EnF
 ;1099;;血月低语：暗夜惊魂;Bloodmoon's Whisper;BW
@@ -1119,11 +1117,11 @@ life-in-the-village-4;1136;;Life in the village 4;;LITV4
 real-island-2-modular-craft;1137;;真实空岛2：模块化之旅;Real Island 2 - Modular Craft;RI2
 ;1138;;奥术咖啡馆;Arcane Cofferia;
 unyielding;1139;;Unyielding;;
-;1140;;剑与王国;;SNK
+;1140;;剑与王国;;sword_and_kingdom
 the-fungal-infection-coop;1141;;The Fungal Infection | Co-Op Base Defense;;
 mc-eternal-2;1142;;永恒的MC 2;MC Eternal 2;MCE2
 solo-leveling-reawakening;1143;;Solo Leveling - Reawakening;;
-create-ultimate-selection;1144;;Create: Ultimate Selection - QUESTS NOW!;;
+create-ultimate-selection;1144;;Create: Ultimate Selection;;
 ;1145;;元素觉醒;Elemental Awakening;
 endless-horror-the-ultimate-horror-modpack;1146;;Endless Horror - The ULTIMATE Horror Experience;;
 ;1147;;锻造之旅;;
@@ -1145,13 +1143,13 @@ blue-archive-x-mineraft;1163;;我的世界x蔚蓝档案;BlueArchive x Minecraft;
 ;1164;;Fresh & Smooth;;
 ;1165;;机动重启工程：风之旅;The Caravan of Winds;TCW
 ;1166;;Furry Fandom Club Boss Rush Official Offline;;FFCBR
-immersive-ultra;1167;;极致沉浸;Immersive Ultra;
+;1167;;极致沉浸;Immersive Ultra;
 ;1168;;Polymania!;;
 survivearchive;1169;;SurviveArchive - A Blue Archive modpack;;
 beloong;1170;;化龍;BeLoong;
-;1171;;畅游自然;;SiF
+;1171;;畅游自然;;SiN
 ;1172;;退休工艺;Retirement Craft;RmC
-;1173;;溯光暗潮：云影;NS's Random Gunfight;NRG
+;1173;;溯光暗潮;TRACING LIGHT · DARK TIDE;NRG
 ;1174;;雪狐的基础整合;SF Integrated Modpack;SFI
 ;1175;;硬核惊变;Hardcore Surprise;HS
 society-sunlit-valley;1176;;Society: Sunlit Valley;;
@@ -1179,7 +1177,7 @@ repalmon;1198;;Re帕鲁梦;RePalmon;RPLM
 structural-ingenuity;1199;;结构型奇思妙想;Structural Ingenuity;
 arcaneaxis-ars;1200;;秘法象限;ArcaneAxis;ARS
 gregtech-easy;1201;;格雷科技简单版;GregTech Easy;GTE
-;1202;;机境交响;Creation Exploring the Road of;CETR
+create-exploring-the-path-of;1202;;机境交响;Creation Exploring the Road of;CETR
 multiblockful-skies;1203;;Multiblockful Skies;;
 ;1204;;刀剑物语;SwordStory;SS
 ;1205;;无垠征途;The Unbounded Expedition;TUE
@@ -1194,13 +1192,13 @@ farmy-skyblock;1213;;Farmy Skyblock;;
 bloody-skyblock-modpack;1214;;Bloody Skyblock;;
 starages;1215;;Star Space Ages;;
 create-spectral-cuisine;1216;;Create: Spectral Cuisine;;
-project-infinity-0-1;1217;;Project Infinity 0.1;;
+project-infinity-0-1;1217;;无限计划;Project Infinity 0.1;
 create-live-6;1218;;Create Live 6;;
 ;1219;;全面包围-硬核惊变;Full encirclement;FLET
 ;1220;;科波菲尔;Copperfield;CPF
 ;1221;;试用核心/I.O.P的水槽基础整合;Trial Essential;
 tnp-limitless-8;1222;;TNP Limitless 8;;
-;1223;;重度机械症;Mechanomania;
+mechanomania;1223;;重度机械症;Mechanomania;
 ;1224;;寻此苦旅3;Per Aspera3;PA3
 calamity-rpg-iii-wounds-of-the-world;1225;;Calamity RPG III : Wounds of the World;;
 ;1226;;烛枫公会优化整合包;;ZFGH
@@ -1221,17 +1219,17 @@ erstwhile-journey-2;1240;;往昔之旅2;Erstwhile Journey 2;EJ2
 ;1241;;诡厄：使徒;;GRAE
 ;1242;;时间之书 : 星之旅行-重制版;BookofTime StarTravel;BKSL
 cook-in-skyland-elegant-feast;1243;;天空厨房：典雅盛宴;Cook in Skyland Elegant Feast;CiS2
-ftb-stoneblock-4;1244;;FTB StoneBlock 4;;SB4
+ftb-stoneblock-4;1244;;石头世界4;FTB StoneBlock 4;SB4
 techevdiscovery;1245;;TechEv || Discovery;;
 g3-project;1246;;G3 project;;
-;1247;;新州;Xin Zhou;XZ
+;1247;;新州;Xinzhou;XZ
 emc-and-fe-plus3;1248;;EMC & FE +++;;E&F2
 terracraft-confluence;1249;;泰拉工艺：汇流;TerraCraft:Confluence;TCC
 ;1250;;探索领域;Explore Realm;ER
 beyond-cosmo;1251;;Beyond Cosmo;;
-;1252;;闲居物语;Travel Architecture Dreams;TAD
+;1252;;闲居物语;Travel Serere Homestead;TSH
 high-altitude-alchemy;1253;;High-Altitude Alchemy;;
-;1254;;机械动力: 界位工程师;Create Boundary Engineer;CBE
+create-boundary-engineer;1254;;机械动力: 界位工程师;Create Boundary Engineer;CBE
 skyopolis-evolved;1255;;Skyopolis: Evolved;;
 ;1256;;IFR的1.12.2优化整合包;IFR's Forgified Optimization;IFO
 ;1257;;无穷匠艺;;
@@ -1262,7 +1260,7 @@ mythcrafts;1281;;MYTHCRAFT 5;;MC
 ;1282;;牧场物语;Harvest Moon;
 ;1283;;逃逸：寄生末日;SRP: Escape Parasite Doom;SRP:epd
 ;1284;;Ice and M;;IAM
-;1285;;秋水;autumn floods;AF
+autumn-floods;1285;;秋水;autumn floods;AF
 ;1286;;V2O5;;
 ;1287;;地牢冒险者;Dungeon Adventurer;DA
 ultramodern-optimization;1289;;超现代优化;Ultramodern optimization;UO
@@ -1273,14 +1271,14 @@ pandemonium-nexus-anarchic-aeon;1293;;万象枢纽：无序纪元;Pandemonium Ne
 ;1294;;菌染亵渎;Fungal Infection Blasphemy;FIB
 ;1295;;Ice and M:Sky;;IAMS
 ;1296;;TUFF PERFORMANCE;;
-;1297;;灾厄巫咒;;
+;1297;;灾厄巫咒;Curlamoety;
 ;1298;;子弹呼啸 : 重制;Bullet Whizz : Remake;BWR
 mybiomesobeautiful;1299;;My Biomes Is So Beautiful;;
 create-capitalist;1300;;Create Capitalist;;
 diving-beyond;1301;;Diving Beyond;;
 ;1302;;奇星·奥术;Mystic Star_Arcane;
 guild-adventures;1303;;Guild Adventures;;
-;1304;;艾斯爱慕：新视野;Spore and M:New Horizons;SMNH
+;1304;;艾斯爱慕：无限构件：现代工业;Spore and M:Infinity Mechanism:Modern Industrialization;SMIM
 otherworld-dnd;1305;;Otherworld [Dungeons & Dragons];;
 ;1306;;奇幻起源;Fantasy Origins;
 projects;1307;;ProjectS;;
@@ -1318,7 +1316,7 @@ farming-crossing-6-dinner-party;1334;;Farming Crossing 6: Dinner Party!;;
 ;1339;;机械动力：枪火不断;Create: Gunfire Never Stops;CGNS
 ;1340;;逆转未来;Battle For The Future;BFF
 day-of-mind;1341;;DayOfMind;;DOM
-;1342;;机械动力：探险生存 2;Create Adventure Survival 2;
+create-adventure-survival-ii;1342;;机械动力：探险生存 2;Create Adventure Survival II;
 ;1343;;云游四海;WAYFARING;WF
 ;1344;;阿卡迪亚的天启;The Apocalypse of Arcadia;TAOA
 ;1345;;纯净原版・焕新;Pure Vanilla Renewal;PVR
@@ -1327,4 +1325,110 @@ day-of-mind;1341;;DayOfMind;;DOM
 dragns-o-suite-pack;1348;;DragN's O-Suite Pack;;
 ;1349;;机械动力：工业与牧歌;Create: Industry and Pastoral;CIAP
 ;1350;;灾厄纪行;;
-beebeeblock-the-skyhive;1351;;蜂蜂空坊;Beebeeblock: The Skyhive;BTS
+beebeeblock-the-skyhive;1351;;蜂蜂空坊;Beebeeblock: The Skyhive;BBB
+the-last-world-shines;1352;;末世生辉;The Last World Shines;TLWS
+;1353;;MineOptimiz;;
+journey-to-infinity;1354;;Journey To Infinity;;
+;1355;;混元登仙;;HATI
+flying-path;1356;;飞舞之路;Flying Path;
+create-craft-quiet;1357;;机械动力:匠途闲境;Create:Craft&Quiet;ccq
+sky-new-horizons;1358;;Sky New Horizons;;SkyNH
+;1359;;天启之路;The Path Of Revelation;TPOR
+mana-and-mechanisms;1360;;Mana & Mechanisms;;
+;1361;;胶兽异界之旅Ⅱ;;
+mechanical-dragon;1362;;龙之机械;Dragon create;DC
+;1363;;香草精华;;VE
+submerged-2;1364;;Seaopolis Submerged 2;;
+;1365;;天煞孤星;A STAR DOOMED TO LONELINESS;ALONG
+;1366;;全亡灵启示录;All Undead Apocalypse;AUA
+;1367;;空流整合包;SkyFlow;
+;1368;;飞升者的陨落;Fall of Ascension;FOA
+;1369;;万华工艺录;KaleidoCraftia;KlC
+;1370;;多方块笙息空岛;;DSK
+etbw2-demo;1371;;探索光明的世界2;Explore the Bright World 2;EtBW2
+stellarisworkshop;1372;;孤星工坊;StellarisWorkshop;GTSW
+enders-journey-beyond-the-end;1373;;Ender's Journey - Beyond The End;;
+mysticalblockreloaded;1374;;Mystical Block Reloaded;;
+cozy-mizuno-minecraft;1375;;A Cozy Mizuno World;;
+;1376;;新生异土;Tensura Neo Otherworld;
+extraordinary-energy-modern;1377;;Extraordinary Energy : Modern;;
+;1378;;铁砧工艺-七天创世;;
+avaritia-project;1379;;Avaritia Project;;
+after-the-nukes;1380;;After The Nukes;;
+abyssal-ascent;1381;;Abyssal Ascent;;
+desolate-planet;1382;;Desolate Planet;;
+;1383;;德雷马尔：神化;Drehmal: Apotheosis;DHA
+project-arc-light-the-hanging-pavilion;1384;;弧光计划：空中楼阁;Project Arc Light: The Hanging Pavilion;PAHP
+;1385;;文明：创世;Civilization Isolaria;
+blockitecture;1386;;方块建筑学;Blockitecture (Block Architecture);
+;1388;;曙光空岛;;
+;1389;;千界一梦;The Oneiropolis;TOP
+;1390;;乌托星岛·创世旅途 3.0;EpicUraNepAdventure 3.0;EUNA3
+itaj;1391;;It Takes a Journey;;ITAJ
+taltale-pack;1392;;Taltale Pack;;
+waccyys-fantasia;1393;;waccyy's Fantasia;;
+all-the-mods-11;1394;;All The Mods 11;;ATM11
+create-live-7;1395;;Create Live 7;;
+;1396;;锻造之旅—无尽征途;;wjzt
+;1397;;魔法现代化工业笙息空岛;;MXSK
+nuclear-tech-integrated;1398;;核科技：集成;Nuclear Tech: Integrated;
+crashed;1399;;Crashed;;
+;1400;;格雷科技：万子科技;Greg Tech ： Wanzi Technology;GTWT
+moddedtogether;1401;;Modded Together;;
+;1402;;附魔工程;;
+;1403;;机械动力：航空学新视野2.0;Create Aero: New Horizons2.0;CANH
+;1404;;Better with Datapack;;
+restlesshorizons;1405;;Restless Horizons;;RH
+;1406;;虚空行者;Void Wayfarer;VW
+;1407;;模块化整合包：农业;Modular Modpack: Agriculture;MMA
+the-song-of-crafting;1408;;合成颂歌;The Song of Crafting;
+awakening;1409;;AMP - Awakening Classic;;
+;1410;;末世再现;;CATT
+;1411;;死亡突围：朝花暮拾;DeadoutRe：Duskora;DRD
+craftoria-2;1412;;Craftoria 2;;
+;1413;;这是一个水槽包;This is the sink pack;
+;1414;;绝境中的生存;Survival in Desperation;
+;1415;;等价无尽机械;PeojectE Avaritia Create;
+;1416;;破灭与重生：破晓之途;Ruins and Rebirth:Path to Daybreak;RRPD
+;1417;;最后那些天-低性能优化版;Those Last Day Boost;
+;1418;;涅槃;Nirvana;UPN
+enigmatic-skies;1419;;Enigmatic Skies;;
+;1420;;Spark+ 原版红石增强优化;Spark+ Vanilla Redstone Optimization;SVRO
+;1421;;混沌之地;TheChaoticnia;
+;1422;;消逝的曙光;Dusk of Dawn;DOW
+cook-in-skyland-recaked;1423;;天空厨房：重制版;Cook in Skyland Recaked;CiSR
+rlcraft-fanmade;1424;;RLCraft Fanmade;;
+unaltered;1425;;Unaltered+;;
+sendims-banforges;1426;;千界万锻;Myriad Dimensional Forge;SDBF
+;1427;;超级优化;Super Optimized;SO
+society-sunlit-cobblemon;1428;;Society: Sunlit Cobblemon;;
+create-aeronautica;1429;;Create Aeronautica;;
+;1430;;群星入侵;Astrincursion;
+;1431;;涟漪之篇;As Written By Whom;AWBW
+starbuncles-gift;1432;;星宝石兽的礼物;starbuncles gift;
+;1433;;Ember Peril: Silent Expanse;;EPSE
+sky-bees-reborn;1434;;Sky Bees Reborn;;
+who-am-i-not-me;1435;;我非我;Who Am I - Not Me;
+all-the-hacks;1436;;All The Hacks;;ATH
+;1437;;新：模拟大都市;;NSUK
+;1438;;异界工匠;;
+;1439;;工业升级指导版;Industrial upgrade 101;IU101
+;1440;;假面骑士全明星编年史;;KRASC
+;1441;;极速优化;Ultra Fast Optimization;UFO
+new-age-science-and-technology;1442;;新时代科技;New Age Science and Technology;NAST
+;1443;;屎生万物;EverythingFromPoop;EFP
+;1444;;天顶征途;Zenith Conquest;
+;1445;;瓶中伊甸;Eden in the Flask;EITF
+aircrashed-engineer-ii;1446;;坠机工程师2;Aircrashed Engineer II;ACEII
+star-avaritia;1447;;寰宇星光;Star Avaritia;SA
+astrids-fnaf-pack;1448;;Astrid's FNAF Pack;;
+hp-create-world-of-gears;1449;;HP - Create World of Gears;;
+the-cursed-wanderer-reborn;1450;;咒游诸界：重生;The Cursed Wanderer: Reborn;TCWR
+;1451;;机械之旅;Mechanical Create;
+;1452;;探索MC小马的世界;Explore MLP World;EPW
+tech101;1453;;科技入门学;Tech101;
+endfield-new-horizons;1454;;终末地工业：新视野;Endfield：New Horizons;efnh
+dungeon-train;1455;;地牢列车;Dungeon train;
+project-arc-light-dimensional-rift;1456;;弧光计划：维度裂隙;Project Arc Light -  Dimensional Rift;PA2
+;1457;;恶意世界;HostileCraft;HC
+adj;1458;;A Distant Journey;;ADJ

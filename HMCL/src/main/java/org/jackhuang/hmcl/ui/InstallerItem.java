@@ -34,27 +34,23 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.setting.VersionIconType;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
  * @author huangyuhui
  */
 public class InstallerItem extends Control {
-    private final String id;
-    private final VersionIconType iconType;
+    private final GameComponentType type;
+    private final GameInstanceIconType iconType;
     private final Style style;
     private final ObjectProperty<InstalledState> versionProperty = new SimpleObjectProperty<>(this, "version", null);
     private final ObjectProperty<State> resolvedStateProperty = new SimpleObjectProperty<>(this, "resolvedState", InstallableState.INSTANCE);
@@ -83,30 +79,14 @@ public class InstallerItem extends Control {
         CARD,
     }
 
-    public InstallerItem(LibraryAnalyzer.LibraryType id, Style style) {
-        this(id.getPatchId(), style);
-    }
-
-    public InstallerItem(String id, Style style) {
-        this.id = id;
+    public InstallerItem(GameComponentType type, Style style) {
+        this.type = type;
         this.style = style;
-
-        iconType = switch (id) {
-            case "game" -> VersionIconType.GRASS;
-            case "fabric", "fabric-api" -> VersionIconType.FABRIC;
-            case "legacyfabric", "legacyfabric-api" -> VersionIconType.LEGACY_FABRIC;
-            case "forge" -> VersionIconType.FORGE;
-            case "cleanroom" -> VersionIconType.CLEANROOM;
-            case "liteloader" -> VersionIconType.CHICKEN;
-            case "optifine" -> VersionIconType.OPTIFINE;
-            case "quilt", "quilt-api" -> VersionIconType.QUILT;
-            case "neoforge" -> VersionIconType.NEO_FORGE;
-            default -> null;
-        };
+        this.iconType = GameInstanceIconType.getIconType(type);
     }
 
-    public String getLibraryId() {
-        return id;
+    public GameComponentType getComponentType() {
+        return type;
     }
 
     public ObjectProperty<InstalledState> versionProperty() {
@@ -149,7 +129,7 @@ public class InstallerItem extends Control {
     public final static class InstallerItemGroup {
         private final InstallerItem game;
 
-        private final InstallerItem[] libraries;
+        private final InstallerItem[] components;
 
         private Set<InstallerItem> getIncompatibles(Map<InstallerItem, Set<InstallerItem>> incompatibleMap, InstallerItem item) {
             return incompatibleMap.computeIfAbsent(item, it -> new HashSet<>());
@@ -175,19 +155,19 @@ public class InstallerItem extends Control {
             }
         }
 
-        public InstallerItemGroup(String gameVersion, Style style) {
-            game = new InstallerItem(MINECRAFT, style);
-            InstallerItem fabric = new InstallerItem(FABRIC, style);
-            InstallerItem fabricApi = new InstallerItem(FABRIC_API, style);
-            InstallerItem forge = new InstallerItem(FORGE, style);
-            InstallerItem cleanroom = new InstallerItem(CLEANROOM, style);
-            InstallerItem legacyfabric = new InstallerItem(LEGACY_FABRIC, style);
-            InstallerItem legacyfabricApi = new InstallerItem(LEGACY_FABRIC_API, style);
-            InstallerItem neoForge = new InstallerItem(NEO_FORGE, style);
-            InstallerItem liteLoader = new InstallerItem(LITELOADER, style);
-            InstallerItem optiFine = new InstallerItem(OPTIFINE, style);
-            InstallerItem quilt = new InstallerItem(QUILT, style);
-            InstallerItem quiltApi = new InstallerItem(QUILT_API, style);
+        public InstallerItemGroup(GameVersionNumber gameVersion, Style style) {
+            game = new InstallerItem(GameComponentType.GAME, style);
+            InstallerItem fabric = new InstallerItem(GameComponentType.FABRIC, style);
+            InstallerItem fabricApi = new InstallerItem(GameComponentType.FABRIC_API, style);
+            InstallerItem forge = new InstallerItem(GameComponentType.FORGE, style);
+            InstallerItem cleanroom = new InstallerItem(GameComponentType.CLEANROOM, style);
+            InstallerItem legacyfabric = new InstallerItem(GameComponentType.LEGACY_FABRIC, style);
+            InstallerItem legacyfabricApi = new InstallerItem(GameComponentType.LEGACY_FABRIC_API, style);
+            InstallerItem neoForge = new InstallerItem(GameComponentType.NEO_FORGE, style);
+            InstallerItem liteLoader = new InstallerItem(GameComponentType.LITELOADER, style);
+            InstallerItem optiFine = new InstallerItem(GameComponentType.OPTIFINE, style);
+            InstallerItem quilt = new InstallerItem(GameComponentType.QUILT, style);
+            InstallerItem quiltApi = new InstallerItem(GameComponentType.QUILT_API, style);
 
             Map<InstallerItem, Set<InstallerItem>> incompatibleMap = new HashMap<>();
             mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge, cleanroom, legacyfabric);
@@ -217,7 +197,7 @@ public class InstallerItem extends Control {
                     for (InstallerItem other : incompatibleItems) {
                         InstalledState otherVersion = other.versionProperty.get();
                         if (otherVersion != null) {
-                            return new IncompatibleState(other.id, otherVersion.version);
+                            return new IncompatibleState(other.type.getPatchId(), otherVersion.version);
                         }
                     }
 
@@ -226,7 +206,7 @@ public class InstallerItem extends Control {
             }
 
             if (gameVersion != null) {
-                game.versionProperty.set(new InstalledState(gameVersion, false, false));
+                game.versionProperty.set(new InstalledState(gameVersion.toString(), false, false));
             }
 
             InstallerItem[] all = {game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi, legacyfabric, legacyfabricApi, cleanroom};
@@ -235,22 +215,19 @@ public class InstallerItem extends Control {
                 if (!item.resolvedStateProperty.isBound()) {
                     item.resolvedStateProperty.bind(Bindings.createObjectBinding(() -> {
                         InstalledState itemVersion = item.versionProperty.get();
-                        if (itemVersion != null) {
-                            return itemVersion;
-                        }
-                        return InstallableState.INSTANCE;
+                        return Objects.requireNonNullElse(itemVersion, InstallableState.INSTANCE);
                     }, item.versionProperty));
                 }
             }
 
             if (gameVersion == null) {
-                this.libraries = all;
-            } else if (gameVersion.equals("1.12.2")) {
-                this.libraries = new InstallerItem[]{game, forge, cleanroom, liteLoader, legacyfabric, legacyfabricApi, optiFine};
-            } else if (GameVersionNumber.compare(gameVersion, "1.13.2") <= 0) {
-                this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine, legacyfabric, legacyfabricApi};
+                this.components = all;
+            } else if (gameVersion.compareTo("1.12.2") == 0) {
+                this.components = new InstallerItem[]{game, forge, cleanroom, liteLoader, legacyfabric, legacyfabricApi, optiFine};
+            } else if (gameVersion.compareTo("1.13.2") <= 0) {
+                this.components = new InstallerItem[]{game, forge, liteLoader, optiFine, legacyfabric, legacyfabricApi};
             } else {
-                this.libraries = new InstallerItem[]{game, forge, neoForge, optiFine, fabric, fabricApi, quilt, quiltApi};
+                this.components = new InstallerItem[]{game, forge, neoForge, optiFine, fabric, fabricApi, quilt, quiltApi};
             }
         }
 
@@ -258,8 +235,8 @@ public class InstallerItem extends Control {
             return game;
         }
 
-        public InstallerItem[] getLibraries() {
-            return libraries;
+        public InstallerItem[] getComponents() {
+            return components;
         }
     }
 
@@ -309,7 +286,7 @@ public class InstallerItem extends Control {
             nameLabel.getStyleClass().add("installer-item-name");
             nameLabel.setMouseTransparent(true);
             pane.getChildren().add(nameLabel);
-            nameLabel.textProperty().set(I18n.hasKey("install.installer." + control.id) ? i18n("install.installer." + control.id) : control.id);
+            nameLabel.textProperty().set(I18n.hasKey("install.installer." + control.type.getPatchId()) ? i18n("install.installer." + control.type.getPatchId()) : control.type.getPatchId());
             HBox.setMargin(nameLabel, new Insets(0, 4, 0, 4));
 
             Label statusLabel = new Label();
@@ -355,7 +332,7 @@ public class InstallerItem extends Control {
             pane.getChildren().add(buttonsContainer);
 
             JFXButton removeButton = FXUtils.newToggleButton4(SVG.CLOSE);
-            if (control.id.equals(MINECRAFT.getPatchId())) {
+            if (control.type == GameComponentType.GAME) {
                 removeButton.setVisible(false);
             } else {
                 removeButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> {
