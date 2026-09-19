@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,64 +18,32 @@
 package org.jackhuang.hmcl.download.fabric;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.ComponentVersionList;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.gson.JsonSerializable;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.download.fabriclike.FabricLikeVersionList;
 
-import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
-
-public final class FabricVersionList extends ComponentVersionList<FabricRemoteVersion> {
-    private final DownloadProvider downloadProvider;
-
+public final class FabricVersionList extends FabricLikeVersionList<FabricRemoteVersion> {
     public FabricVersionList(DownloadProvider downloadProvider) {
-        this.downloadProvider = downloadProvider;
+        super(downloadProvider);
     }
 
     @Override
-    public boolean hasType() {
-        return false;
+    protected String getLoaderMetaURL() {
+        return "https://meta.fabricmc.net/v2/versions/loader";
     }
 
     @Override
-    public Task<?> refreshAsync() {
-        return Task.runAsync(() -> {
-            List<String> gameVersions = getGameVersions(GAME_META_URL);
-            List<String> loaderVersions = getGameVersions(LOADER_META_URL);
-
-            lock.writeLock().lock();
-
-            try {
-                for (String gameVersion : gameVersions)
-                    for (String loaderVersion : loaderVersions)
-                        versions.put(gameVersion, new FabricRemoteVersion(gameVersion, loaderVersion,
-                                Collections.singletonList(getLaunchMetaUrl(gameVersion, loaderVersion))));
-            } finally {
-                lock.writeLock().unlock();
-            }
-        });
+    protected String getGameMetaURL() {
+        return "https://meta.fabricmc.net/v2/versions/game";
     }
 
-    private static final String LOADER_META_URL = "https://meta.fabricmc.net/v2/versions/loader";
-    private static final String GAME_META_URL = "https://meta.fabricmc.net/v2/versions/game";
-
-    private List<String> getGameVersions(String metaUrl) throws IOException {
-        String json = NetworkUtils.doGet(downloadProvider.injectURLWithCandidates(metaUrl));
-        return JsonUtils.GSON.fromJson(json, listTypeOf(GameVersion.class))
-                .stream().map(GameVersion::version).collect(Collectors.toList());
-    }
-
-    private static String getLaunchMetaUrl(String gameVersion, String loaderVersion) {
+    @Override
+    protected String getLaunchMetaUrl(String gameVersion, String loaderVersion) {
         return String.format("https://meta.fabricmc.net/v2/versions/loader/%s/%s", gameVersion, loaderVersion);
     }
 
-    @JsonSerializable
-    private record GameVersion(String version, String maven, boolean stable) {
+    @Override
+    protected FabricRemoteVersion createRemoteVersion(String gameVersion, String loaderVersion, List<String> urls) {
+        return new FabricRemoteVersion(gameVersion, loaderVersion, urls);
     }
 }

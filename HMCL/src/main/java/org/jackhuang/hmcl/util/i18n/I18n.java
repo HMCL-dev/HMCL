@@ -22,8 +22,8 @@ import org.jackhuang.hmcl.addon.AddonLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
-import org.jackhuang.hmcl.download.fabric.FabricAPIInstallTask;
-import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
+import org.jackhuang.hmcl.download.fabriclike.FabricLikeInstallTask;
+import org.jackhuang.hmcl.download.fabriclike.ModrinthComponentInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeOldInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
@@ -35,8 +35,6 @@ import org.jackhuang.hmcl.download.liteloader.LiteLoaderInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeOldInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
-import org.jackhuang.hmcl.download.quilt.QuiltAPIInstallTask;
-import org.jackhuang.hmcl.download.quilt.QuiltInstallTask;
 import org.jackhuang.hmcl.game.HMCLModpackInstallTask;
 import org.jackhuang.hmcl.java.JavaInstallTask;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
@@ -64,7 +62,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.time.temporal.TemporalAccessor;
-import java.util.*;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 public final class I18n {
 
@@ -201,14 +200,10 @@ public final class I18n {
             return i18n("install.installer.install", i18n("install.installer.liteloader"));
         } else if (task instanceof OptiFineInstallTask) {
             return i18n("install.installer.install", i18n("install.installer.optifine"));
-        } else if (task instanceof FabricInstallTask) {
-            return i18n("install.installer.install", i18n("install.installer.fabric"));
-        } else if (task instanceof FabricAPIInstallTask) {
-            return i18n("install.installer.install", i18n("install.installer.fabric-api"));
-        } else if (task instanceof QuiltInstallTask) {
-            return i18n("install.installer.install", i18n("install.installer.quilt"));
-        } else if (task instanceof QuiltAPIInstallTask) {
-            return i18n("install.installer.install", i18n("install.installer.quilt-api"));
+        } else if (task instanceof FabricLikeInstallTask) {
+            task.setName(i18n("install.installer.install", i18n("install.installer.fabric")));
+        } else if (task instanceof ModrinthComponentInstallTask modrinthComponentInstallTask) {
+            task.setName(i18n("install.installer.install", i18n("install.installer." + modrinthComponentInstallTask.getVersion().projectId())));
         } else if (task instanceof CurseCompletionTask || task instanceof ModrinthCompletionTask || task instanceof ServerModpackCompletionTask || task instanceof McbbsModpackCompletionTask) {
             return i18n("modpack.completion");
         } else if (task instanceof ModpackInstallTask) {

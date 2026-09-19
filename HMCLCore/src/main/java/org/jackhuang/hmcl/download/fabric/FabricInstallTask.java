@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,202 +17,18 @@
  */
 package org.jackhuang.hmcl.download.fabric;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.UnsupportedInstallationException;
-import org.jackhuang.hmcl.download.game.GameLibrariesTask;
-import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.task.GetTask;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.gson.JsonSerializable;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.download.fabriclike.FabricLikeInstallTask;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceManifest;
 
-import java.io.IOException;
-import java.util.*;
-
-import static org.jackhuang.hmcl.download.UnsupportedInstallationException.FABRIC_NOT_COMPATIBLE_WITH_FORGE;
-
-/**
- * <b>Note</b>: Fabric should be installed first.
- *
- * @author huangyuhui
- */
-public final class FabricInstallTask extends Task<GameInstancePatch> {
-
-    private final DefaultDependencyManager dependencyManager;
-    private final GameInstanceManifest manifest;
-    private final FabricRemoteVersion remote;
-    private final GetTask launchMetaTask;
-    private final List<Task<?>> dependencies = new ArrayList<>(1);
-
-    public FabricInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, FabricRemoteVersion remoteVersion) {
-        if (!manifest.isModifiable()) {
-            throw new IllegalArgumentException("Manifest is not modifiable");
-        }
-
-        this.dependencyManager = dependencyManager;
-        this.manifest = manifest;
-        this.remote = remoteVersion;
-
-        launchMetaTask = new GetTask(dependencyManager.getDownloadProvider().injectURLsWithCandidates(remoteVersion.getUrls()));
-        launchMetaTask.setCacheRepository(dependencyManager.getCacheRepository());
+public class FabricInstallTask extends FabricLikeInstallTask {
+    public FabricInstallTask(DefaultDependencyManager dependencyManager, GameInstanceManifest manifest, ComponentRemoteVersion remoteVersion) {
+        super(dependencyManager, manifest, remoteVersion);
     }
 
-    @Override
-    public boolean doPreExecute() {
-        return true;
-    }
-
-    @Override
-    public void preExecute() throws Exception {
-        if (!Objects.equals(GameComponentAnalyzer.VANILLA_MAIN, manifest.mainClass()))
-            throw new UnsupportedInstallationException(FABRIC_NOT_COMPATIBLE_WITH_FORGE);
-    }
-
-    @Override
-    public Collection<Task<?>> getDependents() {
-        return Collections.singleton(launchMetaTask);
-    }
-
-    @Override
-    public Collection<Task<?>> getDependencies() {
-        return dependencies;
-    }
-
-    @Override
-    public boolean isRelyingOnDependencies() {
-        return false;
-    }
-
-    @Override
-    public void execute() throws IOException {
-        FabricInfo fabricInfo = JsonUtils.GSON.fromJson(launchMetaTask.getResult(), FabricInfo.class);
-        if (fabricInfo == null)
-            throw new IOException("Fabric metadata is invalid");
-
-        setResult(getPatch(fabricInfo, remote.getGameVersion(), remote.getSelfVersion()));
-
-        dependencies.add(new GameLibrariesTask(dependencyManager, manifest, true, getResult().getLibraries()));
-    }
-
-    private GameInstancePatch getPatch(FabricInfo fabricInfo, String gameVersion, String loaderVersion) {
-        JsonObject launcherMeta = fabricInfo.launcherMeta;
-        Arguments arguments = new Arguments();
-
-        String mainClass;
-        if (!launcherMeta.get("mainClass").isJsonObject()) {
-            mainClass = launcherMeta.get("mainClass").getAsString();
-        } else {
-            mainClass = launcherMeta.get("mainClass").getAsJsonObject().get("client").getAsString();
-        }
-
-        if (launcherMeta.has("launchwrapper")) {
-            String clientTweaker = launcherMeta.get("launchwrapper").getAsJsonObject().get("tweakers").getAsJsonObject().get("client").getAsJsonArray().get(0).getAsString();
-            arguments = arguments.addGameArguments("--tweakClass", clientTweaker);
-        }
-
-        JsonObject librariesObject = launcherMeta.getAsJsonObject("libraries");
-        List<Library> libraries = new ArrayList<>();
-
-        // "common, server" is hard coded in fabric installer.
-        // Don't know the purpose of ignoring client libraries.
-        for (String side : new String[]{"common", "server"}) {
-            for (JsonElement element : librariesObject.getAsJsonArray(side)) {
-                libraries.add(JsonUtils.GSON.fromJson(element, Library.class));
-            }
-        }
-
-        libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.intermediary.maven), "https://maven.fabricmc.net/", null));
-        libraries.add(new Library(Artifact.fromDescriptor(fabricInfo.loader.maven), "https://maven.fabricmc.net/", null));
-
-        return new GameInstancePatch(GameComponentType.FABRIC.getPatchId(), loaderVersion, GameInstancePatch.PRIORITY_LOADER, arguments, mainClass, libraries);
-    }
-
-    @JsonSerializable
-    public static class FabricInfo {
-        private final LoaderInfo loader;
-        private final IntermediaryInfo intermediary;
-        private final JsonObject launcherMeta;
-
-        public FabricInfo(LoaderInfo loader, IntermediaryInfo intermediary, JsonObject launcherMeta) {
-            this.loader = loader;
-            this.intermediary = intermediary;
-            this.launcherMeta = launcherMeta;
-        }
-
-        public LoaderInfo getLoader() {
-            return loader;
-        }
-
-        public IntermediaryInfo getIntermediary() {
-            return intermediary;
-        }
-
-        public JsonObject getLauncherMeta() {
-            return launcherMeta;
-        }
-    }
-
-    @JsonSerializable
-    public static class LoaderInfo {
-        private final String separator;
-        private final int build;
-        private final String maven;
-        private final String version;
-        private final boolean stable;
-
-        public LoaderInfo(String separator, int build, String maven, String version, boolean stable) {
-            this.separator = separator;
-            this.build = build;
-            this.maven = maven;
-            this.version = version;
-            this.stable = stable;
-        }
-
-        public String getSeparator() {
-            return separator;
-        }
-
-        public int getBuild() {
-            return build;
-        }
-
-        public String getMaven() {
-            return maven;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public boolean isStable() {
-            return stable;
-        }
-    }
-
-    @JsonSerializable
-    public static class IntermediaryInfo {
-        private final String maven;
-        private final String version;
-        private final boolean stable;
-
-        public IntermediaryInfo(String maven, String version, boolean stable) {
-            this.maven = maven;
-            this.version = version;
-            this.stable = stable;
-        }
-
-        public String getMaven() {
-            return maven;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public boolean isStable() {
-            return stable;
-        }
+    protected GameComponentType getComponentType() {
+        return GameComponentType.FABRIC;
     }
 }
