@@ -15,30 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.modpack;
+package org.jackhuang.hmcl.schematic;
 
-import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Unmodifiable;
+import com.google.gson.annotations.SerializedName;
 
-import java.util.List;
-
-/// Format-specific modpack manifest metadata.
-@NotNullByDefault
-public interface ModpackManifest {
-
-    /// Returns the provider that understands this manifest.
-    ///
-    /// @return the modpack provider
-    ModpackProvider getProvider();
-
-    /// Marker for manifests that expose optional file entries.
-    @NotNullByDefault
-    interface SupportOptional {
-
-        /// Returns all files declared by this manifest, including required and optional ones.
-        ///
-        /// @return the modpack files
-        @Unmodifiable
-        List<? extends ModpackFile> getFiles();
+public record LitematicaConfig(@SerializedName("Generic") Generic generic) {
+    public record Generic(boolean customSchematicBaseDirectoryEnabled, String customSchematicBaseDirectory) {
     }
 }
