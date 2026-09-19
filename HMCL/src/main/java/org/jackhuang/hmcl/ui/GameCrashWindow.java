@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.Themes;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
@@ -481,6 +482,7 @@ public class GameCrashWindow extends Stage {
                 toolBar.getStyleClass().add("jfx-tool-bar");
 
                 JFXButton restartButton = FXUtils.newRaisedButton(i18n("game.crash.restart"));
+                launchingPane.addEventHandler(DialogCloseEvent.CLOSE, event -> restartButton.setDisable(false));
                 restartButton.setOnAction(e -> {
                     restartButton.setDisable(true);
                     DialogUtils.show(stackPane, launchingPane);
