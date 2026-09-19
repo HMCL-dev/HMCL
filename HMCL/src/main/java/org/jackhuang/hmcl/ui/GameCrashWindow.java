@@ -28,6 +28,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
@@ -61,6 +62,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -87,14 +89,24 @@ public class GameCrashWindow extends Stage {
 
     private final List<Log> logs;
 
-    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, HMCLGameInstance gameInstance, LaunchOptions launchOptions, List<Log> logs) {
-        Themes.applyNativeDarkMode(this);
+    /// The action invoked when the user clicks the restart button, relaunching the crashed game
+    /// with the original launch context. It receives this crash window, which hosts the launch
+    /// progress overlay and is closed by the launcher when the launch succeeds.
+    private final Consumer<GameCrashWindow> restartAction;
 
+    /// The launch progress pane shown as an overlay in this window while the restarted game is
+    /// launching.
+    private final Region launchingPane;
+
+    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, HMCLGameInstance gameInstance, LaunchOptions launchOptions, List<Log> logs, Region launchingPane, Consumer<GameCrashWindow> restartAction) {
+        Themes.applyNativeDarkMode(this);
         this.managedProcess = managedProcess;
         this.exitType = exitType;
         this.gameInstance = gameInstance;
         this.launchOptions = launchOptions;
         this.logs = logs;
+        this.launchingPane = Objects.requireNonNull(launchingPane);
+        this.restartAction = Objects.requireNonNull(restartAction);
 
         memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " " + i18n("settings.memory.unit.mib")).orElse("-");
 
@@ -467,7 +479,15 @@ public class GameCrashWindow extends Stage {
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);
                 toolBar.getStyleClass().add("jfx-tool-bar");
-                toolBar.getChildren().setAll(exportButtonPane, logButton, helpButton);
+
+                JFXButton restartButton = FXUtils.newRaisedButton(i18n("game.crash.restart"));
+                restartButton.setOnAction(e -> {
+                    restartButton.setDisable(true);
+                    DialogUtils.show(stackPane, launchingPane);
+                    restartAction.accept(GameCrashWindow.this);
+                });
+
+                toolBar.getChildren().setAll(exportButtonPane, restartButton, logButton, helpButton);
             }
 
             getChildren().setAll(titlePane, infoPane, moddedPane, gameDirPane, toolBar);
