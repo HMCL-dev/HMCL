@@ -113,6 +113,10 @@ public class SkinCanvas extends Group {
         return skin;
     }
 
+    public Scale getScale() {
+        return scale;
+    }
+
     public void updateSkin(Image skin, boolean isSlim, final @Nullable Image cape) {
         if (SkinHelper.isNoRequest(skin) && SkinHelper.isSkin(skin)) {
             this.srcSkin = skin;
