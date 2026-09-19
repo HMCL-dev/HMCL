@@ -488,7 +488,7 @@
     -fx-padding: 0;
 }
 
-.launch-pane > .jfx-button, .jfx-button * {
+.launch-pane > .launch-button .label {
     -fx-text-fill: -monet-on-primary-container;
     -fx-font-size: 14px;
 }
@@ -730,6 +730,10 @@
     -fx-text-fill: BLACK;
 }
 
+.jfx-tool-bar Text {
+
+}
+
 .jfx-tool-bar .jfx-options-burger {
     -fx-padding: 22px;
 }
@@ -762,6 +766,7 @@
 
 .jfx-tool-bar-button {
     -fx-text-fill: -monet-on-surface;
+    -fx-font-size: 14px;
     -fx-toggle-icon4-size: 37px;
     -fx-pref-height: -fx-toggle-icon4-size;
     -fx-max-height: -fx-toggle-icon4-size;
@@ -775,6 +780,11 @@
 .jfx-tool-bar-button .icon {
     -fx-fill: rgb(204.0, 204.0, 51.0);
     -fx-padding: 10.0;
+}
+
+.jfx-tool-bar-tip Text {
+    -fx-font-size: 13;
+    -fx-fill: -monet-on-surface;
 }
 
 .jfx-decorator-button {
@@ -1107,6 +1117,10 @@
 .md-list-cell {
     -fx-border-color: -monet-outline-variant;
     -fx-border-width: 0 0 1 0;
+}
+
+.md-list-cell:last {
+    -fx-border-width: 0;
 }
 
 .md-list-cell:selected {
@@ -1956,7 +1970,7 @@
 }
 
 .line-select-button .menu-container:selected .subtitle-label {
-    -fx-text-fill: -monet-primary-container;
+    -fx-text-fill: -monet-primary-transparent-80;
 }
 
 .line-toggle-button .jfx-toggle-button {

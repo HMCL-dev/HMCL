@@ -34,7 +34,7 @@ HMCL 是一款开源、跨平台的 Minecraft 启动器，支持模组管理、�
 
 HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS、FreeBSD 等常见的操作系统，同时也支持 x86、ARM、RISC-V、MIPS、LoongArch 等不同的 CPU 架构。你可以使用 HMCL 在不同平台上轻松地游玩 Minecraft。
 
-如果你想要了解 HMCL 对不同平台的支持程度，请参见 [此表格](PLATFORM_zh.md)。
+如果你想要了解 HMCL 对不同平台的支持程度，请参见 [此表格](PLATFORM_zh_Hans.md)。
 
 ## 下载
 
@@ -53,10 +53,10 @@ HMCL 是一个社区驱动的开源项目，欢迎任何人参与贡献代码或
 - 通过在 GitHub 上[创建 Issue](https://github.com/HMCL-dev/HMCL/issues/new/choose) 来报告 Bug 或提出功能请求。
 - 通过在 GitHub 上 Fork 仓库并[提交 Pull Request](https://github.com/HMCL-dev/HMCL/compare) 来贡献代码。
 
-在参与贡献前，请阅读[贡献指南](./Contributing_zh.md)，其中包含以下内容：
+在参与贡献前，请阅读[贡献指南](./Contributing_zh_Hans.md)，其中包含以下内容：
 
-- [如何从源码构建并运行 HMCL](./Contributing_zh.md#构建-hmcl)
-- [通过调试选项调整 HMCL 的行为](./Contributing_zh.md#调试选项)
+- [如何从源码构建并运行 HMCL](./Contributing_zh_Hans.md#构建-hmcl)
+- [通过调试选项调整 HMCL 的行为](./Contributing_zh_Hans.md#调试选项)
 
 ## 贡献者
 

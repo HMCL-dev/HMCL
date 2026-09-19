@@ -138,6 +138,14 @@ public record Library(
         this(artifact, url, downloads, null, null, null, null, null, null);
     }
 
+    public Library(String group, String name, String version) {
+        this(group, name, version, null);
+    }
+
+    public Library(String group, String name, String version, @Nullable String classifier) {
+        this(new Artifact(group, name, version, classifier));
+    }
+
     public String groupId() {
         return artifact.getGroup();
     }
@@ -195,12 +203,9 @@ public record Library(
             return true;
         }
 
-        if (downloads != null && downloads.classifiers() != null
-                && downloads.classifiers().keySet().stream().anyMatch(s -> s.startsWith("native"))) {
-            return true;
-        }
-
-        return this.artifact().getClassifier() != null && this.artifact().getClassifier().startsWith("natives-");
+        return downloads != null
+                && downloads.classifiers() != null
+                && downloads.classifiers().keySet().stream().anyMatch(s -> s.startsWith("native"));
     }
 
     public @Nullable LibraryDownloadInfo getRawDownloadInfo() {
