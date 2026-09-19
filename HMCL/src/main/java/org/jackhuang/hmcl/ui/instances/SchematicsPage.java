@@ -102,14 +102,14 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
         }
     });
 
-    private static String translateAuthorName(String author) {
+    public static String translateAuthorName(String author) {
         if (I18n.isUseChinese() && "hsds".equals(author)) {
             return "黑山大叔";
         }
         return author;
     }
 
-    private static String translateType(SchematicType type) {
+    public static String translateType(SchematicType type) {
         return switch (type) {
             case SCHEM -> i18n("schematics.info.type.schem");
             case NBT_STRUCTURE -> i18n("schematics.info.type.nbt_structure");
@@ -738,6 +738,18 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                 this.right = new HBox(8);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
+                JFXButton btnExplore = FXUtils.newToggleButton4(SVG.EXPLORE); // Change the icon if allows editing
+                btnExplore.setOnAction(event -> {
+                    Item item = getItem();
+                    if (item instanceof SchematicItem) {
+                        try {
+                            Controllers.navigate(new NBTEditorPage(item.getPath()));
+                        } catch (IOException ignored) { // Should be impossible
+                        }
+                    }
+                });
+                btnExplore.visibleProperty().bind(isFileProperty);
+
                 JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 {
                     var fo = SVG.FOLDER_OPEN.createIcon();
@@ -752,18 +764,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                     Item item = getItem();
                     if (item != null) item.onReveal();
                 });
-
-                JFXButton btnExplore = FXUtils.newToggleButton4(SVG.EXPLORE); // Change the icon if allows editing
-                btnExplore.setOnAction(event -> {
-                    Item item = getItem();
-                    if (item instanceof SchematicItem) {
-                        try {
-                            Controllers.navigate(new NBTEditorPage(item.getPath()));
-                        } catch (IOException ignored) { // Should be impossible
-                        }
-                    }
-                });
-                btnExplore.visibleProperty().bind(isFileProperty);
 
                 JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
                 btnDelete.setOnAction(event -> {

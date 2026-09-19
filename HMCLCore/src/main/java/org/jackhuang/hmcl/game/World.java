@@ -179,6 +179,14 @@ public final class World {
         return null;
     }
 
+    public int getDataVersion() {
+        if (levelData.get("Data") instanceof CompoundTag data &&
+                data.get("DataVersion") instanceof IntTag dataVersionTag) {
+            return dataVersionTag.get();
+        }
+        return -1;
+    }
+
     public @Nullable Long getSeed() {
         // Valid after 1.16(20w20a)
         if (normalizedWorldGenSettingsData != null
