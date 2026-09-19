@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -704,7 +705,8 @@ public final class DefaultGameInstanceTest {
                     DefaultDependencyManager dependencyManager,
                     Path zipFile,
                     GameInstanceID instanceId,
-                    String iconUrl) {
+                    String iconUrl,
+                    @Nullable Set<String> excludedFiles) {
                 throw new UnsupportedOperationException();
             }
         };
