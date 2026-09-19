@@ -106,6 +106,8 @@ public final class CrashWindow extends Stage {
         FXUtils.setIcon(this);
         setTitle(i18n("message.error"));
 
+        FXUtils.addMacOSCloseWindowHandler(this, null);
+
         setOnCloseRequest(e -> Platform.exit());
     }
 

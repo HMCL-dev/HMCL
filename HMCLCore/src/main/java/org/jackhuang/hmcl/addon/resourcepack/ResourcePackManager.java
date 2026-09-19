@@ -522,18 +522,18 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     }
 
     public ResourcePackFile.Compatibility getCompatibility(@NotNull ResourcePackFile resourcePack) {
-        if (resourcePack.getMeta() == null || resourcePack.getMeta().pack() == null)
+        if (resourcePack.getPackInfo() == null)
             return ResourcePackFile.Compatibility.MISSING_PACK_META;
         if (this.getRequiredVersion().isUnspecified())
             return ResourcePackFile.Compatibility.MISSING_GAME_META;
         int requiredMajor = getRequiredVersion().majorVersion();
         VersionRange<PackMcMeta.PackVersion> versionRange;
         if (requiredMajor > 64)
-            versionRange = getResourcePackVersionRangeNew(resourcePack.getMeta().pack());
+            versionRange = getResourcePackVersionRangeNew(resourcePack.getPackInfo());
         else if (requiredMajor > 15)
-            versionRange = getResourcePackVersionRangeOld(resourcePack.getMeta().pack());
+            versionRange = getResourcePackVersionRangeOld(resourcePack.getPackInfo());
         else
-            versionRange = getResourcePackVersionRangeOldest(resourcePack.getMeta().pack());
+            versionRange = getResourcePackVersionRangeOldest(resourcePack.getPackInfo());
         if (versionRange.isEmpty())
             return ResourcePackFile.Compatibility.INVALID;
         if (versionRange.getMaximum().compareTo(this.getRequiredVersion()) < 0)
