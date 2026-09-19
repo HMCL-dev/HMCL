@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
@@ -38,10 +39,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
@@ -49,10 +47,7 @@ import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
-import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.directory.GameDirectoryListItem;
@@ -84,6 +79,16 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         gameDirectoryListItems = MappedObservableList.create(GameDirectoryManager.getGameDirectories(), gameDirectory -> {
             GameDirectoryListItem item = new GameDirectoryListItem(gameDirectory);
             FXUtils.setLimitWidth(item, 200);
+            FXUtils.onSecondaryButtonClicked(item, () -> {
+                PopupMenu menu = new PopupMenu();
+                JFXPopup popup = new JFXPopup(menu);
+                menu.getContent().add(new IconedMenuItem(
+                        SVG.EDIT,
+                        i18n("button.edit"),
+                        () -> Controllers.navigate(new GameDirectoryPage(gameDirectory)),
+                        popup));
+                popup.show(item, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, item.getWidth(), 0);
+            });
             return item;
         });
 

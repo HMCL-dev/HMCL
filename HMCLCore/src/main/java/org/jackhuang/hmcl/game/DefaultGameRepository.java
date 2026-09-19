@@ -24,7 +24,6 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -523,57 +522,6 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @return the task that saves and publishes the manifest
     public Task<GameInstanceManifest> saveAsync(GameInstanceManifest instanceManifest) {
         return Task.supplyAsync(() -> save(instanceManifest));
-    }
-
-    /// Creates a task that updates one registered instance inside an exclusive draft.
-    ///
-    /// The updater receives the instance from the immutable published snapshot and must return a
-    /// working manifest with the same id. Its result is staged and committed exactly once. Failure
-    /// or cancellation aborts the draft; shared cache files written by the updater are retained.
-    ///
-    /// @param <E>        the checked exception type thrown while creating the update task
-    /// @param instanceId the instance to update
-    /// @param updater    the asynchronous manifest update
-    /// @return the task that commits the updated manifest
-    public <E extends Exception> Task<Void> updateInstanceAsync(
-            GameInstanceID instanceId,
-            ExceptionalFunction<GameInstance, Task<GameInstanceManifest>, E> updater) {
-        return Task.composeAsync(() -> {
-            DefaultGameRepositoryDraft draft = openDraft();
-            try {
-                return Objects.requireNonNull(
-                                updater.apply(draft.getBaseSnapshot().getInstance(instanceId)),
-                                "Instance updater returned null")
-                        .thenApplyAsync(manifest -> {
-                            if (!instanceId.equals(manifest.id())) {
-                                throw new IllegalArgumentException(
-                                        "Instance updater changed id from " + instanceId + " to " + manifest.id());
-                            }
-                            draft.put(manifest);
-                            draft.commit();
-                            return manifest;
-                        }).whenComplete(exception -> {
-                            if (draft.isOpen()) {
-                                draft.abort();
-                            }
-                        });
-            } catch (Throwable exception) {
-                abortDraftAfterFailure(draft, exception);
-                throw exception;
-            }
-        });
-    }
-
-    /// Aborts a draft after task construction fails and preserves any cleanup failure.
-    ///
-    /// @param draft   the draft to abort
-    /// @param failure the failure that prevented task construction
-    private static void abortDraftAfterFailure(DefaultGameRepositoryDraft draft, Throwable failure) {
-        try {
-            draft.abort();
-        } catch (Exception cleanupFailure) {
-            failure.addSuppressed(cleanupFailure);
-        }
     }
 
     /// Creates an empty unsealed snapshot for the given layout.

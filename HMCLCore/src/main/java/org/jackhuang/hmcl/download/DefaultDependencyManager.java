@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeInstallTask;
 import org.jackhuang.hmcl.download.optifine.OptiFineInstallTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -36,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 
 /// Provides downloads and game-component installation for one game repository.
@@ -161,6 +163,69 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
         } catch (IOException cleanupFailure) {
             failure.addSuppressed(cleanupFailure);
         }
+    }
+
+    /// Creates a task that updates an instance's manifest and its own client JAR in one draft.
+    ///
+    /// The updater receives the published instance and must return a manifest with the same id.
+    /// If the updated manifest uses this instance's own JAR, that JAR is replaced when the resolved
+    /// client download changes or the previous manifest used another instance's JAR. Downloads are
+    /// compared by SHA-1 when either declares a checksum, otherwise by URL and size. Matching
+    /// checksums identify the same client even when the URLs differ. Referenced JARs are not modified.
+    ///
+    /// A replacement is obtained through this manager's download provider and cache before the
+    /// manifest and JAR are committed together. A task failure aborts the draft and retains the
+    /// previously published instance files. Shared cache files written by the tasks are retained.
+    ///
+    /// @param <E>        the checked exception type thrown while creating the update task
+    /// @param instanceId the instance to update
+    /// @param updater    the asynchronous manifest update
+    /// @return the task that commits the updated instance
+    public <E extends Exception> Task<Void> updateInstanceAsync(
+            GameInstanceID instanceId,
+            ExceptionalFunction<GameInstance, Task<GameInstanceManifest>, E> updater) {
+        return Task.composeAsync(() -> {
+            DefaultGameRepositoryDraft draft = repository.openDraft();
+            try {
+                GameInstance instance = draft.getBaseSnapshot().getInstance(instanceId);
+                return Objects.requireNonNull(updater.apply(instance), "Instance updater returned null")
+                        .thenComposeAsync(manifest -> {
+                            if (!instanceId.equals(manifest.id())) {
+                                throw new IllegalArgumentException(
+                                        "Instance updater changed id from " + instanceId + " to " + manifest.id());
+                            }
+                            GameInstanceManifest previous = instance.getResolvedManifest();
+                            GameInstanceManifest resolved = draft.getBaseSnapshot().resolve(manifest);
+                            draft.put(manifest);
+                            if (instanceId.equals(resolved.jar())
+                                    && (!instanceId.equals(previous.jar())
+                                    || !isSameClientDownload(previous.getDownloadInfo(), resolved.getDownloadInfo()))) {
+                                return new GameDownloadTask(this, resolved).thenAcceptAsync(
+                                        jar -> draft.putPrimaryJar(instanceId, jar));
+                            }
+                            return null;
+                        }).thenRunAsync(() -> {
+                            draft.commit();
+                        }).whenComplete(exception -> {
+                            if (draft.isOpen()) {
+                                draft.abort();
+                            }
+                        });
+            } catch (Throwable exception) {
+                abortDraftAfterFailure(draft, exception);
+                throw exception;
+            }
+        });
+    }
+
+    /// Compares client identity by checksum, falling back to URL and size when neither has one.
+    private static boolean isSameClientDownload(DownloadInfo previous, DownloadInfo updated) {
+        @Nullable String previousSha1 = previous.getSha1();
+        @Nullable String updatedSha1 = updated.getSha1();
+        if (previousSha1 != null || updatedSha1 != null) {
+            return previousSha1 != null && previousSha1.equalsIgnoreCase(updatedSha1);
+        }
+        return previous.getUrl().equals(updated.getUrl()) && previous.getSize() == updated.getSize();
     }
 
     @Override
