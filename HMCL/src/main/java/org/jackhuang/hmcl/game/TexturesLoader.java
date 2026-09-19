@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -186,6 +187,39 @@ public final class TexturesLoader {
                 }, uuidFallback);
     }
 
+    /// Loads the cached skin texture of an account from the local texture cache.
+    ///
+    /// The skin URL stored in the account private data locates the texture file downloaded on an earlier launch, so
+    /// that the avatar can be displayed immediately without waiting for the profile to be fetched from the network.
+    ///
+    /// @param account the account whose cached skin should be loaded
+    /// @param fallback the texture to return when no skin is cached or the cached texture is unavailable
+    /// @return the cached skin texture, or `fallback` if it is unavailable
+    private static LoadedTexture getCachedSkinTexture(Account account, LoadedTexture fallback) {
+        @Nullable String url = account.getCachedSkinUrl();
+        if (StringUtils.isBlank(url)) {
+            return fallback;
+        }
+
+        Path file = getTexturePath(new Texture(url, null));
+        if (!Files.isRegularFile(file)) {
+            return fallback;
+        }
+
+        try (InputStream in = Files.newInputStream(file)) {
+            Image img = new Image(in);
+            if (img.isError())
+                throw img.getException();
+
+            @Nullable String model = account.getCachedSkinModel();
+            Map<String, String> metadata = model == null ? emptyMap() : singletonMap("model", model);
+            return new LoadedTexture(img, metadata);
+        } catch (Throwable e) {
+            LOG.warning("Failed to load cached skin texture " + url, e);
+            return fallback;
+        }
+    }
+
     public static ObservableValue<LoadedTexture> skinBinding(Account account) {
         LoadedTexture uuidFallback = getDefaultSkin(account.getProfileID());
         if (account instanceof OfflineAccount) {
@@ -229,16 +263,25 @@ public final class TexturesLoader {
                             if (texture != null && StringUtils.isNotBlank(texture.url())) {
                                 return CompletableFuture.supplyAsync(() -> {
                                     try {
-                                        return loadTexture(texture);
+                                        LoadedTexture loadedTexture = loadTexture(texture);
+                                        @Nullable Map<String, String> metadata = texture.metadata();
+                                        account.setCachedSkin(texture.url(), metadata == null ? null : metadata.get("model"));
+                                        return loadedTexture;
                                     } catch (Throwable e) {
                                         LOG.warning("Failed to load texture " + texture.url() + ", using fallback texture", e);
                                         return uuidFallback;
                                     }
                                 }, POOL);
                             }
+
+                            // A present profile without a skin texture confirms that the account has no skin, so the
+                            // stale cache, if any, is cleared. An empty `textures`, in contrast, may just mean that
+                            // the profile has not been fetched yet.
+                            account.setCachedSkin(null, null);
                         }
 
-                        return CompletableFuture.completedFuture(uuidFallback);
+                        // Until the profile arrives, keep displaying the skin cached on an earlier launch, if any.
+                        return CompletableFuture.completedFuture(getCachedSkinTexture(account, uuidFallback));
                     }, uuidFallback);
         }
     }
