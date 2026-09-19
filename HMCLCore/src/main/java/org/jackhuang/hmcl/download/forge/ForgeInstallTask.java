@@ -17,30 +17,25 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
-import org.jackhuang.hmcl.download.*;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.UnsupportedInstallationException;
+import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.game.GameComponentAnalyzer;
-import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 
-import static org.jackhuang.hmcl.download.UnsupportedInstallationException.CLEANROOM_NOT_COMPATIBLE_WITH_FORGE;
 import static org.jackhuang.hmcl.download.UnsupportedInstallationException.UNSUPPORTED_LAUNCH_WRAPPER;
-import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
-import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
+import static org.jackhuang.hmcl.download.forge.ForgeInstallation.detectForgeInstallerType;
 
 /**
  *
@@ -75,9 +70,7 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
     public void preExecute() throws Exception {
         installer = Files.createTempFile("forge-installer", ".jar");
 
-        dependent = new FileDownloadTask(
-                dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()),
-                installer, null);
+        dependent = new FileDownloadTask(dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()), installer, null);
         dependent.setCacheRepository(dependencyManager.getCacheRepository());
         dependent.setCaching(true);
         dependent.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
@@ -107,114 +100,22 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
     @Override
     public void execute() throws IOException, VersionMismatchException, UnsupportedInstallationException {
         String originalMainClass = manifest.mainClass();
+
         if (GameVersionNumber.compare("1.13", remote.getGameVersion()) <= 0) {
             // Forge 1.13 is not compatible with fabric.
             if (!GameComponentAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
                 throw new UnsupportedInstallationException(UNSUPPORTED_LAUNCH_WRAPPER);
         }
 
-        if (detectForgeInstallerType(remote.getGameVersion(), installer)) {
-            dependency = new GameDownloadTask(dependencyManager, manifest)
-                    .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
-                            dependencyManager,
-                            manifest,
-                            minecraftJar,
-                            remote.getSelfVersion(),
-                            installer));
-        } else {
-            dependency = new ForgeOldInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer);
-        }
-    }
+        var type = detectForgeInstallerType(remote.getGameVersion(), installer);
 
-    /// Returns whether a Forge installer uses the processor-based format.
-    ///
-    /// @param gameVersion Minecraft version expected by the installation
-    /// @param installer   the Forge installer JAR
-    /// @return `true` for the processor-based format, or `false` for the legacy format
-    /// @throws IOException              if the installer profile is missing, malformed, or
-    ///                                  unsupported
-    /// @throws VersionMismatchException if the installer targets another Minecraft version
-    public static boolean detectForgeInstallerType(String gameVersion, Path installer) throws IOException, VersionMismatchException {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            String installProfileText = Files.readString(fs.getPath("install_profile.json"));
-            Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
-            if (installProfile.containsKey("spec")) {
-                ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
-                if (!gameVersion.equals(profile.getMinecraft()))
-                    throw new VersionMismatchException(profile.getMinecraft(), gameVersion);
-                return true;
-            } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
-                ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
-                if (!gameVersion.equals(profile.install().getMinecraft()))
-                    throw new VersionMismatchException(profile.install().getMinecraft(), gameVersion);
-                return false;
-            } else {
-                throw new IOException();
-            }
+        switch (type) {
+            case LEGACY_MODLOADER, LEGACY_FML ->
+                dependency = new ForgeLegacyInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer, type);
+            case OLD ->
+                dependency = new ForgeOldInstallTask(dependencyManager, manifest, remote.getSelfVersion(), installer);
+            case NEW ->
+                dependency = new GameDownloadTask(dependencyManager, manifest).thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(dependencyManager, manifest, minecraftJar, remote.getSelfVersion(), installer));
         }
-    }
-
-    /// Creates a task that installs Forge from a local installer JAR.
-    ///
-    /// Processor-based installers obtain a verified vanilla client JAR from shared cache storage;
-    /// neither format reads an instance JAR.
-    ///
-    /// @param dependencyManager repository-scoped download services
-    /// @param manifest          working manifest receiving the Forge patch
-    /// @param gameVersion       Minecraft version expected by the installation
-    /// @param installer         the Forge installer JAR
-    /// @return the task producing the Forge patch
-    /// @throws IOException              if the installer profile is missing, malformed, or
-    ///                                  unsupported
-    /// @throws VersionMismatchException if the installer targets another Minecraft version
-    /// @throws UnsupportedInstallationException if the manifest already contains Cleanroom
-    public static Task<GameInstancePatch> install(
-            DefaultDependencyManager dependencyManager,
-            GameInstanceManifest manifest,
-            String gameVersion,
-            Path installer) throws IOException, VersionMismatchException, UnsupportedInstallationException {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            String installProfileText = Files.readString(fs.getPath("install_profile.json"));
-            Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
-            if (installProfile.containsKey("spec")) {
-                checkCleanroomCompatibility(manifest, gameVersion);
-                ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
-                if (!gameVersion.equals(profile.getMinecraft()))
-                    throw new VersionMismatchException(profile.getMinecraft(), gameVersion);
-                return new GameDownloadTask(dependencyManager, manifest)
-                        .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
-                                dependencyManager,
-                                manifest,
-                                minecraftJar,
-                                modifyVersion(gameVersion, profile.getVersion()),
-                                installer));
-            } else if (installProfile.containsKey("install") && installProfile.containsKey("versionInfo")) {
-                checkCleanroomCompatibility(manifest, gameVersion);
-                ForgeInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeInstallProfile.class);
-                if (!gameVersion.equals(profile.install().getMinecraft()))
-                    throw new VersionMismatchException(profile.install().getMinecraft(), gameVersion);
-                return new ForgeOldInstallTask(dependencyManager, manifest, modifyVersion(gameVersion, profile.install().getPath().getVersion().replaceAll("(?i)forge", "")), installer);
-            } else {
-                throw new IOException();
-            }
-        }
-    }
-
-    /// Rejects Forge installation when the manifest already contains Cleanroom.
-    ///
-    /// @param manifest          working manifest receiving the Forge patch
-    /// @param gameVersion       Minecraft version used for component analysis
-    /// @throws UnsupportedInstallationException if the manifest already contains Cleanroom
-    private static void checkCleanroomCompatibility(
-            GameInstanceManifest manifest,
-            String gameVersion) throws UnsupportedInstallationException {
-        GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, GameVersionNumber.asGameVersion(gameVersion));
-        if (analyzer.has(GameComponentType.CLEANROOM)) {
-            throw new UnsupportedInstallationException(CLEANROOM_NOT_COMPATIBLE_WITH_FORGE);
-        }
-    }
-
-    private static String modifyVersion(String gameVersion, String version) {
-        return removePrefix(removeSuffix(removePrefix(removeSuffix(removePrefix(version.replace(gameVersion, "").trim(), "-"), "-"), "_"), "_"), "forge-");
     }
 }

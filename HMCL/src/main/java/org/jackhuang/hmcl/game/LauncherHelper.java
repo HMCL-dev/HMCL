@@ -215,7 +215,7 @@ public final class LauncherHelper {
                             })
                     );
                 }).withStage("launch.state.dependencies")
-                .thenComposeAsync(() -> new GameVerificationFixTask(gameInstance, gameInstance.getVersion(), launchManifest.get()))
+                .thenComposeAsync(() -> new GameVerificationFixTask(gameInstance, gameInstance.getVersion()))
                 .thenComposeAsync(() -> {
                     if (setting.getInheritable(GameSettings::allowAutoAgentProperty)
                             || setting.getInheritable(GameSettings::noJVMOptionsProperty)

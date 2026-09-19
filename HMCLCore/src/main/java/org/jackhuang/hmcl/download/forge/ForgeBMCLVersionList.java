@@ -23,15 +23,16 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
+import static org.jackhuang.hmcl.download.forge.ForgeInstallation.fromLookupVersion;
+import static org.jackhuang.hmcl.download.forge.ForgeInstallation.toLookupVersion;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
@@ -57,14 +58,6 @@ public final class ForgeBMCLVersionList extends ComponentVersionList<ForgeRemote
         throw new UnsupportedOperationException("ForgeBMCLVersionList does not support loading the entire Forge remote version list.");
     }
 
-    private static String toLookupVersion(String gameVersion) {
-        return "1.7.10-pre4".equals(gameVersion) ? "1.7.10_pre4" : gameVersion;
-    }
-
-    private static String fromLookupVersion(String lookupVersion) {
-        return "1.7.10_pre4".equals(lookupVersion) ? "1.7.10-pre4" : lookupVersion;
-    }
-
     private static String toLookupBranch(String gameVersion, String branch) {
         if ("1.7.10-pre4".equals(gameVersion)) {
             return "prerelease";
@@ -86,21 +79,21 @@ public final class ForgeBMCLVersionList extends ComponentVersionList<ForgeRemote
                             if (version == null)
                                 continue;
                             List<String> urls = new ArrayList<>();
-                            for (ForgeVersion.File file : version.getFiles())
-                                if ("installer".equals(file.getCategory()) && "jar".equals(file.getFormat())) {
-                                    String branch = toLookupBranch(gameVersion, version.getBranch());
+                            for (ForgeVersion.File file : version.files())
+                                if (("installer".equals(file.category()) && "jar".equals(file.format())) || (("client".equals(file.category()) || "universal".equals(file.category())) && "zip".equals(file.format()))) {
+                                    String branch = toLookupBranch(gameVersion, version.branch());
 
-                                    String classifier = lookupVersion + "-" + version.getVersion() + (branch.isEmpty() ? "" : '-' + branch);
-                                    String fileName1 = "forge-" + classifier + "-" + file.getCategory() + "." + file.getFormat();
-                                    String fileName2 = "forge-" + classifier + "-" + lookupVersion + "-" + file.getCategory() + "." + file.getFormat();
+                                    String classifier = lookupVersion + "-" + version.version() + (branch.isEmpty() ? "" : '-' + branch);
+                                    String fileName1 = "forge-" + classifier + "-" + file.category() + "." + file.format();
+                                    String fileName2 = "forge-" + classifier + "-" + lookupVersion + "-" + file.category() + "." + file.format();
                                     urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "/" + fileName1);
                                     urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "-" + lookupVersion + "/" + fileName2);
                                     urls.add(NetworkUtils.withQuery("https://bmclapi2.bangbang93.com/forge/download", mapOf(
-                                            pair("mcversion", version.getGameVersion()),
-                                            pair("version", version.getVersion()),
+                                            pair("mcversion", version.mcversion()),
+                                            pair("version", version.version()),
                                             pair("branch", branch),
-                                            pair("category", file.getCategory()),
-                                            pair("format", file.getFormat())
+                                            pair("category", file.category()),
+                                            pair("format", file.format())
                                     )));
                                 }
 
@@ -108,16 +101,16 @@ public final class ForgeBMCLVersionList extends ComponentVersionList<ForgeRemote
                                 continue;
 
                             Instant releaseDate = null;
-                            if (version.getModified() != null) {
+                            if (version.modified() != null) {
                                 try {
-                                    releaseDate = Instant.parse(version.getModified());
+                                    releaseDate = Instant.parse(version.modified());
                                 } catch (DateTimeParseException e) {
-                                    LOG.warning("Failed to parse instant " + version.getModified(), e);
+                                    LOG.warning("Failed to parse instant " + version.modified(), e);
                                 }
                             }
 
                             versions.put(gameVersion, new ForgeRemoteVersion(
-                                    fromLookupVersion(version.getGameVersion()), version.getVersion(), releaseDate, urls));
+                                    fromLookupVersion(version.mcversion()), version.version(), releaseDate, urls));
                         }
                     } finally {
                         lock.writeLock().unlock();
@@ -132,14 +125,9 @@ public final class ForgeBMCLVersionList extends ComponentVersionList<ForgeRemote
     }
 
     @Immutable
-    public static final class ForgeVersion implements Validation {
-
-        private final String branch;
-        private final int build;
-        private final String mcversion;
-        private final String modified;
-        private final String version;
-        private final List<File> files;
+    @JsonSerializable
+    public record ForgeVersion(String branch, int build, String mcversion, String modified, String version,
+                               List<File> files) implements Validation {
 
         /**
          * No-arg constructor for Gson.
@@ -147,44 +135,6 @@ public final class ForgeBMCLVersionList extends ComponentVersionList<ForgeRemote
         @SuppressWarnings("unused")
         public ForgeVersion() {
             this(null, 0, "", null, "", Collections.emptyList());
-        }
-
-        public ForgeVersion(String branch, int build, String mcversion, String modified, String version, List<File> files) {
-            this.branch = branch;
-            this.build = build;
-            this.mcversion = mcversion;
-            this.modified = modified;
-            this.version = version;
-            this.files = files;
-        }
-
-        @Nullable
-        public String getBranch() {
-            return branch;
-        }
-
-        public int getBuild() {
-            return build;
-        }
-
-        @NotNull
-        public String getGameVersion() {
-            return mcversion;
-        }
-
-        @Nullable
-        public String getModified() {
-            return modified;
-        }
-
-        @NotNull
-        public String getVersion() {
-            return version;
-        }
-
-        @NotNull
-        public List<File> getFiles() {
-            return files;
         }
 
         @Override
@@ -198,31 +148,10 @@ public final class ForgeBMCLVersionList extends ComponentVersionList<ForgeRemote
         }
 
         @Immutable
-        public static final class File {
-            private final String format;
-            private final String category;
-            private final String hash;
-
+        @JsonSerializable
+        public record File(String format, String category, String hash) {
             public File() {
                 this("", "", "");
-            }
-
-            public File(String format, String category, String hash) {
-                this.format = format;
-                this.category = category;
-                this.hash = hash;
-            }
-
-            public String getFormat() {
-                return format;
-            }
-
-            public String getCategory() {
-                return category;
-            }
-
-            public String getHash() {
-                return hash;
             }
         }
     }

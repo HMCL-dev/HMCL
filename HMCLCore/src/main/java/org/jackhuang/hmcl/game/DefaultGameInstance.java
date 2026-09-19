@@ -168,7 +168,7 @@ public abstract class DefaultGameInstance implements GameInstance {
     @Override
     public GameComponentAnalyzer getAnalyzer() {
         if (analyzer == null) {
-            analyzer = GameComponentAnalyzer.analyze(manifest.isModifiable() ? manifest : getResolvedManifest(), getVersion());
+            analyzer = GameComponentAnalyzer.analyze(manifest.isModifiable() ? manifest : getResolvedManifest(), getVersion(), this.getInstanceJarFile());
         }
         return analyzer;
     }

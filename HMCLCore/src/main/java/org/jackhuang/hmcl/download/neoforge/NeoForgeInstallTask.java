@@ -19,7 +19,8 @@ package org.jackhuang.hmcl.download.neoforge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.VersionMismatchException;
-import org.jackhuang.hmcl.download.forge.*;
+import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile;
+import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
@@ -33,7 +34,9 @@ import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 import static org.jackhuang.hmcl.util.StringUtils.removePrefix;
 import static org.jackhuang.hmcl.util.StringUtils.removeSuffix;
@@ -124,14 +127,14 @@ public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
             Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
             if (GameComponentType.FORGE.getPatchId().equals(installProfile.get("profile")) && (Files.exists(fs.getPath("META-INF/NEOFORGE.RSA")) || installProfileText.contains("neoforge"))) {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
-                if (!gameVersion.equals(profile.getMinecraft()))
-                    throw new VersionMismatchException(profile.getMinecraft(), gameVersion);
+                if (!gameVersion.equals(profile.minecraft()))
+                    throw new VersionMismatchException(profile.minecraft(), gameVersion);
                 return new GameDownloadTask(dependencyManager, manifest)
                         .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
                                 dependencyManager,
                                 manifest,
                                 minecraftJar,
-                                modifyNeoForgeOldVersion(gameVersion, profile.getVersion()),
+                                modifyNeoForgeOldVersion(gameVersion, profile.version()),
                                 installer))
                         .thenApplyAsync(neoForgeVersion -> {
                     if (!neoForgeVersion.id().equals(GameComponentType.FORGE.getPatchId()) || neoForgeVersion.version() == null) {
@@ -144,14 +147,14 @@ public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
                 });
             } else if (GameComponentType.NEO_FORGE.getPatchId().equals(installProfile.get("profile")) || "NeoForge".equals(installProfile.get("profile"))) {
                 ForgeNewInstallProfile profile = JsonUtils.fromNonNullJson(installProfileText, ForgeNewInstallProfile.class);
-                if (!gameVersion.equals(profile.getMinecraft()))
-                    throw new VersionMismatchException(profile.getMinecraft(), gameVersion);
+                if (!gameVersion.equals(profile.minecraft()))
+                    throw new VersionMismatchException(profile.minecraft(), gameVersion);
                 return new GameDownloadTask(dependencyManager, manifest)
                         .thenComposeAsync(minecraftJar -> new NeoForgeOldInstallTask(
                                 dependencyManager,
                                 manifest,
                                 minecraftJar,
-                                modifyNeoForgeNewVersion(profile.getVersion()),
+                                modifyNeoForgeNewVersion(profile.version()),
                                 installer));
             } else {
                 throw new IOException();
