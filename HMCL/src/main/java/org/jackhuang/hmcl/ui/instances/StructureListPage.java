@@ -162,7 +162,7 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
         if (directory == null) return;
         String initial = object.getIdString();
         Controllers.prompt(
-                "rename",
+                i18n("world.structure.rename"),
                 (result, handler) -> {
                     Path file = object.structureFile.getFile();
                     try {
@@ -175,8 +175,8 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
                     }
                     },
                 initial,
-                new Validator(i18n("world.structure.invalid_id"), flattened ? Identifier::isValid : FileUtils::isNameValid),
-                new Validator(i18n("world.structure.already_exists"), id -> initial.equals(id) || !Files.exists(getPathFor(id)))
+                new Validator(i18n("world.structure.rename.invalid_id"), flattened ? Identifier::isValid : FileUtils::isNameValid),
+                new Validator(i18n("world.structure.rename.already_exists"), id -> initial.equals(id) || !Files.exists(getPathFor(id)))
         );
     }
 
