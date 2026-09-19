@@ -133,8 +133,7 @@ final class MainWindowPane extends StackPane {
         dialogOverlayPane.setVisible(false);
         decorator.capableDraggingWindow(dialogOverlayPane);
 
-        StackPane rightButtonsContainer = createWindowButtons();
-        rightButtonsContainer.getStyleClass().add("jfx-tool-bar");
+        HBox rightButtonsContainer = createWindowButtons();
         AnchorPane buttonsLayer = new AnchorPane(rightButtonsContainer);
         buttonsLayer.setPickOnBounds(false);
         AnchorPane.setTopAnchor(rightButtonsContainer, 0D);
@@ -177,7 +176,7 @@ final class MainWindowPane extends StackPane {
     /// Creates the help, minimize, and application-close buttons.
     ///
     /// @return a size-limited top-right button row
-    private StackPane createWindowButtons() {
+    private HBox createWindowButtons() {
         HBox buttons = new HBox();
         buttons.setAlignment(Pos.TOP_RIGHT);
         buttons.setMaxSize(Region.USE_PREF_SIZE, 40);
@@ -204,7 +203,8 @@ final class MainWindowPane extends StackPane {
         decorator.forbidDraggingWindow(closeButton);
 
         buttons.getChildren().setAll(helpButton, minimizeButton, closeButton);
-        return new StackPane(buttons);
+        buttons.getStyleClass().add("jfx-tool-bar");
+        return buttons;
     }
 
     /// Recomputes the title-bar background for the current theme and transparency preference.
