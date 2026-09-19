@@ -4,6 +4,7 @@ import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
 import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
 import org.jackhuang.hmcl.gradle.l10n.CreateLanguageList
 import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
+import org.jackhuang.hmcl.gradle.l10n.SyncTranslations
 import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import org.jackhuang.hmcl.gradle.pack.CreateDeb
@@ -431,12 +432,21 @@ tasks.register<CheckTranslations>("checkTranslations") {
     val dir = layout.projectDirectory.dir("src/main/resources/assets/lang")
 
     englishFile.set(dir.file("I18N.properties"))
-    simplifiedChineseFile.set(dir.file("I18N_zh_CN.properties"))
-    traditionalChineseFile.set(dir.file("I18N_zh.properties"))
+    simplifiedChineseFile.set(dir.file("I18N_zh_Hans.properties"))
+    traditionalChineseFile.set(dir.file("I18N_zh_Hant.properties"))
     classicalChineseFile.set(dir.file("I18N_lzh.properties"))
 }
 
 // l10n
+
+tasks.register<SyncTranslations>("syncTranslations") {
+    group = "localization"
+    description = "Synchronizes translation keys and blank lines with I18N.properties."
+
+    val dir = layout.projectDirectory.dir("src/main/resources/assets/lang")
+    sourceFile.set(dir.file("I18N.properties"))
+    translationFiles.from(fileTree(dir) { include("I18N_*.properties") })
+}
 
 val generatedDir = layout.buildDirectory.dir("generated")
 

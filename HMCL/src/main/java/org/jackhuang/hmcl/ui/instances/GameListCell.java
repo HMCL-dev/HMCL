@@ -161,8 +161,14 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     @Override
     public void updateItem(GameListItem item, boolean empty) {
-        this.graphic.releaseRippleImmediately();
+        GameListItem oldItem = getItem();
+        boolean oldEmpty = isEmpty();
+
         super.updateItem(item, empty);
+
+        if (oldItem == item && oldEmpty == empty) return;
+
+        this.graphic.releaseRippleImmediately();
 
         this.imageView.imageProperty().unbind();
         this.content.titleProperty().unbind();

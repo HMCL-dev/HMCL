@@ -69,8 +69,8 @@ public final class DownloadProviderWrapper implements DownloadProvider {
     }
 
     @Override
-    public VersionList<?> getVersionList(GameComponentType componentType) {
-        return new VersionList<>() {
+    public ComponentVersionList<?> getVersionList(GameComponentType componentType) {
+        return new ComponentVersionList<>() {
             @Override
             public boolean hasType() {
                 return getProvider().getVersionList(componentType).hasType();

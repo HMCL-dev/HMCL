@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.modpack;
 
-import org.jackhuang.hmcl.util.Lang;
-
 import java.util.List;
 
 /**
@@ -40,7 +38,7 @@ public interface ModAdviser {
         HIDDEN
     }
 
-    List<String> MODPACK_BLACK_LIST = Lang.immutableListOf(
+    List<String> MODPACK_BLACK_LIST = List.of(
         "regex:(.*?)\\.log",
         "regex:.*\\.dat_old$", "regex:.*\\.old$", // Backup files
         "regex:.*\\.BakaCoreInfo$", // BakaXL
@@ -61,17 +59,17 @@ public interface ModAdviser {
         "irisUpdateInfo.json", // Iris
         "modernfix", // ModernFix
         "modtranslations", // Mod translations
-        "schematics", // Schematics mod
         "journeymap/data", // JourneyMap
         "mods/.connector" // Sinytra Connector
     );
 
-    List<String> MODPACK_SUGGESTED_BLACK_LIST = Lang.immutableListOf(
+    List<String> MODPACK_SUGGESTED_BLACK_LIST = List.of(
             "fonts", // BetterFonts
             "saves", "servers.dat", "options.txt", // Minecraft
             "blueprints" /* BuildCraft */,
             "optionsof.txt" /* OptiFine */,
             "journeymap" /* JourneyMap */,
+            "schematics" /* Schematics mod */,
             "optionsshaders.txt",
             "mods/VoxelMods");
 

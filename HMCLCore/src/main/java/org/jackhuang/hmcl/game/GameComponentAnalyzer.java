@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 @NotNullByDefault
 public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyzer.Mark> {
@@ -69,13 +70,9 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
         return new GameComponentAnalyzer(standaloneManifest, components, bootstrapVersion);
     }
 
-    public static GameComponentAnalyzer analyze(GameInstanceManifest.Resolved resolved, @Nullable GameVersionNumber gameVersion) {
-        return analyze(resolved.standaloneManifest(), resolved.launchManifest(), gameVersion);
-    }
-
     public static GameComponentAnalyzer analyze(GameInstanceManifest manifest, @Nullable GameVersionNumber gameVersion) {
         if (manifest.inheritsFrom() != null)
-            throw new IllegalArgumentException("LibraryAnalyzer can only analyze independent game version");
+            throw new IllegalArgumentException("GameComponentAnalyzer can only analyze independent game version");
 
         return analyze(manifest, manifest, gameVersion);
     }
@@ -103,49 +100,14 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
         return false;
     }
 
-    public boolean hasModLauncher() {
+    public boolean hasForgeModLauncher() {
         return GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(manifest.mainClass()) || manifest.getPatches().stream().anyMatch(
                 patch -> GameComponentAnalyzer.MOD_LAUNCHER_MAIN.equals(patch.mainClass())
         );
     }
 
-    private static GameInstanceManifest removingMatchedLibrary(GameInstanceManifest manifest, GameComponentType type) {
-        List<Library> libraries = new ArrayList<>();
-        List<Library> rawLibraries = manifest.getLibraries();
-        for (Library library : rawLibraries) {
-            if (type.matchLibrary(library, rawLibraries)) {
-                // skip
-            } else {
-                libraries.add(library);
-            }
-        }
-        return manifest.withLibraries(libraries);
-    }
-
-    private GameInstancePatch removingMatchedLibrary(GameInstancePatch patch, GameComponentType type) {
-        List<Library> libraries = new ArrayList<>();
-        List<Library> rawLibraries = patch.getLibraries();
-        for (Library library : rawLibraries) {
-            if (type.matchLibrary(library, rawLibraries)) {
-                // skip
-            } else {
-                libraries.add(library);
-            }
-        }
-        return patch.withLibraries(libraries);
-    }
-
-    /// Remove library by library id
-    ///
-    /// @param componentType the patch identifier, such as `forge`, `optifine`, or `fabric`
-    /// @return this
-    public GameInstanceManifest removeLibrary(GameComponentType componentType) {
-        if (!has(componentType)) return manifest;
-        GameInstanceManifest manifest = removingMatchedLibrary(this.manifest, componentType);
-        return manifest.withPatches(this.manifest.getPatches().stream()
-                .filter(patch -> !componentType.getPatchId().equals(patch.id()))
-                .map(patch -> removingMatchedLibrary(patch, componentType))
-                .toList());
+    public @Nullable Mark getMark(GameComponentType type) {
+        return components.get(type);
     }
 
     public @Nullable String getVersion(GameComponentType type) {
@@ -157,23 +119,30 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
         return bootstrapVersion;
     }
 
+    public boolean isModded() {
+        String mainClass = manifest.mainClass();
+        if (mainClass == null || GameComponentAnalyzer.LAUNCH_WRAPPER_MAIN.equals(mainClass)) {
+            return false;
+        }
+
+        for (String packageName : GameComponentAnalyzer.MOD_LOADER_MAIN_CLASSES_PACKAGES) {
+            if (mainClass.startsWith(packageName))
+                return true;
+        }
+
+        return false;
+    }
+
     /// If a library is provided in `$.patches`, it's structure is so clear that we can do any operation.
     /// Otherwise, we must guess how are these libraries mixed.
     /// Maybe a guessing implementation will be provided in the future. But by now, we simply set it to JUST\_EXISTED.
     public boolean isClear(GameComponentType type) {
-        return manifest.hasPatch(type.getPatchId());
+        return manifest.hasPatch(type);
     }
 
     @Override
     public Iterator<Mark> iterator() {
         return components.values().iterator();
-    }
-
-    /// If a library is provided in `$.patches`, it's structure is so clear that we can do any operation.
-    /// Otherwise, we must guess how are these libraries mixed.
-    /// Maybe a guessing implementation will be provided in the future. But by now, we simply set it to JUST\_EXISTED.
-    public enum Status {
-        CLEAR, UNSURE, JUST_EXISTED
     }
 
     public record Mark(
@@ -220,4 +189,6 @@ public final class GameComponentAnalyzer implements Iterable<GameComponentAnalyz
             "optifine.OptiFineForgeTweaker"
     );
     public static final String LITELOADER_TWEAKER = "com.mumfrey.liteloader.launch.LiteLoaderTweaker";
+
+    public static final Pattern OPTIFINE_VERSION_PATTERN = Pattern.compile("^([0-9.]+)_(?<optifine>HD_.+)$");
 }
