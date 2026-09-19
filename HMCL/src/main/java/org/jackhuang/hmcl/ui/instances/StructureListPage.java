@@ -30,6 +30,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.schematic.NBTStructureFile;
 import org.jackhuang.hmcl.schematic.SchematicType;
@@ -47,6 +48,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -78,6 +81,8 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
             directory = world.getFile().resolve("structures");
             flattened = false;
         }
+
+        FXUtils.applyDragListener(this, p -> SchematicType.getType(p) == SchematicType.NBT_STRUCTURE, this::addFiles);
 
         refresh();
     }
@@ -193,6 +198,41 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
         }
     }
 
+    private void chooseAndAdd() {
+        FileChooser chooser = new FileChooser();
+        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("schematics.info.type.nbt_structure"), "*.nbt"));
+        List<Path> res = Controllers.showOpenMultipleDialog(chooser);
+
+        if (res != null) addFiles(res);
+    }
+
+    private void addFiles(Collection<Path> files) {
+        if (directory == null || files.isEmpty()) return;
+
+        List<Path> failures = new ArrayList<>();
+        Task.runAsync(Schedulers.io(), () -> {
+            for (Path file : files) {
+                try {
+                    var target = getPathFor(FileUtils.getNameWithoutExtension(file));
+                    Files.createDirectories(target.getParent());
+                    Files.copy(file, target);
+                } catch (IOException e) {
+                    failures.add(file);
+                    LOG.warning("Failed to add structure file " + file, e);
+                }
+            }
+        }).withRunAsync(Schedulers.javafx(), () -> {
+            if (!failures.isEmpty()) {
+                StringBuilder failure = new StringBuilder(i18n("world.structure.add.failed"));
+                for (Path file: failures) {
+                    failure.append("\n").append(file.toString());
+                }
+                Controllers.dialog(failure.toString(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+            refresh();
+        }).start();
+    }
+
     public static final class NBTStructureInfoObject {
 
         private final @Nullable String namespace;
@@ -225,7 +265,8 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
         protected List<Node> initializeToolbar(StructureListPage skinnable) {
             return List.of(
                     ToolbarListPageSkin.createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    ToolbarListPageSkin.createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::reveal)
+                    ToolbarListPageSkin.createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::reveal),
+                    ToolbarListPageSkin.createToolbarButton2(i18n("world.structure.add"), SVG.ADD, skinnable::chooseAndAdd)
             );
         }
     }

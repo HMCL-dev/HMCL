@@ -76,6 +76,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.*;
+import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createDecoratorButton;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -842,7 +843,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
             {
                 var toolbar = new HBox();
-                JFXButton btnGoBack = createToolbarButton2("", SVG.ARROW_BACK, skinnable::navigateBack);
+                JFXButton btnGoBack = createDecoratorButton("", SVG.ARROW_BACK, skinnable::navigateBack);
                 btnGoBack.disableProperty().bind(skinnable.isRootProperty());
                 JFXButton btnDownload = createToolbarButton2(i18n("schematics.install_mod"), SVG.DOWNLOAD, skinnable::downloadLitematica);
                 FXUtils.onChangeAndOperate(skinnable.downloadTarget, (t) -> btnDownload.setDisable(t == null));
