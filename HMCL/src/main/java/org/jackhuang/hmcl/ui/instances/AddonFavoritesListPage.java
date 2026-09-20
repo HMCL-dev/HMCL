@@ -35,6 +35,7 @@ import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
@@ -318,7 +319,7 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
 
             var iconLoader = new RemoteImageLoader(skinnable.downloadProvider) {
                 @Override
-                protected @NotNull Task<Image> createLoadTask(@NotNull List<URI> uris) {
+                protected @NotNull Task<Image> createLoadTask(@NotNull List<WebURL> uris) {
                     return FXUtils.getRemoteImageTask(uris, 64, 64, true, true);
                 }
             };
