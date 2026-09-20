@@ -49,7 +49,8 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Objects;
+import java.util.UUID;
 
 /// Stores the current workspace's main launcher settings.
 ///
@@ -201,13 +202,13 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return acceptPreviewUpdate;
     }
 
-    /// Whether automatic update dialogs are disabled.
-    @SerializedName("disableAutoShowUpdateDialog")
-    private final BooleanProperty disableAutoShowUpdateDialog = new SimpleBooleanProperty(false);
+    /// Whether preview builds are accepted by update checks.
+    @SerializedName("updateMode")
+    private final ObjectProperty<EnumUpdateMode> updateMode = new SimpleObjectProperty<>(EnumUpdateMode.NOTIFY);
 
-    /// Returns the automatic update dialog disable property.
-    public BooleanProperty disableAutoShowUpdateDialogProperty() {
-        return disableAutoShowUpdateDialog;
+    /// Returns the update mode property.
+    public ObjectProperty<EnumUpdateMode> updateModeProperty() {
+        return updateMode;
     }
 
     /// Whether April Fools features are disabled.
