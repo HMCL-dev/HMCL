@@ -1002,8 +1002,8 @@ public final class FXUtils {
     }
 
     /// Creates a task that caches an image from HTTP(S) candidates and loads it with the requested sizing options.
-    public static Task<Image> getRemoteImageTask(List<WebURL> uris, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
-        return new CacheFileTask(uris)
+    public static Task<Image> getRemoteImageTask(List<WebURL> urls, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
+        return new CacheFileTask(urls)
                 .setSignificance(Task.TaskSignificance.MINOR)
                 .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);

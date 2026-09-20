@@ -252,8 +252,8 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
             iconLoader = new RemoteImageLoader(control.downloadProvider) {
                 @Override
-                protected @NotNull Task<Image> createLoadTask(@NotNull List<WebURL> uris) {
-                    return FXUtils.getRemoteImageTask(uris, 80, 80, true, true);
+                protected @NotNull Task<Image> createLoadTask(@NotNull List<WebURL> urls) {
+                    return FXUtils.getRemoteImageTask(urls, 80, 80, true, true);
                 }
             };
 

@@ -51,7 +51,7 @@ public abstract class RemoteImageLoader {
     }
 
     /// Creates a task that loads an image from candidate URLs in attempt order.
-    protected abstract @NotNull Task<Image> createLoadTask(@NotNull List<WebURL> uris);
+    protected abstract @NotNull Task<Image> createLoadTask(@NotNull List<WebURL> urls);
 
     /// Loads an image or assigns the placeholder when the URL is absent or invalid.
     @FXThread

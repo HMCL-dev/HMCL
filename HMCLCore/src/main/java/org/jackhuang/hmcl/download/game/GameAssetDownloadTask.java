@@ -101,9 +101,9 @@ public final class GameAssetDownloadTask extends Task<Void> {
                 LOG.warning("Unable to calc hash value of file " + file, e);
             }
             if (download) {
-                @Unmodifiable List<WebURL> uris = dependencyManager.getDownloadProvider().getAssetObjectCandidates(assetObject.getLocation());
+                @Unmodifiable List<WebURL> urls = dependencyManager.getDownloadProvider().getAssetObjectCandidates(assetObject.getLocation());
 
-                var task = new FileDownloadTask(uris, file, new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.hash()));
+                var task = new FileDownloadTask(urls, file, new FileDownloadTask.IntegrityCheck("SHA-1", assetObject.hash()));
                 task.setName(assetObject.hash());
                 task.setCandidate(dependencyManager.getCacheRepository().getCommonDirectory()
                         .resolve("assets").resolve("objects").resolve(assetObject.getLocation()));

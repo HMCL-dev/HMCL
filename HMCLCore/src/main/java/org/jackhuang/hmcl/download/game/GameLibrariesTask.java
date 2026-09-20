@@ -153,9 +153,9 @@ public final class GameLibrariesTask extends Task<Void> {
                     for (FMLLib fmlLib : fmlLibs) {
                         Path file = libDir.resolve(fmlLib.name);
                         if (shouldDownloadFMLLib(fmlLib, file)) {
-                            @Unmodifiable List<WebURL> uris = dependencyManager.getDownloadProvider()
+                            @Unmodifiable List<WebURL> urls = dependencyManager.getDownloadProvider()
                                     .injectURLWithCandidates(fmlLib.downloadUrl());
-                            dependencies.add(new FileDownloadTask(uris, file)
+                            dependencies.add(new FileDownloadTask(urls, file)
                                     .withCounter("hmcl.install.libraries"));
                         }
                     }

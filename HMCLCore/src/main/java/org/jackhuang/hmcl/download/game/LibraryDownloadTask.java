@@ -116,8 +116,8 @@ public class LibraryDownloadTask extends Task<Void> {
         }
 
 
-        @Unmodifiable List<WebURL> uris = dependencyManager.getDownloadProvider().injectURLWithCandidates(url);
-        task = new FileDownloadTask(uris, jar,
+        @Unmodifiable List<WebURL> urls = dependencyManager.getDownloadProvider().injectURLWithCandidates(url);
+        task = new FileDownloadTask(urls, jar,
                 library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
         task.setCacheRepository(cacheRepository);
         task.setCaching(true);

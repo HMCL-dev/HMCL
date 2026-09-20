@@ -60,36 +60,36 @@ public final class CacheFileTask extends FetchTask<Path> {
 
     /// Creates a task for candidate URLs using remote cache metadata.
     ///
-    /// @param uris candidate download URLs in attempt order
-    public CacheFileTask(@NotNull List<@NotNull WebURL> uris) {
-        super(uris);
+    /// @param urls candidate download URLs in attempt order
+    public CacheFileTask(@NotNull List<@NotNull WebURL> urls) {
+        super(urls);
         this.expectedSha1 = null;
-        validateUris(uris);
-        setName(uris.get(0).toString());
+        validateUris(urls);
+        setName(urls.get(0).toString());
     }
 
     /// Creates a task that returns content cached under a verified SHA-1 checksum.
     ///
-    /// @param uris         candidate download URLs in attempt order
+    /// @param urls         candidate download URLs in attempt order
     /// @param expectedSha1 the expected SHA-1 checksum
     public CacheFileTask(
-            @NotNull List<@NotNull WebURL> uris,
+            @NotNull List<@NotNull WebURL> urls,
             @NotNull String expectedSha1) {
-        super(uris);
+        super(urls);
         if (!DigestUtils.isSha1Digest(expectedSha1)) {
             throw new IllegalArgumentException("Invalid SHA-1 checksum: " + expectedSha1);
         }
         this.expectedSha1 = expectedSha1.toLowerCase(Locale.ROOT);
-        validateUris(uris);
-        setName(uris.get(0).toString());
+        validateUris(urls);
+        setName(urls.get(0).toString());
     }
 
     /// Verifies that all candidate URLs use HTTP or HTTPS.
     ///
-    /// @param uris the candidate URLs
-    private static void validateUris(@NotNull List<@NotNull WebURL> uris) {
-        if (!uris.stream().allMatch(NetworkUtils::isHttpUri)) {
-            throw new IllegalArgumentException(uris.toString());
+    /// @param urls the candidate URLs
+    private static void validateUris(@NotNull List<@NotNull WebURL> urls) {
+        if (!urls.stream().allMatch(NetworkUtils::isHttpUri)) {
+            throw new IllegalArgumentException(urls.toString());
         }
     }
 
