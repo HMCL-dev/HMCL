@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.addon.repository;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
@@ -39,7 +40,6 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -182,9 +182,9 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                     pair("index", convertSortType(sort))
             );
 
-            List<URI> candidates = downloadProvider.injectURLWithCandidates(NetworkUtils.withQuery(PREFIX + "/v2/search", query));
+            @Unmodifiable List<WebURL> candidates = downloadProvider.injectURLWithCandidates(NetworkUtils.withQuery(PREFIX + "/v2/search", query));
             IOException exception = null;
-            for (URI candidate : candidates) {
+            for (WebURL candidate : candidates) {
                 try {
                     LOG.info("Fetching " + candidate);
                     Response<ProjectSearchResult> response = HttpRequest.GET(candidate.toString())
@@ -246,10 +246,10 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         SEMAPHORE.acquireUninterruptibly();
         try {
             id = StringUtils.removePrefix(id, "local-");
-            List<URI> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/project/" + id);
+            @Unmodifiable List<WebURL> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/project/" + id);
             IOException exception = null;
 
-            for (URI candidate : candidates) {
+            for (WebURL candidate : candidates) {
                 try {
                     Project project = HttpRequest.GET(candidate.toString()).getJson(Project.class);
                     return project.toAddon();
@@ -303,10 +303,10 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         try {
             id = StringUtils.removePrefix(id, "local-");
 
-            List<URI> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/project/" + id + "/version?include_changelog=false");
+            @Unmodifiable List<WebURL> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/project/" + id + "/version?include_changelog=false");
             IOException exception = null;
 
-            for (URI candidate : candidates) {
+            for (WebURL candidate : candidates) {
                 try {
                     List<ProjectVersion> versions = HttpRequest.GET(candidate.toString())
                             .getJson(listTypeOf(ProjectVersion.class));
@@ -334,15 +334,15 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     public String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
-            List<URI> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/version/" + versionId);
+            @Unmodifiable List<WebURL> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/version/" + versionId);
             IOException exception = null;
 
-            for (URI uri : candidates) {
+            for (WebURL url : candidates) {
                 try {
-                    ProjectVersion version = HttpRequest.GET(uri.toString()).getJson(ProjectVersion.class);
+                    ProjectVersion version = HttpRequest.GET(url.toString()).getJson(ProjectVersion.class);
                     return version.changelog();
                 } catch (IOException e) {
-                    IOException wrapper = new IOException("Failed to get addon changelog: " + uri, e);
+                    IOException wrapper = new IOException("Failed to get addon changelog: " + url, e);
                     if (candidates.size() == 1) {
                         exception = wrapper;
                     } else {

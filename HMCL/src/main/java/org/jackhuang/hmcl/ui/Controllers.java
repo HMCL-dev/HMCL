@@ -606,20 +606,20 @@ public final class Controllers {
         }
     }
 
-    public static void openUriOrCopy(@Nullable URI uri) {
-        if (uri == null) return;
-        openUriOrCopy(uri.toString());
+    public static void openUriOrCopy(@Nullable URI url) {
+        if (url == null) return;
+        openUriOrCopy(url.toString());
     }
 
-    public static void openUriOrCopy(@Nullable String uri) {
-        if (uri == null) return;
+    public static void openUriOrCopy(@Nullable String url) {
+        if (url == null) return;
         var dialog = new MessageDialogPane.Builder(
-                i18n("web.open_in_browser", uri),
+                i18n("web.open_in_browser", url),
                 i18n("message.confirm"),
                 MessageDialogPane.MessageType.QUESTION
         )
-                .addAction(i18n("button.copy"), () -> FXUtils.copyText(uri))
-                .yesOrNo(() -> FXUtils.openLink(uri), null)
+                .addAction(i18n("button.copy"), () -> FXUtils.copyText(url))
+                .yesOrNo(() -> FXUtils.openLink(url), null)
                 .build();
         dialog(dialog);
     }
