@@ -34,8 +34,6 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
@@ -228,7 +226,6 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
     private static class FavoritesCell extends MDListCell<FavoritesManager.Favorite> {
 
         private final TwoLineListItem content = new TwoLineListItem();
-        private final JFXButton forwardButton = FXUtils.newToggleButton4(SVG.ARROW_FORWARD);
 
         public FavoritesCell(AddonFavoritesListPage parentPage, JFXListView<FavoritesManager.Favorite> listView) {
             super(listView);
@@ -239,20 +236,13 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
 
-            forwardButton.setOnAction(e -> {
-                if (getItem() != null && !isEmpty()) parentPage.navigateTo(getItem());
-            });
-
-            container.getChildren().setAll(content, forwardButton);
+            container.getChildren().setAll(content);
 
             StackPane.setMargin(container, new Insets(8, 8, 8, 16));
             getContainer().getChildren().setAll(container);
 
-            addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-                if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
-                    forwardButton.fire();
-                    e.consume();
-                }
+            onClicked(() -> {
+                if (getItem() != null && !isEmpty()) parentPage.navigateTo(getItem());
             });
         }
 
