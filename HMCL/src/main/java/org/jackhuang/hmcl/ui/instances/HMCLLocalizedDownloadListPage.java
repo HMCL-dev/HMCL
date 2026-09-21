@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.instances;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.game.LocalizedRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
@@ -54,9 +56,8 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
     }
 
     private HMCLLocalizedDownloadListPage(DownloadPage.DownloadCallback callback, boolean instanceSelection, RemoteAddon.Type type, boolean curseForge, boolean modrinth) {
-        super(type, null, callback, instanceSelection);
-
-        repository = new Repository();
+        super(type, new Repository(), callback, instanceSelection);
+        ((Repository) repository).downloadSource.bind(downloadSource);
 
         supportChinese.set(true);
 
@@ -86,10 +87,12 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         }
     }
 
-    private class Repository extends LocalizedRemoteAddonRepository {
+    private static class Repository extends LocalizedRemoteAddonRepository {
 
         public Repository() {
         }
+
+        public final StringProperty downloadSource = new SimpleStringProperty();
 
         @Override
         protected RemoteAddonRepository getBackedRemoteModRepository() {

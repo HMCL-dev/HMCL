@@ -85,7 +85,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
     protected final StringProperty downloadSource = new SimpleStringProperty();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private int searchID = 0;
-    protected RemoteAddonRepository repository;
+    protected final RemoteAddonRepository repository;
     protected final RemoteAddon.Type type;
     private final DownloadProvider downloadProvider;
 
