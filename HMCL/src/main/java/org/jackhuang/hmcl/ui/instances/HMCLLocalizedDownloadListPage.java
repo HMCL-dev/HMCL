@@ -32,35 +32,35 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
     public static DownloadListPage ofMod(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MOD, CurseForgeRemoteAddonRepository.getInstance(), ModrinthRemoteAddonRepository.getInstance());
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MOD, true, true);
     }
 
     public static DownloadListPage ofModrinthMod(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MOD, null, ModrinthRemoteAddonRepository.getInstance());
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MOD, false, true);
     }
 
     public static DownloadListPage ofModPack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MODPACK, CurseForgeRemoteAddonRepository.getInstance(), ModrinthRemoteAddonRepository.getInstance());
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MODPACK, true, true);
     }
 
     public static DownloadListPage ofResourcePack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.RESOURCE_PACK, CurseForgeRemoteAddonRepository.getInstance(), ModrinthRemoteAddonRepository.getInstance());
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.RESOURCE_PACK, true, true);
     }
 
     public static DownloadListPage ofShaderPack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
-        var page = new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.SHADER_PACK, CurseForgeRemoteAddonRepository.getInstance(), ModrinthRemoteAddonRepository.getInstance());
+        var page = new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.SHADER_PACK, true, true);
         page.supportChinese.set(false);
         return page;
     }
 
-    private HMCLLocalizedDownloadListPage(DownloadPage.DownloadCallback callback, boolean instanceSelection, RemoteAddon.Type type, CurseForgeRemoteAddonRepository curseForge, ModrinthRemoteAddonRepository modrinth) {
+    private HMCLLocalizedDownloadListPage(DownloadPage.DownloadCallback callback, boolean instanceSelection, RemoteAddon.Type type, boolean curseForge, boolean modrinth) {
         super(type, null, callback, instanceSelection);
 
-        repository = new Repository(curseForge, modrinth);
+        repository = new Repository();
 
         supportChinese.set(true);
 
-        boolean supportedCurseForge = CurseForgeRemoteAddonRepository.isAvailable() && curseForge != null;
+        boolean supportedCurseForge = curseForge && CurseForgeRemoteAddonRepository.isAvailable();
 
         downloadSources.setAll("addon.modrinth");
         if (supportedCurseForge) {
@@ -70,13 +70,13 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         if ("curseforge".equalsIgnoreCase(settings().defaultAddonSourceProperty().get())) {
             if (supportedCurseForge) {
                 downloadSource.set("addon.curseforge");
-            } else if (modrinth != null) {
+            } else if (modrinth) {
                 downloadSource.set("addon.modrinth");
             } else {
                 throw new AssertionError("Should not be here.");
             }
         } else {
-            if (modrinth != null) {
+            if (modrinth) {
                 downloadSource.set("addon.modrinth");
             } else if (supportedCurseForge) {
                 downloadSource.set("addon.curseforge");
@@ -87,20 +87,16 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
     }
 
     private class Repository extends LocalizedRemoteAddonRepository {
-        private final CurseForgeRemoteAddonRepository curseForge;
-        private final ModrinthRemoteAddonRepository modrinth;
 
-        public Repository(CurseForgeRemoteAddonRepository curseForge, ModrinthRemoteAddonRepository modrinth) {
-            this.curseForge = curseForge;
-            this.modrinth = modrinth;
+        public Repository() {
         }
 
         @Override
         protected RemoteAddonRepository getBackedRemoteModRepository() {
             if ("addon.modrinth".equals(downloadSource.get())) {
-                return modrinth;
+                return ModrinthRemoteAddonRepository.getInstance();
             } else {
-                return curseForge;
+                return CurseForgeRemoteAddonRepository.getInstance();
             }
         }
 
