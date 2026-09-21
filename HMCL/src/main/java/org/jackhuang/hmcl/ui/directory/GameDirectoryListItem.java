@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -42,7 +43,14 @@ public class GameDirectoryListItem extends RadioButton {
         getStyleClass().setAll("game-directory-list-item", "navigation-drawer-item");
         setUserData(gameDirectory);
 
-        this.selectedProperty().bind(Bindings.equal(gameDirectory, GameDirectoryManager.selectedGameDirectoryProperty()));
+        // The selected state is decided by the stable ID, so replacing a game directory entry with a new
+        // instance sharing the same ID keeps this row selected.
+        this.selectedProperty().bind(Bindings.createBooleanBinding(
+                () -> {
+                    @Nullable GameDirectory selected = GameDirectoryManager.selectedGameDirectoryProperty().get();
+                    return selected != null && gameDirectory.getId().equals(selected.getId());
+                },
+                GameDirectoryManager.selectedGameDirectoryProperty()));
     }
 
     /// Creates the JavaFX skin for this item.
