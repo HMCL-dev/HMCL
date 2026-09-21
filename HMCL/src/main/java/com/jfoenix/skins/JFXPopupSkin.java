@@ -29,7 +29,8 @@ import javafx.animation.*;
 import javafx.animation.Animation.Status;
 import javafx.scene.Node;
 import javafx.scene.control.Skin;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
@@ -50,7 +51,6 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
 
     private Animation animation;
     private Animation closeAnimation;
-    private boolean closing;
 
     protected Scale scale;
 
@@ -77,7 +77,6 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
     }
 
     public final void animate() {
-        closing = false;
         container.setMouseTransparent(false);
         if (animation != null) {
             if (animation.getStatus() == Status.STOPPED) {
@@ -93,11 +92,10 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
     }
 
     public final void animateClose(Runnable onFinished) {
-        if (closing) {
+        if (closeAnimation != null) {
             return;
         }
 
-        closing = true;
         container.setMouseTransparent(true);
         if (animation != null) {
             animation.stop();
@@ -125,6 +123,17 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
             init();
         });
         closeAnimation.play();
+    }
+
+    public final boolean cancelCloseAnimation() {
+        if (closeAnimation == null) {
+            return false;
+        }
+
+        closeAnimation.stop();
+        closeAnimation = null;
+        container.setMouseTransparent(false);
+        return true;
     }
 
     @Override
@@ -180,7 +189,6 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
             closeAnimation.stop();
             closeAnimation = null;
         }
-        closing = false;
         container.setMouseTransparent(false);
         container.setOpacity(0);
         scale.setX(1.0);

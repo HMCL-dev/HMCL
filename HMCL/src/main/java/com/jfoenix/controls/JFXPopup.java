@@ -131,7 +131,8 @@ public class JFXPopup extends PopupControl {
     }
 
     public void show(Node node, PopupVPosition vAlign, PopupHPosition hAlign, double initOffsetX, double initOffsetY, boolean attachToNode) {
-        if (!isShowing()) {
+        boolean relocate = cancelCloseAnimation();
+        if (!isShowing() || relocate) {
             Scene scene = node.getScene();
             if (scene == null || scene.getWindow() == null) {
                 throw new IllegalStateException("Can not show popup. The node must be attached to a scene/window.");
@@ -144,10 +145,14 @@ public class JFXPopup extends PopupControl {
             double anchorX = parent.getX() + scene.getX() + origin.getX() + (hAlign == PopupHPosition.RIGHT ? ((Region) node).getWidth() : 0);
             double anchorY = parent.getY() + origin.getY() + scene.getY() + (vAlign == PopupVPosition.BOTTOM ? ((Region) node).getHeight() : 0);
 
-            if (attachToNode)
+            if (relocate) {
+                setAnchorX(anchorX);
+                setAnchorY(anchorY);
+            } else if (attachToNode) {
                 this.show(node, anchorX, anchorY);
-            else
+            } else {
                 this.show(parent, anchorX, anchorY);
+            }
 
             ((JFXPopupSkin) getSkin()).reset(vAlign, isRTL ? hAlign.getOpposite() : hAlign, isRTL ? -initOffsetX : initOffsetX, initOffsetY);
             Platform.runLater(() -> ((JFXPopupSkin) getSkin()).animate());
@@ -155,7 +160,8 @@ public class JFXPopup extends PopupControl {
     }
 
     public void show(Window window, double x, double y, PopupVPosition vAlign, PopupHPosition hAlign, double initOffsetX, double initOffsetY) {
-        if (!isShowing()) {
+        boolean relocate = cancelCloseAnimation();
+        if (!isShowing() || relocate) {
             if (window == null) {
                 throw new IllegalStateException("Can not show popup. The node must be attached to a scene/window.");
             }
@@ -166,6 +172,10 @@ public class JFXPopup extends PopupControl {
             ((JFXPopupSkin) getSkin()).reset(vAlign, hAlign, initOffsetX, initOffsetY);
             Platform.runLater(() -> ((JFXPopupSkin) getSkin()).animate());
         }
+    }
+
+    public boolean cancelCloseAnimation() {
+        return isShowing() && getSkin() instanceof JFXPopupSkin skin && skin.cancelCloseAnimation();
     }
 
     @Override
