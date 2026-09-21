@@ -86,15 +86,17 @@ public class DownloadListPage extends Control implements DecoratorPage {
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private int searchID = 0;
     protected RemoteAddonRepository repository;
+    protected final RemoteAddon.Type type;
     private final DownloadProvider downloadProvider;
 
     private Runnable retrySearch;
 
-    public DownloadListPage(RemoteAddonRepository repository) {
-        this(repository, null, false);
+    public DownloadListPage(RemoteAddon.Type type, RemoteAddonRepository repository) {
+        this(type, repository, null, false);
     }
 
-    public DownloadListPage(RemoteAddonRepository repository, DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+    public DownloadListPage(RemoteAddon.Type type, RemoteAddonRepository repository, DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        this.type = type;
         this.repository = repository;
         this.callback = callback;
         this.instanceSelection = instanceSelection;
@@ -178,7 +180,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                 return version != GameVersionNumber.unknown() ? version.toString() : "";
             }
         }).thenApplyAsync(
-                gameVersion -> repository.search(downloadProvider, gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteAddonRepository.SortOrder.DESC)
+                gameVersion -> repository.search(downloadProvider, type, gameVersion, category, pageOffset, 50, searchFilter, sort, RemoteAddonRepository.SortOrder.DESC)
         ).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (searchID != currentSearchID) {
                 return;
@@ -354,7 +356,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                     categoryComboBox.getItems().setAll(CategoryIndented.ALL);
                     categoryComboBox.getSelectionModel().select(0);
 
-                    Task.supplyAsync(() -> getSkinnable().repository.getCategories())
+                    Task.supplyAsync(() -> getSkinnable().repository.getCategories(getSkinnable().type))
                             .thenAcceptAsync(Schedulers.javafx(), categories -> {
                                 if (!Objects.equals(getSkinnable().downloadSource.get(), downloadSource)) {
                                     return;
@@ -604,7 +606,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                                             : PADDING
                             );
 
-                            ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(getSkinnable().repository.getType()).getModByCurseForgeId(item.slug());
+                            ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(getSkinnable().type).getModByCurseForgeId(item.slug());
                             content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : item.title());
                             String description = item.description();
                             if (description != null) {

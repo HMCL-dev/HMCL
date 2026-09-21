@@ -55,11 +55,12 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @see <a href="https://docs.modrinth.com/api">Modrinth API Doc</a>
 public final class ModrinthRemoteAddonRepository implements RemoteAddonRepository {
-    public static final ModrinthRemoteAddonRepository COMMON = new ModrinthRemoteAddonRepository();
-    public static final ModrinthRemoteAddonRepository MODS = new ModrinthRemoteAddonRepository("mod");
-    public static final ModrinthRemoteAddonRepository MODPACKS = new ModrinthRemoteAddonRepository("modpack");
-    public static final ModrinthRemoteAddonRepository RESOURCE_PACKS = new ModrinthRemoteAddonRepository("resourcepack");
-    public static final ModrinthRemoteAddonRepository SHADER_PACKS = new ModrinthRemoteAddonRepository("shader");
+
+    private static final ModrinthRemoteAddonRepository INSTANCE = new ModrinthRemoteAddonRepository();
+
+    public static ModrinthRemoteAddonRepository getInstance() {
+        return INSTANCE;
+    }
 
     private static final Comparator<String> TAG_COMPARATOR = PriorityComparator.of(
             List.of("babric",
@@ -107,31 +108,23 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         };
     }
 
+    private static @Nullable String toProjectType(RemoteAddon.Type type) {
+        return switch (type) {
+            case MOD -> "mod";
+            case MODPACK -> "modpack";
+            case RESOURCE_PACK -> "resourcepack";
+            case SHADER_PACK -> "shader";
+            default -> null;
+        };
+    }
+
     private static final Semaphore SEMAPHORE = new Semaphore(16);
 
     private static final String PREFIX = "https://api.modrinth.com";
 
     private static final String BASE = "https://modrinth.com";
 
-    private final @Nullable String projectType;
-
-    private final @Nullable RemoteAddon.Type type;
-
     private ModrinthRemoteAddonRepository() {
-        this.projectType = null;
-        this.type = null;
-    }
-
-    private ModrinthRemoteAddonRepository(@NotNull String projectType) {
-        this.projectType = projectType;
-        this.type = toAddonType(projectType);
-        if (type == null) throw new IllegalArgumentException("Unsupported Modrinth project type: " + projectType);
-    }
-
-    @Override
-    public RemoteAddon.Type getType() {
-        if (type == null) throw new UnsupportedOperationException();
-        return this.type;
     }
 
     @Override
@@ -162,8 +155,9 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     }
 
     @Override
-    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
-        if (projectType == null) throw new UnsupportedOperationException();
+    public SearchResult search(DownloadProvider downloadProvider, RemoteAddon.Type type, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
+        String projectType = toProjectType(type);
+        if (projectType == null) return SearchResult.EMPTY;
         SEMAPHORE.acquireUninterruptibly();
         try {
             List<List<String>> facets = new ArrayList<>();
@@ -366,8 +360,9 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     }
 
     @Override
-    public Stream<RemoteAddonRepository.Category> getCategories() throws IOException {
-        if (projectType == null) throw new UnsupportedOperationException();
+    public Stream<RemoteAddonRepository.Category> getCategories(RemoteAddon.Type type) throws IOException {
+        String projectType = toProjectType(type);
+        if (projectType == null) return Stream.empty();
         SEMAPHORE.acquireUninterruptibly();
         try {
             List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(listTypeOf(Category.class));

@@ -342,7 +342,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         private void loadChangelog(AddonUpdateObject object, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             spinnerPane.setLoading(true);
-            RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
+            RemoteAddonRepository repo = object.data.source().getRepository();
             Task.supplyAsync(() -> {
                 if (object.changelog != null) {
                     return object.changelog;
@@ -368,7 +368,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         private void loadVersionPageUrl(AddonUpdateObject object, JFXHyperlink button) {
             Task.supplyAsync(() -> {
-                RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
+                RemoteAddonRepository repo = object.data.source().getRepository();
                 return repo == null ? null : repo.getVersionPageUrl(object.data.targetVersion());
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null && StringUtils.isNotBlank(result)) {

@@ -32,31 +32,31 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
     public static DownloadListPage ofMod(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MOD, CurseForgeRemoteAddonRepository.MODS, ModrinthRemoteAddonRepository.MODS);
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MOD, CurseForgeRemoteAddonRepository.getInstance(), ModrinthRemoteAddonRepository.getInstance());
     }
 
     public static DownloadListPage ofModrinthMod(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MOD, null, ModrinthRemoteAddonRepository.MODS);
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MOD, null, ModrinthRemoteAddonRepository.getInstance());
     }
 
     public static DownloadListPage ofModPack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MODPACK, CurseForgeRemoteAddonRepository.MODPACKS, ModrinthRemoteAddonRepository.MODPACKS);
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MODPACK, CurseForgeRemoteAddonRepository.getInstance(), ModrinthRemoteAddonRepository.getInstance());
     }
 
     public static DownloadListPage ofResourcePack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.RESOURCE_PACK, CurseForgeRemoteAddonRepository.RESOURCE_PACKS, ModrinthRemoteAddonRepository.RESOURCE_PACKS);
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.RESOURCE_PACK, CurseForgeRemoteAddonRepository.getInstance(), ModrinthRemoteAddonRepository.getInstance());
     }
 
     public static DownloadListPage ofShaderPack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
-        var page = new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.SHADER_PACK, CurseForgeRemoteAddonRepository.SHADERS, ModrinthRemoteAddonRepository.SHADER_PACKS);
+        var page = new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.SHADER_PACK, CurseForgeRemoteAddonRepository.getInstance(), ModrinthRemoteAddonRepository.getInstance());
         page.supportChinese.set(false);
         return page;
     }
 
     private HMCLLocalizedDownloadListPage(DownloadPage.DownloadCallback callback, boolean instanceSelection, RemoteAddon.Type type, CurseForgeRemoteAddonRepository curseForge, ModrinthRemoteAddonRepository modrinth) {
-        super(null, callback, instanceSelection);
+        super(type, null, callback, instanceSelection);
 
-        repository = new Repository(type, curseForge, modrinth);
+        repository = new Repository(curseForge, modrinth);
 
         supportChinese.set(true);
 
@@ -87,12 +87,10 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
     }
 
     private class Repository extends LocalizedRemoteAddonRepository {
-        private final RemoteAddon.Type type;
         private final CurseForgeRemoteAddonRepository curseForge;
         private final ModrinthRemoteAddonRepository modrinth;
 
-        public Repository(RemoteAddon.Type type, CurseForgeRemoteAddonRepository curseForge, ModrinthRemoteAddonRepository modrinth) {
-            this.type = type;
+        public Repository(CurseForgeRemoteAddonRepository curseForge, ModrinthRemoteAddonRepository modrinth) {
             this.curseForge = curseForge;
             this.modrinth = modrinth;
         }
@@ -106,10 +104,6 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
             }
         }
 
-        @Override
-        public RemoteAddon.Type getType() {
-            return type;
-        }
     }
 
     @Override
