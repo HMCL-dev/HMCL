@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.instances;
+package org.jackhuang.hmcl.ui.instances.server;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
@@ -36,25 +36,24 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import org.glavo.nbt.io.MinecraftEdition;
-import org.glavo.nbt.io.NBTCodec;
-import org.glavo.nbt.tag.*;
 import org.jackhuang.hmcl.game.GameInstance;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.server.Server;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -87,50 +86,46 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         return new ServerListPageSkin();
     }
 
-    public void launchAndEnterServer(Server server) {
+    public void launchAndEnterServer(ServerHolder holder) {
         if (gameInstance != null) {
-            Instances.launchAndEnterServer(gameInstance, server.ip);
+            Instances.launchAndEnterServer(gameInstance, holder.server.getIp());
         }
     }
 
-    public void copyServerIp(Server server) {
-        FXUtils.copyText(server.ip, i18n("servers.manage.copy.server.ip.ok.toast"));
+    public void copyServerIp(ServerHolder holder) {
+        FXUtils.copyText(holder.server.getIp(), i18n("servers.manage.copy.server.ip.ok.toast"));
     }
 
-    public void delete(Server server) {
+    public void delete(ServerHolder holder) {
         Controllers.confirm(
                 i18n("button.remove.confirm"),
                 i18n("server.delete"),
-                () -> Task.runAsync(() -> {
-                    ServerHolder holder = server.holder;
-                    if (holder == null) return;
+                () -> Task.runAsync(Schedulers.io(), () -> {
+                    List<Server> servers = holder.cachedServers;
+                    servers.remove(holder.inDatPathSlot);
+                    Server.saveToServersDat(servers, holder.fromServersDatFilePath);
+                }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception != null)
+                        LOG.warning("Failed to save server data.", exception);
 
-                    Task.runAsync(Schedulers.io(), () -> {
-                        List<Server> servers = Server.getServers(holder.fromServersDatFilePath);
-                        servers.remove(server);
-                        Server.saveServerToDat(holder.fromServersDatFilePath, servers);
-                    }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                        if (exception != null)
-                            LOG.warning("Failed to save server data.", exception);
-
-                        refresh();
-                    }).start();
-
+                    refresh();
                 }).start(),
 
                 null
         );
     }
 
-    public void copyToInstance(Server server) {
-        ServerHolder holder = server.holder;
-        if (holder == null) return;
+    public void copyToInstance(ServerHolder holder) {
+        addServer(holder.server);
+    }
+
+    public void addServer(Server server) {
         if (gameInstance == null) return;
 
         Task.runAsync(Schedulers.io(), () -> {
-            List<Server> servers = Server.getServers(gameInstance.getServersDatFilePath());
+            List<Server> servers = Server.loadFromServersDat(gameInstance.getServersDatFilePath());
             servers.add(server);
-            Server.saveServerToDat(gameInstance.getServersDatFilePath(), servers);
+            Server.saveToServersDat(servers, gameInstance.getServersDatFilePath());
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception != null)
                 LOG.warning("Failed to save server data.", exception);
@@ -139,9 +134,9 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         }).start();
     }
 
-    public void generateLaunchScript(Server server) {
+    public void generateLaunchScript(ServerHolder holder) {
         if (gameInstance != null) {
-            Instances.generateLaunchScriptForQuickConnectServer(gameInstance, server.ip);
+            Instances.generateLaunchScriptForQuickConnectServer(gameInstance, holder.server.getIp());
         }
     }
 
@@ -161,10 +156,15 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
             stream = stream.filter(holder -> holder.fromServersDatFilePath.equals(gameInstance.getServersDatFilePath()));
         }
         if (!showHide.get()) {
-            stream = stream.filter(holder -> !holder.server.hidden);
+            stream = stream.filter(holder -> !holder.server.isHidden());
         }
 
         getItems().setAll(stream.toList());
+    }
+
+    private void addServer() {
+        runInFX(() -> Controllers.dialog(new AddServerPane(() -> {
+        }, this::addServer)));
     }
 
     private void refresh() {
@@ -186,14 +186,15 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                     ArrayList<ServerHolder> holders = new ArrayList<>();
                     pathListMap.put(instance.getServersDatFilePath(), holders);
 
-                    List<Server> parsedServers = Server.getServers(instance.getServersDatFilePath());
-                    for (int index = 0; index < parsedServers.size(); index++) {
-                        Server server = parsedServers.get(index);
-                        ServerHolder holder = new ServerHolder(instance.getServersDatFilePath(), index, server);
-                        server.holder = holder;
-                        holder.holdInstances.add(instance);
+                    if (Files.exists(instance.getServersDatFilePath())) {
+                        List<Server> parsedServers = Server.loadFromServersDat(instance.getServersDatFilePath());
+                        for (int index = 0; index < parsedServers.size(); index++) {
+                            Server server = parsedServers.get(index);
+                            ServerHolder holder = new ServerHolder(instance.getServersDatFilePath(), parsedServers, index, IconedServer.pack(server));
+                            holder.holdInstances.add(instance);
 
-                        holders.add(holder);
+                            holders.add(holder);
+                        }
                     }
                 }
             }
@@ -262,7 +263,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                 btnLaunch.setOnAction(event -> {
                     ServerHolder holder = getItem();
                     if (holder != null)
-                        page.launchAndEnterServer(holder.server);
+                        page.launchAndEnterServer(holder);
                 });
 
                 JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
@@ -307,12 +308,12 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                 content.setTitle("");
                 content.setSubtitle("");
             } else {
-                imageView.setImage(holder.server.iconImage == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : holder.server.iconImage);
-                leftTooltip.setText(holder.server.ip);
-                content.setTitle(holder.server.name != null ? parseColorEscapes(holder.server.name) : "");
-                content.setSubtitle(holder.server.ip);
+                imageView.setImage(holder.server.iconImage);
+                leftTooltip.setText(holder.server.getIp());
+                content.setTitle(holder.server.getName() != null ? parseColorEscapes(holder.server.getName()) : "");
+                content.setSubtitle(holder.server.getIp());
 
-                if (holder.server.hidden) {
+                if (holder.server.isHidden()) {
                     content.addTag(i18n("server.tag.hide"));
                 }
 
@@ -338,22 +339,22 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
 
-            IconedMenuItem copyToInstanceMEnuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("servers.manage.copy.to.instance"), () -> page.copyToInstance(holder.server), popup);
+            IconedMenuItem copyToInstanceMEnuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("servers.manage.copy.to.instance"), () -> page.copyToInstance(holder), popup);
             popupMenu.getContent().addAll(
                     new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch_and_connect_server"), () ->
-                            page.launchAndEnterServer(holder.server), popup
+                            page.launchAndEnterServer(holder), popup
                     ),
                     new IconedMenuItem(SVG.SCRIPT, i18n("instance.launch_script"), () ->
-                            page.generateLaunchScript(holder.server), popup
+                            page.generateLaunchScript(holder), popup
                     ),
                     new MenuSeparator(),
                     new IconedMenuItem(SVG.CONTENT_COPY, i18n("servers.manage.copy.server.ip"), () ->
-                            page.copyServerIp(holder.server), popup
+                            page.copyServerIp(holder), popup
                     ),
                     new MenuSeparator(),
                     copyToInstanceMEnuItem,
                     new IconedMenuItem(SVG.DELETE_FOREVER, i18n("server.delete"), () ->
-                            page.delete(holder.server), popup
+                            page.delete(holder), popup
                     )
             );
             if (page.gameInstance != null) {
@@ -365,46 +366,30 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         }
     }
 
-    public static final class ServerHolder {
-        final @NotNull List<GameInstance> holdInstances = new ArrayList<>();
-        final @NotNull Path fromServersDatFilePath;
-        final int inDatPathSlot;
-        final @NotNull Server server;
+    public static class IconedServer extends Server {
+        final Image iconImage;
 
-        public ServerHolder(@NotNull Path fromServersDatFilePath, int inDatPathSlot, @NotNull Server server) {
-            this.fromServersDatFilePath = fromServersDatFilePath;
-            this.inDatPathSlot = inDatPathSlot;
-            this.server = server;
-        }
-    }
+        public IconedServer(boolean acceptTextures, boolean hidden, @Nullable String icon, @Nullable String ip, @Nullable String name) {
+            super(acceptTextures, hidden, icon, ip, name);
 
-    public static final class Server {
-        final boolean acceptTextures;
-        final boolean hidden;
-        final @Nullable String icon;
-        final @Nullable String ip;
-        final @Nullable String name;
-
-        transient final Image iconImage;
-        transient ServerHolder holder;
-
-        public Server(
-                boolean acceptTextures,
-                boolean hidden,
-                @Nullable String icon,
-                @Nullable String ip,
-                @Nullable String name
-        ) {
-            this.acceptTextures = acceptTextures;
-            this.hidden = hidden;
-            this.icon = icon;
-            this.ip = ip;
-            this.name = name;
-
-            this.iconImage = parseImage(icon);
+            Image parsedImage = parseImage(icon);
+            iconImage = parsedImage == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : parsedImage;
         }
 
-        public static Image parseImage(String imageBase64String) {
+        public static IconedServer pack(Server server) {
+            if (server instanceof IconedServer) {
+                return (IconedServer) server;
+            }
+            return new IconedServer(
+                    server.isAcceptTextures(),
+                    server.isHidden(),
+                    server.getIcon(),
+                    server.getIp(),
+                    server.getName()
+            );
+        }
+
+        private static Image parseImage(String imageBase64String) {
             if (imageBase64String == null || imageBase64String.isEmpty()) {
                 return null;
             }
@@ -416,84 +401,20 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                 return null;
             }
         }
+    }
 
-        public static List<Server> getServers(@NotNull Path serversDatFilePath) {
-            List<Server> set = new ArrayList<>();
-            if (Files.exists(serversDatFilePath)) {
-                try {
-                    CompoundTag tags = (CompoundTag) NBTCodec.of(MinecraftEdition.JAVA_EDITION).readTag(serversDatFilePath);
-                    Tag serversTag = tags.get("servers");
-                    if (serversTag instanceof ListTag<?> st) {
-                        for (Tag tag : st) {
-                            if (tag instanceof CompoundTag cTag) {
-                                set.add(new Server(
-                                        cTag.get("acceptTextures") instanceof ByteTag bt && bt.getValue() != 0,
-                                        cTag.get("hidden") instanceof ByteTag bt && bt.getValue() != 0,
-                                        cTag.get("icon") instanceof StringTag stg ? stg.getValue() : null,
-                                        cTag.get("ip") instanceof StringTag stg ? stg.getValue() : null,
-                                        cTag.get("name") instanceof StringTag stg ? stg.getValue() : null
-                                ));
-                            }
-                        }
-                    }
-                } catch (IOException e) {
-                    LOG.error("Failed to read servers.dat file.", e);
-                }
-            }
-            return set;
-        }
+    public static final class ServerHolder {
+        final @NotNull List<GameInstance> holdInstances = new ArrayList<>();
+        final @NotNull Path fromServersDatFilePath;
+        final @NotNull List<Server> cachedServers;
+        final int inDatPathSlot;
+        final @NotNull IconedServer server;
 
-        public static void saveServerToDat(Path datFile, List<Server> saveServerData) {
-            ListTag<CompoundTag> tag = new ListTag<>();
-            for (Server server : saveServerData) {
-                CompoundTag serverTag = new CompoundTag();
-                server.writeToCompoundTag(serverTag);
-                tag.addTag(serverTag);
-            }
-
-            CompoundTag root = new CompoundTag();
-            root.addTag("servers", tag);
-
-            try (var output = Files.newOutputStream(datFile)) {
-                NBTCodec.of(MinecraftEdition.JAVA_EDITION).writeTag(output, root);
-            } catch (IOException e) {
-                LOG.error("Failed to write servers.dat file.", e);
-            }
-        }
-
-        public void writeToCompoundTag(CompoundTag tag) {
-            tag.addByte("acceptTextures", (byte) (acceptTextures ? 1 : 0));
-            tag.addByte("hidden", (byte) (hidden ? 1 : 0));
-            if (icon != null) tag.addString("icon", icon);
-            if (ip != null) tag.addString("ip", ip);
-            if (name != null) tag.addString("name", name);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (o == null || getClass() != o.getClass()) return false;
-            Server that = (Server) o;
-            return Objects.equals(ip, that.ip) &&
-                    Objects.equals(name, that.name) &&
-                    Objects.equals(acceptTextures, that.acceptTextures) &&
-                    Objects.equals(hidden, that.hidden) &&
-                    Objects.equals(icon, that.icon);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(ip, name);
-        }
-
-        @Override
-        public String toString() {
-            return "Server{" +
-                    "acceptTextures=" + acceptTextures +
-                    ", hidden=" + hidden +
-                    ", icon='" + icon + '\'' +
-                    ", ip='" + ip + '\'' +
-                    ", name='" + name + '\'' +
-                    '}';
+        public ServerHolder(@NotNull Path fromServersDatFilePath, @NotNull List<Server> cachedServers, int inDatPathSlot, @NotNull IconedServer server) {
+            this.fromServersDatFilePath = fromServersDatFilePath;
+            this.inDatPathSlot = inDatPathSlot;
+            this.cachedServers = cachedServers;
+            this.server = server;
         }
     }
 
@@ -520,7 +441,8 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
             return Arrays.asList(
                     chkShowAll,
                     chkShowHide,
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh)
+                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton2(i18n("servers.manager.add"), SVG.ADD, skinnable::addServer)
             );
         }
 
