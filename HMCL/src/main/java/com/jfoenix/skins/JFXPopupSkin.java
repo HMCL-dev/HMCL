@@ -29,7 +29,8 @@ import javafx.animation.*;
 import javafx.animation.Animation.Status;
 import javafx.scene.Node;
 import javafx.scene.control.Skin;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
@@ -49,6 +50,8 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
     protected Node root;
 
     private Animation animation;
+    private Animation closeAnimation;
+
     protected Scale scale;
 
     public JFXPopupSkin(JFXPopup control) {
@@ -74,6 +77,7 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
     }
 
     public final void animate() {
+        container.setMouseTransparent(false);
         if (animation != null) {
             if (animation.getStatus() == Status.STOPPED) {
                 container.setOpacity(1);
@@ -85,6 +89,51 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
             scale.setX(1.0);
             scale.setY(1.0);
         }
+    }
+
+    public final void animateClose(Runnable onFinished) {
+        if (closeAnimation != null) {
+            return;
+        }
+
+        container.setMouseTransparent(true);
+        if (animation != null) {
+            animation.stop();
+        }
+
+        if (!AnimationUtils.isAnimationEnabled()) {
+            onFinished.run();
+            init();
+            return;
+        }
+
+        Interpolator interpolator = Motion.EASE;
+        closeAnimation = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(popupContent.opacityProperty(), popupContent.getOpacity(), interpolator),
+                        new KeyValue(scale.xProperty(), scale.getX(), interpolator),
+                        new KeyValue(scale.yProperty(), scale.getY(), interpolator)),
+                new KeyFrame(Motion.SHORT4,
+                        new KeyValue(popupContent.opacityProperty(), 0, interpolator),
+                        new KeyValue(scale.xProperty(), 0, interpolator),
+                        new KeyValue(scale.yProperty(), 0.01, interpolator)));
+        closeAnimation.setOnFinished(event -> {
+            closeAnimation = null;
+            onFinished.run();
+            init();
+        });
+        closeAnimation.play();
+    }
+
+    public final boolean cancelCloseAnimation() {
+        if (closeAnimation == null) {
+            return false;
+        }
+
+        closeAnimation.stop();
+        closeAnimation = null;
+        container.setMouseTransparent(false);
+        return true;
     }
 
     @Override
@@ -102,6 +151,10 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
         if (animation != null) {
             animation.stop();
             animation = null;
+        }
+        if (closeAnimation != null) {
+            closeAnimation.stop();
+            closeAnimation = null;
         }
         container = null;
         control = null;
@@ -132,6 +185,11 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
     public void init() {
         if (animation != null)
             animation.stop();
+        if (closeAnimation != null) {
+            closeAnimation.stop();
+            closeAnimation = null;
+        }
+        container.setMouseTransparent(false);
         container.setOpacity(0);
         scale.setX(1.0);
         scale.setY(0.01);
