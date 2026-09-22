@@ -110,7 +110,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod(FOR_MOD, true)));
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack(FOR_RESOURCE_PACK, true)));
         shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack(FOR_SHADER, true)));
-        worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteAddonRepository.WORLDS)));
+        worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(RemoteAddon.Type.WORLD, CurseForgeRemoteAddonRepository.getInstance())));
         tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
 
         GameDirectoryManager.registerVersionsListener(this::loadVersions);

@@ -42,7 +42,7 @@ public class QuiltAPIVersionList extends ComponentVersionList<QuiltAPIRemoteVers
     @Override
     public Task<?> refreshAsync() {
         return Task.runAsync(() -> {
-            for (RemoteAddon.Version modVersion : Lang.toIterable(ModrinthRemoteAddonRepository.MODS.getRemoteVersionsById(downloadProvider, "qsl"))) {
+            for (RemoteAddon.Version modVersion : Lang.toIterable(ModrinthRemoteAddonRepository.getInstance().getRemoteVersionsById(downloadProvider, "qsl"))) {
                 for (String gameVersion : modVersion.gameVersions()) {
                     versions.put(gameVersion, new QuiltAPIRemoteVersion(gameVersion, modVersion.version(), modVersion.name(), modVersion.datePublished(), modVersion,
                             Collections.singletonList(modVersion.file().url())));

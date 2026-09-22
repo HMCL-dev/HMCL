@@ -72,24 +72,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
         return !API_KEY.isEmpty();
     }
 
-    private final @Nullable RemoteAddon.Type type;
-    private final int section;
-
     public CurseForgeRemoteAddonRepository() {
-        this.type = null;
-        this.section = -1;
-    }
-
-    public CurseForgeRemoteAddonRepository(int section) {
-        this.type = toAddonType(section);
-        if (type == null) throw new IllegalArgumentException("Unsupported CurseForge section id: " + section);
-        this.section = section;
-    }
-
-    @Override
-    public RemoteAddon.Type getType() {
-        if (type == null) throw new UnsupportedOperationException();
-        return type;
     }
 
     @Override
@@ -131,8 +114,9 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     /// @throws NoCandidatesException         if no response is obtained and no I/O failure was recorded
     /// @throws IOException                   if all candidate requests fail with I/O errors
     @Override
-    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
-        if (type == null) throw new UnsupportedOperationException();
+    public SearchResult search(DownloadProvider downloadProvider, RemoteAddon.Type type, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
+        int section = toSectionId(type);
+        if (section < 0) return SearchResult.EMPTY;
         SEMAPHORE.acquireUninterruptibly();
         try {
             int categoryId = 0;
@@ -360,8 +344,9 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     }
 
     @Override
-    public Stream<RemoteAddonRepository.Category> getCategories() throws IOException {
-        if (type == null) throw new UnsupportedOperationException();
+    public Stream<RemoteAddonRepository.Category> getCategories(RemoteAddon.Type type) throws IOException {
+        int section = toSectionId(type);
+        if (section < 0) return Stream.empty();
         SEMAPHORE.acquireUninterruptibly();
         try {
             Response<List<Category>> categories = withApiKey(HttpRequest.GET(PREFIX + "/v1/categories", pair("gameId", "432")))
@@ -408,13 +393,11 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     public static final int SECTION_UNKNOWN2 = 4979;
     public static final int SECTION_UNKNOWN3 = 4984;
 
-    public static final CurseForgeRemoteAddonRepository COMMON = new CurseForgeRemoteAddonRepository();
-    public static final CurseForgeRemoteAddonRepository MODS = new CurseForgeRemoteAddonRepository(SECTION_MOD);
-    public static final CurseForgeRemoteAddonRepository MODPACKS = new CurseForgeRemoteAddonRepository(SECTION_MODPACK);
-    public static final CurseForgeRemoteAddonRepository RESOURCE_PACKS = new CurseForgeRemoteAddonRepository(SECTION_RESOURCE_PACK);
-    public static final CurseForgeRemoteAddonRepository WORLDS = new CurseForgeRemoteAddonRepository(SECTION_WORLD);
-    public static final CurseForgeRemoteAddonRepository CUSTOMIZATIONS = new CurseForgeRemoteAddonRepository(SECTION_CUSTOMIZATION);
-    public static final CurseForgeRemoteAddonRepository SHADERS = new CurseForgeRemoteAddonRepository(SECTION_SHADER);
+    private static final CurseForgeRemoteAddonRepository INSTANCE = new CurseForgeRemoteAddonRepository();
+
+    public static CurseForgeRemoteAddonRepository getInstance() {
+        return INSTANCE;
+    }
 
     @Nullable
     private static RemoteAddon.Type toAddonType(int classId) {
@@ -426,6 +409,18 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             case SECTION_SHADER -> RemoteAddon.Type.SHADER_PACK;
             case SECTION_MOD -> RemoteAddon.Type.MOD;
             default -> null;
+        };
+    }
+
+    private static int toSectionId(RemoteAddon.Type type) {
+        return switch (type) {
+            case MOD -> SECTION_MOD;
+            case MODPACK -> SECTION_MODPACK;
+            case RESOURCE_PACK -> SECTION_RESOURCE_PACK;
+            case SHADER_PACK -> SECTION_SHADER;
+            case WORLD -> SECTION_WORLD;
+            case CUSTOMIZATION -> SECTION_CUSTOMIZATION;
+            default -> -1;
         };
     }
 
