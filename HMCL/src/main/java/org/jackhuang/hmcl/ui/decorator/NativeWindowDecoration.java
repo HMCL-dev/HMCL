@@ -43,6 +43,9 @@ final class NativeWindowDecoration {
     /// Marks nodes whose title-content descendants are already observed for native hit testing.
     private static final Object DRAG_CONFIGURED = new Object();
 
+    /// Whether the user explicitly enabled native decoration regardless of automatic platform or brightness exclusions.
+    private final boolean forced;
+
     /// The platform-supported extended stage style.
     final StageStyle style;
 
@@ -72,8 +75,10 @@ final class NativeWindowDecoration {
 
     /// Resolves all required public APIs and creates a detached header bar.
     ///
+    /// @param forced whether to bypass the automatic theme brightness exclusion
     /// @throws ReflectiveOperationException if the runtime does not expose a required API
-    private NativeWindowDecoration() throws ReflectiveOperationException {
+    private NativeWindowDecoration(boolean forced) throws ReflectiveOperationException {
+        this.forced = forced;
         style = (StageStyle) Objects.requireNonNull(StageStyle.class.getField("EXTENDED").get(null));
         Class<?> headerClass = Class.forName("javafx.scene.layout.HeaderBar");
         Class<?> dragClass = Class.forName("javafx.scene.layout.HeaderDragType");
@@ -87,11 +92,28 @@ final class NativeWindowDecoration {
         headerBar = (Region) headerClass.getConstructor().newInstance();
     }
 
-    /// Creates native decoration support on macOS or Windows 11 and later when JavaFX 27 or later supports it.
+    /// Creates native decoration support according to the configured preference and runtime capabilities.
     ///
-    /// @return the resolved support, or `null` on other platforms or unsupported runtimes
+    /// The `hmcl.nativeDecoration` system property takes precedence over `HMCL_NATIVE_DECORATION`.
+    /// Values are case-insensitive and trimmed: `false` disables native decoration, `true` enables it on
+    /// any supported platform, and `auto` enables it only on macOS or Windows 11 and later. Missing or
+    /// unrecognized values use `auto`. All modes require JavaFX 27 or later and extended-window support.
+    /// The preference is read when this method is called and retained by the returned instance.
+    ///
+    /// @return the resolved support, or `null` when disabled by policy or unavailable on the runtime
     static @Nullable NativeWindowDecoration create() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS
+        @Nullable String preference = System.getProperty("hmcl.nativeDecoration", System.getenv("HMCL_NATIVE_DECORATION"));
+        if (preference != null) {
+            preference = preference.trim();
+        }
+        if ("false".equalsIgnoreCase(preference)) {
+            return null;
+        }
+        boolean forced = "true".equalsIgnoreCase(preference);
+        if (!forced && preference != null && !"auto".equalsIgnoreCase(preference)) {
+            LOG.warning("Invalid native decoration preference: " + preference + "; using auto");
+        }
+        if (!forced && OperatingSystem.CURRENT_OS != OperatingSystem.MACOS
                 && !OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11)) {
             return null;
         }
@@ -100,11 +122,23 @@ final class NativeWindowDecoration {
             if (version < 27 || !Platform.isSupported(ConditionalFeature.valueOf("EXTENDED_WINDOW"))) {
                 return null;
             }
-            return new NativeWindowDecoration();
+            return new NativeWindowDecoration(forced);
         } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
             LOG.warning("Native window decoration is unavailable; using custom decoration", e);
             return null;
         }
+    }
+
+    /// Returns whether to use native decoration with the current transparency and theme brightness.
+    ///
+    /// Transparent windows always use custom decoration. Automatic mode also excludes dark windows on Windows;
+    /// explicitly enabling native decoration bypasses only that brightness exclusion.
+    ///
+    /// @param transparent whether the theme requests window transparency
+    /// @param dark whether the current theme is dark
+    /// @return whether this instance permits native decoration for the supplied theme settings
+    boolean isPreferred(boolean transparent, boolean dark) {
+        return !transparent && (forced || !(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && dark));
     }
 
     /// Sets or removes the header content; the caller must first detach it from any other parent.

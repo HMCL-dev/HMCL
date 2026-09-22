@@ -709,13 +709,12 @@ public final class Decorator {
         SettingsManager.state().setHeight(bounds.getHeight());
     }
 
-    /// Returns the preferred style for the current runtime, transparency, and theme brightness.
+    /// Returns the preferred style for the configured native-decoration policy and current theme.
     ///
-    /// @return the system style when available and opaque, except for dark windows on Windows;
-    ///         otherwise the custom transparent style
+    /// @return the system style when available and permitted by the policy; otherwise the custom transparent style
     private StageStyle preferredStageStyle() {
-        return nativeDecoration != null && !Themes.windowTransparentProperty().get()
-                && !(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Themes.darkModeProperty().get())
+        return nativeDecoration != null && nativeDecoration.isPreferred(
+                Themes.windowTransparentProperty().get(), Themes.darkModeProperty().get())
                 ? nativeDecoration.style : StageStyle.TRANSPARENT;
     }
 
@@ -732,8 +731,10 @@ public final class Decorator {
     /// transparent scene when the stage has none. If the retained scene belongs to another stage, it is detached
     /// from that stage before being installed on `newStage`. A newly attached stage receives the persisted normal
     /// content bounds. Native frame offsets and minimum size are resolved when the stage is shown.
-    /// Opaque windows use the system decoration when supported, except for dark windows on Windows. Other windows
-    /// use the custom transparent decoration. Any active window animation is cancelled and reset. Custom window
+    /// The native-decoration policy selects the system or custom transparent decoration. Automatic mode uses
+    /// system decoration for supported opaque windows, except for dark windows on Windows; explicit enablement
+    /// bypasses the brightness exclusion. Transparent windows always use custom decoration.
+    /// Any active window animation is cancelled and reset. Custom window
     /// animations run only with custom decoration. This method does not show the stage.
     ///
     /// @param newStage the stage to attach, which must be accessed on the JavaFX application thread

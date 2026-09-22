@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXDialog;
+import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
@@ -34,10 +35,14 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.JavaFXLauncher;
 import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
+import org.jackhuang.hmcl.util.platform.OSVersion;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.api.parallel.Resources;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -46,8 +51,11 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Exercises JavaFX's native header hit testing without requiring a desktop window manager.
 @NotNullByDefault
@@ -62,6 +70,70 @@ final class NativeWindowDecorationTest {
         } catch (ClassNotFoundException e) {
             return false;
         }
+    }
+
+    /// Verifies explicit preferences and automatic platform restrictions against the runtime's capabilities.
+    @Test
+    @ResourceLock(Resources.SYSTEM_PROPERTIES)
+    void honorsConfiguredPreference() throws Exception {
+        onFxThread(() -> {
+            @Nullable String previous = System.getProperty("hmcl.nativeDecoration");
+            try {
+                System.setProperty("hmcl.nativeDecoration", " FALSE ");
+                assertNull(NativeWindowDecoration.create());
+
+                boolean supported = Platform.isSupported(ConditionalFeature.valueOf("EXTENDED_WINDOW"));
+                System.setProperty("hmcl.nativeDecoration", " TRUE ");
+                @Nullable NativeWindowDecoration forced = NativeWindowDecoration.create();
+                assertEquals(supported, forced != null);
+                if (forced != null) {
+                    assertTrue(forced.isPreferred(false, true));
+                    assertFalse(forced.isPreferred(true, false));
+                    assertFalse(forced.isPreferred(true, true));
+                }
+
+                boolean automatic = supported && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                        || OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11));
+                System.setProperty("hmcl.nativeDecoration", " AUTO ");
+                @Nullable NativeWindowDecoration decoration = NativeWindowDecoration.create();
+                assertEquals(automatic, decoration != null);
+                if (decoration != null) {
+                    assertFalse(decoration.isPreferred(true, false));
+                }
+
+                System.clearProperty("hmcl.nativeDecoration");
+                @Nullable String environment = System.getenv("HMCL_NATIVE_DECORATION");
+                if (environment != null) {
+                    environment = environment.trim();
+                }
+                boolean expected = "true".equalsIgnoreCase(environment) ? supported
+                        : !"false".equalsIgnoreCase(environment) && automatic;
+                assertEquals(expected, NativeWindowDecoration.create() != null);
+
+                System.setProperty("hmcl.nativeDecoration", "invalid");
+                assertEquals(automatic, NativeWindowDecoration.create() != null);
+            } finally {
+                if (previous == null) {
+                    System.clearProperty("hmcl.nativeDecoration");
+                } else {
+                    System.setProperty("hmcl.nativeDecoration", previous);
+                }
+            }
+            return null;
+        });
+    }
+
+    /// Verifies automatic mode preserves transparency and Windows dark-mode exclusions.
+    @Test
+    void retainsAutomaticThemeExclusions() throws Exception {
+        onFxThread(() -> {
+            NativeWindowDecoration decoration = createDecoration();
+            assertTrue(decoration.isPreferred(false, false));
+            assertFalse(decoration.isPreferred(true, false));
+            assertFalse(decoration.isPreferred(true, true));
+            assertEquals(OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS, decoration.isPreferred(false, true));
+            return null;
+        });
     }
 
     /// Verifies nested title content and label skins are draggable while interactive controls are excluded.
@@ -162,9 +234,9 @@ final class NativeWindowDecorationTest {
 
     /// Resolves the real APIs even when the headless toolkit reports no native window decorations.
     private static NativeWindowDecoration createDecoration() throws ReflectiveOperationException {
-        Constructor<NativeWindowDecoration> constructor = NativeWindowDecoration.class.getDeclaredConstructor();
+        Constructor<NativeWindowDecoration> constructor = NativeWindowDecoration.class.getDeclaredConstructor(boolean.class);
         constructor.setAccessible(true);
-        return constructor.newInstance();
+        return constructor.newInstance(false);
     }
 
     /// Applies CSS so hit testing includes control skins, then lays out the header at a fixed size.
