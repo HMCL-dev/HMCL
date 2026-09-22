@@ -67,6 +67,9 @@ final class NativeWindowDecoration {
     /// Excludes a node and its descendants from native dragging.
     private final Object notDraggable;
 
+    /// Ignores an overlay and its descendants when testing underlying native header areas.
+    private final Object transparentSubtree;
+
     /// Resolves all required public APIs and creates a detached header bar.
     ///
     /// @throws ReflectiveOperationException if the runtime does not expose a required API
@@ -80,6 +83,7 @@ final class NativeWindowDecoration {
         setSystemButtonHeight = headerClass.getMethod("setSystemButtonHeight", Stage.class, double.class);
         draggable = Objects.requireNonNull(dragClass.getField("DRAGGABLE").get(null));
         notDraggable = Objects.requireNonNull(dragClass.getField("NONE").get(null));
+        transparentSubtree = Objects.requireNonNull(dragClass.getField("TRANSPARENT_SUBTREE").get(null));
         headerBar = (Region) headerClass.getConstructor().newInstance();
     }
 
@@ -131,6 +135,20 @@ final class NativeWindowDecoration {
             setDragType.invoke(null, node, enabled ? draggable : notDraggable);
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Cannot configure native header dragging", e);
+        }
+    }
+
+    /// Lets native header hit testing pass through an overlay and its descendants.
+    ///
+    /// Ordinary mouse picking is unchanged. This does not create draggable areas outside the underlying
+    /// header. Descendants excluded with [#setDraggable(Node, boolean)] block native dragging instead.
+    ///
+    /// @param overlay the overlay above the header
+    void setDragTransparent(Node overlay) {
+        try {
+            setDragType.invoke(null, overlay, transparentSubtree);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Cannot configure native header overlay", e);
         }
     }
 

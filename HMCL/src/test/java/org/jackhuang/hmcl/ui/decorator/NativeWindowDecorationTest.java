@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.decorator;
 
+import com.jfoenix.controls.JFXDialog;
 import javafx.application.Platform;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
@@ -24,12 +25,15 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.PickResult;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.JavaFXLauncher;
+import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -43,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 /// Exercises JavaFX's native header hit testing without requiring a desktop window manager.
 @NotNullByDefault
@@ -98,6 +103,47 @@ final class NativeWindowDecorationTest {
         });
     }
 
+    /// Verifies dialog overlays preserve native header dragging without allowing ordinary mouse clicks through.
+    @Test
+    void picksHeaderThroughDialogOverlay() throws Exception {
+        onFxThread(() -> {
+            NativeWindowDecoration decoration = createDecoration();
+            Rectangle title = new Rectangle(20, 20);
+            Button headerAction = new Button("Header action");
+            decoration.setContent(new BorderPane(new StackPane(title), null, headerAction, null, null));
+            decoration.headerBar.setPrefHeight(40);
+            StackPane root = new StackPane(new BorderPane(new StackPane(), decoration.headerBar, null, null, null));
+            Scene scene = new Scene(root, 800, 400);
+            Button dialogAction = new Button("Dialog action");
+            JFXDialogPane pane = new JFXDialogPane();
+            pane.push(dialogAction);
+            JFXDialog dialog = new JFXDialog(root, pane, JFXDialog.DialogTransition.NONE, false);
+            // A nested overlay node must inherit transparency for header hit testing only.
+            Region shade = new Region();
+            dialog.getChildren().add(0, shade);
+            decoration.setDraggable(pane, false);
+            dialog.show();
+            root.resize(800, 400);
+            root.applyCss();
+            root.layout();
+
+            assertNotEquals("DRAGBAR", pick(scene, title));
+            decoration.setDragTransparent(dialog);
+            assertEquals("DRAGBAR", pick(scene, title));
+            assertNotEquals("DRAGBAR", pick(scene, headerAction));
+            assertNotEquals("DRAGBAR", pick(scene, 20, 200));
+            assertSame(shade, pickMouse(scene, title.localToScene(10, 10)).getIntersectedNode());
+
+            // Dialog controls must still block native dragging even when they overlap the header.
+            Point2D actionCenter = dialogAction.localToScene(dialogAction.getWidth() / 2, dialogAction.getHeight() / 2);
+            pane.getParent().setTranslateY(20 - actionCenter.getY());
+            assertNotEquals("DRAGBAR", pick(scene, dialogAction));
+            dialog.close();
+            assertEquals("DRAGBAR", pick(scene, title));
+            return null;
+        });
+    }
+
     /// Verifies each newly attached stage opts out of the system-provided window buttons.
     @Test
     void hidesSystemButtons() throws Exception {
@@ -132,15 +178,27 @@ final class NativeWindowDecorationTest {
     ///
     /// @return the native hit-test category at the node's center, or `null` for an ordinary client-area hit
     private static @Nullable String pick(Scene scene, Node node) throws ReflectiveOperationException {
+        Point2D point = node.localToScene(node.getLayoutBounds().getWidth() / 2, node.getLayoutBounds().getHeight() / 2);
+        return pick(scene, point.getX(), point.getY());
+    }
+
+    /// Returns the native header hit-test category at scene coordinates, or `null` for an ordinary client-area hit.
+    private static @Nullable String pick(Scene scene, double x, double y) throws ReflectiveOperationException {
         Class<?> listenerClass = Class.forName("javafx.scene.Scene$ScenePeerListener");
         Constructor<?> constructor = listenerClass.getDeclaredConstructor(Scene.class);
         constructor.setAccessible(true);
         Object listener = constructor.newInstance(scene);
         Method pick = listenerClass.getDeclaredMethod("pickHeaderArea", double.class, double.class);
         pick.setAccessible(true);
-        Point2D point = node.localToScene(node.getLayoutBounds().getWidth() / 2, node.getLayoutBounds().getHeight() / 2);
-        @Nullable Object result = pick.invoke(listener, point.getX(), point.getY());
+        @Nullable Object result = pick.invoke(listener, x, y);
         return result == null ? null : result.toString();
+    }
+
+    /// Performs ordinary mouse picking to verify the modal overlay still intercepts input.
+    private static PickResult pickMouse(Scene scene, Point2D point) throws ReflectiveOperationException {
+        Method pick = Scene.class.getDeclaredMethod("pick", double.class, double.class);
+        pick.setAccessible(true);
+        return (PickResult) pick.invoke(scene, point.getX(), point.getY());
     }
 
     /// Runs a checked test action on the JavaFX application thread and propagates failures.

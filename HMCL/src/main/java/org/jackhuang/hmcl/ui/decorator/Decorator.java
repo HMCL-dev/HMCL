@@ -389,6 +389,19 @@ public final class Decorator {
         });
     }
 
+    /// Configures window dragging through an overlay while retaining ordinary mouse picking.
+    ///
+    /// Native decoration permits dragging only over underlying draggable header areas. Custom decoration
+    /// permits dragging from the overlay itself. Interactive content must be excluded with [#forbidDraggingWindow(Node)].
+    ///
+    /// @param overlay the overlay above the window content and title bar
+    public void capableDraggingOverlay(Node overlay) {
+        capableDraggingWindow(overlay);
+        if (nativeDecoration != null) {
+            nativeDecoration.setDragTransparent(overlay);
+        }
+    }
+
     /// Registers `node` as the title-bar area used to restore and maximize the attached stage.
     ///
     /// @param node the title-bar node
