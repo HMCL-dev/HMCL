@@ -23,6 +23,7 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
@@ -78,6 +79,9 @@ import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 
@@ -135,6 +139,23 @@ public final class Decorator {
 
     /// Whether the attached stage delegates window decoration and gestures to the platform.
     private boolean nativeDecorationEnabled;
+
+    /// Installs application-specific identity and lifecycle integration on replacement stages before attachment.
+    private final Consumer<Stage> stageInitializer;
+
+    /// Whether an appearance change has already queued a window-style check.
+    private boolean windowStyleUpdateQueued;
+
+    /// Coalesces appearance changes so stage replacement runs after theme bindings have updated.
+    private final ChangeListener<Boolean> windowStyleListener = (observable, oldValue, newValue) -> {
+        if (!windowStyleUpdateQueued) {
+            windowStyleUpdateQueued = true;
+            Platform.runLater(() -> {
+                windowStyleUpdateQueued = false;
+                updateWindowStyle();
+            });
+        }
+    };
 
     /// The clipped main-window content hosted inside [#shadowContainer].
     private final MainWindowPane mainWindowPane;
@@ -219,9 +240,13 @@ public final class Decorator {
     ///
     /// The decorator initially enables its custom window shadow. No scene is created until
     /// [#attachStage(Stage)] is called or [#getRoot()] is otherwise installed in a scene.
+    /// Appearance changes replace the attached stage when required, preserving its retained scene and window state.
     ///
     /// @param mainPage the permanent root page of the navigation stack
-    public Decorator(Node mainPage) {
+    /// @param stageInitializer configures each replacement stage on the JavaFX application thread before attachment;
+    ///                         it must not show the stage and is not called for stages supplied to [#attachStage(Stage)]
+    public Decorator(Node mainPage, Consumer<Stage> stageInitializer) {
+        this.stageInitializer = Objects.requireNonNull(stageInitializer);
         navigator.setOnNavigated(this::onNavigated);
 
         mainWindowPane = new MainWindowPane(this);
@@ -718,11 +743,46 @@ public final class Decorator {
                 ? nativeDecoration.style : StageStyle.TRANSPARENT;
     }
 
-    /// Returns whether the current stage must be replaced to apply the effective transparency and brightness.
+    /// Replaces the attached stage when transparency or theme brightness requires a different decoration style.
     ///
-    /// @return `true` if a stage is attached with a different style from the current preference
-    public boolean isStageStyleOutdated() {
-        return stage != null && stage.getStyle() != preferredStageStyle();
+    /// Preserves the scene, navigation, dialogs, normal bounds, supported window states, and focus owner.
+    /// Hidden windows remain hidden. Does nothing while detached or when the current style is still suitable.
+    /// Must run on the JavaFX application thread after theme bindings have updated.
+    private void updateWindowStyle() {
+        FXUtils.checkFxUserThread();
+        @Nullable Stage previousStage = stage;
+        if (previousStage == null || previousStage.getStyle() == preferredStageStyle()) {
+            return;
+        }
+
+        boolean showing = previousStage.isShowing();
+        boolean maximized = WindowState.isMaximized(previousStage);
+        boolean fullScreen = previousStage.isFullScreen();
+        boolean iconified = previousStage.isIconified();
+        @Nullable Node focusOwner = previousStage.getScene().getFocusOwner();
+
+        Stage replacement = new Stage();
+        stageInitializer.accept(replacement);
+        replacement.setTitle(previousStage.getTitle());
+        replacement.getIcons().setAll(previousStage.getIcons());
+        replacement.setOnCloseRequest(previousStage.getOnCloseRequest());
+        replacement.setResizable(previousStage.isResizable());
+        replacement.setAlwaysOnTop(previousStage.isAlwaysOnTop());
+        replacement.setFullScreenExitHint(previousStage.getFullScreenExitHint());
+        replacement.setFullScreenExitKeyCombination(previousStage.getFullScreenExitKeyCombination());
+
+        detachStage();
+        previousStage.hide();
+        attachStage(replacement);
+        replacement.setMaximized(maximized && WindowState.supportsMaximization(replacement));
+        replacement.setFullScreen(fullScreen);
+        replacement.setIconified(iconified);
+        if (showing) {
+            replacement.show();
+        }
+        if (focusOwner != null) {
+            focusOwner.requestFocus();
+        }
     }
 
     /// Attaches the retained scene and native window behavior to `newStage`.
@@ -735,7 +795,8 @@ public final class Decorator {
     /// system decoration for supported opaque windows, except for dark windows on Windows; explicit enablement
     /// bypasses the brightness exclusion. Transparent windows always use custom decoration.
     /// Any active window animation is cancelled and reset. Custom window
-    /// animations run only with custom decoration. This method does not show the stage.
+    /// animations run only with custom decoration. Appearance listeners remain active until [#detachStage()].
+    /// This method does not show the stage or invoke the replacement-stage initializer.
     ///
     /// @param newStage the stage to attach, which must be accessed on the JavaFX application thread
     /// @return the scene installed on `newStage`
@@ -811,6 +872,10 @@ public final class Decorator {
             contentWidth.bind(windowBounds.contentWidthProperty());
             contentHeight.bind(windowBounds.contentHeightProperty());
             updateWindowDecoration(WindowState.isMaximized(newStage) || newStage.isFullScreen());
+            Themes.windowTransparentProperty().addListener(windowStyleListener);
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                Themes.darkModeProperty().addListener(windowStyleListener);
+            }
         }
         root.setCursor(Cursor.DEFAULT);
         dragging = false;
@@ -822,6 +887,7 @@ public final class Decorator {
     ///
     /// The root, scene, navigation state, dialogs, and snackbar remain owned by this decorator and may subsequently
     /// be attached to another stage. Calling this method while detached has no effect beyond resetting root transforms.
+    /// Removes appearance listeners; a queued style check does nothing unless another stage has been attached.
     /// Hiding a stage that will later be shown again does not require detachment.
     public void detachStage() {
         FXUtils.checkFxUserThread();
@@ -834,6 +900,10 @@ public final class Decorator {
             windowBounds = null;
         }
         if (stage != null) {
+            Themes.windowTransparentProperty().removeListener(windowStyleListener);
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                Themes.darkModeProperty().removeListener(windowStyleListener);
+            }
             stage.removeEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
             stage.iconifiedProperty().removeListener(iconifiedListener);
             stage.maximizedProperty().removeListener(stageDecorationListener);

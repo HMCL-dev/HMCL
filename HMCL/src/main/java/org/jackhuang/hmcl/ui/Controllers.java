@@ -24,7 +24,6 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
@@ -52,7 +51,6 @@ import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.Decorator;
-import org.jackhuang.hmcl.ui.decorator.WindowState;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
@@ -99,8 +97,6 @@ public final class Controllers {
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     /// The coordinator for the main window's scene graph and navigation stack.
     private static @Nullable Decorator decorator;
-    /// Whether an appearance change has already queued a main-window style check.
-    private static boolean windowStyleUpdateQueued;
 
     private static DownloadPage downloadPage;
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
@@ -229,50 +225,6 @@ public final class Controllers {
         WindowsNativeUtils.installWindowsAppUserModelRelaunchProperties(stage);
     }
 
-    /// Replaces the main stage when transparency or theme brightness requires a different decoration style.
-    ///
-    /// The retained scene, navigation, dialogs, normal bounds, and supported window states are preserved. A hidden window
-    /// remains hidden. This method must run on the JavaFX application thread after theme bindings have updated.
-    private static void updateMainWindowStyle() {
-        @Nullable Decorator currentDecorator = decorator;
-        if (currentDecorator == null || !currentDecorator.isStageStyleOutdated()) {
-            return;
-        }
-        @Nullable Stage previousStage = currentDecorator.getStage();
-        if (previousStage == null) {
-            return;
-        }
-
-        boolean showing = previousStage.isShowing();
-        boolean maximized = WindowState.isMaximized(previousStage);
-        boolean fullScreen = previousStage.isFullScreen();
-        boolean iconified = previousStage.isIconified();
-        @Nullable Node focusOwner = previousStage.getScene().getFocusOwner();
-
-        Stage replacement = new Stage();
-        configureMainStage(replacement);
-        replacement.setTitle(previousStage.getTitle());
-        replacement.getIcons().setAll(previousStage.getIcons());
-        replacement.setOnCloseRequest(previousStage.getOnCloseRequest());
-        replacement.setResizable(previousStage.isResizable());
-        replacement.setAlwaysOnTop(previousStage.isAlwaysOnTop());
-        replacement.setFullScreenExitHint(previousStage.getFullScreenExitHint());
-        replacement.setFullScreenExitKeyCombination(previousStage.getFullScreenExitKeyCombination());
-
-        currentDecorator.detachStage();
-        previousStage.hide();
-        currentDecorator.attachStage(replacement);
-        replacement.setMaximized(maximized && WindowState.supportsMaximization(replacement));
-        replacement.setFullScreen(fullScreen);
-        replacement.setIconified(iconified);
-        if (showing) {
-            replacement.show();
-        }
-        if (focusOwner != null) {
-            focusOwner.requestFocus();
-        }
-    }
-
     /// Initializes the main application stage, scene graph, and background services.
     ///
     /// @param stage the primary application stage, which must not have been shown
@@ -295,21 +247,8 @@ public final class Controllers {
 
         configureMainStage(stage);
 
-        decorator = new Decorator(getRootPage());
+        decorator = new Decorator(getRootPage(), Controllers::configureMainStage);
         Scene mainScene = decorator.attachStage(stage);
-        ChangeListener<Boolean> windowStyleListener = (observable, oldValue, newValue) -> {
-            if (!windowStyleUpdateQueued) {
-                windowStyleUpdateQueued = true;
-                Platform.runLater(() -> {
-                    windowStyleUpdateQueued = false;
-                    updateMainWindowStyle();
-                });
-            }
-        };
-        Themes.windowTransparentProperty().addListener(windowStyleListener);
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            Themes.darkModeProperty().addListener(windowStyleListener);
-        }
         getRootPage().getMainPage().showUpdateProperty().bind(UpdateChecker.checkingUpdateProperty().not().and(UpdateChecker.outdatedProperty()));
         getRootPage().getMainPage().showUpdateDialogProperty().bind(
                 decorator.backableProperty().not()
