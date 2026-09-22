@@ -88,6 +88,10 @@ public final class LauncherHelper {
     private final GameSettings.Effective setting;
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
+
+    /// The crash window that hosted the launch progress of a restart; closed once the restart
+    /// launch succeeds, kept open on failure for inspecting the logs.
+    private @Nullable GameCrashWindow restartHostWindow;
     private QuickPlayOption quickPlayOption;
     private boolean disableOfflineSkin = false;
 
@@ -147,6 +151,23 @@ public final class LauncherHelper {
     public void makeLaunchScript(Path scriptFile) {
         this.scriptFile = Objects.requireNonNull(scriptFile);
         launch();
+    }
+
+    /// Restarts the crashed game with the launch context captured by this helper, e.g. the account
+    /// and the QuickPlay option. The launch progress is shown as an overlay in the hosting crash
+    /// window, which is closed when the launch succeeds and stays open on failure.
+    ///
+    /// @param hostWindow the crash window that invoked this restart
+    private void restartCrashedGame(GameCrashWindow hostWindow) {
+        if (launcherVisibility == LauncherVisibility.HIDE) {
+            // The platform must outlive the crash window, which closes when the launch succeeds.
+            setImplicitExit(false);
+        }
+
+        restartHostWindow = Objects.requireNonNull(hostWindow);
+
+        LOG.info("Restarting game instance: " + gameInstance.getId());
+        launch0();
     }
 
     /// Builds and executes the launch pipeline for the captured game instance.
@@ -333,6 +354,13 @@ public final class LauncherHelper {
             @Override
             public void onStop(boolean success, TaskExecutor executor) {
                 runLater(() -> {
+                    if (success && restartHostWindow != null) {
+                        restartHostWindow.close();
+                        restartHostWindow = null;
+                    } else if (!success && launcherVisibility == LauncherVisibility.HIDE) {
+                        setImplicitExit(true);
+                    }
+
                     // Check if the application has stopped
                     // because onStop will be invoked if tasks fail when the executor service shut down.
                     if (!Controllers.isStopped()) {
@@ -951,6 +979,8 @@ public final class LauncherHelper {
                         // If application was stopped and execution services did not finish termination,
                         // these codes will be executed.
                         if (Controllers.getStage() != null) {
+                            // The platform must survive the main window being closed while the game runs.
+                            setImplicitExit(false);
                             Controllers.getStage().close();
                             Controllers.shutdown();
                             Schedulers.shutdown();
@@ -1034,7 +1064,7 @@ public final class LauncherHelper {
 
             if (exitType != ExitType.NORMAL) {
                 gameInstance.markLaunchedAbnormally();
-                runLater(() -> new GameCrashWindow(process, exitType, gameInstance, launchOptions, logs).show());
+                runLater(() -> new GameCrashWindow(process, exitType, gameInstance, launchOptions, logs, launchingStepsPane, LauncherHelper.this::restartCrashedGame).show());
             }
 
             checkExit();
