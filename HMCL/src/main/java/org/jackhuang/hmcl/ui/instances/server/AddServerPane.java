@@ -25,10 +25,10 @@ import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import org.jackhuang.hmcl.server.ServerStatusGetter;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.DialogAware;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
@@ -40,20 +40,33 @@ import java.util.function.Consumer;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.setValidateWhileTextChanged;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AddServerPane extends TransitionPane implements DialogAware {
-    private final Runnable failed;
-    private final Consumer<ServerListPage.IconedServer> success;
+    private final Consumer<ServerListPage.IconedServer> doAddServer;
 
-    private final GridPane body;
-    private final JFXTextField txtServerName;
-    private final JFXTextField txtServerIP;
+    private final GridPane body = new GridPane();
+    private final JFXTextField txtServerName = new JFXTextField();
+    private final JFXTextField txtServerIP = new JFXTextField();
 
-    public AddServerPane(Runnable failed, Consumer<ServerListPage.IconedServer> success) {
-        this.failed = failed;
-        this.success = success;
+    private final JFXButton btnAccept = new JFXButton();
+    private final JFXButton btnCancel = new JFXButton();
+    private final SpinnerPane spinner = new SpinnerPane();
+    private final Label lblErrorMessage = new Label();
+
+    public AddServerPane(Consumer<ServerListPage.IconedServer> doAddServer) {
+        this.doAddServer = doAddServer;
 
         getStyleClass().add("skin-pane");
+        initPaneContents();
+
+    }
+
+    private void initPaneContents() {
+        body.setDisable(false);
+        body.getChildren().clear();
+        body.getColumnConstraints().clear();
+        lblErrorMessage.setText("");
 
         JFXDialogLayout rootLayout = new JFXDialogLayout();
         getChildren().setAll(rootLayout);
@@ -61,7 +74,6 @@ public class AddServerPane extends TransitionPane implements DialogAware {
 
         VBox bodyVbox = new VBox();
         bodyVbox.setSpacing(8);
-        body = new GridPane();
 
         VBox.setMargin(body, new Insets(20, 0, 0, 0));
         body.setVgap(22);
@@ -82,7 +94,6 @@ public class AddServerPane extends TransitionPane implements DialogAware {
             GridPane.setHalignment(label, HPos.LEFT);
             body.add(label, 0, 0);
 
-            txtServerName = new JFXTextField();
             txtServerName.setPromptText(i18n("servers.manager.add.server.name.def"));
             body.add(txtServerName, 1, 0);
         }
@@ -94,7 +105,6 @@ public class AddServerPane extends TransitionPane implements DialogAware {
             GridPane.setHalignment(label, HPos.LEFT);
             body.add(label, 0, 1);
 
-            txtServerIP = new JFXTextField();
             txtServerIP.setValidators(new RequiredValidator());
             setValidateWhileTextChanged(txtServerIP, true);
             body.add(txtServerIP, 1, 1);
@@ -103,7 +113,7 @@ public class AddServerPane extends TransitionPane implements DialogAware {
         bodyVbox.getChildren().add(body);
         rootLayout.setBody(bodyVbox);
 
-        JFXButton btnAccept = new JFXButton(i18n("servers.manager.add.accept"));
+        btnAccept.setText(i18n("servers.manager.add.accept"));
         btnAccept.getStyleClass().add("dialog-accept");
         btnAccept.setOnAction(e -> onAdd());
         btnAccept.disableProperty().bind(new BooleanBinding() {
@@ -117,36 +127,64 @@ public class AddServerPane extends TransitionPane implements DialogAware {
             }
         });
 
-        JFXButton btnCancel = new JFXButton(i18n("button.cancel"));
+        lblErrorMessage.setWrapText(true);
+        lblErrorMessage.setMaxWidth(400);
+
+        btnCancel.setText(i18n("button.cancel"));
         btnCancel.getStyleClass().add("dialog-cancel");
         btnCancel.setOnAction(e -> onCancel());
         onEscPressed(this, btnCancel::fire);
 
-        SpinnerPane spinner = new SpinnerPane();
         spinner.getStyleClass().add("small-spinner-pane");
         spinner.setContent(btnAccept);
 
-        rootLayout.setActions(btnAccept, btnCancel);
+        HBox actions = new HBox(spinner, btnCancel);
+        actions.setAlignment(Pos.CENTER_RIGHT);
+
+        rootLayout.setActions(lblErrorMessage, actions);
     }
 
     private void onCancel() {
         fireEvent(new DialogCloseEvent());
-        failed.run();
     }
 
     private void onAdd() {
-        String serverName = txtServerName.getText();
+        spinner.showSpinner();
+        String serverName;
         String serverIP = txtServerIP.getText();
         if (serverIP == null) return;
-        if (serverName == null || serverName.isEmpty()) {
+        if (txtServerName.getText() == null || txtServerName.getText().isEmpty()) {
             serverName = i18n("servers.manager.add.server.name.def");
+        } else {
+            serverName = txtServerName.getText();
         }
+
 
         body.setDisable(true);
 
-        fireEvent(new DialogCloseEvent());
-        // todo online check
-        success.accept(new ServerListPage.IconedServer(true, false, null, serverName, serverIP));
+        Task.supplyAsync(Schedulers.io(), () ->
+                ServerStatusGetter.getStatus(serverIP)
+        ).whenComplete(Schedulers.javafx(), (status, exception) -> {
+            if (exception != null)
+                LOG.warning("Failed to fetch server status.", exception);
+
+            if (status == null) {
+                spinner.hideSpinner();
+                btnAccept.setText(i18n("servers.manager.add.still"));
+                btnAccept.setOnAction(e -> {
+                    fireEvent(new DialogCloseEvent());
+                    doAddServer.accept(new ServerListPage.IconedServer(false, false, null, serverIP, serverName));
+                });
+                btnCancel.setOnAction(e -> {
+                    initPaneContents();
+                });
+                lblErrorMessage.setText(i18n("servers.manager.add.error.status"));
+            } else {
+//                initStatusContents(new ServerListPage.IconedServer(false, false, status.favicon(), serverIP, serverName));
+                fireEvent(new DialogCloseEvent());
+                doAddServer.accept(new ServerListPage.IconedServer(false, false, status.favicon(), serverIP, serverName));
+            }
+        }).start();
     }
 
     @Override

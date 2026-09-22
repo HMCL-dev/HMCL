@@ -163,8 +163,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
     }
 
     private void addServer() {
-        runInFX(() -> Controllers.dialog(new AddServerPane(() -> {
-        }, this::addServer)));
+        runInFX(() -> Controllers.dialog(new AddServerPane(this::addServer)));
     }
 
     private void refresh() {
