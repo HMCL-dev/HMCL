@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.game;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.stage.Stage;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Launcher;
@@ -48,6 +50,7 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -97,7 +100,7 @@ public final class LauncherHelper {
         this.setting = gameInstance.getEffectiveSettings();
         this.launcherVisibility = setting.getInheritable(GameSettings::launcherVisibilityProperty);
         this.showLogs = setting.getInheritable(GameSettings::showLogsProperty);
-        this.launchingStepsPane.setTitle(i18n("instance.launch"));
+        this.launchingStepsPane.setTitle(i18n("instance.launch") + " - " + gameInstance.getId().id());
     }
 
     public HMCLGameInstance getGameInstance() {
@@ -290,7 +293,7 @@ public final class LauncherHelper {
                             launchOptions,
                             launcherVisibility == LauncherVisibility.CLOSE
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
-                                    : new HMCLProcessListener(authInfo, launchOptions, launchingLatch, gameInstance.getVersion().compareTo(GameVersionNumber.unknown()) != 0)
+                                    : new HMCLProcessListener(this, authInfo, launchOptions, launchingLatch, gameInstance.getVersion().compareTo(GameVersionNumber.unknown()) != 0)
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
@@ -834,9 +837,10 @@ public final class LauncherHelper {
     /// The managed process listener.
     /// Guarantee that one Java [Process], one [HMCLProcessListener].
     /// Because every time we launched a game, we generates a new [HMCLProcessListener]
-    private final class HMCLProcessListener implements ProcessListener {
+    public static final class HMCLProcessListener implements ProcessListener {
 
         private final ReentrantLock lock = new ReentrantLock();
+        private final LauncherHelper launcherHelper;
         private final LaunchOptions launchOptions;
         private ManagedProcess process;
         private volatile boolean lwjgl;
@@ -848,12 +852,35 @@ public final class LauncherHelper {
         private Thread submitLogThread;
         private LinkedBlockingQueue<Log> logBuffer;
 
-        public HMCLProcessListener(AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
+        private final ReadOnlyBooleanWrapper exited = new ReadOnlyBooleanWrapper(false);
+
+        public HMCLProcessListener(LauncherHelper launcherHelper, AuthInfo authInfo, LaunchOptions launchOptions, CountDownLatch launchingLatch, boolean detectWindow) {
+            this.launcherHelper = launcherHelper;
             this.launchOptions = launchOptions;
             this.launchingLatch = launchingLatch;
             this.detectWindow = detectWindow;
             this.forbiddenAccessToken = authInfo != null ? authInfo.getAccessToken() : null;
             this.logs = new CircularArrayList<>(Log.getLogLines() + 1);
+        }
+
+        public ManagedProcess getProcess() {
+            return process;
+        }
+
+        public LogWindow getLogWindow() {
+            return logWindow;
+        }
+
+        public CircularArrayList<Log> getLogs() {
+            return logs;
+        }
+
+        public HMCLGameInstance getGameInstance() {
+            return launcherHelper.gameInstance;
+        }
+
+        public ReadOnlyBooleanProperty exitedProperty() {
+            return exited.getReadOnlyProperty();
         }
 
         @Override
@@ -869,11 +896,14 @@ public final class LauncherHelper {
                 LOG.info("Process ClassPath: " + classpath);
             }
 
-            if (showLogs) {
+            {
                 CountDownLatch logWindowLatch = new CountDownLatch(1);
                 runLater(() -> {
                     logWindow = new LogWindow(process, logs);
-                    logWindow.show();
+                    logWindow.logLine(new Log(Logger.filterForbiddenToken("Command: " + new CommandBuilder().addAll(process.getCommands())), Log4jLevel.INFO));
+                    if (process.getClasspath() != null)
+                        logWindow.logLine(new Log("ClassPath: " + process.getClasspath(), Log4jLevel.INFO));
+                    if (launcherHelper.showLogs) logWindow.show();
                     logWindowLatch.countDown();
                 });
 
@@ -923,10 +953,12 @@ public final class LauncherHelper {
                     Thread.currentThread().interrupt();
                 }
             }
+
+            GameProcessManager.add(this);
         }
 
         private void finishLaunch() {
-            switch (launcherVisibility) {
+            switch (launcherHelper.launcherVisibility) {
                 case HIDE_AND_REOPEN:
                     runLater(() -> {
                         // If application was stopped and execution services did not finish termination,
@@ -973,20 +1005,9 @@ public final class LauncherHelper {
                 log = log.replace(forbiddenAccessToken, "<access token>");
 
             Log4jLevel level = isErrorStream && !log.startsWith("[authlib-injector]") ? Log4jLevel.ERROR : null;
-            if (showLogs) {
-                if (level == null)
-                    level = Objects.requireNonNullElse(Log4jLevel.guessLevel(log), Log4jLevel.INFO);
-                logBuffer.add(new Log(log, level));
-            } else {
-                lock.lock();
-                try {
-                    logs.addLast(new Log(log, level));
-                    if (logs.size() > Log.getLogLines())
-                        logs.removeFirst();
-                } finally {
-                    lock.unlock();
-                }
-            }
+            if (level == null)
+                level = Objects.requireNonNullElse(Log4jLevel.guessLevel(log), Log4jLevel.INFO);
+            logBuffer.add(new Log(log, level));
 
             if (!lwjgl) {
                 String lowerCaseLog = log.toLowerCase(Locale.ROOT);
@@ -1006,15 +1027,15 @@ public final class LauncherHelper {
 
         @Override
         public void onExit(int exitCode, ExitType exitType) {
-            if (showLogs) {
-                logBuffer.add(new Log(String.format("[%s] [HMCL ProcessListener] Minecraft exit with code %d(0x%x), type is %s.", TIME_FORMATTER.format(Instant.now()), exitCode, exitCode, exitType), Log4jLevel.INFO));
-                submitLogThread.interrupt();
-                try {
-                    submitLogThread.join();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
+            logBuffer.add(new Log(String.format("[%s] [HMCL ProcessListener] Minecraft exit with code %d(0x%x), type is %s.", TIME_FORMATTER.format(Instant.now()), exitCode, exitCode, exitType), Log4jLevel.INFO));
+            submitLogThread.interrupt();
+            try {
+                submitLogThread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
+
+            runInFX(() -> exited.set(true));
 
             launchingLatch.countDown();
 
@@ -1033,11 +1054,11 @@ public final class LauncherHelper {
             }
 
             if (exitType != ExitType.NORMAL) {
-                gameInstance.markLaunchedAbnormally();
-                runLater(() -> new GameCrashWindow(process, exitType, gameInstance, launchOptions, logs).show());
+                launcherHelper.gameInstance.markLaunchedAbnormally();
+                runLater(() -> new GameCrashWindow(process, exitType, launcherHelper.gameInstance, launchOptions, logs).show());
             }
 
-            checkExit();
+            launcherHelper.checkExit();
         }
 
     }
