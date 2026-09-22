@@ -795,7 +795,8 @@ public final class Decorator {
     /// system decoration for supported opaque windows, except for dark windows on Windows; explicit enablement
     /// bypasses the brightness exclusion. Transparent windows always use custom decoration.
     /// Any active window animation is cancelled and reset. Custom window
-    /// animations run only with custom decoration. Appearance listeners remain active until [#detachStage()].
+    /// animations run only with custom decoration. Window-style listeners remain active until [#detachStage()].
+    /// On macOS, native application appearance updates are installed once per stage and retained across detachment.
     /// This method does not show the stage or invoke the replacement-stage initializer.
     ///
     /// @param newStage the stage to attach, which must be accessed on the JavaFX application thread
@@ -860,6 +861,9 @@ public final class Decorator {
         }
 
         if (stage != newStage) {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                Themes.applyNativeDarkMode(newStage);
+            }
             playRestoreMinimizeAnimation = false;
             updateWindowDecoration(false);
             stage = newStage;
@@ -887,7 +891,7 @@ public final class Decorator {
     ///
     /// The root, scene, navigation state, dialogs, and snackbar remain owned by this decorator and may subsequently
     /// be attached to another stage. Calling this method while detached has no effect beyond resetting root transforms.
-    /// Removes appearance listeners; a queued style check does nothing unless another stage has been attached.
+    /// Removes window-style listeners; a queued style check does nothing unless another stage has been attached.
     /// Hiding a stage that will later be shown again does not require detachment.
     public void detachStage() {
         FXUtils.checkFxUserThread();

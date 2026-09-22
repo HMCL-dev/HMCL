@@ -44,7 +44,6 @@ import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
-import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
@@ -212,16 +211,13 @@ public final class Controllers {
         }
     }
 
-    /// Installs application identity and native lifecycle integration on a new main stage.
+    /// Configures the main stage's application identity, shutdown action, and taskbar relaunch information.
     ///
     /// @param stage the unshown main stage
     private static void configureMainStage(Stage stage) {
         stage.setOnCloseRequest(event -> Launcher.stopApplication());
         FXUtils.setIcon(stage);
         stage.setTitle(Metadata.FULL_TITLE);
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-            Themes.applyNativeDarkMode(stage);
-        }
         WindowsNativeUtils.installWindowsAppUserModelRelaunchProperties(stage);
     }
 
