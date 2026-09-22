@@ -173,7 +173,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         Task.runAsync(() -> {
             for (Path file : files) {
                 try {
-                    resourcePackManager.importResourcePack(file);
+                    resourcePackManager.addResourcePack(file);
                 } catch (Exception e) {
                     LOG.warning("Failed to add resource pack", e);
                     failures.add(file);
