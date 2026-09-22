@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.instances;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -29,18 +28,19 @@ import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Skin;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import javafx.stage.FileChooser;
 import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.mod.LocalMod;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
@@ -55,8 +55,8 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.FileNameSet;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
+import org.jackhuang.hmcl.util.FileNameSet;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SynchronizedExceptionalLazy;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -72,11 +72,13 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.ui.FXUtils.*;
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -145,7 +147,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new SchematicsPageSkin(this);
+        return new SchematicsPageSkin();
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
@@ -816,98 +818,73 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
         }
     }
 
-    private static final class SchematicsPageSkin extends SkinBase<SchematicsPage> {
+    private final class SchematicsPageSkin extends ToolbarListPageSkin<Item, SchematicsPage> {
 
-        private final JFXListView<Item> listView;
+        SchematicsPageSkin() {
+            super(SchematicsPage.this, true);
 
-        SchematicsPageSkin(SchematicsPage skinnable) {
-            super(skinnable);
+            listView.setCellFactory(x -> new Cell(listView));
 
-            StackPane pane = new StackPane();
-            pane.setPadding(new Insets(10));
-            pane.getStyleClass().addAll("notice-pane");
+            setupSkin(
+                    new Node[]{
+                            createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, getSkinnable()::refresh),
+                            createToolbarButton2(i18n("schematics.add"), SVG.ADD, getSkinnable()::onAddFiles),
+                            createToolbarButton2(i18n("schematics.create_directory"), SVG.CREATE_NEW_FOLDER, getSkinnable()::onCreateDirectory),
+                            createToolbarButton2(i18n("search"), SVG.SEARCH, this::startSearch)
+                    },
+                    null
+            );
 
-            ComponentList root = new ComponentList();
-            root.getStyleClass().add("no-padding");
-            listView = new JFXListView<>();
-            listView.setSelectionModel(new NoneMultipleSelectionModel<>());
-
-            {
-                StackPane placeholderContainer = new StackPane();
-                placeholderContainer.getStyleClass().add("notice-pane");
-                Label placeholderLabel = new Label(i18n("schematics.empty"));
-                placeholderContainer.getChildren().add(placeholderLabel);
-                listView.setPlaceholder(placeholderContainer);
-            }
-
-            {
-                var toolbar = new HBox();
-                JFXButton btnGoBack = createToolbarButton2("", SVG.ARROW_BACK, skinnable::navigateBack);
-                btnGoBack.disableProperty().bind(skinnable.isRootProperty());
-                JFXButton btnDownload = createToolbarButton2(i18n("schematics.install_mod"), SVG.DOWNLOAD, skinnable::downloadLitematica);
-                FXUtils.onChangeAndOperate(skinnable.downloadTarget, (t) -> btnDownload.setDisable(t == null));
-                toolbar.getChildren().setAll(
-                        btnGoBack,
-                        createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                        createToolbarButton2(i18n("schematics.add"), SVG.ADD, skinnable::onAddFiles),
-                        createToolbarButton2(i18n("schematics.create_directory"), SVG.CREATE_NEW_FOLDER, skinnable::onCreateDirectory),
-                        createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::onRevealSchematicsFolder),
-                        btnDownload
-                );
-                FXUtils.setOverflowHidden(toolbar, 8);
-                root.getContent().add(toolbar);
-            }
-
-            {
-                SpinnerPane center = new SpinnerPane();
-                ComponentList.setVgrow(center, Priority.ALWAYS);
-                center.loadingProperty().bind(skinnable.loadingProperty());
-
-                listView.setCellFactory(x -> new Cell(listView));
-                listView.setSelectionModel(new NoneMultipleSelectionModel<>());
-                Bindings.bindContent(listView.getItems(), skinnable.getItems());
-
-                // ListViewBehavior would consume ESC pressed event, preventing us from handling it
-                // So we ignore it here
-                ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-                listView.getStyleClass().add("no-horizontal-scrollbar");
-
-
-                center.setContent(listView);
-                root.getContent().add(center);
-            }
-
-            {
-                var relPath = new HBox();
-                relPath.getStyleClass().add("jfx-tool-bar-tip");
-                relPath.setAlignment(Pos.CENTER_LEFT);
-                FXUtils.onChangeAndOperate(skinnable.currentDirectoryProperty(), currentDir -> {
-                    relPath.getChildren().clear();
-                    var d = currentDir;
-                    while (d != null) {
-                        if (d != currentDir) {
-                            var box = new HBox(new Text(">"));
-                            box.setPadding(new Insets(3));
-                            relPath.getChildren().add(0, box);
-                        }
-                        var txt = new Text(d.getName());
-                        var box = new HBox(txt);
-                        box.setPadding(new Insets(3));
-                        box.setMouseTransparent(true);
-                        var rippler = new RipplerContainer(box);
-                        var finalD = d;
-                        FXUtils.onClicked(rippler, () -> skinnable.navigateTo(finalD));
-                        relPath.getChildren().add(0, rippler);
-                        d = d.parent;
+            var relPath = new HBox();
+            relPath.getStyleClass().add("jfx-tool-bar-tip");
+            relPath.setAlignment(Pos.CENTER_LEFT);
+            FXUtils.onChangeAndOperate(SchematicsPage.this.currentDirectoryProperty(), currentDir -> {
+                relPath.getChildren().clear();
+                var d = currentDir;
+                while (d != null) {
+                    if (d != currentDir) {
+                        var sep = new HBox(new Text(">"));
+                        sep.setPadding(new Insets(3));
+                        relPath.getChildren().add(0, sep);
                     }
-                });
-                var relPathPane = new HBox(relPath);
-                relPathPane.setPadding(new Insets(2));
-                root.getContent().add(relPathPane);
-            }
+                    var txt = new Text(d.getName());
+                    var box = new HBox(txt);
+                    box.setPadding(new Insets(3));
+                    box.setMouseTransparent(true);
+                    var rippler = new RipplerContainer(box);
+                    var finalD = d;
+                    FXUtils.onClicked(rippler, () -> SchematicsPage.this.navigateTo(finalD));
+                    relPath.getChildren().add(0, rippler);
+                    d = d.parent;
+                }
+            });
 
-            pane.getChildren().setAll(root);
-            getChildren().setAll(pane);
+            var relPathPane = new HBox(relPath);
+            relPathPane.setPadding(new Insets(2));
+            rootList.getContent().add(relPathPane);
+        }
+
+        @Override
+        protected String getEmptyPlaceholderText() {
+            return i18n("schematics.empty");
+        }
+
+        @Override
+        protected Predicate<Item> updateSearchPredicate(String searchText) {
+            if (searchText == null || searchText.isEmpty()) return item -> true;
+            if (searchText.startsWith("regex:")) {
+                String regex = searchText.substring("regex:".length());
+                try {
+                    Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+                    return item -> pattern.matcher(item.getName() + item.getDescription()).find();
+                } catch (PatternSyntaxException e) {
+                    return item -> false;
+                }
+            } else {
+                return item -> (item.getName() + item.getDescription())
+                        .toLowerCase(Locale.ROOT)
+                        .contains(searchText.toLowerCase(Locale.ROOT));
+            }
         }
     }
 
