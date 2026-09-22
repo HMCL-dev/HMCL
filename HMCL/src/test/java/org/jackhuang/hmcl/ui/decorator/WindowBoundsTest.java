@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.decorator;
 
+import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
@@ -229,9 +230,18 @@ final class WindowBoundsTest {
         }
     }
 
-    /// Returns EXTENDED when available, otherwise the traditional native frame.
-    private static StageStyle nativeStyle() {
+    /// Returns EXTENDED on JavaFX 27 or later when supported, otherwise the traditional native frame.
+    ///
+    /// Queries capabilities on the JavaFX application thread, waiting for the result when called elsewhere.
+    private static StageStyle nativeStyle() throws Exception {
+        if (!Platform.isFxApplicationThread()) {
+            return onFxThread(WindowBoundsTest::nativeStyle);
+        }
         try {
+            int version = Integer.parseInt(System.getProperty("javafx.version", "0").split("[.\\-+]")[0]);
+            if (version < 27 || !Platform.isSupported(ConditionalFeature.valueOf("EXTENDED_WINDOW"))) {
+                return StageStyle.DECORATED;
+            }
             return StageStyle.valueOf("EXTENDED");
         } catch (IllegalArgumentException e) {
             return StageStyle.DECORATED;
