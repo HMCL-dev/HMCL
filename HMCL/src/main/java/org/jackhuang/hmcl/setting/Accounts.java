@@ -271,7 +271,10 @@ public final class Accounts {
 
         try {
             AccountID accountID = Account.readAccountID(record);
-            return factory.fromStorage(record, SettingsManager.getAccountPrivateData(accountID, portable));
+            JsonObject privateData = SettingsManager.getAccountPrivateData(accountID, portable);
+            Account account = factory.fromStorage(record, privateData);
+            Account.restoreCachedSkin(account, privateData);
+            return account;
         } catch (Exception e) {
             LOG.warning("Failed to load account: " + describeAccountRecord(record), e);
             return null;
