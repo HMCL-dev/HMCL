@@ -230,9 +230,11 @@ public final class JavaDownloadDialog extends StackPane {
 
             this.remoteVersionBox = new JFXComboBox<>();
             this.remoteVersionBox.setConverter(FXUtils.stringConverter(JavaRemoteVersion::getDistributionVersion));
+            this.remoteVersionBox.disableProperty().bind(Bindings.isNull(distributionBox.getSelectionModel().selectedItemProperty()));
 
             this.packageTypeBox = new JFXComboBox<>(FXCollections.observableArrayList());
             this.packageTypeBox.setConverter(FXUtils.stringConverter(JavaPackageType::getDisplayName));
+            this.packageTypeBox.disableProperty().bind(Bindings.isNull(distributionBox.getSelectionModel().selectedItemProperty()));
 
             this.downloadButton = new JFXButton(i18n("download"));
             downloadButton.setOnAction(e -> onDownload());
@@ -312,8 +314,6 @@ public final class JavaDownloadDialog extends StackPane {
             Consumer<DiscoJavaVersionList> updateListStatus = list -> {
                 remoteVersionBox.setItems(null);
                 packageTypeBox.getItems().clear();
-                remoteVersionBox.setDisable(true);
-                packageTypeBox.setDisable(true);
                 warningLabel.setText(null);
 
                 if (list == null || (list.versions != null && list.versions.isEmpty()))
@@ -326,9 +326,6 @@ public final class JavaDownloadDialog extends StackPane {
                     if (list.status == DiscoJavaVersionList.Status.SUCCESS) {
                         packageTypeBox.getItems().setAll(list.versions.keySet());
                         packageTypeBox.getSelectionModel().selectFirst();
-
-                        remoteVersionBox.setDisable(false);
-                        packageTypeBox.setDisable(false);
                     } else
                         warningLabel.setText(i18n("java.download.load_list.failed"));
                 }
