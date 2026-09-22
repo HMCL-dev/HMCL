@@ -366,16 +366,23 @@ public final class GameDirectoryManager {
     }
 
     /// Adds a game directory to the given store, replacing a game directory with the same ID in that store.
+    ///
+    /// The replacement keeps the selected game directory pointing at an entry of [#mergedGameDirectories],
+    /// so the selection does not silently become detached from the merged view.
     private static void addGameDirectory(GameDirectories gameDirectories, GameDirectory gameDirectory) {
         Objects.requireNonNull(gameDirectory);
         ObservableList<GameDirectory> entries = gameDirectories.getGameDirectories();
         GameDirectoryID id = gameDirectory.getId();
         for (int i = 0; i < entries.size(); i++) {
-            if (entries.get(i).getId().equals(id)) {
-                repositories.remove(entries.get(i));
+            GameDirectory replaced = entries.get(i);
+            if (replaced.getId().equals(id)) {
+                repositories.remove(replaced);
                 settings().setSelectedInstance(id, null);
                 entries.set(i, gameDirectory);
                 rebuildGameDirectories();
+                if (replaced == selectedGameDirectory.get()) {
+                    selectedGameDirectory.set(gameDirectory);
+                }
                 return;
             }
         }
