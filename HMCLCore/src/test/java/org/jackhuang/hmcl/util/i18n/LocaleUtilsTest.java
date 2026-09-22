@@ -254,4 +254,25 @@ public final class LocaleUtilsTest {
         assertEquals(TextDirection.RIGHT_TO_LEFT, LocaleUtils.getTextDirection(Locale.forLanguageTag("he")));
         assertEquals(TextDirection.RIGHT_TO_LEFT, LocaleUtils.getTextDirection(Locale.forLanguageTag("heb")));
     }
+
+    @Test
+    public void testGetMinecraftLanguageTag() {
+        assertEquals("en_US", LocaleUtils.getMinecraftLanguageTag(Locale.ENGLISH));
+        assertEquals("zh_CN", LocaleUtils.getMinecraftLanguageTag(Locale.SIMPLIFIED_CHINESE));
+        assertEquals("zh_TW", LocaleUtils.getMinecraftLanguageTag(Locale.TRADITIONAL_CHINESE));
+        assertEquals("ja", LocaleUtils.getMinecraftLanguageTag(Locale.JAPANESE));
+        assertEquals("de_DE", LocaleUtils.getMinecraftLanguageTag(Locale.GERMANY));
+        assertEquals("he_IL", LocaleUtils.getMinecraftLanguageTag(Locale.forLanguageTag("iw-IL")));
+        assertEquals("zh_HK", LocaleUtils.getMinecraftLanguageTag(Locale.forLanguageTag("zh-HK")));
+        assertEquals("lzh", LocaleUtils.getMinecraftLanguageTag(Locale.forLanguageTag("lzh")));
+        assertEquals("de", LocaleUtils.getMinecraftLanguageTag(Locale.forLanguageTag("de")));
+    }
+
+    @Test
+    public void testGetMinecraftLanguageFileNames() {
+        assertEquals(List.of("en_us.json", "en.json"), LocaleUtils.getMinecraftLanguageFileNames(Locale.ENGLISH));
+        assertEquals(List.of("en_gb.json", "en_us.json", "en.json"), LocaleUtils.getMinecraftLanguageFileNames(Locale.UK));
+        assertEquals(List.of("zh_cn.json", "zh.json"), LocaleUtils.getMinecraftLanguageFileNames(Locale.SIMPLIFIED_CHINESE));
+        assertEquals(List.of("zh_hk.json", "zh_tw.json", "zh.json", "zh_cn.json"), LocaleUtils.getMinecraftLanguageFileNames(Locale.forLanguageTag("zh-HK")));
+    }
 }
