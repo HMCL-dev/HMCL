@@ -32,7 +32,9 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -53,16 +55,16 @@ final class NativeWindowDecoration {
     final Region headerBar;
 
     /// Assigns the header bar's center content.
-    private final Method setCenter;
+    private final MethodHandle setCenter;
 
     /// Assigns a node's native header hit-test behavior.
-    private final Method setDragType;
+    private final MethodHandle setDragType;
 
     /// Reads explicit native drag exclusions on title nodes.
-    private final Method getDragType;
+    private final MethodHandle getDragType;
 
     /// Sets the system button height to zero to hide the platform-provided buttons.
-    private final Method setSystemButtonHeight;
+    private final MethodHandle setSystemButtonHeight;
 
     /// Marks only the specified node as draggable, preserving child control interaction.
     private final Object draggable;
@@ -76,20 +78,26 @@ final class NativeWindowDecoration {
     /// Resolves all required public APIs and creates a detached header bar.
     ///
     /// @param forced whether to bypass the automatic theme brightness exclusion
-    /// @throws ReflectiveOperationException if the runtime does not expose a required API
-    private NativeWindowDecoration(boolean forced) throws ReflectiveOperationException {
+    /// @throws Throwable if a required API cannot be resolved or invoked
+    private NativeWindowDecoration(boolean forced) throws Throwable {
         this.forced = forced;
-        style = (StageStyle) Objects.requireNonNull(StageStyle.class.getField("EXTENDED").get(null));
+        MethodHandles.Lookup lookup = MethodHandles.publicLookup();
+        style = (StageStyle) lookup.findStaticGetter(StageStyle.class, "EXTENDED", StageStyle.class).invokeExact();
         Class<?> headerClass = Class.forName("javafx.scene.layout.HeaderBar");
         Class<?> dragClass = Class.forName("javafx.scene.layout.HeaderDragType");
-        setCenter = headerClass.getMethod("setCenter", Node.class);
-        setDragType = headerClass.getMethod("setDragType", Node.class, dragClass);
-        getDragType = headerClass.getMethod("getDragType", Node.class);
-        setSystemButtonHeight = headerClass.getMethod("setSystemButtonHeight", Stage.class, double.class);
-        draggable = Objects.requireNonNull(dragClass.getField("DRAGGABLE").get(null));
-        notDraggable = Objects.requireNonNull(dragClass.getField("NONE").get(null));
-        transparentSubtree = Objects.requireNonNull(dragClass.getField("TRANSPARENT_SUBTREE").get(null));
-        headerBar = (Region) headerClass.getConstructor().newInstance();
+        // Adapt runtime-only types once so cached handles can be invoked with exact, statically known signatures.
+        setCenter = lookup.findVirtual(headerClass, "setCenter", MethodType.methodType(void.class, Node.class))
+                .asType(MethodType.methodType(void.class, Region.class, Node.class));
+        setDragType = lookup.findStatic(headerClass, "setDragType", MethodType.methodType(void.class, Node.class, dragClass))
+                .asType(MethodType.methodType(void.class, Node.class, Object.class));
+        getDragType = lookup.findStatic(headerClass, "getDragType", MethodType.methodType(dragClass, Node.class))
+                .asType(MethodType.methodType(Object.class, Node.class));
+        setSystemButtonHeight = lookup.findStatic(headerClass, "setSystemButtonHeight",
+                MethodType.methodType(void.class, Stage.class, double.class));
+        draggable = Objects.requireNonNull(lookup.findStaticGetter(dragClass, "DRAGGABLE", dragClass).invoke());
+        notDraggable = Objects.requireNonNull(lookup.findStaticGetter(dragClass, "NONE", dragClass).invoke());
+        transparentSubtree = Objects.requireNonNull(lookup.findStaticGetter(dragClass, "TRANSPARENT_SUBTREE", dragClass).invoke());
+        headerBar = (Region) lookup.findConstructor(headerClass, MethodType.methodType(void.class)).invoke();
     }
 
     /// Creates native decoration support according to the configured preference and runtime capabilities.
@@ -123,7 +131,7 @@ final class NativeWindowDecoration {
                 return null;
             }
             return new NativeWindowDecoration(forced);
-        } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+        } catch (Throwable e) {
             LOG.warning("Native window decoration is unavailable; using custom decoration", e);
             return null;
         }
@@ -152,8 +160,8 @@ final class NativeWindowDecoration {
             if (content != null) {
                 configureTitleDragging(content);
             }
-            setCenter.invoke(headerBar, content);
-        } catch (ReflectiveOperationException e) {
+            setCenter.invokeExact(headerBar, content);
+        } catch (Throwable e) {
             throw new IllegalStateException("Cannot update native header content", e);
         }
     }
@@ -166,8 +174,8 @@ final class NativeWindowDecoration {
     /// @param enabled whether the node itself may move the window
     void setDraggable(Node node, boolean enabled) {
         try {
-            setDragType.invoke(null, node, enabled ? draggable : notDraggable);
-        } catch (ReflectiveOperationException e) {
+            setDragType.invokeExact(node, enabled ? draggable : notDraggable);
+        } catch (Throwable e) {
             throw new IllegalStateException("Cannot configure native header dragging", e);
         }
     }
@@ -180,8 +188,8 @@ final class NativeWindowDecoration {
     /// @param overlay the overlay above the header
     void setDragTransparent(Node overlay) {
         try {
-            setDragType.invoke(null, overlay, transparentSubtree);
-        } catch (ReflectiveOperationException e) {
+            setDragType.invokeExact(overlay, transparentSubtree);
+        } catch (Throwable e) {
             throw new IllegalStateException("Cannot configure native header overlay", e);
         }
     }
@@ -197,10 +205,10 @@ final class NativeWindowDecoration {
             return;
         }
         try {
-            if (getDragType.invoke(null, node) == notDraggable) {
+            if ((Object) getDragType.invokeExact(node) == notDraggable) {
                 return;
             }
-        } catch (ReflectiveOperationException e) {
+        } catch (Throwable e) {
             throw new IllegalStateException("Cannot read native header dragging", e);
         }
         if (node instanceof Control && !(node instanceof Label)) {
@@ -229,8 +237,8 @@ final class NativeWindowDecoration {
     /// @param stage the extended stage to configure
     void configureStage(Stage stage) {
         try {
-            setSystemButtonHeight.invoke(null, stage, 0.0);
-        } catch (ReflectiveOperationException e) {
+            setSystemButtonHeight.invokeExact(stage, 0.0);
+        } catch (Throwable e) {
             throw new IllegalStateException("Cannot hide native window buttons", e);
         }
     }
