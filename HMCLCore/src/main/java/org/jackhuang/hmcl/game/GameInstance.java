@@ -18,16 +18,22 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.schematic.LitematicaConfig;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Provides a view of a game instance and its instance-specific paths within a
 /// [GameRepositorySnapshot].
@@ -167,7 +173,25 @@ public interface GameInstance {
     ///
     /// @return the schematics directory below the run directory
     default Path getSchematicsDirectory() {
-        return getRunDirectory().resolve("schematics");
+        var runDir = getRunDirectory();
+        var litematicaConfig = runDir.resolve("config").resolve("litematica.json");
+        Path dir = runDir.resolve("schematics");
+        if (Files.isRegularFile(litematicaConfig)) {
+            try {
+                var conf = JsonUtils.fromJsonFile(litematicaConfig, LitematicaConfig.class);
+                if (conf != null
+                        && conf.generic() != null
+                        && conf.generic().customSchematicBaseDirectoryEnabled()
+                        && StringUtils.isNotBlank(conf.generic().customSchematicBaseDirectory())
+                ) {
+                    var p = Path.of(conf.generic().customSchematicBaseDirectory());
+                    dir = p.isAbsolute() ? p.normalize() : runDir.resolve(p).normalize();
+                }
+            } catch (Exception e) {
+                LOG.warning("Failed to load custom schematics directory from litematica config at '%s'".formatted(litematicaConfig), e);
+            }
+        }
+        return dir;
     }
 
     /// Returns the directory used for extracted native libraries for a platform.

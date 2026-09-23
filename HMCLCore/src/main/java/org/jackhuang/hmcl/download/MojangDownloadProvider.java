@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomVersionList;
 import org.jackhuang.hmcl.download.fabric.FabricAPIVersionList;
 import org.jackhuang.hmcl.download.fabric.FabricVersionList;
@@ -30,9 +31,8 @@ import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
 import org.jackhuang.hmcl.game.GameComponentType;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.net.URI;
 import java.util.List;
 
 /**
@@ -72,13 +72,13 @@ public class MojangDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public List<URI> getVersionListURLs() {
-        return List.of(URI.create("https://piston-meta.mojang.com/mc/game/version_manifest.json"));
+    public @Unmodifiable List<WebURL> getVersionListURLs() {
+        return List.of(WebURL.parse("https://piston-meta.mojang.com/mc/game/version_manifest.json"));
     }
 
     @Override
-    public List<URI> getAssetObjectCandidates(String assetObjectLocation) {
-        return List.of(NetworkUtils.toURI("https://resources.download.minecraft.net/" + assetObjectLocation));
+    public @Unmodifiable List<WebURL> getAssetObjectCandidates(String assetObjectLocation) {
+        return List.of(WebURL.parse("https://resources.download.minecraft.net/" + assetObjectLocation));
     }
 
     @Override

@@ -23,6 +23,7 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
@@ -61,6 +62,7 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -77,6 +79,9 @@ import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 
@@ -129,6 +134,29 @@ public final class Decorator {
     /// The navigation stack rendered in the main window.
     private final Navigator navigator = new Navigator();
 
+    /// Reflective access to system decoration, or `null` on unsupported runtimes.
+    private final @Nullable NativeWindowDecoration nativeDecoration = NativeWindowDecoration.create();
+
+    /// Whether the attached stage delegates window decoration and gestures to the platform.
+    private boolean nativeDecorationEnabled;
+
+    /// Installs application-specific identity and lifecycle integration on replacement stages before attachment.
+    private final Consumer<Stage> stageInitializer;
+
+    /// Whether an appearance change has already queued a window-style check.
+    private boolean windowStyleUpdateQueued;
+
+    /// Coalesces appearance changes so stage replacement runs after theme bindings have updated.
+    private final ChangeListener<Boolean> windowStyleListener = (observable, oldValue, newValue) -> {
+        if (!windowStyleUpdateQueued) {
+            windowStyleUpdateQueued = true;
+            Platform.runLater(() -> {
+                windowStyleUpdateQueued = false;
+                updateWindowStyle();
+            });
+        }
+    };
+
     /// The clipped main-window content hosted inside [#shadowContainer].
     private final MainWindowPane mainWindowPane;
 
@@ -141,14 +169,17 @@ public final class Decorator {
     /// Whether the navigation close action should use the home icon.
     private final BooleanProperty showCloseAsHome = new SimpleBooleanProperty(this, "showCloseAsHome");
 
-    /// The width of the visible window content, excluding custom decoration insets.
+    /// The width of the visible window content, excluding native borders and custom shadow padding.
     private final DoubleProperty contentWidth = new SimpleDoubleProperty(this, "contentWidth");
 
-    /// The height of the visible window content, excluding custom decoration insets.
+    /// The height of the visible window content, excluding native borders and custom shadow padding.
     private final DoubleProperty contentHeight = new SimpleDoubleProperty(this, "contentHeight");
 
     /// The stage currently controlled by this decorator, or `null` while detached.
     private @Nullable Stage stage;
+
+    /// Tracks the attached stage's content geometry, or `null` while detached.
+    private @Nullable WindowBounds windowBounds;
 
     /// The title-bar state supplied by the current page, or `null` before navigation is initialized.
     private final ObjectProperty<DecoratorPage.@Nullable State> state = new SimpleObjectProperty<>(this, "state");
@@ -198,49 +229,7 @@ public final class Decorator {
     private final InvalidationListener stageDecorationListener = observable -> {
         @Nullable Stage currentStage = stage;
         if (currentStage != null) {
-            updateWindowDecoration(currentStage.isMaximized() || currentStage.isFullScreen());
-        }
-    };
-
-    /// Updates the changed visible-content bound and persists normal, non-iconified stage bounds.
-    private final InvalidationListener stageBoundsListener = observable -> {
-        @Nullable Stage currentStage = stage;
-        if (currentStage == null) {
-            return;
-        }
-
-        Insets insets = getWindowInsets();
-        boolean saveBounds = !currentStage.isIconified()
-                // https://github.com/HMCL-dev/HMCL/issues/4290
-                && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
-                || !currentStage.isFullScreen() && !currentStage.isMaximized());
-
-        if (observable == currentStage.xProperty()) {
-            if (saveBounds) {
-                double currentContentX = currentStage.getX() + insets.getLeft();
-                SettingsManager.state().setX(currentContentX / PRIMARY_SCREEN_BOUNDS.getWidth());
-            }
-        } else if (observable == currentStage.yProperty()) {
-            if (saveBounds) {
-                double currentContentY = currentStage.getY() + insets.getTop();
-                SettingsManager.state().setY(currentContentY / PRIMARY_SCREEN_BOUNDS.getHeight());
-            }
-        } else if (observable == currentStage.widthProperty()) {
-            double currentContentWidth = Math.max(
-                    MIN_CONTENT_WIDTH,
-                    currentStage.getWidth() - insets.getLeft() - insets.getRight());
-            contentWidth.set(currentContentWidth);
-            if (saveBounds) {
-                SettingsManager.state().setWidth(currentContentWidth);
-            }
-        } else if (observable == currentStage.heightProperty()) {
-            double currentContentHeight = Math.max(
-                    MIN_CONTENT_HEIGHT,
-                    currentStage.getHeight() - insets.getTop() - insets.getBottom());
-            contentHeight.set(currentContentHeight);
-            if (saveBounds) {
-                SettingsManager.state().setHeight(currentContentHeight);
-            }
+            updateWindowDecoration(WindowState.isMaximized(currentStage) || currentStage.isFullScreen());
         }
     };
 
@@ -251,9 +240,13 @@ public final class Decorator {
     ///
     /// The decorator initially enables its custom window shadow. No scene is created until
     /// [#attachStage(Stage)] is called or [#getRoot()] is otherwise installed in a scene.
+    /// Appearance changes replace the attached stage when required, preserving its retained scene and window state.
     ///
     /// @param mainPage the permanent root page of the navigation stack
-    public Decorator(Node mainPage) {
+    /// @param stageInitializer configures each replacement stage on the JavaFX application thread before attachment;
+    ///                         it must not show the stage and is not called for stages supplied to [#attachStage(Stage)]
+    public Decorator(Node mainPage, Consumer<Stage> stageInitializer) {
+        this.stageInitializer = Objects.requireNonNull(stageInitializer);
         navigator.setOnNavigated(this::onNavigated);
 
         mainWindowPane = new MainWindowPane(this);
@@ -285,21 +278,21 @@ public final class Decorator {
         return root;
     }
 
-    /// Returns the insets reserved outside the main-window content.
+    /// Returns the space reserved inside the scene for custom window shadows.
     ///
-    /// @return the root's shadow insets for a normal window, or [Insets#EMPTY] while maximized or full-screen
+    /// @return the custom shadow insets, or [Insets#EMPTY] with native decoration, supported maximization, or full-screen
     public Insets getWindowInsets() {
         return root.getPadding();
     }
 
-    /// Returns the visible window-content width property, excluding custom decoration insets.
+    /// Returns the visible window-content width property, excluding native borders and custom shadow padding.
     ///
     /// @return the current content-width property
     public ReadOnlyDoubleProperty contentWidthProperty() {
         return contentWidth;
     }
 
-    /// Returns the visible window-content height property, excluding custom decoration insets.
+    /// Returns the visible window-content height property, excluding native borders and custom shadow padding.
     ///
     /// @return the current content-height property
     public ReadOnlyDoubleProperty contentHeightProperty() {
@@ -316,11 +309,12 @@ public final class Decorator {
 
     /// Updates the shadow, outer insets, and content corner shape for an edge-to-edge window state.
     ///
-    /// @param edgeToEdge whether the attached stage is maximized or full-screen
+    /// @param edgeToEdge whether the attached stage is maximized under [WindowState]'s policy or full-screen
     private void updateWindowDecoration(boolean edgeToEdge) {
-        root.setPadding(edgeToEdge ? Insets.EMPTY : SHADOW_INSETS);
-        shadowContainer.setEffect(edgeToEdge ? null : windowShadow);
-        mainWindowPane.setWindowEdgeToEdge(edgeToEdge);
+        boolean customDecoration = !nativeDecorationEnabled && !edgeToEdge;
+        root.setPadding(customDecoration ? SHADOW_INSETS : Insets.EMPTY);
+        shadowContainer.setEffect(customDecoration ? windowShadow : null);
+        mainWindowPane.setWindowCornersRounded(customDecoration);
     }
 
     /// Returns the pane on which application dialogs are stacked.
@@ -405,12 +399,32 @@ public final class Decorator {
     ///
     /// @param node the drag-enabled node
     public void capableDraggingWindow(Node node) {
-        node.addEventHandler(MouseEvent.MOUSE_MOVED, event -> allowMove = true);
+        if (nativeDecoration != null) {
+            nativeDecoration.setDraggable(node, true);
+        }
+        node.addEventHandler(MouseEvent.MOUSE_MOVED, event -> {
+            if (!nativeDecorationEnabled) {
+                allowMove = true;
+            }
+        });
         node.addEventHandler(MouseEvent.MOUSE_EXITED, event -> {
             if (!dragging) {
                 allowMove = false;
             }
         });
+    }
+
+    /// Configures window dragging through an overlay while retaining ordinary mouse picking.
+    ///
+    /// Native decoration permits dragging only over underlying draggable header areas. Custom decoration
+    /// permits dragging from the overlay itself. Interactive content must be excluded with [#forbidDraggingWindow(Node)].
+    ///
+    /// @param overlay the overlay above the window content and title bar
+    public void capableDraggingOverlay(Node overlay) {
+        capableDraggingWindow(overlay);
+        if (nativeDecoration != null) {
+            nativeDecoration.setDragTransparent(overlay);
+        }
     }
 
     /// Registers `node` as the title-bar area used to restore and maximize the attached stage.
@@ -425,9 +439,14 @@ public final class Decorator {
     ///
     /// @param node the node that must consume drag eligibility
     public void forbidDraggingWindow(Node node) {
+        if (nativeDecoration != null) {
+            nativeDecoration.setDraggable(node, false);
+        }
         node.addEventHandler(MouseEvent.MOUSE_MOVED, event -> {
-            allowMove = false;
-            event.consume();
+            if (!nativeDecorationEnabled) {
+                allowMove = false;
+                event.consume();
+            }
         });
     }
 
@@ -436,14 +455,15 @@ public final class Decorator {
     /// @param event the title-bar click event
     private void onTitleBarDoubleClick(MouseEvent event) {
         @Nullable Stage currentStage = stage;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+        if (nativeDecorationEnabled
                 || currentStage == null
+                || !WindowState.supportsMaximization(currentStage)
                 || event.getButton() != MouseButton.PRIMARY
                 || event.getClickCount() != 2) {
             return;
         }
 
-        currentStage.setMaximized(!currentStage.isMaximized());
+        currentStage.setMaximized(!WindowState.isMaximized(currentStage));
         event.consume();
     }
 
@@ -452,7 +472,7 @@ public final class Decorator {
     /// @param event the title-bar drag event
     private void onTitleBarDragged(MouseEvent event) {
         @Nullable Stage currentStage = stage;
-        if (currentStage == null || dragging || !currentStage.isMaximized()) {
+        if (nativeDecorationEnabled || currentStage == null || dragging || !WindowState.isMaximized(currentStage)) {
             return;
         }
 
@@ -531,10 +551,10 @@ public final class Decorator {
     /// @param event the pointer movement event
     private void onMouseMoved(MouseEvent event) {
         @Nullable Stage currentStage = stage;
-        if (currentStage == null
+        if (nativeDecorationEnabled || currentStage == null
                 || currentStage.isIconified()
                 || currentStage.isFullScreen()
-                || currentStage.isMaximized()
+                || WindowState.isMaximized(currentStage)
                 || !currentStage.isResizable()) {
             root.setCursor(Cursor.DEFAULT);
             return;
@@ -597,10 +617,10 @@ public final class Decorator {
     /// @param event the primary-button drag event
     private void onMouseDragged(MouseEvent event) {
         @Nullable Stage currentStage = stage;
-        if (currentStage == null
+        if (nativeDecorationEnabled || currentStage == null
                 || currentStage.isIconified()
                 || currentStage.isFullScreen()
-                || currentStage.isMaximized()
+                || WindowState.isMaximized(currentStage)
                 || !event.isPrimaryButtonDown()
                 || event.isStillSincePress()) {
             return;
@@ -673,13 +693,12 @@ public final class Decorator {
         return root.getScene();
     }
 
-    /// Applies the persisted content bounds and current decoration insets to `targetStage`.
+    /// Returns the persisted normal content rectangle without native borders or custom shadow padding.
     ///
     /// An off-screen persisted position is replaced with a position centered on the primary screen.
     ///
-    /// @param targetStage the stage receiving the initial outer bounds and minimum dimensions
-    private void initializeStageBounds(Stage targetStage) {
-        Insets insets = getWindowInsets();
+    /// @return the initial content bounds in JavaFX screen coordinates
+    private Rectangle2D initialContentBounds() {
         double initialContentWidth = Math.max(MIN_CONTENT_WIDTH, SettingsManager.state().getWidth());
         double initialContentHeight = Math.max(MIN_CONTENT_HEIGHT, SettingsManager.state().getHeight());
         double initialContentX = SettingsManager.state().getX() * PRIMARY_SCREEN_BOUNDS.getWidth();
@@ -702,14 +721,68 @@ public final class Decorator {
             initialContentY = (PRIMARY_SCREEN_BOUNDS.getHeight() - initialContentHeight) / 2;
         }
 
-        targetStage.setX(initialContentX - insets.getLeft());
-        targetStage.setY(initialContentY - insets.getTop());
-        targetStage.setWidth(initialContentWidth + insets.getLeft() + insets.getRight());
-        targetStage.setHeight(initialContentHeight + insets.getTop() + insets.getBottom());
-        targetStage.setMinWidth(MIN_CONTENT_WIDTH + insets.getLeft() + insets.getRight());
-        targetStage.setMinHeight(MIN_CONTENT_HEIGHT + insets.getTop() + insets.getBottom());
-        contentWidth.set(initialContentWidth);
-        contentHeight.set(initialContentHeight);
+        return new Rectangle2D(initialContentX, initialContentY, initialContentWidth, initialContentHeight);
+    }
+
+    /// Persists a normal content rectangle independently of the window's decoration style.
+    ///
+    /// @param bounds the content bounds in JavaFX screen coordinates
+    private void saveContentBounds(Rectangle2D bounds) {
+        SettingsManager.state().setX(bounds.getMinX() / PRIMARY_SCREEN_BOUNDS.getWidth());
+        SettingsManager.state().setY(bounds.getMinY() / PRIMARY_SCREEN_BOUNDS.getHeight());
+        SettingsManager.state().setWidth(bounds.getWidth());
+        SettingsManager.state().setHeight(bounds.getHeight());
+    }
+
+    /// Returns the preferred style for the configured native-decoration policy and current theme.
+    ///
+    /// @return the system style when available and permitted by the policy; otherwise the custom transparent style
+    private StageStyle preferredStageStyle() {
+        return nativeDecoration != null && nativeDecoration.isPreferred(
+                Themes.windowTransparentProperty().get(), Themes.darkModeProperty().get())
+                ? nativeDecoration.style : StageStyle.TRANSPARENT;
+    }
+
+    /// Replaces the attached stage when transparency or theme brightness requires a different decoration style.
+    ///
+    /// Preserves the scene, navigation, dialogs, normal bounds, supported window states, and focus owner.
+    /// Hidden windows remain hidden. Does nothing while detached or when the current style is still suitable.
+    /// Must run on the JavaFX application thread after theme bindings have updated.
+    private void updateWindowStyle() {
+        FXUtils.checkFxUserThread();
+        @Nullable Stage previousStage = stage;
+        if (previousStage == null || previousStage.getStyle() == preferredStageStyle()) {
+            return;
+        }
+
+        boolean showing = previousStage.isShowing();
+        boolean maximized = WindowState.isMaximized(previousStage);
+        boolean fullScreen = previousStage.isFullScreen();
+        boolean iconified = previousStage.isIconified();
+        @Nullable Node focusOwner = previousStage.getScene().getFocusOwner();
+
+        Stage replacement = new Stage();
+        stageInitializer.accept(replacement);
+        replacement.setTitle(previousStage.getTitle());
+        replacement.getIcons().setAll(previousStage.getIcons());
+        replacement.setOnCloseRequest(previousStage.getOnCloseRequest());
+        replacement.setResizable(previousStage.isResizable());
+        replacement.setAlwaysOnTop(previousStage.isAlwaysOnTop());
+        replacement.setFullScreenExitHint(previousStage.getFullScreenExitHint());
+        replacement.setFullScreenExitKeyCombination(previousStage.getFullScreenExitKeyCombination());
+
+        detachStage();
+        previousStage.hide();
+        attachStage(replacement);
+        replacement.setMaximized(maximized && WindowState.supportsMaximization(replacement));
+        replacement.setFullScreen(fullScreen);
+        replacement.setIconified(iconified);
+        if (showing) {
+            replacement.show();
+        }
+        if (focusOwner != null) {
+            focusOwner.requestFocus();
+        }
     }
 
     /// Attaches the retained scene and native window behavior to `newStage`.
@@ -717,22 +790,39 @@ public final class Decorator {
     /// If the root has no scene, this method reuses `newStage`'s scene and replaces its root, or creates a
     /// transparent scene when the stage has none. If the retained scene belongs to another stage, it is detached
     /// from that stage before being installed on `newStage`. A newly attached stage receives the persisted normal
-    /// content bounds and minimum size adjusted for the normal decoration insets. The stage and retained scene use
-    /// transparent styles required by the custom decoration. Any active window animation is cancelled and reset.
-    /// When window animations are enabled, each subsequent showing starts the opening animation. This method does
-    /// not show the stage.
+    /// content bounds. Native frame offsets and minimum size are resolved when the stage is shown.
+    /// The native-decoration policy selects the system or custom transparent decoration. Automatic mode uses
+    /// system decoration for supported opaque windows, except for dark windows on Windows; explicit enablement
+    /// bypasses the brightness exclusion. Transparent windows always use custom decoration.
+    /// Any active window animation is cancelled and reset. Custom window
+    /// animations run only with custom decoration. Window-style listeners remain active until [#detachStage()].
+    /// On macOS, native application appearance updates are installed once per stage and retained across detachment.
+    /// This method does not show the stage or invoke the replacement-stage initializer.
     ///
     /// @param newStage the stage to attach, which must be accessed on the JavaFX application thread
     /// @return the scene installed on `newStage`
-    /// @throws IllegalStateException if `newStage` has already been shown with a non-transparent style, or if the
+    /// @throws IllegalStateException if `newStage` has already been shown with a different style, or if the
     ///                               retained root or scene cannot be transferred from its current owner
     public Scene attachStage(Stage newStage) {
         FXUtils.checkFxUserThread();
         stopWindowAnimation();
 
-        if (newStage.getStyle() != StageStyle.TRANSPARENT) {
-            newStage.initStyle(StageStyle.TRANSPARENT);
+        if (stage != null && stage != newStage) {
+            detachStage();
         }
+
+        StageStyle style = preferredStageStyle();
+        if (newStage.getStyle() != style) {
+            newStage.initStyle(style);
+        }
+        nativeDecorationEnabled = nativeDecoration != null && style == nativeDecoration.style;
+        if (nativeDecoration != null) {
+            nativeDecoration.setContent(null);
+            if (nativeDecorationEnabled) {
+                nativeDecoration.configureStage(newStage);
+            }
+        }
+        mainWindowPane.setNativeDecoration(nativeDecorationEnabled ? nativeDecoration : null);
 
         @Nullable Scene retainedScene = root.getScene();
         Scene scene;
@@ -759,37 +849,37 @@ public final class Decorator {
             }
         }
 
-        scene.setFill(Color.TRANSPARENT);
+        if (nativeDecorationEnabled) {
+            scene.fillProperty().bind(Themes.colorSchemeProperty().getSurfaceContainer());
+        } else {
+            scene.fillProperty().unbind();
+            scene.setFill(Color.TRANSPARENT);
+        }
 
         if (newStage.getScene() != scene) {
             newStage.setScene(scene);
         }
 
         if (stage != newStage) {
-            playRestoreMinimizeAnimation = false;
-            if (stage != null) {
-                stage.removeEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
-                stage.iconifiedProperty().removeListener(iconifiedListener);
-                stage.maximizedProperty().removeListener(stageDecorationListener);
-                stage.fullScreenProperty().removeListener(stageDecorationListener);
-                stage.xProperty().removeListener(stageBoundsListener);
-                stage.yProperty().removeListener(stageBoundsListener);
-                stage.widthProperty().removeListener(stageBoundsListener);
-                stage.heightProperty().removeListener(stageBoundsListener);
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                Themes.applyNativeDarkMode(newStage);
             }
-
+            playRestoreMinimizeAnimation = false;
             updateWindowDecoration(false);
-            initializeStageBounds(newStage);
             stage = newStage;
-            updateWindowDecoration(newStage.isMaximized() || newStage.isFullScreen());
             newStage.addEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
             newStage.iconifiedProperty().addListener(iconifiedListener);
             newStage.maximizedProperty().addListener(stageDecorationListener);
             newStage.fullScreenProperty().addListener(stageDecorationListener);
-            newStage.xProperty().addListener(stageBoundsListener);
-            newStage.yProperty().addListener(stageBoundsListener);
-            newStage.widthProperty().addListener(stageBoundsListener);
-            newStage.heightProperty().addListener(stageBoundsListener);
+            windowBounds = new WindowBounds(newStage, root, initialContentBounds(),
+                    MIN_CONTENT_WIDTH, MIN_CONTENT_HEIGHT, this::saveContentBounds);
+            contentWidth.bind(windowBounds.contentWidthProperty());
+            contentHeight.bind(windowBounds.contentHeightProperty());
+            updateWindowDecoration(WindowState.isMaximized(newStage) || newStage.isFullScreen());
+            Themes.windowTransparentProperty().addListener(windowStyleListener);
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                Themes.darkModeProperty().addListener(windowStyleListener);
+            }
         }
         root.setCursor(Cursor.DEFAULT);
         dragging = false;
@@ -801,20 +891,27 @@ public final class Decorator {
     ///
     /// The root, scene, navigation state, dialogs, and snackbar remain owned by this decorator and may subsequently
     /// be attached to another stage. Calling this method while detached has no effect beyond resetting root transforms.
+    /// Removes window-style listeners; a queued style check does nothing unless another stage has been attached.
     /// Hiding a stage that will later be shown again does not require detachment.
     public void detachStage() {
         FXUtils.checkFxUserThread();
         stopWindowAnimation();
 
+        if (windowBounds != null) {
+            windowBounds.close();
+            contentWidth.unbind();
+            contentHeight.unbind();
+            windowBounds = null;
+        }
         if (stage != null) {
+            Themes.windowTransparentProperty().removeListener(windowStyleListener);
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                Themes.darkModeProperty().removeListener(windowStyleListener);
+            }
             stage.removeEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
             stage.iconifiedProperty().removeListener(iconifiedListener);
             stage.maximizedProperty().removeListener(stageDecorationListener);
             stage.fullScreenProperty().removeListener(stageDecorationListener);
-            stage.xProperty().removeListener(stageBoundsListener);
-            stage.yProperty().removeListener(stageBoundsListener);
-            stage.widthProperty().removeListener(stageBoundsListener);
-            stage.heightProperty().removeListener(stageBoundsListener);
             if (stage.getScene() == root.getScene()) {
                 stage.setScene(null);
             }
@@ -880,7 +977,7 @@ public final class Decorator {
     /// Calling this method replaces any active minimize, restore, close, or earlier opening animation. If window
     /// animations are disabled, it restores the stable root transform without starting an animation.
     private void playOpenAnimation() {
-        if (!AnimationUtils.playWindowAnimation()) {
+        if (nativeDecorationEnabled || !AnimationUtils.playWindowAnimation()) {
             stopWindowAnimation();
             Controllers.trimHeap();
             return;
@@ -915,7 +1012,7 @@ public final class Decorator {
             return;
         }
 
-        if (AnimationUtils.playWindowAnimation() && OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
+        if (!nativeDecorationEnabled && AnimationUtils.playWindowAnimation() && OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
             Timeline timeline = new Timeline(
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(root.opacityProperty(), 1, Motion.EASE),
@@ -946,7 +1043,7 @@ public final class Decorator {
 
     /// Closes the application, using the configured window animation when enabled.
     void closeWindow() {
-        if (AnimationUtils.playWindowAnimation()) {
+        if (!nativeDecorationEnabled && AnimationUtils.playWindowAnimation()) {
             Timeline timeline = new Timeline(
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(root.opacityProperty(), 1, Motion.EASE),
@@ -1074,6 +1171,11 @@ public final class Decorator {
 
     /// Restores the root node's transform after an animated minimization.
     private void playRestoreAnimation() {
+        if (nativeDecorationEnabled) {
+            stopWindowAnimation();
+            return;
+        }
+
         Timeline timeline = new Timeline(
                 new KeyFrame(Duration.ZERO,
                         new KeyValue(root.opacityProperty(), 0, Motion.EASE),
