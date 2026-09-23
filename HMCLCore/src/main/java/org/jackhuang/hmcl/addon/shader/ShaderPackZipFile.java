@@ -48,9 +48,7 @@ final class ShaderPackZipFile extends ShaderPackFile {
             aperture:
             {
                 Path metaPath = root.resolve("pack.json");
-                if (!Files.isRegularFile(metaPath)
-                        || !Files.isDirectory(root.resolve("src"))
-                        || !Files.isDirectory(root.resolve("slang"))) {
+                if (!Files.isRegularFile(metaPath) || !Files.isDirectory(root.resolve("src"))) {
                     break aperture;
                 }
                 ShaderPackMeta meta = null;

@@ -34,9 +34,7 @@ final class ShaderPackFolder extends ShaderPackFile {
         aperture:
         {
             Path metaPath = file.resolve("pack.json");
-            if (!Files.isRegularFile(metaPath)
-                    || !Files.isDirectory(file.resolve("slang"))
-                    || !Files.isDirectory(file.resolve("src"))) {
+            if (!Files.isRegularFile(metaPath) || !Files.isDirectory(file.resolve("src"))) {
                 break aperture;
             }
 
