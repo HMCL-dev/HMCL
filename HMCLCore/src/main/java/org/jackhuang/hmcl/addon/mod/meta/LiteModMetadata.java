@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.addon.meta;
+package org.jackhuang.hmcl.addon.mod.meta;
 
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveEntry;
