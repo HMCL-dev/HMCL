@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.server;
 
+import org.jetbrains.annotations.Nullable;
+
 public record ServerStatus(
         // https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#Pong_Response
         long networkLatency,
@@ -27,6 +29,6 @@ public record ServerStatus(
 
         int playerMax,
         int playerOnline,
-        String favicon
+        @Nullable String favicon
 ) {
 }

@@ -21,8 +21,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.io.*;
-import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.StandardSocketOptions;
 import java.nio.charset.StandardCharsets;
 
 public final class ServerStatusGetter {
@@ -30,40 +30,21 @@ public final class ServerStatusGetter {
 
     }
 
-    private static InetSocketAddress parseAddress(String ipStr) throws IOException {
-        if (ipStr == null || ipStr.isEmpty()) throw new IOException("server ip is empty.");
-
-        String host = ipStr;
-        int port = 25565;
-
-        int lastIndexOf = ipStr.lastIndexOf(":");
-        if (lastIndexOf != -1) {
-            String portArea = ipStr.substring(lastIndexOf + 1);
-            try {
-                int parsedPort = Integer.parseInt(portArea);
-                if (parsedPort > 0 && parsedPort <= 65535) {
-                    host = ipStr.substring(0, lastIndexOf);
-                    port = parsedPort;
-                }
-            } catch (Exception ignore) {
-            }
-        }
-        return new InetSocketAddress(host, port);
-    }
-
     public static ServerStatus getStatus(String serverIp) throws IOException {
-        return ServerStatusGetter.getStatus(parseAddress(serverIp));
+        return ServerStatusGetter.getStatus(ServerAddress.parseAddress(serverIp));
     }
 
-    public static ServerStatus getStatus(InetSocketAddress address) throws IOException {
+    private static ServerStatus getStatus(ServerAddress address) throws IOException {
+        ServerAddress resolvedAddress = ServerDnsSrvRedirector.lookup(address);
+
         try (Socket socket = new Socket()) {
-            socket.connect(address);
-            socket.setSoTimeout(10_000);
+            socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
+            socket.connect(resolvedAddress.toInetSocketAddress(), 7_000);
 
             try (DataOutputStream out = new DataOutputStream(socket.getOutputStream());
                  DataInputStream in = new DataInputStream(socket.getInputStream())) {
 
-                sendHandshakeStatusPacket(out, address.getHostName(), address.getPort());
+                sendHandshakeStatusPacket(out, address.host(), address.port());
                 sendStatusRequestPacket(out);
                 var status = readStatusResponsePacket(in);
 
@@ -82,9 +63,13 @@ public final class ServerStatusGetter {
                 int playerMax = playersJsonObject.get("max").getAsInt();
                 int playerOnline = playersJsonObject.get("online").getAsInt();
 
-
-                // todo check
-                String favicon = rootStatus.get("favicon").getAsString().substring("data:image/png;base64,".length());
+                String favicon = null;
+                if (rootStatus.get("favicon") != null) {
+                    String fetchedFavicon = rootStatus.get("favicon").getAsString();
+                    if (fetchedFavicon.startsWith("data:image/png;base64,")) {
+                        favicon = fetchedFavicon.substring("data:image/png;base64,".length());
+                    }
+                }
 
                 return new ServerStatus(
                         networkLatency,
@@ -120,52 +105,53 @@ public final class ServerStatusGetter {
             int packetId = readVarInt(packetIn);
             if (packetId != 0x00)
                 throw new IOException("Invalid packet id " + packetId + ", expected 0x00(Status Response).");
-            byte[] jsonBytes = new byte[readVarInt(packetIn)];
-            packetIn.readFully(jsonBytes);
-            return new String(jsonBytes, StandardCharsets.UTF_8);
+
+            return readVarString(packetIn); // Status Json
         }
     }
 
     private static void sendStatusRequestPacket(DataOutputStream sendTarget) throws IOException {
-        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            output.write(0x00);                             // Packet ID
+        sendPacket(sendTarget, out -> {
+            out.writeByte(0x00); // Packet ID
+        });
+    }
 
-            writeVarInt(sendTarget, output.size()); // Packet Size
-            sendTarget.write(output.toByteArray()); // Packet Contents
+    private static void sendPacket(DataOutputStream target, PacketWriter packetWriter) throws IOException {
+        try (ByteArrayOutputStream packetOut = new ByteArrayOutputStream();
+             DataOutputStream dataPacketOut = new DataOutputStream(packetOut)) {
+            packetWriter.write(dataPacketOut);
+
+            writeVarInt(target, packetOut.size()); // Packet Size
+            target.write(packetOut.toByteArray()); // Packet Contents
         }
     }
 
     private static void sendHandshakeStatusPacket(DataOutputStream sendTarget, String address, int port) throws IOException {
-        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            output.write(0x00);                             // Packet ID
-            writeVarInt(output, -1);                     // Protocol Version
+        sendPacket(sendTarget, out -> {
+            // Packet ID
+            out.write(0x00);
 
-            byte[] addressBytes = address.getBytes(StandardCharsets.UTF_8);
-            writeVarInt(output, addressBytes.length);
-            output.write(addressBytes);
+            // Protocol Version
+            writeVarInt(out, 777);
+
+            // Server Host
+            writeVarString(out, address);
 
             // Server Port
-            output.write((port >>> 8) & 0xFF);
-            output.write(port & 0xFF);
+            out.writeShort(port);
 
             // Next State Status Request
-            writeVarInt(output, 1);
-
-            writeVarInt(sendTarget, output.size()); // Packet Size
-            sendTarget.write(output.toByteArray()); // Packet Contents
-        }
+            writeVarInt(out, 1);
+        });
     }
 
     private static void sendPingRequestPacket(DataOutputStream sendTarget) throws IOException {
-        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            output.write(0x01); // packet id
+        sendPacket(sendTarget, out -> {
+            out.write(0x01); // packet id
             long time = System.currentTimeMillis();
 
-            writeLong(output, time); // time
-
-            writeVarInt(sendTarget, output.size());
-            sendTarget.write(output.toByteArray());
-        }
+            writeLong(out, time); // time
+        });
     }
 
     private static void writeVarInt(OutputStream out, int value) throws IOException {
@@ -176,6 +162,12 @@ public final class ServerStatusGetter {
         }
 
         out.write(value);
+    }
+
+    private static String readVarString(DataInputStream in) throws IOException {
+        byte[] bytes = new byte[readVarInt(in)];
+        in.readFully(bytes);
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private static int readVarInt(InputStream in) throws IOException {
@@ -205,6 +197,12 @@ public final class ServerStatusGetter {
         }
     }
 
+    private static void writeVarString(OutputStream out, String string) throws IOException {
+        byte[] bytes = string.getBytes(StandardCharsets.UTF_8);
+        writeVarInt(out, bytes.length);
+        out.write(bytes);
+    }
+
     private static long readLong(InputStream in) throws IOException {
         long value = 0;
         for (int i = 0; i < 8; i++) {
@@ -215,5 +213,10 @@ public final class ServerStatusGetter {
             value = (value << 8) | (b & 0xFF);
         }
         return value;
+    }
+
+    @FunctionalInterface
+    private interface PacketWriter {
+        void write(DataOutputStream out) throws IOException;
     }
 }
