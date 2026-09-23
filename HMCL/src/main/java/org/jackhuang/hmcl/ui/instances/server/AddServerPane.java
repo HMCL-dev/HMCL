@@ -59,7 +59,6 @@ public class AddServerPane extends TransitionPane implements DialogAware {
 
         getStyleClass().add("skin-pane");
         initPaneContents();
-
     }
 
     private void initPaneContents() {
@@ -90,18 +89,18 @@ public class AddServerPane extends TransitionPane implements DialogAware {
         // server name
         {
             Label label = new Label();
-            label.setText(i18n("servers.manager.add.server.name"));
+            label.setText(i18n("servers.manager.server.name"));
             GridPane.setHalignment(label, HPos.LEFT);
             body.add(label, 0, 0);
 
-            txtServerName.setPromptText(i18n("servers.manager.add.server.name.def"));
+            txtServerName.setPromptText(i18n("servers.manager.server.name.def"));
             body.add(txtServerName, 1, 0);
         }
 
         // server ip
         {
             Label label = new Label();
-            label.setText(i18n("servers.manager.add.server.ip"));
+            label.setText(i18n("servers.manager.server.ip"));
             GridPane.setHalignment(label, HPos.LEFT);
             body.add(label, 0, 1);
 
@@ -154,7 +153,7 @@ public class AddServerPane extends TransitionPane implements DialogAware {
         String serverIP = txtServerIP.getText();
         if (serverIP == null) return;
         if (txtServerName.getText() == null || txtServerName.getText().isEmpty()) {
-            serverName = i18n("servers.manager.add.server.name.def");
+            serverName = i18n("servers.manager.server.name.def");
         } else {
             serverName = txtServerName.getText();
         }
@@ -180,7 +179,6 @@ public class AddServerPane extends TransitionPane implements DialogAware {
                 });
                 lblErrorMessage.setText(i18n("servers.manager.add.error.status"));
             } else {
-//                initStatusContents(new ServerListPage.IconedServer(false, false, status.favicon(), serverIP, serverName));
                 fireEvent(new DialogCloseEvent());
                 doAddServer.accept(new ServerListPage.IconedServer(false, false, status.favicon(), serverIP, serverName));
             }

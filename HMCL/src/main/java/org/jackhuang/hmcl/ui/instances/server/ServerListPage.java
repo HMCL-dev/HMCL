@@ -92,6 +92,12 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         }
     }
 
+    public void showServerStatus(ServerHolder holder) {
+        if (gameInstance != null) {
+            runInFX(() -> Controllers.dialog(new ServerStatusPane(holder.server)));
+        }
+    }
+
     public void copyServerIp(ServerHolder holder) {
         FXUtils.copyText(holder.server.getIp(), i18n("servers.manage.copy.server.ip.ok.toast"));
     }
@@ -328,6 +334,23 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                             .forEach(content::addTag);
                 }
 
+                // add status tag.
+//                Task.supplyAsync(Schedulers.io(), () -> ServerStatusGetter.getStatus(holder.server.getIp()))
+//                        .whenComplete(Schedulers.javafx(), (status, throwable) -> {
+//                            if (throwable != null) {
+//                                LOG.error("Failed to get server status.", throwable);
+//                            }
+//
+//                            if (status != null) {
+//                                if (status.favicon() != null) {
+//                                    Image latestImage = IconedServer.parseImage(status.favicon());
+//                                    if (latestImage != null) {
+//                                        imageView.setImage(latestImage);
+//                                    }
+//                                }
+//                            }
+//                        }).start();
+
                 setGraphic(graphic);
             }
         }
@@ -340,6 +363,9 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
 
             IconedMenuItem copyToInstanceMEnuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("servers.manage.copy.to.instance"), () -> page.copyToInstance(holder), popup);
             popupMenu.getContent().addAll(
+                    new IconedMenuItem(SVG.CHAT, i18n("servers.manager.status"), () ->
+                            page.showServerStatus(holder), popup
+                    ),
                     new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch_and_connect_server"), () ->
                             page.launchAndEnterServer(holder), popup
                     ),
@@ -388,7 +414,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
             );
         }
 
-        private static Image parseImage(String imageBase64String) {
+        public static @Nullable Image parseImage(String imageBase64String) {
             if (imageBase64String == null || imageBase64String.isEmpty()) {
                 return null;
             }
