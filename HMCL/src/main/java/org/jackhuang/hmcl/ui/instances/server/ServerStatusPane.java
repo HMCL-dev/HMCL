@@ -50,6 +50,10 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
     private @Nullable ServerStatus status;
 
     public ServerStatusPane(ServerListPage.IconedServer iconedServer) {
+        this(iconedServer, false);
+    }
+
+    public ServerStatusPane(ServerListPage.IconedServer iconedServer, boolean fromDnD) {
         this.iconedServer = iconedServer;
 
         getStyleClass().add("skin-pane");
@@ -64,13 +68,27 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
             refreshSpinner.setContent(refreshBtn);
         }
 
-        JFXButton backBtn = new JFXButton(i18n("button.back"));
-        backBtn.getStyleClass().add("dialog-back");
-        backBtn.setOnAction(e -> onClose());
-        onEscPressed(this, backBtn::fire);
-
-        HBox actions = new HBox(refreshSpinner, backBtn);
+        HBox actions = new HBox(refreshSpinner);
         actions.setAlignment(Pos.CENTER_RIGHT);
+
+        if (fromDnD) {
+            // add to current instance
+
+            // launch game
+
+            JFXButton cancelBtn = new JFXButton(i18n("button.cancel"));
+            cancelBtn.getStyleClass().add("dialog-cancel");
+            cancelBtn.setOnAction(e -> onClose());
+            onEscPressed(this, cancelBtn::fire);
+            actions.getChildren().add(cancelBtn);
+        } else {
+            // back
+            JFXButton backBtn = new JFXButton(i18n("button.back"));
+            backBtn.getStyleClass().add("dialog-back");
+            backBtn.setOnAction(e -> onClose());
+            onEscPressed(this, backBtn::fire);
+            actions.getChildren().add(backBtn);
+        }
 
         replaceBody();
 
@@ -131,7 +149,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
 
             rows++;
             textPane.add(new Label(i18n("servers.manager.server.latency") + ":"), 0, rows);
-            textPane.add(new Label(String.format("%,d", cachedServerStatus.networkLatency())), 1, rows);
+            textPane.add(new Label(String.format("%,dms", cachedServerStatus.networkLatency())), 1, rows);
 
             rows++;
             textPane.add(new Label(i18n("servers.manager.server.players") + ":"), 0, rows);

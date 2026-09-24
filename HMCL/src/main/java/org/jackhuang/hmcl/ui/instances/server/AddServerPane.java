@@ -177,7 +177,7 @@ public class AddServerPane extends TransitionPane implements DialogAware {
                 btnCancel.setOnAction(e -> {
                     initPaneContents();
                 });
-                lblErrorMessage.setText(i18n("servers.manager.add.error.status"));
+                lblErrorMessage.setText(i18n("servers.manager.error.status"));
             } else {
                 fireEvent(new DialogCloseEvent());
                 doAddServer.accept(new ServerListPage.IconedServer(false, false, status.favicon(), serverIP, serverName));
