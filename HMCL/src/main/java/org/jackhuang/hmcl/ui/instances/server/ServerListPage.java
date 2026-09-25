@@ -129,9 +129,15 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         if (gameInstance == null) return;
 
         Task.runAsync(Schedulers.io(), () -> {
-            List<Server> servers = Server.loadFromServersDat(gameInstance.getServersDatFilePath());
+            Path serversDatFilePath = gameInstance.getServersDatFilePath();
+            List<Server> servers;
+            if (Files.exists(serversDatFilePath)) {
+                servers = Server.loadFromServersDat(serversDatFilePath);
+            } else {
+                servers = new ArrayList<>();
+            }
             servers.add(server);
-            Server.saveToServersDat(servers, gameInstance.getServersDatFilePath());
+            Server.saveToServersDat(servers, serversDatFilePath);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception != null)
                 LOG.warning("Failed to save server data.", exception);
