@@ -19,15 +19,17 @@ package org.jackhuang.hmcl.ui.decorator;
 
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.stage.WindowEvent;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Unmodifiable;
@@ -41,6 +43,8 @@ import java.util.function.Consumer;
 /// until [#close()] is called. Normal bounds are sampled after layout, and once more before hiding or detaching.
 /// Maximized bounds under [WindowState]'s policy, full-screen bounds, and iconified bounds are not reported
 /// as normal bounds. Transparent macOS windows retain normal bounds despite native zoom notifications.
+/// Minimum sizes are configured separately after showing or a display-scale or resizability change;
+/// ordinary geometry tracking does not write window constraints.
 @NotNullByDefault
 final class WindowBounds implements AutoCloseable {
     /// The stage whose outer geometry is managed.
@@ -67,18 +71,6 @@ final class WindowBounds implements AutoCloseable {
     /// The latest normal content rectangle, retained through hiding and non-normal window states.
     private Rectangle2D normalBounds;
 
-    /// The last native frame width observed with a normal client-size notification.
-    private double frameWidth;
-
-    /// The last native frame height observed with a normal client-size notification.
-    private double frameHeight;
-
-    /// The horizontal display scale at which the frame was last initialized.
-    private double frameScaleX;
-
-    /// The vertical display scale at which the frame was last initialized.
-    private double frameScaleY;
-
     /// The content width excluding both native borders and custom shadow padding.
     private final ReadOnlyDoubleWrapper contentWidth = new ReadOnlyDoubleWrapper();
 
@@ -94,17 +86,20 @@ final class WindowBounds implements AutoCloseable {
     /// Whether geometry must be sampled after the next layout pulse.
     private boolean dirty;
 
+    /// Whether the native minimum needs configuration once normal geometry has stopped changing between pulses.
+    private boolean minimumSizePending;
+
     /// Whether this tracker has released its listeners.
     private boolean closed;
 
-    /// Marks geometry for sampling after stage and scene notifications have both completed.
-    private final InvalidationListener boundsListener = observable -> invalidate();
+    /// Marks geometry for sampling after layout without assuming an order for stage and scene notifications.
+    private final ChangeListener<Object> boundsListener = (observable, oldValue, newValue) -> invalidate();
 
     /// Compensates for native offsets discovered while creating the window peer.
     private final InvalidationListener offsetListener = observable -> restorePosition();
 
-    /// Samples frame extents only when the corresponding native client dimension has been updated.
-    private final InvalidationListener sceneSizeListener = this::updateFrameSize;
+    /// Requests new native minimum dimensions when the display scale or resizability changes.
+    private final ChangeListener<Object> minimumSizeListener = (observable, oldValue, newValue) -> invalidateMinimumSize();
 
     /// Establishes the normal restore rectangle before the native peer becomes visible.
     private final EventHandler<WindowEvent> showingHandler = event -> restoreBounds();
@@ -114,8 +109,7 @@ final class WindowBounds implements AutoCloseable {
         restorePosition();
         restoringPosition = false;
         shown = true;
-        initializeFrameSize();
-        invalidate();
+        invalidateMinimumSize();
     };
 
     /// Samples geometry before JavaFX clears the hidden scene's native offsets.
@@ -125,15 +119,14 @@ final class WindowBounds implements AutoCloseable {
         restoringPosition = false;
     };
 
-    /// Samples a coherent set of stage, scene, and padding values after layout.
-    private final Runnable pulseListener = () -> {
-        if (dirty) {
-            updateBounds();
-        }
-    };
+    /// Samples geometry and separately processes pending minimum-size configuration after layout.
+    private final Runnable pulseListener = this::onPulse;
 
-    /// The properties observed for geometry, state, padding, and display-scale changes.
-    private final Observable @Unmodifiable [] observed;
+    /// The properties observed for geometry, state, and padding changes.
+    private final ObservableValue<?> @Unmodifiable [] observed;
+
+    /// The properties that can change the normal native frame dimensions.
+    private final ObservableValue<?> @Unmodifiable [] minimumSizeObserved;
 
     /// Initializes client sizing and installs listeners on an attached stage and scene.
     ///
@@ -160,20 +153,23 @@ final class WindowBounds implements AutoCloseable {
         root.setMinSize(0, 0);
         contentWidth.set(initialBounds.getWidth());
         contentHeight.set(initialBounds.getHeight());
-        observed = new Observable[] {
+        observed = new ObservableValue<?>[] {
                 stage.xProperty(), stage.yProperty(), stage.widthProperty(), stage.heightProperty(),
                 stage.maximizedProperty(), stage.fullScreenProperty(), stage.iconifiedProperty(),
-                stage.outputScaleXProperty(), stage.outputScaleYProperty(),
                 scene.xProperty(), scene.yProperty(), scene.widthProperty(), scene.heightProperty(),
                 root.paddingProperty()
         };
-        for (Observable observable : observed) {
+        for (ObservableValue<?> observable : observed) {
             observable.addListener(boundsListener);
         }
         scene.xProperty().addListener(offsetListener);
         scene.yProperty().addListener(offsetListener);
-        scene.widthProperty().addListener(sceneSizeListener);
-        scene.heightProperty().addListener(sceneSizeListener);
+        minimumSizeObserved = new ObservableValue<?>[] {
+                stage.outputScaleXProperty(), stage.outputScaleYProperty(), stage.resizableProperty()
+        };
+        for (ObservableValue<?> observable : minimumSizeObserved) {
+            observable.addListener(minimumSizeListener);
+        }
         scene.addPostLayoutPulseListener(pulseListener);
         stage.addEventHandler(WindowEvent.WINDOW_SHOWING, showingHandler);
         stage.addEventHandler(WindowEvent.WINDOW_SHOWN, shownHandler);
@@ -184,8 +180,7 @@ final class WindowBounds implements AutoCloseable {
         if (stage.isShowing()) {
             restoringPosition = false;
             shown = true;
-            initializeFrameSize();
-            invalidate();
+            invalidateMinimumSize();
         }
     }
 
@@ -203,6 +198,33 @@ final class WindowBounds implements AutoCloseable {
     private void invalidate() {
         dirty = true;
         Platform.requestNextPulse();
+    }
+
+    /// Schedules native minimum-size configuration independently of ordinary geometry sampling.
+    private void invalidateMinimumSize() {
+        minimumSizePending = true;
+        invalidate();
+    }
+
+    /// Samples dirty geometry, then configures pending minimums on a subsequent quiet layout pulse.
+    private void onPulse() {
+        if (closed) {
+            return;
+        }
+        if (dirty) {
+            updateBounds();
+            if (minimumSizePending && isNormal()) {
+                Platform.requestNextPulse();
+            }
+        } else if (minimumSizePending && isNormal()) {
+            updateMinimumSize();
+        }
+    }
+
+    /// Returns whether the visible stage can supply normal window geometry.
+    private boolean isNormal() {
+        return shown && !restoringPosition && !stage.isIconified()
+                && !WindowState.isMaximized(stage) && !stage.isFullScreen();
     }
 
     /// Requests the normal client size and starts compensating for native client offsets.
@@ -241,12 +263,6 @@ final class WindowBounds implements AutoCloseable {
             return;
         }
 
-        if (frameScaleX != stage.getOutputScaleX() || frameScaleY != stage.getOutputScaleY()) {
-            initializeFrameSize();
-        } else {
-            updateMinimumSize();
-        }
-
         normalBounds = new Rectangle2D(
                 stage.getX() + scene.getX() + insets.getLeft(),
                 stage.getY() + scene.getY() + insets.getTop(),
@@ -254,34 +270,14 @@ final class WindowBounds implements AutoCloseable {
         saveBounds.accept(normalBounds);
     }
 
-    /// Samples the initial frame after peer creation and establishes native minimum dimensions.
-    private void initializeFrameSize() {
-        if (!WindowState.isMaximized(stage) && !stage.isFullScreen() && !stage.isIconified()) {
-            frameWidth = Math.max(0, stage.getWidth() - scene.getWidth());
-            frameHeight = Math.max(0, stage.getHeight() - scene.getHeight());
-            frameScaleX = stage.getOutputScaleX();
-            frameScaleY = stage.getOutputScaleY();
-            updateMinimumSize();
-        }
-    }
-
-    /// Samples the native frame extent corresponding to a changed client dimension.
-    ///
-    /// @param observable the scene width or height property updated by JavaFX
-    private void updateFrameSize(Observable observable) {
-        if (shown && !restoringPosition && !WindowState.isMaximized(stage) && !stage.isFullScreen() && !stage.isIconified()) {
-            if (observable == scene.widthProperty()) {
-                frameWidth = Math.max(0, stage.getWidth() - scene.getWidth());
-            } else {
-                frameHeight = Math.max(0, stage.getHeight() - scene.getHeight());
-            }
-        }
-    }
-
-    /// Applies the normal content minimum with the most recently observed native frame extents.
+    /// Measures the normal native frame and applies content minimums including frame and shadow padding.
     private void updateMinimumSize() {
-        // Stage dimensions can already contain a resize request that the scene has not received yet.
-        // Reuse frame extents captured with client notifications instead of subtracting those mixed sizes.
+        // Stage and Scene sizes arrive separately. Only measure after pending geometry notifications
+        // have been processed, never from an individual size listener or an ordinary resize pulse.
+        boolean hasFrame = stage.getStyle() != StageStyle.TRANSPARENT && stage.getStyle() != StageStyle.UNDECORATED;
+        double frameWidth = hasFrame ? Math.max(0, stage.getWidth() - scene.getWidth()) : 0;
+        double frameHeight = hasFrame ? Math.max(0, stage.getHeight() - scene.getHeight()) : 0;
+        minimumSizePending = false;
         stage.setMinWidth(minWidth + normalInsets.getLeft() + normalInsets.getRight() + frameWidth);
         stage.setMinHeight(minHeight + normalInsets.getTop() + normalInsets.getBottom() + frameHeight);
     }
@@ -295,13 +291,14 @@ final class WindowBounds implements AutoCloseable {
         }
         updateBounds();
         closed = true;
-        for (Observable observable : observed) {
+        for (ObservableValue<?> observable : observed) {
             observable.removeListener(boundsListener);
         }
         scene.xProperty().removeListener(offsetListener);
         scene.yProperty().removeListener(offsetListener);
-        scene.widthProperty().removeListener(sceneSizeListener);
-        scene.heightProperty().removeListener(sceneSizeListener);
+        for (ObservableValue<?> observable : minimumSizeObserved) {
+            observable.removeListener(minimumSizeListener);
+        }
         scene.removePostLayoutPulseListener(pulseListener);
         stage.removeEventHandler(WindowEvent.WINDOW_SHOWING, showingHandler);
         stage.removeEventHandler(WindowEvent.WINDOW_SHOWN, shownHandler);
