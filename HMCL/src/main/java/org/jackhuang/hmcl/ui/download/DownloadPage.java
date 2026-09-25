@@ -79,7 +79,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TabHeader.Tab<DownloadListPage> shaderTab = new TabHeader.Tab<>("shaderTab");
     private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
-    private final TabHeader.Tab<AddonFavoritesListPage> favoritesPageTab = new TabHeader.Tab<>("favoritesTab");
+    private final TabHeader.Tab<AddonFavoritesListPage> favoritesTab = new TabHeader.Tab<>("favoritesTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
 
@@ -107,8 +107,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack(FOR_RESOURCE_PACK, true)));
         shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack(FOR_SHADER, true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteAddonRepository.WORLDS)));
-        favoritesPageTab.setNodeSupplier(loadVersionFor(AddonFavoritesListPage::new));
-        tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab, favoritesPageTab);
+        favoritesTab.setNodeSupplier(loadVersionFor(AddonFavoritesListPage::new));
+        tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab, favoritesTab);
 
         GameDirectoryManager.registerVersionsListener(this::loadVersions);
 
@@ -123,7 +123,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 .addNavigationDrawerTab(tab, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
                 .addNavigationDrawerTab(tab, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
                 .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC)
-                .addNavigationDrawerTab(tab, favoritesPageTab, i18n("addon.favorites"), SVG.STAR, SVG.STAR_FILL);
+                .addNavigationDrawerTab(tab, favoritesTab, i18n("addon.favorites"), SVG.STAR, SVG.STAR_FILL);
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
 
@@ -199,8 +199,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     if (worldTab.isInitialized()) {
                         worldTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
                     }
-                    if (favoritesPageTab.isInitialized()) {
-                        favoritesPageTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
+                    if (favoritesTab.isInitialized()) {
+                        favoritesTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
                     }
                 }));
             }
