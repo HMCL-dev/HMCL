@@ -23,6 +23,7 @@ import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -83,6 +85,7 @@ public final class FavoritesManager {
             var map = Files.isRegularFile(file) ? JsonUtils.fromJsonFile(file, typeToken) : null;
             if (map != null)
                 map.forEach((name, items) -> favoritesMap.put(name, new Favorite(this, name, items)));
+            favoritesMap.computeIfAbsent("", n -> new Favorite(this, n, new LinkedHashSet<>()));
             loaded = true;
         } catch (IOException | JsonSyntaxException e) {
             LOG.warning("Failed to load favorites file at " + file, e);
@@ -91,9 +94,10 @@ public final class FavoritesManager {
         }
     }
 
-    public void save() {
+    private void save0() {
         lock.lock();
         try {
+            if (!loaded) load();
             var pairs = favoritesMap.entrySet().stream().map(entry -> Pair.pair(entry.getKey(), entry.getValue().items)).toList();
             JsonUtils.writeToJsonFile(file, Lang.mapOf(pairs));
         } catch (IOException e) {
@@ -101,6 +105,10 @@ public final class FavoritesManager {
         } finally {
             lock.unlock();
         }
+    }
+
+    public void save() {
+        CompletableFuture.runAsync(this::save0, Schedulers.io());
     }
 
     public void resolveAll(DownloadProvider downloadProvider) {
@@ -131,6 +139,10 @@ public final class FavoritesManager {
         }
     }
 
+    public @NotNull FavoritesManager.Favorite getDefault() {
+        return getOrCreate("");
+    }
+
     public @Nullable FavoritesManager.Favorite get(String name) {
         lock.lock();
         try {
@@ -142,6 +154,15 @@ public final class FavoritesManager {
 
     public boolean has(String name) {
         return get(name) != null;
+    }
+
+    public boolean contains(RemoteAddon addon) {
+        lock.lock();
+        try {
+            return favoritesMap.values().stream().anyMatch(f -> f.contains(addon));
+        } finally {
+            lock.unlock();
+        }
     }
 
     public static final class Favorite {
@@ -166,6 +187,10 @@ public final class FavoritesManager {
 
         public String getName() {
             return name;
+        }
+
+        public boolean isDefault() {
+            return "".equals(name);
         }
 
         @Unmodifiable
@@ -224,28 +249,41 @@ public final class FavoritesManager {
             }
         }
 
+        public boolean contains(RemoteAddon addon) {
+            lock.lock();
+            try {
+                return items.contains(Item.fromAddon(addon));
+            } finally {
+                lock.unlock();
+            }
+        }
+
         public void add(RemoteAddon addon) {
             lock.lock();
             try {
-                var item = Item.fromAddon(addon);
-                items.remove(item);
-                items.add(item);
+                items.add(Item.fromAddon(addon));
                 manager.save();
             } finally {
                 lock.unlock();
             }
         }
 
-        public void remove(Collection<RemoteAddon> addons) {
+        public boolean remove(Collection<Item> itemsToRemove) {
             lock.lock();
             try {
-                if (items.removeAll(addons.stream().map(Item::fromAddon).collect(Collectors.toSet())))
+                if (items.removeAll(itemsToRemove)) {
                     manager.save();
+                    return true;
+                }
+                return false;
             } finally {
                 lock.unlock();
             }
         }
 
+        public boolean removeAddons(Collection<RemoteAddon> addons) {
+            return remove(addons.stream().map(Item::fromAddon).collect(Collectors.toSet()));
+        }
     }
 
     @JsonSerializable

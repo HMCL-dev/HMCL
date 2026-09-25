@@ -52,6 +52,7 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
+import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.RemoteImageLoader;
@@ -60,13 +61,18 @@ import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URI;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class AddonFavoritesListPage extends Control implements DecoratorPage {
+public class AddonFavoritesListPage extends Control implements DecoratorPage, PageAware {
+
+    private static String translateName(String name) {
+        if (name.isEmpty()) return i18n("message.default");
+        return name;
+    }
 
     private static final FavoritesManager manager = FavoritesManager.getInstance();
 
@@ -109,6 +115,7 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
         refresh();
     }
 
+    @Override
     public void refresh() {
         setLoading(true);
         items.clear();
@@ -117,6 +124,17 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
                     items.setAll(manager.getFavorites());
                     setLoading(false);
                 }).start();
+    }
+
+    @Override
+    public void onPageShown() {
+        navigateBack();
+        refresh();
+    }
+
+    @Override
+    public void onPageHidden() {
+        navigateBack();
     }
 
     public BooleanProperty loadingProperty() {
@@ -139,12 +157,16 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
     private void navigateTo(FavoritesManager.Favorite favorite) {
         var page = new AddonFavoritePage(this, favorite);
         body.setContent(page, ContainerAnimations.SWIPE_LEFT);
+        page.requestFocus();
         page.refresh();
     }
 
     private void navigateBack() {
-        body.setContent(favoritesList, ContainerAnimations.SWIPE_RIGHT);
-        refresh();
+        if (body.getCurrentNode() != favoritesList) {
+            body.setContent(favoritesList, ContainerAnimations.SWIPE_RIGHT);
+            favoritesList.requestFocus();
+            refresh();
+        }
     }
 
     private static class AddonFavoritesListPageSkin extends SkinBase<AddonFavoritesListPage> {
@@ -251,7 +273,7 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
         protected void updateControl(FavoritesManager.Favorite item, boolean empty) {
             if (item == null || empty) return;
 
-            content.setTitle(item.getName());
+            content.setTitle(translateName(item.getName()));
 
             final int count = item.getItems().size();
             final int availableCount;
@@ -299,6 +321,10 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
             }).start();
         }
 
+        private void remove(Collection<FavoritesManager.Item> items) {
+            if (favorite.remove(items))
+                refresh();
+        }
     }
 
     public static final class FavoriteItemObject {
@@ -324,7 +350,7 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
                 }
             };
 
-            listView.setCellFactory(x -> new FavoriteItemCell(skinnable.parentPage, iconLoader, listView));
+            listView.setCellFactory(x -> new FavoriteItemCell(skinnable, iconLoader, listView));
         }
 
         @Override
@@ -343,13 +369,19 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
 
-        private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
-
-        public FavoriteItemCell(AddonFavoritesListPage parentPage, RemoteImageLoader iconLoader, JFXListView<FavoriteItemObject> listView) {
+        public FavoriteItemCell(AddonFavoritePage page, RemoteImageLoader iconLoader, JFXListView<FavoriteItemObject> listView) {
             super(listView);
 
             this.iconLoader = iconLoader;
 
+            JFXButton removeButton = FXUtils.newToggleButton4(SVG.DELETE);
+            removeButton.setOnAction(e -> {
+                if (getItem() != null && !isEmpty()) {
+                    page.remove(List.of(getItem().item));
+                }
+            });
+
+            JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
             infoButton.setOnAction(e -> {
                 if (getItem() != null && !isEmpty() && getItem().addon != null) {
                     var downloadListPage = HMCLLocalizedDownloadListPage.ofAddonWithSource(false, getItem().addon);
@@ -357,7 +389,7 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
                     Controllers.navigate(new DownloadPage(
                             downloadListPage,
                             getItem().addon,
-                            HMCLGameInstance.Optional.of(parentPage.instanceReference.get().repository(), parentPage.selectedInstance.get()),
+                            HMCLGameInstance.Optional.of(page.parentPage.instanceReference.get().repository(), page.parentPage.selectedInstance.get()),
                             switch (getItem().addon.type()) { // TODO remove this because we have a better way
                                 case MOD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD;
                                 case RESOURCE_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK;
@@ -375,7 +407,7 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
             content.setMouseTransparent(true);
             setSelectable();
 
-            container.getChildren().setAll(imageContainer, content, infoButton);
+            container.getChildren().setAll(imageContainer, content, removeButton, infoButton);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -406,17 +438,27 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage {
                     if (description != null) description = description.replaceAll("\\R", " ");
                     content.setSubtitle(description);
                 }
-                {
-                    for (String category : addon.categories()) {
-                        if (!"minecraft".equalsIgnoreCase(category)) {
-                            content.addTag(i18n(switch (source) {
-                                case MODRINTH -> "modrinth.category." + category;
-                                case CURSEFORGE -> "curseforge.category." + category;
-                            }));
-                        }
-                    }
-                    iconLoader.load(imageContainer.imageProperty(), addon.iconUrl());
+
+                if (addon.type() != null) {
+                    String type = switch (addon.type()) {
+                        case MOD -> i18n("mods");
+                        case RESOURCE_PACK -> i18n("resourcepack");
+                        case SHADER_PACK -> i18n("download.shader"); //TODO update
+                        default -> null;
+                    };
+                    if (type != null) content.addTag(type);
                 }
+
+                for (String category : addon.categories()) {
+                    if (!"minecraft".equalsIgnoreCase(category)) {
+                        content.addTag(i18n(switch (source) {
+                            case MODRINTH -> "modrinth.category." + category;
+                            case CURSEFORGE -> "curseforge.category." + category;
+                        }));
+                    }
+                }
+
+                iconLoader.load(imageContainer.imageProperty(), addon.iconUrl());
             }
         }
     }
