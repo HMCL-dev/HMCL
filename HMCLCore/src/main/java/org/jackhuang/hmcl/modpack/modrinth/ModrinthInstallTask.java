@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.modpack.modrinth;
 
 import com.google.gson.JsonParseException;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.*;
@@ -31,7 +32,6 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -181,7 +181,7 @@ public class ModrinthInstallTask extends Task<Void> {
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
 
-        @Nullable URI iconUri = NetworkUtils.toURIOrNull(iconUrl);
+        @Nullable WebURL iconUri = NetworkUtils.toWebURLOrNull(iconUrl);
         if (iconUri != null) {
             String ext = FileUtils.getExtension(StringUtils.substringAfter(iconUri.getPath(), '/')).toLowerCase(Locale.ROOT);
             if (Modpack.SUPPORTED_ICON_EXTS.contains(ext)) {

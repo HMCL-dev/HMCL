@@ -39,12 +39,12 @@ public final class AuthlibInjectorDnD {
     private AuthlibInjectorDnD() {}
 
     public static Optional<String> parseUrlFromDragboard(Dragboard dragboard) {
-        String uri = dragboard.getString();
-        if (uri == null) return Optional.empty();
+        String url = dragboard.getString();
+        if (url == null) return Optional.empty();
 
-        String[] uriElements = uri.split(":");
-        if (uriElements.length == 3 && SCHEME.equals(uriElements[0]) && PATH_YGGDRASIL_SERVER.equals(uriElements[1])) {
-            return Optional.of(decodeURL(uriElements[2]));
+        String[] urlElements = url.split(":");
+        if (urlElements.length == 3 && SCHEME.equals(urlElements[0]) && PATH_YGGDRASIL_SERVER.equals(urlElements[1])) {
+            return Optional.of(decodeURL(urlElements[2]));
         }
         return Optional.empty();
     }

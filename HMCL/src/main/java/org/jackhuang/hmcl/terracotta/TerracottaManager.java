@@ -22,6 +22,7 @@ import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.DownloadException;
@@ -42,7 +43,6 @@ import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -288,7 +288,7 @@ public final class TerracottaManager {
 
     public static Task<String> exportLogs() {
         if (STATE_V.get() instanceof TerracottaState.PortSpecific portSpecific) {
-            return new GetTask(URI.create(String.format("http://127.0.0.1:%d/log?fetch=true", portSpecific.port)))
+            return new GetTask(WebURL.parse(String.format("http://127.0.0.1:%d/log?fetch=true", portSpecific.port)))
                     .setSignificance(Task.TaskSignificance.MINOR);
         }
         return Task.completed(null);
@@ -297,7 +297,7 @@ public final class TerracottaManager {
     public static TerracottaState.Waiting setWaiting() {
         TerracottaState state = STATE_V.get();
         if (state instanceof TerracottaState.PortSpecific portSpecific) {
-            new GetTask(URI.create(String.format("http://127.0.0.1:%d/state/ide", portSpecific.port)))
+            new GetTask(WebURL.parse(String.format("http://127.0.0.1:%d/state/ide", portSpecific.port)))
                     .setSignificance(Task.TaskSignificance.MINOR)
                     .start();
             return new TerracottaState.Waiting(-1, -1, null);
@@ -317,7 +317,7 @@ public final class TerracottaManager {
                     .thenComposeAsync(nodes -> {
                         List<Pair<String, String>> query = new ArrayList<>(nodes.size() + 1);
                         query.add(pair("player", getPlayerName()));
-                        for (URI node : nodes) {
+                        for (WebURL node : nodes) {
                             query.add(pair("public_nodes", node.toString()));
                         }
                         return new GetTask(NetworkUtils.withQuery(
@@ -338,7 +338,7 @@ public final class TerracottaManager {
                         ArrayList<Pair<String, String>> query = new ArrayList<>(nodes.size() + 2);
                         query.add(pair("room", room));
                         query.add(pair("player", getPlayerName()));
-                        for (URI node : nodes) {
+                        for (WebURL node : nodes) {
                             query.add(pair("public_nodes", node.toString()));
                         }
                         return new GetTask(NetworkUtils.withQuery("http://127.0.0.1:%d/state/guesting".formatted(portSpecific.port), query))

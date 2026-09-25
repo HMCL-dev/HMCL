@@ -73,7 +73,7 @@ public final class DialogUtils {
     private static void showInDecorator(Decorator decorator, StackPane dialogContainer, Node content, StackPane dialogOverlayPane) {
         show(dialogContainer, content, dialogOverlayPane, dialog -> {
             JFXDialogPane pane = (JFXDialogPane) dialog.getContent();
-            decorator.capableDraggingWindow(dialog);
+            decorator.capableDraggingOverlay(dialog);
             decorator.forbidDraggingWindow(pane);
             dialog.setDialogContainer(dialogContainer);
         });
