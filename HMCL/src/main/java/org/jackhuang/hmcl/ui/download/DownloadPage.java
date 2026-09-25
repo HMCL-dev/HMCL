@@ -123,7 +123,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 .addNavigationDrawerTab(tab, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
                 .addNavigationDrawerTab(tab, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
                 .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC)
-                .addNavigationDrawerTab(tab, favoritesPageTab, i18n("addon.favorites"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL);
+                .addNavigationDrawerTab(tab, favoritesPageTab, i18n("addon.favorites"), SVG.STAR, SVG.STAR_FILL);
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
 
