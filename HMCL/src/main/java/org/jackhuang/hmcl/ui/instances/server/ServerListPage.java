@@ -403,8 +403,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         public IconedServer(boolean acceptTextures, boolean hidden, @Nullable String icon, @Nullable String ip, @Nullable String name) {
             super(acceptTextures, hidden, icon, ip, name);
 
-            Image parsedImage = parseImage(icon);
-            iconImage = parsedImage == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : parsedImage;
+            iconImage = parseImageOrDefault(icon);
         }
 
         public static IconedServer pack(Server server) {
@@ -420,17 +419,16 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
             );
         }
 
-        public static @Nullable Image parseImage(String imageBase64String) {
-            if (imageBase64String == null || imageBase64String.isEmpty()) {
-                return null;
+        public static @NotNull Image parseImageOrDefault(@Nullable String imageBase64String) {
+            if (imageBase64String != null && !imageBase64String.isEmpty()) {
+                try (ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(imageBase64String))) {
+                    // png format.
+                    return FXUtils.loadImage(bais, "icon.png", 0, 0, true, true);
+                } catch (Exception e) {
+                    LOG.warning("Failed to decode server icon", e);
+                }
             }
-            try (ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(imageBase64String))) {
-                // png format.
-                return FXUtils.loadImage(bais, "icon.png", 0, 0, true, true);
-            } catch (Exception e) {
-                LOG.warning("Failed to decode server icon", e);
-                return null;
-            }
+            return FXUtils.newBuiltinImage("/assets/img/unknown_server.png");
         }
     }
 

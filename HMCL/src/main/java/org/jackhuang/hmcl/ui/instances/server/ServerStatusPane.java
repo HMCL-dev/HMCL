@@ -106,13 +106,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
 
         Image serverIcon = iconedServer.iconImage;
         if (status != null) {
-            String latestFavicon = status.favicon();
-            if (latestFavicon != null) {
-                Image latestFaviconImage = ServerListPage.IconedServer.parseImage(latestFavicon);
-                if (latestFaviconImage != null) {
-                    serverIcon = latestFaviconImage;
-                }
-            }
+            serverIcon = ServerListPage.IconedServer.parseImageOrDefault(status.favicon());
         }
 
         int iconScale = 4;
