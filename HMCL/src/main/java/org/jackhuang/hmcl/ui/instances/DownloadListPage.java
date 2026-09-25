@@ -24,6 +24,7 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -44,10 +45,12 @@ import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
+import org.jackhuang.hmcl.setting.FavoritesManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -67,6 +70,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 
 public class DownloadListPage extends Control implements DecoratorPage {
+
+    private static final FavoritesManager favoritesManager = FavoritesManager.getInstance();
+
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
@@ -87,6 +93,8 @@ public class DownloadListPage extends Control implements DecoratorPage {
     private int searchID = 0;
     protected RemoteAddonRepository repository;
     private final DownloadProvider downloadProvider;
+
+    private final BooleanProperty favoritesLoaded = new SimpleBooleanProperty();
 
     private Runnable retrySearch;
 
@@ -118,6 +126,12 @@ public class DownloadListPage extends Control implements DecoratorPage {
         if (!searchInitialized) {
             searchInitialized = true;
             search("", null, 0, "", RemoteAddonRepository.SortType.RELEVANCY);
+        }
+
+        if (!favoritesLoaded.get()) {
+            Task.runAsync(Schedulers.io(), favoritesManager::load)
+                    .thenRunAsync(Schedulers.javafx(), () -> favoritesLoaded.set(true))
+                    .start();
         }
 
         if (instanceSelection) {
@@ -554,6 +568,10 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
                     private final TwoLineListItem content = new TwoLineListItem();
                     private final ImageContainer imageContainer = new ImageContainer(40);
+                    private final JFXButton addToFavBtn = FXUtils.newToggleButton4(SVG.STAR);
+
+                    private final BooleanProperty addedToFav = new SimpleBooleanProperty();
+                    private ChangeListener<Boolean> favChangeListener = null;
 
                     {
                         setPadding(PADDING);
@@ -565,8 +583,16 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
                         imageContainer.setMouseTransparent(true);
 
-                        container.getChildren().setAll(imageContainer, content);
+                        container.getChildren().setAll(imageContainer, content, addToFavBtn);
                         HBox.setHgrow(content, Priority.ALWAYS);
+
+                        FXUtils.onChangeAndOperate(addedToFav, added -> {
+                            if (added) {
+                                addToFavBtn.setGraphic(SVG.STAR_FILL.createIcon());
+                            } else {
+                                addToFavBtn.setGraphic(SVG.STAR.createIcon());
+                            }
+                        });
 
                         this.graphic = new RipplerContainer(container);
                         wrapper.getChildren().setAll(this.graphic);
@@ -595,9 +621,16 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
                         this.graphic.releaseRippleImmediately();
 
+                        if (favChangeListener != null) control.favoritesLoaded.removeListener(favChangeListener);
+                        favChangeListener = null;
+
                         if (empty || item == null) {
                             setGraphic(null);
                         } else {
+                            favChangeListener = FXUtils.onWeakChangeAndOperate(control.favoritesLoaded, loaded -> {
+                                if (loaded) addedToFav.set(favoritesManager.contains(item));
+                            });
+
                             setPadding(
                                     getIndex() == getListView().getItems().size() - 1
                                             ? LAST_PADDING
@@ -616,7 +649,19 @@ public class DownloadListPage extends Control implements DecoratorPage {
                                 if (getSkinnable().shouldDisplayCategory(category))
                                     content.addTag(getSkinnable().getLocalizedCategory(category, null));
                             }
+
                             iconLoader.load(imageContainer.imageProperty(), item.iconUrl());
+
+                            addToFavBtn.setOnAction(e -> {
+                                if (addedToFav.get()) {
+                                    FavoritesManager.getInstance().getDefault().removeAddons(List.of(item));
+                                    addedToFav.set(false);
+                                } else {
+                                    FavoritesManager.getInstance().getDefault().add(item);
+                                    addedToFav.set(true);
+                                }
+                            });
+
                             setGraphic(wrapper);
                         }
                     }
