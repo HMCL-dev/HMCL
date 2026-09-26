@@ -19,22 +19,26 @@ package org.jackhuang.hmcl.server;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.Socket;
 import java.net.StandardSocketOptions;
 import java.nio.charset.StandardCharsets;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
+// https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping
 public final class ServerStatusGetter {
     private ServerStatusGetter() {
 
     }
 
-    public static ServerStatus getStatus(String serverIp) throws IOException {
+    public static @NotNull ServerStatusResult getStatus(String serverIp) throws IOException {
         return ServerStatusGetter.getStatus(ServerAddress.parseAddress(serverIp));
     }
 
-    private static ServerStatus getStatus(ServerAddress address) throws IOException {
+    private static @NotNull ServerStatusResult getStatus(ServerAddress address) throws IOException {
         ServerAddress resolvedAddress = ServerDnsSrvRedirector.lookup(address);
 
         try (Socket socket = new Socket()) {
@@ -71,15 +75,18 @@ public final class ServerStatusGetter {
                     }
                 }
 
-                return new ServerStatus(
+                return ServerStatusResult.success(new ServerStatus(
                         networkLatency,
                         protocol,
                         protocolName,
                         playerMax,
                         playerOnline,
                         favicon
-                );
+                ));
             }
+        } catch (Exception e) {
+            LOG.error("Failed to get the status of server " + address, e);
+            return ServerStatusResult.failure(e);
         }
     }
 

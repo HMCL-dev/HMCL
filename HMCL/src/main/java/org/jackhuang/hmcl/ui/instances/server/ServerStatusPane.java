@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class ServerStatusPane extends TransitionPane implements DialogAware {
     private final ServerListPage.IconedServer iconedServer;
@@ -147,7 +146,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
 
             rows++;
             textPane.add(new Label(i18n("servers.manager.server.players") + ":"), 0, rows);
-            textPane.add(new Label(cachedServerStatus.playerOnline() + "/" + cachedServerStatus.playerMax()), 1, rows);
+            textPane.add(new Label(String.format("%,d/%,d", cachedServerStatus.playerOnline(), cachedServerStatus.playerMax())), 1, rows);
         }
 
         rootLayout.setBody(contentBox);
@@ -158,17 +157,12 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         refreshSpinner.showSpinner();
         Task.supplyAsync(Schedulers.io(), () ->
                 ServerStatusGetter.getStatus(iconedServer.getIp())
-        ).whenComplete(Schedulers.javafx(), (status, throwable) -> {
+        ).whenComplete(Schedulers.javafx(), (result, ignored) -> {
             refreshSpinner.hideSpinner();
 
+            this.status = result.getIfSuccess();
             if (status == null) {
                 lblErrorMessage.setText(i18n("servers.manager.error.status"));
-            }
-
-            this.status = status;
-
-            if (throwable != null) {
-                LOG.error("Error while getting server status.", throwable);
             }
 
             replaceBody();

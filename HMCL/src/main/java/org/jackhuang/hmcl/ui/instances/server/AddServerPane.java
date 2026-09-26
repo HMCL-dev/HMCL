@@ -26,6 +26,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.server.ServerStatus;
 import org.jackhuang.hmcl.server.ServerStatusGetter;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -163,10 +164,11 @@ public class AddServerPane extends TransitionPane implements DialogAware {
 
         Task.supplyAsync(Schedulers.io(), () ->
                 ServerStatusGetter.getStatus(serverIP)
-        ).whenComplete(Schedulers.javafx(), (status, exception) -> {
+        ).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception != null)
                 LOG.warning("Failed to fetch server status.", exception);
 
+            ServerStatus status = result.getIfSuccess();
             if (status == null) {
                 spinner.hideSpinner();
                 btnAccept.setText(i18n("servers.manager.add.still"));

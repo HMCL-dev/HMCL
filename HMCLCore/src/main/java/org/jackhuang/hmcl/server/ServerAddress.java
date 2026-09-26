@@ -17,8 +17,11 @@
  */
 package org.jackhuang.hmcl.server;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Objects;
 
 public record ServerAddress(
         String host,
@@ -55,5 +58,22 @@ public record ServerAddress(
 
     public InetSocketAddress toInetSocketAddress() {
         return new InetSocketAddress(host, port);
+    }
+
+    @Override
+    public @NotNull String toString() {
+        return host + ":" + port;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        ServerAddress that = (ServerAddress) o;
+        return port == that.port && Objects.equals(host, that.host);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(host, port);
     }
 }

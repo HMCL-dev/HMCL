@@ -130,4 +130,15 @@ public class Server {
     public @Nullable String getName() {
         return name;
     }
+
+    @Override
+    public String toString() {
+        return "Server{" +
+                "acceptTextures=" + acceptTextures +
+                ", hidden=" + hidden +
+                ", icon='" + icon + '\'' +
+                ", ip='" + ip + '\'' +
+                ", name='" + name + '\'' +
+                '}';
+    }
 }

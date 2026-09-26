@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
@@ -30,15 +31,18 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
-import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.util.Subscription;
 import org.jackhuang.hmcl.game.GameInstance;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.server.Server;
+import org.jackhuang.hmcl.server.ServerStatus;
+import org.jackhuang.hmcl.server.ServerStatusGetter;
+import org.jackhuang.hmcl.server.ServerStatusResult;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -51,6 +55,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -233,10 +238,11 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         private final ServerListPage page;
 
         private final RipplerContainer graphic;
-        private final ImageContainer imageView;
-        private final Tooltip leftTooltip;
+        private final ImageContainer serverIcon;
         private final TwoLineListItem content;
-        private final JFXButton btnLaunch;
+        private final ServerNetworkLatencyPane serverNetworkLatencyPane;
+
+        private Subscription serverNetworkLatencyValueSubscription;
 
         public ServerListCell(ServerListPage page) {
             this.page = page;
@@ -245,15 +251,14 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
             root.getStyleClass().add("md-list-cell");
             root.setPadding(new Insets(8));
 
+            // server icon
             {
                 StackPane left = new StackPane();
-                this.leftTooltip = new Tooltip();
-                FXUtils.installSlowTooltip(left, leftTooltip);
                 root.setLeft(left);
                 left.setPadding(new Insets(0, 8, 0, 0));
 
-                this.imageView = new ImageContainer(32);
-                left.getChildren().add(imageView);
+                this.serverIcon = new ImageContainer(32);
+                left.getChildren().add(serverIcon);
             }
 
             {
@@ -267,15 +272,19 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                 root.setRight(right);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
-                btnLaunch = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
-                btnLaunch.managedProperty().bind(btnLaunch.visibleProperty());
-                right.getChildren().add(btnLaunch);
-                FXUtils.installFastTooltip(btnLaunch, i18n("instance.launch"));
-                btnLaunch.setOnAction(event -> {
+                StackPane statusPane = new StackPane();
+                JFXButton statusBtn = FXUtils.newToggleButton4(SVG.NONE);
+                statusBtn.managedProperty().bind(statusBtn.visibleProperty());
+                statusBtn.setOnAction(event -> {
                     ServerHolder holder = getItem();
                     if (holder != null)
-                        page.launchAndEnterServer(holder);
+                        page.showServerStatus(holder);
                 });
+                serverNetworkLatencyPane = new ServerNetworkLatencyPane();
+
+                statusPane.getChildren().add(serverNetworkLatencyPane);
+                statusPane.getChildren().add(statusBtn);
+                right.getChildren().add(statusPane);
 
                 JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
                 right.getChildren().add(btnMore);
@@ -307,6 +316,11 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
 
             super.updateItem(holder, empty);
 
+            if (serverNetworkLatencyValueSubscription != null) {
+                serverNetworkLatencyValueSubscription.unsubscribe();
+                serverNetworkLatencyValueSubscription = null;
+            }
+
             if (oldHolder == holder && oldEmpty == empty) return;
 
             this.graphic.releaseRippleImmediately();
@@ -314,13 +328,12 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
 
             if (empty || holder == null) {
                 setGraphic(null);
-                imageView.setImage(null);
-                leftTooltip.setText("");
+                serverIcon.setImage(null);
                 content.setTitle("");
                 content.setSubtitle("");
+                serverNetworkLatencyPane.error();
             } else {
-                imageView.setImage(holder.server.iconImage);
-                leftTooltip.setText(holder.server.getIp());
+                serverIcon.setImage(holder.server.iconImage);
                 content.setTitle(holder.server.getName() != null ? parseColorEscapes(holder.server.getName()) : "");
                 content.setSubtitle(holder.server.getIp());
 
@@ -340,24 +353,39 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                             .forEach(content::addTag);
                 }
 
-                // add status tag.
-//                Task.supplyAsync(Schedulers.io(), () -> ServerStatusGetter.getStatus(holder.server.getIp()))
-//                        .whenComplete(Schedulers.javafx(), (status, throwable) -> {
-//                            if (throwable != null) {
-//                                LOG.error("Failed to get server status.", throwable);
-//                            }
-//
-//                            if (status != null) {
-//                                if (status.favicon() != null) {
-//                                    Image latestImage = IconedServer.parseImage(status.favicon());
-//                                    if (latestImage != null) {
-//                                        imageView.setImage(latestImage);
-//                                    }
-//                                }
-//                            }
-//                        }).start();
-
                 setGraphic(graphic);
+
+                holder.startGetServerStatusAsync();
+                applyServerStatusResult(holder, holder.serverStatusResultWrapper.getReadOnlyProperty().get());
+                serverNetworkLatencyValueSubscription = holder.serverStatusResultWrapper.subscribe(result -> applyServerStatusResult(holder, result));
+            }
+        }
+
+        private void applyServerStatusResult(ServerHolder holder, ServerStatusResult result) {
+            if (result == null) {
+                serverNetworkLatencyPane.ping();
+                return;
+            }
+            ServerStatus serverStatus = result.getIfSuccess();
+            if (serverStatus == null) {
+                serverNetworkLatencyPane.error();
+            } else {
+                serverNetworkLatencyPane.pong(serverStatus.networkLatency());
+
+                // update latest server icon
+                serverIcon.setImage(IconedServer.parseImageOrDefault(serverStatus.favicon()));
+                if (!Objects.equals(serverStatus.favicon(), holder.server.getIcon())) {
+                    // save latest icon
+                    Task.runAsync(Schedulers.io(), () -> {
+                        try {
+                            IconedServer newServer = holder.server.withIcon(serverStatus.favicon());
+                            holder.cachedServers.set(holder.inDatPathSlot, newServer);
+                            Server.saveToServersDat(holder.cachedServers, holder.fromServersDatFilePath);
+                        } catch (Exception e) {
+                            LOG.error("Failed to save servers dat", e);
+                        }
+                    }).start();
+                }
             }
         }
 
@@ -369,7 +397,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
 
             IconedMenuItem copyToInstanceMEnuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("servers.manage.copy.to.instance"), () -> page.copyToInstance(holder), popup);
             popupMenu.getContent().addAll(
-                    new IconedMenuItem(SVG.CHAT, i18n("servers.manager.status"), () ->
+                    new IconedMenuItem(SVG.SERVER_SIGNAL_FULL, i18n("servers.manager.status"), () ->
                             page.showServerStatus(holder), popup
                     ),
                     new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch_and_connect_server"), () ->
@@ -406,6 +434,10 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
             iconImage = parseImageOrDefault(icon);
         }
 
+        public IconedServer withIcon(@Nullable String newIcon) {
+            return new IconedServer(isAcceptTextures(), isHidden(), newIcon, getIp(), getName());
+        }
+
         public static IconedServer pack(Server server) {
             if (server instanceof IconedServer) {
                 return (IconedServer) server;
@@ -438,6 +470,23 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         final @NotNull List<Server> cachedServers;
         final int inDatPathSlot;
         final @NotNull IconedServer server;
+
+        final @NotNull ReadOnlyObjectWrapper<ServerStatusResult> serverStatusResultWrapper = new ReadOnlyObjectWrapper<>(null);
+        private final AtomicBoolean serverStatusComputed = new AtomicBoolean(false);
+
+        public void startGetServerStatusAsync() {
+            if (serverStatusResultWrapper.get() != null) return;
+            if (serverStatusComputed.compareAndSet(false, true)) {
+                reGetServerStatusAsync();
+            }
+        }
+
+        public void reGetServerStatusAsync() {
+            Task.supplyAsync(Schedulers.io(), () -> ServerStatusGetter.getStatus(server.getIp()))
+                    .whenComplete(Schedulers.javafx(), (result, ignored) -> {
+                        serverStatusResultWrapper.set(result);
+                    }).start();
+        }
 
         public ServerHolder(@NotNull Path fromServersDatFilePath, @NotNull List<Server> cachedServers, int inDatPathSlot, @NotNull IconedServer server) {
             this.fromServersDatFilePath = fromServersDatFilePath;
