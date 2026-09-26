@@ -32,18 +32,15 @@ import java.util.zip.ZipFile
 class PackUtils {
 
     companion object {
-
-        fun artifactFile(jarFile: File, ext: String) = jarFile.resolveSibling(jarFile.nameWithoutExtension + '.' + ext)
+        val algorithms = linkedMapOf(
+            "SHA-1" to "sha1",
+            "SHA-256" to "sha256",
+            "SHA-512" to "sha512"
+        )
 
         fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
 
         fun createChecksum(file: File) {
-            val algorithms = linkedMapOf(
-                "SHA-1" to "sha1",
-                "SHA-256" to "sha256",
-                "SHA-512" to "sha512"
-            )
-
             algorithms.forEach { (algorithm, ext) ->
                 File(file.parentFile, "${file.name}.$ext").writeText(
                     digest(algorithm, file.readBytes()).joinToString(separator = "", postfix = "\n") { "%02x".format(it) }
@@ -75,6 +72,7 @@ class PackUtils {
                 Files.newOutputStream(zipfs.getPath("META-INF/hmcl_signature")).use { it.write(signature) }
             }
         }
-    }
 
+        fun artifactFile(jarFile: File, ext: String) = jarFile.resolveSibling(jarFile.nameWithoutExtension + '.' + ext)
+    }
 }
