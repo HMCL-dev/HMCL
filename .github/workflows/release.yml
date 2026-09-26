@@ -34,7 +34,7 @@ jobs:
           distribution: 'temurin'
           java-version: '25'
       - name: Fetch last version
-        run: ./gradlew ${{ matrix.task }} --no-daemon --info --stacktrace
+        run: ./gradlew ${{ matrix.task }} --no-daemon --configuration-cache --info --stacktrace
       - name: Check for existing tags
         run: if [ -z "$(git tag -l "$HMCL_TAG_NAME")" ]; then echo "continue=true" >> $GITHUB_ENV; fi
       - name: Download artifacts
