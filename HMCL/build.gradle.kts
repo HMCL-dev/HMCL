@@ -7,9 +7,9 @@ import org.jackhuang.hmcl.gradle.pack.ReleaseType
 import org.jackhuang.hmcl.gradle.terracotta.AbstractTerracottaTask
 import org.jackhuang.hmcl.gradle.terracotta.TerracottaConfigUpgradeTask
 import org.jackhuang.hmcl.gradle.terracotta.TerracottaConfigValidateTask
-import org.jackhuang.hmcl.gradle.utils.PackUtils.Companion.artifactFile
-import org.jackhuang.hmcl.gradle.utils.PackUtils.Companion.attachSignature
-import org.jackhuang.hmcl.gradle.utils.PackUtils.Companion.createChecksum
+import org.jackhuang.hmcl.gradle.utils.ArtifactUtils.Companion.artifactFile
+import org.jackhuang.hmcl.gradle.utils.ArtifactUtils.Companion.attachSignature
+import org.jackhuang.hmcl.gradle.utils.ArtifactUtils.Companion.createChecksum
 import org.jackhuang.hmcl.gradle.utils.PropertiesUtils
 import java.util.zip.ZipFile
 

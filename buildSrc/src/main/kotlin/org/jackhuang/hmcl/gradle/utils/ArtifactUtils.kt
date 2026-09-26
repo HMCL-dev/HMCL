@@ -29,7 +29,7 @@ import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.zip.ZipFile
 
-class PackUtils {
+class ArtifactUtils {
 
     companion object {
         val algorithms = linkedMapOf(
