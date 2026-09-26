@@ -55,9 +55,9 @@ class PackUtils {
                 return
             }
 
-            val privatekey = KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(File(keyLocation).readBytes()))
+            val privateKey = KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(File(keyLocation).readBytes()))
             val signer = Signature.getInstance("SHA512withRSA")
-            signer.initSign(privatekey)
+            signer.initSign(privateKey)
             ZipFile(jar).use { zip ->
                 zip.stream()
                     .sorted(Comparator.comparing { it.name })
