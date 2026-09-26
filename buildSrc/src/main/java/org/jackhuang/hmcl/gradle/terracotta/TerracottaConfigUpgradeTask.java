@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.gradle;
+package org.jackhuang.hmcl.gradle.terracotta;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -29,10 +29,7 @@ import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -57,24 +54,17 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
 
-public abstract class TerracottaConfigUpgradeTask extends DefaultTask {
-
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+@CacheableTask
+public abstract class TerracottaConfigUpgradeTask extends AbstractTerracottaTask {
 
     @Input
     public abstract ListProperty<@NotNull String> getClassifiers();
-
-    @Input
-    public abstract Property<@NotNull String> getVersion();
 
     @Input
     public abstract Property<@NotNull String> getDownloadURL();
 
     @InputFile
     public abstract RegularFileProperty getTemplateFile();
-
-    @OutputFile
-    public abstract RegularFileProperty getOutputFile();
 
     @TaskAction
     public void run() throws Exception {
@@ -159,21 +149,6 @@ public abstract class TerracottaConfigUpgradeTask extends DefaultTask {
         config.add("packages", GSON.toJsonTree(bundles));
 
         Files.writeString(getOutputFile().get().getAsFile().toPath(), GSON.toJson(config), StandardCharsets.UTF_8);
-    }
-
-    public void checkValid() throws IOException {
-        Path output = getOutputFile().get().getAsFile().toPath();
-        if (Files.isReadable(output)) {
-            String version = GSON.fromJson(Files.readString(output, StandardCharsets.UTF_8), JsonObject.class)
-                    .get("version_latest").getAsJsonPrimitive().getAsString();
-            if (Objects.equals(version, getVersion().get())) {
-                return;
-            }
-        }
-
-        throw new GradleException(String.format("Terracotta config isn't up-to-date! " +
-                "You might have just edited the version number in libs.version.toml. " +
-                "Please run task %s to resolve the new config.", getPath()));
     }
 
     private record Bundle(
