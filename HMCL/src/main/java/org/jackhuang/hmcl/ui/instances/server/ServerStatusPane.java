@@ -26,15 +26,17 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.server.ServerStatus;
 import org.jackhuang.hmcl.server.ServerStatusGetter;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.DialogAware;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.ImageContainer;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -73,21 +75,47 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         if (fromDnD) {
             // add to current instance
 
-            // launch game
+            JFXButton addToInstallBtn = new JFXButton(i18n("servers.dnd.add"));
+            addToInstallBtn.getStyleClass().add("dialog-accept");
+            addToInstallBtn.setOnAction(ignored0 -> {
+                fireEvent(new DialogCloseEvent());
+                // open server manager
+                HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
+                HMCLGameInstance selectedInstance = repository.getSelectedInstance();
+                if (selectedInstance == null) {
+                    JFXButton gotoDownload = new JFXButton(i18n("instance.empty.launch.goto_download"));
+                    gotoDownload.getStyleClass().add("dialog-accept");
+                    gotoDownload.setOnAction(ignored1 -> Controllers.navigate(Controllers.getDownloadPage()));
 
-            JFXButton cancelBtn = new JFXButton(i18n("button.cancel"));
-            cancelBtn.getStyleClass().add("dialog-cancel");
-            cancelBtn.setOnAction(e -> onClose());
-            onEscPressed(this, cancelBtn::fire);
-            actions.getChildren().add(cancelBtn);
-        } else {
-            // back
-            JFXButton backBtn = new JFXButton(i18n("button.back"));
-            backBtn.getStyleClass().add("dialog-back");
-            backBtn.setOnAction(e -> onClose());
-            onEscPressed(this, backBtn::fire);
-            actions.getChildren().add(backBtn);
+                    Controllers.confirmAction(i18n("servers.dnd.add.instanceempty.desc"), i18n("servers.dnd.add.instanceempty"),
+                            MessageDialogPane.MessageType.ERROR,
+                            gotoDownload,
+                            null);
+                } else {
+                    Instances.modifyServerList(selectedInstance);
+                    if (Controllers.getGameInstancePage().getSelectedTab() instanceof ServerListPage listPage) {
+                        listPage.addServer(iconedServer);
+                    }
+                }
+            });
+            actions.getChildren().add(addToInstallBtn);
         }
+
+        JFXButton launchBtn = new JFXButton(i18n("instance.launch"));
+        launchBtn.getStyleClass().add("dialog-accept");
+        launchBtn.setOnAction(e -> {
+            fireEvent(new DialogCloseEvent());
+            HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
+            HMCLGameInstance selectedInstance = repository.getSelectedInstance();
+            Instances.launchAndEnterServer(selectedInstance, iconedServer.getIp());
+        });
+        actions.getChildren().add(launchBtn);
+
+        JFXButton cancelBtn = new JFXButton(i18n("button.cancel"));
+        cancelBtn.getStyleClass().add("dialog-cancel");
+        cancelBtn.setOnAction(e -> onClose());
+        onEscPressed(this, cancelBtn::fire);
+        actions.getChildren().add(cancelBtn);
 
         replaceBody();
 

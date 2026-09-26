@@ -103,6 +103,25 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         }
     }
 
+    public void editServer(ServerHolder holder) {
+        if (gameInstance != null) {
+            runInFX(() -> Controllers.dialog(new EditServerPane(EditServerPane.Type.EDIT, holder.server, (server) -> {
+                if (!server.equals(holder.server)) {
+                    Task.runAsync(Schedulers.io(), () -> {
+                        List<Server> cachedServers = holder.cachedServers;
+                        cachedServers.set(holder.inDatPathSlot, server);
+                        Server.saveToServersDat(cachedServers, holder.fromServersDatFilePath);
+                    }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception != null)
+                            LOG.warning("Failed to save server data.", exception);
+
+                        refresh();
+                    }).start();
+                }
+            })));
+        }
+    }
+
     public void copyServerIp(ServerHolder holder) {
         FXUtils.copyText(holder.server.getIp(), i18n("servers.manage.copy.server.ip.ok.toast"));
     }
@@ -180,7 +199,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
     }
 
     private void addServer() {
-        runInFX(() -> Controllers.dialog(new AddServerPane(this::addServer)));
+        runInFX(() -> Controllers.dialog(new EditServerPane(EditServerPane.Type.ADD, null, this::addServer)));
     }
 
     private void refresh() {
@@ -397,6 +416,9 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
 
             IconedMenuItem copyToInstanceMEnuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("servers.manage.copy.to.instance"), () -> page.copyToInstance(holder), popup);
             popupMenu.getContent().addAll(
+                    new IconedMenuItem(SVG.EDIT, i18n("servers.manager.edit"), () ->
+                            page.editServer(holder), popup
+                    ),
                     new IconedMenuItem(SVG.SERVER_SIGNAL_FULL, i18n("servers.manager.status"), () ->
                             page.showServerStatus(holder), popup
                     ),
@@ -436,6 +458,10 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
 
         public IconedServer withIcon(@Nullable String newIcon) {
             return new IconedServer(isAcceptTextures(), isHidden(), newIcon, getIp(), getName());
+        }
+
+        public IconedServer withIpAndName(@Nullable String newIp, @Nullable String newName) {
+            return new IconedServer(isAcceptTextures(), isHidden(), getIcon(), newIp, newName);
         }
 
         public static IconedServer pack(Server server) {

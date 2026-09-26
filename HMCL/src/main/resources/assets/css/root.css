@@ -582,11 +582,6 @@
     -fx-padding: 0.7em 0.8em;
 }
 
-.dialog-back {
-    -fx-text-fill: -monet-on-surface-variant;
-    -fx-padding: 0.7em 0.8em;
-}
-
 /*******************************************************************************
  *                                                                             *
  * Microsoft Login Dialog                                                      *

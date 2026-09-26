@@ -436,4 +436,9 @@ public final class Instances {
         Controllers.navigate(Controllers.getGameInstancePage());
     }
 
+    public static void modifyServerList(HMCLGameInstance gameInstance) {
+        Controllers.getGameInstancePage().setInstance(gameInstance.getId(), gameInstance.getRepository());
+        Controllers.getGameInstancePage().showServerList();
+        Controllers.navigate(Controllers.getGameInstancePage());
+    }
 }

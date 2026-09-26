@@ -43,9 +43,11 @@ import static org.jackhuang.hmcl.ui.FXUtils.setValidateWhileTextChanged;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class AddServerPane extends TransitionPane implements DialogAware {
-    private final Consumer<ServerListPage.IconedServer> doAddServer;
+public class EditServerPane extends TransitionPane implements DialogAware {
+    private final Consumer<ServerListPage.IconedServer> handleCallback;
 
+    private final ServerListPage.IconedServer reference;
+    private final Type type;
     private final GridPane body = new GridPane();
     private final JFXTextField txtServerName = new JFXTextField();
     private final JFXTextField txtServerIP = new JFXTextField();
@@ -55,8 +57,10 @@ public class AddServerPane extends TransitionPane implements DialogAware {
     private final SpinnerPane spinner = new SpinnerPane();
     private final Label lblErrorMessage = new Label();
 
-    public AddServerPane(Consumer<ServerListPage.IconedServer> doAddServer) {
-        this.doAddServer = doAddServer;
+    public EditServerPane(Type type, ServerListPage.IconedServer reference, Consumer<ServerListPage.IconedServer> handleCallback) {
+        this.type = type;
+        this.reference = reference;
+        this.handleCallback = handleCallback;
 
         getStyleClass().add("skin-pane");
         initPaneContents();
@@ -70,7 +74,10 @@ public class AddServerPane extends TransitionPane implements DialogAware {
 
         JFXDialogLayout rootLayout = new JFXDialogLayout();
         getChildren().setAll(rootLayout);
-        rootLayout.setHeading(new Label(i18n("servers.manager.add.head")));
+        rootLayout.setHeading(new Label(switch (type) {
+                case EDIT -> i18n("servers.manager.edit.head");
+                case ADD -> i18n("servers.manager.add.head");
+            }));
 
         VBox bodyVbox = new VBox();
         bodyVbox.setSpacing(8);
@@ -96,6 +103,10 @@ public class AddServerPane extends TransitionPane implements DialogAware {
 
             txtServerName.setPromptText(i18n("servers.manager.server.name.def"));
             body.add(txtServerName, 1, 0);
+
+            if (reference != null) {
+                txtServerName.setText(reference.getName());
+            }
         }
 
         // server ip
@@ -108,12 +119,19 @@ public class AddServerPane extends TransitionPane implements DialogAware {
             txtServerIP.setValidators(new RequiredValidator());
             setValidateWhileTextChanged(txtServerIP, true);
             body.add(txtServerIP, 1, 1);
+
+            if (reference != null) {
+                txtServerIP.setText(reference.getIp());
+            }
         }
 
         bodyVbox.getChildren().add(body);
         rootLayout.setBody(bodyVbox);
 
-        btnAccept.setText(i18n("servers.manager.add.accept"));
+        btnAccept.setText(switch (type) {
+            case EDIT -> i18n("servers.manager.edit.accept");
+            case ADD -> i18n("servers.manager.add.accept");
+        });
         btnAccept.getStyleClass().add("dialog-accept");
         btnAccept.setOnAction(e -> onAdd());
         btnAccept.disableProperty().bind(new BooleanBinding() {
@@ -144,10 +162,6 @@ public class AddServerPane extends TransitionPane implements DialogAware {
         rootLayout.setActions(lblErrorMessage, actions);
     }
 
-    private void onCancel() {
-        fireEvent(new DialogCloseEvent());
-    }
-
     private void onAdd() {
         spinner.showSpinner();
         String serverName;
@@ -158,7 +172,6 @@ public class AddServerPane extends TransitionPane implements DialogAware {
         } else {
             serverName = txtServerName.getText();
         }
-
 
         body.setDisable(true);
 
@@ -171,10 +184,17 @@ public class AddServerPane extends TransitionPane implements DialogAware {
             ServerStatus status = result.getIfSuccess();
             if (status == null) {
                 spinner.hideSpinner();
-                btnAccept.setText(i18n("servers.manager.add.still"));
+                btnAccept.setText(switch (type) {
+                    case EDIT -> i18n("servers.manager.edit.still");
+                    case ADD -> i18n("servers.manager.add.still");
+                });
                 btnAccept.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
-                    doAddServer.accept(new ServerListPage.IconedServer(false, false, null, serverIP, serverName));
+                    if (reference != null) {
+                        handleCallback.accept(reference.withIpAndName(serverIP, serverName));
+                    } else {
+                        handleCallback.accept(new ServerListPage.IconedServer(false, false, null, serverIP, serverName));
+                    }
                 });
                 btnCancel.setOnAction(e -> {
                     initPaneContents();
@@ -182,9 +202,22 @@ public class AddServerPane extends TransitionPane implements DialogAware {
                 lblErrorMessage.setText(i18n("servers.manager.error.status"));
             } else {
                 fireEvent(new DialogCloseEvent());
-                doAddServer.accept(new ServerListPage.IconedServer(false, false, status.favicon(), serverIP, serverName));
+                if (reference != null) {
+                    handleCallback.accept(reference.withIpAndName(serverIP, serverName));
+                } else {
+                    handleCallback.accept(new ServerListPage.IconedServer(false, false, status.favicon(), serverIP, serverName));
+                }
             }
         }).start();
+    }
+
+    private void onCancel() {
+        fireEvent(new DialogCloseEvent());
+    }
+
+    public enum Type {
+        EDIT,
+        ADD
     }
 
     @Override

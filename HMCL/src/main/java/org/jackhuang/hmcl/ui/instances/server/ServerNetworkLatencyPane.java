@@ -32,7 +32,7 @@ public class ServerNetworkLatencyPane extends StackPane {
     private static final Timeline TIMELINE = new Timeline();
 
     static {
-        TIMELINE.getKeyFrames().add(new KeyFrame(Duration.millis(200), e -> {
+        TIMELINE.getKeyFrames().add(new KeyFrame(Duration.millis(125), e -> {
             for (ServerNetworkLatencyPane c : List.copyOf(INSTANCES)) {
                 if (c.state == State.PINGING) {
                     c.next();

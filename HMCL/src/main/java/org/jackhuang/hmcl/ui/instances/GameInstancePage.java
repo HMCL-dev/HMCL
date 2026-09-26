@@ -24,6 +24,7 @@ import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.event.Event;
 import javafx.event.EventType;
+import javafx.scene.Node;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -169,6 +170,14 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
 
     public void showInstanceSettings() {
         tab.select(gameSettingsTab, false);
+    }
+
+    public void showServerList() {
+        tab.select(serverListTab, false);
+    }
+
+    public Node getSelectedTab() {
+        return tab.getSelectionModel().getSelectedItem().getNode();
     }
 
     public void setInstance(GameInstanceID instanceId, HMCLGameRepository repository) {
