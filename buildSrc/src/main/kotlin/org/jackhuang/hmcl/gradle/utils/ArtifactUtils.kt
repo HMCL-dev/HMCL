@@ -18,7 +18,6 @@
 
 package org.jackhuang.hmcl.gradle.utils
 
-import org.gradle.api.logging.Logger
 import java.io.File
 import java.net.URI
 import java.nio.file.FileSystems
@@ -48,13 +47,7 @@ class ArtifactUtils {
             }
         }
 
-        fun attachSignature(jar: File, logger: Logger) {
-            val keyLocation = System.getenv("HMCL_SIGNATURE_KEY")
-            if (keyLocation == null) {
-                logger.warn("Missing signature key")
-                return
-            }
-
+        fun attachSignature(jar: File, keyLocation: String) {
             val privateKey = KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(File(keyLocation).readBytes()))
             val signer = Signature.getInstance("SHA512withRSA")
             signer.initSign(privateKey)
@@ -73,6 +66,6 @@ class ArtifactUtils {
             }
         }
 
-        fun artifactFile(jarFile: File, ext: String) = jarFile.resolveSibling(jarFile.nameWithoutExtension + '.' + ext)
+        fun resolveArtifactFile(jarFile: File, ext: String) = jarFile.resolveSibling(jarFile.nameWithoutExtension + '.' + ext)
     }
 }

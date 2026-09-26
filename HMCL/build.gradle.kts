@@ -7,7 +7,7 @@ import org.jackhuang.hmcl.gradle.pack.ReleaseType
 import org.jackhuang.hmcl.gradle.terracotta.AbstractTerracottaTask
 import org.jackhuang.hmcl.gradle.terracotta.TerracottaConfigUpgradeTask
 import org.jackhuang.hmcl.gradle.terracotta.TerracottaConfigValidateTask
-import org.jackhuang.hmcl.gradle.utils.ArtifactUtils.Companion.artifactFile
+import org.jackhuang.hmcl.gradle.utils.ArtifactUtils.Companion.resolveArtifactFile
 import org.jackhuang.hmcl.gradle.utils.ArtifactUtils.Companion.attachSignature
 import org.jackhuang.hmcl.gradle.utils.ArtifactUtils.Companion.createChecksum
 import org.jackhuang.hmcl.gradle.utils.PropertiesUtils
@@ -185,7 +185,12 @@ tasks.shadowJar {
     val jarFile = jarPath
 
     doLast {
-        attachSignature(jarFile, logger)
+        val keyLocation = System.getenv("HMCL_SIGNATURE_KEY")
+        if (keyLocation != null) {
+            attachSignature(jarFile, keyLocation)
+        } else {
+            logger.warn("Missing signature key")
+        }
         createChecksum(jarFile)
     }
 }
@@ -215,7 +220,7 @@ val makeExecutables = tasks.register("makeExecutables") {
     dependsOn(tasks.jar)
 
     inputs.file(jarPath)
-    outputs.files(extensions.map { artifactFile(jarPath, it) })
+    outputs.files(extensions.map { resolveArtifactFile(jarPath, it) })
 
     val jarFile = jarPath
 
@@ -224,7 +229,7 @@ val makeExecutables = tasks.register("makeExecutables") {
 
         ZipFile(jarFile).use { zipFile ->
             for (extension in extensions) {
-                val output = artifactFile(jarFile, extension)
+                val output = resolveArtifactFile(jarFile, extension)
                 val entry = zipFile.getEntry("assets/HMCLauncher.$extension")
                     ?: throw GradleException("HMCLauncher.$extension not found")
 
@@ -242,7 +247,7 @@ val makeExecutables = tasks.register("makeExecutables") {
 val makeDeb = tasks.register("makeDeb", CreateDeb::class) {
     dependsOn(makeExecutables)
 
-    val debFile = layout.file(provider { artifactFile(jarPath, "deb") })
+    val debFile = layout.file(provider { resolveArtifactFile(jarPath, "deb") })
 
     val debChannel = when (versionType) {
         "stable" -> ReleaseType.STABLE
@@ -253,7 +258,7 @@ val makeDeb = tasks.register("makeDeb", CreateDeb::class) {
     version.set(project.version.toString())
     releaseType.set(debChannel)
     launcherClassName.set("org.jackhuang.hmcl.Launcher")
-    appShFile.set(layout.file(provider { artifactFile(jarPath, "sh") }))
+    appShFile.set(layout.file(provider { resolveArtifactFile(jarPath, "sh") }))
     iconFile.set(layout.projectDirectory.file("image/hmcl.png"))
     outputFile.set(debFile)
 
