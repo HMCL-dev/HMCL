@@ -22,6 +22,7 @@ import org.glavo.nbt.tag.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Optional;
@@ -32,6 +33,12 @@ public final class NBTUtils {
 
     public static CompoundTag readCompressed(Path file) throws IOException {
         return NBTCodec.of().readTag(file, TagType.COMPOUND);
+    }
+
+    public static void writeCompressed(CompoundTag tag, Path file) throws IOException {
+        try (var output = Files.newOutputStream(file)) {
+            NBTCodec.of().writeTag(output, tag);
+        }
     }
 
     public static OptionalLong tryGetLong(Tag tag) {

@@ -384,6 +384,16 @@ public final class Instances {
                 launcherHelper.setQuickPlayOption(new QuickPlayOption.SinglePlayer(worldFolderName)));
     }
 
+    public static void launchAndEnterServer(HMCLGameInstance gameInstance, String serverIp) {
+        launch(gameInstance, launcherHelper ->
+                launcherHelper.setQuickPlayOption(new QuickPlayOption.MultiPlayer(serverIp)));
+    }
+
+    public static void generateLaunchScriptForQuickConnectServer(HMCLGameInstance gameInstance, String serverIp) {
+        generateLaunchScript(gameInstance, launcherHelper ->
+                launcherHelper.setQuickPlayOption(new QuickPlayOption.MultiPlayer(serverIp)));
+    }
+
     private static void ensureSelectedAccount(Consumer<Account> action) {
         Account account = Accounts.getSelectedAccount();
         if (SettingsManager.isNewlyCreated() && !AuthlibInjectorServers.getServers().isEmpty() &&
@@ -426,4 +436,9 @@ public final class Instances {
         Controllers.navigate(Controllers.getGameInstancePage());
     }
 
+    public static void modifyServerList(HMCLGameInstance gameInstance) {
+        Controllers.getGameInstancePage().setInstance(gameInstance.getId(), gameInstance.getRepository());
+        Controllers.getGameInstancePage().showServerList();
+        Controllers.navigate(Controllers.getGameInstancePage());
+    }
 }
