@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.time.Instant;
@@ -49,7 +50,11 @@ public final class ForgeRemoteVersion extends ComponentRemoteVersion {
         return "1.7.10-pre4".equals(gameVersion) ? "1.7.10_pre4" : gameVersion;
     }
 
-    private static String toLookupBranch(String gameVersion, String branch) {
+    private static String fromLookupVersion(String lookupVersion) {
+        return "1.7.10_pre4".equals(lookupVersion) ? "1.7.10-pre4" : lookupVersion;
+    }
+
+    private static String toLookupBranch(String gameVersion, @Nullable String branch) {
         if ("1.7.10-pre4".equals(gameVersion)) {
             return "prerelease";
         }
@@ -63,7 +68,7 @@ public final class ForgeRemoteVersion extends ComponentRemoteVersion {
             TreeSet<ForgeRemoteVersion> versions = new TreeSet<>();
 
             for (Map.Entry<String, int[]> entry : root.mcversion().entrySet()) {
-                if (gameVersion.equals(GameVersionNumber.asGameVersion(entry.getKey()))) {
+                if (gameVersion.equals(GameVersionNumber.asGameVersion(fromLookupVersion(entry.getKey())))) {
                     for (int v : entry.getValue()) {
                         ForgeVersion version = root.number().get(v);
                         if (version == null)
@@ -81,7 +86,7 @@ public final class ForgeRemoteVersion extends ComponentRemoteVersion {
                             continue;
 
                         versions.add(new ForgeRemoteVersion(
-                                GameVersionNumber.asGameVersion(toLookupVersion(version.getGameVersion())),
+                                gameVersion,
                                 version.getVersion(),
                                 version.getModified() > 0 ? Instant.ofEpochSecond(version.getModified()) : null,
                                 Collections.singletonList(jar)
@@ -103,6 +108,7 @@ public final class ForgeRemoteVersion extends ComponentRemoteVersion {
 
             TreeSet<ForgeRemoteVersion> versions = new TreeSet<>();
             for (ForgeBMCLVersion version : forgeVersions) {
+                //noinspection ConstantValue
                 if (version == null)
                     continue;
 
@@ -116,7 +122,7 @@ public final class ForgeRemoteVersion extends ComponentRemoteVersion {
                         String fileName2 = "forge-" + classifier + "-" + lookupVersion + "-" + file.category() + "." + file.format();
                         urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "/" + fileName1);
                         urls.add("https://files.minecraftforge.net/maven/net/minecraftforge/forge/" + classifier + "-" + lookupVersion + "/" + fileName2);
-                        urls.add(NetworkUtils.withQuery("https://bmclapi2.bangbang93.com/forge/download", mapOf(
+                        urls.add(NetworkUtils.withQuery(bmclRoot + "/forge/download", mapOf(
                                 pair("mcversion", version.mcversion()),
                                 pair("version", version.version()),
                                 pair("branch", branch),
@@ -137,7 +143,7 @@ public final class ForgeRemoteVersion extends ComponentRemoteVersion {
                     }
                 }
 
-                versions.add(new ForgeRemoteVersion(GameVersionNumber.asGameVersion(version.mcversion()), version.version(), releaseDate, urls));
+                versions.add(new ForgeRemoteVersion(gameVersion, version.version(), releaseDate, urls));
             }
 
             return ComponentRemoteVersionList.of(GameComponentType.FORGE, versions);
@@ -151,7 +157,7 @@ public final class ForgeRemoteVersion extends ComponentRemoteVersion {
      * @param selfVersion the version string of the remote version.
      * @param url         the installer or universal jar original URL.
      */
-    public ForgeRemoteVersion(GameVersionNumber gameVersion, String selfVersion, Instant releaseDate, List<String> url) {
+    public ForgeRemoteVersion(GameVersionNumber gameVersion, String selfVersion, @Nullable Instant releaseDate, List<String> url) {
         super(GameComponentType.FORGE, gameVersion, selfVersion, releaseDate, Type.UNCATEGORIZED, url);
     }
 

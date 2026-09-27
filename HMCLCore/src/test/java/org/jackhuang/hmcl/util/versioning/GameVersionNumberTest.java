@@ -434,7 +434,6 @@ public final class GameVersionNumberTest {
             assertNormalized(version, version);
         }
 
-        assertNormalized("1.7.10-pre4", "1.7.10_pre4");
         assertNormalized("1.21.11-pre3", "1.21.11-pre-3");
         assertNormalized("1.21.11-pre3", "1.21.11 Pre-Release 3");
         assertNormalized("1.21.11-pre3_unobfuscated", "1.21.11 Pre-Release 3 Unobfuscated");
