@@ -176,7 +176,7 @@ public class DownloadProvider {
         assert (type == GameComponentType.GAME) == (gameVersion == null);
 
         return switch (type) {
-            case GAME -> GameRemoteVersion.fetchAsync(DownloadCandidates.of(GameRemoteVersion.VERSION_MANIFEST_URL));
+            case GAME -> GameRemoteVersion.fetchAsync(getGameVersionListCandidates());
             case LEGACY_FABRIC -> fetchFabricVersionsAsync(
                     type,
                     gameVersion,
@@ -258,6 +258,10 @@ public class DownloadProvider {
                             List.of(it.file().url()))
             );
         };
+    }
+
+    protected DownloadCandidates getGameVersionListCandidates() {
+        return DownloadCandidates.of(GameRemoteVersion.VERSION_MANIFEST_URL);
     }
 
     public DownloadCandidates getDownloadCandidates(String baseURL) {

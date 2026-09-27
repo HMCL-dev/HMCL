@@ -35,8 +35,6 @@ import java.util.*;
 /// @author Glavo
 @NotNullByDefault
 public final class HMCLDownloadProvider extends DownloadProvider {
-    private static final String BMCLAPI_ROOT = System.getProperty("hmcl.bmclapi.override", "https://bmclapi2.bangbang93.com");
-
     private volatile DownloadSource versionListSource = DownloadSource.DEFAULT;
     private volatile DownloadSource fileSource = DownloadSource.DEFAULT;
 
@@ -57,34 +55,40 @@ public final class HMCLDownloadProvider extends DownloadProvider {
         }
     }
 
-    private final List<MirrorRule> rules = List.of(
-            new MirrorRule("https://bmclapi2.bangbang93.com", BMCLAPI_ROOT),
-            new MirrorRule("https://launchermeta.mojang.com", BMCLAPI_ROOT),
-            new MirrorRule("https://piston-meta.mojang.com", BMCLAPI_ROOT),
-            new MirrorRule("https://piston-data.mojang.com", BMCLAPI_ROOT),
-            new MirrorRule("https://launcher.mojang.com", BMCLAPI_ROOT),
-            new MirrorRule("https://libraries.minecraft.net", BMCLAPI_ROOT + "/libraries"),
-            new MirrorRule("http://files.minecraftforge.net/maven", BMCLAPI_ROOT + "/maven"),
-            new MirrorRule("https://files.minecraftforge.net/maven", BMCLAPI_ROOT + "/maven"),
-            new MirrorRule("https://maven.minecraftforge.net", BMCLAPI_ROOT + "/maven"),
-            new MirrorRule("https://maven.neoforged.net/releases/", BMCLAPI_ROOT + "/maven/"),
-            new MirrorRule("http://dl.liteloader.com/versions", BMCLAPI_ROOT + "/maven"),
-            new MirrorRule("https://dl.liteloader.com/versions", BMCLAPI_ROOT + "/maven"),
-            new MirrorRule("https://meta.fabricmc.net", BMCLAPI_ROOT + "/fabric-meta"),
-            new MirrorRule("https://maven.fabricmc.net", BMCLAPI_ROOT + "/maven"),
-            new MirrorRule("https://authlib-injector.yushi.moe", BMCLAPI_ROOT + "/mirrors/authlib-injector"),
-            new MirrorRule("https://repo1.maven.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
-            new MirrorRule("https://repo.maven.apache.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
-            new MirrorRule("https://hmcl.glavo.site/metadata/cleanroom", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom"),
-            new MirrorRule("https://hmcl.glavo.site/metadata/fmllibs", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/fmllibs"),
-            new MirrorRule("https://zkitefly.github.io/unlisted-versions-of-minecraft", "https://alist.8mi.tech/d/mirror/unlisted-versions-of-minecraft/Auto"),
+    private final String bmclRoot;
+    private final List<MirrorRule> rules;
 
-            // https://github.com/mcmod-info-mirror/mcim-rust-api
-            new MirrorRule("https://api.modrinth.com", "https://mod.mcimirror.top/modrinth", true),
-            new MirrorRule("https://cdn.modrinth.com", "https://mod.mcimirror.top", true),
-            new MirrorRule("https://api.curseforge.com", "https://mod.mcimirror.top/curseforge", true),
-            new MirrorRule("https://edge.forgecdn.net", "https://mod.mcimirror.top", true)
-    );
+    public HMCLDownloadProvider(String bmclRoot) {
+        this.bmclRoot = bmclRoot;
+        this.rules = List.of(
+                new MirrorRule("https://bmclapi2.bangbang93.com", bmclRoot),
+                new MirrorRule("https://launchermeta.mojang.com", bmclRoot),
+                new MirrorRule("https://piston-meta.mojang.com", bmclRoot),
+                new MirrorRule("https://piston-data.mojang.com", bmclRoot),
+                new MirrorRule("https://launcher.mojang.com", bmclRoot),
+                new MirrorRule("https://libraries.minecraft.net", bmclRoot + "/libraries"),
+                new MirrorRule("http://files.minecraftforge.net/maven", bmclRoot + "/maven"),
+                new MirrorRule("https://files.minecraftforge.net/maven", bmclRoot + "/maven"),
+                new MirrorRule("https://maven.minecraftforge.net", bmclRoot + "/maven"),
+                new MirrorRule("https://maven.neoforged.net/releases/", bmclRoot + "/maven/"),
+                new MirrorRule("http://dl.liteloader.com/versions", bmclRoot + "/maven"),
+                new MirrorRule("https://dl.liteloader.com/versions", bmclRoot + "/maven"),
+                new MirrorRule("https://meta.fabricmc.net", bmclRoot + "/fabric-meta"),
+                new MirrorRule("https://maven.fabricmc.net", bmclRoot + "/maven"),
+                new MirrorRule("https://authlib-injector.yushi.moe", bmclRoot + "/mirrors/authlib-injector"),
+                new MirrorRule("https://repo1.maven.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
+                new MirrorRule("https://repo.maven.apache.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
+                new MirrorRule("https://hmcl.glavo.site/metadata/cleanroom", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom"),
+                new MirrorRule("https://hmcl.glavo.site/metadata/fmllibs", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/fmllibs"),
+                new MirrorRule("https://zkitefly.github.io/unlisted-versions-of-minecraft", "https://alist.8mi.tech/d/mirror/unlisted-versions-of-minecraft/Auto"),
+
+                // https://github.com/mcmod-info-mirror/mcim-rust-api
+                new MirrorRule("https://api.modrinth.com", "https://mod.mcimirror.top/modrinth", true),
+                new MirrorRule("https://cdn.modrinth.com", "https://mod.mcimirror.top", true),
+                new MirrorRule("https://api.curseforge.com", "https://mod.mcimirror.top/curseforge", true),
+                new MirrorRule("https://edge.forgecdn.net", "https://mod.mcimirror.top", true)
+        );
+    }
 
     @Override
     protected Task<? extends ComponentRemoteVersionList<?>> fetchVersionsAsync(GameComponentType type, @Nullable GameVersionNumber gameVersion) {
@@ -93,8 +97,8 @@ public final class HMCLDownloadProvider extends DownloadProvider {
             case GAME -> {
                 return GameRemoteVersion.fetchAsync(getCandidates(
                         versionListSource,
-                        GameRemoteVersion.VERSION_MANIFEST_URL,
-                        BMCLAPI_ROOT + "/mc/game/version_manifest.json"
+                        GameRemoteVersion.VERSION_MANIFEST_URL.toString(),
+                        bmclRoot + "/mc/game/version_manifest.json"
                 ));
             }
             case FORGE -> {
@@ -105,7 +109,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                     return fetchOfficial;
                 }
 
-                Task<ComponentRemoteVersionList<ForgeRemoteVersion>> fetchBMCL = ForgeRemoteVersion.fetchBMCLAsync(BMCLAPI_ROOT, gameVersion);
+                Task<ComponentRemoteVersionList<ForgeRemoteVersion>> fetchBMCL = ForgeRemoteVersion.fetchBMCLAsync(bmclRoot, gameVersion);
                 if (source == DownloadSource.MIRROR) {
                     return new FallbackTask<>(fetchBMCL, fetchOfficial);
                 } else {
@@ -123,7 +127,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 if (!LocaleUtils.IS_CHINA_MAINLAND && (source == DownloadSource.DEFAULT || source == DownloadSource.OFFICIAL)) {
                     return fetchOfficial;
                 }
-                Task<ComponentRemoteVersionList<NeoForgeRemoteVersion>> fetchBMCL = NeoForgeRemoteVersion.fetchBMCLAsync(BMCLAPI_ROOT, gameVersion);
+                Task<ComponentRemoteVersionList<NeoForgeRemoteVersion>> fetchBMCL = NeoForgeRemoteVersion.fetchBMCLAsync(bmclRoot, gameVersion);
                 if (source == DownloadSource.MIRROR || source == DownloadSource.DEFAULT) {
                     return new FallbackTask<>(fetchBMCL, fetchOfficial);
                 } else {
@@ -131,7 +135,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 }
             }
             case OPTIFINE -> {
-                return OptiFineRemoteVersion.fetchBMCLAsync(BMCLAPI_ROOT, gameVersion);
+                return OptiFineRemoteVersion.fetchBMCLAsync(bmclRoot, gameVersion);
             }
         }
 
@@ -210,7 +214,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
         return getCandidates(
                 fileSource,
                 "https://resources.download.minecraft.net/" + assetObject.getLocation(),
-                BMCLAPI_ROOT + "/mc/assets/" + assetObject.getLocation()
+                bmclRoot + "/mc/assets/" + assetObject.getLocation()
         );
     }
 
