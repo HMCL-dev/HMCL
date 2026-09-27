@@ -210,6 +210,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
     }
 
     private void refresh() {
+        lblErrorMessage.setText("");
         refreshSpinner.showSpinner();
 
         Task.supplyAsync(Schedulers.io(), () ->
