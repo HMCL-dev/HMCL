@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -29,12 +28,11 @@ import java.util.SortedSet;
 @NotNullByDefault
 public final class ComponentRemoteVersionList<V extends ComponentRemoteVersion> extends AbstractList<V> {
     private static final ComponentRemoteVersionList<?>[] EMPTY_LISTS = new ComponentRemoteVersionList<?>[GameComponentType.ALL.size()];
+    private static final ComponentRemoteVersion[] EMPTY_VERSIONS_ARRAY = new ComponentRemoteVersion[0];
 
     static {
-        GameRemoteVersion[] emptyArray = new GameRemoteVersion[0];
-
         for (GameComponentType type : GameComponentType.ALL) {
-            EMPTY_LISTS[type.ordinal()] = new ComponentRemoteVersionList<>(type, emptyArray);
+            EMPTY_LISTS[type.ordinal()] = new ComponentRemoteVersionList<>(type, EMPTY_VERSIONS_ARRAY);
         }
     }
 
@@ -47,7 +45,7 @@ public final class ComponentRemoteVersionList<V extends ComponentRemoteVersion> 
 
     @SuppressWarnings("unchecked")
     public static <V extends ComponentRemoteVersion> ComponentRemoteVersionList<V> of(GameComponentType type, SortedSet<? extends V> elements) {
-        return new ComponentRemoteVersionList<>(type, elements.toArray((V[]) new GameRemoteVersion[elements.size()]));
+        return new ComponentRemoteVersionList<>(type, elements.toArray((V[]) EMPTY_VERSIONS_ARRAY));
     }
 
     private final GameComponentType type;
