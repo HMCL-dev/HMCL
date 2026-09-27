@@ -30,6 +30,8 @@ import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricAPIRemoteVersion;
 import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricRemoteVersion;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
+import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
+import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
 import org.jackhuang.hmcl.game.AssetObject;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.task.GetTask;
@@ -232,9 +234,30 @@ public class DownloadProvider {
                     gameVersion
             );
             case LITELOADER -> LiteLoaderRemoteVersion.fetchAsync(gameVersion);
-            case OPTIFINE -> null;
-            case QUILT -> null;
-            case QUILT_API -> null;
+            case OPTIFINE -> Task.supplyAsync(() -> {
+                throw new UnsupportedOperationException("OptiFine version list fetching is not supported in this DownloadProvider.");
+            });
+            case QUILT -> fetchFabricVersionsAsync(
+                    type,
+                    gameVersion,
+                    DownloadCandidates.of(QuiltRemoteVersion.GAME_META_URL),
+                    DownloadCandidates.of(QuiltRemoteVersion.LOADER_META_URL),
+                    (metaGameVersion, loaderVersion) -> new QuiltRemoteVersion(
+                            gameVersion, loaderVersion,
+                            List.of("%s/%s/%s".formatted(QuiltRemoteVersion.LOADER_META_URL, metaGameVersion, loaderVersion)))
+            );
+            case QUILT_API -> fetchModrinthVersionsAsync(
+                    type,
+                    QuiltAPIRemoteVersion.MODRINTH_ID,
+                    gameVersion,
+                    it -> new QuiltAPIRemoteVersion(
+                            gameVersion,
+                            it.version(),
+                            it.name(),
+                            it.datePublished(),
+                            it,
+                            List.of(it.file().url()))
+            );
         };
     }
 

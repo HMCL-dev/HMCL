@@ -33,6 +33,8 @@ import java.util.List;
 
 @NotNullByDefault
 public final class QuiltAPIRemoteVersion extends ComponentRemoteVersion {
+    public static final String MODRINTH_ID = "qsl";
+
     private final String fullVersion;
     private final RemoteAddon.Version version;
 
@@ -43,7 +45,7 @@ public final class QuiltAPIRemoteVersion extends ComponentRemoteVersion {
      * @param selfVersion the version string of the remote version.
      * @param urls        the installer or universal jar original URL.
      */
-    QuiltAPIRemoteVersion(GameVersionNumber gameVersion, String selfVersion, String fullVersion, Instant datePublished, RemoteAddon.Version version, List<String> urls) {
+    public QuiltAPIRemoteVersion(GameVersionNumber gameVersion, String selfVersion, String fullVersion, Instant datePublished, RemoteAddon.Version version, List<String> urls) {
         super(GameComponentType.QUILT_API, gameVersion, selfVersion, datePublished, Type.UNCATEGORIZED, urls);
 
         this.fullVersion = fullVersion;

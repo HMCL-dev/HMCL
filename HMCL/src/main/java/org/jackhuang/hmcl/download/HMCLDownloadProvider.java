@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
+import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.game.AssetObject;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.setting.DownloadSource;
@@ -104,6 +105,9 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 } else {
                     return new FallbackTask<>(fetchOfficial, fetchBMCL);
                 }
+            }
+            case OPTIFINE -> {
+                return OptiFineRemoteVersion.fetchBMCLAsync(BMCLAPI_ROOT, gameVersion);
             }
         }
 

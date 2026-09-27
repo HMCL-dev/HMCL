@@ -31,6 +31,10 @@ import java.util.List;
 
 @NotNullByDefault
 public final class QuiltRemoteVersion extends ComponentRemoteVersion {
+
+    public static final String LOADER_META_URL = "https://meta.quiltmc.org/v3/versions/loader";
+    public static final String GAME_META_URL = "https://meta.quiltmc.org/v3/versions/game";
+
     /**
      * Constructor.
      *
@@ -38,7 +42,7 @@ public final class QuiltRemoteVersion extends ComponentRemoteVersion {
      * @param selfVersion the version string of the remote version.
      * @param urls        the installer or universal jar original URL.
      */
-    QuiltRemoteVersion(GameVersionNumber gameVersion, String selfVersion, List<String> urls) {
+    public QuiltRemoteVersion(GameVersionNumber gameVersion, String selfVersion, List<String> urls) {
         super(GameComponentType.QUILT, gameVersion, selfVersion, null, Type.UNCATEGORIZED, urls);
     }
 
