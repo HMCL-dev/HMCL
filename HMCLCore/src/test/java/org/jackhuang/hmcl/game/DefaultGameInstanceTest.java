@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DefaultGameBuilder;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
@@ -238,7 +239,7 @@ public final class DefaultGameInstanceTest {
                 new DefaultCacheRepository(tempDirectory.resolve("cache"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new MojangDownloadProvider(),
+                new DownloadProvider(),
                 cacheRepository);
         Path source = tempDirectory.resolve("client.jar");
         Files.writeString(source, "client");
@@ -267,7 +268,7 @@ public final class DefaultGameInstanceTest {
         DefaultCacheRepository cacheRepository = new DefaultCacheRepository(cacheDirectory);
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new MojangDownloadProvider(),
+                new DownloadProvider(),
                 cacheRepository);
         Path source = tempDirectory.resolve("client.jar");
         Files.writeString(source, "client");
@@ -308,7 +309,7 @@ public final class DefaultGameInstanceTest {
         TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new MojangDownloadProvider(),
+                new DownloadProvider(),
                 new DefaultCacheRepository(tempDirectory.resolve("download-cache")));
         ForgeNewInstallTask task = new ForgeNewInstallTask(
                 dependencyManager,
@@ -345,7 +346,7 @@ public final class DefaultGameInstanceTest {
         TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new MojangDownloadProvider(),
+                new DownloadProvider(),
                 new DefaultCacheRepository(tempDirectory.resolve("download-cache")));
         ForgeNewInstallTask task = new ForgeNewInstallTask(
                 dependencyManager,
@@ -401,7 +402,7 @@ public final class DefaultGameInstanceTest {
                 new GameInstanceManifest(new GameInstanceID("instance")));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 managerRepository,
-                new MojangDownloadProvider(),
+                new DownloadProvider(),
                 new DefaultCacheRepository(tempDirectory.resolve("cache")));
 
         assertThrows(IllegalArgumentException.class, () -> dependencyManager.validateGameInstance(instance));
@@ -421,7 +422,7 @@ public final class DefaultGameInstanceTest {
         repository.publish(instanceId, new GameInstanceManifest(instanceId));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new MojangDownloadProvider(),
+                new DownloadProvider(),
                 new DefaultCacheRepository(tempDirectory.resolve("cache")));
 
         IllegalStateException exception = assertThrows(
@@ -445,7 +446,7 @@ public final class DefaultGameInstanceTest {
                 new GameInstanceManifest(instanceId));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new MojangDownloadProvider(),
+                new DownloadProvider(),
                 new DefaultCacheRepository(tempDirectory.resolve("cache")));
         repository.publishEmpty();
 
@@ -471,7 +472,7 @@ public final class DefaultGameInstanceTest {
         repository.publish(instanceId, new GameInstanceManifest(instanceId));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new MojangDownloadProvider(),
+                new DownloadProvider(),
                 new DefaultCacheRepository(tempDirectory.resolve("cache")));
 
         IllegalStateException exception = assertThrows(
@@ -491,7 +492,7 @@ public final class DefaultGameInstanceTest {
         TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new MojangDownloadProvider(),
+                new DownloadProvider(),
                 new DefaultCacheRepository(tempDirectory.resolve("cache")));
         DefaultGameBuilder builder = dependencyManager.newGameBuilder(new GameInstanceID("instance"));
 
@@ -515,7 +516,7 @@ public final class DefaultGameInstanceTest {
         TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new MojangDownloadProvider(),
+                new DownloadProvider(),
                 new DefaultCacheRepository(tempDirectory.resolve("cache")));
         DefaultGameBuilder builder = dependencyManager.newGameBuilder(new GameInstanceID("instance"));
 
@@ -541,7 +542,7 @@ public final class DefaultGameInstanceTest {
         Files.writeString(marker, "existing");
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new MojangDownloadProvider(),
+                new DownloadProvider(),
                 new DefaultCacheRepository(tempDirectory.resolve("cache")));
         MultiMCInstanceConfiguration manifest = createMultiMCConfiguration();
         Modpack modpack = createMultiMCModpack(manifest);
@@ -799,7 +800,7 @@ public final class DefaultGameInstanceTest {
         private CapturingDependencyManager(
                 DefaultGameRepository repository,
                 DefaultCacheRepository cacheRepository) {
-            super(repository, new MojangDownloadProvider(), cacheRepository);
+            super(repository, new DownloadProvider(), cacheRepository);
         }
 
         /// Records the requested remote version without performing a network lookup.

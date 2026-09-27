@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -320,7 +321,7 @@ public final class DefaultGameRepositoryDraftTest {
         DefaultCacheRepository cache = new DefaultCacheRepository(tempDirectory.resolve("cache"));
         Path cached = cache.cacheFile(source, "SHA-1", sha1);
         DefaultDependencyManager manager = new DefaultDependencyManager(
-                repository, new MojangDownloadProvider(), cache);
+                repository, new DownloadProvider(), cache);
         GameInstanceManifest replacement = original.withDownloads(Map.of(DownloadType.CLIENT,
                 new DownloadInfo("https://example.invalid/client.jar", sha1)));
 
@@ -548,7 +549,7 @@ public final class DefaultGameRepositoryDraftTest {
 
     /// Creates a dependency manager with a cache isolated inside the test repository.
     private static DefaultDependencyManager createDependencyManager(TestRepository repository) {
-        return new DefaultDependencyManager(repository, new MojangDownloadProvider(),
+        return new DefaultDependencyManager(repository, new DownloadProvider(),
                 new DefaultCacheRepository(repository.getBaseDirectory().resolve("cache")));
     }
 
