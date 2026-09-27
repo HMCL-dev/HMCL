@@ -27,7 +27,6 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputFile;
 import org.jetbrains.annotations.NotNull;
 
-@CacheableTask
 public abstract class AbstractTerracottaTask extends DefaultTask {
 
     protected static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

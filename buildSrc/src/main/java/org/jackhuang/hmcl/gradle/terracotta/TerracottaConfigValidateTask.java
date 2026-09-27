@@ -17,38 +17,18 @@
  */
 package org.jackhuang.hmcl.gradle.terracotta;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.annotations.SerializedName;
-import kala.compress.archivers.tar.TarArchiveEntry;
-import kala.compress.archivers.tar.TarArchiveReader;
-import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
-import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.zip.GZIPInputStream;
 
-@CacheableTask
 public abstract class TerracottaConfigValidateTask extends AbstractTerracottaTask {
 
     @Input
