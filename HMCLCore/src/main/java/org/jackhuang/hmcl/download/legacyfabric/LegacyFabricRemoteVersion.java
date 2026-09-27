@@ -24,11 +24,13 @@ import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.nio.file.Path;
 import java.util.*;
 
-public class LegacyFabricRemoteVersion extends ComponentRemoteVersion {
+@NotNullByDefault
+public final class LegacyFabricRemoteVersion extends ComponentRemoteVersion {
 
     public static final String LOADER_META_URL = "https://meta.legacyfabric.net/v2/versions/loader";
     public static final String GAME_META_URL = "https://meta.legacyfabric.net/v2/versions/game";

@@ -36,7 +36,6 @@ public final class ComponentRemoteVersionList<V extends ComponentRemoteVersion> 
         }
     }
 
-
     public static <V extends ComponentRemoteVersion> ComponentRemoteVersionList<V> of(GameComponentType type) {
         @SuppressWarnings("unchecked")
         ComponentRemoteVersionList<V> list = (ComponentRemoteVersionList<V>) EMPTY_LISTS[type.ordinal()];

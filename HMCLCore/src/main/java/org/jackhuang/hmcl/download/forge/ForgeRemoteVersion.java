@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.nio.file.Path;
 import java.time.Instant;
@@ -39,7 +40,8 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class ForgeRemoteVersion extends ComponentRemoteVersion {
+@NotNullByDefault
+public final class ForgeRemoteVersion extends ComponentRemoteVersion {
 
     public static final WebURL FORGE_LIST = WebURL.parse("https://hmcl.glavo.site/metadata/forge/");
 
