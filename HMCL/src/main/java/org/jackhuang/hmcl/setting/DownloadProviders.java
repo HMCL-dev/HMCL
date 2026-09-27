@@ -17,8 +17,11 @@
  */
 package org.jackhuang.hmcl.setting;
 
+import javafx.beans.InvalidationListener;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.task.DownloadException;
+import org.jackhuang.hmcl.task.FetchTask;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
@@ -29,6 +32,8 @@ import java.net.SocketTimeoutException;
 import java.nio.file.AccessDeniedException;
 import java.util.concurrent.CancellationException;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
+import static org.jackhuang.hmcl.task.FetchTask.DEFAULT_CONCURRENCY;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class DownloadProviders {
@@ -39,7 +44,17 @@ public final class DownloadProviders {
 
     /// Initializes download provider settings and synchronizes download thread settings.
     public static void init() {
-        // TODO
+        InvalidationListener onChangeDownloadThreads = observable -> {
+            FetchTask.setDownloadExecutorConcurrency(settings().autoDownloadThreadsProperty().get()
+                    ? DEFAULT_CONCURRENCY
+                    : settings().downloadThreadsProperty().get());
+        };
+        settings().autoDownloadThreadsProperty().addListener(onChangeDownloadThreads);
+        settings().downloadThreadsProperty().addListener(onChangeDownloadThreads);
+        onChangeDownloadThreads.invalidated(null);
+
+        FXUtils.onChangeAndOperate(settings().versionListSourceProperty(), PROVIDER::setVersionListSource);
+        FXUtils.onChangeAndOperate(settings().fileDownloadSourceProperty(), PROVIDER::setFileSource);
     }
 
     /**

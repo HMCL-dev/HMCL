@@ -142,6 +142,14 @@ public final class HMCLDownloadProvider extends DownloadProvider {
         return super.fetchVersionsAsync(type, gameVersion);
     }
 
+    public void setFileSource(DownloadSource fileSource) {
+        this.fileSource = Objects.requireNonNull(fileSource);
+    }
+
+    public void setVersionListSource(DownloadSource versionListSource) {
+        this.versionListSource = Objects.requireNonNull(versionListSource);
+    }
+
     @Override
     public DownloadCandidates getDownloadCandidates(List<String> urls) {
         if (urls.isEmpty()) {
