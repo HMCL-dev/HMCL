@@ -34,7 +34,11 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TreeSet;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -89,7 +93,7 @@ public final class ForgeRemoteVersion extends ComponentRemoteVersion {
                                 gameVersion,
                                 version.getVersion(),
                                 version.getModified() > 0 ? Instant.ofEpochSecond(version.getModified()) : null,
-                                Collections.singletonList(jar)
+                                List.of(jar)
                         ));
                     }
                     break;
