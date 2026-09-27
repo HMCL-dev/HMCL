@@ -1579,7 +1579,7 @@ public final class FXUtils {
             GridPane body = new GridPane(4, 8);
             {
                 Label fromLabel = new Label(i18n("button.select_date.from"));
-                this.fromPicker = new JFXDatePicker(LocalDate.now(Clock.systemDefaultZone()));
+                this.fromPicker = new JFXDatePicker(LocalDate.now());
                 fromPicker.setOverLay(true);
                 fromPicker.setDialogParent(Controllers.getDecorator().getDialogContainer());
                 body.add(fromLabel, 0, 0);
@@ -1587,7 +1587,7 @@ public final class FXUtils {
             }
             {
                 Label toLabel = new Label(i18n("button.select_date.to"));
-                this.toPicker = new JFXDatePicker(LocalDate.now(Clock.systemDefaultZone()));
+                this.toPicker = new JFXDatePicker(LocalDate.now());
                 toPicker.setOverLay(true);
                 toPicker.setDialogParent(Controllers.getDecorator().getDialogContainer());
                 body.add(toLabel, 0, 1);

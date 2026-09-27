@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.time.Year;
 import java.time.YearMonth;
 import java.time.chrono.ChronoLocalDate;
 import java.time.chrono.Chronology;
@@ -52,6 +53,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 public class JFXDatePickerContent extends VBox {
     private static final String SPINNER_LABEL = "spinner-label";
@@ -174,9 +176,7 @@ public class JFXDatePickerContent extends VBox {
         this.createWeekDaysCells();
         this.createDayCells();
 
-        for (int i = 0; i <= 200; ++i) {
-            this.yearsListView.getItems().add(Integer.toString(1900 + i));
-        }
+        this.yearsListView.getItems().addAll(IntStream.rangeClosed(1900, Year.now().getValue() + 100).mapToObj(Integer::toString).toList());
 
         StackPane main = new StackPane();
         this.yearsListView.setVisible(false);
