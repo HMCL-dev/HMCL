@@ -68,8 +68,8 @@ public final class HMCLDownloadProvider extends DownloadProvider {
             new MirrorRule("https://files.minecraftforge.net/maven", BMCLAPI_ROOT + "/maven"),
             new MirrorRule("https://maven.minecraftforge.net", BMCLAPI_ROOT + "/maven"),
             new MirrorRule("https://maven.neoforged.net/releases/", BMCLAPI_ROOT + "/maven/"),
-            new MirrorRule("http://dl.liteloader.com/versions/versions.json", BMCLAPI_ROOT + "/maven/com/mumfrey/liteloader/versions.json"),
             new MirrorRule("http://dl.liteloader.com/versions", BMCLAPI_ROOT + "/maven"),
+            new MirrorRule("https://dl.liteloader.com/versions", BMCLAPI_ROOT + "/maven"),
             new MirrorRule("https://meta.fabricmc.net", BMCLAPI_ROOT + "/fabric-meta"),
             new MirrorRule("https://maven.fabricmc.net", BMCLAPI_ROOT + "/maven"),
             new MirrorRule("https://authlib-injector.yushi.moe", BMCLAPI_ROOT + "/mirrors/authlib-injector"),
@@ -171,6 +171,11 @@ public final class HMCLDownloadProvider extends DownloadProvider {
         var candidates = new ArrayList<DownloadCandidate>(urls.size() * 2);
         for (String url : urls) {
             DownloadCandidate candidate = DownloadCandidate.of(url);
+            if (candidate.url() == null) {
+                // Invalid URL, just add it to the list and let the download task handle it.
+                candidates.add(candidate);
+                continue;
+            }
 
             @Nullable DownloadCandidate mirrorCandidate = null;
             boolean fallback = false;
