@@ -17,14 +17,56 @@
  */
 package org.jackhuang.hmcl.server;
 
+import com.google.gson.JsonElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.UUID;
 
 public record ServerStatus(
         long networkLatency,
-        int protocol,
-        String protocolName,
-        int playerMax,
-        int playerOnline,
-        @Nullable String favicon
+        @NotNull Version version,
+        @NotNull Players players,
+        @NotNull Description description,
+        @Nullable String favicon,
+        boolean enforcesSecureChat,
+        @Nullable ModInfo modInfo
 ) {
+
+    public record Version(
+            @NotNull String name,
+            int version
+    ) {
+
+    }
+
+    public record Players(
+            int max,
+            int online,
+            @NotNull List<@NotNull Sample> samples
+    ) {
+        public record Sample(
+                @NotNull String name,
+                @NotNull UUID id
+        ) {
+
+        }
+    }
+
+    public record Description(@NotNull JsonElement description) {
+
+    }
+
+    public record ModInfo(
+            @NotNull String type,
+            @NotNull List<Mod> modList
+    ) {
+        public record Mod(
+                @NotNull String modId,
+                @NotNull String version
+        ) {
+
+        }
+    }
 }

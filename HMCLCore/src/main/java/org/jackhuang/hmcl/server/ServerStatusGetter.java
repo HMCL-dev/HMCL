@@ -17,18 +17,20 @@
  */
 package org.jackhuang.hmcl.server;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.Socket;
 import java.net.StandardSocketOptions;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 // https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping
+// https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Minecraft_Forge_Handshake
 public final class ServerStatusGetter {
     private ServerStatusGetter() {
 
@@ -59,35 +61,89 @@ public final class ServerStatusGetter {
 
                 JsonObject rootStatus = JsonParser.parseString(status).getAsJsonObject();
 
-                JsonObject versionJsonObject = rootStatus.getAsJsonObject("version");
-                int protocol = versionJsonObject.get("protocol").getAsInt();
-                String protocolName = versionJsonObject.get("name").getAsString();
-
-                JsonObject playersJsonObject = rootStatus.getAsJsonObject("players");
-                int playerMax = playersJsonObject.get("max").getAsInt();
-                int playerOnline = playersJsonObject.get("online").getAsInt();
-
-                String favicon = null;
-                if (rootStatus.get("favicon") != null) {
-                    String fetchedFavicon = rootStatus.get("favicon").getAsString();
-                    if (fetchedFavicon.startsWith("data:image/png;base64,")) {
-                        favicon = fetchedFavicon.substring("data:image/png;base64,".length());
-                    }
-                }
-
-                return ServerStatusResult.success(new ServerStatus(
-                        networkLatency,
-                        protocol,
-                        protocolName,
-                        playerMax,
-                        playerOnline,
-                        favicon
-                ));
+                ServerStatus parseServerStatus = parseServerStatus(networkLatency, rootStatus);
+                return ServerStatusResult.success(parseServerStatus);
             }
         } catch (Exception e) {
             LOG.error("Failed to get the status of server " + address, e);
             return ServerStatusResult.failure(e);
         }
+    }
+
+    private static ServerStatus parseServerStatus(long networkLatency, JsonObject rootStatus) {
+        JsonObject versionJsonObject = rootStatus.getAsJsonObject("version");
+        ServerStatus.Version version = new ServerStatus.Version(versionJsonObject.get("name").getAsString(), versionJsonObject.get("protocol").getAsInt());
+
+        JsonObject playersJsonObject = rootStatus.getAsJsonObject("players");
+        ArrayList<ServerStatus.Players.Sample> samples = new ArrayList<>();
+        ServerStatus.Players players = new ServerStatus.Players(playersJsonObject.get("max").getAsInt(), playersJsonObject.get("online").getAsInt(), samples);
+        JsonElement playersSampleJsonElement = playersJsonObject.get("sample");
+        if (playersSampleJsonElement instanceof JsonArray jArray) {
+            for (JsonElement element : jArray) {
+                JsonObject jsonObject = (JsonObject) element;
+                samples.add(new ServerStatus.Players.Sample(
+                        jsonObject.get("name").getAsString(),
+                        UUID.fromString(jsonObject.get("id").getAsString())
+                ));
+            }
+        }
+
+        ServerStatus.Description description;
+        if (rootStatus.get("description") != null) {
+            description = new ServerStatus.Description(rootStatus.get("description"));
+        } else {
+            description = new ServerStatus.Description(JsonNull.INSTANCE);
+        }
+
+        String favicon;
+        if (rootStatus.get("favicon") != null) {
+            String fetchedFavicon = rootStatus.get("favicon").getAsString();
+            if (fetchedFavicon.startsWith("data:image/png;base64,")) {
+                favicon = fetchedFavicon.substring("data:image/png;base64,".length());
+            } else {
+                favicon = null;
+            }
+        } else {
+            favicon = null;
+        }
+
+        boolean enforcesSecureChat;
+        if (rootStatus.get("enforcesSecureChat") != null) {
+            enforcesSecureChat = rootStatus.get("enforcesSecureChat").getAsBoolean();
+        } else {
+            enforcesSecureChat = false;
+        }
+
+        ServerStatus.ModInfo modInfo;
+        if (rootStatus.get("modinfo") != null) {
+            JsonObject modinfoJsonObject = rootStatus.get("modinfo").getAsJsonObject();
+            ArrayList<ServerStatus.ModInfo.Mod> modList = new ArrayList<>();
+            modInfo = new ServerStatus.ModInfo(
+                    modinfoJsonObject.get("type").getAsString(),
+                    modList
+            );
+            if (modinfoJsonObject.get("modList") instanceof JsonArray jArray) {
+                for (JsonElement element : jArray) {
+                    JsonObject jsonObject = (JsonObject) element;
+                    modList.add(new ServerStatus.ModInfo.Mod(
+                            jsonObject.get("modid").getAsString(),
+                            jsonObject.get("version").getAsString()
+                    ));
+                }
+            }
+        } else {
+            modInfo = null;
+        }
+
+        return new ServerStatus(
+                networkLatency,
+                version,
+                players,
+                description,
+                favicon,
+                enforcesSecureChat,
+                modInfo
+        );
     }
 
     private static long readPongResponsePacket(DataInputStream in) throws IOException {

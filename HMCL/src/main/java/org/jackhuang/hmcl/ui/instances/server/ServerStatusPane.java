@@ -174,7 +174,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
 
             rows++;
             textPane.add(new Label(i18n("servers.manager.server.players") + ":"), 0, rows);
-            textPane.add(new Label(String.format("%,d/%,d", cachedServerStatus.playerOnline(), cachedServerStatus.playerMax())), 1, rows);
+            textPane.add(new Label(String.format("%,d/%,d", cachedServerStatus.players().online(), cachedServerStatus.players().max())), 1, rows);
         }
 
         rootLayout.setBody(contentBox);
