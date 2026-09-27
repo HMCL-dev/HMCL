@@ -32,7 +32,6 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.java.JavaDistribution;
 import org.jackhuang.hmcl.download.java.JavaPackageType;
@@ -58,6 +57,7 @@ import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -201,7 +201,7 @@ public final class JavaDownloadDialog extends StackPane {
 
                         if (exceptionToDisplay != null) {
                             LOG.warning("Failed to download java", exceptionToDisplay);
-                            Controllers.dialog(DownloadProviders.localizeErrorMessage(exceptionToDisplay), i18n("install.failed"));
+                            Controllers.dialog(I18n.localizeErrorMessage(exceptionToDisplay), i18n("install.failed"));
                         }
                     });
 
@@ -436,7 +436,7 @@ public final class JavaDownloadDialog extends StackPane {
                             LOG.warning("Failed to download java", exception);
                             Throwable resolvedException = resolveException(exception);
                             if (!(resolvedException instanceof CancellationException)) {
-                                Controllers.dialog(DownloadProviders.localizeErrorMessage(resolvedException), i18n("install.failed"));
+                                Controllers.dialog(I18n.localizeErrorMessage(resolvedException), i18n("install.failed"));
                             }
                         }
                     })), i18n("java.download"), TaskCancellationAction.NORMAL);
