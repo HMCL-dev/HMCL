@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.addon.repository;
 
 import com.google.gson.reflect.TypeToken;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
@@ -29,10 +30,10 @@ import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
@@ -154,8 +155,8 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
             @Nullable Response<List<CurseAddon>> response = null;
 
             @Nullable IOException exception = null;
-            List<URI> candidates = downloadProvider.injectURLWithCandidates(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", query));
-            for (URI candidate : candidates) {
+            @Unmodifiable List<WebURL> candidates = downloadProvider.injectURLWithCandidates(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", query));
+            for (WebURL candidate : candidates) {
                 LOG.info("Fetching " + candidate);
                 try {
                     response = withApiKey(HttpRequest.GET(candidate.toString()))

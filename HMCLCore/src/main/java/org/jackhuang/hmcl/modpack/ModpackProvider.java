@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.modpack;
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.task.Task;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Set;
 
 /// Provides format-specific operations for reading, installing, updating, and completing modpacks.
 @NotNullByDefault
@@ -52,9 +54,16 @@ public interface ModpackProvider {
     /// @param instance          the registered instance to update
     /// @param zipFile           the modpack archive
     /// @param modpack           the parsed modpack
+    /// @param excludedFiles   keys of optional files the user chose not to install; `null` or empty means
+    ///                          install all files. When non-null, must not contain `null` elements.
     /// @return the update task
     /// @throws MismatchedModpackTypeException if the parsed manifest belongs to another provider
-    Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException;
+    Task<?> createUpdateTask(
+            DefaultDependencyManager dependencyManager,
+            DefaultGameInstance instance,
+            Path zipFile,
+            Modpack modpack,
+            @Nullable Set<String> excludedFiles) throws MismatchedModpackTypeException;
 
     /// Reads this provider's manifest from an opened modpack archive.
     ///
@@ -71,5 +80,16 @@ public interface ModpackProvider {
     /// @param modpackConfigurationJson the serialized configuration
     /// @param builder                  the launch options builder to update
     default void injectLaunchOptions(String modpackConfigurationJson, LaunchOptions.Builder builder) {
+    }
+
+    /// Enriches a manifest with remote metadata for optional files (file names, URLs, addons).
+    /// The type of the result manifest must be same as the original one.
+    /// When the remote metadata can not be fetched, the original files are returned.
+    ///
+    /// @param downloadProvider the download provider used for remote queries
+    /// @param manifest         the parsed manifest
+    /// @return the enriched manifest, or `manifest` when no enrichment is needed
+    default ModpackManifest loadFiles(DownloadProvider downloadProvider, ModpackManifest manifest) {
+        return manifest;
     }
 }

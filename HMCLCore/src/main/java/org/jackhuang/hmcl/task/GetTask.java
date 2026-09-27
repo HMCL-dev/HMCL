@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.task;
 
 import com.google.gson.reflect.TypeToken;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.UrlResponseInfo;
@@ -25,28 +26,28 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-/**
- * @author huangyuhui
- */
+/// Downloads text, decoding HTTP responses using their declared charset or UTF-8.
 public final class GetTask extends FetchTask<String> {
 
-    public GetTask(String uri) {
-        this(NetworkUtils.toURI(uri));
+    /// Creates a text download task for an absolute URL string.
+    public GetTask(String url) {
+        this(WebURL.parse(url));
     }
 
-    public GetTask(URI url) {
+    /// Creates a text download task for one URL.
+    public GetTask(WebURL url) {
         this(List.of(url));
         setName(url.toString());
     }
 
-    public GetTask(List<URI> url) {
+    /// Creates a text download task with a snapshot of nonempty candidate URLs in attempt order.
+    public GetTask(List<WebURL> url) {
         super(url);
         setName(url.get(0).toString());
     }

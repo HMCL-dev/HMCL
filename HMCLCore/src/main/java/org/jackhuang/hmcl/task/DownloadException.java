@@ -17,23 +17,27 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.glavo.url.WebURL;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.net.URI;
 
 import static java.util.Objects.requireNonNull;
 
+/// Reports failure to download a candidate URL, retaining the underlying cause.
 public class DownloadException extends IOException {
 
-    private final URI uri;
+    /// Candidate URL whose download failed.
+    private final WebURL url;
 
-    public DownloadException(URI uri, @NotNull Throwable cause) {
-        super("Unable to download " + uri + ", " + cause.getMessage(), requireNonNull(cause));
-        this.uri = uri;
+    /// Creates a failure for the candidate URL and a non-null cause.
+    public DownloadException(WebURL url, @NotNull Throwable cause) {
+        super("Unable to download " + url + ", " + cause.getMessage(), requireNonNull(cause));
+        this.url = url;
     }
 
-    public URI getUri() {
-        return uri;
+    /// Returns the candidate URL before any redirects.
+    public WebURL getUrl() {
+        return url;
     }
 }

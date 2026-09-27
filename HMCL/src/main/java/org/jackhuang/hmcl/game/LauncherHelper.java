@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.stage.Stage;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
@@ -39,8 +40,8 @@ import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
@@ -57,7 +58,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.SocketTimeoutException;
-import java.net.URI;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -356,26 +356,26 @@ public final class LauncherHelper {
                                     message = i18n("launch.failed.download_library", ((LibraryDownloadException) ex).getLibrary().name()) + "\n";
                                     if (ex.getCause() instanceof ResponseCodeException rce) {
                                         int responseCode = rce.getResponseCode();
-                                        String uri = rce.getUri();
+                                        String url = rce.getUrl();
                                         if (responseCode == 404)
-                                            message += i18n("download.code.404", uri);
+                                            message += i18n("download.code.404", url);
                                         else
-                                            message += i18n("download.failed", uri, responseCode);
+                                            message += i18n("download.failed", url, responseCode);
                                     } else {
                                         message += StringUtils.getStackTrace(ex.getCause());
                                     }
-                                } else if (ex instanceof DownloadException) {
-                                    URI uri = ((DownloadException) ex).getUri();
+                                } else if (ex instanceof DownloadException de) {
+                                    WebURL url = de.getUrl();
                                     if (ex.getCause() instanceof SocketTimeoutException) {
-                                        message = i18n("install.failed.downloading.timeout", uri);
+                                        message = i18n("install.failed.downloading.timeout", url);
                                     } else if (ex.getCause() instanceof ResponseCodeException responseCodeException) {
                                         if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
-                                            message = i18n("download.code." + responseCodeException.getResponseCode(), uri);
+                                            message = i18n("download.code." + responseCodeException.getResponseCode(), url);
                                         } else {
-                                            message = i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(ex.getCause());
+                                            message = i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(ex.getCause());
                                         }
                                     } else {
-                                        message = i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(ex.getCause());
+                                        message = i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(ex.getCause());
                                     }
                                 } else if (ex instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
                                     message = i18n("assets.index.malformed");
@@ -385,11 +385,11 @@ public final class LauncherHelper {
                                     message = i18n("account.failed.character_deleted");
                                 } else if (ex instanceof ResponseCodeException rce) {
                                     int responseCode = rce.getResponseCode();
-                                    String uri = rce.getUri();
+                                    String url = rce.getUrl();
                                     if (responseCode == 404)
-                                        message = i18n("download.code.404", uri);
+                                        message = i18n("download.code.404", url);
                                     else
-                                        message = i18n("download.failed", uri, responseCode);
+                                        message = i18n("download.failed", url, responseCode);
                                 } else if (ex instanceof CommandTooLongException) {
                                     message = i18n("launch.failed.command_too_long");
                                 } else if (ex instanceof ExecutionPolicyLimitException) {

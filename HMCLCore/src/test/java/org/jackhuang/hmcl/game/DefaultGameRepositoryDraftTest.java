@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.MojangDownloadProvider;
@@ -33,7 +34,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.http.HttpHeaders;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -370,7 +370,7 @@ public final class DefaultGameRepositoryDraftTest {
         Files.writeString(target, "old client");
         String newUrl = "https://example.invalid/new.jar";
         DefaultDependencyManager manager = createDependencyManager(repository);
-        manager.getCacheRepository().cacheText(new UrlResponseInfo(200, URI.create(newUrl),
+        manager.getCacheRepository().cacheText(new UrlResponseInfo(200, WebURL.parse(newUrl),
                 HttpHeaders.of(Map.of("etag", List.of("new-client"),
                         "cache-control", List.of("max-age=3600")), (name, value) -> true)), "new client");
         GameInstanceManifest replacement = original.withDownloads(Map.of(DownloadType.CLIENT, new DownloadInfo(newUrl)));

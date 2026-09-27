@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -44,52 +44,52 @@ public final class CacheFileTask extends FetchTask<Path> {
     /// Expected SHA-1 checksum, or `null` when the remote cache policy determines reuse.
     private final @Nullable String expectedSha1;
 
-    /// Creates a task for one URI string using remote cache metadata.
+    /// Creates a task for one URL string using remote cache metadata.
     ///
-    /// @param uri the HTTP or HTTPS URI string
-    public CacheFileTask(@NotNull String uri) {
-        this(NetworkUtils.toURI(uri));
+    /// @param url the HTTP or HTTPS URL string
+    public CacheFileTask(@NotNull String url) {
+        this(WebURL.parse(url));
     }
 
-    /// Creates a task for one URI using remote cache metadata.
+    /// Creates a task for one URL using remote cache metadata.
     ///
-    /// @param uri the HTTP or HTTPS URI
-    public CacheFileTask(@NotNull URI uri) {
-        this(List.of(uri));
+    /// @param url the HTTP or HTTPS URL
+    public CacheFileTask(@NotNull WebURL url) {
+        this(List.of(url));
     }
 
-    /// Creates a task for candidate URIs using remote cache metadata.
+    /// Creates a task for candidate URLs using remote cache metadata.
     ///
-    /// @param uris candidate download URIs in attempt order
-    public CacheFileTask(@NotNull List<@NotNull URI> uris) {
-        super(uris);
+    /// @param urls candidate download URLs in attempt order
+    public CacheFileTask(@NotNull List<@NotNull WebURL> urls) {
+        super(urls);
         this.expectedSha1 = null;
-        validateUris(uris);
-        setName(uris.get(0).toString());
+        validateUris(urls);
+        setName(urls.get(0).toString());
     }
 
     /// Creates a task that returns content cached under a verified SHA-1 checksum.
     ///
-    /// @param uris         candidate download URIs in attempt order
+    /// @param urls         candidate download URLs in attempt order
     /// @param expectedSha1 the expected SHA-1 checksum
     public CacheFileTask(
-            @NotNull List<@NotNull URI> uris,
+            @NotNull List<@NotNull WebURL> urls,
             @NotNull String expectedSha1) {
-        super(uris);
+        super(urls);
         if (!DigestUtils.isSha1Digest(expectedSha1)) {
             throw new IllegalArgumentException("Invalid SHA-1 checksum: " + expectedSha1);
         }
         this.expectedSha1 = expectedSha1.toLowerCase(Locale.ROOT);
-        validateUris(uris);
-        setName(uris.get(0).toString());
+        validateUris(urls);
+        setName(urls.get(0).toString());
     }
 
-    /// Verifies that all candidate URIs use HTTP or HTTPS.
+    /// Verifies that all candidate URLs use HTTP or HTTPS.
     ///
-    /// @param uris the candidate URIs
-    private static void validateUris(@NotNull List<@NotNull URI> uris) {
-        if (!uris.stream().allMatch(NetworkUtils::isHttpUri)) {
-            throw new IllegalArgumentException(uris.toString());
+    /// @param urls the candidate URLs
+    private static void validateUris(@NotNull List<@NotNull WebURL> urls) {
+        if (!urls.stream().allMatch(NetworkUtils::isHttpUri)) {
+            throw new IllegalArgumentException(urls.toString());
         }
     }
 
@@ -110,13 +110,13 @@ public final class CacheFileTask extends FetchTask<Path> {
         }
 
         // Check cache
-        for (URI uri : uris) {
+        for (WebURL url : urls) {
             try {
-                setResult(repository.getCachedRemoteFile(uri, true));
-                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                setResult(repository.getCachedRemoteFile(url, true));
+                LOG.info("Using cached file for " + NetworkUtils.dropQuery(url));
                 return EnumCheckETag.CACHED;
             } catch (CacheRepository.CacheExpiredException e) {
-                LOG.info("Cache expired for " + NetworkUtils.dropQuery(uri));
+                LOG.info("Cache expired for " + NetworkUtils.dropQuery(url));
             } catch (IOException ignored) {
             }
         }

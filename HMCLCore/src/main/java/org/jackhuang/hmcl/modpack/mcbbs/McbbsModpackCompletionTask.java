@@ -18,11 +18,12 @@
 package org.jackhuang.hmcl.modpack.mcbbs;
 
 import com.google.gson.JsonParseException;
+import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
-import org.jackhuang.hmcl.addon.mod.ModManager;
-import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
+import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.curse.CurseMetaMod;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -218,7 +219,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                                                 McbbsModpackManifest.CurseFile file = (McbbsModpackManifest.CurseFile) rawFile;
                                                 if (StringUtils.isBlank(file.getFileName())) {
                                                     try {
-                                                        return file.withFileName(NetworkUtils.detectFileName(NetworkUtils.toURI(file.getUrl())));
+                                                        return file.withFileName(NetworkUtils.detectFileName(WebURL.parse(file.getUrl())));
                                                     } catch (IOException e) {
                                                         try {
                                                             String result = NetworkUtils.doGet(String.format("https://cursemeta.dries007.net/%d/%d.json", file.getProjectID(), file.getFileID()));

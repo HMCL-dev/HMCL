@@ -90,6 +90,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         String iconUrl = settings.get(LocalModpackPage.MODPACK_ICON_URL);
         Charset charset = settings.get(LocalModpackPage.MODPACK_CHARSET);
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
+        var excludedFiles = settings.get(LocalModpackPage.MODPACK_EXCLUDED_FILES);
 
         if (isManuallyCreated) {
             return ModpackHelper.getInstallManuallyCreatedModpackTask(selected, name, charset);
@@ -108,7 +109,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
                 if (serverModpackManifest != null) {
                     return ModpackHelper.getUpdateTask(repository, serverModpackManifest, modpack.getEncoding(), instanceId, ModpackHelper.readModpackConfiguration(repository.getLayout().getModpackConfigurationFile(instanceId)));
                 } else {
-                    return ModpackHelper.getUpdateTask(repository, selected, modpack.getEncoding(), instanceId, ModpackHelper.readModpackConfiguration(repository.getLayout().getModpackConfigurationFile(instanceId)));
+                    return ModpackHelper.getUpdateTask(repository, selected, modpack.getEncoding(), instanceId, ModpackHelper.readModpackConfiguration(repository.getLayout().getModpackConfigurationFile(instanceId)), excludedFiles);
                 }
             } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
@@ -123,7 +124,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
                 return ModpackHelper.getInstallTask(repository, serverModpackManifest, instanceId, modpack)
                         .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(repository.getInstance(instanceId)));
             } else {
-                return ModpackHelper.getInstallTask(repository, selected, instanceId, modpack, iconUrl)
+                return ModpackHelper.getInstallTask(repository, selected, instanceId, modpack, iconUrl, excludedFiles)
                         .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(repository.getInstance(instanceId)));
             }
         }

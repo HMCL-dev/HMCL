@@ -17,14 +17,14 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
-import org.jackhuang.hmcl.download.DownloadProvider;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.ComponentVersionList;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.net.URI;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
@@ -96,5 +96,6 @@ public final class ForgeVersionList extends ComponentVersionList<ForgeRemoteVers
                 });
     }
 
-    public static final URI FORGE_LIST = URI.create("https://hmcl.glavo.site/metadata/forge/");
+    /// Base URL for Forge version metadata maintained for the launcher.
+    public static final WebURL FORGE_LIST = WebURL.parse("https://hmcl.glavo.site/metadata/forge/");
 }

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.instances;
 import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.stage.FileChooser;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
@@ -49,9 +50,9 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -81,7 +82,7 @@ public final class Instances {
 
     public static void downloadModpackImpl(DownloadProvider downloadProvider, HMCLGameRepository repository, GameInstanceID instanceId, RemoteAddon mod, RemoteAddon.Version file) {
         Path modpack;
-        List<URI> downloadURLs;
+        @Unmodifiable List<WebURL> downloadURLs;
         try {
             downloadURLs = downloadProvider.injectURLWithCandidates(file.file().url());
             modpack = Files.createTempFile("modpack", ".zip");

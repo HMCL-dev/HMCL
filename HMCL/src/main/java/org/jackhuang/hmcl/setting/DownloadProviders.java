@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.beans.InvalidationListener;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FetchTask;
@@ -29,7 +30,6 @@ import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import javax.net.ssl.SSLHandshakeException;
 import java.io.FileNotFoundException;
 import java.net.SocketTimeoutException;
-import java.net.URI;
 import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -104,30 +104,30 @@ public final class DownloadProviders {
     }
 
     public static String localizeErrorMessage(Throwable exception) {
-        if (exception instanceof DownloadException) {
-            URI uri = ((DownloadException) exception).getUri();
+        if (exception instanceof DownloadException de) {
+            WebURL url = de.getUrl();
             if (exception.getCause() instanceof SocketTimeoutException) {
-                return i18n("install.failed.downloading.timeout", uri);
+                return i18n("install.failed.downloading.timeout", url);
             } else if (exception.getCause() instanceof ResponseCodeException) {
                 ResponseCodeException responseCodeException = (ResponseCodeException) exception.getCause();
                 if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
-                    return i18n("download.code." + responseCodeException.getResponseCode(), uri);
+                    return i18n("download.code." + responseCodeException.getResponseCode(), url);
                 } else {
-                    return i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(exception.getCause());
+                    return i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause());
                 }
             } else if (exception.getCause() instanceof FileNotFoundException) {
-                return i18n("download.code.404", uri);
+                return i18n("download.code.404", url);
             } else if (exception.getCause() instanceof AccessDeniedException) {
-                return i18n("install.failed.downloading.detail", uri) + "\n" + i18n("exception.access_denied", ((AccessDeniedException) exception.getCause()).getFile());
+                return i18n("install.failed.downloading.detail", url) + "\n" + i18n("exception.access_denied", ((AccessDeniedException) exception.getCause()).getFile());
             } else if (exception.getCause() instanceof ArtifactMalformedException) {
-                return i18n("install.failed.downloading.detail", uri) + "\n" + i18n("exception.artifact_malformed");
+                return i18n("install.failed.downloading.detail", url) + "\n" + i18n("exception.artifact_malformed");
             } else if (exception.getCause() instanceof SSLHandshakeException && !(exception.getCause().getMessage() != null && exception.getCause().getMessage().contains("Remote host terminated"))) {
                 if (exception.getCause().getMessage() != null && (exception.getCause().getMessage().contains("No name matching") || exception.getCause().getMessage().contains("No subject alternative DNS name matching"))) {
-                    return i18n("install.failed.downloading.detail", uri) + "\n" + i18n("exception.dns.pollution");
+                    return i18n("install.failed.downloading.detail", url) + "\n" + i18n("exception.dns.pollution");
                 }
-                return i18n("install.failed.downloading.detail", uri) + "\n" + i18n("exception.ssl_handshake");
+                return i18n("install.failed.downloading.detail", url) + "\n" + i18n("exception.ssl_handshake");
             } else {
-                return i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(exception.getCause());
+                return i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause());
             }
         } else if (exception instanceof ArtifactMalformedException) {
             return i18n("exception.artifact_malformed");

@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.modpack.modrinth;
 
 import com.google.gson.JsonParseException;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.*;
@@ -31,7 +32,6 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -57,6 +57,9 @@ public class ModrinthInstallTask extends Task<Void> {
     /// Previous modpack configuration when updating, or `null` for a new installation.
     private final @Nullable ModpackConfiguration<ModrinthManifest> config;
 
+    /// Keys of optional files the user chose not to install; `null` or empty means install all.
+    private final @Nullable Set<String> excludedFiles;
+
     /// Validated extension of the scheduled icon download, or `null` when no icon is scheduled.
     private @Nullable String iconExt;
 
@@ -73,6 +76,8 @@ public class ModrinthInstallTask extends Task<Void> {
     /// @param manifest          the Modrinth index
     /// @param instanceId        the id of the new instance
     /// @param iconUrl           the optional icon URL, or `null`
+    /// @param excludedFiles   keys of optional files the user chose not to install; `null` or empty means
+    ///                          install all files. When non-null, must not contain `null` elements.
     /// @throws IllegalStateException if the manifest declares an unsupported mod loader, the target
     ///                               cannot be reserved, or another repository draft is open
     public ModrinthInstallTask(
@@ -81,8 +86,9 @@ public class ModrinthInstallTask extends Task<Void> {
             Modpack modpack,
             ModrinthManifest manifest,
             GameInstanceID instanceId,
-            @Nullable String iconUrl) {
-        this(dependencyManager, zipFile, modpack, manifest, instanceId, null, iconUrl);
+            @Nullable String iconUrl,
+            @Nullable Set<String> excludedFiles) {
+        this(dependencyManager, zipFile, modpack, manifest, instanceId, null, iconUrl, excludedFiles);
     }
 
     /// Creates a task that updates an existing Modrinth modpack instance.
@@ -93,6 +99,8 @@ public class ModrinthInstallTask extends Task<Void> {
     /// @param manifest          the Modrinth index
     /// @param instance          the existing instance to update
     /// @param iconUrl           the optional icon URL, or `null`
+    /// @param excludedFiles   keys of optional files the user chose not to install; `null` or empty means
+    ///                          install all files. When non-null, must not contain `null` elements.
     /// @throws IllegalArgumentException if `instance` belongs to another repository, has no
     ///                                  modpack configuration, or records another provider type
     /// @throws IllegalStateException    if the manifest declares an unsupported mod loader,
@@ -104,8 +112,9 @@ public class ModrinthInstallTask extends Task<Void> {
             Modpack modpack,
             ModrinthManifest manifest,
             DefaultGameInstance instance,
-            @Nullable String iconUrl) {
-        this(dependencyManager, zipFile, modpack, manifest, instance.getId(), instance, iconUrl);
+            @Nullable String iconUrl,
+            @Nullable Set<String> excludedFiles) {
+        this(dependencyManager, zipFile, modpack, manifest, instance.getId(), instance, iconUrl, excludedFiles);
     }
 
     /// Creates a Modrinth installation task in the mode selected by `updateTarget`.
@@ -117,6 +126,8 @@ public class ModrinthInstallTask extends Task<Void> {
     /// @param instanceId        the target instance id
     /// @param updateTarget      the existing instance selecting update mode, or `null` for install
     /// @param iconUrl           the optional icon URL, or `null`
+    /// @param excludedFiles   keys of optional files the user chose not to install; `null` or empty means
+    ///                          install all files. When non-null, must not contain `null` elements.
     /// @throws IllegalArgumentException if an update target has no compatible configuration
     /// @throws IllegalStateException    if the manifest declares an unsupported mod loader, the
     ///                                  target cannot be reserved, an update target is not the exact
@@ -128,7 +139,8 @@ public class ModrinthInstallTask extends Task<Void> {
             ModrinthManifest manifest,
             GameInstanceID instanceId,
             @Nullable DefaultGameInstance updateTarget,
-            @Nullable String iconUrl) {
+            @Nullable String iconUrl,
+            @Nullable Set<String> excludedFiles) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
@@ -136,6 +148,7 @@ public class ModrinthInstallTask extends Task<Void> {
         this.instanceId = instanceId;
         this.updateTarget = updateTarget;
         this.iconUrl = iconUrl;
+        this.excludedFiles = excludedFiles == null ? null : Set.copyOf(excludedFiles);
         this.repository = dependencyManager.getGameRepository();
         this.run = repository.getLayout().getInstanceRoot(instanceId);
 
@@ -168,7 +181,7 @@ public class ModrinthInstallTask extends Task<Void> {
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
 
-        @Nullable URI iconUri = NetworkUtils.toURIOrNull(iconUrl);
+        @Nullable WebURL iconUri = NetworkUtils.toWebURLOrNull(iconUrl);
         if (iconUri != null) {
             String ext = FileUtils.getExtension(StringUtils.substringAfter(iconUri.getPath(), '/')).toLowerCase(Locale.ROOT);
             if (Modpack.SUPPORTED_ICON_EXTS.contains(ext)) {
@@ -224,7 +237,7 @@ public class ModrinthInstallTask extends Task<Void> {
         if (config != null) {
             // For update, remove mods not listed in new manifest
             for (ModrinthManifest.File oldManifestFile : config.getManifest().getFiles()) {
-                Path oldFile = run.resolve(oldManifestFile.getPath());
+                Path oldFile = run.resolve(oldManifestFile.path());
                 if (!Files.exists(oldFile)) continue;
                 if (manifest.getFiles().stream().noneMatch(oldManifestFile::equals)) {
                     Files.deleteIfExists(oldFile);
@@ -249,6 +262,6 @@ public class ModrinthInstallTask extends Task<Void> {
         }
 
         // The game builder runs as a dependent and registers the instance before this phase.
-        dependencies.add(new ModrinthCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest));
+        dependencies.add(new ModrinthCompletionTask(dependencyManager, repository.getInstance(instanceId), manifest, excludedFiles));
     }
 }

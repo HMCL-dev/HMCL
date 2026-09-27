@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.auth.offline;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import javafx.scene.image.Image;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.GetTask;
@@ -185,8 +186,8 @@ public record Skin(Type type, String cslApi, TextureModel textureModel, String l
 
     private static class FetchBytesTask extends FetchTask<InputStream> {
 
-        public FetchBytesTask(String uri) {
-            super(List.of(NetworkUtils.toURI(uri)));
+        public FetchBytesTask(String url) {
+            super(List.of(WebURL.parse(url)));
         }
 
         @Override
