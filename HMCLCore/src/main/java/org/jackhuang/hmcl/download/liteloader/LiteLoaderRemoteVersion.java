@@ -36,6 +36,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 @NotNullByDefault
 public final class LiteLoaderRemoteVersion extends ComponentRemoteVersion {
 
@@ -52,26 +54,33 @@ public final class LiteLoaderRemoteVersion extends ComponentRemoteVersion {
         }
 
         return Task.supplyAsync(() -> {
+            List<LiteLoaderRemoteVersionRecord> records;
+
             try (var input = LiteLoaderRemoteVersion.class.getResourceAsStream("/assets/liteloader/versions.json")) {
-                var records = JsonUtils.GSON.fromJson(
+                if (input == null) {
+                    LOG.warning("Failed to load LiteLoader versions.json from resources");
+                    return ComponentRemoteVersionList.of(GameComponentType.LITELOADER);
+                }
+
+                records = JsonUtils.GSON.fromJson(
                         new String(input.readAllBytes(), StandardCharsets.UTF_8),
                         JsonUtils.listTypeOf(LiteLoaderRemoteVersionRecord.class));
-                var versions = new TreeSet<LiteLoaderRemoteVersion>();
-
-                for (var record : records) {
-                    if (GameVersionNumber.asGameVersion(record.gameVersion).equals(gameVersion)) {
-                        versions.add(new LiteLoaderRemoteVersion(
-                                gameVersion,
-                                record.version,
-                                record.snapshot ? Type.SNAPSHOT : Type.RELEASE,
-                                List.of(record.url),
-                                record.tweakClass,
-                                List.copyOf(record.libraries)
-                        ));
-                    }
-                }
-                return ComponentRemoteVersionList.of(GameComponentType.LITELOADER, versions);
             }
+
+            var versions = new TreeSet<LiteLoaderRemoteVersion>();
+            for (var record : records) {
+                if (GameVersionNumber.asGameVersion(record.gameVersion).equals(gameVersion)) {
+                    versions.add(new LiteLoaderRemoteVersion(
+                            gameVersion,
+                            record.version,
+                            record.snapshot ? Type.SNAPSHOT : Type.RELEASE,
+                            List.of(record.url),
+                            record.tweakClass,
+                            List.copyOf(record.libraries)
+                    ));
+                }
+            }
+            return ComponentRemoteVersionList.of(GameComponentType.LITELOADER, versions);
         });
     }
 
