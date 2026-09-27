@@ -30,8 +30,7 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /// @author Glavo
 @NotNullByDefault
@@ -57,6 +56,35 @@ public final class HMCLDownloadProvider extends DownloadProvider {
             };
         }
     }
+
+    private final List<MirrorRule> rules = List.of(
+            new MirrorRule("https://bmclapi2.bangbang93.com", BMCLAPI_ROOT),
+            new MirrorRule("https://launchermeta.mojang.com", BMCLAPI_ROOT),
+            new MirrorRule("https://piston-meta.mojang.com", BMCLAPI_ROOT),
+            new MirrorRule("https://piston-data.mojang.com", BMCLAPI_ROOT),
+            new MirrorRule("https://launcher.mojang.com", BMCLAPI_ROOT),
+            new MirrorRule("https://libraries.minecraft.net", BMCLAPI_ROOT + "/libraries"),
+            new MirrorRule("http://files.minecraftforge.net/maven", BMCLAPI_ROOT + "/maven"),
+            new MirrorRule("https://files.minecraftforge.net/maven", BMCLAPI_ROOT + "/maven"),
+            new MirrorRule("https://maven.minecraftforge.net", BMCLAPI_ROOT + "/maven"),
+            new MirrorRule("https://maven.neoforged.net/releases/", BMCLAPI_ROOT + "/maven/"),
+            new MirrorRule("http://dl.liteloader.com/versions/versions.json", BMCLAPI_ROOT + "/maven/com/mumfrey/liteloader/versions.json"),
+            new MirrorRule("http://dl.liteloader.com/versions", BMCLAPI_ROOT + "/maven"),
+            new MirrorRule("https://meta.fabricmc.net", BMCLAPI_ROOT + "/fabric-meta"),
+            new MirrorRule("https://maven.fabricmc.net", BMCLAPI_ROOT + "/maven"),
+            new MirrorRule("https://authlib-injector.yushi.moe", BMCLAPI_ROOT + "/mirrors/authlib-injector"),
+            new MirrorRule("https://repo1.maven.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
+            new MirrorRule("https://repo.maven.apache.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
+            new MirrorRule("https://hmcl.glavo.site/metadata/cleanroom", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom"),
+            new MirrorRule("https://hmcl.glavo.site/metadata/fmllibs", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/fmllibs"),
+            new MirrorRule("https://zkitefly.github.io/unlisted-versions-of-minecraft", "https://alist.8mi.tech/d/mirror/unlisted-versions-of-minecraft/Auto"),
+
+            // https://github.com/mcmod-info-mirror/mcim-rust-api
+            new MirrorRule("https://api.modrinth.com", "https://mod.mcimirror.top/modrinth", true),
+            new MirrorRule("https://cdn.modrinth.com", "https://mod.mcimirror.top", true),
+            new MirrorRule("https://api.curseforge.com", "https://mod.mcimirror.top/curseforge", true),
+            new MirrorRule("https://edge.forgecdn.net", "https://mod.mcimirror.top", true)
+    );
 
     @Override
     protected Task<? extends ComponentRemoteVersionList<?>> fetchVersionsAsync(GameComponentType type, @Nullable GameVersionNumber gameVersion) {
@@ -115,6 +143,60 @@ public final class HMCLDownloadProvider extends DownloadProvider {
     }
 
     @Override
+    public DownloadCandidates getDownloadCandidates(List<String> urls) {
+        if (urls.isEmpty()) {
+            throw new IllegalArgumentException("urls cannot be empty");
+        }
+
+        DownloadSource source = fileSource;
+
+        // true means prefer mirror, false means prefer official, null means do not use mirror
+        @Nullable Boolean mirrorFirst;
+        if (LocaleUtils.IS_CHINA_MAINLAND) {
+            mirrorFirst = switch (source) {
+                case DEFAULT, MIRROR -> true;
+                case OFFICIAL -> false;
+            };
+        } else {
+            mirrorFirst = switch (source) {
+                case DEFAULT, OFFICIAL -> null;
+                case MIRROR -> true;
+            };
+        }
+
+        if (mirrorFirst == null) {
+            return super.getDownloadCandidates(urls);
+        }
+
+        var candidates = new ArrayList<DownloadCandidate>(urls.size() * 2);
+        for (String url : urls) {
+            DownloadCandidate candidate = DownloadCandidate.of(url);
+
+            @Nullable DownloadCandidate mirrorCandidate = null;
+            boolean fallback = false;
+            for (MirrorRule rule : rules) {
+                if (url.startsWith(rule.source)) {
+                    mirrorCandidate = DownloadCandidate.of(rule.target + url.substring(rule.source.length()));
+                    fallback = rule.fallback;
+                    break;
+                }
+            }
+
+            if (mirrorCandidate == null) {
+                candidates.add(candidate);
+            } else if (mirrorFirst && !fallback) {
+                candidates.add(mirrorCandidate);
+                candidates.add(candidate);
+            } else {
+                candidates.add(candidate);
+                candidates.add(mirrorCandidate);
+            }
+        }
+
+        return DownloadCandidates.of(List.copyOf(candidates));
+    }
+
+    @Override
     public DownloadCandidates getAssetObjectCandidates(AssetObject assetObject) {
         return getCandidates(
                 fileSource,
@@ -159,6 +241,12 @@ public final class HMCLDownloadProvider extends DownloadProvider {
         @Override
         public List<Task<?>> getDependencies() {
             return dependencies;
+        }
+    }
+
+    private record MirrorRule(String source, String target, boolean fallback) {
+        public MirrorRule(String source, String target) {
+            this(source, target, false);
         }
     }
 }

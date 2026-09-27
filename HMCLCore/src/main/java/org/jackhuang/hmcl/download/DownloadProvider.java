@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download;
 
 import com.google.gson.reflect.TypeToken;
-import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomRemoteVersion;
@@ -262,24 +261,20 @@ public class DownloadProvider {
     }
 
     public DownloadCandidates getDownloadCandidates(String baseURL) {
-        return DownloadCandidates.of(List.of(DownloadCandidate.of(baseURL)));
-    }
-
-    public DownloadCandidates getDownloadCandidates(WebURL baseURL) {
-        return DownloadCandidates.of(List.of(DownloadCandidate.of(baseURL)));
-    }
-
-    public DownloadCandidates getDownloadCandidates(List<String> baseURL) {
-        return DownloadCandidates.of(baseURL.stream().map(DownloadCandidate::of).toArray(DownloadCandidate[]::new));
+        return getDownloadCandidates(List.of(baseURL));
     }
 
     public DownloadCandidates getDownloadCandidates(ComponentRemoteVersion remoteVersion) {
         return getDownloadCandidates(remoteVersion.getUrls());
     }
 
+    public DownloadCandidates getDownloadCandidates(List<String> urls) {
+        return DownloadCandidates.of(urls.stream().map(DownloadCandidate::of).toArray(DownloadCandidate[]::new));
+    }
+
     /// Returns unmodifiable candidate URLs for an asset's relative object location, in attempt order.
     public DownloadCandidates getAssetObjectCandidates(AssetObject assetObject) {
-        return DownloadCandidates.of("https://resources.download.minecraft.net/" + assetObject.getLocation());
+        return getDownloadCandidates("https://resources.download.minecraft.net/" + assetObject.getLocation());
     }
 
     private static final class VersionListState {
