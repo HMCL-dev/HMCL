@@ -12,6 +12,7 @@ import com.jfoenix.svg.SVGGlyph;
 import com.jfoenix.transitions.CachedTransition;
 import javafx.animation.*;
 import javafx.animation.Animation.Status;
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.PseudoClass;
@@ -34,6 +35,7 @@ import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.SVGContainer;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -58,11 +60,9 @@ import java.util.stream.IntStream;
 public class JFXDatePickerContent extends VBox {
     private static final String SPINNER_LABEL = "spinner-label";
     private static final String ROBOTO = "Roboto";
-    private static final Color DEFAULT_CELL_COLOR = Color.valueOf("#9C9C9C");
     protected JFXDatePicker datePicker;
     private JFXButton backMonthButton;
     private JFXButton forwardMonthButton;
-    private final ObjectProperty<Label> selectedYearCell = new SimpleObjectProperty<>(null);
     private Label selectedDateLabel;
     private Label selectedYearLabel;
     private Label monthYearLabel;
@@ -80,49 +80,66 @@ public class JFXDatePickerContent extends VBox {
     private final ListView<String> yearsListView = new JFXListView<>() {
         {
             this.getStyleClass().addAll("date-picker-list-view", "no-padding");
+            this.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
             this.setCellFactory((listView) -> new ListCell<>() {
                 static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
                 final Label label = new Label();
                 final StackPane root;
+                final RipplerContainer ripplerContainer;
+
+                final WeakListenerHolder holder = new WeakListenerHolder();
 
                 {
-                    JFXDatePickerContent.this.selectedYearLabel.textProperty().addListener((o, oldVal, newVal) -> {
-                        if (!JFXDatePickerContent.this.yearsListView.isVisible() && label.getText().equals(newVal)) {
-                            JFXDatePickerContent.this.selectedYearCell.set(this.label);
-                        }
-                        if (label.getText().equals(newVal)) this.updateSelected(true);
-                    });
-
                     label.getStyleClass().add(SPINNER_LABEL);
                     label.setMaxWidth(Double.MAX_VALUE);
+                    label.textProperty().bind(itemProperty());
                     StackPane pane = new StackPane(label);
                     pane.setPadding(new Insets(7));
-                    RipplerContainer ripplerContainer = new RipplerContainer(pane);
+                    ripplerContainer = new RipplerContainer(pane);
                     root = new StackPane(ripplerContainer);
                     root.getStyleClass().add("data-picker-list-cell");
                     this.setGraphic(root);
 
+                    var selectedListenerWeak = holder.weak((InvalidationListener) observable -> {
+                        String newVal = JFXDatePickerContent.this.selectedYearLabel.getText();
+                        if (newVal != null && getItem() != null && getItem().equals(newVal))
+                            updateSelected(true);
+                    });
+                    JFXDatePickerContent.this.selectedYearLabel.textProperty().addListener(selectedListenerWeak);
+                    itemProperty().addListener(selectedListenerWeak);
+
                     FXUtils.onChangeAndOperate(selectedProperty(), selected -> {
+                        if (getListView() != null) {
+                            if (selected) {
+                                getListView().getSelectionModel().select(getIndex());
+                            } else {
+                                getListView().getSelectionModel().clearSelection(getIndex());
+                            }
+                        }
                         root.pseudoClassStateChanged(SELECTED, selected);
                         if (selected) {
-                            int offset = Integer.parseInt(label.getText()) - Integer.parseInt(JFXDatePickerContent.this.selectedYearLabel.getText());
+                            int offset = Integer.parseInt(getItem()) - Integer.parseInt(JFXDatePickerContent.this.selectedYearLabel.getText());
                             JFXDatePickerContent.this.forward(offset, ChronoUnit.YEARS, false, false);
                         }
                     });
                 }
 
                 public void updateItem(String item, boolean empty) {
+                    String oldItem = getItem();
+                    boolean oldEmpty = isEmpty();
+
                     super.updateItem(item, empty);
+                    setText(null);
+
+                    if (Objects.equals(oldItem, item) && oldEmpty == empty) return;
+                    ripplerContainer.releaseRippleImmediately();
+
                     if (!empty && item != null) {
-                        label.setText(item);
-                        setText(null);
                         setGraphic(root);
-                        if (item.equals(selectedYearLabel.getText())) updateSelected(true);
                     } else {
                         setGraphic(null);
                     }
-
                 }
             });
         }

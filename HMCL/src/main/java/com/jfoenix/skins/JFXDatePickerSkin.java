@@ -39,7 +39,6 @@ public class JFXDatePickerSkin extends DatePickerSkin {
     public JFXDatePickerSkin(JFXDatePicker datePicker) {
         super(datePicker);
         this.jfxDatePicker = datePicker;
-        super.getPopupContent();
 
         try {
             Object expressionHelper = ReflectionHelper.getFieldContent(datePicker.focusedProperty().getClass().getSuperclass(), datePicker.focusedProperty(), "helper");
@@ -102,6 +101,7 @@ public class JFXDatePickerSkin extends DatePickerSkin {
         });
     }
 
+    @Override
     public JFXDatePickerContent getPopupContent() {
         if (this.content == null) {
             this.content = new JFXDatePickerContent(this.jfxDatePicker);
@@ -110,6 +110,7 @@ public class JFXDatePickerSkin extends DatePickerSkin {
         return this.content;
     }
 
+    @Override
     public void show() {
         if (!((JFXDatePicker) this.getSkinnable()).isOverLay()) {
             super.show();
@@ -134,6 +135,7 @@ public class JFXDatePickerSkin extends DatePickerSkin {
                     if (o instanceof Stack<?> stack) {
                         stack.pop();
                     }
+                    jfxDatePicker.hide();
                 }
             };
             this.getPopupContent().addEventHandler(DialogCloseEvent.CLOSE, e -> this.dialog.close());
@@ -158,6 +160,7 @@ public class JFXDatePickerSkin extends DatePickerSkin {
         return this.dialog;
     }
 
+    @Override
     public Node getDisplayNode() {
         if (this.displayNode == null) {
             this.displayNode = this.getEditableInputNode2();
