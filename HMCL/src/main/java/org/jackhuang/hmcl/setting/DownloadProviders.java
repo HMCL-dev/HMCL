@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.task.FetchTask.DEFAULT_CONCURRENCY;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class DownloadProviders {
     private DownloadProviders() {

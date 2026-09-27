@@ -37,7 +37,6 @@ public final class GameInstanceJsonDownloadTask extends Task<String> {
     private final Task<ComponentRemoteVersionList<?>> getGameVersionsTask;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-
     public GameInstanceJsonDownloadTask(String gameVersion, DefaultDependencyManager dependencyManager) {
         this.gameVersion = gameVersion;
         this.dependencyManager = dependencyManager;

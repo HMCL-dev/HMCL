@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download.java.mojang;
 
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
-import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DownloadInfo;
 import org.jackhuang.hmcl.game.GameJavaVersion;

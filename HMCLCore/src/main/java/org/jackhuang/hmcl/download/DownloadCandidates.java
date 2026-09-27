@@ -54,7 +54,6 @@ public final class DownloadCandidates {
         return new DownloadCandidates(List.of(candidates));
     }
 
-
     public static DownloadCandidates ofUrls(List<WebURL> urls) {
         return new DownloadCandidates(urls.stream().map(DownloadCandidate::of).toList());
     }
