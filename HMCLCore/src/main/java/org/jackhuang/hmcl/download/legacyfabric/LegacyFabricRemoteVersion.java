@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download.legacyfabric;
 
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
@@ -32,8 +33,8 @@ import java.util.*;
 @NotNullByDefault
 public final class LegacyFabricRemoteVersion extends ComponentRemoteVersion {
 
-    public static final String LOADER_META_URL = "https://meta.legacyfabric.net/v2/versions/loader";
-    public static final String GAME_META_URL = "https://meta.legacyfabric.net/v2/versions/game";
+    public static final WebURL LOADER_META_URL = WebURL.parse("https://meta.legacyfabric.net/v2/versions/loader");
+    public static final WebURL GAME_META_URL = WebURL.parse("https://meta.legacyfabric.net/v2/versions/game");
 
     /// Constructor.
     ///

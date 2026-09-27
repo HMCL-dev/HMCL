@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
@@ -40,7 +42,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
 
     private static DownloadCandidates getCandidates(
             DownloadSource source,
-            String defaultUrl, String bmclapiUrl
+            WebURL defaultUrl, WebURL bmclapiUrl
     ) {
         if (LocaleUtils.IS_CHINA_MAINLAND) {
             return switch (source) {
@@ -97,8 +99,8 @@ public final class HMCLDownloadProvider extends DownloadProvider {
             case GAME -> {
                 return GameRemoteVersion.fetchAsync(getCandidates(
                         versionListSource,
-                        GameRemoteVersion.VERSION_MANIFEST_URL.toString(),
-                        bmclRoot + "/mc/game/version_manifest.json"
+                        GameRemoteVersion.VERSION_MANIFEST_URL,
+                        WebURL.parse(bmclRoot + "/mc/game/version_manifest.json")
                 ));
             }
             case FORGE -> {
@@ -148,6 +150,24 @@ public final class HMCLDownloadProvider extends DownloadProvider {
 
     public void setVersionListSource(DownloadSource versionListSource) {
         this.versionListSource = Objects.requireNonNull(versionListSource);
+    }
+
+    @Override
+    public DownloadCandidates getGameVersionListCandidates() {
+        return getCandidates(
+                versionListSource,
+                GameRemoteVersion.VERSION_MANIFEST_URL,
+                WebURL.parse(bmclRoot + "/mc/game/version_manifest.json")
+        );
+    }
+
+    @Override
+    public FabricLikeVersionListCandidates getFabricVersionListCandidates() {
+        DownloadSource source = versionListSource;
+        return new FabricLikeVersionListCandidates(
+                getCandidates(source, FabricRemoteVersion.LOADER_META_URL, WebURL.parse(bmclRoot + "/fabric-meta/v2/versions/loader")),
+                getCandidates(source, FabricRemoteVersion.GAME_META_URL, WebURL.parse(bmclRoot + "/fabric-meta/v2/versions/game"))
+        );
     }
 
     @Override
@@ -213,8 +233,8 @@ public final class HMCLDownloadProvider extends DownloadProvider {
     public DownloadCandidates getAssetObjectCandidates(AssetObject assetObject) {
         return getCandidates(
                 fileSource,
-                "https://resources.download.minecraft.net/" + assetObject.getLocation(),
-                bmclRoot + "/mc/assets/" + assetObject.getLocation()
+                WebURL.parse("https://resources.download.minecraft.net/" + assetObject.getLocation()),
+                WebURL.parse(bmclRoot + "/mc/assets/" + assetObject.getLocation())
         );
     }
 

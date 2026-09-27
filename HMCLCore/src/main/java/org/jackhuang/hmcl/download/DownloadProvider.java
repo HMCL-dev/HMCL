@@ -116,15 +116,15 @@ public class DownloadProvider {
         }
     }
 
-    protected <V extends ComponentRemoteVersion> Task<ComponentRemoteVersionList<V>> fetchFabricVersionsAsync(
+    private  <V extends ComponentRemoteVersion> Task<ComponentRemoteVersionList<V>> fetchFabricVersionsAsync(
             GameComponentType type,
             GameVersionNumber gameVersion,
-            DownloadCandidates loaderMetaCandidates, DownloadCandidates gameMetaCandidates,
+            FabricLikeVersionListCandidates candidates,
             BiFunction<String, String, V> function
     ) {
         return Task.combine(
-                new GetTask(loaderMetaCandidates),
-                new GetTask(gameMetaCandidates)
+                new GetTask(candidates.loaderMetaCandidates),
+                new GetTask(candidates.gameMetaCandidates)
         ).thenApplyAsync(pair -> {
             @JsonSerializable
             record GameVersion(String version, String maven, boolean stable) {
@@ -132,7 +132,7 @@ public class DownloadProvider {
 
             TypeToken<List<GameVersion>> gameVersionsType = listTypeOf(GameVersion.class);
 
-            List<GameVersion> gameVersions = JsonUtils.fromNonNullJson(pair.getKey(), gameVersionsType);
+            List<GameVersion> gameVersions = JsonUtils.fromNonNullJson(pair.getValue(), gameVersionsType);
 
             Optional<GameVersion> metaGameVersion = gameVersions.stream()
                     .filter(it -> gameVersion.equals(GameVersionNumber.asGameVersion(it.version)))
@@ -142,7 +142,7 @@ public class DownloadProvider {
             }
 
             SortedSet<V> versions = new TreeSet<>();
-            List<GameVersion> loaderVersions = JsonUtils.fromNonNullJson(pair.getValue(), gameVersionsType);
+            List<GameVersion> loaderVersions = JsonUtils.fromNonNullJson(pair.getKey(), gameVersionsType);
             for (GameVersion loaderVersion : loaderVersions) {
                 versions.add(function.apply(metaGameVersion.get().version, loaderVersion.version));
             }
@@ -151,7 +151,7 @@ public class DownloadProvider {
         });
     }
 
-    protected <V extends ComponentRemoteVersion> Task<ComponentRemoteVersionList<V>> fetchModrinthVersionsAsync(
+    private  <V extends ComponentRemoteVersion> Task<ComponentRemoteVersionList<V>> fetchModrinthVersionsAsync(
             GameComponentType type,
             String modId,
             GameVersionNumber gameVersion,
@@ -177,11 +177,30 @@ public class DownloadProvider {
 
         return switch (type) {
             case GAME -> GameRemoteVersion.fetchAsync(getGameVersionListCandidates());
+            case FABRIC -> fetchFabricVersionsAsync(
+                    type,
+                    gameVersion,
+                    getFabricVersionListCandidates(),
+                    (metaGameVersion, loaderVersion) -> new FabricRemoteVersion(
+                            gameVersion, loaderVersion,
+                            List.of("%s/%s/%s".formatted(FabricRemoteVersion.LOADER_META_URL, metaGameVersion, loaderVersion)))
+            );
+            case FABRIC_API -> fetchModrinthVersionsAsync(
+                    type,
+                    FabricAPIRemoteVersion.MODRINTH_ID,
+                    gameVersion,
+                    it -> new FabricAPIRemoteVersion(
+                            gameVersion,
+                            it.version(),
+                            it.name(),
+                            it.datePublished(),
+                            it,
+                            List.of(it.file().url()))
+            );
             case LEGACY_FABRIC -> fetchFabricVersionsAsync(
                     type,
                     gameVersion,
-                    DownloadCandidates.of(LegacyFabricRemoteVersion.GAME_META_URL),
-                    DownloadCandidates.of(LegacyFabricRemoteVersion.LOADER_META_URL),
+                    getLegacyFabricVersionListCandidates(),
                     (metaGameVersion, loaderVersion) -> new LegacyFabricRemoteVersion(
                             gameVersion, loaderVersion,
                             List.of("%s/%s/%s".formatted(LegacyFabricRemoteVersion.LOADER_META_URL, metaGameVersion, loaderVersion)))
@@ -198,20 +217,19 @@ public class DownloadProvider {
                             it,
                             List.of(it.file().url()))
             );
-            case FABRIC -> fetchFabricVersionsAsync(
+            case QUILT -> fetchFabricVersionsAsync(
                     type,
                     gameVersion,
-                    DownloadCandidates.of(FabricRemoteVersion.GAME_META_URL),
-                    DownloadCandidates.of(FabricRemoteVersion.LOADER_META_URL),
-                    (metaGameVersion, loaderVersion) -> new FabricRemoteVersion(
+                    getQuiltVersionListCandidates(),
+                    (metaGameVersion, loaderVersion) -> new QuiltRemoteVersion(
                             gameVersion, loaderVersion,
-                            List.of("%s/%s/%s".formatted(FabricRemoteVersion.LOADER_META_URL, metaGameVersion, loaderVersion)))
+                            List.of("%s/%s/%s".formatted(QuiltRemoteVersion.LOADER_META_URL, metaGameVersion, loaderVersion)))
             );
-            case FABRIC_API -> fetchModrinthVersionsAsync(
+            case QUILT_API -> fetchModrinthVersionsAsync(
                     type,
-                    FabricAPIRemoteVersion.MODRINTH_ID,
+                    QuiltAPIRemoteVersion.MODRINTH_ID,
                     gameVersion,
-                    it -> new FabricAPIRemoteVersion(
+                    it -> new QuiltAPIRemoteVersion(
                             gameVersion,
                             it.version(),
                             it.name(),
@@ -236,32 +254,32 @@ public class DownloadProvider {
             case OPTIFINE -> Task.supplyAsync(() -> {
                 throw new UnsupportedOperationException("OptiFine version list fetching is not supported in this DownloadProvider.");
             });
-            case QUILT -> fetchFabricVersionsAsync(
-                    type,
-                    gameVersion,
-                    DownloadCandidates.of(QuiltRemoteVersion.GAME_META_URL),
-                    DownloadCandidates.of(QuiltRemoteVersion.LOADER_META_URL),
-                    (metaGameVersion, loaderVersion) -> new QuiltRemoteVersion(
-                            gameVersion, loaderVersion,
-                            List.of("%s/%s/%s".formatted(QuiltRemoteVersion.LOADER_META_URL, metaGameVersion, loaderVersion)))
-            );
-            case QUILT_API -> fetchModrinthVersionsAsync(
-                    type,
-                    QuiltAPIRemoteVersion.MODRINTH_ID,
-                    gameVersion,
-                    it -> new QuiltAPIRemoteVersion(
-                            gameVersion,
-                            it.version(),
-                            it.name(),
-                            it.datePublished(),
-                            it,
-                            List.of(it.file().url()))
-            );
         };
     }
 
-    protected DownloadCandidates getGameVersionListCandidates() {
-        return DownloadCandidates.of(GameRemoteVersion.VERSION_MANIFEST_URL);
+    public DownloadCandidates getGameVersionListCandidates() {
+        return DownloadCandidates.of("https://piston-meta.mojang.com/mc/game/version_manifest.json");
+    }
+
+    public FabricLikeVersionListCandidates getFabricVersionListCandidates() {
+        return new FabricLikeVersionListCandidates(
+                DownloadCandidates.of(FabricRemoteVersion.LOADER_META_URL),
+                DownloadCandidates.of(FabricRemoteVersion.GAME_META_URL)
+        );
+    }
+
+    public FabricLikeVersionListCandidates getLegacyFabricVersionListCandidates() {
+        return new FabricLikeVersionListCandidates(
+                DownloadCandidates.of(LegacyFabricRemoteVersion.LOADER_META_URL),
+                DownloadCandidates.of(LegacyFabricRemoteVersion.GAME_META_URL)
+        );
+    }
+
+    public FabricLikeVersionListCandidates getQuiltVersionListCandidates() {
+        return new FabricLikeVersionListCandidates(
+                DownloadCandidates.of(QuiltRemoteVersion.LOADER_META_URL),
+                DownloadCandidates.of(QuiltRemoteVersion.GAME_META_URL)
+        );
     }
 
     public DownloadCandidates getDownloadCandidates(String baseURL) {
@@ -279,6 +297,12 @@ public class DownloadProvider {
     /// Returns unmodifiable candidate URLs for an asset's relative object location, in attempt order.
     public DownloadCandidates getAssetObjectCandidates(AssetObject assetObject) {
         return getDownloadCandidates("https://resources.download.minecraft.net/" + assetObject.getLocation());
+    }
+
+    public record FabricLikeVersionListCandidates(
+            DownloadCandidates loaderMetaCandidates, DownloadCandidates gameMetaCandidates
+    ) {
+
     }
 
     private static final class VersionListState {
