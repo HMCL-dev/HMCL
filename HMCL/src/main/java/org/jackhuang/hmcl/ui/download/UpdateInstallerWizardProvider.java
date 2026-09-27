@@ -18,9 +18,9 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
-import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameAssetIndexDownloadTask;
+import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.download.game.LibraryDownloadException;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,11 +105,11 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     public Node createPage(WizardController controller, int step, SettingsMap settings) {
         switch (step) {
             case 0:
-                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + componentType.getPatchId())), gameInstance.getVersion().toString(), downloadProvider, componentType, () -> {
+                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + componentType.getPatchId())), gameInstance.getVersion(), downloadProvider, componentType, () -> {
                     if (oldLibraryVersion == null) {
                         controller.onFinish();
                     } else if (componentType == GameComponentType.GAME) {
-                        String newGameVersion = ((ComponentRemoteVersion) settings.get(componentType.getPatchId())).getSelfVersion();
+                        GameVersionNumber newGameVersion = ((GameRemoteVersion) settings.get(componentType.getPatchId())).getGameVersion();
                         controller.onNext(new AdditionalInstallersPage(gameInstance, newGameVersion, controller, downloadProvider));
                     } else {
                         Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + componentType.getPatchId()), oldLibraryVersion, ((ComponentRemoteVersion) settings.get(componentType.getPatchId())).getSelfVersion()),

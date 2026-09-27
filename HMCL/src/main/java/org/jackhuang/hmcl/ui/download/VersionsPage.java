@@ -88,12 +88,12 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     private final ObjectProperty<Status> status = new SimpleObjectProperty<>(Status.LOADING);
 
     public VersionsPage(Navigation navigation,
-                        String title, String gameVersion,
+                        String title, GameVersionNumber gameVersion,
                         DownloadProvider downloadProvider,
                         GameComponentType componentType,
                         Runnable callback) {
         this.title = title;
-        this.gameVersion = componentType == GameComponentType.GAME ? null : GameVersionNumber.asGameVersion(gameVersion);
+        this.gameVersion = componentType == GameComponentType.GAME ? null : gameVersion;
         this.componentType = componentType;
         this.navigation = navigation;
         this.downloadProvider = downloadProvider;
@@ -241,7 +241,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             if (remoteVersion instanceof GameRemoteVersion) {
                 ComponentRemoteVersion.Type versionType = remoteVersion.getVersionType();
-                GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(remoteVersion.getGameVersion());
+                GameVersionNumber gameVersion = remoteVersion.getGameVersion();
 
                 switch (versionType) {
                     case RELEASE -> {
@@ -249,8 +249,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         imageView.setImage(GameInstanceIconType.GRASS.getIcon());
                     }
                     case SNAPSHOT, PENDING, UNOBFUSCATED -> {
-                        if (versionType == ComponentRemoteVersion.Type.SNAPSHOT
-                                && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isAprilFools()) {
+                        if (versionType == ComponentRemoteVersion.Type.SNAPSHOT && gameVersion.isAprilFools()) {
                             twoLineListItem.addTag(i18n("instance.game.april_fools"));
                             imageView.setImage(GameInstanceIconType.APRIL_FOOLS.getIcon());
                         } else {
@@ -290,7 +289,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     iconType = GameInstanceIconType.COMMAND;
 
                 imageView.setImage(iconType.getIcon());
-                String displayGameVersion = I18n.getDisplayVersion(GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()));
+                String displayGameVersion = I18n.getDisplayVersion(remoteVersion.getGameVersion());
 
                 if (twoLineListItem.getSubtitle() == null)
                     twoLineListItem.setSubtitle(displayGameVersion);
@@ -471,7 +470,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                                 || versionType == ComponentRemoteVersion.Type.PENDING
                                 || versionType == ComponentRemoteVersion.Type.UNOBFUSCATED;
                         case APRIL_FOOLS -> versionType == ComponentRemoteVersion.Type.SNAPSHOT
-                                && GameVersionNumber.asGameVersion(it.getGameVersion()).isAprilFools();
+                                && it.getGameVersion().isAprilFools();
                         case OLD -> versionType == ComponentRemoteVersion.Type.OLD;
                         // case ALL,
                         default -> true;

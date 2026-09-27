@@ -364,7 +364,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         Task<?> task = downloadProvider.getVersionsAsync(GameComponentType.GAME, null, false)
                 .thenApplyAsync(versions -> versions.stream()
                         .filter(it -> it.getVersionType() == RELEASE)
-                        .filter(it -> NativePatcher.checkSupportedStatus(GameVersionNumber.asGameVersion(it.getGameVersion()), Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION) != NativePatcher.SupportStatus.UNSUPPORTED)
+                        .filter(it -> NativePatcher.checkSupportedStatus(it.getGameVersion(), Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION) != NativePatcher.SupportStatus.UNSUPPORTED)
                         .sorted()
                         .findFirst()
                         .orElseThrow(() -> new IOException("No versions found")))
@@ -372,7 +372,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
                     HMCLDependencyManager dependency = repository.getDependency();
 
-                    String gameVersion = version.getGameVersion();
+                    String gameVersion = version.getGameVersion().toString();
                     GameInstanceID instanceId = new GameInstanceID(gameVersion);
 
                     instanceHolder.value = instanceId;
