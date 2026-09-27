@@ -136,26 +136,26 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
             serverIcon = ServerListPage.IconedServer.parseImageOrDefault(status.favicon());
         }
 
-        int iconScale = 4;
-        ImageContainer imageView = new ImageContainer(32);
+        int iconScale = 1;
+        ImageContainer imageView = new ImageContainer(64);
         imageView.setImage(serverIcon);
 
         imageView.setScaleX(iconScale);
         imageView.setScaleY(iconScale);
 
         StackPane canvasPane = new StackPane(imageView);
-        canvasPane.setPrefWidth(iconScale * 32);
-        canvasPane.setPrefHeight(iconScale * 32);
+        canvasPane.setPrefWidth(iconScale * 64);
+        canvasPane.setPrefHeight(iconScale * 64);
         contentBox.getChildren().add(canvasPane);
 
         GridPane textPane = new GridPane();
-        textPane.setAlignment(Pos.TOP_LEFT);
+        textPane.setAlignment(Pos.CENTER_LEFT);
 
         textPane.setHgap(10);
         textPane.setVgap(10);
 
         contentBox.getChildren().add(textPane);
-        HBox.setMargin(textPane, new Insets(15, 0, 0, 20));
+        HBox.setMargin(textPane, new Insets(0, 0, 0, 20));
 
         int rows = 0;
         textPane.add(new Label(i18n("servers.manager.server.name") + ":"), 0, rows);
