@@ -31,6 +31,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
@@ -261,6 +262,9 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         private final TwoLineListItem content;
         private final ServerNetworkLatencyPane serverNetworkLatencyPane;
 
+        private final JFXButton statusBtn;
+        private final Tooltip statusBtnTooltip;
+
         private Subscription serverNetworkLatencyValueSubscription;
 
         public ServerListCell(ServerListPage page) {
@@ -292,7 +296,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                 right.setAlignment(Pos.CENTER_RIGHT);
 
                 StackPane statusPane = new StackPane();
-                JFXButton statusBtn = FXUtils.newToggleButton4(SVG.NONE);
+                statusBtn = FXUtils.newToggleButton4(SVG.NONE);
                 statusBtn.managedProperty().bind(statusBtn.visibleProperty());
                 statusBtn.setOnAction(event -> {
                     ServerHolder holder = getItem();
@@ -304,6 +308,27 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                 statusPane.getChildren().add(serverNetworkLatencyPane);
                 statusPane.getChildren().add(statusBtn);
                 right.getChildren().add(statusPane);
+
+                statusBtnTooltip = new Tooltip();
+                FXUtils.installFastTooltip(statusBtn, statusBtnTooltip);
+
+                JFXButton editBtn = FXUtils.newToggleButton4(SVG.EDIT);
+                right.getChildren().add(editBtn);
+                FXUtils.installFastTooltip(editBtn, i18n("servers.manager.edit"));
+                editBtn.setOnAction(event -> {
+                    ServerHolder holder = getItem();
+                    if (holder != null)
+                        page.editServer(holder);
+                });
+
+                JFXButton launchBtn = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
+                right.getChildren().add(launchBtn);
+                FXUtils.installFastTooltip(launchBtn, i18n("instance.launch"));
+                launchBtn.setOnAction(event -> {
+                    ServerHolder holder = getItem();
+                    if (holder != null)
+                        page.launchAndEnterServer(holder);
+                });
 
                 JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
                 right.getChildren().add(btnMore);
@@ -351,6 +376,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                 content.setTitle("");
                 content.setSubtitle("");
                 serverNetworkLatencyPane.error();
+                statusBtnTooltip.setText("");
             } else {
                 serverIcon.setImage(holder.server.iconImage);
                 content.setTitle(holder.server.getName() != null ? parseColorEscapes(holder.server.getName()) : "");
@@ -383,14 +409,16 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         private void applyServerStatusResult(ServerHolder holder, ServerStatusResult result) {
             if (result == null) {
                 serverNetworkLatencyPane.ping();
+                statusBtnTooltip.setText(i18n("servers.manager.status.outside.pinging"));
                 return;
             }
             ServerStatus serverStatus = result.getIfSuccess();
             if (serverStatus == null) {
                 serverNetworkLatencyPane.error();
+                statusBtnTooltip.setText(i18n("servers.manager.status.outside.error"));
             } else {
                 serverNetworkLatencyPane.pong(serverStatus.networkLatency());
-
+                statusBtnTooltip.setText(i18n("servers.manager.status.outside.pong", String.format("%,d", serverStatus.networkLatency())));
                 // update latest server icon
                 serverIcon.setImage(IconedServer.parseImageOrDefault(serverStatus.favicon()));
                 if (!Objects.equals(serverStatus.favicon(), holder.server.getIcon())) {
@@ -422,6 +450,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                     new IconedMenuItem(SVG.SERVER_SIGNAL_FULL, i18n("servers.manager.status"), () ->
                             page.showServerStatus(holder), popup
                     ),
+                    new MenuSeparator(),
                     new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch_and_connect_server"), () ->
                             page.launchAndEnterServer(holder), popup
                     ),
