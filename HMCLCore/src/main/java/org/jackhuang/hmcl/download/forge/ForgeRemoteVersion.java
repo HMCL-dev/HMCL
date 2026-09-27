@@ -65,8 +65,8 @@ public final class ForgeRemoteVersion extends ComponentRemoteVersion {
         return Objects.requireNonNullElse(branch, "");
     }
 
-    public static Task<ComponentRemoteVersionList<ForgeRemoteVersion>> fetchAsync(DownloadCandidates candidates, GameVersionNumber gameVersion) {
-        return new GetTask(candidates).thenApplyAsync(result -> {
+    public static Task<ComponentRemoteVersionList<ForgeRemoteVersion>> fetchAsync(DownloadProvider downloadProvider, GameVersionNumber gameVersion) {
+        return new GetTask(downloadProvider.getForgeVersionListCandidates()).thenApplyAsync(result -> {
             ForgeVersionRoot root = JsonUtils.GSON.fromJson(result, ForgeVersionRoot.class);
 
             TreeSet<ForgeRemoteVersion> versions = new TreeSet<>();
@@ -104,7 +104,8 @@ public final class ForgeRemoteVersion extends ComponentRemoteVersion {
         });
     }
 
-    public static Task<ComponentRemoteVersionList<ForgeRemoteVersion>> fetchBMCLAsync(String bmclRoot, GameVersionNumber gameVersion) {
+    public static Task<ComponentRemoteVersionList<ForgeRemoteVersion>> fetchBMCLAsync(
+            DownloadProvider downloadProvider, String bmclRoot, GameVersionNumber gameVersion) {
         String lookupVersion = toLookupVersion(gameVersion.toString());
 
         return new GetTask(DownloadCandidates.of(bmclRoot + "/forge/minecraft/" + lookupVersion)).thenApplyAsync(result -> {

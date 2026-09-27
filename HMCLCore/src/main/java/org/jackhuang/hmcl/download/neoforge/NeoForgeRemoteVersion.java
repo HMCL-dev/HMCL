@@ -18,10 +18,8 @@
 package org.jackhuang.hmcl.download.neoforge;
 
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.download.ComponentRemoteVersionList;
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.ComponentRemoteVersion;
-import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
@@ -45,8 +43,8 @@ public final class NeoForgeRemoteVersion extends ComponentRemoteVersion {
 
     private static final GameVersionNumber GAME_VERSION_1_20_1 = GameVersionNumber.asGameVersion("1.20.1");
 
-    public static final String OLD_URL = "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/forge";
-    public static final String META_URL = "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge";
+    public static final WebURL OLD_URL = WebURL.parse("https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/forge");
+    public static final WebURL META_URL = WebURL.parse("https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge");
 
     private static Type getType(String version) {
         return version.contains("beta") || version.contains("alpha") ? Type.SNAPSHOT : Type.RELEASE;
@@ -65,14 +63,13 @@ public final class NeoForgeRemoteVersion extends ComponentRemoteVersion {
     }
 
     public static Task<ComponentRemoteVersionList<NeoForgeRemoteVersion>> fetchAsync(
-            DownloadCandidates metaCandidates, DownloadCandidates oldCandidates,
-            GameVersionNumber gameVersion) {
+            DownloadProvider downloadProvider, GameVersionNumber gameVersion) {
         @JsonSerializable
         record OfficialAPIResult(boolean isSnapshot, List<String> versions) {
         }
 
         boolean isOld = gameVersion.equals(GAME_VERSION_1_20_1);
-        return new GetTask(isOld ? oldCandidates : metaCandidates)
+        return new GetTask(isOld ? downloadProvider.getNeoForgeOldVersionListCandidates() : downloadProvider.getNeoForgeVersionListCandidates())
                 .thenApplyAsync(result -> {
                     OfficialAPIResult apiResult = JsonUtils.fromNonNullJson(result, OfficialAPIResult.class);
 

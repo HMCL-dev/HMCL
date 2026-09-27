@@ -96,22 +96,15 @@ public final class HMCLDownloadProvider extends DownloadProvider {
     protected Task<? extends ComponentRemoteVersionList<?>> fetchVersionsAsync(GameComponentType type, @Nullable GameVersionNumber gameVersion) {
         assert (gameVersion == null) == (type == GameComponentType.GAME);
         switch (type) {
-            case GAME -> {
-                return GameRemoteVersion.fetchAsync(getCandidates(
-                        versionListSource,
-                        GameRemoteVersion.VERSION_MANIFEST_URL,
-                        WebURL.parse(bmclRoot + "/mc/game/version_manifest.json")
-                ));
-            }
             case FORGE -> {
-                Task<ComponentRemoteVersionList<ForgeRemoteVersion>> fetchOfficial = ForgeRemoteVersion.fetchAsync(DownloadCandidates.of(ForgeRemoteVersion.FORGE_LIST), gameVersion);
+                Task<ComponentRemoteVersionList<ForgeRemoteVersion>> fetchOfficial = ForgeRemoteVersion.fetchAsync(this, gameVersion);
 
                 DownloadSource source = versionListSource;
                 if (!LocaleUtils.IS_CHINA_MAINLAND && (source == DownloadSource.DEFAULT || source == DownloadSource.OFFICIAL)) {
                     return fetchOfficial;
                 }
 
-                Task<ComponentRemoteVersionList<ForgeRemoteVersion>> fetchBMCL = ForgeRemoteVersion.fetchBMCLAsync(bmclRoot, gameVersion);
+                Task<ComponentRemoteVersionList<ForgeRemoteVersion>> fetchBMCL = ForgeRemoteVersion.fetchBMCLAsync(this, bmclRoot, gameVersion);
                 if (source == DownloadSource.MIRROR) {
                     return new FallbackTask<>(fetchBMCL, fetchOfficial);
                 } else {
@@ -119,11 +112,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 }
             }
             case NEO_FORGE -> {
-                Task<ComponentRemoteVersionList<NeoForgeRemoteVersion>> fetchOfficial = NeoForgeRemoteVersion.fetchAsync(
-                        DownloadCandidates.of(NeoForgeRemoteVersion.META_URL),
-                        DownloadCandidates.of(NeoForgeRemoteVersion.OLD_URL),
-                        gameVersion
-                );
+                Task<ComponentRemoteVersionList<NeoForgeRemoteVersion>> fetchOfficial = NeoForgeRemoteVersion.fetchAsync(this, gameVersion);
 
                 DownloadSource source = versionListSource;
                 if (!LocaleUtils.IS_CHINA_MAINLAND && (source == DownloadSource.DEFAULT || source == DownloadSource.OFFICIAL)) {
@@ -137,7 +126,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 }
             }
             case OPTIFINE -> {
-                return OptiFineRemoteVersion.fetchBMCLAsync(bmclRoot, gameVersion);
+                return OptiFineRemoteVersion.fetchBMCLAsync(this, bmclRoot, gameVersion);
             }
         }
 

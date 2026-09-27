@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.download.optifine;
 
-import org.jackhuang.hmcl.download.ComponentRemoteVersionList;
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.ComponentRemoteVersion;
-import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
@@ -58,7 +55,7 @@ public final class OptiFineRemoteVersion extends ComponentRemoteVersion {
         };
     }
 
-    public static Task<ComponentRemoteVersionList<OptiFineRemoteVersion>> fetchBMCLAsync(String bmclRoot, GameVersionNumber gameVersion) {
+    public static Task<ComponentRemoteVersionList<OptiFineRemoteVersion>> fetchBMCLAsync(DownloadProvider downloadProvider, String bmclRoot, GameVersionNumber gameVersion) {
         @JsonSerializable
         record OptiFineVersion(String dl, String ver,
                                String date, String type,

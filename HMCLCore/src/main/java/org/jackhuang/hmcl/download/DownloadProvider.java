@@ -116,7 +116,7 @@ public class DownloadProvider {
         }
     }
 
-    private  <V extends ComponentRemoteVersion> Task<ComponentRemoteVersionList<V>> fetchFabricVersionsAsync(
+    private <V extends ComponentRemoteVersion> Task<ComponentRemoteVersionList<V>> fetchFabricVersionsAsync(
             GameComponentType type,
             GameVersionNumber gameVersion,
             FabricLikeVersionListCandidates candidates,
@@ -151,7 +151,7 @@ public class DownloadProvider {
         });
     }
 
-    private  <V extends ComponentRemoteVersion> Task<ComponentRemoteVersionList<V>> fetchModrinthVersionsAsync(
+    private <V extends ComponentRemoteVersion> Task<ComponentRemoteVersionList<V>> fetchModrinthVersionsAsync(
             GameComponentType type,
             String modId,
             GameVersionNumber gameVersion,
@@ -176,7 +176,7 @@ public class DownloadProvider {
         assert (type == GameComponentType.GAME) == (gameVersion == null);
 
         return switch (type) {
-            case GAME -> GameRemoteVersion.fetchAsync(getGameVersionListCandidates());
+            case GAME -> GameRemoteVersion.fetchAsync(this);
             case FABRIC -> fetchFabricVersionsAsync(
                     type,
                     gameVersion,
@@ -237,19 +237,9 @@ public class DownloadProvider {
                             it,
                             List.of(it.file().url()))
             );
-            case FORGE -> ForgeRemoteVersion.fetchAsync(
-                    DownloadCandidates.of(ForgeRemoteVersion.FORGE_LIST),
-                    gameVersion
-            );
-            case NEO_FORGE -> NeoForgeRemoteVersion.fetchAsync(
-                    DownloadCandidates.of(NeoForgeRemoteVersion.META_URL),
-                    DownloadCandidates.of(NeoForgeRemoteVersion.OLD_URL),
-                    gameVersion
-            );
-            case CLEANROOM -> CleanroomRemoteVersion.fetchAsync(
-                    DownloadCandidates.of(CleanroomRemoteVersion.LOADER_LIST_URL),
-                    gameVersion
-            );
+            case FORGE -> ForgeRemoteVersion.fetchAsync(this, gameVersion);
+            case NEO_FORGE -> NeoForgeRemoteVersion.fetchAsync(this, gameVersion);
+            case CLEANROOM -> CleanroomRemoteVersion.fetchAsync(this, gameVersion);
             case LITELOADER -> LiteLoaderRemoteVersion.fetchAsync(gameVersion);
             case OPTIFINE -> Task.supplyAsync(() -> {
                 throw new UnsupportedOperationException("OptiFine version list fetching is not supported in this DownloadProvider.");
@@ -280,6 +270,22 @@ public class DownloadProvider {
                 DownloadCandidates.of(QuiltRemoteVersion.LOADER_META_URL),
                 DownloadCandidates.of(QuiltRemoteVersion.GAME_META_URL)
         );
+    }
+
+    public DownloadCandidates getForgeVersionListCandidates() {
+        return DownloadCandidates.of(ForgeRemoteVersion.FORGE_LIST);
+    }
+
+    public DownloadCandidates getNeoForgeVersionListCandidates() {
+        return DownloadCandidates.of(NeoForgeRemoteVersion.META_URL);
+    }
+
+    public DownloadCandidates getNeoForgeOldVersionListCandidates() {
+        return DownloadCandidates.of(NeoForgeRemoteVersion.OLD_URL);
+    }
+
+    public DownloadCandidates getCleanroomVersionListCandidates() {
+        return DownloadCandidates.of(CleanroomRemoteVersion.LOADER_LIST_URL);
     }
 
     public DownloadCandidates getDownloadCandidates(String baseURL) {
