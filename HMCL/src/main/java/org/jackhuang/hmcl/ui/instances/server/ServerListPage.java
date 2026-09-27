@@ -100,7 +100,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
 
     public void showServerStatus(ServerHolder holder) {
         if (gameInstance != null) {
-            runInFX(() -> Controllers.dialog(new ServerStatusPane(holder.server)));
+            runInFX(() -> Controllers.dialog(new ServerStatusPane(holder.serverStatusResultWrapper, holder.server)));
         }
     }
 

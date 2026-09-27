@@ -19,6 +19,9 @@ package org.jackhuang.hmcl.ui.instances.server;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.WeakChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -30,6 +33,7 @@ import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.server.ServerStatus;
 import org.jackhuang.hmcl.server.ServerStatusGetter;
+import org.jackhuang.hmcl.server.ServerStatusResult;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -37,7 +41,8 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.instances.Instances;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -47,15 +52,18 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
     private final SpinnerPane refreshSpinner = new SpinnerPane();
     private final JFXDialogLayout rootLayout = new JFXDialogLayout();
     private final Label lblErrorMessage = new Label();
+    private final ReadOnlyObjectWrapper<ServerStatusResult> serverStatusResultWrapper;
+    private final ChangeListener<ServerStatusResult> listener = (ignored0, ignored1, newResult) -> {
+        replaceBody();
+    };
 
-    private @Nullable ServerStatus status;
-
-    public ServerStatusPane(ServerListPage.IconedServer iconedServer) {
-        this(iconedServer, false);
+    public ServerStatusPane(ReadOnlyObjectWrapper<ServerStatusResult> reference, ServerListPage.IconedServer iconedServer) {
+        this(reference, iconedServer, false);
     }
 
-    public ServerStatusPane(ServerListPage.IconedServer iconedServer, boolean fromDnD) {
+    public ServerStatusPane(ReadOnlyObjectWrapper<ServerStatusResult> reference, ServerListPage.IconedServer iconedServer, boolean fromDnD) {
         this.iconedServer = iconedServer;
+        this.serverStatusResultWrapper = Objects.requireNonNullElseGet(reference, () -> new ReadOnlyObjectWrapper<>(null));
 
         getStyleClass().add("skin-pane");
         getChildren().setAll(rootLayout);
@@ -117,24 +125,42 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         onEscPressed(this, cancelBtn::fire);
         actions.getChildren().add(cancelBtn);
 
-        replaceBody();
-
         lblErrorMessage.setWrapText(true);
         lblErrorMessage.setMaxWidth(400);
         rootLayout.getActions().addAll(lblErrorMessage, actions);
 
-
-        refresh();
+        replaceBody();
+        serverStatusResultWrapper.addListener(new WeakChangeListener<>(listener));
+        refreshIfNoStatus();
     }
 
     public void replaceBody() {
-        HBox contentBox = new HBox();
-        setMargin(contentBox, new Insets(20, 0, 0, 0));
+        ServerStatusResult statusResult = serverStatusResultWrapper.get();
+        ServerStatus status;
+
+        if (statusResult == null) {
+            status = null;
+        } else {
+            status = statusResult.getIfSuccess();
+        }
 
         Image serverIcon = iconedServer.iconImage;
         if (status != null) {
             serverIcon = ServerListPage.IconedServer.parseImageOrDefault(status.favicon());
         }
+
+        refreshSpinner.hideSpinner();
+        if (statusResult != null) {
+            if (statusResult.exceptionIfFailure() != null) {
+                lblErrorMessage.setText(i18n("servers.manager.error.status"));
+            } else {
+                lblErrorMessage.setText("");
+            }
+        }
+
+        HBox contentBox = new HBox();
+        setMargin(contentBox, new Insets(20, 0, 0, 0));
+
 
         int iconScale = 1;
         ImageContainer imageView = new ImageContainer(64);
@@ -165,35 +191,31 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         textPane.add(new Label(i18n("servers.manager.server.ip") + ":"), 0, rows);
         textPane.add(new Label(iconedServer.getIp()), 1, rows);
 
-        ServerStatus cachedServerStatus = status;
-        if (cachedServerStatus != null) {
+        if (status != null) {
 
             rows++;
             textPane.add(new Label(i18n("servers.manager.server.latency") + ":"), 0, rows);
-            textPane.add(new Label(String.format("%,dms", cachedServerStatus.networkLatency())), 1, rows);
+            textPane.add(new Label(String.format("%,dms", status.networkLatency())), 1, rows);
 
             rows++;
             textPane.add(new Label(i18n("servers.manager.server.players") + ":"), 0, rows);
-            textPane.add(new Label(String.format("%,d/%,d", cachedServerStatus.players().online(), cachedServerStatus.players().max())), 1, rows);
+            textPane.add(new Label(String.format("%,d/%,d", status.players().online(), status.players().max())), 1, rows);
         }
 
         rootLayout.setBody(contentBox);
     }
 
+    private void refreshIfNoStatus() {
+        if (serverStatusResultWrapper.get() == null) refresh();
+    }
+
     private void refresh() {
-        lblErrorMessage.setText("");
         refreshSpinner.showSpinner();
+
         Task.supplyAsync(Schedulers.io(), () ->
                 ServerStatusGetter.getStatus(iconedServer.getIp())
         ).whenComplete(Schedulers.javafx(), (result, ignored) -> {
-            refreshSpinner.hideSpinner();
-
-            this.status = result.getIfSuccess();
-            if (status == null) {
-                lblErrorMessage.setText(i18n("servers.manager.error.status"));
-            }
-
-            replaceBody();
+            serverStatusResultWrapper.set(result);
         }).start();
     }
 

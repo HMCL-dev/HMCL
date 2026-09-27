@@ -260,7 +260,7 @@ public final class Decorator {
 
         root.addEventFilter(DragEvent.DRAG_OVER, ServerDnD.dragOverHandler());
         root.addEventFilter(DragEvent.DRAG_DROPPED, ServerDnD.dragDroppedHandler(
-                server -> Controllers.dialog(new ServerStatusPane(ServerListPage.IconedServer.pack(server), true))));
+                server -> Controllers.dialog(new ServerStatusPane(null, ServerListPage.IconedServer.pack(server), true))));
     }
 
     /// Returns the node that must be installed as the scene root.
