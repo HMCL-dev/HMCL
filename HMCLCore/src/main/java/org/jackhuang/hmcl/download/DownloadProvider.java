@@ -300,6 +300,14 @@ public class DownloadProvider {
         return DownloadCandidates.of(urls.stream().map(DownloadCandidate::of).toArray(DownloadCandidate[]::new));
     }
 
+    public DownloadCandidates getVersionListCandidates(String url) {
+        return getVersionListCandidates(List.of(url));
+    }
+
+    public DownloadCandidates getVersionListCandidates(List<String> urls) {
+        return getDownloadCandidates(urls);
+    }
+
     /// Returns unmodifiable candidate URLs for an asset's relative object location, in attempt order.
     public DownloadCandidates getAssetObjectCandidates(AssetObject assetObject) {
         return getDownloadCandidates("https://resources.download.minecraft.net/" + assetObject.getLocation());

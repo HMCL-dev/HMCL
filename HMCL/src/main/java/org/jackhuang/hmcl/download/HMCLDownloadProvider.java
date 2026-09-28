@@ -58,6 +58,62 @@ public final class HMCLDownloadProvider extends DownloadProvider {
         }
     }
 
+    private static DownloadCandidates getCandidates(DownloadSource source, List<MirrorRule> rules, List<String> urls) {
+        if (urls.isEmpty()) {
+            throw new IllegalArgumentException("urls cannot be empty");
+        }
+
+        // true means prefer mirror, false means prefer official, null means do not use mirror
+        @Nullable Boolean mirrorFirst;
+        if (LocaleUtils.IS_CHINA_MAINLAND) {
+            mirrorFirst = switch (source) {
+                case DEFAULT, MIRROR -> true;
+                case OFFICIAL -> false;
+            };
+        } else {
+            mirrorFirst = switch (source) {
+                case DEFAULT, OFFICIAL -> null;
+                case MIRROR -> true;
+            };
+        }
+
+        if (mirrorFirst == null) {
+            return DownloadCandidates.of(urls.stream().map(DownloadCandidate::of).toArray(DownloadCandidate[]::new));
+        }
+
+        var candidates = new ArrayList<DownloadCandidate>(urls.size() * 2);
+        for (String url : urls) {
+            DownloadCandidate candidate = DownloadCandidate.of(url);
+            if (candidate.url() == null) {
+                // Invalid URL, just add it to the list and let the download task handle it.
+                candidates.add(candidate);
+                continue;
+            }
+
+            @Nullable DownloadCandidate mirrorCandidate = null;
+            boolean fallback = false;
+            for (MirrorRule rule : rules) {
+                if (url.startsWith(rule.source)) {
+                    mirrorCandidate = DownloadCandidate.of(rule.target + url.substring(rule.source.length()));
+                    fallback = rule.fallback;
+                    break;
+                }
+            }
+
+            if (mirrorCandidate == null) {
+                candidates.add(candidate);
+            } else if (mirrorFirst && !fallback) {
+                candidates.add(mirrorCandidate);
+                candidates.add(candidate);
+            } else {
+                candidates.add(candidate);
+                candidates.add(mirrorCandidate);
+            }
+        }
+
+        return DownloadCandidates.of(List.copyOf(candidates));
+    }
+
     private final String bmclRoot;
     private final List<MirrorRule> rules;
 
@@ -167,63 +223,15 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 : DownloadCandidates.of(CleanroomRemoteVersion.LOADER_LIST_URL);
     }
 
+
     @Override
     public DownloadCandidates getDownloadCandidates(List<String> urls) {
-        if (urls.isEmpty()) {
-            throw new IllegalArgumentException("urls cannot be empty");
-        }
+        return getCandidates(fileSource, rules, urls);
+    }
 
-        DownloadSource source = fileSource;
-
-        // true means prefer mirror, false means prefer official, null means do not use mirror
-        @Nullable Boolean mirrorFirst;
-        if (LocaleUtils.IS_CHINA_MAINLAND) {
-            mirrorFirst = switch (source) {
-                case DEFAULT, MIRROR -> true;
-                case OFFICIAL -> false;
-            };
-        } else {
-            mirrorFirst = switch (source) {
-                case DEFAULT, OFFICIAL -> null;
-                case MIRROR -> true;
-            };
-        }
-
-        if (mirrorFirst == null) {
-            return super.getDownloadCandidates(urls);
-        }
-
-        var candidates = new ArrayList<DownloadCandidate>(urls.size() * 2);
-        for (String url : urls) {
-            DownloadCandidate candidate = DownloadCandidate.of(url);
-            if (candidate.url() == null) {
-                // Invalid URL, just add it to the list and let the download task handle it.
-                candidates.add(candidate);
-                continue;
-            }
-
-            @Nullable DownloadCandidate mirrorCandidate = null;
-            boolean fallback = false;
-            for (MirrorRule rule : rules) {
-                if (url.startsWith(rule.source)) {
-                    mirrorCandidate = DownloadCandidate.of(rule.target + url.substring(rule.source.length()));
-                    fallback = rule.fallback;
-                    break;
-                }
-            }
-
-            if (mirrorCandidate == null) {
-                candidates.add(candidate);
-            } else if (mirrorFirst && !fallback) {
-                candidates.add(mirrorCandidate);
-                candidates.add(candidate);
-            } else {
-                candidates.add(candidate);
-                candidates.add(mirrorCandidate);
-            }
-        }
-
-        return DownloadCandidates.of(List.copyOf(candidates));
+    @Override
+    public DownloadCandidates getVersionListCandidates(List<String> urls) {
+        return getCandidates(versionListSource, rules, urls);
     }
 
     @Override
