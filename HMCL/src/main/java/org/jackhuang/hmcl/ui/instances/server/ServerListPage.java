@@ -124,7 +124,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
     }
 
     public void copyServerIp(ServerHolder holder) {
-        FXUtils.copyText(holder.server.getIp(), i18n("servers.manage.copy.server.ip.ok.toast"));
+        FXUtils.copyText(holder.server.getIp(), i18n("server.manage.copy.server.ip.ok.toast"));
     }
 
     public void delete(ServerHolder holder) {
@@ -314,7 +314,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
 
                 JFXButton editBtn = FXUtils.newToggleButton4(SVG.EDIT);
                 right.getChildren().add(editBtn);
-                FXUtils.installFastTooltip(editBtn, i18n("servers.manager.edit"));
+                FXUtils.installFastTooltip(editBtn, i18n("server.manage.edit"));
                 editBtn.setOnAction(event -> {
                     ServerHolder holder = getItem();
                     if (holder != null)
@@ -409,16 +409,16 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         private void applyServerStatusResult(ServerHolder holder, ServerStatusResult result) {
             if (result == null) {
                 serverNetworkLatencyPane.ping();
-                statusBtnTooltip.setText(i18n("servers.manager.status.outside.pinging"));
+                statusBtnTooltip.setText(i18n("server.manage.status.outside.pinging"));
                 return;
             }
             ServerStatus serverStatus = result.getIfSuccess();
             if (serverStatus == null) {
                 serverNetworkLatencyPane.error();
-                statusBtnTooltip.setText(i18n("servers.manager.status.outside.error"));
+                statusBtnTooltip.setText(i18n("server.manage.status.outside.error"));
             } else {
                 serverNetworkLatencyPane.pong(serverStatus.networkLatency());
-                statusBtnTooltip.setText(i18n("servers.manager.status.outside.pong", String.format("%,d", serverStatus.networkLatency())));
+                statusBtnTooltip.setText(i18n("server.manage.status.outside.pong", String.format("%,d", serverStatus.networkLatency())));
                 // update latest server icon
                 serverIcon.setImage(IconedServer.parseImageOrDefault(serverStatus.favicon()));
                 if (!Objects.equals(serverStatus.favicon(), holder.server.getIcon())) {
@@ -442,12 +442,12 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
 
-            IconedMenuItem copyToInstanceMEnuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("servers.manage.copy.to.instance"), () -> page.copyToInstance(holder), popup);
+            IconedMenuItem copyToInstanceMEnuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("server.manage.copy.to.instance"), () -> page.copyToInstance(holder), popup);
             popupMenu.getContent().addAll(
-                    new IconedMenuItem(SVG.EDIT, i18n("servers.manager.edit"), () ->
+                    new IconedMenuItem(SVG.EDIT, i18n("server.manage.edit"), () ->
                             page.editServer(holder), popup
                     ),
-                    new IconedMenuItem(SVG.SERVER_SIGNAL_FULL, i18n("servers.manager.status"), () ->
+                    new IconedMenuItem(SVG.SERVER_SIGNAL_FULL, i18n("server.manage.status"), () ->
                             page.showServerStatus(holder), popup
                     ),
                     new MenuSeparator(),
@@ -458,7 +458,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                             page.generateLaunchScript(holder), popup
                     ),
                     new MenuSeparator(),
-                    new IconedMenuItem(SVG.CONTENT_COPY, i18n("servers.manage.copy.server.ip"), () ->
+                    new IconedMenuItem(SVG.CONTENT_COPY, i18n("server.manage.copy.server.ip"), () ->
                             page.copyServerIp(holder), popup
                     ),
                     new MenuSeparator(),
@@ -565,17 +565,17 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
 
         @Override
         protected List<Node> initializeToolbar(ServerListPage skinnable) {
-            JFXCheckBox chkShowAll = new JFXCheckBox(i18n("servers.show_all"));
+            JFXCheckBox chkShowAll = new JFXCheckBox(i18n("server.manage.show_all"));
             chkShowAll.selectedProperty().bindBidirectional(skinnable.showAll);
 
-            JFXCheckBox chkShowHide = new JFXCheckBox(i18n("servers.show_hide"));
+            JFXCheckBox chkShowHide = new JFXCheckBox(i18n("server.manage.show_hide"));
             chkShowHide.selectedProperty().bindBidirectional(skinnable.showHide);
 
             return Arrays.asList(
                     chkShowAll,
                     chkShowHide,
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("servers.manager.add"), SVG.ADD, skinnable::addServer)
+                    createToolbarButton2(i18n("server.manage.add"), SVG.ADD, skinnable::addServer)
             );
         }
 

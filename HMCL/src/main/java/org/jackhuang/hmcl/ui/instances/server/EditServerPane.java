@@ -76,8 +76,8 @@ public class EditServerPane extends TransitionPane implements DialogAware {
         JFXDialogLayout rootLayout = new JFXDialogLayout();
         getChildren().setAll(rootLayout);
         rootLayout.setHeading(new Label(switch (type) {
-                case EDIT -> i18n("servers.manager.edit.head");
-                case ADD -> i18n("servers.manager.add.head");
+                case EDIT -> i18n("server.manage.edit.head");
+                case ADD -> i18n("server.manage.add.head");
             }));
 
         VBox bodyVbox = new VBox();
@@ -98,11 +98,11 @@ public class EditServerPane extends TransitionPane implements DialogAware {
         // server name
         {
             Label label = new Label();
-            label.setText(i18n("servers.manager.server.name"));
+            label.setText(i18n("server.name"));
             GridPane.setHalignment(label, HPos.LEFT);
             body.add(label, 0, 0);
 
-            txtServerName.setPromptText(i18n("servers.manager.server.name.def"));
+            txtServerName.setPromptText(i18n("server.name.def"));
             txtServerName.setTextFormatter(new TextFormatter<>(change -> {
                 if (change.getControlNewText().length() <= 32) {
                     return change;
@@ -119,7 +119,7 @@ public class EditServerPane extends TransitionPane implements DialogAware {
         // server ip
         {
             Label label = new Label();
-            label.setText(i18n("servers.manager.server.ip"));
+            label.setText(i18n("server.ip"));
             GridPane.setHalignment(label, HPos.LEFT);
             body.add(label, 0, 1);
 
@@ -136,8 +136,8 @@ public class EditServerPane extends TransitionPane implements DialogAware {
         rootLayout.setBody(bodyVbox);
 
         btnAccept.setText(switch (type) {
-            case EDIT -> i18n("servers.manager.edit.accept");
-            case ADD -> i18n("servers.manager.add.accept");
+            case EDIT -> i18n("server.manage.edit.accept");
+            case ADD -> i18n("server.manage.add.accept");
         });
         btnAccept.getStyleClass().add("dialog-accept");
         btnAccept.setOnAction(e -> onAdd());
@@ -175,7 +175,7 @@ public class EditServerPane extends TransitionPane implements DialogAware {
         String serverIP = txtServerIP.getText();
         if (serverIP == null) return;
         if (txtServerName.getText() == null || txtServerName.getText().isEmpty()) {
-            serverName = i18n("servers.manager.server.name.def");
+            serverName = i18n("server.name.def");
         } else {
             serverName = txtServerName.getText();
         }
@@ -192,8 +192,8 @@ public class EditServerPane extends TransitionPane implements DialogAware {
             if (status == null) {
                 spinner.hideSpinner();
                 btnAccept.setText(switch (type) {
-                    case EDIT -> i18n("servers.manager.edit.still");
-                    case ADD -> i18n("servers.manager.add.still");
+                    case EDIT -> i18n("server.manage.edit.still");
+                    case ADD -> i18n("server.manage.add.still");
                 });
                 btnAccept.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
@@ -206,7 +206,7 @@ public class EditServerPane extends TransitionPane implements DialogAware {
                 btnCancel.setOnAction(e -> {
                     initPaneContents();
                 });
-                lblErrorMessage.setText(i18n("servers.manager.error.status"));
+                lblErrorMessage.setText(i18n("server.manage.status.error"));
             } else {
                 fireEvent(new DialogCloseEvent());
                 if (reference != null) {

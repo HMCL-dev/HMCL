@@ -71,7 +71,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
 
         getStyleClass().add("skin-pane");
         getChildren().setAll(rootLayout);
-        rootLayout.setHeading(new Label(i18n("servers.manager.status.head")));
+        rootLayout.setHeading(new Label(i18n("server.manage.status.head")));
 
         {
             JFXButton refreshBtn = new JFXButton(i18n("button.refresh"));
@@ -87,7 +87,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         if (fromDnD) {
             // add to current instance
 
-            JFXButton addToInstallBtn = new JFXButton(i18n("servers.dnd.add"));
+            JFXButton addToInstallBtn = new JFXButton(i18n("server.dnd.add"));
             addToInstallBtn.getStyleClass().add("dialog-accept");
             addToInstallBtn.setOnAction(ignored0 -> {
                 fireEvent(new DialogCloseEvent());
@@ -99,7 +99,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
                     gotoDownload.getStyleClass().add("dialog-accept");
                     gotoDownload.setOnAction(ignored1 -> Controllers.navigate(Controllers.getDownloadPage()));
 
-                    Controllers.confirmAction(i18n("servers.dnd.add.instanceempty.desc"), i18n("servers.dnd.add.instanceempty"),
+                    Controllers.confirmAction(i18n("server.dnd.add.instanceempty.desc"), i18n("server.dnd.add.instanceempty"),
                             MessageDialogPane.MessageType.ERROR,
                             gotoDownload,
                             null);
@@ -178,7 +178,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         refreshSpinner.hideSpinner();
         if (statusResult != null) {
             if (statusResult.exceptionIfFailure() != null) {
-                lblErrorMessage.setText(i18n("servers.manager.error.status"));
+                lblErrorMessage.setText(i18n("server.manage.status.error"));
             } else {
                 lblErrorMessage.setText("");
             }
@@ -206,11 +206,11 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         serverInfoBox.getChildren().add(textPane);
         HBox.setMargin(textPane, new Insets(0, 0, 0, 20));
 
-        Label label = new Label(i18n("servers.manager.server.name") + ":");
+        Label label = new Label(i18n("server.name") + ":");
         textPane.add(label, 0, 0);
         textPane.add(new Label(iconedServer.getName()), 1, 0);
 
-        textPane.add(new Label(i18n("servers.manager.server.ip") + ":"), 0, 1);
+        textPane.add(new Label(i18n("server.ip") + ":"), 0, 1);
         textPane.add(new Label(iconedServer.getIp()), 1, 1);
 
         root.getChildren().add(serverInfoBox);
@@ -220,7 +220,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
             motdBox.setPadding(new Insets(10, 12, 10, 12));
             motdBox.setMaxWidth(620);
 
-            Label motdTitle = new Label(i18n("servers.manager.server.motd"));
+            Label motdTitle = new Label(i18n("server.motd"));
             motdTitle.getStyleClass().add("server-status-motd-title");
             motdBox.getChildren().add(motdTitle);
 
@@ -246,10 +246,10 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
             detailRow.setMaxWidth(620);
 
             var cells = List.of(
-                    createStatCell(i18n("servers.manager.server.type"), status.modInfo() != null ? i18n("servers.manager.server.modtypeinfo", status.modInfo().type(), status.modInfo().modList().size()) : i18n("servers.manager.server.vanilla"), true),
-                    createStatCell(i18n("servers.manager.server.players"), String.format("%,d/%,d", status.players().online(), status.players().max()), true),
-                    createStatCell(i18n("servers.manager.server.version"), MinecraftChatComponentUtils.toPlainStringFromChatComponent(new JsonPrimitive(status.version().name())) + "(" + status.version().version() + ")", true),
-                    createStatCell(i18n("servers.manager.server.latency"), String.format("%,dms", status.networkLatency()), false)
+                    createStatCell(i18n("server.type"), status.modInfo() != null ? i18n("server.type.mod", status.modInfo().type(), status.modInfo().modList().size()) : i18n("server.type.vanilla"), true),
+                    createStatCell(i18n("server.onlineplayers"), String.format("%,d/%,d", status.players().online(), status.players().max()), true),
+                    createStatCell(i18n("server.playversion"), MinecraftChatComponentUtils.toPlainStringFromChatComponent(new JsonPrimitive(status.version().name())) + "(" + status.version().version() + ")", true),
+                    createStatCell(i18n("server.latency"), String.format("%,dms", status.networkLatency()), false)
             );
             detailRow.getChildren().addAll(cells);
 

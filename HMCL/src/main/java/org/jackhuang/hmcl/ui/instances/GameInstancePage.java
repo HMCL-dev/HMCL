@@ -369,7 +369,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         .addNavigationDrawerTab(control.tab, control.resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
                         .addNavigationDrawerTab(control.tab, control.worldListTab, i18n("world.manage"), SVG.PUBLIC)
                         .addNavigationDrawerTab(control.tab, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL)
-                        .addNavigationDrawerTab(control.tab, control.serverListTab, i18n("servers.manage"), SVG.DRESSER);
+                        .addNavigationDrawerTab(control.tab, control.serverListTab, i18n("server.manage"), SVG.DRESSER);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);
 
                 PopupMenu browseList = new PopupMenu();
