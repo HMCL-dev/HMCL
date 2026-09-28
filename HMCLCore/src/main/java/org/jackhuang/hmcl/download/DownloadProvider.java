@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -247,8 +248,8 @@ public class DownloadProvider {
         };
     }
 
-    public DefaultCacheRepository getCacheRepository() {
-        return new DefaultCacheRepository();
+    public CacheRepository getCacheRepository() {
+        return CacheRepository.getInstance();
     }
 
     public DownloadCandidates getGameVersionListCandidates() {

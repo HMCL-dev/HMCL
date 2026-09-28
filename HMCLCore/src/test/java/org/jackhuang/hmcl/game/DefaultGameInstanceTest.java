@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DefaultGameBuilder;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameVerificationFixTask;
@@ -239,7 +238,7 @@ public final class DefaultGameInstanceTest {
                 new DefaultCacheRepository(tempDirectory.resolve("cache"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new DownloadProvider(),
+                new TestDownloadProvider(cacheRepository),
                 cacheRepository);
         Path source = tempDirectory.resolve("client.jar");
         Files.writeString(source, "client");
@@ -268,7 +267,7 @@ public final class DefaultGameInstanceTest {
         DefaultCacheRepository cacheRepository = new DefaultCacheRepository(cacheDirectory);
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new DownloadProvider(),
+                new TestDownloadProvider(cacheRepository),
                 cacheRepository);
         Path source = tempDirectory.resolve("client.jar");
         Files.writeString(source, "client");
@@ -307,10 +306,11 @@ public final class DefaultGameInstanceTest {
                 markerSha1);
 
         TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("download-cache"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new DownloadProvider(),
-                new DefaultCacheRepository(tempDirectory.resolve("download-cache")));
+                new TestDownloadProvider(cacheRepository),
+                cacheRepository);
         ForgeNewInstallTask task = new ForgeNewInstallTask(
                 dependencyManager,
                 new GameInstanceManifest(new GameInstanceID("instance")),
@@ -344,10 +344,11 @@ public final class DefaultGameInstanceTest {
                 "0000000000000000000000000000000000000000");
 
         TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("download-cache"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new DownloadProvider(),
-                new DefaultCacheRepository(tempDirectory.resolve("download-cache")));
+                new TestDownloadProvider(cacheRepository),
+                cacheRepository);
         ForgeNewInstallTask task = new ForgeNewInstallTask(
                 dependencyManager,
                 new GameInstanceManifest(new GameInstanceID("instance")),
@@ -400,10 +401,11 @@ public final class DefaultGameInstanceTest {
         TestGameInstance instance = instanceRepository.publish(
                 new GameInstanceID("instance"),
                 new GameInstanceManifest(new GameInstanceID("instance")));
+        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("cache"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 managerRepository,
-                new DownloadProvider(),
-                new DefaultCacheRepository(tempDirectory.resolve("cache")));
+                new TestDownloadProvider(cacheRepository),
+                cacheRepository);
 
         assertThrows(IllegalArgumentException.class, () -> dependencyManager.validateGameInstance(instance));
         assertThrows(IllegalArgumentException.class, () -> dependencyManager.newGameBuilder(instance));
@@ -420,10 +422,11 @@ public final class DefaultGameInstanceTest {
         TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
         GameInstanceID instanceId = new GameInstanceID("instance");
         repository.publish(instanceId, new GameInstanceManifest(instanceId));
+        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("cache"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new DownloadProvider(),
-                new DefaultCacheRepository(tempDirectory.resolve("cache")));
+                new TestDownloadProvider(cacheRepository),
+                cacheRepository);
 
         IllegalStateException exception = assertThrows(
                 IllegalStateException.class,
@@ -444,10 +447,11 @@ public final class DefaultGameInstanceTest {
         TestGameInstance instance = repository.publish(
                 instanceId,
                 new GameInstanceManifest(instanceId));
+        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("cache"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new DownloadProvider(),
-                new DefaultCacheRepository(tempDirectory.resolve("cache")));
+                new TestDownloadProvider(cacheRepository),
+                cacheRepository);
         repository.publishEmpty();
 
         IllegalStateException exception = assertThrows(
@@ -470,10 +474,11 @@ public final class DefaultGameInstanceTest {
                 instanceId,
                 new GameInstanceManifest(instanceId));
         repository.publish(instanceId, new GameInstanceManifest(instanceId));
+        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("cache"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new DownloadProvider(),
-                new DefaultCacheRepository(tempDirectory.resolve("cache")));
+                new TestDownloadProvider(cacheRepository),
+                cacheRepository);
 
         IllegalStateException exception = assertThrows(
                 IllegalStateException.class,
@@ -490,10 +495,11 @@ public final class DefaultGameInstanceTest {
     public void testGameBuilderCloseAbortsReservedDraft(@TempDir Path tempDirectory)
             throws IOException {
         TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("cache"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new DownloadProvider(),
-                new DefaultCacheRepository(tempDirectory.resolve("cache")));
+                new TestDownloadProvider(cacheRepository),
+                cacheRepository);
         DefaultGameBuilder builder = dependencyManager.newGameBuilder(new GameInstanceID("instance"));
 
         assertThrows(IllegalStateException.class, repository::openDraft);
@@ -514,10 +520,11 @@ public final class DefaultGameInstanceTest {
     public void testGameBuilderBuildFailureAbortsReservedDraft(@TempDir Path tempDirectory)
             throws IOException {
         TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("cache"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new DownloadProvider(),
-                new DefaultCacheRepository(tempDirectory.resolve("cache")));
+                new TestDownloadProvider(cacheRepository),
+                cacheRepository);
         DefaultGameBuilder builder = dependencyManager.newGameBuilder(new GameInstanceID("instance"));
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, builder::buildAsync);
@@ -540,10 +547,11 @@ public final class DefaultGameInstanceTest {
         Path marker = instance.getInstanceRoot().resolve("marker.txt");
         Files.createDirectories(marker.getParent());
         Files.writeString(marker, "existing");
+        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("cache"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
                 repository,
-                new DownloadProvider(),
-                new DefaultCacheRepository(tempDirectory.resolve("cache")));
+                new TestDownloadProvider(cacheRepository),
+                cacheRepository);
         MultiMCInstanceConfiguration manifest = createMultiMCConfiguration();
         Modpack modpack = createMultiMCModpack(manifest);
         MultiMCModpackInstallTask task = new MultiMCModpackInstallTask(
@@ -800,7 +808,7 @@ public final class DefaultGameInstanceTest {
         private CapturingDependencyManager(
                 DefaultGameRepository repository,
                 DefaultCacheRepository cacheRepository) {
-            super(repository, new DownloadProvider(), cacheRepository);
+            super(repository, new TestDownloadProvider(cacheRepository), cacheRepository);
         }
 
         /// Records the requested remote version without performing a network lookup.

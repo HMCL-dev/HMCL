@@ -86,6 +86,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     }
 
     @Override
+    public DefaultCacheRepository getCacheRepository() {
+        return cacheRepository;
+    }
+
+    @Override
     public DefaultGameBuilder newGameBuilder(GameInstanceID instanceId) {
         GameInstanceManifest initialManifest = new GameInstanceManifest(instanceId);
         DefaultGameRepositoryDraft draft = openGameBuilderDraft(initialManifest, null);
