@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
 @NotNullByDefault
-public abstract class DownloadProvider {
+public class DownloadProvider {
 
     private static final VarHandle VERSION_LIST_STATES_HANDLE = MethodHandles.arrayElementVarHandle(VersionListState[].class);
     private final @Nullable VersionListState[] versionListStates = new VersionListState[GameComponentType.ALL.size()];
@@ -247,7 +247,9 @@ public abstract class DownloadProvider {
         };
     }
 
-    public abstract DefaultCacheRepository getCacheRepository();
+    public DefaultCacheRepository getCacheRepository() {
+        return new DefaultCacheRepository();
+    }
 
     public DownloadCandidates getGameVersionListCandidates() {
         return DownloadCandidates.of("https://piston-meta.mojang.com/mc/game/version_manifest.json");
