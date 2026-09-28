@@ -223,7 +223,6 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 : DownloadCandidates.of(CleanroomRemoteVersion.LOADER_LIST_URL);
     }
 
-
     @Override
     public DownloadCandidates getDownloadCandidates(List<String> urls) {
         return getCandidates(fileSource, rules, urls);
