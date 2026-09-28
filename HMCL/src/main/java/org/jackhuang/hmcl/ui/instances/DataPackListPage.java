@@ -102,7 +102,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
     }
 
     void removeSelected(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems) {
-        List<DataPack.Pack> failed = new ArrayList<>(0);
+        List<String> failed = new ArrayList<>(0);
         selectedItems.stream()
                 .map(DataPackListPageSkin.DataPackInfoObject::getPackInfo)
                 .forEach(pack -> {
@@ -111,12 +111,12 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
                     } catch (IOException e) {
                         // Fail to remove mods if the game is running or the datapack is absent.
                         LOG.warning("Failed to delete datapack \"" + pack.getId() + "\"", e);
-                        failed.add(pack);
+                        failed.add(pack.getId());
                     }
                 });
 
         if (!failed.isEmpty())
-            Controllers.dialog(i18n("datapack.delete.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            Controllers.dialog(i18n("datapack.delete.failed", String.join(", ", failed)), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
     }
 
     void enableSelected(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems) {
