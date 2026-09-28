@@ -220,7 +220,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
             motdBox.setPadding(new Insets(10, 12, 10, 12));
             motdBox.setMaxWidth(620);
 
-            Label motdTitle = new Label("MOTD");
+            Label motdTitle = new Label(i18n("servers.manager.server.motd"));
             motdTitle.getStyleClass().add("server-status-motd-title");
             motdBox.getChildren().add(motdTitle);
 
@@ -246,7 +246,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
             detailRow.setMaxWidth(620);
 
             var cells = List.of(
-                    createStatCell(i18n("servers.manager.server.type"), status.modInfo() != null ? status.modInfo().type() + "(" + status.modInfo().modList().size() + " mods)" : i18n("servers.manager.server.vanilla"), true),
+                    createStatCell(i18n("servers.manager.server.type"), status.modInfo() != null ? i18n("servers.manager.server.modtypeinfo", status.modInfo().type(), status.modInfo().modList().size()) : i18n("servers.manager.server.vanilla"), true),
                     createStatCell(i18n("servers.manager.server.players"), String.format("%,d/%,d", status.players().online(), status.players().max()), true),
                     createStatCell(i18n("servers.manager.server.version"), MinecraftChatComponentUtils.toPlainStringFromChatComponent(new JsonPrimitive(status.version().name())) + "(" + status.version().version() + ")", true),
                     createStatCell(i18n("servers.manager.server.latency"), String.format("%,dms", status.networkLatency()), false)
