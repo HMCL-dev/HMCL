@@ -25,6 +25,7 @@ import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.server.ServerStatus;
 import org.jackhuang.hmcl.server.ServerStatusGetter;
@@ -102,6 +103,12 @@ public class EditServerPane extends TransitionPane implements DialogAware {
             body.add(label, 0, 0);
 
             txtServerName.setPromptText(i18n("servers.manager.server.name.def"));
+            txtServerName.setTextFormatter(new TextFormatter<>(change -> {
+                if (change.getControlNewText().length() <= 32) {
+                    return change;
+                }
+                return null;
+            }));
             body.add(txtServerName, 1, 0);
 
             if (reference != null) {
