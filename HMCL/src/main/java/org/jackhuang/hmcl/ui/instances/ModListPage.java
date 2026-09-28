@@ -215,10 +215,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     .filter(Objects::nonNull)
                     .map(ModInfoObject::getModInfo)
                     .toArray(LocalModFile[]::new));
-            loadMods(modManager);
         } catch (IOException ignore) {
             // Fail to remove mods if the game is running or the mod is absent.
+            Controllers.dialog(i18n("mods.delete.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
         }
+        loadMods(modManager);
     }
 
     void enableSelected(ObservableList<ModInfoObject> selectedItems) {

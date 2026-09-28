@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -100,6 +102,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
     }
 
     void removeSelected(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems) {
+        List<DataPack.Pack> failed = new ArrayList<>(0);
         selectedItems.stream()
                 .map(DataPackListPageSkin.DataPackInfoObject::getPackInfo)
                 .forEach(pack -> {
@@ -108,8 +111,12 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
                     } catch (IOException e) {
                         // Fail to remove mods if the game is running or the datapack is absent.
                         LOG.warning("Failed to delete datapack \"" + pack.getId() + "\"", e);
+                        failed.add(pack);
                     }
                 });
+
+        if (!failed.isEmpty())
+            Controllers.dialog(i18n("datapack.delete.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
     }
 
     void enableSelected(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems) {
