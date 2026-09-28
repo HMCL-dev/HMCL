@@ -26,6 +26,8 @@ public abstract class AbstractDependencyManager implements DependencyManager {
     public abstract DownloadProvider getDownloadProvider();
 
     @Override
-    public abstract DefaultCacheRepository getCacheRepository();
+    public DefaultCacheRepository getCacheRepository() {
+        return getDownloadProvider().getCacheRepository();
+    }
 
 }

@@ -26,8 +26,10 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.game.AssetObject;
 import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -196,6 +198,11 @@ public final class HMCLDownloadProvider extends DownloadProvider {
 
     public void setVersionListSource(DownloadSource versionListSource) {
         this.versionListSource = Objects.requireNonNull(versionListSource);
+    }
+
+    @Override
+    public HMCLCacheRepository getCacheRepository() {
+        return HMCLCacheRepository.REPOSITORY;
     }
 
     @Override
