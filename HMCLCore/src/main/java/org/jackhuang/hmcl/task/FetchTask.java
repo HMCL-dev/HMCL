@@ -531,7 +531,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
     /// Downloads a non-HTTP candidate through its installed URL handler, retrying I/O failures.
     private void downloadNotHttp(WebURL url, int retry, Duration connectTimeout, Duration readTimeout) throws DownloadException, InterruptedException {
         @Nullable ArrayList<Exception> exceptions = null;
-        for (int retryTime = 0; retryTime < retry; retryTime++) {
+        for (int attempts = 0, attemptsLimit = retry + 1; attempts < attemptsLimit; attempts++) {
             if (isCancelled()) {
                 throw new InterruptedException();
             }
@@ -561,7 +561,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                     exceptions = new ArrayList<>();
 
                 exceptions.add(ex);
-                LOG.warning("Failed to download " + url + ", repeat times: " + retryTime, ex);
+                LOG.warning("Failed to download " + url + ", repeat times: " + attempts, ex);
             }
         }
 
