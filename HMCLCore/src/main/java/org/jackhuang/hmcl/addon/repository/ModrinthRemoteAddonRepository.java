@@ -183,7 +183,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                     pair("index", convertSortType(sort))
             );
 
-            DownloadCandidates candidates = downloadProvider.getDownloadCandidates(NetworkUtils.withQuery(PREFIX + "/v2/search", query));
+            DownloadCandidates candidates = downloadProvider.getVersionListCandidates(NetworkUtils.withQuery(PREFIX + "/v2/search", query));
             IOException exception = null;
             for (DownloadCandidate candidate : candidates.getCandidates()) {
                 try {
@@ -247,7 +247,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         SEMAPHORE.acquireUninterruptibly();
         try {
             id = StringUtils.removePrefix(id, "local-");
-            DownloadCandidates candidates = downloadProvider.getDownloadCandidates(PREFIX + "/v2/project/" + id);
+            DownloadCandidates candidates = downloadProvider.getVersionListCandidates(PREFIX + "/v2/project/" + id);
             IOException exception = null;
 
             for (DownloadCandidate candidate : candidates.getCandidates()) {
@@ -304,7 +304,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         try {
             id = StringUtils.removePrefix(id, "local-");
 
-            DownloadCandidates candidates = downloadProvider.getDownloadCandidates(PREFIX + "/v2/project/" + id + "/version?include_changelog=false");
+            DownloadCandidates candidates = downloadProvider.getVersionListCandidates(PREFIX + "/v2/project/" + id + "/version?include_changelog=false");
             IOException exception = null;
 
             for (DownloadCandidate candidate : candidates.getCandidates()) {
@@ -335,7 +335,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     public String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
-            DownloadCandidates candidates = downloadProvider.getDownloadCandidates(PREFIX + "/v2/version/" + versionId);
+            DownloadCandidates candidates = downloadProvider.getVersionListCandidates(PREFIX + "/v2/version/" + versionId);
             IOException exception = null;
 
             for (DownloadCandidate candidate : candidates.getCandidates()) {
