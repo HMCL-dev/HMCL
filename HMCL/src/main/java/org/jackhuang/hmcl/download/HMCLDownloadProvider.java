@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download;
 
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.download.cleanroom.CleanroomRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
@@ -160,6 +161,13 @@ public final class HMCLDownloadProvider extends DownloadProvider {
     }
 
     @Override
+    public DownloadCandidates getCleanroomVersionListCandidates() {
+        return LocaleUtils.IS_CHINA_MAINLAND
+                ? DownloadCandidates.of(CleanroomRemoteVersion.LOADER_LIST_URL, WebURL.parse("https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom/index.json"))
+                : DownloadCandidates.of(CleanroomRemoteVersion.LOADER_LIST_URL);
+    }
+
+    @Override
     public DownloadCandidates getDownloadCandidates(List<String> urls) {
         if (urls.isEmpty()) {
             throw new IllegalArgumentException("urls cannot be empty");
@@ -223,7 +231,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
         return getCandidates(
                 fileSource,
                 WebURL.parse("https://resources.download.minecraft.net/" + assetObject.getLocation()),
-                WebURL.parse(bmclRoot + "/mc/assets/" + assetObject.getLocation())
+                WebURL.parse(bmclRoot + "/assets/" + assetObject.getLocation())
         );
     }
 
