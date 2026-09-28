@@ -28,7 +28,7 @@ public record ServerStatus(
         long networkLatency,
         @NotNull Version version,
         @NotNull Players players,
-        @NotNull Description description,
+        @NotNull JsonElement description,
         @Nullable String favicon,
         boolean enforcesSecureChat,
         @Nullable ModInfo modInfo
@@ -52,10 +52,6 @@ public record ServerStatus(
         ) {
 
         }
-    }
-
-    public record Description(@NotNull JsonElement description) {
-
     }
 
     public record ModInfo(

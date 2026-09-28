@@ -25,6 +25,7 @@ import java.net.Socket;
 import java.net.StandardSocketOptions;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -88,13 +89,6 @@ public final class ServerStatusGetter {
             }
         }
 
-        ServerStatus.Description description;
-        if (rootStatus.get("description") != null) {
-            description = new ServerStatus.Description(rootStatus.get("description"));
-        } else {
-            description = new ServerStatus.Description(JsonNull.INSTANCE);
-        }
-
         String favicon;
         if (rootStatus.get("favicon") != null) {
             String fetchedFavicon = rootStatus.get("favicon").getAsString();
@@ -139,7 +133,7 @@ public final class ServerStatusGetter {
                 networkLatency,
                 version,
                 players,
-                description,
+                Objects.requireNonNullElse(rootStatus.get("description"), JsonNull.INSTANCE),
                 favicon,
                 enforcesSecureChat,
                 modInfo
