@@ -32,5 +32,8 @@ public enum ThemeColorType {
     CUSTOM,
 
     /// Extracts the launcher theme color from the current background when possible.
-    BACKGROUND
+    BACKGROUND,
+
+    /// Uses time-varying color of oxidizing copper provided by Minecraft
+    COPPER
 }

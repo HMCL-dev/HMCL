@@ -721,6 +721,9 @@ public final class ThemePackManager {
             }
             return ThemeColorSource.wallpaper();
         }
+        if (themeColorType == ThemeColorType.COPPER) {
+            return ThemeColorSource.copper();
+        }
 
         ThemeColor color = Objects.requireNonNullElse(settings().customThemeColorProperty().get(), ThemeColor.DEFAULT);
         return ThemeColorSource.custom(color);

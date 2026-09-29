@@ -21,6 +21,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
+import org.jackhuang.hmcl.util.aprilfools.TheCopperAge;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,7 @@ import java.util.Objects;
 
 /// Describes how a theme-pack appearance chooses its Monet seed color.
 @NotNullByDefault
-public sealed interface ThemeColorSource permits ThemeColorSource.Default, ThemeColorSource.Custom, ThemeColorSource.Wallpaper {
+public sealed interface ThemeColorSource permits ThemeColorSource.Copper, ThemeColorSource.Custom, ThemeColorSource.Default, ThemeColorSource.Wallpaper {
     /// JSON member name for the source type.
     String FIELD_SOURCE = "source";
 
@@ -49,6 +50,13 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Default, Theme
     /// @return the wallpaper color source
     static ThemeColorSource wallpaper() {
         return new Wallpaper();
+    }
+
+    /// Creates a copper color source.
+    ///
+    /// @return the copper color source
+    static ThemeColorSource copper() {
+        return new Copper();
     }
 
     /// Parses a color source from a manifest JSON value.
@@ -87,6 +95,9 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Default, Theme
         }
         if ("WALLPAPER".equals(normalized)) {
             return wallpaper();
+        }
+        if ("COPPER".equals(normalized)) {
+            return copper();
         }
         throw new JsonParseException("Unsupported theme color source: " + source);
     }
@@ -167,6 +178,28 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Default, Theme
         @Override
         public ThemeColor resolveFallback() {
             return ThemeColor.DEFAULT;
+        }
+    }
+
+    /// A time-varying seed color of oxidizing copper provided by Minecraft.
+    @NotNullByDefault
+    record Copper() implements ThemeColorSource {
+        /// Creates a copper color source.
+        public Copper {
+        }
+
+        /// Converts this color source to its JSON representation.
+        @Override
+        public JsonElement toJsonElement() {
+            JsonObject object = new JsonObject();
+            object.addProperty(FIELD_SOURCE, "copper");
+            return object;
+        }
+
+        /// Returns the default color or copper used.
+        @Override
+        public ThemeColor resolveFallback() {
+            return ThemeColor.of(TheCopperAge.Degree.UNOXIDIZED.getColor());
         }
     }
 }

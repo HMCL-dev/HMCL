@@ -37,10 +37,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
@@ -67,6 +64,7 @@ import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.aprilfools.TheCopperAge;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -215,108 +213,135 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
             updatePane.getChildren().setAll(hBox, closeUpdateButton);
         }
+        getChildren().add(updatePane);
 
-        HBox launchPane = new HBox();
-        launchPane.getStyleClass().add("launch-pane");
-        FXUtils.onChangeAndOperate(selectedRepositorySnapshot, ignored -> mutableInstances.setAll(GameDirectoryManager.getSelectedRepository().getDisplayInstances().toList()));
-        FXUtils.onScroll(launchPane, instances, list -> {
-            @Nullable HMCLGameInstance currentGame = getCurrentGame();
-            @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
-            return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-        }, instance -> instance.getRepository().setSelectedInstance(instance));
-
-        StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
+        HBox buttonsPane = new HBox(16);
         {
-            JFXButton launchButton = new JFXButton();
-            launchButton.getStyleClass().add("launch-button");
-            launchButton.setDefaultButton(true);
+            HBox copperUtilities = new HBox(16);
+            copperUtilities.getStyleClass().add("card");
+            copperUtilities.setMaxHeight(Region.USE_PREF_SIZE);
+
+            JFXButton btnAxe = new JFXButton();
+            btnAxe.getStyleClass().add("toggle-icon4");
+            btnAxe.setGraphic(new ImageView(FXUtils.newBuiltinImage("/assets/img/iron_axe.png", 32D, 32D, true, true)));
+            btnAxe.setOnAction(e -> TheCopperAge.useAxe());
+
+            JFXButton btnWax = new JFXButton();
+            btnWax.getStyleClass().add("toggle-icon4");
+            btnWax.setGraphic(new ImageView(FXUtils.newBuiltinImage("/assets/img/honeycomb.png", 32D, 32D, true, true)));
+            btnWax.setOnAction(e -> TheCopperAge.wax());
+
+            copperUtilities.getChildren().setAll(btnAxe, btnWax);
+            copperUtilities.visibleProperty().bind(TheCopperAge.oxidizingProperty());
+
+            buttonsPane.getChildren().add(copperUtilities);
+        }
+        {
+            HBox launchPane = new HBox();
+            launchPane.getStyleClass().add("launch-pane");
+            FXUtils.onChangeAndOperate(selectedRepositorySnapshot, ignored -> mutableInstances.setAll(GameDirectoryManager.getSelectedRepository().getDisplayInstances().toList()));
+            FXUtils.onScroll(launchPane, instances, list -> {
+                @Nullable HMCLGameInstance currentGame = getCurrentGame();
+                @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
+                return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
+            }, instance -> instance.getRepository().setSelectedInstance(instance));
+
             {
-                VBox graphic = new VBox();
-                graphic.setAlignment(Pos.CENTER);
-                Label launchLabel = new Label();
-                launchLabel.setStyle("-fx-font-size: 16px;");
-                Label currentLabel = new Label();
-                currentLabel.setStyle("-fx-font-size: 12px;");
+                JFXButton launchButton = new JFXButton();
+                launchButton.getStyleClass().add("launch-button");
+                launchButton.setDefaultButton(true);
+                {
+                    VBox graphic = new VBox();
+                    graphic.setAlignment(Pos.CENTER);
+                    Label launchLabel = new Label();
+                    launchLabel.setStyle("-fx-font-size: 16px;");
+                    Label currentLabel = new Label();
+                    currentLabel.setStyle("-fx-font-size: 12px;");
 
-                FXUtils.onChangeAndOperate(currentGameProperty(), new Consumer<>() {
-                    private Tooltip tooltip;
+                    FXUtils.onChangeAndOperate(currentGameProperty(), new Consumer<>() {
+                        private Tooltip tooltip;
 
-                    @Override
-                    public void accept(@Nullable HMCLGameInstance currentGame) {
-                        if (currentGame == null) {
-                            launchLabel.setText(i18n("instance.launch.empty"));
-                            currentLabel.setText(null);
-                            graphic.getChildren().setAll(launchLabel);
-                            FXUtils.setOnActionWithCooldown(launchButton, MainPage.this::launchNoGame);
-                            if (tooltip == null)
-                                tooltip = new Tooltip(i18n("instance.launch.empty.tooltip"));
-                            FXUtils.installFastTooltip(launchButton, tooltip);
+                        @Override
+                        public void accept(@Nullable HMCLGameInstance currentGame) {
+                            if (currentGame == null) {
+                                launchLabel.setText(i18n("instance.launch.empty"));
+                                currentLabel.setText(null);
+                                graphic.getChildren().setAll(launchLabel);
+                                FXUtils.setOnActionWithCooldown(launchButton, MainPage.this::launchNoGame);
+                                if (tooltip == null)
+                                    tooltip = new Tooltip(i18n("instance.launch.empty.tooltip"));
+                                FXUtils.installFastTooltip(launchButton, tooltip);
+                            } else {
+                                launchLabel.setText(i18n("instance.launch"));
+                                currentLabel.setText(currentGame.getId().toString());
+                                graphic.getChildren().setAll(launchLabel, currentLabel);
+                                FXUtils.setOnActionWithCooldown(launchButton, MainPage.this::launch);
+                                if (tooltip != null)
+                                    Tooltip.uninstall(launchButton, tooltip);
+                            }
+                        }
+                    });
+
+                    launchButton.setGraphic(graphic);
+                }
+
+                menuButton = new JFXButton();
+                menuButton.getStyleClass().add("menu-button");
+                menuButton.setOnAction(e -> {
+                    if (GameListPopupMenu.hideShowing(menuButton)) {
+                        return;
+                    }
+
+                    JFXPopup popup = GameListPopupMenu.showAndGetPopup(
+                            menuButton,
+                            JFXPopup.PopupVPosition.BOTTOM,
+                            JFXPopup.PopupHPosition.RIGHT,
+                            0,
+                            -menuButton.getHeight(),
+                            instances
+                    );
+
+                    Node graphic = menuButton.getGraphic();
+                    if (graphic != null) {
+                        if (AnimationUtils.isAnimationEnabled()) {
+                            Duration duration = Duration.millis(200);
+                            RotateTransition rotateOpen = new RotateTransition(duration, graphic);
+                            rotateOpen.setToAngle(-180);
+                            FXUtils.playAnimation(graphic, "arrow-rotation", rotateOpen);
+
+                            popup.setOnHidden(windowEvent -> {
+                                RotateTransition rotateClose = new RotateTransition(duration, graphic);
+                                rotateClose.setToAngle(0);
+                                FXUtils.playAnimation(graphic, "arrow-rotation", rotateClose);
+                            });
                         } else {
-                            launchLabel.setText(i18n("instance.launch"));
-                            currentLabel.setText(currentGame.getId().toString());
-                            graphic.getChildren().setAll(launchLabel, currentLabel);
-                            FXUtils.setOnActionWithCooldown(launchButton, MainPage.this::launch);
-                            if (tooltip != null)
-                                Tooltip.uninstall(launchButton, tooltip);
+                            graphic.setRotate(-180);
+                            popup.setOnHidden(windowEvent -> graphic.setRotate(0));
                         }
                     }
                 });
+                FXUtils.installFastTooltip(menuButton, i18n("instance.switch"));
+                menuButton.setGraphic(SVG.ARROW_DROP_UP.createIcon(30));
 
-                launchButton.setGraphic(graphic);
+                EventHandler<MouseEvent> secondaryClickHandle = event -> {
+                    if (event.getButton() == MouseButton.SECONDARY && event.getClickCount() == 1) {
+                        menuButton.fire();
+                        event.consume();
+                    }
+                };
+                launchButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
+                menuButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
+
+                launchPane.getChildren().setAll(launchButton, menuButton);
             }
 
-            menuButton = new JFXButton();
-            menuButton.getStyleClass().add("menu-button");
-            menuButton.setOnAction(e -> {
-                if (GameListPopupMenu.hideShowing(menuButton)) {
-                    return;
-                }
-
-                JFXPopup popup = GameListPopupMenu.showAndGetPopup(
-                        menuButton,
-                        JFXPopup.PopupVPosition.BOTTOM,
-                        JFXPopup.PopupHPosition.RIGHT,
-                        0,
-                        -menuButton.getHeight(),
-                        instances
-                );
-
-                Node graphic = menuButton.getGraphic();
-                if (graphic != null) {
-                    if (AnimationUtils.isAnimationEnabled()) {
-                        Duration duration = Duration.millis(200);
-                        RotateTransition rotateOpen = new RotateTransition(duration, graphic);
-                        rotateOpen.setToAngle(-180);
-                        FXUtils.playAnimation(graphic, "arrow-rotation", rotateOpen);
-
-                        popup.setOnHidden(windowEvent -> {
-                            RotateTransition rotateClose = new RotateTransition(duration, graphic);
-                            rotateClose.setToAngle(0);
-                            FXUtils.playAnimation(graphic, "arrow-rotation", rotateClose);
-                        });
-                    } else {
-                        graphic.setRotate(-180);
-                        popup.setOnHidden(windowEvent -> graphic.setRotate(0));
-                    }
-                }
-            });
-            FXUtils.installFastTooltip(menuButton, i18n("instance.switch"));
-            menuButton.setGraphic(SVG.ARROW_DROP_UP.createIcon(30));
-
-            EventHandler<MouseEvent> secondaryClickHandle = event -> {
-                if (event.getButton() == MouseButton.SECONDARY && event.getClickCount() == 1) {
-                    menuButton.fire();
-                    event.consume();
-                }
-            };
-            launchButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
-            menuButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
-
-            launchPane.getChildren().setAll(launchButton, menuButton);
+            buttonsPane.getChildren().add(launchPane);
         }
 
-        getChildren().addAll(updatePane, launchPane);
-
+        buttonsPane.setAlignment(Pos.BOTTOM_RIGHT);
+        buttonsPane.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        StackPane.setAlignment(buttonsPane, Pos.BOTTOM_RIGHT);
+        getChildren().add(buttonsPane);
     }
 
     private void showUpdateDialog(boolean show) {
