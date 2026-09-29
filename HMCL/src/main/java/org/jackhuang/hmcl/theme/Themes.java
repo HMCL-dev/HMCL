@@ -217,12 +217,7 @@ public final class Themes {
             ThemeColor fallback,
             @Nullable ThemeColorSource source,
             BackgroundType backgroundType) {
-        if (source instanceof ThemeColorSource.Copper) {
-            TheCopperAge.startOxidation();
-            return ThemeColor.of(TheCopperAge.getColor());
-        } else {
-            TheCopperAge.stopAndClearState();
-        }
+        TheCopperAge.stopAndClearState();
         if (source == null) {
             return fallback;
         }
