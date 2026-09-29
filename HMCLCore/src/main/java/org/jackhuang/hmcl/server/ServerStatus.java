@@ -50,7 +50,7 @@ public record ServerStatus(
                 @NotNull String name,
                 @NotNull UUID id
         ) {
-
+            public static Sample ANONYMOUS_PLAYER = new Sample("Anonymous Player", new UUID(0, 0));
         }
     }
 

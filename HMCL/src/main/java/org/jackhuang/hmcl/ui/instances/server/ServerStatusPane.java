@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.instances.Instances;
@@ -138,7 +139,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         refreshIfNoStatus();
     }
 
-    private static VBox createStatCell(String titleText, String valueText, boolean showDivider) {
+    private static VBox createStatCell(String titleText, String valueText, boolean showDivider, String tooltip) {
         VBox cell = new VBox(3);
         cell.getStyleClass().add("server-status-stat-cell");
         if (!showDivider) {
@@ -155,6 +156,10 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         value.getStyleClass().add("server-status-stat-value");
         value.setWrapText(true);
         value.setMaxWidth(100);
+
+        if (tooltip != null) {
+            FXUtils.installFastTooltip(value, tooltip);
+        }
 
         cell.getChildren().addAll(title, value);
         return cell;
@@ -245,11 +250,49 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
             detailRow.setSpacing(0);
             detailRow.setMaxWidth(620);
 
+            String playersTooltip = null;
+            if (!status.players().samples().isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.join("\n", status.players().samples().stream()
+                        .map(sample -> {
+                            if (ServerStatus.Players.Sample.ANONYMOUS_PLAYER.equals(sample)) {
+                                return i18n("server.anonymous_player");
+                            }
+                            return MinecraftChatComponentUtils.toPlainStringFromChatComponent(new JsonPrimitive(sample.name()));
+                        })
+                        .toList())
+                );
+
+                if (status.players().samples().size() < status.players().online()) {
+                    sb.append("\n");
+                    sb.append(i18n("server.and_more_players", String.valueOf(status.players().online() - status.players().samples().size())));
+                }
+
+                playersTooltip = sb.toString();
+            }
+
+            String modsTooltip = null;
+            int showCount = 15;
+            if (status.modInfo() != null && !status.modInfo().modList().isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(String.join("\n", status.modInfo().modList().stream()
+                        .limit(showCount)
+                        .map(it -> it.modId() + " - " + it.version())
+                        .toList())
+                );
+                if (showCount < status.modInfo().modList().size()) {
+                    sb.append("\n");
+                    sb.append(i18n("server.and_more_mods", String.valueOf(status.modInfo().modList().size() - showCount)));
+                }
+
+                modsTooltip = sb.toString();
+            }
+
             var cells = List.of(
-                    createStatCell(i18n("server.type"), status.modInfo() != null ? i18n("server.type.mod", status.modInfo().type(), status.modInfo().modList().size()) : i18n("server.type.vanilla"), true),
-                    createStatCell(i18n("server.onlineplayers"), String.format("%,d/%,d", status.players().online(), status.players().max()), true),
-                    createStatCell(i18n("server.playversion"), MinecraftChatComponentUtils.toPlainStringFromChatComponent(new JsonPrimitive(status.version().name())) + "(" + status.version().version() + ")", true),
-                    createStatCell(i18n("server.latency"), String.format("%,dms", status.networkLatency()), false)
+                    createStatCell(i18n("server.type"), status.modInfo() != null ? i18n("server.type.mod", status.modInfo().type(), status.modInfo().modList().size()) : i18n("server.type.vanilla"), true, modsTooltip),
+                    createStatCell(i18n("server.onlineplayers"), String.format("%,d/%,d", status.players().online(), status.players().max()), true, playersTooltip),
+                    createStatCell(i18n("server.playversion"), MinecraftChatComponentUtils.toPlainStringFromChatComponent(new JsonPrimitive(status.version().name())) + "(" + status.version().version() + ")", true, null),
+                    createStatCell(i18n("server.latency"), String.format("%,dms", status.networkLatency()), false, null)
             );
             detailRow.getChildren().addAll(cells);
 
