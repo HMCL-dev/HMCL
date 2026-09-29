@@ -133,7 +133,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         applyPinging(observableServerStatus.pingingProperty().get());
         listenerHolder.add(FXUtils.onWeakChangeAndOperate(observableServerStatus.pingingProperty(), this::applyPinging));
 
-        observableServerStatus.refreshIfNoResultAsync(true);
+        observableServerStatus.refreshIfNoResultOrFailedAsync(true);
     }
 
     private static VBox createStatCell(String titleText, String valueText, boolean showDivider, String tooltip) {

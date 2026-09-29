@@ -48,6 +48,13 @@ public class ObservableServerStatus {
         }
     }
 
+    public void refreshIfNoResultOrFailedAsync(boolean urgent) {
+        ServerStatusResult result = resultProperty.get();
+        if (result == null || result.isFailure()) {
+            refreshAsync(urgent);
+        }
+    }
+
     public void refreshAsync(boolean urgent) {
         Task.runAsync(Schedulers.javafx(), () -> {
 

@@ -42,6 +42,14 @@ public sealed class ServerStatusResult {
         return null;
     }
 
+    public boolean isSuccess() {
+        return this instanceof SuccessResult;
+    }
+
+    public boolean isFailure() {
+        return this instanceof FailureResult;
+    }
+
     private static final class SuccessResult extends ServerStatusResult {
         public final ServerStatus serverStatus;
 
