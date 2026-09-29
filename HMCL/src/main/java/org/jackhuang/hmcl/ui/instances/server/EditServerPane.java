@@ -28,7 +28,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.server.ServerStatus;
-import org.jackhuang.hmcl.server.ServerStatusGetter;
+import org.jackhuang.hmcl.server.ServerStatusPinger;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -42,7 +42,6 @@ import java.util.function.Consumer;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.setValidateWhileTextChanged;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class EditServerPane extends TransitionPane implements DialogAware {
     private final Consumer<ServerListPage.IconedServer> handleCallback;
@@ -183,10 +182,8 @@ public class EditServerPane extends TransitionPane implements DialogAware {
         body.setDisable(true);
 
         Task.supplyAsync(Schedulers.io(), () ->
-                ServerStatusGetter.getStatus(serverIP)
-        ).whenComplete(Schedulers.javafx(), (result, exception) -> {
-            if (exception != null)
-                LOG.warning("Failed to fetch server status.", exception);
+                ServerStatusPinger.getStatus(serverIP)
+        ).whenComplete(Schedulers.javafx(), (result, ignored) -> {
 
             ServerStatus status = result.getIfSuccess();
             if (status == null) {

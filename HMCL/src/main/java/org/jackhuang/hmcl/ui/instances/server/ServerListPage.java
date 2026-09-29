@@ -22,7 +22,6 @@ import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
@@ -42,7 +41,6 @@ import org.jackhuang.hmcl.game.GameInstance;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.server.Server;
 import org.jackhuang.hmcl.server.ServerStatus;
-import org.jackhuang.hmcl.server.ServerStatusGetter;
 import org.jackhuang.hmcl.server.ServerStatusResult;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -56,7 +54,6 @@ import java.io.ByteArrayInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -100,7 +97,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
 
     public void showServerStatus(ServerHolder holder) {
         if (gameInstance != null) {
-            runInFX(() -> Controllers.dialog(new ServerStatusPane(holder.serverStatusResultWrapper, holder.server)));
+            runInFX(() -> Controllers.dialog(new ServerStatusPane(holder.observableServerStatus, holder.server)));
         }
     }
 
@@ -265,7 +262,8 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         private final JFXButton statusBtn;
         private final Tooltip statusBtnTooltip;
 
-        private Subscription serverNetworkLatencyValueSubscription;
+        private Subscription serverStatusResultValueSubscription;
+        private Subscription serverStatusPingingValueSubscription;
 
         public ServerListCell(ServerListPage page) {
             this.page = page;
@@ -360,10 +358,15 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
 
             super.updateItem(holder, empty);
 
-            if (serverNetworkLatencyValueSubscription != null) {
-                serverNetworkLatencyValueSubscription.unsubscribe();
-                serverNetworkLatencyValueSubscription = null;
+            if (serverStatusPingingValueSubscription != null) {
+                serverStatusPingingValueSubscription.unsubscribe();
+                serverStatusPingingValueSubscription = null;
             }
+            if (serverStatusResultValueSubscription != null) {
+                serverStatusResultValueSubscription.unsubscribe();
+                serverStatusResultValueSubscription = null;
+            }
+
 
             if (oldHolder == holder && oldEmpty == empty) return;
 
@@ -400,16 +403,26 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
 
                 setGraphic(graphic);
 
-                holder.startGetServerStatusAsync();
-                applyServerStatusResult(holder, holder.serverStatusResultWrapper.getReadOnlyProperty().get());
-                serverNetworkLatencyValueSubscription = holder.serverStatusResultWrapper.subscribe(result -> applyServerStatusResult(holder, result));
+                holder.observableServerStatus.refreshIfNoResultAsync(false);
+
+                applyServerStatusResult(holder, holder.observableServerStatus.resultProperty().get());
+                serverStatusResultValueSubscription = holder.observableServerStatus.resultProperty().subscribe(result -> applyServerStatusResult(holder, result));
+
+                applyServerPinging(holder, holder.observableServerStatus.pingingProperty().get());
+                serverStatusPingingValueSubscription = holder.observableServerStatus.pingingProperty().subscribe(pinging -> applyServerPinging(holder, pinging));
+            }
+        }
+
+        private void applyServerPinging(ServerHolder holder, boolean pinging) {
+            if (pinging) {
+                serverNetworkLatencyPane.ping();
+                statusBtnTooltip.setText(i18n("server.manage.status.outside.pinging"));
             }
         }
 
         private void applyServerStatusResult(ServerHolder holder, ServerStatusResult result) {
             if (result == null) {
-                serverNetworkLatencyPane.ping();
-                statusBtnTooltip.setText(i18n("server.manage.status.outside.pinging"));
+                // pinging..., skip
                 return;
             }
             ServerStatus serverStatus = result.getIfSuccess();
@@ -526,28 +539,14 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         final int inDatPathSlot;
         final @NotNull IconedServer server;
 
-        final @NotNull ReadOnlyObjectWrapper<ServerStatusResult> serverStatusResultWrapper = new ReadOnlyObjectWrapper<>(null);
-        private final AtomicBoolean serverStatusComputed = new AtomicBoolean(false);
-
-        public void startGetServerStatusAsync() {
-            if (serverStatusResultWrapper.get() != null) return;
-            if (serverStatusComputed.compareAndSet(false, true)) {
-                reGetServerStatusAsync();
-            }
-        }
-
-        public void reGetServerStatusAsync() {
-            Task.supplyAsync(Schedulers.io(), () -> ServerStatusGetter.getStatus(server.getIp()))
-                    .whenComplete(Schedulers.javafx(), (result, ignored) -> {
-                        serverStatusResultWrapper.set(result);
-                    }).start();
-        }
+        final @NotNull ObservableServerStatus observableServerStatus;
 
         public ServerHolder(@NotNull Path fromServersDatFilePath, @NotNull List<Server> cachedServers, int inDatPathSlot, @NotNull IconedServer server) {
             this.fromServersDatFilePath = fromServersDatFilePath;
             this.inDatPathSlot = inDatPathSlot;
             this.cachedServers = cachedServers;
             this.server = server;
+            this.observableServerStatus = new ObservableServerStatus(server.getIp());
         }
     }
 

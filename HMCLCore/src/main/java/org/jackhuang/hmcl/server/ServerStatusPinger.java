@@ -32,13 +32,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 // https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping
 // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Minecraft_Forge_Handshake
-public final class ServerStatusGetter {
-    private ServerStatusGetter() {
+public final class ServerStatusPinger {
+    private ServerStatusPinger() {
 
     }
 
     public static @NotNull ServerStatusResult getStatus(String serverIp) throws IOException {
-        return ServerStatusGetter.getStatus(ServerAddress.parseAddress(serverIp));
+        return ServerStatusPinger.getStatus(ServerAddress.parseAddress(serverIp));
     }
 
     private static @NotNull ServerStatusResult getStatus(ServerAddress address) throws IOException {

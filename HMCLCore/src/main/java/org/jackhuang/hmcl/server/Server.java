@@ -31,7 +31,6 @@ import static org.jackhuang.hmcl.util.NBTUtils.readCompressed;
 import static org.jackhuang.hmcl.util.NBTUtils.writeCompressed;
 
 public class Server {
-
     private final boolean acceptTextures;
     private final boolean hidden;
     private final @Nullable String icon;

@@ -20,9 +20,6 @@ package org.jackhuang.hmcl.ui.instances.server;
 import com.google.gson.JsonPrimitive;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.WeakChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -34,13 +31,11 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.server.ServerStatus;
-import org.jackhuang.hmcl.server.ServerStatusGetter;
 import org.jackhuang.hmcl.server.ServerStatusResult;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.instances.Instances;
@@ -57,18 +52,16 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
     private final SpinnerPane refreshSpinner = new SpinnerPane();
     private final JFXDialogLayout rootLayout = new JFXDialogLayout();
     private final Label lblErrorMessage = new Label();
-    private final ReadOnlyObjectWrapper<ServerStatusResult> serverStatusResultWrapper;
-    private final ChangeListener<ServerStatusResult> listener = (ignored0, ignored1, newResult) -> {
-        replaceBody();
-    };
+    private final ObservableServerStatus observableServerStatus;
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
-    public ServerStatusPane(ReadOnlyObjectWrapper<ServerStatusResult> reference, ServerListPage.IconedServer iconedServer) {
+    public ServerStatusPane(ObservableServerStatus reference, ServerListPage.IconedServer iconedServer) {
         this(reference, iconedServer, false);
     }
 
-    public ServerStatusPane(ReadOnlyObjectWrapper<ServerStatusResult> reference, ServerListPage.IconedServer iconedServer, boolean fromDnD) {
+    public ServerStatusPane(ObservableServerStatus reference, ServerListPage.IconedServer iconedServer, boolean fromDnD) {
         this.iconedServer = iconedServer;
-        this.serverStatusResultWrapper = Objects.requireNonNullElseGet(reference, () -> new ReadOnlyObjectWrapper<>(null));
+        this.observableServerStatus = Objects.requireNonNullElseGet(reference, () -> new ObservableServerStatus(iconedServer.getIp()));
 
         getStyleClass().add("skin-pane");
         getChildren().setAll(rootLayout);
@@ -77,7 +70,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         {
             JFXButton refreshBtn = new JFXButton(i18n("button.refresh"));
             refreshBtn.getStyleClass().add("dialog-refresh");
-            refreshBtn.setOnAction(e -> refresh());
+            refreshBtn.setOnAction(e -> observableServerStatus.refreshAsync(true));
             refreshSpinner.getStyleClass().add("small-spinner-pane");
             refreshSpinner.setContent(refreshBtn);
         }
@@ -134,9 +127,13 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         lblErrorMessage.setMaxWidth(400);
         rootLayout.getActions().addAll(lblErrorMessage, actions);
 
-        replaceBody();
-        serverStatusResultWrapper.addListener(new WeakChangeListener<>(listener));
-        refreshIfNoStatus();
+        applyResult(observableServerStatus.resultProperty().get());
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(observableServerStatus.resultProperty(), this::applyResult));
+
+        applyPinging(observableServerStatus.pingingProperty().get());
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(observableServerStatus.pingingProperty(), this::applyPinging));
+
+        observableServerStatus.refreshIfNoResultAsync(true);
     }
 
     private static VBox createStatCell(String titleText, String valueText, boolean showDivider, String tooltip) {
@@ -165,28 +162,32 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         return cell;
     }
 
-    public void replaceBody() {
-        ServerStatusResult statusResult = serverStatusResultWrapper.get();
+    public void applyPinging(boolean pinging) {
+        if (pinging) {
+            lblErrorMessage.setText("");
+            refreshSpinner.showSpinner();
+        } else {
+            refreshSpinner.hideSpinner();
+        }
+    }
+
+    public void applyResult(ServerStatusResult statusResult) {
         ServerStatus status;
 
         if (statusResult == null) {
+            // pinging..., continue
             status = null;
         } else {
+            // ping failed
             status = statusResult.getIfSuccess();
+            if (status == null) {
+                lblErrorMessage.setText(i18n("server.manage.status.error"));
+            }
         }
 
         Image serverIcon = iconedServer.iconImage;
         if (status != null) {
             serverIcon = ServerListPage.IconedServer.parseImageOrDefault(status.favicon());
-        }
-
-        refreshSpinner.hideSpinner();
-        if (statusResult != null) {
-            if (statusResult.exceptionIfFailure() != null) {
-                lblErrorMessage.setText(i18n("server.manage.status.error"));
-            } else {
-                lblErrorMessage.setText("");
-            }
         }
 
         VBox root = new VBox();
@@ -300,21 +301,6 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         }
 
         rootLayout.setBody(root);
-    }
-
-    private void refreshIfNoStatus() {
-        if (serverStatusResultWrapper.get() == null) refresh();
-    }
-
-    private void refresh() {
-        lblErrorMessage.setText("");
-        refreshSpinner.showSpinner();
-
-        Task.supplyAsync(Schedulers.io(), () ->
-                ServerStatusGetter.getStatus(iconedServer.getIp())
-        ).whenComplete(Schedulers.javafx(), (result, ignored) -> {
-            serverStatusResultWrapper.set(result);
-        }).start();
     }
 
     private void onClose() {
