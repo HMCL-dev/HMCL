@@ -29,7 +29,7 @@ import java.util.Objects;
 
 /// Describes how a theme-pack appearance chooses its Monet seed color.
 @NotNullByDefault
-public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeColorSource.Default, ThemeColorSource.Wallpaper {
+public sealed interface ThemeColorSource permits ThemeColorSource.Default, ThemeColorSource.Custom, ThemeColorSource.Wallpaper {
     /// JSON member name for the source type.
     String FIELD_SOURCE = "source";
 
@@ -169,5 +169,4 @@ public sealed interface ThemeColorSource permits ThemeColorSource.Custom, ThemeC
             return ThemeColor.DEFAULT;
         }
     }
-
 }
