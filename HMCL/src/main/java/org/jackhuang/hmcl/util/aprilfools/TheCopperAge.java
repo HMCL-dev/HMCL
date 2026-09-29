@@ -17,16 +17,20 @@
  */
 package org.jackhuang.hmcl.util.aprilfools;
 
+import javafx.beans.binding.StringBinding;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FXThread;
 
+import java.util.Locale;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class TheCopperAge {
 
@@ -35,6 +39,26 @@ public final class TheCopperAge {
     private static final BooleanProperty waxed = new SimpleBooleanProperty(false);
 
     private static final ReadOnlyBooleanWrapper oxidizing = new ReadOnlyBooleanWrapper(false);
+
+    private static final StringBinding displayedState = new StringBinding() {
+        {
+            bind(oxidationDegree, waxed, oxidizing);
+        }
+
+        @Override
+        protected String computeValue() {
+            if (!oxidizing.get()) return "";
+            String state;
+            var degree = oxidationDegree.get();
+            if (degree == Degree.UNOXIDIZED) {
+                state = "";
+            } else {
+                state = i18n("launcher.april_fools.copper." + degree.name().toLowerCase(Locale.ROOT));
+            }
+            if (waxed.get()) state = i18n("launcher.april_fools.copper.waxed") + state;
+            return state;
+        }
+    };
 
     private static ScheduledExecutorService oxidationScheduler = null;
 
@@ -52,6 +76,10 @@ public final class TheCopperAge {
 
     public static boolean isOxidizing() {
         return oxidizing.get();
+    }
+
+    public static StringBinding displayedState() {
+        return displayedState;
     }
 
     @FXThread

@@ -23,6 +23,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
+import javafx.beans.binding.StringBinding;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -119,6 +120,19 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         ImageView titleIcon = new ImageView(FXUtils.newBuiltinImage("/assets/img/icon-title.png"));
         Label titleLabel = new Label(Metadata.FULL_TITLE);
+        titleLabel.textProperty().bind(new StringBinding() {
+            {
+                bind(TheCopperAge.displayedState());
+            }
+
+            @Override
+            protected String computeValue() {
+                var copperState = TheCopperAge.displayedState().get();
+                if (copperState.isEmpty()) return Metadata.FULL_TITLE;
+                if (!copperState.endsWith(" ")) copperState += " ";
+                return Metadata.FULL_TITLE + " (%sHMCL)".formatted(copperState);
+            }
+        });
         if (I18n.isUpsideDown()) {
             titleIcon.setRotate(180);
             titleLabel.setRotate(180);
