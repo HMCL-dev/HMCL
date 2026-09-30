@@ -19,10 +19,11 @@ package org.jackhuang.hmcl.addon.repository;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
-import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.download.DownloadCandidate;
+import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Immutable;
@@ -182,19 +183,19 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                     pair("index", convertSortType(sort))
             );
 
-            @Unmodifiable List<WebURL> candidates = downloadProvider.injectURLWithCandidates(NetworkUtils.withQuery(PREFIX + "/v2/search", query));
+            DownloadCandidates candidates = downloadProvider.getVersionListCandidates(NetworkUtils.withQuery(PREFIX + "/v2/search", query));
             IOException exception = null;
-            for (WebURL candidate : candidates) {
+            for (DownloadCandidate candidate : candidates.getCandidates()) {
                 try {
-                    LOG.info("Fetching " + candidate);
-                    Response<ProjectSearchResult> response = HttpRequest.GET(candidate.toString())
+                    LOG.info("Fetching " + candidate.displayUrl());
+                    Response<ProjectSearchResult> response = HttpRequest.GET(candidate.displayUrl())
                             .getJson(Response.typeOf(ProjectSearchResult.class));
                     return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toAddon), (int) Math.ceil((double) response.totalHits / pageSize));
                 } catch (IOException e) {
                     LOG.warning("Failed to search addons: " + candidate, e);
 
                     IOException wrapper = new IOException("Failed to search addons: " + candidate, e);
-                    if (candidates.size() == 1) {
+                    if (candidates.getCandidates().size() == 1) {
                         exception = wrapper;
                     } else {
                         if (exception == null) {
@@ -246,16 +247,16 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         SEMAPHORE.acquireUninterruptibly();
         try {
             id = StringUtils.removePrefix(id, "local-");
-            @Unmodifiable List<WebURL> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/project/" + id);
+            DownloadCandidates candidates = downloadProvider.getVersionListCandidates(PREFIX + "/v2/project/" + id);
             IOException exception = null;
 
-            for (WebURL candidate : candidates) {
+            for (DownloadCandidate candidate : candidates.getCandidates()) {
                 try {
-                    Project project = HttpRequest.GET(candidate.toString()).getJson(Project.class);
+                    Project project = HttpRequest.GET(candidate.displayUrl()).getJson(Project.class);
                     return project.toAddon();
                 } catch (IOException e) {
                     IOException wrapper = new IOException("Failed to get addon: " + candidate, e);
-                    if (candidates.size() == 1) {
+                    if (candidates.getCandidates().size() == 1) {
                         exception = wrapper;
                     } else {
                         if (exception == null) {
@@ -303,17 +304,17 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         try {
             id = StringUtils.removePrefix(id, "local-");
 
-            @Unmodifiable List<WebURL> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/project/" + id + "/version?include_changelog=false");
+            DownloadCandidates candidates = downloadProvider.getVersionListCandidates(PREFIX + "/v2/project/" + id + "/version?include_changelog=false");
             IOException exception = null;
 
-            for (WebURL candidate : candidates) {
+            for (DownloadCandidate candidate : candidates.getCandidates()) {
                 try {
-                    List<ProjectVersion> versions = HttpRequest.GET(candidate.toString())
+                    List<ProjectVersion> versions = HttpRequest.GET(candidate.displayUrl())
                             .getJson(listTypeOf(ProjectVersion.class));
                     return versions.stream().map(ProjectVersion::toVersion).flatMap(Optional::stream);
                 } catch (IOException e) {
                     IOException wrapper = new IOException("Failed to get remote versions: " + candidate, e);
-                    if (candidates.size() == 1) {
+                    if (candidates.getCandidates().size() == 1) {
                         exception = wrapper;
                     } else {
                         if (exception == null) {
@@ -334,16 +335,16 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     public String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
-            @Unmodifiable List<WebURL> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/version/" + versionId);
+            DownloadCandidates candidates = downloadProvider.getVersionListCandidates(PREFIX + "/v2/version/" + versionId);
             IOException exception = null;
 
-            for (WebURL url : candidates) {
+            for (DownloadCandidate candidate : candidates.getCandidates()) {
                 try {
-                    ProjectVersion version = HttpRequest.GET(url.toString()).getJson(ProjectVersion.class);
+                    ProjectVersion version = HttpRequest.GET(candidate.displayUrl()).getJson(ProjectVersion.class);
                     return version.changelog();
                 } catch (IOException e) {
-                    IOException wrapper = new IOException("Failed to get addon changelog: " + url, e);
-                    if (candidates.size() == 1) {
+                    IOException wrapper = new IOException("Failed to get addon changelog: " + candidate.displayUrl(), e);
+                    if (candidates.getCandidates().size() == 1) {
                         exception = wrapper;
                     } else {
                         if (exception == null) {

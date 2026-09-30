@@ -53,3 +53,9 @@ tasks.processResources {
         }
     }
 }
+
+tasks.register("updateLiteLoaderVersionList", org.jackhuang.hmcl.gradle.component.UpdateLiteLoaderVersionList::class) {
+    description = "Update LiteLoader version list"
+
+    outputFile.set(projectDir.resolve("src/main/resources/assets/liteloader/versions.json"))
+}
