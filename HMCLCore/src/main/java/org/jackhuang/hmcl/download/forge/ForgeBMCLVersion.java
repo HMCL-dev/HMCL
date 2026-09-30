@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,27 +17,30 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 
-/// @author huangyuhui
 @NotNullByDefault
-record ForgeVersionRoot(String artifact,
-                        String webpath,
-                        @Nullable String adfly,
-                        @Nullable String homepage,
-                        @Nullable String name,
-                        @Nullable Map<String, int[]> branches,
-                        Map<String, int[]> mcversion,
-                        @Nullable Map<String, Integer> promos,
-                        Map<Integer, ForgeVersion> number) {
+@JsonSerializable
+record ForgeBMCLVersion(
+        @Nullable String branch,
+        int build,
+        String mcversion,
+        @Nullable String modified,
+        String version,
+        List<File> files) {
 
-    public ForgeVersionRoot {
-        Objects.requireNonNull(number, "number");
+    public ForgeBMCLVersion {
+        Objects.requireNonNull(files, "files");
         Objects.requireNonNull(mcversion, "mcversion");
+        Objects.requireNonNull(version, "version");
     }
 
+    @JsonSerializable
+    public record File(String format, String category, String hash) {
+    }
 }

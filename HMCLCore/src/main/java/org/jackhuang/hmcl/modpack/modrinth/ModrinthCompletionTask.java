@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.modpack.modrinth;
 
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -161,8 +162,9 @@ public class ModrinthCompletionTask extends Task<Void> {
             if (modsDirectory.equals(filePath.getParent()) && this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
                 continue;
 
+            DownloadProvider downloadProvider = dependency.getDownloadProvider();
             var task = new FileDownloadTask(
-                    dependency.getDownloadProvider().injectURLsWithCandidates(file.downloads()),
+                    downloadProvider.getDownloadCandidates(file.downloads()),
                     filePath);
             task.setCacheRepository(dependency.getCacheRepository());
             task.setCaching(true);
