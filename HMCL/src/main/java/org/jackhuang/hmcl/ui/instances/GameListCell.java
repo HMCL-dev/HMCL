@@ -53,6 +53,10 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     private final StringProperty tag = new SimpleStringProperty();
 
+    private JFXPopup managementPopup;
+
+    private GameListItem managementPopupItem;
+
     public GameListCell() {
         BorderPane root = new BorderPane();
         root.getStyleClass().add("md-list-cell");
@@ -132,7 +136,12 @@ public final class GameListCell extends ListCell<GameListItem> {
                 if (item == null)
                     return;
 
-                JFXPopup popup = getPopup(item);
+                JFXPopup popup = getManagementPopup(item);
+                if (popup.isShowing()) {
+                    popup.hide();
+                    return;
+                }
+
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
                 popup.show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, vPosition == JFXPopup.PopupVPosition.TOP ? root.getHeight() : -root.getHeight());
             });
@@ -152,7 +161,12 @@ public final class GameListCell extends ListCell<GameListItem> {
                     item.modifyGameSettings();
                 }
             } else if (e.getButton() == MouseButton.SECONDARY) {
-                JFXPopup popup = getPopup(item);
+                JFXPopup popup = getManagementPopup(item);
+                if (popup.isShowing()) {
+                    popup.hide();
+                    return;
+                }
+
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
                 popup.show(root, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - root.getHeight());
             }
@@ -167,6 +181,12 @@ public final class GameListCell extends ListCell<GameListItem> {
         super.updateItem(item, empty);
 
         if (oldItem == item && oldEmpty == empty) return;
+
+        if (managementPopup != null) {
+            managementPopup.hide();
+            managementPopup = null;
+            managementPopupItem = null;
+        }
 
         this.graphic.releaseRippleImmediately();
 
@@ -193,9 +213,21 @@ public final class GameListCell extends ListCell<GameListItem> {
         }
     }
 
-    private static JFXPopup getPopup(GameListItem item) {
+    private JFXPopup getManagementPopup(GameListItem item) {
+        if (managementPopup == null || managementPopupItem != item) {
+            if (managementPopup != null) {
+                managementPopup.hide();
+            }
+            managementPopup = createPopup(item);
+            managementPopupItem = item;
+        }
+        return managementPopup;
+    }
+
+    private static JFXPopup createPopup(GameListItem item) {
         PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
+        popup.setConsumeAutoHidingEvents(true);
 
         menu.getContent().setAll(
                 new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch.test"), item::testGame, popup),
