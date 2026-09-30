@@ -54,9 +54,9 @@ public final class TheCopperAge {
             if (degree == Degree.UNOXIDIZED) {
                 state = "";
             } else {
-                state = i18n("launcher.april_fools.copper." + degree.name().toLowerCase(Locale.ROOT));
+                state = i18n("launcher.april_fools.copper.state." + degree.name().toLowerCase(Locale.ROOT));
             }
-            if (waxed.get()) state = i18n("launcher.april_fools.copper.waxed") + state;
+            if (waxed.get()) state = i18n("launcher.april_fools.copper.state.waxed") + state;
             return state;
         }
     };
