@@ -50,14 +50,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class LocalModpackPage extends ModpackPage {
 
@@ -84,7 +80,7 @@ public final class LocalModpackPage extends ModpackPage {
 
         String name = controller.getSettings().get(MODPACK_NAME);
         if (name != null) {
-            txtModpackName.setText(name);
+            txtModpackName.setText(name.replace(":", ""));
             txtModpackName.setDisable(true);
         } else {
             FXUtils.onChangeAndOperate(installAsVersion, installAsVersion -> {
@@ -98,8 +94,8 @@ public final class LocalModpackPage extends ModpackPage {
                             new RequiredValidator(),
                             new Validator(i18n("install.new_game.already_exists"), str -> !ModpackHelper.isExternalGameNameConflicts(str)
                                     && GameDirectoryManager.getGameDirectories().stream()
-                                            .noneMatch(existingProfile ->
-                                                    str.equals(GameDirectoryManager.getGameDirectoryCustomName(existingProfile)))),
+                                    .noneMatch(existingProfile ->
+                                            str.equals(GameDirectoryManager.getGameDirectoryCustomName(existingProfile)))),
                             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId));
                 }
             });
@@ -142,7 +138,8 @@ public final class LocalModpackPage extends ModpackPage {
                         }
 
                         Controllers.confirm(i18n("modpack.type.manual.warning"), i18n("install.modpack"), MessageDialogPane.MessageType.WARNING,
-                                () -> {},
+                                () -> {
+                                },
                                 controller::onEnd);
 
                         controller.getSettings().put(MODPACK_MANUALLY_CREATED, true);
