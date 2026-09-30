@@ -62,6 +62,7 @@ import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -1002,8 +1003,8 @@ public final class FXUtils {
     }
 
     /// Creates a task that caches an image from HTTP(S) candidates and loads it with the requested sizing options.
-    public static Task<Image> getRemoteImageTask(List<WebURL> urls, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
-        return new CacheFileTask(urls)
+    public static Task<Image> getRemoteImageTask(DownloadCandidates candidates, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
+        return new CacheFileTask(candidates)
                 .setSignificance(Task.TaskSignificance.MINOR)
                 .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);

@@ -63,7 +63,7 @@ final class MainWindowPane extends StackPane {
     /// The decorator whose state and actions are represented by this pane.
     private final Decorator decorator;
 
-    /// The clip that rounds normal window corners and becomes square while the window fills the screen.
+    /// The content clip, rounded only for normal windows with custom decoration.
     private final Rectangle clip = new Rectangle();
 
     /// The frame containing the title bar and current navigation page.
@@ -71,6 +71,9 @@ final class MainWindowPane extends StackPane {
 
     /// The title bar containing page navigation state.
     private final BorderPane titleBar;
+
+    /// The custom help, minimize, and close buttons shared by both decoration styles.
+    private final HBox windowButtons;
 
     /// The transition container used when the title-bar state changes.
     private final TransitionPane navBarPane;
@@ -112,14 +115,15 @@ final class MainWindowPane extends StackPane {
         center.getChildren().setAll(decorator.getNavigator());
         frame.setCenter(center);
 
-        HBox rightButtonsContainer = createWindowButtons();
+        windowButtons = createWindowButtons();
         titleBar = new BorderPane();
         titleBar.setPickOnBounds(false);
         titleBar.getStyleClass().add("jfx-tool-bar");
-        titleBar.setRight(rightButtonsContainer);
+        titleBar.setRight(windowButtons);
 
         navBarPane = new TransitionPane();
         titleBar.setCenter(navBarPane);
+        decorator.capableDraggingWindow(navBarPane);
         frame.setTop(titleBar);
 
         updateTitleBarBackground();
@@ -136,11 +140,27 @@ final class MainWindowPane extends StackPane {
         getChildren().setAll(backgroundNode, frame);
     }
 
-    /// Updates the content-corner shape for an edge-to-edge window state.
+    /// Moves the custom title bar into or out of the native dragging header.
     ///
-    /// @param edgeToEdge whether the attached window is maximized or full-screen
-    void setWindowEdgeToEdge(boolean edgeToEdge) {
-        double arc = edgeToEdge ? 0.0 : ARC;
+    /// @param decoration the native header support, or `null` for custom decoration
+    void setNativeDecoration(@Nullable NativeWindowDecoration decoration) {
+        frame.setTop(null);
+        if (decoration == null) {
+            frame.setTop(titleBar);
+        } else {
+            decoration.setContent(titleBar);
+            decoration.headerBar.backgroundProperty().bind(titleBar.backgroundProperty());
+            frame.setTop(decoration.headerBar);
+        }
+    }
+
+    /// Enables or disables custom rounding of the content corners.
+    ///
+    /// Native decoration uses square content bounds so the platform can shape the window outline.
+    ///
+    /// @param rounded whether to round the content corners
+    void setWindowCornersRounded(boolean rounded) {
+        double arc = rounded ? ARC : 0.0;
         clip.setArcWidth(arc);
         clip.setArcHeight(arc);
     }
@@ -171,6 +191,7 @@ final class MainWindowPane extends StackPane {
     private HBox createWindowButtons() {
         HBox buttons = new HBox();
         buttons.setAlignment(Pos.TOP_RIGHT);
+        decorator.capableDraggingWindow(buttons);
         buttons.setMaxSize(Region.USE_PREF_SIZE, 40);
 
         JFXButton helpButton = new JFXButton();
@@ -247,6 +268,7 @@ final class MainWindowPane extends StackPane {
     private Node createNavBar(DecoratorPage.State state) {
         HBox navBar = new HBox();
         navBar.setAlignment(Pos.CENTER_LEFT);
+        decorator.capableDraggingWindow(navBar);
 
         // Left navigation buttons
         if (state.backable()) {
@@ -275,6 +297,7 @@ final class MainWindowPane extends StackPane {
         StackPane titleArea = new StackPane();
         titleArea.setAlignment(Pos.CENTER_LEFT);
         titleArea.setMinWidth(0);
+        decorator.capableDraggingWindow(titleArea);
         HBox.setHgrow(titleArea, Priority.ALWAYS);
         if (state.titleNode() != null) {
             titleArea.getChildren().setAll(state.titleNode());
@@ -284,6 +307,7 @@ final class MainWindowPane extends StackPane {
             titleLabel.textFillProperty().bind(Themes.titleFillProperty());
             titleLabel.getStyleClass().add("jfx-decorator-title");
             titleLabel.setMinWidth(0);
+            titleLabel.setMouseTransparent(true);
             titleArea.getChildren().setAll(titleLabel);
         }
 

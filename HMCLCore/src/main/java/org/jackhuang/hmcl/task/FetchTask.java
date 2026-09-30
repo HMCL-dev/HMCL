@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,19 +18,21 @@
 package org.jackhuang.hmcl.task;
 
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.download.DownloadCandidate;
+import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URLConnection;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
@@ -40,40 +42,26 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.jackhuang.hmcl.util.Lang.threadPool;
+import static org.jackhuang.hmcl.util.Lang.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Downloads candidate URLs in order, with retries, HTTP caching, and supported range resumption.
-public abstract class FetchTask<T> extends Task<T> {
+@NotNullByDefault
+public abstract class FetchTask<T extends @UnknownNullability Object> extends Task<T> {
 
     protected static final int DEFAULT_RETRY = 5;
 
-    /// Immutable snapshot of candidate URLs in attempt order.
-    protected final @Unmodifiable List<WebURL> urls;
-    protected int retry = DEFAULT_RETRY;
+    protected final DownloadCandidates candidates;
     protected CacheRepository repository = CacheRepository.getInstance();
 
     /// Creates a download task with a snapshot of the candidate URLs.
     ///
-    /// @param urls nonempty candidate URLs, with no null elements
+    /// @param candidates nonempty candidate URLs, with no null elements
     /// @throws IllegalArgumentException if no candidates are supplied
     /// @throws NullPointerException if the list or any element is null
-    public FetchTask(@NotNull List<@NotNull WebURL> urls) {
-        Objects.requireNonNull(urls);
-
-        this.urls = List.copyOf(urls);
-
-        if (this.urls.isEmpty())
-            throw new IllegalArgumentException("At least one URL is required");
-
+    public FetchTask(DownloadCandidates candidates) {
+        this.candidates = candidates;
         setExecutor(DOWNLOAD_EXECUTOR);
-    }
-
-    public void setRetry(int retry) {
-        if (retry <= 0)
-            throw new IllegalArgumentException("Retry count must be greater than 0");
-
-        this.retry = retry;
     }
 
     public void setCacheRepository(CacheRepository repository) {
@@ -113,12 +101,24 @@ public abstract class FetchTask<T> extends Task<T> {
         if (SEMAPHORE != null)
             SEMAPHORE.acquire();
         try {
-            for (WebURL url : urls) {
+            for (DownloadCandidate candidate : candidates.getCandidates()) {
+                WebURL url = candidate.url();
+                if (url == null) {
+                    if (exceptions == null)
+                        exceptions = new ArrayList<>();
+                    exceptions.add(new DownloadException(candidate.rawUrl(), new MalformedURLException("Invalid URL: " + candidate)));
+                    continue;
+                }
+
+                int retry = candidate.retry() >= 0 ? candidate.retry() : DEFAULT_RETRY;
+                Duration connectTimeout = Objects.requireNonNullElse(candidate.connectTimeout(), NetworkUtils.TIMEOUT);
+                Duration readTimeout = Objects.requireNonNullElse(candidate.readTimeout(), NetworkUtils.TIMEOUT);
+
                 try {
                     if (NetworkUtils.isHttpUri(url))
-                        downloadHttp(url, checkETag);
+                        downloadHttp(url, retry, connectTimeout, readTimeout, checkETag);
                     else
-                        downloadNotHttp(url);
+                        downloadNotHttp(url, retry, connectTimeout, readTimeout);
                     return;
                 } catch (DownloadException e) {
                     if (exceptions == null)
@@ -247,7 +247,7 @@ public abstract class FetchTask<T> extends Task<T> {
                           @Nullable FetchTask.HttpResumeContext resume, InputStream inputStream,
                           long contentLength,
                           ContentEncoding contentEncoding) throws IOException, InterruptedException {
-        boolean success = false;
+        boolean success;
         try (var counter = new CounterInputStream(inputStream);
              var input = contentEncoding.wrap(counter)) {
             long lastDownloaded = 0L;
@@ -294,7 +294,7 @@ public abstract class FetchTask<T> extends Task<T> {
     }
 
     /// Downloads an HTTP candidate, following HTTP(S) redirects and retrying recoverable failures.
-    private void downloadHttp(WebURL url, boolean checkETag) throws DownloadException, InterruptedException {
+    private void downloadHttp(WebURL url, int retry, Duration connectTimeout, Duration readTimeout, boolean checkETag) throws DownloadException, InterruptedException {
         if (checkETag) {
             // Handle cache
             try {
@@ -314,7 +314,7 @@ public abstract class FetchTask<T> extends Task<T> {
         // If loading the cache fails, the cache should not be loaded again.
         boolean useCachedResult = true;
         try {
-            for (int retryTime = 0, retryLimit = retry; retryTime < retryLimit; retryTime++) {
+            for (int attempts = 0, attemptsLimit = retry + 1; attempts < attemptsLimit; attempts++) {
                 if (isCancelled()) {
                     throw new InterruptedException();
                 }
@@ -324,7 +324,7 @@ public abstract class FetchTask<T> extends Task<T> {
                     beforeDownload(url);
                     updateProgress(0);
 
-                    @Nullable HttpURLConnection connection = null;
+                    @Nullable HttpURLConnection connection;
                     UrlResponseInfo responseInfo;
                     @Nullable String bmclapiHash;
                     int responseCode;
@@ -344,6 +344,8 @@ public abstract class FetchTask<T> extends Task<T> {
 
                     do {
                         connection = NetworkUtils.createHttpConnection(currentURI);
+                        connection.setConnectTimeout((int) connectTimeout.toMillis());
+                        connection.setReadTimeout((int) readTimeout.toMillis());
                         boolean keepConnection = false;
                         try {
                             headers.forEach(connection::setRequestProperty);
@@ -397,7 +399,7 @@ public abstract class FetchTask<T> extends Task<T> {
                             resumeContext = null;
                             discardContext(context);
                             context = null;
-                            retryLimit++;
+                            attemptsLimit++;
                             continue;
                         }
 
@@ -416,7 +418,7 @@ public abstract class FetchTask<T> extends Task<T> {
                                 useCachedResult = false;
                                 // Now we must reconnect the server since 304 may result in empty content,
                                 // if we want to redownload the file, we must reconnect the server without etag settings.
-                                retryLimit++;
+                                attemptsLimit++;
                                 continue;
                             }
                         } else if (responseCode / 100 == 4) {
@@ -440,7 +442,7 @@ public abstract class FetchTask<T> extends Task<T> {
                                 resumeContext = null;
                                 discardContext(context);
                                 context = null;
-                                retryLimit++;
+                                attemptsLimit++;
                                 continue;
                             }
                         } else {
@@ -492,9 +494,9 @@ public abstract class FetchTask<T> extends Task<T> {
 
                     exceptions.add(ex);
 
-                    LOG.warning("Failed to download " + url + ", repeat times: " + retryTime + (redirects == null ? "" : ", redirects: " + redirects), ex);
+                    LOG.warning("Failed to download " + url + ", repeat times: " + attempts + (redirects == null ? "" : ", redirects: " + redirects), ex);
 
-                    if (retryTime < retryLimit - 1) {
+                    if (attempts < attemptsLimit - 1) {
                         // Wait for a while before retrying
                         Thread.sleep(200);
                     }
@@ -527,9 +529,9 @@ public abstract class FetchTask<T> extends Task<T> {
     }
 
     /// Downloads a non-HTTP candidate through its installed URL handler, retrying I/O failures.
-    private void downloadNotHttp(WebURL url) throws DownloadException, InterruptedException {
+    private void downloadNotHttp(WebURL url, int retry, Duration connectTimeout, Duration readTimeout) throws DownloadException, InterruptedException {
         @Nullable ArrayList<Exception> exceptions = null;
-        for (int retryTime = 0; retryTime < retry; retryTime++) {
+        for (int attempts = 0, attemptsLimit = retry + 1; attempts < attemptsLimit; attempts++) {
             if (isCancelled()) {
                 throw new InterruptedException();
             }
@@ -539,6 +541,8 @@ public abstract class FetchTask<T> extends Task<T> {
                 updateProgress(0);
 
                 URLConnection conn = NetworkUtils.createConnection(url);
+                conn.setConnectTimeout((int) connectTimeout.toMillis());
+                conn.setReadTimeout((int) readTimeout.toMillis());
                 try (Context context = getContext()) {
                     download(context,
                             null, conn.getInputStream(),
@@ -557,7 +561,7 @@ public abstract class FetchTask<T> extends Task<T> {
                     exceptions = new ArrayList<>();
 
                 exceptions.add(ex);
-                LOG.warning("Failed to download " + url + ", repeat times: " + retryTime, ex);
+                LOG.warning("Failed to download " + url + ", repeat times: " + attempts, ex);
             }
         }
 
