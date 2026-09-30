@@ -23,6 +23,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FXThread;
+import org.jackhuang.hmcl.util.Lang;
 
 import java.util.Locale;
 import java.util.Random;
@@ -86,7 +87,7 @@ public final class TheCopperAge {
     public static void startOxidation() {
         if (isOxidizing()) return;
         oxidizing.set(true);
-        oxidationScheduler = Executors.newScheduledThreadPool(1);
+        oxidationScheduler = Executors.newScheduledThreadPool(1, Lang.daemonThreadFactory("The Copper Age Oxidizer"));
         var random = new Random();
 
         oxidationScheduler.scheduleAtFixedRate(() -> {
