@@ -15,38 +15,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.addon.resourcepack;
+package org.jackhuang.hmcl.addon.pack.resourcepack;
 
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.addon.meta.PackMcMeta;
-import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.addon.pack.PackMcMeta;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class ResourcePackFolder extends ResourcePackFile {
-    private final PackMcMeta.PackInfo info;
 
-    public ResourcePackFolder(ResourcePackManager manager, Path path) {
-        super(manager, path);
-
+    public static ResourcePackFolder load(ResourcePackManager manager, Path path) {
         PackMcMeta meta = null;
         try {
             meta = PackMcMeta.fromNonNullJsonFile(path.resolve("pack.mcmeta"));
         } catch (Exception e) {
             LOG.warning("Failed to parse resource pack meta", e);
         }
-        this.info = meta != null ? meta.pack() : null;
+
+        return new ResourcePackFolder(manager, path, meta != null ? meta.pack() : null);
     }
 
-    @Override
-    public PackMcMeta.PackInfo getPackInfo() {
-        return info;
+    private ResourcePackFolder(ResourcePackManager manager, Path path, PackMcMeta.PackInfo info) {
+        super(manager, path, info);
     }
 
     @Override
@@ -67,10 +62,4 @@ final class ResourcePackFolder extends ResourcePackFile {
         }
         return null;
     }
-
-    @Override
-    public void delete() throws IOException {
-        FileUtils.deleteDirectory(file);
-    }
-
 }
