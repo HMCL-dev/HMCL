@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.JavaProcessLauncher;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnknownNullability;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -182,8 +181,6 @@ public final class MonitorClient {
                     }
                 }
             }
-            case MonitorProtocol.TAG_FATAL ->
-                    LOG.error("HMCL monitor reported a failure: " + (parts.length > 1 ? parts[1] : "unknown"));
             default -> LOG.warning("Unknown protocol message from HMCL monitor: " + line);
         }
     }
@@ -202,10 +199,7 @@ public final class MonitorClient {
                     return;
                 }
                 String[] parts = line.split("\t");
-                if (MonitorProtocol.TAG_FATAL.equals(parts[0])) {
-                    future.completeExceptionally(new IOException("The HMCL monitor failed to create the game process: "
-                            + (parts.length > 1 ? parts[1] : "unknown reason")));
-                } else if (!MonitorProtocol.TAG_PID.equals(parts[0]) || parts.length < 3) {
+                if (!MonitorProtocol.TAG_PID.equals(parts[0]) || parts.length < 3) {
                     future.completeExceptionally(new IOException("Unexpected handshake message from HMCL monitor: " + line));
                 } else {
                     future.complete(parts);

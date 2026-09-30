@@ -29,8 +29,7 @@ import java.nio.charset.StandardCharsets;
 /// <ul>
 ///     <li>{@code P\t<pid>\t<startTime>} &mdash; handshake, sent once the game process has been created;</li>
 ///     <li>{@code L\t<isError>\t<line>} &mdash; one line of game output;</li>
-///     <li>{@code E\t<exitCode>\t<exitType>} &mdash; the game process has exited;</li>
-///     <li>{@code F\t<message>} &mdash; a fatal error, the game process could not be created.</li>
+///     <li>{@code E\t<exitCode>\t<exitType>} &mdash; the game process has exited.</li>
 /// </ul>
 @NotNullByDefault
 public final class MonitorProtocol {
@@ -47,8 +46,6 @@ public final class MonitorProtocol {
     static final String TAG_LOG = "L";
     /// Message tag of the game exit message.
     static final String TAG_EXIT = "E";
-    /// Message tag of a fatal error message.
-    static final String TAG_FATAL = "F";
 
     private MonitorProtocol() {
     }

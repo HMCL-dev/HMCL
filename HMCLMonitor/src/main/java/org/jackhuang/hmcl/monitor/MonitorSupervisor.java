@@ -111,8 +111,8 @@ public final class MonitorSupervisor {
 
         Path logFile = Files.createTempFile("hmcl-monitor-game-", ".log");
 
-        /// The monitor owns the game process, so the regular [ManagedProcess] applies, and the exit
-        /// classification is performed by the very same [ExitWaiter] the direct launch path uses.
+        // The monitor owns the game process, so the regular [ManagedProcess] applies, and the exit
+        // classification is performed by the very same [ExitWaiter] the direct launch path uses.
         ManagedProcess gameProcess = new ManagedProcess(game, spec.command);
 
         // Forward one game output line to the log file, the managed process (feeding the exit
@@ -164,16 +164,17 @@ public final class MonitorSupervisor {
 
             boolean crashed = exitType != ProcessListener.ExitType.NORMAL;
             try {
-                Path resultFile = writeResult(spec, gameProcess.getPid(), processStartTime, exitCode, exitType, logFile);
+                @Nullable Path resultFile = null;
+                if (crashed) {
+                    resultFile = writeResult(spec, gameProcess.getPid(), processStartTime, exitCode, exitType, logFile);
+                }
                 boolean relaunch = spec.relaunchAlways || (spec.relaunchOnCrash && crashed);
                 if (relaunch && !isParentAlive()) {
-                    relaunch(resultFile, crashed);
+                    relaunch(resultFile);
                 }
             } catch (IOException e) {
                 LOG.error("Failed to write the monitor result file or relaunch the launcher", e);
             }
-            // When the main launcher process is still alive it has consumed the events itself and
-            // presents the crash window; the result file is left behind for debugging only.
         }), "exit-waiter", true);
 
         // Keep the monitor process alive until the game has exited and been reported; the caller
@@ -235,13 +236,13 @@ public final class MonitorSupervisor {
     }
 
     /// Starts a new HMCL main process. Fire-and-forget; the current monitor process exits right after.
-    private static void relaunch(Path resultFile, boolean crashed) throws IOException {
+    private static void relaunch(@Nullable Path resultFile) throws IOException {
         Path thisJar = JarUtils.thisJarPath();
         if (thisJar == null) {
             LOG.warning("Failed to find the current HMCL jar, cannot relaunch the launcher");
             return;
         }
-        if (crashed) {
+        if (resultFile != null) { // crashed
             JavaProcessLauncher.startJava(thisJar, "--crash-report", resultFile.toAbsolutePath().toString());
         } else {
             JavaProcessLauncher.startJava(thisJar);

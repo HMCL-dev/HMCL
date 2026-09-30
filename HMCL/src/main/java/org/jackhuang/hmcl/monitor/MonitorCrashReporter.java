@@ -104,7 +104,7 @@ public final class MonitorCrashReporter {
         // for the pending loads and try again when each repository publishes its snapshot.
         List<HMCLGameRepository> pending = repositories.stream()
                 .filter(repository -> !repository.isLoaded())
-                .collect(Collectors.toList());
+                .toList();
         if (pending.isEmpty()) {
             LOG.warning("Cannot resolve the launched instance " + result.instanceId + " ("
                     + describeRepositories(repositories) + "), skip showing the crash window."
@@ -157,6 +157,9 @@ public final class MonitorCrashReporter {
 
             LaunchOptions launchOptions = rebuildLaunchOptions(result);
             List<Log> logs = readSessionLogs(result.logFile);
+            if (result.logFile != null) {
+                Files.delete(Path.of(result.logFile));
+            }
 
             new GameCrashWindow(process, exitType, instance, launchOptions, logs).show();
         } catch (Throwable e) {
