@@ -120,18 +120,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         ImageView titleIcon = new ImageView(FXUtils.newBuiltinImage("/assets/img/icon-title.png"));
         Label titleLabel = new Label(Metadata.FULL_TITLE);
-        titleLabel.textProperty().bind(new StringBinding() {
-            {
-                bind(TheCopperAge.displayedState());
-            }
-
-            @Override
-            protected String computeValue() {
-                var copperState = TheCopperAge.displayedState().get();
-                if (copperState.isEmpty()) return Metadata.FULL_TITLE;
-                return Metadata.FULL_TITLE + " (%s)".formatted(copperState);
-            }
-        });
         if (I18n.isUpsideDown()) {
             titleIcon.setRotate(180);
             titleLabel.setRotate(180);
@@ -139,6 +127,28 @@ public final class MainPage extends StackPane implements DecoratorPage {
         titleLabel.getStyleClass().add("jfx-decorator-title");
         titleLabel.textFillProperty().bind(Themes.titleFillProperty());
         titleNode.getChildren().setAll(titleIcon, titleLabel);
+
+        Label copperStateLabel = new Label();
+        copperStateLabel.getStyleClass().add("jfx-decorator-title");
+        copperStateLabel.textFillProperty().bind(Themes.titleFillProperty());
+        copperStateLabel.textProperty().bind(new StringBinding() {
+            {
+                bind(TheCopperAge.displayedState());
+            }
+
+            @Override
+            protected String computeValue() {
+                var copperState = TheCopperAge.displayedState().get();
+                if (copperState.isEmpty()) return "";
+                return "(%s)".formatted(copperState);
+            }
+        });
+        if (I18n.isUpsideDown()) {
+            // Not rotating because we're already in upside-down English
+            titleNode.getChildren().add(1, copperStateLabel); // Place it between icon and title
+        } else {
+            titleNode.getChildren().add(copperStateLabel);
+        }
 
         state.setValue(new State(null, titleNode, false, false, true));
 
