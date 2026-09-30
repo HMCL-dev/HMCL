@@ -219,15 +219,13 @@ public final class CurseCompletionTask extends Task<Void> {
     /// @throws IOException if CurseForge metadata cannot be read
     private @Nullable Path guessFilePath(CurseManifestFile file, DownloadProvider downloadProvider, Path resourcePacksRoot, Path shaderPacksRoot) throws IOException {
         RemoteAddon mod = CurseForgeRemoteAddonRepository.MODS.getAddonById(downloadProvider, Integer.toString(file.projectID()));
-        int classID = ((CurseForgeRemoteAddonRepository.CurseAddon) mod.data()).classId();
         String fileName = file.fileName();
-        return switch (classID) {
-            case 12,       // Resource pack
-                 6945 -> { // Data pack
+        return switch (Objects.requireNonNullElse(mod.type(), RemoteAddon.Type.MOD)) {
+            case RESOURCE_PACK, DATA_PACK -> {
                 Path path = resourcePacksRoot.resolve(fileName);
                 yield Files.exists(path) ? null : path;
             }
-            case 6552 -> { // Shader pack
+            case SHADER_PACK -> { // Shader pack
                 Path path = shaderPacksRoot.resolve(fileName);
                 yield Files.exists(path) ? null : path;
             }
