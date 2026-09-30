@@ -79,7 +79,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
-        this.type = Objects.requireNonNullElse(addon.type(), repository.getType());
+        this.type = addon.type();
         this.translations = ModTranslations.getTranslationsByAddonType(this.type);
         this.mod = translations.getModByCurseForgeId(addon.slug());
         this.instanceReference = instanceReference;
@@ -605,7 +605,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 return Task.allOf(queue).thenSupplyAsync(() -> {
                     var dependenciesStream = dependencies.values().stream().flatMap(types -> {
-                        if (types.value().isEmpty()) return Stream.of();
+                        if (types.value().isEmpty()) return Stream.empty();
                         return Stream.concat(
                                 Stream.of(types.key()),
                                 types.value().stream().sorted(Comparator.comparing(item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)));
