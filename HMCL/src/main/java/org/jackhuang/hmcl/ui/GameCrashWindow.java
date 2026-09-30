@@ -51,12 +51,10 @@ import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;

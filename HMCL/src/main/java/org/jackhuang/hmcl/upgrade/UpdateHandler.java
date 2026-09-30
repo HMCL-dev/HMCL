@@ -23,7 +23,6 @@ import javafx.application.Platform;
 import org.jackhuang.hmcl.EntryPoint;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -39,7 +38,6 @@ import org.jackhuang.hmcl.util.platform.JavaProcessLauncher;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,7 +46,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.checkFxUserThread;
 import static org.jackhuang.hmcl.util.Lang.thread;
