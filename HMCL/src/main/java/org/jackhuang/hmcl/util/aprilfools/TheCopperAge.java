@@ -49,15 +49,20 @@ public final class TheCopperAge {
         @Override
         protected String computeValue() {
             if (!oxidizing.get()) return "";
-            String state;
+
+            String waxedString = i18n("launcher.april_fools.copper.state.waxed");
+
             var degree = oxidationDegree.get();
             if (degree == Degree.UNOXIDIZED) {
-                state = "";
+                return waxed.get() ?
+                        i18n("launcher.april_fools.copper.state.0", waxedString)
+                        : "";
             } else {
-                state = i18n("launcher.april_fools.copper.state." + degree.name().toLowerCase(Locale.ROOT));
+                String degreeName = i18n("launcher.april_fools.copper.state." + degree.name().toLowerCase(Locale.ROOT));
+                return waxed.get()
+                        ? i18n("launcher.april_fools.copper.state.1", waxedString, degreeName)
+                        : i18n("launcher.april_fools.copper.state.0", degreeName);
             }
-            if (waxed.get()) state = i18n("launcher.april_fools.copper.state.waxed") + state;
-            return state;
         }
     };
 

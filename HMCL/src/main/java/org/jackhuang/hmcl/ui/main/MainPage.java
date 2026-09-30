@@ -129,8 +129,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             protected String computeValue() {
                 var copperState = TheCopperAge.displayedState().get();
                 if (copperState.isEmpty()) return Metadata.FULL_TITLE;
-                if (!copperState.endsWith(" ")) copperState += " ";
-                return Metadata.FULL_TITLE + " (%sHMCL)".formatted(copperState);
+                return Metadata.FULL_TITLE + " (%s)".formatted(copperState);
             }
         });
         if (I18n.isUpsideDown()) {
