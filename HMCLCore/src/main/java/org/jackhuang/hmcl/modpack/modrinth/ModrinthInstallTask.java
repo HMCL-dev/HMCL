@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.modpack.modrinth;
 import com.google.gson.JsonParseException;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.*;
@@ -187,7 +188,8 @@ public class ModrinthInstallTask extends Task<Void> {
             if (Modpack.SUPPORTED_ICON_EXTS.contains(ext)) {
                 iconExt = ext;
 
-                dependents.add(downloadIconTask = new CacheFileTask(dependencyManager.getDownloadProvider().injectURLWithCandidates(iconUrl)));
+                DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
+                dependents.add(downloadIconTask = new CacheFileTask(downloadProvider.getDownloadCandidates(iconUrl)));
             }
         }
 
