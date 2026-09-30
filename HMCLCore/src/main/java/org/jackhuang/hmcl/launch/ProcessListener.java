@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.launch;
 
-import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.ProcessInfo;
 
 /**
  *
@@ -29,7 +29,7 @@ public interface ProcessListener {
      * When a game launched, this method will be called to get the new process.
      * You should not override this method when your ProcessListener is shared with all processes.
      */
-    default void setProcess(ManagedProcess process) {
+    default void setProcess(ProcessInfo process) {
     }
 
     /**

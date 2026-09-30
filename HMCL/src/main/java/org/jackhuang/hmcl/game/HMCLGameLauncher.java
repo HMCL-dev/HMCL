@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.ProcessInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
@@ -154,7 +154,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     @Override
-    public ManagedProcess launch() throws IOException, InterruptedException {
+    public ProcessInfo launch() throws IOException, InterruptedException {
         generateOptionsTxt();
         return super.launch();
     }

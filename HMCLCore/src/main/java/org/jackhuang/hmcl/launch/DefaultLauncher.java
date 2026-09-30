@@ -662,7 +662,7 @@ public class DefaultLauncher extends Launcher {
     }
 
     @Override
-    public ManagedProcess launch() throws IOException, InterruptedException {
+    public ProcessInfo launch() throws IOException, InterruptedException {
         Path nativeFolder = getNativeFolder();
 
         final Command command = generateCommandLine(nativeFolder);

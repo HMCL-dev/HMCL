@@ -19,23 +19,26 @@ package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.launch.StreamPump;
 import org.jackhuang.hmcl.util.Lang;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-/// The managed process.
+/// The game process spawned and owned by this JVM process.
 ///
 /// @author huangyuhui
 /// <!-- @see org.jackhuang.hmcl.launch.ExitWaiter -->
 /// @see org.jackhuang.hmcl.launch.StreamPump
-public final class ManagedProcess {
+public final class ManagedProcess implements ProcessInfo {
     private final ReentrantLock lock = new ReentrantLock();
     private final Process process;
     private final List<String> commands;
     private final String classpath;
+    private final long processStartTime;
     private final Map<String, Object> properties = new HashMap<>();
     private final List<String> lines = new ArrayList<>();
     private final List<Thread> relatedThreads = new ArrayList<>();
@@ -44,6 +47,7 @@ public final class ManagedProcess {
         this.process = processBuilder.start();
         this.commands = processBuilder.command();
         this.classpath = null;
+        this.processStartTime = process.info().startInstant().map(Instant::toEpochMilli).orElseGet(System::currentTimeMillis);
     }
 
     /**
@@ -56,6 +60,7 @@ public final class ManagedProcess {
         this.process = process;
         this.commands = List.copyOf(commands);
         this.classpath = null;
+        this.processStartTime = process.info().startInstant().map(Instant::toEpochMilli).orElseGet(System::currentTimeMillis);
     }
 
     /**
@@ -69,6 +74,7 @@ public final class ManagedProcess {
         this.process = process;
         this.commands = List.copyOf(commands);
         this.classpath = classpath;
+        this.processStartTime = process.info().startInstant().map(Instant::toEpochMilli).orElseGet(System::currentTimeMillis);
     }
 
     /**
@@ -80,11 +86,27 @@ public final class ManagedProcess {
         return process;
     }
 
+    @Override
+    public long getPid() {
+        return process.pid();
+    }
+
+    @Override
+    public ProcessHandle getHandle() {
+        return process.toHandle();
+    }
+
+    @Override
+    public long getProcessStartTime() {
+        return processStartTime;
+    }
+
     /**
      * The command line.
      *
      * @return the list of each part of command line separated by spaces.
      */
+    @Override
     public List<String> getCommands() {
         return commands;
     }
@@ -94,7 +116,8 @@ public final class ManagedProcess {
      *
      * @return classpath
      */
-    public String getClasspath() {
+    @Override
+    public @Nullable String getClasspath() {
         return classpath;
     }
 
@@ -163,6 +186,7 @@ public final class ManagedProcess {
     /**
      * True if the managed process is running.
      */
+    @Override
     public boolean isRunning() {
         try {
             process.exitValue();
@@ -182,6 +206,7 @@ public final class ManagedProcess {
     /**
      * Destroys the raw process and other related threads that are monitoring this raw process.
      */
+    @Override
     public void stop() {
         process.destroy();
         destroyRelatedThreads();

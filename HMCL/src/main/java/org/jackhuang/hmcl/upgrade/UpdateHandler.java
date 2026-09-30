@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.platform.JavaProcessLauncher;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -198,54 +199,7 @@ public final class UpdateHandler {
     }
 
     public static void startJava(Path jar, String... appArgs) throws IOException {
-        List<String> commandline = new ArrayList<>();
-        commandline.add(JavaRuntime.getDefault().getBinary().toString());
-
-        try {
-            for (String inputArgument : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
-                if (inputArgument.startsWith("-D") || inputArgument.startsWith("-X")) {
-                    commandline.add(inputArgument);
-                }
-            }
-        } catch (Throwable ignored) {
-            // ManagementFactory not available
-            for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
-                if (entry.getKey() instanceof String key && key.startsWith("hmcl.")) {
-                    commandline.add("-D" + key + "=" + entry.getValue());
-                }
-            }
-        }
-
-        commandline.add("-jar");
-        commandline.add(jar.toAbsolutePath().toString());
-        commandline.addAll(Arrays.asList(appArgs));
-        LOG.info("Starting process: " + maskCommandline(commandline));
-        new ProcessBuilder(commandline)
-                .directory(Paths.get("").toAbsolutePath().toFile())
-                .inheritIO()
-                .start();
-    }
-
-    private static String maskCommandline(List<String> commandline) {
-        return commandline.stream().map(str -> {
-            if (str.startsWith("-D")) {
-                int eqIdx = str.indexOf('=');
-                if (eqIdx != -1) {
-                    String key = str.substring(2, eqIdx);
-                    String value = str.substring(eqIdx + 1);
-                    if (key.contains("http.proxy") ||
-                            key.startsWith("https.proxy") ||
-                            key.startsWith("socksProxy") ||
-                            key.equals("hmcl.microsoft.auth.id") ||
-                            key.equals("hmcl.curseforge.apikey")
-                    ) {
-                        return "-D" + key + "=" + (value.isEmpty() ? "" : value.charAt(0) + "*".repeat(value.length() - 1));
-                    }
-                }
-            }
-
-            return str;
-        }).collect(Collectors.joining(" "));
+        JavaProcessLauncher.startJava(jar, appArgs);
     }
 
     private static Optional<Path> tryRename(Path path, String newVersion) {

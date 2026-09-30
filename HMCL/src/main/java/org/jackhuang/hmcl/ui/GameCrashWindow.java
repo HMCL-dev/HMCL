@@ -79,7 +79,7 @@ public class GameCrashWindow extends Stage {
     private final BooleanProperty loading = new SimpleBooleanProperty();
     private final TextFlow feedbackTextFlow = new TextFlow();
 
-    private final ManagedProcess managedProcess;
+    private final ProcessInfo managedProcess;
     private final ProcessListener.ExitType exitType;
     private final LaunchOptions launchOptions;
     private final View view;
@@ -87,7 +87,7 @@ public class GameCrashWindow extends Stage {
 
     private final List<Log> logs;
 
-    public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, HMCLGameInstance gameInstance, LaunchOptions launchOptions, List<Log> logs) {
+    public GameCrashWindow(ProcessInfo managedProcess, ProcessListener.ExitType exitType, HMCLGameInstance gameInstance, LaunchOptions launchOptions, List<Log> logs) {
         Themes.applyNativeDarkMode(this);
 
         this.managedProcess = managedProcess;
@@ -277,16 +277,7 @@ public class GameCrashWindow extends Stage {
         return CompletableFuture.supplyAsync(() ->
                         logs.stream().map(Log::getLog).collect(Collectors.joining("\n")))
                 .thenComposeAsync(logs -> {
-                    long processStartTime = managedProcess.getProcess().info()
-                            .startInstant()
-                            .map(Instant::toEpochMilli).orElseGet(() -> {
-                                try {
-                                    return ManagementFactory.getRuntimeMXBean().getStartTime();
-                                } catch (Throwable e) {
-                                    LOG.warning("Failed to get process start time", e);
-                                    return 0L;
-                                }
-                            });
+                    long processStartTime = managedProcess.getProcessStartTime();
 
                     return LogExporter.exportLogs(logFile, gameInstance, launchOptions, logs,
                             new CommandBuilder().addAll(managedProcess.getCommands()).toString(),
