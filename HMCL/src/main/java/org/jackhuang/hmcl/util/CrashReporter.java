@@ -67,6 +67,7 @@ public final class CrashReporter implements Thread.UncaughtExceptionHandler {
                         alert.setHeaderText(i18n("message.info"));
                         alert.showAndWait();
                     } catch (Throwable t) {
+                        SwingUtils.showErrorDialog(info);
                         LOG.error("Unable to show message", t);
                     }
                 }
