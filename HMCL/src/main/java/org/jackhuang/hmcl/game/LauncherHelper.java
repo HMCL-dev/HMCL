@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
+import org.jackhuang.hmcl.monitor.MonitorClient;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.game.*;
@@ -283,7 +284,7 @@ public final class LauncherHelper {
 
                     LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(gameInstance.getModsDirectory(), 10));
 
-                    return new HMCLGameLauncher(
+                    HMCLGameLauncher launcher = new HMCLGameLauncher(
                             gameInstance,
                             launchManifest.get(),
                             authInfo,
@@ -292,6 +293,20 @@ public final class LauncherHelper {
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
                                     : new HMCLProcessListener(authInfo, launchOptions, launchingLatch, gameInstance.getVersion().compareTo(GameVersionNumber.unknown()) != 0)
                     );
+
+                    // The HMCL monitor supervises the game process and relaunches HMCL after it
+                    // exits, so the main launcher process may exit once the game window is up.
+                    // With the log window shown, the main process stays alive and handles the
+                    // game exit itself, so nothing should be relaunched.
+                    launcher.setRelaunchPolicy(showLogs
+                            ? DefaultLauncher.MonitorLaunchContext.RelaunchPolicy.NEVER
+                            : switch (launcherVisibility) {
+                                case HIDE_AND_REOPEN -> DefaultLauncher.MonitorLaunchContext.RelaunchPolicy.ALWAYS;
+                                case HIDE -> DefaultLauncher.MonitorLaunchContext.RelaunchPolicy.ON_CRASH;
+                                default -> DefaultLauncher.MonitorLaunchContext.RelaunchPolicy.NEVER;
+                            });
+
+                    return launcher;
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
                         return Task.supplyAsync(launcher::launch);
@@ -925,6 +940,23 @@ public final class LauncherHelper {
             }
         }
 
+        /// Called when the game window has been detected and the launch has succeeded.
+        ///
+        /// <p>When the game process is managed by the HMCL monitor, the main launcher process may exit
+        /// right away for the [LauncherVisibility#HIDE] and [LauncherVisibility#HIDE_AND_REOPEN]
+        /// visibilities: the monitor supervises the game process, analyzes its exit, and relaunches
+        /// HMCL if configured to, so lingering here would only waste resources.
+        private void finishLaunchAfterWindowDetected() {
+            if (MonitorClient.isEnabled() && !showLogs
+                    && (launcherVisibility == LauncherVisibility.HIDE
+                    || launcherVisibility == LauncherVisibility.HIDE_AND_REOPEN)) {
+                launchingLatch.countDown();
+                runLater(Launcher::stopApplication);
+            } else {
+                finishLaunch();
+            }
+        }
+
         private void finishLaunch() {
             switch (launcherVisibility) {
                 case HIDE_AND_REOPEN:
@@ -995,7 +1027,7 @@ public final class LauncherHelper {
                     try {
                         if (!lwjgl) {
                             lwjgl = true;
-                            finishLaunch();
+                            finishLaunchAfterWindowDetected();
                         }
                     } finally {
                         lock.unlock();

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.monitor.MonitorClient;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
@@ -51,6 +52,10 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     /// @param listener process listener, or `null` to inherit IO
     public HMCLGameLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
         this(instance, manifest, authInfo, options, listener, true);
+
+        if (MonitorClient.isEnabled()) {
+            setLaunchMonitor(MonitorClient::launchNewMonitor);
+        }
     }
 
     /// Creates a launcher for the given instance and launch plan.
