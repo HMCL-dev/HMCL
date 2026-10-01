@@ -20,7 +20,10 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
@@ -187,6 +190,10 @@ public class LineSelectButton<T extends @UnknownNullability Object> extends Line
 
     public void setDescriptionConverter(Function<T, String> value) {
         descriptionConverterProperty().set(value);
+    }
+
+    public void setNullSafeDescriptionConverter(Function<@NotNull T, String> value) {
+        descriptionConverterProperty().set(it -> it != null ? value.apply(it) : "");
     }
 
     private final ListProperty<T> items = new SimpleListProperty<>(this, "items", FXCollections.emptyObservableList());
