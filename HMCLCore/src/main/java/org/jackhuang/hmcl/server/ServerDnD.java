@@ -48,7 +48,7 @@ public final class ServerDnD {
 
         try {
             return Optional.of(new Server(
-                    false,
+                    Server.ServerPackStatus.PROMPT,
                     false,
                     urlElements.length == 4 ? urlElements[3] : null,
                     new String(Base64.getDecoder().decode(urlElements[2]), StandardCharsets.UTF_8),

@@ -31,14 +31,14 @@ import static org.jackhuang.hmcl.util.NBTUtils.readCompressed;
 import static org.jackhuang.hmcl.util.NBTUtils.writeCompressed;
 
 public class Server {
-    private final boolean acceptTextures;
+    private final @NotNull ServerPackStatus serverPackStatus;
     private final boolean hidden;
     private final @Nullable String icon;
     private final @Nullable String ip;
     private final @Nullable String name;
 
-    public Server(boolean acceptTextures, boolean hidden, @Nullable String icon, @Nullable String ip, @Nullable String name) {
-        this.acceptTextures = acceptTextures;
+    public Server(@NotNull ServerPackStatus serverPackStatus, boolean hidden, @Nullable String icon, @Nullable String ip, @Nullable String name) {
+        this.serverPackStatus = serverPackStatus;
         this.hidden = hidden;
         this.icon = icon;
         this.ip = ip;
@@ -47,7 +47,7 @@ public class Server {
 
     public static Server loadSingle(@NotNull CompoundTag tag) {
         return new Server(
-                tag.get("acceptTextures") instanceof ByteTag bt && bt.getValue() != 0,
+                tag.get("acceptTextures") instanceof ByteTag bt ? (bt.getValue() == 0 ? ServerPackStatus.DISABLED : ServerPackStatus.ENABLED) : ServerPackStatus.PROMPT,
                 tag.get("hidden") instanceof ByteTag bt && bt.getValue() != 0,
                 tag.get("icon") instanceof StringTag stg ? stg.getValue() : null,
                 tag.get("ip") instanceof StringTag stg ? stg.getValue() : null,
@@ -91,7 +91,12 @@ public class Server {
     }
 
     public void writeToCompoundTag(CompoundTag tag) {
-        tag.addByte("acceptTextures", (byte) (acceptTextures ? 1 : 0));
+        switch (serverPackStatus) {
+            case ENABLED -> tag.addByte("acceptTextures", (byte) 1);
+            case DISABLED -> tag.addByte("acceptTextures", (byte) 0);
+            case PROMPT -> {
+            }
+        }
         tag.addByte("hidden", (byte) (hidden ? 1 : 0));
         if (icon != null) tag.addString("icon", icon);
         if (ip != null) tag.addString("ip", ip);
@@ -102,16 +107,16 @@ public class Server {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Server server = (Server) o;
-        return acceptTextures == server.acceptTextures && hidden == server.hidden && Objects.equals(icon, server.icon) && Objects.equals(ip, server.ip) && Objects.equals(name, server.name);
+        return serverPackStatus == server.serverPackStatus && hidden == server.hidden && Objects.equals(icon, server.icon) && Objects.equals(ip, server.ip) && Objects.equals(name, server.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(acceptTextures, hidden, icon, ip, name);
+        return Objects.hash(serverPackStatus, hidden, icon, ip, name);
     }
 
-    public boolean isAcceptTextures() {
-        return acceptTextures;
+    public ServerPackStatus getServerPackStatus() {
+        return serverPackStatus;
     }
 
     public boolean isHidden() {
@@ -133,11 +138,17 @@ public class Server {
     @Override
     public String toString() {
         return "Server{" +
-                "acceptTextures=" + acceptTextures +
+                "acceptTextures=" + serverPackStatus +
                 ", hidden=" + hidden +
                 ", icon='" + icon + '\'' +
                 ", ip='" + ip + '\'' +
                 ", name='" + name + '\'' +
                 '}';
+    }
+
+    public enum ServerPackStatus {
+        ENABLED(),
+        DISABLED(),
+        PROMPT();
     }
 }

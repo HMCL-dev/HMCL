@@ -503,18 +503,10 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
     public static class IconedServer extends Server {
         final Image iconImage;
 
-        public IconedServer(boolean acceptTextures, boolean hidden, @Nullable String icon, @Nullable String ip, @Nullable String name) {
-            super(acceptTextures, hidden, icon, ip, name);
+        public IconedServer(ServerPackStatus serverPackStatus, boolean hidden, @Nullable String icon, @Nullable String ip, @Nullable String name) {
+            super(serverPackStatus, hidden, icon, ip, name);
 
             iconImage = parseImageOrDefault(icon);
-        }
-
-        public IconedServer withIcon(@Nullable String newIcon) {
-            return new IconedServer(isAcceptTextures(), isHidden(), newIcon, getIp(), getName());
-        }
-
-        public IconedServer withIpAndName(@Nullable String newIp, @Nullable String newName) {
-            return new IconedServer(isAcceptTextures(), isHidden(), getIcon(), newIp, newName);
         }
 
         public static IconedServer pack(Server server) {
@@ -522,12 +514,20 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                 return (IconedServer) server;
             }
             return new IconedServer(
-                    server.isAcceptTextures(),
+                    server.getServerPackStatus(),
                     server.isHidden(),
                     server.getIcon(),
                     server.getIp(),
                     server.getName()
             );
+        }
+
+        public IconedServer withIcon(@Nullable String newIcon) {
+            return new IconedServer(getServerPackStatus(), isHidden(), newIcon, getIp(), getName());
+        }
+
+        public IconedServer withIpAndName(@Nullable String newIp, @Nullable String newName) {
+            return new IconedServer(getServerPackStatus(), isHidden(), getIcon(), newIp, newName);
         }
 
         public static @NotNull Image parseImageOrDefault(@Nullable String imageBase64String) {

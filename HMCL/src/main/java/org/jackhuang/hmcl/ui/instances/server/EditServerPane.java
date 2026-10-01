@@ -27,6 +27,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.server.Server;
 import org.jackhuang.hmcl.server.ServerStatus;
 import org.jackhuang.hmcl.server.ServerStatusPinger;
 import org.jackhuang.hmcl.server.ServerStatusResult;
@@ -203,7 +204,7 @@ public class EditServerPane extends TransitionPane implements DialogAware {
                     if (reference != null) {
                         handleCallback.accept(reference.withIpAndName(serverIP, serverName));
                     } else {
-                        handleCallback.accept(new ServerListPage.IconedServer(false, false, null, serverIP, serverName));
+                        handleCallback.accept(new ServerListPage.IconedServer(Server.ServerPackStatus.PROMPT, false, null, serverIP, serverName));
                     }
                 });
                 btnCancel.setOnAction(e -> {
@@ -220,7 +221,7 @@ public class EditServerPane extends TransitionPane implements DialogAware {
                 if (reference != null) {
                     handleCallback.accept(reference.withIpAndName(serverIP, serverName));
                 } else {
-                    handleCallback.accept(new ServerListPage.IconedServer(false, false, status.favicon(), serverIP, serverName));
+                    handleCallback.accept(new ServerListPage.IconedServer(Server.ServerPackStatus.PROMPT, false, status.favicon(), serverIP, serverName));
                 }
             }
         }).start();
