@@ -443,6 +443,7 @@ public final class LauncherHelper {
         try {
             corruptMods = modManager.getLocalFiles().stream()
                     .filter(LocalModFile::isCorrupt)
+                    .filter(LocalModFile::isActive)
                     .toList();
         } catch (IOException e) {
             LOG.warning("Failed to check mod integrity", e);
@@ -471,12 +472,12 @@ public final class LauncherHelper {
                     i18n("mods.corrupt.warning.title"),
                     MessageType.WARNING,
                     () -> {
-                        // User clicked "Yes" - block launch
-                        future.completeExceptionally(new CancellationException("Launch blocked due to corrupt mods"));
+                        // User clicked "Yes" - continue launch
+                        future.complete(null);
                     },
                     () -> {
-                        // User clicked "No" - continue launch
-                        future.complete(null);
+                        // User clicked "No" - block launch
+                        future.completeExceptionally(new CancellationException("Launch blocked due to corrupt mods"));
                     }
             );
         });
