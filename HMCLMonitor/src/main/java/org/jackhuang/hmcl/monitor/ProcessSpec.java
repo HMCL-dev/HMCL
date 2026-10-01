@@ -50,6 +50,11 @@ final class ProcessSpec {
     boolean inheritStdin;
     /// The post-exit command to run after the game exits, already tokenized, or `null`.
     @Nullable List<String> postExitCommand;
+    /// Whether the main launcher manually canceled the game process, written by the main launcher
+    /// over the already consumed spec file right before it destroys the game process. The monitor
+    /// checks this flag before reporting the exit, so a manual cancellation is not mistaken for a
+    /// crash; it is always `false` in the spec initially handed to the monitor.
+    boolean canceled;
     /// Whether to relaunch the launcher after the game exits unconditionally.
     boolean relaunchAlways;
     /// Whether to relaunch the launcher after the game exits abnormally.

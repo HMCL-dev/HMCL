@@ -144,7 +144,7 @@ public final class MonitorCrashReporter {
         try {
             List<String> commands = result.commands != null ? result.commands : List.of();
             ProcessHandle gameHandle = result.pid > 0 ? ProcessHandle.of(result.pid).orElse(null) : null;
-            MonitorGameProcess process = new MonitorGameProcess(gameHandle, commands, result.processStartTime);
+            MonitorGameProcess process = new MonitorGameProcess(gameHandle, commands, result.processStartTime, null);
 
             ProcessListener.ExitType exitType = ProcessListener.ExitType.APPLICATION_ERROR;
             if (result.exitType != null) {

@@ -79,7 +79,9 @@ public final class MonitorSupervisor {
     /// Reads the [ProcessSpec] from `specPath`, creates the process it describes, supervises it
     /// until it exits, and reports the result.
     ///
-    /// @param specPath the file containing the [ProcessSpec]; deleted after the process is created
+    /// @param specPath the file containing the [ProcessSpec]; deleted after the process is created,
+    ///                 and possibly rewritten by the main launcher afterward to mark a manual
+    ///                 cancellation, which [startMonitors] consumes before reporting the exit
     /// @throws IOException          if the spec file is malformed or the game process cannot be created
     /// @throws InterruptedException if interrupted while waiting for the game process
     public static void start(Path specPath) throws IOException, InterruptedException {
@@ -120,12 +122,12 @@ public final class MonitorSupervisor {
         // process exited early) is not fatal: only the forwarding stops, the log file keeps
         // collecting the remaining output.
         try (BufferedWriter logWriter = Files.newBufferedWriter(logFile, MonitorProtocol.CHARSET)) {
-            startMonitors(gameProcess, logWriter, protocol, spec, processStartTime, logFile);
+            startMonitors(gameProcess, logWriter, protocol, spec, processStartTime, logFile, specPath);
         }
     }
 
     static private void startMonitors(ManagedProcess gameProcess, BufferedWriter logWriter, PrintStream protocol,
-                                      ProcessSpec spec, long processStartTime, Path logFile) throws InterruptedException {
+                                      ProcessSpec spec, long processStartTime, Path logFile, Path specPath) throws InterruptedException {
         AtomicBoolean parentGone = new AtomicBoolean(false);
         class LineSink {
             void accept(String line, boolean isErrorStream) {
@@ -158,17 +160,26 @@ public final class MonitorSupervisor {
 
         Thread exitWaiter = Lang.thread(new ExitWaiter(gameProcess, List.of(stdoutPump, stderrPump), (exitCode, exitType) -> {
             LOG.info("Game exited with code " + exitCode + "(" + Integer.toHexString(exitCode) + "), type " + exitType);
-            protocol.println(MonitorProtocol.exitMessage(exitCode, exitType));
+
+            // The main launcher rewrites the spec file to mark a manual cancellation right before it
+            // destroys the game process, so a present file can only be caused by an exit requested
+            // by the user; report it as interrupted, mirroring the interrupted ExitWaiter of the
+            // direct launch path.
+            boolean canceled = readCanceled(specPath);
+            ProcessListener.ExitType reportedType = canceled ? ProcessListener.ExitType.INTERRUPTED : exitType;
+            if (canceled)
+                LOG.info("The game process was canceled by the main launcher, reporting the exit as interrupted");
+            protocol.println(MonitorProtocol.exitMessage(exitCode, reportedType));
 
             runPostExitCommand(spec);
 
-            boolean crashed = exitType != ProcessListener.ExitType.NORMAL;
+            boolean crashed = reportedType != ProcessListener.ExitType.NORMAL;
             try {
                 @Nullable Path resultFile = null;
                 if (crashed) {
-                    resultFile = writeResult(spec, gameProcess.getPid(), processStartTime, exitCode, exitType, logFile);
+                    resultFile = writeResult(spec, gameProcess.getPid(), processStartTime, exitCode, reportedType, logFile);
                 }
-                boolean relaunch = spec.relaunchAlways || (spec.relaunchOnCrash && crashed);
+                boolean relaunch = !canceled && (spec.relaunchAlways || (spec.relaunchOnCrash && crashed));
                 if (relaunch && !isParentAlive()) {
                     relaunch(resultFile);
                 }
@@ -199,6 +210,27 @@ public final class MonitorSupervisor {
         } catch (Throwable e) {
             LOG.warning("An Exception happened while running exit command.", e);
         }
+    }
+
+    /// Returns whether the main launcher rewrote the spec file to mark the game process as manually
+    /// canceled, consuming the rewritten file so that it does not outlive this check.
+    private static boolean readCanceled(Path specPath) {
+        if (!Files.exists(specPath))
+            return false;
+        boolean canceled = false;
+        try {
+            ProcessSpec spec = JsonUtils.fromJsonFile(specPath, ProcessSpec.class);
+            canceled = spec != null && spec.canceled;
+        } catch (IOException e) {
+            LOG.warning("Failed to read the rewritten monitor spec file " + specPath, e);
+        } finally {
+            try {
+                Files.deleteIfExists(specPath);
+            } catch (IOException e) {
+                LOG.warning("Failed to delete the rewritten monitor spec file " + specPath, e);
+            }
+        }
+        return canceled;
     }
 
     /// Writes the [ResultSpec] consumed by a relaunched launcher to a temp file.

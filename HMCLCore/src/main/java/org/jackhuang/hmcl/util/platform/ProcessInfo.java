@@ -49,7 +49,8 @@ public interface ProcessInfo {
 
     /// Destroys the game process.
     ///
-    /// <p>Implementations that monitor the process with extra threads must also interrupt them, so
-    /// that a cancelled launch is not mistaken for a crashed game.
+    /// <p>The exit of a manually stopped game must be recognizable as a cancellation by whoever
+    /// classifies the exit, so that a cancelled launch is not mistaken for a crashed game; the
+    /// mechanism depends on how the implementation supervises the process.
     void stop();
 }

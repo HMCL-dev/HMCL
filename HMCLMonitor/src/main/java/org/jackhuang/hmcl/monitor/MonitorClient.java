@@ -100,13 +100,15 @@ public final class MonitorClient {
         }
 
         ProcessHandle gameHandle = ProcessHandle.of(pid).orElse(null);
-        MonitorGameProcess process = new MonitorGameProcess(gameHandle, context.builder().command(), processStartTime);
+        MonitorGameProcess process = new MonitorGameProcess(gameHandle, context.builder().command(), processStartTime, specFile);
 
         ProcessListener listener = context.listener();
         if (listener != null)
             listener.setProcess(process);
 
-        Thread readerThread = Lang.thread(() -> {
+        // The reader thread keeps draining the protocol stream until the monitor exits, so that the
+        // exit message of a canceled launch is still dispatched and classified as interrupted.
+        Lang.thread(() -> {
             try {
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -116,7 +118,6 @@ public final class MonitorClient {
                 LOG.error("Failed to read from the HMCL monitor", e);
             }
         }, "hmcl-monitor-reader", true);
-        process.attachReaderThread(readerThread);
 
         return process;
     }
