@@ -126,6 +126,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         return new ModListPageSkin(this);
     }
 
+    /// Opens the search bar and appends `character` to the current query.
+    ///
+    /// @param character the character typed by the user
+    public void search(String character) {
+        if (getSkin() instanceof ModListPageSkin skin) {
+            skin.search(character);
+        }
+    }
+
     public void refresh() {
         loadMods(modManager);
     }
@@ -507,6 +516,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     Platform.runLater(searchField::requestFocus);
                 }
             }
+        }
+
+        /// Opens the search bar and appends `character` to the current query.
+        ///
+        /// @param character the character typed by the user
+        void search(String character) {
+            changeToolbar(searchBar);
+            searchField.appendText(character);
+            searchField.requestFocus();
         }
 
         private void search() {
