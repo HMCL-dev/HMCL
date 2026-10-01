@@ -47,10 +47,7 @@ public interface ProcessInfo {
     /// Returns whether the game process is still running.
     boolean isRunning();
 
-    /// Destroys the game process.
-    ///
-    /// <p>The exit of a manually stopped game must be recognizable as a cancellation by whoever
-    /// classifies the exit, so that a cancelled launch is not mistaken for a crashed game; the
-    /// mechanism depends on how the implementation supervises the process.
+    /// Destroys the game process, in a way that lets the exit classifier recognize the exit as a
+    /// manual cancellation rather than a crash.
     void stop();
 }

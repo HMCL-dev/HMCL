@@ -66,11 +66,9 @@ public final class MonitorClient {
 
     /// Launches the game process via a new HMCL monitor process and returns a view of it.
     ///
-    /// <p>This method blocks until the monitor has created the game process and reported its id
-    /// back. A reader thread is spawned afterward to dispatch the monitor's protocol messages:
-    /// game output lines are forwarded to the [listener][MonitorLaunchContext#listener()], and the
-    /// exit event triggers [ProcessListener#onExit]. The reader thread keeps draining the stream
-    /// even when the listener is absent, since an undrained pipe would eventually block the monitor.
+    /// <p>Blocks until the monitor has created the game process and reported its id back; game
+    /// output and the exit event are dispatched to the [listener][MonitorLaunchContext#listener()]
+    /// asynchronously afterward.
     ///
     /// @param context the launch context prepared by [org.jackhuang.hmcl.launch.DefaultLauncher]
     /// @return a view of the game process managed by the monitor
@@ -107,7 +105,9 @@ public final class MonitorClient {
             listener.setProcess(process);
 
         // The reader thread keeps draining the protocol stream until the monitor exits, so that the
-        // exit message of a canceled launch is still dispatched and classified as interrupted.
+        // exit message of a canceled launch is still dispatched and classified as interrupted. It
+        // must drain even without a listener, since an undrained pipe would eventually block the
+        // monitor.
         Lang.thread(() -> {
             try {
                 String line;
@@ -131,12 +131,8 @@ public final class MonitorClient {
             spec.directory = builder.directory().getAbsolutePath();
         spec.environment = new LinkedHashMap<>(builder.environment());
         spec.encoding = context.encoding().name();
-        // The direct launch path lets a listener-less game inherit the launcher's standard input;
-        // keep that behavior for the CLOSE-like launcher visibility.
         spec.inheritStdin = context.listener() == null;
         spec.postExitCommand = context.postExitCommand();
-        // The relaunch policy comes from the launch context; the monitor re-checks the liveness of
-        // this process before relaunching, so a still-alive launcher is never duplicated.
         MonitorLaunchContext.RelaunchPolicy relaunchPolicy = context.relaunchPolicy();
         spec.relaunchAlways = relaunchPolicy == MonitorLaunchContext.RelaunchPolicy.ALWAYS;
         spec.relaunchOnCrash = relaunchPolicy == MonitorLaunchContext.RelaunchPolicy.ON_CRASH;
@@ -227,8 +223,7 @@ public final class MonitorClient {
             waiter.interrupt();
             // The monitor must not outlive a failed handshake: it would create and supervise the
             // game process on its own, leaving behind an orphaned game, e.g. when the user cancels
-            // the launch while the handshake is still pending. Destroying an already-dead monitor
-            // (the monitor exited before the handshake) is a no-op.
+            // the launch while the handshake is still pending.
             if (!handshakeCompleted)
                 daemon.destroy();
         }

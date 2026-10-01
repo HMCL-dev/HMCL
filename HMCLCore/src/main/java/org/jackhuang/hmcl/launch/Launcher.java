@@ -84,8 +84,7 @@ public abstract class Launcher {
 
     /// Starts the game process.
     ///
-    /// @return the information of the launched game process; a [org.jackhuang.hmcl.util.platform.ManagedProcess] when the process is
-    ///         spawned directly, or a view of the monitor-supervised process otherwise
+    /// @return the information of the launched game process
     /// @throws IOException          if the process cannot be created or launch preparation fails
     /// @throws InterruptedException if interrupted while preparing or starting the process
     public abstract ProcessInfo launch() throws IOException, InterruptedException;

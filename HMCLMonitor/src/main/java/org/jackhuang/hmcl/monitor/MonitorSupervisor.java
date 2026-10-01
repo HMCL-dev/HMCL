@@ -80,9 +80,7 @@ public final class MonitorSupervisor {
     /// Reads the [ProcessSpec] from `specPath`, creates the process it describes, supervises it
     /// until it exits, and reports the result.
     ///
-    /// @param specPath the file containing the [ProcessSpec]; deleted after the process is created,
-    ///                 and possibly rewritten by the main launcher afterward to mark a manual
-    ///                 cancellation, which [startMonitors] consumes before reporting the exit
+    /// @param specPath the file containing the [ProcessSpec]
     /// @throws IOException          if the spec file is malformed or the game process cannot be created
     /// @throws InterruptedException if interrupted while waiting for the game process
     public static void start(Path specPath) throws IOException, InterruptedException {
@@ -163,10 +161,9 @@ public final class MonitorSupervisor {
         Thread exitWaiter = Lang.thread(new ExitWaiter(gameProcess, List.of(stdoutPump, stderrPump), (exitCode, exitType) -> {
             LOG.info("Game exited with code " + exitCode + "(" + Integer.toHexString(exitCode) + "), type " + exitType);
 
-            // The main launcher rewrites the spec file to mark a manual cancellation right before it
-            // destroys the game process, so a present file can only be caused by an exit requested
-            // by the user; report it as interrupted, mirroring the interrupted ExitWaiter of the
-            // direct launch path.
+            // A present spec file can only mean the main launcher marked a manual cancellation
+            // right before destroying the game process (see MonitorGameProcess#stop); report the
+            // exit as interrupted like the direct launch path does.
             boolean canceled = readCanceled(specPath);
             ProcessListener.ExitType reportedType = canceled ? ProcessListener.ExitType.INTERRUPTED : exitType;
             if (canceled)

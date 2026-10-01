@@ -942,10 +942,9 @@ public final class LauncherHelper {
 
         /// Called when the game window has been detected and the launch has succeeded.
         ///
-        /// <p>When the game process is managed by the HMCL monitor, the main launcher process may exit
-        /// right away for the [LauncherVisibility#HIDE] and [LauncherVisibility#HIDE_AND_REOPEN]
-        /// visibilities: the monitor supervises the game process, analyzes its exit, and relaunches
-        /// HMCL if configured to, so lingering here would only waste resources.
+        /// <p>When the game exit is handled by the HMCL monitor, the application exits right away for
+        /// the [LauncherVisibility#HIDE] and [LauncherVisibility#HIDE_AND_REOPEN] visibilities;
+        /// otherwise this method delegates to [finishLaunch].
         private void finishLaunchAfterWindowDetected() {
             if (MonitorClient.isEnabled() && !showLogs
                     && (launcherVisibility == LauncherVisibility.HIDE

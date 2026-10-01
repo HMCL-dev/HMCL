@@ -31,14 +31,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// A view of the game process supervised by the HMCL monitor.
 ///
 /// <p>Unlike [org.jackhuang.hmcl.util.platform.ManagedProcess], the game process is not spawned nor
-/// owned by this JVM; only its id, command line and start time are known, learned from the monitor's
-/// handshake. [stop] rewrites the spec file to mark the game process as canceled before destroying
-/// it through its [ProcessHandle], so the monitor reports the exit as interrupted rather than a
-/// crash.
-///
-/// <p>Instances also represent already-exited games when presenting the crash window of a relaunched
-/// launcher; their [handle][#getHandle] may be unresolvable and their spec file is unknown in that
-/// case.
+/// owned by this JVM; only the information reported by the monitor's handshake is known. Instances
+/// may also represent already-exited games when presenting the crash window of a relaunched
+/// launcher, in which case the [handle][#getHandle] may be unresolvable and the spec file unknown.
 @NotNullByDefault
 public final class MonitorGameProcess implements ProcessInfo {
 
@@ -46,8 +41,7 @@ public final class MonitorGameProcess implements ProcessInfo {
     private final long pid;
     private final List<String> commands;
     private final long processStartTime;
-    /// The file the spec was exchanged with the monitor through, rewritten by [stop] to mark the
-    /// cancellation, or `null` when the game process is a dead one presented by a relaunched launcher.
+    /// The file the spec was exchanged with the monitor through, or `null` when unknown.
     private final @Nullable Path specFile;
 
     /// Creates a view of the monitor-supervised game process.
@@ -98,10 +92,8 @@ public final class MonitorGameProcess implements ProcessInfo {
 
     @Override
     public void stop() {
-        // The monitor lives in another JVM, so its exit classification cannot be interrupted the way
-        // the direct launch path interrupts its ExitWaiter; the rewritten spec file is the signal
-        // telling the monitor that this exit is a manual cancellation. It is written before the game
-        // process is destroyed, so the file is guaranteed to be present when the monitor checks it.
+        // The monitor cannot be interrupted the way the direct launch path's ExitWaiter is; the
+        // rewritten spec file is the cancellation signal, so write it before destroying the process.
         Path specFile = this.specFile;
         if (specFile != null)
             writeCancelSpec(specFile);

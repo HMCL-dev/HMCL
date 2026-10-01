@@ -71,9 +71,8 @@ public final class MonitorCrashReporter {
     /// Shows the game crash window for the given monitor result file.
     ///
     /// <p>Must be called on the JavaFX application thread after the main window has been set up.
-    /// The result file is deleted once it has been consumed. When the launched instance cannot be
-    /// resolved even after every game repository has finished loading, the crash window is skipped;
-    /// the session log file remains on disk for inspection.
+    /// The result file is deleted once consumed. The crash window is skipped when the launched
+    /// instance cannot be resolved; the session log file remains on disk for inspection.
     ///
     /// @param resultFile the result file written by the monitor
     public static void show(Path resultFile) {
