@@ -40,7 +40,7 @@ public sealed class ServerAddressResolveResult {
         Map<String, String> queryProperties = new LinkedHashMap<>(serverAddress.getQueryProperties());
         boolean isSame = serverAddress.getHostAndIp().equals(address.getHostName(), address.getPort());
 
-        if (isSame && queryProperties.get("_o") != null) {
+        if (!isSame || queryProperties.get("_o") != null) {
             queryProperties.put("_o", serverAddress.getHostAndIp().host() + ":" + serverAddress.getHostAndIp().port());
         }
 

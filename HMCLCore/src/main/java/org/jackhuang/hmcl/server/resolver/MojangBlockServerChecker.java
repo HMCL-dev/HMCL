@@ -46,8 +46,8 @@ public final class MojangBlockServerChecker {
                 if (predicate == null) {
                     try {
                         URLConnection urlConnection = (new URL("https://sessionserver.mojang.com/blockedservers")).openConnection();
-                        urlConnection.setConnectTimeout(70_000);
-                        urlConnection.setReadTimeout(70_000);
+                        urlConnection.setConnectTimeout(7_000);
+                        urlConnection.setReadTimeout(7_000);
 
                         try (InputStream is = urlConnection.getInputStream();
                              BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.ISO_8859_1))

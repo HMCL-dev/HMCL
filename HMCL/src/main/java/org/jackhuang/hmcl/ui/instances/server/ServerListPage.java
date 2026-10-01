@@ -357,6 +357,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
             boolean oldEmpty = isEmpty();
 
             super.updateItem(holder, empty);
+            if (oldHolder == holder && oldEmpty == empty) return;
 
             if (serverStatusPingingValueSubscription != null) {
                 serverStatusPingingValueSubscription.unsubscribe();
@@ -366,9 +367,6 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                 serverStatusResultValueSubscription.unsubscribe();
                 serverStatusResultValueSubscription = null;
             }
-
-
-            if (oldHolder == holder && oldEmpty == empty) return;
 
             this.graphic.releaseRippleImmediately();
             this.content.getTags().clear();
@@ -386,7 +384,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
 
                 String displayIp = holder.server.getIp();
                 if (displayIp == null) displayIp = "";
-                int queryStart = holder.server.getIp().lastIndexOf('?');
+                int queryStart = displayIp.lastIndexOf('?');
                 boolean mask = false;
                 if (queryStart != -1) {
                     mask = true;

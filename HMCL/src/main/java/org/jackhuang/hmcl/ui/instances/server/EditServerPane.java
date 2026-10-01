@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.ui.construct.DialogAware;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -59,13 +60,17 @@ public class EditServerPane extends TransitionPane implements DialogAware {
     private final SpinnerPane spinner = new SpinnerPane();
     private final Label lblErrorMessage = new Label();
 
-    public EditServerPane(Type type, ServerListPage.IconedServer reference, Consumer<ServerListPage.IconedServer> handleCallback) {
+    public EditServerPane(Type type, @Nullable ServerListPage.IconedServer reference, Consumer<ServerListPage.IconedServer> handleCallback) {
         this.type = type;
         this.reference = reference;
         this.handleCallback = handleCallback;
 
         getStyleClass().add("skin-pane");
-        initPaneContents(reference.getName(), reference.getIp());
+        if (reference != null) {
+            initPaneContents(reference.getName(), reference.getIp());
+        } else {
+            initPaneContents("", "");
+        }
     }
 
     private void initPaneContents(String serverName, String serverIP) {

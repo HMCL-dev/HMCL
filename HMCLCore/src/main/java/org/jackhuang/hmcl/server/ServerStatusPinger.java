@@ -47,6 +47,7 @@ public final class ServerStatusPinger {
                 try (Socket socket = new Socket()) {
                     socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
                     socket.connect(successResult.getConnectAddress(), 7_000);
+                    socket.setSoTimeout(7_000);
 
                     try (DataOutputStream out = new DataOutputStream(socket.getOutputStream());
                          DataInputStream in = new DataInputStream(socket.getInputStream())) {
