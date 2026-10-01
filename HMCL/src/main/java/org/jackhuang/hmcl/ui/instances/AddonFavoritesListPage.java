@@ -69,9 +69,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AddonFavoritesListPage extends Control implements DecoratorPage, PageAware {
 
-    private static String translateName(String name) {
-        if (name.isEmpty()) return i18n("message.default");
-        return name;
+    public static String getFavoriteDisplayName(FavoritesManager.Favorite favorite) {
+        if (favorite.getName().isEmpty()) return i18n("message.default");
+        return favorite.getName();
     }
 
     private static final FavoritesManager manager = FavoritesManager.getInstance();
@@ -273,7 +273,7 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage, Pa
         protected void updateControl(FavoritesManager.Favorite item, boolean empty) {
             if (item == null || empty) return;
 
-            content.setTitle(translateName(item.getName()));
+            content.setTitle(getFavoriteDisplayName(item));
 
             final int count = item.getItems().size();
             final int availableCount;
@@ -390,7 +390,7 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage, Pa
                             downloadListPage,
                             getItem().addon,
                             HMCLGameInstance.Optional.of(page.parentPage.instanceReference.get().repository(), page.parentPage.selectedInstance.get()),
-                            switch (getItem().addon.type()) { // TODO remove this because we have a better way
+                            switch (getItem().addon.type()) { // TODO remove this
                                 case MOD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD;
                                 case RESOURCE_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK;
                                 case SHADER_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_SHADER;

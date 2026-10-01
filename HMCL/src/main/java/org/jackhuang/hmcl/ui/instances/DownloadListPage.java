@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.*;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.*;
@@ -653,12 +650,15 @@ public class DownloadListPage extends Control implements DecoratorPage {
                             iconLoader.load(imageContainer.imageProperty(), item.iconUrl());
 
                             addToFavBtn.setOnAction(e -> {
-                                if (addedToFav.get()) {
-                                    FavoritesManager.getInstance().getDefault().removeAddons(List.of(item));
-                                    addedToFav.set(false);
+                                if (FavoritesManager.getInstance().getFavorites().size() > 1) {
+                                    Controllers.dialog(new AddToFavoritesDialog(item, addedToFav));
                                 } else {
-                                    FavoritesManager.getInstance().getDefault().add(item);
-                                    addedToFav.set(true);
+                                    if (addedToFav.get()) {
+                                        FavoritesManager.getInstance().getDefault().removeAddons(List.of(item));
+                                    } else {
+                                        FavoritesManager.getInstance().getDefault().add(item);
+                                    }
+                                    addedToFav.set(!addedToFav.get());
                                 }
                             });
 
@@ -680,6 +680,66 @@ public class DownloadListPage extends Control implements DecoratorPage {
             for (RemoteAddonRepository.Category subcategory : category.subcategories()) {
                 resolveCategory(subcategory, indent + 1, result);
             }
+        }
+    }
+
+    private static final class AddToFavoritesDialog extends JFXDialogLayout {
+
+        public AddToFavoritesDialog(RemoteAddon addon, BooleanProperty addedToFavProperty) {
+            setHeading(new Label(i18n("addon.favorites.add_to_fav")));
+
+            class FavCheck extends HBox {
+                private final FavoritesManager.Favorite favorite;
+                private final boolean initial;
+
+                private final JFXCheckBox check;
+
+                public FavCheck(FavoritesManager.Favorite favorite) {
+                    this.favorite = favorite;
+                    this.check = new JFXCheckBox(AddonFavoritesListPage.getFavoriteDisplayName(favorite));
+                    check.setSelected(this.initial = favorite.contains(addon));
+                    getChildren().setAll(check);
+
+                    setAlignment(Pos.CENTER_LEFT);
+                }
+            }
+
+            ComponentList content = new ComponentList();
+            List<FavCheck> checks = FavoritesManager.getInstance().getFavorites().stream().map(FavCheck::new).toList();
+            content.getContent().addAll(checks);
+
+            ScrollPane scrollPane = new ScrollPane(content);
+            scrollPane.setFitToWidth(true);
+            FXUtils.smoothScrolling(scrollPane);
+            VBox.setVgrow(scrollPane, Priority.ALWAYS);
+            setBody(scrollPane);
+
+            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+            cancelButton.getStyleClass().add("dialog-cancel");
+            cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+            JFXButton confirmButton = new JFXButton(i18n("button.ok"));
+            confirmButton.getStyleClass().add("dialog-accept");
+            confirmButton.setOnAction(e -> {
+                boolean checked = false;
+                for (FavCheck favCheck : checks) {
+                    if (favCheck.check.isSelected()) {
+                        checked = true;
+                        if (!favCheck.initial) favCheck.favorite.add(addon);
+                    } else {
+                        if (favCheck.initial) favCheck.favorite.removeAddons(List.of(addon));
+                    }
+                }
+                addedToFavProperty.set(checked);
+                fireEvent(new DialogCloseEvent());
+            });
+
+            setActions(cancelButton, confirmButton);
+
+            setPrefWidth(400);
+            setMaxWidth(Region.USE_PREF_SIZE);
+            maxHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
+            FXUtils.onEscPressed(this, cancelButton::fire);
         }
     }
 }
