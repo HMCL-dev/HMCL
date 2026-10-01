@@ -66,7 +66,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 
-public class DownloadListPage extends Control implements DecoratorPage {
+public class DownloadListPage extends Control implements DecoratorPage, PageAware {
 
     private static final FavoritesManager favoritesManager = FavoritesManager.getInstance();
 
@@ -139,6 +139,12 @@ public class DownloadListPage extends Control implements DecoratorPage {
             @Nullable HMCLGameInstance repositorySelection = repository.getSelectedInstance();
             selectedInstance.set(repositorySelection != null ? repositorySelection.getId() : null);
         }
+    }
+
+    @Override
+    public void onPageShown() {
+        favoritesLoaded.set(false);
+        favoritesLoaded.set(true);
     }
 
     public boolean isFailed() {
@@ -699,6 +705,8 @@ public class DownloadListPage extends Control implements DecoratorPage {
                     this.check = new JFXCheckBox(AddonFavoritesPage.getFavoriteDisplayName(favorite));
                     check.setSelected(this.initial = favorite.contains(addon));
                     getChildren().setAll(check);
+
+                    FXUtils.onClicked(this, check::fire);
 
                     setAlignment(Pos.CENTER_LEFT);
                 }

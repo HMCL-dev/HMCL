@@ -133,7 +133,12 @@ public final class FavoritesManager {
     public @NotNull FavoritesManager.Favorite getOrCreate(String name) {
         lock.lock();
         try {
-            return favoritesMap.computeIfAbsent(name, n -> new Favorite(this, n, new LinkedHashSet<>()));
+            if (favoritesMap.containsKey(name))
+                return favoritesMap.get(name);
+            var fav = new Favorite(this, name, new LinkedHashSet<>());
+            favoritesMap.put(name, fav);
+            save();
+            return fav;
         } finally {
             lock.unlock();
         }
@@ -147,6 +152,16 @@ public final class FavoritesManager {
         lock.lock();
         try {
             return favoritesMap.get(name);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void remove(Favorite favorite) {
+        lock.lock();
+        try {
+            if (favoritesMap.remove(favorite.getName()) != null)
+                save();
         } finally {
             lock.unlock();
         }

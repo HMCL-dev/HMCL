@@ -52,12 +52,11 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.ImageContainer;
-import org.jackhuang.hmcl.ui.construct.MDListCell;
-import org.jackhuang.hmcl.ui.construct.PageAware;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.FutureCallback;
 import org.jackhuang.hmcl.util.RemoteImageLoader;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jetbrains.annotations.NotNull;
@@ -66,13 +65,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AddonFavoritesPage extends Control implements DecoratorPage, PageAware {
 
     public static String getFavoriteDisplayName(Favorite favorite) {
-        if (favorite.getName().isEmpty()) return i18n("message.default");
+        if (favorite.getName().isEmpty()) return i18n("addon.favorites.default");
         return favorite.getName();
     }
 
@@ -120,6 +120,7 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
     @Override
     public void refresh() {
         setLoading(true);
+        navigateBack();
         items.clear();
         Task.runAsync(Schedulers.io(), manager::load)
                 .thenRunAsync(Schedulers.javafx(), () -> {
@@ -130,7 +131,6 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
 
     @Override
     public void onPageShown() {
-        navigateBack();
         refresh();
     }
 
@@ -154,6 +154,21 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
     @Override
     public Skin<?> createDefaultSkin() {
         return new AddonFavoritesPageSkin(this);
+    }
+
+    private void createNewFav() {
+        Controllers.prompt(
+                i18n("addon.favorites.create"),
+                (result, handler) -> {
+                    manager.getOrCreate(result);
+                    refresh();
+                    handler.resolve();
+                },
+                "",
+                new Validator(i18n("addon.favorites.create.name_blank"), StringUtils::isNotBlank),
+                new Validator(i18n("addon.favorites.create.already_exists"), s ->
+                        manager.getFavorites().stream().map(Favorite::getName).noneMatch(name -> name.equals(s)))
+        );
     }
 
     private void navigateTo(Favorite favorite) {
@@ -243,7 +258,8 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
         @Override
         protected List<Node> initializeToolbar(FavList skinnable) {
             return List.of(
-                    ToolbarListPageSkin.createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable.parentPage::refresh)
+                    ToolbarListPageSkin.createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable.parentPage::refresh),
+                    ToolbarListPageSkin.createToolbarButton2(i18n("addon.favorites.create"), SVG.ADD, skinnable.parentPage::createNewFav)
             );
         }
     }
@@ -251,6 +267,7 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
     private static class FavCell extends MDListCell<Favorite> {
 
         private final TwoLineListItem content = new TwoLineListItem();
+        private final JFXButton deleteButton = FXUtils.newToggleButton4(SVG.DELETE);
 
         public FavCell(AddonFavoritesPage parentPage, JFXListView<Favorite> listView) {
             super(listView);
@@ -258,10 +275,18 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
+
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
 
-            container.getChildren().setAll(content);
+            deleteButton.setOnAction(e -> {
+                if (getItem() != null && !isEmpty()) {
+                    manager.remove(getItem());
+                    parentPage.refresh();
+                }
+            });
+
+            container.getChildren().setAll(content, deleteButton);
 
             StackPane.setMargin(container, new Insets(8, 8, 8, 16));
             getContainer().getChildren().setAll(container);
@@ -274,6 +299,8 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
         @Override
         protected void updateControl(Favorite item, boolean empty) {
             if (item == null || empty) return;
+
+            deleteButton.setVisible(!item.getName().isEmpty()); // Forbid deleting default fav
 
             content.setTitle(getFavoriteDisplayName(item));
 
@@ -455,7 +482,7 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
                     if (!"minecraft".equalsIgnoreCase(category)) {
                         content.addTag(i18n(switch (source) {
                             case MODRINTH -> "modrinth.category." + category;
-                            case CURSEFORGE -> "curseforge.category." + category;
+                            case CURSEFORGE -> "curse.category." + category;
                         }));
                     }
                 }
