@@ -21,7 +21,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import org.jetbrains.annotations.Nullable;
 
-
 public class ServerAddressMaskHBox extends HBox {
     public final Label realServerLabel = new Label();
     public final Label queryLabel = new Label();
