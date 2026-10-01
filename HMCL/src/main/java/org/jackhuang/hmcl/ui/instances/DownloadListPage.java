@@ -696,7 +696,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
                 public FavCheck(FavoritesManager.Favorite favorite) {
                     this.favorite = favorite;
-                    this.check = new JFXCheckBox(AddonFavoritesListPage.getFavoriteDisplayName(favorite));
+                    this.check = new JFXCheckBox(AddonFavoritesPage.getFavoriteDisplayName(favorite));
                     check.setSelected(this.initial = favorite.contains(addon));
                     getChildren().setAll(check);
 

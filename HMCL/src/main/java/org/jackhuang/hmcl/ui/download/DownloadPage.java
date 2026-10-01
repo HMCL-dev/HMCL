@@ -80,9 +80,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private final TabHeader.Tab<DownloadListPage> modpackTab = new TabHeader.Tab<>("modpackTab");
     private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TabHeader.Tab<DownloadListPage> shaderTab = new TabHeader.Tab<>("shaderTab");
-    private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
-    private final TabHeader.Tab<AddonFavoritesListPage> favoritesTab = new TabHeader.Tab<>("favoritesTab");
-    private final TransitionPane transitionPane = new TransitionPane();
+    private final TabHeader.Tab<DownloadListPage>   worldTab       = new TabHeader.Tab<>("worldTab");
+    private final TabHeader.Tab<AddonFavoritesPage> favoritesTab   = new TabHeader.Tab<>("favoritesTab");
+    private final TransitionPane                    transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
 
     private WeakListenerHolder listenerHolder;
@@ -109,7 +109,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack(FOR_RESOURCE_PACK, true)));
         shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack(FOR_SHADER, true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteAddonRepository.WORLDS)));
-        favoritesTab.setNodeSupplier(loadVersionFor(AddonFavoritesListPage::new));
+        favoritesTab.setNodeSupplier(loadVersionFor(AddonFavoritesPage::new));
         tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab, favoritesTab);
 
         GameDirectoryManager.registerVersionsListener(this::loadVersions);
@@ -137,7 +137,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             T node = nodeSupplier.get();
             if (node instanceof DownloadListPage page) {
                 page.loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()));
-            } else if (node instanceof AddonFavoritesListPage page) {
+            } else if (node instanceof AddonFavoritesPage page) {
                 page.loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()));
             }
             return node;

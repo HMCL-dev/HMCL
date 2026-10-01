@@ -67,7 +67,7 @@ import java.util.Map;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class AddonFavoritesListPage extends Control implements DecoratorPage, PageAware {
+public class AddonFavoritesPage extends Control implements DecoratorPage, PageAware {
 
     public static String getFavoriteDisplayName(FavoritesManager.Favorite favorite) {
         if (favorite.getName().isEmpty()) return i18n("message.default");
@@ -86,11 +86,11 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage, Pa
     private final ListProperty<FavoritesManager.Favorite> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
 
     private final TransitionPane body = new TransitionPane();
-    private final FavoritesList favoritesList = new FavoritesList(this);
+    private final FavList favList = new FavList(this);
 
-    public AddonFavoritesListPage() {
+    public AddonFavoritesPage() {
         addEventHandler(KeyEvent.KEY_PRESSED, e -> {
-            if (e.getCode() == KeyCode.ESCAPE && body.getCurrentNode() != favoritesList) {
+            if (e.getCode() == KeyCode.ESCAPE && body.getCurrentNode() != favList) {
                 navigateBack();
                 e.consume();
             }
@@ -151,27 +151,27 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage, Pa
 
     @Override
     public Skin<?> createDefaultSkin() {
-        return new AddonFavoritesListPageSkin(this);
+        return new AddonFavoritesPageSkin(this);
     }
 
     private void navigateTo(FavoritesManager.Favorite favorite) {
-        var page = new AddonFavoritePage(this, favorite);
+        var page = new FavPage(this, favorite);
         body.setContent(page, ContainerAnimations.SWIPE_LEFT);
         page.requestFocus();
         page.refresh();
     }
 
     private void navigateBack() {
-        if (body.getCurrentNode() != favoritesList) {
-            body.setContent(favoritesList, ContainerAnimations.SWIPE_RIGHT);
-            favoritesList.requestFocus();
+        if (body.getCurrentNode() != favList) {
+            body.setContent(favList, ContainerAnimations.SWIPE_RIGHT);
+            favList.requestFocus();
             refresh();
         }
     }
 
-    private static class AddonFavoritesListPageSkin extends SkinBase<AddonFavoritesListPage> {
+    private static class AddonFavoritesPageSkin extends SkinBase<AddonFavoritesPage> {
 
-        protected AddonFavoritesListPageSkin(AddonFavoritesListPage control) {
+        protected AddonFavoritesPageSkin(AddonFavoritesPage control) {
             super(control);
 
             BorderPane pane = new BorderPane();
@@ -207,18 +207,18 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage, Pa
                 GridPane.setColumnSpan(lastNode, 3);
             }
 
-            control.body.setContent(control.favoritesList, ContainerAnimations.NONE);
+            control.body.setContent(control.favList, ContainerAnimations.NONE);
             pane.setCenter(control.body);
 
             getChildren().setAll(pane);
         }
     }
 
-    private static class FavoritesList extends ListPageBase<FavoritesManager.Favorite> {
+    private static class FavList extends ListPageBase<FavoritesManager.Favorite> {
 
-        private final AddonFavoritesListPage parentPage;
+        private final AddonFavoritesPage parentPage;
 
-        public FavoritesList(AddonFavoritesListPage parentPage) {
+        public FavList(AddonFavoritesPage parentPage) {
             this.parentPage = parentPage;
 
             this.itemsProperty().bind(parentPage.items);
@@ -226,31 +226,31 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage, Pa
         }
 
         public Skin<?> createDefaultSkin() {
-            return new FavoritesListSkin(this);
+            return new FavListSkin(this);
         }
     }
 
-    private static class FavoritesListSkin extends ToolbarListPageSkin<FavoritesManager.Favorite, FavoritesList> {
+    private static class FavListSkin extends ToolbarListPageSkin<FavoritesManager.Favorite, FavList> {
 
-        public FavoritesListSkin(FavoritesList skinnable) {
+        public FavListSkin(FavList skinnable) {
             super(skinnable);
 
-            listView.setCellFactory(x -> new FavoritesCell(skinnable.parentPage, listView));
+            listView.setCellFactory(x -> new FavCell(skinnable.parentPage, listView));
         }
 
         @Override
-        protected List<Node> initializeToolbar(FavoritesList skinnable) {
+        protected List<Node> initializeToolbar(FavList skinnable) {
             return List.of(
                     ToolbarListPageSkin.createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable.parentPage::refresh)
             );
         }
     }
 
-    private static class FavoritesCell extends MDListCell<FavoritesManager.Favorite> {
+    private static class FavCell extends MDListCell<FavoritesManager.Favorite> {
 
         private final TwoLineListItem content = new TwoLineListItem();
 
-        public FavoritesCell(AddonFavoritesListPage parentPage, JFXListView<FavoritesManager.Favorite> listView) {
+        public FavCell(AddonFavoritesPage parentPage, JFXListView<FavoritesManager.Favorite> listView) {
             super(listView);
 
             HBox container = new HBox(8);
@@ -292,13 +292,13 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage, Pa
         }
     }
 
-    public static class AddonFavoritePage extends ListPageBase<FavoriteItemObject> {
+    public static class FavPage extends ListPageBase<FavItemObject> {
 
-        private final AddonFavoritesListPage parentPage;
-        private final DownloadProvider downloadProvider;
+        private final AddonFavoritesPage parentPage;
+        private final DownloadProvider   downloadProvider;
         private final FavoritesManager.Favorite favorite;
 
-        public AddonFavoritePage(AddonFavoritesListPage parentPage, FavoritesManager.Favorite favorite) {
+        public FavPage(AddonFavoritesPage parentPage, FavoritesManager.Favorite favorite) {
             this.parentPage = parentPage;
             this.downloadProvider = parentPage.downloadProvider;
             this.favorite = favorite;
@@ -306,7 +306,7 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage, Pa
 
         @Override
         protected Skin<?> createDefaultSkin() {
-            return new AddonFavoritesListPage.AddonFavoritePageSkin(this);
+            return new FavPageSkin(this);
         }
 
         public void refresh() {
@@ -316,7 +316,7 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage, Pa
                 favorite.resolve(downloadProvider);
                 return favorite.getResolvedAddons();
             }).whenComplete(Schedulers.javafx(), (map, exception) -> {
-                getItems().setAll(map.entrySet().stream().map(AddonFavoritesListPage.FavoriteItemObject::new).toList());
+                getItems().setAll(map.entrySet().stream().map(FavItemObject::new).toList());
                 setLoading(false);
             }).start();
         }
@@ -327,20 +327,20 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage, Pa
         }
     }
 
-    public static final class FavoriteItemObject {
+    public static final class FavItemObject {
 
         private final FavoritesManager.Item item;
         private final @Nullable RemoteAddon addon;
 
-        private FavoriteItemObject(Map.Entry<FavoritesManager.Item, RemoteAddon> entry) {
+        private FavItemObject(Map.Entry<FavoritesManager.Item, RemoteAddon> entry) {
             this.item = entry.getKey();
             this.addon = entry.getValue();
         }
     }
 
-    private static final class AddonFavoritePageSkin extends ToolbarListPageSkin<FavoriteItemObject, AddonFavoritePage> {
+    private static final class FavPageSkin extends ToolbarListPageSkin<FavItemObject, FavPage> {
 
-        public AddonFavoritePageSkin(AddonFavoritePage skinnable) {
+        public FavPageSkin(FavPage skinnable) {
             super(skinnable);
 
             var iconLoader = new RemoteImageLoader(skinnable.downloadProvider) {
@@ -350,11 +350,11 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage, Pa
                 }
             };
 
-            listView.setCellFactory(x -> new FavoriteItemCell(skinnable, iconLoader, listView));
+            listView.setCellFactory(x -> new FavItemCell(skinnable, iconLoader, listView));
         }
 
         @Override
-        protected List<Node> initializeToolbar(AddonFavoritePage skinnable) {
+        protected List<Node> initializeToolbar(FavPage skinnable) {
             return List.of(
                     ToolbarListPageSkin.createToolbarButton2("", SVG.ARROW_BACK, skinnable.parentPage::navigateBack),
                     ToolbarListPageSkin.createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh)
@@ -362,14 +362,14 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage, Pa
         }
     }
 
-    private static final class FavoriteItemCell extends MDListCell<FavoriteItemObject> {
+    private static final class FavItemCell extends MDListCell<FavItemObject> {
 
         private final RemoteImageLoader iconLoader;
 
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
 
-        public FavoriteItemCell(AddonFavoritePage page, RemoteImageLoader iconLoader, JFXListView<FavoriteItemObject> listView) {
+        public FavItemCell(FavPage page, RemoteImageLoader iconLoader, JFXListView<FavItemObject> listView) {
             super(listView);
 
             this.iconLoader = iconLoader;
@@ -414,7 +414,7 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage, Pa
         }
 
         @Override
-        protected void updateControl(FavoriteItemObject item, boolean empty) {
+        protected void updateControl(FavItemObject item, boolean empty) {
             if (item == null || empty) return;
 
             content.getTags().clear();
