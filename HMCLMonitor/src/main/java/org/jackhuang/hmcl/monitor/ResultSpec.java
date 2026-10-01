@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.monitor;
 
-import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 

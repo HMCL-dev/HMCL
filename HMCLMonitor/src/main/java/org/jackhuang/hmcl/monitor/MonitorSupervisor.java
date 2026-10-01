@@ -148,6 +148,7 @@ public final class MonitorSupervisor {
                 }
             }
         }
+
         LineSink sink = new LineSink();
 
         Charset encoding = Charset.forName(Objects.requireNonNullElse(spec.encoding, Charset.defaultCharset().name()));
