@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.task;
 
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -86,23 +87,6 @@ public class FileDownloadTask extends FetchTask<Void> {
         this(List.of(WebURL.parse(url)), path, integrityCheck);
     }
 
-    /// Creates a download task for one URL.
-    ///
-    /// @param url  the URL of remote file.
-    /// @param path the location that download to.
-    public FileDownloadTask(WebURL url, Path path) {
-        this(url, path, null);
-    }
-
-    /// Creates a download task with an optional integrity check for one URL.
-    ///
-    /// @param url            the URL of remote file.
-    /// @param path           the location that download to.
-    /// @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
-    public FileDownloadTask(WebURL url, Path path, @Nullable IntegrityCheck integrityCheck) {
-        this(List.of(url), path, integrityCheck);
-    }
-
     /// Creates a download task with a snapshot of nonempty candidate URLs.
     ///
     /// @param urls candidate URLs of the remote file, attempted in order
@@ -117,7 +101,19 @@ public class FileDownloadTask extends FetchTask<Void> {
     /// @param path           the location that download to.
     /// @param integrityCheck the integrity check to perform, null if no integrity check is to be performed
     public FileDownloadTask(List<WebURL> urls, Path path, @Nullable IntegrityCheck integrityCheck) {
-        super(urls);
+        super(DownloadCandidates.ofUrls(urls));
+        this.file = path;
+        this.integrityCheck = integrityCheck;
+
+        setName(path.getFileName().toString());
+    }
+
+    public FileDownloadTask(DownloadCandidates candidates, Path file) {
+        this(candidates, file, null);
+    }
+
+    public FileDownloadTask(DownloadCandidates candidates, Path path, @Nullable IntegrityCheck integrityCheck) {
+        super(candidates);
         this.file = path;
         this.integrityCheck = integrityCheck;
 
@@ -149,7 +145,7 @@ public class FileDownloadTask extends FetchTask<Void> {
             if (cache.isPresent()) {
                 try {
                     FileUtils.copyFile(cache.get(), file);
-                    LOG.trace("Successfully verified file " + file + " from " + urls.get(0));
+                    LOG.trace("Successfully verified file " + file + " from " + candidates.getPrimaryCandidate().url());
                     return EnumCheckETag.CACHED;
                 } catch (IOException e) {
                     LOG.warning("Failed to copy cache files", e);
