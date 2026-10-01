@@ -57,20 +57,16 @@ public final class AprilFools {
                 "ES", "DE", "FR", "GB", "RU", "UA", "US"
         ).contains(LocaleUtils.SYSTEM_DEFAULT.getCountry());
 
-        boolean aprilFoolsMode, forceAprilFools = false;
         String value = System.getProperty("hmcl.april_fools", System.getenv("HMCL_APRIL_FOOLS"));
         if ("true".equalsIgnoreCase(value)) {
-            aprilFoolsMode = true;
-            forceAprilFools = true;
-        } else if ("false".equalsIgnoreCase(value) || !supportedRegion) {
-            aprilFoolsMode = false;
+            ENABLED = true;
+        } else if ("false".equalsIgnoreCase(value)) {
+            ENABLED = false;
         } else {
-            aprilFoolsMode = date.getMonth() == Month.APRIL && date.getDayOfMonth() == 1;
+            ENABLED = supportedRegion && date.getMonth() == Month.APRIL && date.getDayOfMonth() == 1
+                    && !settings().disableAprilFoolsProperty().get()
+                    && !(state().getShownTips().get(APRIL_FOOLS_TIP) instanceof Number year && year.intValue() >= currentYear);
         }
-
-        ENABLED = aprilFoolsMode
-                && !settings().disableAprilFoolsProperty().get()
-                && (forceAprilFools || !(state().getShownTips().get(APRIL_FOOLS_TIP) instanceof Number year && year.intValue() >= currentYear));
     }
 
     /// Whether April Fools is enabled.
