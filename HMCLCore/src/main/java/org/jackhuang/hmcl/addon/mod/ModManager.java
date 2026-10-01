@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -154,9 +155,6 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             }
         }
 
-        // Check mod file integrity before parsing metadata
-        boolean corrupt = ModIntegrityChecker.isCorrupt(file);
-
         LocalModFile modInfo = null;
 
         List<Exception> exceptions = new ArrayList<>();
@@ -198,11 +196,20 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     fileNameWithoutExtension,
                     new LocalAddonFile.Description("litemod".equals(extension) ? "LiteLoader Mod" : ""),
                     "", "", "", "", "",
-                    corrupt
+                    false
             );
-        } else if (corrupt) {
-            modInfo.setCorrupt(true);
         }
+
+        // Schedule async integrity check
+        final LocalModFile finalModInfo = modInfo;
+        CompletableFuture.runAsync(() -> {
+            try {
+                boolean corrupt = ModIntegrityChecker.isCorrupt(file);
+                finalModInfo.setCorrupt(corrupt);
+            } catch (Exception e) {
+                LOG.warning("Failed to check mod integrity: " + file, e);
+            }
+        });
 
         if (!modInfo.isOld()) {
             localFiles.add(modInfo);

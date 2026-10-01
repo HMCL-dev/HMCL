@@ -51,7 +51,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     private final String fileName;
     private final String logoPath;
     private final BooleanProperty activeProperty;
-    private boolean corrupt;
+    private final BooleanProperty corruptProperty;
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
         this(modManager, mod, file, name, description, "", "", "", "", "");
@@ -73,7 +73,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         this.gameVersion = gameVersion;
         this.url = url;
         this.logoPath = logoPath;
-        this.corrupt = corrupt;
+        this.corruptProperty = new SimpleBooleanProperty(this, "corrupt", corrupt);
 
         activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
             @Override
@@ -157,12 +157,17 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
 
     /// Returns whether this mod file is corrupt (ZIP structure is damaged).
     public boolean isCorrupt() {
-        return corrupt;
+        return corruptProperty.get();
+    }
+
+    /// Returns the corrupt property for binding.
+    public BooleanProperty corruptProperty() {
+        return corruptProperty;
     }
 
     /// Sets the corrupt status of this mod file.
     public void setCorrupt(boolean corrupt) {
-        this.corrupt = corrupt;
+        this.corruptProperty.set(corrupt);
     }
 
     public boolean isActive() {
