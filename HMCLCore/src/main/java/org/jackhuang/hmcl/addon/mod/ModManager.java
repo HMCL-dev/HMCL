@@ -232,6 +232,23 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     public void refresh() throws IOException {
         lock.lock();
         try {
+            // Check if files have changed since last scan
+            Set<Path> currentFiles = new HashSet<>();
+            if (Files.isDirectory(getDirectory())) {
+                try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getDirectory())) {
+                    for (Path subitem : modsDirectoryStream) {
+                        currentFiles.add(subitem);
+                    }
+                }
+            }
+
+            // If files haven't changed and we already have loaded data, skip rescan
+            if (loaded && currentFiles.equals(localFiles.stream()
+                    .map(LocalModFile::getFile)
+                    .collect(java.util.stream.Collectors.toSet()))) {
+                return;
+            }
+
             localFiles.clear();
             localMods.clear();
 
