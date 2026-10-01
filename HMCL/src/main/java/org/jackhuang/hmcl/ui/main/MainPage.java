@@ -43,7 +43,6 @@ import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.ComponentVersionList;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -70,7 +69,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
@@ -401,13 +399,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private void launchNoGame() {
         DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
-        ComponentVersionList<?> versionList = downloadProvider.getVersionList(GameComponentType.GAME);
 
         Holder<GameInstanceID> instanceHolder = new Holder<>();
-        Task<?> task = versionList.refreshAsync("")
-                .thenSupplyAsync(() -> versionList.getVersions("").stream()
+        Task<?> task = downloadProvider.getVersionsAsync(GameComponentType.GAME, null, false)
+                .thenApplyAsync(versions -> versions.stream()
                         .filter(it -> it.getVersionType() == RELEASE)
-                        .filter(it -> NativePatcher.checkSupportedStatus(GameVersionNumber.asGameVersion(it.getGameVersion()), Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION) != NativePatcher.SupportStatus.UNSUPPORTED)
+                        .filter(it -> NativePatcher.checkSupportedStatus(it.getGameVersion(), Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION) != NativePatcher.SupportStatus.UNSUPPORTED)
                         .sorted()
                         .findFirst()
                         .orElseThrow(() -> new IOException("No versions found")))
@@ -415,7 +412,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
                     HMCLDependencyManager dependency = repository.getDependency();
 
-                    String gameVersion = version.getGameVersion();
+                    String gameVersion = version.getGameVersion().toString();
                     GameInstanceID instanceId = new GameInstanceID(gameVersion);
 
                     instanceHolder.value = instanceId;
