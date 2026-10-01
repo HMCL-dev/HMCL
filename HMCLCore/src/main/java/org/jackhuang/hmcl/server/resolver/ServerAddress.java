@@ -48,11 +48,18 @@ public final class ServerAddress {
             String queryPropertyStr = input.substring(queryStart + 1);
             String[] args = queryPropertyStr.split("&");
             for (String arg : args) {
-                String[] pair = arg.split("=");
-                queryProperties.put(
-                        URLDecoder.decode(pair[0], StandardCharsets.UTF_8),
-                        URLDecoder.decode(pair[1], StandardCharsets.UTF_8)
-                );
+                int separator = arg.indexOf('=');
+
+                String key;
+                String value;
+                if (separator >= 0) {
+                    key = URLDecoder.decode(arg.substring(0, separator), StandardCharsets.UTF_8);
+                    value = URLDecoder.decode(arg.substring(separator + 1), StandardCharsets.UTF_8);
+                } else {
+                    key = URLDecoder.decode(arg, StandardCharsets.UTF_8);
+                    value = "";
+                }
+                queryProperties.put(key, value);
             }
             input = input.substring(0, queryStart);
         }
