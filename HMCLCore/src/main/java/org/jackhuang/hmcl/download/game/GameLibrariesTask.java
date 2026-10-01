@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
+import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -30,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -152,9 +153,9 @@ public final class GameLibrariesTask extends Task<Void> {
                     for (FMLLib fmlLib : fmlLibs) {
                         Path file = libDir.resolve(fmlLib.name);
                         if (shouldDownloadFMLLib(fmlLib, file)) {
-                            List<URI> uris = dependencyManager.getDownloadProvider()
-                                    .injectURLWithCandidates(fmlLib.downloadUrl());
-                            dependencies.add(new FileDownloadTask(uris, file)
+                            DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
+                            DownloadCandidates urls = downloadProvider.getDownloadCandidates(fmlLib.downloadUrl());
+                            dependencies.add(new FileDownloadTask(urls, file)
                                     .withCounter("hmcl.install.libraries"));
                         }
                     }

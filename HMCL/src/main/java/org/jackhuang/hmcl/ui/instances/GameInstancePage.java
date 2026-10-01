@@ -207,6 +207,14 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         FXUtils.openFolder(gameInstance.getRunDirectory().resolve(sub));
     }
 
+    private void onBrowseSchematics() {
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance == null) {
+            return;
+        }
+        FXUtils.openFolder(gameInstance.getSchematicsDirectory());
+    }
+
     private void redownloadAssetIndex() {
         HMCLGameInstance gameInstance = requireGameInstance();
         if (gameInstance != null) {
@@ -358,7 +366,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         new IconedMenuItem(SVG.EXTENSION, i18n("folder.mod"), () -> control.onBrowse("mods"), browsePopup),
                         new IconedMenuItem(SVG.TEXTURE, i18n("folder.resourcepacks"), () -> control.onBrowse("resourcepacks"), browsePopup),
                         new IconedMenuItem(SVG.PUBLIC, i18n("folder.saves"), () -> control.onBrowse("saves"), browsePopup),
-                        new IconedMenuItem(SVG.SCHEMA, i18n("folder.schematics"), () -> control.onBrowse("schematics"), browsePopup),
+                        new IconedMenuItem(SVG.SCHEMA, i18n("folder.schematics"), control::onBrowseSchematics, browsePopup),
                         new IconedMenuItem(SVG.WB_SUNNY, i18n("folder.shaderpacks"), () -> control.onBrowse("shaderpacks"), browsePopup),
                         new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("folder.screenshots"), () -> control.onBrowse("screenshots"), browsePopup),
                         new IconedMenuItem(SVG.SETTINGS, i18n("folder.config"), () -> control.onBrowse("config"), browsePopup),

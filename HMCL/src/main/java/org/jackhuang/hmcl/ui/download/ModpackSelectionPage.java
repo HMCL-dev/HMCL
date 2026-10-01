@@ -27,6 +27,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
@@ -125,7 +126,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
             try {
                 if (url.endsWith("server-manifest.json")) {
                     // if urlString ends with .json, we assume that the url is server-manifest.json
-                    Controllers.taskDialog(new GetTask(url).whenComplete(Schedulers.javafx(), (result, e) -> {
+                    Controllers.taskDialog(new GetTask(WebURL.parse(url)).whenComplete(Schedulers.javafx(), (result, e) -> {
                         ServerModpackManifest manifest = JsonUtils.fromMaybeMalformedJson(result, ServerModpackManifest.class);
                         if (manifest == null) {
                             handler.reject(i18n("modpack.type.server.malformed"));
