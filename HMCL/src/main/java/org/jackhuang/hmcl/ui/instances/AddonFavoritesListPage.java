@@ -38,6 +38,7 @@ import javafx.scene.layout.*;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -345,8 +346,8 @@ public class AddonFavoritesListPage extends Control implements DecoratorPage, Pa
 
             var iconLoader = new RemoteImageLoader(skinnable.downloadProvider) {
                 @Override
-                protected @NotNull Task<Image> createLoadTask(@NotNull List<WebURL> uris) {
-                    return FXUtils.getRemoteImageTask(uris, 64, 64, true, true);
+                protected @NotNull Task<Image> createLoadTask(@NotNull DownloadCandidates candidates) {
+                    return FXUtils.getRemoteImageTask(candidates, 64, 64, true, true);
                 }
             };
 
