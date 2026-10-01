@@ -80,9 +80,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private final TabHeader.Tab<DownloadListPage> modpackTab = new TabHeader.Tab<>("modpackTab");
     private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TabHeader.Tab<DownloadListPage> shaderTab = new TabHeader.Tab<>("shaderTab");
-    private final TabHeader.Tab<DownloadListPage>   worldTab       = new TabHeader.Tab<>("worldTab");
-    private final TabHeader.Tab<AddonFavoritesPage> favoritesTab   = new TabHeader.Tab<>("favoritesTab");
-    private final TransitionPane                    transitionPane = new TransitionPane();
+    private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
+    private final TabHeader.Tab<AddonFavoritesPage> favoritesTab = new TabHeader.Tab<>("favoritesTab");
+    private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
 
     private WeakListenerHolder listenerHolder;

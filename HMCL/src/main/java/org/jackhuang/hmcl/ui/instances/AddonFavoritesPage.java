@@ -295,7 +295,7 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
     public static class FavPage extends ListPageBase<FavItemObject> {
 
         private final AddonFavoritesPage parentPage;
-        private final DownloadProvider   downloadProvider;
+        private final DownloadProvider downloadProvider;
         private final FavoritesManager.Favorite favorite;
 
         public FavPage(AddonFavoritesPage parentPage, FavoritesManager.Favorite favorite) {
