@@ -72,5 +72,4 @@ final class ResourcePackFolder extends ResourcePackFile {
     public void delete() throws IOException {
         FileUtils.deleteDirectory(file);
     }
-
 }
