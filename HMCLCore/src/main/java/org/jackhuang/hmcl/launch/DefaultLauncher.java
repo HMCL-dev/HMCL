@@ -53,6 +53,51 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @author huangyuhui
 public class DefaultLauncher extends Launcher {
 
+    /// Launches the game process described by the context via the HMCL monitor process.
+    @FunctionalInterface
+    public interface LaunchMonitorFunction {
+        /// @param context the launch context prepared by [DefaultLauncher]
+        /// @return a view of the game process launched and supervised by the monitor
+        ProcessInfo apply(MonitorLaunchContext context) throws IOException;
+    }
+
+    /// The context needed to launch a game process via the HMCL monitor process.
+    ///
+    /// @param builder         the process builder prepared by [DefaultLauncher]; its command line,
+    ///                        working directory and environment are already complete
+    /// @param listener        the process listener that receives game output and exit events,
+    ///                        or `null` if game output is not needed
+    /// @param encoding        the charset of the game process output
+    /// @param options         the launch options, providing instance identity for the result report
+    /// @param postExitCommand the post-exit command to run after the game exits, already tokenized
+    ///                        and with placeholders expanded, or `null` if not configured
+    /// @param relaunchPolicy  what the monitor should do after the game process exits
+    public record MonitorLaunchContext(
+            ProcessBuilder builder,
+            @Nullable ProcessListener listener,
+            Charset encoding,
+            LaunchOptions options,
+            @Nullable List<String> postExitCommand,
+            RelaunchPolicy relaunchPolicy) {
+
+        /// What the HMCL monitor process should do after the game process exits.
+        public enum RelaunchPolicy {
+            /// Never relaunch the launcher after the game exits.
+            NEVER,
+            /// Relaunch the launcher when the game exits abnormally, so that it presents the
+            /// crash window.
+            ON_CRASH,
+            /// Relaunch the launcher unconditionally after the game exits, e.g. for the
+            /// "hide and reopen" launcher visibility.
+            ALWAYS
+        }
+    }
+
+    /// If non-null, game processes are created via the HMCL monitor process instead of directly.
+    private @Nullable LaunchMonitorFunction launchMonitor = null;
+    /// The relaunch policy applied by the HMCL monitor process after the game process exits.
+    private MonitorLaunchContext.RelaunchPolicy relaunchPolicy = MonitorLaunchContext.RelaunchPolicy.NEVER;
+
     public DefaultLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
         super(instance, manifest, authInfo, options, listener, daemon);
     }
@@ -661,8 +706,20 @@ public class DefaultLauncher extends Launcher {
         return Path.of(options.getNativesDir());
     }
 
+    /// Sets the monitor launcher; when non-null, [launching][#launch] delegates process creation to
+    /// the HMCL monitor process.
+    public void setLaunchMonitor(@Nullable LaunchMonitorFunction launchMonitor) {
+        this.launchMonitor = launchMonitor;
+    }
+
+    /// Sets what the HMCL monitor process should do after the game process exits. Ignored unless
+    /// [a monitor launcher is set][#setLaunchMonitor].
+    public void setRelaunchPolicy(MonitorLaunchContext.RelaunchPolicy relaunchPolicy) {
+        this.relaunchPolicy = relaunchPolicy;
+    }
+
     @Override
-    public ManagedProcess launch() throws IOException, InterruptedException {
+    public ProcessInfo launch() throws IOException, InterruptedException {
         Path nativeFolder = getNativeFolder();
 
         final Command command = generateCommandLine(nativeFolder);
@@ -704,6 +761,17 @@ public class DefaultLauncher extends Launcher {
             if (appdata != null) builder.environment().put("APPDATA", appdata.toString());
 
             builder.environment().putAll(getEnvVars(nativeFolder));
+
+            if (launchMonitor != null) {
+                // The post-exit command must be executed by the monitor, since the main launcher
+                // process may exit before the game process does.
+                List<String> postExitCommand = null;
+                if (StringUtils.isNotBlank(options.getPostExitCommand()))
+                    postExitCommand = StringUtils.tokenize(options.getPostExitCommand(), getEnvVars(nativeFolder));
+
+                return launchMonitor.apply(new MonitorLaunchContext(builder, listener, command.encoding, options, postExitCommand, relaunchPolicy));
+            }
+
             process = builder.start();
         } catch (IOException e) {
             throw new ProcessCreationException(e);
