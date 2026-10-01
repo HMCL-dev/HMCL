@@ -285,6 +285,22 @@ public final class LauncherHelper {
 
                     LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(gameInstance.getModsDirectory(), 10));
 
+                    // Log corrupt mods before game launch
+                    try {
+                        List<LocalModFile> corruptMods = gameInstance.getModManager().getLocalFiles().stream()
+                                .filter(LocalModFile::isCorrupt)
+                                .filter(LocalModFile::isActive)
+                                .toList();
+                        if (!corruptMods.isEmpty()) {
+                            LOG.warning("Found " + corruptMods.size() + " corrupt mod(s) in current instance:");
+                            for (LocalModFile mod : corruptMods) {
+                                LOG.warning("  - " + mod.getName() + " (" + mod.getFile() + ")");
+                            }
+                        }
+                    } catch (IOException e) {
+                        LOG.warning("Failed to check mod integrity before launch", e);
+                    }
+
                     return new HMCLGameLauncher(
                             gameInstance,
                             launchManifest.get(),
