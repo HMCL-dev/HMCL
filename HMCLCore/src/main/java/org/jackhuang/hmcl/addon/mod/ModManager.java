@@ -243,10 +243,17 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             }
 
             // If files haven't changed and we already have loaded data, skip rescan
-            if (loaded && currentFiles.equals(localFiles.stream()
-                    .map(LocalModFile::getFile)
-                    .collect(java.util.stream.Collectors.toSet()))) {
-                return;
+            if (loaded && currentFiles.size() == localFiles.size()) {
+                boolean allMatch = true;
+                for (LocalModFile localFile : localFiles) {
+                    if (!currentFiles.contains(localFile.getFile())) {
+                        allMatch = false;
+                        break;
+                    }
+                }
+                if (allMatch) {
+                    return;
+                }
             }
 
             localFiles.clear();
