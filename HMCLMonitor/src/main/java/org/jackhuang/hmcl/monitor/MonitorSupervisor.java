@@ -47,8 +47,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// <p>The monitor has no user interface. It owns the game process, so it always knows the real exit
 /// code even after the main launcher process has exited. Game output is teed into a session log
 /// file and forwarded to the main launcher process over [the protocol][MonitorProtocol]; after the
-/// game exits, the result is written to a result file, the post-exit command is run, and HMCL is
-/// relaunched if the launch options ask for it and the main launcher process is already gone.
+/// game exits, the post-exit command is run, and HMCL is relaunched if the launch options ask for
+/// it and the main launcher process is already gone. The crash result file and the session log are
+/// only kept when a relaunched launcher is going to consume them.
 @NotNullByDefault
 public final class MonitorSupervisor {
 
@@ -176,13 +177,23 @@ public final class MonitorSupervisor {
 
             boolean crashed = reportedType != ProcessListener.ExitType.NORMAL;
             try {
-                @Nullable Path resultFile = null;
-                if (crashed) {
-                    resultFile = writeResult(spec, gameProcess.getPid(), processStartTime, exitCode, reportedType, logFile);
-                }
                 boolean relaunch = !canceled && (spec.relaunchAlways || (spec.relaunchOnCrash && crashed));
+
+                @Nullable Path resultFile = null;
                 if (relaunch && !isParentAlive()) {
+                    if (crashed)
+                        resultFile = writeResult(spec, gameProcess.getPid(), processStartTime, exitCode, reportedType, logFile);
                     relaunch(resultFile);
+                }
+
+                // The session log is only consumed through a crash result file; deleting it in
+                // every other case keeps it from accumulating in the temporary directory.
+                if (resultFile == null) {
+                    try {
+                        Files.deleteIfExists(logFile);
+                    } catch (IOException e) {
+                        LOG.warning("Failed to delete the session log file " + logFile, e);
+                    }
                 }
             } catch (IOException e) {
                 LOG.error("Failed to write the monitor result file or relaunch the launcher", e);

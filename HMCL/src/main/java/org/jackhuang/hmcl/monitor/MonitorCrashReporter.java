@@ -158,7 +158,7 @@ public final class MonitorCrashReporter {
             LaunchOptions launchOptions = rebuildLaunchOptions(result);
             List<Log> logs = readSessionLogs(result.logFile);
             if (result.logFile != null) {
-                Files.delete(Path.of(result.logFile));
+                Files.deleteIfExists(Path.of(result.logFile));
             }
 
             new GameCrashWindow(process, exitType, instance, launchOptions, logs).show();

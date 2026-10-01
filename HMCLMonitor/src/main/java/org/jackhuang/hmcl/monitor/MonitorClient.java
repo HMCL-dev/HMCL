@@ -210,10 +210,12 @@ public final class MonitorClient {
             }
         }, "hmcl-monitor-handshake", true);
 
+        boolean handshakeCompleted = false;
         try {
-            return future.get(MonitorProtocol.HANDSHAKE_TIMEOUT, TimeUnit.MILLISECONDS);
+            String[] handshake = future.get(MonitorProtocol.HANDSHAKE_TIMEOUT, TimeUnit.MILLISECONDS);
+            handshakeCompleted = true;
+            return handshake;
         } catch (TimeoutException e) {
-            daemon.destroy();
             throw new IOException("Timed out waiting for the HMCL monitor handshake", e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -223,6 +225,12 @@ public final class MonitorClient {
             throw new IOException(cause.getMessage(), cause);
         } finally {
             waiter.interrupt();
+            // The monitor must not outlive a failed handshake: it would create and supervise the
+            // game process on its own, leaving behind an orphaned game, e.g. when the user cancels
+            // the launch while the handshake is still pending. Destroying an already-dead monitor
+            // (the monitor exited before the handshake) is a no-op.
+            if (!handshakeCompleted)
+                daemon.destroy();
         }
     }
 
