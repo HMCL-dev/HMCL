@@ -65,10 +65,10 @@ public class EditServerPane extends TransitionPane implements DialogAware {
         this.handleCallback = handleCallback;
 
         getStyleClass().add("skin-pane");
-        initPaneContents();
+        initPaneContents(reference.getName(), reference.getIp());
     }
 
-    private void initPaneContents() {
+    private void initPaneContents(String serverName, String serverIP) {
         body.setDisable(false);
         body.getChildren().clear();
         body.getColumnConstraints().clear();
@@ -112,8 +112,8 @@ public class EditServerPane extends TransitionPane implements DialogAware {
             }));
             body.add(txtServerName, 1, 0);
 
-            if (reference != null) {
-                txtServerName.setText(reference.getName());
+            if (serverName != null) {
+                txtServerName.setText(serverName);
             }
         }
 
@@ -128,8 +128,8 @@ public class EditServerPane extends TransitionPane implements DialogAware {
             setValidateWhileTextChanged(txtServerIP, true);
             body.add(txtServerIP, 1, 1);
 
-            if (reference != null) {
-                txtServerIP.setText(reference.getIp());
+            if (serverIP != null) {
+                txtServerIP.setText(serverIP);
             }
         }
 
@@ -203,7 +203,7 @@ public class EditServerPane extends TransitionPane implements DialogAware {
                     }
                 });
                 btnCancel.setOnAction(e -> {
-                    initPaneContents();
+                    initPaneContents(serverName, serverIP);
                 });
                 ServerStatusResult.FailureResult.Reason reason = result.getFailureReasonIfFailed();
                 lblErrorMessage.setText(switch (Objects.requireNonNull(reason)) {
