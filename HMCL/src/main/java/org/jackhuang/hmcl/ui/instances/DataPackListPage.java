@@ -21,25 +21,20 @@ import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.addon.datapack.DataPack;
+import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -126,30 +121,5 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
 
     void openDataPackFolder() {
         FXUtils.openFolder(dataPack.getPath());
-    }
-
-    @NotNull Predicate<DataPackListPageSkin.DataPackInfoObject> updateSearchPredicate(String queryString) {
-        if (queryString.isBlank()) {
-            return dataPack -> true;
-        }
-
-        final Predicate<String> stringPredicate;
-        if (queryString.startsWith("regex:")) {
-            try {
-                Pattern pattern = Pattern.compile(StringUtils.substringAfter(queryString, "regex:"));
-                stringPredicate = s -> s != null && pattern.matcher(s).find();
-            } catch (Exception e) {
-                return dataPack -> false;
-            }
-        } else {
-            String lowerCaseFilter = queryString.toLowerCase(Locale.ROOT);
-            stringPredicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerCaseFilter);
-        }
-
-        return dataPack -> {
-            String id = dataPack.getPackInfo().getId();
-            String description = dataPack.getPackInfo().getDescription().toString();
-            return stringPredicate.test(id) || stringPredicate.test(description);
-        };
     }
 }
