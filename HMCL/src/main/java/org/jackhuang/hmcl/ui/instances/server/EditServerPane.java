@@ -176,7 +176,6 @@ public class EditServerPane extends TransitionPane implements DialogAware {
     }
 
     private void onAdd() {
-        spinner.showSpinner();
         String serverName;
         String serverIP = txtServerIP.getText();
         if (serverIP == null) return;
@@ -187,7 +186,7 @@ public class EditServerPane extends TransitionPane implements DialogAware {
         }
 
         body.setDisable(true);
-
+        spinner.showSpinner();
         Task.supplyAsync(Schedulers.io(), () ->
                 ServerStatusPinger.getStatus(serverIP)
         ).whenComplete(Schedulers.javafx(), (result, ignored) -> {

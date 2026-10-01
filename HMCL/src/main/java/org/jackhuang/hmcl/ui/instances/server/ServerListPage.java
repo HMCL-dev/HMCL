@@ -492,7 +492,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                     )
             );
             if (page.gameInstance != null) {
-                copyToInstanceMEnuItem.setDisable(getItem().fromServersDatFilePath.equals(page.gameInstance.getServersDatFilePath()));
+                copyToInstanceMEnuItem.setDisable(holder.fromServersDatFilePath.equals(page.gameInstance.getServersDatFilePath()));
             }
 
             JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
