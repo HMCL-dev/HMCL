@@ -87,4 +87,10 @@ public class ServerAddressMaskPane extends HBox {
 
         realServerLabel.setText(serverIP);
     }
+
+    public void labelAddStyleClass(String styleClass) {
+        atLabel.getStyleClass().add(styleClass);
+        realServerLabel.getStyleClass().add(styleClass);
+        queryLabel.getStyleClass().add(styleClass);
+    }
 }

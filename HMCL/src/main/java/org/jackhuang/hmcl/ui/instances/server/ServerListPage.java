@@ -287,7 +287,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
             {
                 this.contentLine1 = new TwoLineListItem();
                 this.contentLine2AddressMaskPane = new ServerAddressMaskPane("");
-                contentLine2AddressMaskPane.getStyleClass().add("subtitle");
+                contentLine2AddressMaskPane.labelAddStyleClass("subtitle");
 
                 HBox contentLine2 = new HBox(contentLine2AddressMaskPane);
                 VBox center = new VBox(contentLine1, contentLine2);
