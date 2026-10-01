@@ -45,6 +45,8 @@ import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.FavoritesManager;
+import org.jackhuang.hmcl.setting.FavoritesManager.Favorite;
+import org.jackhuang.hmcl.setting.FavoritesManager.Item;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -69,7 +71,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class AddonFavoritesPage extends Control implements DecoratorPage, PageAware {
 
-    public static String getFavoriteDisplayName(FavoritesManager.Favorite favorite) {
+    public static String getFavoriteDisplayName(Favorite favorite) {
         if (favorite.getName().isEmpty()) return i18n("message.default");
         return favorite.getName();
     }
@@ -83,7 +85,7 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
     private final ObjectProperty<GameInstanceID> selectedInstance = new SimpleObjectProperty<>();
     private final DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
 
-    private final ListProperty<FavoritesManager.Favorite> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
+    private final ListProperty<Favorite> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
 
     private final TransitionPane body = new TransitionPane();
     private final FavList favList = new FavList(this);
@@ -154,8 +156,8 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
         return new AddonFavoritesPageSkin(this);
     }
 
-    private void navigateTo(FavoritesManager.Favorite favorite) {
-        var page = new FavPage(this, favorite);
+    private void navigateTo(Favorite favorite) {
+        var page = new FavItemsList(this, favorite);
         body.setContent(page, ContainerAnimations.SWIPE_LEFT);
         page.requestFocus();
         page.refresh();
@@ -214,7 +216,7 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
         }
     }
 
-    private static class FavList extends ListPageBase<FavoritesManager.Favorite> {
+    private static class FavList extends ListPageBase<Favorite> {
 
         private final AddonFavoritesPage parentPage;
 
@@ -230,7 +232,7 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
         }
     }
 
-    private static class FavListSkin extends ToolbarListPageSkin<FavoritesManager.Favorite, FavList> {
+    private static class FavListSkin extends ToolbarListPageSkin<Favorite, FavList> {
 
         public FavListSkin(FavList skinnable) {
             super(skinnable);
@@ -246,11 +248,11 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
         }
     }
 
-    private static class FavCell extends MDListCell<FavoritesManager.Favorite> {
+    private static class FavCell extends MDListCell<Favorite> {
 
         private final TwoLineListItem content = new TwoLineListItem();
 
-        public FavCell(AddonFavoritesPage parentPage, JFXListView<FavoritesManager.Favorite> listView) {
+        public FavCell(AddonFavoritesPage parentPage, JFXListView<Favorite> listView) {
             super(listView);
 
             HBox container = new HBox(8);
@@ -270,7 +272,7 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
         }
 
         @Override
-        protected void updateControl(FavoritesManager.Favorite item, boolean empty) {
+        protected void updateControl(Favorite item, boolean empty) {
             if (item == null || empty) return;
 
             content.setTitle(getFavoriteDisplayName(item));
@@ -292,13 +294,13 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
         }
     }
 
-    public static class FavPage extends ListPageBase<FavItemObject> {
+    public static class FavItemsList extends ListPageBase<FavItemObject> {
 
         private final AddonFavoritesPage parentPage;
         private final DownloadProvider downloadProvider;
-        private final FavoritesManager.Favorite favorite;
+        private final Favorite favorite;
 
-        public FavPage(AddonFavoritesPage parentPage, FavoritesManager.Favorite favorite) {
+        public FavItemsList(AddonFavoritesPage parentPage, Favorite favorite) {
             this.parentPage = parentPage;
             this.downloadProvider = parentPage.downloadProvider;
             this.favorite = favorite;
@@ -306,7 +308,7 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
 
         @Override
         protected Skin<?> createDefaultSkin() {
-            return new FavPageSkin(this);
+            return new FavItemsListSkin(this);
         }
 
         public void refresh() {
@@ -321,7 +323,7 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
             }).start();
         }
 
-        private void remove(Collection<FavoritesManager.Item> items) {
+        private void remove(Collection<Item> items) {
             if (favorite.remove(items))
                 refresh();
         }
@@ -329,18 +331,18 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
 
     public static final class FavItemObject {
 
-        private final FavoritesManager.Item item;
+        private final Item item;
         private final @Nullable RemoteAddon addon;
 
-        private FavItemObject(Map.Entry<FavoritesManager.Item, RemoteAddon> entry) {
+        private FavItemObject(Map.Entry<Item, RemoteAddon> entry) {
             this.item = entry.getKey();
             this.addon = entry.getValue();
         }
     }
 
-    private static final class FavPageSkin extends ToolbarListPageSkin<FavItemObject, FavPage> {
+    private static final class FavItemsListSkin extends ToolbarListPageSkin<FavItemObject, FavItemsList> {
 
-        public FavPageSkin(FavPage skinnable) {
+        public FavItemsListSkin(FavItemsList skinnable) {
             super(skinnable);
 
             var iconLoader = new RemoteImageLoader(skinnable.downloadProvider) {
@@ -354,7 +356,7 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
         }
 
         @Override
-        protected List<Node> initializeToolbar(FavPage skinnable) {
+        protected List<Node> initializeToolbar(FavItemsList skinnable) {
             return List.of(
                     ToolbarListPageSkin.createToolbarButton2("", SVG.ARROW_BACK, skinnable.parentPage::navigateBack),
                     ToolbarListPageSkin.createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh)
@@ -369,7 +371,7 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
 
-        public FavItemCell(FavPage page, RemoteImageLoader iconLoader, JFXListView<FavItemObject> listView) {
+        public FavItemCell(FavItemsList page, RemoteImageLoader iconLoader, JFXListView<FavItemObject> listView) {
             super(listView);
 
             this.iconLoader = iconLoader;
