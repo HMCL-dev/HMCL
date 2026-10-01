@@ -36,6 +36,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.util.Subscription;
 import org.jackhuang.hmcl.game.GameInstance;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
@@ -256,7 +257,8 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
 
         private final RipplerContainer graphic;
         private final ImageContainer serverIcon;
-        private final TwoLineListItem content;
+        private final TwoLineListItem contentLine1;
+        private final ServerAddressMaskPane contentLine2AddressMaskPane;
         private final ServerNetworkLatencyPane serverNetworkLatencyPane;
 
         private final JFXButton statusBtn;
@@ -283,9 +285,14 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
             }
 
             {
-                this.content = new TwoLineListItem();
-                root.setCenter(content);
-                content.setMouseTransparent(true);
+                this.contentLine1 = new TwoLineListItem();
+                this.contentLine2AddressMaskPane = new ServerAddressMaskPane("");
+                contentLine2AddressMaskPane.getStyleClass().add("subtitle");
+
+                HBox contentLine2 = new HBox(contentLine2AddressMaskPane);
+                VBox center = new VBox(contentLine1, contentLine2);
+                center.setMouseTransparent(true);
+                root.setCenter(center);
             }
 
             {
@@ -369,43 +376,35 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
             }
 
             this.graphic.releaseRippleImmediately();
-            this.content.getTags().clear();
+            this.contentLine1.getTags().clear();
 
             if (empty || holder == null) {
                 setGraphic(null);
                 serverIcon.setImage(null);
-                content.setTitle("");
-                content.setSubtitle("");
+                contentLine1.setTitle("");
                 serverNetworkLatencyPane.error();
                 statusBtnTooltip.setText("");
+                contentLine2AddressMaskPane.set("");
             } else {
                 serverIcon.setImage(holder.server.iconImage);
-                content.setTitle(holder.server.getName() != null ? parseColorEscapes(holder.server.getName()) : "");
+                contentLine1.setTitle(holder.server.getName() != null ? parseColorEscapes(holder.server.getName()) : "");
 
-                String displayIp = holder.server.getIp();
-                if (displayIp == null) displayIp = "";
-                int queryStart = displayIp.lastIndexOf('?');
-                boolean mask = false;
-                if (queryStart != -1) {
-                    mask = true;
-                    displayIp = displayIp.substring(0, queryStart);
-                }
-                content.setSubtitle(displayIp);
+                contentLine2AddressMaskPane.set(holder.server.getIp());
 
                 if (holder.server.isHidden()) {
-                    content.addTag(i18n("server.tag.hide"));
+                    contentLine1.addTag(i18n("server.tag.hide"));
                 }
 
                 if (holder.holdInstances.contains(page.gameInstance)) {
-                    content.addTag(i18n("server.tag.hold.current"));
+                    contentLine1.addTag(i18n("server.tag.hold.current"));
                     holder.holdInstances.stream()
                             .filter(e -> !e.equals(page.gameInstance))
                             .map(gameInstance -> gameInstance.getId().id())
-                            .forEach(content::addTag);
+                            .forEach(contentLine1::addTag);
                 } else {
                     holder.holdInstances.stream()
                             .map(gameInstance -> gameInstance.getId().id())
-                            .forEach(content::addTag);
+                            .forEach(contentLine1::addTag);
                 }
 
                 setGraphic(graphic);

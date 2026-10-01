@@ -19,33 +19,70 @@ package org.jackhuang.hmcl.ui.instances.server;
 
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ServerAddressMaskHBox extends HBox {
+public class ServerAddressMaskPane extends HBox {
+    public final Label atLabel = new Label();
     public final Label realServerLabel = new Label();
     public final Label queryLabel = new Label();
 
-    public ServerAddressMaskHBox(@Nullable String serverIP) {
+    public ServerAddressMaskPane(@Nullable String serverIP) {
         queryLabel.setOpacity(0.3);
+        atLabel.setOpacity(0.3);
 
+        queryLabel.setMinWidth(Region.USE_PREF_SIZE);
+        atLabel.setMinWidth(Region.USE_PREF_SIZE);
+        realServerLabel.setMinWidth(Region.USE_PREF_SIZE);
+
+        getChildren().add(atLabel);
         getChildren().add(realServerLabel);
         getChildren().add(queryLabel);
         set(serverIP);
     }
 
+    public static void installMask(@NotNull Label label, String text) {
+        int length = text.length();
+        StringBuilder maskBuilder = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            char c = text.charAt(i);
+            if (c == '@' || c == '?') {
+                maskBuilder.append(c);
+            } else {
+                maskBuilder.append("*");
+            }
+        }
+        String mask = maskBuilder.toString();
+
+        label.setText(mask);
+
+        label.hoverProperty().addListener((obs, wasHover, isHover) -> {
+            label.setText(isHover ? text : mask);
+        });
+    }
+
     public void set(@Nullable String serverIP) {
         if (serverIP == null) {
             realServerLabel.setText("");
-            queryLabel.setText("");
+            installMask(atLabel, "");
+            installMask(queryLabel, "");
             return;
         }
         int queryStart = serverIP.lastIndexOf('?');
         if (queryStart != -1) {
-            String queryPropertyStr = serverIP.substring(queryStart);
-            queryLabel.setText(queryPropertyStr);
+            installMask(queryLabel, serverIP.substring(queryStart));
             serverIP = serverIP.substring(0, queryStart);
         } else {
-            queryLabel.setText("");
+            installMask(queryLabel, "");
+        }
+
+        int atEnd = serverIP.indexOf('@');
+        if (atEnd != -1) {
+            installMask(atLabel, serverIP.substring(0, atEnd + 1));
+            serverIP = serverIP.substring(atEnd + 1);
+        } else {
+            installMask(atLabel, "");
         }
 
         realServerLabel.setText(serverIP);
