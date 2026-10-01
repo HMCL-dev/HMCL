@@ -154,6 +154,9 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             }
         }
 
+        // Check mod file integrity before parsing metadata
+        boolean corrupt = ModIntegrityChecker.isCorrupt(file);
+
         LocalModFile modInfo = null;
 
         List<Exception> exceptions = new ArrayList<>();
@@ -193,8 +196,12 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     getLocalMod(fileNameWithoutExtension, ModLoaderType.UNKNOWN),
                     file,
                     fileNameWithoutExtension,
-                    new LocalAddonFile.Description("litemod".equals(extension) ? "LiteLoader Mod" : "")
+                    new LocalAddonFile.Description("litemod".equals(extension) ? "LiteLoader Mod" : ""),
+                    "", "", "", "", "",
+                    corrupt
             );
+        } else if (corrupt) {
+            modInfo.setCorrupt(true);
         }
 
         if (!modInfo.isOld()) {

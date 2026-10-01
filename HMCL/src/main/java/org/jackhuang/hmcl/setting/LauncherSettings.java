@@ -219,6 +219,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return disableAprilFools;
     }
 
+    /// Whether to ignore corrupt mod warnings during launch.
+    @SerializedName("ignoreCorruptMods")
+    private final BooleanProperty ignoreCorruptMods = new SimpleBooleanProperty(false);
+
+    /// Returns the corrupt mod warning ignore property.
+    public BooleanProperty ignoreCorruptModsProperty() {
+        return ignoreCorruptMods;
+    }
+
     /// The common Minecraft directory selection mode.
     @SerializedName("commonDirectoryType")
     private final ObjectProperty<EnumCommonDirectory> commonDirectoryType = new RawPreservingObjectProperty<>(EnumCommonDirectory.DEFAULT);

@@ -814,6 +814,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 content.addTagWarning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType()));
             }
 
+            if (modInfo.isCorrupt()) {
+                warning.add(i18n("mods.corrupt"));
+                content.addTagWarning(i18n("mods.corrupt"));
+            }
+
             String modVersion = modInfo.getVersion();
             if (StringUtils.isNotBlank(modVersion) && !"${version}".equals(modVersion)) {
                 content.addTag(modVersion);

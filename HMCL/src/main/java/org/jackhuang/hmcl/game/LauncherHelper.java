@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.game;
 import com.jfoenix.controls.JFXButton;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
@@ -67,6 +69,7 @@ import java.util.stream.Collectors;
 
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
@@ -214,6 +217,7 @@ public final class LauncherHelper {
                     );
                 }).withStage("launch.state.dependencies")
                 .thenComposeAsync(() -> new GameVerificationFixTask(gameInstance, gameInstance.getVersion(), launchManifest.get()))
+                .thenComposeAsync(() -> checkCorruptMods(gameInstance, setting))
                 .thenComposeAsync(() -> {
                     if (setting.getInheritable(GameSettings::allowAutoAgentProperty)
                             || setting.getInheritable(GameSettings::noJVMOptionsProperty)
@@ -422,6 +426,61 @@ public final class LauncherHelper {
         });
 
         executor.start();
+    }
+
+    /// Checks for corrupt mod files and prompts the user if any are found.
+    ///
+    /// Returns a task that completes when the user has made a choice (or if no corrupt mods
+    /// are found or the user has chosen to ignore the warning).
+    private Task<Void> checkCorruptMods(HMCLGameInstance gameInstance, GameSettings.Effective setting) {
+        // Skip if user has chosen to ignore corrupt mod warnings
+        if (settings().ignoreCorruptModsProperty().get()) {
+            return Task.completed(null);
+        }
+
+        ModManager modManager = gameInstance.getModManager();
+        List<LocalModFile> corruptMods;
+        try {
+            corruptMods = modManager.getLocalFiles().stream()
+                    .filter(LocalModFile::isCorrupt)
+                    .toList();
+        } catch (IOException e) {
+            LOG.warning("Failed to check mod integrity", e);
+            return Task.completed(null);
+        }
+
+        if (corruptMods.isEmpty()) {
+            return Task.completed(null);
+        }
+
+        // Log the corrupt mods
+        LOG.warning("Found " + corruptMods.size() + " corrupt mod(s):");
+        for (LocalModFile mod : corruptMods) {
+            LOG.warning("  - " + mod.getFile());
+        }
+
+        // Build the warning message
+        String modList = corruptMods.stream()
+                .map(LocalModFile::getName)
+                .collect(Collectors.joining(", "));
+
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        runInFX(() -> {
+            Controllers.confirm(
+                    i18n("mods.corrupt.warning", modList),
+                    i18n("mods.corrupt.warning.title"),
+                    MessageType.WARNING,
+                    () -> {
+                        // User clicked "Yes" - block launch
+                        future.completeExceptionally(new CancellationException("Launch blocked due to corrupt mods"));
+                    },
+                    () -> {
+                        // User clicked "No" - continue launch
+                        future.complete(null);
+                    }
+            );
+        });
+        return Task.fromCompletableFuture(future);
     }
 
     private static Task<JavaRuntime> checkGameState(HMCLGameInstance gameInstance, GameSettings.Effective setting, GameInstanceManifest manifest) {

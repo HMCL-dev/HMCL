@@ -209,6 +209,14 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 {
+                    LineToggleButton ignoreCorruptMods = new LineToggleButton();
+                    ignoreCorruptMods.setTitle(i18n("settings.launcher.ignore_corrupt_mods"));
+                    ignoreCorruptMods.setSubtitle(i18n("settings.launcher.ignore_corrupt_mods.subtitle"));
+                    ignoreCorruptMods.selectedProperty().bindBidirectional(settings().ignoreCorruptModsProperty());
+                    miscPaneList.getContent().add(ignoreCorruptMods);
+                }
+
+                {
                     BorderPane debugPane = new BorderPane();
 
                     Label left = new Label(i18n("settings.launcher.debug"));
