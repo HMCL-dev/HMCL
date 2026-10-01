@@ -15,15 +15,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.server;
+package org.jackhuang.hmcl.server.resolver;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
-import java.io.IOException;
 import java.util.Hashtable;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -35,7 +35,7 @@ public final class ServerDnsSrvRedirector {
 
     }
 
-    static @NotNull ServerAddress lookup(ServerAddress original) throws IOException {
+    static @Nullable HostAndIp lookup(ServerAddress address0) {
         if (redirector == null) {
             synchronized (ServerDnsSrvRedirector.class) {
                 if (redirector == null) {
@@ -49,30 +49,38 @@ public final class ServerDnsSrvRedirector {
                         DirContext context = new InitialDirContext(env);
 
                         redirector = (address) -> {
-                            if (address.port() != 25565) return address;
-                            try {
-                                Attributes attributes = context.getAttributes("_minecraft._tcp." + address.host(), new String[]{"SRV"});
-                                Attribute srvAttribute = attributes.get("srv");
-                                if (srvAttribute != null) {
-                                    String[] arguments = srvAttribute.get().toString().split(" ", 4);
-                                    return new ServerAddress(arguments[3], ServerAddress.parsePort(arguments[2]));
+                            if (address.getHostAndIp().port() == 25565) {
+                                try {
+                                    Attributes attributes = context.getAttributes("_minecraft._tcp." + address.getHostAndIp().host(), new String[]{"SRV"});
+                                    Attribute srvAttribute = attributes.get("srv");
+                                    if (srvAttribute != null) {
+                                        String[] arguments = srvAttribute.get().toString().split(" ", 4);
+
+                                        int port = 25565;
+                                        try {
+                                            port = Integer.parseInt(arguments[2]);
+                                        } catch (Exception ignored) {
+                                        }
+
+                                        return new HostAndIp(arguments[3], port);
+                                    }
+                                } catch (Throwable ignored) {
                                 }
-                            } catch (Throwable ignored) {
                             }
-                            return address;
+                            return null;
                         };
                     } catch (Throwable e) {
                         LOG.error("Failed to initialize SRV redirect resolved, some servers might not work", e);
-                        redirector = (address) -> address;
+                        redirector = (address) -> null;
                     }
                 }
             }
         }
-        return redirector.lookup(original);
+        return redirector.lookup(address0);
     }
 
     @FunctionalInterface
     private interface DnsSrvRedirector {
-        @NotNull ServerAddress lookup(@NotNull ServerAddress original) throws IOException;
+        @Nullable HostAndIp lookup(@NotNull ServerAddress address);
     }
 }

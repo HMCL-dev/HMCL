@@ -425,10 +425,15 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                 // pinging..., skip
                 return;
             }
-            ServerStatus serverStatus = result.getIfSuccess();
+            ServerStatus serverStatus = result.getIfSucceed();
             if (serverStatus == null) {
                 serverNetworkLatencyPane.error();
-                statusBtnTooltip.setText(i18n("server.manage.status.outside.error"));
+                ServerStatusResult.FailureResult.Reason reason = result.getFailureReasonIfFailed();
+                statusBtnTooltip.setText(switch (Objects.requireNonNull(reason)) {
+                    case EXCEPTION -> i18n("server.manage.status.outside.error");
+                    case UNKNOWN_HOST -> i18n("server.manage.status.outside.error.unknownhost");
+                    case BLOCKED_BY_MOJANG -> i18n("server.manage.status.outside.error.blocked");
+                });
             } else {
                 serverNetworkLatencyPane.pong(serverStatus.networkLatency());
                 statusBtnTooltip.setText(i18n("server.manage.status.outside.pong", String.format("%,d", serverStatus.networkLatency())));

@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.server;
 
 import com.google.gson.*;
+import org.jackhuang.hmcl.server.resolver.ServerAddress;
+import org.jackhuang.hmcl.server.resolver.ServerAddressResolveResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -38,36 +40,40 @@ public final class ServerStatusPinger {
     }
 
     public static @NotNull ServerStatusResult getStatus(String serverIp) throws IOException {
-        return ServerStatusPinger.getStatus(ServerAddress.parseAddress(serverIp));
-    }
+        try {
+            ServerAddress address = ServerAddress.fromString(serverIp);
+            ServerAddressResolveResult resolveResult = address.resolve();
+            if (resolveResult instanceof ServerAddressResolveResult.SuccessResult successResult) {
+                try (Socket socket = new Socket()) {
+                    socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
+                    socket.connect(successResult.getConnectAddress(), 7_000);
 
-    private static @NotNull ServerStatusResult getStatus(ServerAddress address) throws IOException {
-        ServerAddress resolvedAddress = ServerDnsSrvRedirector.lookup(address);
+                    try (DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                         DataInputStream in = new DataInputStream(socket.getInputStream())) {
 
-        try (Socket socket = new Socket()) {
-            socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
-            socket.connect(resolvedAddress.toInetSocketAddress(), 7_000);
+                        sendHandshakeStatusPacket(out,
+                                successResult.getPackerHandshakeAddress(), successResult.getPackerHandshakePort()
+                        );
+                        sendStatusRequestPacket(out);
+                        var status = readStatusResponsePacket(in);
 
-            try (DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                 DataInputStream in = new DataInputStream(socket.getInputStream())) {
+                        long sendTime = System.currentTimeMillis();
+                        sendPingRequestPacket(out);
+                        var pong = readPongResponsePacket(in);
+                        long networkLatency = System.currentTimeMillis() - sendTime;
 
-                sendHandshakeStatusPacket(out, address.host(), address.port());
-                sendStatusRequestPacket(out);
-                var status = readStatusResponsePacket(in);
+                        JsonObject rootStatus = JsonParser.parseString(status).getAsJsonObject();
 
-                long sendTime = System.currentTimeMillis();
-                sendPingRequestPacket(out);
-                var pong = readPongResponsePacket(in);
-                long networkLatency = System.currentTimeMillis() - sendTime;
-
-                JsonObject rootStatus = JsonParser.parseString(status).getAsJsonObject();
-
-                ServerStatus parseServerStatus = parseServerStatus(networkLatency, rootStatus);
-                return ServerStatusResult.success(parseServerStatus);
+                        ServerStatus parseServerStatus = parseServerStatus(networkLatency, rootStatus);
+                        return ServerStatusResult.success(parseServerStatus);
+                    }
+                }
+            } else {
+                return ServerStatusResult.failure(((ServerAddressResolveResult.FailureResult) resolveResult).getReason().getStatusReason());
             }
         } catch (Exception e) {
-            LOG.error("Failed to get the status of server " + address, e);
-            return ServerStatusResult.failure(e);
+            LOG.error("Failed to get the status of server " + serverIp, e);
+            return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION);
         }
     }
 

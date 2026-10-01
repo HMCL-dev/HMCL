@@ -29,6 +29,7 @@ import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.server.ServerStatus;
 import org.jackhuang.hmcl.server.ServerStatusPinger;
+import org.jackhuang.hmcl.server.ServerStatusResult;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -37,6 +38,7 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -185,7 +187,7 @@ public class EditServerPane extends TransitionPane implements DialogAware {
                 ServerStatusPinger.getStatus(serverIP)
         ).whenComplete(Schedulers.javafx(), (result, ignored) -> {
 
-            ServerStatus status = result.getIfSuccess();
+            ServerStatus status = result.getIfSucceed();
             if (status == null) {
                 spinner.hideSpinner();
                 btnAccept.setText(switch (type) {
@@ -203,7 +205,12 @@ public class EditServerPane extends TransitionPane implements DialogAware {
                 btnCancel.setOnAction(e -> {
                     initPaneContents();
                 });
-                lblErrorMessage.setText(i18n("server.manage.status.error"));
+                ServerStatusResult.FailureResult.Reason reason = result.getFailureReasonIfFailed();
+                lblErrorMessage.setText(switch (Objects.requireNonNull(reason)) {
+                    case EXCEPTION -> i18n("server.manage.status.error");
+                    case UNKNOWN_HOST -> i18n("server.manage.status.error.unknownhost");
+                    case BLOCKED_BY_MOJANG -> i18n("server.manage.status.error.blocked");
+                });
             } else {
                 fireEvent(new DialogCloseEvent());
                 if (reference != null) {

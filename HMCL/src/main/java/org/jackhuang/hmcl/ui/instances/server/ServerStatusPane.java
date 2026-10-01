@@ -179,9 +179,14 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
             status = null;
         } else {
             // ping failed
-            status = statusResult.getIfSuccess();
+            status = statusResult.getIfSucceed();
             if (status == null) {
-                lblErrorMessage.setText(i18n("server.manage.status.error"));
+                ServerStatusResult.FailureResult.Reason reason = statusResult.getFailureReasonIfFailed();
+                lblErrorMessage.setText(switch (Objects.requireNonNull(reason)) {
+                    case EXCEPTION -> i18n("server.manage.status.error");
+                    case UNKNOWN_HOST -> i18n("server.manage.status.error.unknownhost");
+                    case BLOCKED_BY_MOJANG -> i18n("server.manage.status.error.blocked");
+                });
             }
         }
 

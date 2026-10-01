@@ -24,20 +24,20 @@ public sealed class ServerStatusResult {
         return new SuccessResult(serverStatus);
     }
 
-    public static ServerStatusResult failure(Exception exception) {
-        return new FailureResult(exception);
+    public static ServerStatusResult failure(FailureResult.Reason reason) {
+        return new FailureResult(reason);
     }
 
-    public @Nullable ServerStatus getIfSuccess() {
+    public @Nullable ServerStatus getIfSucceed() {
         if (this instanceof SuccessResult success) {
             return success.serverStatus;
         }
         return null;
     }
 
-    public @Nullable Exception exceptionIfFailure() {
+    public @Nullable ServerStatusResult.FailureResult.Reason getFailureReasonIfFailed() {
         if (this instanceof FailureResult failure) {
-            return failure.exception;
+            return failure.reason;
         }
         return null;
     }
@@ -50,19 +50,25 @@ public sealed class ServerStatusResult {
         return this instanceof FailureResult;
     }
 
-    private static final class SuccessResult extends ServerStatusResult {
+    public static final class SuccessResult extends ServerStatusResult {
         public final ServerStatus serverStatus;
 
-        public SuccessResult(ServerStatus serverStatus) {
+        private SuccessResult(ServerStatus serverStatus) {
             this.serverStatus = serverStatus;
         }
     }
 
-    private static final class FailureResult extends ServerStatusResult {
-        public final Exception exception;
+    public static final class FailureResult extends ServerStatusResult {
+        public final Reason reason;
 
-        public FailureResult(Exception exception) {
-            this.exception = exception;
+        private FailureResult(Reason reason) {
+            this.reason = reason;
+        }
+
+        public enum Reason {
+            EXCEPTION,
+            UNKNOWN_HOST,
+            BLOCKED_BY_MOJANG
         }
     }
 }
