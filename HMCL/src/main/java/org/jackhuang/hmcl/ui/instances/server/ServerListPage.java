@@ -383,7 +383,16 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
             } else {
                 serverIcon.setImage(holder.server.iconImage);
                 content.setTitle(holder.server.getName() != null ? parseColorEscapes(holder.server.getName()) : "");
-                content.setSubtitle(holder.server.getIp());
+
+                String displayIp = holder.server.getIp();
+                if (displayIp == null) displayIp = "";
+                int queryStart = holder.server.getIp().lastIndexOf('?');
+                boolean mask = false;
+                if (queryStart != -1) {
+                    mask = true;
+                    displayIp = displayIp.substring(0, queryStart);
+                }
+                content.setSubtitle(displayIp);
 
                 if (holder.server.isHidden()) {
                     content.addTag(i18n("server.tag.hide"));

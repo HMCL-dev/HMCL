@@ -222,7 +222,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         textPane.add(new Label(iconedServer.getName()), 1, 0);
 
         textPane.add(new Label(i18n("server.ip") + ":"), 0, 1);
-        textPane.add(new Label(iconedServer.getIp()), 1, 1);
+        textPane.add(new ServerAddressMaskHBox(iconedServer.getIp()), 1, 1);
 
         root.getChildren().add(serverInfoBox);
         if (status != null) {
