@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.SettingsManager;

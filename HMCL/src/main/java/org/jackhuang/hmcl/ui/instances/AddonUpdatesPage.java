@@ -34,11 +34,11 @@ import javafx.scene.layout.VBox;
 import javafx.util.Subscription;
 import org.jackhuang.hmcl.addon.AddonUpdate;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
-import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
+import org.jackhuang.hmcl.addon.update.AddonUpdateTask;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -50,7 +50,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -363,81 +362,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                     LOG.warning("Failed to load addon version page url", exception);
                 }
             }).start();
-        }
-    }
-
-    public static class AddonUpdateTask extends Task<Void> {
-        private final Collection<Task<?>> dependents;
-        private final List<LocalAddonFile> failedAddons = new ArrayList<>();
-
-        AddonUpdateTask(Path addonDirectory, List<AddonUpdate> addons) {
-            setStage("addon.check_update.confirm");
-            getProperties().put("total", addons.size());
-
-            this.dependents = new ArrayList<>();
-            for (AddonUpdate addon : addons) {
-                LocalAddonFile local = addon.localAddonFile();
-                RemoteAddon.Version remote = addon.targetVersion();
-                boolean isDisabled = local.isDisabled();
-                String fileName = remote.file().filename();
-                if (isDisabled)
-                    fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
-                String newFileName = fileName;
-
-                dependents.add(Task
-                        .runAsync(Schedulers.javafx(), () -> local.setOld(true))
-                        .thenComposeAsync(() ->
-                                new FileDownloadTask(remote.file().url(), addonDirectory.resolve(newFileName)).setName(remote.name())
-                        ).whenComplete(Schedulers.javafx(), exception -> {
-                            if (exception != null) {
-                                // restore state if failed
-                                local.setOld(false);
-                                if (isDisabled)
-                                    local.markDisabled();
-                                failedAddons.add(local);
-                            } else {
-                                local.onUpdated(newFileName);
-                                if (!local.keepOldFiles()) {
-                                    try {
-                                        local.delete();
-                                    } catch (IOException e) {
-                                        LOG.warning("Failed to delete outdated addon: " + local.getFile(), e);
-                                    }
-                                }
-                            }
-                        })
-                        .withCounter("addon.check_update.confirm"));
-            }
-        }
-
-        public List<LocalAddonFile> getFailedAddons() {
-            return failedAddons;
-        }
-
-        @Override
-        public Collection<Task<?>> getDependents() {
-            return dependents;
-        }
-
-        @Override
-        public boolean doPreExecute() {
-            return true;
-        }
-
-        @Override
-        public void preExecute() {
-            notifyPropertiesChanged();
-        }
-
-        @Override
-        public boolean isRelyingOnDependents() {
-            return false;
-        }
-
-        @Override
-        public void execute() throws Exception {
-            if (!isDependentsSucceeded())
-                throw getException();
         }
     }
 }
