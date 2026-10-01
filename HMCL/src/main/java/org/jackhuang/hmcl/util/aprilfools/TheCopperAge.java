@@ -96,7 +96,7 @@ public final class TheCopperAge {
         var random = new Random();
 
         oxidationScheduler.scheduleAtFixedRate(() -> {
-            if (random.nextDouble() < 0.1) tryOxidize();
+            if (random.nextDouble() < 0.2) tryOxidize();
         }, 2, 5, TimeUnit.SECONDS);
     }
 
