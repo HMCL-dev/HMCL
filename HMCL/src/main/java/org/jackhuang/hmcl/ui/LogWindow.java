@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -68,6 +69,7 @@ public final class LogWindow extends Stage {
     private static final Log4jLevel[] LEVELS = {Log4jLevel.FATAL, Log4jLevel.ERROR, Log4jLevel.WARN, Log4jLevel.INFO, Log4jLevel.DEBUG};
 
     private final CircularArrayList<Log> logs;
+    private final ReadOnlyStringWrapper lastLogLine = new ReadOnlyStringWrapper();
     private final Map<Log4jLevel, SimpleIntegerProperty> levelCountMap = new EnumMap<>(Log4jLevel.class);
     private final Map<Log4jLevel, SimpleBooleanProperty> levelShownMap = new EnumMap<>(Log4jLevel.class);
 
@@ -79,13 +81,17 @@ public final class LogWindow extends Stage {
     }
 
     private final LogWindowImpl impl;
-    private final ManagedProcess gameProcess;
+    private final @Nullable ManagedProcess gameProcess;
+
+    public LogWindow() {
+        this(null, new CircularArrayList<>());
+    }
 
     public LogWindow(ManagedProcess gameProcess) {
         this(gameProcess, new CircularArrayList<>());
     }
 
-    public LogWindow(ManagedProcess gameProcess, CircularArrayList<Log> logs) {
+    public LogWindow(@Nullable ManagedProcess gameProcess, CircularArrayList<Log> logs) {
         Themes.applyNativeDarkMode(this);
 
         this.logs = logs;
@@ -101,12 +107,13 @@ public final class LogWindow extends Stage {
 
         this.gameProcess = gameProcess;
 
-        FXUtils.addMacOSCloseWindowHandler(this, () -> !gameProcess.isRunning());
+        FXUtils.addMacOSCloseWindowHandler(this, () -> gameProcess == null || !gameProcess.isRunning());
     }
 
     public void logLine(Log log) {
         Log4jLevel level = log.getLevel();
         logs.add(log);
+        lastLogLine.set(log.getLog());
         if (levelShownMap.get(level).get())
             impl.listView.getItems().add(log);
 
@@ -120,6 +127,7 @@ public final class LogWindow extends Stage {
         for (Log log : logs) {
             Log4jLevel level = log.getLevel();
             this.logs.add(log);
+            this.lastLogLine.set(log.getLog());
             if (levelShownMap.get(level).get())
                 impl.listView.getItems().add(log);
 
@@ -128,6 +136,10 @@ public final class LogWindow extends Stage {
         }
         checkLogCount();
         autoScroll();
+    }
+
+    public ReadOnlyStringProperty lastLogLineProperty() {
+        return lastLogLine.getReadOnlyProperty();
     }
 
     private void shakeLogs() {
@@ -198,7 +210,7 @@ public final class LogWindow extends Stage {
         }
 
         private void onTerminateGame() {
-            LogWindow.this.gameProcess.stop();
+            if (gameProcess != null) gameProcess.stop();
         }
 
         private void onClear() {
@@ -234,7 +246,7 @@ public final class LogWindow extends Stage {
                 Path dumpFile = Paths.get("minecraft-exported-jstack-dump-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
 
                 try {
-                    if (gameProcess.isRunning()) {
+                    if (gameProcess != null && gameProcess.isRunning()) {
                         GameDumpGenerator.writeDumpTo(gameProcess.getProcess().pid(), dumpFile);
                         FXUtils.showFileInExplorer(dumpFile);
                     }
@@ -251,7 +263,7 @@ public final class LogWindow extends Stage {
             });
         }
 
-        private ManagedProcess getGameProcess() {
+        private @Nullable ManagedProcess getGameProcess() {
             return gameProcess;
         }
 
@@ -433,12 +445,17 @@ public final class LogWindow extends Stage {
                 clearButton.setOnAction(e -> getSkinnable().onClear());
                 hBox.getChildren().setAll(autoScrollCheckBox, wrapTextCheckBox, exportLogsButton, terminateButton, exportDumpPane, clearButton);
 
-                control.getGameProcess().getProcess()
-                        .onExit()
-                        .thenRunAsync(() -> {
-                            terminateButton.setDisable(true);
-                            exportDumpButton.setDisable(true);
-                        }, Schedulers.javafx());
+                if (control.getGameProcess() != null) {
+                    control.getGameProcess().getProcess()
+                            .onExit()
+                            .thenRunAsync(() -> {
+                                terminateButton.setDisable(true);
+                                exportDumpButton.setDisable(true);
+                            }, Schedulers.javafx());
+                } else {
+                    terminateButton.setDisable(true);
+                    exportDumpButton.setDisable(true);
+                }
 
                 vbox.getChildren().add(bottom);
             }
