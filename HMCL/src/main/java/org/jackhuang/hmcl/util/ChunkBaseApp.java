@@ -52,7 +52,6 @@ public final class ChunkBaseApp {
 
     public static final String @NotNull @Unmodifiable [] END_CITY_GAME_VERSIONS = getGameVersions("end-city");
 
-
     public static boolean isSupported(@NotNull World world) {
         return world.getSeed() != null && world.getGameVersion() != null &&
                 world.getGameVersion().compareTo(MIN_GAME_VERSION) >= 0;
