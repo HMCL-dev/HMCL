@@ -52,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -149,6 +150,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
     }
 
     public void addServer(Server server) {
+        HMCLGameInstance gameInstance = this.gameInstance;
         if (gameInstance == null) return;
 
         Task.runAsync(Schedulers.io(), () -> {
@@ -221,13 +223,17 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                     pathListMap.put(instance.getServersDatFilePath(), holders);
 
                     if (Files.exists(instance.getServersDatFilePath())) {
-                        List<Server> parsedServers = Server.loadFromServersDat(instance.getServersDatFilePath());
-                        for (int index = 0; index < parsedServers.size(); index++) {
-                            Server server = parsedServers.get(index);
-                            ServerHolder holder = new ServerHolder(instance.getServersDatFilePath(), parsedServers, index, IconedServer.pack(server));
-                            holder.holdInstances.add(instance);
+                        try {
+                            List<Server> parsedServers = Server.loadFromServersDat(instance.getServersDatFilePath());
+                            for (int index = 0; index < parsedServers.size(); index++) {
+                                Server server = parsedServers.get(index);
+                                ServerHolder holder = new ServerHolder(instance.getServersDatFilePath(), parsedServers, index, IconedServer.pack(server));
+                                holder.holdInstances.add(instance);
 
-                            holders.add(holder);
+                                holders.add(holder);
+                            }
+                        } catch (IOException e) {
+                            LOG.error("Failed to load servers from dat file: " + instance.getServersDatFilePath(), e);
                         }
                     }
                 }
@@ -445,18 +451,18 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                 statusBtnTooltip.setText(i18n("server.manage.status.outside.pong", String.format("%,d", serverStatus.networkLatency())));
                 // update latest server icon
                 serverIcon.setImage(IconedServer.parseImageOrDefault(serverStatus.favicon()));
-                if (!Objects.equals(serverStatus.favicon(), holder.server.getIcon())) {
-                    // save latest icon
-                    Task.runAsync(Schedulers.io(), () -> {
-                        try {
-                            IconedServer newServer = holder.server.withIcon(serverStatus.favicon());
-                            holder.cachedServers.set(holder.inDatPathSlot, newServer);
-                            Server.saveToServersDat(holder.cachedServers, holder.fromServersDatFilePath);
-                        } catch (Exception e) {
-                            LOG.error("Failed to save servers dat", e);
-                        }
-                    }).start();
-                }
+//                if (!Objects.equals(serverStatus.favicon(), holder.server.getIcon())) {
+//                    // save latest icon
+//                    Task.runAsync(Schedulers.io(), () -> {
+//                        try {
+//                            IconedServer newServer = holder.server.withIcon(serverStatus.favicon());
+//                            holder.cachedServers.set(holder.inDatPathSlot, newServer);
+//                            Server.saveToServersDat(holder.cachedServers, holder.fromServersDatFilePath);
+//                        } catch (Exception e) {
+//                            LOG.error("Failed to save servers dat", e);
+//                        }
+//                    }).start();
+//                }
             }
         }
 
