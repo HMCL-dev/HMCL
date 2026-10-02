@@ -40,3 +40,34 @@ jobs:
           body: "Automatically updated Minecraft versions list."
           branch: auto-update-minecraft-versions
           delete-branch: true
+
+  update-chunkbase-versions:
+    if: ${{ github.repository_owner == 'HMCL-dev' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            .github/scripts/update-chunkbase-versions.js
+            HMCL/src/main/resources/assets/chunkbase/game_versions.json
+          sparse-checkout-cone-mode: false
+
+      - name: Update Chunkbase game versions
+        id: update
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const script = require("./.github/scripts/update-chunkbase-versions.js");
+            await script({ github, context, core });
+
+      - name: Create Pull Request
+        if: ${{ steps.update.outputs.updated == 'true' }}
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update Chunkbase game versions [skip ci]"
+          title: "Update Chunkbase game versions [skip ci]"
+          body: "Automatically updated the Chunkbase supported game versions."
+          branch: auto-update-chunkbase-versions
+          delete-branch: true
