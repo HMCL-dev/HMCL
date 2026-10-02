@@ -504,10 +504,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         /// Fetches requested links and digests, processing at most three mods concurrently.
         private void prefetchDataWithProgress() throws InterruptedException {
-            boolean needsRemoteInfo = fields.stream().anyMatch(f ->
+            boolean needsCurseForgeInfo = fields.stream().anyMatch(f ->
                     f.equals("curseForgeUrl") || f.equals("curseForgeFileUrl") ||
-                            f.equals("curseForgeDownloadPage") || f.equals("modrinthUrl") ||
-                            f.equals("modrinthFileUrl"));
+                            f.equals("curseForgeDownloadPage"));
+            boolean needsModrinthInfo = fields.stream().anyMatch(f ->
+                    f.equals("modrinthUrl") || f.equals("modrinthFileUrl"));
+            boolean needsRemoteInfo = needsCurseForgeInfo || needsModrinthInfo;
             boolean needsSha1 = fields.contains("sha1");
             boolean needsSha512 = fields.contains("sha512");
 
@@ -551,7 +553,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 futures.add(CompletableFuture.runAsync(() -> {
                     try {
                         if (needsRemoteInfo) {
-                            RemoteModInfo remoteInfo = getRemoteModInfo(mod);
+                            RemoteModInfo remoteInfo = getRemoteModInfo(mod, needsCurseForgeInfo, needsModrinthInfo);
                             if (remoteInfo.hasNetworkError) {
                                 networkErrorCount.incrementAndGet();
                                 failedModPaths.add(filePath);
@@ -788,7 +790,19 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         return sha512Cache.computeIfAbsent(path, p -> computeSha512(p));
     }
 
+    /// Looks up remote metadata from both platforms.
     private RemoteModInfo getRemoteModInfo(LocalModFile mod) {
+        return getRemoteModInfo(mod, true, true);
+    }
+
+    /// Looks up remote metadata, querying only the sources required by the selected fields.
+    /// Failures of sources that were not queried do not set {@code hasNetworkError}, so an
+    /// outage of an irrelevant platform neither delays the export nor triggers retry prompts.
+    ///
+    /// @param mod               the local mod to look up
+    /// @param queryCurseForge   whether CurseForge links are needed
+    /// @param queryModrinth     whether Modrinth links are needed
+    private RemoteModInfo getRemoteModInfo(LocalModFile mod, boolean queryCurseForge, boolean queryModrinth) {
         Path filePath = mod.getFile();
         @Nullable RemoteModInfo cached = remoteModInfoCache.get(filePath);
         if (cached != null) {
@@ -805,56 +819,60 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
 
         // Fetch CurseForge info
-        try {
-            if (CurseForgeRemoteAddonRepository.isAvailable()) {
-                RemoteAddonRepository curseForgeRepo = RemoteAddon.Source.CURSEFORGE.getRepoForType(RemoteAddon.Type.MOD);
-                if (curseForgeRepo != null) {
-                    Optional<RemoteAddon.Version> curseForgeVersion = curseForgeRepo.getRemoteVersionByLocalFile(filePath);
-                    if (curseForgeVersion.isPresent()) {
-                        RemoteAddon.Version version = curseForgeVersion.get();
-                        curseForgeFileUrl = version.file() != null && version.file().url() != null ? version.file().url() : "";
-                        try {
-                            RemoteAddon addon = curseForgeRepo.getAddonById(downloadProvider, version.projectId());
-                            if (addon != null) {
-                                curseForgeUrl = addon.pageUrl() != null ? addon.pageUrl() : "";
-                                if (version.self() instanceof CurseForgeRemoteAddonRepository.CurseAddon.LatestFile latestFile) {
-                                    curseForgeDownloadPage = curseForgeUrl + "/download/" + latestFile.id();
+        if (queryCurseForge) {
+            try {
+                if (CurseForgeRemoteAddonRepository.isAvailable()) {
+                    RemoteAddonRepository curseForgeRepo = RemoteAddon.Source.CURSEFORGE.getRepoForType(RemoteAddon.Type.MOD);
+                    if (curseForgeRepo != null) {
+                        Optional<RemoteAddon.Version> curseForgeVersion = curseForgeRepo.getRemoteVersionByLocalFile(filePath);
+                        if (curseForgeVersion.isPresent()) {
+                            RemoteAddon.Version version = curseForgeVersion.get();
+                            curseForgeFileUrl = version.file() != null && version.file().url() != null ? version.file().url() : "";
+                            try {
+                                RemoteAddon addon = curseForgeRepo.getAddonById(downloadProvider, version.projectId());
+                                if (addon != null) {
+                                    curseForgeUrl = addon.pageUrl() != null ? addon.pageUrl() : "";
+                                    if (version.self() instanceof CurseForgeRemoteAddonRepository.CurseAddon.LatestFile latestFile) {
+                                        curseForgeDownloadPage = curseForgeUrl + "/download/" + latestFile.id();
+                                    }
                                 }
+                            } catch (IOException e) {
+                                hasNetworkError = true;
+                                LOG.warning("Failed to get CurseForge mod info for " + filePath, e);
                             }
-                        } catch (IOException e) {
-                            hasNetworkError = true;
-                            LOG.warning("Failed to get CurseForge mod info for " + filePath, e);
                         }
                     }
                 }
+            } catch (IOException e) {
+                hasNetworkError = true;
+                LOG.warning("Failed to lookup CurseForge version for " + filePath, e);
             }
-        } catch (IOException e) {
-            hasNetworkError = true;
-            LOG.warning("Failed to lookup CurseForge version for " + filePath, e);
         }
 
         // Fetch Modrinth info
-        try {
-            RemoteAddonRepository modrinthRepo = RemoteAddon.Source.MODRINTH.getRepoForType(RemoteAddon.Type.MOD);
-            if (modrinthRepo != null) {
-                Optional<RemoteAddon.Version> modrinthVersion = modrinthRepo.getRemoteVersionByLocalFile(filePath);
-                if (modrinthVersion.isPresent()) {
-                    RemoteAddon.Version version = modrinthVersion.get();
-                    modrinthFileUrl = version.file() != null && version.file().url() != null ? version.file().url() : "";
-                    try {
-                        RemoteAddon addon = modrinthRepo.getAddonById(downloadProvider, version.projectId());
-                        if (addon != null) {
-                            modrinthUrl = addon.pageUrl() != null ? addon.pageUrl() : "";
+        if (queryModrinth) {
+            try {
+                RemoteAddonRepository modrinthRepo = RemoteAddon.Source.MODRINTH.getRepoForType(RemoteAddon.Type.MOD);
+                if (modrinthRepo != null) {
+                    Optional<RemoteAddon.Version> modrinthVersion = modrinthRepo.getRemoteVersionByLocalFile(filePath);
+                    if (modrinthVersion.isPresent()) {
+                        RemoteAddon.Version version = modrinthVersion.get();
+                        modrinthFileUrl = version.file() != null && version.file().url() != null ? version.file().url() : "";
+                        try {
+                            RemoteAddon addon = modrinthRepo.getAddonById(downloadProvider, version.projectId());
+                            if (addon != null) {
+                                modrinthUrl = addon.pageUrl() != null ? addon.pageUrl() : "";
+                            }
+                        } catch (IOException e) {
+                            hasNetworkError = true;
+                            LOG.warning("Failed to get Modrinth mod info for " + filePath, e);
                         }
-                    } catch (IOException e) {
-                        hasNetworkError = true;
-                        LOG.warning("Failed to get Modrinth mod info for " + filePath, e);
                     }
                 }
+            } catch (IOException e) {
+                hasNetworkError = true;
+                LOG.warning("Failed to lookup Modrinth version for " + filePath, e);
             }
-        } catch (IOException e) {
-            hasNetworkError = true;
-            LOG.warning("Failed to lookup Modrinth version for " + filePath, e);
         }
 
         RemoteModInfo result = new RemoteModInfo(
