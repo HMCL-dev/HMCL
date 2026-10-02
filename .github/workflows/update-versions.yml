@@ -1,4 +1,4 @@
-name: Update Game Versions
+name: Update Minecraft version numbers
 
 on:
   schedule:
@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  update-minecraft-versions:
+  update-versions:
     if: ${{ github.repository_owner == 'HMCL-dev' }}
     runs-on: ubuntu-latest
     steps:
@@ -19,42 +19,21 @@ jobs:
         with:
           sparse-checkout: |
             .github/scripts/update-versions.js
+            .github/scripts/update-chunkbase-versions.js
             HMCLCore/src/main/resources/assets/game/versions.txt
+            HMCL/src/main/resources/assets/chunkbase/game_versions.json
           sparse-checkout-cone-mode: false
 
-      - name: Update versions.txt
-        id: update
+      - name: Update Minecraft versions
+        id: update-minecraft
         uses: actions/github-script@v9
         with:
           script: |
             const script = require("./.github/scripts/update-versions.js");
             await script({ github, context, core });
 
-      - name: Create Pull Request
-        if: ${{ steps.update.outputs.updated == 'true' }}
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Update Minecraft versions [skip ci]"
-          title: "Update Minecraft versions [skip ci]"
-          body: "Automatically updated Minecraft versions list."
-          branch: auto-update-minecraft-versions
-          delete-branch: true
-
-  update-chunkbase-versions:
-    if: ${{ github.repository_owner == 'HMCL-dev' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          sparse-checkout: |
-            .github/scripts/update-chunkbase-versions.js
-            HMCL/src/main/resources/assets/chunkbase/game_versions.json
-          sparse-checkout-cone-mode: false
-
       - name: Update Chunkbase game versions
-        id: update
+        id: update-chunkbase
         uses: actions/github-script@v9
         with:
           script: |
@@ -62,12 +41,12 @@ jobs:
             await script({ github, context, core });
 
       - name: Create Pull Request
-        if: ${{ steps.update.outputs.updated == 'true' }}
-        uses: peter-evans/create-pull-request@v7
+        if: ${{ steps.update-minecraft.outputs.updated == 'true' || steps.update-chunkbase.outputs.updated == 'true' }}
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Update Chunkbase game versions [skip ci]"
-          title: "Update Chunkbase game versions [skip ci]"
-          body: "Automatically updated the Chunkbase supported game versions."
-          branch: auto-update-chunkbase-versions
+          commit-message: "Update Minecraft version numbers [skip ci]"
+          title: "Update Minecraft version numbers [skip ci]"
+          body: "Automatically updated the Minecraft supported version numbers."
+          branch: auto-update-minecraft-version-numbers
           delete-branch: true
