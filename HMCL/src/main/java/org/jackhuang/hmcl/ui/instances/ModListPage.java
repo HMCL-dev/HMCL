@@ -415,6 +415,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         Controllers.taskDialog(
                 task
                         .whenComplete(Schedulers.javafx(), (networkErrorCount, exception) -> {
+                            if (exception instanceof CancellationException) {
+                                // The export was cancelled by the user; no file was written.
+                                return;
+                            }
+
                             if (exception != null) {
                                 LOG.warning("Failed to export mods", exception);
                                 String errorMessage = StringUtils.isBlank(exception.getMessage()) ? exception.toString() : exception.getMessage();
@@ -481,6 +486,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             prefetchDataWithProgress();
 
+            // Cancellation is cooperative: abort before creating or overwriting the target file.
+            if (isCancelled()) {
+                throw new InterruptedException();
+            }
+
             if (format.equals("csv")) {
                 exportToCSVWithProgress();
             } else if (format.equals("json")) {
@@ -493,7 +503,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
 
         /// Fetches requested links and digests, processing at most three mods concurrently.
-        private void prefetchDataWithProgress() {
+        private void prefetchDataWithProgress() throws InterruptedException {
             boolean needsRemoteInfo = fields.stream().anyMatch(f ->
                     f.equals("curseForgeUrl") || f.equals("curseForgeFileUrl") ||
                             f.equals("curseForgeDownloadPage") || f.equals("modrinthUrl") ||
@@ -522,6 +532,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             List<CompletableFuture<Void>> futures = new ArrayList<>();
 
             for (ModInfoObject modInfo : modsToProcess) {
+                // Stop dispatching remaining remote lookups once the user cancels;
+                // at most the in-flight permits (3) still finish before join() returns.
+                if (isCancelled()) {
+                    break;
+                }
+
                 LocalModFile mod = modInfo.getModInfo();
                 Path filePath = mod.getFile();
 
@@ -558,8 +574,13 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 }, Schedulers.io()));
             }
 
-            // Wait for all prefetch tasks to complete
+            // Wait for the scheduled prefetch tasks to complete
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+            // Propagate cancellation to execute() so the output file is never written.
+            if (isCancelled()) {
+                throw new InterruptedException();
+            }
         }
 
         /// Writes one expanded template per mod as UTF-8 text, replacing the target file.
