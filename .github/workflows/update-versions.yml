@@ -1,9 +1,8 @@
-name: Update Minecraft Versions
+name: Update Game Versions
 
 on:
   schedule:
-    # Every Sunday at 00:00 UTC
-    - cron: '0 0 * * 0'
+    - cron: '0 0 * * *' # Every day at 00:00 UTC
   workflow_dispatch:
 
 permissions:
@@ -11,7 +10,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  update-versions:
+  update-minecraft-versions:
     if: ${{ github.repository_owner == 'HMCL-dev' }}
     runs-on: ubuntu-latest
     steps:
