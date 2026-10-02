@@ -1,0 +1,43 @@
+name: Update Minecraft Versions
+
+on:
+  schedule:
+    # Every Sunday at 00:00 UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-versions:
+    if: ${{ github.repository_owner == 'HMCL-dev' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            .github/scripts/update-versions.js
+            HMCLCore/src/main/resources/assets/game/versions.txt
+          sparse-checkout-cone-mode: false
+
+      - name: Update versions.txt
+        id: update
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const script = require("./.github/scripts/update-versions.js");
+            await script({ github, context, core });
+
+      - name: Create Pull Request
+        if: ${{ steps.update.outputs.updated == 'true' }}
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update Minecraft versions [skip ci]"
+          title: "Update Minecraft versions [skip ci]"
+          body: "Automatically updated Minecraft versions list."
+          branch: auto-update-minecraft-versions
+          delete-branch: true
