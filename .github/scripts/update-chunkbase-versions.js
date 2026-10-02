@@ -18,8 +18,8 @@ const chunkbaseApps = [
 // The "java//" prefix deliberately excludes latest/experimental, large biomes and bedrock options.
 const javaVersionOptionPattern = /<option\s+value="java\/\/java_(\d+(?:_\d+)*)"/g;
 
-// Extracts the supported Java Edition versions (newest first) from a Chunkbase app page.
-async function fetchJavaVersions(url) {
+// Downloads the raw HTML of a Chunkbase app page.
+async function fetchPageHtml(url) {
     const response = await fetch(url, {
         headers: {
             "User-Agent": browserUserAgent,
@@ -29,8 +29,11 @@ async function fetchJavaVersions(url) {
     if (!response.ok) {
         throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
     }
+    return response.text();
+}
 
-    const html = await response.text();
+// Extracts the supported Java Edition versions (newest first) from a Chunkbase app page HTML.
+function parseJavaVersions(html, url) {
     const versions = [];
     const seen = new Set();
     let match;
@@ -53,23 +56,24 @@ async function fetchJavaVersions(url) {
 module.exports = async ({ github, context, core }) => {
     const gameVersions = JSON.parse(fs.readFileSync(gameVersionsFilePath, "utf8"));
 
-    let updated = false;
-    for (const { url, key } of chunkbaseApps) {
-        let latestVersions;
-        try {
-            latestVersions = await fetchJavaVersions(url);
-        } catch (e) {
-            // Keep checking the other apps even if one page fails to load.
-            core.setFailed(e);
-            continue;
-        }
+    // Phase 1: fetch all four pages concurrently. Promise.all guarantees parsing only starts
+    // after every HTML has been downloaded successfully; any failure aborts the whole run
+    // and leaves game_versions.json untouched.
+    const htmls = await Promise.all(
+        chunkbaseApps.map(({ url }) => fetchPageHtml(url))
+    );
 
+    // Phase 2: parse the downloaded pages and update the version lists.
+    let updated = false;
+    htmls.forEach((html, index) => {
+        const { url, key } = chunkbaseApps[index];
+        const latestVersions = parseJavaVersions(html, url);
         const currentVersions = gameVersions[key] ?? [];
         const upToDate = currentVersions.length === latestVersions.length &&
-            currentVersions.every((version, index) => version === latestVersions[index]);
+            currentVersions.every((version, i) => version === latestVersions[i]);
         if (upToDate) {
             core.info(`${key} is already up to date.`);
-            continue;
+            return;
         }
 
         core.info(`${key} updated:`);
@@ -77,7 +81,7 @@ module.exports = async ({ github, context, core }) => {
         core.info(`  new: ${JSON.stringify(latestVersions)}`);
         gameVersions[key] = latestVersions;
         updated = true;
-    }
+    });
 
     if (updated) {
         fs.writeFileSync(gameVersionsFilePath, JSON.stringify(gameVersions, null, 2) + "\n");
