@@ -2,7 +2,7 @@ name: Update Game Versions
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Every day at 00:00 UTC
+    - cron: '0 15 * * *' # Every day at 15:00 UTC
   workflow_dispatch:
 
 permissions:
