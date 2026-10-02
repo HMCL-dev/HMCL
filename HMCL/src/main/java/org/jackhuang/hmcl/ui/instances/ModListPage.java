@@ -1406,8 +1406,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                                         return;
                                     }
                                     fireEvent(new DialogCloseEvent());
+                                    DownloadListPage downloadListPage = HMCLLocalizedDownloadListPage.ofMod(null, false);
+                                    // Load versions from the same source that found this mod,
+                                    // otherwise the project ID would be sent to the wrong platform.
+                                    downloadListPage.downloadSource.set(item.getKey());
                                     Controllers.navigate(new DownloadPage(
-                                            HMCLLocalizedDownloadListPage.ofMod(null, false),
+                                            downloadListPage,
                                             remoteAddon,
                                             HMCLGameInstance.Optional.of(instance),
                                             org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD
