@@ -83,22 +83,14 @@ public final class CSVTable {
                             out.append(txt);
                         else {
                             out.append('"');
+                            // Escape quotes by doubling them as required by RFC 4180;
+                            // line breaks are kept literally inside quoted fields.
                             for (int i = 0; i < txt.length(); i++) {
                                 char c = txt.charAt(i);
-                                switch (c) {
-                                    case '"':
-                                        out.append("\\\"");
-                                        break;
-                                    case '\r':
-                                        out.append("\\r");
-                                        break;
-                                    case '\n':
-                                        out.append("\\n");
-                                        break;
-                                    default:
-                                        out.append(c);
-                                        break;
-                                }
+                                if (c == '"')
+                                    out.append("\"\"");
+                                else
+                                    out.append(c);
                             }
                             out.append('"');
                         }
