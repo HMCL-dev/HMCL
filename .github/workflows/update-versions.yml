@@ -2,7 +2,7 @@ name: Update Minecraft version numbers
 
 on:
   schedule:
-    - cron: '0 16 * * *' # Every day at 16:00 UTC
+    - cron: '0 16 * * *' # Every day at 00:00 UTC+8
   workflow_dispatch:
 
 permissions:
