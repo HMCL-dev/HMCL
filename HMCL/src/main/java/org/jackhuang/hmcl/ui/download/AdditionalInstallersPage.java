@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.Optional;
 
@@ -36,11 +37,11 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class AdditionalInstallersPage extends AbstractInstallersPage {
     protected final BooleanProperty compatible = new SimpleBooleanProperty();
-    protected final String gameVersion;
+    protected final GameVersionNumber gameVersion;
     protected final GameInstanceManifest manifest;
     protected final HMCLGameInstance instance;
 
-    public AdditionalInstallersPage(HMCLGameInstance instance, String gameVersion, WizardController controller, DownloadProvider downloadProvider) {
+    public AdditionalInstallersPage(HMCLGameInstance instance, GameVersionNumber gameVersion, WizardController controller, DownloadProvider downloadProvider) {
         super(controller, gameVersion, downloadProvider);
         this.instance = instance;
         this.gameVersion = gameVersion;

@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.MojangDownloadProvider;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -33,7 +33,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.http.HttpHeaders;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -321,7 +320,7 @@ public final class DefaultGameRepositoryDraftTest {
         DefaultCacheRepository cache = new DefaultCacheRepository(tempDirectory.resolve("cache"));
         Path cached = cache.cacheFile(source, "SHA-1", sha1);
         DefaultDependencyManager manager = new DefaultDependencyManager(
-                repository, new MojangDownloadProvider(), cache);
+                repository, new TestDownloadProvider(cache), cache);
         GameInstanceManifest replacement = original.withDownloads(Map.of(DownloadType.CLIENT,
                 new DownloadInfo("https://example.invalid/client.jar", sha1)));
 
@@ -370,7 +369,7 @@ public final class DefaultGameRepositoryDraftTest {
         Files.writeString(target, "old client");
         String newUrl = "https://example.invalid/new.jar";
         DefaultDependencyManager manager = createDependencyManager(repository);
-        manager.getCacheRepository().cacheText(new UrlResponseInfo(200, URI.create(newUrl),
+        manager.getCacheRepository().cacheText(new UrlResponseInfo(200, WebURL.parse(newUrl),
                 HttpHeaders.of(Map.of("etag", List.of("new-client"),
                         "cache-control", List.of("max-age=3600")), (name, value) -> true)), "new client");
         GameInstanceManifest replacement = original.withDownloads(Map.of(DownloadType.CLIENT, new DownloadInfo(newUrl)));
@@ -549,8 +548,9 @@ public final class DefaultGameRepositoryDraftTest {
 
     /// Creates a dependency manager with a cache isolated inside the test repository.
     private static DefaultDependencyManager createDependencyManager(TestRepository repository) {
-        return new DefaultDependencyManager(repository, new MojangDownloadProvider(),
-                new DefaultCacheRepository(repository.getBaseDirectory().resolve("cache")));
+        DefaultCacheRepository cacheRepository =
+                new DefaultCacheRepository(repository.getBaseDirectory().resolve("cache"));
+        return new DefaultDependencyManager(repository, new TestDownloadProvider(cacheRepository), cacheRepository);
     }
 
     /// Minimal repository implementation for draft tests.
