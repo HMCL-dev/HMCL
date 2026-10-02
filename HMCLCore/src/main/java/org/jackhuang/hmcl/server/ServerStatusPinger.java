@@ -148,30 +148,34 @@ public final class ServerStatusPinger {
     }
 
     private static long readPongResponsePacket(DataInputStream in) throws IOException {
-        byte[] packetData = new byte[readVarInt(in)];
-        in.readFully(packetData);
-
-        try (ByteArrayInputStream bais = new ByteArrayInputStream(packetData);
-             DataInputStream packetIn = new DataInputStream(bais)) {
+        return readPacket(in, packetIn -> {
             int packetId = readVarInt(packetIn);
             if (packetId != 0x01)
                 throw new IOException("Invalid packet id " + packetId + ", expected 0x01(Pong Response).");
             return readLong(packetIn);
-        }
+        });
     }
 
-    private static String readStatusResponsePacket(DataInputStream in) throws IOException {
-        byte[] packetData = new byte[readVarInt(in)];
+    private static <T> T readPacket(DataInputStream in, PacketReader<T> reader) throws IOException {
+        int length = readVarInt(in);
+        if (length > 32768) throw new IOException("Packet length too large: " + length);
+        byte[] packetData = new byte[length];
         in.readFully(packetData);
 
         try (ByteArrayInputStream bais = new ByteArrayInputStream(packetData);
              DataInputStream packetIn = new DataInputStream(bais)) {
+            return reader.reader(packetIn);
+        }
+    }
+
+    private static String readStatusResponsePacket(DataInputStream in) throws IOException {
+        return readPacket(in, packetIn -> {
             int packetId = readVarInt(packetIn);
             if (packetId != 0x00)
                 throw new IOException("Invalid packet id " + packetId + ", expected 0x00(Status Response).");
 
             return readVarString(packetIn); // Status Json
-        }
+        });
     }
 
     private static void sendStatusRequestPacket(DataOutputStream sendTarget) throws IOException {
@@ -229,7 +233,9 @@ public final class ServerStatusPinger {
     }
 
     private static String readVarString(DataInputStream in) throws IOException {
-        byte[] bytes = new byte[readVarInt(in)];
+        int length = readVarInt(in);
+        if (length > 32768) throw new IOException("Packet string length too large: " + length);
+        byte[] bytes = new byte[length];
         in.readFully(bytes);
         return new String(bytes, StandardCharsets.UTF_8);
     }
@@ -282,5 +288,10 @@ public final class ServerStatusPinger {
     @FunctionalInterface
     private interface PacketWriter {
         void write(DataOutputStream out) throws IOException;
+    }
+
+    @FunctionalInterface
+    private interface PacketReader<T> {
+        T reader(DataInputStream in) throws IOException;
     }
 }
