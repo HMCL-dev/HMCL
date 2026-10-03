@@ -577,6 +577,71 @@
     -fx-text-fill: -monet-on-surface;
 }
 
+.dialog-refresh {
+    -fx-text-fill: -monet-primary;
+    -fx-padding: 0.7em 0.8em;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Server Status Dialog                                                      *
+ *                                                                             *
+ ******************************************************************************/
+
+.server-status-motd-box {
+    -fx-background-color: -monet-surface-container;
+    -fx-background-radius: 10px;
+    -fx-border-color: -monet-outline-variant;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-max-width: 620px;
+}
+
+.server-status-motd-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.server-status-motd-line {
+    -fx-font-size: 13px;
+    -fx-text-fill: -monet-on-surface;
+    -fx-wrap-text: true;
+    -fx-max-width: 560px;
+}
+
+.server-status-detail-row {
+    -fx-background-color: -monet-surface-container-low;
+    -fx-background-radius: 10px;
+    -fx-border-color: -monet-outline-variant;
+    -fx-border-width: 1px;
+    -fx-border-radius: 10px;
+    -fx-max-width: 620px;
+}
+
+.server-status-stat-cell {
+    -fx-border-color: -monet-outline-variant;
+    -fx-border-width: 0 1 0 0;
+}
+
+.server-status-stat-cell-last {
+    -fx-border-width: 0;
+}
+
+.server-status-stat-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.server-status-stat-value {
+    -fx-font-size: 13px;
+    -fx-font-weight: 500;
+    -fx-text-fill: -monet-on-surface;
+    -fx-wrap-text: true;
+    -fx-max-width: 100px;
+}
+
 /*******************************************************************************
  *                                                                             *
  * Microsoft Login Dialog                                                      *
