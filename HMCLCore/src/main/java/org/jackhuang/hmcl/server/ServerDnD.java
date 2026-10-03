@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.server;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import javafx.event.EventHandler;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
@@ -27,7 +29,38 @@ import java.util.Base64;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-// minecraft-server:base64ServerName:base64ServerIP[:base64Favicon]
+/**
+ * Drag-and-drop payload for a Minecraft server definition.
+ * <p>
+ * Format: {@code minecraft-server:Base64(JSON)}
+ *
+ * <p>
+ * Required fields:
+ * <ul>
+ *   <li>{@code name}: the display name of the server.</li>
+ *   <li>{@code address}: the server address, such as
+ *   "...@server.ip.example.com:25565?_id=xxx&key=value...".</li>
+ * </ul>
+ *
+ * <p>
+ * Optional fields:
+ * <ul>
+ *   <li>{@code favicon}: the server icon. This value should be the raw PNG base64 payload only, without
+ *   the {@code data:image/png;base64,} prefix. The parser in {@link ServerStatusPinger} accepts the
+ *   Minecraft status format where the remote payload may include a data URL, but it strips the prefix and
+ *   keeps only the base64 bytes. This drag-and-drop payload therefore stores the base64 text directly,
+ *   not the full data URL.</li>
+ * </ul>
+ *
+ * Example payload:
+ * <pre>
+ * {
+ *   "name": "server name",
+ *   "address": "...@server.ip.example.com:25565?_id=xxx&key=value...",
+ *   "favicon": "iVBORw0KGgoAAAANSUhEUgAA..."
+ * }
+ * </pre>
+ */
 public final class ServerDnD {
     private static final String SCHEME = "minecraft-server";
 
@@ -38,21 +71,22 @@ public final class ServerDnD {
         String url = dragboard.getString();
         if (url == null) return Optional.empty();
 
-
-        String[] urlElements = url.split(":");
-
-        if (urlElements.length != 4 && urlElements.length != 3) {
-            return Optional.empty();
-        }
-        if (!urlElements[0].equals(SCHEME)) return Optional.empty();
-
+        int index = url.indexOf(":");
+        if (index == -1) return Optional.empty();
         try {
+            JsonObject object = JsonParser.parseString(new String(Base64.getDecoder().decode(url.substring(index + 1)), StandardCharsets.UTF_8)).getAsJsonObject();
+            String favicon = null;
+            if (object.has("favicon")) {
+                favicon = object.get("favicon").getAsString();
+            }
+            String address = object.get("address").getAsString();
+            String name = object.get("name").getAsString();
             return Optional.of(new Server(
                     Server.ServerPackStatus.PROMPT,
                     false,
-                    urlElements.length == 4 ? urlElements[3] : null,
-                    new String(Base64.getDecoder().decode(urlElements[2]), StandardCharsets.UTF_8),
-                    new String(Base64.getDecoder().decode(urlElements[1]), StandardCharsets.UTF_8)
+                    favicon,
+                    address,
+                    name
             ));
         } catch (Exception ignored) {
         }
