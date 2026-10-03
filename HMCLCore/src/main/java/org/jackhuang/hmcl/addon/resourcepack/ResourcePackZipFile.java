@@ -35,16 +35,22 @@ import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Reads metadata and icons from a ZIP resource pack.
 final class ResourcePackZipFile extends ResourcePackFile {
-    private final PackMcMeta.PackInfo info;
+    /// The parsed metadata, or null if it could not be read.
+    private final PackMcMeta.@Nullable PackInfo info;
 
+    /// Reads the pack metadata and resolves its description using the manager's locale.
+    ///
+    /// @throws IOException if the ZIP archive cannot be opened or closed
     public ResourcePackZipFile(ResourcePackManager manager, Path path) throws IOException {
         super(manager, path);
 
-        PackMcMeta meta = null;
+        @Nullable PackMcMeta meta = null;
         try (var zipFileTree = CompressingUtils.openZipTree(path)) {
             try {
-                meta = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"));
+                meta = PackMcMeta.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"))
+                        .withDescription(ResourcePackDescriptionResolver.resolveFromZip(zipFileTree, manager.getLocale()));
             } catch (Exception e) {
                 LOG.warning("Failed to parse resource pack meta", e);
             }
@@ -53,7 +59,7 @@ final class ResourcePackZipFile extends ResourcePackFile {
     }
 
     @Override
-    public PackMcMeta.PackInfo getPackInfo() {
+    public PackMcMeta.@Nullable PackInfo getPackInfo() {
         return info;
     }
 
@@ -99,4 +105,3 @@ final class ResourcePackZipFile extends ResourcePackFile {
         return new AddonUpdate(source, RemoteAddon.Type.RESOURCE_PACK, this, currentVersion.get(), remoteVersions.get(0), false);
     }
 }
-

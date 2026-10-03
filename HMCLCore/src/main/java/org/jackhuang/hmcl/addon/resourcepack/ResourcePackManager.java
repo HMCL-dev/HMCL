@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
@@ -214,6 +215,8 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     private final Path resourcePackDirectory;
     private final Path optionsFile;
+    /// The locale used to resolve resource-pack descriptions.
+    private final Locale locale;
 
     private @Nullable GameVersionNumber minecraftVersion;
     private @Nullable PackMcMeta.PackVersion requiredVersion;
@@ -221,13 +224,27 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     private boolean loaded = false;
 
-    /// Creates a resource-pack manager for the given instance.
+    /// Creates a resource-pack manager using the system default locale for descriptions.
     ///
     /// @param instance the snapshot member whose resource packs this manager operates on
     public ResourcePackManager(DefaultGameInstance instance) {
+        this(instance, LocaleUtils.SYSTEM_DEFAULT);
+    }
+
+    /// Creates a resource-pack manager using the given locale for descriptions.
+    ///
+    /// @param instance the snapshot member whose resource packs this manager operates on
+    /// @param locale the locale used to select resource-pack translations; must not be null
+    public ResourcePackManager(DefaultGameInstance instance, Locale locale) {
         super(instance);
         this.resourcePackDirectory = instance.getResourcePackDirectory();
         this.optionsFile = instance.getRunDirectory().resolve("options.txt");
+        this.locale = Objects.requireNonNull(locale, "locale");
+    }
+
+    /// Returns the locale used to resolve resource-pack descriptions.
+    Locale getLocale() {
+        return locale;
     }
 
     private @Nullable Charset optionsFileEncoding;
