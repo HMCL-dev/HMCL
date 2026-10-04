@@ -387,7 +387,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                 return GameInstanceIconType
                     .getIconType(localModFile.getModLoaderType())
                     .getIcon();
-        }
+            }
 
             return null;
         }
