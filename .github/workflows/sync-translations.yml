@@ -1,0 +1,44 @@
+name: Sync Translations
+
+on:
+  schedule:
+    # At 20:00 on Sunday and Wednesday (UTC) / At 4:00 on Monday and Thursday (BJT)
+    - cron: "0 20 * * 0,3"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-versions:
+    if: ${{ github.repository_owner == 'HMCL-dev' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          java-package: 'jdk+fx'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-cleanup: never
+
+      - name: Sync Translations
+        run: ./gradlew syncTranslations --no-daemon --parallel --stacktrace
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Sync translations [skip ci]"
+          title: "Sync translations [skip ci]"
+          body: "Automatically sync HMCL translations."
+          branch: auto-sync-translations
+          delete-branch: true
