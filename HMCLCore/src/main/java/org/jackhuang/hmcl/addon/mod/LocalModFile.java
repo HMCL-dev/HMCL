@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.addon.mod;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
@@ -25,6 +26,7 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -51,7 +53,29 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     private final String fileName;
     private final String logoPath;
     private final BooleanProperty activeProperty;
+    private final BooleanProperty corruptProperty;
+
+    /// UI mirror of [#integrityCheckFailed], written on the FX thread so listeners can observe
+    /// changes. It can lag the authoritative field by one dispatch, and is written inline when
+    /// no FX toolkit is running.
+    private final BooleanProperty integrityCheckFailedProperty = new SimpleBooleanProperty(this, "integrityCheckFailed", true);
+
+    /// Whether this mod is corrupt. Written by integrity check tasks and read by any thread.
     private volatile boolean corrupt;
+
+    /// Whether the integrity check for this mod failed to complete.
+    ///
+    /// This is the authoritative value read by [#isIntegrityCheckFailed()]. It starts as `true`:
+    /// a newly loaded entry has not been checked yet, and until the check finishes its state is
+    /// unknown, not "sound". [ModManager] clears this once a check produces a verdict.
+    private volatile boolean integrityCheckFailed = true;
+
+    /// The file's identity when this entry was loaded, or `null` if it has not been supplied.
+    ///
+    /// Set by [ModManager] from the directory scan, so the file's metadata is read once per
+    /// scan rather than once per constructed entry. Used to detect an in-place replacement of
+    /// the file under the same name.
+    private volatile @Nullable ModManager.FileInfo fileInfoAtLoad;
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
         this(modManager, mod, file, name, description, "", "", "", "", "");
@@ -74,6 +98,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         this.url = url;
         this.logoPath = logoPath;
         this.corrupt = corrupt;
+        this.corruptProperty = new SimpleBooleanProperty(this, "corrupt", corrupt);
 
         activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
             @Override
@@ -155,14 +180,111 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         return activeProperty;
     }
 
-    /// Returns whether this mod file is corrupt (ZIP structure is damaged).
+    /// Returns whether this mod file is corrupt (ZIP structure is damaged, or a checksum
+    /// mismatch was found in strict mode).
+    ///
+    /// Reads the value written by the integrity check task directly, so the result is
+    /// visible to any thread as soon as the check completes. The [corruptProperty] is
+    /// updated separately for UI notification.
     public boolean isCorrupt() {
         return corrupt;
     }
 
+    /// Returns the corrupt property for binding.
+    ///
+    /// The returned property is read-only: writes must go through [#setCorrupt(boolean)] so the
+    /// field backing [#isCorrupt()] stays in sync. The property is updated on the FX thread and
+    /// exists for UI binding only; use [#isCorrupt()] for programmatic reads.
+    public ReadOnlyBooleanProperty corruptProperty() {
+        return corruptProperty;
+    }
+
     /// Sets the corrupt status of this mod file.
-    public void setCorrupt(boolean corrupt) {
+    ///
+    /// Package-private: the corrupt verdict is owned by the integrity check pipeline in
+    /// [ModManager], and letting arbitrary callers set it would let them contradict the check.
+    ///
+    /// This method is thread-safe and can be called from any thread. The field is the
+    /// authoritative value read by [#isCorrupt()]; the property mirrors it for the UI and is
+    /// written on the FX thread.
+    void setCorrupt(boolean corrupt) {
         this.corrupt = corrupt;
+        setPropertyOnFxThread(this.corruptProperty, corrupt);
+    }
+
+    /// Returns whether the integrity check for this mod failed to complete.
+    ///
+    /// A failed check is distinct from a passing check: the mod's status is unknown rather
+    /// than known-good. A freshly loaded mod starts in this state until its check completes,
+    /// so it is never presented as verified before it has actually been checked.
+    public boolean isIntegrityCheckFailed() {
+        return integrityCheckFailed;
+    }
+
+    /// Marks whether the integrity check for this mod failed to complete.
+    ///
+    /// Package-private, for the same reason as [#setCorrupt(boolean)].
+    ///
+    /// This method is thread-safe and can be called from any thread. The field is the
+    /// authoritative value read by [#isIntegrityCheckFailed()]; the property mirrors it for
+    /// the UI and is written on the FX thread.
+    ///
+    /// @param failed whether the check failed
+    void setIntegrityCheckFailed(boolean failed) {
+        this.integrityCheckFailed = failed;
+        setPropertyOnFxThread(this.integrityCheckFailedProperty, failed);
+    }
+
+    /// Returns the integrity-check-failed property for binding.
+    ///
+    /// The returned property is read-only: writes must go through
+    /// [#setIntegrityCheckFailed(boolean)] so the field backing [#isIntegrityCheckFailed()]
+    /// stays in sync. The property is updated on the FX thread and exists for UI binding only.
+    public ReadOnlyBooleanProperty integrityCheckFailedProperty() {
+        return integrityCheckFailedProperty;
+    }
+
+    /// Writes a boolean property on the FX thread, falling back to a direct write.
+    ///
+    /// The field backing the getter is the authoritative value, so the property is only a UI
+    /// mirror. Writing it on the FX thread keeps it safe to observe from listeners; when no FX
+    /// toolkit is running (headless contexts, tests) the write is done inline so the mirror
+    /// cannot be left permanently stale.
+    ///
+    /// @param property the property to write
+    /// @param value the value to write
+    private static void setPropertyOnFxThread(BooleanProperty property, boolean value) {
+        try {
+            if (javafx.application.Platform.isFxApplicationThread()) {
+                property.set(value);
+            } else {
+                javafx.application.Platform.runLater(() -> property.set(value));
+            }
+        } catch (IllegalStateException e) {
+            // The FX toolkit is not initialized, so there is no UI thread to marshal onto;
+            // write inline to keep the mirror in step with the authoritative field.
+            LOG.debug("Unable to dispatch mod integrity update to the FX thread", e);
+            property.set(value);
+        }
+    }
+
+    /// Returns the file's identity at the time this entry was loaded.
+    ///
+    /// Used to detect an in-place replacement of the file under the same name.
+    ///
+    /// @return the file identity, or `null` if it has not been supplied
+    @Nullable ModManager.FileInfo getFileInfo() {
+        return fileInfoAtLoad;
+    }
+
+    /// Records the file's identity as read by the directory scan.
+    ///
+    /// Called by [ModManager] when the entry is added, so the metadata does not have to be
+    /// read a second time here.
+    ///
+    /// @param fileInfo the file's identity
+    void setFileInfo(ModManager.FileInfo fileInfo) {
+        this.fileInfoAtLoad = fileInfo;
     }
 
     public boolean isActive() {

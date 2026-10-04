@@ -217,6 +217,14 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 {
+                    LineToggleButton strictModIntegrityCheck = new LineToggleButton();
+                    strictModIntegrityCheck.setTitle(i18n("settings.launcher.strict_mod_integrity_check"));
+                    strictModIntegrityCheck.setSubtitle(i18n("settings.launcher.strict_mod_integrity_check.subtitle"));
+                    strictModIntegrityCheck.selectedProperty().bindBidirectional(settings().strictModIntegrityCheckProperty());
+                    miscPaneList.getContent().add(strictModIntegrityCheck);
+                }
+
+                {
                     BorderPane debugPane = new BorderPane();
 
                     Label left = new Label(i18n("settings.launcher.debug"));

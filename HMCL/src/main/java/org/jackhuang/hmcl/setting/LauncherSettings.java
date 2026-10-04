@@ -228,6 +228,15 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return ignoreCorruptMods;
     }
 
+    /// Whether to enable strict mod integrity checking (CRC32 verification).
+    @SerializedName("strictModIntegrityCheck")
+    private final BooleanProperty strictModIntegrityCheck = new SimpleBooleanProperty(false);
+
+    /// Returns the strict mod integrity check property.
+    public BooleanProperty strictModIntegrityCheckProperty() {
+        return strictModIntegrityCheck;
+    }
+
     /// The common Minecraft directory selection mode.
     @SerializedName("commonDirectoryType")
     private final ObjectProperty<EnumCommonDirectory> commonDirectoryType = new RawPreservingObjectProperty<>(EnumCommonDirectory.DEFAULT);

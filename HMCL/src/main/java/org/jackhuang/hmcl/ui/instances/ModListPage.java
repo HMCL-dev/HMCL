@@ -23,7 +23,9 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -81,6 +83,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
@@ -149,6 +152,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         CompletableFuture.supplyAsync(() -> {
             lock.lock();
             try {
+                // Set strict mode based on user settings
+                modManager.setStrictIntegrityCheck(settings().strictModIntegrityCheckProperty().get());
                 modManager.refresh();
                 return modManager.getLocalFiles().stream().map(ModInfoObject::new).toList();
             } catch (IOException e) {
@@ -730,6 +735,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
 
         private BooleanProperty booleanProperty;
+        private ReadOnlyBooleanProperty corruptProperty;
+        private ChangeListener<? super Boolean> corruptListener;
+        private ReadOnlyBooleanProperty integrityCheckFailedProperty;
+        private ChangeListener<? super Boolean> integrityCheckFailedListener;
 
         private Tooltip warningTooltip;
 
@@ -764,9 +773,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 warningTooltip = null;
             }
 
-            if (empty) return;
+            // Detach before the early return so a recycled cell never keeps a listener on
+            // the previous item's properties.
+            detachPropertyListeners();
 
-            List<String> warning = new ArrayList<>();
+            if (empty) return;
 
             content.getTags().clear();
 
@@ -810,13 +821,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             if (modLoaderType == ModLoaderType.UNKNOWN) {
                 content.addTagWarning(i18n("mods.unknown"));
             } else if (!page.supportedLoaders.contains(modLoaderType)) {
-                warning.add(i18n("mods.warning.loader_mismatch"));
                 content.addTagWarning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType()));
-            }
-
-            if (modInfo.isCorrupt()) {
-                warning.add(i18n("mods.corrupt"));
-                content.addTagWarning(i18n("mods.corrupt"));
             }
 
             String modVersion = modInfo.getVersion();
@@ -828,6 +833,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
+
+            corruptProperty = modInfo.corruptProperty();
+            corruptListener = (obs, oldVal, newVal) -> updateWarningState();
+            corruptProperty.addListener(corruptListener);
+
+            integrityCheckFailedProperty = modInfo.integrityCheckFailedProperty();
+            integrityCheckFailedListener = (obs, oldVal, newVal) -> updateWarningState();
+            integrityCheckFailedProperty.addListener(integrityCheckFailedListener);
+
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
             restoreButton.setOnAction(e -> {
                 menu.get().getContent().setAll(modInfo.getMod().getOldFiles().stream()
@@ -842,14 +856,75 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             revealButton.setOnAction(e -> FXUtils.showFileInExplorer(modInfo.getFile()));
             infoButton.setOnAction(e -> Controllers.dialog(new ModInfoDialog(dataItem)));
 
+            updateWarningState();
+        }
+
+        /// Detaches the listeners registered on the currently bound item's properties.
+        ///
+        /// Must be called whenever the cell is rebound or recycled, so a listener never
+        /// outlives the item it was registered for.
+        private void detachPropertyListeners() {
+            detachListener(corruptProperty, corruptListener);
+            corruptProperty = null;
+            corruptListener = null;
+
+            detachListener(integrityCheckFailedProperty, integrityCheckFailedListener);
+            integrityCheckFailedProperty = null;
+            integrityCheckFailedListener = null;
+        }
+
+        /// Removes a listener from a property, tolerating either being `null`.
+        ///
+        /// @param property the property the listener was registered on
+        /// @param listener the listener to remove
+        private static void detachListener(
+                @Nullable ObservableValue<? extends Boolean> property,
+                @Nullable ChangeListener<? super Boolean> listener) {
+            if (property != null && listener != null) {
+                property.removeListener(listener);
+            }
+        }
+
+        /// Recomputes the corrupt/integrity warning state of this cell.
+        ///
+        /// Called both when the cell is (re)bound to an item and when an async integrity
+        /// check completes, so the displayed state reflects the latest known result.
+        private void updateWarningState() {
+            if (getItem() == null) {
+                return;
+            }
+            LocalModFile modInfo = getItem().getModInfo();
+
+            if (warningTooltip != null) {
+                Tooltip.uninstall(this, warningTooltip);
+                warningTooltip = null;
+            }
+
+            List<String> warning = new ArrayList<>();
+            String corruptTag = i18n("mods.corrupt");
+            String unverifiedTag = i18n("mods.integrity_check_failed");
+            content.getTags().removeIf(tag -> tag instanceof Label
+                    && (corruptTag.equals(((Label) tag).getText()) || unverifiedTag.equals(((Label) tag).getText())));
+
+            ModLoaderType modLoaderType = modInfo.getModLoaderType();
+            if (modLoaderType != ModLoaderType.UNKNOWN && !page.supportedLoaders.contains(modLoaderType)) {
+                warning.add(i18n("mods.warning.loader_mismatch"));
+            }
+
+            if (modInfo.isCorrupt()) {
+                warning.add(corruptTag);
+                content.addTagWarning(corruptTag);
+            } else if (modInfo.isIntegrityCheckFailed()) {
+                warning.add(unverifiedTag);
+                content.addTagWarning(unverifiedTag);
+            }
+
             if (!warning.isEmpty()) {
                 pseudoClassStateChanged(WARNING, true);
-
-                //noinspection ConstantValue
-                this.warningTooltip = warning.size() == 1
-                        ? new Tooltip(warning.get(0))
-                        : new Tooltip(String.join("\n", warning));
+                this.warningTooltip = new Tooltip(String.join("\n", warning));
                 FXUtils.installFastTooltip(this, warningTooltip);
+            } else {
+                pseudoClassStateChanged(WARNING, false);
             }
         }
     }

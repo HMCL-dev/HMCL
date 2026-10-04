@@ -449,21 +449,51 @@ public final class LauncherHelper {
     /// Returns a task that completes when the user has made a choice (or if no corrupt mods
     /// are found or the user has chosen to ignore the warning).
     private Task<Void> checkCorruptMods(HMCLGameInstance gameInstance, GameSettings.Effective setting) {
+        ModManager modManager = gameInstance.getModManager();
+
+        // Apply the strict-mode setting unconditionally, so the manager's view matches the
+        // user's configuration even when the warning itself is suppressed below.
+        modManager.setStrictIntegrityCheck(settings().strictModIntegrityCheckProperty().get());
+
         // Skip if user has chosen to ignore corrupt mod warnings
         if (settings().ignoreCorruptModsProperty().get()) {
             return Task.completed(null);
         }
 
-        ModManager modManager = gameInstance.getModManager();
-        List<LocalModFile> corruptMods;
+        List<LocalModFile> files;
         try {
-            corruptMods = modManager.getLocalFiles().stream()
-                    .filter(LocalModFile::isCorrupt)
-                    .filter(LocalModFile::isActive)
-                    .toList();
-        } catch (IOException e) {
+            // Rescan so integrity checks are (re)scheduled with the current strict-mode setting.
+            // getLocalFiles() alone would be a no-op for an already-loaded manager, leaving the
+            // corrupt flags from the previous mode in place.
+            modManager.refresh();
+            // Now wait for the checks scheduled above to finish
+            modManager.waitForIntegrityChecks();
+            files = modManager.getLocalFiles();
+        } catch (IOException | RuntimeException e) {
+            // The integrity check could not run at all. Tell the user rather than silently
+            // launching as if the mods had been verified, and never let the failure abort the
+            // launch pipeline.
             LOG.warning("Failed to check mod integrity", e);
+            runInFX(() -> Controllers.dialog(
+                    i18n("mods.corrupt.check_failed"), i18n("message.warning"), MessageType.WARNING));
             return Task.completed(null);
+        }
+
+        List<LocalModFile> corruptMods = files.stream()
+                .filter(LocalModFile::isCorrupt)
+                .filter(LocalModFile::isActive)
+                .toList();
+
+        // Log mods whose check could not be completed. Logging only: an unverified mod is not
+        // a launch blocker, so it must not silently become "sound" but must not stop the launch
+        // either. Reported regardless of whether corrupt mods were found.
+        List<String> unverified = files.stream()
+                .filter(LocalModFile::isIntegrityCheckFailed)
+                .filter(LocalModFile::isActive)
+                .map(mod -> Objects.toString(mod.getName(), ""))
+                .toList();
+        if (!unverified.isEmpty()) {
+            LOG.warning("Unable to verify " + unverified.size() + " mod(s): " + String.join(", ", unverified));
         }
 
         if (corruptMods.isEmpty()) {
@@ -476,28 +506,51 @@ public final class LauncherHelper {
             LOG.warning("  - " + mod.getFile());
         }
 
-        // Build the warning message
+        // Build the warning message, escaping archive-controlled mod names so they cannot
+        // be interpreted as markup by the dialog's XML fragment parser.
         String modList = corruptMods.stream()
-                .map(LocalModFile::getName)
+                .map(mod -> escapeDialogMarkup(Objects.toString(mod.getName(), "")))
                 .collect(Collectors.joining(", "));
 
         CompletableFuture<Void> future = new CompletableFuture<>();
         runInFX(() -> {
-            Controllers.confirm(
-                    i18n("mods.corrupt.warning", modList),
-                    i18n("mods.corrupt.warning.title"),
-                    MessageType.WARNING,
-                    () -> {
-                        // User clicked "Yes" - continue launch
-                        future.complete(null);
-                    },
-                    () -> {
-                        // User clicked "No" - block launch
-                        future.completeExceptionally(new CancellationException("Launch blocked due to corrupt mods"));
-                    }
-            );
+            try {
+                if (Controllers.isStopped()) {
+                    // Launcher is stopped, complete the future to avoid hanging
+                    future.complete(null);
+                    return;
+                }
+                Controllers.confirm(
+                        i18n("mods.corrupt.warning", modList),
+                        i18n("mods.corrupt.warning.title"),
+                        MessageType.WARNING,
+                        () -> {
+                            // User clicked "Yes" - continue launch
+                            future.complete(null);
+                        },
+                        () -> {
+                            // User clicked "No" - block launch
+                            future.completeExceptionally(new CancellationException("Launch blocked due to corrupt mods"));
+                        }
+                );
+            } catch (Exception e) {
+                // Never leave the launch pipeline waiting on a dialog that failed to appear
+                LOG.warning("Failed to show corrupt mod warning", e);
+                future.complete(null);
+            }
         });
         return Task.fromCompletableFuture(future);
+    }
+
+    /// Escapes archive-controlled markup characters so a mod name cannot be interpreted
+    /// as an XML fragment by the dialog's parser.
+    ///
+    /// @param value the raw mod name
+    /// @return the escaped name safe for embedding in the warning message
+    private static String escapeDialogMarkup(String value) {
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
     }
 
     private static Task<JavaRuntime> checkGameState(HMCLGameInstance gameInstance, GameSettings.Effective setting, GameInstanceManifest manifest) {
