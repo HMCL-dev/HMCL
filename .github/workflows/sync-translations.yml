@@ -11,7 +11,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  update-versions:
+  sync-translations:
     if: ${{ github.repository_owner == 'HMCL-dev' }}
     runs-on: ubuntu-latest
     steps:
