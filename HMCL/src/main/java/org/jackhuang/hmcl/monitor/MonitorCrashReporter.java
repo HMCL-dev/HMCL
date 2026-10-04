@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.setting.GameDirectoryID;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.ui.GameCrashWindow;
 import org.jackhuang.hmcl.util.Log4jLevel;
@@ -42,8 +43,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static javafx.application.Platform.runLater;
@@ -60,8 +59,8 @@ public final class MonitorCrashReporter {
     /// Handles the `--crash-report` argument of a launcher process relaunched by the monitor.
     ///
     /// @param args the process arguments
-    /// @return the path of the monitor result file to present, or `null` if the arguments do not
-    ///         request a crash report
+    /// @return the path of the monitor result file to present, or `null` when the arguments do not
+    /// request a crash report
     public static @Nullable Path processArguments(String[] args) {
         if (args.length == 2 && args[0].equals("--crash-report"))
             return Path.of(args[1]);
@@ -71,8 +70,10 @@ public final class MonitorCrashReporter {
     /// Shows the game crash window for the given monitor result file.
     ///
     /// <p>Must be called on the JavaFX application thread after the main window has been set up.
-    /// The result file is deleted once consumed. The crash window is skipped when the launched
-    /// instance cannot be resolved; the session log file remains on disk for inspection.
+    /// The result file is deleted once consumed. When the launched instance cannot be resolved
+    /// immediately and its repository is still loading, the resolution is deferred until the
+    /// repository publishes its loaded snapshot. The crash window is skipped when the instance
+    /// still cannot be resolved; the session log file remains on disk for inspection.
     ///
     /// @param resultFile the result file written by the monitor
     public static void show(Path resultFile) {
@@ -91,51 +92,78 @@ public final class MonitorCrashReporter {
         if (result == null)
             return;
 
-        List<HMCLGameRepository> repositories = GameDirectoryManager.getOrCreateAllRepositories();
-        HMCLGameInstance instance = findInstance(repositories, result);
+        HMCLGameRepository repository = resolveRepository(result.gameDirectoryId);
+        HMCLGameInstance instance = findInstance(repository, result.instanceId);
         if (instance != null) {
             presentCrashWindow(result, instance);
             return;
         }
 
-        // The relaunched launcher shows its main window before the game repositories have finished
-        // loading their snapshots asynchronously, so the instance may not be resolvable yet; wait
-        // for the pending loads and try again when each repository publishes its snapshot.
-        List<HMCLGameRepository> pending = repositories.stream()
-                .filter(repository -> !repository.isLoaded())
-                .toList();
-        if (pending.isEmpty()) {
-            LOG.warning("Cannot resolve the launched instance " + result.instanceId + " ("
-                    + describeRepositories(repositories) + "), skip showing the crash window."
-                    + " The session log is at " + result.logFile);
+        // The relaunched launcher shows its main window before the game repository has finished
+        // loading its snapshot asynchronously, so the launched instance may exist but not be
+        // resolvable yet. An already-loaded repository will never gain the instance and a missing
+        // repository has nothing to wait for, so only an unloaded repository is waited on.
+        if (repository == null || repository.isLoaded()) {
+            giveUp(result.instanceId, result.logFile, repository);
             return;
         }
 
-        LOG.info("Waiting for " + pending.size() + " game repositories to load before showing the crash window");
-        AtomicInteger pendingCount = new AtomicInteger(pending.size());
-        AtomicBoolean handled = new AtomicBoolean(false);
-        for (HMCLGameRepository repository : pending) {
-            ChangeListener<DefaultGameRepositorySnapshot> listener = new ChangeListener<>() {
-                @Override
-                public void changed(ObservableValue<? extends DefaultGameRepositorySnapshot> observable,
-                                    DefaultGameRepositorySnapshot oldValue, DefaultGameRepositorySnapshot newValue) {
-                    repository.snapshotProperty().removeListener(this);
-                    if (handled.get())
-                        return;
+        LOG.info("Waiting for the game repository to load before showing the crash window");
+        // Snapshot publication runs on the JavaFX application thread and this listener removes
+        // itself before scheduling the re-resolution, so the re-resolution is scheduled exactly
+        // once.
+        ChangeListener<DefaultGameRepositorySnapshot> listener = new ChangeListener<>() {
+            @Override
+            public void changed(ObservableValue<? extends DefaultGameRepositorySnapshot> observable,
+                    DefaultGameRepositorySnapshot oldValue, DefaultGameRepositorySnapshot newValue) {
+                repository.snapshotProperty().removeListener(this);
+                runLater(() -> resolveAndPresent(result, repository));
+            }
+        };
+        repository.snapshotProperty().addListener(listener);
+    }
 
-                    HMCLGameInstance resolved = findInstance(repositories, result);
-                    if (resolved != null) {
-                        if (handled.compareAndSet(false, true))
-                            runLater(() -> presentCrashWindow(result, resolved));
-                    } else if (pendingCount.decrementAndGet() == 0 && handled.compareAndSet(false, true)) {
-                        LOG.warning("Cannot resolve the launched instance " + result.instanceId + " ("
-                                + describeRepositories(repositories) + "), skip showing the crash window."
-                                + " The session log is at " + result.logFile);
-                    }
-                }
-            };
-            repository.snapshotProperty().addListener(listener);
+    /// Returns the repository of the registered game directory with the given id, starting its
+    /// initial refresh when needed.
+    ///
+    /// @param gameDirectoryId the persistent game directory id recorded by the monitor, or `null`
+    /// when unknown
+    /// @return the matching repository, or `null` when no registered game directory has this id,
+    /// e.g. because the user removed the game directory while the game was running
+    private static @Nullable HMCLGameRepository resolveRepository(@Nullable String gameDirectoryId) {
+        if (gameDirectoryId == null)
+            return null;
+        GameDirectoryID id;
+        try {
+            id = GameDirectoryID.parse(gameDirectoryId);
+        } catch (IllegalArgumentException e) {
+            LOG.warning("Malformed game directory id in the monitor result file: " + gameDirectoryId);
+            return null;
         }
+        return GameDirectoryManager.getOrCreateRepositoryByDirectoryId(id);
+    }
+
+    /// Resolves the launched instance after the repository has loaded, and shows the crash window
+    /// when it is found.
+    private static void resolveAndPresent(ResultSpec result, HMCLGameRepository repository) {
+        HMCLGameInstance instance = findInstance(repository, result.instanceId);
+        if (instance != null)
+            presentCrashWindow(result, instance);
+        else
+            giveUp(result.instanceId, result.logFile, repository);
+    }
+
+    /// Logs that the launched instance could not be resolved and the crash window is skipped.
+    private static void giveUp(@Nullable String instanceId, @Nullable String logFile,
+            @Nullable HMCLGameRepository repository) {
+        LOG.warning("Cannot resolve the launched instance " + instanceId + " ("
+                + (repository != null
+                        ? repository.getSnapshot().getInstanceCount() + " instances, loaded="
+                                + repository.isLoaded() + ", base directory "
+                                + repository.getLayout().getBaseDirectory()
+                        : "no registered game directory has the recorded id")
+                + "), skip showing the crash window."
+                + " The session log is at " + logFile);
     }
 
     /// Builds and shows the crash window from the monitor result and the resolved instance.
@@ -164,14 +192,6 @@ public final class MonitorCrashReporter {
         } catch (Throwable e) {
             LOG.warning("Failed to show the crash window for the relaunched launcher", e);
         }
-    }
-
-    /// Describes the given repositories with their loaded instance counts, for diagnostics.
-    private static String describeRepositories(List<HMCLGameRepository> repositories) {
-        return repositories.stream()
-                .map(repository -> repository.getSnapshot().getInstanceCount() + " instances, loaded="
-                        + repository.isLoaded())
-                .collect(Collectors.joining("; ", "[", "]"));
     }
 
     /// Rebuilds a [LaunchOptions] carrying the display-relevant fields recorded by the monitor.
@@ -211,8 +231,8 @@ public final class MonitorCrashReporter {
         return builder.create();
     }
 
-    /// Reads the session log file written by the monitor into [Log] entries, guessing the level of
-    /// each line. Returns an empty list when the log file is missing or unreadable.
+    /// Reads the session log file written by the monitor into [Log] entries, guessing the level
+    /// of each line. Returns an empty list when the log file is missing or unreadable.
     private static List<Log> readSessionLogs(@Nullable String logFile) {
         if (logFile == null)
             return List.of();
@@ -226,24 +246,24 @@ public final class MonitorCrashReporter {
         }
     }
 
-    /// Resolves the launched instance by its id across the given game directories.
-    private static @Nullable HMCLGameInstance findInstance(List<HMCLGameRepository> repositories, ResultSpec result) {
-        if (result.instanceId == null)
+    /// Resolves the launched instance by its id in the given repository.
+    ///
+    /// @param repository the repository of the recorded game directory, or `null` when no
+    /// registered game directory matches
+    /// @param instanceId the instance id recorded by the monitor, or `null` when unknown
+    /// @return the instance, or `null` when it cannot be resolved
+    private static @Nullable HMCLGameInstance findInstance(@Nullable HMCLGameRepository repository,
+            @Nullable String instanceId) {
+        if (repository == null || instanceId == null)
             return null;
 
         GameInstanceID id;
         try {
-            id = new GameInstanceID(result.instanceId);
+            id = new GameInstanceID(instanceId);
         } catch (IllegalArgumentException e) {
-            LOG.warning("Malformed instance id in the monitor result file: " + result.instanceId);
+            LOG.warning("Malformed instance id in the monitor result file: " + instanceId);
             return null;
         }
-
-        for (HMCLGameRepository repository : repositories) {
-            HMCLGameInstance instance = repository.findInstance(id);
-            if (instance != null)
-                return instance;
-        }
-        return null;
+        return repository.findInstance(id);
     }
 }

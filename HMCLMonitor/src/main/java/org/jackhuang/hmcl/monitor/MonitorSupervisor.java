@@ -253,6 +253,7 @@ public final class MonitorSupervisor {
         result.exitType = exitType.name();
         result.logFile = logFile.toString();
         result.instanceId = spec.instanceId;
+        result.gameDirectoryId = spec.gameDirectoryId;
         result.versionName = spec.versionName;
         result.gameDir = spec.gameDir;
         result.maxMemory = spec.maxMemory;

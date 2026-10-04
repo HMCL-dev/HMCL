@@ -305,6 +305,7 @@ public final class LauncherHelper {
                                 case HIDE -> DefaultLauncher.MonitorLaunchContext.RelaunchPolicy.ON_CRASH;
                                 default -> DefaultLauncher.MonitorLaunchContext.RelaunchPolicy.NEVER;
                             });
+                    launcher.setGameDirectoryId(gameInstance.getRepository().getGameDirectory().getId().toString());
 
                     return launcher;
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result

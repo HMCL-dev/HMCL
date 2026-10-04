@@ -138,6 +138,7 @@ public final class MonitorClient {
         spec.relaunchOnCrash = relaunchPolicy == MonitorLaunchContext.RelaunchPolicy.ON_CRASH;
         if (options.getInstanceId() != null)
             spec.instanceId = options.getInstanceId().toString();
+        spec.gameDirectoryId = context.gameDirectoryId();
         spec.versionName = options.getVersionName();
         if (options.getGameDir() != null)
             spec.gameDir = options.getGameDir().toString();

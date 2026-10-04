@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.UnknownNullability;
 import org.jetbrains.annotations.UnmodifiableView;
 
@@ -279,21 +278,28 @@ public final class GameDirectoryManager {
         return repositories.computeIfAbsent(gameDirectory, HMCLGameRepository::new);
     }
 
-    /// Creates repositories for every merged game directory and returns them, starting the initial
-    /// refresh of the ones that have not loaded yet.
+    /// Returns the repository of the registered game directory with the given id, creating it when
+    /// needed, or `null` when no registered game directory has this id.
     ///
-    /// <p>Used for lookups that are not tied to the selected game directory, e.g. resolving an
-    /// instance id recorded by the HMCL monitor. The selected repository's refresh is managed by the
-    /// selection flow and is not started again here.
-    public static @Unmodifiable List<HMCLGameRepository> getOrCreateAllRepositories() {
-        List<HMCLGameRepository> result = new ArrayList<>();
-        for (GameDirectory directory : mergedGameDirectoriesUnmodifiable) {
-            HMCLGameRepository repository = getOrCreateRepository(directory);
-            if (repository != selectedRepository.get() && !repository.isLoaded())
-                repository.refreshAsync().start();
-            result.add(repository);
-        }
-        return result;
+    /// <p>Used for lookups that only know the persistent directory id, e.g. resolving an instance
+    /// id recorded by the HMCL monitor. The returned repository is refreshed when it is not loaded;
+    /// the selected repository's refresh is managed by the selection flow and is not started again
+    /// here.
+    ///
+    /// @param id the persistent id of the game directory to find
+    /// @return the matching repository, or `null` when no registered game directory has this id
+    public static @Nullable HMCLGameRepository getOrCreateRepositoryByDirectoryId(GameDirectoryID id) {
+        GameDirectory match = mergedGameDirectoriesUnmodifiable.stream()
+                .filter(directory -> directory.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+        if (match == null)
+            return null;
+
+        HMCLGameRepository repository = getOrCreateRepository(match);
+        if (repository != selectedRepository.get() && !repository.isLoaded())
+            repository.refreshAsync().start();
+        return repository;
     }
 
     /// Adds a game directory to the per-workspace store.

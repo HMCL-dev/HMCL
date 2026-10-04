@@ -59,6 +59,9 @@ final class ProcessSpec {
     boolean relaunchOnCrash;
     /// The id of the launched instance, or `null` when unknown.
     @Nullable String instanceId;
+    /// The persistent id of the registered game directory owning the launched instance, or `null`
+    /// when unknown.
+    @Nullable String gameDirectoryId;
     /// The display name of the launched version, or `null` when unknown.
     @Nullable String versionName;
     /// The game directory of the launched instance, or `null` when unknown.

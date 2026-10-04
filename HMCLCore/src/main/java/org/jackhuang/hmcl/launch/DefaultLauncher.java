@@ -69,6 +69,9 @@ public class DefaultLauncher extends Launcher {
     ///                        or `null` if game output is not needed
     /// @param encoding        the charset of the game process output
     /// @param options         the launch options, providing instance identity for the result report
+    /// @param gameDirectoryId the persistent id of the registered game directory owning the
+    ///                        launched instance, recorded for the result report, or `null` when
+    ///                        unknown
     /// @param postExitCommand the post-exit command to run after the game exits, already tokenized
     ///                        and with placeholders expanded, or `null` if not configured
     /// @param relaunchPolicy  what the monitor should do after the game process exits
@@ -77,6 +80,7 @@ public class DefaultLauncher extends Launcher {
             @Nullable ProcessListener listener,
             Charset encoding,
             LaunchOptions options,
+            @Nullable String gameDirectoryId,
             @Nullable List<String> postExitCommand,
             RelaunchPolicy relaunchPolicy) {
 
@@ -97,6 +101,9 @@ public class DefaultLauncher extends Launcher {
     private @Nullable LaunchMonitorFunction launchMonitor = null;
     /// The relaunch policy applied by the HMCL monitor process after the game process exits.
     private MonitorLaunchContext.RelaunchPolicy relaunchPolicy = MonitorLaunchContext.RelaunchPolicy.NEVER;
+    /// The persistent id of the registered game directory owning the launched instance, recorded
+    /// for the monitor result report.
+    private @Nullable String gameDirectoryId;
 
     public DefaultLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
         super(instance, manifest, authInfo, options, listener, daemon);
@@ -718,6 +725,12 @@ public class DefaultLauncher extends Launcher {
         this.relaunchPolicy = relaunchPolicy;
     }
 
+    /// Sets the persistent id of the registered game directory owning the launched instance,
+    /// recorded in the monitor result. Ignored unless [a monitor launcher is set][#setLaunchMonitor].
+    public void setGameDirectoryId(@Nullable String gameDirectoryId) {
+        this.gameDirectoryId = gameDirectoryId;
+    }
+
     @Override
     public ProcessInfo launch() throws IOException, InterruptedException {
         Path nativeFolder = getNativeFolder();
@@ -769,7 +782,8 @@ public class DefaultLauncher extends Launcher {
                 if (StringUtils.isNotBlank(options.getPostExitCommand()))
                     postExitCommand = StringUtils.tokenize(options.getPostExitCommand(), getEnvVars(nativeFolder));
 
-                return launchMonitor.apply(new MonitorLaunchContext(builder, listener, command.encoding, options, postExitCommand, relaunchPolicy));
+                return launchMonitor.apply(new MonitorLaunchContext(builder, listener, command.encoding, options,
+                        gameDirectoryId, postExitCommand, relaunchPolicy));
             }
 
             process = builder.start();
