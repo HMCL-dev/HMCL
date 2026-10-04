@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -169,11 +170,21 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
                 item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
 
-                content.setTitle(item.getModInfo().getName());
+                if (item.getAddonInfo() instanceof LocalModFile modFile) {
+                    content.setTitle(modFile.getName());
 
-                if (content.getTags().isEmpty()) {
-                    content.addTag(item.getModInfo().getId());
-                    content.addTag(item.getSource());
+                    if (content.getTags().isEmpty()) {
+                        content.addTag(modFile.getId());
+                        content.addTag(item.getSource());
+                    }
+                }
+
+                if (item.getAddonInfo() instanceof ResourcePackFile resourcePackFile) {
+                    content.setTitle(resourcePackFile.getFileName());
+
+                    if (content.getTags().isEmpty()) {
+                        content.addTag(item.getSource());
+                    }
                 }
 
                 content.setSubtitle(
@@ -342,8 +353,8 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             this.fileName.set(fileName);
         }
 
-        public LocalModFile getModInfo() {
-            return (LocalModFile) data.localAddonFile();
+        public LocalAddonFile getAddonInfo() {
+            return data.localAddonFile();
         }
 
         public String getCurrentVersion() {
@@ -393,42 +404,52 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         }
 
         private Image loadIcon() {
-            if (!(data.localAddonFile() instanceof LocalModFile localModFile)) {
-                return getDefaultIcon();
-            }
+            if (data.localAddonFile() instanceof LocalModFile localModFile) {
+                List<String> iconPaths = new ArrayList<>();
 
-            List<String> iconPaths = new ArrayList<>();
+                if (StringUtils.isNotBlank(localModFile.getLogoPath())) {
+                    iconPaths.add(localModFile.getLogoPath());
+                }
 
-            if (StringUtils.isNotBlank(localModFile.getLogoPath())) {
-                iconPaths.add(localModFile.getLogoPath());
-            }
+                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(localModFile.getFile())) {
 
-            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(
-                    localModFile.getFile())) {
+                    for (String path : iconPaths) {
+                        Path iconPath = fs.getPath(path);
 
-                for (String path : iconPaths) {
-                    Path iconPath = fs.getPath(path);
+                        if (Files.exists(iconPath)) {
+                            Image image = FXUtils.loadImage(
+                                iconPath,
+                                80,
+                                80,
+                                true,
+                                true
+                            );
 
-                    if (Files.exists(iconPath)) {
-                        Image image = FXUtils.loadImage(
-                            iconPath,
-                            80,
-                            80,
-                            true,
-                            true
-                        );
-
-                        if (!image.isError()
-                            && image.getWidth() > 0
-                            && image.getHeight() > 0
-                            && Math.abs(image.getWidth() - image.getHeight()) < 1
-                        ) {
-                            return image;
+                            if (!image.isError()
+                                && image.getWidth() > 0
+                                && image.getHeight() > 0
+                                && Math.abs(image.getWidth() - image.getHeight()) < 1
+                            ) {
+                                return image;
+                            }
                         }
                     }
+                } catch (Exception e) {
+                    LOG.warning("Failed to load addon icons", e);
                 }
-            } catch (Exception e) {
-                LOG.warning("Failed to load addon icons", e);
+            }
+            
+            if (data.localAddonFile() instanceof ResourcePackFile resourcePackFile) {
+                Image image = resourcePackFile.loadIcon();
+
+                if (image != null
+                    && !image.isError()
+                    && image.getWidth() > 0
+                    && image.getHeight() > 0
+                    && Math.abs(image.getWidth() - image.getHeight()) < 1
+                ) {
+                    return image;
+                }
             }
 
             return getDefaultIcon();
