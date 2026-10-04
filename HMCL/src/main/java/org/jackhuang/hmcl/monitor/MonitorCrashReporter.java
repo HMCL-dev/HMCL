@@ -231,17 +231,14 @@ public final class MonitorCrashReporter {
         return builder.create();
     }
 
-    /// Reads the tail of the session log file written by the monitor into [Log] entries, guessing
-    /// the level of each line. At most [Log#getLogLines] lines are retained, matching the
-    /// in-memory log limit of the direct launch path. Returns an empty list when the log file is
-    /// missing or unreadable.
+    /// Reads the tail of the session log file into [Log] entries, guessing each line's level. At
+    /// most [Log#getLogLines] lines are kept, matching the direct launch path's in-memory limit.
+    /// Returns an empty list when the file is missing or unreadable.
     private static @Unmodifiable List<Log> readSessionLogs(@Nullable String logFile) {
         if (logFile == null)
             return List.of();
         int limit = Log.getLogLines();
         try (Stream<String> lines = Files.lines(Path.of(logFile), MonitorProtocol.CHARSET)) {
-            // Streaming keeps a huge session log from being loaded into memory at once; only the
-            // last `limit` lines are retained.
             CircularArrayList<Log> retained = new CircularArrayList<>(limit + 1);
             lines.forEach(line -> {
                 if (retained.size() == limit)
