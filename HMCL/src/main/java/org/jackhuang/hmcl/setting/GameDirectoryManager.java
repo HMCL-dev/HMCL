@@ -281,10 +281,8 @@ public final class GameDirectoryManager {
     /// Returns the repository of the registered game directory with the given id, creating it when
     /// needed, or `null` when no registered game directory has this id.
     ///
-    /// <p>Used for lookups that only know the persistent directory id, e.g. resolving an instance
-    /// id recorded by the HMCL monitor. The returned repository is refreshed when it is not loaded;
-    /// the selected repository's refresh is managed by the selection flow and is not started again
-    /// here.
+    /// <p>The repository is not refreshed here; callers that need loaded state should start
+    /// [HMCLGameRepository#refreshAsync] themselves.
     ///
     /// @param id the persistent id of the game directory to find
     /// @return the matching repository, or `null` when no registered game directory has this id
@@ -293,13 +291,7 @@ public final class GameDirectoryManager {
                 .filter(directory -> directory.getId().equals(id))
                 .findFirst()
                 .orElse(null);
-        if (match == null)
-            return null;
-
-        HMCLGameRepository repository = getOrCreateRepository(match);
-        if (repository != selectedRepository.get() && !repository.isLoaded())
-            repository.refreshAsync().start();
-        return repository;
+        return match != null ? getOrCreateRepository(match) : null;
     }
 
     /// Adds a game directory to the per-workspace store.

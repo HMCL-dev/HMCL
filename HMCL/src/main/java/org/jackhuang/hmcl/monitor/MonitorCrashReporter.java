@@ -17,9 +17,6 @@
  */
 package org.jackhuang.hmcl.monitor;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import org.jackhuang.hmcl.game.DefaultGameRepositorySnapshot;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -30,7 +27,9 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.setting.GameDirectoryID;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.GameCrashWindow;
+import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -38,12 +37,14 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static javafx.application.Platform.runLater;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -69,11 +70,10 @@ public final class MonitorCrashReporter {
 
     /// Shows the game crash window for the given monitor result file.
     ///
-    /// <p>Must be called on the JavaFX application thread after the main window has been set up.
-    /// The result file is deleted once consumed. When the launched instance cannot be resolved
-    /// immediately and its repository is still loading, the resolution is deferred until the
-    /// repository publishes its loaded snapshot. The crash window is skipped when the instance
-    /// still cannot be resolved; the session log file remains on disk for inspection.
+    /// <p>Must be called on the JavaFX application thread after the main window is set up, and
+    /// deletes the result file once consumed. When the launched instance cannot be resolved
+    /// immediately, the resolution is deferred until its repository finishes loading; the crash
+    /// window is skipped if it still cannot be resolved or the repository fails to load.
     ///
     /// @param resultFile the result file written by the monitor
     public static void show(Path resultFile) {
@@ -109,22 +109,20 @@ public final class MonitorCrashReporter {
         }
 
         LOG.info("Waiting for the game repository to load before showing the crash window");
-        // Snapshot publication runs on the JavaFX application thread and this listener removes
-        // itself before scheduling the re-resolution, so the re-resolution is scheduled exactly
-        // once.
-        ChangeListener<DefaultGameRepositorySnapshot> listener = new ChangeListener<>() {
-            @Override
-            public void changed(ObservableValue<? extends DefaultGameRepositorySnapshot> observable,
-                    DefaultGameRepositorySnapshot oldValue, DefaultGameRepositorySnapshot newValue) {
-                repository.snapshotProperty().removeListener(this);
+        // Waiting on the refresh task rather than snapshot publication, so that a failed load also
+        // ends the wait; the loaded snapshot is published before the task completes. The selection
+        // flow's own refresh may overlap harmlessly (both scans are read-only).
+        repository.refreshAsync().whenComplete(Schedulers.defaultScheduler(), exception -> {
+            if (exception == null) {
                 runLater(() -> resolveAndPresent(result, repository));
+            } else {
+                LOG.warning("Failed to load the game repository while waiting to show the crash window", exception);
+                runLater(() -> giveUp(result.instanceId, result.logFile, repository));
             }
-        };
-        repository.snapshotProperty().addListener(listener);
+        }).start();
     }
 
-    /// Returns the repository of the registered game directory with the given id, starting its
-    /// initial refresh when needed.
+    /// Returns the repository of the registered game directory with the given id.
     ///
     /// @param gameDirectoryId the persistent game directory id recorded by the monitor, or `null`
     /// when unknown
