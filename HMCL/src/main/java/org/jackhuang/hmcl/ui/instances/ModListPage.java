@@ -1085,7 +1085,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             getContainer().getChildren().setAll(container);
         }
 
-+        /// Guards disabling a mod that others depend on, for every activation path (mouse / keyboard /
+        /// Guards disabling a mod that others depend on, for every activation path (mouse / keyboard /
         /// accessibility). onAction fires after the toggle has applied, so when disabling would break
         /// dependents we revert it and let the user confirm/cascade first; cancelling leaves the mod
         /// enabled.
