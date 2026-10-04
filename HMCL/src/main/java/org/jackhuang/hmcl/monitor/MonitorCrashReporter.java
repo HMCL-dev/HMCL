@@ -231,16 +231,25 @@ public final class MonitorCrashReporter {
         return builder.create();
     }
 
-    /// Reads the session log file written by the monitor into [Log] entries, guessing the level
-    /// of each line. Returns an empty list when the log file is missing or unreadable.
-    private static List<Log> readSessionLogs(@Nullable String logFile) {
+    /// Reads the tail of the session log file written by the monitor into [Log] entries, guessing
+    /// the level of each line. At most [Log#getLogLines] lines are retained, matching the
+    /// in-memory log limit of the direct launch path. Returns an empty list when the log file is
+    /// missing or unreadable.
+    private static @Unmodifiable List<Log> readSessionLogs(@Nullable String logFile) {
         if (logFile == null)
             return List.of();
-        try {
-            return Files.readAllLines(Path.of(logFile), MonitorProtocol.CHARSET).stream()
-                    .map(line -> new Log(line, Log4jLevel.guessLevel(line)))
-                    .collect(Collectors.toList());
-        } catch (IOException e) {
+        int limit = Log.getLogLines();
+        try (Stream<String> lines = Files.lines(Path.of(logFile), MonitorProtocol.CHARSET)) {
+            // Streaming keeps a huge session log from being loaded into memory at once; only the
+            // last `limit` lines are retained.
+            CircularArrayList<Log> retained = new CircularArrayList<>(limit + 1);
+            lines.forEach(line -> {
+                if (retained.size() == limit)
+                    retained.removeFirst();
+                retained.addLast(new Log(line, Log4jLevel.guessLevel(line)));
+            });
+            return List.copyOf(retained);
+        } catch (IOException | UncheckedIOException e) {
             LOG.warning("Failed to read the session log file " + logFile, e);
             return List.of();
         }
