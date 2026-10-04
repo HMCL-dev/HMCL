@@ -128,10 +128,9 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// @throws IllegalStateException if a draft is active
     public void setBaseDirectory(Path baseDirectory) {
         checkNoActiveDraft("set base directory");
-        // Mark unloaded before publishing so snapshot listeners do not treat the empty snapshot as ready.
-        this.loaded = false;
         DefaultGameRepositorySnapshot initial = createSnapshot(createLayout(baseDirectory));
-        publishSnapshot(initial);
+        // The empty snapshot is published as not loaded so snapshot listeners do not treat it as ready.
+        publishSnapshot(initial, false);
     }
 
     /// {@inheritDoc}
@@ -167,6 +166,23 @@ public abstract class DefaultGameRepository implements GameRepository {
     protected void publishSnapshot(DefaultGameRepositorySnapshot newSnapshot) {
         newSnapshot.seal();
         runOnFxThreadAndWait(() -> {
+            snapshot.set(newSnapshot);
+        });
+    }
+
+    /// Publishes `newSnapshot` together with the repository's loaded state as one atomic step.
+    ///
+    /// The loaded flag is written immediately before the snapshot property is updated on the
+    /// JavaFX application thread, so snapshot listeners observe a ready repository when the
+    /// published state is loaded, and JavaFX-thread observers that see the new loaded state also
+    /// observe the new snapshot instead of the previous one.
+    ///
+    /// @param newSnapshot the snapshot to publish
+    /// @param loaded the loaded state to publish together with the snapshot
+    protected void publishSnapshot(DefaultGameRepositorySnapshot newSnapshot, boolean loaded) {
+        newSnapshot.seal();
+        runOnFxThreadAndWait(() -> {
+            this.loaded = loaded;
             snapshot.set(newSnapshot);
         });
     }
@@ -299,9 +315,9 @@ public abstract class DefaultGameRepository implements GameRepository {
             }
         }
 
-        // Mark loaded before publishing so snapshot listeners observe a ready repository.
-        loaded = true;
-        publishSnapshot(newSnapshot);
+        // Publish the scanned snapshot as loaded; the flag must become visible together with the
+        // snapshot so FX-thread consumers never act on the loaded flag with a stale snapshot.
+        publishSnapshot(newSnapshot, true);
     }
 
     /// Loads one instance directory without renaming on-disk JSON or jar files.
