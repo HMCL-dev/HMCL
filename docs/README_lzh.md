@@ -25,7 +25,7 @@
 ---
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | **中文** ([简体](README_zh.md), [繁體](README_zh_Hant.md), **文言**) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
+English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | **中文** ([简体](README_zh_Hans.md), [繁體](README_zh_Hant.md), **文言**) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 <!-- #END LANGUAGE_SWITCHER -->
 
 ### 概敘
@@ -61,9 +61,9 @@ HMCL 乃社群共驅之開源項目，迎諸君獻碼或建言。
 
 ## 貢獻者
 
-自乙未年（2015）始，百二十余人參與 HMCL，謝其勤勞！
+自乙未年（2015）始，百三十余人參與 HMCL，謝其勤勞！
 
-[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL&max=200)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## 開源之約
 

@@ -17,14 +17,18 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.download.DownloadCandidate;
+import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.util.CacheRepository;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -34,43 +38,90 @@ import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * Download a file to cache repository.
- *
- * @author Glavo
- */
+/// Downloads a remote file to a cache repository.
+///
+/// @author Glavo
 public final class CacheFileTask extends FetchTask<Path> {
 
-    public CacheFileTask(@NotNull String uri) {
-        this(NetworkUtils.toURI(uri));
+    /// Expected SHA-1 checksum, or `null` when the remote cache policy determines reuse.
+    private final @Nullable String expectedSha1;
+
+    /// Creates a task for one URL string using remote cache metadata.
+    ///
+    /// @param url the HTTP or HTTPS URL string
+    public CacheFileTask(@NotNull String url) {
+        this(WebURL.parse(url));
     }
 
-    public CacheFileTask(@NotNull URI uri) {
-        super(List.of(uri));
-        setName(uri.toString());
-
-        if (!NetworkUtils.isHttpUri(uri))
-            throw new IllegalArgumentException(uri.toString());
+    /// Creates a task for one URL using remote cache metadata.
+    ///
+    /// @param url the HTTP or HTTPS URL
+    public CacheFileTask(@NotNull WebURL url) {
+        this(List.of(url));
     }
 
-    public CacheFileTask(@NotNull List<@NotNull URI> uris) {
-        super(uris);
-        setName(uris.get(0).toString());
-
-        if (!uris.stream().allMatch(NetworkUtils::isHttpUri))
-            throw new IllegalArgumentException(uris.toString());
+    /// Creates a task for candidate URLs using remote cache metadata.
+    ///
+    /// @param urls candidate download URLs in attempt order
+    public CacheFileTask(@NotNull List<@NotNull WebURL> urls) {
+        this(DownloadCandidates.ofUrls(urls));
     }
 
+    public CacheFileTask(DownloadCandidates candidates) {
+        super(candidates);
+        this.expectedSha1 = null;
+        validateUris(candidates);
+        setName(candidates.getPrimaryCandidate().displayUrl());
+    }
+
+    public CacheFileTask(DownloadCandidates candidates, String expectedSha1) {
+        super(candidates);
+        if (!DigestUtils.isSha1Digest(expectedSha1)) {
+            throw new IllegalArgumentException("Invalid SHA-1 checksum: " + expectedSha1);
+        }
+        this.expectedSha1 = expectedSha1.toLowerCase(Locale.ROOT);
+        validateUris(candidates);
+        setName(candidates.getPrimaryCandidate().displayUrl());
+    }
+
+    /// Verifies that all candidate URLs use HTTP or HTTPS.
+    ///
+    /// @param urls the candidate URLs
+    private static void validateUris(@NotNull DownloadCandidates urls) {
+        for (DownloadCandidate candidate : urls.getCandidates()) {
+            if (candidate.url() == null || !NetworkUtils.isHttpUri(candidate.url())) {
+                throw new IllegalArgumentException("Invalid URL: " + candidate.displayUrl());
+            }
+        }
+    }
+
+    /// Selects a verified content-addressed entry or the applicable remote-cache policy.
+    ///
+    /// @return the cache action to perform before downloading
     @Override
     protected EnumCheckETag shouldCheckETag() {
+        if (expectedSha1 != null) {
+            Optional<Path> cached = repository.checkExistentFile(
+                    null, CacheRepository.SHA1, expectedSha1);
+            if (cached.isPresent()) {
+                setResult(cached.get());
+                LOG.info("Using cached file with SHA-1 " + expectedSha1);
+                return EnumCheckETag.CACHED;
+            }
+            return EnumCheckETag.NOT_CHECK_E_TAG;
+        }
+
         // Check cache
-        for (URI uri : uris) {
+        for (DownloadCandidate candidate : candidates.getCandidates()) {
+            WebURL url = candidate.url();
+            if (url == null) continue;
+
             try {
-                setResult(repository.getCachedRemoteFile(uri, true));
-                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                setResult(repository.getCachedRemoteFile(url, true));
+                LOG.info("Using cached file for " + NetworkUtils.dropQuery(url));
                 return EnumCheckETag.CACHED;
             } catch (CacheRepository.CacheExpiredException e) {
-                LOG.info("Cache expired for " + NetworkUtils.dropQuery(uri));
+                LOG.info("Cache expired for " + NetworkUtils.dropQuery(url));
             } catch (IOException ignored) {
             }
         }
@@ -82,10 +133,18 @@ public final class CacheFileTask extends FetchTask<Path> {
         setResult(cache);
     }
 
+    /// Creates a temporary sink that publishes a successful download to the cache repository.
+    ///
+    /// @param response     the HTTP response metadata
+    /// @param checkETag    whether remote cache metadata is being checked
+    /// @param bmclapiHash  the hash supplied by BMCLAPI, or `null`
+    /// @return the temporary download sink
+    /// @throws IOException if the temporary file cannot be created
     @Override
     protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) throws IOException {
-        assert checkETag;
-        assert response != null;
+        if (expectedSha1 == null && (!checkETag || response == null)) {
+            throw new IOException("Remote response metadata is unavailable");
+        }
 
         return new Context() {
             private final Path temp = Files.createTempFile("hmcl-download-", null);
@@ -124,7 +183,15 @@ public final class CacheFileTask extends FetchTask<Path> {
                 }
 
                 try {
-                    setResult(repository.cacheRemoteFile(response, temp));
+                    if (expectedSha1 != null) {
+                        ChecksumMismatchException.verifyChecksum(
+                                temp, CacheRepository.SHA1, expectedSha1);
+                        setResult(repository.cacheFile(
+                                temp, CacheRepository.SHA1, expectedSha1));
+                    } else {
+                        setResult(repository.cacheRemoteFile(
+                                Objects.requireNonNull(response), temp));
+                    }
                 } finally {
                     deleteTempFile();
                 }

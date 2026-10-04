@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.tree;
 import kala.compress.archivers.tar.TarArchiveEntry;
 import kala.compress.archivers.tar.TarArchiveReader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -61,31 +62,11 @@ public final class TarFileTree extends ArchiveFileTree<TarArchiveReader, TarArch
 
     private final Path tempFile;
     private final Thread shutdownHook;
+    private @Nullable Dir<TarArchiveEntry> root;
 
-    public TarFileTree(TarArchiveReader file, Path tempFile) throws IOException {
+    public TarFileTree(TarArchiveReader file, Path tempFile) {
         super(file);
         this.tempFile = tempFile;
-        try {
-            for (TarArchiveEntry entry : file.getEntries()) {
-                addEntry(entry);
-            }
-        } catch (Throwable e) {
-            try {
-                file.close();
-            } catch (Throwable e2) {
-                e.addSuppressed(e2);
-            }
-
-            if (tempFile != null) {
-                try {
-                    Files.deleteIfExists(tempFile);
-                } catch (Throwable e2) {
-                    e.addSuppressed(e2);
-                }
-            }
-
-            throw e;
-        }
 
         if (tempFile != null) {
             this.shutdownHook = new Thread(() -> {
@@ -97,6 +78,18 @@ public final class TarFileTree extends ArchiveFileTree<TarArchiveReader, TarArch
             Runtime.getRuntime().addShutdownHook(shutdownHook);
         } else
             this.shutdownHook = null;
+    }
+
+    @Override
+    public Dir<TarArchiveEntry> getRoot() {
+        if (root == null) {
+            root = new Dir<>("");
+            for (TarArchiveEntry entry : reader.getEntries()) {
+                addEntry(root, entry);
+            }
+        }
+
+        return root;
     }
 
     @Override

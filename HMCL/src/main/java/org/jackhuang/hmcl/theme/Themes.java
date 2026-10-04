@@ -24,17 +24,13 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.SetChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.image.Image;
-import javafx.scene.image.PixelReader;
-import javafx.scene.image.PixelWriter;
-import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BackgroundImage;
@@ -83,6 +79,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -94,6 +91,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Provides the current launcher MonetFX theme and derived color bindings.
 @NotNullByDefault
 public final class Themes {
+    /// The stage property retaining the listener for native appearance updates and marking completed registration.
+    private static final String NATIVE_DARK_MODE_LISTENER = "Themes.applyNativeDarkMode.listener";
+
     /// The seed color extracted from the last loaded wallpaper image.
     private static final ReadOnlyObjectWrapper<@Nullable ThemeColor> wallpaperThemeColor = new ReadOnlyObjectWrapper<>();
 
@@ -114,6 +114,9 @@ public final class Themes {
             observables.add(wallpaperThemeColor);
             if (FXUtils.DARK_MODE != null) {
                 observables.add(FXUtils.DARK_MODE);
+            }
+            if (FXUtils.ACCENT_COLOR != null) {
+                observables.add(FXUtils.ACCENT_COLOR);
             }
             bind(observables.toArray(new Observable[0]));
         }
@@ -195,6 +198,7 @@ public final class Themes {
         }
         return switch (themeColorType) {
             case DEFAULT -> ThemeColor.DEFAULT;
+            case SYSTEM -> getSystemThemeColor();
             case CUSTOM -> fallback;
             case BACKGROUND -> resolveWallpaperThemeColor(fallback, backgroundType);
         };
@@ -282,9 +286,14 @@ public final class Themes {
             colorScheme
     );
 
-    /// The current JavaFX launcher background.
-    private static final ReadOnlyObjectWrapper<Background> background = new ReadOnlyObjectWrapper<>(
-            new Background(new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY)));
+    /// Whether the current color scheme brightness is inherited from system.
+    private static final ReadOnlyBooleanWrapper autoBrightness = new ReadOnlyBooleanWrapper();
+
+    /// The current JavaFX launcher background and its node opacity.
+    private static final ReadOnlyObjectWrapper<LauncherBackground> background = new ReadOnlyObjectWrapper<>(
+            new LauncherBackground(
+                    new Background(new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY)),
+                    1.0));
 
     /// The last loaded background source used to rebuild the JavaFX background without reloading images.
     private static @Nullable LoadedBackground loadedBackground;
@@ -300,8 +309,8 @@ public final class Themes {
 
     /// A loaded JavaFX background source and the wallpaper color extracted while loading it.
     private sealed interface LoadedBackground {
-        /// Returns the loaded JavaFX background.
-        Background background();
+        /// Returns the loaded JavaFX background and its node opacity.
+        LauncherBackground background();
 
         /// Returns whether this background is the configured fallback background.
         boolean fallbackBackground();
@@ -316,7 +325,7 @@ public final class Themes {
         /// @param wallpaperThemeColor the seed color extracted from [#image], or `null` when unavailable
         /// @param fallbackBackground  whether this background is the configured fallback background
         record Image(
-                Background background,
+                LauncherBackground background,
                 javafx.scene.image.Image image,
                 @Nullable ThemeColor wallpaperThemeColor,
                 boolean fallbackBackground) implements LoadedBackground {
@@ -339,7 +348,7 @@ public final class Themes {
         /// @param wallpaperThemeColor the seed color represented by [#paint], or `null` when unavailable
         /// @param fallbackBackground  whether this background is the configured fallback background
         record Paint(
-                Background background,
+                LauncherBackground background,
                 @Nullable javafx.scene.paint.Paint paint,
                 @Nullable ThemeColor wallpaperThemeColor,
                 boolean fallbackBackground) implements LoadedBackground {
@@ -359,7 +368,7 @@ public final class Themes {
         /// @param background         the loaded JavaFX background
         /// @param fallbackBackground whether this background is the configured fallback background
         record ThemeColorFill(
-                Background background,
+                LauncherBackground background,
                 boolean fallbackBackground) implements LoadedBackground {
             /// Creates a loaded theme-color background.
             ///
@@ -377,6 +386,35 @@ public final class Themes {
     }
 
     static {
+        Supplier<@Nullable Brightness> effectiveBrightnessSupplier = () -> {
+            try {
+                return ThemePackManager.resolveCurrentThemeBrightness(ThemePackManager.currentResolveContext());
+            } catch (IOException | RuntimeException e) {
+                return null;
+            }
+        };
+        InvalidationListener autoBrightnessListener = o -> {
+            boolean auto;
+            if (settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
+                String val = settings().themeBrightnessModeProperty().get();
+                auto = val == null || switch (val.trim().toLowerCase(Locale.ROOT)) {
+                    case "light", "dark" -> false;
+                    default -> true;
+                };
+            } else {
+                auto = effectiveBrightnessSupplier.get() == null;
+            }
+            autoBrightness.set(auto);
+        };
+        settings().selectedThemeProperty().addListener(autoBrightnessListener);
+        settings().getThemeAppearanceOverrides().addListener(autoBrightnessListener);
+        settings().themeBrightnessModeProperty().addListener(autoBrightnessListener);
+        settings().backgroundTypeProperty().addListener(autoBrightnessListener);
+        if (FXUtils.DARK_MODE != null) {
+            FXUtils.DARK_MODE.addListener(autoBrightnessListener);
+        }
+        autoBrightnessListener.invalidated(null);
+
         ChangeListener<ResolvedTheme> listener = (observable, oldValue, newValue) -> {
             if (!Objects.equals(oldValue, newValue)) {
                 colorScheme.set(newValue.toColorScheme());
@@ -430,7 +468,7 @@ public final class Themes {
         }
 
         String themeBrightnessMode = settings().themeBrightnessModeProperty().get();
-        return switch (Objects.toString(themeBrightnessMode, "").toLowerCase(Locale.ROOT).trim()) {
+        return switch (Objects.toString(themeBrightnessMode, "").trim().toLowerCase(Locale.ROOT)) {
             case "light" -> Brightness.LIGHT;
             case "dark" -> Brightness.DARK;
             default -> getAutomaticBrightness();
@@ -441,24 +479,16 @@ public final class Themes {
     ///
     /// @return the effective launcher brightness
     public static Brightness getCurrentBrightness() {
+        Brightness contextBrightness = getThemeConditionBrightness();
         if (!settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_BRIGHTNESS_MODE)) {
-            Brightness contextBrightness = getThemeConditionBrightness();
             try {
                 return Objects.requireNonNullElse(
                         ThemePackManager.resolveCurrentThemeBrightness(ThemeResolveContext.current(contextBrightness)),
                         contextBrightness);
-            } catch (IOException | RuntimeException e) {
-                return contextBrightness;
+            } catch (IOException | RuntimeException ignored) {
             }
         }
-
-        String themeBrightnessMode = settings().themeBrightnessModeProperty().get();
-        return switch (Objects.toString(themeBrightnessMode, "").toLowerCase(Locale.ROOT).trim()) {
-            case "auto" -> getAutomaticBrightness();
-            case "dark" -> Brightness.DARK;
-            case "light" -> Brightness.LIGHT;
-            default -> getAutomaticBrightness();
-        };
+        return contextBrightness;
     }
 
     /// Returns the brightness requested by the current system or platform settings.
@@ -528,6 +558,15 @@ public final class Themes {
         return defaultBrightness = brightness;
     }
 
+    /// Returns the current operating system accent color, or the launcher default when unavailable.
+    public static ThemeColor getSystemThemeColor() {
+        if (FXUtils.ACCENT_COLOR == null) {
+            return ThemeColor.DEFAULT;
+        }
+        @Nullable Color accentColor = FXUtils.ACCENT_COLOR.get();
+        return accentColor != null ? ThemeColor.of(accentColor) : ThemeColor.DEFAULT;
+    }
+
     /// Returns the current resolved launcher theme.
     public static ResolvedTheme getTheme() {
         return theme.get();
@@ -543,8 +582,8 @@ public final class Themes {
         return colorScheme.get();
     }
 
-    /// Returns the current JavaFX launcher background property.
-    public static ReadOnlyObjectProperty<Background> backgroundProperty() {
+    /// Returns the current JavaFX launcher background and node opacity property.
+    public static ReadOnlyObjectProperty<LauncherBackground> backgroundProperty() {
         startBackgroundUpdates();
         return background.getReadOnlyProperty();
     }
@@ -824,7 +863,8 @@ public final class Themes {
         }
         @Nullable LoadedBackground loaded = loadedBackground;
         if (loaded instanceof LoadedBackground.ThemeColorFill themeColorFill) {
-            Background newBackground = createThemeColorBackground(getLoadedBackgroundOpacity(loaded.fallbackBackground()));
+            LauncherBackground newBackground =
+                    createThemeColorBackground(getLoadedBackgroundOpacity(loaded.fallbackBackground()));
             loadedBackground = new LoadedBackground.ThemeColorFill(newBackground, themeColorFill.fallbackBackground());
             background.set(newBackground);
         }
@@ -858,17 +898,23 @@ public final class Themes {
         LoadedBackground refreshed;
         if (loaded instanceof LoadedBackground.Image imageBackground) {
             refreshed = new LoadedBackground.Image(
-                    createBackgroundWithOpacity(imageBackground.image(), opacity),
+                    new LauncherBackground(
+                            imageBackground.background().background(),
+                            MathUtils.clamp(opacity, 0., 1.)),
                     imageBackground.image(),
                     imageBackground.wallpaperThemeColor(),
                     imageBackground.fallbackBackground());
         } else if (loaded instanceof LoadedBackground.ThemeColorFill themeColorFill) {
             refreshed = new LoadedBackground.ThemeColorFill(
-                    createThemeColorBackground(opacity),
+                    new LauncherBackground(
+                            themeColorFill.background().background(),
+                            MathUtils.clamp(opacity, 0., 1.)),
                     themeColorFill.fallbackBackground());
         } else if (loaded instanceof LoadedBackground.Paint paintBackground) {
             refreshed = new LoadedBackground.Paint(
-                    createPaintBackground(paintBackground.paint(), opacity),
+                    new LauncherBackground(
+                            paintBackground.background().background(),
+                            MathUtils.clamp(opacity, 0., 1.)),
                     paintBackground.paint(),
                     paintBackground.wallpaperThemeColor(),
                     paintBackground.fallbackBackground());
@@ -917,60 +963,37 @@ public final class Themes {
         return FXUtils.loadImage(new CacheFileTask(url).run());
     }
 
-    /// Creates a JavaFX paint background with the requested opacity.
-    private static Background createPaintBackground(@Nullable Paint paint, double opacity) {
-        opacity = MathUtils.clamp(opacity, 0., 1.);
-        if (paint instanceof Color || paint == null) {
-            Color color = (Color) paint;
-            if (color == null) {
-                color = Color.WHITE;
-            }
-            if (opacity < 1.) {
-                color = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getOpacity() * opacity);
-            }
-            return new Background(new BackgroundFill(color, CornerRadii.EMPTY, Insets.EMPTY));
-        } else {
-            return new Background(new BackgroundFill(paint, CornerRadii.EMPTY, Insets.EMPTY));
-        }
+    /// Creates a JavaFX paint background with a separately stored node opacity.
+    private static LauncherBackground createPaintBackground(@Nullable Paint paint, double opacity) {
+        return new LauncherBackground(
+                new Background(new BackgroundFill(
+                        Objects.requireNonNullElse(paint, Color.WHITE),
+                        CornerRadii.EMPTY,
+                        Insets.EMPTY)),
+                MathUtils.clamp(opacity, 0., 1.));
     }
 
     /// Creates a JavaFX background from the current theme color scheme surface container.
-    private static Background createThemeColorBackground(double opacity) {
+    private static LauncherBackground createThemeColorBackground(double opacity) {
         return createPaintBackground(getColorScheme().getColor(ColorRole.SURFACE_CONTAINER), opacity);
     }
 
-    /// Creates a JavaFX image background with the requested opacity.
-    private static Background createBackgroundWithOpacity(Image image, double opacity) {
-        PixelReader pixelReader = image.getPixelReader();
-        if (opacity <= 0) {
-            return new Background(new BackgroundFill(new Color(1, 1, 1, 0), CornerRadii.EMPTY, Insets.EMPTY));
-        } else if (opacity >= 1. || pixelReader == null) {
-            return new Background(new BackgroundImage(
-                    image,
-                    BackgroundRepeat.NO_REPEAT,
-                    BackgroundRepeat.NO_REPEAT,
-                    BackgroundPosition.DEFAULT,
-                    new BackgroundSize(800, 480, false, false, true, true)
-            ));
-        } else {
-            WritableImage tempImage = new WritableImage((int) image.getWidth(), (int) image.getHeight());
-            PixelWriter pixelWriter = tempImage.getPixelWriter();
-            for (int y = 0; y < image.getHeight(); y++) {
-                for (int x = 0; x < image.getWidth(); x++) {
-                    Color color = pixelReader.getColor(x, y);
-                    Color newColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getOpacity() * opacity);
-                    pixelWriter.setColor(x, y, newColor);
-                }
-            }
-
-            return new Background(new BackgroundImage(
-                    tempImage,
-                    BackgroundRepeat.NO_REPEAT,
-                    BackgroundRepeat.NO_REPEAT,
-                    BackgroundPosition.DEFAULT,
-                    new BackgroundSize(800, 480, false, false, true, true)
-            ));
-        }
+    /// Creates a JavaFX image background with a separately stored node opacity.
+    private static LauncherBackground createBackgroundWithOpacity(Image image, double opacity) {
+        Background imageBackground = new Background(new BackgroundImage(
+                image,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.DEFAULT,
+                new BackgroundSize(
+                        BackgroundSize.AUTO,
+                        BackgroundSize.AUTO,
+                        false,
+                        false,
+                        false,
+                        true)
+        ));
+        return new LauncherBackground(imageBackground, MathUtils.clamp(opacity, 0., 1.));
     }
 
     /// Loads a default launcher background image from local workspace files.
@@ -1073,6 +1096,27 @@ public final class Themes {
             FXUtils.DARK_MODE != null ? FXUtils.DARK_MODE : settings().themeBrightnessModeProperty()
     );
 
+    /// Whether the launcher window should be transparent after applying launcher and theme settings.
+    private static final BooleanBinding windowTransparent = Bindings.createBooleanBinding(
+            () -> {
+                if (settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_WINDOW_TRANSPARENT)) {
+                    return settings().windowTransparentProperty().get();
+                }
+                try {
+                    return Objects.requireNonNullElse(
+                            ThemePackManager.resolveCurrentWindowTransparent(ThemePackManager.currentResolveContext()),
+                            false);
+                } catch (IOException | RuntimeException e) {
+                    return false;
+                }
+            },
+            settings().windowTransparentProperty(),
+            settings().getThemeAppearanceOverrides(),
+            settings().selectedThemeProperty(),
+            settings().themeBrightnessModeProperty(),
+            FXUtils.DARK_MODE != null ? FXUtils.DARK_MODE : settings().themeBrightnessModeProperty()
+    );
+
     /// The title text fill derived from the current color scheme.
     private static final ObjectBinding<Color> titleFill = Bindings.createObjectBinding(
             () -> titleBarTransparent.get()
@@ -1092,13 +1136,32 @@ public final class Themes {
         return titleBarTransparent;
     }
 
+    /// Returns whether the launcher window should be transparent after applying launcher and theme settings.
+    public static BooleanBinding windowTransparentProperty() {
+        return windowTransparent;
+    }
+
     /// Returns whether the current color scheme uses dark brightness.
     public static BooleanBinding darkModeProperty() {
         return darkMode;
     }
 
-    /// Applies native dark-mode integration to a JavaFX stage where the platform supports it.
+    /// Returns whether the current color scheme brightness is inherited from system.
+    public static ReadOnlyBooleanProperty autoBrightnessProperty() {
+        return autoBrightness.getReadOnlyProperty();
+    }
+
+    /// Registers native dark-mode integration once per stage where the platform supports it.
+    ///
+    /// Windows updates the stage's native frame; macOS updates the application appearance. The stage retains
+    /// its listener, which observes theme changes weakly. Repeated calls for an already registered stage do
+    /// nothing, including after hiding the stage or replacing its scene.
+    ///
+    /// @param stage the stage retaining the registration, accessed on the JavaFX application thread
     public static void applyNativeDarkMode(Stage stage) {
+        if (stage.getProperties().containsKey(NATIVE_DARK_MODE_LISTENER)) {
+            return;
+        }
         if (OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11) && NativeUtils.USE_JNA && Dwmapi.INSTANCE != null) {
             ChangeListener<Boolean> listener = FXUtils.onWeakChange(Themes.darkModeProperty(), darkMode -> {
                 if (stage.isShowing()) {
@@ -1115,7 +1178,7 @@ public final class Themes {
                     });
                 }
             });
-            stage.getProperties().put("Themes.applyNativeDarkMode.listener", listener);
+            stage.getProperties().put(NATIVE_DARK_MODE_LISTENER, listener);
 
             if (stage.isShowing()) {
                 listener.changed(null, false, Themes.darkModeProperty().get());
@@ -1132,7 +1195,7 @@ public final class Themes {
             MacOSNativeUtils.setAppearance(darkModeProperty().get());
 
             ChangeListener<Boolean> listener = FXUtils.onWeakChange(Themes.darkModeProperty(), MacOSNativeUtils::setAppearance);
-            stage.getProperties().put("Themes.applyNativeDarkMode.listener", listener);
+            stage.getProperties().put(NATIVE_DARK_MODE_LISTENER, listener);
         }
     }
 

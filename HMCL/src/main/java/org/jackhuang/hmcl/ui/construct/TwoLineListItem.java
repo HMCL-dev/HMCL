@@ -23,16 +23,22 @@ import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
-import javafx.geometry.HPos;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.stream.Collectors;
+
+/// Displays a title with optional tags and a subtitle.
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
 
@@ -42,48 +48,30 @@ public class TwoLineListItem extends VBox {
     private final Label lblTitle;
     private Label lblSubtitle;
 
+    /// Creates an empty item whose children do not receive mouse events.
     public TwoLineListItem() {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
         setMouseTransparent(true);
 
         lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
+        lblTitle.setTextOverrun(OverrunStyle.ELLIPSIS);
 
-        // Custom layout for the title row: when there isn't enough room, the tags shrink (and clip)
-        // first; only once they are gone does the title itself start to ellipsize. The preferred
-        // width stays the natural title+tags width (no width bindings), so this works in any parent
-        // without circular layout dependencies.
         this.firstLine = new HBox(lblTitle) {
+            /// Includes the tags' natural width when requesting space from the parent.
             @Override
-            protected void layoutChildren() {
-                var managed = getManagedChildren();
-                if (managed.size() != 2) {
-                    super.layoutChildren();
-                    return;
+            protected double computePrefWidth(double height) {
+                double width = super.computePrefWidth(height);
+                for (Node child : getManagedChildren()) {
+                    if (child instanceof TagsBox tagsBox) {
+                        width += snapSizeX(tagsBox.computeNaturalPrefWidth(height));
+                    }
                 }
-
-                Insets insets = getInsets();
-                double x = insets.getLeft();
-                double y = insets.getTop();
-                double availableWidth = Math.max(0, getWidth() - x - insets.getRight());
-                double availableHeight = Math.max(0, getHeight() - y - insets.getBottom());
-
-                Node title = managed.get(0);
-                Node tagsNode = managed.get(1);
-                double spacing = getSpacing();
-
-                double titleWidth = Math.min(title.prefWidth(availableHeight), availableWidth);
-                double tagsWidth = Math.min(tagsNode.prefWidth(availableHeight),
-                        Math.max(0, availableWidth - titleWidth - spacing));
-
-                layoutInArea(title, x, y, titleWidth, availableHeight, 0, HPos.LEFT, VPos.CENTER);
-                layoutInArea(tagsNode, x + titleWidth + spacing, y, tagsWidth, availableHeight, 0, HPos.LEFT, VPos.CENTER);
+                return width;
             }
         };
         firstLine.getStyleClass().add("first-line");
         firstLine.setAlignment(Pos.CENTER_LEFT);
-        // Safety net: never let the row's content render past its own right edge.
-        FXUtils.setOverflowHidden(firstLine);
 
         this.getChildren().setAll(firstLine);
     }
@@ -193,39 +181,81 @@ public class TwoLineListItem extends VBox {
         return lblSubtitle;
     }
 
-    private ObservableList<Label> tags;
-
-    public ObservableList<Label> getTags() {
-        if (tags == null) {
-            tags = FXCollections.observableArrayList();
-
-            var tagsBox = new HBox(8);
-            tagsBox.getStyleClass().add("tags");
-            tagsBox.setAlignment(Pos.CENTER_LEFT);
-            tagsBox.setMinWidth(0);
-            Bindings.bindContent(tagsBox.getChildren(), tags);
-            var isNotEmpty = Bindings.isNotEmpty(tags);
-            tagsBox.managedProperty().bind(isNotEmpty);
-            tagsBox.visibleProperty().bind(isNotEmpty);
-            FXUtils.setOverflowHidden(tagsBox);
-
-            // The title/tags shrink priority is handled by firstLine's custom layout (see constructor).
-            firstLine.getChildren().setAll(lblTitle, tagsBox);
-        }
-        return tags;
-    }
-
-    public void addTag(String tag, PseudoClass pseudoClass) {
+    private static Label createTag(String tag, PseudoClass pseudoClass) {
         var tagLabel = new Label(tag);
         tagLabel.getStyleClass().add("tag");
         tagLabel.setMinWidth(Label.USE_PREF_SIZE);
         if (pseudoClass != null)
             tagLabel.pseudoClassStateChanged(pseudoClass, true);
-        getTags().add(tagLabel);
+        return tagLabel;
+    }
+
+    /// Stores the mutable tag list once tag support has been initialized.
+    private @Nullable ObservableList<Label> tags;
+
+    /// Returns the mutable list of tags displayed after the title.
+    public ObservableList<Label> getTags() {
+        if (tags == null) {
+            tags = FXCollections.observableArrayList();
+
+            var tagsBox = new TagsBox();
+            tagsBox.getStyleClass().add("tags");
+            tagsBox.setAlignment(Pos.CENTER_LEFT);
+
+            HBox.setHgrow(tagsBox, Priority.SOMETIMES);
+
+            Bindings.bindContent(tagsBox.getChildren(), tags);
+            var isNotEmpty = Bindings.isNotEmpty(tags);
+            tagsBox.managedProperty().bind(isNotEmpty);
+            tagsBox.visibleProperty().bind(isNotEmpty);
+
+            FXUtils.setOverflowHidden(tagsBox);
+
+            HBox.setHgrow(lblTitle, Priority.ALWAYS);
+            lblTitle.setMinWidth(0);
+            firstLine.getChildren().setAll(lblTitle, tagsBox);
+        }
+        return tags;
+    }
+
+    /// Reports its natural width separately from the width used to allocate space within the title row.
+    @NotNullByDefault
+    private static final class TagsBox extends HBox {
+
+        /// Creates a tag container with zero minimum and preferred allocation widths.
+        private TagsBox() {
+            super(8);
+            // Start at zero during HBox allocation so tags do not compete with the title for space.
+            setPrefWidth(0);
+            setMinWidth(0);
+        }
+
+        /// Returns the computed preferred width without applying the zero preferred-width override.
+        ///
+        /// @param height the available height, or -1 if unspecified
+        /// @return the natural preferred width of the tags and their container
+        private double computeNaturalPrefWidth(double height) {
+            return super.computePrefWidth(height);
+        }
+    }
+
+    public void addTag(String tag, PseudoClass pseudoClass) {
+        getTags().add(createTag(tag, pseudoClass));
     }
 
     public void addTag(String tag) {
         addTag(tag, null);
+    }
+
+    public void addTags(Collection<String> tags) {
+        getTags().addAll(tags.stream().map(tag -> createTag(tag, null)).toList());
+    }
+
+    public void addTagsIfNotExist(Collection<String> tags) {
+        var current = getTags().stream().map(Label::getText).collect(Collectors.toSet());
+        var target = new LinkedHashSet<>(tags);
+        target.removeAll(current);
+        addTags(target);
     }
 
     private static final PseudoClass WARNING_PSEUDO_CLASS = PseudoClass.getPseudoClass("warning");

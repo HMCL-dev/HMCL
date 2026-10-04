@@ -57,6 +57,7 @@ import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -200,7 +201,7 @@ public final class JavaDownloadDialog extends StackPane {
 
                         if (exceptionToDisplay != null) {
                             LOG.warning("Failed to download java", exceptionToDisplay);
-                            Controllers.dialog(DownloadProviders.localizeErrorMessage(exceptionToDisplay), i18n("install.failed"));
+                            Controllers.dialog(I18n.localizeErrorMessage(exceptionToDisplay), i18n("install.failed"));
                         }
                     });
 
@@ -232,6 +233,7 @@ public final class JavaDownloadDialog extends StackPane {
             this.remoteVersionBox.setConverter(FXUtils.stringConverter(JavaRemoteVersion::getDistributionVersion));
 
             this.packageTypeBox = new JFXComboBox<>(FXCollections.observableArrayList());
+            this.packageTypeBox.setConverter(FXUtils.stringConverter(JavaPackageType::getDisplayName));
 
             this.downloadButton = new JFXButton(i18n("download"));
             downloadButton.setOnAction(e -> onDownload());
@@ -371,7 +373,7 @@ public final class JavaDownloadDialog extends StackPane {
             if (version == null)
                 return;
 
-            Controllers.taskDialog(new GetTask(downloadProvider.injectURLWithCandidates(version.getLinks().pkgInfoUri()))
+            Controllers.taskDialog(new GetTask(downloadProvider.getDownloadCandidates(version.getLinks().pkgInfoUri()))
                     .setExecutor(Schedulers.io())
                     .thenComposeAsync(json -> {
                         DiscoResult<DiscoRemoteFileInfo> result = JsonUtils.fromNonNullJson(json, DiscoResult.typeOf(DiscoRemoteFileInfo.class));
@@ -391,8 +393,8 @@ public final class JavaDownloadDialog extends StackPane {
                         Task<FileDownloadTask.IntegrityCheck> getIntegrityCheck;
                         if (StringUtils.isNotBlank(fileInfo.checksum()))
                             getIntegrityCheck = Task.completed(new FileDownloadTask.IntegrityCheck(fileInfo.checksumType(), fileInfo.checksum()));
-                        else if (StringUtils.isNotBlank(fileInfo.checksumUri()))
-                            getIntegrityCheck = new GetTask(downloadProvider.injectURLWithCandidates(fileInfo.checksumUri()))
+                        else if (StringUtils.isNotBlank(fileInfo.checksumUri())) {
+                            getIntegrityCheck = new GetTask(downloadProvider.getDownloadCandidates(fileInfo.checksumUri()))
                                     .thenApplyAsync(checksum -> {
                                         checksum = checksum.trim();
 
@@ -402,13 +404,16 @@ public final class JavaDownloadDialog extends StackPane {
 
                                         return new FileDownloadTask.IntegrityCheck(fileInfo.checksumType(), checksum);
                                     });
+                        }
                         else
                             getIntegrityCheck = Task.completed(null);
 
                         return getIntegrityCheck
                                 .thenComposeAsync(integrityCheck ->
-                                        new FileDownloadTask(downloadProvider.injectURLWithCandidates(fileInfo.directDownloadUri()),
-                                                targetFile, integrityCheck).setName(fileInfo.fileName()))
+                                {
+                                    return new FileDownloadTask(downloadProvider.getDownloadCandidates(fileInfo.directDownloadUri()),
+                                            targetFile, integrityCheck).setName(fileInfo.fileName());
+                                })
                                 .thenSupplyAsync(() -> targetFile);
                     })
                     .whenComplete(Schedulers.javafx(), ((result, exception) -> {
@@ -431,7 +436,7 @@ public final class JavaDownloadDialog extends StackPane {
                             LOG.warning("Failed to download java", exception);
                             Throwable resolvedException = resolveException(exception);
                             if (!(resolvedException instanceof CancellationException)) {
-                                Controllers.dialog(DownloadProviders.localizeErrorMessage(resolvedException), i18n("install.failed"));
+                                Controllers.dialog(I18n.localizeErrorMessage(resolvedException), i18n("install.failed"));
                             }
                         }
                     })), i18n("java.download"), TaskCancellationAction.NORMAL);

@@ -1,0 +1,40 @@
+name: Check Codes Comment
+
+on:
+  workflow_run:
+    workflows: ["Check Codes"]
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'failure'
+    steps:
+      - name: Checkout Script
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            .github/scripts/check-codes-comment.js
+          sparse-checkout-cone-mode: false
+      - name: Download Artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: checkstyle-artifact
+          path: ${{ runner.temp }}/checkstyle-artifact
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate Review Comment
+        uses: actions/github-script@v9
+        env:
+          REPORTS_PATH: ${{ runner.temp }}/checkstyle-artifact/ALL_REPORTS.jsonl
+          PULL_REQUEST_NUMBER_PATH: ${{ runner.temp }}/checkstyle-artifact/PULL_REQUEST_NUMBER
+        with:
+          script: |
+            const script = require("./.github/scripts/check-codes-comment.js");
+            await script({ github, context, core });

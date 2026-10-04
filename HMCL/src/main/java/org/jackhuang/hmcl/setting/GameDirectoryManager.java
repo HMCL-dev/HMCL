@@ -22,9 +22,9 @@ import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.HMCLGameRepositorySnapshot;
 import org.jackhuang.hmcl.util.PortablePath;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -39,10 +39,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.*;
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Manages the merged runtime view of local and user game directories.
@@ -53,6 +53,14 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// [LauncherSettings] directly.
 @NotNullByDefault
 public final class GameDirectoryManager {
+
+    /// The stable ID shared by newly created and migrated current-workspace game directories.
+    static final GameDirectoryID DEFAULT_GAME_DIRECTORY_ID =
+            new GameDirectoryID(new UUID(0x7105bc1f490e5e8cL, 0x878cf5844c3d4bc3L));
+
+    /// The stable ID shared by newly created and migrated user-home game directories.
+    static final GameDirectoryID HOME_GAME_DIRECTORY_ID =
+            new GameDirectoryID(new UUID(0xf3eafde8506e5a77L, 0xbc88f24b4728dfb2L));
 
     /// The default current-workspace game directory path.
     private static final PortablePath CURRENT_GAME_DIRECTORY_PATH = PortablePath.of(".minecraft");
@@ -131,12 +139,17 @@ public final class GameDirectoryManager {
     /// The selected game repository, or `null` before the fallback game directory is resolved.
     private static final ObjectProperty<@UnknownNullability HMCLGameRepository> selectedRepository = new SimpleObjectProperty<>(GameDirectoryManager.class, "selectedRepository");
 
-    /// The selected instance ID projected from the selected repository.
-    private static final ReadOnlyStringWrapper selectedInstance = new ReadOnlyStringWrapper(GameDirectoryManager.class, "selectedInstance");
+    /// The selected instance projected from the selected repository's current snapshot.
+    private static final ReadOnlyObjectWrapper<@Nullable HMCLGameInstance> selectedInstance =
+            new ReadOnlyObjectWrapper<>(GameDirectoryManager.class, "selectedInstance");
 
     /// Updates [#selectedInstance] when the selected repository changes its selected instance.
-    private static final ChangeListener<String> selectedRepositoryInstanceListener =
+    private static final ChangeListener<@Nullable HMCLGameInstance> selectedRepositoryInstanceListener =
             (observable, oldValue, newValue) -> selectedInstance.set(newValue);
+
+    /// Reacts when the selected repository publishes a new snapshot.
+    private static final ChangeListener<? super HMCLGameRepositorySnapshot> selectedRepositorySnapshotListener =
+            (observable, oldValue, newValue) -> onSelectedRepositorySnapshotChanged();
 
     /// Initializes game directory state from the stores loaded by [SettingsManager].
     ///
@@ -154,12 +167,14 @@ public final class GameDirectoryManager {
         if (localGameDirectories().isNewlyCreated() && localGameDirectories().getGameDirectories().isEmpty()) {
             needRebuildGameDirectories = true;
             GameDirectories gameDirectories = localGameDirectories();
-            gameDirectories.getGameDirectories().add(new GameDirectory(newGameDirectoryId(), null, CURRENT_GAME_DIRECTORY_PATH));
+            gameDirectories.getGameDirectories().add(new GameDirectory(
+                    DEFAULT_GAME_DIRECTORY_ID, null, CURRENT_GAME_DIRECTORY_PATH));
         }
         if (userGameDirectories().isNewlyCreated() && userGameDirectories().getGameDirectories().isEmpty()) {
             needRebuildGameDirectories = true;
             GameDirectories gameDirectories = userGameDirectories();
-            gameDirectories.getGameDirectories().add(new GameDirectory(newGameDirectoryId(), null, HOME_GAME_DIRECTORY_PATH));
+            gameDirectories.getGameDirectories().add(new GameDirectory(
+                    HOME_GAME_DIRECTORY_ID, null, HOME_GAME_DIRECTORY_PATH));
         }
 
         needRebuildGameDirectories |= createDefaultGameDirectoriesIfEmpty();
@@ -190,25 +205,32 @@ public final class GameDirectoryManager {
             @Nullable HMCLGameRepository oldRepository = selectedRepository.get();
             if (oldRepository != null) {
                 oldRepository.selectedInstanceProperty().removeListener(selectedRepositoryInstanceListener);
+                oldRepository.snapshotProperty().removeListener(selectedRepositorySnapshotListener);
             }
             HMCLGameRepository repository = getOrCreateRepository(newValue);
             selectedRepository.set(repository);
             selectedInstance.set(repository.getSelectedInstance());
             repository.selectedInstanceProperty().addListener(selectedRepositoryInstanceListener);
-            repository.refreshVersionsAsync().start();
+            repository.snapshotProperty().addListener(selectedRepositorySnapshotListener);
+            if (repository.isLoaded()) {
+                onSelectedRepositorySnapshotChanged();
+            }
+            repository.refreshAsync().start();
         });
         selectedGameDirectory.set(currentGameDirectory != null ? currentGameDirectory : mergedGameDirectories.get(0));
+    }
 
-        EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> {
-            runInFX(() -> {
-                @Nullable HMCLGameRepository repository = selectedRepository.get();
-                if (repository != null && repository == event.getSource()) {
-                    repository.refreshSelectedInstance();
-                    for (Consumer<HMCLGameRepository> listener : versionsListeners)
-                        listener.accept(repository);
-                }
-            });
-        });
+    /// Restores selection and notifies consumers after the selected repository publishes a loaded snapshot.
+    private static void onSelectedRepositorySnapshotChanged() {
+        @Nullable HMCLGameRepository repository = selectedRepository.get();
+        if (repository == null || !repository.isLoaded()) {
+            return;
+        }
+
+        repository.refreshSelectedInstance();
+        for (Consumer<HMCLGameRepository> listener : versionsListeners) {
+            listener.accept(repository);
+        }
     }
 
     /// Creates the built-in game directories only when no game directory exists.
@@ -216,9 +238,11 @@ public final class GameDirectoryManager {
         if (localGameDirectories().getGameDirectories().isEmpty()
                 && userGameDirectories().getGameDirectories().isEmpty()) {
             localGameDirectories().getGameDirectories()
-                    .add(new GameDirectory(newGameDirectoryId(), null, CURRENT_GAME_DIRECTORY_PATH));
+                    .add(new GameDirectory(
+                            DEFAULT_GAME_DIRECTORY_ID, null, CURRENT_GAME_DIRECTORY_PATH));
             userGameDirectories().getGameDirectories()
-                    .add(new GameDirectory(newGameDirectoryId(), null, HOME_GAME_DIRECTORY_PATH));
+                    .add(new GameDirectory(
+                            HOME_GAME_DIRECTORY_ID, null, HOME_GAME_DIRECTORY_PATH));
             return true;
         } else {
             return false;
@@ -466,17 +490,26 @@ public final class GameDirectoryManager {
     }
 
     /// Returns the selected instance property projected from the selected repository.
-    public static ReadOnlyStringProperty selectedInstanceProperty() {
+    ///
+    /// The value is `null` when the selected repository has no registered selected instance.
+    ///
+    /// @return the read-only selected-instance property
+    public static ReadOnlyObjectProperty<@Nullable HMCLGameInstance> selectedInstanceProperty() {
         return selectedInstance.getReadOnlyProperty();
     }
 
-    /// Returns the selected instance ID for the selected repository.
-    public static @Nullable String getSelectedInstance() {
+    /// Returns the selected instance from the selected repository's current snapshot.
+    ///
+    /// @return the selected instance, or `null` when none is registered
+    public static @Nullable HMCLGameInstance getSelectedInstance() {
         return getSelectedRepository().getSelectedInstance();
     }
 
-    /// Sets the selected instance ID for the selected repository.
-    public static void setSelectedInstance(@Nullable String instance) {
+    /// Sets the selected instance for the selected repository.
+    ///
+    /// @param instance the instance to select, or `null` to clear the selection
+    /// @throws IllegalArgumentException if `instance` belongs to another repository
+    public static void setSelectedInstance(@Nullable HMCLGameInstance instance) {
         getSelectedRepository().setSelectedInstance(instance);
     }
 

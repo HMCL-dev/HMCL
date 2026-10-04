@@ -34,8 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.util.Objects;
 
-import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
-
 /// Persistent configuration for a game directory.
 @JsonAdapter(GameDirectory.Serializer.class)
 @NotNullByDefault
@@ -118,7 +116,7 @@ public final class GameDirectory implements Observable {
         this.path = new SimpleObjectProperty<>(this, "path", Objects.requireNonNull(path));
         this.legacyGameSettings = new SimpleObjectProperty<>(this, "legacyGameSettings", legacyGameSettings);
 
-        addPropertyChangedListener(onInvalidating(this::invalidate));
+        addPropertyChangedListener(arg -> invalidate());
     }
 
     /// Returns a debug string containing the game directory path and display metadata.

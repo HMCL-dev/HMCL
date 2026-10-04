@@ -56,4 +56,22 @@ public interface Advapi32 extends StdCallLibrary {
                       IntByReference lpReserved,
                       Pointer lpClass, IntByReference lpcchClass,
                       Pointer lpftLastWriteTime);
+
+    /**
+     * @see <a href="https://learn.microsoft.com/windows/win32/api/winreg/nf-winreg-regcreatekeyexw">RegCreateKeyExW function</a>
+     */
+    int RegCreateKeyExW(Pointer hKey, WString lpSubKey, int Reserved, WString lpClass,
+                        int dwOptions, int samDesired, Pointer lpSecurityAttributes,
+                        PointerByReference phkResult, IntByReference lpdwDisposition);
+
+    /**
+     * @see <a href="https://learn.microsoft.com/windows/win32/api/winreg/nf-winreg-regsetvalueexw">RegSetValueExW function</a>
+     */
+    int RegSetValueExW(Pointer hKey, WString lpValueName, int Reserved, int dwType,
+                       Pointer lpData, int cbData);
+
+    /**
+     * @see <a href="https://learn.microsoft.com/windows/win32/api/winreg/nf-winreg-regdeletevaluew">RegDeleteValueW function</a>
+     */
+    int RegDeleteValueW(Pointer hKey, WString lpValueName);
 }

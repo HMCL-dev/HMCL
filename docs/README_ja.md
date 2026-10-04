@@ -25,7 +25,7 @@
 ---
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | **日本語** | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
+English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh_Hans.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | **日本語** | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 <!-- #END LANGUAGE_SWITCHER -->
 
 ## 紹介
@@ -60,9 +60,9 @@ HMCL の開発には、次の方法で参加できます。
 
 ## 貢献者
 
-2015 年以来、120 人を超える貢献者が HMCL に参加しています。ご協力ありがとうございます。
+2015 年以来、130 人を超える貢献者が HMCL に参加しています。ご協力ありがとうございます。
 
-[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL&max=200)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## ライセンス
 

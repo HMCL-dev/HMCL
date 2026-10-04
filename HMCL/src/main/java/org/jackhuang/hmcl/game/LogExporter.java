@@ -22,14 +22,18 @@ import org.jackhuang.hmcl.addon.mod.MinecraftVersionMatcher;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.mod.NestedJarInspector.NestedJar;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -50,22 +54,24 @@ public final class LogExporter {
     }
 
     public static CompletableFuture<Void> exportLogs(
-            Path zipFile, DefaultGameRepository gameRepository, String versionId, String logs, String launchScript,
+            Path zipFile, DefaultGameInstance instance, LaunchOptions options, String logs, String launchScript,
             PathMatcher logMatcher) {
-        Path runDirectory = gameRepository.getRunDirectory(versionId);
-        Path baseDirectory = gameRepository.getBaseDirectory();
-        List<String> versions = new ArrayList<>();
+        DefaultGameRepositorySnapshot repositorySnapshot = instance.getSnapshot();
+        Path runDirectory = options.getGameDir();
+        List<GameInstanceID> instances = new ArrayList<>();
 
-        String currentVersionId = versionId;
-        HashSet<String> resolvedSoFar = new HashSet<>();
+        GameInstanceID currentInstanceId = instance.id;
+        HashSet<GameInstanceID> resolvedSoFar = new HashSet<>();
         while (true) {
-            if (resolvedSoFar.contains(currentVersionId)) break;
-            resolvedSoFar.add(currentVersionId);
-            Version currentVersion = gameRepository.getVersion(currentVersionId);
-            versions.add(currentVersionId);
+            if (resolvedSoFar.contains(currentInstanceId)) break;
+            resolvedSoFar.add(currentInstanceId);
+            @Nullable DefaultGameInstance currentInstance = repositorySnapshot.get(currentInstanceId);
+            if (currentInstance == null)
+                break;
+            instances.add(currentInstanceId);
 
-            if (StringUtils.isNotBlank(currentVersion.getInheritsFrom())) {
-                currentVersionId = currentVersion.getInheritsFrom();
+            if (currentInstance.getManifest().inheritsFrom() != null) {
+                currentInstanceId = currentInstance.getManifest().inheritsFrom();
             } else {
                 break;
             }
@@ -83,7 +89,7 @@ public final class LogExporter {
                 zipper.putTextFile(Logger.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
 
                 try {
-                    ModManager modManager = gameRepository.getModManager(versionId);
+                    ModManager modManager = instance.getModManager();
                     modManager.refresh();
                     // Resolve the full Jar-in-Jar tree now (synchronously — this whole export runs on a
                     // background task), so the report is accurate even when the mod manager was never
@@ -134,7 +140,7 @@ public final class LogExporter {
                     // Multi-version "wrapper" mods that bundle one copy per game version but have no
                     // copy targeting this instance's Minecraft version — the wrapper can't load
                     // anything, a likely crash cause.
-                    String instanceMc = gameRepository.getGameVersion(versionId).orElse(null);
+                    String instanceMc = instance.getVersion().toString();
                     LinkedHashSet<String> incompatible = new LinkedHashSet<>();
                     if (StringUtils.isNotBlank(instanceMc)) {
                         for (LocalModFile host : activeMods) {
@@ -209,10 +215,12 @@ public final class LogExporter {
                     LOG.warning("Failed to export mod info to crash report package", e);
                 }
 
-                for (String id : versions) {
-                    Path versionJson = baseDirectory.resolve("versions").resolve(id).resolve(id + ".json");
-                    if (Files.exists(versionJson)) {
-                        zipper.putFile(versionJson, id + ".json");
+                for (GameInstanceID id : instances) {
+                    @Nullable DefaultGameInstance currentInstance = repositorySnapshot.get(id);
+                    if (currentInstance != null) {
+                        try (var writer = new OutputStreamWriter(zipper.putStream(id + ".json"), StandardCharsets.UTF_8)) {
+                            JsonUtils.GSON.toJson(currentInstance.getManifest(), writer);
+                        }
                     }
                 }
             } catch (IOException e) {

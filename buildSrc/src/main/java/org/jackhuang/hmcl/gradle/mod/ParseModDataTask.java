@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.gradle.mod;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
+import org.glavo.url.WebURL;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
@@ -33,7 +34,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -58,7 +58,7 @@ public abstract class ParseModDataTask extends DefaultTask {
     private static final String MOD_SEPARATOR = ",";
 
     private static final Pattern[] CURSEFORGE_PATTERNS = {
-            Pattern.compile("^/(minecraft|Minecraft|minecraft-bedrock)/(mc-mods|data-packs|modpacks|customization|mc-addons|texture-packs|customization/configuration|addons|scripts)/+(?<modid>[\\w-]+)(/(.*?))?$"),
+            Pattern.compile("^/(minecraft|Minecraft|minecraft-bedrock)/(mc-mods|data-packs|modpacks|customization|mc-addons|texture-packs|customization/configuration|addons|scripts|bukkit-plugins)/+(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/projects/(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/mc-mods/minecraft/(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/legacy/mc-mods/minecraft/(\\d+)-(?<modid>[\\w-]+)"),
@@ -68,27 +68,6 @@ public abstract class ParseModDataTask extends DefaultTask {
         return name.replace("&amp;", "&")
                 .replace("&lt;", "<")
                 .replace("&gt;", ">");
-    }
-
-    private static String parseCurseforge(String url) {
-        URI res = URI.create(url.replace(" ", "%20"));
-
-        if (!"http".equals(res.getScheme()) && !"https".equals(res.getScheme())) {
-            return "";
-        }
-
-        if ("edge.forgecdn.net".equals(res.getHost())) {
-            return "";
-        }
-
-        for (Pattern pattern : CURSEFORGE_PATTERNS) {
-            Matcher matcher = pattern.matcher(res.getPath());
-            if (matcher.matches()) {
-                return matcher.group("modid");
-            }
-        }
-
-        return "";
     }
 
     private static final Pattern MCMOD_PATTERN =
@@ -169,7 +148,8 @@ public abstract class ParseModDataTask extends DefaultTask {
                 }
 
                 if (chineseName.contains(S) || subName.contains(S)) {
-                    throw new GradleException("Error: " + chineseName);
+                    LOGGER.warn("Error chinese name: {}", chineseName);
+                    continue;
                 }
 
                 String curseforgeId = "";
@@ -180,13 +160,40 @@ public abstract class ParseModDataTask extends DefaultTask {
                 List<ModData.Link> mcmodLinks = links.get("mcmod");
 
                 if (curseforgeLinks != null && !curseforgeLinks.isEmpty()) {
+                    boolean reportError = true;
+
                     for (ModData.Link link : curseforgeLinks) {
-                        curseforgeId = parseCurseforge(link.url);
+                        WebURL res = WebURL.parse(link.url);
+
+                        if (!"http".equals(res.getScheme()) && !"https".equals(res.getScheme())) {
+                            curseforgeId = "";
+                            break;
+                        }
+
+                        if (Set.of(
+                                "files.xmdhs.com",
+                                "edge.forgecdn.net",
+                                "minecraft.curseforge.com",
+                                "mediafilez.forgecdn.net"
+                        ).contains(res.getHost())) {
+                            reportError = false;
+                            curseforgeId = "";
+                            break;
+                        }
+
+                        for (Pattern pattern : CURSEFORGE_PATTERNS) {
+                            Matcher matcher = pattern.matcher(res.getPath());
+                            if (matcher.matches()) {
+                                curseforgeId = matcher.group("modid");
+                                break;
+                            }
+                        }
+
                         if (!curseforgeId.isEmpty()) {
                             break;
                         }
                     }
-                    if (curseforgeId.isEmpty()) {
+                    if (curseforgeId.isEmpty() && reportError) {
                         LOGGER.warn("Error curseforge: {}", chineseName);
                     }
                 }

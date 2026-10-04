@@ -57,7 +57,7 @@ public final class JavaFXPlatform {
         ALL.put("linux-riscv64", new JavaFXPlatform("linux", GLAVO_GROUP_ID, "19.0.2.1-riscv64"));
 
         // FreeBSD
-        ALL.put("freebsd-x86_64", new JavaFXPlatform("freebsd", GLAVO_GROUP_ID, "14.0.2.1-freebsd"));
+        ALL.put("freebsd-x86_64", new JavaFXPlatform("freebsd", GLAVO_GROUP_ID, "21.0.11-freebsd"));
     }
 
     private final String classifier;

@@ -85,8 +85,8 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
 
         group.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
             Choice<T> choice = newValue != null ? choiceByToggle.get(newValue) : null;
-            selectedChoice.set(choice);
             selectedValue.set(choice != null ? choice.getValue() : null);
+            selectedChoice.set(choice);
         });
 
         selectedValue.addListener((observable, oldValue, newValue) -> {
@@ -94,6 +94,12 @@ public final class RadioChoiceList<T extends @UnknownNullability Object> extends
                 selectValue(newValue);
             }
         });
+    }
+
+    /// Replaces the displayed choices.
+    @SafeVarargs
+    public final void setChoices(Choice<T>... choices) {
+        setChoices(List.of(choices));
     }
 
     /// Replaces the displayed choices.

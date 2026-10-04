@@ -50,6 +50,7 @@
           "themeColor",
           "themeColorStyle",
           "titleBarTransparent",
+          "windowTransparent",
           "background",
           "backgroundOpacity"
         ]
@@ -136,6 +137,9 @@
     },
     "launcherFontFamily": {
       "type": "string"
+    },
+    "windowTransparent": {
+      "type": "boolean"
     },
     "animationDisabled": {
       "type": "boolean"

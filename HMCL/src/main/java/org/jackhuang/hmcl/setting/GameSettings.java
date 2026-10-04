@@ -152,10 +152,10 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
         /// The icon of the instance.
         @SerializedName("icon")
-        private final SettingProperty<VersionIconType> icon = newSettingProperty("icon", VersionIconType.DEFAULT);
+        private final SettingProperty<GameInstanceIconType> icon = newSettingProperty("icon", GameInstanceIconType.DEFAULT);
 
         /// Returns the instance icon property.
-        public SettingProperty<VersionIconType> iconProperty() {
+        public SettingProperty<GameInstanceIconType> iconProperty() {
             return icon;
         }
 
@@ -643,6 +643,19 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return vulkanRenderer;
     }
 
+    /// Property name for high performance GPU preference.
+    public static final String PROPERTY_HIGH_PERFORMANCE = "highPerformance";
+
+    /// Whether to launch games with high-performance GPU.
+    @SerializedName(PROPERTY_HIGH_PERFORMANCE)
+    private final InheritableProperty<Boolean> highPerformance =
+            newInheritableProperty(PROPERTY_HIGH_PERFORMANCE, false);
+
+    /// Returns the high performance GPU preference property.
+    public InheritableProperty<Boolean> highPerformanceProperty() {
+        return highPerformance;
+    }
+
     /// Property name for customized environment variables.
     public static final String PROPERTY_ENVIRONMENT_VARIABLES = "environmentVariables";
 
@@ -800,15 +813,15 @@ public sealed abstract class GameSettings extends ObservableSetting {
     }
 
     /// Property name for using native GLFW.
-    public static final String PROPERTY_USE_NATIVE_GLFW = "useNativeGLFW";
+    public static final String PROPERTY_USE_NATIVE_GLFW_OR_SDL = "useNativeGLFW";
 
     /// If `true`, HMCL will use native GLFW.
-    @SerializedName(PROPERTY_USE_NATIVE_GLFW)
-    private final InheritableProperty<Boolean> useNativeGLFW = newInheritableProperty(PROPERTY_USE_NATIVE_GLFW, false);
+    @SerializedName(PROPERTY_USE_NATIVE_GLFW_OR_SDL)
+    private final InheritableProperty<Boolean> useNativeGLFWorSDL = newInheritableProperty(PROPERTY_USE_NATIVE_GLFW_OR_SDL, false);
 
     /// Returns the native GLFW property.
-    public InheritableProperty<Boolean> useNativeGLFWProperty() {
-        return useNativeGLFW;
+    public InheritableProperty<Boolean> useNativeGLFWorSDLProperty() {
+        return useNativeGLFWorSDL;
     }
 
     /// Property name for using native OpenAL.
@@ -916,11 +929,11 @@ public sealed abstract class GameSettings extends ObservableSetting {
         }
 
         /// Finds the effective Java runtime.
-        public @Nullable JavaRuntime getJava(@Nullable GameVersionNumber gameVersion, @Nullable Version version) throws InterruptedException {
+        public @Nullable JavaRuntime getJava(@Nullable GameVersionNumber gameVersion, @Nullable GameInstanceManifest manifest) throws InterruptedException {
             JavaVersionType javaVersionType = getInheritable(GameSettings::javaTypeProperty);
             switch (javaVersionType) {
                 case AUTO:
-                    return JavaManager.findSuitableJava(gameVersion, version);
+                    return JavaManager.findSuitableJava(gameVersion, manifest);
                 case CUSTOM:
                     try {
                         return JavaManager.getJava(Path.of(getInheritable(GameSettings::customJavaPathProperty)));
@@ -930,7 +943,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
                 case VERSION: {
                     String javaVersion = getInheritable(GameSettings::customJavaVersionProperty);
                     if (StringUtils.isBlank(javaVersion)) {
-                        return JavaManager.findSuitableJava(gameVersion, version);
+                        return JavaManager.findSuitableJava(gameVersion, manifest);
                     }
 
                     int majorVersion = -1;
@@ -948,13 +961,13 @@ public sealed abstract class GameSettings extends ObservableSetting {
                     Collection<JavaRuntime> allJava = JavaManager.getAllJava().stream()
                             .filter(it -> it.getParsedVersion() == finalMajorVersion)
                             .collect(Collectors.toList());
-                    return JavaManager.findSuitableJava(allJava, gameVersion, version);
+                    return JavaManager.findSuitableJava(allJava, gameVersion, manifest);
                 }
                 case DETECTED: {
                     DetectedJava detectedJava = getInheritable(GameSettings::detectedJavaProperty);
                     String javaVersion = detectedJava.version();
                     if (StringUtils.isBlank(javaVersion)) {
-                        return JavaManager.findSuitableJava(gameVersion, version);
+                        return JavaManager.findSuitableJava(gameVersion, manifest);
                     }
 
                     if (StringUtils.isNotBlank(detectedJava.pathHash())) {

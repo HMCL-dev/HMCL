@@ -4,6 +4,7 @@ import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
 import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
 import org.jackhuang.hmcl.gradle.l10n.CreateLanguageList
 import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
+import org.jackhuang.hmcl.gradle.l10n.SyncTranslations
 import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import org.jackhuang.hmcl.gradle.pack.CreateDeb
@@ -52,7 +53,7 @@ if (buildNumber != null) {
     }
 }
 
-val embedResources by configurations.registering
+val embedResources = configurations.register("embedResources")
 
 dependencies {
     implementation(project(":HMCLCore"))
@@ -166,7 +167,7 @@ val hmclProperties = buildList {
 }
 
 val hmclPropertiesFile = layout.buildDirectory.file("hmcl.properties")
-val createPropertiesFile by tasks.registering {
+val createPropertiesFile = tasks.register("createPropertiesFile") {
     outputs.file(hmclPropertiesFile)
     hmclProperties.forEach { (k, v) -> inputs.property(k, v) }
 
@@ -258,7 +259,7 @@ tasks.processResources {
 
 fun artifactFile(ext: String) = jarPath.resolveSibling(jarPath.nameWithoutExtension + '.' + ext)
 
-val makeExecutables by tasks.registering {
+val makeExecutables = tasks.register("makeExecutables") {
     val extensions = listOf("exe", "sh")
 
     dependsOn(tasks.jar)
@@ -286,7 +287,7 @@ val makeExecutables by tasks.registering {
     }
 }
 
-val makeDeb by tasks.registering(CreateDeb::class) {
+val makeDeb = tasks.register("makeDeb", CreateDeb::class) {
     dependsOn(makeExecutables)
 
     val debFile = layout.file(provider { artifactFile("deb") })
@@ -299,6 +300,7 @@ val makeDeb by tasks.registering(CreateDeb::class) {
 
     version.set(project.version.toString())
     releaseType.set(debChannel)
+    launcherClassName.set("org.jackhuang.hmcl.Launcher")
     appShFile.set(layout.file(provider { artifactFile("sh") }))
     iconFile.set(layout.projectDirectory.file("image/hmcl.png"))
     outputFile.set(debFile)
@@ -429,28 +431,37 @@ tasks.register<CheckTranslations>("checkTranslations") {
     val dir = layout.projectDirectory.dir("src/main/resources/assets/lang")
 
     englishFile.set(dir.file("I18N.properties"))
-    simplifiedChineseFile.set(dir.file("I18N_zh_CN.properties"))
-    traditionalChineseFile.set(dir.file("I18N_zh.properties"))
+    simplifiedChineseFile.set(dir.file("I18N_zh_Hans.properties"))
+    traditionalChineseFile.set(dir.file("I18N_zh_Hant.properties"))
     classicalChineseFile.set(dir.file("I18N_lzh.properties"))
 }
 
 // l10n
 
+tasks.register<SyncTranslations>("syncTranslations") {
+    group = "localization"
+    description = "Synchronizes translation keys and blank lines with I18N.properties."
+
+    val dir = layout.projectDirectory.dir("src/main/resources/assets/lang")
+    sourceFile.set(dir.file("I18N.properties"))
+    translationFiles.from(fileTree(dir) { include("I18N_*.properties") })
+}
+
 val generatedDir = layout.buildDirectory.dir("generated")
 
-val upsideDownTranslate by tasks.registering(UpsideDownTranslate::class) {
+val upsideDownTranslate = tasks.register<UpsideDownTranslate>("upsideDownTranslate") {
     inputFile.set(layout.projectDirectory.file("src/main/resources/assets/lang/I18N.properties"))
     outputFile.set(generatedDir.map { it.file("generated/i18n/I18N_en_Qabs.properties") })
 }
 
-val createLanguageList by tasks.registering(CreateLanguageList::class) {
+val createLanguageList = tasks.register<CreateLanguageList>("createLanguageList") {
     resourceBundleDir.set(layout.projectDirectory.dir("src/main/resources/assets/lang"))
     resourceBundleBaseName.set("I18N")
     additionalLanguages.set(listOf("en-Qabs"))
     outputFile.set(generatedDir.map { it.file("languages.json") })
 }
 
-val createLocaleNamesResourceBundle by tasks.registering(CreateLocaleNamesResourceBundle::class) {
+val createLocaleNamesResourceBundle = tasks.register<CreateLocaleNamesResourceBundle>("createLocaleNamesResourceBundle") {
     dependsOn(createLanguageList)
 
     languagesFile.set(createLanguageList.flatMap { it.outputFile })

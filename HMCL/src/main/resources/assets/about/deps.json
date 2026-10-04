@@ -113,5 +113,10 @@
     "title": "uuid-tools",
     "subtitle": "Copyright © 2026 Glavo.\nLicensed under the Apache 2.0 License.",
     "externalLink": "https://github.com/Glavo/uuid-tools"
+  },
+  {
+    "title": "CommonMark",
+    "subtitle": "Copyright (c) 2015 Robin Stocker.\nAll rights reserved.",
+    "externalLink": "https://github.com/commonmark/commonmark-java"
   }
 ]
