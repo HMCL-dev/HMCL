@@ -35,7 +35,8 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -180,15 +181,13 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
     }
 
     private class InstallerListPageSkin extends ToolbarListPageSkin<InstallerItem, InstallerListPage> {
-
         InstallerListPageSkin() {
-            super(InstallerListPage.this);
-        }
-
-        @Override
-        protected List<Node> initializeToolbar(InstallerListPage skinnable) {
-            return Collections.singletonList(
-                    createToolbarButton2(i18n("install.installer.install_offline"), SVG.ADD, skinnable::installOffline)
+            super(InstallerListPage.this, false);
+            setupSkin(
+                    new Node[]{
+                            createToolbarButton2(i18n("install.installer.install_offline"), SVG.ADD, getSkinnable()::installOffline)
+                    },
+                    null
             );
         }
     }
