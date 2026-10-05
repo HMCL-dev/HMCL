@@ -88,6 +88,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
 
         ListView<AddonUpdateObject> listView = new ListView<>(objects);
         listView.getStyleClass().add("no-horizontal-scrollbar");
