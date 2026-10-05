@@ -36,7 +36,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -176,8 +175,11 @@ public final class MonitorSupervisor {
             try {
                 boolean relaunch = !canceled && (spec.relaunchAlways || (spec.relaunchOnCrash && crashed));
 
+                if (protocol.checkError())
+                    parentGone.set(true);
+
                 @Nullable Path resultFile = null;
-                if (relaunch && !isParentAlive()) {
+                if (relaunch && parentGone.get()) {
                     if (crashed)
                         resultFile = writeResult(spec, gameProcess.getPid(), processStartTime, exitCode, reportedType, logFile);
                     relaunch(resultFile);
@@ -263,18 +265,6 @@ public final class MonitorSupervisor {
         result.commands = spec.command;
         JsonUtils.writeToJsonFile(resultFile, result);
         return resultFile;
-    }
-
-    /// Returns whether the main launcher process that spawned this daemon is still alive.
-    ///
-    /// <p>On POSIX systems a reparented process's parent is the init process, which also means
-    /// the original parent is gone.
-    private static boolean isParentAlive() {
-        Optional<ProcessHandle> parent = ProcessHandle.current().parent();
-        if (parent.isEmpty())
-            return false;
-        ProcessHandle parentHandle = parent.get();
-        return parentHandle.pid() != 1 && parentHandle.isAlive();
     }
 
     /// Starts a new HMCL main process. Fire-and-forget; the current monitor process exits right after.
