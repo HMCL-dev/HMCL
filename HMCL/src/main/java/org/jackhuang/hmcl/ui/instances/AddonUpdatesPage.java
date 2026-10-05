@@ -104,8 +104,6 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             private final StackPane wrapper = new StackPane();
             private final HBox container = new HBox(8);
 
-            private AddonUpdateObject boundItem;
-
             private final JFXCheckBox enabledBox = new JFXCheckBox();
             private final ImageContainer imageContainer = new ImageContainer(40);
             private final TwoLineListItem content = new TwoLineListItem();
@@ -153,9 +151,10 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
             @Override
             protected void updateItem(AddonUpdateObject item, boolean empty) {
-                if (boundItem != null) {
-                    enabledBox.selectedProperty().unbindBidirectional(boundItem.enabledProperty());
-                    boundItem = null;
+                AddonUpdateObject oldItem = getItem();
+
+                if (oldItem != null) {
+                    enabledBox.selectedProperty().unbindBidirectional(oldItem.enabledProperty());
                 }
 
                 super.updateItem(item, empty);
@@ -165,9 +164,20 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                     return;
                 }
 
-                boundItem = item;
-
                 enabledBox.selectedProperty().bindBidirectional(item.enabledProperty());
+
+                LocalAddonFile addonInfo = item.getAddonInfo();
+
+                if (oldItem != item) {
+                    content.getTags().clear();
+
+                    if (addonInfo instanceof LocalModFile modFile) {
+                        content.addTag(modFile.getId());
+                        content.addTag(item.getSource());
+                    } else if (addonInfo instanceof ResourcePackFile) {
+                        content.addTag(item.getSource());
+                    }
+                }
 
                 setPadding(
                     getIndex() == getListView().getItems().size() - 1 ? LAST_PADDING : PADDING
@@ -175,21 +185,10 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
                 item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
 
-                if (item.getAddonInfo() instanceof LocalModFile modFile) {
+                if (addonInfo instanceof LocalModFile modFile) {
                     content.setTitle(modFile.getName());
-
-                    if (content.getTags().isEmpty()) {
-                        content.addTag(modFile.getId());
-                        content.addTag(item.getSource());
-                    }
-                }
-
-                if (item.getAddonInfo() instanceof ResourcePackFile resourcePackFile) {
+                } else if (addonInfo instanceof ResourcePackFile resourcePackFile) {
                     content.setTitle(resourcePackFile.getFileName());
-
-                    if (content.getTags().isEmpty()) {
-                        content.addTag(item.getSource());
-                    }
                 }
 
                 content.setSubtitle(
