@@ -109,7 +109,7 @@ final class ShaderPackZipFile extends ShaderPackFile {
 
     @Override
     public @Nullable AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
-        RemoteAddonRepository repository = source.getRepoForType(RemoteAddon.Type.SHADER_PACK);
+        RemoteAddonRepository repository = source.getRepository();
         if (repository == null) return null;
         Optional<RemoteAddon.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
         if (currentVersion.isEmpty()) return null;

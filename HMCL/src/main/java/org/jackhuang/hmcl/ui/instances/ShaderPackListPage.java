@@ -516,8 +516,8 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
             setBody(descriptionPane);
 
             for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
-                    pair("addon.curseforge", CurseForgeRemoteAddonRepository.SHADERS),
-                    pair("addon.modrinth", ModrinthRemoteAddonRepository.SHADER_PACKS)
+                    pair("addon.curseforge", CurseForgeRemoteAddonRepository.getInstance()),
+                    pair("addon.modrinth", ModrinthRemoteAddonRepository.getInstance())
             )) {
                 RemoteAddonRepository repository = item.getValue();
                 JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
