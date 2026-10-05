@@ -19,17 +19,16 @@ package org.jackhuang.hmcl.addon.mod;
 
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class LocalMod {
 
     private final String id;
     private final ModLoaderType modLoaderType;
-    // Mutated on IO threads (ModManager.refresh/addModInfo under its lock) while iterated lock-free on
-    // the FX thread (dependency panel, active-change listeners) — must be concurrent sets, or an
-    // in-flight refresh corrupts an FX-side iteration (ConcurrentModificationException at best).
-    private final Set<LocalModFile> files = ConcurrentHashMap.newKeySet();
-    private final Set<LocalModFile> oldFiles = ConcurrentHashMap.newKeySet();
+    // ModManager is the sole writer. Copy-on-write publication lets recycled FX cells inspect rollback
+    // candidates without sharing the manager's mutation lock or exposing a partially changed set.
+    private final Set<LocalModFile> files = new CopyOnWriteArraySet<>();
+    private final Set<LocalModFile> oldFiles = new CopyOnWriteArraySet<>();
 
     public LocalMod(String id, ModLoaderType modLoaderType) {
         this.id = id;

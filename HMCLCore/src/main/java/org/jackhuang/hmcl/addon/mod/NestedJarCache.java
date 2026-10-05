@@ -22,6 +22,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.addon.mod.NestedJarInspector.NestedJar;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -48,13 +49,20 @@ final class NestedJarCache {
     // Bump whenever the scanner's produced data changes (shape or values), so stale caches are
     // discarded and regenerated. v2: Forge ${file.jarVersion} placeholders resolved. v3: Fabric/Quilt
     // ${...} placeholders nulled out too. v4: nested jars declared via JarJar metadata /
-    // Embedded-Dependencies-Mod (no mods.toml) are now discovered.
-    private static final int FORMAT_VERSION = 4;
+    // Embedded-Dependencies-Mod (no mods.toml) are now discovered. v5 persists dependency constraints
+    // and provided aliases used by the relation resolver. v6 adds Forge JarJar coordinates and
+    // allowed/actual artifact versions for candidate selection. v7 keys parsed trees by the active
+    // loader set so dual-descriptor jars cannot be reused across incompatible instance loaders.
+    private static final int FORMAT_VERSION = 7;
 
     private NestedJarCache() {
     }
 
-    record Entry(long lastModified, long size, List<NestedJar> tree) {
+    record Entry(long lastModified, long size, String loaderKey, @Unmodifiable List<NestedJar> tree) {
+        /// Creates an immutable persisted entry.
+        Entry {
+            tree = List.copyOf(tree);
+        }
     }
 
     /// Reads the cache file. Returns an empty (mutable) map when the file is absent, unreadable, or of
@@ -76,11 +84,13 @@ final class NestedJarCache {
                             continue;
                         JsonObject e = el.getAsJsonObject();
                         String path = optString(e, "path");
-                        if (path == null || !e.has("lastModified") || !e.has("size"))
+                        if (path == null || !isSafeRelativeKey(path)
+                                || !e.has("lastModified") || !e.has("size"))
                             continue;
                         result.put(path, new Entry(
                                 e.get("lastModified").getAsLong(),
                                 e.get("size").getAsLong(),
+                                e.has("loaderKey") ? e.get("loaderKey").getAsString() : "",
                                 readNodes(e.get("tree"))));
                     } catch (Exception entryEx) {
                         LOG.warning("Skipping malformed Jar-in-Jar cache entry in " + file, entryEx);
@@ -105,6 +115,7 @@ final class NestedJarCache {
                 e.addProperty("path", me.getKey());
                 e.addProperty("lastModified", me.getValue().lastModified());
                 e.addProperty("size", me.getValue().size());
+                e.addProperty("loaderKey", me.getValue().loaderKey());
                 e.add("tree", writeNodes(me.getValue().tree()));
                 arr.add(e);
             }
@@ -138,6 +149,42 @@ final class NestedJarCache {
             o.addProperty("loader", node.loaderType().name());
             if (node.minecraftVersion() != null)
                 o.addProperty("mc", node.minecraftVersion());
+            o.addProperty("mcRequired", node.minecraftConstraintRequired());
+            if (!node.dependencies().isEmpty()) {
+                JsonArray dependencies = new JsonArray();
+                for (ModDependency dependency : node.dependencies()) {
+                    JsonObject declared = new JsonObject();
+                    declared.addProperty("id", dependency.id());
+                    declared.addProperty("constraint", dependency.versionConstraint());
+                    declared.addProperty("optional", dependency.optional());
+                    declared.addProperty("loader", dependency.declaringLoader().name());
+                    dependencies.add(declared);
+                }
+                o.add("dependencies", dependencies);
+            }
+            if (!node.providedVersions().isEmpty()) {
+                JsonObject provided = new JsonObject();
+                node.providedVersions().forEach(provided::addProperty);
+                o.add("provides", provided);
+            }
+            if (!node.conflicts().isEmpty()) {
+                JsonArray conflicts = new JsonArray();
+                for (ModConflict conflict : node.conflicts()) {
+                    JsonObject declared = new JsonObject();
+                    declared.addProperty("id", conflict.id());
+                    declared.addProperty("constraint", conflict.versionConstraint());
+                    declared.addProperty("hard", conflict.hard());
+                    declared.addProperty("loader", conflict.declaringLoader().name());
+                    conflicts.add(declared);
+                }
+                o.add("conflicts", conflicts);
+            }
+            if (node.jijIdentifier() != null)
+                o.addProperty("jijIdentifier", node.jijIdentifier());
+            if (node.jijVersionRange() != null)
+                o.addProperty("jijVersionRange", node.jijVersionRange());
+            if (node.jijArtifactVersion() != null)
+                o.addProperty("jijArtifactVersion", node.jijArtifactVersion());
             if (!node.children().isEmpty())
                 o.add("children", writeNodes(node.children()));
             arr.add(o);
@@ -147,29 +194,130 @@ final class NestedJarCache {
 
     private static List<NestedJar> readNodes(JsonElement element) {
         List<NestedJar> result = new ArrayList<>();
-        if (element instanceof JsonArray arr) {
-            for (JsonElement el : arr) {
-                if (!el.isJsonObject())
-                    continue;
-                JsonObject o = el.getAsJsonObject();
-                List<NestedJar> children = o.has("children") ? readNodes(o.get("children")) : List.of();
-                result.add(new NestedJar(
-                        optString(o, "path"),
-                        optString(o, "fileName"),
-                        optString(o, "id"),
-                        optString(o, "name"),
-                        optString(o, "version"),
-                        parseLoader(optString(o, "loader")),
-                        optString(o, "mc"),
-                        children));
-            }
+        if (!(element instanceof JsonArray arr)) {
+            throw new IllegalArgumentException("Jar-in-Jar cache tree is not an array");
         }
-        return result;
+        for (JsonElement el : arr) {
+            if (!el.isJsonObject()) {
+                throw new IllegalArgumentException("Jar-in-Jar cache node is not an object");
+            }
+            JsonObject o = el.getAsJsonObject();
+            if (optString(o, "path") == null || optString(o, "fileName") == null) {
+                throw new IllegalArgumentException("Jar-in-Jar cache node is missing its path");
+            }
+            List<NestedJar> children = o.has("children") ? readNodes(o.get("children")) : List.of();
+            List<ModDependency> dependencies = readDependencies(o.get("dependencies"));
+            Map<String, String> providedVersions = readProvidedVersions(o.get("provides"));
+            List<ModConflict> conflicts = readConflicts(o.get("conflicts"));
+            result.add(new NestedJar(
+                    optString(o, "path"),
+                    optString(o, "fileName"),
+                    optString(o, "id"),
+                    optString(o, "name"),
+                    optString(o, "version"),
+                    parseLoader(optString(o, "loader")),
+                    optString(o, "mc"),
+                    o.has("mcRequired") && o.get("mcRequired").getAsBoolean(),
+                    dependencies,
+                    providedVersions,
+                    conflicts,
+                    optString(o, "jijIdentifier"),
+                    optString(o, "jijVersionRange"),
+                    optString(o, "jijArtifactVersion"),
+                    children));
+        }
+        return List.copyOf(result);
+    }
+
+    /// Reads dependency declarations from one cached node.
+    private static List<ModDependency> readDependencies(JsonElement element) {
+        List<ModDependency> result = new ArrayList<>();
+        if (element == null) {
+            return List.of();
+        }
+        if (!(element instanceof JsonArray dependencies)) {
+            throw new IllegalArgumentException("Jar-in-Jar dependency cache is not an array");
+        }
+        for (JsonElement item : dependencies) {
+            if (!(item instanceof JsonObject dependency)) {
+                throw new IllegalArgumentException("Jar-in-Jar dependency cache item is malformed");
+            }
+            String id = optString(dependency, "id");
+            if (id == null) {
+                continue;
+            }
+            String constraint = optString(dependency, "constraint");
+            boolean optional = dependency.has("optional") && dependency.get("optional").getAsBoolean();
+            result.add(new ModDependency(
+                    id,
+                    constraint == null ? "*" : constraint,
+                    optional,
+                    parseLoader(optString(dependency, "loader"))));
+        }
+        return List.copyOf(result);
+    }
+
+    /// Reads provided capability versions from one cached node.
+    private static Map<String, String> readProvidedVersions(JsonElement element) {
+        Map<String, String> result = new LinkedHashMap<>();
+        if (element == null) {
+            return Map.of();
+        }
+        if (!(element instanceof JsonObject provided)) {
+            throw new IllegalArgumentException("Jar-in-Jar provides cache is not an object");
+        }
+        for (Map.Entry<String, JsonElement> entry : provided.entrySet()) {
+            if (!entry.getValue().isJsonPrimitive()) {
+                throw new IllegalArgumentException("Jar-in-Jar provided version is malformed");
+            }
+            result.put(entry.getKey(), entry.getValue().getAsString());
+        }
+        return Map.copyOf(result);
+    }
+
+    /// Reads conflict declarations from one cached node.
+    private static List<ModConflict> readConflicts(JsonElement element) {
+        List<ModConflict> result = new ArrayList<>();
+        if (element == null) {
+            return List.of();
+        }
+        if (!(element instanceof JsonArray conflicts)) {
+            throw new IllegalArgumentException("Jar-in-Jar conflict cache is not an array");
+        }
+        for (JsonElement item : conflicts) {
+            if (!(item instanceof JsonObject conflict)) {
+                throw new IllegalArgumentException("Jar-in-Jar conflict cache item is malformed");
+            }
+            String id = optString(conflict, "id");
+            if (id == null) {
+                continue;
+            }
+            String constraint = optString(conflict, "constraint");
+            boolean hard = conflict.has("hard") && conflict.get("hard").getAsBoolean();
+            result.add(new ModConflict(
+                    id,
+                    constraint == null ? "*" : constraint,
+                    hard,
+                    parseLoader(optString(conflict, "loader"))));
+        }
+        return List.copyOf(result);
     }
 
     private static String optString(JsonObject obj, String key) {
         JsonElement e = obj.get(key);
         return e != null && e.isJsonPrimitive() ? e.getAsString() : null;
+    }
+
+    /// Returns whether a persisted key remains inside the instance mods directory when resolved.
+    private static boolean isSafeRelativeKey(String key) {
+        try {
+            Path path = Path.of(key.replace('/', java.io.File.separatorChar)).normalize();
+            return !path.isAbsolute()
+                    && path.getNameCount() > 0
+                    && !"..".equals(path.getName(0).toString());
+        } catch (RuntimeException ignored) {
+            return false;
+        }
     }
 
     private static ModLoaderType parseLoader(String name) {

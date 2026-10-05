@@ -38,10 +38,10 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Default snapshot member for an official-layout game instance.
 ///
 /// Index fields (`id`, `manifest`, layout binding, and optional non-conventional file paths) belong
-/// to a [DefaultGameRepositorySnapshot]. Lazy services such as [#getModManager()] and
-/// [#getResourcePackManager()] belong to this snapshot member only: copies produced by
-/// [#withNewSnapshot] / [#withManifest] do not inherit them, so a repository refresh or COW publish
-/// does not keep a long-lived addon-manager session.
+/// to a [DefaultGameRepositorySnapshot]. Snapshot-local analysis and resource-pack services are not
+/// inherited by copies. Mod analysis is the exception: [#getModManager()] delegates to the owning
+/// repository's stable per-instance manager so every snapshot and consumer shares one serialization
+/// boundary for the same mods directory.
 @NotNullByDefault
 public abstract class DefaultGameInstance implements GameInstance {
 
@@ -66,9 +66,6 @@ public abstract class DefaultGameInstance implements GameInstance {
     /// `null` means detection has not been attempted yet. After detection, unknown results are
     /// stored as [GameVersionNumber#unknown()] rather than left null.
     protected @Nullable GameVersionNumber version;
-
-    /// Lazily created mod manager for this snapshot member only.
-    private @Nullable ModManager modManager;
 
     /// Lazily created resource-pack manager for this snapshot member only.
     private @Nullable ResourcePackManager resourcePackManager;
@@ -102,8 +99,8 @@ public abstract class DefaultGameInstance implements GameInstance {
     /// Creates an instance that may reuse storage paths and version cache from another snapshot wrapper.
     ///
     /// The manifest path is copied when `id` equals that of `shareSession`. The cached game version is
-    /// copied only when `id` and `manifest` also equal those of `shareSession`. Addon managers are
-    /// never shared: each snapshot member creates its own managers on first use.
+    /// copied only when `id` and `manifest` also equal those of `shareSession`. Snapshot-local addon
+    /// managers are not inherited; the repository-scoped mod manager is obtained separately.
     ///
     /// @param snapshot     the snapshot that will own the copy
     /// @param id           the instance id
@@ -186,18 +183,14 @@ public abstract class DefaultGameInstance implements GameInstance {
         return version;
     }
 
-    /// Returns the mod manager for this snapshot member.
+    /// Returns the repository-scoped mod manager for this instance ID.
     ///
-    /// The manager is created on first use and is not shared with other snapshot wrappers. After a
-    /// repository refresh or COW publish, callers should obtain the manager from the current
-    /// instance again.
+    /// Snapshot wrappers for the same repository instance share this manager so scans, mutations,
+    /// and persistent cache writes have one serialization boundary.
     ///
     /// @return the mod manager
     public ModManager getModManager() {
-        if (modManager == null) {
-            modManager = new ModManager(this);
-        }
-        return modManager;
+        return repository.getModManager(this);
     }
 
     /// Returns the resource-pack manager for this snapshot member.

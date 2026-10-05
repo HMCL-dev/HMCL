@@ -98,6 +98,10 @@ public final class MinecraftVersionMatcher {
         if (constraint == null || constraint.isBlank() || version == null || version.isBlank())
             return false;
         try {
+            // Reuse the complete loader dialect implementation for ordinary release versions.
+            // Minecraft-specific parsing below remains as a fallback for snapshots and legacy names.
+            if (ModVersionPredicate.satisfies(loader, constraint, version))
+                return true;
             GameVersionNumber v = GameVersionNumber.asGameVersion(version);
             return switch (loader) {
                 case FORGE, NEO_FORGE -> satisfiesMaven(constraint.trim(), v);

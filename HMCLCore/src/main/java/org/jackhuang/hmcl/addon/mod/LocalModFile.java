@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -49,19 +50,31 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     private final String authors;
     private final String version;
     private final String gameVersion;
+    /// Whether [#gameVersion] is a required loader constraint rather than display metadata.
+    private final boolean minecraftConstraintRequired;
     private final String url;
     private final String fileName;
+    /// Stable enabled-path identity retained across disabled/old suffix renames.
+    private final Path identityPath;
     private final String logoPath;
-    private final List<String> bundledMods;
-    // Full Jar-in-Jar scan result. Written by a background scan thread and read from the FX thread
-    // (UI) and export threads, so the tree and its flattened id set are packed into one immutable
-    // holder behind a single volatile field — readers always see a consistent, fully-published pair.
-    private volatile BundledScan bundledScan = BundledScan.EMPTY;
+    private final @Unmodifiable List<String> bundledMods;
+    /// Required and optional dependency declarations with their original loader constraints.
+    private final @Unmodifiable List<ModDependency> dependencies;
 
-    private record BundledScan(List<NestedJarInspector.NestedJar> tree, Set<String> ids) {
+    /// Additional capability IDs exposed by this file, mapped to their provided versions.
+    private final @Unmodifiable Map<String, String> providedVersions;
+
+    /// Loader-declared hard and soft conflicts.
+    private final @Unmodifiable List<ModConflict> conflicts;
+    // Mutable only while the owning ModManager holds its single serialization lock. Consumers receive
+    // the immutable copy published by ModRelationIndex rather than observing this field directly.
+    private BundledScan bundledScan = BundledScan.EMPTY;
+
+    private record BundledScan(
+            @Unmodifiable List<NestedJarInspector.NestedJar> tree,
+            @Unmodifiable Set<String> ids) {
         static final BundledScan EMPTY = new BundledScan(List.of(), Set.of());
     }
-    private final List<String> dependencies;
     private final BooleanProperty activeProperty;
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
@@ -69,10 +82,34 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
-        this(modManager, mod, file, name, description, authors, version, gameVersion, url, logoPath, List.of(), List.of());
+        this(modManager, mod, file, name, description, authors, version, gameVersion, url, logoPath,
+                List.of(), List.of(), Map.of());
     }
 
-    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath, List<String> bundledMods, List<String> dependencies) {
+    /// Creates a parsed local mod file with loader-native dependency and capability metadata.
+    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description,
+                        String authors, String version, String gameVersion, String url, String logoPath,
+                        List<String> bundledMods, List<ModDependency> dependencies,
+                        Map<String, String> providedVersions) {
+        this(modManager, mod, file, name, description, authors, version, gameVersion, url, logoPath,
+                bundledMods, dependencies, providedVersions, List.of());
+    }
+
+    /// Creates a parsed local mod file with complete dependencies, aliases, and conflicts.
+    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description,
+                        String authors, String version, String gameVersion, String url, String logoPath,
+                        List<String> bundledMods, List<ModDependency> dependencies,
+                        Map<String, String> providedVersions, List<ModConflict> conflicts) {
+        this(modManager, mod, file, name, description, authors, version, gameVersion, url, logoPath,
+                bundledMods, dependencies, providedVersions, conflicts, false);
+    }
+
+    /// Creates a parsed local mod file and marks whether its Minecraft value is a required constraint.
+    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description,
+                        String authors, String version, String gameVersion, String url, String logoPath,
+                        List<String> bundledMods, List<ModDependency> dependencies,
+                        Map<String, String> providedVersions, List<ModConflict> conflicts,
+                        boolean minecraftConstraintRequired) {
         super();
         this.modManager = modManager;
         this.mod = mod;
@@ -82,15 +119,24 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         this.authors = authors;
         this.version = version;
         this.gameVersion = gameVersion;
+        this.minecraftConstraintRequired = minecraftConstraintRequired;
         this.url = url;
         this.logoPath = logoPath;
         this.bundledMods = bundledMods == null ? List.of() : List.copyOf(bundledMods);
         this.dependencies = dependencies == null ? List.of() : List.copyOf(dependencies);
+        this.providedVersions = providedVersions == null ? Map.of() : Map.copyOf(providedVersions);
+        this.conflicts = conflicts == null ? List.of() : List.copyOf(conflicts);
+        Path absolute = file.toAbsolutePath().normalize();
+        this.identityPath = absolute.resolveSibling(
+                LocalAddonManager.getLocalAddonName(absolute)).normalize();
 
         activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
+            /// Prevents a failed filesystem mutation rollback from recursively renaming the file.
+            private boolean restoring;
+
             @Override
             protected void invalidated() {
-                if (isOld()) return;
+                if (isOld() || restoring) return;
 
                 Path path = LocalModFile.this.file.toAbsolutePath();
 
@@ -101,6 +147,14 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
                         LocalModFile.this.file = modManager.disableMod(path);
                 } catch (IOException e) {
                     LOG.error("Unable to invert state of mod file " + path, e);
+                    restoring = true;
+                    try {
+                        set(!get());
+                    } finally {
+                        restoring = false;
+                    }
+                } finally {
+                    modManager.invalidatePublishedAnalysis();
                 }
             }
         };
@@ -155,6 +209,11 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         return gameVersion;
     }
 
+    /// Returns whether the Minecraft metadata must filter this file from the provider graph.
+    public boolean isMinecraftConstraintRequired() {
+        return minecraftConstraintRequired;
+    }
+
     public String getUrl() {
         return url;
     }
@@ -163,17 +222,17 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         return logoPath;
     }
 
-    public List<String> getBundledMods() {
+    public @Unmodifiable List<String> getBundledMods() {
         return bundledMods;
     }
 
     public boolean hasBundledMods() {
-        return !bundledMods.isEmpty();
+        return !bundledMods.isEmpty() || !bundledScan.tree().isEmpty();
     }
 
     /// The full Jar-in-Jar tree (every nesting depth), with real parsed metadata for each node.
     /// Populated by {@link ModManager}'s background scan; empty for mods without nested jars.
-    public List<NestedJarInspector.NestedJar> getBundledTree() {
+    public @Unmodifiable List<NestedJarInspector.NestedJar> getBundledTree() {
         return bundledScan.tree();
     }
 
@@ -190,7 +249,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
 
     /// Every mod id bundled anywhere in this jar's Jar-in-Jar tree (all depths). Used by the dependency
     /// cascade and the bundled-dependency status so a dependency shipped inside a wrapper is recognized.
-    public Set<String> getAllBundledModIds() {
+    public @Unmodifiable Set<String> getAllBundledModIds() {
         return bundledScan.ids();
     }
 
@@ -199,27 +258,50 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     /// with a constraint loads only if it covers the version (a multi-version wrapper activates just
     /// the matching copy). Used by the dependency cascade so a wrapper counts as a provider only for
     /// the copy the instance would really load. An unknown instance version disables the filter.
-    public Set<String> getLoadableBundledModIds(String instanceMinecraftVersion) {
+    public @Unmodifiable Set<String> getLoadableBundledModIds(String instanceMinecraftVersion) {
         Set<String> ids = new HashSet<>();
         collectLoadableIds(getBundledTree(), instanceMinecraftVersion, ids);
-        return ids;
+        return Set.copyOf(ids);
     }
 
     private static void collectLoadableIds(List<NestedJarInspector.NestedJar> nodes, String mc, Set<String> out) {
         for (NestedJarInspector.NestedJar node : nodes) {
-            boolean constrained = node.minecraftVersion() != null && !node.minecraftVersion().isBlank();
+            boolean constrained = node.minecraftConstraintRequired()
+                    && node.minecraftVersion() != null && !node.minecraftVersion().isBlank();
             boolean loadable = !constrained || mc == null || mc.isBlank()
                     || MinecraftVersionMatcher.matches(node, mc);
             if (!loadable)
                 continue; // a non-loadable copy — and anything nested under it — isn't available
             if (node.id() != null && !node.id().isBlank())
                 out.add(node.id());
+            out.addAll(node.providedVersions().keySet());
             collectLoadableIds(node.children(), mc, out);
         }
     }
 
-    public List<String> getDependencies() {
+    /// Returns dependency declarations in the source loader's version dialect.
+    public @Unmodifiable List<ModDependency> getDependencies() {
         return dependencies;
+    }
+
+    /// Returns additional mod IDs provided by this file and the version exposed for each ID.
+    public @Unmodifiable Map<String, String> getProvidedVersions() {
+        return providedVersions;
+    }
+
+    /// Returns every capability ID exposed by this file, including its primary mod ID.
+    public @Unmodifiable Set<String> getProvidedIds() {
+        LinkedHashSet<String> result = new LinkedHashSet<>();
+        if (getId() != null && !getId().isBlank()) {
+            result.add(getId());
+        }
+        result.addAll(providedVersions.keySet());
+        return Set.copyOf(result);
+    }
+
+    /// Returns loader-declared hard and soft conflicts.
+    public @Unmodifiable List<ModConflict> getConflicts() {
+        return conflicts;
     }
 
     public boolean hasDependencies() {
@@ -231,7 +313,9 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     public boolean isActive() {
-        return activeProperty.get();
+        // Background analysis derives state from the atomically published path instead of reading a
+        // JavaFX property while its invalidation callback may still be waiting for the manager lock.
+        return !modManager.isDisabled(file);
     }
 
     public void setActive(boolean active) {
@@ -258,6 +342,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
             mod.getOldFiles().remove(this);
             mod.getFiles().add(this);
         }
+        modManager.invalidatePublishedAnalysis();
     }
 
     @Override
@@ -268,11 +353,14 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     @Override
     public void markDisabled() throws IOException {
         file = modManager.disableMod(file);
+        activeProperty.set(false);
+        modManager.invalidatePublishedAnalysis();
     }
 
     @Override
     public void delete() throws IOException {
         Files.deleteIfExists(file);
+        modManager.invalidatePublishedAnalysis();
     }
 
     @Override
@@ -298,11 +386,11 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof LocalModFile && Objects.equals(getFileName(), ((LocalModFile) obj).getFileName());
+        return obj instanceof LocalModFile other && identityPath.equals(other.identityPath);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getFileName());
+        return identityPath.hashCode();
     }
 }

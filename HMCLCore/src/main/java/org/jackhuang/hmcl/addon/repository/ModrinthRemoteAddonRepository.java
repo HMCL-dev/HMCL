@@ -331,6 +331,42 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         }
     }
 
+    /// Resolves one Modrinth version by its stable version ID.
+    @Override
+    public Optional<RemoteAddon.Version> getRemoteVersionById(
+            DownloadProvider downloadProvider,
+            String versionId) throws IOException {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            DownloadCandidates candidates = downloadProvider.getVersionListCandidates(
+                    PREFIX + "/v2/version/" + versionId);
+            IOException exception = null;
+            for (DownloadCandidate candidate : candidates.getCandidates()) {
+                try {
+                    return HttpRequest.GET(candidate.displayUrl())
+                            .getJson(ProjectVersion.class)
+                            .toVersion();
+                } catch (IOException e) {
+                    if (e instanceof NoSuchFileException
+                            || e instanceof ResponseCodeException response
+                            && response.getResponseCode() == 404) {
+                        continue;
+                    }
+                    if (exception == null) {
+                        exception = new IOException("Failed to get remote version " + versionId);
+                    }
+                    exception.addSuppressed(e);
+                }
+            }
+            if (exception != null) {
+                throw exception;
+            }
+            return Optional.empty();
+        } finally {
+            SEMAPHORE.release();
+        }
+    }
+
     @Override
     public String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
@@ -487,7 +523,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                     type,
                     files.get(0).toFile(),
                     dependencies.stream().map(dependency -> {
-                        if (dependency.projectId == null) {
+                        if (dependency.projectId == null && dependency.versionId == null) {
                             return RemoteAddon.Dependency.ofBroken();
                         }
 
@@ -495,7 +531,11 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                             throw new IllegalStateException("Broken datas");
                         }
 
-                        return RemoteAddon.Dependency.ofGeneral(DEPENDENCY_TYPE.get(dependency.dependencyType), RemoteAddon.Source.MODRINTH, dependency.projectId);
+                        return RemoteAddon.Dependency.ofVersion(
+                                DEPENDENCY_TYPE.get(dependency.dependencyType),
+                                RemoteAddon.Source.MODRINTH,
+                                dependency.projectId,
+                                dependency.versionId);
                     }).filter(Objects::nonNull).collect(Collectors.toList()),
                     gameVersions,
                     loaders.stream().map(AddonLoader::of).toList()

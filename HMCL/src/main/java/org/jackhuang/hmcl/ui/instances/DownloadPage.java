@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.addon.mod.ModRelationIndex;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -50,10 +51,13 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -86,12 +90,6 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.mod = translations.getModByCurseForgeId(addon.slug());
         this.instanceReference = instanceReference;
         this.callback = callback;
-
-        // Warm up the installed-mod cache once when this page is opened so dependency rows do not
-        // rescan the instance every time a version dialog is shown.
-        if (instanceReference.instanceId() != null) {
-            Task.supplyAsync(Schedulers.io(), () -> AddonVersion.getInstalledMods(instanceReference)).start();
-        }
 
         loadAddonVersions();
 
@@ -171,51 +169,6 @@ public class DownloadPage extends Control implements DecoratorPage {
             saveAs(file);
         } else {
             this.callback.download(page.getDownloadProvider(), instanceReference.repository(), instanceReference.instanceId(), addon, file);
-        }
-    }
-
-    /// Updates the installed-mod cache after a mod has been downloaded into an instance.
-    ///
-    /// @param instanceReference the destination instance
-    /// @param addon the downloaded mod
-    public static void markModInstalled(HMCLGameInstance.Optional instanceReference, RemoteAddon addon) {
-        Set<String> ids = new HashSet<>();
-        if (StringUtils.isNotBlank(addon.slug())) {
-            ids.add(addon.slug());
-        }
-        ModTranslations.Mod translated = ModTranslations.getTranslationsByAddonType(
-                Objects.requireNonNullElse(addon.type(), RemoteAddon.Type.MOD)).getModByCurseForgeId(addon.slug());
-        if (translated != null) {
-            ids.addAll(translated.getModIds());
-        }
-        AddonVersion.markInstalled(instanceReference, ids);
-    }
-
-    /// Updates the installed-mod cache after a mod is enabled or disabled.
-    ///
-    /// @param instanceReference the affected instance
-    /// @param modId the mod id
-    /// @param active whether the mod is enabled
-    public static void setModActive(HMCLGameInstance.Optional instanceReference, String modId, boolean active) {
-        if (StringUtils.isBlank(modId)) {
-            return;
-        }
-        synchronized (AddonVersion.INSTALLED_CACHE_LOCK) {
-            if (AddonVersion.isCachedInstance(instanceReference) && AddonVersion.installedCache != null) {
-                AddonVersion.installedCache.put(modId.toLowerCase(Locale.ROOT), active);
-            } else {
-                AddonVersion.installedCacheGeneration++;
-            }
-        }
-    }
-
-    /// Invalidates the installed-mod cache after files are added or removed.
-    public static void invalidateInstalledMods() {
-        synchronized (AddonVersion.INSTALLED_CACHE_LOCK) {
-            AddonVersion.installedCacheRepository = null;
-            AddonVersion.installedCacheInstanceId = null;
-            AddonVersion.installedCache = null;
-            AddonVersion.installedCacheGeneration++;
         }
     }
 
@@ -414,6 +367,122 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
+    /// Installed-state result for a remote dependency row.
+    private enum DependencyPresence {
+        /// The exact remote project or a trusted mod ID provider is active.
+        INSTALLED,
+        /// A matching provider exists but is disabled.
+        DISABLED,
+        /// No matching provider was found after a complete lookup.
+        MISSING,
+        /// The platform dependency names an exact remote version that is not installed.
+        INCOMPATIBLE_VERSION,
+        /// The project is installed, but its file does not target this instance's loader or game version.
+        INCOMPATIBLE_ENVIRONMENT,
+        /// Network or identity evidence was insufficient for a reliable result.
+        UNKNOWN
+    }
+
+    /// Stable remote project lookup key.
+    private record RemoteProjectKey(RemoteAddon.Source source, String projectId) {
+    }
+
+    /// Installed remote versions and aggregate active state for one project.
+    private record RemoteVersionState(boolean enabled, boolean compatible) {
+        /// Merges duplicate local files for the same exact remote version.
+        private RemoteVersionState merge(RemoteVersionState other) {
+            return new RemoteVersionState(enabled || other.enabled, compatible || other.compatible);
+        }
+    }
+
+    /// Aggregate installed state for one stable remote project ID.
+    private record RemoteProjectState(
+            boolean enabled,
+            boolean compatible,
+            @Unmodifiable Map<String, RemoteVersionState> versions) {
+        /// Creates an immutable project state.
+        private RemoteProjectState {
+            versions = Map.copyOf(versions);
+        }
+
+        /// Merges identities from multiple local files belonging to the same project.
+        private RemoteProjectState merge(RemoteProjectState other) {
+            Map<String, RemoteVersionState> mergedVersions = new LinkedHashMap<>(versions);
+            other.versions.forEach((version, state) ->
+                    mergedVersions.merge(version, state, RemoteVersionState::merge));
+            return new RemoteProjectState(
+                    enabled || other.enabled,
+                    compatible || other.compatible,
+                    mergedVersions);
+        }
+    }
+
+    /// Immutable installed-mod identity snapshot used while one dependency dialog is open.
+    private record InstalledModSnapshot(
+            ModRelationIndex relations,
+            @Unmodifiable Map<RemoteProjectKey, RemoteProjectState> remoteProjects,
+            @Unmodifiable Set<RemoteAddon.Source> failedSources,
+            boolean hasLocalMods) {
+        /// Creates an immutable installed identity snapshot.
+        private InstalledModSnapshot {
+            remoteProjects = Map.copyOf(remoteProjects);
+            failedSources = Set.copyOf(failedSources);
+        }
+
+        /// Resolves a dependency by exact remote identity, then by curated actual ModIds.
+        private DependencyPresence resolve(RemoteAddon.Dependency dependency, @Nullable ModTranslations.Mod mod) {
+            @Nullable RemoteAddon.Source source = dependency.getSource();
+            @Nullable String projectId = dependency.getResolvedProjectId();
+            if (source != null && projectId != null) {
+                @Nullable RemoteProjectState remote = remoteProjects.get(new RemoteProjectKey(source, projectId));
+                if (remote != null) {
+                    @Nullable String requiredVersion = dependency.getVersionId();
+                    if (requiredVersion != null) {
+                        @Nullable RemoteVersionState exact = remote.versions().get(requiredVersion);
+                        if (exact == null) {
+                            return DependencyPresence.INCOMPATIBLE_VERSION;
+                        }
+                        if (!exact.enabled()) {
+                            return DependencyPresence.DISABLED;
+                        }
+                        return exact.compatible()
+                                ? DependencyPresence.INSTALLED
+                                : DependencyPresence.INCOMPATIBLE_ENVIRONMENT;
+                    }
+                    if (!remote.enabled()) {
+                        return DependencyPresence.DISABLED;
+                    }
+                    return remote.compatible()
+                            ? DependencyPresence.INSTALLED
+                            : DependencyPresence.INCOMPATIBLE_ENVIRONMENT;
+                }
+            }
+
+            if (mod != null) {
+                boolean foundDisabled = false;
+                for (String modId : mod.getModIds()) {
+                    List<ModRelationIndex.Provider> providers = relations.getProviders(modId);
+                    if (providers.stream().anyMatch(ModRelationIndex.Provider::active)) {
+                        return DependencyPresence.INSTALLED;
+                    }
+                    foundDisabled |= !providers.isEmpty();
+                }
+                if (foundDisabled) {
+                    return DependencyPresence.DISABLED;
+                }
+                if (!relations.isComplete()) {
+                    return DependencyPresence.UNKNOWN;
+                }
+            } else {
+                return hasLocalMods ? DependencyPresence.UNKNOWN : DependencyPresence.MISSING;
+            }
+            if (source != null && failedSources.contains(source)) {
+                return DependencyPresence.UNKNOWN;
+            }
+            return DependencyPresence.MISSING;
+        }
+    }
+
     private static final class DependencyAddonItem extends LineButton {
         public static final EnumMap<RemoteAddon.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
                 Pair.pair(RemoteAddon.DependencyType.EMBEDDED, "addon.dependency.embedded"),
@@ -427,8 +496,9 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         public final RemoteAddon addon;
 
-        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, HMCLGameInstance.Optional instanceReference,
-                            @Nullable Map<String, Boolean> installedMods) {
+        DependencyAddonItem(DownloadListPage page, RemoteAddon.Dependency dependency, RemoteAddon addon,
+                            HMCLGameInstance.Optional instanceReference,
+                            @Nullable InstalledModSnapshot installedMods) {
             this.addon = addon;
 
             HBox pane = new HBox(8);
@@ -458,27 +528,18 @@ public class DownloadPage extends Control implements DecoratorPage {
             content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
             content.setSubtitle(addon.description());
             if (installedMods != null) {
-                Set<String> candidates = new HashSet<>();
-                if (StringUtils.isNotBlank(addon.slug())) {
-                    candidates.add(addon.slug().toLowerCase(Locale.ROOT));
-                }
-                if (mod != null) {
-                    for (String modId : mod.getModIds()) {
-                        candidates.add(modId.toLowerCase(Locale.ROOT));
-                    }
-                }
-
-                @Nullable Boolean active = null;
-                for (String candidate : candidates) {
-                    if (installedMods.containsKey(candidate)) {
-                        active = installedMods.get(candidate);
-                        if (active) {
-                            break;
-                        }
-                    }
-                }
-                content.addTag(i18n(active == null ? "addon.dependencies.missing"
-                        : active ? "addon.dependencies.installed" : "addon.dependencies.disabled"));
+                DependencyPresence presence = installedMods.resolve(dependency, mod);
+                String status = switch (presence) {
+                    case INSTALLED -> i18n("addon.dependencies.installed");
+                    case DISABLED -> i18n("addon.dependencies.disabled");
+                    case MISSING -> i18n("addon.dependencies.missing");
+                    case INCOMPATIBLE_VERSION -> i18n(
+                            "addon.dependencies.incompatible_version", dependency.getVersionId());
+                    case INCOMPATIBLE_ENVIRONMENT -> i18n(
+                            "addon.dependencies.incompatible_environment");
+                    case UNKNOWN -> i18n("addon.dependencies.unknown");
+                };
+                content.addTag(status);
             }
             for (String category : addon.categories()) {
                 if (page.shouldDisplayCategory(category))
@@ -648,7 +709,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         private void loadDependencies(RemoteAddon.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
             spinnerPane.setLoading(true);
             Task.composeAsync(() -> {
-                Map<String, Boolean> installedMods = getInstalledMods(selfPage.instanceReference);
+                @Nullable InstalledModSnapshot installedMods = resolveInstalledMods(
+                        selfPage.instanceReference, version.dependencies());
 
                 // TODO: Massive tasks may cause OOM.
                 EnumMap<RemoteAddon.DependencyType, Pair<Label, List<DependencyAddonItem>>> dependencies = new EnumMap<>(RemoteAddon.DependencyType.class);
@@ -675,12 +737,12 @@ public class DownloadPage extends Control implements DecoratorPage {
                                     hasBroken.set(true);
                                     return;
                                 }
-                                @Nullable Map<String, Boolean> statusSource =
-                                        dependency.getType() == RemoteAddon.DependencyType.REQUIRED
-                                                ? installedMods
-                                                : null;
+                                @Nullable InstalledModSnapshot statusSource = switch (dependency.getType()) {
+                                    case REQUIRED, OPTIONAL, TOOL, INCLUDE -> installedMods;
+                                    default -> null;
+                                };
                                 DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(
-                                        selfPage.page, dep, selfPage.instanceReference, statusSource);
+                                        selfPage.page, dependency, dep, selfPage.instanceReference, statusSource);
                                 var listener = FXUtils.onWeakChangeAndOperate(dependenciesList.widthProperty(), d -> FXUtils.setLimitWidth(dependencyAddonItem, d.doubleValue()));
                                 dependencyAddonItem.getProperties().put("DependencyAddonItem.width", listener);
                                 dependencies.get(dependency.getType()).value().add(dependencyAddonItem);
@@ -719,87 +781,62 @@ public class DownloadPage extends Control implements DecoratorPage {
             }).start();
         }
 
-        /// Serializes access to the installed-mod cache.
-        private static final Object INSTALLED_CACHE_LOCK = new Object();
-
-        /// Repository associated with the cached map.
-        private static @Nullable HMCLGameRepository installedCacheRepository;
-
-        /// Instance associated with the cached map.
-        private static @Nullable GameInstanceID installedCacheInstanceId;
-
-        /// Lowercase mod ids mapped to whether at least one matching file is active.
-        private static @Nullable Map<String, Boolean> installedCache;
-
-        /// Changes whenever a cache mutation invalidates an in-flight scan.
-        private static long installedCacheGeneration;
-
-        /// Returns whether the supplied reference identifies the currently cached instance.
-        private static boolean isCachedInstance(HMCLGameInstance.Optional instanceReference) {
-            return installedCacheRepository == instanceReference.repository()
-                    && Objects.equals(installedCacheInstanceId, instanceReference.instanceId());
-        }
-
-        /// Returns the installed-mod map for an instance, rebuilding it when necessary.
-        private static @Nullable Map<String, Boolean> getInstalledMods(HMCLGameInstance.Optional instanceReference) {
-            if (instanceReference.instanceId() == null) {
-                return null;
-            }
-
-            long generationAtStart;
-            synchronized (INSTALLED_CACHE_LOCK) {
-                if (isCachedInstance(instanceReference)) {
-                    return installedCache;
-                }
-                generationAtStart = installedCacheGeneration;
-            }
-
-            @Nullable Map<String, Boolean> resolved = resolveInstalledMods(instanceReference);
-            if (resolved != null) {
-                synchronized (INSTALLED_CACHE_LOCK) {
-                    if (generationAtStart == installedCacheGeneration) {
-                        installedCacheRepository = instanceReference.repository();
-                        installedCacheInstanceId = instanceReference.instanceId();
-                        installedCache = resolved;
-                    }
-                }
-            }
-            return resolved;
-        }
-
-        /// Marks the supplied mod ids as installed and active in the targeted cache entry.
-        private static void markInstalled(HMCLGameInstance.Optional instanceReference, Collection<String> modIds) {
-            synchronized (INSTALLED_CACHE_LOCK) {
-                if (isCachedInstance(instanceReference) && installedCache != null) {
-                    for (String id : modIds) {
-                        if (StringUtils.isNotBlank(id)) {
-                            installedCache.put(id.toLowerCase(Locale.ROOT), Boolean.TRUE);
-                        }
-                    }
-                } else {
-                    installedCacheGeneration++;
-                }
-            }
-        }
-
-        /// Reads the instance's mod files and builds a lowercase id-to-active-state map.
-        private static @Nullable Map<String, Boolean> resolveInstalledMods(HMCLGameInstance.Optional instanceReference) {
+        /// Builds one immutable installed identity snapshot for a dependency dialog.
+        private static @Nullable InstalledModSnapshot resolveInstalledMods(
+                HMCLGameInstance.Optional instanceReference,
+                Collection<RemoteAddon.Dependency> dependencies) {
             HMCLGameInstance.Optional refreshed = instanceReference.refreshed();
             @Nullable HMCLGameInstance instance = refreshed.instance();
             if (instance == null) {
                 return null;
             }
+
             try {
                 ModManager modManager = instance.getModManager();
-                Map<String, Boolean> installed = new HashMap<>();
-                for (LocalModFile file : modManager.getLocalFiles()) {
-                    String id = file.getId();
-                    if (StringUtils.isBlank(id)) {
-                        continue;
+                ModRelationIndex relations = modManager.getRelationIndex();
+                List<LocalModFile> localFiles = modManager.getLocalFiles();
+                Set<RemoteAddon.Source> sources = dependencies.stream()
+                        .map(RemoteAddon.Dependency::getSource)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toCollection(() -> EnumSet.noneOf(RemoteAddon.Source.class)));
+                Map<RemoteProjectKey, RemoteProjectState> remoteProjects = new LinkedHashMap<>();
+                Set<RemoteAddon.Source> failedSources = EnumSet.noneOf(RemoteAddon.Source.class);
+                Set<ModLoaderType> supportedLoaders = modManager.getSupportedLoaders();
+                String minecraftVersion = instance.getVersion().toString();
+
+                for (RemoteAddon.Source source : sources) {
+                    for (LocalModFile localFile : localFiles) {
+                        try {
+                            Optional<RemoteAddon.Version> remote =
+                                    modManager.resolveRemoteVersion(source, localFile);
+                            if (remote.isEmpty()) {
+                                continue;
+                            }
+                            RemoteAddon.Version version = remote.get();
+                            boolean enabled = localFile.isActive();
+                            boolean loaderCompatible = localFile.getModLoaderType() == ModLoaderType.UNKNOWN
+                                    || supportedLoaders.contains(localFile.getModLoaderType());
+                            loaderCompatible &= version.loaders().isEmpty()
+                                    || version.loaders().stream()
+                                    .anyMatch(loader -> supportedLoaders.contains(loader.type()));
+                            boolean gameCompatible = version.gameVersions().isEmpty()
+                                    || version.gameVersions().contains(minecraftVersion);
+                            boolean compatible = enabled && loaderCompatible && gameCompatible;
+                            Map<String, RemoteVersionState> versions = StringUtils.isBlank(version.versionId())
+                                    ? Map.of()
+                                    : Map.of(version.versionId(), new RemoteVersionState(enabled, compatible));
+                            RemoteProjectKey key = new RemoteProjectKey(source, version.projectId());
+                            RemoteProjectState state = new RemoteProjectState(
+                                    enabled, compatible, versions);
+                            remoteProjects.merge(key, state, RemoteProjectState::merge);
+                        } catch (IOException e) {
+                            failedSources.add(source);
+                            LOG.warning("Failed to resolve remote identity for " + localFile.getFile(), e);
+                        }
                     }
-                    installed.merge(id.toLowerCase(Locale.ROOT), file.isActive(), Boolean::logicalOr);
                 }
-                return installed;
+                return new InstalledModSnapshot(
+                        relations, remoteProjects, failedSources, !localFiles.isEmpty());
             } catch (Exception e) {
                 LOG.warning("Failed to resolve installed mods for dependency status", e);
                 return null;

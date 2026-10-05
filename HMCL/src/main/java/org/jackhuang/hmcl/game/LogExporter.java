@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.MinecraftVersionMatcher;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.addon.mod.ModRelationIndex;
 import org.jackhuang.hmcl.addon.mod.NestedJarInspector.NestedJar;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -43,6 +44,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -94,7 +96,7 @@ public final class LogExporter {
                     // Resolve the full Jar-in-Jar tree now (synchronously — this whole export runs on a
                     // background task), so the report is accurate even when the mod manager was never
                     // opened before the crash.
-                    modManager.scanBundledTrees();
+                    ModRelationIndex relationIndex = modManager.getRelationIndex();
 
                     List<LocalModFile> activeMods = modManager.getLocalFiles().stream()
                             .filter(LocalModFile::isActive)
@@ -102,6 +104,11 @@ public final class LogExporter {
                             .toList();
 
                     StringBuilder infoBuilder = new StringBuilder();
+                    infoBuilder.append("=== Mod Relation Analysis ===").append(System.lineSeparator())
+                            .append("Complete: ").append(relationIndex.isComplete()).append(System.lineSeparator())
+                            .append(System.lineSeparator())
+                            .append("----------------------------").append(System.lineSeparator())
+                            .append(System.lineSeparator());
 
                     // Mods that exist both as a standalone file and inside another active mod's
                     // Jar-in-Jar payload. Such duplicates can conflict and crash the game, so list
@@ -111,14 +118,17 @@ public final class LogExporter {
                     // — no filename guessing, no false positives.
                     LinkedHashSet<String> duplicates = new LinkedHashSet<>();
                     for (LocalModFile host : activeMods) {
-                        Set<String> bundledIds = host.getAllBundledModIds();
+                        Set<String> bundledIds = relationIndex.getBundledIds(host).stream()
+                                .map(id -> id.toLowerCase(Locale.ROOT))
+                                .collect(java.util.stream.Collectors.toSet());
                         if (bundledIds.isEmpty()) continue;
                         for (LocalModFile other : activeMods) {
                             if (other == host) continue;
-                            String id = other.getId();
-                            if (StringUtils.isBlank(id)) continue;
-                            if (bundledIds.contains(id)) {
-                                duplicates.add(other.getName() + " [" + other.getFileName() + "] <-> bundled in " + host.getName() + " (" + id + ")");
+                            for (String id : other.getProvidedIds()) {
+                                if (bundledIds.contains(id.toLowerCase(Locale.ROOT))) {
+                                    duplicates.add(other.getName() + " [" + other.getFileName()
+                                            + "] <-> bundled in " + host.getName() + " (" + id + ")");
+                                }
                             }
                         }
                     }
@@ -144,7 +154,8 @@ public final class LogExporter {
                     LinkedHashSet<String> incompatible = new LinkedHashSet<>();
                     if (StringUtils.isNotBlank(instanceMc)) {
                         for (LocalModFile host : activeMods) {
-                            collectIncompatibleBundles(host.getBundledTree(), instanceMc, host.getName(), incompatible);
+                            collectIncompatibleBundles(
+                                    relationIndex.getBundledTree(host), instanceMc, host.getName(), incompatible);
                         }
                     }
 
@@ -157,6 +168,56 @@ public final class LogExporter {
                         infoBuilder.append("These bundled mods have no copy targeting MC ").append(instanceMc).append(" and likely fail to load:").append(System.lineSeparator());
                         for (String line : incompatible) {
                             infoBuilder.append("\t|-> ").append(line).append(System.lineSeparator());
+                        }
+                    }
+                    infoBuilder.append(System.lineSeparator())
+                            .append("----------------------------").append(System.lineSeparator())
+                            .append(System.lineSeparator());
+
+                    infoBuilder.append("=== Dependency Issues ===").append(System.lineSeparator());
+                    if (relationIndex.getDependencyIssues().isEmpty()) {
+                        infoBuilder.append("None").append(System.lineSeparator());
+                    } else {
+                        for (ModRelationIndex.DependencyIssue issue : relationIndex.getDependencyIssues()) {
+                            String sourceName = issue.nestedSource() != null
+                                    ? issue.nestedSource().displayName()
+                                    : issue.declaringHost().getName();
+                            infoBuilder.append("\t|-> ")
+                                    .append(sourceName)
+                                    .append(" requires ")
+                                    .append(issue.resolution().dependency().id())
+                                    .append(" ")
+                                    .append(issue.resolution().dependency().versionConstraint())
+                                    .append(": ")
+                                    .append(issue.resolution().status());
+                            String detectedVersions = issue.resolution().providers().stream()
+                                    .map(ModRelationIndex.Provider::version)
+                                    .filter(StringUtils::isNotBlank)
+                                    .distinct()
+                                    .collect(java.util.stream.Collectors.joining(", "));
+                            if (!detectedVersions.isBlank()) {
+                                infoBuilder.append(" (detected: ").append(detectedVersions).append(")");
+                            }
+                            infoBuilder.append(System.lineSeparator());
+                        }
+                    }
+                    infoBuilder.append(System.lineSeparator())
+                            .append("=== Active Conflicts ===").append(System.lineSeparator());
+                    if (relationIndex.getActiveConflicts().isEmpty()) {
+                        infoBuilder.append("None").append(System.lineSeparator());
+                    } else {
+                        for (ModRelationIndex.ActiveConflict conflict : relationIndex.getActiveConflicts()) {
+                            String sourceName = conflict.nestedSource() != null
+                                    ? conflict.nestedSource().displayName()
+                                    : conflict.declaringHost().getName();
+                            infoBuilder.append("\t|-> ")
+                                    .append(sourceName)
+                                    .append(" conflicts with ")
+                                    .append(conflict.conflict().id())
+                                    .append(" ")
+                                    .append(conflict.conflict().versionConstraint())
+                                    .append(conflict.conflict().hard() ? " [hard]" : " [warning]")
+                                    .append(System.lineSeparator());
                         }
                     }
                     infoBuilder.append(System.lineSeparator())
@@ -192,7 +253,7 @@ public final class LogExporter {
                                 infoBuilder.append(" [").append(mod.getFileName()).append("]");
                             }
                             infoBuilder.append(System.lineSeparator());
-                            List<NestedJar> tree = mod.getBundledTree();
+                            List<NestedJar> tree = relationIndex.getBundledTree(mod);
                             if (!tree.isEmpty()) {
                                 appendJarTree(infoBuilder, tree, 1);
                             } else {
@@ -239,7 +300,9 @@ public final class LogExporter {
                 byId.computeIfAbsent(node.id(), k -> new ArrayList<>()).add(node);
         for (Map.Entry<String, List<NestedJar>> e : byId.entrySet()) {
             List<NestedJar> copies = e.getValue();
-            if (copies.size() > 1 && copies.stream().noneMatch(n -> MinecraftVersionMatcher.matches(n, instanceMc)))
+            if (copies.size() > 1
+                    && copies.stream().allMatch(NestedJar::minecraftConstraintRequired)
+                    && copies.stream().noneMatch(n -> MinecraftVersionMatcher.matches(n, instanceMc)))
                 out.add(e.getKey() + " (bundled in " + hostName + ", " + copies.size() + " versions, none for MC " + instanceMc + ")");
         }
         for (NestedJar node : siblings)

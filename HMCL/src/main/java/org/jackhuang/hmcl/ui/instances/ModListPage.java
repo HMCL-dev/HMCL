@@ -59,8 +59,11 @@ import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.MinecraftVersionMatcher;
+import org.jackhuang.hmcl.addon.mod.ModConflict;
+import org.jackhuang.hmcl.addon.mod.ModDependency;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.addon.mod.ModRelationIndex;
 import org.jackhuang.hmcl.addon.mod.NestedJarInspector;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
@@ -93,7 +96,6 @@ import java.util.*;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -106,7 +108,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> implements PageAware {
-    private final ReentrantLock lock = new ReentrantLock();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
     /// Changes after a background JIJ scan so expanded rows can rebuild their nested metadata.
@@ -117,8 +118,17 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     private final BooleanProperty bundledScanReady =
             new SimpleBooleanProperty(this, "bundledScanReady", true);
 
+    /// Whether the latest complete-analysis attempt failed or was truncated.
+    private final BooleanProperty bundledScanFailed =
+            new SimpleBooleanProperty(this, "bundledScanFailed", false);
+
     private ModManager modManager;
     private @Nullable HMCLGameInstance gameInstance;
+    /// Immutable relation index published after the current manager's complete JIJ scan.
+    private @Nullable ModRelationIndex relationIndex;
+
+    /// Monotonic token preventing an older asynchronous load from publishing into a newer page state.
+    private long loadGeneration;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
@@ -164,26 +174,24 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     private void loadMods(ModManager modManager) {
+        long generation = ++loadGeneration;
         setLoading(true);
         bundledScanReady.set(false);
-        DownloadPage.invalidateInstalledMods();
-
+        bundledScanFailed.set(false);
+        relationIndex = null;
         if (this.modManager != modManager) {
             getItems().clear();
         }
         this.modManager = modManager;
         CompletableFuture.supplyAsync(() -> {
-            lock.lock();
             try {
                 modManager.refresh();
                 return modManager.getLocalFiles().stream().map(ModInfoObject::new).toList();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
-            } finally {
-                lock.unlock();
             }
         }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
-            if (this.modManager != modManager) {
+            if (generation != loadGeneration || this.modManager != modManager) {
                 return;
             }
 
@@ -199,20 +207,28 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             setLoading(false);
 
             if (exception == null) {
-                CompletableFuture.runAsync(modManager::scanBundledTrees, Schedulers.io())
-                        .whenCompleteAsync((ignored, scanException) -> {
-                            if (this.modManager != modManager) {
+                CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return modManager.getRelationIndex();
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                }, Schedulers.io()).whenCompleteAsync((index, scanException) -> {
+                            if (generation != loadGeneration || this.modManager != modManager) {
                                 return;
                             }
                             if (scanException != null) {
                                 LOG.warning("Failed to scan Jar-in-Jar trees", scanException);
                             } else {
+                                relationIndex = index;
                                 bundledScanGeneration.set(bundledScanGeneration.get() + 1);
                             }
-                            bundledScanReady.set(true);
+                            bundledScanReady.set(scanException == null && index != null && index.isComplete());
+                            bundledScanFailed.set(scanException != null || index == null || !index.isComplete());
                         }, Schedulers.javafx());
             } else {
-                bundledScanReady.set(true);
+                bundledScanReady.set(false);
+                bundledScanFailed.set(true);
             }
         }, Schedulers.javafx());
     }
@@ -225,6 +241,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     /// Returns whether disable and remove operations may safely resolve reverse dependencies.
     public BooleanProperty bundledScanReadyProperty() {
         return bundledScanReady;
+    }
+
+    /// Returns whether the latest nested analysis was incomplete or failed.
+    public BooleanProperty bundledScanFailedProperty() {
+        return bundledScanFailed;
     }
 
     /// Returns the current instance's Minecraft version, or an empty string before an instance loads.
@@ -368,50 +389,17 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
     /// Finds active mods that transitively lose their last required provider with the targets gone.
     private List<ModInfoObject> findActiveDependents(Collection<LocalModFile> targets) {
-        String instanceVersion = getGameVersion();
-        Set<LocalModFile> targetSet = new HashSet<>(targets);
-        Map<String, Set<LocalModFile>> activeProviders = new HashMap<>();
+        if (relationIndex == null) {
+            return List.of();
+        }
+        Map<LocalModFile, ModInfoObject> byFile = new HashMap<>();
         for (ModInfoObject item : getItems()) {
-            LocalModFile mod = item.getModInfo();
-            if (!mod.isActive() && !targetSet.contains(mod)) {
-                continue;
-            }
-            if (StringUtils.isNotBlank(mod.getId())) {
-                activeProviders.computeIfAbsent(mod.getId(), ignored -> new HashSet<>()).add(mod);
-            }
-            for (String bundledId : mod.getLoadableBundledModIds(instanceVersion)) {
-                activeProviders.computeIfAbsent(bundledId, ignored -> new HashSet<>()).add(mod);
-            }
+            byFile.put(item.getModInfo(), item);
         }
-
-        Set<LocalModFile> doomed = new HashSet<>(targets);
-        List<ModInfoObject> dependents = new ArrayList<>();
-        boolean changed = true;
-        while (changed) {
-            changed = false;
-            Set<String> lostIds = new HashSet<>();
-            for (Map.Entry<String, Set<LocalModFile>> entry : activeProviders.entrySet()) {
-                if (doomed.containsAll(entry.getValue())) {
-                    lostIds.add(entry.getKey());
-                }
-            }
-            if (lostIds.isEmpty()) {
-                break;
-            }
-
-            for (ModInfoObject item : getItems()) {
-                LocalModFile mod = item.getModInfo();
-                if (!mod.isActive() || doomed.contains(mod)) {
-                    continue;
-                }
-                if (mod.getDependencies().stream().anyMatch(lostIds::contains)) {
-                    dependents.add(item);
-                    doomed.add(mod);
-                    changed = true;
-                }
-            }
-        }
-        return dependents;
+        return relationIndex.findActiveDependents(targets, byFile.keySet()).stream()
+                .map(byFile::get)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     /// Describes one action offered after reverse dependencies are detected.
@@ -509,24 +497,18 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final JFXTextField searchField;
 
-        /// Keeps the dependency-download cache synchronized with enable and disable operations.
-        private final InvalidationListener activeChangeListener = observable -> {
-            if (observable instanceof BooleanProperty property
-                    && property.getBean() instanceof LocalModFile mod) {
-                HMCLGameInstance current = getSkinnable().gameInstance;
-                if (current == null) {
-                    return;
-                }
-                boolean anyActive = mod.getMod().getFiles().stream().anyMatch(LocalModFile::isActive);
-                DownloadPage.setModActive(HMCLGameInstance.Optional.of(current), mod.getId(), anyActive);
-            }
-        };
-
         /// Timer for debouncing search input to avoid executing search on every keystroke.
         private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
+        /// Debounces relation rebuilds when one cascade toggles several files in quick succession.
+        private final PauseTransition activeRefreshPause = new PauseTransition(Duration.millis(100));
+
+        /// Schedules a fresh immutable analysis after any local file enable-state mutation.
+        private final InvalidationListener activeChangeListener = ignored -> activeRefreshPause.playFromStart();
+
         public ModListPageSkin(ModListPage skinnable) {
             super(skinnable);
+            activeRefreshPause.setOnFinished(ignored -> skinnable.refresh());
 
             StackPane pane = new StackPane();
             pane.setPadding(new Insets(10));
@@ -537,6 +519,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             root.getStyleClass().add("no-padding");
             listView = new JFXListView<>();
             listView.getStyleClass().add("no-horizontal-scrollbar");
+            skinnable.bundledScanGenerationProperty().addListener(ignored -> listView.refresh());
 
             {
                 toolbarPane = new TransitionPane();
@@ -600,76 +583,78 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
                 };
 
-            listView.getSelectionModel().getSelectedItems().addListener(listener);
-            listView.getItems().addListener(listener);
+                listView.getSelectionModel().getSelectedItems().addListener(listener);
+                listView.getItems().addListener(listener);
 
-            JFXButton btnRemove = createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
-                var selected = listView.getSelectionModel().getSelectedItems();
-                List<LocalModFile> targets = new ArrayList<>();
-                for (ModInfoObject item : selected)
-                    if (item != null) targets.add(item.getModInfo());
-                List<ModInfoObject> dependents = skinnable.findActiveDependents(targets);
-                if (dependents.isEmpty()) {
-                    Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
-                            () -> skinnable.removeSelected(selected), null);
-                } else {
-                    List<ModInfoObject> selectedSnapshot = new ArrayList<>(selected);
-                    Controllers.dialog(new DependencyWarningDialog(dependents, i18n("button.remove"), List.of(
-                            new CascadeOption(i18n("addon.dependencies.warning.cascade.none"),
-                                    () -> skinnable.removeSelected(FXCollections.observableArrayList(selectedSnapshot))),
-                            new CascadeOption(i18n("addon.dependencies.warning.cascade"), () -> {
-                                for (ModInfoObject dependent : dependents)
-                                    dependent.getModInfo().setActive(false);
-                                skinnable.removeSelected(FXCollections.observableArrayList(selectedSnapshot));
-                            }),
-                            new CascadeOption(i18n("addon.dependencies.warning.cascade.delete"), () -> {
-                                List<ModInfoObject> all = new ArrayList<>(selectedSnapshot);
-                                all.addAll(dependents);
-                                skinnable.removeSelected(FXCollections.observableArrayList(all));
-                            })
-                    )));
-                }
-            });
-            JFXButton btnDisable = createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () -> {
-                var selected = listView.getSelectionModel().getSelectedItems();
-                List<LocalModFile> targets = new ArrayList<>();
-                for (ModInfoObject item : selected)
-                    if (item != null) targets.add(item.getModInfo());
-                List<ModInfoObject> dependents = skinnable.findActiveDependents(targets);
-                if (dependents.isEmpty()) {
-                    skinnable.disableSelected(selected);
-                } else {
-                    Controllers.dialog(new DependencyWarningDialog(dependents, i18n("mods.disable"), List.of(
-                            new CascadeOption(i18n("addon.dependencies.warning.cascade.none"),
-                                    () -> skinnable.disableSelected(selected)),
-                            new CascadeOption(i18n("addon.dependencies.warning.cascade"), () -> {
-                                skinnable.disableSelected(selected);
-                                for (ModInfoObject dependent : dependents)
-                                    dependent.getModInfo().setActive(false);
-                            })
-                    )));
-                }
-            });
-            // Disable the dependency-changing operations until the background bundled-id scan is ready,
-            // so a cascade never runs against an incomplete bundled-id set (see ModListPage).
-            btnRemove.disableProperty().bind(getSkinnable().bundledScanReadyProperty().not());
-            btnDisable.disableProperty().bind(getSkinnable().bundledScanReadyProperty().not());
+                JFXButton btnRemove = createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
+                    var selected = listView.getSelectionModel().getSelectedItems();
+                    List<LocalModFile> targets = new ArrayList<>();
+                    for (ModInfoObject item : selected)
+                        if (item != null) targets.add(item.getModInfo());
+                    List<ModInfoObject> dependents = skinnable.findActiveDependents(targets);
+                    if (dependents.isEmpty()) {
+                        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
+                                () -> skinnable.removeSelected(selected), null);
+                    } else {
+                        List<ModInfoObject> selectedSnapshot = new ArrayList<>(selected);
+                        Controllers.dialog(new DependencyWarningDialog(dependents, i18n("button.remove"), List.of(
+                                new CascadeOption(i18n("addon.dependencies.warning.cascade.none"),
+                                        () -> skinnable.removeSelected(FXCollections.observableArrayList(selectedSnapshot))),
+                                new CascadeOption(i18n("addon.dependencies.warning.cascade"), () -> {
+                                    for (ModInfoObject dependent : dependents)
+                                        dependent.getModInfo().setActive(false);
+                                    skinnable.removeSelected(FXCollections.observableArrayList(selectedSnapshot));
+                                }),
+                                new CascadeOption(i18n("addon.dependencies.warning.cascade.delete"), () -> {
+                                    List<ModInfoObject> all = new ArrayList<>(selectedSnapshot);
+                                    all.addAll(dependents);
+                                    skinnable.removeSelected(FXCollections.observableArrayList(all));
+                                })
+                        )));
+                    }
+                });
+                JFXButton btnDisable = createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () -> {
+                    var selected = listView.getSelectionModel().getSelectedItems();
+                    List<LocalModFile> targets = new ArrayList<>();
+                    for (ModInfoObject item : selected)
+                        if (item != null) targets.add(item.getModInfo());
+                    List<ModInfoObject> dependents = skinnable.findActiveDependents(targets);
+                    if (dependents.isEmpty()) {
+                        skinnable.disableSelected(selected);
+                    } else {
+                        Controllers.dialog(new DependencyWarningDialog(dependents, i18n("mods.disable"), List.of(
+                                new CascadeOption(i18n("addon.dependencies.warning.cascade.none"),
+                                        () -> skinnable.disableSelected(selected)),
+                                new CascadeOption(i18n("addon.dependencies.warning.cascade"), () -> {
+                                    skinnable.disableSelected(selected);
+                                    for (ModInfoObject dependent : dependents)
+                                        dependent.getModInfo().setActive(false);
+                                })
+                        )));
+                    }
+                });
+                JFXButton btnEnable = createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
+                        skinnable.enableSelected(listView.getSelectionModel().getSelectedItems()));
+                // Disable the dependency-changing operations until the background bundled-id scan is ready,
+                // so a cascade never runs against an incomplete bundled-id set (see ModListPage).
+                btnRemove.disableProperty().bind(getSkinnable().bundledScanReadyProperty().not());
+                btnDisable.disableProperty().bind(getSkinnable().bundledScanReadyProperty().not());
+                btnEnable.disableProperty().bind(getSkinnable().bundledScanReadyProperty().not());
 
-            toolbarSelecting.getChildren().setAll(
-                    btnRemove,
-                    createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
-                            skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
-                    btnDisable,
-                    createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
-                            skinnable.checkUpdates(
-                                    listView.getSelectionModel().getSelectedItems().stream()
-                                                .map(ModListPage.ModInfoObject::getModInfo)
-                                                .toList()
-                                )
-                        ),
-                        selectAll,
-                        createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
-                                listView.getSelectionModel().clearSelection())
+                toolbarSelecting.getChildren().setAll(
+                        btnRemove,
+                        btnEnable,
+                        btnDisable,
+                        createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
+                                skinnable.checkUpdates(
+                                        listView.getSelectionModel().getSelectedItems().stream()
+                                                    .map(ModListPage.ModInfoObject::getModInfo)
+                                                    .toList()
+                                    )
+                            ),
+                            selectAll,
+                            createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
+                                    listView.getSelectionModel().clearSelection())
                 );
 
                 FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
@@ -733,6 +718,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         search();
                     }
                 });
+                skinnable.getItems().forEach(item -> item.active.addListener(activeChangeListener));
 
                 listView.setOnContextMenuRequested(event -> {
                     ModListPage.ModInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
@@ -750,8 +736,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
                 JFXSpinner scanHintSpinner = new JFXSpinner();
                 scanHintSpinner.setRadius(7);
-                HBox scanHint = new HBox(
-                        8, scanHintSpinner, new Label(i18n("mods.dependency_analyzing")));
+                Label scanHintLabel = new Label();
+                scanHintLabel.textProperty().bind(Bindings.createStringBinding(
+                        () -> i18n(skinnable.bundledScanFailedProperty().get()
+                                ? "mods.dependency_analysis_failed"
+                                : "mods.dependency_analyzing"),
+                        skinnable.bundledScanFailedProperty()));
+                scanHintSpinner.visibleProperty().bind(skinnable.bundledScanFailedProperty().not());
+                scanHintSpinner.managedProperty().bind(skinnable.bundledScanFailedProperty().not());
+                HBox scanHint = new HBox(8, scanHintSpinner, scanHintLabel);
                 scanHint.getStyleClass().add("mod-scan-hint");
                 scanHint.setAlignment(Pos.CENTER_LEFT);
                 BooleanProperty showScanHint = new SimpleBooleanProperty(false);
@@ -770,6 +763,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     } else {
                         showScanHint.set(false);
                         scanHintDelay.playFromStart();
+                    }
+                });
+                FXUtils.onChangeAndOperate(skinnable.bundledScanFailedProperty(), failed -> {
+                    if (failed) {
+                        scanHintDelay.stop();
+                        showScanHint.set(true);
                     }
                 });
 
@@ -819,7 +818,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             || predicate.test(modInfo.getId())
                             || predicate.test(Objects.toString(modInfo.getModLoaderType()))
                             || predicate.test((item.getModTranslations() != null ? item.getModTranslations().getDisplayName() : null))
-                            || modInfo.getBundledMods().stream().anyMatch(predicate)) {
+                            || modInfo.getBundledMods().stream().anyMatch(predicate)
+                            || modInfo.getDependencies().stream().map(ModDependency::id).anyMatch(predicate)
+                            || modInfo.getProvidedIds().stream().anyMatch(predicate)
+                            || modInfo.getConflicts().stream().map(ModConflict::id).anyMatch(predicate)) {
                         listView.getItems().add(item);
                     }
                 }
@@ -1146,6 +1148,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     // disambiguate which copy of a multi-version wrapper is active (the group case below).
                     NestedJarInspector.NestedJar node = versions.get(0);
                     nestedBox.getChildren().add(createBundledRow(node, indent, null, null, MatchKind.NONE));
+                    appendNestedRelations(node, indent + 1);
                     if (node.hasChildren())
                         appendBundledNodes(node.children(), indent + 1, instanceMc);
                 } else {
@@ -1153,13 +1156,23 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     // the copy whose declared range contains it (what the wrapper would actually load);
                     // else the first. Only the representative is recursed into — the others are the same
                     // mod. The badge's tooltip lists every collapsed copy so the rest stay discoverable.
+                    @Nullable ModInfoObject currentItem = getItem();
+                    NestedJarInspector.NestedJar selected = currentItem == null || page.relationIndex == null
+                            ? null
+                            : versions.stream()
+                            .filter(candidate -> page.relationIndex.isNestedSelected(
+                                    currentItem.getModInfo(), candidate))
+                            .findFirst().orElse(null);
                     NestedJarInspector.NestedJar exact = versions.stream()
                             .filter(v -> MinecraftVersionMatcher.matchesExact(v, instanceMc)).findFirst().orElse(null);
                     NestedJarInspector.NestedJar ranged = exact != null ? null : versions.stream()
                             .filter(v -> satisfiesRange(v, instanceMc)).findFirst().orElse(null);
-                    NestedJarInspector.NestedJar rep = exact != null ? exact : ranged != null ? ranged : versions.get(0);
-                    MatchKind kind = exact != null ? MatchKind.EXACT
-                            : ranged != null ? MatchKind.RANGE
+                    NestedJarInspector.NestedJar rep = selected != null
+                            ? selected
+                            : exact != null ? exact : ranged != null ? ranged : versions.get(0);
+                    MatchKind kind = MinecraftVersionMatcher.matchesExact(rep, instanceMc) ? MatchKind.EXACT
+                            : satisfiesRange(rep, instanceMc) ? MatchKind.RANGE
+                            : !rep.minecraftConstraintRequired() ? MatchKind.NONE
                             : instanceMc != null && !instanceMc.isBlank() ? MatchKind.INCOMPATIBLE
                             : MatchKind.NONE;
                     String tooltip = versions.stream()
@@ -1167,6 +1180,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             .collect(Collectors.joining("\n"));
                     nestedBox.getChildren().add(createBundledRow(rep, indent,
                             i18n("addon.bundled.versions", versions.size()), tooltip, kind));
+                    appendNestedRelations(rep, indent + 1);
                     if (rep.hasChildren())
                         appendBundledNodes(rep.children(), indent + 1, instanceMc);
                 }
@@ -1174,6 +1188,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             for (NestedJarInspector.NestedJar node : ungrouped) {
                 nestedBox.getChildren().add(createBundledRow(node, indent, null, null, MatchKind.NONE));
+                appendNestedRelations(node, indent + 1);
                 if (node.hasChildren())
                     appendBundledNodes(node.children(), indent + 1, instanceMc);
             }
@@ -1224,6 +1239,29 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return row;
         }
 
+        /// Appends dependency and conflict rows declared directly by one nested mod node.
+        private void appendNestedRelations(NestedJarInspector.NestedJar node, int indent) {
+            for (Map.Entry<String, String> provided : node.providedVersions().entrySet()) {
+                Node row = createProvidedRow(provided.getKey(), provided.getValue());
+                VBox.setMargin(row, new Insets(0, 0, 0, indent * 16));
+                nestedBox.getChildren().add(row);
+            }
+            for (ModDependency dependency : node.dependencies()) {
+                Node row = createDependencyRow(dependency);
+                VBox.setMargin(row, new Insets(0, 0, 0, indent * 16));
+                nestedBox.getChildren().add(row);
+            }
+            @Nullable ModInfoObject item = getItem();
+            if (item == null) {
+                return;
+            }
+            for (ModConflict conflict : node.conflicts()) {
+                Node row = createConflictRow(conflict);
+                VBox.setMargin(row, new Insets(0, 0, 0, indent * 16));
+                nestedBox.getChildren().add(row);
+            }
+        }
+
         /// The tag on a multi-version wrapper's representative row: an EXACT build for this instance, a
         /// RANGE-compatible build (its declared range covers a gap version — what the wrapper would
         /// load), INCOMPATIBLE (the instance version matches no bundled copy at all, so the wrapper
@@ -1231,7 +1269,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private enum MatchKind { NONE, INCOMPATIBLE, RANGE, EXACT }
 
         private static boolean satisfiesRange(NestedJarInspector.NestedJar node, String instanceMc) {
-            return instanceMc != null && !instanceMc.isBlank()
+            return node.minecraftConstraintRequired()
+                    && instanceMc != null && !instanceMc.isBlank()
                     && MinecraftVersionMatcher.satisfies(node.loaderType(), node.minecraftVersion(), instanceMc);
         }
 
@@ -1252,71 +1291,112 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return label;
         }
 
-        private Node createDependencyRow(LocalModFile modInfo, String depId) {
-            Label name = new Label(depId);
-
-            // A dependency may be installed under a compatible loader other than this mod's own
-            // (e.g. a Quilt mod depending on a Fabric mod), so match by id across ALL loaded mods.
-            // Resolved from the page's own item list — pure FX-side data — rather than through
-            // ModManager.hasMod/getLocalMod: those take the manager lock, and an in-flight refresh
-            // holds it for its whole parse, which would freeze the FX thread on panel expansion.
-            Set<LocalModFile> installedFiles = new HashSet<>();
-            for (ModInfoObject item : page.getItems()) {
-                LocalModFile file = item.getModInfo();
-                if (depId.equals(file.getId()))
-                    installedFiles.add(file);
-            }
+        /// Creates a dependency row backed by the immutable relation index.
+        private Node createDependencyRow(ModDependency dependency) {
+            Label name = new Label(dependency.id());
+            Label constraint = new Label(dependency.versionConstraint());
+            constraint.getStyleClass().add("mod-nested-version");
 
             Label status = new Label();
             Runnable refresh = () -> {
-                String statusText;
-                if (installedFiles.isEmpty()) {
-                    // Not installed separately — it may instead be bundled inside this mod via
-                    // Jar-in-Jar. Prefer an exact id match against the scanned tree; fall back to the
-                    // filename heuristic for nested jars whose metadata could not be parsed.
-                    boolean bundled = modInfo.getAllBundledModIds().contains(depId)
-                            || isBundledDependency(depId, modInfo.getBundledMods());
-                    statusText = bundled
-                            ? i18n("addon.dependencies.bundled")
-                            : i18n("addon.dependencies.missing");
-                } else if (installedFiles.stream().anyMatch(LocalModFile::isActive)) {
-                    statusText = i18n("addon.dependencies.installed");
-                } else {
-                    statusText = i18n("addon.dependencies.disabled");
+                @Nullable ModRelationIndex index = page.relationIndex;
+                if (index == null) {
+                    status.setText("(" + i18n("addon.dependencies.unknown") + ")");
+                    return;
                 }
+                ModRelationIndex.Resolution resolution = index.resolve(dependency);
+                String statusText = switch (resolution.status()) {
+                    case SATISFIED -> resolution.providers().stream()
+                            .anyMatch(provider -> provider.nestedSource() != null)
+                            ? i18n("addon.dependencies.bundled")
+                            : i18n("addon.dependencies.installed");
+                    case DISABLED -> i18n("addon.dependencies.disabled");
+                    case MISSING -> i18n("addon.dependencies.missing");
+                    case VERSION_MISMATCH -> i18n(
+                            "addon.dependencies.incompatible_version", dependency.versionConstraint());
+                    case UNKNOWN_VERSION -> i18n("addon.dependencies.unknown_version");
+                };
                 status.setText("(" + statusText + ")");
+                String versions = resolution.providers().stream()
+                        .map(ModRelationIndex.Provider::version)
+                        .filter(version -> !version.isBlank())
+                        .distinct()
+                        .collect(Collectors.joining(", "));
+                status.setTooltip(versions.isBlank() ? null : new Tooltip(versions));
             };
             refresh.run();
-            // Keep the status live while the panel stays open: re-evaluate whenever a provider is
-            // enabled/disabled. Listeners are dropped when the panel is torn down (clearNested).
-            for (LocalModFile file : installedFiles) {
-                InvalidationListener listener = obs -> refresh.run();
-                file.activeProperty().addListener(listener);
-                nestedListenerCleanups.add(() -> file.activeProperty().removeListener(listener));
+
+            @Nullable ModRelationIndex index = page.relationIndex;
+            if (index != null) {
+                Set<LocalModFile> observedHosts = new HashSet<>();
+                for (ModRelationIndex.Provider provider : index.getProviders(dependency.id())) {
+                    if (observedHosts.add(provider.host())) {
+                        InvalidationListener listener = ignored -> refresh.run();
+                        provider.host().activeProperty().addListener(listener);
+                        nestedListenerCleanups.add(() -> provider.host().activeProperty().removeListener(listener));
+                    }
+                }
             }
 
-            HBox row = new HBox(8, SVG.EXTENSION.createIcon(16), name, status);
+            HBox row = new HBox(8, SVG.EXTENSION.createIcon(16), name);
+            if (!dependency.versionConstraint().isBlank() && !"*".equals(dependency.versionConstraint())) {
+                row.getChildren().add(constraint);
+            }
+            row.getChildren().add(status);
             row.getStyleClass().add("mod-nested-item");
             row.setAlignment(Pos.CENTER_LEFT);
             return row;
         }
 
-        // Heuristic: a dependency may be shipped inside the mod's own Jar-in-Jar payload,
-        // in which case it won't show up as a separately installed mod. Match the dependency
-        // id against the bundled jar file names.
-        private boolean isBundledDependency(String depId, List<String> bundledMods) {
-            if (bundledMods.isEmpty())
-                return false;
-
-            String id = depId.toLowerCase(Locale.ROOT);
-            String idAlt = id.replace("-", "").replace("_", "");
-            for (String path : bundledMods) {
-                String fileName = (path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path)
-                        .toLowerCase(Locale.ROOT);
-                if (fileName.contains(id) || fileName.replace("-", "").replace("_", "").contains(idAlt))
-                    return true;
+        /// Creates a row describing an additional capability exposed by the current file or node.
+        private Node createProvidedRow(String id, String version) {
+            Label name = new Label(id);
+            HBox row = new HBox(8, SVG.CHECK.createIcon(16), name);
+            if (!version.isBlank()) {
+                Label providedVersion = new Label(version);
+                providedVersion.getStyleClass().add("mod-nested-version");
+                row.getChildren().add(providedVersion);
             }
-            return false;
+            row.getStyleClass().add("mod-nested-item");
+            row.setAlignment(Pos.CENTER_LEFT);
+            return row;
+        }
+
+        /// Creates a conflict row and marks whether the current provider graph activates it.
+        private Node createConflictRow(ModConflict conflict) {
+            Label name = new Label(conflict.id());
+            Label constraint = new Label(conflict.versionConstraint());
+            constraint.getStyleClass().add("mod-nested-version");
+            Label status = new Label();
+            Runnable refresh = () -> {
+                boolean active = page.relationIndex != null
+                        && page.relationIndex.getProviders(conflict.id()).stream()
+                        .filter(ModRelationIndex.Provider::active)
+                        .anyMatch(provider -> "*".equals(conflict.versionConstraint())
+                                || !provider.version().isBlank() && conflict.matches(provider.version()));
+                status.setText(i18n(active
+                        ? conflict.hard() ? "addon.conflicts.active_hard" : "addon.conflicts.active_soft"
+                        : "addon.conflicts.inactive"));
+            };
+            refresh.run();
+            if (page.relationIndex != null) {
+                Set<LocalModFile> observedHosts = new HashSet<>();
+                for (ModRelationIndex.Provider provider : page.relationIndex.getProviders(conflict.id())) {
+                    if (observedHosts.add(provider.host())) {
+                        InvalidationListener listener = ignored -> refresh.run();
+                        provider.host().activeProperty().addListener(listener);
+                        nestedListenerCleanups.add(() -> provider.host().activeProperty().removeListener(listener));
+                    }
+                }
+            }
+            HBox row = new HBox(8, SVG.WARNING.createIcon(16), name);
+            if (!conflict.versionConstraint().isBlank() && !"*".equals(conflict.versionConstraint())) {
+                row.getChildren().add(constraint);
+            }
+            row.getChildren().add(status);
+            row.getStyleClass().add("mod-nested-item");
+            row.setAlignment(Pos.CENTER_LEFT);
+            return row;
         }
 
         // Tears down the nested panel's content, first detaching any live status-refresh listeners
@@ -1335,7 +1415,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             LocalModFile modInfo = item.getModInfo();
             if (modInfo.hasBundledMods()) {
                 nestedBox.getChildren().add(createSectionLabel(i18n("addon.bundled")));
-                List<NestedJarInspector.NestedJar> tree = modInfo.getBundledTree();
+                List<NestedJarInspector.NestedJar> tree = page.relationIndex != null
+                        ? page.relationIndex.getBundledTree(modInfo)
+                        : List.of();
                 if (tree.isEmpty()) {
                     // Deep scan hasn't finished yet — show the declared filenames; this panel rebuilds
                     // when the background scan bumps bundledScanGeneration (see the cell's listener).
@@ -1349,8 +1431,20 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             }
             if (modInfo.hasDependencies()) {
                 nestedBox.getChildren().add(createSectionLabel(i18n("addon.dependencies")));
-                for (String depId : modInfo.getDependencies())
-                    nestedBox.getChildren().add(createDependencyRow(modInfo, depId));
+                for (ModDependency dependency : modInfo.getDependencies()) {
+                    nestedBox.getChildren().add(createDependencyRow(dependency));
+                }
+            }
+            if (!modInfo.getProvidedVersions().isEmpty()) {
+                nestedBox.getChildren().add(createSectionLabel(i18n("addon.provides")));
+                modInfo.getProvidedVersions().forEach((id, version) ->
+                        nestedBox.getChildren().add(createProvidedRow(id, version)));
+            }
+            if (!modInfo.getConflicts().isEmpty()) {
+                nestedBox.getChildren().add(createSectionLabel(i18n("addon.conflicts")));
+                for (ModConflict conflict : modInfo.getConflicts()) {
+                    nestedBox.getChildren().add(createConflictRow(conflict));
+                }
             }
         }
 
@@ -1425,7 +1519,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             }
         }
 
-
         @Override
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             pseudoClassStateChanged(WARNING, false);
@@ -1434,7 +1527,18 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 warningTooltip = null;
             }
 
-            if (empty) return;
+            if (empty) {
+                suppressExpandAnimation = true;
+                if (expandedBinding != null) {
+                    expanded.unbindBidirectional(expandedBinding);
+                    expandedBinding = null;
+                }
+                expanded.set(false);
+                suppressExpandAnimation = false;
+                snapExpansion(false);
+                content.getTags().clear();
+                return;
+            }
 
             List<String> warning = new ArrayList<>();
 
@@ -1518,7 +1622,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             expandButton.setVisible(expandable);
             expandButton.setManaged(expandable);
             if (modInfo.hasBundledMods()) {
-                content.addTag(i18n("addon.bundled") + ": " + modInfo.getBundledMods().size());
+                int bundledCount = page.relationIndex != null
+                        ? page.relationIndex.getBundledTree(modInfo).size()
+                        : modInfo.getBundledMods().size();
+                content.addTag(i18n("addon.bundled") + ": " + bundledCount);
             }
             snapExpansion(dataItem.expandedProperty().get());
 

@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.addon.mod;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.meta.*;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.GameComponentAnalyzer;
@@ -38,8 +40,6 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -84,14 +84,29 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     /// Parsed mod files indexed by path and guarded by [#lock].
     private final Map<Path, CachedMod> cache = new HashMap<>();
 
-    /// Prevents concurrent managers for one instance from writing the same JIJ cache file.
-    private static final Map<Path, ReentrantLock> JIJ_SCAN_LOCKS = new ConcurrentHashMap<>();
-
     /// Files whose JIJ scan failed for a non-transient reason during this manager's lifetime.
-    private final Set<Path> jijScanFailed = ConcurrentHashMap.newKeySet();
+    /// Access is serialized by the manager's single [#lock].
+    private final Set<Path> jijScanFailed = new HashSet<>();
+
+    /// Files whose nested-jar declarations were completely checked, including files with no JIJ.
+    private final Set<Path> jijScanCompleted = new HashSet<>();
+
+    /// Immutable relation index for the latest completed top-level and JIJ scan.
+    private @Nullable ModRelationIndex relationIndex;
+
+    /// Remote project identities cached by source and local file fingerprint.
+    private final Map<RemoteIdentityKey, Optional<RemoteAddon.Version>> remoteIdentityCache = new HashMap<>();
 
     /// Associates a parsed mod with the filesystem fingerprint from its last refresh.
     private record CachedMod(long lastModified, long size, LocalModFile mod) {
+    }
+
+    /// Cache key for one source-specific remote identity lookup.
+    private record RemoteIdentityKey(
+            RemoteAddon.Source source,
+            Path path,
+            long lastModified,
+            long size) {
     }
 
     /// Creates a mod manager for the given instance.
@@ -99,6 +114,26 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     /// @param instance the snapshot member whose mods directory this manager operates on
     public ModManager(DefaultGameInstance instance) {
         super(instance);
+    }
+
+    /// Rebinds the stable manager and invalidates analysis when instance layout or manifest changes.
+    @Override
+    public void rebindInstance(DefaultGameInstance instance) {
+        lock.lock();
+        try {
+            if (this.instance == instance) {
+                return;
+            }
+            boolean changed = !this.instance.getManifest().equals(instance.getManifest())
+                    || !this.instance.getModsDirectory().equals(instance.getModsDirectory());
+            super.rebindInstance(instance);
+            if (changed) {
+                loaded = false;
+                relationIndex = null;
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
@@ -276,6 +311,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     public void refresh() throws IOException {
         lock.lock();
         try {
+            relationIndex = null;
+            jijScanFailed.clear();
             analyze();
 
             boolean supportSubfolders = analyzer.has(GameComponentType.FORGE)
@@ -289,6 +326,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                     removeModInfo(cached.mod());
                 }
                 cache.clear();
+                jijScanFailed.clear();
+                jijScanCompleted.clear();
                 cachedModLoaders = Set.copyOf(modLoaders);
             }
 
@@ -316,6 +355,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                 CachedMod cached = entry.getValue();
                 if (stamp == null || stamp[0] != cached.lastModified() || stamp[1] != cached.size()) {
                     removeModInfo(cached.mod());
+                    jijScanFailed.remove(entry.getKey());
+                    jijScanCompleted.remove(entry.getKey());
                     iterator.remove();
                 }
             }
@@ -326,12 +367,15 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                 }
                 @Nullable LocalModFile modInfo = addModInfo(entry.getKey());
                 if (modInfo != null) {
+                    jijScanFailed.remove(entry.getKey());
+                    jijScanCompleted.remove(entry.getKey());
                     cache.put(entry.getKey(), new CachedMod(
                             entry.getValue()[0], entry.getValue()[1], modInfo));
                 }
             }
 
             updateSupportedLoaders();
+            remoteIdentityCache.keySet().removeIf(key -> !current.containsKey(key.path()));
 
             loaded = true;
         } finally {
@@ -341,92 +385,217 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     /// Resolves complete Jar-in-Jar trees for loaded mods and persists reusable scan results.
     ///
-    /// The expensive extraction work runs outside the manager lock, while access to the shared
-    /// on-disk cache is serialized per cache path. The method is safe to call repeatedly.
-    public void scanBundledTrees() {
-        List<CachedMod> snapshot;
+    /// This stable repository-scoped manager is the sole writer for its instance cache. The manager
+    /// lock serializes refresh, file mutations, deep scanning, and cache publication.
+    private boolean scanBundledTrees() {
         lock.lock();
         try {
             if (!loaded) {
-                return;
+                return false;
             }
-            snapshot = new ArrayList<>(cache.values());
-        } finally {
-            lock.unlock();
-        }
 
-        List<CachedMod> pending = new ArrayList<>();
-        for (CachedMod cached : snapshot) {
-            if (cached.mod().hasBundledMods()
-                    && cached.mod().getBundledTree().isEmpty()
-                    && !jijScanFailed.contains(cached.mod().getFile())) {
-                pending.add(cached);
+            List<CachedMod> snapshot = new ArrayList<>(cache.values());
+            List<CachedMod> pending = new ArrayList<>();
+            for (CachedMod cached : snapshot) {
+                if (!jijScanCompleted.contains(cached.mod().getFile())
+                        && !jijScanFailed.contains(cached.mod().getFile())) {
+                    pending.add(cached);
+                }
             }
-        }
-        if (pending.isEmpty()) {
-            return;
-        }
-
-        Path cacheFile = jijCacheFile();
-        ReentrantLock scanLock = JIJ_SCAN_LOCKS.computeIfAbsent(cacheFile, ignored -> new ReentrantLock());
-        scanLock.lock();
-        try {
+            Path cacheFile = jijCacheFile();
             Map<String, NestedJarCache.Entry> persisted = NestedJarCache.load(cacheFile);
             boolean dirty = false;
+            boolean incomplete = false;
             Set<String> truncatedKeys = new HashSet<>();
             for (CachedMod cached : pending) {
-                if (!cached.mod().getBundledTree().isEmpty()) {
-                    continue;
+                if (!fingerprintMatches(cached)) {
+                    loaded = false;
+                    relationIndex = null;
+                    return false;
                 }
                 @Nullable String key = jijCacheKey(cached.mod().getFile());
                 @Nullable NestedJarCache.Entry hit = key == null ? null : persisted.get(key);
                 if (hit != null
                         && hit.lastModified() == cached.lastModified()
-                        && hit.size() == cached.size()) {
+                        && hit.size() == cached.size()
+                        && hit.loaderKey().equals(loaderCacheKey())) {
                     cached.mod().setBundledTree(hit.tree());
-                } else {
-                    try (ZipFileTree tree = CompressingUtils.openZipTree(cached.mod().getFile())) {
-                        NestedJarInspector.ScanResult scanResult = NestedJarInspector.scan(tree);
-                        cached.mod().setBundledTree(scanResult.tree());
-                        if (scanResult.truncated() && key != null) {
+                    jijScanCompleted.add(cached.mod().getFile());
+                    continue;
+                }
+
+                try (ZipFileTree tree = CompressingUtils.openZipTree(cached.mod().getFile())) {
+                    NestedJarInspector.ScanResult scanResult = NestedJarInspector.scan(
+                            tree, Objects.requireNonNullElse(cachedModLoaders, Set.of()));
+                    if (!fingerprintMatches(cached)) {
+                        loaded = false;
+                        relationIndex = null;
+                        return false;
+                    }
+                    cached.mod().setBundledTree(scanResult.tree());
+                    if (scanResult.truncated()) {
+                        if (key != null) {
                             truncatedKeys.add(key);
                         }
-                        dirty = true;
-                    } catch (Exception e) {
-                        if (!(e instanceof NoSuchFileException || e instanceof FileNotFoundException)) {
-                            jijScanFailed.add(cached.mod().getFile());
-                        }
-                        LOG.warning("Failed to scan Jar-in-Jar tree of " + cached.mod().getFile(), e);
+                        incomplete = true;
+                    } else {
+                        jijScanCompleted.add(cached.mod().getFile());
                     }
+                    dirty = true;
+                } catch (Exception e) {
+                    if (e instanceof NoSuchFileException || e instanceof FileNotFoundException) {
+                        loaded = false;
+                        relationIndex = null;
+                        return false;
+                    }
+                    jijScanFailed.add(cached.mod().getFile());
+                    incomplete = true;
+                    LOG.warning("Failed to scan Jar-in-Jar tree of " + cached.mod().getFile(), e);
                 }
             }
 
-            if (dirty) {
-                Map<String, NestedJarCache.Entry> fresh = new LinkedHashMap<>(persisted);
-                for (CachedMod cached : snapshot) {
-                    if (!cached.mod().hasBundledMods()) {
-                        continue;
-                    }
-                    List<NestedJarInspector.NestedJar> tree = cached.mod().getBundledTree();
-                    if (tree.isEmpty()) {
-                        continue;
-                    }
-                    @Nullable String key = jijCacheKey(cached.mod().getFile());
-                    if (key != null) {
-                        fresh.put(key, new NestedJarCache.Entry(cached.lastModified(), cached.size(), tree));
-                    }
+            Map<String, NestedJarCache.Entry> fresh = new LinkedHashMap<>(persisted);
+            for (CachedMod cached : snapshot) {
+                List<NestedJarInspector.NestedJar> tree = cached.mod().getBundledTree();
+                if (!jijScanCompleted.contains(cached.mod().getFile())) {
+                    continue;
                 }
-                fresh.keySet().removeAll(truncatedKeys);
-                fresh.keySet().removeIf(key -> {
-                    Path modFile = getDirectory().resolve(key);
-                    return !Files.exists(modFile)
-                            && !Files.exists(modFile.resolveSibling(modFile.getFileName() + DISABLED_EXTENSION));
-                });
+                @Nullable String key = jijCacheKey(cached.mod().getFile());
+                if (key != null) {
+                    fresh.put(key, new NestedJarCache.Entry(
+                            cached.lastModified(), cached.size(), loaderCacheKey(), tree));
+                }
+            }
+            fresh.keySet().removeAll(truncatedKeys);
+            fresh.keySet().removeIf(key -> {
+                Path modFile = getDirectory().resolve(key);
+                return !Files.exists(modFile)
+                        && !Files.exists(modFile.resolveSibling(modFile.getFileName() + DISABLED_EXTENSION));
+            });
+            if (dirty || !fresh.equals(persisted)) {
                 NestedJarCache.save(cacheFile, fresh);
             }
+            incomplete |= snapshot.stream()
+                    .map(cached -> cached.mod().getFile())
+                    .anyMatch(jijScanFailed::contains);
+            relationIndex = null;
+            return !incomplete;
         } finally {
-            scanLock.unlock();
+            lock.unlock();
         }
+    }
+
+    /// Returns an immutable dependency/provider index for the latest complete scan.
+    ///
+    /// The first call refreshes top-level metadata when needed and completes the JIJ scan. Later
+    /// callers, including UI and crash export, share the same manager and immutable index.
+    ///
+    /// @return the current relation index
+    /// @throws IOException if top-level mod metadata cannot be refreshed
+    public ModRelationIndex getRelationIndex() throws IOException {
+        lock.lock();
+        try {
+            if (!loaded) {
+                refresh();
+            }
+            if (relationIndex == null) {
+                boolean complete = scanBundledTrees();
+                if (!complete) {
+                    refresh();
+                    complete = scanBundledTrees();
+                }
+                relationIndex = new ModRelationIndex(
+                        localFiles, gameVersion, supportedLoaders, complete);
+            }
+            return relationIndex;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /// Returns whether a cached file still has the fingerprint captured by the latest refresh.
+    private static boolean fingerprintMatches(CachedMod cached) {
+        try {
+            BasicFileAttributes attributes = Files.readAttributes(
+                    cached.mod().getFile(), BasicFileAttributes.class);
+            return attributes.isRegularFile()
+                    && attributes.lastModifiedTime().toMillis() == cached.lastModified()
+                    && attributes.size() == cached.size();
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    /// Returns a stable cache discriminator for the loader-aware metadata reader preference.
+    private String loaderCacheKey() {
+        return Objects.requireNonNullElse(cachedModLoaders, Set.<ModLoaderType>of()).stream()
+                .map(Enum::name)
+                .sorted()
+                .collect(java.util.stream.Collectors.joining(","));
+    }
+
+    /// Invalidates relation and remote-identity projections after an enable/disable path mutation.
+    void invalidatePublishedAnalysis() {
+        lock.lock();
+        try {
+            relationIndex = null;
+            remoteIdentityCache.clear();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /// Resolves and caches a local file's stable remote project/version identity for one source.
+    ///
+    /// @param source the remote platform
+    /// @param file the parsed local file
+    /// @return the matching remote version, or empty when the platform has no exact file match
+    /// @throws IOException if the platform lookup fails
+    public Optional<RemoteAddon.Version> resolveRemoteVersion(
+            RemoteAddon.Source source,
+            LocalModFile file) throws IOException {
+        Path path = file.getFile();
+        BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
+        Path normalized = path.toAbsolutePath().normalize();
+        RemoteIdentityKey key = new RemoteIdentityKey(
+                source,
+                normalized,
+                attributes.lastModifiedTime().toMillis(),
+                attributes.size());
+
+        lock.lock();
+        try {
+            @Nullable Optional<RemoteAddon.Version> cached = remoteIdentityCache.get(key);
+            if (cached != null) {
+                return cached;
+            }
+        } finally {
+            lock.unlock();
+        }
+
+        @Nullable RemoteAddonRepository repository = source.getRepoForType(RemoteAddon.Type.MOD);
+        if (repository == null) {
+            return Optional.empty();
+        }
+        Optional<RemoteAddon.Version> resolved = repository.getRemoteVersionByLocalFile(path);
+
+        // Network I/O runs outside the manager lock. Publish only if the file identity is still the
+        // same; a concurrent enable/disable or replacement will be looked up under its new stamp.
+        BasicFileAttributes current = Files.readAttributes(file.getFile(), BasicFileAttributes.class);
+        boolean unchanged = file.getFile().toAbsolutePath().normalize().equals(normalized)
+                && current.lastModifiedTime().toMillis() == key.lastModified()
+                && current.size() == key.size();
+        if (unchanged) {
+            lock.lock();
+            try {
+                remoteIdentityCache.keySet().removeIf(existing -> existing.source() == source
+                        && existing.path().equals(normalized));
+                remoteIdentityCache.put(key, resolved);
+            } finally {
+                lock.unlock();
+            }
+        }
+        return resolved;
     }
 
     /// Returns the instance-local file that stores persisted JIJ scan results.
@@ -493,6 +662,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                         Files.size(newFile),
                         modInfo));
             }
+            relationIndex = null;
+            remoteIdentityCache.clear();
         } finally {
             lock.unlock();
         }
@@ -618,6 +789,14 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     public static boolean isFileNameMod(Path file) {
         String name = getLocalAddonName(file);
         return MOD_EXTENSIONS.contains(FileUtils.getExtension(name).toLowerCase(Locale.ROOT));
+    }
+
+    /// Returns whether a metadata ID is a known unexpanded template placeholder.
+    ///
+    /// Only exact placeholder values are rejected; valid IDs that merely contain `name` or `modid`
+    /// remain usable.
+    public static boolean isPlaceholderModId(@Nullable String id) {
+        return id != null && (id.equalsIgnoreCase("name") || id.equalsIgnoreCase("modid"));
     }
 
     public static boolean isFileMod(Path modFile) {

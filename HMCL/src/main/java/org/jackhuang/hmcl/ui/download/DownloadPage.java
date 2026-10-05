@@ -181,7 +181,18 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 } else {
                     Controllers.showToast(i18n("install.success"));
                     if (mod != null) {
-                        org.jackhuang.hmcl.ui.instances.DownloadPage.markModInstalled(instanceReference, mod);
+                        @Nullable HMCLGameInstance installedInstance = instanceReference.refreshed().instance();
+                        if (installedInstance != null) {
+                            Task.runAsync(Schedulers.io(), () -> {
+                                var manager = installedInstance.getModManager();
+                                manager.refresh();
+                                manager.getRelationIndex();
+                            }).whenComplete(refreshException -> {
+                                if (refreshException != null) {
+                                    LOG.warning("Failed to refresh installed mods after download", refreshException);
+                                }
+                            }).start();
+                        }
                     }
                 }
             }), i18n("message.downloading"), TaskCancellationAction.NORMAL);

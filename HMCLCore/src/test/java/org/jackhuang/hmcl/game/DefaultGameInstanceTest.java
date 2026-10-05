@@ -200,9 +200,9 @@ public final class DefaultGameInstanceTest {
         assertEquals(repository.getLayout().getInstanceJarFile(jarId), instance.getInstanceJarFile());
     }
 
-    /// Snapshot copies never reuse addon managers; only the version cache is shared for the same manifest.
+    /// Snapshot copies share the repository-scoped mod manager while resource-pack managers remain local.
     @Test
-    public void testSnapshotCopyDoesNotShareAddonManagers(@TempDir Path tempDirectory) throws IOException {
+    public void testSnapshotCopySharesStableModManager(@TempDir Path tempDirectory) throws IOException {
         TestRepository repository = new TestRepository(tempDirectory);
         GameInstanceID instanceId = new GameInstanceID("instance");
         GameInstanceID oldJarId = new GameInstanceID("old-jar");
@@ -218,13 +218,13 @@ public final class DefaultGameInstanceTest {
 
         TestGameInstance sameManifestCopy = original.withNewSnapshot(repository.newSnapshot());
         assertSame(original.cachedVersion(), sameManifestCopy.cachedVersion());
-        assertNotSame(originalModManager, sameManifestCopy.getModManager());
+        assertSame(originalModManager, sameManifestCopy.getModManager());
         assertNotSame(originalResourcePackManager, sameManifestCopy.getResourcePackManager());
 
         GameInstanceManifest newManifest = oldManifest.withJar(newJarId);
         TestGameInstance updated = original.withManifest(repository.newSnapshot(), newManifest);
         assertNull(updated.cachedVersion());
-        assertNotSame(originalModManager, updated.getModManager());
+        assertSame(originalModManager, updated.getModManager());
         assertNotSame(originalResourcePackManager, updated.getResourcePackManager());
         assertEquals(GameVersionNumber.asGameVersion("1.21.1"), updated.getVersion());
     }
