@@ -158,7 +158,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     @Override
     public SearchResult search(DownloadProvider downloadProvider, RemoteAddon.Type type, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
         String projectType = toProjectType(type);
-        if (projectType == null) return SearchResult.EMPTY;
+        if (projectType == null) return SearchResult.empty();
         SEMAPHORE.acquireUninterruptibly();
         try {
             List<List<String>> facets = new ArrayList<>();

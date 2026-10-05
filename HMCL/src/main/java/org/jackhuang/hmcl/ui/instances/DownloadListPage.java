@@ -86,17 +86,17 @@ public class DownloadListPage extends Control implements DecoratorPage {
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private int searchID = 0;
     protected final RemoteAddonRepository repository;
-    protected final RemoteAddon.Type type;
+    protected final @NotNull RemoteAddon.Type type;
     private final DownloadProvider downloadProvider;
 
     private Runnable retrySearch;
 
-    public DownloadListPage(RemoteAddon.Type type, RemoteAddonRepository repository) {
+    public DownloadListPage(@NotNull RemoteAddon.Type type, RemoteAddonRepository repository) {
         this(type, repository, null, false);
     }
 
-    public DownloadListPage(RemoteAddon.Type type, RemoteAddonRepository repository, DownloadPage.DownloadCallback callback, boolean instanceSelection) {
-        this.type = type;
+    public DownloadListPage(@NotNull RemoteAddon.Type type, RemoteAddonRepository repository, DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        this.type = Objects.requireNonNull(type);
         this.repository = repository;
         this.callback = callback;
         this.instanceSelection = instanceSelection;

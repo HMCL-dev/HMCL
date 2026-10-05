@@ -79,7 +79,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
-        this.type = addon.type();
+        this.type = Objects.requireNonNullElse(addon.type(), page.type);
         this.translations = ModTranslations.getTranslationsByAddonType(this.type);
         this.mod = translations.getModByCurseForgeId(addon.slug());
         this.instanceReference = instanceReference;

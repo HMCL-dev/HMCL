@@ -73,8 +73,9 @@ public interface RemoteAddonRepository {
     }
 
     record SearchResult(Stream<RemoteAddon> results, int totalPages) {
-
-        public static final SearchResult EMPTY = new SearchResult(Stream.empty(), 0);
+        public static SearchResult empty() {
+            return new SearchResult(Stream.empty(), 0);
+        }
 
     }
 }

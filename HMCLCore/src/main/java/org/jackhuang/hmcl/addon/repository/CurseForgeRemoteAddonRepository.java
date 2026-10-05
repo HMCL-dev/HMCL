@@ -116,7 +116,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
     @Override
     public SearchResult search(DownloadProvider downloadProvider, RemoteAddon.Type type, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
         int section = toSectionId(type);
-        if (section < 0) return SearchResult.EMPTY;
+        if (section < 0) return SearchResult.empty();
         SEMAPHORE.acquireUninterruptibly();
         try {
             int categoryId = 0;
