@@ -88,7 +88,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
     private static final SynchronizedExceptionalLazy<RemoteAddon> litematicaLazy = new SynchronizedExceptionalLazy<>(() -> {
         try {
-            return ModrinthRemoteAddonRepository.MODS.getAddonById(DownloadProviders.getDownloadProvider(), "litematica");
+            return ModrinthRemoteAddonRepository.getInstance().getAddonById(DownloadProviders.getDownloadProvider(), "litematica");
         } catch (IOException e) {
             LOG.warning("Failed to fetch litematica", e);
             throw e;
@@ -96,7 +96,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
     });
     private static final SynchronizedExceptionalLazy<RemoteAddon> forgematicaLazy = new SynchronizedExceptionalLazy<>(() -> {
         try {
-            return ModrinthRemoteAddonRepository.MODS.getAddonById(DownloadProviders.getDownloadProvider(), "forgematica");
+            return ModrinthRemoteAddonRepository.getInstance().getAddonById(DownloadProviders.getDownloadProvider(), "forgematica");
         } catch (IOException e) {
             LOG.warning("Failed to fetch forgematica", e);
             throw e;
@@ -755,10 +755,10 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
                 {
                     var fo = SVG.FOLDER_OPEN.createIcon();
                     var f = SVG.FOLDER.createIcon();
-                    btnReveal.graphicProperty().bind(isDirectoryProperty.map(b -> b ? fo : f));
+                    btnReveal.graphicProperty().bind(Bindings.when(isDirectoryProperty).then(fo).otherwise(f));
 
                     var tooltip = new Tooltip();
-                    tooltip.textProperty().bind(isDirectoryProperty.map(b -> b ? i18n("button.reveal_dir") : i18n("reveal.in_file_manager")));
+                    tooltip.textProperty().bind(Bindings.when(isDirectoryProperty).then(i18n("button.reveal_dir")).otherwise(i18n("reveal.in_file_manager")));
                     FXUtils.installFastTooltip(btnReveal, tooltip);
                 }
                 btnReveal.setOnAction(event -> {

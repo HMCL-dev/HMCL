@@ -17,23 +17,26 @@
  */
 package org.jackhuang.hmcl.util.url.data;
 
+import org.glavo.url.WebURL;
+
 import java.io.IOException;
 import java.net.*;
 
-/**
- * @author Glavo
- */
+/// Opens data URL connections using [WebURL] to parse the address.
+///
+/// @author Glavo
 public final class DataURLHandle extends URLStreamHandler {
+    /// Creates a connection without decoding its Base64 payload.
+    ///
+    /// @throws MalformedURLException if the address cannot be parsed as a data URL
     @Override
     protected URLConnection openConnection(URL u) throws IOException {
         try {
-            URI uri = u.toURI();
-            if (!DataUri.isDataUri(uri))
-                throw new MalformedURLException("URI is not a data URI: " + u);
-
-            return new DataURLConnection(u, new DataUri(uri));
-        } catch (URISyntaxException e) {
-            throw new MalformedURLException(e.getMessage());
+            return new DataURLConnection(u, new DataURL(WebURL.of(u)));
+        } catch (IllegalArgumentException e) {
+            MalformedURLException exception = new MalformedURLException(e.getMessage());
+            exception.initCause(e);
+            throw exception;
         }
     }
 }
