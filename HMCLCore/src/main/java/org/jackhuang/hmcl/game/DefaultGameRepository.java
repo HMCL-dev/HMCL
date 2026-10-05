@@ -172,10 +172,9 @@ public abstract class DefaultGameRepository implements GameRepository {
 
     /// Publishes `newSnapshot` together with the repository's loaded state as one atomic step.
     ///
-    /// The loaded flag is written immediately before the snapshot property is updated on the
-    /// JavaFX application thread, so snapshot listeners observe a ready repository when the
-    /// published state is loaded, and JavaFX-thread observers that see the new loaded state also
-    /// observe the new snapshot instead of the previous one.
+    /// Both are updated in one JavaFX-thread step, so snapshot listeners observe a ready
+    /// repository when the published state is loaded, and observers that see the new loaded state
+    /// also observe the new snapshot instead of the previous one.
     ///
     /// @param newSnapshot the snapshot to publish
     /// @param loaded the loaded state to publish together with the snapshot

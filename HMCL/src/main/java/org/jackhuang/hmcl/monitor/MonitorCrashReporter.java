@@ -99,10 +99,9 @@ public final class MonitorCrashReporter {
             return;
         }
 
-        // The relaunched launcher shows its main window before the game repository has finished
-        // loading its snapshot asynchronously, so the launched instance may exist but not be
-        // resolvable yet. An already-loaded repository will never gain the instance and a missing
-        // repository has nothing to wait for, so only an unloaded repository is waited on.
+        // The relaunched launcher shows its main window before the repository has finished loading
+        // asynchronously, so the launched instance may not be resolvable yet. A loaded repository
+        // will never gain the instance and a missing repository has nothing to wait for.
         if (repository == null || repository.isLoaded()) {
             giveUp(result.instanceId, result.logFile, repository);
             return;

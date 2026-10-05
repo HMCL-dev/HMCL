@@ -85,7 +85,7 @@ public final class MonitorSupervisor {
     public static void start(Path specPath) throws IOException, InterruptedException {
         LOG.info("*** HMCL MONITOR ***");
 
-        // stdout is used by log output so using stderr for protocol
+        // stdout carries the monitor's log output, so the protocol goes over raw stderr
         PrintStream protocol = new PrintStream(new FileOutputStream(FileDescriptor.err), true, MonitorProtocol.CHARSET);
 
         ProcessSpec spec = JsonUtils.fromJsonFile(specPath, ProcessSpec.class);
@@ -116,9 +116,8 @@ public final class MonitorSupervisor {
         ManagedProcess gameProcess = new ManagedProcess(game, spec.command);
 
         // Forward one game output line to the log file, the managed process (feeding the exit
-        // classification) and the protocol stream. A broken protocol stream (the main launcher
-        // process exited early) is not fatal: only the forwarding stops, the log file keeps
-        // collecting the remaining output.
+        // classification) and the protocol stream. A broken protocol stream (the launcher exited
+        // early) only stops forwarding; the log file keeps collecting the remaining output.
         try (BufferedWriter logWriter = Files.newBufferedWriter(logFile, MonitorProtocol.CHARSET)) {
             startMonitors(gameProcess, logWriter, protocol, spec, processStartTime, logFile, specPath);
         }

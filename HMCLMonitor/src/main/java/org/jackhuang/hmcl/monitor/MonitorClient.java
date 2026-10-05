@@ -104,10 +104,9 @@ public final class MonitorClient {
         if (listener != null)
             listener.setProcess(process);
 
-        // The reader thread keeps draining the protocol stream until the monitor exits, so that the
-        // exit message of a canceled launch is still dispatched and classified as interrupted. It
-        // must drain even without a listener, since an undrained pipe would eventually block the
-        // monitor.
+        // The reader thread must drain the protocol stream until the monitor exits even without a
+        // listener: the exit message of a canceled launch is dispatched here, and an undrained
+        // pipe would eventually block the monitor.
         Lang.thread(() -> {
             try {
                 String line;

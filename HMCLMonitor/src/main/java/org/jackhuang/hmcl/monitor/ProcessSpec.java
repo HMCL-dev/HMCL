@@ -45,8 +45,8 @@ final class ProcessSpec {
     @Nullable Map<String, String> environment;
     /// The charset of the game process output; required.
     @Nullable String encoding;
-    /// Whether the game process should inherit the monitor's standard input, matching the direct
-    /// launch path's behavior when no process listener is present.
+    /// Whether the game process should inherit the monitor's standard input; set when no process
+    /// listener is present.
     boolean inheritStdin;
     /// The post-exit command to run after the game exits, already tokenized, or `null`.
     @Nullable List<String> postExitCommand;

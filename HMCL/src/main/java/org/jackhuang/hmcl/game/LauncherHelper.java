@@ -294,10 +294,9 @@ public final class LauncherHelper {
                                     : new HMCLProcessListener(authInfo, launchOptions, launchingLatch, gameInstance.getVersion().compareTo(GameVersionNumber.unknown()) != 0)
                     );
 
-                    // The HMCL monitor supervises the game process and relaunches HMCL after it
-                    // exits, so the main launcher process may exit once the game window is up.
-                    // With the log window shown, the main process stays alive and handles the
-                    // game exit itself, so nothing should be relaunched.
+                    // The monitor relaunches HMCL after the game exits, so the launcher may exit
+                    // once the game window is up. With the log window shown, the launcher stays
+                    // alive and handles the game exit itself, so nothing should be relaunched.
                     launcher.setRelaunchPolicy(showLogs
                             ? DefaultLauncher.MonitorLaunchContext.RelaunchPolicy.NEVER
                             : switch (launcherVisibility) {
