@@ -321,6 +321,8 @@ public final class Launcher extends Application {
             } catch (NoClassDefFoundError ignored) {
             }
             LOG.info("Native Backend: " + (NativeUtils.USE_JNA ? "JNA" : "None"));
+            // Check Admin Permission
+            AdminChecker.isAdmin().thenAccept(admin -> LOG.info("Running as Administrator: " + admin));
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
                 LOG.info("XDG Current Desktop: " + System.getenv("XDG_CURRENT_DESKTOP"));
