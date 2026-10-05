@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.skin.SkinModel;
 import org.jackhuang.hmcl.game.skin.TextureType;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -100,7 +101,7 @@ public final class TexturesLoader {
         if (!Files.isRegularFile(file)) {
             // download it
             try {
-                new FileDownloadTask(texture.url(), file).run();
+                new FileDownloadTask(DownloadProviders.getDownloadProvider().getDownloadCandidates(texture.url()), file).run();
                 LOG.info("Texture downloaded: " + texture.url());
             } catch (Exception e) {
                 if (Files.isRegularFile(file)) {

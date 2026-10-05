@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import org.glavo.url.WebURL;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
@@ -30,10 +31,13 @@ import org.jackhuang.hmcl.util.gson.ValidationTypeAdapterFactory;
 import org.jackhuang.hmcl.util.io.HttpMultipartRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -164,7 +168,7 @@ public class YggdrasilService {
 
     /**
      * Get complete game profile.
-     *
+     * <p>
      * Game profile provided from authentication is not complete (no skin data in properties).
      *
      * @param uuid the uuid that the character corresponding to.
@@ -223,12 +227,13 @@ public class YggdrasilService {
         }
     }
 
-    private static String request(URI uri, Object payload) throws AuthenticationException {
+    /// Performs a GET when the payload is null, or posts the payload as JSON otherwise.
+    private static String request(WebURL url, @Nullable Object payload) throws AuthenticationException {
         try {
             if (payload == null)
-                return NetworkUtils.doGet(uri);
+                return NetworkUtils.doGet(url);
             else
-                return NetworkUtils.doPost(uri, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
+                return NetworkUtils.doPost(url, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         }
