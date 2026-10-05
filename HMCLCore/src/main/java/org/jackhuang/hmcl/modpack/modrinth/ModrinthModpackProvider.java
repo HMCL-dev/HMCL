@@ -101,11 +101,11 @@ public final class ModrinthModpackProvider implements ModpackProvider {
                     if (sha1 == null) {
                         return file.withAddon(null);
                     }
-                    RemoteAddon.Version version = ModrinthRemoteAddonRepository.MODS.getRemoteVersionBySHA1(sha1).orElse(null);
+                    RemoteAddon.Version version = ModrinthRemoteAddonRepository.getInstance().getRemoteVersionBySHA1(sha1).orElse(null);
                     if (version == null) {
                         return file.withAddon(null);
                     }
-                    RemoteAddon addon = ModrinthRemoteAddonRepository.MODS.getAddonById(downloadProvider, version.projectId());
+                    RemoteAddon addon = ModrinthRemoteAddonRepository.getInstance().getAddonById(downloadProvider, version.projectId());
                     return file.withAddon(addon);
                 } catch (FileNotFoundException fof) {
                     LOG.warning("Could not query modrinth for deleted mods: " + file.fileName(), fof);
