@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.terracotta;
 
 import com.google.gson.JsonParseException;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -26,9 +27,8 @@ import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -43,17 +43,19 @@ public final class TerracottaNodeList {
         public void validate() throws JsonParseException, TolerableValidationException {
             Validation.requireNonNull(url, "TerracottaNode.url cannot be null");
             try {
-                new URI(url);
-            } catch (URISyntaxException e) {
+                WebURL.parse(url);
+            } catch (IllegalArgumentException e) {
                 throw new JsonParseException("Invalid URL: " + url, e);
             }
         }
     }
 
-    private static volatile List<URI> list;
+    /// Cached node URLs, or `null` before the first fetch completes.
+    private static volatile @Nullable @Unmodifiable List<WebURL> list;
 
-    public static List<URI> fetch() {
-        List<URI> list = TerracottaNodeList.list;
+    /// Returns the cached unmodifiable node URLs, fetching once and caching an empty list on failure.
+    public static @Unmodifiable List<WebURL> fetch() {
+        @Nullable @Unmodifiable List<WebURL> list = TerracottaNodeList.list;
         if (list != null)
             return list;
 
@@ -84,7 +86,7 @@ public final class TerracottaNodeList {
 
                                 return StringUtils.isBlank(node.region) || LocaleUtils.IS_CHINA_MAINLAND == "CN".equalsIgnoreCase(node.region);
                             })
-                            .map(it -> URI.create(it.url()))
+                            .map(it -> WebURL.parse(it.url()))
                             .toList();
                     LOG.info("Terracotta node list: " + list);
                 }
