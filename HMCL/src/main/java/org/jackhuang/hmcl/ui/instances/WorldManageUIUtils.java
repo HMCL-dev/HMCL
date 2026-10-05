@@ -19,9 +19,9 @@ package org.jackhuang.hmcl.ui.instances;
 
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -34,17 +34,16 @@ import org.jackhuang.hmcl.util.FileNameSet;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -60,9 +59,9 @@ public final class WorldManageUIUtils {
         Path savesDirectory = runDirectory.resolve("saves");
 
         Path worldZip;
-        List<URI> downloadURLs;
+        DownloadCandidates downloadURLs;
         try {
-            downloadURLs = downloadProvider.injectURLWithCandidates(file.file().url());
+            downloadURLs = downloadProvider.getDownloadCandidates(file.file().url());
             worldZip = Files.createTempFile("world", ".zip");
         } catch (IOException | IllegalArgumentException e) {
             Controllers.dialog(
@@ -80,7 +79,7 @@ public final class WorldManageUIUtils {
                                 if (exception instanceof CancellationException) {
                                     Controllers.showToast(i18n("message.cancelled"));
                                 } else {
-                                    Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                                    Controllers.dialog(I18n.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
                                 }
                             } else {
                                 installWorld(worldZip, savesDirectory, () -> Controllers.showToast(i18n("install.success")));
