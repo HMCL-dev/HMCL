@@ -28,6 +28,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -69,6 +71,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -93,6 +96,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         ListView<AddonUpdateObject> listView = new ListView<>(objects);
         listView.getStyleClass().add("no-horizontal-scrollbar");
         listView.setStyle("-fx-background-color: transparent;");
+        ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
         listView.setCellFactory(x -> new ListCell<>() {
             private static final Insets PADDING = new Insets(3, 9, 0, 9);
             private static final Insets LAST_PADDING = new Insets(3, 9, 3, 9);
