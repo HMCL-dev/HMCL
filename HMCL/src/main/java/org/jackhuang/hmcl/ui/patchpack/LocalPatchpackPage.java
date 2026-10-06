@@ -162,6 +162,10 @@ public final class LocalPatchpackPage extends SpinnerPane implements WizardPage 
         return pane;
     }
 
+    private static String sanitizeName(String s) {
+        return s.toLowerCase(Locale.ROOT).replace(" ", "").replace(":", "").replace("'", "");
+    }
+
     private static @Nullable LineTextPane createNamePane(PatchpackInfo info, String currentName) {
         if (info.modpack() == null || StringUtils.isBlank(info.modpack().name())) {
             return null;
@@ -171,8 +175,8 @@ public final class LocalPatchpackPage extends SpinnerPane implements WizardPage 
         pane.setTitle(i18n("patchpack.modpack_name"));
 
 
-        var cleanModpackName = info.modpack().name().toLowerCase(Locale.ROOT).replace(" ", "").replace(":", "");
-        var cleanCurrentName = currentName.toLowerCase(Locale.ROOT).replace(" ", "").replace(":", "");
+        var cleanModpackName = sanitizeName(info.modpack().name());
+        var cleanCurrentName = sanitizeName(currentName);
 
         if (!cleanModpackName.equals(cleanCurrentName)) {
             pane.setText(i18n("patchpack.difference", info.modpack().name(), currentName));
