@@ -140,15 +140,18 @@ public record RemoteAddon(String slug, String author, String title, String descr
             return resolvedProjectId;
         }
 
+        /// Loads the referenced project, resolving a version-only dependency to its project first.
+        ///
+        /// @param downloadProvider provider used for remote requests
+        /// @return the resolved project, or {@link RemoteAddon#BROKEN} when its identity cannot be resolved
+        /// @throws IOException if the remote repository request fails
         public RemoteAddon load(DownloadProvider downloadProvider) throws IOException {
             if (this.remoteAddon == null) {
                 if (this.type == DependencyType.BROKEN) {
                     this.remoteAddon = RemoteAddon.BROKEN;
                 } else if (this.id == null && this.versionId != null) {
-                    @Nullable RemoteAddonRepository repository = this.source.getRepoForType(Type.MOD);
-                    Optional<Version> version = repository == null
-                            ? Optional.empty()
-                            : repository.getRemoteVersionById(downloadProvider, this.versionId);
+                    RemoteAddonRepository repository = this.source.getRepository();
+                    Optional<Version> version = repository.getRemoteVersionById(downloadProvider, this.versionId);
                     if (version.isPresent()) {
                         this.resolvedProjectId = version.get().projectId();
                         this.remoteAddon = repository.getAddonById(

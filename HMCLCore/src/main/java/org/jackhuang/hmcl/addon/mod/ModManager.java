@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -387,9 +388,12 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     ///
     /// This stable repository-scoped manager is the sole writer for its instance cache. The manager
     /// lock serializes refresh, file mutations, deep scanning, and cache publication.
-    private boolean scanBundledTrees() {
+    private boolean scanBundledTrees(NestedJarInspector.ScanContext scanContext) {
         lock.lock();
         try {
+            if (scanContext.isCancelled()) {
+                throw new CancellationException("Jar-in-Jar scan cancelled");
+            }
             if (!loaded) {
                 return false;
             }
@@ -408,6 +412,9 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             boolean incomplete = false;
             Set<String> truncatedKeys = new HashSet<>();
             for (CachedMod cached : pending) {
+                if (scanContext.isCancelled()) {
+                    throw new CancellationException("Jar-in-Jar scan cancelled");
+                }
                 if (!fingerprintMatches(cached)) {
                     loaded = false;
                     relationIndex = null;
@@ -426,7 +433,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
                 try (ZipFileTree tree = CompressingUtils.openZipTree(cached.mod().getFile())) {
                     NestedJarInspector.ScanResult scanResult = NestedJarInspector.scan(
-                            tree, Objects.requireNonNullElse(cachedModLoaders, Set.of()));
+                            tree, Objects.requireNonNullElse(cachedModLoaders, Set.of()), scanContext);
                     if (!fingerprintMatches(cached)) {
                         loaded = false;
                         relationIndex = null;
@@ -442,6 +449,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                         jijScanCompleted.add(cached.mod().getFile());
                     }
                     dirty = true;
+                } catch (CancellationException e) {
+                    throw e;
                 } catch (Exception e) {
                     if (e instanceof NoSuchFileException || e instanceof FileNotFoundException) {
                         loaded = false;
@@ -493,16 +502,26 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     /// @return the current relation index
     /// @throws IOException if top-level mod metadata cannot be refreshed
     public ModRelationIndex getRelationIndex() throws IOException {
+        return getRelationIndex(new NestedJarInspector.ScanContext());
+    }
+
+    /// Returns the immutable relation index using a caller-owned cancellable scan context.
+    ///
+    /// @param scanContext shared cancellation and byte budget for this analysis request
+    /// @return the current relation index
+    /// @throws IOException if top-level mod metadata cannot be refreshed
+    /// @throws CancellationException if the caller cancels the scan
+    public ModRelationIndex getRelationIndex(NestedJarInspector.ScanContext scanContext) throws IOException {
         lock.lock();
         try {
             if (!loaded) {
                 refresh();
             }
             if (relationIndex == null) {
-                boolean complete = scanBundledTrees();
+                boolean complete = scanBundledTrees(scanContext);
                 if (!complete) {
                     refresh();
-                    complete = scanBundledTrees();
+                    complete = scanBundledTrees(scanContext);
                 }
                 relationIndex = new ModRelationIndex(
                         localFiles, gameVersion, supportedLoaders, complete);
@@ -573,10 +592,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             lock.unlock();
         }
 
-        @Nullable RemoteAddonRepository repository = source.getRepoForType(RemoteAddon.Type.MOD);
-        if (repository == null) {
-            return Optional.empty();
-        }
+        RemoteAddonRepository repository = source.getRepository();
         Optional<RemoteAddon.Version> resolved = repository.getRemoteVersionByLocalFile(path);
 
         // Network I/O runs outside the manager lock. Publish only if the file identity is still the

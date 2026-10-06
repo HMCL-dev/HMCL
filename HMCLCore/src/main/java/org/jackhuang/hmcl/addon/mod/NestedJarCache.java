@@ -54,6 +54,8 @@ final class NestedJarCache {
     // allowed/actual artifact versions for candidate selection. v7 keys parsed trees by the active
     // loader set so dual-descriptor jars cannot be reused across incompatible instance loaders.
     private static final int FORMAT_VERSION = 7;
+    /// Maximum serialized cache size accepted before falling back to a rescan.
+    private static final long MAX_CACHE_BYTES = 64L * 1024 * 1024;
 
     private NestedJarCache() {
     }
@@ -72,6 +74,10 @@ final class NestedJarCache {
         if (!Files.isRegularFile(file))
             return result;
         try {
+            if (Files.size(file) > MAX_CACHE_BYTES) {
+                LOG.warning("Ignoring oversized Jar-in-Jar cache " + file);
+                return result;
+            }
             JsonObject root = JsonUtils.GSON.fromJson(Files.readString(file), JsonObject.class);
             if (root == null || !root.has("formatVersion") || root.get("formatVersion").getAsInt() != FORMAT_VERSION)
                 return new LinkedHashMap<>();
@@ -91,7 +97,7 @@ final class NestedJarCache {
                                 e.get("lastModified").getAsLong(),
                                 e.get("size").getAsLong(),
                                 e.has("loaderKey") ? e.get("loaderKey").getAsString() : "",
-                                readNodes(e.get("tree"))));
+                                readNodes(e.get("tree"), 1, new int[]{0})));
                     } catch (Exception entryEx) {
                         LOG.warning("Skipping malformed Jar-in-Jar cache entry in " + file, entryEx);
                     }
@@ -192,12 +198,19 @@ final class NestedJarCache {
         return arr;
     }
 
-    private static List<NestedJar> readNodes(JsonElement element) {
+    /// Reads and validates one cached tree within the scanner's production depth and node limits.
+    private static List<NestedJar> readNodes(JsonElement element, int depth, int[] nodeCount) {
+        if (depth > NestedJarInspector.MAX_DEPTH) {
+            throw new IllegalArgumentException("Jar-in-Jar cache tree exceeds the depth limit");
+        }
         List<NestedJar> result = new ArrayList<>();
         if (!(element instanceof JsonArray arr)) {
             throw new IllegalArgumentException("Jar-in-Jar cache tree is not an array");
         }
         for (JsonElement el : arr) {
+            if (++nodeCount[0] > NestedJarInspector.MAX_NODES) {
+                throw new IllegalArgumentException("Jar-in-Jar cache tree exceeds the node limit");
+            }
             if (!el.isJsonObject()) {
                 throw new IllegalArgumentException("Jar-in-Jar cache node is not an object");
             }
@@ -205,7 +218,9 @@ final class NestedJarCache {
             if (optString(o, "path") == null || optString(o, "fileName") == null) {
                 throw new IllegalArgumentException("Jar-in-Jar cache node is missing its path");
             }
-            List<NestedJar> children = o.has("children") ? readNodes(o.get("children")) : List.of();
+            List<NestedJar> children = o.has("children")
+                    ? readNodes(o.get("children"), depth + 1, nodeCount)
+                    : List.of();
             List<ModDependency> dependencies = readDependencies(o.get("dependencies"));
             Map<String, String> providedVersions = readProvidedVersions(o.get("provides"));
             List<ModConflict> conflicts = readConflicts(o.get("conflicts"));

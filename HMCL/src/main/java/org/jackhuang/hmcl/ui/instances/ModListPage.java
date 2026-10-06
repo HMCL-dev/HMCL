@@ -79,6 +79,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
@@ -129,6 +130,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
     /// Monotonic token preventing an older asynchronous load from publishing into a newer page state.
     private long loadGeneration;
+    /// Context cancelled whenever a newer page load supersedes the active nested-mod scan.
+    private @Nullable NestedJarInspector.ScanContext bundledScanContext;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
@@ -173,7 +176,13 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         loadMods(gameInstance.getModManager());
     }
 
+    /// Reloads top-level metadata, cancelling any older nested analysis before starting a new one.
     private void loadMods(ModManager modManager) {
+        if (bundledScanContext != null) {
+            bundledScanContext.cancel();
+        }
+        NestedJarInspector.ScanContext scanContext = new NestedJarInspector.ScanContext();
+        bundledScanContext = scanContext;
         long generation = ++loadGeneration;
         setLoading(true);
         bundledScanReady.set(false);
@@ -209,13 +218,16 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             if (exception == null) {
                 CompletableFuture.supplyAsync(() -> {
                     try {
-                        return modManager.getRelationIndex();
+                        return modManager.getRelationIndex(scanContext);
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
                 }, Schedulers.io()).whenCompleteAsync((index, scanException) -> {
                             if (generation != loadGeneration || this.modManager != modManager) {
                                 return;
+                            }
+                            if (bundledScanContext == scanContext) {
+                                bundledScanContext = null;
                             }
                             if (scanException != null) {
                                 LOG.warning("Failed to scan Jar-in-Jar trees", scanException);
@@ -227,6 +239,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             bundledScanFailed.set(scanException != null || index == null || !index.isComplete());
                         }, Schedulers.javafx());
             } else {
+                if (bundledScanContext == scanContext) {
+                    bundledScanContext = null;
+                }
                 bundledScanReady.set(false);
                 bundledScanFailed.set(true);
             }
@@ -251,6 +266,120 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     /// Returns the current instance's Minecraft version, or an empty string before an instance loads.
     public String getGameVersion() {
         return gameInstance != null ? gameInstance.getVersion().toString() : "";
+    }
+
+    /// Opens an aggregate view of unresolved dependencies and active conflicts.
+    public void showRelationSummary() {
+        if (relationIndex == null || !relationIndex.isComplete()) {
+            Controllers.dialog(i18n("mods.dependency_analysis_failed"), i18n("addon.relations"),
+                    MessageDialogPane.MessageType.WARNING);
+            return;
+        }
+        Controllers.dialog(new RelationSummaryDialog(relationIndex, this::exportRelations));
+    }
+
+    /// Exports top-level and recursively nested mod metadata with resolved dependency states.
+    public void exportRelations() {
+        @Nullable ModRelationIndex currentIndex = relationIndex;
+        if (currentIndex == null || !currentIndex.isComplete()) {
+            Controllers.dialog(i18n("mods.dependency_analysis_failed"), i18n("button.export"),
+                    MessageDialogPane.MessageType.WARNING);
+            return;
+        }
+
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle(i18n("button.export"));
+        chooser.setInitialFileName("hmcl-mod-relations.csv");
+        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter("CSV", "*.csv"));
+        @Nullable Path output = Controllers.showSaveDialog(chooser);
+        if (output == null) {
+            return;
+        }
+
+        List<LocalModFile> mods = getItems().stream().map(ModInfoObject::getModInfo).toList();
+        Controllers.taskDialog(Task.runAsync(() -> {
+            CSVTable table = createRelationExport(mods, currentIndex);
+            table.write(output);
+            FXUtils.showFileInExplorer(output);
+        }).whenComplete(Schedulers.javafx(), exception -> {
+            if (exception == null) {
+                Controllers.dialog(output.toString(), i18n("message.success"));
+            } else {
+                LOG.warning("Failed to export mod relation information", exception);
+                Controllers.dialog("", i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+        }), i18n("button.export"), TaskCancellationAction.NORMAL);
+    }
+
+    /// Builds a CSV containing top-level files and every nested node.
+    private static CSVTable createRelationExport(List<LocalModFile> mods, ModRelationIndex index) {
+        CSVTable table = new CSVTable();
+        List<String> headers = List.of(
+                "Host File", "Nested Path", "Depth", "Mod ID", "Name", "Version", "Loader",
+                "Selected", "Dependencies", "Conflicts");
+        for (int column = 0; column < headers.size(); column++) {
+            table.set(column, 0, headers.get(column));
+        }
+
+        int row = 1;
+        for (LocalModFile mod : mods) {
+            table.set(0, row, FileUtils.getName(mod.getFile()));
+            table.set(2, row, "0");
+            table.set(3, row, Objects.toString(mod.getId(), ""));
+            table.set(4, row, Objects.toString(mod.getName(), ""));
+            table.set(5, row, Objects.toString(mod.getVersion(), ""));
+            table.set(6, row, mod.getModLoaderType().name());
+            table.set(7, row, Boolean.toString(mod.isActive()));
+            table.set(8, row, formatDependencies(mod.getDependencies(), index));
+            table.set(9, row, formatConflicts(mod.getConflicts()));
+            row++;
+            row = appendNestedExportRows(table, row, mod, index.getBundledTree(mod), "", 1, index);
+        }
+        return table;
+    }
+
+    /// Appends one nested tree to the relation export and returns the next free row.
+    private static int appendNestedExportRows(
+            CSVTable table,
+            int firstRow,
+            LocalModFile host,
+            List<NestedJarInspector.NestedJar> nodes,
+            String parentPath,
+            int depth,
+            ModRelationIndex index) {
+        int row = firstRow;
+        for (NestedJarInspector.NestedJar node : nodes) {
+            String nestedPath = parentPath.isEmpty() ? node.path() : parentPath + "!/" + node.path();
+            table.set(0, row, FileUtils.getName(host.getFile()));
+            table.set(1, row, nestedPath);
+            table.set(2, row, Integer.toString(depth));
+            table.set(3, row, Objects.toString(node.id(), ""));
+            table.set(4, row, node.displayName());
+            table.set(5, row, Objects.toString(node.version(), ""));
+            table.set(6, row, node.loaderType().name());
+            table.set(7, row, Boolean.toString(index.isNestedSelected(host, node)));
+            table.set(8, row, formatDependencies(node.dependencies(), index));
+            table.set(9, row, formatConflicts(node.conflicts()));
+            row++;
+            row = appendNestedExportRows(table, row, host, node.children(), nestedPath, depth + 1, index);
+        }
+        return row;
+    }
+
+    /// Formats dependency declarations together with their current resolution states.
+    private static String formatDependencies(List<ModDependency> dependencies, ModRelationIndex index) {
+        return dependencies.stream()
+                .map(dependency -> dependency.id() + " " + dependency.versionConstraint()
+                        + " [" + index.resolve(dependency).status().name() + "]")
+                .collect(Collectors.joining("; "));
+    }
+
+    /// Formats conflict declarations for a stable machine-readable export cell.
+    private static String formatConflicts(List<ModConflict> conflicts) {
+        return conflicts.stream()
+                .map(conflict -> conflict.id() + " " + conflict.versionConstraint()
+                        + " [" + (conflict.hard() ? "HARD" : "SOFT") + "]")
+                .collect(Collectors.joining("; "));
     }
 
     public void add() {
@@ -412,6 +541,132 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
     }
 
+    /// Searchable aggregate view of unresolved dependencies and active conflicts.
+    @NotNullByDefault
+    private static final class RelationSummaryDialog extends JFXDialogLayout {
+        /// Creates a summary backed by the already-published immutable relation index.
+        ///
+        /// @param index relation data to display
+        /// @param exportAction action that opens the CSV export flow
+        private RelationSummaryDialog(ModRelationIndex index, Runnable exportAction) {
+            setHeading(new Label(i18n("addon.relations")));
+
+            JFXTextField search = new JFXTextField();
+            search.setPromptText(i18n("search"));
+            VBox rows = new VBox(8);
+            Runnable refresh = () -> populateRows(rows, index, search.getText());
+            search.textProperty().addListener(ignored -> refresh.run());
+            refresh.run();
+
+            ScrollPane scrollPane = new ScrollPane(rows);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setMaxHeight(420);
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            FXUtils.smoothScrolling(scrollPane);
+            setBody(new VBox(12, search, scrollPane));
+
+            JFXButton close = new JFXButton(i18n("button.ok"));
+            close.getStyleClass().add("dialog-accept");
+            close.setOnAction(event -> fireEvent(new DialogCloseEvent()));
+            JFXButton export = new JFXButton(i18n("button.export"));
+            export.setOnAction(event -> exportAction.run());
+            setActions(export, close);
+        }
+
+        /// Rebuilds the visible aggregate rows for the current query.
+        private static void populateRows(VBox rows, ModRelationIndex index, @Nullable String query) {
+            rows.getChildren().clear();
+            String normalizedQuery = Objects.toString(query, "").strip().toLowerCase(Locale.ROOT);
+
+            for (ModRelationIndex.DependencyIssue issue : index.getDependencyIssues()) {
+                String line = formatDependencyIssue(issue);
+                if (matchesQuery(line, normalizedQuery)) {
+                    rows.getChildren().add(createSummaryRow(SVG.EXTENSION, line));
+                }
+            }
+            for (ModRelationIndex.ActiveConflict conflict : index.getActiveConflicts()) {
+                String line = formatActiveConflict(conflict);
+                if (matchesQuery(line, normalizedQuery)) {
+                    rows.getChildren().add(createSummaryRow(SVG.WARNING, line));
+                }
+            }
+            if (rows.getChildren().isEmpty()) {
+                Label empty = new Label(i18n(normalizedQuery.isEmpty()
+                        ? "mods.relations.no_issues"
+                        : "search.no_results_found"));
+                empty.setWrapText(true);
+                rows.getChildren().add(empty);
+            }
+        }
+
+        /// Creates one icon-and-text summary row.
+        private static Node createSummaryRow(SVG icon, String text) {
+            Label label = new Label(text);
+            label.setWrapText(true);
+            HBox.setHgrow(label, Priority.ALWAYS);
+            HBox row = new HBox(8, icon.createIcon(16), label);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.setPadding(new Insets(6));
+            return row;
+        }
+
+        /// Formats one unresolved required dependency with its host, source, and known providers.
+        private static String formatDependencyIssue(ModRelationIndex.DependencyIssue issue) {
+            ModDependency dependency = issue.resolution().dependency();
+            String source = displayName(issue.declaringHost());
+            if (issue.nestedSource() != null) {
+                source += " / " + issue.nestedSource().displayName();
+            }
+            String status = switch (issue.resolution().status()) {
+                case DISABLED -> i18n("addon.dependencies.disabled");
+                case MISSING -> i18n("addon.dependencies.missing");
+                case VERSION_MISMATCH -> i18n(
+                        "addon.dependencies.incompatible_version", dependency.versionConstraint());
+                case UNKNOWN_VERSION -> i18n("addon.dependencies.unknown_version");
+                case SATISFIED -> i18n("addon.dependencies.installed");
+            };
+            String providers = issue.resolution().providers().stream()
+                    .map(provider -> displayName(provider.host())
+                            + (provider.version().isBlank() ? "" : " " + provider.version()))
+                    .distinct()
+                    .collect(Collectors.joining(", "));
+            return source + " → " + dependency.id()
+                    + (dependency.versionConstraint().isBlank() ? "" : " " + dependency.versionConstraint())
+                    + " — " + status + (providers.isBlank() ? "" : " (" + providers + ")");
+        }
+
+        /// Formats one active hard or soft conflict and the providers that trigger it.
+        private static String formatActiveConflict(ModRelationIndex.ActiveConflict conflict) {
+            String source = displayName(conflict.declaringHost());
+            if (conflict.nestedSource() != null) {
+                source += " / " + conflict.nestedSource().displayName();
+            }
+            String providers = conflict.providers().stream()
+                    .map(provider -> displayName(provider.host()))
+                    .distinct()
+                    .collect(Collectors.joining(", "));
+            return i18n(conflict.conflict().hard()
+                    ? "addon.conflicts.active_hard"
+                    : "addon.conflicts.active_soft")
+                    + ": " + source + " ↔ " + conflict.conflict().id()
+                    + (providers.isBlank() ? "" : " (" + providers + ")");
+        }
+
+        /// Returns whether a formatted row contains the case-insensitive query.
+        private static boolean matchesQuery(String text, String normalizedQuery) {
+            return normalizedQuery.isEmpty() || text.toLowerCase(Locale.ROOT).contains(normalizedQuery);
+        }
+
+        /// Returns a stable human-readable name for a top-level mod file.
+        private static String displayName(LocalModFile mod) {
+            return StringUtils.isNotBlank(mod.getName())
+                    ? mod.getName()
+                    : StringUtils.isNotBlank(mod.getId())
+                    ? mod.getId()
+                    : FileUtils.getName(mod.getFile());
+        }
+    }
+
     /// Prompts for the cascade policy when an operation would break dependent mods.
     @NotNullByDefault
     private static final class DependencyWarningDialog extends JFXDialogLayout {
@@ -558,10 +813,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 searchBar.getChildren().setAll(searchField, closeSearchBar);
 
                 // Toolbar Normal
+                JFXButton relationSummary = createToolbarButton2(
+                        i18n("addon.relations"), SVG.STACKS, skinnable::showRelationSummary);
+                relationSummary.disableProperty().bind(skinnable.bundledScanReadyProperty().not());
                 toolbarNormal.getChildren().setAll(
                         createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                         createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
                         createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openModFolder),
+                        relationSummary,
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                                 skinnable.checkUpdates(
                                         listView.getItems().stream()
@@ -744,7 +1003,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         skinnable.bundledScanFailedProperty()));
                 scanHintSpinner.visibleProperty().bind(skinnable.bundledScanFailedProperty().not());
                 scanHintSpinner.managedProperty().bind(skinnable.bundledScanFailedProperty().not());
-                HBox scanHint = new HBox(8, scanHintSpinner, scanHintLabel);
+                JFXButton retryScan = new JFXButton(i18n("button.refresh"));
+                retryScan.setOnAction(event -> skinnable.refresh());
+                retryScan.visibleProperty().bind(skinnable.bundledScanFailedProperty());
+                retryScan.managedProperty().bind(skinnable.bundledScanFailedProperty());
+                HBox scanHint = new HBox(8, scanHintSpinner, scanHintLabel, retryScan);
                 scanHint.getStyleClass().add("mod-scan-hint");
                 scanHint.setAlignment(Pos.CENTER_LEFT);
                 BooleanProperty showScanHint = new SimpleBooleanProperty(false);
@@ -819,6 +1082,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             || predicate.test(Objects.toString(modInfo.getModLoaderType()))
                             || predicate.test((item.getModTranslations() != null ? item.getModTranslations().getDisplayName() : null))
                             || modInfo.getBundledMods().stream().anyMatch(predicate)
+                            || matchesNested(modInfo.getBundledTree(), predicate)
                             || modInfo.getDependencies().stream().map(ModDependency::id).anyMatch(predicate)
                             || modInfo.getProvidedIds().stream().anyMatch(predicate)
                             || modInfo.getConflicts().stream().map(ModConflict::id).anyMatch(predicate)) {
@@ -826,6 +1090,25 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     }
                 }
             }
+        }
+
+        /// Searches nested names, paths, IDs, aliases, dependencies, and conflicts recursively.
+        private static boolean matchesNested(
+                List<NestedJarInspector.NestedJar> nodes,
+                Predicate<@Nullable String> predicate) {
+            for (NestedJarInspector.NestedJar node : nodes) {
+                if (predicate.test(node.path())
+                        || predicate.test(node.fileName())
+                        || predicate.test(node.id())
+                        || predicate.test(node.name())
+                        || node.providedVersions().keySet().stream().anyMatch(predicate)
+                        || node.dependencies().stream().map(ModDependency::id).anyMatch(predicate)
+                        || node.conflicts().stream().map(ModConflict::id).anyMatch(predicate)
+                        || matchesNested(node.children(), predicate)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
     }

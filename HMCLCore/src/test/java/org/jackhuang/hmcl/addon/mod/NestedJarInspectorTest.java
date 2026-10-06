@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -36,6 +37,7 @@ import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /// Verifies nested metadata, dependency, alias, conflict, and JarJar selection extraction.
@@ -175,6 +177,74 @@ public final class NestedJarInspectorTest {
                 """.getBytes(StandardCharsets.UTF_8))));
         try (ZipFileTree tree = CompressingUtils.openZipTree(host)) {
             assertTrue(NestedJarInspector.scan(tree).truncated());
+        }
+    }
+
+    /// Stops bounded extraction when the shared instance-wide byte budget is exhausted.
+    @Test
+    public void testSharedByteBudgetIsEnforced(@TempDir Path tempDirectory) throws IOException {
+        byte[] child = zip(Map.of("fabric.mod.json", """
+                {"schemaVersion":1,"id":"child","version":"1.0.0"}
+                """.getBytes(StandardCharsets.UTF_8)));
+        Path host = tempDirectory.resolve("budget.jar");
+        Files.write(host, zip(Map.of(
+                "fabric.mod.json", """
+                        {"schemaVersion":1,"id":"host","version":"1.0.0","jars":[{"file":"child.jar"}]}
+                        """.getBytes(StandardCharsets.UTF_8),
+                "child.jar", child)));
+
+        try (ZipFileTree tree = CompressingUtils.openZipTree(host)) {
+            NestedJarInspector.ScanResult result = NestedJarInspector.scan(
+                    tree, Set.of(), new NestedJarInspector.ScanContext(32));
+            assertTrue(result.truncated());
+        }
+    }
+
+    /// Stops extraction when one nested entry exceeds its own uncompressed-byte allowance.
+    @Test
+    public void testPerEntryByteBudgetIsEnforced(@TempDir Path tempDirectory) throws IOException {
+        byte[] child = zip(Map.of("fabric.mod.json", """
+                {"schemaVersion":1,"id":"child","version":"1.0.0"}
+                """.getBytes(StandardCharsets.UTF_8)));
+        Path host = tempDirectory.resolve("entry-budget.jar");
+        Files.write(host, zip(Map.of(
+                "fabric.mod.json", """
+                        {"schemaVersion":1,"id":"host","version":"1.0.0","jars":[{"file":"child.jar"}]}
+                        """.getBytes(StandardCharsets.UTF_8),
+                "child.jar", child)));
+
+        try (ZipFileTree tree = CompressingUtils.openZipTree(host)) {
+            NestedJarInspector.ScanResult result = NestedJarInspector.scan(
+                    tree, Set.of(), new NestedJarInspector.ScanContext(4096), 32, 4096);
+            assertTrue(result.truncated());
+        }
+    }
+
+    /// Counts actual stream bytes even when no trustworthy ZIP entry size is available.
+    @Test
+    public void testStreamingCopyCannotBypassByteBudget() {
+        byte[] content = new byte[64];
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        assertThrows(IOException.class, () -> NestedJarInspector.copyWithBudget(
+                new ByteArrayInputStream(content),
+                output,
+                new long[]{4096},
+                new NestedJarInspector.ScanContext(4096),
+                32));
+        assertTrue(output.size() <= 32);
+    }
+
+    /// Aborts before extraction when a superseding caller cancels the scan context.
+    @Test
+    public void testCancellation(@TempDir Path tempDirectory) throws IOException {
+        Path host = tempDirectory.resolve("cancelled.jar");
+        Files.write(host, nestedFabricJar("host", 1));
+        NestedJarInspector.ScanContext context = new NestedJarInspector.ScanContext();
+        context.cancel();
+
+        try (ZipFileTree tree = CompressingUtils.openZipTree(host)) {
+            assertThrows(java.util.concurrent.CancellationException.class,
+                    () -> NestedJarInspector.scan(tree, Set.of(), context));
         }
     }
 

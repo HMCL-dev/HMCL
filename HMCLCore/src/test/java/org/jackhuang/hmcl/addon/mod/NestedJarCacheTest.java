@@ -86,4 +86,31 @@ public final class NestedJarCacheTest {
                 """);
         assertTrue(NestedJarCache.load(cache).isEmpty());
     }
+
+    /// Rejects a cached tree deeper than the scanner could have produced.
+    @Test
+    public void testRejectsOverDepthTree(@TempDir Path tempDirectory) throws Exception {
+        Path cache = tempDirectory.resolve("jij-cache.json");
+        String node = "{\"path\":\"leaf.jar\",\"fileName\":\"leaf.jar\",\"loader\":\"UNKNOWN\"}";
+        for (int depth = 0; depth < NestedJarInspector.MAX_DEPTH; depth++) {
+            node = "{\"path\":\"child.jar\",\"fileName\":\"child.jar\",\"loader\":\"UNKNOWN\",\"children\":["
+                    + node + "]}";
+        }
+        Files.writeString(cache, "{\"formatVersion\":7,\"entries\":[{\"path\":\"mod.jar\","
+                + "\"lastModified\":1,\"size\":1,\"loaderKey\":\"FABRIC\",\"tree\":[" + node + "]}]}");
+
+        assertTrue(NestedJarCache.load(cache).isEmpty());
+    }
+
+    /// Rejects a cached tree containing more nodes than a production scan allows.
+    @Test
+    public void testRejectsOverNodeLimitTree(@TempDir Path tempDirectory) throws Exception {
+        Path cache = tempDirectory.resolve("jij-cache.json");
+        String node = "{\"path\":\"child.jar\",\"fileName\":\"child.jar\",\"loader\":\"UNKNOWN\"}";
+        String tree = String.join(",", java.util.Collections.nCopies(NestedJarInspector.MAX_NODES + 1, node));
+        Files.writeString(cache, "{\"formatVersion\":7,\"entries\":[{\"path\":\"mod.jar\","
+                + "\"lastModified\":1,\"size\":1,\"loaderKey\":\"FABRIC\",\"tree\":[" + tree + "]}]}");
+
+        assertTrue(NestedJarCache.load(cache).isEmpty());
+    }
 }

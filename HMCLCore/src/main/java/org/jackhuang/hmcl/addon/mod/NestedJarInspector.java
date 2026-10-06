@@ -32,9 +32,14 @@ import org.tomlj.TomlTable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -65,8 +70,95 @@ public final class NestedJarInspector {
     /// Upper bound on nodes visited per top-level mod, so a jar bundling thousands of entries can't
     /// stall a refresh.
     public static final int MAX_NODES = 512;
+    /// Maximum uncompressed bytes copied from one nested JAR entry.
+    public static final long MAX_ENTRY_BYTES = 256L * 1024 * 1024;
+    /// Maximum uncompressed bytes copied while resolving one top-level mod's nested tree.
+    public static final long MAX_TREE_BYTES = 512L * 1024 * 1024;
+    /// Maximum uncompressed bytes copied across one instance-wide nested-mod scan.
+    public static final long MAX_SCAN_BYTES = 2L * 1024 * 1024 * 1024;
 
     private NestedJarInspector() {
+    }
+
+    /// Shared cancellation and byte budget for one instance-wide nested-mod scan.
+    public static final class ScanContext {
+        /// Whether the caller has cancelled this scan.
+        private final AtomicBoolean cancelled = new AtomicBoolean();
+        /// Uncompressed bytes still available to all top-level trees in this scan.
+        private final AtomicLong bytesRemaining;
+
+        /// Creates a context using the production-wide byte limit.
+        public ScanContext() {
+            this(MAX_SCAN_BYTES);
+        }
+
+        /// Creates a context with a custom byte limit for focused tests.
+        ///
+        /// @param maxBytes maximum uncompressed bytes that may be copied
+        ScanContext(long maxBytes) {
+            if (maxBytes < 0) {
+                throw new IllegalArgumentException("maxBytes must be non-negative");
+            }
+            bytesRemaining = new AtomicLong(maxBytes);
+        }
+
+        /// Requests cancellation. Active bounded copies notice this before their next buffer write.
+        public void cancel() {
+            cancelled.set(true);
+        }
+
+        /// Returns whether cancellation has been requested.
+        public boolean isCancelled() {
+            return cancelled.get();
+        }
+
+        /// Throws when cancellation has been requested.
+        private void checkCancelled() {
+            if (isCancelled()) {
+                throw new CancellationException("Jar-in-Jar scan cancelled");
+            }
+        }
+
+        /// Returns the remaining instance-wide uncompressed-byte budget.
+        private long remainingBytes() {
+            return bytesRemaining.get();
+        }
+
+        /// Atomically consumes bytes from the instance-wide budget.
+        ///
+        /// @param bytes bytes about to be written
+        /// @return whether the bytes fit in the remaining budget
+        private boolean tryConsume(long bytes) {
+            while (true) {
+                long remaining = bytesRemaining.get();
+                if (bytes > remaining) {
+                    return false;
+                }
+                if (bytesRemaining.compareAndSet(remaining, remaining - bytes)) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    /// Signals a bounded-copy limit without treating the host mod itself as unreadable.
+    private static final class ScanBudgetExceededException extends IOException {
+        /// Whether no later entry in this top-level tree can fit the exhausted budget.
+        private final boolean terminal;
+
+        /// Creates a budget exception.
+        ///
+        /// @param message diagnostic limit description
+        /// @param terminal whether scanning the rest of this tree must stop
+        private ScanBudgetExceededException(String message, boolean terminal) {
+            super(message);
+            this.terminal = terminal;
+        }
+
+        /// Returns whether the whole current tree budget is exhausted.
+        private boolean terminal() {
+            return terminal;
+        }
     }
 
     /// One node of the Jar-in-Jar tree, with its {@link #children} already populated.
@@ -128,12 +220,38 @@ public final class NestedJarInspector {
     /// @param preferredLoaders active instance loader types in preference order
     /// @return the complete or truncated scan result
     public static ScanResult scan(ZipFileTree modTree, Set<ModLoaderType> preferredLoaders) {
+        return scan(modTree, preferredLoaders, new ScanContext());
+    }
+
+    /// Scans a complete tree using a caller-owned instance-wide cancellation and byte budget.
+    ///
+    /// @param modTree the already-open top-level mod archive
+    /// @param preferredLoaders active instance loader types in preference order
+    /// @param context shared scan context
+    /// @return the complete or truncated scan result
+    /// @throws CancellationException if the caller cancels the context
+    public static ScanResult scan(
+            ZipFileTree modTree,
+            Set<ModLoaderType> preferredLoaders,
+            ScanContext context) {
+        return scan(modTree, preferredLoaders, context, MAX_ENTRY_BYTES, MAX_TREE_BYTES);
+    }
+
+    /// Scans with custom per-entry and per-tree limits for focused regression tests.
+    static ScanResult scan(
+            ZipFileTree modTree,
+            Set<ModLoaderType> preferredLoaders,
+            ScanContext context,
+            long maxEntryBytes,
+            long maxTreeBytes) {
+        context.checkCancelled();
         List<String> childPaths = childJarPaths(modTree);
         if (childPaths.isEmpty())
             return ScanResult.EMPTY;
         boolean[] truncated = {false};
         List<NestedJar> tree = scanChildren(
-                modTree, childPaths, 1, new int[]{MAX_NODES}, truncated, Set.copyOf(preferredLoaders));
+                modTree, childPaths, 1, new int[]{MAX_NODES}, new long[]{maxTreeBytes},
+                truncated, Set.copyOf(preferredLoaders), context, maxEntryBytes);
         return new ScanResult(tree, truncated[0]);
     }
 
@@ -151,29 +269,47 @@ public final class NestedJarInspector {
             ZipFileTree parentTree,
             List<String> childPaths,
             int depth,
-            int[] budget,
+            int[] nodeBudget,
+            long[] byteBudget,
             boolean[] truncated,
-            Set<ModLoaderType> preferredLoaders) {
+            Set<ModLoaderType> preferredLoaders,
+            ScanContext context,
+            long maxEntryBytes) {
         List<NestedJar> result = new ArrayList<>();
         Map<String, JarJarInfo> jarJarInfo = jarJarInfo(parentTree);
         for (String childPath : childPaths) {
-            if (budget[0] <= 0) {
+            context.checkCancelled();
+            if (nodeBudget[0] <= 0) {
                 LOG.warning("Jar-in-Jar node budget exhausted; stopping scan at " + childPath);
                 truncated[0] = true;
                 break;
             }
-            budget[0]--;
+            nodeBudget[0]--;
             @Nullable JarJarInfo declaration = jarJarInfo.get(childPath);
 
             Path temp = null;
             try {
-                if (parentTree.getEntry(childPath) == null) {
+                var entry = parentTree.getEntry(childPath);
+                if (entry == null) {
                     truncated[0] = true;
                     result.add(fallback(childPath, declaration));
                     continue;
                 }
+                long declaredSize = entry.getSize();
+                if (declaredSize > maxEntryBytes) {
+                    throw new ScanBudgetExceededException(
+                            "Nested jar exceeds the per-entry byte limit: " + childPath, false);
+                }
+                if (declaredSize > byteBudget[0] || declaredSize > context.remainingBytes()) {
+                    throw new ScanBudgetExceededException(
+                            "Jar-in-Jar scan byte budget exhausted at " + childPath, true);
+                }
                 temp = Files.createTempFile("hmcl-jij-", ".jar");
-                parentTree.extractTo(childPath, temp);
+                try (InputStream input = parentTree.getInputStream(entry);
+                     OutputStream output = Files.newOutputStream(
+                             temp, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+                    copyWithBudget(input, output, byteBudget, context, maxEntryBytes);
+                }
                 try (ZipFileTree childTree = CompressingUtils.openZipTree(temp)) {
                     Parsed m = parse(childTree, preferredLoaders);
                     List<String> declaredGrandchildren = childJarPaths(childTree);
@@ -187,7 +323,8 @@ public final class NestedJarInspector {
                     List<NestedJar> grandchildren = grandchildPaths.isEmpty()
                             ? List.of()
                             : scanChildren(
-                            childTree, grandchildPaths, depth + 1, budget, truncated, preferredLoaders);
+                            childTree, grandchildPaths, depth + 1, nodeBudget, byteBudget, truncated,
+                            preferredLoaders, context, maxEntryBytes);
                     result.add(m == null
                             ? new NestedJar(childPath, baseName(childPath), null, null, null,
                             ModLoaderType.UNKNOWN, null, false, List.of(), Map.of(), List.of(),
@@ -204,6 +341,15 @@ public final class NestedJarInspector {
                             declaration == null ? null : declaration.artifactVersion(),
                             grandchildren));
                 }
+            } catch (CancellationException e) {
+                throw e;
+            } catch (ScanBudgetExceededException e) {
+                truncated[0] = true;
+                LOG.warning(e.getMessage());
+                result.add(fallback(childPath, declaration));
+                if (e.terminal()) {
+                    break;
+                }
             } catch (Exception e) {
                 truncated[0] = true;
                 LOG.warning("Failed to scan nested jar " + childPath, e);
@@ -218,6 +364,39 @@ public final class NestedJarInspector {
             }
         }
         return List.copyOf(result);
+    }
+
+    /// Copies one nested entry while enforcing actual uncompressed-byte limits.
+    ///
+    /// ZIP metadata is only a preflight optimization: this loop counts bytes that are really read, so
+    /// entries with an unknown or dishonest declared size cannot bypass the limits.
+    static void copyWithBudget(
+            InputStream input,
+            OutputStream output,
+            long[] treeBytesRemaining,
+            ScanContext context,
+            long maxEntryBytes) throws IOException {
+        byte[] buffer = new byte[8192];
+        long entryBytes = 0;
+        while (true) {
+            context.checkCancelled();
+            int read = input.read(buffer);
+            if (read < 0) {
+                return;
+            }
+            if (entryBytes > maxEntryBytes - read) {
+                throw new ScanBudgetExceededException("Nested jar exceeds the per-entry byte limit", false);
+            }
+            if (treeBytesRemaining[0] < read) {
+                throw new ScanBudgetExceededException("Jar-in-Jar tree byte budget exhausted", true);
+            }
+            if (!context.tryConsume(read)) {
+                throw new ScanBudgetExceededException("Instance Jar-in-Jar scan byte budget exhausted", true);
+            }
+            entryBytes += read;
+            treeBytesRemaining[0] -= read;
+            output.write(buffer, 0, read);
+        }
     }
 
     private static NestedJar fallback(String path, @Nullable JarJarInfo declaration) {
