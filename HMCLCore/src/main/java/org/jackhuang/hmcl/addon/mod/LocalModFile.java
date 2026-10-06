@@ -209,7 +209,11 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     /// written on the FX thread.
     void setCorrupt(boolean corrupt) {
         this.corrupt = corrupt;
-        setPropertyOnFxThread(this.corruptProperty, corrupt);
+        if (javafx.application.Platform.isFxApplicationThread()) {
+            this.corruptProperty.set(corrupt);
+        } else {
+            javafx.application.Platform.runLater(() -> this.corruptProperty.set(corrupt));
+        }
     }
 
     /// Returns whether the integrity check for this mod failed to complete.
@@ -232,7 +236,11 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     /// @param failed whether the check failed
     void setIntegrityCheckFailed(boolean failed) {
         this.integrityCheckFailed = failed;
-        setPropertyOnFxThread(this.integrityCheckFailedProperty, failed);
+        if (javafx.application.Platform.isFxApplicationThread()) {
+            this.integrityCheckFailedProperty.set(failed);
+        } else {
+            javafx.application.Platform.runLater(() -> this.integrityCheckFailedProperty.set(failed));
+        }
     }
 
     /// Returns the integrity-check-failed property for binding.
@@ -242,30 +250,6 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     /// stays in sync. The property is updated on the FX thread and exists for UI binding only.
     public ReadOnlyBooleanProperty integrityCheckFailedProperty() {
         return integrityCheckFailedProperty;
-    }
-
-    /// Writes a boolean property on the FX thread, falling back to a direct write.
-    ///
-    /// The field backing the getter is the authoritative value, so the property is only a UI
-    /// mirror. Writing it on the FX thread keeps it safe to observe from listeners; when no FX
-    /// toolkit is running (headless contexts, tests) the write is done inline so the mirror
-    /// cannot be left permanently stale.
-    ///
-    /// @param property the property to write
-    /// @param value the value to write
-    private static void setPropertyOnFxThread(BooleanProperty property, boolean value) {
-        try {
-            if (javafx.application.Platform.isFxApplicationThread()) {
-                property.set(value);
-            } else {
-                javafx.application.Platform.runLater(() -> property.set(value));
-            }
-        } catch (IllegalStateException e) {
-            // The FX toolkit is not initialized, so there is no UI thread to marshal onto;
-            // write inline to keep the mirror in step with the authoritative field.
-            LOG.debug("Unable to dispatch mod integrity update to the FX thread", e);
-            property.set(value);
-        }
     }
 
     /// Returns the file's identity at the time this entry was loaded.

@@ -54,6 +54,7 @@ import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
+import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -83,7 +84,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 
-import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
@@ -148,12 +148,17 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         if (this.modManager != modManager) {
             getItems().clear();
         }
+        // Snapshot the instance this manager belongs to. Reading the field inside the async
+        // task would pick up a newly selected instance while still scanning the old manager,
+        // applying that instance's mod integrity settings to the wrong mods.
+        HMCLGameInstance instance = this.gameInstance;
         this.modManager = modManager;
         CompletableFuture.supplyAsync(() -> {
             lock.lock();
             try {
-                // Set strict mode based on user settings
-                modManager.setStrictIntegrityCheck(settings().strictModIntegrityCheckProperty().get());
+                // Set strict mode based on the instance's settings
+                modManager.setStrictIntegrityCheck(instance != null && instance.getEffectiveSettings()
+                        .getInheritable(GameSettings::strictModIntegrityCheckProperty));
                 modManager.refresh();
                 return modManager.getLocalFiles().stream().map(ModInfoObject::new).toList();
             } catch (IOException e) {
@@ -835,12 +840,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
 
             corruptProperty = modInfo.corruptProperty();
-            corruptListener = (obs, oldVal, newVal) -> updateWarningState();
-            corruptProperty.addListener(corruptListener);
+            corruptListener = FXUtils.onWeakChange(corruptProperty, v -> updateWarningState());
 
             integrityCheckFailedProperty = modInfo.integrityCheckFailedProperty();
-            integrityCheckFailedListener = (obs, oldVal, newVal) -> updateWarningState();
-            integrityCheckFailedProperty.addListener(integrityCheckFailedListener);
+            integrityCheckFailedListener = FXUtils.onWeakChange(integrityCheckFailedProperty, v -> updateWarningState());
 
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
             restoreButton.setOnAction(e -> {
@@ -864,24 +867,16 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         /// Must be called whenever the cell is rebound or recycled, so a listener never
         /// outlives the item it was registered for.
         private void detachPropertyListeners() {
-            detachListener(corruptProperty, corruptListener);
-            corruptProperty = null;
-            corruptListener = null;
+            if (corruptProperty != null && corruptListener != null) {
+                corruptProperty.removeListener(corruptListener);
+                corruptProperty = null;
+                corruptListener = null;
+            }
 
-            detachListener(integrityCheckFailedProperty, integrityCheckFailedListener);
-            integrityCheckFailedProperty = null;
-            integrityCheckFailedListener = null;
-        }
-
-        /// Removes a listener from a property, tolerating either being `null`.
-        ///
-        /// @param property the property the listener was registered on
-        /// @param listener the listener to remove
-        private static void detachListener(
-                @Nullable ObservableValue<? extends Boolean> property,
-                @Nullable ChangeListener<? super Boolean> listener) {
-            if (property != null && listener != null) {
-                property.removeListener(listener);
+            if (integrityCheckFailedProperty != null && integrityCheckFailedListener != null) {
+                integrityCheckFailedProperty.removeListener(integrityCheckFailedListener);
+                integrityCheckFailedProperty = null;
+                integrityCheckFailedListener = null;
             }
         }
 

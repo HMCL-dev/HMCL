@@ -69,7 +69,6 @@ import java.util.stream.Collectors;
 
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
-import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
@@ -453,10 +452,10 @@ public final class LauncherHelper {
 
         // Apply the strict-mode setting unconditionally, so the manager's view matches the
         // user's configuration even when the warning itself is suppressed below.
-        modManager.setStrictIntegrityCheck(settings().strictModIntegrityCheckProperty().get());
+        modManager.setStrictIntegrityCheck(setting.getInheritable(GameSettings::strictModIntegrityCheckProperty));
 
         // Skip if user has chosen to ignore corrupt mod warnings
-        if (settings().ignoreCorruptModsProperty().get()) {
+        if (setting.getInheritable(GameSettings::ignoreCorruptModsProperty)) {
             return Task.completed(null);
         }
 
@@ -506,10 +505,11 @@ public final class LauncherHelper {
             LOG.warning("  - " + mod.getFile());
         }
 
-        // Build the warning message, escaping archive-controlled mod names so they cannot
-        // be interpreted as markup by the dialog's XML fragment parser.
+        // Build the warning message. Mod display names come from archive metadata and may be
+        // localized or duplicated, so identify each mod by its file name instead. The name is
+        // escaped because the dialog parses its text as markup.
         String modList = corruptMods.stream()
-                .map(mod -> escapeDialogMarkup(Objects.toString(mod.getName(), "")))
+                .map(mod -> escapeDialogMarkup(FileUtils.getName(mod.getFile())))
                 .collect(Collectors.joining(", "));
 
         CompletableFuture<Void> future = new CompletableFuture<>();

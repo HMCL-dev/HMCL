@@ -510,6 +510,17 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             launcherSettings.getContent().add(showLogsPane);
             showLogsPane.setTitle(i18n("settings.show_log"));
 
+            // Mod Corruption Settings
+            var ignoreCorruptModsPane = createInheritableBooleanButton(GameSettings::ignoreCorruptModsProperty);
+            launcherSettings.getContent().add(ignoreCorruptModsPane);
+            ignoreCorruptModsPane.setTitle(i18n("settings.ignore_corrupt_mods"));
+            ignoreCorruptModsPane.setSubtitle(i18n("settings.ignore_corrupt_mods.subtitle"));
+
+            var strictModIntegrityCheckPane = createInheritableBooleanButton(GameSettings::strictModIntegrityCheckProperty);
+            launcherSettings.getContent().add(strictModIntegrityCheckPane);
+            strictModIntegrityCheckPane.setTitle(i18n("settings.strict_mod_integrity_check"));
+            strictModIntegrityCheckPane.setSubtitle(i18n("settings.strict_mod_integrity_check.subtitle"));
+
             // Enable Debug Log Output Setting
             var enableDebugLogOutputPane = createInheritableBooleanButton(GameSettings::enableDebugLogOutputProperty);
             launcherSettings.getContent().add(enableDebugLogOutputPane);

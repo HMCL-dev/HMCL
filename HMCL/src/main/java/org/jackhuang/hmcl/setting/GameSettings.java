@@ -764,6 +764,30 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return showLogs;
     }
 
+    /// Property name for ignoring corrupt mod warnings.
+    public static final String PROPERTY_IGNORE_CORRUPT_MODS = "ignoreCorruptMods";
+
+    /// If `true`, do not warn about corrupt mod files before launching the game.
+    @SerializedName(PROPERTY_IGNORE_CORRUPT_MODS)
+    private final InheritableProperty<Boolean> ignoreCorruptMods = newInheritableProperty(PROPERTY_IGNORE_CORRUPT_MODS, false);
+
+    /// Returns the ignore corrupt mods property.
+    public InheritableProperty<Boolean> ignoreCorruptModsProperty() {
+        return ignoreCorruptMods;
+    }
+
+    /// Property name for enabling strict mod integrity checking.
+    public static final String PROPERTY_STRICT_MOD_INTEGRITY_CHECK = "strictModIntegrityCheck";
+
+    /// If `true`, verify mod CRC32 checksums, which is slower but only advisory.
+    @SerializedName(PROPERTY_STRICT_MOD_INTEGRITY_CHECK)
+    private final InheritableProperty<Boolean> strictModIntegrityCheck = newInheritableProperty(PROPERTY_STRICT_MOD_INTEGRITY_CHECK, false);
+
+    /// Returns the strict mod integrity check property.
+    public InheritableProperty<Boolean> strictModIntegrityCheckProperty() {
+        return strictModIntegrityCheck;
+    }
+
     /// Property name for enabling debug log output.
     public static final String PROPERTY_ENABLE_DEBUG_LOG_OUTPUT = "enableDebugLogOutput";
 
