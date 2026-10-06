@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.construct.URLValidator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
-import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -46,16 +45,11 @@ import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-/// The first page of the patch pack installation wizard, which lets the user choose the patch pack
-/// archive to install.
 @NotNullByDefault
-public final class PatchPackSelectionPage extends VBox implements WizardPage {
+public final class PatchpackSelectionPage extends VBox implements WizardPage {
     private final WizardController controller;
 
-    /// Creates the patch pack source selection page.
-    ///
-    /// @param controller the wizard controller
-    public PatchPackSelectionPage(WizardController controller) {
+    public PatchpackSelectionPage(WizardController controller) {
         this.controller = controller;
 
         Label title = new Label(i18n("patchpack.choose"));
@@ -76,11 +70,6 @@ public final class PatchPackSelectionPage extends VBox implements WizardPage {
         });
     }
 
-    /// Creates one of the buttons of this page.
-    ///
-    /// @param type   the localization key suffix describing the source
-    /// @param action the action performed when the button is clicked
-    /// @return the created button
     private JFXButton createButton(String type, Runnable action) {
         JFXButton button = new JFXButton();
 
@@ -104,7 +93,6 @@ public final class PatchPackSelectionPage extends VBox implements WizardPage {
         return button;
     }
 
-    /// Asks the user for a patch pack archive stored on this computer.
     private void onChooseLocalFile() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("patchpack.choose"));
@@ -117,13 +105,8 @@ public final class PatchPackSelectionPage extends VBox implements WizardPage {
         controller.onNext();
     }
 
-    /// Downloads a patch pack archive from a URL provided by the user.
-    ///
-    /// The download happens in a task dialog so that the user can cancel it, and the wizard moves
-    /// on to the next page only after the archive has been downloaded successfully.
     private void onChooseRemoteFile() {
         Controllers.prompt(i18n("patchpack.choose.remote.tooltip"), (url, handler) -> {
-            // The URL may not end with ".zip", so the file is downloaded before its content is read.
             Path patchPack;
             try {
                 patchPack = Files.createTempFile("patchpack", ".zip");
@@ -153,10 +136,6 @@ public final class PatchPackSelectionPage extends VBox implements WizardPage {
                 handler.reject(i18n("message.failed"));
             }
         }, "", new URLValidator());
-    }
-
-    @Override
-    public void cleanup(SettingsMap settings) {
     }
 
     @Override

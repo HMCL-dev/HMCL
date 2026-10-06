@@ -53,12 +53,12 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
-public final class LocalPatchPackPage extends SpinnerPane implements WizardPage {
+public final class LocalPatchpackPage extends SpinnerPane implements WizardPage {
     static final SettingsMap.Key<Charset> PATCH_PACK_CHARSET = new SettingsMap.Key<>("PATCH_PACK_CHARSET");
 
     private final WizardController controller;
 
-    public LocalPatchPackPage(WizardController controller) {
+    public LocalPatchpackPage(WizardController controller) {
         this.controller = controller;
 
         JFXButton btnInstall = FXUtils.newRaisedButton(i18n("button.install"));
@@ -89,7 +89,7 @@ public final class LocalPatchPackPage extends SpinnerPane implements WizardPage 
         }
 
         showSpinner();
-        Task.supplyAsync(() -> PatchpackHelper.findSuitableEncoding(file)).thenApplyAsync(encoding -> new LoadedPatchPack(encoding, PatchpackHelper.readPatchPackInfo(file, encoding))).whenComplete(Schedulers.javafx(), (loaded, exception) -> {
+        Task.supplyAsync(() -> PatchpackHelper.findSuitableEncoding(file)).thenApplyAsync(encoding -> new LoadedPatchpack(encoding, PatchpackHelper.readPatchPackInfo(file, encoding))).whenComplete(Schedulers.javafx(), (loaded, exception) -> {
             hideSpinner();
 
             if (exception != null) {
@@ -207,6 +207,6 @@ public final class LocalPatchPackPage extends SpinnerPane implements WizardPage 
         return null;
     }
 
-    private record LoadedPatchPack(Charset charset, PatchpackInfo info) {
+    private record LoadedPatchpack(Charset charset, PatchpackInfo info) {
     }
 }
