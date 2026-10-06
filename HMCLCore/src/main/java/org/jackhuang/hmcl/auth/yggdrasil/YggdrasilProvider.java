@@ -58,7 +58,7 @@ public interface YggdrasilProvider {
     /// Returns the endpoint for reading the profile properties of the given player UUID.
     WebURL getProfilePropertiesURL(UUID uuid) throws AuthenticationException;
 
-    URI getFriendsURL();
+    WebURL getFriendsURL();
 
-    URI getPresenceURL();
+    WebURL getPresenceURL();
 }
