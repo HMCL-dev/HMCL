@@ -182,7 +182,7 @@ public final class LocalPatchPackPage extends SpinnerPane implements WizardPage 
 
     @Override
     public String getTitle() {
-        return i18n("patchpack.task.install");
+        return i18n("patchpack.task.import");
     }
 
     private static final Pattern VERSION_RANGE_PATTERN = Pattern.compile("([\\[(])([^,]*),?([^,]*)([\\])])");
