@@ -161,6 +161,6 @@ public final class PatchPackSelectionPage extends VBox implements WizardPage {
 
     @Override
     public String getTitle() {
-        return i18n("patchpack.task.install");
+        return i18n("patchpack.task.import");
     }
 }
