@@ -15,14 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.download.legacyfabric;
+package org.jackhuang.hmcl.download.fabriclike;
 
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
-import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -32,10 +32,10 @@ import java.time.Instant;
 import java.util.List;
 
 @NotNullByDefault
-public final class LegacyFabricAPIRemoteVersion extends ComponentRemoteVersion {
-
-    /// @see <a href="https://modrinth.com/mod/legacy-fabric-api">Legacy Fabric API - Modrinth</a>
-    public static final String MODRINTH_ID = "legacy-fabric-api";
+public class FabricAPILikeRemoteVersion extends ComponentRemoteVersion {
+    public static final String FABRIC_API_MODRINTH_ID = "fabric-api";
+    public static final String LEGACY_FABRC_API_MODRINTH_ID = "legacy-fabric-api";
+    public static final String QSL_MODRINTH_ID = "qsl";
 
     private final String fullVersion;
     private final RemoteAddon.Version version;
@@ -47,8 +47,8 @@ public final class LegacyFabricAPIRemoteVersion extends ComponentRemoteVersion {
      * @param selfVersion the version string of the remote version.
      * @param urls        the installer or universal jar original URL.
      */
-    public LegacyFabricAPIRemoteVersion(GameVersionNumber gameVersion, String selfVersion, String fullVersion, Instant datePublished, RemoteAddon.Version version, List<String> urls) {
-        super(GameComponentType.LEGACY_FABRIC_API, gameVersion, selfVersion, datePublished, Type.UNCATEGORIZED, urls);
+    public FabricAPILikeRemoteVersion(GameComponentType type, GameVersionNumber gameVersion, String selfVersion, String fullVersion, Instant datePublished, RemoteAddon.Version version, List<String> urls) {
+        super(type, gameVersion, selfVersion, datePublished, Type.UNCATEGORIZED, urls);
 
         this.fullVersion = fullVersion;
         this.version = version;
@@ -68,12 +68,17 @@ public final class LegacyFabricAPIRemoteVersion extends ComponentRemoteVersion {
             DefaultDependencyManager dependencyManager,
             GameInstanceManifest baseManifest,
             Path modsDirectory) {
-        return new LegacyFabricAPIInstallTask(dependencyManager, baseManifest, this, modsDirectory);
+        return new FabricAPILikeInstallTask(this, modsDirectory);
     }
 
     @Override
     public int compareTo(ComponentRemoteVersion o) {
-        if (!(o instanceof LegacyFabricAPIRemoteVersion)) return 0;
-        return -this.getReleaseDate().compareTo(o.getReleaseDate());
+        if (!(o instanceof FabricAPILikeRemoteVersion)) return 0;
+
+        if (this.getReleaseDate() != null && o.getReleaseDate() != null) {
+            return -this.getReleaseDate().compareTo(o.getReleaseDate());
+        }
+
+        return 0;
     }
 }

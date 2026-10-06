@@ -30,20 +30,15 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
-import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomRemoteVersion;
-import org.jackhuang.hmcl.download.fabric.FabricAPIRemoteVersion;
-import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
+import org.jackhuang.hmcl.download.fabriclike.FabricAPILikeRemoteVersion;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
-import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricAPIRemoteVersion;
-import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricRemoteVersion;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
-import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
-import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -279,11 +274,11 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     iconType = GameInstanceIconType.CLEANROOM;
                 else if (remoteVersion instanceof NeoForgeRemoteVersion)
                     iconType = GameInstanceIconType.NEO_FORGE;
-                else if (remoteVersion instanceof LegacyFabricRemoteVersion || remoteVersion instanceof LegacyFabricAPIRemoteVersion)
+                else if (remoteVersion instanceof FabricAPILikeRemoteVersion remote && remote.getComponentType() == GameComponentType.LEGACY_FABRIC_API)
                     iconType = GameInstanceIconType.LEGACY_FABRIC;
-                else if (remoteVersion instanceof FabricRemoteVersion || remoteVersion instanceof FabricAPIRemoteVersion)
+                else if (remoteVersion instanceof FabricAPILikeRemoteVersion remote && remote.getComponentType() == GameComponentType.FABRIC_API)
                     iconType = GameInstanceIconType.FABRIC;
-                else if (remoteVersion instanceof QuiltRemoteVersion || remoteVersion instanceof QuiltAPIRemoteVersion)
+                else if (remoteVersion instanceof FabricAPILikeRemoteVersion remote && remote.getComponentType() == GameComponentType.QUILT_API)
                     iconType = GameInstanceIconType.QUILT;
                 else
                     iconType = GameInstanceIconType.COMMAND;

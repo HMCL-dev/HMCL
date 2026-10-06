@@ -21,15 +21,13 @@ import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomRemoteVersion;
-import org.jackhuang.hmcl.download.fabric.FabricAPIRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
+import org.jackhuang.hmcl.download.fabriclike.FabricAPILikeRemoteVersion;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
-import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricAPIRemoteVersion;
 import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricRemoteVersion;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
-import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
 import org.jackhuang.hmcl.game.AssetObject;
 import org.jackhuang.hmcl.game.GameComponentType;
@@ -188,15 +186,17 @@ public class DownloadProvider {
             );
             case FABRIC_API -> fetchModrinthVersionsAsync(
                     type,
-                    FabricAPIRemoteVersion.MODRINTH_ID,
+                    FabricAPILikeRemoteVersion.FABRIC_API_MODRINTH_ID,
                     gameVersion,
-                    it -> new FabricAPIRemoteVersion(
+                    it -> new FabricAPILikeRemoteVersion(
+                            GameComponentType.FABRIC_API,
                             gameVersion,
                             it.version(),
                             it.name(),
                             it.datePublished(),
                             it,
-                            List.of(it.file().url()))
+                            List.of(it.file().url())) {
+                    }
             );
             case LEGACY_FABRIC -> fetchFabricVersionsAsync(
                     type,
@@ -208,9 +208,10 @@ public class DownloadProvider {
             );
             case LEGACY_FABRIC_API -> fetchModrinthVersionsAsync(
                     type,
-                    LegacyFabricAPIRemoteVersion.MODRINTH_ID,
+                    FabricAPILikeRemoteVersion.LEGACY_FABRC_API_MODRINTH_ID,
                     gameVersion,
-                    it -> new LegacyFabricAPIRemoteVersion(
+                    it -> new FabricAPILikeRemoteVersion(
+                            GameComponentType.LEGACY_FABRIC_API,
                             gameVersion,
                             it.version(),
                             it.name(),
@@ -228,9 +229,10 @@ public class DownloadProvider {
             );
             case QUILT_API -> fetchModrinthVersionsAsync(
                     type,
-                    QuiltAPIRemoteVersion.MODRINTH_ID,
+                    FabricAPILikeRemoteVersion.QSL_MODRINTH_ID,
                     gameVersion,
-                    it -> new QuiltAPIRemoteVersion(
+                    it -> new FabricAPILikeRemoteVersion(
+                            GameComponentType.QUILT_API,
                             gameVersion,
                             it.version(),
                             it.name(),
