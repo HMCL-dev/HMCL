@@ -41,11 +41,7 @@ import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.LineFileChooserButton;
-import org.jackhuang.hmcl.ui.construct.LineToggleButton;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.PortablePath;
@@ -248,21 +244,25 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                     Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
                         SettingsManager.forceOverwriteUserGameDirectories();
                         GameDirectoryManager.addUserGameDirectory(newGameDirectory);
+                        GameDirectoryManager.setSelectedGameDirectory(newGameDirectory);
                         fireEvent(new PageCloseEvent());
                     });
                     return;
                 }
                 GameDirectoryManager.addUserGameDirectory(newGameDirectory);
+                GameDirectoryManager.setSelectedGameDirectory(newGameDirectory);
             } else {
                 if (SettingsManager.isLocalGameDirectoriesReadOnly()) {
                     Controllers.confirmBackupAndOverwrite(i18n("settings.game_directories.read_only"), () -> {
                         SettingsManager.forceOverwriteLocalGameDirectories();
                         GameDirectoryManager.addLocalGameDirectory(newGameDirectory);
+                        GameDirectoryManager.setSelectedGameDirectory(newGameDirectory);
                         fireEvent(new PageCloseEvent());
                     });
                     return;
                 }
                 GameDirectoryManager.addLocalGameDirectory(newGameDirectory);
+                GameDirectoryManager.setSelectedGameDirectory(newGameDirectory);
             }
         }
 

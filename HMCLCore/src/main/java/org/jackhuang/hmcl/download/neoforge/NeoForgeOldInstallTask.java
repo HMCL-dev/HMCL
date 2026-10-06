@@ -19,8 +19,10 @@ package org.jackhuang.hmcl.download.neoforge;
 
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile;
+import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
+import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile;
 import org.jackhuang.hmcl.download.game.GameInstanceJsonDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
@@ -42,7 +44,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -355,8 +356,8 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
                         throw new Exception("client_mappings download info not found");
                     }
 
-                    List<URI> mappingsUri = dependencyManager.getDownloadProvider()
-                            .injectURLWithCandidates(mappings.getUrl());
+                    DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
+                    DownloadCandidates mappingsUri = downloadProvider.getDownloadCandidates(mappings.getUrl());
                     var mappingsTask = new FileDownloadTask(
                             mappingsUri,
                             Path.of(output),

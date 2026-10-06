@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
@@ -70,7 +71,10 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
     public void preExecute() throws Exception {
         installer = Files.createTempFile("forge-installer", ".jar");
 
-        dependent = new FileDownloadTask(dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()), installer, null);
+        DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
+        dependent = new FileDownloadTask(
+                downloadProvider.getDownloadCandidates(remote),
+                installer, null);
         dependent.setCacheRepository(dependencyManager.getCacheRepository());
         dependent.setCaching(true);
         dependent.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
@@ -100,14 +104,13 @@ public final class ForgeInstallTask extends Task<GameInstancePatch> {
     @Override
     public void execute() throws IOException, VersionMismatchException, UnsupportedInstallationException {
         String originalMainClass = manifest.mainClass();
-
-        if (GameVersionNumber.compare("1.13", remote.getGameVersion()) <= 0) {
+        if (GameVersionNumber.asGameVersion("1.13").compareTo(remote.getGameVersion()) <= 0) {
             // Forge 1.13 is not compatible with fabric.
             if (!GameComponentAnalyzer.FORGE_OPTIFINE_MAIN.contains(originalMainClass))
                 throw new UnsupportedInstallationException(UNSUPPORTED_LAUNCH_WRAPPER);
         }
 
-        var type = detectForgeInstallerType(remote.getGameVersion(), installer);
+        var type = detectForgeInstallerType(remote.getGameVersion().toString(), installer);
 
         switch (type) {
             case LEGACY_MODLOADER, LEGACY_FML ->

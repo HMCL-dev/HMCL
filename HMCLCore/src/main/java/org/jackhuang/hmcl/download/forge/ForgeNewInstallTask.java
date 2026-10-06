@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.download.forge;
 
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.download.game.GameInstanceJsonDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
@@ -42,7 +44,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -371,8 +372,8 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
                         throw new Exception("client_mappings download info not found");
                     }
 
-                    List<URI> mappingsUrl = dependencyManager.getDownloadProvider()
-                            .injectURLWithCandidates(mappings.getUrl());
+                    DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
+                    DownloadCandidates mappingsUrl = downloadProvider.getDownloadCandidates(mappings.getUrl());
                     var mappingsTask = new FileDownloadTask(
                             mappingsUrl,
                             Path.of(output),

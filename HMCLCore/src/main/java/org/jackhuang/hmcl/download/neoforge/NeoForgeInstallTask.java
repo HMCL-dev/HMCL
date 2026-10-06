@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.neoforge;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionMismatchException;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
@@ -69,8 +70,9 @@ public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
     public void preExecute() throws Exception {
         installer = Files.createTempFile("neoforge-installer", ".jar");
 
+        DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
         dependent = new FileDownloadTask(
-                dependencyManager.getDownloadProvider().injectURLsWithCandidates(remoteVersion.getUrls()),
+                downloadProvider.getDownloadCandidates(remoteVersion),
                 installer, null
         );
         dependent.setCacheRepository(dependencyManager.getCacheRepository());
@@ -101,7 +103,7 @@ public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
 
     @Override
     public void execute() throws Exception {
-        dependency = install(dependencyManager, manifest, remoteVersion.getGameVersion(), installer);
+        dependency = install(dependencyManager, manifest, remoteVersion.getGameVersion().toString(), installer);
     }
 
     /// Creates a task that installs NeoForge from a local installer JAR.

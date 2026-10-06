@@ -17,25 +17,27 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
-import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.gson.Validation;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Objects;
 
-/**
- *
- * @author huangyuhui
- */
-@Immutable
-public record ForgeVersionRoot(String artifact, String webpath, String adfly, String homepage, String name,
-                               Map<String, int[]> branches, Map<String, int[]> mcversion, Map<String, Integer> promos,
-                               Map<Integer, ForgeVersion> number) implements Validation {
-    @Override
-    public void validate() throws JsonParseException {
-        if (number == null)
-            throw new JsonParseException("ForgeVersionRoot number cannot be null");
-        if (mcversion == null)
-            throw new JsonParseException("ForgeVersionRoot mcversion cannot be null");
+/// @author huangyuhui
+@NotNullByDefault
+record ForgeVersionRoot(String artifact,
+                        String webpath,
+                        @Nullable String adfly,
+                        @Nullable String homepage,
+                        @Nullable String name,
+                        @Nullable Map<String, int[]> branches,
+                        Map<String, int[]> mcversion,
+                        @Nullable Map<String, Integer> promos,
+                        Map<Integer, ForgeVersion> number) {
+
+    public ForgeVersionRoot {
+        Objects.requireNonNull(number, "number");
+        Objects.requireNonNull(mcversion, "mcversion");
     }
+
 }
