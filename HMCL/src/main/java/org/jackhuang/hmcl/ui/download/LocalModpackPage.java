@@ -80,7 +80,7 @@ public final class LocalModpackPage extends ModpackPage {
 
         String name = controller.getSettings().get(MODPACK_NAME);
         if (name != null) {
-            txtModpackName.setText(name.replace(":", ""));
+            txtModpackName.setText(name.replace(":", "_"));
             txtModpackName.setDisable(true);
         } else {
             FXUtils.onChangeAndOperate(installAsVersion, installAsVersion -> {
