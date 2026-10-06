@@ -19,18 +19,15 @@ package org.jackhuang.hmcl.addon.mod;
 
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/// Evaluates mod dependency versions using the declaring loader's native constraint dialect.
-///
-/// Forge and NeoForge use Maven version ranges. Fabric uses extended SemVer predicates with AND,
-/// OR, wildcard, tilde, caret, and prerelease-floor forms. Quilt uses the same primitive predicate
-/// forms for the declarations represented by [ModDependency]. Malformed input fails closed.
+/// Evaluates Maven and extended-SemVer dependency predicates; malformed input fails closed.
 @NotNullByDefault
-public final class ModVersionPredicate {
+final class ModVersionPredicate {
     /// Utility class; not instantiable.
     private ModVersionPredicate() {
     }
@@ -41,7 +38,10 @@ public final class ModVersionPredicate {
     /// @param constraint the raw constraint
     /// @param version the raw provider version
     /// @return whether the version satisfies the constraint
-    public static boolean satisfies(ModLoaderType loader, String constraint, String version) {
+    static boolean satisfies(
+            ModLoaderType loader,
+            @Nullable String constraint,
+            @Nullable String version) {
         if (constraint == null || constraint.isBlank() || "*".equals(constraint.trim())) {
             return true;
         }
@@ -76,7 +76,7 @@ public final class ModVersionPredicate {
     /// @param left the left version
     /// @param right the right version
     /// @return a negative, zero, or positive comparison result
-    public static int compareMaven(String left, String right) {
+    static int compareMaven(String left, String right) {
         return VersionNumber.compare(stripV(left.trim()), stripV(right.trim()));
     }
 
@@ -85,7 +85,7 @@ public final class ModVersionPredicate {
     /// @param left the left version
     /// @param right the right version
     /// @return a negative, zero, or positive comparison result
-    public static int compareSemVer(String left, String right) {
+    static int compareSemVer(String left, String right) {
         String normalizedLeft = stripBuild(stripV(left.trim()));
         String normalizedRight = stripBuild(stripV(right.trim()));
         if (!isSemVerLike(normalizedLeft) || !isSemVerLike(normalizedRight)) {

@@ -79,6 +79,21 @@ public final class ModRelationIndexTest {
         assertEquals(List.of(middle, leaf), index.findActiveDependents(List.of(first, second), mods));
     }
 
+    /// Optional dependencies remain visible metadata but do not create issues or cascade targets.
+    @Test
+    public void testOptionalDependencyDoesNotAffectRequiredGraph(@TempDir Path tempDirectory) {
+        ModManager manager = manager(tempDirectory);
+        LocalModFile provider = mod(manager, "library", "1.0", List.of(), Map.of());
+        LocalModFile consumer = mod(manager, "consumer", "1.0", List.of(
+                new ModDependency("library", ">=2", true, ModLoaderType.FABRIC),
+                new ModDependency("missing", "*", true, ModLoaderType.FABRIC)), Map.of());
+        List<LocalModFile> mods = List.of(provider, consumer);
+        ModRelationIndex index = new ModRelationIndex(mods, "1.20.1");
+
+        assertTrue(index.getDependencyIssues().isEmpty());
+        assertTrue(index.findActiveDependents(List.of(provider), mods).isEmpty());
+    }
+
     /// Unselected wrapper branches do not contribute dependency constraints to reachable candidates.
     @Test
     public void testSelectedReachableNestedConstraints(@TempDir Path tempDirectory) {

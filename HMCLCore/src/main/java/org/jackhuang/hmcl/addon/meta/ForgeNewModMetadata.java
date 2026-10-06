@@ -63,7 +63,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @Immutable
 public final class ForgeNewModMetadata {
-    // Loader/runtime ids that are not user-installable mods, excluded from the dependency list.
+    /// Non-installable loader and platform dependency IDs.
     private static final Set<String> IGNORED_DEPENDENCIES = Set.of("minecraft", "forge", "neoforge");
 
     private final String modLoader;

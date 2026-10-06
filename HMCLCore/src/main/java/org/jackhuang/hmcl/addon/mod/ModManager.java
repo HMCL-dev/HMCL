@@ -85,8 +85,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     /// Parsed mod files indexed by path and guarded by [#lock].
     private final Map<Path, CachedMod> cache = new HashMap<>();
 
-    /// Files whose JIJ scan failed for a non-transient reason during this manager's lifetime.
-    /// Access is serialized by the manager's single [#lock].
+    /// Files whose JIJ scan failed during the current refresh cycle.
     private final Set<Path> jijScanFailed = new HashSet<>();
 
     /// Files whose nested-jar declarations were completely checked, including files with no JIJ.
@@ -195,7 +194,6 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
         List<Pair<ModMetadataReader, ModLoaderType>> readersMap = READERS.get(extension);
         if (readersMap == null) {
-            // Is not a mod file.
             return null;
         }
 
@@ -384,114 +382,106 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
     }
 
-    /// Resolves complete Jar-in-Jar trees for loaded mods and persists reusable scan results.
-    ///
-    /// This stable repository-scoped manager is the sole writer for its instance cache. The manager
-    /// lock serializes refresh, file mutations, deep scanning, and cache publication.
+    /// Resolves and persists complete Jar-in-Jar trees while the manager lock is held.
     private boolean scanBundledTrees(NestedJarInspector.ScanContext scanContext) {
-        lock.lock();
-        try {
+        if (scanContext.isCancelled()) {
+            throw new CancellationException("Jar-in-Jar scan cancelled");
+        }
+        if (!loaded) {
+            return false;
+        }
+
+        List<CachedMod> snapshot = new ArrayList<>(cache.values());
+        List<CachedMod> pending = new ArrayList<>();
+        for (CachedMod cached : snapshot) {
+            if (!jijScanCompleted.contains(cached.mod().getFile())
+                    && !jijScanFailed.contains(cached.mod().getFile())) {
+                pending.add(cached);
+            }
+        }
+        Path cacheFile = jijCacheFile();
+        Map<String, NestedJarCache.Entry> persisted = NestedJarCache.load(cacheFile);
+        boolean dirty = false;
+        boolean incomplete = false;
+        Set<String> truncatedKeys = new HashSet<>();
+        for (CachedMod cached : pending) {
             if (scanContext.isCancelled()) {
                 throw new CancellationException("Jar-in-Jar scan cancelled");
             }
-            if (!loaded) {
+            if (!fingerprintMatches(cached)) {
+                loaded = false;
+                relationIndex = null;
                 return false;
             }
-
-            List<CachedMod> snapshot = new ArrayList<>(cache.values());
-            List<CachedMod> pending = new ArrayList<>();
-            for (CachedMod cached : snapshot) {
-                if (!jijScanCompleted.contains(cached.mod().getFile())
-                        && !jijScanFailed.contains(cached.mod().getFile())) {
-                    pending.add(cached);
-                }
+            @Nullable String key = jijCacheKey(cached.mod().getFile());
+            @Nullable NestedJarCache.Entry hit = key == null ? null : persisted.get(key);
+            if (hit != null
+                    && hit.lastModified() == cached.lastModified()
+                    && hit.size() == cached.size()
+                    && hit.loaderKey().equals(loaderCacheKey())) {
+                cached.mod().setBundledTree(hit.tree());
+                jijScanCompleted.add(cached.mod().getFile());
+                continue;
             }
-            Path cacheFile = jijCacheFile();
-            Map<String, NestedJarCache.Entry> persisted = NestedJarCache.load(cacheFile);
-            boolean dirty = false;
-            boolean incomplete = false;
-            Set<String> truncatedKeys = new HashSet<>();
-            for (CachedMod cached : pending) {
-                if (scanContext.isCancelled()) {
-                    throw new CancellationException("Jar-in-Jar scan cancelled");
-                }
+
+            try (ZipFileTree tree = CompressingUtils.openZipTree(cached.mod().getFile())) {
+                NestedJarInspector.ScanResult scanResult = NestedJarInspector.scan(
+                        tree, Objects.requireNonNullElse(cachedModLoaders, Set.of()), scanContext);
                 if (!fingerprintMatches(cached)) {
                     loaded = false;
                     relationIndex = null;
                     return false;
                 }
-                @Nullable String key = jijCacheKey(cached.mod().getFile());
-                @Nullable NestedJarCache.Entry hit = key == null ? null : persisted.get(key);
-                if (hit != null
-                        && hit.lastModified() == cached.lastModified()
-                        && hit.size() == cached.size()
-                        && hit.loaderKey().equals(loaderCacheKey())) {
-                    cached.mod().setBundledTree(hit.tree());
-                    jijScanCompleted.add(cached.mod().getFile());
-                    continue;
-                }
-
-                try (ZipFileTree tree = CompressingUtils.openZipTree(cached.mod().getFile())) {
-                    NestedJarInspector.ScanResult scanResult = NestedJarInspector.scan(
-                            tree, Objects.requireNonNullElse(cachedModLoaders, Set.of()), scanContext);
-                    if (!fingerprintMatches(cached)) {
-                        loaded = false;
-                        relationIndex = null;
-                        return false;
+                cached.mod().setBundledTree(scanResult.tree());
+                if (scanResult.truncated()) {
+                    if (key != null) {
+                        truncatedKeys.add(key);
                     }
-                    cached.mod().setBundledTree(scanResult.tree());
-                    if (scanResult.truncated()) {
-                        if (key != null) {
-                            truncatedKeys.add(key);
-                        }
-                        incomplete = true;
-                    } else {
-                        jijScanCompleted.add(cached.mod().getFile());
-                    }
-                    dirty = true;
-                } catch (CancellationException e) {
-                    throw e;
-                } catch (Exception e) {
-                    if (e instanceof NoSuchFileException || e instanceof FileNotFoundException) {
-                        loaded = false;
-                        relationIndex = null;
-                        return false;
-                    }
-                    jijScanFailed.add(cached.mod().getFile());
                     incomplete = true;
-                    LOG.warning("Failed to scan Jar-in-Jar tree of " + cached.mod().getFile(), e);
+                } else {
+                    jijScanCompleted.add(cached.mod().getFile());
                 }
-            }
-
-            Map<String, NestedJarCache.Entry> fresh = new LinkedHashMap<>(persisted);
-            for (CachedMod cached : snapshot) {
-                List<NestedJarInspector.NestedJar> tree = cached.mod().getBundledTree();
-                if (!jijScanCompleted.contains(cached.mod().getFile())) {
-                    continue;
+                dirty = true;
+            } catch (CancellationException e) {
+                throw e;
+            } catch (Exception e) {
+                if (e instanceof NoSuchFileException || e instanceof FileNotFoundException) {
+                    loaded = false;
+                    relationIndex = null;
+                    return false;
                 }
-                @Nullable String key = jijCacheKey(cached.mod().getFile());
-                if (key != null) {
-                    fresh.put(key, new NestedJarCache.Entry(
-                            cached.lastModified(), cached.size(), loaderCacheKey(), tree));
-                }
+                jijScanFailed.add(cached.mod().getFile());
+                incomplete = true;
+                LOG.warning("Failed to scan Jar-in-Jar tree of " + cached.mod().getFile(), e);
             }
-            fresh.keySet().removeAll(truncatedKeys);
-            fresh.keySet().removeIf(key -> {
-                Path modFile = getDirectory().resolve(key);
-                return !Files.exists(modFile)
-                        && !Files.exists(modFile.resolveSibling(modFile.getFileName() + DISABLED_EXTENSION));
-            });
-            if (dirty || !fresh.equals(persisted)) {
-                NestedJarCache.save(cacheFile, fresh);
-            }
-            incomplete |= snapshot.stream()
-                    .map(cached -> cached.mod().getFile())
-                    .anyMatch(jijScanFailed::contains);
-            relationIndex = null;
-            return !incomplete;
-        } finally {
-            lock.unlock();
         }
+
+        Map<String, NestedJarCache.Entry> fresh = new LinkedHashMap<>(persisted);
+        for (CachedMod cached : snapshot) {
+            List<NestedJarInspector.NestedJar> tree = cached.mod().getBundledTree();
+            if (!jijScanCompleted.contains(cached.mod().getFile())) {
+                continue;
+            }
+            @Nullable String key = jijCacheKey(cached.mod().getFile());
+            if (key != null) {
+                fresh.put(key, new NestedJarCache.Entry(
+                        cached.lastModified(), cached.size(), loaderCacheKey(), tree));
+            }
+        }
+        fresh.keySet().removeAll(truncatedKeys);
+        fresh.keySet().removeIf(key -> {
+            Path modFile = getDirectory().resolve(key);
+            return !Files.exists(modFile)
+                    && !Files.exists(modFile.resolveSibling(modFile.getFileName() + DISABLED_EXTENSION));
+        });
+        if (dirty || !fresh.equals(persisted)) {
+            NestedJarCache.save(cacheFile, fresh);
+        }
+        incomplete |= snapshot.stream()
+                .map(cached -> cached.mod().getFile())
+                .anyMatch(jijScanFailed::contains);
+        relationIndex = null;
+        return !incomplete;
     }
 
     /// Returns an immutable dependency/provider index for the latest complete scan.
@@ -595,8 +585,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         RemoteAddonRepository repository = source.getRepository();
         Optional<RemoteAddon.Version> resolved = repository.getRemoteVersionByLocalFile(path);
 
-        // Network I/O runs outside the manager lock. Publish only if the file identity is still the
-        // same; a concurrent enable/disable or replacement will be looked up under its new stamp.
+        // Cache only if no concurrent file mutation changed the identity.
         BasicFileAttributes current = Files.readAttributes(file.getFile(), BasicFileAttributes.class);
         boolean unchanged = file.getFile().toAbsolutePath().normalize().equals(normalized)
                 && current.lastModifiedTime().toMillis() == key.lastModified()

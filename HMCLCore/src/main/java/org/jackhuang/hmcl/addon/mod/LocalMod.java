@@ -25,9 +25,9 @@ public class LocalMod {
 
     private final String id;
     private final ModLoaderType modLoaderType;
-    // ModManager is the sole writer. Copy-on-write publication lets recycled FX cells inspect rollback
-    // candidates without sharing the manager's mutation lock or exposing a partially changed set.
+    /// Current files, published copy-on-write for lock-free UI iteration.
     private final Set<LocalModFile> files = new CopyOnWriteArraySet<>();
+    /// Older files retained as rollback candidates.
     private final Set<LocalModFile> oldFiles = new CopyOnWriteArraySet<>();
 
     public LocalMod(String id, ModLoaderType modLoaderType) {

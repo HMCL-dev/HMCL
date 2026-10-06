@@ -65,9 +65,7 @@ public final class QuiltModMetadata {
         private final String id;
         private final String version;
         private final Metadata metadata;
-        // Quilt declares nested jars as a plain array of path strings (e.g. ["sub.jar"]), unlike
-        // Fabric's array of {"file": "..."} objects. Modeling it as objects makes Gson throw and the
-        // whole (otherwise valid) Quilt mod fall back to UNKNOWN, losing nested mods and dependencies.
+        /// Quilt nested JAR entry paths.
         private final List<String> jars;
         private final JsonArray depends;
         /// Alternative capabilities exposed by the Quilt mod.
@@ -87,9 +85,7 @@ public final class QuiltModMetadata {
         }
     }
 
-    // Loader/runtime/platform ids that are not shown as user-facing mod dependencies. Fabric API
-    // (fabric-api) is deliberately NOT here: it is a real installable mod, so it must stay in the
-    // dependency graph for the installed-status hint and the disable/remove cascade to work.
+    /// Non-installable loader and platform dependency IDs.
     private static final Set<String> IGNORED_DEPENDENCIES = Set.of("minecraft", "java", "quilt_loader", "quilt_base", "fabric");
 
     private final int schema_version;

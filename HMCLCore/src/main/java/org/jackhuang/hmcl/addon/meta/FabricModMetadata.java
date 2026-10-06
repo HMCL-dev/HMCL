@@ -64,9 +64,7 @@ public final class FabricModMetadata {
     /// Optional dependency suggestions retained for relation display.
     private final Map<String, Object> suggests;
 
-    // Loader/runtime/platform ids that are not shown as user-facing mod dependencies. Fabric API
-    // (fabric-api) is deliberately NOT here: it is a real installable mod, so it must stay in the
-    // dependency graph for the installed-status hint and the disable/remove cascade to work.
+    /// Non-installable loader and platform dependency IDs.
     private static final Set<String> IGNORED_DEPENDENCIES = Set.of("minecraft", "java", "fabricloader", "fabric");
 
     public FabricModMetadata() {
@@ -188,12 +186,9 @@ public final class FabricModMetadata {
         @SerializedName("file")
         private final String file;
 
+        /// Creates an empty value for Gson deserialization.
         public FabricNestedJar() {
-            this("");
-        }
-
-        public FabricNestedJar(String file) {
-            this.file = file;
+            this.file = "";
         }
     }
 

@@ -484,15 +484,13 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class DependencyAddonItem extends LineButton {
-        public static final EnumMap<RemoteAddon.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
-                Pair.pair(RemoteAddon.DependencyType.EMBEDDED, "addon.dependency.embedded"),
-                Pair.pair(RemoteAddon.DependencyType.OPTIONAL, "addon.dependency.optional"),
-                Pair.pair(RemoteAddon.DependencyType.REQUIRED, "addon.dependency.required"),
-                Pair.pair(RemoteAddon.DependencyType.TOOL, "addon.dependency.tool"),
-                Pair.pair(RemoteAddon.DependencyType.INCLUDE, "addon.dependency.include"),
-                Pair.pair(RemoteAddon.DependencyType.INCOMPATIBLE, "addon.dependency.incompatible"),
-                Pair.pair(RemoteAddon.DependencyType.BROKEN, "addon.dependency.broken")
-        ));
+        /// Compact dependency-type labels displayed beside each row.
+        private static final EnumMap<RemoteAddon.DependencyType, String> TAG_I18N_KEYS = new EnumMap<>(Map.of(
+                RemoteAddon.DependencyType.EMBEDDED, "addon.dependency.tag.embedded",
+                RemoteAddon.DependencyType.OPTIONAL, "addon.dependency.tag.optional",
+                RemoteAddon.DependencyType.REQUIRED, "addon.dependency.tag.required",
+                RemoteAddon.DependencyType.TOOL, "addon.dependency.tag.tool",
+                RemoteAddon.DependencyType.INCLUDE, "addon.dependency.tag.include"));
 
         public final RemoteAddon addon;
 
@@ -527,6 +525,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(type).getModByCurseForgeId(addon.slug());
             content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
             content.setSubtitle(addon.description());
+            content.addTag(i18n(TAG_I18N_KEYS.get(dependency.getType())));
             if (installedMods != null) {
                 DependencyPresence presence = installedMods.resolve(dependency, mod);
                 String status = switch (presence) {
@@ -539,7 +538,11 @@ public class DownloadPage extends Control implements DecoratorPage {
                             "addon.dependencies.incompatible_environment");
                     case UNKNOWN -> i18n("addon.dependencies.unknown");
                 };
-                content.addTag(status);
+                if (presence == DependencyPresence.INSTALLED || presence == DependencyPresence.UNKNOWN) {
+                    content.addTag(status);
+                } else {
+                    content.addTagWarning(status);
+                }
             }
             for (String category : addon.categories()) {
                 if (page.shouldDisplayCategory(category))
@@ -713,7 +716,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                         selfPage.instanceReference, version.dependencies());
 
                 // TODO: Massive tasks may cause OOM.
-                EnumMap<RemoteAddon.DependencyType, Pair<Label, List<DependencyAddonItem>>> dependencies = new EnumMap<>(RemoteAddon.DependencyType.class);
+                EnumMap<RemoteAddon.DependencyType, List<DependencyAddonItem>> dependencies =
+                        new EnumMap<>(RemoteAddon.DependencyType.class);
                 AtomicBoolean hasBroken = new AtomicBoolean(false);
                 List<Task<?>> queue = new ArrayList<>(version.dependencies().size());
                 for (RemoteAddon.Dependency dependency : version.dependencies()) {
@@ -723,12 +727,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         continue;
                     }
 
-                    if (!dependencies.containsKey(dependency.getType())) {
-                        Label title = new Label(i18n(DependencyAddonItem.I18N_KEY.get(dependency.getType())));
-                        title.setPadding(new Insets(0, 8, 0, 8));
-                        List<DependencyAddonItem> list = new ArrayList<>();
-                        dependencies.put(dependency.getType(), Pair.pair(title, list));
-                    }
+                    dependencies.computeIfAbsent(dependency.getType(), ignored -> new ArrayList<>());
 
                     queue.add(Task.supplyAsync(Schedulers.io(), () -> dependency.load(selfPage.page.getDownloadProvider()))
                             .setSignificance(Task.TaskSignificance.MINOR)
@@ -745,18 +744,15 @@ public class DownloadPage extends Control implements DecoratorPage {
                                         selfPage.page, dependency, dep, selfPage.instanceReference, statusSource);
                                 var listener = FXUtils.onWeakChangeAndOperate(dependenciesList.widthProperty(), d -> FXUtils.setLimitWidth(dependencyAddonItem, d.doubleValue()));
                                 dependencyAddonItem.getProperties().put("DependencyAddonItem.width", listener);
-                                dependencies.get(dependency.getType()).value().add(dependencyAddonItem);
+                                dependencies.get(dependency.getType()).add(dependencyAddonItem);
                             })
                             .setSignificance(Task.TaskSignificance.MINOR));
                 }
 
                 return Task.allOf(queue).thenSupplyAsync(() -> {
-                    var dependenciesStream = dependencies.values().stream().flatMap(types -> {
-                        if (types.value().isEmpty()) return Stream.empty();
-                        return Stream.concat(
-                                Stream.of(types.key()),
-                                types.value().stream().sorted(Comparator.comparing(item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)));
-                    });
+                    Stream<DependencyAddonItem> dependenciesStream = dependencies.values().stream()
+                            .flatMap(items -> items.stream().sorted(Comparator.comparing(
+                                    item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)));
                     if (!hasBroken.get()) {
                         return dependenciesStream;
                     } else {

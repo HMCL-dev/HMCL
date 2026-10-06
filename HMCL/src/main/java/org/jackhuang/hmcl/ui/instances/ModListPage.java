@@ -894,8 +894,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 });
                 JFXButton btnEnable = createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
                         skinnable.enableSelected(listView.getSelectionModel().getSelectedItems()));
-                // Disable the dependency-changing operations until the background bundled-id scan is ready,
-                // so a cascade never runs against an incomplete bundled-id set (see ModListPage).
                 btnRemove.disableProperty().bind(getSkinnable().bundledScanReadyProperty().not());
                 btnDisable.disableProperty().bind(getSkinnable().bundledScanReadyProperty().not());
                 btnEnable.disableProperty().bind(getSkinnable().bundledScanReadyProperty().not());
@@ -1370,19 +1368,16 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             getContainer().getChildren().setAll(container);
         }
 
-        /// Guards disabling a mod that others depend on, for every activation path (mouse / keyboard /
-        /// accessibility). onAction fires after the toggle has applied, so when disabling would break
-        /// dependents we revert it and let the user confirm/cascade first; cancelling leaves the mod
-        /// enabled.
+        /// Reverts a dependency-breaking toggle until the user chooses a cascade policy.
         private void guardDisableToggle() {
             ModInfoObject item = getItem();
             if (item == null || checkBox.isSelected())
-                return; // enabling (or empty) — nothing to warn about
+                return;
             LocalModFile target = item.getModInfo();
             List<ModInfoObject> dependents = page.findActiveDependents(List.of(target));
             if (dependents.isEmpty())
-                return; // no dependents — let the disable stand
-            target.setActive(true); // undo the just-applied disable; the checkbox re-checks via its binding
+                return;
+            target.setActive(true);
             Controllers.dialog(new DependencyWarningDialog(dependents, i18n("mods.disable"), List.of(
                     new CascadeOption(i18n("addon.dependencies.warning.cascade.none"),
                             () -> target.setActive(false)),
@@ -1394,6 +1389,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             )));
         }
 
+        /// Creates a fallback row for an unparsed nested entry path.
         private Node createNestedRow(String path, int indent) {
             String name = path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path;
 
@@ -1410,12 +1406,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return row;
         }
 
-        /// Renders a level of the Jar-in-Jar tree, recursing into children (indented). Copies of the
-        /// same mod for different Minecraft versions (multi-version "wrapper" jars) are grouped into a
-        /// single row that highlights the copy matching this instance, so a 15-version wrapper reads as
-        /// one entry instead of fifteen.
+        /// Renders one tree level while grouping alternate versions of the same nested mod.
         private void appendBundledNodes(List<NestedJarInspector.NestedJar> nodes, int indent, String instanceMc) {
-            // Group by id; nodes without a parsed id stay ungrouped (rendered as-is afterwards).
             LinkedHashMap<String, List<NestedJarInspector.NestedJar>> groups = new LinkedHashMap<>();
             List<NestedJarInspector.NestedJar> ungrouped = new ArrayList<>();
             for (NestedJarInspector.NestedJar node : nodes) {
@@ -1427,18 +1419,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             for (List<NestedJarInspector.NestedJar> versions : groups.values()) {
                 if (versions.size() == 1) {
-                    // A lone nested mod: no "current instance" highlight — that tag only makes sense to
-                    // disambiguate which copy of a multi-version wrapper is active (the group case below).
                     NestedJarInspector.NestedJar node = versions.get(0);
                     nestedBox.getChildren().add(createBundledRow(node, indent, null, null, MatchKind.NONE));
                     appendNestedRelations(node, indent + 1);
                     if (node.hasChildren())
                         appendBundledNodes(node.children(), indent + 1, instanceMc);
                 } else {
-                    // Multi-version: prefer the copy whose version exactly matches this instance; else
-                    // the copy whose declared range contains it (what the wrapper would actually load);
-                    // else the first. Only the representative is recursed into — the others are the same
-                    // mod. The badge's tooltip lists every collapsed copy so the rest stay discoverable.
                     @Nullable ModInfoObject currentItem = getItem();
                     NestedJarInspector.NestedJar selected = currentItem == null || page.relationIndex == null
                             ? null
@@ -1477,6 +1463,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             }
         }
 
+        /// Creates one parsed nested-mod row.
         private Node createBundledRow(NestedJarInspector.NestedJar node, int indent, String versionsBadge, String badgeTooltip, MatchKind match) {
             HBox row = new HBox(8, SVG.STACKS.createIcon(16));
             row.getStyleClass().add("mod-nested-item");
@@ -1505,8 +1492,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 row.getChildren().add(current);
             }
             if (match == MatchKind.RANGE) {
-                // Not an exact build for this instance, but its declared version range covers it — the
-                // copy the wrapper would actually load. Tooltip shows the matched constraint.
                 Label range = new Label(i18n("addon.bundled.range"));
                 range.getStyleClass().add("mod-nested-range");
                 if (node.minecraftVersion() != null && !node.minecraftVersion().isBlank())
@@ -1514,7 +1499,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 row.getChildren().add(range);
             }
             if (match == MatchKind.INCOMPATIBLE) {
-                // No bundled copy targets this instance's version — the wrapper has nothing to load.
                 Label incompatible = new Label(i18n("addon.bundled.incompatible"));
                 incompatible.getStyleClass().add("mod-nested-incompatible");
                 row.getChildren().add(incompatible);
@@ -1545,20 +1529,17 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             }
         }
 
-        /// The tag on a multi-version wrapper's representative row: an EXACT build for this instance, a
-        /// RANGE-compatible build (its declared range covers a gap version — what the wrapper would
-        /// load), INCOMPATIBLE (the instance version matches no bundled copy at all, so the wrapper
-        /// can't serve it), or NONE (a single bundled mod, or the instance version is unknown).
+        /// Compatibility tag for a grouped nested-mod version.
         private enum MatchKind { NONE, INCOMPATIBLE, RANGE, EXACT }
 
+        /// Returns whether the nested mod's declared Minecraft range accepts the instance.
         private static boolean satisfiesRange(NestedJarInspector.NestedJar node, String instanceMc) {
             return node.minecraftConstraintRequired()
                     && instanceMc != null && !instanceMc.isBlank()
                     && MinecraftVersionMatcher.satisfies(node.loaderType(), node.minecraftVersion(), instanceMc);
         }
 
-        // A fixed-width leading gap for one indentation level, so nested rows step inward without
-        // overriding the row's own (CSS-defined) padding.
+        /// Creates fixed-width indentation without changing row padding.
         private static Region indentSpacer(int indent) {
             Region spacer = new Region();
             double width = indent * 16;
@@ -1568,6 +1549,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return spacer;
         }
 
+        /// Creates a nested-details section heading.
         private Node createSectionLabel(String text) {
             Label label = new Label(text);
             label.getStyleClass().add("mod-nested-section");
@@ -1682,8 +1664,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return row;
         }
 
-        // Tears down the nested panel's content, first detaching any live status-refresh listeners
-        // so long-lived mod files don't pin recycled cells.
+        /// Clears nested content and detaches provider listeners from recycled cells.
         private void clearNested() {
             for (Runnable cleanup : nestedListenerCleanups)
                 cleanup.run();
@@ -1702,13 +1683,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         ? page.relationIndex.getBundledTree(modInfo)
                         : List.of();
                 if (tree.isEmpty()) {
-                    // Deep scan hasn't finished yet — show the declared filenames; this panel rebuilds
-                    // when the background scan bumps bundledScanGeneration (see the cell's listener).
                     for (String path : modInfo.getBundledMods())
                         nestedBox.getChildren().add(createNestedRow(path, 0));
                 } else {
-                    // Use the page's already-resolved instance version (same value used elsewhere on
-                    // the page) rather than re-resolving on the FX thread from the raw version.
                     appendBundledNodes(tree, 0, page.getGameVersion());
                 }
             }
@@ -1731,7 +1708,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             }
         }
 
-        // Snap to the given state without animating — used when a cell is recycled to another item.
+        /// Applies expansion state immediately when a cell is recycled.
         private void snapExpansion(boolean expand) {
             if (nestedAnimation != null) {
                 nestedAnimation.stop();
@@ -1751,7 +1728,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             }
         }
 
-        // Smoothly slide the nested list open/closed on a real user toggle.
+        /// Animates a user-triggered expansion change.
         private void animateExpansion(boolean expand) {
             if (nestedAnimation != null) {
                 nestedAnimation.stop();

@@ -22,6 +22,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.addon.mod.NestedJarInspector.NestedJar;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
@@ -35,28 +37,15 @@ import java.util.Map;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// On-disk store of the per-instance Jar-in-Jar scan results, so the expensive deep scan (extracting
-/// nested jars) is only paid once per mod change instead of on every launcher start.
-///
-/// One JSON file per instance, keyed by the mod file's path relative to the mods directory plus its
-/// {@code mtime + size} fingerprint. Only the {@link NestedJar} tree is stored — top-level mod
-/// metadata is still parsed normally by {@link ModManager}.
-///
-/// The tree is (de)serialized by hand through Gson's {@link JsonObject}/{@link JsonArray} model rather
-/// than a record adapter: it avoids the reflection that native-image builds forbid, and keeps a
-/// recursive shape trivial to read/write.
+/// Per-instance cache of bounded Jar-in-Jar scan trees keyed by relative path and file fingerprint.
+@NotNullByDefault
 final class NestedJarCache {
-    // Bump whenever the scanner's produced data changes (shape or values), so stale caches are
-    // discarded and regenerated. v2: Forge ${file.jarVersion} placeholders resolved. v3: Fabric/Quilt
-    // ${...} placeholders nulled out too. v4: nested jars declared via JarJar metadata /
-    // Embedded-Dependencies-Mod (no mods.toml) are now discovered. v5 persists dependency constraints
-    // and provided aliases used by the relation resolver. v6 adds Forge JarJar coordinates and
-    // allowed/actual artifact versions for candidate selection. v7 keys parsed trees by the active
-    // loader set so dual-descriptor jars cannot be reused across incompatible instance loaders.
+    /// Serialized cache schema version.
     private static final int FORMAT_VERSION = 7;
     /// Maximum serialized cache size accepted before falling back to a rescan.
     private static final long MAX_CACHE_BYTES = 64L * 1024 * 1024;
 
+    /// Utility class; not instantiable.
     private NestedJarCache() {
     }
 
@@ -78,18 +67,16 @@ final class NestedJarCache {
                 LOG.warning("Ignoring oversized Jar-in-Jar cache " + file);
                 return result;
             }
-            JsonObject root = JsonUtils.GSON.fromJson(Files.readString(file), JsonObject.class);
+            @Nullable JsonObject root = JsonUtils.GSON.fromJson(Files.readString(file), JsonObject.class);
             if (root == null || !root.has("formatVersion") || root.get("formatVersion").getAsInt() != FORMAT_VERSION)
                 return new LinkedHashMap<>();
             if (root.get("entries") instanceof JsonArray entries) {
                 for (JsonElement el : entries) {
-                    // Per-entry tolerance: one malformed entry (e.g. from a truncated write) only
-                    // costs a rescan of that mod, not of the whole instance.
                     try {
                         if (!el.isJsonObject())
                             continue;
                         JsonObject e = el.getAsJsonObject();
-                        String path = optString(e, "path");
+                        @Nullable String path = optString(e, "path");
                         if (path == null || !isSafeRelativeKey(path)
                                 || !e.has("lastModified") || !e.has("size"))
                             continue;
@@ -199,7 +186,7 @@ final class NestedJarCache {
     }
 
     /// Reads and validates one cached tree within the scanner's production depth and node limits.
-    private static List<NestedJar> readNodes(JsonElement element, int depth, int[] nodeCount) {
+    private static List<NestedJar> readNodes(@Nullable JsonElement element, int depth, int[] nodeCount) {
         if (depth > NestedJarInspector.MAX_DEPTH) {
             throw new IllegalArgumentException("Jar-in-Jar cache tree exceeds the depth limit");
         }
@@ -215,7 +202,9 @@ final class NestedJarCache {
                 throw new IllegalArgumentException("Jar-in-Jar cache node is not an object");
             }
             JsonObject o = el.getAsJsonObject();
-            if (optString(o, "path") == null || optString(o, "fileName") == null) {
+            @Nullable String path = optString(o, "path");
+            @Nullable String fileName = optString(o, "fileName");
+            if (path == null || fileName == null) {
                 throw new IllegalArgumentException("Jar-in-Jar cache node is missing its path");
             }
             List<NestedJar> children = o.has("children")
@@ -225,8 +214,8 @@ final class NestedJarCache {
             Map<String, String> providedVersions = readProvidedVersions(o.get("provides"));
             List<ModConflict> conflicts = readConflicts(o.get("conflicts"));
             result.add(new NestedJar(
-                    optString(o, "path"),
-                    optString(o, "fileName"),
+                    path,
+                    fileName,
                     optString(o, "id"),
                     optString(o, "name"),
                     optString(o, "version"),
@@ -245,7 +234,7 @@ final class NestedJarCache {
     }
 
     /// Reads dependency declarations from one cached node.
-    private static List<ModDependency> readDependencies(JsonElement element) {
+    private static List<ModDependency> readDependencies(@Nullable JsonElement element) {
         List<ModDependency> result = new ArrayList<>();
         if (element == null) {
             return List.of();
@@ -257,11 +246,11 @@ final class NestedJarCache {
             if (!(item instanceof JsonObject dependency)) {
                 throw new IllegalArgumentException("Jar-in-Jar dependency cache item is malformed");
             }
-            String id = optString(dependency, "id");
+            @Nullable String id = optString(dependency, "id");
             if (id == null) {
                 continue;
             }
-            String constraint = optString(dependency, "constraint");
+            @Nullable String constraint = optString(dependency, "constraint");
             boolean optional = dependency.has("optional") && dependency.get("optional").getAsBoolean();
             result.add(new ModDependency(
                     id,
@@ -273,7 +262,7 @@ final class NestedJarCache {
     }
 
     /// Reads provided capability versions from one cached node.
-    private static Map<String, String> readProvidedVersions(JsonElement element) {
+    private static Map<String, String> readProvidedVersions(@Nullable JsonElement element) {
         Map<String, String> result = new LinkedHashMap<>();
         if (element == null) {
             return Map.of();
@@ -291,7 +280,7 @@ final class NestedJarCache {
     }
 
     /// Reads conflict declarations from one cached node.
-    private static List<ModConflict> readConflicts(JsonElement element) {
+    private static List<ModConflict> readConflicts(@Nullable JsonElement element) {
         List<ModConflict> result = new ArrayList<>();
         if (element == null) {
             return List.of();
@@ -303,11 +292,11 @@ final class NestedJarCache {
             if (!(item instanceof JsonObject conflict)) {
                 throw new IllegalArgumentException("Jar-in-Jar conflict cache item is malformed");
             }
-            String id = optString(conflict, "id");
+            @Nullable String id = optString(conflict, "id");
             if (id == null) {
                 continue;
             }
-            String constraint = optString(conflict, "constraint");
+            @Nullable String constraint = optString(conflict, "constraint");
             boolean hard = conflict.has("hard") && conflict.get("hard").getAsBoolean();
             result.add(new ModConflict(
                     id,
@@ -318,8 +307,8 @@ final class NestedJarCache {
         return List.copyOf(result);
     }
 
-    private static String optString(JsonObject obj, String key) {
-        JsonElement e = obj.get(key);
+    private static @Nullable String optString(JsonObject obj, String key) {
+        @Nullable JsonElement e = obj.get(key);
         return e != null && e.isJsonPrimitive() ? e.getAsString() : null;
     }
 
@@ -335,7 +324,7 @@ final class NestedJarCache {
         }
     }
 
-    private static ModLoaderType parseLoader(String name) {
+    private static ModLoaderType parseLoader(@Nullable String name) {
         if (name == null)
             return ModLoaderType.UNKNOWN;
         try {

@@ -33,13 +33,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /// Immutable provider and dependency index for one completed mod-directory analysis.
 ///
-/// Top-level files, multi-mod aliases, loader `provides` aliases, and selected Jar-in-Jar nodes all
-/// contribute capabilities. Nested candidates are selected iteratively: only root or already-selected
-/// reachable nodes contribute constraints to the next pass, preventing unselected wrapper branches
-/// from polluting dependency resolution.
+/// Candidate selection only accepts reachable nested nodes, so inactive wrapper branches cannot
+/// contribute providers or constraints.
 @NotNullByDefault
 public final class ModRelationIndex {
     /// Maximum convergence passes for nested candidate selection.
@@ -114,7 +113,6 @@ public final class ModRelationIndex {
     private record Candidate(
             NestedJarInspector.NestedJar node,
             LocalModFile host,
-            java.nio.file.Path hostPath,
             @Nullable Candidate parent) {
     }
 
@@ -142,11 +140,6 @@ public final class ModRelationIndex {
     /// @param minecraftVersion the instance Minecraft version used to filter wrapper candidates
     public ModRelationIndex(Collection<LocalModFile> mods, String minecraftVersion) {
         this(mods, minecraftVersion, EnumSet.allOf(ModLoaderType.class), true);
-    }
-
-    /// Creates an index and records whether its nested-provider graph is complete.
-    public ModRelationIndex(Collection<LocalModFile> mods, String minecraftVersion, boolean complete) {
-        this(mods, minecraftVersion, EnumSet.allOf(ModLoaderType.class), complete);
     }
 
     /// Creates an index for the loaders that can participate in the current instance.
@@ -420,9 +413,8 @@ public final class ModRelationIndex {
 
             Set<Candidate> next = new LinkedHashSet<>();
             for (Map.Entry<String, List<Candidate>> entry : groups.entrySet()) {
-                List<ModDependency> idConstraints = entry.getValue().isEmpty()
-                        ? List.of()
-                        : constraints.getOrDefault(normalize(entry.getValue().get(0).node().id()), List.of());
+                List<ModDependency> idConstraints = constraints.getOrDefault(
+                        normalize(entry.getValue().get(0).node().id()), List.of());
                 @Nullable Candidate chosen = entry.getValue().stream()
                         .filter(candidate -> reachable(candidate, previousSelection))
                         .filter(candidate -> satisfiesAll(candidate, idConstraints))
@@ -438,7 +430,7 @@ public final class ModRelationIndex {
                     .map(candidate -> candidate.host().getFile() + "!" + candidate.node().path()
                             + "@" + candidate.node().version())
                     .sorted()
-                    .reduce("", (left, right) -> left + "|" + right);
+                    .collect(Collectors.joining("|"));
             if (next.equals(previousSelection) || !seenStates.add(state)) {
                 return next;
             }
@@ -553,8 +545,7 @@ public final class ModRelationIndex {
                     && !MinecraftVersionMatcher.matches(node, minecraftVersion)) {
                 continue;
             }
-            Candidate candidate = new Candidate(
-                    node, host, host.getFile().toAbsolutePath().normalize(), parent);
+            Candidate candidate = new Candidate(node, host, parent);
             out.add(candidate);
             collectCandidates(
                     node.children(), host, candidate, minecraftVersion, supportedLoaders, out);

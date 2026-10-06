@@ -20,9 +20,11 @@ package org.jackhuang.hmcl.addon.mod;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.tomlj.Toml;
@@ -53,30 +55,23 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Recursive scanner for a mod's Jar-in-Jar tree.
 ///
-/// Unlike the metadata readers in {@code addon.meta} (which build a full {@link LocalModFile} and
-/// register a {@link LocalMod} on a {@link ModManager}), this only extracts what the mod list and the
-/// dependency logic need: for every jar nested at any depth, its id/name/version/loader and the
-/// Minecraft version it targets (for multi-version "wrapper" jars that bundle one copy per game
-/// version). Nothing is added to any registry.
-///
-/// The scan runs eagerly at parse time (from {@link ModManager}), not on demand: mod-dependency
-/// cascade and the bundled-dependency report both need the *complete, accurate* set of bundled mod
-/// ids, which a lazy expand-time scan could not provide. The cost is paid once and travels with the
-/// cached mod info (refreshes reuse it). Recursion is bounded by {@link #MAX_DEPTH} and the total node
-/// count by {@link #MAX_NODES} to guard against pathological or malicious nesting.
+/// Extracts nested metadata for dependency analysis without registering nested mods. Depth, node,
+/// per-entry, per-tree, and instance-wide byte limits bound hostile or malformed archives.
+@NotNullByDefault
 public final class NestedJarInspector {
     /// How many layers deep the scan drills (direct children are layer 1).
-    public static final int MAX_DEPTH = 4;
+    static final int MAX_DEPTH = 4;
     /// Upper bound on nodes visited per top-level mod, so a jar bundling thousands of entries can't
     /// stall a refresh.
-    public static final int MAX_NODES = 512;
+    static final int MAX_NODES = 512;
     /// Maximum uncompressed bytes copied from one nested JAR entry.
-    public static final long MAX_ENTRY_BYTES = 256L * 1024 * 1024;
+    private static final long MAX_ENTRY_BYTES = 256L * 1024 * 1024;
     /// Maximum uncompressed bytes copied while resolving one top-level mod's nested tree.
-    public static final long MAX_TREE_BYTES = 512L * 1024 * 1024;
+    private static final long MAX_TREE_BYTES = 512L * 1024 * 1024;
     /// Maximum uncompressed bytes copied across one instance-wide nested-mod scan.
-    public static final long MAX_SCAN_BYTES = 2L * 1024 * 1024 * 1024;
+    private static final long MAX_SCAN_BYTES = 2L * 1024 * 1024 * 1024;
 
+    /// Utility class; not instantiable.
     private NestedJarInspector() {
     }
 
@@ -196,11 +191,10 @@ public final class NestedJarInspector {
         }
     }
 
-    /// A full tree scan's outcome: the tree, plus whether the node budget cut it short. A truncated
-    /// tree is still useful for display, but callers must NOT persist it as if it were complete —
-    /// the host file's fingerprint wouldn't change, so the incompleteness would become permanent.
+    /// A scan result whose truncated flag prevents incomplete trees from being cached.
     public record ScanResult(@Unmodifiable List<NestedJar> tree, boolean truncated) {
-        public static final ScanResult EMPTY = new ScanResult(List.of(), false);
+        /// Shared empty complete scan result.
+        private static final ScanResult EMPTY = new ScanResult(List.of(), false);
 
         /// Creates an immutable scan result.
         public ScanResult {
@@ -210,7 +204,7 @@ public final class NestedJarInspector {
 
     /// Scans the full Jar-in-Jar tree of an already-open mod jar. Returns an empty result when the mod
     /// declares no nested jars (or isn't a Fabric/Quilt/Forge/NeoForge mod).
-    public static ScanResult scan(ZipFileTree modTree) {
+    static ScanResult scan(ZipFileTree modTree) {
         return scan(modTree, Set.of());
     }
 
@@ -219,7 +213,7 @@ public final class NestedJarInspector {
     /// @param modTree the already-open top-level mod archive
     /// @param preferredLoaders active instance loader types in preference order
     /// @return the complete or truncated scan result
-    public static ScanResult scan(ZipFileTree modTree, Set<ModLoaderType> preferredLoaders) {
+    static ScanResult scan(ZipFileTree modTree, Set<ModLoaderType> preferredLoaders) {
         return scan(modTree, preferredLoaders, new ScanContext());
     }
 
@@ -256,7 +250,7 @@ public final class NestedJarInspector {
     }
 
     /// Flattens every non-blank mod id in the tree (all depths) into {@code out}.
-    public static void collectIds(List<NestedJar> tree, Set<String> out) {
+    static void collectIds(List<NestedJar> tree, Set<String> out) {
         for (NestedJar node : tree) {
             if (node.id != null && !node.id.isBlank())
                 out.add(node.id);
@@ -287,9 +281,9 @@ public final class NestedJarInspector {
             nodeBudget[0]--;
             @Nullable JarJarInfo declaration = jarJarInfo.get(childPath);
 
-            Path temp = null;
+            @Nullable Path temp = null;
             try {
-                var entry = parentTree.getEntry(childPath);
+                @Nullable ZipArchiveEntry entry = parentTree.getEntry(childPath);
                 if (entry == null) {
                     truncated[0] = true;
                     result.add(fallback(childPath, declaration));
@@ -311,7 +305,7 @@ public final class NestedJarInspector {
                     copyWithBudget(input, output, byteBudget, context, maxEntryBytes);
                 }
                 try (ZipFileTree childTree = CompressingUtils.openZipTree(temp)) {
-                    Parsed m = parse(childTree, preferredLoaders);
+                    @Nullable Parsed m = parse(childTree, preferredLoaders);
                     List<String> declaredGrandchildren = childJarPaths(childTree);
                     if (depth >= MAX_DEPTH && !declaredGrandchildren.isEmpty()) {
                         truncated[0] = true;
@@ -366,10 +360,7 @@ public final class NestedJarInspector {
         return List.copyOf(result);
     }
 
-    /// Copies one nested entry while enforcing actual uncompressed-byte limits.
-    ///
-    /// ZIP metadata is only a preflight optimization: this loop counts bytes that are really read, so
-    /// entries with an unknown or dishonest declared size cannot bypass the limits.
+    /// Copies one nested entry while counting actual uncompressed bytes.
     static void copyWithBudget(
             InputStream input,
             OutputStream output,
@@ -424,7 +415,7 @@ public final class NestedJarInspector {
     private static Map<String, JarJarInfo> jarJarInfo(ZipFileTree tree) {
         Map<String, JarJarInfo> result = new LinkedHashMap<>();
         try {
-            JsonObject root = readJson(tree, "META-INF/jarjar/metadata.json");
+            @Nullable JsonObject root = readJson(tree, "META-INF/jarjar/metadata.json");
             if (root == null || !(root.get("jars") instanceof JsonArray jars)) {
                 return result;
             }
@@ -454,33 +445,29 @@ public final class NestedJarInspector {
         return result;
     }
 
-    /// Every nested-jar entry path a jar declares, across *all* mechanisms and independent of whether
-    /// it has a parseable mods.toml: Fabric/Quilt `jars`, Forge JarJar metadata, and the manifest's
-    /// {@code Embedded-Dependencies-Mod}. A bare "wrapper" jar (no mods.toml, just a manifest/JarJar
-    /// pointer to the real mod) declares nested jars only through the last two, so we must not gate
-    /// this on the metadata reader succeeding.
+    /// Collects nested paths from Fabric, Quilt, Forge JarJar, and manifest declarations.
     private static List<String> childJarPaths(ZipFileTree tree) {
         LinkedHashSet<String> paths = new LinkedHashSet<>();
         try {
-            JsonObject fabric = readJson(tree, "fabric.mod.json");
+            @Nullable JsonObject fabric = readJson(tree, "fabric.mod.json");
             if (fabric != null && fabric.get("jars") instanceof JsonArray jars)
                 for (JsonElement e : jars)
                     if (e.isJsonObject() && e.getAsJsonObject().has("file"))
                         paths.add(e.getAsJsonObject().get("file").getAsString());
 
-            JsonObject quilt = readJson(tree, "quilt.mod.json");
+            @Nullable JsonObject quilt = readJson(tree, "quilt.mod.json");
             if (quilt != null && quilt.get("quilt_loader") instanceof JsonObject ql && ql.get("jars") instanceof JsonArray qjars)
                 for (JsonElement e : qjars)
                     if (e.isJsonPrimitive())
                         paths.add(e.getAsString());
 
-            JsonObject jarjar = readJson(tree, "META-INF/jarjar/metadata.json");
+            @Nullable JsonObject jarjar = readJson(tree, "META-INF/jarjar/metadata.json");
             if (jarjar != null && jarjar.get("jars") instanceof JsonArray jjars)
                 for (JsonElement e : jjars)
                     if (e.isJsonObject() && e.getAsJsonObject().has("path"))
                         paths.add(e.getAsJsonObject().get("path").getAsString());
 
-            var manifest = tree.getEntry("META-INF/MANIFEST.MF");
+            @Nullable ZipArchiveEntry manifest = tree.getEntry("META-INF/MANIFEST.MF");
             if (manifest != null) {
                 try (InputStream is = tree.getInputStream(manifest)) {
                     String embedded = new Manifest(is).getMainAttributes().getValue("Embedded-Dependencies-Mod");
@@ -495,7 +482,6 @@ public final class NestedJarInspector {
         return new ArrayList<>(paths);
     }
 
-    // ── format detection (metadata only; child paths come from childJarPaths) ────────────
     private record Parsed(@Nullable String id, @Nullable String name, @Nullable String version,
                           ModLoaderType loaderType, @Nullable String minecraftVersion,
                           boolean minecraftConstraintRequired,
@@ -542,7 +528,7 @@ public final class NestedJarInspector {
 
     /// Parses Fabric metadata, dependencies, and provided aliases from a nested jar.
     private static @Nullable Parsed fromFabric(ZipFileTree tree) throws IOException {
-        JsonObject root = readJson(tree, "fabric.mod.json");
+        @Nullable JsonObject root = readJson(tree, "fabric.mod.json");
         if (root == null) {
             return null;
         }
@@ -592,7 +578,7 @@ public final class NestedJarInspector {
 
     /// Parses Quilt metadata, recursive version constraints, and provided aliases from a nested jar.
     private static @Nullable Parsed fromQuilt(ZipFileTree tree) throws IOException {
-        JsonObject root = readJson(tree, "quilt.mod.json");
+        @Nullable JsonObject root = readJson(tree, "quilt.mod.json");
         if (root == null || !(root.get("quilt_loader") instanceof JsonObject loader)) {
             return null;
         }
@@ -669,7 +655,9 @@ public final class NestedJarInspector {
             }
         }
 
-        String name = loader.get("metadata") instanceof JsonObject metadata ? asString(metadata, "name") : null;
+        @Nullable String name = loader.get("metadata") instanceof JsonObject metadata
+                ? asString(metadata, "name")
+                : null;
         return new Parsed(
                 usableModId(asString(loader, "id")),
                 name,
@@ -793,20 +781,17 @@ public final class NestedJarInspector {
                 List.copyOf(conflicts));
     }
 
-    /// Nulls out a version still holding an unresolved build placeholder (e.g. Fabric's
-    /// {@code ${version}}), so the UI and crash report show nothing rather than the raw token.
+    /// Drops unresolved build placeholders from parsed versions.
     private static @Nullable String cleanVersion(@Nullable String version) {
         return version != null && version.contains("${") ? null : version;
     }
 
-    /// Forge mod versions are often the literal {@code ${file.jarVersion}}, resolved at build time
-    /// from the jar manifest's Implementation-Version (mirrors ForgeNewModMetadata). If it can't be
-    /// resolved, drop the version rather than show a raw placeholder.
+    /// Resolves Forge's file.jarVersion placeholder from the manifest.
     private static @Nullable String resolveForgeVersion(ZipFileTree tree, @Nullable String version) {
         if (version == null || !version.contains("${"))
             return version;
         if (version.contains("${file.jarVersion}")) {
-            var manifest = tree.getEntry("META-INF/MANIFEST.MF");
+            @Nullable ZipArchiveEntry manifest = tree.getEntry("META-INF/MANIFEST.MF");
             if (manifest != null) {
                 try (InputStream is = tree.getInputStream(manifest)) {
                     String impl = new Manifest(is).getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
@@ -853,7 +838,6 @@ public final class NestedJarInspector {
         return null;
     }
 
-    // ── helpers ───────────────────────────────────────────────────────
     /// Adds Fabric-style dependencies from an ID-to-version map.
     private static void addJsonDependencies(
             List<ModDependency> result,
@@ -907,7 +891,7 @@ public final class NestedJarInspector {
     }
 
     /// Converts Quilt's recursive any/all version form to OR/AND predicate text.
-    private static @Nullable String asQuiltConstraint(JsonElement element) {
+    private static @Nullable String asQuiltConstraint(@Nullable JsonElement element) {
         if (element == null || element.isJsonNull()) {
             return null;
         }
@@ -944,7 +928,7 @@ public final class NestedJarInspector {
     }
 
     private static @Nullable JsonObject readJson(ZipFileTree tree, String path) throws IOException {
-        var entry = tree.getEntry(path);
+        @Nullable ZipArchiveEntry entry = tree.getEntry(path);
         if (entry == null)
             return null;
         try {
@@ -959,9 +943,8 @@ public final class NestedJarInspector {
         return e != null && e.isJsonPrimitive() ? e.getAsString() : null;
     }
 
-    /// A Minecraft constraint may be a single range string ("1.20.x", ">=26.1- <26.2-") or an array of
-    /// them; render a readable value either way.
-    private static @Nullable String asVersionString(JsonElement e) {
+    /// Reads a Minecraft constraint from either a string or an array.
+    private static @Nullable String asVersionString(@Nullable JsonElement e) {
         if (e == null)
             return null;
         if (e.isJsonPrimitive())

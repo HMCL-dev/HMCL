@@ -63,7 +63,6 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     /// Loaded local addon files for the bound instance.
     protected final Set<@NotNull T> localFiles = new LinkedHashSet<>();
 
-    /// The snapshot member this manager serves.
     /// Current repository snapshot member for this stable per-instance manager.
     ///
     /// Repository snapshots may replace their wrapper object while retaining the same instance ID.
@@ -81,12 +80,7 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     ///
     /// @return the bound [DefaultGameInstance]
     public DefaultGameInstance getInstance() {
-        lock.lock();
-        try {
-            return instance;
-        } finally {
-            lock.unlock();
-        }
+        return instance;
     }
 
     /// Rebinds this manager to the latest repository snapshot member for the same instance ID.

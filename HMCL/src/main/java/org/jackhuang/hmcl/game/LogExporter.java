@@ -93,9 +93,6 @@ public final class LogExporter {
                 try {
                     ModManager modManager = instance.getModManager();
                     modManager.refresh();
-                    // Resolve the full Jar-in-Jar tree now (synchronously — this whole export runs on a
-                    // background task), so the report is accurate even when the mod manager was never
-                    // opened before the crash.
                     ModRelationIndex relationIndex = modManager.getRelationIndex();
 
                     List<LocalModFile> activeMods = modManager.getLocalFiles().stream()
@@ -110,12 +107,6 @@ public final class LogExporter {
                             .append("----------------------------").append(System.lineSeparator())
                             .append(System.lineSeparator());
 
-                    // Mods that exist both as a standalone file and inside another active mod's
-                    // Jar-in-Jar payload. Such duplicates can conflict and crash the game, so list
-                    // them at the very top of the report.
-                    // Matched by exact mod id against the scanned Jar-in-Jar tree (all depths), so a
-                    // standalone mod that is also shipped inside another active mod is caught precisely
-                    // — no filename guessing, no false positives.
                     LinkedHashSet<String> duplicates = new LinkedHashSet<>();
                     for (LocalModFile host : activeMods) {
                         Set<String> bundledIds = relationIndex.getBundledIds(host).stream()
@@ -147,9 +138,6 @@ public final class LogExporter {
                             .append("----------------------------").append(System.lineSeparator())
                             .append(System.lineSeparator());
 
-                    // Multi-version "wrapper" mods that bundle one copy per game version but have no
-                    // copy targeting this instance's Minecraft version — the wrapper can't load
-                    // anything, a likely crash cause.
                     String instanceMc = instance.getVersion().toString();
                     LinkedHashSet<String> incompatible = new LinkedHashSet<>();
                     if (StringUtils.isNotBlank(instanceMc)) {
@@ -160,7 +148,7 @@ public final class LogExporter {
                     }
 
                     infoBuilder.append("=== Incompatible Multi-Version Bundles (no copy for this instance's Minecraft version) ===").append(System.lineSeparator());
-                    if (instanceMc == null) {
+                    if (StringUtils.isBlank(instanceMc)) {
                         infoBuilder.append("Skipped: could not determine this instance's Minecraft version.").append(System.lineSeparator());
                     } else if (incompatible.isEmpty()) {
                         infoBuilder.append("None").append(System.lineSeparator());
@@ -257,7 +245,6 @@ public final class LogExporter {
                             if (!tree.isEmpty()) {
                                 appendJarTree(infoBuilder, tree, 1);
                             } else {
-                                // Deep scan produced nothing usable — fall back to the declared filenames.
                                 for (String bundled : mod.getBundledMods()) {
                                     String name = bundled.contains("/") ? bundled.substring(bundled.lastIndexOf('/') + 1) : bundled;
                                     infoBuilder.append("\t|-> ").append(name).append(System.lineSeparator());
@@ -290,9 +277,7 @@ public final class LogExporter {
         });
     }
 
-    /// Flags same-id multi-version groups at *any* nesting depth whose copies none fit this instance's
-    /// Minecraft version — the wrapper would then fail to load that mod. Mirrors the mod list's
-    /// per-level grouping (which recurses), so a group nested two+ levels deep isn't missed.
+    /// Collects multi-version groups that have no copy compatible with the instance.
     private static void collectIncompatibleBundles(List<NestedJar> siblings, String instanceMc, String hostName, LinkedHashSet<String> out) {
         Map<String, List<NestedJar>> byId = new LinkedHashMap<>();
         for (NestedJar node : siblings)
@@ -309,7 +294,7 @@ public final class LogExporter {
             collectIncompatibleBundles(node.children(), instanceMc, hostName, out);
     }
 
-    /// Prints a mod's Jar-in-Jar tree recursively (all nesting depths), one indented line per node.
+    /// Appends a Jar-in-Jar tree to the exported report.
     private static void appendJarTree(StringBuilder sb, List<NestedJar> nodes, int depth) {
         String indent = "\t".repeat(depth);
         for (NestedJar node : nodes) {
