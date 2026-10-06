@@ -33,11 +33,11 @@ public final class LineTextPane extends LineComponent {
 
     private StringProperty text;
 
+    private Label rightLabel;
+
     public StringProperty textProperty() {
         if (text == null) {
             text = new StringPropertyBase() {
-                private Label rightLabel;
-
                 @Override
                 public Object getBean() {
                     return LineTextPane.this;
@@ -76,5 +76,9 @@ public final class LineTextPane extends LineComponent {
 
     public void setText(String text) {
         textProperty().set(text);
+    }
+
+    public Label getRightLabel() {
+        return rightLabel;
     }
 }

@@ -288,6 +288,13 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         }
     }
 
+    private void installPatchPack() {
+        HMCLGameInstance gameInstance = requireGameInstance();
+        if (gameInstance != null) {
+            Instances.installPatchPack(gameInstance);
+        }
+    }
+
     private void rename() {
         HMCLGameInstance gameInstance = requireGameInstance();
         if (gameInstance != null) {
@@ -384,6 +391,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         new IconedMenuItem(SVG.FOLDER_COPY, i18n("instance.manage.duplicate"), control::duplicate, managementPopup),
                         new IconedMenuItem(SVG.DELETE, i18n("instance.manage.remove"), control::remove, managementPopup),
                         new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), control::export, managementPopup),
+                        new IconedMenuItem(SVG.REBASE_EDIT, i18n("patchpack.task.install"), control::installPatchPack, managementPopup),
                         new MenuSeparator(),
                         new IconedMenuItem(null, i18n("instance.manage.redownload_assets_index"), control::redownloadAssetIndex, managementPopup),
                         new IconedMenuItem(null, i18n("instance.manage.remove_assets"), control::clearAssets, managementPopup),

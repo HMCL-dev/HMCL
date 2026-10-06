@@ -41,6 +41,10 @@
     -fx-text-fill: -monet-on-surface-variant;
 }
 
+.text-warning {
+    -fx-text-fill: -monet-tertiary;
+}
+
 .hyperlink {
     -fx-text-fill: -monet-primary;
 }
