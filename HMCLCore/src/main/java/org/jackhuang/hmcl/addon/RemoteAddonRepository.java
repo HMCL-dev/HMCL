@@ -29,13 +29,11 @@ import java.util.stream.Stream;
 
 public interface RemoteAddonRepository {
 
-    RemoteAddon.Type getType();
-
     String getApiBaseUrl();
 
     String getBaseUrl();
 
-    SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder)
+    SearchResult search(DownloadProvider downloadProvider, RemoteAddon.Type type, String gameVersion, @Nullable Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder)
             throws IOException;
 
     Optional<RemoteAddon.Version> getRemoteVersionByLocalFile(Path file) throws IOException;
@@ -63,7 +61,7 @@ public interface RemoteAddonRepository {
     @NotNull
     String getVersionPageUrl(RemoteAddon.Version version) throws IOException;
 
-    Stream<Category> getCategories() throws IOException;
+    Stream<Category> getCategories(RemoteAddon.Type type) throws IOException;
 
     record Category(Object self, String id, List<Category> subcategories) {
     }
@@ -82,5 +80,9 @@ public interface RemoteAddonRepository {
     }
 
     record SearchResult(Stream<RemoteAddon> results, int totalPages) {
+        public static SearchResult empty() {
+            return new SearchResult(Stream.empty(), 0);
+        }
+
     }
 }
