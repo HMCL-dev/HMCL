@@ -137,12 +137,23 @@ public abstract class Modpack {
             String iconUrl,
             @Nullable Set<String> excludedFiles);
 
-    public static boolean acceptFile(String path, List<String> blackList, List<String> whiteList) {
+    /// Returns whether a file path should be included in a modpack export.
+    ///
+    /// <p>A path is accepted when it passes the blacklist check and also either has no whitelist
+    /// constraint ({@code null}) or is explicitly listed in the whitelist. An empty (non-null)
+    /// whitelist rejects every path, reflecting a user selection of zero files.
+    ///
+    /// @param path      the archive-relative path to test; an empty string is always accepted
+    /// @param blackList patterns for paths that must be excluded regardless of the whitelist
+    /// @param whiteList the explicit inclusion list, or {@code null} to accept all non-blacklisted paths;
+    ///                  an empty list means no path is accepted
+    /// @return {@code true} if the path should be included
+    public static boolean acceptFile(String path, List<String> blackList, @Nullable List<String> whiteList) {
         if (path.isEmpty())
             return true;
         if (ModAdviser.match(blackList, path, false))
             return false;
-        if (whiteList == null || whiteList.isEmpty())
+        if (whiteList == null)
             return true;
         for (String s : whiteList)
             if (path.equals(s))
