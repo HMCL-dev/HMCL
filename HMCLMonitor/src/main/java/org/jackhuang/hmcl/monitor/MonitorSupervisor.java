@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.monitor;
 
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.launch.ExitWaiter;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.launch.StreamPump;
@@ -37,6 +38,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -61,19 +63,18 @@ public final class MonitorSupervisor {
     /// @return whether the arguments were consumed; the caller should exit afterward, since
     ///         [MonitorSupervisor#start] blocks until the game process has exited
     public static boolean processArguments(String[] args) {
-        if (args.length >= 1 && args[0].equals("--monitor")) {
-            if (args.length != 2) {
-                LOG.error("Usage: --monitor <specFile>");
-            } else {
-                try {
-                    start(Path.of(args[1]));
-                } catch (IOException | InterruptedException e) {
-                    LOG.error("Failed to supervise the game process", e);
-                }
-            }
+        if (args.length < 1 || !args[0].equals("--monitor"))
+            return false;
+        if (args.length != 2) {
+            LOG.error("Usage: --monitor <specFile>");
             return true;
         }
-        return false;
+        try {
+            start(Path.of(args[1]));
+        } catch (IOException | InterruptedException e) {
+            LOG.error("Failed to supervise the game process", e);
+        }
+        return true;
     }
 
     /// Reads the [ProcessSpec] from `specPath`, creates the process it describes, supervises it
@@ -88,7 +89,12 @@ public final class MonitorSupervisor {
         // stdout carries the monitor's log output, so the protocol goes over raw stderr
         PrintStream protocol = new PrintStream(new FileOutputStream(FileDescriptor.err), true, MonitorProtocol.CHARSET);
 
-        ProcessSpec spec = JsonUtils.fromJsonFile(specPath, ProcessSpec.class);
+        ProcessSpec spec;
+        try {
+            spec = JsonUtils.fromJsonFile(specPath, ProcessSpec.class);
+        } catch (JsonParseException e) {
+            throw new IOException("Malformed process spec file " + specPath, e);
+        }
         if (spec == null || spec.command == null || spec.command.isEmpty() || spec.encoding == null)
             throw new IOException("Malformed process spec file " + specPath);
         Files.delete(specPath);
@@ -123,32 +129,28 @@ public final class MonitorSupervisor {
         }
     }
 
-    static private void startMonitors(ManagedProcess gameProcess, BufferedWriter logWriter, PrintStream protocol,
+    private static void startMonitors(ManagedProcess gameProcess, BufferedWriter logWriter, PrintStream protocol,
                                       ProcessSpec spec, long processStartTime, Path logFile, Path specPath) throws InterruptedException {
         AtomicBoolean parentGone = new AtomicBoolean(false);
-        class LineSink {
-            void accept(String line, boolean isErrorStream) {
-                try {
-                    synchronized (logWriter) {
-                        logWriter.write(line);
-                        logWriter.newLine();
-                        logWriter.flush();
-                    }
-                } catch (IOException e) {
-                    LOG.warning("Failed to write the session log", e);
+        BiConsumer<String, Boolean> sink = (line, isErrorStream) -> {
+            try {
+                synchronized (logWriter) {
+                    logWriter.write(line);
+                    logWriter.newLine();
+                    logWriter.flush();
                 }
-                gameProcess.addLine(line);
-                if (!parentGone.get()) {
-                    protocol.println(MonitorProtocol.logMessage(isErrorStream, line));
-                    if (protocol.checkError())
-                        parentGone.set(true);
-                }
+            } catch (IOException e) {
+                LOG.warning("Failed to write the session log", e);
             }
-        }
+            gameProcess.addLine(line);
+            if (!parentGone.get()) {
+                protocol.println(MonitorProtocol.logMessage(isErrorStream, line));
+                if (protocol.checkError())
+                    parentGone.set(true);
+            }
+        };
 
-        LineSink sink = new LineSink();
-
-        Charset encoding = Charset.forName(Objects.requireNonNullElse(spec.encoding, Charset.defaultCharset().name()));
+        Charset encoding = Charset.forName(Objects.requireNonNull(spec.encoding));
         Thread stdoutPump = Lang.thread(new StreamPump(gameProcess.getProcess().getInputStream(),
                 line -> sink.accept(line, false), encoding), "monitor-stdout-pump", true);
         Thread stderrPump = Lang.thread(new StreamPump(gameProcess.getProcess().getErrorStream(),
@@ -180,7 +182,7 @@ public final class MonitorSupervisor {
                 @Nullable Path resultFile = null;
                 if (relaunch && parentGone.get()) {
                     if (crashed)
-                        resultFile = writeResult(spec, gameProcess.getPid(), processStartTime, exitCode, reportedType, logFile);
+                        resultFile = writeResult(spec, gameProcess.getPid(), processStartTime, reportedType, logFile);
                     relaunch(resultFile);
                 }
 
@@ -244,13 +246,12 @@ public final class MonitorSupervisor {
     }
 
     /// Writes the [ResultSpec] consumed by a relaunched launcher to a temp file.
-    private static Path writeResult(ProcessSpec spec, long pid, long processStartTime, int exitCode,
+    private static Path writeResult(ProcessSpec spec, long pid, long processStartTime,
                                     ProcessListener.ExitType exitType, Path logFile) throws IOException {
         Path resultFile = Files.createTempFile("hmcl-monitor-result-", ".json");
         ResultSpec result = new ResultSpec();
         result.pid = pid;
         result.processStartTime = processStartTime;
-        result.exitCode = exitCode;
         result.exitType = exitType.name();
         result.logFile = logFile.toString();
         result.instanceId = spec.instanceId;

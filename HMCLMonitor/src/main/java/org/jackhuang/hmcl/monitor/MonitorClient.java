@@ -54,14 +54,14 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class MonitorClient {
 
     /// Whether the monitor feature is enabled through the {@code HMCL_USE_HMCLMONITOR} environment variable.
-    private static final boolean DAEMON_ENABLED = System.getenv("HMCL_USE_HMCLMONITOR") != null;
+    private static final boolean MONITOR_ENABLED = System.getenv("HMCL_USE_HMCLMONITOR") != null;
 
     private MonitorClient() {
     }
 
     /// Returns whether the monitor feature is enabled.
     public static boolean isEnabled() {
-        return DAEMON_ENABLED;
+        return MONITOR_ENABLED;
     }
 
     /// Launches the game process via a new HMCL monitor process and returns a view of it.
@@ -84,10 +84,18 @@ public final class MonitorClient {
         Path specFile = Files.createTempFile("hmcl-monitor-spec-", ".json");
         JsonUtils.writeToJsonFile(specFile, buildSpec(context, options));
 
-        Process daemon = startDaemonProcess(thisJar, specFile);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(daemon.getErrorStream(), MonitorProtocol.CHARSET));
+        List<String> commandline = JavaProcessLauncher.buildJavaCommandLine(thisJar,
+                "--monitor", specFile.toAbsolutePath().toString());
+        LOG.info("Starting monitor process: " + JavaProcessLauncher.maskCommandLine(commandline));
+        Process monitor = new ProcessBuilder(commandline)
+                .directory(Paths.get("").toAbsolutePath().toFile())
+                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+                .redirectError(ProcessBuilder.Redirect.PIPE)
+                .start();
 
-        String[] handshake = readHandshake(daemon, reader);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(monitor.getErrorStream(), MonitorProtocol.CHARSET));
+
+        String[] handshake = readHandshake(monitor, reader);
         long pid;
         long processStartTime;
         try {
@@ -186,7 +194,7 @@ public final class MonitorClient {
     ///
     /// @throws IOException if the monitor exits or fails before the handshake, sends a malformed
     ///                     message, or does not answer within [MonitorProtocol#HANDSHAKE_TIMEOUT]
-    private static String[] readHandshake(Process daemon, BufferedReader reader) throws IOException {
+    private static String[] readHandshake(Process monitor, BufferedReader reader) throws IOException {
         CompletableFuture<String[]> future = new CompletableFuture<>();
         Thread waiter = Lang.thread(() -> {
             try {
@@ -225,20 +233,7 @@ public final class MonitorClient {
             // game process on its own, leaving behind an orphaned game, e.g. when the user cancels
             // the launch while the handshake is still pending.
             if (!handshakeCompleted)
-                daemon.destroy();
+                monitor.destroy();
         }
-    }
-
-    /// Starts the monitor process. Its stderr carries the protocol stream and is therefore piped;
-    /// its stdout, where the monitor's log output goes, is inherited for diagnostics.
-    private static Process startDaemonProcess(Path thisJar, Path specFile) throws IOException {
-        List<String> commandline = JavaProcessLauncher.buildJavaCommandLine(thisJar,
-                "--monitor", specFile.toAbsolutePath().toString());
-        LOG.info("Starting monitor process: " + JavaProcessLauncher.maskCommandLine(commandline));
-        return new ProcessBuilder(commandline)
-                .directory(Paths.get("").toAbsolutePath().toFile())
-                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-                .redirectError(ProcessBuilder.Redirect.PIPE)
-                .start();
     }
 }

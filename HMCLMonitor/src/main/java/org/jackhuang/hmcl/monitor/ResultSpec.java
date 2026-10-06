@@ -30,8 +30,6 @@ public final class ResultSpec {
     long pid;
     /// The epoch millisecond at which the game process started.
     long processStartTime;
-    /// The exit code of the game process.
-    @Nullable Integer exitCode;
     /// The name of the [ProcessListener.ExitType] of the game process.
     @Nullable String exitType;
     /// The session log file collecting the game output, or `null` when unavailable.

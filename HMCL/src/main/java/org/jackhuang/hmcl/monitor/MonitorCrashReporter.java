@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.monitor;
 
+import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -28,6 +29,7 @@ import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.setting.GameDirectoryID;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.GameCrashWindow;
 import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Log4jLevel;
@@ -37,7 +39,6 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -80,7 +81,7 @@ public final class MonitorCrashReporter {
         ResultSpec result;
         try {
             result = JsonUtils.fromJsonFile(resultFile, ResultSpec.class);
-        } catch (IOException e) {
+        } catch (IOException | JsonParseException e) {
             LOG.warning("Failed to read the monitor result file " + resultFile, e);
             return;
         }
@@ -113,7 +114,13 @@ public final class MonitorCrashReporter {
         // flow's own refresh may overlap harmlessly (both scans are read-only).
         repository.refreshAsync().whenComplete(Schedulers.defaultScheduler(), exception -> {
             if (exception == null) {
-                runLater(() -> resolveAndPresent(result, repository));
+                runLater(() -> {
+                    HMCLGameInstance loaded = findInstance(repository, result.instanceId);
+                    if (loaded != null)
+                        presentCrashWindow(result, loaded);
+                    else
+                        giveUp(result.instanceId, result.logFile, repository);
+                });
             } else {
                 LOG.warning("Failed to load the game repository while waiting to show the crash window", exception);
                 runLater(() -> giveUp(result.instanceId, result.logFile, repository));
@@ -140,16 +147,6 @@ public final class MonitorCrashReporter {
         return GameDirectoryManager.getOrCreateRepositoryByDirectoryId(id);
     }
 
-    /// Resolves the launched instance after the repository has loaded, and shows the crash window
-    /// when it is found.
-    private static void resolveAndPresent(ResultSpec result, HMCLGameRepository repository) {
-        HMCLGameInstance instance = findInstance(repository, result.instanceId);
-        if (instance != null)
-            presentCrashWindow(result, instance);
-        else
-            giveUp(result.instanceId, result.logFile, repository);
-    }
-
     /// Logs that the launched instance could not be resolved and the crash window is skipped.
     private static void giveUp(@Nullable String instanceId, @Nullable String logFile,
             @Nullable HMCLGameRepository repository) {
@@ -165,29 +162,69 @@ public final class MonitorCrashReporter {
 
     /// Builds and shows the crash window from the monitor result and the resolved instance.
     private static void presentCrashWindow(ResultSpec result, HMCLGameInstance instance) {
+        MonitorGameProcess process;
+        ProcessListener.ExitType exitType;
+        LaunchOptions launchOptions;
+        @Nullable Path logFile;
         try {
             List<String> commands = result.commands != null ? result.commands : List.of();
             ProcessHandle gameHandle = result.pid > 0 ? ProcessHandle.of(result.pid).orElse(null) : null;
-            MonitorGameProcess process = new MonitorGameProcess(gameHandle, commands, result.processStartTime, null);
-
-            ProcessListener.ExitType exitType = ProcessListener.ExitType.APPLICATION_ERROR;
-            if (result.exitType != null) {
-                try {
-                    exitType = ProcessListener.ExitType.valueOf(result.exitType);
-                } catch (IllegalArgumentException e) {
-                    LOG.warning("Unknown exit type in the monitor result file: " + result.exitType);
-                }
-            }
-
-            LaunchOptions launchOptions = rebuildLaunchOptions(result);
-            List<Log> logs = readSessionLogs(result.logFile);
-            if (result.logFile != null) {
-                Files.deleteIfExists(Path.of(result.logFile));
-            }
-
-            new GameCrashWindow(process, exitType, instance, launchOptions, logs).show();
+            process = new MonitorGameProcess(gameHandle, commands, result.processStartTime, null);
+            exitType = resolveExitType(result.exitType);
+            launchOptions = rebuildLaunchOptions(result);
+            logFile = result.logFile != null ? Path.of(result.logFile) : null;
         } catch (Throwable e) {
-            LOG.warning("Failed to show the crash window for the relaunched launcher", e);
+            LOG.warning("Failed to prepare the crash window for the relaunched launcher", e);
+            return;
+        }
+
+        Task.supplyAsync(() -> {
+            if (logFile == null)
+                return List.<Log>of();
+            // Keep at most Log.getLogLines() lines.
+            List<Log> logs = List.of();
+            int limit = Log.getLogLines();
+            try (Stream<String> lines = Files.lines(logFile, MonitorProtocol.CHARSET)) {
+                CircularArrayList<String> tail = new CircularArrayList<>(limit + 1);
+                lines.forEach(line -> {
+                    if (tail.size() == limit)
+                        tail.removeFirst();
+                    tail.addLast(line);
+                });
+                logs = tail.stream()
+                        .map(line -> new Log(line, Log4jLevel.guessLevel(line)))
+                        .toList();
+            } catch (IOException | UncheckedIOException e) {
+                LOG.warning("Failed to read the session log file " + logFile, e);
+            }
+
+            try {
+                Files.deleteIfExists(logFile);
+            } catch (IOException e) {
+                LOG.warning("Failed to delete the session log file " + logFile, e);
+            }
+            return logs;
+        }).whenComplete(Schedulers.javafx(), (logs, exception) -> {
+            if (exception != null)
+                LOG.warning("Failed to read the session log file " + result.logFile, exception);
+            try {
+                new GameCrashWindow(process, exitType, instance, launchOptions,
+                        exception == null ? logs : List.of()).show();
+            } catch (Throwable e) {
+                LOG.warning("Failed to show the crash window for the relaunched launcher", e);
+            }
+        }).start();
+    }
+
+    /// Returns the exit type recorded in the monitor result, falling back to application error.
+    private static ProcessListener.ExitType resolveExitType(@Nullable String exitType) {
+        if (exitType == null)
+            return ProcessListener.ExitType.APPLICATION_ERROR;
+        try {
+            return ProcessListener.ExitType.valueOf(exitType);
+        } catch (IllegalArgumentException e) {
+            LOG.warning("Unknown exit type in the monitor result file: " + exitType);
+            return ProcessListener.ExitType.APPLICATION_ERROR;
         }
     }
 
@@ -226,27 +263,6 @@ public final class MonitorCrashReporter {
         }
         builder.setJava(java);
         return builder.create();
-    }
-
-    /// Reads the tail of the session log file into [Log] entries, guessing each line's level. At
-    /// most [Log#getLogLines] lines are kept, matching the direct launch path's in-memory limit.
-    /// Returns an empty list when the file is missing or unreadable.
-    private static @Unmodifiable List<Log> readSessionLogs(@Nullable String logFile) {
-        if (logFile == null)
-            return List.of();
-        int limit = Log.getLogLines();
-        try (Stream<String> lines = Files.lines(Path.of(logFile), MonitorProtocol.CHARSET)) {
-            CircularArrayList<Log> retained = new CircularArrayList<>(limit + 1);
-            lines.forEach(line -> {
-                if (retained.size() == limit)
-                    retained.removeFirst();
-                retained.addLast(new Log(line, Log4jLevel.guessLevel(line)));
-            });
-            return List.copyOf(retained);
-        } catch (IOException | UncheckedIOException e) {
-            LOG.warning("Failed to read the session log file " + logFile, e);
-            return List.of();
-        }
     }
 
     /// Resolves the launched instance by its id in the given repository.
