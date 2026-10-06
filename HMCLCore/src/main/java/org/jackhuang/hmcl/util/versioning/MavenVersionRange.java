@@ -26,8 +26,7 @@ import java.util.List;
 @NotNullByDefault
 public final class MavenVersionRange {
     public static MavenVersionRange parse(String range) {
-        if (range.isBlank())
-            throw new IllegalArgumentException("Version range is empty");
+        if (range.isBlank()) throw new IllegalArgumentException("Version range is empty");
 
         List<Restriction> restrictions = new ArrayList<>();
         int start = 0;
@@ -40,9 +39,10 @@ public final class MavenVersionRange {
 
         return new MavenVersionRange(restrictions);
     }
+
+
     private static Restriction parseRestriction(String text) {
-        if (text.isEmpty())
-            throw new IllegalArgumentException("Version range contains an empty restriction");
+        if (text.isEmpty()) throw new IllegalArgumentException("Version range contains an empty restriction");
 
         char first = text.charAt(0);
         if (first != '[' && first != '(') {
@@ -74,8 +74,7 @@ public final class MavenVersionRange {
 
     private static boolean isEmptyInterval(VersionNumber lower, boolean lowerInclusive, VersionNumber upper, boolean upperInclusive) {
         int result = lower.compareTo(upper);
-        if (result > 0)
-            return true;
+        if (result > 0) return true;
 
         return result == 0 && !lowerInclusive && !upperInclusive;
     }
@@ -89,34 +88,27 @@ public final class MavenVersionRange {
     public boolean contains(String version) {
         VersionNumber number = VersionNumber.asVersion(version);
         for (Restriction restriction : restrictions) {
-            if (restriction.contains(number))
-                return true;
+            if (restriction.contains(number)) return true;
         }
         return false;
     }
+
     public boolean isSoft() {
         return restrictions.size() == 1 && restrictions.get(0).softVersion != null;
     }
 
-    private record Restriction(
-            @Nullable VersionNumber softVersion,
-            @Nullable VersionNumber lower,
-            boolean lowerInclusive,
-            @Nullable VersionNumber upper,
-            boolean upperInclusive
-    ) {
+    private record Restriction(@Nullable VersionNumber softVersion, @Nullable VersionNumber lower,
+                               boolean lowerInclusive, @Nullable VersionNumber upper, boolean upperInclusive) {
         Restriction(VersionNumber version) {
             this(version, null, true, null, true);
         }
 
         boolean contains(VersionNumber version) {
-            if (softVersion != null)
-                return softVersion.compareTo(version) == 0;
+            if (softVersion != null) return softVersion.compareTo(version) == 0;
 
             if (lower != null) {
                 int result = lower.compareTo(version);
-                if (result > 0 || result == 0 && !lowerInclusive)
-                    return false;
+                if (result > 0 || result == 0 && !lowerInclusive) return false;
             }
             if (upper != null) {
                 int result = upper.compareTo(version);
