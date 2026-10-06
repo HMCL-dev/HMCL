@@ -84,7 +84,10 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                     @Nullable Exception completedFailure = failure;
                     runInFX(() -> {
                         if (success && completedFailure == null) {
-                            if (settings.get("success_message") instanceof String successMessage)
+                            @Nullable WizardProvider.SuccessCallback successCallback = settings.get(WizardProvider.SuccessCallback.KEY);
+                            if (successCallback != null)
+                                successCallback.onSuccess(settings, () -> onEnd());
+                            else if (settings.get("success_message") instanceof String successMessage)
                                 Controllers.dialog(successMessage, null, MessageType.SUCCESS, () -> onEnd());
                             else if (!settings.containsKey("forbid_success_message"))
                                 Controllers.dialog(i18n("message.success"), null, MessageType.SUCCESS, () -> onEnd());
