@@ -38,10 +38,8 @@ import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.WindowsNativeUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
@@ -142,12 +140,8 @@ public final class Launcher extends Application {
                 Platform.setImplicitExit(false);
                 Controllers.initialize(primaryStage);
 
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
-                    Themes.applyNativeDarkMode(primaryStage);
-
                 UpdateChecker.init();
 
-                WindowsNativeUtils.installWindowsAppUserModelRelaunchProperties(primaryStage);
                 primaryStage.show();
             });
         } catch (Throwable e) {

@@ -17,42 +17,42 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
+import org.glavo.url.WebURL;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilProvider;
 
-import java.net.URI;
 import java.util.UUID;
 
 public record AuthlibInjectorProvider(String apiRoot) implements YggdrasilProvider {
 
     @Override
-    public URI getAuthenticationURL() {
-        return URI.create(apiRoot + "authserver/authenticate");
+    public WebURL getAuthenticationURL() {
+        return WebURL.parse(apiRoot + "authserver/authenticate");
     }
 
     @Override
-    public URI getRefreshmentURL() {
-        return URI.create(apiRoot + "authserver/refresh");
+    public WebURL getRefreshmentURL() {
+        return WebURL.parse(apiRoot + "authserver/refresh");
     }
 
     @Override
-    public URI getValidationURL() {
-        return URI.create(apiRoot + "authserver/validate");
+    public WebURL getValidationURL() {
+        return WebURL.parse(apiRoot + "authserver/validate");
     }
 
     @Override
-    public URI getInvalidationURL() {
-        return URI.create(apiRoot + "authserver/invalidate");
+    public WebURL getInvalidationURL() {
+        return WebURL.parse(apiRoot + "authserver/invalidate");
     }
 
     @Override
-    public URI getSkinUploadURL(UUID uuid) throws UnsupportedOperationException {
-        return URI.create(apiRoot + "api/user/profile/" + UUIDs.toCompactString(uuid) + "/skin");
+    public WebURL getSkinUploadURL(UUID uuid) throws UnsupportedOperationException {
+        return WebURL.parse(apiRoot + "api/user/profile/" + UUIDs.toCompactString(uuid) + "/skin");
     }
 
     @Override
-    public URI getProfilePropertiesURL(UUID uuid) {
-        return URI.create(apiRoot + "sessionserver/session/minecraft/profile/" + UUIDs.toCompactString(uuid));
+    public WebURL getProfilePropertiesURL(UUID uuid) {
+        return WebURL.parse(apiRoot + "sessionserver/session/minecraft/profile/" + UUIDs.toCompactString(uuid));
     }
 
     @Override

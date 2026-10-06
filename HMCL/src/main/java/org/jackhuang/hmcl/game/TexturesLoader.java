@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.Skin;
 import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -100,7 +101,7 @@ public final class TexturesLoader {
         if (!Files.isRegularFile(file)) {
             // download it
             try {
-                new FileDownloadTask(texture.url(), file).run();
+                new FileDownloadTask(DownloadProviders.getDownloadProvider().getDownloadCandidates(texture.url()), file).run();
                 LOG.info("Texture downloaded: " + texture.url());
             } catch (Exception e) {
                 if (Files.isRegularFile(file)) {

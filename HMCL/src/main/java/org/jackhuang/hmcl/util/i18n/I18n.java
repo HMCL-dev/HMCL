@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.i18n;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
 import org.jackhuang.hmcl.download.fabric.FabricAPIInstallTask;
@@ -53,20 +54,27 @@ import org.jackhuang.hmcl.modpack.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackLocalInstallTask;
+import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.translator.Translator;
+import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
+import javax.net.ssl.SSLHandshakeException;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.nio.file.AccessDeniedException;
 import java.time.temporal.TemporalAccessor;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.concurrent.CancellationException;
 
 public final class I18n {
 
@@ -238,6 +246,39 @@ public final class I18n {
         }
 
         return null;
+    }
+
+    public static String localizeErrorMessage(Throwable exception) {
+        if (exception instanceof DownloadException de) {
+            String url = de.getUrl();
+            if (exception.getCause() instanceof SocketTimeoutException) {
+                return i18n("install.failed.downloading.timeout", url);
+            } else if (exception.getCause() instanceof ResponseCodeException responseCodeException) {
+                if (hasKey("download.code." + responseCodeException.getResponseCode())) {
+                    return i18n("download.code." + responseCodeException.getResponseCode(), url);
+                } else {
+                    return i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause());
+                }
+            } else if (exception.getCause() instanceof FileNotFoundException) {
+                return i18n("download.code.404", url);
+            } else if (exception.getCause() instanceof AccessDeniedException) {
+                return i18n("install.failed.downloading.detail", url) + "\n" + i18n("exception.access_denied", ((AccessDeniedException) exception.getCause()).getFile());
+            } else if (exception.getCause() instanceof ArtifactMalformedException) {
+                return i18n("install.failed.downloading.detail", url) + "\n" + i18n("exception.artifact_malformed");
+            } else if (exception.getCause() instanceof SSLHandshakeException && !(exception.getCause().getMessage() != null && exception.getCause().getMessage().contains("Remote host terminated"))) {
+                if (exception.getCause().getMessage() != null && (exception.getCause().getMessage().contains("No name matching") || exception.getCause().getMessage().contains("No subject alternative DNS name matching"))) {
+                    return i18n("install.failed.downloading.detail", url) + "\n" + i18n("exception.dns.pollution");
+                }
+                return i18n("install.failed.downloading.detail", url) + "\n" + i18n("exception.ssl_handshake");
+            } else {
+                return i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause());
+            }
+        } else if (exception instanceof ArtifactMalformedException) {
+            return i18n("exception.artifact_malformed");
+        } else if (exception instanceof CancellationException) {
+            return i18n("message.cancelled");
+        }
+        return StringUtils.getStackTrace(exception);
     }
 
     public static boolean hasKey(String key) {

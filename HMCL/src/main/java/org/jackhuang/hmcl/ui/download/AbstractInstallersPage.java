@@ -56,9 +56,9 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
 
     protected BooleanProperty installable = new SimpleBooleanProperty();
 
-    public AbstractInstallersPage(WizardController controller, String gameVersion, DownloadProvider downloadProvider) {
+    public AbstractInstallersPage(WizardController controller, GameVersionNumber gameVersion, DownloadProvider downloadProvider) {
         this.controller = controller;
-        this.group = new InstallerItem.InstallerItemGroup(GameVersionNumber.asGameVersion(gameVersion), getInstallerItemStyle());
+        this.group = new InstallerItem.InstallerItemGroup(gameVersion, getInstallerItemStyle());
 
         for (InstallerItem component : group.getComponents()) {
             GameComponentType type = component.getComponentType();

@@ -22,6 +22,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
+import org.glavo.url.WebURL;
 import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
@@ -42,7 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -294,13 +294,13 @@ public class MicrosoftService {
             String response = NetworkUtils.readFullyAsString(con);
             if (StringUtils.isBlank(response)) {
                 if (con.getResponseCode() / 100 != 2)
-                    throw new ResponseCodeException(con.getURL().toURI(), con.getResponseCode());
+                    throw new ResponseCodeException(WebURL.of(con.getURL()), con.getResponseCode());
             } else {
                 MinecraftErrorResponse profileResponse = GSON.fromJson(response, MinecraftErrorResponse.class);
                 if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
                     throw new AuthenticationException("Failed to upload skin, response code: " + con.getResponseCode() + ", response: " + response);
             }
-        } catch (IOException | JsonParseException | URISyntaxException e) {
+        } catch (IOException | JsonParseException e) {
             throw new AuthenticationException(e);
         }
     }
@@ -310,7 +310,7 @@ public class MicrosoftService {
             if (payload == null)
                 return NetworkUtils.doGet(url);
             else
-                return NetworkUtils.doPost(NetworkUtils.toURI(url), payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
+                return NetworkUtils.doPost(WebURL.parse(url), payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         }
