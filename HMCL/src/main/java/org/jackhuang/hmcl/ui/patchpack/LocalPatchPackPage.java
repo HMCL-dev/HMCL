@@ -145,7 +145,6 @@ public final class LocalPatchPackPage extends SpinnerPane implements WizardPage 
         pane.setTitle(i18n("patchpack.version_range"));
         pane.setText(i18n("patchpack.version", info.modpackVersionRange(), instanceVersion));
         if (info.isOutOfRange(instanceVersion)) {
-            System.out.println(1111111111);
             pane.getRightLabel().setStyle("-fx-text-fill: -monet-tertiary-fixed-dim;");
         }
 
