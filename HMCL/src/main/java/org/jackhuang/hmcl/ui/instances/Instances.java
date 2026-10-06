@@ -60,16 +60,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -311,21 +307,21 @@ public final class Instances {
         var dialog = dialogBuilder.build();
 
         Task.supplyAsync(() -> {
-            var versions = repository.getInstanceManifests();
+            var versions = repository.getDisplayInstances().toList();
 
-            Set<String> activeAssets = versions.stream()
-                    .map(GameInstanceManifest::getAssetIndex)
-                    .distinct()
-                    .flatMap(idx -> {
+            Set<String> activeAssets = versions
+                    .stream()
+                    .map(it -> {
                         try {
-                            AssetIndex index = repository.getAssetIndex(null, idx.getId());
-                            return index.getObjects().values().stream().map(AssetObject::getLocation);
+                            return it.getAssetIndex(it.getManifest().assetIndex().getId());
                         } catch (IOException e) {
                             LOG.warning("Failed to get asset index", e);
-                            return Stream.empty();
+                            return null;
                         }
-
                     })
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .flatMap(idx -> idx.getObjects().values().stream().map(AssetObject::getLocation))
                     .collect(Collectors.toSet());
 
             List<Path> unusedFiles = new ArrayList<>();
@@ -339,7 +335,7 @@ public final class Instances {
                 unusedFolders.add(repository.getBaseDirectory().resolve(path));
             }
 
-            versions.stream().map(v -> repository.getRunDirectory(v.id())).distinct().forEach(runDir -> {
+            versions.stream().map(HMCLGameInstance::getRunDirectory).distinct().forEach(runDir -> {
                 for (String folderName : uselessFolderNames) {
                     Path target = runDir.resolve(folderName);
                     if (Files.isDirectory(target)) {
