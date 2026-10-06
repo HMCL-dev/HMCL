@@ -28,16 +28,16 @@ import java.util.List;
 public record PatchpackInfo(@SerializedName("formatVersion") int formatVersion,
                             @SerializedName("name") @NotNull String name,
                             @SerializedName("description") @Nullable String description,
-                            @SerializedName("modpackVersionRange") @Nullable String modpackVersionRange,
+                            @SerializedName("modpack") @Nullable Modpack modpack,
                             @SerializedName("authors") @Nullable @Unmodifiable List<String> authors,
                             @SerializedName("url") @Nullable String url, @SerializedName("diff") @Nullable Diff diff) {
     public static final String FILE_NAME = "patchpackinfo.json";
 
     public @Nullable MavenVersionRange parsedModpackVersionRange() {
-        if (modpackVersionRange == null || modpackVersionRange.isBlank()) return null;
+        if (modpack == null || modpack.versionRange() == null || modpack.versionRange().isBlank()) return null;
 
         try {
-            return MavenVersionRange.parse(modpackVersionRange);
+            return MavenVersionRange.parse(modpack.versionRange());
         } catch (IllegalArgumentException e) {
             return null;
         }
@@ -54,5 +54,9 @@ public record PatchpackInfo(@SerializedName("formatVersion") int formatVersion,
                        @SerializedName("rename") @Nullable @Unmodifiable List<Rename> rename) {
         public record Rename(@SerializedName("from") @NotNull String from, @SerializedName("to") @NotNull String to) {
         }
+    }
+
+    public record Modpack(@SerializedName("versionRange") @Nullable String versionRange,
+                          @SerializedName("name") @Nullable String name) {
     }
 }

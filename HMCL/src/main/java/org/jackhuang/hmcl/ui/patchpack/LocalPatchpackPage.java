@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -109,8 +110,13 @@ public final class LocalPatchpackPage extends SpinnerPane implements WizardPage 
             if (info.authors() != null && !info.authors().isEmpty())
                 componentList.getContent().add(createTextPane(i18n("archive.author"), String.join(", ", info.authors())));
 
-            @Nullable LineTextPane versionPane = createVersionPane(info, readInstanceVersion(controller));
+            var config = readModpackConfiguration(controller);
+
+            @Nullable LineTextPane versionPane = createVersionPane(info, config != null ? config.getVersion() : null);
             if (versionPane != null) componentList.getContent().add(versionPane);
+
+            @Nullable LineTextPane namePane = createNamePane(info, config != null ? config.getName() : this.controller.getSettings().get(PatchpackInstallWizardProvider.INSTANCE_ID).id());
+            if (namePane != null) componentList.getContent().add(namePane);
 
             componentList.getContent().add(buttons);
 
@@ -135,28 +141,50 @@ public final class LocalPatchpackPage extends SpinnerPane implements WizardPage 
     }
 
     private static @Nullable LineTextPane createVersionPane(PatchpackInfo info, @Nullable String instanceVersion) {
-        if (StringUtils.isBlank(info.modpackVersionRange())) {
+        if (info.modpack() == null || StringUtils.isBlank(info.modpack().versionRange())) {
             return null;
         }
 
         if (instanceVersion == null) instanceVersion = i18n("message.unknown");
 
         LineTextPane pane = new LineTextPane();
-        pane.setTitle(i18n("patchpack.version_range"));
-        pane.setText(i18n("patchpack.version", info.modpackVersionRange(), instanceVersion));
+        pane.setTitle(i18n("patchpack.modpack_version_range"));
+        pane.setText(i18n("patchpack.difference", info.modpack().versionRange(), instanceVersion));
         if (info.isOutOfRange(instanceVersion)) {
-            pane.getRightLabel().setStyle("-fx-text-fill: -monet-tertiary-fixed-dim;");
+            pane.getRightLabel().setStyle("-fx-text-fill: -monet-tertiary;");
         }
 
-        var translated = translateVersionRange(info.modpackVersionRange());
+        var translated = translateVersionRange(info.modpack().versionRange());
         if (translated != null) {
-            pane.setText(i18n("patchpack.version", String.format(translated, i18n("patchpack.target_version")), instanceVersion));
+            pane.setText(i18n("patchpack.difference", String.format(translated, i18n("patchpack.target_version")), instanceVersion));
         }
 
         return pane;
     }
 
-    private static @Nullable String readInstanceVersion(WizardController controller) {
+    private static @Nullable LineTextPane createNamePane(PatchpackInfo info, String currentName) {
+        if (info.modpack() == null || StringUtils.isBlank(info.modpack().name())) {
+            return null;
+        }
+
+        LineTextPane pane = new LineTextPane();
+        pane.setTitle(i18n("patchpack.modpack_name"));
+
+
+        var cleanModpackName = info.modpack().name().toLowerCase(Locale.ROOT).replace(" ", "").replace(":", "");
+        var cleanCurrentName = currentName.toLowerCase(Locale.ROOT).replace(" ", "").replace(":", "");
+
+        if (!cleanModpackName.equals(cleanCurrentName)) {
+            pane.setText(i18n("patchpack.difference", info.modpack().name(), currentName));
+            pane.getRightLabel().setStyle("-fx-text-fill: -monet-tertiary;");
+        } else {
+            pane.setText(info.modpack().name());
+        }
+
+        return pane;
+    }
+
+    private static @Nullable ModpackConfiguration<?> readModpackConfiguration(WizardController controller) {
         @Nullable GameInstanceID instanceId = controller.getSettings().get(PatchpackInstallWizardProvider.INSTANCE_ID);
         HMCLGameRepository repository = controller.getSettings().get(PatchpackInstallWizardProvider.REPOSITORY);
         if (instanceId == null || repository == null) return null;
@@ -166,7 +194,7 @@ public final class LocalPatchpackPage extends SpinnerPane implements WizardPage 
 
         try {
             @Nullable ModpackConfiguration<?> configuration = instance.readModpackConfiguration();
-            return configuration != null ? configuration.getVersion() : null;
+            return configuration;
         } catch (IOException e) {
             LOG.warning("Failed to read modpack configuration of " + instanceId, e);
             return null;
