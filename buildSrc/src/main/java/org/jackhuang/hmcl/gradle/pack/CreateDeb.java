@@ -240,6 +240,7 @@ public abstract class CreateDeb extends DefaultTask {
                 Replaces: %s
                 """.formatted(getCurrentType().getPackageName(), getVersion().get(), Math.max(installedSize, 1), getConflicts(getCurrentType().getPackageName()), getConflicts(getCurrentType().getPackageName())) + "\n";
     }
+    
     // provide Conflicts & Replaces Content String.
     private String getConflicts(String packageName) {
         switch (packageName) {
