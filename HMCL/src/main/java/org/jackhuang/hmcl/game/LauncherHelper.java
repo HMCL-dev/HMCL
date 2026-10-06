@@ -38,8 +38,8 @@ import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.*;
@@ -177,7 +177,7 @@ public final class LauncherHelper {
                                             gameInstance.readModpackConfiguration();
                                     if (configuration == null) return null;
                                     @Nullable ModpackProvider provider =
-                                            ModpackHelper.getProviderByType(configuration.getType());
+                                            ModpackHelper.getProviderByType(configuration.type());
                                     if (provider == null) return null;
                                     else return provider.createCompletionTask(
                                             dependencyManager,
