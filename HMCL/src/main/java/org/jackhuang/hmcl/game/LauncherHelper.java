@@ -315,9 +315,9 @@ public final class LauncherHelper {
                             Controllers.dialog(i18n("instance.launch_script.success", FileUtils.getAbsolutePath(scriptFile)));
                         });
                     }
-                }).withFakeProgress(
+                }).withIndeterminateProgress(
                         i18n("message.doing"),
-                        () -> launchingLatch.getCount() == 0, 6.95
+                        () -> launchingLatch.getCount() == 0
                 ).withStage("launch.state.waiting_launching"))
                 .withStagesHints(
                         new Task.StagesHint("launch.state.java"),

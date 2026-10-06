@@ -34,6 +34,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.*;
@@ -872,6 +873,13 @@ public abstract class Task<T> {
         return new FakeProgressTask(done, k).setExecutor(Schedulers.defaultScheduler()).setName(name).setSignificance(TaskSignificance.MAJOR);
     }
 
+    public Task<T> withIndeterminateProgress(String name, BooleanSupplier done) {
+        return new IndeterminateProgressTask(done)
+                .setExecutor(Schedulers.defaultScheduler())
+                .setName(name)
+                .setSignificance(TaskSignificance.MAJOR);
+    }
+
     public record StagesHint(String stage, List<String> aliases) {
         public StagesHint(String stage) {
             this(stage, List.of());
@@ -1255,6 +1263,33 @@ public abstract class Task<T> {
             }
 
             updateProgress(1.0D);
+            setResult(Task.this.getResult());
+        }
+    }
+
+    private final class IndeterminateProgressTask extends Task<T> {
+        private final BooleanSupplier done;
+
+        private IndeterminateProgressTask(BooleanSupplier done) {
+            this.done = done;
+        }
+
+        @Override
+        public Collection<Task<?>> getDependents() {
+            return Collections.singleton(Task.this);
+        }
+
+        @Override
+        public void execute() throws InterruptedException {
+            updateProgressImmediately(-1);
+
+            while (!done.getAsBoolean()) {
+                if (isCancelled()) {
+                    throw new CancellationException();
+                }
+                Thread.sleep(100);
+            }
+
             setResult(Task.this.getResult());
         }
     }
