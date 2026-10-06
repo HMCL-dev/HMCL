@@ -40,7 +40,6 @@ public final class MavenVersionRange {
         return new MavenVersionRange(restrictions);
     }
 
-
     private static Restriction parseRestriction(String text) {
         if (text.isEmpty()) throw new IllegalArgumentException("Version range contains an empty restriction");
 
