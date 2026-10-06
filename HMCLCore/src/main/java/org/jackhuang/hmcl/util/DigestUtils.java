@@ -48,6 +48,23 @@ public final class DigestUtils {
         return true;
     }
 
+    /// Returns whether `digest` is a 512-bit hexadecimal SHA-512 digest (128 hex digits).
+    ///
+    /// @param digest the digest string to check, or `null`
+    /// @return `true` when `digest` is a valid SHA-512 hex digest
+    public static boolean isSha512Digest(String digest) {
+        if (digest == null || digest.length() != 128) return false;
+
+        for (int i = 0; i < digest.length(); i++) {
+            char ch = digest.charAt(i);
+            if ((ch < '0' || ch > '9') && (ch < 'a' || ch > 'f') && (ch < 'A' || ch > 'F')) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public static MessageDigest getDigest(String algorithm) {
         try {
             return MessageDigest.getInstance(algorithm);

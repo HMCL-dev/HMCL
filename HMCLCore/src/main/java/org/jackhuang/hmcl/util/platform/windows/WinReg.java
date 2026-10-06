@@ -88,6 +88,10 @@ public abstract class WinReg {
         return list;
     }
 
+    public abstract boolean setValue(HKEY root, String key, String valueName, String value);
+
+    public abstract boolean deleteValue(HKEY root, String key, String valueName);
+
     private static final class JNAWinReg extends WinReg {
 
         private final Advapi32 advapi32;
@@ -244,6 +248,63 @@ public abstract class WinReg {
             }
 
             return Collections.emptyList();
+        }
+
+        @Override
+        public boolean setValue(HKEY root, String key, String valueName, String value) {
+            PointerByReference phkKey = new PointerByReference();
+            int status = advapi32.RegCreateKeyExW(
+                    root.toPointer(),
+                    new WString(key),
+                    0,
+                    null,
+                    WinConstants.REG_OPTION_NON_VOLATILE,
+                    WinConstants.KEY_WRITE,
+                    null,
+                    phkKey,
+                    null
+            );
+
+            if (status != WinConstants.ERROR_SUCCESS) {
+                return false;
+            }
+
+            Pointer hkey = phkKey.getValue();
+            try {
+                byte[] data = (value + "\0").getBytes(StandardCharsets.UTF_16LE);
+                try (Memory mem = new Memory(data.length)) {
+                    mem.write(0, data, 0, data.length);
+                    status = advapi32.RegSetValueExW(
+                            hkey,
+                            new WString(valueName),
+                            0,
+                            WinConstants.REG_SZ,
+                            mem,
+                            data.length
+                    );
+                }
+                return status == WinConstants.ERROR_SUCCESS;
+            } finally {
+                advapi32.RegCloseKey(hkey);
+            }
+        }
+
+        @Override
+        public boolean deleteValue(HKEY root, String key, String valueName) {
+            PointerByReference phkKey = new PointerByReference();
+            int status = advapi32.RegOpenKeyExW(root.toPointer(), new WString(key), 0, WinConstants.KEY_SET_VALUE, phkKey);
+
+            if (status != WinConstants.ERROR_SUCCESS) {
+                return false;
+            }
+
+            Pointer hkey = phkKey.getValue();
+            try {
+                status = advapi32.RegDeleteValueW(hkey, new WString(valueName));
+                return status == WinConstants.ERROR_SUCCESS;
+            } finally {
+                advapi32.RegCloseKey(hkey);
+            }
         }
     }
 

@@ -28,10 +28,12 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Set;
 
 public final class HMCLModpackProvider implements ModpackProvider {
     public static final HMCLModpackProvider INSTANCE = new HMCLModpackProvider();
@@ -42,12 +44,17 @@ public final class HMCLModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, GameInstanceID instanceId) {
+    public @Nullable Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance) {
         return null;
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, GameInstanceID instanceId, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException {
+    public Task<?> createUpdateTask(
+            DefaultDependencyManager dependencyManager,
+            DefaultGameInstance instance,
+            Path zipFile,
+            Modpack modpack,
+            @Nullable Set<String> excludedFiles) throws MismatchedModpackTypeException {
         if (!(modpack.getManifest() instanceof HMCLModpackManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
@@ -55,7 +62,7 @@ public final class HMCLModpackProvider implements ModpackProvider {
             throw new IllegalArgumentException("HMCLModpackProvider requires HMCLGameRepository");
         }
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), instanceId, new HMCLModpackInstallTask(repository, zipFile, modpack, instanceId));
+        return new ModpackUpdateTask(instance, new HMCLModpackInstallTask(repository, zipFile, modpack, instance));
     }
 
     @Override
@@ -76,7 +83,12 @@ public final class HMCLModpackProvider implements ModpackProvider {
 
     private final static class HMCLModpack extends Modpack {
         @Override
-        public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, GameInstanceID instanceId, String iconUrl) {
+        public Task<?> getInstallTask(
+                DefaultDependencyManager dependencyManager,
+                Path zipFile,
+                GameInstanceID instanceId,
+                String iconUrl,
+                @Nullable Set<String> excludedFiles) {
             return new HMCLModpackInstallTask((HMCLGameRepository) dependencyManager.getGameRepository(), zipFile, this, instanceId);
         }
     }

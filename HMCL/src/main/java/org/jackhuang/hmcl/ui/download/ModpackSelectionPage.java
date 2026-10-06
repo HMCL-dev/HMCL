@@ -27,6 +27,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
@@ -44,7 +45,6 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -114,7 +114,6 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip", "*.mrpack"));
         Path selectedFile = Controllers.showOpenDialog(chooser);
         if (selectedFile == null) {
-            Platform.runLater(controller::onEnd);
             return;
         }
 
@@ -127,7 +126,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
             try {
                 if (url.endsWith("server-manifest.json")) {
                     // if urlString ends with .json, we assume that the url is server-manifest.json
-                    Controllers.taskDialog(new GetTask(url).whenComplete(Schedulers.javafx(), (result, e) -> {
+                    Controllers.taskDialog(new GetTask(WebURL.parse(url)).whenComplete(Schedulers.javafx(), (result, e) -> {
                         ServerModpackManifest manifest = JsonUtils.fromMaybeMalformedJson(result, ServerModpackManifest.class);
                         if (manifest == null) {
                             handler.reject(i18n("modpack.type.server.malformed"));
@@ -158,8 +157,8 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                             TaskCancellationAction.NORMAL
                     );
                 }
-            } catch (IOException e) {
-                handler.reject(e.getMessage());
+            } catch (Exception e) {
+                handler.reject(i18n("message.failed"));
             }
         }, "", new URLValidator());
     }

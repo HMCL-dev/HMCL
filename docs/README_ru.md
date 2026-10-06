@@ -25,7 +25,7 @@
 ---
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | **русский** | [українська](README_uk.md)
+English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh_Hans.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | **русский** | [українська](README_uk.md)
 <!-- #END LANGUAGE_SWITCHER -->
 
 ## Введение
@@ -60,9 +60,9 @@ HMCL — это открытый проект, развиваемый сообщ
 
 ## Участники
 
-С 2015 года в разработке HMCL участвовали более 120 человек. Спасибо за ваш труд!
+С 2015 года в разработке HMCL участвовали более 130 человек. Спасибо за ваш труд!
 
-[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL&max=200)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## Лицензия
 

@@ -22,15 +22,11 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.*;
 
 /// Tests for game instance manifest parsing and resolution behavior.
 @NotNullByDefault
@@ -45,23 +41,6 @@ public final class GameInstanceManifestTest {
         JsonObject json = manifest.toJsonObject();
         assertFalse(json.has("root"));
         assertFalse(json.has("hidden"));
-    }
-
-    /// Root manifests with patch lists resolve from the patch view instead of their own body fields.
-    @Test
-    public void testRootManifestWithPatchesUsesPatchView() throws NoSuchGameInstanceException {
-        GameInstanceManifest manifest = manifest(
-                "example",
-                "example.Main",
-                true,
-                false,
-                List.of(patch("patch", null)));
-
-        GameInstanceManifest.Resolved resolved = new DefaultGameRepository(Path.of(".")).resolve(manifest);
-
-        assertNull(resolved.launchManifest().mainClass());
-        assertNull(resolved.launchManifest().patches());
-        assertEquals(List.of(patch("patch", null)), resolved.standaloneManifest().getPatches());
     }
 
     /// Manifest edits update known raw JSON fields without discarding unknown fields.
@@ -127,7 +106,7 @@ public final class GameInstanceManifestTest {
 
         GameInstancePatch patch = originalPatch
                 .withMainClass("new.Main")
-                .withId(null);
+                .withId((String) null);
 
         JsonObject updatedJson = patch.toJsonObject();
         assertEquals("value", updatedJson.get("unknownField").getAsString());

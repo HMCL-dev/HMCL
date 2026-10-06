@@ -17,11 +17,20 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import kala.encdet.EncodingDetector;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.zip.GZIPInputStream;
 
 import static java.nio.charset.StandardCharsets.*;
+import static org.jackhuang.hmcl.util.platform.OperatingSystem.NATIVE_CHARSET;
 
 /**
  * This utility class consists of some util methods operating on InputStream/OutputStream.
@@ -34,6 +43,44 @@ public final class IOUtils {
     }
 
     public static final int DEFAULT_BUFFER_SIZE = 32 * 1024;
+
+    public static BufferedReader newBufferedReaderMaybeNativeEncoding(Path file) throws IOException {
+        if (NATIVE_CHARSET == UTF_8)
+            return Files.newBufferedReader(file);
+
+        FileChannel channel = FileChannel.open(file);
+        try {
+            long oldPosition = channel.position();
+            long size = channel.size();
+
+            EncodingDetector detector = EncodingDetector.MODERN_WEB;
+
+            int bufferSize = (int) Math.max(Math.min(size - oldPosition, detector.maxBytes()), 8192L);
+            ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
+
+            //noinspection StatementWithEmptyBody
+            while (buffer.hasRemaining() && channel.read(buffer) > 0) {
+                // do nothing
+            }
+
+            buffer.flip();
+            Charset charset;
+            if (buffer.remaining() == 0) {
+                charset = UTF_8;
+            } else {
+                EncodingDetector.@Nullable Encoding encoding = detector.detect(buffer).bestEncoding();
+                Charset detectedCharset = encoding != null ? encoding.approximateCharset() : null;
+                charset = detectedCharset != null && (detectedCharset == UTF_8 || detectedCharset == US_ASCII)
+                        ? UTF_8
+                        : NATIVE_CHARSET;
+            }
+            channel.position(oldPosition);
+            return new BufferedReader(new InputStreamReader(Channels.newInputStream(channel), charset));
+        } catch (Throwable e) {
+            closeQuietly(channel, e);
+            throw e;
+        }
+    }
 
     public static byte[] readFully(InputStream stream) throws IOException {
         try (stream) {

@@ -21,7 +21,6 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -52,6 +51,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
+import org.jetbrains.annotations.Nullable;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -183,7 +183,10 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     @FXThread
     private void loadJava(Collection<JavaRuntime> javaRuntimes) {
         if (javaRuntimes != null) {
-            this.setItems(FXCollections.observableArrayList(javaRuntimes));
+            // JavaRuntime equality is path-based. setAll can therefore retain a stale item when the
+            // Java installation at an existing path has been upgraded.
+            this.getItems().clear();
+            this.getItems().addAll(javaRuntimes);
             this.setLoading(false);
         } else {
             this.setLoading(true);
@@ -226,7 +229,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     }
 
     private static final class JavaItemCell extends ListCell<JavaRuntime> {
-        private final Node graphic;
+        private final RipplerContainer graphic;
         private final Label label = new Label();
         private final TwoLineListItem content;
 
@@ -244,10 +247,10 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             center.setAlignment(Pos.CENTER_LEFT);
 
             label.setAlignment(Pos.CENTER);
-            label.setMinSize(24, 24);
-            label.setMaxSize(24, 24);
-            label.setPrefSize(24, 24);
-            label.setStyle("-fx-background-color: -monet-secondary-container; -fx-background-radius: 2; -fx-padding: 2; -fx-font-weight: normal; -fx-font-size: 12px;");
+            FXUtils.setLimitWidth(label, 32);
+            FXUtils.setLimitHeight(label, 32);
+
+            label.setStyle("-fx-background-color: -monet-secondary-container; -fx-background-radius: 2; -fx-padding: 2; -fx-font-weight: normal; -fx-font-size: 16px;");
 
             this.content = new TwoLineListItem();
             HBox.setHgrow(content, Priority.ALWAYS);
@@ -297,22 +300,28 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         @Override
         protected void updateItem(JavaRuntime item, boolean empty) {
             JavaRuntime oldItem = getItem();
+            boolean oldEmpty = isEmpty();
+
             super.updateItem(item, empty);
+
+            if (oldItem == item && oldEmpty == empty) return;
+
+            this.graphic.releaseRippleImmediately();
+
             if (empty || item == null) {
                 setGraphic(null);
             } else {
                 int parsedVersion = item.getParsedVersion();
                 label.setText(parsedVersion >= 0 ? String.valueOf(parsedVersion) : "?");
 
-                content.setTitle((item.isJDK() ? "JDK" : "JRE") + " " + item.getVersion());
+                @Nullable String vendor = JavaInfo.normalizeVendor(item.getVendor());
+
+                content.setTitle((vendor != null ? vendor : i18n("message.unknown")) + " " + (item.isJDK() ? "JDK" : "JRE") + " " + item.getVersion());
                 content.setSubtitle(item.getBinary().toString());
 
                 if (oldItem != item) {
                     content.getTags().clear();
-                    content.addTag(i18n("java.info.architecture") + ": " + item.getArchitecture().getDisplayName());
-                    String vendor = JavaInfo.normalizeVendor(item.getVendor());
-                    if (vendor != null)
-                        content.addTag(i18n("java.info.vendor") + ": " + vendor);
+                    content.addTag(item.getArchitecture().getDisplayName());                    
                 }
 
                 SVG newRemoveIcon = item.isManaged() ? SVG.DELETE_FOREVER : SVG.DELETE;

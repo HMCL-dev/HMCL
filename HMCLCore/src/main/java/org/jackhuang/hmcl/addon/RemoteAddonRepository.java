@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.addon;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -28,23 +29,43 @@ import java.util.stream.Stream;
 
 public interface RemoteAddonRepository {
 
-    enum Type {
-        MOD,
-        MODPACK,
-        RESOURCE_PACK,
-        SHADER_PACK,
-        WORLD,
-        CUSTOMIZATION
+    RemoteAddon.Type getType();
+
+    String getApiBaseUrl();
+
+    String getBaseUrl();
+
+    SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder)
+            throws IOException;
+
+    Optional<RemoteAddon.Version> getRemoteVersionByLocalFile(Path file) throws IOException;
+
+    RemoteAddon getAddonById(DownloadProvider downloadProvider, String id) throws IOException;
+
+    /// @return the dependency resolved, or {@link RemoteAddon#BROKEN} when the dependency is not found
+    /// @throws IOException if an I/O error occurs, except for when the desired dependency is not found
+    RemoteAddon resolveDependency(DownloadProvider downloadProvider, String id) throws IOException;
+
+    RemoteAddon.File getAddonFile(String projectId, String fileId) throws IOException;
+
+    Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException;
+
+    @Nullable
+    String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException;
+
+    @NotNull
+    String getVersionPageUrl(RemoteAddon.Version version) throws IOException;
+
+    Stream<Category> getCategories() throws IOException;
+
+    record Category(Object self, String id, List<Category> subcategories) {
     }
 
-    Type getType();
-
     enum SortType {
+        RELEVANCY,
         POPULARITY,
-        NAME,
         DATE_CREATED,
         LAST_UPDATED,
-        AUTHOR,
         TOTAL_DOWNLOADS
     }
 
@@ -53,55 +74,6 @@ public interface RemoteAddonRepository {
         DESC
     }
 
-    class SearchResult {
-        private final Stream<RemoteAddon> sortedResults;
-
-        private final Stream<RemoteAddon> unsortedResults;
-
-        private final int totalPages;
-
-        public SearchResult(Stream<RemoteAddon> sortedResults, Stream<RemoteAddon> unsortedResults, int totalPages) {
-            this.sortedResults = sortedResults;
-            this.unsortedResults = unsortedResults;
-            this.totalPages = totalPages;
-        }
-
-        public SearchResult(Stream<RemoteAddon> sortedResults, int pages) {
-            this.sortedResults = sortedResults;
-            this.unsortedResults = sortedResults;
-            this.totalPages = pages;
-        }
-
-        public Stream<RemoteAddon> getResults() {
-            return this.sortedResults;
-        }
-
-        public Stream<RemoteAddon> getUnsortedResults() {
-            return this.unsortedResults;
-        }
-
-        public int getTotalPages() {
-            return this.totalPages;
-        }
-    }
-
-    SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder)
-            throws IOException;
-
-    Optional<RemoteAddon.Version> getRemoteVersionByLocalFile(Path file) throws IOException;
-
-    RemoteAddon getModById(DownloadProvider downloadProvider, String id) throws IOException;
-
-    default RemoteAddon resolveDependency(DownloadProvider downloadProvider, String id) throws IOException {
-        return getModById(downloadProvider, id);
-    }
-
-    RemoteAddon.File getModFile(String modId, String fileId) throws IOException;
-
-    Stream<RemoteAddon.Version> getRemoteVersionsById(DownloadProvider downloadProvider, String id) throws IOException;
-
-    Stream<Category> getCategories() throws IOException;
-
-    record Category(Object self, String id, List<Category> subcategories) {
+    record SearchResult(Stream<RemoteAddon> results, int totalPages) {
     }
 }

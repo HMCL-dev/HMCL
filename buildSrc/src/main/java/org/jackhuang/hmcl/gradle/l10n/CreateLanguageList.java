@@ -74,21 +74,7 @@ public abstract class CreateLanguageList extends DefaultTask {
                     locales.add(Locale.ENGLISH);
                 else if (fileName.charAt(baseName.length()) == '_') {
                     String localeName = fileName.substring(baseName.length() + 1, fileName.length() - suffix.length());
-
-                    // TODO: Delete this if the I18N file naming is changed
-                    if (baseName.equals("I18N")) {
-                        if (localeName.equals("zh"))
-                            locales.add(Locale.forLanguageTag("zh-Hant"));
-                        else if (localeName.equals("zh_CN"))
-                            locales.add(Locale.forLanguageTag("zh-Hans"));
-                        else
-                            locales.add(Locale.forLanguageTag(localeName.replace('_', '-')));
-                    } else {
-                        if (localeName.equals("zh"))
-                            locales.add(Locale.forLanguageTag("zh-Hans"));
-                        else
-                            locales.add(Locale.forLanguageTag(localeName.replace('_', '-')));
-                    }
+                    locales.add(Locale.forLanguageTag(localeName.replace('_', '-')));
                 }
             }
         }
