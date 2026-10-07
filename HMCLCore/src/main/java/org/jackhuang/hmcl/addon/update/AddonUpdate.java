@@ -15,14 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.addon;
+package org.jackhuang.hmcl.addon.update;
 
-import org.jetbrains.annotations.NotNull;
+import org.jackhuang.hmcl.addon.LocalAddonFile;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.function.Predicate;
 
+@NotNullByDefault
 public record AddonUpdate(
         LocalAddonFile localAddonFile,
         RemoteAddon.Version currentVersion,
@@ -30,17 +33,17 @@ public record AddonUpdate(
 ) {
 
     ///
-    /// @param predicates conditions that the remote version must satisfy to become a valid target.
+    /// @param restrictions conditions that the remote version must satisfy to become a valid target.
     ///
     ///                   If empty, all remote versions that satisfy the fundamental conditions are considered valid targets to upgrade to.
-    public record TargetVersionRestrictions(@NotNull @Unmodifiable List<Predicate<RemoteAddon.Version>> predicates) {
-        public TargetVersionRestrictions {
-            predicates = List.copyOf(predicates);
+    public record UpdateConditions(@Unmodifiable List<Predicate<RemoteAddon.Version>> restrictions) {
+        public UpdateConditions {
+            restrictions = List.copyOf(restrictions);
         }
 
         @SafeVarargs
-        public TargetVersionRestrictions(Predicate<RemoteAddon.Version>... predicates) {
-            this(List.of(predicates));
+        public UpdateConditions(Predicate<RemoteAddon.Version>... restrictions) {
+            this(List.of(restrictions));
         }
     }
 }

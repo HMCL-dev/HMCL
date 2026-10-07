@@ -32,12 +32,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.util.Subscription;
-import org.jackhuang.hmcl.addon.AddonUpdate;
+import org.jackhuang.hmcl.addon.update.AddonUpdate;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
 import org.jackhuang.hmcl.addon.update.AddonUpdateTask;
+import org.jackhuang.hmcl.addon.update.AddonUpdates;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -69,7 +69,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
     private final ObservableList<AddonUpdateObject> objects;
 
     @SuppressWarnings("unchecked")
-    public AddonUpdatesPage(Path localAddonDirectory, AddonCheckUpdatesTask.Result updates) {
+    public AddonUpdatesPage(Path localAddonDirectory, AddonUpdates updates) {
         this.localAddonDirectory = localAddonDirectory;
 
         getStyleClass().add("gray-background");

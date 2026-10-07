@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.addon.update;
 
-import org.jackhuang.hmcl.addon.AddonUpdate;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -34,7 +33,7 @@ import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class AddonCheckUpdatesTask extends Task<AddonCheckUpdatesTask.Result> {
+public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
     private final List<Task<Pair<AddonUpdate, @Nullable AddonUpdate>>> dependents;
 
     public AddonCheckUpdatesTask(DownloadProvider downloadProvider, String gameVersion, Collection<? extends LocalAddonFile> addons) {
@@ -100,9 +99,6 @@ public class AddonCheckUpdatesTask extends Task<AddonCheckUpdatesTask.Result> {
                     commonUpdates.add(pair.key());
                     if (pair.value() != null) releaseUpdates.add(pair.value());
                 });
-        setResult(new Result(List.copyOf(commonUpdates), List.copyOf(releaseUpdates)));
-    }
-
-    public record Result(List<AddonUpdate> commonUpdates, List<AddonUpdate> releaseUpdates) {
+        setResult(new AddonUpdates(commonUpdates, releaseUpdates));
     }
 }

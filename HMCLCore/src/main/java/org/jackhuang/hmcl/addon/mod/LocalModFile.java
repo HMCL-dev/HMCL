@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.addon.mod;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.addon.AddonLoader;
-import org.jackhuang.hmcl.addon.AddonUpdate;
+import org.jackhuang.hmcl.addon.update.AddonUpdate;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -195,8 +195,8 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     @Override
-    protected AddonUpdate.TargetVersionRestrictions getTargetVersionRestrictions() {
-        return new AddonUpdate.TargetVersionRestrictions(v -> v.loaders().stream().map(AddonLoader::type).collect(Collectors.toSet()).contains(getModLoaderType()));
+    protected AddonUpdate.UpdateConditions getTargetVersionRestrictions() {
+        return new AddonUpdate.UpdateConditions(v -> v.loaders().stream().map(AddonLoader::type).collect(Collectors.toSet()).contains(getModLoaderType()));
     }
 
     @Override

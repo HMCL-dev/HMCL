@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.addon.resourcepack;
 
 import javafx.scene.image.Image;
-import org.jackhuang.hmcl.addon.AddonUpdate;
+import org.jackhuang.hmcl.addon.update.AddonUpdate;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
@@ -81,8 +81,8 @@ final class ResourcePackZipFile extends ResourcePackFile {
     }
 
     @Override
-    protected AddonUpdate.TargetVersionRestrictions getTargetVersionRestrictions() {
-        return new AddonUpdate.TargetVersionRestrictions();
+    protected AddonUpdate.UpdateConditions getTargetVersionRestrictions() {
+        return new AddonUpdate.UpdateConditions();
     }
 
     @Override
