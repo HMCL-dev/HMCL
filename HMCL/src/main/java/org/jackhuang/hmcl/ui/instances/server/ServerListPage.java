@@ -38,7 +38,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Subscription;
-import org.jackhuang.hmcl.game.GameInstance;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.server.Server;
 import org.jackhuang.hmcl.server.ServerStatus;
@@ -56,6 +55,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -63,15 +63,24 @@ import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
+public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> {
+    private static final Object serversFileHandleLockObject = new Object();
+    private final Map<Path, ServerStorage> serverStorageMap = new LinkedHashMap<>();
+
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
     private final BooleanProperty showHide = new SimpleBooleanProperty(this, "showHide", false);
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
     private @Nullable HMCLGameInstance gameInstance;
-    private List<ServerHolder> serverHolders;
+    private List<ServerListItem> serverListEntries = new ArrayList<>();
 
     private int refreshCount = 0;
+
+    public void launchAndEnterServer(ServerListItem item) {
+        if (gameInstance != null) {
+            Instances.launchAndEnterServer(gameInstance, item.server.getIp());
+        }
+    }
 
     public ServerListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
         Objects.requireNonNull(instanceContext, "instanceContext");
@@ -91,116 +100,110 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         return new ServerListPageSkin();
     }
 
-    public void launchAndEnterServer(ServerHolder holder) {
+    public void showServerStatus(ServerListItem item) {
         if (gameInstance != null) {
-            Instances.launchAndEnterServer(gameInstance, holder.server.getIp());
+            runInFX(() -> Controllers.dialog(new ServerStatusPane(item.observableServerStatus, item.server)));
         }
     }
 
-    public void showServerStatus(ServerHolder holder) {
+    public void editServer(ServerListItem item) {
         if (gameInstance != null) {
-            runInFX(() -> Controllers.dialog(new ServerStatusPane(holder.observableServerStatus, holder.server)));
-        }
-    }
-
-    public void editServer(ServerHolder holder) {
-        if (gameInstance != null) {
-            runInFX(() -> Controllers.dialog(new EditServerPane(EditServerPane.Type.EDIT, holder.server, (server) -> {
-                if (!server.equals(holder.server)) {
-                    Task.runAsync(Schedulers.io(), () -> {
-                        List<Server> cachedServers = holder.cachedServers;
-                        cachedServers.set(holder.inDatPathSlot, server);
-                        Server.saveToServersDat(cachedServers, holder.fromServersDatFilePath);
-                    }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            runInFX(() -> Controllers.dialog(new EditServerPane(EditServerPane.Type.EDIT, item.server, (server) -> {
+                if (!server.equals(item.server)) {
+                    Task.supplyAsync(Schedulers.io(), () -> {
+                        ServerStorage storage = item.storageEntry.rootStorage();
+                        return storage.updateEntry(item.storageEntry, server);
+                    }).whenComplete(Schedulers.javafx(), (newEntry, exception) -> {
                         if (exception != null)
                             LOG.warning("Failed to save server data.", exception);
 
-                        refresh();
+                        if (newEntry == null) return;
+
+                        int index = serverListEntries.indexOf(item);
+                        if (index != -1) {
+                            serverListEntries.set(index, new ServerListItem(newEntry));
+                        }
+
+                        updateServerList();
                     }).start();
                 }
             })));
         }
     }
 
-    public void copyServerIp(ServerHolder holder) {
-        FXUtils.copyText(holder.server.getIp(), i18n("server.manage.copy.server.ip.ok.toast"));
+    public void copyServerIp(ServerListItem item) {
+        FXUtils.copyText(item.server.getIp(), i18n("server.manage.copy.server.ip.ok.toast"));
     }
 
-    public void delete(ServerHolder holder) {
+    public void delete(ServerListItem item) {
         Controllers.confirm(
                 i18n("button.remove.confirm"),
                 i18n("server.delete"),
-                () -> Task.runAsync(Schedulers.io(), () -> {
-                    List<Server> servers = holder.cachedServers;
-                    servers.remove(holder.inDatPathSlot);
-                    Server.saveToServersDat(servers, holder.fromServersDatFilePath);
-                }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                () -> Task.runAsync(Schedulers.io(), item.storageEntry::delete
+                ).whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception != null)
                         LOG.warning("Failed to save server data.", exception);
-
-                    refresh();
+                    serverListEntries.remove(item);
+                    updateServerList();
                 }).start(),
-
                 null
         );
     }
 
-    public void copyToInstance(ServerHolder holder) {
-        addServer(holder.server);
+    public void copyToInstance(ServerListItem item) {
+        addServer(item.server);
     }
 
     public void addServer(Server server) {
         HMCLGameInstance gameInstance = this.gameInstance;
         if (gameInstance == null) return;
 
-        Task.runAsync(Schedulers.io(), () -> {
-            Path serversDatFilePath = gameInstance.getServersDatFilePath();
-            List<Server> servers;
-            if (Files.exists(serversDatFilePath)) {
-                servers = Server.loadFromServersDat(serversDatFilePath);
-            } else {
-                servers = new ArrayList<>();
+        Task.supplyAsync(Schedulers.io(), () -> {
+            ServerStorage.ServerStorageEntry storageEntry;
+            synchronized (serversFileHandleLockObject) {
+                ServerStorage storage = serverStorageMap.get(gameInstance.getServersDatFilePath());
+                if (storage == null) {
+                    storage = new ServerStorage(gameInstance.getServersDatFilePath());
+                    storage.holdInstances.add(gameInstance);
+                }
+                storageEntry = storage.add(IconedServer.pack(server));
             }
-            servers.add(server);
-            Server.saveToServersDat(servers, serversDatFilePath);
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            return storageEntry;
+        }).whenComplete(Schedulers.javafx(), (storageEntry, exception) -> {
             if (exception != null)
                 LOG.warning("Failed to save server data.", exception);
 
-            refresh();
+            serverListEntries.add(new ServerListItem(storageEntry));
+            updateServerList();
         }).start();
     }
 
-    public void generateLaunchScript(ServerHolder holder) {
+    public void generateLaunchScript(ServerListItem item) {
         if (gameInstance != null) {
-            Instances.generateLaunchScriptForQuickConnectServer(gameInstance, holder.server.getIp());
+            Instances.generateLaunchScriptForQuickConnectServer(gameInstance, item.server.getIp());
         }
     }
 
-    public void loadInstance(HMCLGameInstance.Optional instance) {
-        this.gameInstance = instance.instance();
-        refresh();
-    }
-
     private void updateServerList() {
-        if (serverHolders == null || gameInstance == null) {
+        if (serverListEntries == null || gameInstance == null) {
             getItems().clear();
             return;
         }
 
-        var stream = serverHolders.stream();
+        var stream = serverListEntries.stream();
         if (!showAll.get()) {
-            stream = stream.filter(holder -> holder.fromServersDatFilePath.equals(gameInstance.getServersDatFilePath()));
+            stream = stream.filter(entry -> entry.storageEntry.getServerDatFilePath().equals(gameInstance.getServersDatFilePath()));
         }
         if (!showHide.get()) {
-            stream = stream.filter(holder -> !holder.server.isHidden());
+            stream = stream.filter(entry -> !entry.server.isHidden());
         }
 
         getItems().setAll(stream.toList());
     }
 
-    private void addServer() {
-        runInFX(() -> Controllers.dialog(new EditServerPane(EditServerPane.Type.ADD, null, this::addServer)));
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        this.gameInstance = instance.instance();
+        refresh();
     }
 
     private void refresh() {
@@ -212,42 +215,33 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
 
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
-            Map<Path, List<ServerHolder>> pathListMap = new LinkedHashMap<>();
-            for (HMCLGameInstance instance : gameInstance.getRepository().getSnapshot().getInstances()) {
-                if (pathListMap.containsKey(instance.getServersDatFilePath())) {
-                    for (ServerHolder holder : pathListMap.get(instance.getServersDatFilePath())) {
-                        holder.holdInstances.add(instance);
-                    }
-                } else {
-                    ArrayList<ServerHolder> holders = new ArrayList<>();
-                    pathListMap.put(instance.getServersDatFilePath(), holders);
+            synchronized (serversFileHandleLockObject) {
+                serverStorageMap.values().forEach(ServerStorage::invalid);
+                serverStorageMap.clear();
 
-                    if (Files.exists(instance.getServersDatFilePath())) {
+                for (HMCLGameInstance instance : gameInstance.getRepository().getSnapshot().getInstances()) {
+                    if (serverStorageMap.containsKey(instance.getServersDatFilePath())) {
+                        serverStorageMap.get(instance.getServersDatFilePath()).holdInstances.add(instance);
+                    } else {
                         try {
-                            List<Server> parsedServers = Server.loadFromServersDat(instance.getServersDatFilePath());
-                            for (int index = 0; index < parsedServers.size(); index++) {
-                                Server server = parsedServers.get(index);
-                                ServerHolder holder = new ServerHolder(instance.getServersDatFilePath(), parsedServers, index, IconedServer.pack(server));
-                                holder.holdInstances.add(instance);
-
-                                holders.add(holder);
-                            }
+                            ServerStorage storage = new ServerStorage(instance.getServersDatFilePath());
+                            storage.holdInstances.add(instance);
+                            serverStorageMap.put(instance.getServersDatFilePath(), storage);
                         } catch (IOException e) {
                             LOG.error("Failed to load servers from dat file: " + instance.getServersDatFilePath(), e);
                         }
                     }
                 }
+
+                return serverStorageMap.values().stream().flatMap(e -> e.storageEntries.stream()).map(ServerListItem::new).toList();
             }
-
-
-            return pathListMap.values().stream().flatMap(Collection::stream).toList();
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh) {
                 // A newer refresh task is running, discard this result
                 return;
             }
 
-            serverHolders = result;
+            serverListEntries = new ArrayList<>(result);
             updateServerList();
 
             if (exception != null)
@@ -257,7 +251,162 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         }).start();
     }
 
-    private static final class ServerListCell extends ListCell<ServerListPage.ServerHolder> {
+    private void addServer() {
+        runInFX(() -> Controllers.dialog(new EditServerPane(EditServerPane.Type.ADD, null, this::addServer)));
+    }
+
+    private static final class ServerStorage {
+        private final List<HMCLGameInstance> holdInstances = new ArrayList<>();
+        private final Path serverDatFilePath;
+        private final List<ServerStorageEntry> storageEntries;
+        private boolean storageValid = true;
+
+        private ServerStorage(Path serverDatFilePath) throws IOException {
+            this.serverDatFilePath = serverDatFilePath;
+
+            synchronized (serversFileHandleLockObject) {
+                if (Files.exists(serverDatFilePath)) {
+                    List<Server> servers = Server.loadFromServersDat(serverDatFilePath);
+                    storageEntries = new CopyOnWriteArrayList<>();
+                    for (Server server : servers) {
+                        ServerStorageEntry entry = new ServerStorageEntry(IconedServer.pack(server));
+                        storageEntries.add(entry);
+                    }
+                } else {
+                    storageEntries = new CopyOnWriteArrayList<>();
+                }
+            }
+        }
+
+        private void save() throws IOException {
+            synchronized (serversFileHandleLockObject) {
+                if (!storageValid) return;
+
+                Server.saveToServersDat(storageEntries.stream().map(e -> e.server).toList(), serverDatFilePath);
+            }
+        }
+
+        private void invalid() {
+            storageValid = false;
+        }
+
+        private void deleteEntry(ServerStorageEntry entry) throws IOException {
+            synchronized (serversFileHandleLockObject) {
+                if (!storageValid) return;
+                if (storageEntries.remove(entry)) {
+                    save();
+                }
+            }
+        }
+
+        private @Nullable ServerStorageEntry updateEntry(ServerStorageEntry entry, IconedServer newServer) throws IOException {
+            synchronized (serversFileHandleLockObject) {
+                if (!storageValid) return null;
+
+                int index = storageEntries.indexOf(entry);
+                if (index == -1) return null;
+
+                ServerStorageEntry newEntry = new ServerStorageEntry(newServer);
+                storageEntries.set(index, newEntry);
+
+                save();
+
+                return newEntry;
+            }
+        }
+
+        public @Nullable ServerStorageEntry add(IconedServer server) throws IOException {
+            synchronized (serversFileHandleLockObject) {
+                if (!storageValid) return null;
+                ServerStorageEntry entry = new ServerStorageEntry(IconedServer.pack(server));
+                storageEntries.add(entry);
+                save();
+                return entry;
+            }
+        }
+
+        public class ServerStorageEntry {
+            private final IconedServer server;
+
+            public ServerStorageEntry(IconedServer server) {
+                this.server = server;
+            }
+
+            private void delete() throws IOException {
+                ServerStorage.this.deleteEntry(this);
+            }
+
+            private ServerStorage rootStorage() {
+                return ServerStorage.this;
+            }
+
+            private Path getServerDatFilePath() {
+                return serverDatFilePath;
+            }
+        }
+    }
+
+    public static final class ServerListItem {
+        final @NotNull ServerListPage.ServerStorage.ServerStorageEntry storageEntry;
+        final @NotNull IconedServer server;
+
+        final @NotNull ObservableServerStatus observableServerStatus;
+
+        public ServerListItem(@NotNull ServerListPage.ServerStorage.ServerStorageEntry storageEntry) {
+            this(storageEntry, new ObservableServerStatus(storageEntry.server.getIp()));
+        }
+
+        public ServerListItem(@NotNull ServerListPage.ServerStorage.ServerStorageEntry storageEntry, @NotNull ObservableServerStatus observableServerStatus) {
+            this.storageEntry = storageEntry;
+            this.server = storageEntry.server;
+            this.observableServerStatus = observableServerStatus;
+        }
+    }
+
+    public static class IconedServer extends Server {
+        final Image iconImage;
+
+        public IconedServer(ServerPackStatus serverPackStatus, boolean hidden, @Nullable String icon, @Nullable String ip, @Nullable String name) {
+            super(serverPackStatus, hidden, icon, ip, name);
+
+            iconImage = parseImageOrDefault(icon);
+        }
+
+        public static IconedServer pack(Server server) {
+            if (server instanceof IconedServer) {
+                return (IconedServer) server;
+            }
+            return new IconedServer(
+                    server.getServerPackStatus(),
+                    server.isHidden(),
+                    server.getIcon(),
+                    server.getIp(),
+                    server.getName()
+            );
+        }
+
+        public static @NotNull Image parseImageOrDefault(@Nullable String imageBase64String) {
+            if (imageBase64String != null && !imageBase64String.isEmpty()) {
+                try (ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(imageBase64String))) {
+                    // png format.
+                    return FXUtils.loadImage(bais, "icon.png", 0, 0, true, true);
+                } catch (Exception e) {
+                    LOG.warning("Failed to decode server icon", e);
+                }
+            }
+            return FXUtils.newBuiltinImage("/assets/img/unknown_server.png");
+        }
+
+        public IconedServer withIcon(@Nullable String newIcon) {
+            return new IconedServer(getServerPackStatus(), isHidden(), newIcon, getIp(), getName());
+        }
+
+        public IconedServer withIpAndName(@Nullable String newIp, @Nullable String newName) {
+            return new IconedServer(getServerPackStatus(), isHidden(), getIcon(), newIp, newName);
+        }
+    }
+
+    private final class ServerListCell extends ListCell<ServerListItem> {
 
         private final ServerListPage page;
 
@@ -310,9 +459,9 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                 statusBtn = FXUtils.newToggleButton4(SVG.NONE);
                 statusBtn.managedProperty().bind(statusBtn.visibleProperty());
                 statusBtn.setOnAction(event -> {
-                    ServerHolder holder = getItem();
-                    if (holder != null)
-                        page.showServerStatus(holder);
+                    ServerListItem item = getItem();
+                    if (item != null)
+                        page.showServerStatus(item);
                 });
                 serverNetworkLatencyPane = new ServerNetworkLatencyPane();
 
@@ -327,26 +476,26 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                 right.getChildren().add(editBtn);
                 FXUtils.installFastTooltip(editBtn, i18n("server.manage.edit"));
                 editBtn.setOnAction(event -> {
-                    ServerHolder holder = getItem();
-                    if (holder != null)
-                        page.editServer(holder);
+                    ServerListItem item = getItem();
+                    if (item != null)
+                        page.editServer(item);
                 });
 
                 JFXButton launchBtn = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
                 right.getChildren().add(launchBtn);
                 FXUtils.installFastTooltip(launchBtn, i18n("instance.launch"));
                 launchBtn.setOnAction(event -> {
-                    ServerHolder holder = getItem();
-                    if (holder != null)
-                        page.launchAndEnterServer(holder);
+                    ServerListItem item = getItem();
+                    if (item != null)
+                        page.launchAndEnterServer(item);
                 });
 
                 JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
                 right.getChildren().add(btnMore);
                 btnMore.setOnAction(event -> {
-                    ServerHolder holder = getItem();
-                    if (holder != null)
-                        showPopupMenu(holder, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
+                    ServerListItem item = getItem();
+                    if (item != null)
+                        showPopupMenu(item, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
                 });
             }
 
@@ -355,22 +504,22 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                 if (event.getClickCount() != 1)
                     return;
 
-                ServerHolder holder = getItem();
-                if (holder == null)
+                ServerListItem item = getItem();
+                if (item == null)
                     return;
 
                 if (event.getButton() == MouseButton.SECONDARY)
-                    showPopupMenu(holder, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
+                    showPopupMenu(item, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
             });
         }
 
         @Override
-        protected void updateItem(ServerHolder holder, boolean empty) {
-            ServerHolder oldHolder = getItem();
+        protected void updateItem(ServerListItem item, boolean empty) {
+            ServerListItem oldItem = getItem();
             boolean oldEmpty = isEmpty();
 
-            super.updateItem(holder, empty);
-            if (oldHolder == holder && oldEmpty == empty) return;
+            super.updateItem(item, empty);
+            if (oldItem == item && oldEmpty == empty) return;
 
             if (serverStatusPingingValueSubscription != null) {
                 serverStatusPingingValueSubscription.unsubscribe();
@@ -384,55 +533,55 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
             this.graphic.releaseRippleImmediately();
             this.contentLine1.getTags().clear();
 
-            if (empty || holder == null) {
+            if (empty || item == null) {
                 setGraphic(null);
                 serverIcon.setImage(null);
                 contentLine1.setTitle("");
-                serverNetworkLatencyPane.error();
+//                serverNetworkLatencyPane.error();
                 statusBtnTooltip.setText("");
                 contentLine2AddressMaskPane.set("");
             } else {
-                serverIcon.setImage(holder.server.iconImage);
-                contentLine1.setTitle(holder.server.getName() != null ? parseColorEscapes(holder.server.getName()) : "");
+                serverIcon.setImage(item.server.iconImage);
+                contentLine1.setTitle(item.server.getName() != null ? parseColorEscapes(item.server.getName()) : "");
 
-                contentLine2AddressMaskPane.set(holder.server.getIp());
+                contentLine2AddressMaskPane.set(item.server.getIp());
 
-                if (holder.server.isHidden()) {
+                if (item.server.isHidden()) {
                     contentLine1.addTag(i18n("server.tag.hide"));
                 }
 
-                if (holder.holdInstances.contains(page.gameInstance)) {
+                if (item.storageEntry.rootStorage().holdInstances.contains(page.gameInstance)) {
                     contentLine1.addTag(i18n("server.tag.hold.current"));
-                    holder.holdInstances.stream()
+                    item.storageEntry.rootStorage().holdInstances.stream()
                             .filter(e -> !e.equals(page.gameInstance))
                             .map(gameInstance -> gameInstance.getId().id())
                             .forEach(contentLine1::addTag);
                 } else {
-                    holder.holdInstances.stream()
+                    item.storageEntry.rootStorage().holdInstances.stream()
                             .map(gameInstance -> gameInstance.getId().id())
                             .forEach(contentLine1::addTag);
                 }
 
                 setGraphic(graphic);
 
-                holder.observableServerStatus.refreshIfNoResultAsync(false);
+                item.observableServerStatus.refreshIfNoResultAsync(false);
 
-                applyServerStatusResult(holder, holder.observableServerStatus.resultProperty().get());
-                serverStatusResultValueSubscription = holder.observableServerStatus.resultProperty().subscribe(result -> applyServerStatusResult(holder, result));
+                applyServerStatusResult(item, item.observableServerStatus.resultProperty().get());
+                serverStatusResultValueSubscription = item.observableServerStatus.resultProperty().subscribe(result -> applyServerStatusResult(item, result));
 
-                applyServerPinging(holder, holder.observableServerStatus.pingingProperty().get());
-                serverStatusPingingValueSubscription = holder.observableServerStatus.pingingProperty().subscribe(pinging -> applyServerPinging(holder, pinging));
+                applyServerPinging(item, item.observableServerStatus.pingingProperty().get());
+                serverStatusPingingValueSubscription = item.observableServerStatus.pingingProperty().subscribe(pinging -> applyServerPinging(item, pinging));
             }
         }
 
-        private void applyServerPinging(ServerHolder holder, boolean pinging) {
+        private void applyServerPinging(ServerListItem item, boolean pinging) {
             if (pinging) {
                 serverNetworkLatencyPane.ping();
                 statusBtnTooltip.setText(i18n("server.manage.status.outside.pinging"));
             }
         }
 
-        private void applyServerStatusResult(ServerHolder holder, ServerStatusResult result) {
+        private void applyServerStatusResult(ServerListItem item, ServerStatusResult result) {
             if (result == null) {
                 // pinging..., skip
                 return;
@@ -451,24 +600,33 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                 statusBtnTooltip.setText(i18n("server.manage.status.outside.pong", String.format("%,d", serverStatus.networkLatency())));
                 // update latest server icon
                 serverIcon.setImage(IconedServer.parseImageOrDefault(serverStatus.favicon()));
-//                if (!Objects.equals(serverStatus.favicon(), holder.server.getIcon())) {
-//                    // save latest icon
-//                    Task.runAsync(Schedulers.io(), () -> {
-//                        try {
-//                            IconedServer newServer = holder.server.withIcon(serverStatus.favicon());
-//                            holder.cachedServers.set(holder.inDatPathSlot, newServer);
-//                            Server.saveToServersDat(holder.cachedServers, holder.fromServersDatFilePath);
-//                        } catch (Exception e) {
-//                            LOG.error("Failed to save servers dat", e);
-//                        }
-//                    }).start();
-//                }
+
+                if (!Objects.equals(serverStatus.favicon(), item.server.getIcon())) {
+                    // save latest icon
+                    Task.supplyAsync(Schedulers.io(), () -> {
+                        IconedServer newServer = item.server.withIcon(serverStatus.favicon());
+                        ServerStorage storage = item.storageEntry.rootStorage();
+                        return storage.updateEntry(item.storageEntry, newServer);
+                    }).whenComplete(Schedulers.javafx(), (newEntry, exception) -> {
+                        if (exception != null)
+                            LOG.warning("Failed to save server data.", exception);
+
+                        if (newEntry == null) return;
+
+                        int index = serverListEntries.indexOf(item);
+                        if (index != -1) {
+                            serverListEntries.set(index, new ServerListItem(newEntry, item.observableServerStatus));
+                        }
+
+                        updateServerList();
+                    }).start();
+                }
             }
         }
 
         // Popup Menu
 
-        public void showPopupMenu(ServerListPage.ServerHolder holder, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
+        public void showPopupMenu(ServerListPage.ServerListItem holder, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
 
@@ -498,7 +656,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
                     )
             );
             if (page.gameInstance != null) {
-                copyToInstanceMEnuItem.setDisable(holder.fromServersDatFilePath.equals(page.gameInstance.getServersDatFilePath()));
+                copyToInstanceMEnuItem.setDisable(holder.storageEntry.getServerDatFilePath().equals(page.gameInstance.getServersDatFilePath()));
             }
 
             JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
@@ -506,68 +664,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         }
     }
 
-    public static class IconedServer extends Server {
-        final Image iconImage;
-
-        public IconedServer(ServerPackStatus serverPackStatus, boolean hidden, @Nullable String icon, @Nullable String ip, @Nullable String name) {
-            super(serverPackStatus, hidden, icon, ip, name);
-
-            iconImage = parseImageOrDefault(icon);
-        }
-
-        public static IconedServer pack(Server server) {
-            if (server instanceof IconedServer) {
-                return (IconedServer) server;
-            }
-            return new IconedServer(
-                    server.getServerPackStatus(),
-                    server.isHidden(),
-                    server.getIcon(),
-                    server.getIp(),
-                    server.getName()
-            );
-        }
-
-        public IconedServer withIcon(@Nullable String newIcon) {
-            return new IconedServer(getServerPackStatus(), isHidden(), newIcon, getIp(), getName());
-        }
-
-        public IconedServer withIpAndName(@Nullable String newIp, @Nullable String newName) {
-            return new IconedServer(getServerPackStatus(), isHidden(), getIcon(), newIp, newName);
-        }
-
-        public static @NotNull Image parseImageOrDefault(@Nullable String imageBase64String) {
-            if (imageBase64String != null && !imageBase64String.isEmpty()) {
-                try (ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(imageBase64String))) {
-                    // png format.
-                    return FXUtils.loadImage(bais, "icon.png", 0, 0, true, true);
-                } catch (Exception e) {
-                    LOG.warning("Failed to decode server icon", e);
-                }
-            }
-            return FXUtils.newBuiltinImage("/assets/img/unknown_server.png");
-        }
-    }
-
-    public static final class ServerHolder {
-        final @NotNull List<GameInstance> holdInstances = new ArrayList<>();
-        final @NotNull Path fromServersDatFilePath;
-        final @NotNull List<Server> cachedServers;
-        final int inDatPathSlot;
-        final @NotNull IconedServer server;
-
-        final @NotNull ObservableServerStatus observableServerStatus;
-
-        public ServerHolder(@NotNull Path fromServersDatFilePath, @NotNull List<Server> cachedServers, int inDatPathSlot, @NotNull IconedServer server) {
-            this.fromServersDatFilePath = fromServersDatFilePath;
-            this.inDatPathSlot = inDatPathSlot;
-            this.cachedServers = cachedServers;
-            this.server = server;
-            this.observableServerStatus = new ObservableServerStatus(server.getIp());
-        }
-    }
-
-    private final class ServerListPageSkin extends ToolbarListPageSkin<ServerListPage.ServerHolder, ServerListPage> {
+    private final class ServerListPageSkin extends ToolbarListPageSkin<ServerListPage.ServerListItem, ServerListPage> {
 
         ServerListPageSkin() {
             super(ServerListPage.this);
@@ -596,7 +693,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerHolder> {
         }
 
         @Override
-        protected ListCell<ServerListPage.ServerHolder> createListCell(JFXListView<ServerListPage.ServerHolder> listView) {
+        protected ListCell<ServerListPage.ServerListItem> createListCell(JFXListView<ServerListPage.ServerListItem> listView) {
             return new ServerListCell(getSkinnable());
         }
     }

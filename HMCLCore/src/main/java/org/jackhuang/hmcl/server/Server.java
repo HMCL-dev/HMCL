@@ -76,7 +76,7 @@ public class Server {
         return servers;
     }
 
-    public static void saveToServersDat(@NotNull List<Server> servers, @NotNull Path file) throws IOException {
+    public static <T extends Server> void saveToServersDat(@NotNull List<T> servers, @NotNull Path file) throws IOException {
         ListTag<CompoundTag> tag = new ListTag<>();
         for (Server server : servers) {
             CompoundTag serverTag = new CompoundTag();
