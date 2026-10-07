@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,28 +54,37 @@ public class AddonUpdateTask extends Task<Void> {
             Path targetFile = addonDirectory.resolve(newFileName);
 
             dependents.add(Task
-                    .runAsync(Schedulers.javafx(), () -> local.setOld(true))
-                    .thenComposeAsync(() ->
-                            new FileDownloadTask(downloadProvider.getDownloadCandidates(remote.file().url()), targetFile).setName(remote.name())
-                    ).whenComplete(Schedulers.javafx(), exception -> {
-                        if (exception != null) {
-                            // restore state if failed
-                            local.setOld(false);
-                            if (isDisabled)
-                                local.markDisabled();
-                            failedAddons.add(local);
-                        } else {
-                            local.onUpdated(newFileName);
-                            if (!local.keepOldFiles()) {
-                                try {
-                                    local.delete();
-                                } catch (IOException e) {
-                                    LOG.warning("Failed to delete outdated addon: " + local.getFile(), e);
-                                }
-                            }
-                        }
-                    })
-                    .withCounter("addon.check_update.confirm"));
+                    .supplyAsync(Schedulers.io(), () -> Files.createTempFile("hmcl-addon-update-", ".tmp"))
+                    // By the time these tasks are executed, tempFile should always hold a value
+                    .thenComposeAsync(tempFile ->
+                            new FileDownloadTask(downloadProvider.getDownloadCandidates(remote.file().url()), tempFile)
+                                    .setName(remote.name())
+                                    .thenRunAsync(Schedulers.javafx(), () -> local.setOld(true))
+                                    .thenRunAsync(Schedulers.io(), () -> Files.move(tempFile, targetFile))
+                                    .whenComplete(Schedulers.javafx(), exception -> {
+                                        try {
+                                            Files.deleteIfExists(tempFile);
+                                        } catch (Exception e) {
+                                            LOG.warning("Failed to delete temp file " + tempFile, e);
+                                        }
+                                        if (exception != null) {
+                                            // restore state if failed
+                                            local.setOld(false);
+                                            if (isDisabled)
+                                                local.markDisabled();
+                                            failedAddons.add(local);
+                                        } else {
+                                            local.onUpdated(newFileName);
+                                            if (!local.keepOldFiles()) {
+                                                try {
+                                                    local.delete();
+                                                } catch (IOException e) {
+                                                    LOG.warning("Failed to delete outdated addon: " + local.getFile(), e);
+                                                }
+                                            }
+                                        }
+                                    })
+                    ).withCounter("addon.check_update.confirm"));
         }
     }
 
