@@ -21,6 +21,8 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.BooleanBinding;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -53,13 +55,15 @@ public class EditServerPane extends TransitionPane implements DialogAware {
     private final ServerListPage.IconedServer reference;
     private final Type type;
     private final GridPane body = new GridPane();
-    private final JFXTextField txtServerName = new JFXTextField();
-    private final JFXTextField txtServerIP = new JFXTextField();
+    private final JFXTextField serverNameField = new JFXTextField();
+    private final JFXTextField serverIpField = new JFXTextField();
 
     private final JFXButton btnAccept = new JFXButton();
     private final JFXButton btnCancel = new JFXButton();
     private final SpinnerPane spinner = new SpinnerPane();
-    private final Label lblErrorMessage = new Label();
+    private final Label lblErrorLabel = new Label();
+
+    private final SimpleBooleanProperty stillActionProgress = new SimpleBooleanProperty(false);
 
     public EditServerPane(Type type, @Nullable ServerListPage.IconedServer reference, Consumer<ServerListPage.IconedServer> handleCallback) {
         this.type = type;
@@ -67,21 +71,21 @@ public class EditServerPane extends TransitionPane implements DialogAware {
         this.handleCallback = handleCallback;
 
         getStyleClass().add("skin-pane");
-        if (reference != null) {
-            initPaneContents(reference.getName(), reference.getIp());
-        } else {
-            initPaneContents("", "");
-        }
-    }
 
-    private void initPaneContents(String serverName, String serverIP) {
-        body.setDisable(false);
-        body.getChildren().clear();
-        body.getColumnConstraints().clear();
-        lblErrorMessage.setText("");
+
+        String referenceServerName;
+        String referenceServerIP;
+        if (reference != null) {
+            referenceServerName = reference.getName();
+            referenceServerIP = reference.getIp();
+        } else {
+            referenceServerName = null;
+            referenceServerIP = null;
+        }
 
         JFXDialogLayout rootLayout = new JFXDialogLayout();
         getChildren().setAll(rootLayout);
+
         rootLayout.setHeading(new Label(switch (type) {
                 case EDIT -> i18n("server.manage.edit.head");
                 case ADD -> i18n("server.manage.add.head");
@@ -102,6 +106,7 @@ public class EditServerPane extends TransitionPane implements DialogAware {
         col1.setHgrow(Priority.ALWAYS);
         body.getColumnConstraints().add(col1);
 
+
         // server name
         {
             Label label = new Label();
@@ -109,17 +114,17 @@ public class EditServerPane extends TransitionPane implements DialogAware {
             GridPane.setHalignment(label, HPos.LEFT);
             body.add(label, 0, 0);
 
-            txtServerName.setPromptText(i18n("server.name.def"));
-            txtServerName.setTextFormatter(new TextFormatter<>(change -> {
+            serverNameField.setPromptText(i18n("server.name.def"));
+            serverNameField.setTextFormatter(new TextFormatter<>(change -> {
                 if (change.getControlNewText().length() <= 32) {
                     return change;
                 }
                 return null;
             }));
-            body.add(txtServerName, 1, 0);
+            body.add(serverNameField, 1, 0);
 
-            if (serverName != null) {
-                txtServerName.setText(serverName);
+            if (referenceServerName != null) {
+                serverNameField.setText(referenceServerName);
             }
         }
 
@@ -130,12 +135,12 @@ public class EditServerPane extends TransitionPane implements DialogAware {
             GridPane.setHalignment(label, HPos.LEFT);
             body.add(label, 0, 1);
 
-            txtServerIP.setValidators(new RequiredValidator());
-            setValidateWhileTextChanged(txtServerIP, true);
-            body.add(txtServerIP, 1, 1);
+            serverIpField.setValidators(new RequiredValidator());
+            setValidateWhileTextChanged(serverIpField, true);
+            body.add(serverIpField, 1, 1);
 
-            if (serverIP != null) {
-                txtServerIP.setText(serverIP);
+            if (referenceServerIP != null) {
+                serverIpField.setText(referenceServerIP);
             }
         }
 
@@ -147,24 +152,22 @@ public class EditServerPane extends TransitionPane implements DialogAware {
             case ADD -> i18n("server.manage.add.accept");
         });
         btnAccept.getStyleClass().add("dialog-accept");
-        btnAccept.setOnAction(e -> onAdd());
         btnAccept.disableProperty().bind(new BooleanBinding() {
             {
-                bind(txtServerIP.textProperty());
+                bind(serverIpField.textProperty());
             }
 
             @Override
             protected boolean computeValue() {
-                return !txtServerIP.validate();
+                return !serverIpField.validate();
             }
         });
 
-        lblErrorMessage.setWrapText(true);
-        lblErrorMessage.setMaxWidth(400);
+        lblErrorLabel.setWrapText(true);
+        lblErrorLabel.setMaxWidth(400);
 
         btnCancel.setText(i18n("button.cancel"));
         btnCancel.getStyleClass().add("dialog-cancel");
-        btnCancel.setOnAction(e -> onCancel());
         onEscPressed(this, btnCancel::fire);
 
         spinner.getStyleClass().add("small-spinner-pane");
@@ -173,21 +176,66 @@ public class EditServerPane extends TransitionPane implements DialogAware {
         HBox actions = new HBox(spinner, btnCancel);
         actions.setAlignment(Pos.CENTER_RIGHT);
 
-        rootLayout.setActions(lblErrorMessage, actions);
+        rootLayout.setActions(lblErrorLabel, actions);
+
+        btnCancel.setOnAction(e -> onCancel());
+        btnAccept.setOnAction(ignored -> {
+            String serverIPText = serverIpField.getText();
+            String serverNameText = serverNameField.getText();
+
+            if (!stillActionProgress.get()) {
+                onAdd();
+                return;
+            }
+
+            fireEvent(new DialogCloseEvent());
+            if (reference != null) {
+                handleCallback.accept(reference.withIpAndName(serverIPText, serverNameText));
+            } else {
+                handleCallback.accept(new ServerListPage.IconedServer(Server.ServerPackStatus.PROMPT, false, null, serverIPText, serverNameText));
+            }
+        });
+
+        ChangeListener<String> contentChangeListener = (ignored0, ignored1, ignored2) -> {
+            if (stillActionProgress.get()) {
+                hideStillAction();
+            }
+        };
+//        serverNameField.textProperty().addListener(contentChangeListener);
+        serverIpField.textProperty().addListener(contentChangeListener);
+    }
+
+    private void showStillAction(String errorMessage) {
+        stillActionProgress.set(true);
+        lblErrorLabel.setText(errorMessage);
+        btnAccept.setText(switch (type) {
+            case EDIT -> i18n("server.manage.edit.still");
+            case ADD -> i18n("server.manage.add.still");
+        });
+    }
+
+    private void hideStillAction() {
+        stillActionProgress.set(false);
+        lblErrorLabel.setText("");
+        btnAccept.setText(switch (type) {
+            case EDIT -> i18n("server.manage.edit.accept");
+            case ADD -> i18n("server.manage.add.accept");
+        });
     }
 
     private void onAdd() {
         String serverName;
-        String serverIP = txtServerIP.getText();
+        String serverIP = serverIpField.getText();
         if (serverIP == null) return;
-        if (txtServerName.getText() == null || txtServerName.getText().isEmpty()) {
+        if (serverNameField.getText() == null || serverNameField.getText().isEmpty()) {
             serverName = i18n("server.name.def");
         } else {
-            serverName = txtServerName.getText();
+            serverName = serverNameField.getText();
         }
 
         body.setDisable(true);
         spinner.showSpinner();
+
         Task.supplyAsync(Schedulers.io(), () ->
                 ServerStatusPinger.getStatus(serverIP)
         ).whenComplete(Schedulers.javafx(), (result, ignored) -> {
@@ -195,23 +243,10 @@ public class EditServerPane extends TransitionPane implements DialogAware {
             ServerStatus status = result.getIfSucceed();
             if (status == null) {
                 spinner.hideSpinner();
-                btnAccept.setText(switch (type) {
-                    case EDIT -> i18n("server.manage.edit.still");
-                    case ADD -> i18n("server.manage.add.still");
-                });
-                btnAccept.setOnAction(e -> {
-                    fireEvent(new DialogCloseEvent());
-                    if (reference != null) {
-                        handleCallback.accept(reference.withIpAndName(serverIP, serverName));
-                    } else {
-                        handleCallback.accept(new ServerListPage.IconedServer(Server.ServerPackStatus.PROMPT, false, null, serverIP, serverName));
-                    }
-                });
-                btnCancel.setOnAction(e -> {
-                    initPaneContents(serverName, serverIP);
-                });
+                body.setDisable(false);
+
                 ServerStatusResult.FailureResult.Reason reason = result.getFailureReasonIfFailed();
-                lblErrorMessage.setText(switch (Objects.requireNonNull(reason)) {
+                showStillAction(switch (Objects.requireNonNull(reason)) {
                     case EXCEPTION -> i18n("server.manage.status.error");
                     case UNKNOWN_HOST -> i18n("server.manage.status.error.unknownhost");
                     case BLOCKED_BY_MOJANG -> i18n("server.manage.status.error.blocked");
@@ -238,6 +273,6 @@ public class EditServerPane extends TransitionPane implements DialogAware {
 
     @Override
     public void onDialogShown() {
-        txtServerName.requestFocus();
+        serverNameField.requestFocus();
     }
 }
