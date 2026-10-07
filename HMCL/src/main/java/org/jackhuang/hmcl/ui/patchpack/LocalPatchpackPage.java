@@ -112,11 +112,11 @@ public final class LocalPatchpackPage extends SpinnerPane implements WizardPage 
 
             var config = readModpackConfiguration(controller);
 
-            @Nullable LineTextPane versionPane = createVersionPane(info, config != null ? config.getVersion() : null);
-            if (versionPane != null) componentList.getContent().add(versionPane);
-
             @Nullable LineTextPane namePane = createNamePane(info, config != null ? config.getName() : this.controller.getSettings().get(PatchpackInstallWizardProvider.INSTANCE_ID).id());
             if (namePane != null) componentList.getContent().add(namePane);
+
+            @Nullable LineTextPane versionPane = createVersionPane(info, config != null ? config.getVersion() : null);
+            if (versionPane != null) componentList.getContent().add(versionPane);
 
             componentList.getContent().add(buttons);
 
