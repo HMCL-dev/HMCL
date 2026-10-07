@@ -180,19 +180,25 @@ public class EditServerPane extends TransitionPane implements DialogAware {
 
         btnCancel.setOnAction(e -> onCancel());
         btnAccept.setOnAction(ignored -> {
-            String serverIPText = serverIpField.getText();
-            String serverNameText = serverNameField.getText();
+            String serverName;
+            String serverIP = serverIpField.getText();
+            if (serverIP == null) return;
+            if (serverNameField.getText() == null || serverNameField.getText().isEmpty()) {
+                serverName = i18n("server.name.def");
+            } else {
+                serverName = serverNameField.getText();
+            }
 
             if (!stillActionProgress.get()) {
-                onAdd();
+                onAdd(serverName, serverIP);
                 return;
             }
 
             fireEvent(new DialogCloseEvent());
             if (reference != null) {
-                handleCallback.accept(reference.withIpAndName(serverIPText, serverNameText));
+                handleCallback.accept(reference.withIpAndName(serverIP, serverName));
             } else {
-                handleCallback.accept(new ServerListPage.IconedServer(Server.ServerPackStatus.PROMPT, false, null, serverIPText, serverNameText));
+                handleCallback.accept(new ServerListPage.IconedServer(Server.ServerPackStatus.PROMPT, false, null, serverIP, serverName));
             }
         });
 
@@ -223,16 +229,7 @@ public class EditServerPane extends TransitionPane implements DialogAware {
         });
     }
 
-    private void onAdd() {
-        String serverName;
-        String serverIP = serverIpField.getText();
-        if (serverIP == null) return;
-        if (serverNameField.getText() == null || serverNameField.getText().isEmpty()) {
-            serverName = i18n("server.name.def");
-        } else {
-            serverName = serverNameField.getText();
-        }
-
+    private void onAdd(String serverName, String serverIP) {
         body.setDisable(true);
         spinner.showSpinner();
 
