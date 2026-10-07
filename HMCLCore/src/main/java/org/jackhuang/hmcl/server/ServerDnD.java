@@ -73,6 +73,7 @@ public final class ServerDnD {
 
         int index = url.indexOf(":");
         if (index == -1) return Optional.empty();
+        if (!SCHEME.equals(url.substring(0, index))) return Optional.empty();
         try {
             JsonObject object = JsonParser.parseString(new String(Base64.getDecoder().decode(url.substring(index + 1)), StandardCharsets.UTF_8)).getAsJsonObject();
             String favicon = null;
