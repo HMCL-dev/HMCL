@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.addon.update;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -34,14 +35,13 @@ import java.util.List;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AddonUpdateTask extends Task<Void> {
-    private final Collection<Task<?>> dependents;
+    private final Collection<Task<?>> dependents = new ArrayList<>();
     private final List<LocalAddonFile> failedAddons = new ArrayList<>();
 
-    public AddonUpdateTask(Path addonDirectory, List<AddonUpdate> addons) {
+    public AddonUpdateTask(DownloadProvider downloadProvider, Path addonDirectory, List<AddonUpdate> addons) {
         setStage("addon.check_update.confirm");
         getProperties().put("total", addons.size());
 
-        this.dependents = new ArrayList<>();
         for (AddonUpdate addon : addons) {
             LocalAddonFile local = addon.localAddonFile();
             RemoteAddon.Version remote = addon.targetVersion();
@@ -50,11 +50,12 @@ public class AddonUpdateTask extends Task<Void> {
             if (isDisabled)
                 fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
             String newFileName = fileName;
+            Path targetFile = addonDirectory.resolve(newFileName);
 
             dependents.add(Task
                     .runAsync(Schedulers.javafx(), () -> local.setOld(true))
                     .thenComposeAsync(() ->
-                            new FileDownloadTask(remote.file().url(), addonDirectory.resolve(newFileName)).setName(remote.name())
+                            new FileDownloadTask(downloadProvider.getDownloadCandidates(remote.file().url()), targetFile).setName(remote.name())
                     ).whenComplete(Schedulers.javafx(), exception -> {
                         if (exception != null) {
                             // restore state if failed
