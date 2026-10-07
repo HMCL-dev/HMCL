@@ -17,7 +17,8 @@
  */
 package org.jackhuang.hmcl.addon;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -28,10 +29,14 @@ public record AddonUpdate(
         RemoteAddon.Version targetVersion
 ) {
 
-    @SuppressWarnings("RedundantRecordConstructor")
-    public record UpdateConditions(RemoteAddon.Type type, @Nullable List<Predicate<RemoteAddon.Version>> predicates) {
+    public record UpdateConditions(@NotNull @Unmodifiable List<Predicate<RemoteAddon.Version>> predicates) {
         public UpdateConditions {
+            predicates = List.copyOf(predicates);
+        }
+
+        @SafeVarargs
+        public UpdateConditions(Predicate<RemoteAddon.Version>... predicates) {
+            this(List.of(predicates));
         }
     }
-
 }

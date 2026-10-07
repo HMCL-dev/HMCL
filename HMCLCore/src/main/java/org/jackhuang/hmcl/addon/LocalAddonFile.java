@@ -62,19 +62,17 @@ public abstract class LocalAddonFile {
         var conditions = getUpdateConditions();
         if (conditions == null) return null;
 
-        RemoteAddonRepository repository = source.getRepoForType(conditions.type());
-        if (repository == null) return null;
-        Optional<RemoteAddon.Version> currentVersion = repository.getRemoteVersionByLocalFile(getFile());
+        RemoteAddonRepository repo = source.getRepository();
+        Optional<RemoteAddon.Version> currentVersion = repo.getRemoteVersionByLocalFile(getFile());
         if (currentVersion.isEmpty()) return null;
         var current = currentVersion.orElseThrow();
 
-        var stream = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().projectId())
+        var stream = repo.getRemoteVersionsById(downloadProvider, currentVersion.get().projectId())
                 .filter(version -> version.gameVersions().contains(gameVersion));
         if (current.gameVersions().contains(gameVersion)) // Otherwise it means we are upgrading from another game version
             stream = stream.filter(version -> version.datePublished().isAfter(current.datePublished()));
-        if (conditions.predicates() != null)
-            for (var p : conditions.predicates())
-                stream = stream.filter(p);
+        for (var p : conditions.predicates())
+            stream = stream.filter(p);
 
         List<RemoteAddon.Version> remoteVersions = stream.sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed()).toList();
         if (remoteVersions.isEmpty()) return null;

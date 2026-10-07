@@ -19,16 +19,17 @@ package org.jackhuang.hmcl.addon.mod;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonUpdate;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
-import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -195,7 +196,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
 
     @Override
     protected AddonUpdate.UpdateConditions getUpdateConditions() {
-        return new AddonUpdate.UpdateConditions(RemoteAddon.Type.MOD, List.of(v -> v.loaders().stream().anyMatch(it -> it.type() == getModLoaderType())));
+        return new AddonUpdate.UpdateConditions(v -> v.loaders().stream().map(AddonLoader::type).collect(Collectors.toSet()).contains(getModLoaderType()));
     }
 
     @Override
