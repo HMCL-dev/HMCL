@@ -175,11 +175,14 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
             }
             return storageEntry;
         }).whenComplete(Schedulers.javafx(), (storageEntry, exception) -> {
-            if (exception != null)
+            if (exception != null) {
                 LOG.warning("Failed to save server data.", exception);
+            }
 
-            serverListEntries.add(new ServerListItem(storageEntry));
-            updateServerList();
+            if (storageEntry != null) {
+                serverListEntries.add(new ServerListItem(storageEntry));
+                updateServerList();
+            }
         }).start();
     }
 
