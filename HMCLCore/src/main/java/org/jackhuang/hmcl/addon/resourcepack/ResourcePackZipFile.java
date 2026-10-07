@@ -81,8 +81,8 @@ final class ResourcePackZipFile extends ResourcePackFile {
     }
 
     @Override
-    protected AddonUpdate.UpdateConditions getUpdateConditions() {
-        return new AddonUpdate.UpdateConditions();
+    protected AddonUpdate.TargetVersionRestrictions getTargetVersionRestrictions() {
+        return new AddonUpdate.TargetVersionRestrictions();
     }
 
     @Override

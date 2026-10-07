@@ -51,16 +51,17 @@ public abstract class LocalAddonFile {
 
     public abstract void delete() throws IOException;
 
+    /// @return the update target version restrictions for this addon file, or null if not upgradable.
     @Nullable
-    protected AddonUpdate.UpdateConditions getUpdateConditions() {
+    protected AddonUpdate.TargetVersionRestrictions getTargetVersionRestrictions() {
         return null;
     }
 
     /// @return A pair of addon update info, the first for all versions and the second for release versions only (might be null).
     @Nullable
     public Pair<AddonUpdate, @Nullable AddonUpdate> checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
-        var conditions = getUpdateConditions();
-        if (conditions == null) return null;
+        var restrictions = getTargetVersionRestrictions();
+        if (restrictions == null) return null;
 
         RemoteAddonRepository repo = source.getRepository();
         Optional<RemoteAddon.Version> currentVersion = repo.getRemoteVersionByLocalFile(getFile());
@@ -71,7 +72,7 @@ public abstract class LocalAddonFile {
                 .filter(version -> version.gameVersions().contains(gameVersion));
         if (current.gameVersions().contains(gameVersion)) // Otherwise it means we are upgrading from another game version
             stream = stream.filter(version -> version.datePublished().isAfter(current.datePublished()));
-        for (var p : conditions.predicates())
+        for (var p : restrictions.predicates())
             stream = stream.filter(p);
 
         List<RemoteAddon.Version> remoteVersions = stream.sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed()).toList();

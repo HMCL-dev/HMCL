@@ -29,13 +29,17 @@ public record AddonUpdate(
         RemoteAddon.Version targetVersion
 ) {
 
-    public record UpdateConditions(@NotNull @Unmodifiable List<Predicate<RemoteAddon.Version>> predicates) {
-        public UpdateConditions {
+    ///
+    /// @param predicates conditions that the remote version must satisfy to become a valid target.
+    ///
+    ///                   If empty, all remote versions that satisfy the fundamental conditions are considered valid targets to upgrade to.
+    public record TargetVersionRestrictions(@NotNull @Unmodifiable List<Predicate<RemoteAddon.Version>> predicates) {
+        public TargetVersionRestrictions {
             predicates = List.copyOf(predicates);
         }
 
         @SafeVarargs
-        public UpdateConditions(Predicate<RemoteAddon.Version>... predicates) {
+        public TargetVersionRestrictions(Predicate<RemoteAddon.Version>... predicates) {
             this(List.of(predicates));
         }
     }
