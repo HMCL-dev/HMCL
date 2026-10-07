@@ -18,15 +18,20 @@
 package org.jackhuang.hmcl.ui.instances.server;
 
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ServerAddressMaskPane extends HBox {
-    public final Label atLabel = new Label();
-    public final Label realServerLabel = new Label();
-    public final Label queryLabel = new Label();
+    private final Label atLabel = new Label();
+    private final Label realServerLabel = new Label();
+    private final Label queryLabel = new Label();
+
+    private final Tooltip atLabelTooltip = new Tooltip();
+    private final Tooltip queryLabelTooltip = new Tooltip();
 
     public ServerAddressMaskPane(@Nullable String serverIP) {
         queryLabel.setOpacity(0.3);
@@ -39,10 +44,13 @@ public class ServerAddressMaskPane extends HBox {
         getChildren().add(atLabel);
         getChildren().add(realServerLabel);
         getChildren().add(queryLabel);
+
+        FXUtils.installFastTooltip(atLabel, atLabelTooltip);
+        FXUtils.installFastTooltip(queryLabel, queryLabelTooltip);
         set(serverIP);
     }
 
-    public static void installMask(@NotNull Label label, String text) {
+    public static void installMask(@NotNull Label label, Tooltip tooltip, String text) {
         int length = text.length();
         StringBuilder maskBuilder = new StringBuilder();
         for (int i = 0; i < length; i++) {
@@ -56,33 +64,30 @@ public class ServerAddressMaskPane extends HBox {
         String mask = maskBuilder.toString();
 
         label.setText(mask);
-
-        label.hoverProperty().addListener((obs, wasHover, isHover) -> {
-            label.setText(isHover ? text : mask);
-        });
+        tooltip.setText(text);
     }
 
     public void set(@Nullable String serverIP) {
         if (serverIP == null) {
             realServerLabel.setText("");
-            installMask(atLabel, "");
-            installMask(queryLabel, "");
+            installMask(atLabel, atLabelTooltip, "");
+            installMask(queryLabel, queryLabelTooltip, "");
             return;
         }
         int queryStart = serverIP.lastIndexOf('?');
         if (queryStart != -1) {
-            installMask(queryLabel, serverIP.substring(queryStart));
+            installMask(queryLabel, queryLabelTooltip, serverIP.substring(queryStart));
             serverIP = serverIP.substring(0, queryStart);
         } else {
-            installMask(queryLabel, "");
+            installMask(queryLabel, queryLabelTooltip, "");
         }
 
         int atEnd = serverIP.indexOf('@');
         if (atEnd != -1) {
-            installMask(atLabel, serverIP.substring(0, atEnd + 1));
+            installMask(atLabel, atLabelTooltip, serverIP.substring(0, atEnd + 1));
             serverIP = serverIP.substring(atEnd + 1);
         } else {
-            installMask(atLabel, "");
+            installMask(atLabel, atLabelTooltip, "");
         }
 
         realServerLabel.setText(serverIP);
