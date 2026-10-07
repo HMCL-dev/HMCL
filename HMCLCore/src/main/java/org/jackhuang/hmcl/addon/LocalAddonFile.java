@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.addon;
 
 import org.jackhuang.hmcl.addon.update.AddonUpdate;
+import org.jackhuang.hmcl.addon.update.AddonUpdateConditions;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -54,7 +55,7 @@ public abstract class LocalAddonFile {
 
     /// @return the update target version restrictions for this addon file, or null if not upgradable.
     @Nullable
-    protected AddonUpdate.UpdateConditions getTargetVersionRestrictions() {
+    protected AddonUpdateConditions getTargetVersionRestrictions() {
         return null;
     }
 
