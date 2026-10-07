@@ -55,7 +55,6 @@ public class AddonUpdateTask extends Task<Void> {
 
             dependents.add(Task
                     .supplyAsync(Schedulers.io(), () -> Files.createTempFile("hmcl-addon-update-", ".tmp"))
-                    // By the time these tasks are executed, tempFile should always hold a value
                     .thenComposeAsync(tempFile ->
                             new FileDownloadTask(downloadProvider.getDownloadCandidates(remote.file().url()), tempFile)
                                     .setName(remote.name())
