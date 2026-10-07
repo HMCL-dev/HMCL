@@ -26,14 +26,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class ServerAddress {
-    private final HostAndIp hostAndIp;
+    private final HostAndPort hostAndPort;
     private final Map<String, String> queryProperties;
 
     private ServerAddress(
-            HostAndIp hostAndIp,
+            HostAndPort hostAndPort,
             Map<String, String> queryProperties
     ) {
-        this.hostAndIp = hostAndIp;
+        this.hostAndPort = hostAndPort;
         this.queryProperties = queryProperties;
     }
 
@@ -85,16 +85,16 @@ public final class ServerAddress {
             } catch (Exception ignore) {
             }
         }
-        return new ServerAddress(new HostAndIp(host, port), queryProperties);
+        return new ServerAddress(new HostAndPort(host, port), queryProperties);
     }
 
     public ServerAddressResolveResult resolve() {
         try {
-            InetSocketAddress inetSocketAddress = hostAndIp.toInetSocketAddress();
+            InetSocketAddress inetSocketAddress = hostAndPort.toInetSocketAddress();
             if (MojangBlockServerChecker.isBlocking(inetSocketAddress)) {
                 return ServerAddressResolveResult.failed(ServerAddressResolveResult.FailureResult.Reason.BLOCKED_BY_MOJANG);
             }
-            HostAndIp lookupDnsResult = ServerDnsSrvRedirector.lookup(this);
+            HostAndPort lookupDnsResult = ServerDnsSrvRedirector.lookup(this);
             if (lookupDnsResult != null) {
                 inetSocketAddress = lookupDnsResult.toInetSocketAddress();
                 if (MojangBlockServerChecker.isBlocking(inetSocketAddress)) {
@@ -111,7 +111,7 @@ public final class ServerAddress {
         return queryProperties;
     }
 
-    public HostAndIp getHostAndIp() {
-        return hostAndIp;
+    public HostAndPort getHostAndIp() {
+        return hostAndPort;
     }
 }

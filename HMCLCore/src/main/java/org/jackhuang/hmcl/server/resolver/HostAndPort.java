@@ -23,7 +23,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
-public record HostAndIp(
+public record HostAndPort(
         @NotNull String host,
         int port
 ) {

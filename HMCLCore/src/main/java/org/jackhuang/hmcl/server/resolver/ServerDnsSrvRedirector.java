@@ -35,7 +35,7 @@ public final class ServerDnsSrvRedirector {
 
     }
 
-    static @Nullable HostAndIp lookup(ServerAddress address0) {
+    static @Nullable HostAndPort lookup(ServerAddress address0) {
         if (redirector == null) {
             synchronized (ServerDnsSrvRedirector.class) {
                 if (redirector == null) {
@@ -62,7 +62,7 @@ public final class ServerDnsSrvRedirector {
                                         } catch (Exception ignored) {
                                         }
 
-                                        return new HostAndIp(arguments[3], port);
+                                        return new HostAndPort(arguments[3], port);
                                     }
                                 } catch (Throwable ignored) {
                                 }
@@ -81,6 +81,6 @@ public final class ServerDnsSrvRedirector {
 
     @FunctionalInterface
     private interface DnsSrvRedirector {
-        @Nullable HostAndIp lookup(@NotNull ServerAddress address);
+        @Nullable HostAndPort lookup(@NotNull ServerAddress address);
     }
 }

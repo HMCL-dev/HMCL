@@ -56,6 +56,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.UnaryOperator;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -112,19 +113,20 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 if (!server.equals(item.server)) {
                     Task.supplyAsync(Schedulers.io(), () -> {
                         ServerStorage storage = item.storageEntry.rootStorage();
-                        return storage.updateEntry(item.storageEntry, server);
-                    }).whenComplete(Schedulers.javafx(), (newEntry, exception) -> {
+                        return storage.updateEntry(item.storageEntry, oldValue -> oldValue.withIpAndName(server.getIp(), server.getName()));
+                    }).whenComplete(Schedulers.javafx(), (updated, exception) -> {
                         if (exception != null)
                             LOG.warning("Failed to save server data.", exception);
 
-                        if (newEntry == null) return;
-
-                        int index = serverListEntries.indexOf(item);
-                        if (index != -1) {
-                            serverListEntries.set(index, new ServerListItem(newEntry));
+                        if (updated) {
+                            int index = serverListEntries.indexOf(item);
+                            if (index != -1) {
+                                serverListEntries.set(index, new ServerListItem(item.storageEntry));
+                            }
+                            updateServerList();
                         }
 
-                        updateServerList();
+
                     }).start();
                 }
             })));
@@ -141,10 +143,12 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 i18n("server.delete"),
                 () -> Task.runAsync(Schedulers.io(), item.storageEntry::delete
                 ).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    if (exception != null)
+                    if (exception != null) {
                         LOG.warning("Failed to save server data.", exception);
-                    serverListEntries.remove(item);
-                    updateServerList();
+                    } else {
+                        serverListEntries.remove(item);
+                        updateServerList();
+                    }
                 }).start(),
                 null
         );
@@ -165,6 +169,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 if (storage == null) {
                     storage = new ServerStorage(gameInstance.getServersDatFilePath());
                     storage.holdInstances.add(gameInstance);
+                    serverStorageMap.put(gameInstance.getServersDatFilePath(), storage);
                 }
                 storageEntry = storage.add(IconedServer.pack(server));
             }
@@ -293,25 +298,41 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
         private void deleteEntry(ServerStorageEntry entry) throws IOException {
             synchronized (serversFileHandleLockObject) {
                 if (!storageValid) return;
-                if (storageEntries.remove(entry)) {
-                    save();
+
+                int index = storageEntries.indexOf(entry);
+                if (index != -1) {
+                    ServerStorageEntry removed = storageEntries.remove(index);
+                    try {
+                        save();
+                    } catch (IOException e) {
+                        storageEntries.add(index, removed);
+                        throw e;
+                    }
                 }
             }
         }
 
-        private @Nullable ServerStorageEntry updateEntry(ServerStorageEntry entry, IconedServer newServer) throws IOException {
+        private boolean updateEntry(ServerStorageEntry entry, UnaryOperator<@NotNull IconedServer> updater) throws IOException {
             synchronized (serversFileHandleLockObject) {
-                if (!storageValid) return null;
+                if (!storageValid) return false;
 
                 int index = storageEntries.indexOf(entry);
-                if (index == -1) return null;
+                if (index == -1) return false;
 
-                ServerStorageEntry newEntry = new ServerStorageEntry(newServer);
-                storageEntries.set(index, newEntry);
+                IconedServer oldValue = entry.server;
+                IconedServer newValue = updater.apply(oldValue);
 
-                save();
+                if (oldValue.equals(newValue)) return false;
 
-                return newEntry;
+                try {
+                    entry.server = newValue;
+                    save();
+                } catch (IOException e) {
+                    entry.server = oldValue;
+                    throw e;
+                }
+
+                return true;
             }
         }
 
@@ -319,14 +340,21 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
             synchronized (serversFileHandleLockObject) {
                 if (!storageValid) return null;
                 ServerStorageEntry entry = new ServerStorageEntry(IconedServer.pack(server));
-                storageEntries.add(entry);
-                save();
+
+                try {
+                    storageEntries.add(entry);
+                    save();
+                } catch (IOException e) {
+                    storageEntries.remove(entry);
+                    throw e;
+                }
+
                 return entry;
             }
         }
 
         public class ServerStorageEntry {
-            private final IconedServer server;
+            private volatile IconedServer server;
 
             public ServerStorageEntry(IconedServer server) {
                 this.server = server;
@@ -604,21 +632,21 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 if (!Objects.equals(serverStatus.favicon(), item.server.getIcon())) {
                     // save latest icon
                     Task.supplyAsync(Schedulers.io(), () -> {
-                        IconedServer newServer = item.server.withIcon(serverStatus.favicon());
                         ServerStorage storage = item.storageEntry.rootStorage();
-                        return storage.updateEntry(item.storageEntry, newServer);
-                    }).whenComplete(Schedulers.javafx(), (newEntry, exception) -> {
+                        return storage.updateEntry(item.storageEntry, server -> server.withIcon(serverStatus.favicon()));
+                    }).whenComplete(Schedulers.javafx(), (updated, exception) -> {
                         if (exception != null)
                             LOG.warning("Failed to save server data.", exception);
 
-                        if (newEntry == null) return;
+                        if (updated) {
+                            int index = serverListEntries.indexOf(item);
+                            if (index != -1) {
+                                serverListEntries.set(index, new ServerListItem(item.storageEntry, item.observableServerStatus));
 
-                        int index = serverListEntries.indexOf(item);
-                        if (index != -1) {
-                            serverListEntries.set(index, new ServerListItem(newEntry, item.observableServerStatus));
+                                updateServerList();
+                            }
                         }
 
-                        updateServerList();
                     }).start();
                 }
             }

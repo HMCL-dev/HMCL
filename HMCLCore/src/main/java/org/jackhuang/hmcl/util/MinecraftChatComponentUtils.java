@@ -22,9 +22,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-public final class MinecraftChatComponentUtils {
-    private MinecraftChatComponentUtils() {
+import java.util.regex.Pattern;
 
+public final class MinecraftChatComponentUtils {
+
+    private static final Pattern FORMATTING_CODE_PATTERN = Pattern.compile("§.?");
+
+    private MinecraftChatComponentUtils() {
     }
 
     public static String toPlainStringFromChatComponent(JsonElement chat) {
@@ -34,7 +38,38 @@ public final class MinecraftChatComponentUtils {
 
         StringBuilder sb = new StringBuilder();
         extractText(chat, sb);
-        return sb.toString().replaceAll("§.?", "");
+        return FORMATTING_CODE_PATTERN.matcher(sb).replaceAll("");
+    }
+
+    private static void extractText(JsonPrimitive prim, StringBuilder sb) {
+        if (prim == null || prim.isJsonNull()) {
+            return;
+        }
+        sb.append(prim.getAsString());
+    }
+
+    private static void extractText(JsonArray array, StringBuilder sb) {
+        if (array == null) {
+            return;
+        }
+        for (JsonElement child : array) {
+            extractText(child, sb);
+        }
+    }
+
+    private static boolean hasJsonArray(JsonObject obj, String key) {
+        JsonElement element = obj.get(key);
+        return element instanceof JsonArray;
+    }
+
+    private static boolean hasJsonObject(JsonObject obj, String key) {
+        JsonElement element = obj.get(key);
+        return element instanceof JsonObject;
+    }
+
+    private static boolean hasJsonPrimitive(JsonObject obj, String key) {
+        JsonElement element = obj.get(key);
+        return element instanceof JsonPrimitive;
     }
 
     private static void extractText(JsonElement chat, StringBuilder sb) {
@@ -43,75 +78,64 @@ public final class MinecraftChatComponentUtils {
         }
 
         if (chat.isJsonPrimitive()) {
-            JsonPrimitive prim = chat.getAsJsonPrimitive();
-            if (prim.isString()) {
-                sb.append(prim.getAsString());
-            } else if (prim.isBoolean()) {
-                sb.append(prim.getAsBoolean());
-            } else {
-                sb.append(prim.getAsNumber().toString());
-            }
+            extractText(chat.getAsJsonPrimitive(), sb);
             return;
         }
 
         if (chat.isJsonArray()) {
-            for (JsonElement child : chat.getAsJsonArray()) {
-                extractText(child, sb);
-            }
+            extractText(chat.getAsJsonArray(), sb);
             return;
         }
 
         if (chat.isJsonObject()) {
             JsonObject obj = chat.getAsJsonObject();
 
-            if (obj.has("text")) {
-                JsonElement textEl = obj.get("text");
-                if (textEl.isJsonPrimitive()) {
-                    sb.append(textEl.getAsString());
-                }
+            if (hasJsonPrimitive(obj, "text")) {
+                extractText(obj.getAsJsonPrimitive("text"), sb);
+            } else if (hasJsonPrimitive(obj, "translate")) {
+                extractTranslate(obj, sb);
+            } else if (hasJsonObject(obj, "score")) {
+                extractScore(obj.getAsJsonObject("score"), sb);
+            } else if (hasJsonPrimitive(obj, "selector")) {
+                extractText(obj.getAsJsonPrimitive("selector"), sb);
+            } else if (hasJsonPrimitive(obj, "keybind")) {
+                extractText(obj.getAsJsonPrimitive("keybind"), sb);
+            } else if (hasJsonPrimitive(obj, "nbt")) {
+                extractText(obj.getAsJsonPrimitive("nbt"), sb);
             }
 
-            if (obj.has("translate")) {
-                sb.append(obj.get("translate").getAsString());
-                if (obj.has("with")) {
-                    JsonArray withArr = obj.getAsJsonArray("with");
-                    for (JsonElement w : withArr) {
-                        extractText(w, sb);
-                    }
-                }
+            if (hasJsonArray(obj, "extra")) {
+                extractText(obj.getAsJsonArray("extra"), sb);
             }
 
-            if (obj.has("score")) {
-                JsonObject scoreObj = obj.getAsJsonObject("score");
-                if (scoreObj.has("name")) sb.append(scoreObj.get("name").getAsString());
-                if (scoreObj.has("objective")) sb.append(":").append(scoreObj.get("objective").getAsString());
+            if (hasJsonArray(obj, "rawtext")) {
+                extractText(obj.getAsJsonArray("rawtext"), sb);
             }
+        }
+    }
 
-            if (obj.has("selector")) {
-                sb.append(obj.get("selector").getAsString());
-            }
+    private static void extractTranslate(JsonObject obj, StringBuilder sb) {
+        if (hasJsonPrimitive(obj, "fallback")) {
+            extractText(obj.getAsJsonPrimitive("fallback"), sb);
+        } else {
+            extractText(obj.getAsJsonPrimitive("translate"), sb);
+        }
 
-            if (obj.has("keybind")) {
-                sb.append(obj.get("keybind").getAsString());
-            }
+        if (hasJsonArray(obj, "with")) {
+            extractText(obj.getAsJsonArray("with"), sb);
+        }
+    }
 
-            if (obj.has("nbt")) {
-                sb.append(obj.get("nbt").getAsString());
-            }
-
-            if (obj.has("rawtext")) {
-                JsonArray rawArr = obj.getAsJsonArray("rawtext");
-                for (JsonElement child : rawArr) {
-                    extractText(child, sb);
-                }
-            }
-
-            if (obj.has("extra")) {
-                JsonArray extraArr = obj.getAsJsonArray("extra");
-                for (JsonElement child : extraArr) {
-                    extractText(child, sb);
-                }
-            }
+    private static void extractScore(JsonObject scoreObj, StringBuilder sb) {
+        if (hasJsonPrimitive(scoreObj, "value")) {
+            extractText(scoreObj.getAsJsonPrimitive("value"), sb);
+            return;
+        }
+        if (hasJsonPrimitive(scoreObj, "name")) {
+            extractText(scoreObj.getAsJsonPrimitive("name"), sb);
+        }
+        if (hasJsonPrimitive(scoreObj, "objective")) {
+            sb.append(':').append(scoreObj.get("objective").getAsString());
         }
     }
 }
