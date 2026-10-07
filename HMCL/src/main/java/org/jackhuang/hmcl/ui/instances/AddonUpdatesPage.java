@@ -330,7 +330,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
         private void loadChangelog(AddonUpdateObject object, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             spinnerPane.setLoading(true);
-            RemoteAddonRepository repo = object.data.targetVersion().source().getCommonRepo();
+            RemoteAddonRepository repo = object.data.targetVersion().source().getRepository();
             Task.supplyAsync(() -> {
                 if (object.changelog != null) return object.changelog;
                 RemoteAddon.Version version = object.data.targetVersion();
@@ -353,7 +353,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
         private void loadVersionPageUrl(AddonUpdateObject object, JFXHyperlink button) {
             Task.supplyAsync(() ->
-                    object.data.targetVersion().source().getCommonRepo().getVersionPageUrl(object.data.targetVersion())
+                    object.data.targetVersion().source().getRepository().getVersionPageUrl(object.data.targetVersion())
             ).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null && StringUtils.isNotBlank(result)) {
                     button.setExternalLink(result);
