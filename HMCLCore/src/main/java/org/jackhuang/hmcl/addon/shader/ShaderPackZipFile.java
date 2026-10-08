@@ -73,11 +73,15 @@ final class ShaderPackZipFile extends ShaderPackFile {
                             .findFirst().orElse(null);
                     if (shadersPath == null) return null;
                 }
+
+                Path metaPath = shadersPath.resolve("pack.json");
                 ShaderPackMeta meta = null;
-                try {
-                    meta = JsonUtils.fromJsonFile(JsonUtils.LENIENT_GSON, shadersPath.resolve("pack.json"), ShaderPackMeta.class);
-                } catch (IOException e) {
-                    LOG.warning("Failed to load shader metadata", e);
+                if (Files.isRegularFile(metaPath)) {
+                    try {
+                        meta = JsonUtils.fromJsonFile(JsonUtils.LENIENT_GSON, metaPath, ShaderPackMeta.class);
+                    } catch (IOException e) {
+                        LOG.warning("Failed to load shader metadata", e);
+                    }
                 }
 
                 String iconPath = shadersPath.resolve("pack.png").toAbsolutePath().normalize().toString();
@@ -94,12 +98,12 @@ final class ShaderPackZipFile extends ShaderPackFile {
     }
 
     @Override
-    public @Nullable Image loadIcon() {
-        try (var zipFileSystem = CompressingUtils.createReadOnlyZipFileSystem(getFile())) {
-            var path = zipFileSystem.getPath(iconPath);
+    public @Nullable Image loadIcon(double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+        try (var fs = CompressingUtils.createReadOnlyZipFileSystem(getFile())) {
+            Path path = fs.getPath(this.iconPath);
             if (!Files.isRegularFile(path)) return null;
-            try (var inputStream = Files.newInputStream(zipFileSystem.getPath(iconPath))) {
-                return new Image(inputStream, 64, 64, true, true);
+            try (var inputStream = Files.newInputStream(path)) {
+                return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
             }
         } catch (Exception e) {
             LOG.warning("Failed to load shader pack icon at %s!/%s".formatted(getFile(), iconPath), e);

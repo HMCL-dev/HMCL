@@ -242,8 +242,7 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
 
         private Image loadIcon() {
             Image icon = file.loadIcon();
-            if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1)
-                return icon;
+            if (icon != null) return icon;
             return getDefaultIcon();
         }
     }

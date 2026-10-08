@@ -68,14 +68,15 @@ final class ShaderPackFolder extends ShaderPackFile {
         super(manager, file, loaderType, shaderPackMeta);
     }
 
-    public @Nullable Image loadIcon() {
+    @Override
+    public @Nullable Image loadIcon(double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
         Path iconPath = switch (getShaderLoaderType()) {
             case APERTURE -> getFile().resolve("pack.png");
             case OPTIFINE_IRIS -> getFile().resolve("shaders").resolve("pack.png");
         };
         if (!Files.isRegularFile(iconPath)) return null;
         try (var inputStream = Files.newInputStream(iconPath)) {
-            return new Image(inputStream, 64, 64, true, true);
+            return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
         } catch (Exception e) {
             LOG.warning("Failed to load shader pack icon at " + iconPath, e);
         }

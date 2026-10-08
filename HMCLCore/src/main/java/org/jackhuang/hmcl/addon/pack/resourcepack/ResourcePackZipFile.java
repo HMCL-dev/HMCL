@@ -25,8 +25,8 @@ import org.jackhuang.hmcl.addon.pack.PackMcMeta;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
@@ -52,23 +52,16 @@ final class ResourcePackZipFile extends ResourcePackFile {
     }
 
     @Override
-    public @Nullable Image loadIcon() {
-        byte[] iconData = null;
-        try (var zipFileTree = CompressingUtils.openZipTree(getFile())) {
-            var iconEntry = zipFileTree.getEntry("/pack.png");
-            if (iconEntry != null) {
-                iconData = zipFileTree.readBinaryEntry(iconEntry);
+    public @Nullable Image loadIcon(double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+        try (var fs = CompressingUtils.createReadOnlyZipFileSystem(getFile())) {
+            Path iconPath = fs.getPath("pack.png");
+            if (Files.isRegularFile(iconPath)) {
+                try (var inputStream = Files.newInputStream(iconPath)) {
+                    return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
+                }
             }
         } catch (Exception e) {
             LOG.warning("Failed to load resource pack icon", e);
-        }
-
-        if (iconData != null) {
-            try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
-                return new Image(inputStream, 64, 64, true, true);
-            } catch (Exception e) {
-                LOG.warning("Failed to load resource pack icon", e);
-            }
         }
         return null;
     }

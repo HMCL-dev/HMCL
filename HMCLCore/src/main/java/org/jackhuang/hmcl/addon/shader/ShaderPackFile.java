@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.addon.shader;
 
-import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -94,8 +93,6 @@ public sealed abstract class ShaderPackFile extends LocalAddonFile implements Co
     public ShaderPackMeta getMeta() {
         return meta;
     }
-
-    public abstract @Nullable Image loadIcon();
 
     public String getName() {
         return StringUtils.isBlank(getMeta().name()) ? getFile().getFileName().toString() : getMeta().name();

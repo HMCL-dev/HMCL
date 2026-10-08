@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.addon;
 
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -53,6 +54,15 @@ public abstract class LocalAddonFile {
 
     public void delete() throws IOException {
         FileUtils.forceDeleteIfExists(getFile());
+    }
+
+    public abstract @Nullable Image loadIcon(double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth);
+
+    public @Nullable Image loadIcon() {
+        Image icon = loadIcon(64D, 64D, true, true);
+        if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1)
+            return icon;
+        return null;
     }
 
     @Nullable
