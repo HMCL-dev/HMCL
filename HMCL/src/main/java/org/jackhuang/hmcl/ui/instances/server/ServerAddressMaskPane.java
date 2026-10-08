@@ -19,10 +19,9 @@ package org.jackhuang.hmcl.ui.instances.server;
 
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
+import javafx.scene.effect.BoxBlur;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ServerAddressMaskPane extends HBox {
@@ -34,60 +33,68 @@ public class ServerAddressMaskPane extends HBox {
     private final Tooltip queryLabelTooltip = new Tooltip();
 
     public ServerAddressMaskPane(@Nullable String serverIP) {
-        queryLabel.setOpacity(0.3);
-        atLabel.setOpacity(0.3);
-
-        queryLabel.setMinWidth(Region.USE_PREF_SIZE);
-        atLabel.setMinWidth(Region.USE_PREF_SIZE);
-        realServerLabel.setMinWidth(Region.USE_PREF_SIZE);
-
         getChildren().add(atLabel);
         getChildren().add(realServerLabel);
         getChildren().add(queryLabel);
 
-        FXUtils.installFastTooltip(atLabel, atLabelTooltip);
-        FXUtils.installFastTooltip(queryLabel, queryLabelTooltip);
+        atLabel.setPickOnBounds(true);
+        queryLabel.setPickOnBounds(true);
+
+//        FXUtils.installFastTooltip(atLabel, atLabelTooltip);
+//        FXUtils.installFastTooltip(queryLabel, queryLabelTooltip);
         set(serverIP);
-    }
 
-    public static void installMask(@NotNull Label label, Tooltip tooltip, String text) {
-        int length = text.length();
-        StringBuilder maskBuilder = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            char c = text.charAt(i);
-            if (c == '@' || c == '?') {
-                maskBuilder.append(c);
-            } else {
-                maskBuilder.append("*");
-            }
-        }
-        String mask = maskBuilder.toString();
+        BoxBlur blur = new BoxBlur();
+        blur.setIterations(3);
 
-        label.setText(mask);
-        tooltip.setText(text);
+        atLabel.setEffect(blur);
+        queryLabel.setEffect(blur);
+
+        atLabel.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
+            atLabel.setEffect(null);
+        });
+        atLabel.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
+            atLabel.setEffect(blur);
+        });
+
+        queryLabel.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
+            queryLabel.setEffect(null);
+        });
+        queryLabel.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
+            queryLabel.setEffect(blur);
+        });
     }
 
     public void set(@Nullable String serverIP) {
         if (serverIP == null) {
+            atLabel.setText("");
             realServerLabel.setText("");
-            installMask(atLabel, atLabelTooltip, "");
-            installMask(queryLabel, queryLabelTooltip, "");
+            queryLabel.setText("");
+
+            atLabelTooltip.setText("");
+            queryLabelTooltip.setText("");
             return;
         }
         int queryStart = serverIP.lastIndexOf('?');
         if (queryStart != -1) {
-            installMask(queryLabel, queryLabelTooltip, serverIP.substring(queryStart));
+            String queryStr = serverIP.substring(queryStart);
+            queryLabel.setText(queryStr);
+            atLabelTooltip.setText(queryStr);
             serverIP = serverIP.substring(0, queryStart);
         } else {
-            installMask(queryLabel, queryLabelTooltip, "");
+            queryLabel.setText("");
+            atLabelTooltip.setText("");
         }
 
         int atEnd = serverIP.indexOf('@');
         if (atEnd != -1) {
-            installMask(atLabel, atLabelTooltip, serverIP.substring(0, atEnd + 1));
+            String atStr = serverIP.substring(0, atEnd + 1);
+            atLabel.setText(atStr);
+            atLabelTooltip.setText(atStr);
             serverIP = serverIP.substring(atEnd + 1);
         } else {
-            installMask(atLabel, atLabelTooltip, "");
+            atLabel.setText("");
+            atLabelTooltip.setText("");
         }
 
         realServerLabel.setText(serverIP);

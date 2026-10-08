@@ -22,11 +22,12 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
 import javafx.scene.image.Image;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -40,8 +41,8 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.util.MinecraftChatComponentUtils;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -140,32 +141,6 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         observableServerStatus.refreshIfNoResultOrFailedAsync(true);
     }
 
-    private static VBox createStatCell(String titleText, String valueText, boolean showDivider, String tooltip) {
-        VBox cell = new VBox(3);
-        cell.getStyleClass().add("server-status-stat-cell");
-        if (!showDivider) {
-            cell.getStyleClass().add("server-status-stat-cell-last");
-        }
-        cell.setAlignment(Pos.CENTER_LEFT);
-        cell.setPadding(new Insets(10, 12, 10, 12));
-        cell.setPrefWidth(140);
-
-        Label title = new Label(titleText);
-        title.getStyleClass().add("server-status-stat-title");
-
-        Label value = new Label(valueText == null || valueText.isBlank() ? "—" : valueText);
-        value.getStyleClass().add("server-status-stat-value");
-        value.setWrapText(true);
-        value.setMaxWidth(100);
-
-        if (tooltip != null) {
-            FXUtils.installFastTooltip(value, tooltip);
-        }
-
-        cell.getChildren().addAll(title, value);
-        return cell;
-    }
-
     public void applyPinging(boolean pinging) {
         if (pinging) {
             lblErrorMessage.setText("");
@@ -173,6 +148,18 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         } else {
             refreshSpinner.hideSpinner();
         }
+    }
+
+    private static Node createDescriptionRow(String title, String content, @Nullable String tooltip, Insets inVBoxInsets) {
+        BorderPane row = new BorderPane();
+        VBox.setMargin(row, inVBoxInsets);
+        row.setLeft(new Label(title));
+        Label right = new Label(content);
+        if (tooltip != null) {
+            FXUtils.installFastTooltip(right, tooltip);
+        }
+        row.setRight(right);
+        return row;
     }
 
     public void applyResult(ServerStatusResult statusResult) {
@@ -199,66 +186,61 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
             serverIcon = ServerListPage.IconedServer.parseImageOrDefault(status.favicon());
         }
 
-        VBox root = new VBox();
-        root.setSpacing(10);
-        HBox serverInfoBox = new HBox();
-        VBox.setMargin(serverInfoBox, new Insets(10, 0, 0, 5));
+        VBox rootContent = new VBox();
+        rootContent.setSpacing(10);
+        rootLayout.setBody(rootContent);
+
+        HBox titleContainer = new HBox();
+        titleContainer.setSpacing(8);
+        titleContainer.setAlignment(Pos.CENTER_LEFT);
+        VBox.setMargin(titleContainer, new Insets(12, 0, 0, 0));
+        rootContent.getChildren().add(titleContainer);
 
         ImageContainer imageView = new ImageContainer(64);
         imageView.setImage(serverIcon);
+        titleContainer.getChildren().add(imageView);
 
-        StackPane canvasPane = new StackPane(imageView);
-        canvasPane.setPrefWidth(64);
-        canvasPane.setPrefHeight(64);
-        serverInfoBox.getChildren().add(canvasPane);
+        VBox titleContent = new VBox();
+        titleContent.setAlignment(Pos.CENTER_LEFT);
+        titleContent.setSpacing(8);
+        HBox.setMargin(titleContent, new Insets(0, 0, 0, 12));
+        titleContainer.getChildren().add(titleContent);
 
-        GridPane textPane = new GridPane();
-        textPane.setAlignment(Pos.CENTER_LEFT);
+        TwoLineListItem title = new TwoLineListItem();
+        title.getTitleLabel().setWrapText(true);
+        title.setTitle(iconedServer.getName());
+        titleContent.getChildren().add(title);
 
-        textPane.setHgap(10);
-        textPane.setVgap(10);
+        ServerAddressMaskPane addressMaskPane = new ServerAddressMaskPane(iconedServer.getIp());
+        addressMaskPane.labelAddStyleClass("subtitle");
+        titleContent.getChildren().add(addressMaskPane);
 
-        serverInfoBox.getChildren().add(textPane);
-        HBox.setMargin(textPane, new Insets(0, 0, 0, 20));
-
-        Label label = new Label(i18n("server.name") + ":");
-        textPane.add(label, 0, 0);
-        textPane.add(new Label(iconedServer.getName()), 1, 0);
-
-        textPane.add(new Label(i18n("server.ip") + ":"), 0, 1);
-        textPane.add(new ServerAddressMaskPane(iconedServer.getIp()), 1, 1);
-
-        root.getChildren().add(serverInfoBox);
         if (status != null) {
-            VBox motdBox = new VBox(5);
-            motdBox.getStyleClass().add("server-status-motd-box");
-            motdBox.setPadding(new Insets(10, 12, 10, 12));
-            motdBox.setMaxWidth(620);
+            VBox motdContentBox = new VBox();
+            motdContentBox.setSpacing(5);
+            motdContentBox.setAlignment(Pos.CENTER_LEFT);
 
-            Label motdTitle = new Label(i18n("server.motd"));
-            motdTitle.getStyleClass().add("server-status-motd-title");
-            motdBox.getChildren().add(motdTitle);
+            VBox.setMargin(motdContentBox, new Insets(4, 0, 0, 4));
+            rootContent.getChildren().add(motdContentBox);
 
-            String motd = MinecraftChatComponentUtils.toPlainStringFromChatComponent(status.description());
-            String[] motdLines = motd.split("\\r?\\n");
+            String[] motdLines = MinecraftChatComponentUtils
+                    .toPlainStringFromChatComponent(status.description())
+                    .split("\\r?\\n");
             for (int i = 0; i < Math.min(motdLines.length, 2); i++) {
-                String line = motdLines[i];
+                String line = motdLines[i].trim();
                 if (line.length() > 80) {
                     line = line.substring(0, 77).trim() + "...";
                 }
                 Label lineLabel = new Label(line);
-                lineLabel.getStyleClass().add("server-status-motd-line");
                 lineLabel.setMaxWidth(560);
                 lineLabel.setWrapText(true);
-                motdBox.getChildren().add(lineLabel);
+                motdContentBox.getChildren().add(lineLabel);
             }
 
-            root.getChildren().add(motdBox);
-
-            HBox detailRow = new HBox();
-            detailRow.getStyleClass().add("server-status-detail-row");
-            detailRow.setSpacing(0);
-            detailRow.setMaxWidth(620);
+            Separator titleEndSeparator = new Separator();
+            titleEndSeparator.setMaxWidth(Double.MAX_VALUE);
+            titleEndSeparator.setPadding(new Insets(4, 0, 0, 0));
+            rootContent.getChildren().add(titleEndSeparator);
 
             String playersTooltip = null;
             if (!status.players().samples().isEmpty()) {
@@ -298,18 +280,12 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
                 modsTooltip = sb.toString();
             }
 
-            var cells = List.of(
-                    createStatCell(i18n("server.type"), status.modInfo() != null ? i18n("server.type.mod", status.modInfo().type(), status.modInfo().modList().size()) : i18n("server.type.vanilla"), true, modsTooltip),
-                    createStatCell(i18n("server.onlineplayers"), String.format("%,d/%,d", status.players().online(), status.players().max()), true, playersTooltip),
-                    createStatCell(i18n("server.playversion"), MinecraftChatComponentUtils.toPlainStringFromChatComponent(new JsonPrimitive(status.version().name())) + "(" + status.version().version() + ")", true, null),
-                    createStatCell(i18n("server.latency"), String.format("%,dms", status.networkLatency()), false, null)
-            );
-            detailRow.getChildren().addAll(cells);
-
-            root.getChildren().add(detailRow);
+            rootContent.getChildren().add(createDescriptionRow(i18n("server.type"), status.modInfo() != null ? i18n("server.type.mod", status.modInfo().type(), status.modInfo().modList().size()) : i18n("server.type.vanilla"), modsTooltip, new Insets(0, 4, 0, 4)));
+            rootContent.getChildren().add(createDescriptionRow(i18n("server.onlineplayers"), String.format("%,d/%,d", status.players().online(), status.players().max()), playersTooltip, new Insets(0, 4, 0, 4)));
+            rootContent.getChildren().add(createDescriptionRow(i18n("server.playversion"), MinecraftChatComponentUtils.toPlainStringFromChatComponent(new JsonPrimitive(status.version().name())) + "(" + status.version().version() + ")", null, new Insets(0, 4, 0, 4)));
+            rootContent.getChildren().add(createDescriptionRow(i18n("server.latency"), String.format("%,dms", status.networkLatency()), null, new Insets(0, 4, 0, 4)));
         }
 
-        rootLayout.setBody(root);
     }
 
     private void onClose() {
