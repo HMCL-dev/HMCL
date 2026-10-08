@@ -20,13 +20,12 @@ package org.jackhuang.hmcl.addon;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -74,14 +73,19 @@ public abstract class LocalAddonFile {
     ) {
     }
 
-    public record Description(List<Part> parts) {
+    @NotNullByDefault
+    public record Description(@Unmodifiable List<Part> parts) {
+
+        public Description {
+            parts = List.copyOf(parts);
+        }
+
         public Description(String text) {
-            this(new ArrayList<>());
-            this.parts.add(new Part(text, "black"));
+            this(List.of(new Part(text, "black")));
         }
 
         @Override
-        public @NotNull String toString() {
+        public String toString() {
             StringBuilder builder = new StringBuilder();
             for (Part part : parts) {
                 builder.append(part.text);
@@ -105,5 +109,4 @@ public abstract class LocalAddonFile {
             }
         }
     }
-
 }
