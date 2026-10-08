@@ -382,6 +382,9 @@ public final class Launcher extends Application {
             return;
         if (!NativeUtils.USE_JNA || Shell32.INSTANCE == null)
             return;
+        @Nullable Path thisJar = JarUtils.thisJarPath();
+        if (thisJar == null || !Files.isRegularFile(thisJar) || !"exe".equalsIgnoreCase(FileUtils.getExtension(thisJar)))
+            return;
 
         try {
             int hr = Shell32.INSTANCE.SetCurrentProcessExplicitAppUserModelID(new WString(Metadata.WINDOWS_APP_USER_MODEL_ID));
