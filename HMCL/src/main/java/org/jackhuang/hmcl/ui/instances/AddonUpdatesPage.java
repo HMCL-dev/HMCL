@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.ui.instances;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.JFXListView;
+
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -82,6 +84,8 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
     private final LocalAddonManager<F> localAddonManager;
     private final ObservableList<AddonUpdateObject> objects;
 
+    private final JFXListView<AddonUpdateObject> listView;
+
     public AddonUpdatesPage(LocalAddonManager<F> localAddonManager, List<LocalAddonFile.AddonUpdate> updates) {
         this.localAddonManager = localAddonManager;
 
@@ -89,14 +93,13 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         objects = FXCollections.observableList(updates.stream().map(AddonUpdateObject::new).collect(Collectors.toList()));
 
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
+        listView = new JFXListView<>();
+        listView.setItems(objects);
 
-        ListView<AddonUpdateObject> listView = new ListView<>(objects);
+        ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
+
         listView.getStyleClass().add("no-horizontal-scrollbar");
         listView.setStyle("-fx-background-color: transparent;");
-        ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
         listView.setCellFactory(x -> new ListCell<>() {
             private static final Insets PADDING = new Insets(3, 9, 0, 9);
             private static final Insets LAST_PADDING = new Insets(3, 9, 3, 9);
@@ -201,9 +204,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             }
         });
 
-        scrollPane.setContent(listView);
-
-        setCenter(scrollPane);
+        setCenter(listView);
 
         HBox actions = new HBox(8);
         actions.setPadding(new Insets(8));
