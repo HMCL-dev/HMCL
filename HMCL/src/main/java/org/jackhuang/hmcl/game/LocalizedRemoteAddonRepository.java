@@ -50,15 +50,15 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
     }
 
     @Override
-    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
+    public SearchResult search(DownloadProvider downloadProvider, RemoteAddon.Type type, String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
         if (!StringUtils.containsChinese(searchFilter)) {
-            return getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
+            return getBackedRemoteModRepository().search(downloadProvider, type, gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
         }
 
         Set<String> englishSearchFiltersSet = new LinkedHashSet<>(INITIAL_CAPACITY);
 
         int count = 0;
-        for (ModTranslations.Mod mod : ModTranslations.getTranslationsByAddonType(getType()).searchMod(searchFilter)) {
+        for (ModTranslations.Mod mod : ModTranslations.getTranslationsByAddonType(type).searchMod(searchFilter)) {
             String englishSearchFilter = String.join(" ", StringUtils.tokenize(StringUtils.isNotBlank(mod.getSubname()) ? mod.getSubname() : mod.getName()));
             if (StringUtils.isNotBlank(englishSearchFilter)) {
                 englishSearchFiltersSet.add(englishSearchFilter);
@@ -69,7 +69,7 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
         }
 
         if (englishSearchFiltersSet.isEmpty()) {
-            return getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
+            return getBackedRemoteModRepository().search(downloadProvider, type, gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
         }
 
         RemoteAddon[] searchResultArray = new RemoteAddon[pageSize];
@@ -78,7 +78,7 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
             SearchResult searchResult = null;
             List<RemoteAddon> remoteAddons = List.of();
             for (String englishSearchFilter : englishSearchFiltersSet) {
-                searchResult = getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, englishSearchFilter, SortType.RELEVANCY, sortOrder);
+                searchResult = getBackedRemoteModRepository().search(downloadProvider, type, gameVersion, category, pageOffset, pageSize, englishSearchFilter, SortType.RELEVANCY, sortOrder);
                 remoteAddons = searchResult.results().toList();
                 if (!remoteAddons.isEmpty()) {
                     break;
@@ -91,7 +91,7 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
                     continue;
                 }
 
-                ModTranslations.Mod chineseTranslation = ModTranslations.getTranslationsByAddonType(getType()).getModByCurseForgeId(remoteAddon.slug());
+                ModTranslations.Mod chineseTranslation = ModTranslations.getTranslationsByAddonType(type).getModByCurseForgeId(remoteAddon.slug());
                 if (chineseTranslation != null && !StringUtils.isBlank(chineseTranslation.getName()) && StringUtils.containsChinese(chineseTranslation.getName())) {
                     searchResultArray[chineseIndex++] = remoteAddon;
                 } else {
@@ -103,7 +103,7 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
 
         StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
         return new SearchResult(Stream.concat(Arrays.stream(searchResultArray, 0, chineseIndex).map(remoteMod -> {
-            ModTranslations.Mod chineseRemoteMod = ModTranslations.getTranslationsByAddonType(getType()).getModByCurseForgeId(remoteMod.slug());
+            ModTranslations.Mod chineseRemoteMod = ModTranslations.getTranslationsByAddonType(type).getModByCurseForgeId(remoteMod.slug());
             if (chineseRemoteMod == null || StringUtils.isBlank(chineseRemoteMod.getName()) || !StringUtils.containsChinese(chineseRemoteMod.getName())) {
                 return Pair.pair(remoteMod, Integer.MAX_VALUE);
             }
@@ -122,8 +122,8 @@ public abstract class LocalizedRemoteAddonRepository implements RemoteAddonRepos
     }
 
     @Override
-    public Stream<Category> getCategories() throws IOException {
-        return getBackedRemoteModRepository().getCategories();
+    public Stream<Category> getCategories(RemoteAddon.Type type) throws IOException {
+        return getBackedRemoteModRepository().getCategories(type);
     }
 
     @Override
