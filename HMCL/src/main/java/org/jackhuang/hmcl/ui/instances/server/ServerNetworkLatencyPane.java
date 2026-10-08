@@ -22,6 +22,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.SVG;
 
@@ -79,22 +80,32 @@ public class ServerNetworkLatencyPane extends StackPane {
     public void error() {
         state = State.ERROR;
         getChildren().clear();
-        getChildren().add(SVG.SERVER_SIGNAL_ERROR.createIcon());
+        getChildren().add(createIcon(SVG.SERVER_SIGNAL_ERROR, "-fx-fill: -monet-error;"));
+    }
+
+    private SVGPath createIcon(SVG svg, String style) {
+        SVGPath icon = createIcon(svg);
+        icon.setStyle(style);
+        return icon;
+    }
+
+    private SVGPath createIcon(SVG svg) {
+        return svg.createIcon();
     }
 
     public void pong(long networkLatency) {
         state = State.PONG;
         getChildren().clear();
         if (networkLatency < 150) {
-            getChildren().add(SVG.SERVER_SIGNAL_FULL.createIcon());
+            getChildren().add(createIcon(SVG.SERVER_SIGNAL_FULL));
         } else if (networkLatency < 300) {
-            getChildren().add(SVG.SERVER_SIGNAL_3_BAR.createIcon());
+            getChildren().add(createIcon(SVG.SERVER_SIGNAL_3_BAR));
         } else if (networkLatency < 600) {
-            getChildren().add(SVG.SERVER_SIGNAL_2_BAR.createIcon());
+            getChildren().add(createIcon(SVG.SERVER_SIGNAL_2_BAR));
         } else if (networkLatency < 1000) {
-            getChildren().add(SVG.SERVER_SIGNAL_1_BAR.createIcon());
+            getChildren().add(createIcon(SVG.SERVER_SIGNAL_1_BAR));
         } else {
-            getChildren().add(SVG.SERVER_SIGNAL_0_BAR.createIcon());
+            getChildren().add(createIcon(SVG.SERVER_SIGNAL_0_BAR));
         }
     }
 

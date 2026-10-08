@@ -248,14 +248,15 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 // A newer refresh task is running, discard this result
                 return;
             }
-
-            serverListEntries = new ArrayList<>(result);
-            updateServerList();
-
-            if (exception != null)
-                LOG.warning("Failed to load server list page", exception);
-
             setLoading(false);
+
+            if (exception != null) {
+                LOG.warning("Failed to load server list page", exception);
+            } else {
+                serverListEntries = new ArrayList<>(result);
+                updateServerList();
+            }
+
         }).start();
     }
 

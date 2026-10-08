@@ -158,7 +158,7 @@ public final class ServerStatusPinger {
 
     private static <T> T readPacket(DataInputStream in, PacketReader<T> reader) throws IOException {
         int length = readVarInt(in);
-        if (length > 32768) throw new IOException("Packet length too large: " + length);
+        if (length > 2097151) throw new IOException("Packet length too large: " + length);
         byte[] packetData = new byte[length];
         in.readFully(packetData);
 
