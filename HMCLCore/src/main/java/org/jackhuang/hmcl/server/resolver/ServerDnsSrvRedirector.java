@@ -49,9 +49,9 @@ public final class ServerDnsSrvRedirector {
                         DirContext context = new InitialDirContext(env);
 
                         redirector = (address) -> {
-                            if (address.getHostAndIp().port() == 25565) {
+                            if (address.getHostAndPort().port() == 25565) {
                                 try {
-                                    Attributes attributes = context.getAttributes("_minecraft._tcp." + address.getHostAndIp().host(), new String[]{"SRV"});
+                                    Attributes attributes = context.getAttributes("_minecraft._tcp." + address.getHostAndPort().host(), new String[]{"SRV"});
                                     Attribute srvAttribute = attributes.get("srv");
                                     if (srvAttribute != null) {
                                         String[] arguments = srvAttribute.get().toString().split(" ", 4);

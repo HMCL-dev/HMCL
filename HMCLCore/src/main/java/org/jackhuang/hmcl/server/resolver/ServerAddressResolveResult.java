@@ -27,21 +27,22 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public sealed class ServerAddressResolveResult {
+    private final ServerAddress rawAddress;
 
-    private ServerAddressResolveResult() {
-
+    private ServerAddressResolveResult(ServerAddress rawAddress) {
+        this.rawAddress = rawAddress;
     }
 
-    public static @NotNull ServerAddressResolveResult.FailureResult failed(FailureResult.Reason reason) {
-        return new FailureResult(reason);
+    public static @NotNull ServerAddressResolveResult.FailureResult failed(ServerAddress rawAddress, FailureResult.Reason reason, Exception exception) {
+        return new FailureResult(rawAddress, reason, exception);
     }
 
-    public static SuccessResult succeed(ServerAddress serverAddress, InetSocketAddress address) {
-        Map<String, String> queryProperties = new LinkedHashMap<>(serverAddress.getQueryProperties());
-        boolean isSame = serverAddress.getHostAndIp().equals(address.getHostName(), address.getPort());
+    public static SuccessResult succeed(ServerAddress rawAddress, InetSocketAddress resolvedAddress) {
+        Map<String, String> queryProperties = new LinkedHashMap<>(rawAddress.getQueryProperties());
+        boolean isSame = rawAddress.getHostAndPort().equals(resolvedAddress.getHostName(), resolvedAddress.getPort());
 
         if (!isSame || queryProperties.get("_o") != null) {
-            queryProperties.put("_o", serverAddress.getHostAndIp().host() + ":" + serverAddress.getHostAndIp().port());
+            queryProperties.put("_o", rawAddress.getHostAndPort().host() + ":" + rawAddress.getHostAndPort().port());
         }
 
         StringBuilder queryArgBuilder = new StringBuilder();
@@ -60,18 +61,29 @@ public sealed class ServerAddressResolveResult {
         }
 
         if (queryArgBuilder.isEmpty()) {
-            queryArgBuilder.insert(0, address.getHostName());
+            queryArgBuilder.insert(0, resolvedAddress.getHostName());
         } else {
-            queryArgBuilder.insert(0, address.getHostName() + "?");
+            queryArgBuilder.insert(0, resolvedAddress.getHostName() + "?");
         }
-        return new SuccessResult(address, queryArgBuilder.toString(), address.getPort());
+        return new SuccessResult(rawAddress, resolvedAddress, queryArgBuilder.toString(), resolvedAddress.getPort());
+    }
+
+    public ServerAddress getRawAddress() {
+        return rawAddress;
     }
 
     public static final class FailureResult extends ServerAddressResolveResult {
         private final Reason reason;
+        private final Exception exception;
 
-        public FailureResult(Reason reason) {
+        public FailureResult(ServerAddress rawAddress, Reason reason, Exception exception) {
+            super(rawAddress);
             this.reason = reason;
+            this.exception = exception;
+        }
+
+        public Exception getException() {
+            return exception;
         }
 
         public Reason getReason() {
@@ -96,7 +108,8 @@ public sealed class ServerAddressResolveResult {
         private final String packerHandshakeAddress;
         private final int packerHandshakePort;
 
-        public SuccessResult(InetSocketAddress connectAddress, String packerHandshakeAddress, int packerHandshakePort) {
+        public SuccessResult(ServerAddress rawAddress, InetSocketAddress connectAddress, String packerHandshakeAddress, int packerHandshakePort) {
+            super(rawAddress);
             this.connectAddress = connectAddress;
             this.packerHandshakeAddress = packerHandshakeAddress;
             this.packerHandshakePort = packerHandshakePort;
@@ -112,15 +125,6 @@ public sealed class ServerAddressResolveResult {
 
         public int getPackerHandshakePort() {
             return packerHandshakePort;
-        }
-
-        @Override
-        public String toString() {
-            return "SuccessResult{" +
-                    "connectAddress=" + connectAddress +
-                    ", packerHandshakeAddress='" + packerHandshakeAddress + '\'' +
-                    ", packerHandshakePort=" + packerHandshakePort +
-                    '}';
         }
     }
 }

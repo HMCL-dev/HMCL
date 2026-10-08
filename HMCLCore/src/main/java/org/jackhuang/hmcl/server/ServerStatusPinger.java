@@ -33,48 +33,60 @@ import java.util.UUID;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 // https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping
+// https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#1.6
 // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Minecraft_Forge_Handshake
 public final class ServerStatusPinger {
     private ServerStatusPinger() {
 
     }
 
-    public static @NotNull ServerStatusResult getStatus(String serverIp) throws IOException {
-        try {
-            ServerAddress address = ServerAddress.fromString(serverIp);
-            ServerAddressResolveResult resolveResult = address.resolve();
-            if (resolveResult instanceof ServerAddressResolveResult.SuccessResult successResult) {
-                try (Socket socket = new Socket()) {
-                    socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
-                    socket.connect(successResult.getConnectAddress(), 7_000);
-                    socket.setSoTimeout(7_000);
+    public static @NotNull ServerStatusResult getStatus(@NotNull String serverIp) throws IOException {
+        ServerAddress address = ServerAddress.fromString(serverIp);
+        ServerAddressResolveResult resolveResult = address.resolve();
 
-                    try (DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                         DataInputStream in = new DataInputStream(socket.getInputStream())) {
+        if (resolveResult instanceof ServerAddressResolveResult.FailureResult failureResult) {
+            return ServerStatusResult.failure(failureResult.getReason().getStatusReason(), failureResult.getException());
+        }
 
-                        sendHandshakeStatusPacket(out,
-                                successResult.getPackerHandshakeAddress(), successResult.getPackerHandshakePort()
-                        );
-                        sendStatusRequestPacket(out);
-                        var status = readStatusResponsePacket(in);
+        ServerAddressResolveResult.SuccessResult successResult = (ServerAddressResolveResult.SuccessResult) resolveResult;
+        ServerStatusResult modernStatusResult = getStatus(successResult);
+        if (modernStatusResult.isSuccess()) {
+            return modernStatusResult;
+        }
 
-                        long sendTime = System.currentTimeMillis();
-                        sendPingRequestPacket(out);
-                        var pong = readPongResponsePacket(in);
-                        long networkLatency = System.currentTimeMillis() - sendTime;
+        Exception collectException = new IOException("Failed to get server status");
+        collectException.addSuppressed(((ServerStatusResult.FailureResult) modernStatusResult).getException());
+        LOG.error("Failed to get the status of server " + resolveResult.getRawAddress().getRawServerIp(), collectException);
+        return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, collectException);
+    }
 
-                        JsonObject rootStatus = JsonParser.parseString(status).getAsJsonObject();
+    private static @NotNull ServerStatusResult getStatus(ServerAddressResolveResult.SuccessResult successResult) throws IOException {
+        try (Socket socket = new Socket()) {
+            socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
+            socket.connect(successResult.getConnectAddress(), 7_000);
+            socket.setSoTimeout(7_000);
 
-                        ServerStatus parseServerStatus = parseServerStatus(networkLatency, rootStatus);
-                        return ServerStatusResult.success(parseServerStatus);
-                    }
-                }
-            } else {
-                return ServerStatusResult.failure(((ServerAddressResolveResult.FailureResult) resolveResult).getReason().getStatusReason());
+            try (DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                 DataInputStream in = new DataInputStream(socket.getInputStream())) {
+
+                sendHandshakeStatusPacket(out,
+                        successResult.getPackerHandshakeAddress(), successResult.getPackerHandshakePort()
+                );
+                sendStatusRequestPacket(out);
+                var status = readStatusResponsePacket(in);
+
+                long sendTime = System.currentTimeMillis();
+                sendPingRequestPacket(out);
+                var pong = readPongResponsePacket(in);
+                long networkLatency = System.currentTimeMillis() - sendTime;
+
+                JsonObject rootStatus = JsonParser.parseString(status).getAsJsonObject();
+
+                ServerStatus parseServerStatus = parseServerStatus(networkLatency, rootStatus);
+                return ServerStatusResult.success(parseServerStatus);
             }
         } catch (Exception e) {
-            LOG.error("Failed to get the status of server " + serverIp, e);
-            return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION);
+            return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, e);
         }
     }
 

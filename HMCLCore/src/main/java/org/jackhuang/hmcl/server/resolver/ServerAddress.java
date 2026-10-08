@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.server.resolver;
 
+import org.jackhuang.hmcl.server.ServerBlockedByMojangException;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
@@ -26,18 +28,22 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class ServerAddress {
+    private final String rawServerIp;
     private final HostAndPort hostAndPort;
     private final Map<String, String> queryProperties;
 
     private ServerAddress(
+            String rawServerIp,
             HostAndPort hostAndPort,
             Map<String, String> queryProperties
     ) {
+        this.rawServerIp = rawServerIp;
         this.hostAndPort = hostAndPort;
         this.queryProperties = queryProperties;
     }
 
     public static ServerAddress fromString(String input) throws IOException {
+        String rawServerIp = input;
         if (input == null || input.isEmpty()) throw new IOException("server ip is empty.");
 
 
@@ -85,25 +91,25 @@ public final class ServerAddress {
             } catch (Exception ignore) {
             }
         }
-        return new ServerAddress(new HostAndPort(host, port), queryProperties);
+        return new ServerAddress(rawServerIp, new HostAndPort(host, port), queryProperties);
     }
 
     public ServerAddressResolveResult resolve() {
         try {
             InetSocketAddress inetSocketAddress = hostAndPort.toInetSocketAddress();
             if (MojangBlockServerChecker.isBlocking(inetSocketAddress)) {
-                return ServerAddressResolveResult.failed(ServerAddressResolveResult.FailureResult.Reason.BLOCKED_BY_MOJANG);
+                return ServerAddressResolveResult.failed(this, ServerAddressResolveResult.FailureResult.Reason.BLOCKED_BY_MOJANG, new ServerBlockedByMojangException("blocked by mojang block server"));
             }
             HostAndPort lookupDnsResult = ServerDnsSrvRedirector.lookup(this);
             if (lookupDnsResult != null) {
                 inetSocketAddress = lookupDnsResult.toInetSocketAddress();
                 if (MojangBlockServerChecker.isBlocking(inetSocketAddress)) {
-                    return ServerAddressResolveResult.failed(ServerAddressResolveResult.FailureResult.Reason.BLOCKED_BY_MOJANG);
+                    return ServerAddressResolveResult.failed(this, ServerAddressResolveResult.FailureResult.Reason.BLOCKED_BY_MOJANG, new ServerBlockedByMojangException("blocked by mojang block server"));
                 }
             }
             return ServerAddressResolveResult.succeed(this, inetSocketAddress);
         } catch (UnknownHostException e) {
-            return ServerAddressResolveResult.failed(ServerAddressResolveResult.FailureResult.Reason.UNKNOWN_HOST);
+            return ServerAddressResolveResult.failed(this, ServerAddressResolveResult.FailureResult.Reason.UNKNOWN_HOST, e);
         }
     }
 
@@ -111,7 +117,11 @@ public final class ServerAddress {
         return queryProperties;
     }
 
-    public HostAndPort getHostAndIp() {
+    public HostAndPort getHostAndPort() {
         return hostAndPort;
+    }
+
+    public String getRawServerIp() {
+        return rawServerIp;
     }
 }

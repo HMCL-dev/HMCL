@@ -24,8 +24,8 @@ public sealed class ServerStatusResult {
         return new SuccessResult(serverStatus);
     }
 
-    public static ServerStatusResult failure(FailureResult.Reason reason) {
-        return new FailureResult(reason);
+    public static ServerStatusResult failure(FailureResult.Reason reason, Exception exception) {
+        return new FailureResult(reason, exception);
     }
 
     public @Nullable ServerStatus getIfSucceed() {
@@ -59,10 +59,20 @@ public sealed class ServerStatusResult {
     }
 
     public static final class FailureResult extends ServerStatusResult {
-        public final Reason reason;
+        private final Reason reason;
+        private final Exception exception;
 
-        private FailureResult(Reason reason) {
+        private FailureResult(Reason reason, Exception exception) {
             this.reason = reason;
+            this.exception = exception;
+        }
+
+        public Reason getReason() {
+            return reason;
+        }
+
+        public Exception getException() {
+            return exception;
         }
 
         public enum Reason {
