@@ -55,10 +55,9 @@ final class ResourcePackZipFile extends ResourcePackFile {
     public @Nullable Image loadIcon(double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
         try (var fs = CompressingUtils.createReadOnlyZipFileSystem(getFile())) {
             Path iconPath = fs.getPath("pack.png");
-            if (Files.isRegularFile(iconPath)) {
-                try (var inputStream = Files.newInputStream(iconPath)) {
-                    return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
-                }
+            if (!Files.isRegularFile(iconPath)) return null;
+            try (var inputStream = Files.newInputStream(iconPath)) {
+                return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
             }
         } catch (Exception e) {
             LOG.warning("Failed to load resource pack icon", e);
