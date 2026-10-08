@@ -166,15 +166,15 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
                 enabledBox.selectedProperty().bindBidirectional(item.enabledProperty());
 
-                LocalAddonFile addonInfo = item.getAddonInfo();
+                LocalAddonFile addonFile = item.getLocalAddonFile();
 
                 if (oldItem != item) {
                     content.getTags().clear();
 
-                    if (addonInfo instanceof LocalModFile modFile) {
+                    if (addonFile instanceof LocalModFile modFile) {
                         content.addTag(modFile.getId());
                         content.addTag(item.getSource());
-                    } else if (addonInfo instanceof ResourcePackFile) {
+                    } else if (addonFile instanceof ResourcePackFile) {
                         content.addTag(item.getSource());
                     }
                 }
@@ -185,9 +185,9 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
                 item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
 
-                if (addonInfo instanceof LocalModFile modFile) {
+                if (addonFile instanceof LocalModFile modFile) {
                     content.setTitle(modFile.getName());
-                } else if (addonInfo instanceof ResourcePackFile resourcePackFile) {
+                } else if (addonFile instanceof ResourcePackFile resourcePackFile) {
                     content.setTitle(resourcePackFile.getFileName());
                 }
 
@@ -357,7 +357,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             this.fileName.set(fileName);
         }
 
-        public LocalAddonFile getAddonInfo() {
+        public LocalAddonFile getLocalAddonFile() {
             return data.localAddonFile();
         }
 
