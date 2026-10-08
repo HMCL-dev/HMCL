@@ -64,7 +64,9 @@ public final class UpgradeDialog extends JFXDialogLayout {
 
             if (node == null || !"h1".equals(node.nodeName())) {
                 LOG.warning("Changelog not found");
-                return null;
+                Label message = new Label(i18n("update.changelog.empty"));
+                message.getStyleClass().add("html");
+                return message;
             }
 
             HTMLRenderer renderer = new HTMLRenderer(uri -> {
