@@ -310,7 +310,7 @@ public final class FavoritesManager {
 
         public @NotNull RemoteAddon resolve(DownloadProvider downloadProvider) throws IOException {
             if (projectId == null || source == null) return RemoteAddon.BROKEN;
-            return source.getCommonRepo().getAddonById(downloadProvider, projectId);
+            return source.getRepository().getAddonById(downloadProvider, projectId);
         }
     }
 }

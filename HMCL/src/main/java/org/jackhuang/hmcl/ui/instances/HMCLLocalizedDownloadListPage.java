@@ -44,8 +44,8 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
             default -> null;
         };
         return switch (addon.source()) {
-            case MODRINTH -> new HMCLLocalizedDownloadListPage(callback, instanceSelection, addon.type(), null, ModrinthRemoteAddonRepository.MODS);
-            case CURSEFORGE -> new HMCLLocalizedDownloadListPage(callback, instanceSelection, addon.type(), CurseForgeRemoteAddonRepository.MODS, null);
+            case MODRINTH -> new HMCLLocalizedDownloadListPage(callback, instanceSelection, addon.type(), false, true);
+            case CURSEFORGE -> new HMCLLocalizedDownloadListPage(callback, instanceSelection, addon.type(), true, false);
         };
     }
 
