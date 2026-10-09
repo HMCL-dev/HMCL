@@ -30,6 +30,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
@@ -807,6 +809,8 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
             SpinnerPane center = new SpinnerPane();
             ComponentList.setVgrow(center, Priority.ALWAYS);
             center.loadingProperty().bind(ServerListPage.this.loadingProperty());
+
+            ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
             center.setContent(listView);
             root.getContent().add(center);
