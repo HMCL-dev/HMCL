@@ -27,21 +27,10 @@ import java.util.Objects;
 /// @author huangyuhui
 @NotNullByDefault
 @JsonSerializable
-public record ForgeInstallProfile(@SerializedName("install") ForgeInstall install,
-                                  @SerializedName("versionInfo") GameInstanceManifest versionInfo) {
-
-    public ForgeInstallProfile {
+public record ForgeOldInstallProfile(@SerializedName("install") ForgeInstallManifest install,
+                                     @SerializedName("versionInfo") GameInstanceManifest versionInfo) {
+    public ForgeOldInstallProfile {
         Objects.requireNonNull(install, "install");
         Objects.requireNonNull(versionInfo, "versionInfo");
-    }
-
-    @Override
-    public ForgeInstall install() {
-        return install;
-    }
-
-    @Override
-    public GameInstanceManifest versionInfo() {
-        return versionInfo;
     }
 }

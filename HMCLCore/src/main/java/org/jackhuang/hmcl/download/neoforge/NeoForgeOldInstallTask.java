@@ -54,8 +54,8 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.zip.ZipException;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.fromNonNullJson;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
 
@@ -75,7 +75,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
             Map<String, String> outputs = new HashMap<>();
             boolean miss = false;
 
-            for (Map.Entry<String, String> entry : processor.getOutputs().entrySet()) {
+            for (Map.Entry<String, String> entry : processor.outputs().entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
 
@@ -106,11 +106,11 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
                 }
             }
 
-            if (!processor.getOutputs().isEmpty() && !miss) {
+            if (!processor.outputs().isEmpty() && !miss) {
                 return;
             }
 
-            Path jar = gameRepository.getLayout().getArtifactFile(processor.getJar());
+            Path jar = gameRepository.getLayout().getArtifactFile(processor.jar());
             if (!Files.isRegularFile(jar))
                 throw new FileNotFoundException("Game processor file not found, should be downloaded in preprocess");
 
@@ -126,8 +126,8 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
             command.add(JavaRuntime.getDefault().getBinary().toString());
             command.add("-cp");
 
-            List<String> classpath = new ArrayList<>(processor.getClasspath().size() + 1);
-            for (Artifact artifact : processor.getClasspath()) {
+            List<String> classpath = new ArrayList<>(processor.classpath().size() + 1);
+            for (Artifact artifact : processor.classpath()) {
                 Path file = gameRepository.getLayout().getArtifactFile(artifact);
                 if (!Files.isRegularFile(file))
                     throw new Exception("Game processor dependency missing");
@@ -138,8 +138,8 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
 
             command.add(mainClass);
 
-            List<String> args = new ArrayList<>(processor.getArgs().size());
-            for (String arg : processor.getArgs()) {
+            List<String> args = new ArrayList<>(processor.args().size());
+            for (String arg : processor.args()) {
                 String parsed = parseLiteral(arg, vars);
                 if (parsed == null)
                     throw new ArtifactMalformedException("Invalid forge installation configuration");
@@ -148,7 +148,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
 
             command.addAll(args);
 
-            LOG.info("Executing external processor " + processor.getJar().toString() + ", command line: " + new CommandBuilder().addAll(command).toString());
+            LOG.info("Executing external processor " + processor.jar().toString() + ", command line: " + new CommandBuilder().addAll(command).toString());
             int exitCode = SystemUtils.callExternalProcess(command);
             if (exitCode != 0)
                 throw new IOException("Game processor exited abnormally with code " + exitCode);
@@ -289,10 +289,10 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
     public void preExecute() throws Exception {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             profile = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
-            processors = profile.getProcessors();
-            neoForgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.getJson())), GameInstanceManifest.class);
+            processors = profile.processors();
+            neoForgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.json())), GameInstanceManifest.class);
 
-            for (Library library : profile.getLibraries()) {
+            for (Library library : profile.libraries()) {
                 Path file = fs.getPath("maven").resolve(library.getPath());
                 if (Files.exists(file)) {
                     Path dest = gameRepository.getLayout().getLibraryFile(manifest.id(), library);
@@ -311,7 +311,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
             throw new ArtifactMalformedException("Malformed forge installer file", ex);
         }
 
-        dependents.add(new GameLibrariesTask(dependencyManager, manifest, true, profile.getLibraries()));
+        dependents.add(new GameLibrariesTask(dependencyManager, manifest, true, profile.libraries()));
     }
 
     private Map<String, String> parseOptions(List<String> args, Map<String, String> vars) {
@@ -339,7 +339,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
     }
 
     private Task<?> patchDownloadMojangMappingsTask(Processor processor, Map<String, String> vars) {
-        Map<String, String> options = parseOptions(processor.getArgs(), vars);
+        Map<String, String> options = parseOptions(processor.args(), vars);
         if (!"DOWNLOAD_MOJMAPS".equals(options.get("task")) || !"client".equals(options.get("side")))
             return null;
         String version = options.get("version");
@@ -409,7 +409,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
 
         vars.put("SIDE", "client");
         vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(isolatedMinecraftJar));
-        vars.put("MINECRAFT_VERSION", profile.getMinecraft());
+        vars.put("MINECRAFT_VERSION", profile.minecraft());
         vars.put("ROOT", FileUtils.getAbsolutePath(gameRepository.getBaseDirectory()));
         vars.put("INSTALLER", installer.toAbsolutePath().toString());
         vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLayout().getLibrariesDirectory()));
