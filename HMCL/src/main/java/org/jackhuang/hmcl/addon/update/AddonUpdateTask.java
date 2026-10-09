@@ -71,7 +71,6 @@ public class AddonUpdateTask extends Task<Void> {
                                             local.setOld(false);
                                             if (isDisabled)
                                                 local.markDisabled();
-                                            failedAddons.add(local);
                                         } else {
                                             local.onUpdated(newFileName);
                                             if (!local.keepOldFiles()) {
@@ -83,7 +82,9 @@ public class AddonUpdateTask extends Task<Void> {
                                             }
                                         }
                                     })
-                    ).withCounter("addon.check_update.confirm"));
+                    ).whenComplete(Schedulers.javafx(), exception -> {
+                        if (exception != null) failedAddons.add(local);
+                    }).withCounter("addon.check_update.confirm"));
         }
     }
 
