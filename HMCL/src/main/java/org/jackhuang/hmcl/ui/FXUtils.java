@@ -1179,6 +1179,27 @@ public final class FXUtils {
         });
     }
 
+    /// Calls `action` with the character the user typed on `node` or one of its children.
+    ///
+    /// Modifier keys, control characters and whitespace are ignored, so that shortcuts, Enter,
+    /// Escape, Backspace and Tab keep their usual behavior.
+    ///
+    /// @param node the node to install the handler on
+    /// @param action the action to run with the typed character
+    public static void onKeyTyped(Node node, Consumer<String> action) {
+        node.addEventHandler(KeyEvent.KEY_TYPED, event -> {
+            String character = event.getCharacter();
+            if (character.length() != 1
+                    || event.isControlDown() || event.isAltDown() || event.isMetaDown()
+                    || Character.isISOControl(character.charAt(0))
+                    || Character.isWhitespace(character.charAt(0)))
+                return;
+
+            action.accept(character);
+            event.consume();
+        });
+    }
+
     public static void onClicked(Node node, Runnable action) {
         node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
             if (e.getButton() == MouseButton.PRIMARY) {

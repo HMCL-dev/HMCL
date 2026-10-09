@@ -120,6 +120,15 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         return new ResourcePackListPageSkin(this);
     }
 
+    /// Opens the search bar and appends `character` to the current query.
+    ///
+    /// @param character the character typed by the user
+    public void search(String character) {
+        if (getSkin() instanceof ResourcePackListPageSkin skin) {
+            skin.search(character);
+        }
+    }
+
     public void loadInstance(HMCLGameInstance.Optional instance) {
         this.gameInstance = instance.instance();
         if (gameInstance == null) {
@@ -456,6 +465,15 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     Platform.runLater(searchField::requestFocus);
                 }
             }
+        }
+
+        /// Opens the search bar and appends `character` to the current query.
+        ///
+        /// @param character the character typed by the user
+        void search(String character) {
+            changeToolbar(searchBar);
+            searchField.appendText(character);
+            searchField.requestFocus();
         }
 
         private void search() {
