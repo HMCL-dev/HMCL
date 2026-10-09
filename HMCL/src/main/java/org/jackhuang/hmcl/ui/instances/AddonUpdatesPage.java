@@ -98,11 +98,12 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
+        setMargin(listView, new Insets(0, 10, 0, 10));
         listView.getStyleClass().add("no-horizontal-scrollbar");
         listView.setStyle("-fx-background-color: transparent;");
         listView.setCellFactory(x -> new ListCell<>() {
-            private static final Insets PADDING = new Insets(3, 9, 0, 9);
-            private static final Insets LAST_PADDING = new Insets(3, 9, 3, 9);
+            private static final Insets PADDING = new Insets(9, 9, 0, 9);
+            private static final Insets LAST_PADDING = new Insets(9, 9, 9, 9);
 
             private final StackPane wrapper = new StackPane();
             private final HBox container = new HBox(8);
