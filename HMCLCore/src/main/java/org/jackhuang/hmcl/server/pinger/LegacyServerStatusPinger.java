@@ -40,7 +40,7 @@ final class LegacyServerStatusPinger implements ServerStatusPinger {
     }
 
     @Override
-    public @NotNull ServerStatusResult getStatus(@NotNull ServerAddressResolveResult.SuccessResult successResult) throws IOException {
+    public @NotNull ServerStatusResult getStatus(@NotNull ServerAddressResolveResult.SuccessResult successResult) {
         try (Socket socket = new Socket()) {
             socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
             socket.connect(successResult.getConnectAddress(), 7_000);
@@ -74,6 +74,8 @@ final class LegacyServerStatusPinger implements ServerStatusPinger {
                 long networkLatency = System.currentTimeMillis() - sendTime;
                 return ServerStatusResult.success(parseResult(networkLatency, response));
             }
+        } catch (Exception e) {
+            return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, e);
         }
     }
 

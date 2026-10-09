@@ -63,7 +63,7 @@ public interface ServerStatusPinger {
         return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, collectException);
     }
 
-    @NotNull ServerStatusResult getStatus(@NotNull ServerAddressResolveResult.SuccessResult successResult) throws IOException;
+    @NotNull ServerStatusResult getStatus(@NotNull ServerAddressResolveResult.SuccessResult successResult);
 
     @FunctionalInterface
     interface DataWriter {
