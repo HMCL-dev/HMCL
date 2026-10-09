@@ -121,6 +121,10 @@ public final class I18n {
         return getTranslator().formatSpeed(bytes);
     }
 
+    public static String formatSize(long bytes) {
+        return getTranslator().formatSize(bytes);
+    }
+
     public static String getDisplayVersion(ComponentRemoteVersion version) {
         return getTranslator().getDisplayVersion(version);
     }
