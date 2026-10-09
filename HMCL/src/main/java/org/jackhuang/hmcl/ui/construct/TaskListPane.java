@@ -370,6 +370,7 @@ public final class TaskListPane extends StackPane {
             // CHECKSTYLE:OFF
             // @formatter:off
             message = switch (stageKey) {
+                case "hmcl.patchpack" ->                i18n("install.patchpack");
                 case "hmcl.modpack" ->                  i18n("install.modpack");
                 case "hmcl.modpack.download" ->         i18n("launch.state.modpack");
                 case "hmcl.install.assets" ->           i18n("assets.download");

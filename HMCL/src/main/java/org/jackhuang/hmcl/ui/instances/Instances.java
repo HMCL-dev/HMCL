@@ -30,7 +30,10 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.setting.AuthlibInjectorServers;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -44,6 +47,7 @@ import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
+import org.jackhuang.hmcl.ui.patchpack.PatchpackInstallWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -271,6 +275,10 @@ public final class Instances {
 
     public static void updateInstance(HMCLGameInstance gameInstance) {
         Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(gameInstance.getRepository(), gameInstance.getId()));
+    }
+
+    public static void installPatchPack(HMCLGameInstance gameInstance) {
+        PatchpackInstallWizardProvider.install(gameInstance);
     }
 
     public static void updateGameAssets(HMCLGameInstance gameInstance) {
