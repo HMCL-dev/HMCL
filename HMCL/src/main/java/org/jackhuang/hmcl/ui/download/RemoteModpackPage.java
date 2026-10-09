@@ -52,7 +52,7 @@ public final class RemoteModpackPage extends ModpackPage {
             return;
         }
 
-        nameProperty.set(manifest.getName().replace(":", "_"));
+        nameProperty.set(LocalModpackPage.processModpackName(manifest.getName()));
         versionProperty.set(manifest.getVersion());
         authorProperty.set(manifest.getAuthor());
 

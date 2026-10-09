@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
@@ -80,7 +81,7 @@ public final class LocalModpackPage extends ModpackPage {
 
         String name = controller.getSettings().get(MODPACK_NAME);
         if (name != null) {
-            txtModpackName.setText(name.replace(":", "_"));
+            txtModpackName.setText(processModpackName(name));
             txtModpackName.setDisable(true);
         } else {
             FXUtils.onChangeAndOperate(installAsVersion, installAsVersion -> {
@@ -160,7 +161,7 @@ public final class LocalModpackPage extends ModpackPage {
 
                         if (name == null) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
-                            txtModpackName.setText(manifest.getName().trim());
+                            txtModpackName.setText(processModpackName(manifest.getName()));
                         }
 
                         btnDescription.setVisible(StringUtils.isNotBlank(manifest.getDescription()));
@@ -234,6 +235,17 @@ public final class LocalModpackPage extends ModpackPage {
     protected void onDescribe() {
         if (manifest != null)
             Controllers.navigate(new WebPage(i18n("modpack.description"), manifest.getDescription()));
+    }
+
+    @Contract("null->null;!null->!null")
+    public static @Nullable String processModpackName(@Nullable String name) {
+        if (name == null)
+            return null;
+
+        return name.trim()
+                .replace(':', '_')
+                .replace('/', '_')
+                .replace('\\', '_');
     }
 
     public static final SettingsMap.Key<Path> MODPACK_FILE = new SettingsMap.Key<>("MODPACK_FILE");
