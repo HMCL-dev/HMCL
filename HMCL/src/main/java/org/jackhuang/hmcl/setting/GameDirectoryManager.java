@@ -275,6 +275,22 @@ public final class GameDirectoryManager {
         return repositories.computeIfAbsent(gameDirectory, HMCLGameRepository::new);
     }
 
+    /// Returns the repository of the registered game directory with the given id, creating it when
+    /// needed, or `null` when no registered game directory has this id.
+    ///
+    /// <p>The repository is not refreshed here; callers that need loaded state should start
+    /// [HMCLGameRepository#refreshAsync] themselves.
+    ///
+    /// @param id the persistent id of the game directory to find
+    /// @return the matching repository, or `null` when no registered game directory has this id
+    public static @Nullable HMCLGameRepository getOrCreateRepositoryByDirectoryId(GameDirectoryID id) {
+        GameDirectory match = mergedGameDirectoriesUnmodifiable.stream()
+                .filter(directory -> directory.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+        return match != null ? getOrCreateRepository(match) : null;
+    }
+
     /// Adds a game directory to the per-workspace store.
     public static void addLocalGameDirectory(GameDirectory gameDirectory) {
         if (SettingsManager.isLocalGameDirectoriesReadOnly()) {

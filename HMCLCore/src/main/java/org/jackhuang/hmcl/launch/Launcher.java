@@ -21,7 +21,7 @@ import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.game.GameInstance;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.LaunchOptions;
-import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.ProcessInfo;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -84,9 +84,9 @@ public abstract class Launcher {
 
     /// Starts the game process.
     ///
-    /// @return the managed process
+    /// @return the information of the launched game process
     /// @throws IOException          if the process cannot be created or launch preparation fails
     /// @throws InterruptedException if interrupted while preparing or starting the process
-    public abstract ManagedProcess launch() throws IOException, InterruptedException;
+    public abstract ProcessInfo launch() throws IOException, InterruptedException;
 
 }

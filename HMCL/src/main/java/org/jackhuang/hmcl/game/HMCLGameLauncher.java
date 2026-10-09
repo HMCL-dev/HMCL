@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.monitor.MonitorClient;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
@@ -26,7 +27,7 @@ import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.ProcessInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
@@ -51,6 +52,10 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     /// @param listener process listener, or `null` to inherit IO
     public HMCLGameLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
         this(instance, manifest, authInfo, options, listener, true);
+
+        if (MonitorClient.isEnabled()) {
+            setLaunchMonitor(MonitorClient::launchNewMonitor);
+        }
     }
 
     /// Creates a launcher for the given instance and launch plan.
@@ -154,7 +159,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     @Override
-    public ManagedProcess launch() throws IOException, InterruptedException {
+    public ProcessInfo launch() throws IOException, InterruptedException {
         generateOptionsTxt();
         return super.launch();
     }

@@ -34,6 +34,7 @@ import javafx.scene.control.ButtonType;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.monitor.MonitorCrashReporter;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
@@ -143,6 +144,12 @@ public final class Launcher extends Application {
                 UpdateChecker.init();
 
                 primaryStage.show();
+
+                // This process may have been relaunched by the HMCL monitor to present the crash
+                // window of a supervised game process.
+                Path pendingCrashReport = MonitorCrashReporter.processArguments(getParameters().getRaw().toArray(new String[0]));
+                if (pendingCrashReport != null)
+                    MonitorCrashReporter.show(pendingCrashReport);
             });
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);

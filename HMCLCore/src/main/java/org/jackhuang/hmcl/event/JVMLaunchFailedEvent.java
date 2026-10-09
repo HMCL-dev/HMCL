@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.event;
 
 import org.jackhuang.hmcl.util.ToStringBuilder;
-import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.ProcessInfo;
 
 /**
  * This event gets fired when we launch the JVM and it got crashed.
@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.util.platform.ManagedProcess;
  */
 public class JVMLaunchFailedEvent extends Event {
 
-    private final ManagedProcess process;
+    private final ProcessInfo process;
 
     /**
      * Constructor.
@@ -37,12 +37,12 @@ public class JVMLaunchFailedEvent extends Event {
      * @param source {@link org.jackhuang.hmcl.launch.ExitWaiter}
      * @param process the crashed process.
      */
-    public JVMLaunchFailedEvent(Object source, ManagedProcess process) {
+    public JVMLaunchFailedEvent(Object source, ProcessInfo process) {
         super(source);
         this.process = process;
     }
 
-    public ManagedProcess getProcess() {
+    public ProcessInfo getProcess() {
         return process;
     }
 

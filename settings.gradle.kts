@@ -2,7 +2,8 @@ rootProject.name = "HMCL3"
 include(
     "HMCL",
     "HMCLCore",
-    "HMCLBoot"
+    "HMCLBoot",
+    "HMCLMonitor"
 )
 
 val minecraftLibraries = listOf("HMCLTransformerDiscoveryService", "HMCLMultiMCBootstrap")
