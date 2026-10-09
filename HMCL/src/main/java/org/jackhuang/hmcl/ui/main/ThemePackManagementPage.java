@@ -23,23 +23,14 @@ import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Skin;
-import javafx.scene.control.SkinBase;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -465,7 +456,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
                 row.getChildren().setAll(themeIcon, item);
 
                 var rowRippler = new RipplerContainer(row);
-                rowRippler.setCursor(Cursor.HAND);
                 ComponentList.setNoPadding(rowRippler);
 
                 FXUtils.onClicked(rowRippler, () -> {
@@ -680,7 +670,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             content.setMouseTransparent(true);
             center.getChildren().setAll(icon, content);
             HBox.setHgrow(content, Priority.ALWAYS);
-            center.setCursor(Cursor.HAND);
             FXUtils.onClicked(ripplerContainer, () -> {
                 ThemePackManager.InstalledThemePack themePack = getItem();
                 if (themePack != null) {

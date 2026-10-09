@@ -18,13 +18,13 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXRippler;
-import javafx.animation.Transition;
-import javafx.css.*;
+import javafx.css.CssMetaData;
+import javafx.css.Styleable;
+import javafx.css.StyleableObjectProperty;
+import javafx.css.StyleableProperty;
 import javafx.css.converter.PaintConverter;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
@@ -32,9 +32,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
-import org.jackhuang.hmcl.theme.Themes;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
-import org.jackhuang.hmcl.ui.animation.Motion;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,8 +60,6 @@ public class RipplerContainer extends StackPane {
         }
     };
 
-    private Transition coverAnimation;
-
     public RipplerContainer(Node container) {
         this.container = container;
 
@@ -90,61 +85,6 @@ public class RipplerContainer extends StackPane {
         shape.widthProperty().bind(widthProperty());
         shape.heightProperty().bind(heightProperty());
         setShape(shape);
-
-        EventHandler<MouseEvent> mouseEventHandler;
-        if (AnimationUtils.isAnimationEnabled()) {
-            mouseEventHandler = event -> {
-                if (coverAnimation != null) {
-                    coverAnimation.stop();
-                    coverAnimation = null;
-                }
-
-                if (event.getEventType() == MouseEvent.MOUSE_ENTERED) {
-                    coverAnimation = new Transition() {
-                        {
-                            setCycleDuration(Motion.SHORT4);
-                            setInterpolator(Motion.EASE_IN);
-                        }
-
-                        @Override
-                        protected void interpolate(double frac) {
-                            interpolateBackground(frac);
-                        }
-                    };
-                } else {
-                    coverAnimation = new Transition() {
-                        {
-                            setCycleDuration(Motion.SHORT4);
-                            setInterpolator(Motion.EASE_OUT);
-                        }
-
-                        @Override
-                        protected void interpolate(double frac) {
-                            interpolateBackground(1 - frac);
-                        }
-                    };
-                }
-
-                coverAnimation.play();
-            };
-        } else {
-            mouseEventHandler = event ->
-                    interpolateBackground(event.getEventType() == MouseEvent.MOUSE_ENTERED ? 1 : 0);
-        }
-
-        addEventHandler(MouseEvent.MOUSE_ENTERED, mouseEventHandler);
-        addEventHandler(MouseEvent.MOUSE_EXITED, mouseEventHandler);
-    }
-
-    private void interpolateBackground(double frac) {
-        if (frac < 0.01) {
-            setBackground(null);
-        } else {
-            Color onSurface = Themes.getColorScheme().getOnSurface();
-            setBackground(new Background(new BackgroundFill(
-                    Color.color(onSurface.getRed(), onSurface.getGreen(), onSurface.getBlue(), frac * 0.04),
-                    CornerRadii.EMPTY, Insets.EMPTY)));
-        }
     }
 
     protected void updateChildren() {
