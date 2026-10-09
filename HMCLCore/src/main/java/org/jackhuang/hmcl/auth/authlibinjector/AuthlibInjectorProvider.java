@@ -19,36 +19,29 @@ package org.jackhuang.hmcl.auth.authlibinjector;
 
 import org.glavo.url.WebURL;
 import org.glavo.uuid.UUIDs;
-import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilProvider;
 
 import java.util.UUID;
 
-public class AuthlibInjectorProvider implements YggdrasilProvider {
-
-    private final String apiRoot;
-
-    public AuthlibInjectorProvider(String apiRoot) {
-        this.apiRoot = apiRoot;
-    }
+public record AuthlibInjectorProvider(String apiRoot) implements YggdrasilProvider {
 
     @Override
-    public WebURL getAuthenticationURL() throws AuthenticationException {
+    public WebURL getAuthenticationURL() {
         return WebURL.parse(apiRoot + "authserver/authenticate");
     }
 
     @Override
-    public WebURL getRefreshmentURL() throws AuthenticationException {
+    public WebURL getRefreshmentURL() {
         return WebURL.parse(apiRoot + "authserver/refresh");
     }
 
     @Override
-    public WebURL getValidationURL() throws AuthenticationException {
+    public WebURL getValidationURL() {
         return WebURL.parse(apiRoot + "authserver/validate");
     }
 
     @Override
-    public WebURL getInvalidationURL() throws AuthenticationException {
+    public WebURL getInvalidationURL() {
         return WebURL.parse(apiRoot + "authserver/invalidate");
     }
 
@@ -58,12 +51,17 @@ public class AuthlibInjectorProvider implements YggdrasilProvider {
     }
 
     @Override
-    public WebURL getProfilePropertiesURL(UUID uuid) throws AuthenticationException {
+    public WebURL getProfilePropertiesURL(UUID uuid) {
         return WebURL.parse(apiRoot + "sessionserver/session/minecraft/profile/" + UUIDs.toCompactString(uuid));
     }
 
     @Override
-    public String toString() {
-        return apiRoot;
+    public WebURL getFriendsURL() {
+        return WebURL.parse(apiRoot + "minecraftservices/friends");
+    }
+
+    @Override
+    public WebURL getPresenceURL() {
+        return WebURL.parse(apiRoot + "minecraftservices/presence");
     }
 }

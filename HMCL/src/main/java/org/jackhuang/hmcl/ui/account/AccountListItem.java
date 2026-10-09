@@ -33,9 +33,11 @@ import org.jackhuang.hmcl.auth.ClassicAccount;
 import org.jackhuang.hmcl.auth.CredentialExpiredException;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -128,6 +130,14 @@ public class AccountListItem extends RadioButton {
                 return uploadableTextures.contains(TextureType.SKIN);
             }, profile);
         } else if (account instanceof OfflineAccount || account.canUploadSkin()) {
+            return createBooleanBinding(() -> true);
+        } else {
+            return createBooleanBinding(() -> false);
+        }
+    }
+
+    public ObservableBooleanValue canAddFriend() {
+        if (account instanceof YggdrasilAccount || account instanceof MicrosoftAccount) {
             return createBooleanBinding(() -> true);
         } else {
             return createBooleanBinding(() -> false);
