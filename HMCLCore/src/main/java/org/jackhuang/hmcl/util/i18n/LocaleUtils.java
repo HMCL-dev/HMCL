@@ -304,6 +304,90 @@ public final class LocaleUtils {
         return null;
     }
 
+    public static @Nullable String getMinecraftLanguageTag(Locale locale) {
+        if (locale == null) return null;
+
+        String root = getRootLanguage(locale);
+        String script = getScript(locale);
+
+        if ("en".equals(root)) {
+            if ("Qabs".equals(script)) return "en_UD";
+            return "en_US";
+        }
+
+        if ("zh".equals(root)) {
+            return getMinecraftChineseLanguageTag(locale);
+        }
+
+        String region = locale.getCountry();
+        return region.isEmpty() ? root : root + "_" + region;
+    }
+
+    public static @NotNull List<String> getMinecraftLanguageFileNames(Locale locale) {
+        ArrayList<String> candidates = new ArrayList<>();
+        for (Locale candidate : getCandidateLocales(locale)) {
+            String fileName = toMinecraftLanguageFileName(candidate);
+            if (fileName != null && !candidates.contains(fileName)) {
+                candidates.add(fileName);
+            }
+        }
+
+        String minecraftLanguageTag = getMinecraftLanguageTag(locale);
+        if (minecraftLanguageTag != null) {
+            String minecraftFileName = minecraftLanguageTag.toLowerCase(Locale.ROOT) + ".json";
+            if (!candidates.contains(minecraftFileName)) {
+                String genericFileName = getRootLanguage(locale).toLowerCase(Locale.ROOT) + ".json";
+                int genericIndex = candidates.indexOf(genericFileName);
+                if (genericIndex >= 0) {
+                    candidates.add(genericIndex, minecraftFileName);
+                } else {
+                    candidates.add(minecraftFileName);
+                }
+            }
+        }
+
+        if ("zh".equals(getRootLanguage(locale)) && "Hant".equals(getScript(locale))) {
+            moveBefore(candidates, "zh_tw.json", "zh.json");
+        }
+
+        return List.copyOf(candidates);
+    }
+
+    private static void moveBefore(List<String> candidates, String fileName, String beforeFileName) {
+        int fileIndex = candidates.indexOf(fileName);
+        int beforeIndex = candidates.indexOf(beforeFileName);
+        if (beforeIndex >= 0 && fileIndex > beforeIndex) {
+            candidates.remove(fileIndex);
+            candidates.add(beforeIndex, fileName);
+        }
+    }
+
+    private static @Nullable String toMinecraftLanguageFileName(Locale locale) {
+        String language = locale.getLanguage();
+        if (language.isEmpty()) {
+            return null;
+        }
+
+        String normalizedLanguage = getRootLanguage(locale).toLowerCase(Locale.ROOT);
+        String region = locale.getCountry().toLowerCase(Locale.ROOT);
+        return (!region.isEmpty() ? normalizedLanguage + "_" + region : normalizedLanguage) + ".json";
+    }
+
+    private static @NotNull String getMinecraftChineseLanguageTag(Locale locale) {
+        if ("lzh".equals(locale.getLanguage())) {
+            return "lzh";
+        }
+
+        String region = locale.getCountry();
+        String script = getScript(locale);
+
+        if ("Hant".equals(script)) {
+            return ("HK".equals(region) || "MO".equals(region)) ? "zh_HK" : "zh_TW";
+        } else {
+            return "zh_CN";
+        }
+    }
+
     /// Find all localized files in the given directory with the given base name and extension.
     /// The file name should be in the format of `baseName[_languageTag].ext`.
     ///

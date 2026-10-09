@@ -58,6 +58,7 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -96,8 +97,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private @Nullable HMCLGameInstance gameInstance;
 
-    private Path resourcePackDirectory;
-    private ResourcePackManager resourcePackManager;
+    private @Nullable Path resourcePackDirectory;
+    private @Nullable ResourcePackManager resourcePackManager;
 
     private final ReentrantLock lock = new ReentrantLock();
 
@@ -120,6 +121,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         return new ResourcePackListPageSkin(this);
     }
 
+    /// Reloads resource packs for the instance using the launcher locale, or clears the list if absent.
     public void loadInstance(HMCLGameInstance.Optional instance) {
         this.gameInstance = instance.instance();
         if (gameInstance == null) {
@@ -129,7 +131,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             return;
         }
 
-        this.resourcePackManager = gameInstance.getResourcePackManager();
+        this.resourcePackManager = new ResourcePackManager(gameInstance, I18n.getLocale().getLocale());
         this.resourcePackDirectory = this.resourcePackManager.getDirectory();
 
         refresh();
