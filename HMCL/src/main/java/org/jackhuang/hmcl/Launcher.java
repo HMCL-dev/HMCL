@@ -615,8 +615,8 @@ public final class Launcher extends Application {
                         while ((line = reader.readLine()) != null) {
                             if (line.startsWith("Uid:")) {
                                 String[] parts = line.split("\t");
-                                if (parts.length >= 2) {
-                                    String uid = parts[1].trim();
+                                if (parts.length >= 3) {
+                                    String uid = parts[2].trim();
                                     return "0".equals(uid);
                                 }
                             }
