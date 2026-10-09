@@ -46,7 +46,7 @@ import java.util.function.Consumer;
  * Optional fields:
  * <ul>
  *   <li>{@code favicon}: the server icon. This value should be the raw PNG base64 payload only, without
- *   the {@code data:image/png;base64,} prefix. The parser in {@link ServerStatusPinger} accepts the
+ *   the {@code data:image/png;base64,} prefix. The parser in {@link org.jackhuang.hmcl.server.pinger.ServerStatusPinger} accepts the
  *   Minecraft status format where the remote payload may include a data URL, but it strips the prefix and
  *   keeps only the base64 bytes. This drag-and-drop payload therefore stores the base64 text directly,
  *   not the full data URL.</li>

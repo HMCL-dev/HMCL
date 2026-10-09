@@ -27,17 +27,17 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public sealed class ServerAddressResolveResult {
-    private final ServerAddress rawAddress;
+    private final ModernServerAddress rawAddress;
 
-    private ServerAddressResolveResult(ServerAddress rawAddress) {
+    private ServerAddressResolveResult(ModernServerAddress rawAddress) {
         this.rawAddress = rawAddress;
     }
 
-    public static @NotNull ServerAddressResolveResult.FailureResult failed(ServerAddress rawAddress, FailureResult.Reason reason, Exception exception) {
+    public static @NotNull ServerAddressResolveResult.FailureResult failed(ModernServerAddress rawAddress, FailureResult.Reason reason, Exception exception) {
         return new FailureResult(rawAddress, reason, exception);
     }
 
-    public static SuccessResult succeed(ServerAddress rawAddress, InetSocketAddress resolvedAddress) {
+    public static SuccessResult succeed(ModernServerAddress rawAddress, InetSocketAddress resolvedAddress) {
         Map<String, String> queryProperties = new LinkedHashMap<>(rawAddress.getQueryProperties());
         boolean isSame = rawAddress.getHostAndPort().equals(resolvedAddress.getHostName(), resolvedAddress.getPort());
 
@@ -68,7 +68,7 @@ public sealed class ServerAddressResolveResult {
         return new SuccessResult(rawAddress, resolvedAddress, queryArgBuilder.toString(), resolvedAddress.getPort());
     }
 
-    public ServerAddress getRawAddress() {
+    public ModernServerAddress getRawAddress() {
         return rawAddress;
     }
 
@@ -76,7 +76,7 @@ public sealed class ServerAddressResolveResult {
         private final Reason reason;
         private final Exception exception;
 
-        public FailureResult(ServerAddress rawAddress, Reason reason, Exception exception) {
+        public FailureResult(ModernServerAddress rawAddress, Reason reason, Exception exception) {
             super(rawAddress);
             this.reason = reason;
             this.exception = exception;
@@ -108,7 +108,7 @@ public sealed class ServerAddressResolveResult {
         private final String packerHandshakeAddress;
         private final int packerHandshakePort;
 
-        public SuccessResult(ServerAddress rawAddress, InetSocketAddress connectAddress, String packerHandshakeAddress, int packerHandshakePort) {
+        public SuccessResult(ModernServerAddress rawAddress, InetSocketAddress connectAddress, String packerHandshakeAddress, int packerHandshakePort) {
             super(rawAddress);
             this.connectAddress = connectAddress;
             this.packerHandshakeAddress = packerHandshakeAddress;

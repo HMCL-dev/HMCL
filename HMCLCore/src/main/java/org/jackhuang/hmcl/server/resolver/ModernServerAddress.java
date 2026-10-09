@@ -27,12 +27,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public final class ServerAddress {
+public final class ModernServerAddress {
     private final String rawServerIp;
     private final HostAndPort hostAndPort;
     private final Map<String, String> queryProperties;
 
-    private ServerAddress(
+    private ModernServerAddress(
             String rawServerIp,
             HostAndPort hostAndPort,
             Map<String, String> queryProperties
@@ -42,7 +42,7 @@ public final class ServerAddress {
         this.queryProperties = queryProperties;
     }
 
-    public static ServerAddress fromString(String input) throws IOException {
+    public static ModernServerAddress fromString(String input) throws IOException {
         String rawServerIp = input;
         if (input == null || input.isEmpty()) throw new IOException("server ip is empty.");
 
@@ -91,7 +91,7 @@ public final class ServerAddress {
             } catch (Exception ignore) {
             }
         }
-        return new ServerAddress(rawServerIp, new HostAndPort(host, port), queryProperties);
+        return new ModernServerAddress(rawServerIp, new HostAndPort(host, port), queryProperties);
     }
 
     public ServerAddressResolveResult resolve() {

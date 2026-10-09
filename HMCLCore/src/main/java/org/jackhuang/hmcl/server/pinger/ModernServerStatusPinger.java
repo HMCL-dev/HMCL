@@ -15,10 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.server;
+package org.jackhuang.hmcl.server.pinger;
 
 import com.google.gson.*;
-import org.jackhuang.hmcl.server.resolver.ServerAddress;
+import org.jackhuang.hmcl.server.ServerStatus;
+import org.jackhuang.hmcl.server.ServerStatusResult;
 import org.jackhuang.hmcl.server.resolver.ServerAddressResolveResult;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,37 +31,16 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
 // https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping
-// https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#1.6
 // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Minecraft_Forge_Handshake
-public final class ServerStatusPinger {
-    private ServerStatusPinger() {
+final class ModernServerStatusPinger implements ServerStatusPinger {
+    static ModernServerStatusPinger instance = new ModernServerStatusPinger();
+
+    private ModernServerStatusPinger() {
 
     }
 
-    public static @NotNull ServerStatusResult getStatus(@NotNull String serverIp) throws IOException {
-        ServerAddress address = ServerAddress.fromString(serverIp);
-        ServerAddressResolveResult resolveResult = address.resolve();
-
-        if (resolveResult instanceof ServerAddressResolveResult.FailureResult failureResult) {
-            return ServerStatusResult.failure(failureResult.getReason().getStatusReason(), failureResult.getException());
-        }
-
-        ServerAddressResolveResult.SuccessResult successResult = (ServerAddressResolveResult.SuccessResult) resolveResult;
-        ServerStatusResult modernStatusResult = getStatus(successResult);
-        if (modernStatusResult.isSuccess()) {
-            return modernStatusResult;
-        }
-
-        Exception collectException = new IOException("Failed to get server status");
-        collectException.addSuppressed(((ServerStatusResult.FailureResult) modernStatusResult).getException());
-        LOG.error("Failed to get the status of server " + resolveResult.getRawAddress().getRawServerIp(), collectException);
-        return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, collectException);
-    }
-
-    private static @NotNull ServerStatusResult getStatus(ServerAddressResolveResult.SuccessResult successResult) throws IOException {
+    public @NotNull ServerStatusResult getStatus(@NotNull ServerAddressResolveResult.SuccessResult successResult) {
         try (Socket socket = new Socket()) {
             socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
             socket.connect(successResult.getConnectAddress(), 7_000);
@@ -90,7 +70,7 @@ public final class ServerStatusPinger {
         }
     }
 
-    private static ServerStatus parseServerStatus(long networkLatency, JsonObject rootStatus) {
+    private ServerStatus parseServerStatus(long networkLatency, JsonObject rootStatus) {
         JsonObject versionJsonObject = rootStatus.getAsJsonObject("version");
         ServerStatus.Version version = new ServerStatus.Version(versionJsonObject.get("name").getAsString(), versionJsonObject.get("protocol").getAsInt());
 
@@ -159,7 +139,7 @@ public final class ServerStatusPinger {
         );
     }
 
-    private static long readPongResponsePacket(DataInputStream in) throws IOException {
+    private long readPongResponsePacket(DataInputStream in) throws IOException {
         return readPacket(in, packetIn -> {
             int packetId = readVarInt(packetIn);
             if (packetId != 0x01)
@@ -168,7 +148,7 @@ public final class ServerStatusPinger {
         });
     }
 
-    private static <T> T readPacket(DataInputStream in, PacketReader<T> reader) throws IOException {
+    private <T> T readPacket(DataInputStream in, DataReader<T> reader) throws IOException {
         int length = readVarInt(in);
         if (length > 2097151) throw new IOException("Packet length too large: " + length);
         byte[] packetData = new byte[length];
@@ -176,11 +156,11 @@ public final class ServerStatusPinger {
 
         try (ByteArrayInputStream bais = new ByteArrayInputStream(packetData);
              DataInputStream packetIn = new DataInputStream(bais)) {
-            return reader.reader(packetIn);
+            return reader.read(packetIn);
         }
     }
 
-    private static String readStatusResponsePacket(DataInputStream in) throws IOException {
+    private String readStatusResponsePacket(DataInputStream in) throws IOException {
         return readPacket(in, packetIn -> {
             int packetId = readVarInt(packetIn);
             if (packetId != 0x00)
@@ -190,23 +170,23 @@ public final class ServerStatusPinger {
         });
     }
 
-    private static void sendStatusRequestPacket(DataOutputStream sendTarget) throws IOException {
+    private void sendStatusRequestPacket(DataOutputStream sendTarget) throws IOException {
         sendPacket(sendTarget, out -> {
             out.writeByte(0x00); // Packet ID
         });
     }
 
-    private static void sendPacket(DataOutputStream target, PacketWriter packetWriter) throws IOException {
+    private void sendPacket(DataOutputStream target, DataWriter dataWriter) throws IOException {
         try (ByteArrayOutputStream packetOut = new ByteArrayOutputStream();
              DataOutputStream dataPacketOut = new DataOutputStream(packetOut)) {
-            packetWriter.write(dataPacketOut);
+            dataWriter.write(dataPacketOut);
 
             writeVarInt(target, packetOut.size()); // Packet Size
             target.write(packetOut.toByteArray()); // Packet Contents
         }
     }
 
-    private static void sendHandshakeStatusPacket(DataOutputStream sendTarget, String address, int port) throws IOException {
+    private void sendHandshakeStatusPacket(DataOutputStream sendTarget, String address, int port) throws IOException {
         sendPacket(sendTarget, out -> {
             // Packet ID
             out.write(0x00);
@@ -225,7 +205,7 @@ public final class ServerStatusPinger {
         });
     }
 
-    private static void sendPingRequestPacket(DataOutputStream sendTarget) throws IOException {
+    private void sendPingRequestPacket(DataOutputStream sendTarget) throws IOException {
         sendPacket(sendTarget, out -> {
             out.write(0x01); // packet id
             long time = System.currentTimeMillis();
@@ -234,7 +214,7 @@ public final class ServerStatusPinger {
         });
     }
 
-    private static void writeVarInt(OutputStream out, int value) throws IOException {
+    private void writeVarInt(OutputStream out, int value) throws IOException {
         while ((value & ~0x7F) != 0) {
             out.write((value & 0x7F) | 0x80);
 
@@ -244,7 +224,7 @@ public final class ServerStatusPinger {
         out.write(value);
     }
 
-    private static String readVarString(DataInputStream in) throws IOException {
+    private String readVarString(DataInputStream in) throws IOException {
         int length = readVarInt(in);
         if (length > 32768) throw new IOException("Packet string length too large: " + length);
         byte[] bytes = new byte[length];
@@ -252,7 +232,7 @@ public final class ServerStatusPinger {
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
-    private static int readVarInt(InputStream in) throws IOException {
+    private int readVarInt(InputStream in) throws IOException {
         int value = 0;
         int position = 0;
         int currentByte;
@@ -273,19 +253,19 @@ public final class ServerStatusPinger {
         throw new IOException("VarInt too big");
     }
 
-    private static void writeLong(OutputStream out, long value) throws IOException {
+    private void writeLong(OutputStream out, long value) throws IOException {
         for (int i = 7; i >= 0; i--) {
             out.write((int) ((value >>> (i * 8)) & 0xFF));
         }
     }
 
-    private static void writeVarString(OutputStream out, String string) throws IOException {
+    private void writeVarString(OutputStream out, String string) throws IOException {
         byte[] bytes = string.getBytes(StandardCharsets.UTF_8);
         writeVarInt(out, bytes.length);
         out.write(bytes);
     }
 
-    private static long readLong(InputStream in) throws IOException {
+    private long readLong(InputStream in) throws IOException {
         long value = 0;
         for (int i = 0; i < 8; i++) {
             int b = in.read();
@@ -295,15 +275,5 @@ public final class ServerStatusPinger {
             value = (value << 8) | (b & 0xFF);
         }
         return value;
-    }
-
-    @FunctionalInterface
-    private interface PacketWriter {
-        void write(DataOutputStream out) throws IOException;
-    }
-
-    @FunctionalInterface
-    private interface PacketReader<T> {
-        T reader(DataInputStream in) throws IOException;
     }
 }

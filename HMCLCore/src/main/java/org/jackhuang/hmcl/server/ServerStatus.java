@@ -26,7 +26,7 @@ import java.util.UUID;
 
 public record ServerStatus(
         long networkLatency,
-        @NotNull Version version,
+        @Nullable Version version,
         @NotNull Players players,
         @NotNull JsonElement description,
         @Nullable String favicon,

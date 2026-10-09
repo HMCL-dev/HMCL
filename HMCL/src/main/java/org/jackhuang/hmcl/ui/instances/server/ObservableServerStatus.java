@@ -21,8 +21,8 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import org.jackhuang.hmcl.server.ServerStatusPinger;
 import org.jackhuang.hmcl.server.ServerStatusResult;
+import org.jackhuang.hmcl.server.pinger.ServerStatusPinger;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 
