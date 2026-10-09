@@ -61,7 +61,6 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import javafx.util.Subscription;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.setting.StyleSheets;
@@ -81,6 +80,7 @@ import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
+import org.jackhuang.hmcl.util.javafx.Subscription;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.Nullable;
@@ -844,7 +844,7 @@ public final class FXUtils {
             }
 
             {
-                subscriptions.add(allEnabled.subscribe(() -> {
+                subscriptions.add(Subscription.subscribe(allEnabled, () -> {
                     if (updating) return;
                     updating = true;
                     try {
@@ -858,7 +858,7 @@ public final class FXUtils {
                     }
                 }));
                 for (var child : children) {
-                    subscriptions.add(child.subscribe(() -> {
+                    subscriptions.add(Subscription.subscribe(child, () -> {
                         if (updating) return;
                         updating = true;
                         try {
