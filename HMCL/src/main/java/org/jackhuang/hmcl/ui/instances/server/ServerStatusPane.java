@@ -284,6 +284,8 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
             rootContent.getChildren().add(createDescriptionRow(i18n("server.onlineplayers"), String.format("%,d/%,d", status.players().online(), status.players().max()), playersTooltip, new Insets(0, 4, 0, 4)));
             if (status.version() != null) {
                 rootContent.getChildren().add(createDescriptionRow(i18n("server.playversion"), MinecraftChatComponentUtils.toPlainStringFromChatComponent(new JsonPrimitive(status.version().name())) + "(" + status.version().version() + ")", null, new Insets(0, 4, 0, 4)));
+            } else {
+                rootContent.getChildren().add(createDescriptionRow(i18n("server.playversion"), i18n("server.playversion.unknown"), null, new Insets(0, 4, 0, 4)));
             }
             rootContent.getChildren().add(createDescriptionRow(i18n("server.latency"), String.format("%,dms", status.networkLatency()), null, new Insets(0, 4, 0, 4)));
         }
