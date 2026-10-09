@@ -27,18 +27,22 @@ import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModpackInstallWizardProvider implements WizardProvider {
     private final HMCLGameRepository repository;
@@ -134,6 +138,22 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     public Object finish(SettingsMap settings) {
         settings.put("title", i18n("install.modpack.installation"));
         settings.put("success_message", i18n("install.success"));
+        Path selected = settings.get(LocalModpackPage.MODPACK_FILE);
+        if (selected != null && Files.isRegularFile(selected))
+            settings.put(WizardProvider.SuccessCallback.KEY, (ignored, next) -> {
+                Controllers.dialog(new MessageDialogPane.Builder(i18n("install.success"), null, MessageType.SUCCESS)
+                        .addAction(i18n("modpack.delete_source"), () -> {
+                            next.run();
+                            Task.runAsync(Schedulers.io(), () -> {
+                                if (FileUtils.moveToTrash(selected))
+                                    LOG.info("Deleted source modpack file: " + selected);
+                                else
+                                    LOG.warning("Failed to move source modpack file to trash: " + selected);
+                            }).start();
+                        })
+                        .ok(next)
+                        .build());
+            });
         settings.put(FailureCallback.KEY, (ignored, exception, next) -> {
             if (exception instanceof ModpackCompletionException) {
                 if (exception.getCause() instanceof FileNotFoundException) {
