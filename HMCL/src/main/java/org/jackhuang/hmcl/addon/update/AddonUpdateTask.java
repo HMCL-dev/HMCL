@@ -83,7 +83,10 @@ public class AddonUpdateTask extends Task<Void> {
                                         }
                                     })
                     ).whenComplete(Schedulers.javafx(), exception -> {
-                        if (exception != null) failedAddons.add(local);
+                        if (exception != null) {
+                            LOG.warning("Failed to update addon", exception);
+                            failedAddons.add(local);
+                        }
                     }).withCounter("addon.check_update.confirm"));
         }
     }
