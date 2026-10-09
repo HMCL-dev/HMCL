@@ -81,7 +81,7 @@ public final class LocalModpackPage extends ModpackPage {
 
         String name = controller.getSettings().get(MODPACK_NAME);
         if (name != null) {
-            txtModpackName.setText(processModpackName(name));
+            txtModpackName.setText(name);
             txtModpackName.setDisable(true);
         } else {
             FXUtils.onChangeAndOperate(installAsVersion, installAsVersion -> {
