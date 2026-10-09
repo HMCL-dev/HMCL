@@ -478,7 +478,6 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
 
                 HBox contentLine2 = new HBox(contentLine2AddressMaskPane);
                 VBox center = new VBox(contentLine1, contentLine2);
-                center.setMouseTransparent(true);
                 root.setCenter(center);
             }
 
