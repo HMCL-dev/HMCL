@@ -44,6 +44,8 @@ import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.addon.datapack.DataPack;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
@@ -82,6 +84,7 @@ import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.setting.SettingsManager.getAuthlibInjectorServers;
 import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.setting.SettingsManager.userState;
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -259,6 +262,15 @@ public final class Controllers {
         }
 
         Lang.thread(JavaManager::initialize, "Search Java", true);
+
+        LocalModFile.setToggleFailureHandler(e -> runInFX(() -> {
+            if (!isStopped())
+                showToast(i18n("mods.toggle.failed"));
+        }));
+        DataPack.setToggleFailureHandler(e -> runInFX(() -> {
+            if (!isStopped())
+                showToast(i18n("datapack.toggle.failed"));
+        }));
 
         StyleSheets.init(mainScene);
 

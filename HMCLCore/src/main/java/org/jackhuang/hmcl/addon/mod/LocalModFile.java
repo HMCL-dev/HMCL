@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.addon.mod;
 
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
@@ -25,11 +26,13 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -52,6 +55,17 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     private final String logoPath;
     private final BooleanProperty activeProperty;
 
+    private boolean reverting;
+
+    /// Handler invoked when toggling a mod's enabled state fails; set by the UI
+    /// module at startup, since this module cannot show UI itself.
+    private static volatile @Nullable Consumer<IOException> toggleFailureHandler = null;
+
+    /// Sets the toggle failure handler, or `null` to unset.
+    public static void setToggleFailureHandler(@Nullable Consumer<IOException> toggleFailureHandler) {
+        LocalModFile.toggleFailureHandler = toggleFailureHandler;
+    }
+
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
         this(modManager, mod, file, name, description, "", "", "", "", "");
     }
@@ -72,7 +86,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
             @Override
             protected void invalidated() {
-                if (isOld()) return;
+                if (isOld() || reverting) return;
 
                 Path path = LocalModFile.this.file.toAbsolutePath();
 
@@ -83,6 +97,24 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
                         LocalModFile.this.file = modManager.disableMod(path);
                 } catch (IOException e) {
                     LOG.error("Unable to invert state of mod file " + path, e);
+
+                    // The file was not renamed. Restore the property outside the current
+                    // change cascade: a revert fired from invalidated() is swallowed by the
+                    // updating guard of the bidirectional binding, so the checkbox would
+                    // keep showing the failed state.
+                    boolean valueToRestore = !get();
+                    Platform.runLater(() -> {
+                        reverting = true;
+                        try {
+                            set(valueToRestore);
+                        } finally {
+                            reverting = false;
+                        }
+                    });
+
+                    Consumer<IOException> handler = toggleFailureHandler;
+                    if (handler != null)
+                        handler.accept(e);
                 }
             }
         };

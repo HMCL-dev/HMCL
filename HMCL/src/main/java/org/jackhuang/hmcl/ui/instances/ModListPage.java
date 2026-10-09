@@ -210,15 +210,24 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     void removeSelected(ObservableList<ModInfoObject> selectedItems) {
-        try {
-            modManager.removeMods(selectedItems.stream()
-                    .filter(Objects::nonNull)
-                    .map(ModInfoObject::getModInfo)
-                    .toArray(LocalModFile[]::new));
-            loadMods(modManager);
-        } catch (IOException ignore) {
-            // Fail to remove mods if the game is running or the mod is absent.
-        }
+        List<String> failed = new ArrayList<>(0);
+        selectedItems.stream()
+                .filter(Objects::nonNull)
+                .map(ModInfoObject::getModInfo)
+                .forEach(mod -> {
+                    try {
+                        modManager.removeMods(mod);
+                    } catch (IOException e) {
+                        // Fail to remove mods if the game is running or the mod is absent.
+                        LOG.warning("Failed to delete mod " + mod.getFileName(), e);
+                        failed.add(mod.getFileName());
+                    }
+                });
+
+        if (!failed.isEmpty())
+            Controllers.dialog(i18n("mods.delete.failed", String.join(", ", failed)), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+
+        loadMods(modManager);
     }
 
     void enableSelected(ObservableList<ModInfoObject> selectedItems) {

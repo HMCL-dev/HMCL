@@ -31,10 +31,12 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,6 +48,15 @@ public class DataPack {
 
     private final Path path;
     private final ObservableList<Pack> packs = FXCollections.observableArrayList();
+
+    /// Handler invoked when toggling a data pack's enabled state fails; set by the
+    /// UI module at startup, since this module cannot show UI itself.
+    private static volatile @Nullable Consumer<IOException> toggleFailureHandler = null;
+
+    /// Sets the toggle failure handler, or `null` to unset.
+    public static void setToggleFailureHandler(@Nullable Consumer<IOException> toggleFailureHandler) {
+        DataPack.toggleFailureHandler = toggleFailureHandler;
+    }
 
     public DataPack(Path path) {
         this.path = path;
@@ -251,6 +262,8 @@ public class DataPack {
         private final LocalAddonFile.Description description;
         private final DataPack parentDataPack;
 
+        private boolean reverting;
+
         public Pack(Path path, boolean isDirectory, String id, LocalAddonFile.Description description, DataPack parentDataPack) {
             this.path = path;
             this.isDirectory = isDirectory;
@@ -271,28 +284,46 @@ public class DataPack {
         }
 
         private BooleanProperty initializeActiveProperty() {
-            BooleanProperty property = new SimpleBooleanProperty(this, "active", !FileUtils.getExtension(this.statusFile).equals(DISABLED_EXT));
-            property.addListener((obs, wasActive, isNowActive) -> {
-                if (wasActive != isNowActive) {
-                    handleFileRename(isNowActive);
+            return new SimpleBooleanProperty(this, "active", !FileUtils.getExtension(this.statusFile).equals(DISABLED_EXT)) {
+                @Override
+                protected void invalidated() {
+                    if (reverting) return;
+                    try {
+                        handleFileRename(get());
+                    } catch (IOException e) {
+                        LOG.warning("Unable to rename file from " + statusFile + " to " + calculateNewStatusFilePath(get()), e);
+
+                        // The file was not renamed. Restore the property outside the current
+                        // change cascade: a revert fired from invalidated() is swallowed by the
+                        // updating guard of the bidirectional binding, so the checkbox would
+                        // keep showing the failed state.
+                        boolean valueToRestore = !get();
+                        Platform.runLater(() -> {
+                            reverting = true;
+                            try {
+                                set(valueToRestore);
+                            } finally {
+                                reverting = false;
+                            }
+                        });
+
+                        Consumer<IOException> handler = toggleFailureHandler;
+                        if (handler != null)
+                            handler.accept(e);
+                    }
                 }
-            });
-            return property;
+            };
         }
 
-        private void handleFileRename(boolean isNowActive) {
+        private void handleFileRename(boolean isNowActive) throws IOException {
             Path newStatusFile = calculateNewStatusFilePath(isNowActive);
             if (statusFile.equals(newStatusFile)) {
                 return;
             }
-            try {
-                Files.move(this.statusFile, newStatusFile);
-                this.statusFile = newStatusFile;
-                if (!this.isDirectory) {
-                    this.path = newStatusFile;
-                }
-            } catch (IOException e) {
-                LOG.warning("Unable to rename file from " + this.statusFile + " to " + newStatusFile, e);
+            Files.move(this.statusFile, newStatusFile);
+            this.statusFile = newStatusFile;
+            if (!this.isDirectory) {
+                this.path = newStatusFile;
             }
         }
 
