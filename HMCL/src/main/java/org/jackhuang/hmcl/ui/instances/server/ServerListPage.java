@@ -17,26 +17,22 @@
  */
 package org.jackhuang.hmcl.ui.instances.server;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
-import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXPopup;
+import com.jfoenix.controls.*;
+import javafx.animation.PauseTransition;
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.Skin;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.util.Duration;
 import javafx.util.Subscription;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.server.Server;
@@ -45,8 +41,11 @@ import org.jackhuang.hmcl.server.ServerStatusResult;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.instances.Instances;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,10 +55,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
-import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
+import static org.jackhuang.hmcl.ui.FXUtils.*;
+import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -695,37 +696,167 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
         }
     }
 
-    private final class ServerListPageSkin extends ToolbarListPageSkin<ServerListPage.ServerListItem, ServerListPage> {
+    private final class ServerListPageSkin extends SkinBase<ServerListPage> {
+        private final JFXListView<ServerListPage.ServerListItem> listView = new JFXListView<>();
+        private final JFXTextField searchField = new JFXTextField();
+        private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+        private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
+
+        private final TransitionPane toolbarPane = new TransitionPane();
+
+        private final HBox searchBar = new HBox();
+        private final HBox toolbarNormal = new HBox();
 
         ServerListPageSkin() {
             super(ServerListPage.this);
 
+            StackPane rootStackPane = new StackPane();
+            getChildren().setAll(rootStackPane);
+            rootStackPane.setPadding(new Insets(10));
+            rootStackPane.getStyleClass().addAll("notice-pane");
+
+            ComponentList root = new ComponentList();
+            rootStackPane.getChildren().setAll(root);
+            root.getStyleClass().add("no-padding");
+
+            listView.getStyleClass().add("no-horizontal-scrollbar");
+            listView.setCellFactory(param -> new ServerListCell(ServerListPage.this));
+            listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+            {
+                root.getContent().add(toolbarPane);
+                FXUtils.setOverflowHidden(toolbarPane, 8);
+
+                Insets toolbarPadding = new Insets(0, 5, 0, 5);
+
+                toolbarNormal.setAlignment(Pos.CENTER_LEFT);
+                toolbarNormal.setPadding(toolbarPadding);
+                toolbarNormal.getChildren().setAll(
+                        createCheckBox(box -> {
+                            box.setText(i18n("server.manage.show_all"));
+                            box.selectedProperty().bindBidirectional(ServerListPage.this.showAll);
+                        }),
+                        createCheckBox(box -> {
+                            box.setText(i18n("server.manage.show_hide"));
+                            box.selectedProperty().bindBidirectional(ServerListPage.this.showHide);
+                        }),
+                        createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, ServerListPage.this::refresh),
+                        createToolbarButton2(i18n("server.manage.add"), SVG.ADD, ServerListPage.this::addServer),
+                        createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
+                );
+
+
+                searchBar.setAlignment(Pos.CENTER);
+                searchBar.setPadding(toolbarPadding);
+                searchField.setPromptText(i18n("search"));
+                HBox.setHgrow(searchField, Priority.ALWAYS);
+                searchPause.setOnFinished(e -> search());
+                searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                    if (isSearching.get() || !StringUtils.isBlank(newValue)) {
+                        searchPause.setRate(1);
+                        searchPause.playFromStart();
+                    }
+                });
+
+                JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
+                    changeToolbar(toolbarNormal);
+                    searchField.clear();
+                    searchPause.stop();
+                    isSearching.set(false);
+                    Bindings.bindContent(listView.getItems(), ServerListPage.this.getItems());
+                });
+
+                onEscPressed(searchField, closeSearchBar::fire);
+
+                searchBar.getChildren().setAll(
+                        createCheckBox(box -> {
+                            box.setText(i18n("server.manage.show_all"));
+                            box.selectedProperty().bindBidirectional(ServerListPage.this.showAll);
+                        }),
+                        createCheckBox(box -> {
+                            box.setText(i18n("server.manage.show_hide"));
+                            box.selectedProperty().bindBidirectional(ServerListPage.this.showHide);
+                        }),
+                        createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, ServerListPage.this::refresh),
+                        searchField,
+                        closeSearchBar
+                );
+                toolbarPane.setContent(toolbarNormal, ContainerAnimations.NONE);
+            }
+
             StackPane placeholderContainer = new StackPane();
             placeholderContainer.getStyleClass().add("notice-pane");
             Label placeholderLabel = new Label(i18n("server.empty"));
+            placeholderLabel.textProperty().bind(Bindings.createStringBinding(() -> {
+                if (isSearching.get()) {
+                    return i18n("search.no_results_found");
+                } else {
+                    return i18n("server.empty");
+                }
+            }, isSearching));
             placeholderContainer.getChildren().add(placeholderLabel);
             listView.setPlaceholder(placeholderContainer);
+
+            Bindings.bindContent(listView.getItems(), ServerListPage.this.getItems());
+            ServerListPage.this.getItems().addListener((ListChangeListener<? super ServerListItem>) c -> {
+                if (isSearching.get()) {
+                    search();
+                }
+            });
+
+            SpinnerPane center = new SpinnerPane();
+            ComponentList.setVgrow(center, Priority.ALWAYS);
+            center.loadingProperty().bind(ServerListPage.this.loadingProperty());
+
+            center.setContent(listView);
+            root.getContent().add(center);
         }
 
-        @Override
-        protected List<Node> initializeToolbar(ServerListPage skinnable) {
-            JFXCheckBox chkShowAll = new JFXCheckBox(i18n("server.manage.show_all"));
-            chkShowAll.selectedProperty().bindBidirectional(skinnable.showAll);
-
-            JFXCheckBox chkShowHide = new JFXCheckBox(i18n("server.manage.show_hide"));
-            chkShowHide.selectedProperty().bindBidirectional(skinnable.showHide);
-
-            return Arrays.asList(
-                    chkShowAll,
-                    chkShowHide,
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("server.manage.add"), SVG.ADD, skinnable::addServer)
-            );
+        private JFXCheckBox createCheckBox(Consumer<JFXCheckBox> consumer) {
+            JFXCheckBox box = new JFXCheckBox();
+            // change style.
+            consumer.accept(box);
+            return box;
         }
 
-        @Override
-        protected ListCell<ServerListPage.ServerListItem> createListCell(JFXListView<ServerListPage.ServerListItem> listView) {
-            return new ServerListCell(getSkinnable());
+        private void changeToolbar(HBox newToolbar) {
+            Node oldToolbar = toolbarPane.getCurrentNode();
+            if (newToolbar != oldToolbar) {
+                toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
+                if (newToolbar == searchBar) {
+                    Platform.runLater(searchField::requestFocus);
+                }
+            }
+        }
+
+        private void search() {
+            isSearching.set(true);
+
+            Bindings.unbindContent(listView.getItems(), ServerListPage.this.getItems());
+
+            String queryString = searchField.getText();
+            if (StringUtils.isBlank(queryString)) {
+                listView.getItems().setAll(ServerListPage.this.getItems());
+            } else {
+                listView.getItems().clear();
+
+                Predicate<@Nullable String> predicate;
+                try {
+                    predicate = StringUtils.compileQuery(queryString);
+                } catch (Throwable e) {
+                    LOG.warning("Illegal regular expression", e);
+                    return;
+                }
+
+                for (ServerListItem item : ServerListPage.this.getItems()) {
+                    String serverIp = item.server.getIp();
+                    String serverName = item.server.getName();
+
+                    if (predicate.test(serverIp) || predicate.test(serverName)) {
+                        listView.getItems().add(item);
+                    }
+                }
+            }
         }
     }
 }
