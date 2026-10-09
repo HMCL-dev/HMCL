@@ -32,6 +32,7 @@ import java.net.StandardSocketOptions;
 import java.util.List;
 
 // https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#1.6
+// Minecraft Beta 1.8 to Minecraft 1.6
 final class LegacyServerStatusPinger implements ServerStatusPinger {
     static LegacyServerStatusPinger instance = new LegacyServerStatusPinger();
 
@@ -54,16 +55,16 @@ final class LegacyServerStatusPinger implements ServerStatusPinger {
                 out.writeByte(0x01); // payload(always 1)
                 out.writeByte(0xfa); // plugin message
 
-                writeString(out, "MC|PingHost"); // magic
-
-                byte[] remainBytes = toByteArray(remainOut -> {
-                    remainOut.writeByte(0x7f); // protocol version
-                    writeString(remainOut, successResult.getRawAddress().getHostAndPort().host()); // raw host
-                    remainOut.writeInt(successResult.getRawAddress().getHostAndPort().port()); // raw port
-                });
-
-                out.writeShort(remainBytes.length); // remain data length
-                out.write(remainBytes); // remain data
+//                writeString(out, "MC|PingHost"); // magic
+//
+//                byte[] remainBytes = toByteArray(remainOut -> {
+//                    remainOut.writeByte(0x7f); // protocol version
+//                    writeString(remainOut, successResult.getRawAddress().getHostAndPort().host()); // raw host
+//                    remainOut.writeInt(successResult.getRawAddress().getHostAndPort().port()); // raw port
+//                });
+//
+//                out.writeShort(remainBytes.length); // remain data length
+//                out.write(remainBytes); // remain data
 
                 int receivePacketId = in.readUnsignedByte();
                 if (receivePacketId != 0xff) {
@@ -134,19 +135,17 @@ final class LegacyServerStatusPinger implements ServerStatusPinger {
 
     private void writeString(final DataOutputStream out, final String str) throws IOException {
         out.writeShort(str.length());
-
-        for (char c : str.toCharArray()) {
-            out.writeChar(c);
-        }
+        out.writeChars(str);
     }
 
     private String readString(final DataInputStream in) throws IOException {
         int length = in.readShort();
 
         char[] chars = new char[length];
-        for (int i = 0; i < length; i++) {
-            chars[i] = in.readChar();
+        for (int index = 0; index < length; index++) {
+            chars[index] = in.readChar();
         }
+
         return new String(chars);
     }
 

@@ -32,7 +32,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public interface ServerStatusPinger {
     List<ServerStatusPinger> PINGERS = List.of(
-            ModernServerStatusPinger.instance,
+//            ModernServerStatusPinger.instance,
             LegacyServerStatusPinger.instance
     );
 

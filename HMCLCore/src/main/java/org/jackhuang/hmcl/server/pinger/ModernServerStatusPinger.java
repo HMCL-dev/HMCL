@@ -33,6 +33,7 @@ import java.util.UUID;
 
 // https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping
 // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Minecraft_Forge_Handshake
+// Minecraft 1.7+
 final class ModernServerStatusPinger implements ServerStatusPinger {
     static ModernServerStatusPinger instance = new ModernServerStatusPinger();
 
