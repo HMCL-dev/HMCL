@@ -92,7 +92,7 @@ public class GameItem {
             @Nullable String modPackVersion = null;
             try {
                 @Nullable ModpackConfiguration<?> config = gameInstance.readModpackConfiguration();
-                modPackVersion = config != null ? config.getVersion() : null;
+                modPackVersion = config != null ? config.version() : null;
             } catch (IOException e) {
                 LOG.warning("Failed to read modpack configuration from " + getId(), e);
             }

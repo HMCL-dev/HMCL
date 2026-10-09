@@ -117,7 +117,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
             if (this.updateTarget != null && Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(Modpack.class));
 
-                if (config == null || !HMCLModpackProvider.INSTANCE.getName().equals(config.getType()))
+                if (config == null || !HMCLModpackProvider.INSTANCE.getName().equals(config.type()))
                     throw new IllegalArgumentException("Instance " + instanceId + " is not a HMCL modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {

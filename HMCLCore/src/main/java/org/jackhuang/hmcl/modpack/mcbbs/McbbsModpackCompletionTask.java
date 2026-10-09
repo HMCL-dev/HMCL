@@ -38,7 +38,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -110,7 +113,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                     throw new IOException("Malformed modpack configuration");
                 }
             }
-            manifest = configuration.getManifest();
+            manifest = configuration.manifest();
             if (manifest == null) throw new CustomException();
         })).thenComposeAsync(unused -> {
             // we first download latest manifest
@@ -193,7 +196,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                 return executor.all(tasks.stream().filter(Objects::nonNull).collect(Collectors.toList()));
             })).thenAcceptAsync(wrapConsumer(unused1 -> {
                 JsonUtils.writeToJsonFile(configurationFile,
-                        new ModpackConfiguration<>(manifest, this.configuration.getType(), this.manifest.getName(), this.manifest.getVersion(),
+                        new ModpackConfiguration<>(manifest, this.configuration.type(), this.manifest.getName(), this.manifest.getVersion(),
                                 this.manifest.getFiles().stream()
                                         .flatMap(file -> file instanceof McbbsModpackManifest.AddonFile
                                                 ? Stream.of((McbbsModpackManifest.AddonFile) file)
