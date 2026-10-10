@@ -38,7 +38,7 @@ public interface ServerStatusPinger {
 
     static @NotNull ServerStatusResult getStatus(@NotNull String serverIp) throws IOException {
         try {
-            ModernServerAddress address = ModernServerAddress.fromString(serverIp);
+            ModernServerAddress address = ModernServerAddress.parse(serverIp);
             ServerAddressResolveResult resolveResult = address.resolve();
 
             if (resolveResult instanceof ServerAddressResolveResult.FailureResult failureResult) {

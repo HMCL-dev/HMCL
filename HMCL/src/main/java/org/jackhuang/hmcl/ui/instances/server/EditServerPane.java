@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.DialogAware;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.RequiredValidator;
+import org.jackhuang.hmcl.ui.construct.MinecraftServerAddressValidator;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,13 +139,15 @@ public class EditServerPane extends TransitionPane implements DialogAware {
             GridPane.setHalignment(label, HPos.LEFT);
             body.add(label, 0, 1);
 
-            serverIpField.setValidators(new RequiredValidator());
+            serverIpField.setValidators(new MinecraftServerAddressValidator());
             setValidateWhileTextChanged(serverIpField, true);
+
             body.add(serverIpField, 1, 1);
 
             if (referenceServerIP != null) {
                 serverIpField.setText(referenceServerIP);
             }
+
         }
 
         // serverPackStatusField

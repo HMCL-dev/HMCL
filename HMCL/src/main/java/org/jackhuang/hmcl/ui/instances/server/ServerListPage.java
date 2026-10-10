@@ -125,7 +125,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                         if (exception != null)
                             LOG.warning("Failed to save server data.", exception);
 
-                        if (updated) {
+                        if (updated != null && updated) {
                             int index = serverListEntries.indexOf(item);
                             if (index != -1) {
                                 serverListEntries.set(index, new ServerListItem(item.storageEntry));
@@ -154,12 +154,13 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                         try {
                             item.storageEntry.delete();
                             result.add(item);
-                        } catch (IOException ignored) {
+                        } catch (IOException e) {
+                            LOG.error("Failed to delete server entry.", e);
                         }
                     }
                     return result;
                 }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    if (result.isEmpty()) return;
+                    if (result == null || result.isEmpty()) return;
                     serverListEntries.removeAll(result);
                     updateServerList();
                 }).start(),
@@ -625,7 +626,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                         if (exception != null)
                             LOG.warning("Failed to save server data.", exception);
 
-                        if (updated) {
+                        if (updated != null && updated) {
                             int index = serverListEntries.indexOf(item);
                             if (index != -1) {
                                 serverListEntries.set(index, new ServerListItem(item.storageEntry, item.observableServerStatus));

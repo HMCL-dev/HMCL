@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.server.resolver;
 
 import org.jackhuang.hmcl.server.ServerBlockedByMojangException;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.net.UnknownHostException;
@@ -42,56 +42,45 @@ public final class ModernServerAddress {
         this.queryProperties = queryProperties;
     }
 
-    public static ModernServerAddress fromString(String input) throws IOException {
-        String rawServerIp = input;
-        if (input == null || input.isEmpty()) throw new IOException("server ip is empty.");
+    public static ModernServerAddress parse(@NotNull String input) {
+        try {
+            input = input.trim();
+            String rawServerIp = input;
+            if (input.isEmpty()) throw new IllegalArgumentException("server ip is empty.");
 
+            Map<String, String> queryProperties = new LinkedHashMap<>();
 
-        Map<String, String> queryProperties = new LinkedHashMap<>();
+            int queryStart = input.lastIndexOf('?');
+            if (queryStart != -1) {
+                String queryPropertyStr = input.substring(queryStart + 1);
+                String[] args = queryPropertyStr.split("&");
+                for (String arg : args) {
+                    int separator = arg.indexOf('=');
 
-        int queryStart = input.lastIndexOf('?');
-        if (queryStart != -1) {
-            String queryPropertyStr = input.substring(queryStart + 1);
-            String[] args = queryPropertyStr.split("&");
-            for (String arg : args) {
-                int separator = arg.indexOf('=');
-
-                String key;
-                String value;
-                if (separator >= 0) {
-                    key = URLDecoder.decode(arg.substring(0, separator), StandardCharsets.UTF_8);
-                    value = URLDecoder.decode(arg.substring(separator + 1), StandardCharsets.UTF_8);
-                } else {
-                    key = URLDecoder.decode(arg, StandardCharsets.UTF_8);
-                    value = "";
+                    String key;
+                    String value;
+                    if (separator >= 0) {
+                        key = URLDecoder.decode(arg.substring(0, separator), StandardCharsets.UTF_8);
+                        value = URLDecoder.decode(arg.substring(separator + 1), StandardCharsets.UTF_8);
+                    } else {
+                        key = URLDecoder.decode(arg, StandardCharsets.UTF_8);
+                        value = "";
+                    }
+                    queryProperties.put(key, value);
                 }
-                queryProperties.put(key, value);
+                input = input.substring(0, queryStart);
             }
-            input = input.substring(0, queryStart);
-        }
 
-        int atEnd = input.indexOf('@');
-        if (atEnd != -1) {
-            queryProperties.put("_id", input.substring(0, atEnd));
-            input = input.substring(atEnd + 1);
-        }
-
-        String host = input;
-        int port = 25565;
-
-        int lastIndexOf = input.lastIndexOf(":");
-        if (lastIndexOf != -1) {
-            String portArea = input.substring(lastIndexOf + 1);
-            try {
-                int parsedPort = Integer.parseInt(portArea);
-                if (parsedPort > 0 && parsedPort <= 65535) {
-                    host = input.substring(0, lastIndexOf);
-                    port = parsedPort;
-                }
-            } catch (Exception ignore) {
+            int atEnd = input.indexOf('@');
+            if (atEnd != -1) {
+                queryProperties.put("_id", input.substring(0, atEnd));
+                input = input.substring(atEnd + 1);
             }
+
+            return new ModernServerAddress(rawServerIp, HostAndPort.parseHostAndPort(input, 25565), queryProperties);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to parse URL " + input, e);
         }
-        return new ModernServerAddress(rawServerIp, new HostAndPort(host, port), queryProperties);
     }
 
     public ServerAddressResolveResult resolve() {
