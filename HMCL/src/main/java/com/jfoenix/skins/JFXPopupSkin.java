@@ -25,10 +25,13 @@ import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXPopup.PopupHPosition;
 import com.jfoenix.controls.JFXPopup.PopupVPosition;
 import com.jfoenix.effects.JFXDepthManager;
+import com.sun.javafx.event.RedirectedEvent;
 import javafx.animation.*;
 import javafx.animation.Animation.Status;
+import javafx.event.EventDispatcher;
 import javafx.scene.Node;
 import javafx.scene.control.Skin;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.transform.Scale;
@@ -51,11 +54,24 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
 
     private Animation animation;
     private Animation closeAnimation;
+    private final EventDispatcher eventDispatcher;
 
     protected Scale scale;
 
     public JFXPopupSkin(JFXPopup control) {
         this.control = control;
+        eventDispatcher = control.getEventDispatcher();
+        if (eventDispatcher != null) {
+            control.setEventDispatcher((event, tail) -> {
+                if (container.isMouseTransparent()
+                        && (event instanceof KeyEvent
+                        || event instanceof RedirectedEvent redirected && redirected.getOriginalEvent() instanceof KeyEvent)) {
+                    // Leave redirected keys unconsumed so the owner window can handle them.
+                    return event;
+                }
+                return eventDispatcher.dispatchEvent(event, tail);
+            });
+        }
         // set scale y to 0.01 instead of 0 to allow layout of the content,
         // otherwise it will cause exception in traverse engine, when focusing the 1st node
         scale = new Scale(1.0, 0.01, 0, 0);
@@ -146,8 +162,10 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
         return root;
     }
 
+    /// Stops animations, restores the popup dispatcher and releases the skin nodes.
     @Override
     public void dispose() {
+        control.setEventDispatcher(eventDispatcher);
         if (animation != null) {
             animation.stop();
             animation = null;
