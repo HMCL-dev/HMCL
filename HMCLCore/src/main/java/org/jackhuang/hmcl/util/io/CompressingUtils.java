@@ -20,8 +20,10 @@ package org.jackhuang.hmcl.util.io;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -32,68 +34,69 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
 import java.util.zip.ZipException;
 
-/**
- * Utilities of compressing
- *
- * @author huangyuhui
- */
+/// Provides ZIP archive access and filename encoding detection.
+///
+/// @author huangyuhui
+@NotNullByDefault
 public final class CompressingUtils {
 
-    private static final FileSystemProvider ZIPFS_PROVIDER = FileSystemProvider.installedProviders().stream()
+    /// ZIP filesystem provider, or `null` when the runtime does not include one.
+    private static final @Nullable FileSystemProvider ZIPFS_PROVIDER = FileSystemProvider.installedProviders().stream()
             .filter(it -> "jar".equalsIgnoreCase(it.getScheme()))
             .findFirst()
             .orElse(null);
 
+    /// Prevents instantiation of this utility class.
     private CompressingUtils() {
     }
 
-    private static CharsetDecoder newCharsetDecoder(Charset charset) {
-        return charset.newDecoder().onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT);
-    }
-
-    public static boolean testEncoding(Path zipFile, Charset encoding) throws IOException {
-        try (ZipArchiveReader zf = openZipFile(zipFile, encoding)) {
-            return testEncoding(zf, encoding);
-        }
-    }
-
-    public static boolean testEncoding(ZipArchiveReader zipFile, Charset encoding) {
-        CharsetDecoder cd = newCharsetDecoder(encoding);
-        CharBuffer cb = CharBuffer.allocate(32);
-
-        for (ZipArchiveEntry entry : zipFile.getEntries()) {
-            if (entry.getGeneralPurposeBit().usesUTF8ForNames()) continue;
-
-            cd.reset();
-            byte[] ba = entry.getRawName();
-            int clen = (int) (ba.length * cd.maxCharsPerByte());
-            if (clen == 0) continue;
-            if (clen <= cb.capacity())
-                cb.clear();
-            else
-                cb = CharBuffer.allocate(clen);
-
-            ByteBuffer bb = ByteBuffer.wrap(ba, 0, ba.length);
-            CoderResult cr = cd.decode(bb, cb, true);
-            if (!cr.isUnderflow()) return false;
-            cr = cd.flush(cb);
-            if (!cr.isUnderflow()) return false;
-        }
-        return true;
-    }
-
-    public static Charset findSuitableEncoding(Path zipFile) throws IOException {
+    /// Guesses a charset for the archive's unmarked entry names, defaulting to UTF-8.
+    ///
+    /// Names marked as UTF-8 or supplied by a Unicode extra field are excluded.
+    /// UTF-8 is preferred when it can decode every remaining name, including when
+    /// there are no remaining names. Otherwise, statistical candidates are tried
+    /// in descending score order, including low-scoring candidates when necessary.
+    /// Candidates must strictly decode every unmarked name. If none qualifies,
+    /// UTF-8 is returned even if some names cannot be decoded with it.
+    /// Successful decoding does not guarantee that the original charset was identified.
+    ///
+    /// @param zipFile archive to inspect
+    /// @return guessed filename charset, or UTF-8 when no candidate qualifies
+    /// @throws IOException if the archive cannot be read or its reader cannot be closed
+    static Charset findSuitableEncoding(Path zipFile) throws IOException {
         try (ZipArchiveReader zf = openZipFile(zipFile, StandardCharsets.UTF_8)) {
             return findSuitableEncoding(zf);
         }
     }
 
-    public static Charset findSuitableEncoding(ZipArchiveReader zipFile) throws IOException {
-        if (testEncoding(zipFile, StandardCharsets.UTF_8)) return StandardCharsets.UTF_8;
-        if (OperatingSystem.NATIVE_CHARSET != StandardCharsets.UTF_8 && testEncoding(zipFile, OperatingSystem.NATIVE_CHARSET))
-            return OperatingSystem.NATIVE_CHARSET;
+    /// Guesses a filename charset without closing the supplied reader,
+    /// defaulting to UTF-8 when no candidate qualifies.
+    ///
+    /// Statistical sampling is bounded, but charset validation covers every
+    /// unmarked entry and resets decoder state between filenames.
+    static Charset findSuitableEncoding(ZipArchiveReader zipFile) {
+        @Nullable List<byte[]> rawNames = null;
+
+        for (ZipArchiveEntry entry : zipFile.getEntries()) {
+            if (entry.getNameSource() == ZipArchiveEntry.NameSource.NAME_WITH_EFS_FLAG
+                    || entry.getNameSource() == ZipArchiveEntry.NameSource.UNICODE_EXTRA_FIELD)
+                continue;
+
+            byte @Nullable [] rawName = entry.getRawName();
+            if (rawName == null || StringUtils.isASCII(rawName))
+                continue;
+
+            if (rawNames == null)
+                rawNames = new ArrayList<>();
+
+            rawNames.add(rawName);
+        }
+
+        if (rawNames == null)
+            return StandardCharsets.UTF_8;
 
         String[] candidates = {
+                "UTF-8",
                 "GB18030",
                 "Big5",
                 "Shift_JIS",
@@ -110,122 +113,158 @@ public final class CompressingUtils {
                 "ISO-8859-1",
                 "ISO-8859-5",
                 "ISO-8859-7",
-                "ISO-8859-8",
-                "UTF-16LE", "UTF-16BE",
-                "UTF-32LE", "UTF-32BE"
+                "ISO-8859-8"
         };
 
+        CharBuffer cb = CharBuffer.allocate(128);
+
+        loop:
         for (String candidate : candidates) {
+            Charset charset;
+
             try {
-                Charset charset = Charset.forName(candidate);
-                if (!charset.equals(OperatingSystem.NATIVE_CHARSET) && testEncoding(zipFile, charset)) {
-                    return charset;
-                }
-            } catch (IllegalArgumentException ignored) {
+                charset = Charset.forName(candidate);
+            } catch (Exception ignored) {
+                continue;
             }
+
+            CharsetDecoder decoder = charset.newDecoder()
+                    .onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT);
+
+            for (byte[] ba : rawNames) {
+                decoder.reset();
+                int clen = (int) (ba.length * decoder.maxCharsPerByte());
+                if (clen == 0) continue;
+                if (clen <= cb.capacity())
+                    cb.clear();
+                else
+                    cb = CharBuffer.allocate(clen);
+
+                ByteBuffer bb = ByteBuffer.wrap(ba, 0, ba.length);
+                CoderResult cr = decoder.decode(bb, cb, true);
+                if (!cr.isUnderflow()) continue loop;
+                cr = decoder.flush(cb);
+                if (!cr.isUnderflow()) continue loop;
+            }
+            return charset;
         }
 
-        throw new IOException("Cannot find suitable encoding for the zip.");
+        return StandardCharsets.UTF_8;
     }
 
+    /// Opens an owning ZIP tree using detected filename encoding.
+    ///
+    /// @throws IOException if opening or reading the archive fails
     public static ZipFileTree openZipTree(Path zipFile) throws IOException {
         return new ZipFileTree(openZipFile(zipFile));
     }
 
+    /// Opens a ZIP reader using detected filename encoding.
+    ///
+    /// The caller must close the returned reader. Readers opened during detection
+    /// are closed if detection fails.
+    ///
+    /// @throws IOException if opening, reading, or closing an intermediate reader fails
     public static ZipArchiveReader openZipFile(Path zipFile) throws IOException {
-        return openZipFileWithPossibleEncoding(zipFile, StandardCharsets.UTF_8);
-    }
-
-    public static ZipArchiveReader openZipFile(Path zipFile, Charset charset) throws IOException {
-        return new ZipArchiveReader(zipFile, charset, true, true);
-    }
-
-    public static ZipArchiveReader openZipFileWithPossibleEncoding(Path zipFile, Charset possibleEncoding) throws IOException {
-        if (possibleEncoding == null)
-            possibleEncoding = StandardCharsets.UTF_8;
-
-        ZipArchiveReader zipReader = new ZipArchiveReader(zipFile, possibleEncoding, true, true);
+        ZipArchiveReader zipReader = openZipFile(zipFile, StandardCharsets.UTF_8);
 
         Charset suitableEncoding;
         try {
-            if (possibleEncoding != StandardCharsets.UTF_8 && CompressingUtils.testEncoding(zipReader, possibleEncoding)) {
-                suitableEncoding = possibleEncoding;
-            } else {
-                suitableEncoding = CompressingUtils.findSuitableEncoding(zipReader);
-                if (suitableEncoding == StandardCharsets.UTF_8)
-                    return zipReader;
-            }
+            suitableEncoding = findSuitableEncoding(zipReader);
         } catch (Throwable e) {
             IOUtils.closeQuietly(zipReader, e);
             throw e;
         }
+        if (suitableEncoding == StandardCharsets.UTF_8)
+            return zipReader;
 
         zipReader.close();
-        return new ZipArchiveReader(zipFile, suitableEncoding, true, true);
+        return openZipFile(zipFile, suitableEncoding);
     }
 
+    /// Opens a reader using the supplied charset for names without Unicode metadata.
+    private static ZipArchiveReader openZipFile(Path zipFile, Charset charset) throws IOException {
+        return new ZipArchiveReader(zipFile, charset, true, true);
+    }
+
+    /// Configures a ZIP filesystem whose filename charset is detected when opened.
     public static final class Builder {
-        private boolean autoDetectEncoding = false;
-        private Charset encoding = StandardCharsets.UTF_8;
+        /// Whether the provider should use temporary files for entry updates.
         private boolean useTempFile = false;
+        /// Whether to pass the provider's archive-creation option.
         private final boolean create;
+        /// Archive whose names are inspected before opening the filesystem.
         private final Path zip;
 
+        /// Creates a builder with the supplied archive path and creation option.
         public Builder(Path zip, boolean create) {
             this.zip = zip;
             this.create = create;
         }
 
-        public Builder setAutoDetectEncoding(boolean autoDetectEncoding) {
-            this.autoDetectEncoding = autoDetectEncoding;
-            return this;
-        }
-
-        public Builder setEncoding(Charset encoding) {
-            this.encoding = encoding;
-            return this;
-        }
-
+        /// Sets temporary-file usage for entry updates and returns this builder.
         public Builder setUseTempFile(boolean useTempFile) {
             this.useTempFile = useTempFile;
             return this;
         }
 
+        /// Detects names in the existing archive and opens its filesystem.
+        ///
+        /// The caller must close the returned filesystem. Encoding detection requires
+        /// an existing archive even when the creation option is enabled.
+        ///
+        /// @throws IOException if detection or opening the filesystem fails
         public FileSystem build() throws IOException {
-            if (autoDetectEncoding) {
-                if (!testEncoding(zip, encoding)) {
-                    encoding = findSuitableEncoding(zip);
-                }
-            }
-            return createZipFileSystem(zip, create, useTempFile, encoding);
+            return createZipFileSystem(zip, create, useTempFile, findSuitableEncoding(zip));
         }
     }
 
+    /// Creates a builder with archive creation disabled.
     public static Builder readonly(Path zipFile) {
         return new Builder(zipFile, false);
     }
 
+    /// Creates a builder with archive creation and temporary-file updates enabled.
     public static Builder writable(Path zipFile) {
         return new Builder(zipFile, true).setUseTempFile(true);
     }
 
+    /// Opens an existing ZIP filesystem using the provider's default filename charset.
     public static FileSystem createReadOnlyZipFileSystem(Path zipFile) throws IOException {
         return createReadOnlyZipFileSystem(zipFile, null);
     }
 
-    public static FileSystem createReadOnlyZipFileSystem(Path zipFile, Charset charset) throws IOException {
+    /// Opens an existing ZIP filesystem with the supplied filename charset,
+    /// or the provider's default when `charset` is `null`.
+    public static FileSystem createReadOnlyZipFileSystem(Path zipFile, @Nullable Charset charset) throws IOException {
         return createZipFileSystem(zipFile, false, false, charset);
     }
 
+    /// Opens or creates a ZIP filesystem with temporary-file updates and the
+    /// provider's default filename charset.
     public static FileSystem createWritableZipFileSystem(Path zipFile) throws IOException {
         return createWritableZipFileSystem(zipFile, null);
     }
 
-    public static FileSystem createWritableZipFileSystem(Path zipFile, Charset charset) throws IOException {
+    /// Opens or creates a ZIP filesystem with temporary-file updates and the
+    /// supplied filename charset, or the provider's default when `charset` is `null`.
+    public static FileSystem createWritableZipFileSystem(Path zipFile, @Nullable Charset charset) throws IOException {
         return createZipFileSystem(zipFile, true, true, charset);
     }
 
-    public static FileSystem createZipFileSystem(Path zipFile, boolean create, boolean useTempFile, Charset encoding) throws IOException {
+    /// Opens a ZIP filesystem with the supplied provider options.
+    ///
+    /// The caller must close the returned filesystem. This method does not detect
+    /// filename encoding or enforce read-only access.
+    ///
+    /// @param zipFile archive to open
+    /// @param create whether a missing archive may be created
+    /// @param useTempFile whether to use temporary files for entry updates
+    /// @param encoding filename charset, or `null` for the provider's default
+    /// @return newly opened filesystem
+    /// @throws IOException if opening fails, including when the ZIP provider is unavailable
+    public static FileSystem createZipFileSystem(Path zipFile, boolean create, boolean useTempFile, @Nullable Charset encoding) throws IOException {
         Map<String, Object> env = new HashMap<>();
         if (create)
             env.put("create", "true");
@@ -245,58 +284,28 @@ public final class CompressingUtils {
         }
     }
 
-    /**
-     * Read the text content of a file in zip.
-     *
-     * @param zipFile the zip file
-     * @param name    the location of the text in zip file, something like A/B/C/D.txt
-     * @return the plain text content of given file.
-     * @throws IOException if the file is not a valid zip file.
-     */
+    /// Reads a ZIP entry as UTF-8 text and closes the archive reader.
+    ///
+    /// @param zipFile archive to read using the reader's default filename charset
+    /// @param name entry path, such as `A/B/C/D.txt`
+    /// @return decoded entry contents, replacing malformed UTF-8 sequences
+    /// @throws IOException if the archive or entry cannot be read
+    /// @throws NullPointerException if the entry does not exist
     public static String readTextZipEntry(Path zipFile, String name) throws IOException {
         try (ZipArchiveReader s = new ZipArchiveReader(zipFile)) {
             return readTextZipEntry(s, name);
         }
     }
 
-    /**
-     * Read the text content of a file in zip.
-     *
-     * @param zipFile the zip file
-     * @param name    the location of the text in zip file, something like A/B/C/D.txt
-     * @return the plain text content of given file.
-     * @throws IOException if the file is not a valid zip file.
-     */
+    /// Reads a ZIP entry as UTF-8 text, closing its stream but leaving the reader open.
+    ///
+    /// @param zipFile archive reader
+    /// @param name entry path, such as `A/B/C/D.txt`
+    /// @return decoded entry contents, replacing malformed UTF-8 sequences
+    /// @throws IOException if the entry cannot be read
+    /// @throws NullPointerException if the entry does not exist
     public static String readTextZipEntry(ZipArchiveReader zipFile, String name) throws IOException {
         return IOUtils.readFullyAsString(zipFile.getInputStream(zipFile.getEntry(name)));
     }
 
-    /**
-     * Read the text content of a file in zip.
-     *
-     * @param zipFile the zip file
-     * @param name    the location of the text in zip file, something like A/B/C/D.txt
-     * @return the plain text content of given file.
-     * @throws IOException if the file is not a valid zip file.
-     */
-    public static String readTextZipEntry(Path zipFile, String name, Charset encoding) throws IOException {
-        try (ZipArchiveReader s = openZipFile(zipFile, encoding)) {
-            return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)));
-        }
-    }
-
-    /**
-     * Read the text content of a file in zip.
-     *
-     * @param file the zip file
-     * @param name the location of the text in zip file, something like A/B/C/D.txt
-     * @return the plain text content of given file.
-     */
-    public static Optional<String> readTextZipEntryQuietly(Path file, String name, Charset encoding) {
-        try {
-            return Optional.of(readTextZipEntry(file, name, encoding));
-        } catch (IOException | NullPointerException e) {
-            return Optional.empty();
-        }
-    }
 }

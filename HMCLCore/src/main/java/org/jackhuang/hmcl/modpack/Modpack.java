@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.task.Task;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -41,20 +40,18 @@ public abstract class Modpack {
     private String version;
     private String gameVersion;
     private String description;
-    private transient Charset encoding;
     private ModpackManifest manifest;
 
     public Modpack() {
-        this("", null, null, null, null, null, null);
+        this("", null, null, null, null, null);
     }
 
-    public Modpack(String name, String author, String version, String gameVersion, String description, Charset encoding, ModpackManifest manifest) {
+    public Modpack(String name, String author, String version, String gameVersion, String description, ModpackManifest manifest) {
         this.name = name;
         this.author = author;
         this.version = version;
         this.gameVersion = gameVersion;
         this.description = description;
-        this.encoding = encoding;
         this.manifest = manifest;
     }
 
@@ -100,15 +97,6 @@ public abstract class Modpack {
 
     public Modpack setDescription(String description) {
         this.description = description;
-        return this;
-    }
-
-    public Charset getEncoding() {
-        return encoding;
-    }
-
-    public Modpack setEncoding(Charset encoding) {
-        this.encoding = encoding;
         return this;
     }
 

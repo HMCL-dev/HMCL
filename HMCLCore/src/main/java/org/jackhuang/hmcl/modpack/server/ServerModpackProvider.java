@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -62,9 +61,9 @@ public final class ServerModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipArchiveReader zip, Path file, Charset encoding) throws IOException, JsonParseException {
+    public Modpack readManifest(ZipArchiveReader zip, Path file) throws IOException, JsonParseException {
         String json = CompressingUtils.readTextZipEntry(zip, "server-manifest.json");
         ServerModpackManifest manifest = JsonUtils.fromNonNullJson(json, ServerModpackManifest.class);
-        return manifest.toModpack(encoding);
+        return manifest.toModpack();
     }
 }

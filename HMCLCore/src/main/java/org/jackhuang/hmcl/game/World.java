@@ -82,7 +82,7 @@ public final class World {
                 }
             }
         } else if (Files.isRegularFile(file))
-            try (FileSystem fs = CompressingUtils.readonly(this.file).setAutoDetectEncoding(true).build()) {
+            try (FileSystem fs = CompressingUtils.readonly(this.file).build()) {
                 Path root;
                 if (Files.isRegularFile(fs.getPath("/level.dat"))) {
                     root = fs.getPath("/");
@@ -328,7 +328,7 @@ public final class World {
         }
 
         if (Files.isRegularFile(file)) {
-            try (FileSystem fs = CompressingUtils.readonly(file).setAutoDetectEncoding(true).build()) {
+            try (FileSystem fs = CompressingUtils.readonly(file).build()) {
                 Path levelDatPath = fs.getPath("/level.dat");
                 if (Files.isRegularFile(levelDatPath)) {
                     fileName = FileUtils.getName(file);
