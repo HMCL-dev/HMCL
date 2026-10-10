@@ -159,7 +159,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                     }
                     return result;
                 }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    if(result.isEmpty()) return;
+                    if (result.isEmpty()) return;
                     serverListEntries.removeAll(result);
                     updateServerList();
                 }).start(),
