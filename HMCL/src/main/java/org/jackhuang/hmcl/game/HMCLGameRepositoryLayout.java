@@ -52,6 +52,7 @@ public final class HMCLGameRepositoryLayout extends DefaultGameRepositoryLayout 
     }
 
     /// Returns the HMCL-managed state directory under the instance metadata directory.
+    @Override
     public Path getInstanceStateDirectory(GameInstanceID instanceId) {
         return getInstanceMetadataDirectory(instanceId).resolve(INSTANCE_STATE_DIRECTORY);
     }

@@ -30,9 +30,12 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.addon.AddonLoader;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.addon.mod.ModManager;
+import org.jackhuang.hmcl.addon.mod.ModRelationIndex;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -48,10 +51,13 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -84,6 +90,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.mod = translations.getModByCurseForgeId(addon.slug());
         this.instanceReference = instanceReference;
         this.callback = callback;
+
         loadAddonVersions();
 
         this.state.set(State.fromTitle(addon.title()));
@@ -360,20 +367,136 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
+    /// Installed-state result for a remote dependency row.
+    private enum DependencyPresence {
+        /// The exact remote project or a trusted mod ID provider is active.
+        INSTALLED,
+        /// A matching provider exists but is disabled.
+        DISABLED,
+        /// No matching provider was found after a complete lookup.
+        MISSING,
+        /// The platform dependency names an exact remote version that is not installed.
+        INCOMPATIBLE_VERSION,
+        /// The project is installed, but its file does not target this instance's loader or game version.
+        INCOMPATIBLE_ENVIRONMENT,
+        /// Network or identity evidence was insufficient for a reliable result.
+        UNKNOWN
+    }
+
+    /// Stable remote project lookup key.
+    private record RemoteProjectKey(RemoteAddon.Source source, String projectId) {
+    }
+
+    /// Installed remote versions and aggregate active state for one project.
+    private record RemoteVersionState(boolean enabled, boolean compatible) {
+        /// Merges duplicate local files for the same exact remote version.
+        private RemoteVersionState merge(RemoteVersionState other) {
+            return new RemoteVersionState(enabled || other.enabled, compatible || other.compatible);
+        }
+    }
+
+    /// Aggregate installed state for one stable remote project ID.
+    private record RemoteProjectState(
+            boolean enabled,
+            boolean compatible,
+            @Unmodifiable Map<String, RemoteVersionState> versions) {
+        /// Creates an immutable project state.
+        private RemoteProjectState {
+            versions = Map.copyOf(versions);
+        }
+
+        /// Merges identities from multiple local files belonging to the same project.
+        private RemoteProjectState merge(RemoteProjectState other) {
+            Map<String, RemoteVersionState> mergedVersions = new LinkedHashMap<>(versions);
+            other.versions.forEach((version, state) ->
+                    mergedVersions.merge(version, state, RemoteVersionState::merge));
+            return new RemoteProjectState(
+                    enabled || other.enabled,
+                    compatible || other.compatible,
+                    mergedVersions);
+        }
+    }
+
+    /// Immutable installed-mod identity snapshot used while one dependency dialog is open.
+    private record InstalledModSnapshot(
+            ModRelationIndex relations,
+            @Unmodifiable Map<RemoteProjectKey, RemoteProjectState> remoteProjects,
+            @Unmodifiable Set<RemoteAddon.Source> failedSources,
+            boolean hasLocalMods) {
+        /// Creates an immutable installed identity snapshot.
+        private InstalledModSnapshot {
+            remoteProjects = Map.copyOf(remoteProjects);
+            failedSources = Set.copyOf(failedSources);
+        }
+
+        /// Resolves a dependency by exact remote identity, then by curated actual ModIds.
+        private DependencyPresence resolve(RemoteAddon.Dependency dependency, @Nullable ModTranslations.Mod mod) {
+            @Nullable RemoteAddon.Source source = dependency.getSource();
+            @Nullable String projectId = dependency.getResolvedProjectId();
+            if (source != null && projectId != null) {
+                @Nullable RemoteProjectState remote = remoteProjects.get(new RemoteProjectKey(source, projectId));
+                if (remote != null) {
+                    @Nullable String requiredVersion = dependency.getVersionId();
+                    if (requiredVersion != null) {
+                        @Nullable RemoteVersionState exact = remote.versions().get(requiredVersion);
+                        if (exact == null) {
+                            return DependencyPresence.INCOMPATIBLE_VERSION;
+                        }
+                        if (!exact.enabled()) {
+                            return DependencyPresence.DISABLED;
+                        }
+                        return exact.compatible()
+                                ? DependencyPresence.INSTALLED
+                                : DependencyPresence.INCOMPATIBLE_ENVIRONMENT;
+                    }
+                    if (!remote.enabled()) {
+                        return DependencyPresence.DISABLED;
+                    }
+                    return remote.compatible()
+                            ? DependencyPresence.INSTALLED
+                            : DependencyPresence.INCOMPATIBLE_ENVIRONMENT;
+                }
+            }
+
+            if (mod != null) {
+                boolean foundDisabled = false;
+                for (String modId : mod.getModIds()) {
+                    List<ModRelationIndex.Provider> providers = relations.getProviders(modId);
+                    if (providers.stream().anyMatch(ModRelationIndex.Provider::active)) {
+                        return DependencyPresence.INSTALLED;
+                    }
+                    foundDisabled |= !providers.isEmpty();
+                }
+                if (foundDisabled) {
+                    return DependencyPresence.DISABLED;
+                }
+                if (!relations.isComplete()) {
+                    return DependencyPresence.UNKNOWN;
+                }
+            } else {
+                return hasLocalMods ? DependencyPresence.UNKNOWN : DependencyPresence.MISSING;
+            }
+            if (source != null && failedSources.contains(source)) {
+                return DependencyPresence.UNKNOWN;
+            }
+            return DependencyPresence.MISSING;
+        }
+    }
+
     private static final class DependencyAddonItem extends LineButton {
-        public static final EnumMap<RemoteAddon.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
-                Pair.pair(RemoteAddon.DependencyType.EMBEDDED, "addon.dependency.embedded"),
-                Pair.pair(RemoteAddon.DependencyType.OPTIONAL, "addon.dependency.optional"),
-                Pair.pair(RemoteAddon.DependencyType.REQUIRED, "addon.dependency.required"),
-                Pair.pair(RemoteAddon.DependencyType.TOOL, "addon.dependency.tool"),
-                Pair.pair(RemoteAddon.DependencyType.INCLUDE, "addon.dependency.include"),
-                Pair.pair(RemoteAddon.DependencyType.INCOMPATIBLE, "addon.dependency.incompatible"),
-                Pair.pair(RemoteAddon.DependencyType.BROKEN, "addon.dependency.broken")
-        ));
+        /// Compact dependency-type labels displayed beside each row.
+        private static final EnumMap<RemoteAddon.DependencyType, String> TAG_I18N_KEYS = new EnumMap<>(Map.of(
+                RemoteAddon.DependencyType.EMBEDDED, "addon.dependency.tag.embedded",
+                RemoteAddon.DependencyType.OPTIONAL, "addon.dependency.tag.optional",
+                RemoteAddon.DependencyType.REQUIRED, "addon.dependency.tag.required",
+                RemoteAddon.DependencyType.TOOL, "addon.dependency.tag.tool",
+                RemoteAddon.DependencyType.INCLUDE, "addon.dependency.tag.include"));
 
         public final RemoteAddon addon;
 
-        DependencyAddonItem(DownloadListPage page, RemoteAddon addon, HMCLGameInstance.Optional instanceReference) {
+        DependencyAddonItem(DownloadListPage page, RemoteAddon.Dependency dependency, RemoteAddon addon,
+                            HMCLGameInstance.Optional instanceReference,
+                            @Nullable InstalledModSnapshot installedMods) {
             this.addon = addon;
 
             HBox pane = new HBox(8);
@@ -402,6 +525,25 @@ public class DownloadPage extends Control implements DecoratorPage {
             ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(type).getModByCurseForgeId(addon.slug());
             content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
             content.setSubtitle(addon.description());
+            content.addTag(i18n(TAG_I18N_KEYS.get(dependency.getType())));
+            if (installedMods != null) {
+                DependencyPresence presence = installedMods.resolve(dependency, mod);
+                String status = switch (presence) {
+                    case INSTALLED -> i18n("addon.dependencies.installed");
+                    case DISABLED -> i18n("addon.dependencies.disabled");
+                    case MISSING -> i18n("addon.dependencies.missing");
+                    case INCOMPATIBLE_VERSION -> i18n(
+                            "addon.dependencies.incompatible_version", dependency.getVersionId());
+                    case INCOMPATIBLE_ENVIRONMENT -> i18n(
+                            "addon.dependencies.incompatible_environment");
+                    case UNKNOWN -> i18n("addon.dependencies.unknown");
+                };
+                if (presence == DependencyPresence.INSTALLED || presence == DependencyPresence.UNKNOWN) {
+                    content.addTag(status);
+                } else {
+                    content.addTagWarning(status);
+                }
+            }
             for (String category : addon.categories()) {
                 if (page.shouldDisplayCategory(category))
                     content.addTag(page.getLocalizedCategory(category, null));
@@ -570,8 +712,12 @@ public class DownloadPage extends Control implements DecoratorPage {
         private void loadDependencies(RemoteAddon.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
             spinnerPane.setLoading(true);
             Task.composeAsync(() -> {
+                @Nullable InstalledModSnapshot installedMods = resolveInstalledMods(
+                        selfPage.instanceReference, version.dependencies());
+
                 // TODO: Massive tasks may cause OOM.
-                EnumMap<RemoteAddon.DependencyType, Pair<Label, List<DependencyAddonItem>>> dependencies = new EnumMap<>(RemoteAddon.DependencyType.class);
+                EnumMap<RemoteAddon.DependencyType, List<DependencyAddonItem>> dependencies =
+                        new EnumMap<>(RemoteAddon.DependencyType.class);
                 AtomicBoolean hasBroken = new AtomicBoolean(false);
                 List<Task<?>> queue = new ArrayList<>(version.dependencies().size());
                 for (RemoteAddon.Dependency dependency : version.dependencies()) {
@@ -581,12 +727,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         continue;
                     }
 
-                    if (!dependencies.containsKey(dependency.getType())) {
-                        Label title = new Label(i18n(DependencyAddonItem.I18N_KEY.get(dependency.getType())));
-                        title.setPadding(new Insets(0, 8, 0, 8));
-                        List<DependencyAddonItem> list = new ArrayList<>();
-                        dependencies.put(dependency.getType(), Pair.pair(title, list));
-                    }
+                    dependencies.computeIfAbsent(dependency.getType(), ignored -> new ArrayList<>());
 
                     queue.add(Task.supplyAsync(Schedulers.io(), () -> dependency.load(selfPage.page.getDownloadProvider()))
                             .setSignificance(Task.TaskSignificance.MINOR)
@@ -595,21 +736,23 @@ public class DownloadPage extends Control implements DecoratorPage {
                                     hasBroken.set(true);
                                     return;
                                 }
-                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dep, selfPage.instanceReference);
+                                @Nullable InstalledModSnapshot statusSource = switch (dependency.getType()) {
+                                    case REQUIRED, OPTIONAL, TOOL, INCLUDE -> installedMods;
+                                    default -> null;
+                                };
+                                DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(
+                                        selfPage.page, dependency, dep, selfPage.instanceReference, statusSource);
                                 var listener = FXUtils.onWeakChangeAndOperate(dependenciesList.widthProperty(), d -> FXUtils.setLimitWidth(dependencyAddonItem, d.doubleValue()));
                                 dependencyAddonItem.getProperties().put("DependencyAddonItem.width", listener);
-                                dependencies.get(dependency.getType()).value().add(dependencyAddonItem);
+                                dependencies.get(dependency.getType()).add(dependencyAddonItem);
                             })
                             .setSignificance(Task.TaskSignificance.MINOR));
                 }
 
                 return Task.allOf(queue).thenSupplyAsync(() -> {
-                    var dependenciesStream = dependencies.values().stream().flatMap(types -> {
-                        if (types.value().isEmpty()) return Stream.empty();
-                        return Stream.concat(
-                                Stream.of(types.key()),
-                                types.value().stream().sorted(Comparator.comparing(item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)));
-                    });
+                    Stream<DependencyAddonItem> dependenciesStream = dependencies.values().stream()
+                            .flatMap(items -> items.stream().sorted(Comparator.comparing(
+                                    item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)));
                     if (!hasBroken.get()) {
                         return dependenciesStream;
                     } else {
@@ -632,6 +775,68 @@ public class DownloadPage extends Control implements DecoratorPage {
                 }
                 spinnerPane.setLoading(false);
             }).start();
+        }
+
+        /// Builds one immutable installed identity snapshot for a dependency dialog.
+        private static @Nullable InstalledModSnapshot resolveInstalledMods(
+                HMCLGameInstance.Optional instanceReference,
+                Collection<RemoteAddon.Dependency> dependencies) {
+            HMCLGameInstance.Optional refreshed = instanceReference.refreshed();
+            @Nullable HMCLGameInstance instance = refreshed.instance();
+            if (instance == null) {
+                return null;
+            }
+
+            try {
+                ModManager modManager = instance.getModManager();
+                ModRelationIndex relations = modManager.getRelationIndex();
+                List<LocalModFile> localFiles = modManager.getLocalFiles();
+                Set<RemoteAddon.Source> sources = dependencies.stream()
+                        .map(RemoteAddon.Dependency::getSource)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toCollection(() -> EnumSet.noneOf(RemoteAddon.Source.class)));
+                Map<RemoteProjectKey, RemoteProjectState> remoteProjects = new LinkedHashMap<>();
+                Set<RemoteAddon.Source> failedSources = EnumSet.noneOf(RemoteAddon.Source.class);
+                Set<ModLoaderType> supportedLoaders = modManager.getSupportedLoaders();
+                String minecraftVersion = instance.getVersion().toString();
+
+                for (RemoteAddon.Source source : sources) {
+                    for (LocalModFile localFile : localFiles) {
+                        try {
+                            Optional<RemoteAddon.Version> remote =
+                                    modManager.resolveRemoteVersion(source, localFile);
+                            if (remote.isEmpty()) {
+                                continue;
+                            }
+                            RemoteAddon.Version version = remote.get();
+                            boolean enabled = localFile.isActive();
+                            boolean loaderCompatible = localFile.getModLoaderType() == ModLoaderType.UNKNOWN
+                                    || supportedLoaders.contains(localFile.getModLoaderType());
+                            loaderCompatible &= version.loaders().isEmpty()
+                                    || version.loaders().stream()
+                                    .anyMatch(loader -> supportedLoaders.contains(loader.type()));
+                            boolean gameCompatible = version.gameVersions().isEmpty()
+                                    || version.gameVersions().contains(minecraftVersion);
+                            boolean compatible = enabled && loaderCompatible && gameCompatible;
+                            Map<String, RemoteVersionState> versions = StringUtils.isBlank(version.versionId())
+                                    ? Map.of()
+                                    : Map.of(version.versionId(), new RemoteVersionState(enabled, compatible));
+                            RemoteProjectKey key = new RemoteProjectKey(source, version.projectId());
+                            RemoteProjectState state = new RemoteProjectState(
+                                    enabled, compatible, versions);
+                            remoteProjects.merge(key, state, RemoteProjectState::merge);
+                        } catch (IOException e) {
+                            failedSources.add(source);
+                            LOG.warning("Failed to resolve remote identity for " + localFile.getFile(), e);
+                        }
+                    }
+                }
+                return new InstalledModSnapshot(
+                        relations, remoteProjects, failedSources, !localFiles.isEmpty());
+            } catch (Exception e) {
+                LOG.warning("Failed to resolve installed mods for dependency status", e);
+                return null;
+            }
         }
 
         private void loadVersionPageUrl(RemoteAddon.Version version, RemoteAddonRepository repo, JFXHyperlink button) {

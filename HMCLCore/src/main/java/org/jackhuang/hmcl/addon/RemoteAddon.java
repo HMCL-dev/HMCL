@@ -28,6 +28,8 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public record RemoteAddon(String slug, String author, String title, String description, List<String> categories,
@@ -62,7 +64,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
     }
 
     public static final class Dependency {
-        private static Dependency BROKEN_DEPENDENCY = null;
+        private static @Nullable Dependency BROKEN_DEPENDENCY = null;
 
         private final DependencyType type;
 
@@ -70,25 +72,46 @@ public record RemoteAddon(String slug, String author, String title, String descr
 
         private final @Nullable String id;
 
-        private transient RemoteAddon remoteAddon = null;
+        /// Stable remote version ID required by the dependency, or `null` for any project version.
+        private final @Nullable String versionId;
 
-        private Dependency(DependencyType type, @Nullable Source source, @Nullable String id) {
+        /// Project ID discovered while resolving a version-only dependency.
+        private transient @Nullable String resolvedProjectId;
+
+        private transient @Nullable RemoteAddon remoteAddon = null;
+
+        private Dependency(DependencyType type, @Nullable Source source, @Nullable String id,
+                           @Nullable String versionId) {
             this.type = type;
             this.source = source;
             this.id = id;
+            this.versionId = versionId;
+            this.resolvedProjectId = id;
         }
 
         public static Dependency ofGeneral(DependencyType type, Source source, String id) {
             if (type == DependencyType.BROKEN) {
                 return ofBroken();
             } else {
-                return new Dependency(type, source, id);
+                return new Dependency(type, source, id, null);
             }
+        }
+
+        /// Creates a dependency that may require one exact remote version identity.
+        public static Dependency ofVersion(
+                DependencyType type,
+                Source source,
+                @Nullable String id,
+                @Nullable String versionId) {
+            if (type == DependencyType.BROKEN) {
+                return ofBroken();
+            }
+            return new Dependency(type, source, id, versionId);
         }
 
         public static Dependency ofBroken() {
             if (BROKEN_DEPENDENCY == null) {
-                BROKEN_DEPENDENCY = new Dependency(DependencyType.BROKEN, null, null);
+                BROKEN_DEPENDENCY = new Dependency(DependencyType.BROKEN, null, null, null);
             }
             return BROKEN_DEPENDENCY;
         }
@@ -107,9 +130,36 @@ public record RemoteAddon(String slug, String author, String title, String descr
             return this.id;
         }
 
+        /// Returns the exact remote version ID when the platform dependency names one.
+        public @Nullable String getVersionId() {
+            return versionId;
+        }
+
+        /// Returns the declared or lazily discovered stable project ID.
+        public @Nullable String getResolvedProjectId() {
+            return resolvedProjectId;
+        }
+
+        /// Loads the referenced project, resolving a version-only dependency to its project first.
+        ///
+        /// @param downloadProvider provider used for remote requests
+        /// @return the resolved project, or {@link RemoteAddon#BROKEN} when its identity cannot be resolved
+        /// @throws IOException if the remote repository request fails
         public RemoteAddon load(DownloadProvider downloadProvider) throws IOException {
             if (this.remoteAddon == null) {
                 if (this.type == DependencyType.BROKEN) {
+                    this.remoteAddon = RemoteAddon.BROKEN;
+                } else if (this.id == null && this.versionId != null) {
+                    RemoteAddonRepository repository = this.source.getRepository();
+                    Optional<Version> version = repository.getRemoteVersionById(downloadProvider, this.versionId);
+                    if (version.isPresent()) {
+                        this.resolvedProjectId = version.get().projectId();
+                        this.remoteAddon = repository.getAddonById(
+                                downloadProvider, version.get().projectId());
+                    } else {
+                        this.remoteAddon = RemoteAddon.BROKEN;
+                    }
+                } else if (this.id == null) {
                     this.remoteAddon = RemoteAddon.BROKEN;
                 } else {
                     this.remoteAddon = this.source.getRepository().resolveDependency(downloadProvider, this.id);
@@ -127,14 +177,16 @@ public record RemoteAddon(String slug, String author, String title, String descr
 
             if (type != that.type) return false;
             if (source != that.source) return false;
-            return id.equals(that.id);
+            if (!Objects.equals(id, that.id)) return false;
+            return Objects.equals(versionId, that.versionId);
         }
 
         @Override
         public int hashCode() {
             int result = type.hashCode();
-            result = 31 * result + source.hashCode();
-            result = 31 * result + id.hashCode();
+            result = 31 * result + Objects.hashCode(source);
+            result = 31 * result + Objects.hashCode(id);
+            result = 31 * result + Objects.hashCode(versionId);
             return result;
         }
     }

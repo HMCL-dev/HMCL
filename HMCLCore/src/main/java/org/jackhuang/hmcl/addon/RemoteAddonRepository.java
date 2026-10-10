@@ -38,6 +38,13 @@ public interface RemoteAddonRepository {
 
     Optional<RemoteAddon.Version> getRemoteVersionByLocalFile(Path file) throws IOException;
 
+    /// Resolves one stable remote version ID when the platform supports direct version lookup.
+    default Optional<RemoteAddon.Version> getRemoteVersionById(
+            DownloadProvider downloadProvider,
+            String versionId) throws IOException {
+        return Optional.empty();
+    }
+
     RemoteAddon getAddonById(DownloadProvider downloadProvider, String id) throws IOException;
 
     /// @return the dependency resolved, or {@link RemoteAddon#BROKEN} when the dependency is not found

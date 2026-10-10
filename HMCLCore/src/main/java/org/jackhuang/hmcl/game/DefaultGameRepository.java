@@ -22,6 +22,7 @@ import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -35,6 +36,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -96,6 +98,9 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// Atomically holds the repository's sole open draft, or `null` when no draft is active.
     private final AtomicReference<@Nullable DefaultGameRepositoryDraft> activeDraft = new AtomicReference<>();
 
+    /// Stable per-instance mod managers shared by all repository snapshot wrappers.
+    private final Map<GameInstanceID, ModManager> modManagers = new ConcurrentHashMap<>();
+
     /// Whether at least one full refresh has completed since the base directory was set.
     private volatile boolean loaded;
 
@@ -130,6 +135,7 @@ public abstract class DefaultGameRepository implements GameRepository {
         checkNoActiveDraft("set base directory");
         // Mark unloaded before publishing so snapshot listeners do not treat the empty snapshot as ready.
         this.loaded = false;
+        modManagers.clear();
         DefaultGameRepositorySnapshot initial = createSnapshot(createLayout(baseDirectory));
         publishSnapshot(initial);
     }
@@ -166,8 +172,33 @@ public abstract class DefaultGameRepository implements GameRepository {
     ///                    unless it is a freshly built replacement
     protected void publishSnapshot(DefaultGameRepositorySnapshot newSnapshot) {
         newSnapshot.seal();
+        modManagers.keySet().removeIf(id -> !newSnapshot.hasInstance(id));
         runOnFxThreadAndWait(() -> {
             snapshot.set(newSnapshot);
+        });
+    }
+
+    /// Returns the stable mod-analysis manager for an instance and binds it to the latest snapshot.
+    ///
+    /// A single manager owns all mutable scan and cache state for one repository instance. UI,
+    /// download, and export consumers therefore share one serialization boundary instead of creating
+    /// competing managers for the same mods directory.
+    ///
+    /// @param instance the current snapshot member
+    /// @return the stable per-instance manager
+    public ModManager getModManager(DefaultGameInstance instance) {
+        Objects.requireNonNull(instance, "instance");
+        if (instance.getRepository() != this) {
+            throw new IllegalArgumentException("Instance belongs to another repository");
+        }
+        @Nullable DefaultGameInstance published = getSnapshot().findInstance(instance.getId());
+        DefaultGameInstance currentInstance = published != null ? published : instance;
+        return modManagers.compute(instance.getId(), (id, current) -> {
+            if (current == null) {
+                return new ModManager(currentInstance);
+            }
+            current.rebindInstance(currentInstance);
+            return current;
         });
     }
 

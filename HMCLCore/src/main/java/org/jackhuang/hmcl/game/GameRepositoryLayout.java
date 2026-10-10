@@ -51,6 +51,17 @@ public interface GameRepositoryLayout {
     /// @return the instance root directory
     Path getInstanceRoot(GameInstanceID instanceId);
 
+    /// Returns the launcher-managed transient state directory for an instance.
+    ///
+    /// The default location is `.hmcl/state` below the instance root. Implementations may override
+    /// this when their layout stores launcher-owned state elsewhere.
+    ///
+    /// @param instanceId the instance ID
+    /// @return the instance state directory
+    default Path getInstanceStateDirectory(GameInstanceID instanceId) {
+        return getInstanceRoot(instanceId).resolve(".hmcl").resolve("state");
+    }
+
     /// Returns the shared libraries directory.
     ///
     /// @return the libraries directory below the base directory

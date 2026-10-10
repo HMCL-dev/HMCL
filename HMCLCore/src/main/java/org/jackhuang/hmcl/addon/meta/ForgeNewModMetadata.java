@@ -27,6 +27,8 @@ import com.google.gson.annotations.JsonAdapter;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.mod.ModConflict;
+import org.jackhuang.hmcl.addon.mod.ModDependency;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
@@ -47,8 +49,12 @@ import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -57,6 +63,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @Immutable
 public final class ForgeNewModMetadata {
+    /// Non-installable loader and platform dependency IDs.
+    private static final Set<String> IGNORED_DEPENDENCIES = Set.of("minecraft", "forge", "neoforge");
+
     private final String modLoader;
 
     private final String loaderVersion;
@@ -229,6 +238,9 @@ public final class ForgeNewModMetadata {
         if (metadata == null || metadata.getMods().isEmpty())
             throw new IOException("Mod " + modFile + " `%s` is malformed..".formatted(modToml.getName()));
         Mod mod = metadata.getMods().get(0);
+        if (ModManager.isPlaceholderModId(mod.getModId())) {
+            throw new IOException("Forge metadata contains an unexpanded mod id placeholder");
+        }
         ZipArchiveEntry manifestMF = tree.getEntry("META-INF/MANIFEST.MF");
         String jarVersion = "";
         if (manifestMF != null) {
@@ -242,12 +254,96 @@ public final class ForgeNewModMetadata {
 
         ModLoaderType type = analyzeLoader(tomlParseResult, mod.getModId(), modLoaderType);
 
+        List<String> bundledMods = new ArrayList<>();
+        ZipArchiveEntry jarInJar = tree.getEntry("META-INF/jarjar/metadata.json");
+        if (jarInJar != null) {
+            try {
+                JarInJarMetadata jarInJarMetadata = JsonUtils.fromJsonFully(tree.getInputStream(jarInJar), JarInJarMetadata.class);
+                if (jarInJarMetadata != null && jarInJarMetadata.jars() != null) {
+                    for (EmbeddedJarMetadata jar : jarInJarMetadata.jars()) {
+                        bundledMods.add(jar.path());
+                    }
+                }
+            } catch (Exception e) {
+                LOG.warning("Failed to parse Jar-in-Jar metadata for " + modFile, e);
+            }
+        }
+
+        Set<String> declaredIds = new LinkedHashSet<>();
+        Map<String, String> providedVersions = new LinkedHashMap<>();
+        for (Mod declaredMod : metadata.getMods()) {
+            if (StringUtils.isBlank(declaredMod.getModId())) {
+                continue;
+            }
+            declaredIds.add(declaredMod.getModId());
+            if (!declaredMod.getModId().equals(mod.getModId())) {
+                providedVersions.put(declaredMod.getModId(), resolveDeclaredVersion(declaredMod, jarVersion));
+            }
+        }
+
+        List<ModDependency> dependencies = new ArrayList<>();
+        List<ModConflict> conflicts = new ArrayList<>();
+        String minecraftConstraint = "";
+        for (Mod declaredMod : metadata.getMods()) {
+            for (Map<String, Object> dependency : parseDependencies(
+                    tomlParseResult,
+                    declaredMod.getModId(),
+                    declaredMod == mod)) {
+                if (!(dependency.get("modId") instanceof String depId)) {
+                    continue;
+                }
+                String constraint = dependency.get("versionRange") instanceof String range ? range : "*";
+                boolean required;
+                if (dependency.get("mandatory") instanceof Boolean mandatory) {
+                    required = mandatory;
+                } else if (dependency.get("type") instanceof String depType) {
+                    required = depType.equalsIgnoreCase("required");
+                } else {
+                    required = true;
+                }
+                boolean serverOnly = dependency.get("side") instanceof String side
+                        && side.equalsIgnoreCase("server");
+                if ("minecraft".equals(depId)) {
+                    if (required && !serverOnly) {
+                        minecraftConstraint = constraint;
+                    }
+                    continue;
+                }
+                if (IGNORED_DEPENDENCIES.contains(depId)
+                        || declaredIds.contains(depId)
+                        || serverOnly) {
+                    continue;
+                }
+                if (dependency.get("type") instanceof String conflictType
+                        && (conflictType.equalsIgnoreCase("incompatible")
+                        || conflictType.equalsIgnoreCase("discouraged"))) {
+                    conflicts.add(new ModConflict(
+                            depId,
+                            constraint,
+                            conflictType.equalsIgnoreCase("incompatible"),
+                            type));
+                    continue;
+                }
+                dependencies.add(new ModDependency(depId, constraint, !required, type));
+            }
+        }
+
         String logoPath = StringUtils.isNotBlank(mod.getLogoFile()) ? mod.getLogoFile() : metadata.getLogoFile();
 
         return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalAddonFile.Description(mod.getDescription()),
-                mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
+                mod.getAuthors(), resolveDeclaredVersion(mod, jarVersion), minecraftConstraint,
                 mod.getDisplayURL(),
-                logoPath);
+                logoPath, bundledMods, dependencies, providedVersions, conflicts,
+                !minecraftConstraint.isBlank());
+    }
+
+    /// Resolves Forge's file.jarVersion placeholder against the manifest implementation version.
+    private static String resolveDeclaredVersion(Mod mod, String jarVersion) {
+        String version = Objects.requireNonNullElse(mod.getVersion(), "");
+        if (StringUtils.isNotBlank(jarVersion)) {
+            version = version.replace("${file.jarVersion}", jarVersion);
+        }
+        return version.contains("${") ? "" : version;
     }
 
     private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, ZipFileTree tree, ModLoaderType modLoaderType) throws IOException {
@@ -311,39 +407,51 @@ public final class ForgeNewModMetadata {
         throw new IOException();
     }
 
-    private static ModLoaderType analyzeLoader(TomlParseResult toml, String modID, ModLoaderType loader) {
-        List<Map<String, Object>> dependencies = null;
+    private static List<Map<String, Object>> parseDependencies(TomlParseResult toml, String modID) {
+        return parseDependencies(toml, modID, true);
+    }
+
+    /// Reads owner-specific dependencies and optionally accepts the legacy unscoped array form.
+    private static List<Map<String, Object>> parseDependencies(
+            TomlParseResult toml,
+            String modID,
+            boolean allowLegacyUnscoped) {
         try {
             TomlArray tomlArray = toml.getArray("dependencies." + modID);
             if (tomlArray != null) {
-                dependencies = tomlArray.toList().stream().map( o -> ((TomlTable) o).toMap()).toList();
+                return tomlArray.toList().stream().map(o -> ((TomlTable) o).toMap()).toList();
             }
         } catch (ClassCastException ignored) { // https://github.com/HMCL-dev/HMCL/issues/5068
         }
 
-        if (dependencies == null) {
-            try {
-                TomlArray tomlArray = toml.getArray("dependencies"); // ??? I have no idea why some of the Forge mods use [[dependencies]]
+        try {
+            TomlTable table = toml.getTable("dependencies");
+            if (table != null) {
+                TomlArray tomlArray = table.getArray(modID);
                 if (tomlArray != null) {
-                    dependencies = tomlArray.toList().stream().map( o -> ((TomlTable) o).toMap()).toList();
-                }
-            } catch (ClassCastException e) {
-                try {
-                    TomlTable table = toml.getTable("dependencies");
-                    if (table == null)
-                        return loader;
-
-                    TomlArray tomlArray = table.getArray(modID);
-                    if (tomlArray != null) {
-                        dependencies = tomlArray.toList().stream().map( o -> ((TomlTable) o).toMap()).toList();
-                    }
-                } catch (Throwable ignored) {
+                    return tomlArray.toList().stream().map(o -> ((TomlTable) o).toMap()).toList();
                 }
             }
+        } catch (Throwable ignored) {
+        }
 
-            if (dependencies == null) {
-                return loader;
+        if (allowLegacyUnscoped) {
+            try {
+                TomlArray tomlArray = toml.getArray("dependencies");
+                if (tomlArray != null) {
+                    return tomlArray.toList().stream().map(o -> ((TomlTable) o).toMap()).toList();
+                }
+            } catch (ClassCastException ignored) {
             }
+        }
+
+        return List.of();
+    }
+
+    private static ModLoaderType analyzeLoader(TomlParseResult toml, String modID, ModLoaderType loader) {
+        List<Map<String, Object>> dependencies = parseDependencies(toml, modID);
+        if (dependencies.isEmpty()) {
+            return loader;
         }
 
         ModLoaderType result = null;

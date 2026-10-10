@@ -30,13 +30,15 @@ import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
-/// Manages local addon files for a single [DefaultGameInstance] snapshot member.
+/// Manages local addon files for one game instance context.
 ///
-/// Each manager is bound to one instance wrapper and must not be shared across repository snapshot
-/// copies. Callers obtain a manager from the current instance after a refresh or COW publish.
+/// Snapshot-local managers retain their original wrapper. Repository-scoped managers may use
+/// [#rebindInstance] to follow the latest wrapper for the same repository and instance ID while
+/// preserving one serialized analysis session.
 ///
 /// @param <T> the local addon file type managed by this manager
 public abstract class LocalAddonManager<T extends LocalAddonFile> {
@@ -61,8 +63,11 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     /// Loaded local addon files for the bound instance.
     protected final Set<@NotNull T> localFiles = new LinkedHashSet<>();
 
-    /// The snapshot member this manager serves.
-    protected final DefaultGameInstance instance;
+    /// Current repository snapshot member for this stable per-instance manager.
+    ///
+    /// Repository snapshots may replace their wrapper object while retaining the same instance ID.
+    /// Rebinding is serialized by [#lock], so subclasses observe one coherent instance context.
+    protected volatile DefaultGameInstance instance;
 
     /// Creates a manager bound to the given instance.
     ///
@@ -76,6 +81,24 @@ public abstract class LocalAddonManager<T extends LocalAddonFile> {
     /// @return the bound [DefaultGameInstance]
     public DefaultGameInstance getInstance() {
         return instance;
+    }
+
+    /// Rebinds this manager to the latest repository snapshot member for the same instance ID.
+    ///
+    /// @param instance the current snapshot member
+    /// @throws IllegalArgumentException if the instance ID or repository differs
+    public void rebindInstance(DefaultGameInstance instance) {
+        Objects.requireNonNull(instance, "instance");
+        lock.lock();
+        try {
+            if (this.instance.getRepository() != instance.getRepository()
+                    || !this.instance.getId().equals(instance.getId())) {
+                throw new IllegalArgumentException("Cannot rebind an addon manager to another instance");
+            }
+            this.instance = instance;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /// Returns the directory that stores local addon files for the bound instance.

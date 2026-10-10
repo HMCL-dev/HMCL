@@ -17,15 +17,18 @@
  */
 package org.jackhuang.hmcl.addon.mod;
 
-import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class LocalMod {
 
     private final String id;
     private final ModLoaderType modLoaderType;
-    private final HashSet<LocalModFile> files = new HashSet<>();
-    private final HashSet<LocalModFile> oldFiles = new HashSet<>();
+    /// Current files, published copy-on-write for lock-free UI iteration.
+    private final Set<LocalModFile> files = new CopyOnWriteArraySet<>();
+    /// Older files retained as rollback candidates.
+    private final Set<LocalModFile> oldFiles = new CopyOnWriteArraySet<>();
 
     public LocalMod(String id, ModLoaderType modLoaderType) {
         this.id = id;
@@ -40,11 +43,11 @@ public class LocalMod {
         return modLoaderType;
     }
 
-    public HashSet<LocalModFile> getFiles() {
+    public Set<LocalModFile> getFiles() {
         return files;
     }
 
-    public HashSet<LocalModFile> getOldFiles() {
+    public Set<LocalModFile> getOldFiles() {
         return oldFiles;
     }
 
