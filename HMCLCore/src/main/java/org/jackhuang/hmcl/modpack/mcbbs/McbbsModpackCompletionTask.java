@@ -97,6 +97,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
         this.configuration = configuration;
 
         setStage("hmcl.modpack.download");
+        setSignificance(TaskSignificance.MODERATE);
     }
 
     @Override
