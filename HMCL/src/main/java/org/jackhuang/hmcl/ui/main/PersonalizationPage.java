@@ -504,13 +504,19 @@ public class PersonalizationPage extends StackPane {
                     i18n("settings.launcher.theme_color_type.background"),
                     ThemeColorType.BACKGROUND);
 
+            var copperColorChoice = new RadioChoiceList.Choice<ThemeColorType>(
+                    i18n("settings.launcher.theme_color_type.copper"),
+                    ThemeColorType.COPPER);
+            copperColorChoice.setSubtitle(i18n("settings.launcher.theme_color_type.copper.description"));
+
             RadioChoiceList<ThemeColorType> themeColorChoiceList = new RadioChoiceList<>();
             themeColorChoiceList.setFallbackValue(ThemeColorType.DEFAULT);
             themeColorChoiceList.setChoices(Arrays.asList(
                     defaultColorChoice,
                     systemColorChoice,
                     customColorChoice,
-                    backgroundColorChoice));
+                    backgroundColorChoice,
+                    copperColorChoice));
 
             JFXButton themeColorOverrideButton = createThemeAppearanceOverrideButton();
             themeColorSublist.setTitleRight(themeColorOverrideButton);
