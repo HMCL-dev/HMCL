@@ -122,6 +122,7 @@ public final class CurseCompletionTask extends Task<Void> {
             }
 
         setStage("hmcl.modpack.download");
+        setSignificance(TaskSignificance.MODERATE);
     }
 
     @Override

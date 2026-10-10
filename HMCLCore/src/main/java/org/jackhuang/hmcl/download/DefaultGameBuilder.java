@@ -169,6 +169,7 @@ public class DefaultGameBuilder extends GameBuilder {
             Task<?> buildTask = libraryTask.thenComposeAsync(manifest -> {
                         GameInstanceManifest resolved = draft.getBaseSnapshot().resolve(manifest);
                         return new GameDownloadTask(dependencyManager, resolved)
+                                .withStage("hmcl.install.game:" + gameVersion)
                                 .thenApplyAsync(minecraftJar -> {
                                     draft.put(resolved.withPatches(manifest.patches()));
                                     draft.putPrimaryJar(instanceId, minecraftJar);

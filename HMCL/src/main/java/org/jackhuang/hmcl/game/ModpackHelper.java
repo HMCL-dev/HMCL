@@ -172,6 +172,7 @@ public final class ModpackHelper {
 
         return new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instanceId)
                 .whenComplete(Schedulers.defaultScheduler(), success, failure)
+                .withStage("hmcl.modpack")
                 .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
 
@@ -179,6 +180,7 @@ public final class ModpackHelper {
         return Files.exists(Paths.get("externalgames").resolve(name));
     }
 
+    /// Extracts a manually created modpack and selects its new external game directory.
     public static Task<?> getInstallManuallyCreatedModpackTask(Path zipFile, String name) {
         if (isExternalGameNameConflicts(name)) {
             throw new IllegalArgumentException("name existing");
@@ -192,7 +194,9 @@ public final class ModpackHelper {
                             PortablePath.fromPath(location));
                     GameDirectoryManager.addLocalGameDirectory(newGameDirectory);
                     GameDirectoryManager.setSelectedGameDirectory(newGameDirectory);
-                });
+                })
+                .withStage("hmcl.modpack")
+                .withStagesHints("hmcl.modpack");
     }
 
     public static Task<?> getInstallTask(HMCLGameRepository repository, Path zipFile, GameInstanceID instanceId, Modpack modpack, @Nullable String iconUrl) {
@@ -232,18 +236,22 @@ public final class ModpackHelper {
             return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMultiMCPostInstallTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), instanceId))
+                    .withStage("hmcl.modpack")
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
             return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMcbbsPostInstallTask(repository, (McbbsModpackManifest) modpack.getManifest(), instanceId))
+                    .withStage("hmcl.modpack")
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else
             return modpack.getInstallTask(repository.getDependency(), zipFile, instanceId, iconUrl, excludedFiles)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
+                    .withStage("hmcl.modpack")
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
 
+    /// Updates a server modpack with backup, repository refresh, and modpack stage hints.
     public static Task<Void> getUpdateTask(HMCLGameRepository repository, ServerModpackManifest manifest, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
         switch (configuration.getType()) {
             case ServerModpackRemoteInstallTask.MODPACK_TYPE: {
@@ -252,6 +260,7 @@ public final class ModpackHelper {
                         instance,
                         new ServerModpackRemoteInstallTask(repository.getDependency(), manifest, instance))
                         .thenComposeAsync(repository.refreshAsync())
+                        .withStage("hmcl.modpack")
                         .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
             }
             default:
@@ -280,17 +289,21 @@ public final class ModpackHelper {
             @Nullable Set<String> excludedFiles)
             throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile);
-        ModpackProvider provider = getProviderByType(configuration.getType());
+        @Nullable ModpackProvider provider = getProviderByType(configuration.getType());
         if (provider == null) {
             throw new UnsupportedModpackException();
         }
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
             return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack, excludedFiles)
                     .thenComposeAsync(() -> createMultiMCPostUpdateTask(repository, (MultiMCInstanceConfiguration) modpack.getManifest(), instanceId))
-                    .thenComposeAsync(repository.refreshAsync());
+                    .thenComposeAsync(repository.refreshAsync())
+                    .withStage("hmcl.modpack")
+                    .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
         else
             return provider.createUpdateTask(repository.getDependency(), repository.getInstance(instanceId), zipFile, modpack, excludedFiles)
-                    .thenComposeAsync(repository.refreshAsync());
+                    .thenComposeAsync(repository.refreshAsync())
+                    .withStage("hmcl.modpack")
+                    .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
 
     public static void toGameSettings(MultiMCInstanceConfiguration c, GameSettings.Instance setting) {
