@@ -43,7 +43,6 @@ import java.util.zip.ZipOutputStream;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /// Verifies ZIP filename detection and decoding for short and marked names.
 ///
@@ -135,9 +134,9 @@ public final class CompressingUtilsTest {
         }
     }
 
-    /// Checks that validation also covers entries beyond the statistical sample.
+    /// Checks that an archive still opens when no candidate decodes all names.
     @Test
-    public void testInvalidUtf8BeyondSample(@TempDir Path directory) throws IOException {
+    public void testUtf8FallbackWhenNoCandidateQualifies(@TempDir Path directory) throws IOException {
         Path zip = directory.resolve("mixed.zip");
         String prefix = "\u4e2d\u6587".repeat(5000);
         try (var out = new ZipOutputStream(Files.newOutputStream(zip), StandardCharsets.ISO_8859_1)) {
@@ -151,9 +150,11 @@ public final class CompressingUtilsTest {
             out.closeEntry();
         }
 
-        // The sampled UTF-8 candidate cannot decode the last entry.
-        assertThrows(IOException.class, () -> CompressingUtils.findSuitableEncoding(zip));
-        assertThrows(IOException.class, () -> CompressingUtils.openZipFile(zip));
+        // The sampled UTF-8 candidate cannot decode the last entry, but remains the fallback.
+        assertEquals(StandardCharsets.UTF_8, CompressingUtils.findSuitableEncoding(zip));
+        try (var reader = CompressingUtils.openZipFile(zip)) {
+            assertNotNull(reader.getEntry(prefix + "0.txt"));
+        }
     }
 
     /// Writes an empty entry for each name using the supplied ZIP charset.

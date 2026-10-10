@@ -50,29 +50,31 @@ public final class CompressingUtils {
     private CompressingUtils() {
     }
 
-    /// Selects a charset that strictly decodes the archive's unmarked entry names.
+    /// Guesses a charset for the archive's unmarked entry names, defaulting to UTF-8.
     ///
     /// Names marked as UTF-8 or supplied by a Unicode extra field are excluded.
     /// UTF-8 is preferred when it can decode every remaining name, including when
     /// there are no remaining names. Otherwise, statistical candidates are tried
     /// in descending score order, including low-scoring candidates when necessary.
+    /// Candidates must strictly decode every unmarked name. If none qualifies,
+    /// UTF-8 is returned even if some names cannot be decoded with it.
     /// Successful decoding does not guarantee that the original charset was identified.
     ///
     /// @param zipFile archive to inspect
-    /// @return selected filename charset
-    /// @throws IOException if the archive cannot be read or no supported candidate
-    /// can decode all unmarked names
+    /// @return guessed filename charset, or UTF-8 when no candidate qualifies
+    /// @throws IOException if the archive cannot be read or its reader cannot be closed
     static Charset findSuitableEncoding(Path zipFile) throws IOException {
         try (ZipArchiveReader zf = openZipFile(zipFile, StandardCharsets.UTF_8)) {
             return findSuitableEncoding(zf);
         }
     }
 
-    /// Selects a filename charset without closing the supplied reader.
+    /// Guesses a filename charset without closing the supplied reader,
+    /// defaulting to UTF-8 when no candidate qualifies.
     ///
     /// Statistical sampling is bounded, but charset validation covers every
     /// unmarked entry and resets decoder state between filenames.
-    static Charset findSuitableEncoding(ZipArchiveReader zipFile) throws IOException {
+    static Charset findSuitableEncoding(ZipArchiveReader zipFile) {
         if (canDecodeNames(zipFile, StandardCharsets.UTF_8))
             return StandardCharsets.UTF_8;
 
@@ -114,7 +116,7 @@ public final class CompressingUtils {
         }
 
         if (buffer == null)
-            throw new ZipException("Cannot determine ZIP filename encoding");
+            return StandardCharsets.UTF_8;
 
         buffer.flip();
 
@@ -128,7 +130,7 @@ public final class CompressingUtils {
         if (charset != null)
             return charset;
 
-        throw new ZipException("Cannot determine ZIP filename encoding");
+        return StandardCharsets.UTF_8;
     }
 
     /// Returns the highest-ranked supported charset that decodes every unmarked
@@ -172,7 +174,7 @@ public final class CompressingUtils {
 
     /// Opens an owning ZIP tree using detected filename encoding.
     ///
-    /// @throws IOException if the archive cannot be read or its encoding cannot be determined
+    /// @throws IOException if opening or reading the archive fails
     public static ZipFileTree openZipTree(Path zipFile) throws IOException {
         return new ZipFileTree(openZipFile(zipFile));
     }
@@ -182,7 +184,7 @@ public final class CompressingUtils {
     /// The caller must close the returned reader. Readers opened during detection
     /// are closed if detection fails.
     ///
-    /// @throws IOException if the archive cannot be read or its encoding cannot be determined
+    /// @throws IOException if opening, reading, or closing an intermediate reader fails
     public static ZipArchiveReader openZipFile(Path zipFile) throws IOException {
         ZipArchiveReader zipReader = openZipFile(zipFile, StandardCharsets.UTF_8);
 
