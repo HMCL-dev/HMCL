@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.io;
 
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
-import kala.encdet.EncodingDetector;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
@@ -28,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.*;
 import java.nio.file.*;
 import java.nio.file.spi.FileSystemProvider;
@@ -75,10 +75,7 @@ public final class CompressingUtils {
     /// Statistical sampling is bounded, but charset validation covers every
     /// unmarked entry and resets decoder state between filenames.
     static Charset findSuitableEncoding(ZipArchiveReader zipFile) {
-        if (canDecodeNames(zipFile, StandardCharsets.UTF_8))
-            return StandardCharsets.UTF_8;
-
-        @Nullable ByteBuffer buffer = null;
+        @Nullable List<byte[]> rawNames = null;
 
         for (ZipArchiveEntry entry : zipFile.getEntries()) {
             if (entry.getNameSource() == ZipArchiveEntry.NameSource.NAME_WITH_EFS_FLAG
@@ -89,87 +86,71 @@ public final class CompressingUtils {
             if (rawName == null || StringUtils.isASCII(rawName))
                 continue;
 
-            if (buffer == null) {
-                int length = Math.max(512, rawName.length + 1);
-                buffer = ByteBuffer.allocate(length);
-            } else {
-                long minCapacity = (long) buffer.position() + rawName.length + 1;
-                if (minCapacity > EncodingDetector.DEFAULT_MAX_BYTES)
-                    // Too many bytes, just skip other entries.
-                    break;
+            if (rawNames == null)
+                rawNames = new ArrayList<>();
 
-                if (buffer.capacity() < minCapacity) {
-                    int newCapacity = (int) Math.max(
-                            Math.min(buffer.capacity() * 2L, Integer.MAX_VALUE - 8),
-                            minCapacity
-                    );
-
-                    ByteBuffer newBuffer = ByteBuffer.allocate(newCapacity);
-                    buffer.flip();
-                    newBuffer.put(buffer);
-                    buffer = newBuffer;
-                }
-            }
-
-            buffer.put(rawName);
-            buffer.put((byte) '\n');
+            rawNames.add(rawName);
         }
 
-        if (buffer == null)
+        if (rawNames == null)
             return StandardCharsets.UTF_8;
 
-        buffer.flip();
+        String[] candidates = {
+                "UTF-8",
+                "GB18030",
+                "Big5",
+                "Shift_JIS",
+                "EUC-JP",
+                "ISO-2022-JP",
+                "EUC-KR",
+                "ISO-2022-KR",
+                "KOI8-R",
+                "windows-1251",
+                "x-MacCyrillic",
+                "IBM855",
+                "IBM866",
+                "windows-1252",
+                "ISO-8859-1",
+                "ISO-8859-5",
+                "ISO-8859-7",
+                "ISO-8859-8"
+        };
 
-        @Nullable Charset charset = findDecodableCandidate(zipFile, EncodingDetector.DEFAULT.detect(buffer));
-        if (charset != null)
-            return charset;
+        CharBuffer cb = CharBuffer.allocate(128);
 
-        // Short filenames can have a clear leading candidate below the default threshold.
-        charset = findDecodableCandidate(zipFile,
-                EncodingDetector.DEFAULT.withMinimumConfidence(0).detect(buffer));
-        if (charset != null)
-            return charset;
-
-        return StandardCharsets.UTF_8;
-    }
-
-    /// Returns the highest-ranked supported charset that decodes every unmarked
-    /// name, or `null` if none of the supplied candidates passes validation.
-    private static @Nullable Charset findDecodableCandidate(ZipArchiveReader zipFile, EncodingDetector.Result result) {
-        for (EncodingDetector.Candidate candidate : result.candidates()) {
-            EncodingDetector.@Nullable Encoding encoding = candidate.encoding();
-            if (encoding == null)
-                continue;
-
-            @Nullable Charset charset = encoding.approximateCharset();
-            if (charset != null && canDecodeNames(zipFile, charset))
-                return charset;
-        }
-        return null;
-    }
-
-    /// Tests each unmarked raw name independently, rejecting malformed or
-    /// unmappable input instead of replacing it with replacement characters.
-    private static boolean canDecodeNames(ZipArchiveReader zipFile, Charset charset) {
-        CharsetDecoder decoder = charset.newDecoder()
-                .onMalformedInput(CodingErrorAction.REPORT)
-                .onUnmappableCharacter(CodingErrorAction.REPORT);
-        for (ZipArchiveEntry entry : zipFile.getEntries()) {
-            if (entry.getNameSource() == ZipArchiveEntry.NameSource.NAME_WITH_EFS_FLAG
-                    || entry.getNameSource() == ZipArchiveEntry.NameSource.UNICODE_EXTRA_FIELD)
-                continue;
-
-            byte @Nullable [] rawName = entry.getRawName();
-            if (rawName == null)
-                continue;
+        loop:
+        for (String candidate : candidates) {
+            Charset charset;
 
             try {
-                decoder.decode(ByteBuffer.wrap(rawName));
-            } catch (CharacterCodingException e) {
-                return false;
+                charset = Charset.forName(candidate);
+            } catch (Exception ignored) {
+                continue;
             }
+
+            CharsetDecoder decoder = charset.newDecoder()
+                    .onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT);
+
+            for (byte[] ba : rawNames) {
+                decoder.reset();
+                int clen = (int) (ba.length * decoder.maxCharsPerByte());
+                if (clen == 0) continue;
+                if (clen <= cb.capacity())
+                    cb.clear();
+                else
+                    cb = CharBuffer.allocate(clen);
+
+                ByteBuffer bb = ByteBuffer.wrap(ba, 0, ba.length);
+                CoderResult cr = decoder.decode(bb, cb, true);
+                if (!cr.isUnderflow()) continue loop;
+                cr = decoder.flush(cb);
+                if (!cr.isUnderflow()) continue loop;
+            }
+            return charset;
         }
-        return true;
+
+        return StandardCharsets.UTF_8;
     }
 
     /// Opens an owning ZIP tree using detected filename encoding.
