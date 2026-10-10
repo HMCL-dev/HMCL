@@ -138,7 +138,7 @@ public class EditServerPane extends TransitionPane implements DialogAware {
 
             serverIpField.setValidators(
                     new RequiredValidator(),
-                    new MinecraftServerAddressValidator()
+                    new MinecraftServerAddressValidator(i18n("server.address.malformed"), false)
             );
             setValidateWhileTextChanged(serverIpField, true);
 

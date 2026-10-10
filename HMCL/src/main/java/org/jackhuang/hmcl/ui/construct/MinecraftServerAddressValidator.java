@@ -21,12 +21,14 @@ import com.jfoenix.validation.base.ValidatorBase;
 import javafx.scene.control.TextInputControl;
 import org.jackhuang.hmcl.util.ServerAddress;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import java.util.Objects;
 
 public class MinecraftServerAddressValidator extends ValidatorBase {
+    private final boolean ignoreEmpty;
 
-    public MinecraftServerAddressValidator() {
-        super(i18n("server.address.malformed"));
+    public MinecraftServerAddressValidator(String message, boolean ignoreEmpty) {
+        super(message);
+        this.ignoreEmpty = ignoreEmpty;
     }
 
     @Override
@@ -38,9 +40,17 @@ public class MinecraftServerAddressValidator extends ValidatorBase {
 
     private void evalTextInputField() {
         TextInputControl textField = ((TextInputControl) srcControl.get());
+        String text = textField.getText();
+
+        if (text == null || text.isEmpty()) {
+            if (ignoreEmpty) {
+                hasErrors.set(false);
+                return;
+            }
+        }
 
         try {
-            ServerAddress.parse(textField.getText());
+            ServerAddress.parse(Objects.requireNonNull(text));
             hasErrors.set(false);
         } catch (Exception e) {
             hasErrors.set(true);
