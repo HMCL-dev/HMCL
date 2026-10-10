@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -66,9 +65,9 @@ public final class HMCLModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipArchiveReader file, Path path, Charset encoding) throws IOException, JsonParseException {
+    public Modpack readManifest(ZipArchiveReader file, Path path) throws IOException, JsonParseException {
         String manifestJson = CompressingUtils.readTextZipEntry(file, "modpack.json");
-        Modpack manifest = JsonUtils.fromNonNullJson(manifestJson, HMCLModpack.class).setEncoding(encoding);
+        Modpack manifest = JsonUtils.fromNonNullJson(manifestJson, HMCLModpack.class);
         String gameJson = CompressingUtils.readTextZipEntry(file, "minecraft/pack.json");
         GameInstanceManifest game = JsonUtils.fromNonNullJson(gameJson, GameInstanceManifest.class);
         if (game.jar() == null)

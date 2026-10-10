@@ -208,8 +208,8 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             }
 
             // TODO: Optimize unbearably slow ModpackInstallTask
-            dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(mcDirectory), any -> true, config).withStage("hmcl.modpack"));
-            dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
+            dependents.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList(mcDirectory), any -> true, config).withStage("hmcl.modpack"));
+            dependents.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
         }
 
         // Stage #1: Load all related Json-Patch from meta maven or local mod pack.
@@ -410,11 +410,9 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             try (FileSystem fs = openModpack()) {
                 Path root = getRootPath(fs).resolve("jarmods");
 
-                try (FileSystem mc = CompressingUtils.writable(
-                        getPrimaryJarFile()
-                ).setAutoDetectEncoding(true).build()) {
+                try (FileSystem mc = CompressingUtils.writable(getPrimaryJarFile()).build()) {
                     for (String fileName : files) {
-                        try (FileSystem jm = CompressingUtils.readonly(root.resolve(fileName)).setAutoDetectEncoding(true).build()) {
+                        try (FileSystem jm = CompressingUtils.readonly(root.resolve(fileName)).build()) {
                             FileUtils.copyDirectory(jm.getPath("/"), mc.getPath("/"));
                         }
                     }
@@ -466,7 +464,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     }
 
     private FileSystem openModpack() throws IOException {
-        return CompressingUtils.readonly(zipFile).setAutoDetectEncoding(true).setEncoding(modpack.getEncoding()).build();
+        return CompressingUtils.readonly(zipFile).build();
     }
 
     private static boolean testPath(Path root) {

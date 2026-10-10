@@ -24,8 +24,6 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 
 public final class Unzipper {
@@ -34,7 +32,6 @@ public final class Unzipper {
     private boolean terminateIfSubDirectoryNotExists = false;
     private String subDirectory = "/";
     private EntryFilter filter;
-    private Charset encoding = StandardCharsets.UTF_8;
 
     /// Decompress the given zip file to a directory.
     ///
@@ -70,11 +67,6 @@ public final class Unzipper {
         return this;
     }
 
-    public Unzipper setEncoding(Charset encoding) {
-        this.encoding = encoding;
-        return this;
-    }
-
     public Unzipper setTerminateIfSubDirectoryNotExists() {
         this.terminateIfSubDirectoryNotExists = true;
         return this;
@@ -92,7 +84,7 @@ public final class Unzipper {
                 : new CopyOption[]{};
 
         long entryCount = 0L;
-        try (ZipArchiveReader reader = CompressingUtils.openZipFileWithPossibleEncoding(zipFile, encoding)) {
+        try (ZipArchiveReader reader = CompressingUtils.openZipFile(zipFile)) {
             String pathPrefix = StringUtils.addSuffix(subDirectory, "/");
 
             for (ZipArchiveEntry entry : reader.getEntries()) {

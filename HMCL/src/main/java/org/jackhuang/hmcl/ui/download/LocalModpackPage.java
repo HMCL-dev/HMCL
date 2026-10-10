@@ -125,7 +125,7 @@ public final class LocalModpackPage extends ModpackPage {
         Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(selectedFile))
                 .thenApplyAsync(encoding -> {
                     charset = encoding;
-                    return ModpackHelper.readModpackManifest(selectedFile, encoding);
+                    return ModpackHelper.readModpackManifest(selectedFile);
                 })
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
                     if (exception instanceof ManuallyCreatedModpackException) {

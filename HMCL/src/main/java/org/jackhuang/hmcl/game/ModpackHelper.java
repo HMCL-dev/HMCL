@@ -90,8 +90,8 @@ public final class ModpackHelper {
         return "zip".equals(ext) || "mrpack".equals(ext);
     }
 
-    public static Modpack readModpackManifest(Path file, Charset charset) throws UnsupportedModpackException, ManuallyCreatedModpackException {
-        try (ZipArchiveReader zipFile = CompressingUtils.openZipFile(file, charset)) {
+    public static Modpack readModpackManifest(Path file) throws UnsupportedModpackException, ManuallyCreatedModpackException {
+        try (ZipArchiveReader zipFile = CompressingUtils.openZipFile(file)) {
             // Order for trying detecting manifest is necessary here.
             // Do not change to iterating providers.
             for (ModpackProvider provider : new ModpackProvider[]{
@@ -102,7 +102,7 @@ public final class ModpackHelper {
                     MultiMCModpackProvider.INSTANCE,
                     ServerModpackProvider.INSTANCE}) {
                 try {
-                    return provider.readManifest(zipFile, file, charset);
+                    return provider.readManifest(zipFile, file);
                 } catch (Exception ignored) {
                 }
             }
@@ -185,7 +185,7 @@ public final class ModpackHelper {
             throw new IllegalArgumentException("name existing");
         }
 
-        return new ManuallyCreatedModpackInstallTask(zipFile, charset, name)
+        return new ManuallyCreatedModpackInstallTask(zipFile, name)
                 .thenAcceptAsync(Schedulers.javafx(), location -> {
                     GameDirectory newGameDirectory = new GameDirectory(
                             GameDirectoryManager.newGameDirectoryId(),
@@ -245,7 +245,7 @@ public final class ModpackHelper {
                     .withStagesHints(new Task.StagesHint("hmcl.modpack"), new Task.StagesHint("hmcl.modpack.download", List.of("hmcl.install.assets", "hmcl.install.libraries")));
     }
 
-    public static Task<Void> getUpdateTask(HMCLGameRepository repository, ServerModpackManifest manifest, Charset charset, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
+    public static Task<Void> getUpdateTask(HMCLGameRepository repository, ServerModpackManifest manifest, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
         switch (configuration.getType()) {
             case ServerModpackRemoteInstallTask.MODPACK_TYPE: {
                 HMCLGameInstance instance = repository.getInstance(instanceId);
@@ -260,15 +260,14 @@ public final class ModpackHelper {
         }
     }
 
-    public static Task<?> getUpdateTask(HMCLGameRepository repository, Path zipFile, Charset charset, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
-        return getUpdateTask(repository, zipFile, charset, instanceId, configuration, null);
+    public static Task<?> getUpdateTask(HMCLGameRepository repository, Path zipFile, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
+        return getUpdateTask(repository, zipFile, instanceId, configuration, null);
     }
 
     /// Creates an update task that respects optional-file selection.
     ///
     /// @param repository      the target repository
     /// @param zipFile         the modpack archive
-    /// @param charset         the archive encoding
     /// @param instanceId      the instance to update
     /// @param configuration   the existing modpack configuration
     /// @param excludedFiles keys of optional files the user chose not to install; `null` means install all.
@@ -277,12 +276,11 @@ public final class ModpackHelper {
     public static Task<?> getUpdateTask(
             HMCLGameRepository repository,
             Path zipFile,
-            Charset charset,
             GameInstanceID instanceId,
             ModpackConfiguration<?> configuration,
             @Nullable Set<String> excludedFiles)
             throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
-        Modpack modpack = ModpackHelper.readModpackManifest(zipFile, charset);
+        Modpack modpack = ModpackHelper.readModpackManifest(zipFile);
         ModpackProvider provider = getProviderByType(configuration.getType());
         if (provider == null) {
             throw new UnsupportedModpackException();

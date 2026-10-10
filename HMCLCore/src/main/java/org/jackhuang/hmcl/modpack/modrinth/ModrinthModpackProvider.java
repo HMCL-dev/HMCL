@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -67,11 +66,11 @@ public final class ModrinthModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipArchiveReader zip, Path file, Charset encoding) throws IOException, JsonParseException {
+    public Modpack readManifest(ZipArchiveReader zip, Path file) throws IOException, JsonParseException {
         try {
             ModrinthManifest manifest = JsonUtils.fromNonNullJson(CompressingUtils.readTextZipEntry(zip, "modrinth.index.json"), ModrinthManifest.class);
 
-            return new Modpack(manifest.getName(), "", manifest.getVersionId(), manifest.getGameVersion(), manifest.getSummary(), encoding, manifest) {
+            return new Modpack(manifest.getName(), "", manifest.getVersionId(), manifest.getGameVersion(), manifest.getSummary(), manifest) {
                 @Override
                 public Task<?> getInstallTask(
                         DefaultDependencyManager dependencyManager,

@@ -407,7 +407,7 @@ public final class Controllers {
         Controllers.taskDialog(
                 Task.composeAsync(Schedulers.io(), () -> {
                             Charset encoding = CompressingUtils.findSuitableEncoding(modpackFile);
-                            Modpack modpack = ModpackHelper.readModpackManifest(modpackFile, encoding);
+                            Modpack modpack = ModpackHelper.readModpackManifest(modpackFile);
                             return ModpackHelper.getInstallTask(
                                     repository, modpackFile, new GameInstanceID(modpack.getName()), modpack, null);
                         })

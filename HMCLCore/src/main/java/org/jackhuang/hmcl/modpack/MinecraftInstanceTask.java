@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +36,6 @@ import java.util.Map;
 public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>> {
 
     private final Path zipFile;
-    private final Charset encoding;
     private final List<String> subDirectories;
     private final Path jsonFile;
     private final T manifest;
@@ -45,9 +43,8 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
     private final String name;
     private final String version;
 
-    public MinecraftInstanceTask(Path zipFile, Charset encoding, List<String> subDirectories, T manifest, ModpackProvider modpackProvider, String name, String version, Path jsonFile) {
+    public MinecraftInstanceTask(Path zipFile, List<String> subDirectories, T manifest, ModpackProvider modpackProvider, String name, String version, Path jsonFile) {
         this.zipFile = zipFile;
-        this.encoding = encoding;
         this.subDirectories = subDirectories.stream().map(FileUtils::normalizePath).toList();
         this.manifest = manifest;
         this.jsonFile = jsonFile;
@@ -83,7 +80,7 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
     public void execute() throws Exception {
         List<ModpackConfiguration.FileInformation> overrides = new ArrayList<>();
 
-        try (var tree = new ZipFileTree(CompressingUtils.openZipFileWithPossibleEncoding(zipFile, encoding))) {
+        try (var tree = new ZipFileTree(CompressingUtils.openZipFile(zipFile))) {
             for (String subDirectory : subDirectories) {
                 ArchiveFileTree.Dir<ZipArchiveEntry> root = tree.getDirectory(subDirectory);
                 if (root == null)

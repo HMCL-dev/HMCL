@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -69,11 +68,10 @@ public interface ModpackProvider {
     ///
     /// @param zipFile  the opened modpack archive
     /// @param file     the modpack archive path
-    /// @param encoding the archive entry-name encoding
     /// @return the parsed modpack
     /// @throws IOException        if the archive cannot be read as this format
     /// @throws JsonParseException if the required manifest is missing or malformed
-    Modpack readManifest(ZipArchiveReader zipFile, Path file, Charset encoding) throws IOException, JsonParseException;
+    Modpack readManifest(ZipArchiveReader zipFile, Path file) throws IOException, JsonParseException;
 
     /// Injects provider-specific launch options from a serialized modpack configuration.
     ///

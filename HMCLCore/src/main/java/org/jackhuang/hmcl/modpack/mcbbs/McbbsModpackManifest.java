@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.util.gson.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -420,10 +419,10 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
         }
     }
 
-    public Modpack toModpack(Charset encoding) throws IOException {
+    public Modpack toModpack() throws IOException {
         String gameVersion = addons.stream().filter(x -> GameComponentType.GAME.getPatchId().equals(x.id)).findAny()
                 .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
-        return new Modpack(name, author, version, gameVersion, description, encoding, this) {
+        return new Modpack(name, author, version, gameVersion, description, this) {
             @Override
             public Task<?> getInstallTask(
                     DefaultDependencyManager dependencyManager,

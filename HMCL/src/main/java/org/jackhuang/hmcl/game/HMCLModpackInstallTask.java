@@ -129,8 +129,8 @@ public final class HMCLModpackInstallTask extends Task<Void> {
             }
         });
 
-        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), List.of("/minecraft"), it -> !"pack.json".equals(it), config));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), List.of("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(this.instanceId)).withStage("hmcl.modpack"));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, List.of("/minecraft"), it -> !"pack.json".equals(it), config));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, List.of("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getLayout().getModpackConfigurationFile(this.instanceId)).withStage("hmcl.modpack"));
     }
 
     @Override

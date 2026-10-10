@@ -19,13 +19,14 @@ package org.jackhuang.hmcl.util.io;
 
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
+import kala.encdet.EncodingDetector;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.charset.*;
 import java.nio.file.*;
 import java.nio.file.spi.FileSystemProvider;
@@ -47,85 +48,63 @@ public final class CompressingUtils {
     private CompressingUtils() {
     }
 
-    private static CharsetDecoder newCharsetDecoder(Charset charset) {
-        return charset.newDecoder().onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT);
-    }
-
-    public static boolean testEncoding(Path zipFile, Charset encoding) throws IOException {
-        try (ZipArchiveReader zf = openZipFile(zipFile, encoding)) {
-            return testEncoding(zf, encoding);
-        }
-    }
-
-    public static boolean testEncoding(ZipArchiveReader zipFile, Charset encoding) {
-        CharsetDecoder cd = newCharsetDecoder(encoding);
-        CharBuffer cb = CharBuffer.allocate(32);
-
-        for (ZipArchiveEntry entry : zipFile.getEntries()) {
-            if (entry.getGeneralPurposeBit().usesUTF8ForNames()) continue;
-
-            cd.reset();
-            byte[] ba = entry.getRawName();
-            int clen = (int) (ba.length * cd.maxCharsPerByte());
-            if (clen == 0) continue;
-            if (clen <= cb.capacity())
-                cb.clear();
-            else
-                cb = CharBuffer.allocate(clen);
-
-            ByteBuffer bb = ByteBuffer.wrap(ba, 0, ba.length);
-            CoderResult cr = cd.decode(bb, cb, true);
-            if (!cr.isUnderflow()) return false;
-            cr = cd.flush(cb);
-            if (!cr.isUnderflow()) return false;
-        }
-        return true;
-    }
-
     public static Charset findSuitableEncoding(Path zipFile) throws IOException {
         try (ZipArchiveReader zf = openZipFile(zipFile, StandardCharsets.UTF_8)) {
             return findSuitableEncoding(zf);
         }
     }
 
-    public static Charset findSuitableEncoding(ZipArchiveReader zipFile) throws IOException {
-        if (testEncoding(zipFile, StandardCharsets.UTF_8)) return StandardCharsets.UTF_8;
-        if (OperatingSystem.NATIVE_CHARSET != StandardCharsets.UTF_8 && testEncoding(zipFile, OperatingSystem.NATIVE_CHARSET))
-            return OperatingSystem.NATIVE_CHARSET;
+    private static Charset findSuitableEncoding(ZipArchiveReader zipFile) {
+        @Nullable ByteBuffer buffer = null;
 
-        String[] candidates = {
-                "GB18030",
-                "Big5",
-                "Shift_JIS",
-                "EUC-JP",
-                "ISO-2022-JP",
-                "EUC-KR",
-                "ISO-2022-KR",
-                "KOI8-R",
-                "windows-1251",
-                "x-MacCyrillic",
-                "IBM855",
-                "IBM866",
-                "windows-1252",
-                "ISO-8859-1",
-                "ISO-8859-5",
-                "ISO-8859-7",
-                "ISO-8859-8",
-                "UTF-16LE", "UTF-16BE",
-                "UTF-32LE", "UTF-32BE"
-        };
+        for (ZipArchiveEntry entry : zipFile.getEntries()) {
+            if (entry.getNameSource() == ZipArchiveEntry.NameSource.NAME_WITH_EFS_FLAG
+                    || entry.getNameSource() == ZipArchiveEntry.NameSource.UNICODE_EXTRA_FIELD)
+                continue;
 
-        for (String candidate : candidates) {
-            try {
-                Charset charset = Charset.forName(candidate);
-                if (!charset.equals(OperatingSystem.NATIVE_CHARSET) && testEncoding(zipFile, charset)) {
-                    return charset;
+            byte[] rawName = entry.getRawName();
+            if (rawName == null || StringUtils.isASCII(rawName))
+                continue;
+
+            if (buffer == null) {
+                int length = Math.max(512, rawName.length + 1);
+                buffer = ByteBuffer.allocate(length);
+            } else {
+                long minCapacity = (long) buffer.position() + rawName.length + 1;
+                if (minCapacity > EncodingDetector.DEFAULT_MAX_BYTES)
+                    // Too many bytes, just skip other entries.
+                    break;
+
+                if (buffer.capacity() < minCapacity) {
+                    int newCapacity = (int) Math.max(
+                            Math.min(buffer.capacity() * 2L, Integer.MAX_VALUE - 8),
+                            minCapacity
+                    );
+
+                    ByteBuffer newBuffer = ByteBuffer.allocate(newCapacity);
+                    buffer.flip();
+                    newBuffer.put(buffer);
+                    buffer = newBuffer;
                 }
-            } catch (IllegalArgumentException ignored) {
             }
+
+            buffer.put(rawName);
+            buffer.put((byte) '\n');
         }
 
-        throw new IOException("Cannot find suitable encoding for the zip.");
+        if (buffer == null)
+            return StandardCharsets.UTF_8;
+
+        buffer.flip();
+
+        EncodingDetector.Candidate candidate = EncodingDetector.DEFAULT.detect(buffer).bestCandidate();
+        if (candidate == null || candidate.encoding() == null)
+            return StandardCharsets.UTF_8;
+
+        Charset approximateCharset = candidate.encoding().approximateCharset();
+        return approximateCharset == null || approximateCharset == StandardCharsets.US_ASCII
+                ? StandardCharsets.UTF_8
+                : approximateCharset;
     }
 
     public static ZipFileTree openZipTree(Path zipFile) throws IOException {
@@ -133,40 +112,21 @@ public final class CompressingUtils {
     }
 
     public static ZipArchiveReader openZipFile(Path zipFile) throws IOException {
-        return openZipFileWithPossibleEncoding(zipFile, StandardCharsets.UTF_8);
+        ZipArchiveReader zipReader = openZipFile(zipFile, StandardCharsets.UTF_8);
+
+        Charset suitableEncoding = findSuitableEncoding(zipFile);
+        if (suitableEncoding == StandardCharsets.UTF_8)
+            return zipReader;
+
+        zipReader.close();
+        return openZipFile(zipFile, suitableEncoding);
     }
 
-    public static ZipArchiveReader openZipFile(Path zipFile, Charset charset) throws IOException {
+    private static ZipArchiveReader openZipFile(Path zipFile, Charset charset) throws IOException {
         return new ZipArchiveReader(zipFile, charset, true, true);
     }
 
-    public static ZipArchiveReader openZipFileWithPossibleEncoding(Path zipFile, Charset possibleEncoding) throws IOException {
-        if (possibleEncoding == null)
-            possibleEncoding = StandardCharsets.UTF_8;
-
-        ZipArchiveReader zipReader = new ZipArchiveReader(zipFile, possibleEncoding, true, true);
-
-        Charset suitableEncoding;
-        try {
-            if (possibleEncoding != StandardCharsets.UTF_8 && CompressingUtils.testEncoding(zipReader, possibleEncoding)) {
-                suitableEncoding = possibleEncoding;
-            } else {
-                suitableEncoding = CompressingUtils.findSuitableEncoding(zipReader);
-                if (suitableEncoding == StandardCharsets.UTF_8)
-                    return zipReader;
-            }
-        } catch (Throwable e) {
-            IOUtils.closeQuietly(zipReader, e);
-            throw e;
-        }
-
-        zipReader.close();
-        return new ZipArchiveReader(zipFile, suitableEncoding, true, true);
-    }
-
     public static final class Builder {
-        private boolean autoDetectEncoding = false;
-        private Charset encoding = StandardCharsets.UTF_8;
         private boolean useTempFile = false;
         private final boolean create;
         private final Path zip;
@@ -176,28 +136,13 @@ public final class CompressingUtils {
             this.create = create;
         }
 
-        public Builder setAutoDetectEncoding(boolean autoDetectEncoding) {
-            this.autoDetectEncoding = autoDetectEncoding;
-            return this;
-        }
-
-        public Builder setEncoding(Charset encoding) {
-            this.encoding = encoding;
-            return this;
-        }
-
         public Builder setUseTempFile(boolean useTempFile) {
             this.useTempFile = useTempFile;
             return this;
         }
 
         public FileSystem build() throws IOException {
-            if (autoDetectEncoding) {
-                if (!testEncoding(zip, encoding)) {
-                    encoding = findSuitableEncoding(zip);
-                }
-            }
-            return createZipFileSystem(zip, create, useTempFile, encoding);
+            return createZipFileSystem(zip, create, useTempFile, findSuitableEncoding(zip));
         }
     }
 
@@ -271,32 +216,4 @@ public final class CompressingUtils {
         return IOUtils.readFullyAsString(zipFile.getInputStream(zipFile.getEntry(name)));
     }
 
-    /**
-     * Read the text content of a file in zip.
-     *
-     * @param zipFile the zip file
-     * @param name    the location of the text in zip file, something like A/B/C/D.txt
-     * @return the plain text content of given file.
-     * @throws IOException if the file is not a valid zip file.
-     */
-    public static String readTextZipEntry(Path zipFile, String name, Charset encoding) throws IOException {
-        try (ZipArchiveReader s = openZipFile(zipFile, encoding)) {
-            return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)));
-        }
-    }
-
-    /**
-     * Read the text content of a file in zip.
-     *
-     * @param file the zip file
-     * @param name the location of the text in zip file, something like A/B/C/D.txt
-     * @return the plain text content of given file.
-     */
-    public static Optional<String> readTextZipEntryQuietly(Path file, String name, Charset encoding) {
-        try {
-            return Optional.of(readTextZipEntry(file, name, encoding));
-        } catch (IOException | NullPointerException e) {
-            return Optional.empty();
-        }
-    }
 }

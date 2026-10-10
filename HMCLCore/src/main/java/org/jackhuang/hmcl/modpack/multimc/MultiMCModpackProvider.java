@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -81,7 +80,7 @@ public final class MultiMCModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipArchiveReader modpackFile, Path modpackPath, Charset encoding) throws IOException {
+    public Modpack readManifest(ZipArchiveReader modpackFile, Path modpackPath) throws IOException {
         String rootEntryName = getRootEntryName(modpackFile);
         MultiMCManifest manifest = MultiMCManifest.readMultiMCModpackManifest(modpackFile, rootEntryName);
 
@@ -92,7 +91,7 @@ public final class MultiMCModpackProvider implements ModpackProvider {
             throw new IOException("`instance.cfg` not found, " + modpackFile + " is not a valid MultiMC modpack.");
         try (InputStream instanceStream = modpackFile.getInputStream(instanceEntry)) {
             MultiMCInstanceConfiguration cfg = new MultiMCInstanceConfiguration(name, instanceStream, manifest);
-            return new Modpack(cfg.getName(), "", "", cfg.getGameVersion(), cfg.getNotes(), encoding, cfg) {
+            return new Modpack(cfg.getName(), "", "", cfg.getGameVersion(), cfg.getNotes(), cfg) {
                 @Override
                 public Task<?> getInstallTask(
                         DefaultDependencyManager dependencyManager,
