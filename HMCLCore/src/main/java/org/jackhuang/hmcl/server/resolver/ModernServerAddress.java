@@ -70,7 +70,7 @@ public final class ModernServerAddress {
             input = input.substring(0, queryStart);
         }
 
-        int atEnd = input.lastIndexOf('@');
+        int atEnd = input.indexOf('@');
         if (atEnd != -1) {
             queryProperties.put("_id", input.substring(0, atEnd));
             input = input.substring(atEnd + 1);

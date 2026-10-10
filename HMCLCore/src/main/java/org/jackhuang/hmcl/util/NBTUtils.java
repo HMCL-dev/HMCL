@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util;
 
 import org.glavo.nbt.io.NBTCodec;
 import org.glavo.nbt.tag.*;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -33,12 +32,6 @@ public final class NBTUtils {
 
     public static CompoundTag readCompressed(Path file) throws IOException {
         return NBTCodec.of().readTag(file, TagType.COMPOUND);
-    }
-
-    public static void writeCompressed(CompoundTag tag, Path file) throws IOException {
-        FileUtils.saveSafely(file, outputStream ->
-                NBTCodec.of().writeTag(outputStream, tag)
-        );
     }
 
     public static OptionalLong tryGetLong(Tag tag) {

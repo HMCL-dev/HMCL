@@ -51,6 +51,7 @@ final class LegacyServerStatusPinger implements ServerStatusPinger {
                  DataInputStream in = new DataInputStream(socket.getInputStream())) {
                 long sendTime = System.currentTimeMillis();
 
+                // only send these 3 bytes and all legacy servers(<=1.6) will respond correspondingly
                 out.writeByte(0xfe); // packet id
                 out.writeByte(0x01); // payload(always 1)
                 out.writeByte(0xfa); // plugin message

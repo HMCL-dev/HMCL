@@ -30,7 +30,10 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.setting.AuthlibInjectorServers;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -383,7 +386,7 @@ public final class Instances {
                 launcherHelper.setQuickPlayOption(new QuickPlayOption.SinglePlayer(worldFolderName)));
     }
 
-    public static void launchAndEnterServer(HMCLGameInstance gameInstance, String serverIp) {
+    public static void launchAndEnterServer(@Nullable HMCLGameInstance gameInstance, String serverIp) {
         launch(gameInstance, launcherHelper ->
                 launcherHelper.setQuickPlayOption(new QuickPlayOption.MultiPlayer(serverIp)));
     }

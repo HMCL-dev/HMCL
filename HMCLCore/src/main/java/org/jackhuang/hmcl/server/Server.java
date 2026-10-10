@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.server;
 
+import org.glavo.nbt.io.NBTCodec;
 import org.glavo.nbt.tag.*;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +28,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
-import static org.jackhuang.hmcl.util.NBTUtils.readCompressed;
-import static org.jackhuang.hmcl.util.NBTUtils.writeCompressed;
 
 public class Server {
     private final @NotNull ServerPackStatus serverPackStatus;
@@ -58,12 +57,13 @@ public class Server {
     public static List<Server> loadFromServersDat(@NotNull Path file) throws IOException {
         List<Server> servers = new ArrayList<>();
 
-        CompoundTag root = readCompressed(file);
+        CompoundTag root = NBTCodec.of().readTag(file, TagType.COMPOUND);
         Tag serversTag = root.get("servers");
-        if (serversTag == null)
+        if (serversTag == null) {
             throw new IOException("servers tag not found");
-        else if (!(serversTag instanceof ListTag<?>))
+        } else if (!(serversTag instanceof ListTag<?>)) {
             throw new IOException("servers tag is not a ListTag");
+        }
 
         for (Tag serverEntryTag : ((ListTag<?>) serversTag)) {
             if (serverEntryTag instanceof CompoundTag serverEntryTagCompound) {
@@ -87,7 +87,9 @@ public class Server {
         CompoundTag root = new CompoundTag();
         root.addTag("servers", tag);
 
-        writeCompressed(root, file);
+        FileUtils.saveSafely(file, outputStream ->
+                NBTCodec.of().writeTag(outputStream, root)
+        );
     }
 
     public void writeToCompoundTag(CompoundTag tag) {
@@ -115,7 +117,7 @@ public class Server {
         return Objects.hash(serverPackStatus, hidden, icon, ip, name);
     }
 
-    public ServerPackStatus getServerPackStatus() {
+    public @NotNull ServerPackStatus getServerPackStatus() {
         return serverPackStatus;
     }
 

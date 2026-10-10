@@ -68,14 +68,15 @@ public final class ServerDnD {
     }
 
     public static Optional<Server> parseUrlFromDragboard(Dragboard dragboard) {
-        String url = dragboard.getString();
-        if (url == null) return Optional.empty();
+        String input = dragboard.getString();
+        if (input == null) return Optional.empty();
+        if (input.length() > 32768) return Optional.empty();
 
-        int index = url.indexOf(":");
+        int index = input.indexOf(":");
         if (index == -1) return Optional.empty();
-        if (!SCHEME.equals(url.substring(0, index))) return Optional.empty();
+        if (!SCHEME.equals(input.substring(0, index))) return Optional.empty();
         try {
-            JsonObject object = JsonParser.parseString(new String(Base64.getDecoder().decode(url.substring(index + 1)), StandardCharsets.UTF_8)).getAsJsonObject();
+            JsonObject object = JsonParser.parseString(new String(Base64.getDecoder().decode(input.substring(index + 1)), StandardCharsets.UTF_8)).getAsJsonObject();
             String favicon = null;
             if (object.has("favicon")) {
                 favicon = object.get("favicon").getAsString();
@@ -95,7 +96,7 @@ public final class ServerDnD {
     }
 
     public static EventHandler<DragEvent> dragOverHandler() {
-        return event -> parseUrlFromDragboard(event.getDragboard()).ifPresent(url -> {
+        return event -> parseUrlFromDragboard(event.getDragboard()).ifPresent(server -> {
             event.acceptTransferModes(TransferMode.COPY);
             event.consume();
         });
