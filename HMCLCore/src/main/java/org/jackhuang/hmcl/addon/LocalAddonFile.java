@@ -22,10 +22,10 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -69,26 +69,21 @@ public abstract class LocalAddonFile {
     ) {
     }
 
-    public static class Description {
-        private final List<LocalAddonFile.Description.Part> parts;
+    @NotNullByDefault
+    public record Description(@Unmodifiable List<Part> parts) {
+
+        public Description {
+            parts = List.copyOf(parts);
+        }
 
         public Description(String text) {
-            this.parts = new ArrayList<>();
-            this.parts.add(new LocalAddonFile.Description.Part(text, "black"));
-        }
-
-        public Description(List<LocalAddonFile.Description.Part> parts) {
-            this.parts = parts;
-        }
-
-        public List<LocalAddonFile.Description.Part> getParts() {
-            return parts;
+            this(List.of(new Part(text, "black")));
         }
 
         @Override
         public String toString() {
             StringBuilder builder = new StringBuilder();
-            for (LocalAddonFile.Description.Part part : parts) {
+            for (Part part : parts) {
                 builder.append(part.text);
             }
             return builder.toString();
@@ -98,27 +93,16 @@ public abstract class LocalAddonFile {
             return toString().lines().map(String::trim).filter(StringUtils::isNotBlank).collect(Collectors.joining(" | "));
         }
 
-        public static class Part {
-            private final String text;
-            private final String color;
+        public record Part(String text, String color) {
+
+            public Part {
+                Objects.requireNonNull(text);
+                Objects.requireNonNull(color);
+            }
 
             public Part(String text) {
                 this(text, "");
             }
-
-            public Part(String text, String color) {
-                this.text = Objects.requireNonNull(text);
-                this.color = Objects.requireNonNull(color);
-            }
-
-            public String getText() {
-                return text;
-            }
-
-            public String getColor() {
-                return color;
-            }
         }
     }
-
 }

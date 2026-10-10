@@ -791,6 +791,11 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             return -1;
         }
 
+        /// Compares this special version with another, treating aliases as their normalized versions.
+        ///
+        /// @param other the special version to compare with
+        /// @return a negative integer, zero, or a positive integer if this version is less than,
+        ///         equal to, or greater than the other version
         int compareToSpecial(Special other) {
             if (this.isUnknown())
                 return other.isUnknown() ? this.asVersionNumber().compareTo(other.asVersionNumber()) : 1;
@@ -805,9 +810,10 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             if (c != 0)
                 return c;
 
-            GameVersionNumber v = prev;
+            @Nullable GameVersionNumber v = prev;
             while (v instanceof Special special) {
-                if (v == other)
+                // Aliases have the same normalized name but are distinct objects.
+                if (v.equals(other))
                     return 1;
 
                 v = special.prev;
