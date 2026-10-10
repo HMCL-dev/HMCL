@@ -60,6 +60,26 @@ OpenJDK 64-Bit Server VM (build 25+37-LTS, mixed mode, sharing)
   ```
 - You can manually download a specific version of the source code from the [GitHub Release page](https://github.com/HMCL-dev/HMCL/releases).
 
+### Setup Gradle Environment
+
+To configure HMCL Gradle project, switch to the root directory of HMCL project and run the following command:
+
+```shell
+./gradlew
+```
+
+It might take a while to download all the dependencies.
+
+HMCL supports Gradle configuration cache.
+To enable this and speed up further building process, create file `gradle.properties` under the root directory of HMCL project,
+and append this line to it:
+
+```properties
+org.gradle.configuration-cache=true
+```
+
+Then re-configure the Gradle project.
+
 ### Build HMCL
 
 To build HMCL, switch to the root directory of the HMCL project and run the following command:

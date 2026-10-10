@@ -1,3 +1,9 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+plugins {
+    `kotlin-dsl`
+}
+
 repositories {
     System.getenv("MAVEN_CENTRAL_REPO").let { repo ->
         if (repo.isNullOrBlank())
@@ -24,6 +30,13 @@ dependencies {
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+        freeCompilerArgs.add("-Xjdk-release=17")
+    }
 }
 
 tasks.withType<JavaCompile> {

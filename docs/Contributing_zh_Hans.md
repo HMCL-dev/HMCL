@@ -59,6 +59,24 @@ OpenJDK 64-Bit Server VM (build 25+37-LTS, mixed mode, sharing)
   ```
 - 从 [GitHub Release 页面](https://github.com/HMCL-dev/HMCL/releases)可以手动下载特定版本的源码。
 
+### 搭建 Gradle 环境
+
+想要配置 HMCL Gradle 项目，请切换到 HMCL 项目的根目录下，并执行以下命令:
+
+```shell
+./gradlew
+```
+
+下载所有依赖项可能会花费一定时间。
+
+HMCL 支持 Gradle 配置缓存。为启用配置缓存以加速后续构建，在 HMCL 项目根目录下创建 `gradle.properties` 文件，并添加以下内容：
+
+```properties
+org.gradle.configuration-cache=true
+```
+
+然后重新配置 Gradle 项目。
+
 ### 构建 HMCL
 
 想要构建 HMCL，请切换到 HMCL 项目的根目录下，并执行以下命令:

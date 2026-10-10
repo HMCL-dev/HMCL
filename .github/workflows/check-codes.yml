@@ -26,7 +26,7 @@ jobs:
         with:
           cache-cleanup: never
       - name: Check Codes
-        run: ./gradlew checkstyle checkTranslations --no-daemon --parallel --stacktrace
+        run: ./gradlew checkstyle checkTranslations --no-daemon --parallel --configuration-cache --stacktrace
       - if: failure() && github.event_name == 'pull_request'
         name: Setup reviewdog
         uses: reviewdog/action-setup@d8edfce3dd5e1ec6978745e801f9c50b5ef80252 # v1.4.0
