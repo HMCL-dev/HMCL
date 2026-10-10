@@ -118,7 +118,9 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 if (!server.equals(item.server)) {
                     Task.supplyAsync(Schedulers.io(), () -> {
                         ServerStorage storage = item.storageEntry.rootStorage();
-                        return storage.updateEntry(item.storageEntry, oldValue -> oldValue.withIpAndName(server.getIp(), server.getName()));
+                        return storage.updateEntry(item.storageEntry, oldValue -> oldValue
+                                .withIpAndName(server.getIp(), server.getName())
+                                .withPackStatus(server.getServerPackStatus()));
                     }).whenComplete(Schedulers.javafx(), (updated, exception) -> {
                         if (exception != null)
                             LOG.warning("Failed to save server data.", exception);
@@ -447,6 +449,10 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
 
         public IconedServer withIpAndName(@Nullable String newIp, @Nullable String newName) {
             return new IconedServer(getServerPackStatus(), isHidden(), getIcon(), newIp, newName);
+        }
+
+        public IconedServer withPackStatus(ServerPackStatus status) {
+            return new IconedServer(status, isHidden(), getIcon(), getIp(), getName());
         }
     }
 

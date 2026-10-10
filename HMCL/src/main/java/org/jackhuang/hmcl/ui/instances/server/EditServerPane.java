@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.instances.server;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.BooleanBinding;
@@ -42,11 +43,11 @@ import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.ui.FXUtils.setValidateWhileTextChanged;
+import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class EditServerPane extends TransitionPane implements DialogAware {
@@ -57,6 +58,7 @@ public class EditServerPane extends TransitionPane implements DialogAware {
     private final GridPane body = new GridPane();
     private final JFXTextField serverNameField = new JFXTextField();
     private final JFXTextField serverIpField = new JFXTextField();
+    private final JFXComboBox<Server.ServerPackStatus> serverPackStatusField = new JFXComboBox<>();
 
     private final JFXButton btnAccept = new JFXButton();
     private final JFXButton btnCancel = new JFXButton();
@@ -72,15 +74,17 @@ public class EditServerPane extends TransitionPane implements DialogAware {
 
         getStyleClass().add("skin-pane");
 
-
         String referenceServerName;
         String referenceServerIP;
+        Server.ServerPackStatus referenceServerPackStatus;
         if (reference != null) {
             referenceServerName = reference.getName();
             referenceServerIP = reference.getIp();
+            referenceServerPackStatus = reference.getServerPackStatus();
         } else {
             referenceServerName = null;
             referenceServerIP = null;
+            referenceServerPackStatus = null;
         }
 
         JFXDialogLayout rootLayout = new JFXDialogLayout();
@@ -144,6 +148,26 @@ public class EditServerPane extends TransitionPane implements DialogAware {
             }
         }
 
+        // serverPackStatusField
+        {
+            Label label = new Label();
+            label.setText(i18n("server.resourcepack"));
+            GridPane.setHalignment(label, HPos.LEFT);
+            body.add(label, 0, 2);
+
+            serverPackStatusField.setConverter(stringConverter(status -> i18n("server.resourcepack." + status.name().toLowerCase(Locale.ROOT))));
+            serverPackStatusField.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal == null && oldVal != null) {
+                    serverPackStatusField.setValue(oldVal);
+                }
+            });
+            serverPackStatusField.getItems().setAll(Server.ServerPackStatus.values());
+            body.add(serverPackStatusField, 1, 2);
+            serverPackStatusField.setValue(
+                    Objects.requireNonNullElse(referenceServerPackStatus, Server.ServerPackStatus.PROMPT)
+            );
+        }
+
         bodyVbox.getChildren().add(body);
         rootLayout.setBody(bodyVbox);
 
@@ -182,6 +206,7 @@ public class EditServerPane extends TransitionPane implements DialogAware {
         btnAccept.setOnAction(ignored -> {
             String serverName;
             String serverIP = serverIpField.getText();
+            Server.ServerPackStatus serverPackStatus = serverPackStatusField.getValue();
             if (serverIP == null) return;
             if (serverNameField.getText() == null || serverNameField.getText().isEmpty()) {
                 serverName = i18n("server.name.def");
@@ -190,15 +215,15 @@ public class EditServerPane extends TransitionPane implements DialogAware {
             }
 
             if (!stillActionProgress.get()) {
-                onAdd(serverName, serverIP);
+                onAdd(serverPackStatus, serverName, serverIP);
                 return;
             }
 
             fireEvent(new DialogCloseEvent());
             if (reference != null) {
-                handleCallback.accept(reference.withIpAndName(serverIP, serverName));
+                handleCallback.accept(reference.withIpAndName(serverIP, serverName).withPackStatus(serverPackStatus));
             } else {
-                handleCallback.accept(new ServerListPage.IconedServer(Server.ServerPackStatus.PROMPT, false, null, serverIP, serverName));
+                handleCallback.accept(new ServerListPage.IconedServer(serverPackStatus, false, null, serverIP, serverName));
             }
         });
 
@@ -229,7 +254,7 @@ public class EditServerPane extends TransitionPane implements DialogAware {
         });
     }
 
-    private void onAdd(String serverName, String serverIP) {
+    private void onAdd(Server.ServerPackStatus packStatus, String serverName, String serverIP) {
         body.setDisable(true);
         spinner.showSpinner();
 
@@ -251,9 +276,9 @@ public class EditServerPane extends TransitionPane implements DialogAware {
             } else {
                 fireEvent(new DialogCloseEvent());
                 if (reference != null) {
-                    handleCallback.accept(reference.withIpAndName(serverIP, serverName));
+                    handleCallback.accept(reference.withIpAndName(serverIP, serverName).withPackStatus(packStatus));
                 } else {
-                    handleCallback.accept(new ServerListPage.IconedServer(Server.ServerPackStatus.PROMPT, false, status.favicon(), serverIP, serverName));
+                    handleCallback.accept(new ServerListPage.IconedServer(packStatus, false, status.favicon(), serverIP, serverName));
                 }
             }
         }).start();
