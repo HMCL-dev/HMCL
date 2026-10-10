@@ -37,10 +37,7 @@ import org.jackhuang.hmcl.server.pinger.ServerStatusPinger;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.DialogAware;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.MinecraftServerAddressValidator;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
@@ -139,7 +136,10 @@ public class EditServerPane extends TransitionPane implements DialogAware {
             GridPane.setHalignment(label, HPos.LEFT);
             body.add(label, 0, 1);
 
-            serverIpField.setValidators(new MinecraftServerAddressValidator());
+            serverIpField.setValidators(
+                    new RequiredValidator(),
+                    new MinecraftServerAddressValidator()
+            );
             setValidateWhileTextChanged(serverIpField, true);
 
             body.add(serverIpField, 1, 1);

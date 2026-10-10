@@ -81,10 +81,13 @@ public record HostAndPort(
                 throw new IllegalArgumentException("Invalid server address: " + input, e);
             }
             if (port < 0 || port > 65535) {
-                throw new IllegalArgumentException("Port number out of range: " + input);
+                throw new IllegalArgumentException("Invalid server address: " + input);
             }
         } else {
             port = defaultPort;
+        }
+        if (host.trim().isEmpty()) {
+            throw new IllegalArgumentException("Invalid server address: " + input);
         }
 
         return new HostAndPort(host, port);
