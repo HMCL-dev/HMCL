@@ -25,11 +25,15 @@ import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -40,7 +44,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class LocalModFile extends LocalAddonFile implements Comparable<LocalModFile> {
 
     private Path file;
+    @Nullable
     private final ModManager modManager;
+    @Nullable
     private final LocalMod mod;
     private final String name;
     private final Description description;
@@ -52,11 +58,11 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     private final String logoPath;
     private final BooleanProperty activeProperty;
 
-    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
+    public LocalModFile(@Nullable ModManager modManager, @Nullable LocalMod mod, Path file, String name, Description description) {
         this(modManager, mod, file, name, description, "", "", "", "", "");
     }
 
-    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
+    public LocalModFile(@Nullable ModManager modManager, @Nullable LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
         super();
         this.modManager = modManager;
         this.mod = mod;
@@ -69,10 +75,11 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         this.url = url;
         this.logoPath = logoPath;
 
-        activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
+        activeProperty = new SimpleBooleanProperty(this, "active", modManager != null && !modManager.isDisabled(file)) {
             @Override
             protected void invalidated() {
                 if (isOld()) return;
+                if (modManager == null) throw new IllegalStateException();
 
                 Path path = LocalModFile.this.file.toAbsolutePath();
 
@@ -89,17 +96,22 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
 
         fileName = FileUtils.getNameWithoutExtension(LocalAddonManager.getLocalAddonName(file));
 
-        if (isOld()) {
-            mod.getOldFiles().add(this);
-        } else {
-            mod.getFiles().add(this);
+
+        if (mod != null) {
+            if (isOld()) {
+                mod.getOldFiles().add(this);
+            } else {
+                mod.getFiles().add(this);
+            }
         }
     }
 
+    @Nullable
     public ModManager getModManager() {
         return modManager;
     }
 
+    @Nullable
     public LocalMod getMod() {
         return mod;
     }
@@ -110,10 +122,14 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     public ModLoaderType getModLoaderType() {
+        if (mod == null) throw new IllegalStateException();
+
         return mod.getModLoaderType();
     }
 
     public String getId() {
+        if (mod == null) throw new IllegalStateException();
+
         return mod.getId();
     }
 
@@ -163,11 +179,16 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     public boolean isOld() {
+        if (modManager == null) throw new IllegalStateException();
+
         return modManager.isOld(file);
     }
 
     @Override
     public void setOld(boolean old) throws IOException {
+        if (modManager == null) throw new IllegalStateException();
+        if (mod == null) throw new IllegalStateException();
+
         file = modManager.setOld(this, old);
 
         if (old) {
@@ -186,6 +207,8 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
 
     @Override
     public void markDisabled() throws IOException {
+        if (modManager == null) throw new IllegalStateException();
+
         file = modManager.disableMod(file);
     }
 

@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
 import org.jackhuang.hmcl.download.fabric.FabricAPIInstallTask;
 import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
+import org.jackhuang.hmcl.download.forge.ForgeLegacyInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeOldInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
@@ -71,7 +72,8 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.AccessDeniedException;
 import java.time.temporal.TemporalAccessor;
-import java.util.*;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.concurrent.CancellationException;
 
 public final class I18n {
@@ -201,7 +203,7 @@ public final class I18n {
             return i18n("install.installer.install", i18n("install.installer.cleanroom"));
         } else if (task instanceof LegacyFabricInstallTask) {
             return i18n("install.installer.install", i18n("install.installer.legacyfabric"));
-        } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
+        } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask || task instanceof ForgeLegacyInstallTask) {
             return i18n("install.installer.install", i18n("install.installer.forge"));
         } else if (task instanceof NeoForgeInstallTask || task instanceof NeoForgeOldInstallTask) {
             return i18n("install.installer.install", i18n("install.installer.neoforge"));

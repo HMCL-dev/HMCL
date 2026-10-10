@@ -40,6 +40,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
 
+import static org.jackhuang.hmcl.download.forge.ForgeInstallation.fromLookupVersion;
+import static org.jackhuang.hmcl.download.forge.ForgeInstallation.toLookupVersion;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
@@ -49,14 +51,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class ForgeRemoteVersion extends ComponentRemoteVersion {
 
     public static final WebURL FORGE_LIST = WebURL.parse("https://hmcl.glavo.site/metadata/forge/");
-
-    private static String toLookupVersion(String gameVersion) {
-        return "1.7.10-pre4".equals(gameVersion) ? "1.7.10_pre4" : gameVersion;
-    }
-
-    private static String fromLookupVersion(String lookupVersion) {
-        return "1.7.10_pre4".equals(lookupVersion) ? "1.7.10-pre4" : lookupVersion;
-    }
 
     private static String toLookupBranch(String gameVersion, @Nullable String branch) {
         if ("1.7.10-pre4".equals(gameVersion)) {
@@ -77,23 +71,24 @@ public final class ForgeRemoteVersion extends ComponentRemoteVersion {
                         ForgeVersion version = root.number().get(v);
                         if (version == null)
                             continue;
-                        String jar = null;
+                        String installer = null;
+                        // Legacy Forge versions publish a single "universal" zip rather than an "installer" jar.
                         for (String[] file : version.getFiles())
-                            if (file.length > 1 && "installer".equals(file[1])) {
+                            if (file.length > 1) {
                                 String classifier = version.getGameVersion() + "-" + version.getVersion()
                                         + (StringUtils.isNotBlank(version.getBranch()) ? "-" + version.getBranch() : "");
                                 String fileName = root.artifact() + "-" + classifier + "-" + file[1] + "." + file[0];
-                                jar = root.webpath() + classifier + "/" + fileName;
+                                installer = root.webpath() + classifier + "/" + fileName;
                             }
 
-                        if (jar == null)
+                        if (installer == null)
                             continue;
 
                         versions.add(new ForgeRemoteVersion(
                                 gameVersion,
                                 version.getVersion(),
                                 version.getModified() > 0 ? Instant.ofEpochSecond(version.getModified()) : null,
-                                List.of(jar)
+                                List.of(installer)
                         ));
                     }
                     break;
@@ -118,8 +113,10 @@ public final class ForgeRemoteVersion extends ComponentRemoteVersion {
                     continue;
 
                 List<String> urls = new ArrayList<>();
+                // Legacy Forge versions only publish "universal" or "client" zips, so accept those in addition to installer jars.
                 for (ForgeBMCLVersion.File file : version.files())
-                    if ("installer".equals(file.category()) && "jar".equals(file.format())) {
+                    if (("installer".equals(file.category()) && "jar".equals(file.format()))
+                            || (("client".equals(file.category()) || "universal".equals(file.category())) && "zip".equals(file.format()))) {
                         String branch = toLookupBranch(gameVersion.toString(), version.branch());
 
                         String classifier = lookupVersion + "-" + version.version() + (branch.isEmpty() ? "" : '-' + branch);
