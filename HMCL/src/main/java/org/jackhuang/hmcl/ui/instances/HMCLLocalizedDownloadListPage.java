@@ -33,24 +33,24 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
-    public static DownloadListPage ofMod(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MOD, true, true);
+    public static DownloadListPage ofMod(boolean instanceSelection) {
+        return new HMCLLocalizedDownloadListPage(null, instanceSelection, RemoteAddon.Type.MOD, true, true);
     }
 
-    public static DownloadListPage ofModrinthMod(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MOD, false, true);
+    public static DownloadListPage ofModrinthMod(boolean instanceSelection) {
+        return new HMCLLocalizedDownloadListPage(null, instanceSelection, RemoteAddon.Type.MOD, false, true);
     }
 
     public static DownloadListPage ofModPack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
         return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MODPACK, true, true);
     }
 
-    public static DownloadListPage ofResourcePack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.RESOURCE_PACK, true, true);
+    public static DownloadListPage ofResourcePack(boolean instanceSelection) {
+        return new HMCLLocalizedDownloadListPage(null, instanceSelection, RemoteAddon.Type.RESOURCE_PACK, true, true);
     }
 
-    public static DownloadListPage ofShaderPack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
-        var page = new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.SHADER_PACK, true, true);
+    public static DownloadListPage ofShaderPack(boolean instanceSelection) {
+        var page = new HMCLLocalizedDownloadListPage(null, instanceSelection, RemoteAddon.Type.SHADER_PACK, true, true);
         page.supportChinese.set(false);
         return page;
     }

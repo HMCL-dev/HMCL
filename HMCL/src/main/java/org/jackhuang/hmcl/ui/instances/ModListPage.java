@@ -60,7 +60,6 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
@@ -71,8 +70,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.ref.WeakReference;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.Objects;
@@ -252,7 +249,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         .composeAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
                             return version != GameVersionNumber.unknown()
-                                    ? new AddonCheckUpdatesTask<>(
+                                    ? new AddonCheckUpdatesTask(
                                             DownloadProviders.getDownloadProvider(), version.toString(), mods)
                                     : null;
                         })
@@ -263,7 +260,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             } else if (result.isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage<>(modManager, result));
+                                Controllers.navigateForward(new AddonUpdatesPage(modManager.getDirectory(), result));
                             }
                         })
                         .withStagesHints("update.checking"),
@@ -316,7 +313,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final HBox toolbarNormal;
         private final HBox toolbarSelecting;
 
-        private final JFXListView<ModListPage.ModInfoObject> listView;
+        private final JFXListView<ModInfoObject> listView;
 
         /// Whether the search mechanism is currently active.
         private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
@@ -383,7 +380,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                                 skinnable.checkUpdates(
                                         listView.getItems().stream()
-                                                .map(ModListPage.ModInfoObject::getModInfo)
+                                                .map(ModInfoObject::getModInfo)
                                                 .toList()
                                 )
                         ),
@@ -417,7 +414,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                                 skinnable.checkUpdates(
                                         listView.getSelectionModel().getSelectedItems().stream()
-                                                .map(ModListPage.ModInfoObject::getModInfo)
+                                                .map(ModInfoObject::getModInfo)
                                                 .toList()
                                 )
                         ),
@@ -454,7 +451,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 ComponentList.setVgrow(center, Priority.ALWAYS);
                 center.loadingProperty().bind(skinnable.loadingProperty());
 
-                listView.setCellFactory(x -> new ModListPage.ModInfoListCell(listView, skinnable));
+                listView.setCellFactory(x -> new ModInfoListCell(listView, skinnable));
                 listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
                 StackPane placeholderContainer = new StackPane();
@@ -474,17 +471,17 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 listView.setPlaceholder(placeholderContainer);
 
                 Bindings.bindContent(listView.getItems(), skinnable.getItems());
-                skinnable.getItems().addListener((ListChangeListener<? super ModListPage.ModInfoObject>) c -> {
+                skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
                     if (isSearching.get()) {
                         search();
                     }
                 });
 
                 listView.setOnContextMenuRequested(event -> {
-                    ModListPage.ModInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
+                    ModInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
                     if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
                         listView.getSelectionModel().clearSelection();
-                        Controllers.dialog(new ModListPage.ModInfoDialog(selectedItem));
+                        Controllers.dialog(new ModInfoDialog(selectedItem));
                     }
                 });
 
@@ -529,7 +526,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 }
 
                 // Do we need to search in the background thread?
-                for (ModListPage.ModInfoObject item : getSkinnable().getItems()) {
+                for (ModInfoObject item : getSkinnable().getItems()) {
                     LocalModFile modInfo = item.getModInfo();
                     if (predicate.test(modInfo.getFileName())
                             || predicate.test(modInfo.getName())
@@ -575,27 +572,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
 
         private Image loadIcon() {
-            List<String> iconPaths = new ArrayList<>();
-
-            if (StringUtils.isNotBlank(this.localModFile.getLogoPath())) {
-                iconPaths.add(this.localModFile.getLogoPath());
-            }
-
-            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(this.localModFile.getFile())) {
-                for (String path : iconPaths) {
-                    Path iconPath = fs.getPath(path);
-                    if (Files.exists(iconPath)) {
-                        Image image = FXUtils.loadImage(iconPath, 80, 80, true, true);
-                        if (!image.isError() && image.getWidth() > 0 && image.getHeight() > 0 &&
-                                Math.abs(image.getWidth() - image.getHeight()) < 1) {
-                            return image;
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                LOG.warning("Failed to load mod icons", e);
-            }
-
+            Image icon = localModFile.loadIcon();
+            if (icon != null) return icon;
             return getDefaultIcon();
         }
     }
@@ -690,7 +668,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 getActions().add(officialPageButton);
             }
 
-            if (modInfo.getModTranslations() == null || StringUtils.isBlank(modInfo.getModTranslations().getMcmod())) {
+            if (modInfo.getModTranslations() == null || StringUtils.isBlank(modInfo.getModTranslations().mcmod())) {
                 JFXHyperlink searchButton = new JFXHyperlink(i18n("mods.mcmod.search"));
                 searchButton.setExternalLink(NetworkUtils.withQuery("https://search.mcmod.cn/s", mapOf(
                         pair("key", modInfo.getModInfo().getName()),
@@ -779,7 +757,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             String displayName = modInfo.getName();
             if (modTranslations != null && I18n.isUseChinese()) {
-                String chineseName = modTranslations.getName();
+                String chineseName = modTranslations.name();
                 if (StringUtils.containsChinese(chineseName)) {
                     if (StringUtils.containsEmoji(chineseName)) {
                         StringBuilder builder = new StringBuilder();

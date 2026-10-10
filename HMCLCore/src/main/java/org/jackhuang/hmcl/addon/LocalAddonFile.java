@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.addon;
 
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -51,11 +52,25 @@ public abstract class LocalAddonFile {
 
     public abstract boolean keepOldFiles();
 
-    public abstract void delete() throws IOException;
+    public void delete() throws IOException {
+        FileUtils.forceDeleteIfExists(getFile());
+    }
+
+    public abstract @Nullable Image loadIcon(double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth);
+
+    public @Nullable Image loadIcon() {
+        Image icon = loadIcon(64D, 64D, true, true);
+        if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1)
+            return icon;
+        return null;
+    }
 
     @Nullable
     public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
         return null;
+    }
+
+    public void onUpdated(String newFileNameWithExt) {
     }
 
     @NotNullByDefault
@@ -64,8 +79,7 @@ public abstract class LocalAddonFile {
             RemoteAddon.Type repoType,
             LocalAddonFile localAddonFile,
             RemoteAddon.Version currentVersion,
-            RemoteAddon.Version targetVersion,
-            boolean useRemoteFileName
+            RemoteAddon.Version targetVersion
     ) {
     }
 

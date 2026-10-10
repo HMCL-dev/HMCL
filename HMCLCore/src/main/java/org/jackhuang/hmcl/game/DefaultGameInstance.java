@@ -19,7 +19,8 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.addon.mod.ModManager;
-import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.addon.shader.ShaderPackManager;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -72,6 +73,9 @@ public abstract class DefaultGameInstance implements GameInstance {
 
     /// Lazily created resource-pack manager for this snapshot member only.
     private @Nullable ResourcePackManager resourcePackManager;
+
+    /// Lazily created shader-pack manager for this snapshot member only.
+    private @Nullable ShaderPackManager shaderPackManager;
 
     protected DefaultGameInstance(
             DefaultGameRepositorySnapshot snapshot,
@@ -212,6 +216,20 @@ public abstract class DefaultGameInstance implements GameInstance {
             resourcePackManager = new ResourcePackManager(this);
         }
         return resourcePackManager;
+    }
+
+    /// Returns the shader-pack manager for this snapshot member.
+    ///
+    /// The manager is created on first use and is not shared with other snapshot wrappers. After a
+    /// repository refresh or COW publish, callers should obtain the manager from the current
+    /// instance again.
+    ///
+    /// @return the shader-pack manager
+    public ShaderPackManager getShaderPackManager() {
+        if (shaderPackManager == null) {
+            shaderPackManager = new ShaderPackManager(this);
+        }
+        return shaderPackManager;
     }
 
     /// Detects the Minecraft game version from this instance's primary client jar.

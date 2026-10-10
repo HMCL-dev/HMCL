@@ -19,14 +19,19 @@ package org.jackhuang.hmcl.addon.mod;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -190,8 +195,27 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     @Override
-    public void delete() throws IOException {
-        Files.deleteIfExists(file);
+    public @Nullable Image loadIcon(double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+        List<String> iconPaths = new ArrayList<>();
+
+        if (StringUtils.isNotBlank(getLogoPath())) {
+            iconPaths.add(getLogoPath());
+        }
+
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file)) {
+            for (String path : iconPaths) {
+                Path iconPath = fs.getPath(path);
+                if (Files.exists(iconPath)) {
+                    try (var inputStream = Files.newInputStream(iconPath)) {
+                        return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOG.warning("Failed to load mod icons", e);
+        }
+
+        return null;
     }
 
     @Override
@@ -207,7 +231,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
                 .sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed())
                 .toList();
         if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(source, RemoteAddon.Type.MOD, this, currentVersion.get(), remoteVersions.get(0), true);
+        return new AddonUpdate(source, RemoteAddon.Type.MOD, this, currentVersion.get(), remoteVersions.get(0));
     }
 
     @Override

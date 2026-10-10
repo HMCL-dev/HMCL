@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2025  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,13 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.resourcepack;
+package org.jackhuang.hmcl.addon.pack.resourcepack;
 
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.junit.jupiter.api.Test;
 
-import static org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager.isMcVersionSupported;
-import static org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager.isMcVersionSupportsNewOptionsFormat;
+import static org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackManager.isMcVersionSupported;
+import static org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackManager.isMcVersionSupportsNewOptionsFormat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
