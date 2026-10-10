@@ -149,20 +149,19 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 i18n("button.remove.confirm"),
                 i18n("server.delete"),
                 () -> Task.supplyAsync(Schedulers.io(), () -> {
-                    boolean result = false;
+                    List<ServerListItem> result = new ArrayList<>();
                     for (ServerListItem item : items) {
                         try {
                             item.storageEntry.delete();
-                            serverListEntries.remove(item);
-                            result = true;
+                            result.add(item);
                         } catch (IOException ignored) {
                         }
                     }
                     return result;
                 }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    if (result) {
-                        updateServerList();
-                    }
+                    if(result.isEmpty()) return;
+                    serverListEntries.removeAll(result);
+                    updateServerList();
                 }).start(),
                 null
         );
@@ -616,7 +615,12 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                     // save latest icon
                     Task.supplyAsync(Schedulers.io(), () -> {
                         ServerStorage storage = item.storageEntry.rootStorage();
-                        return storage.updateEntry(item.storageEntry, server -> server.withIcon(serverStatus.favicon()));
+                        return storage.updateEntry(item.storageEntry, server -> {
+                            if (Objects.equals(server.getIp(), item.server.getIp())) {
+                                return server.withIcon(serverStatus.favicon());
+                            }
+                            return server;
+                        });
                     }).whenComplete(Schedulers.javafx(), (updated, exception) -> {
                         if (exception != null)
                             LOG.warning("Failed to save server data.", exception);

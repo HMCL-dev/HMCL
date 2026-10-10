@@ -20,99 +20,76 @@ package org.jackhuang.hmcl.ui.instances.server;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.SVG;
 
-import java.util.*;
-
 public class ServerNetworkLatencyPane extends StackPane {
-    private static final Set<ServerNetworkLatencyPane> INSTANCES = Collections.newSetFromMap(new WeakHashMap<>());
-    private static final Timeline TIMELINE = new Timeline();
+    private static final SVG[] FRAMES = {
+            SVG.SERVER_SIGNAL_0_BAR,
+            SVG.SERVER_SIGNAL_1_BAR,
+            SVG.SERVER_SIGNAL_2_BAR,
+            SVG.SERVER_SIGNAL_3_BAR,
+            SVG.SERVER_SIGNAL_FULL,
+            SVG.SERVER_SIGNAL_3_BAR,
+            SVG.SERVER_SIGNAL_2_BAR,
+            SVG.SERVER_SIGNAL_1_BAR
+    };
 
-    static {
-        TIMELINE.getKeyFrames().add(new KeyFrame(Duration.millis(125), e -> {
-            for (ServerNetworkLatencyPane c : List.copyOf(INSTANCES)) {
-                if (c.state == State.PINGING) {
-                    c.next();
-                }
-            }
-        }));
-        TIMELINE.setCycleCount(Animation.INDEFINITE);
-        TIMELINE.play();
-    }
-
-    private final List<Node> pingAnimationItems;
+    private final SVGPath icon = SVG.NONE.createIcon();
+    private final Timeline timeline = new Timeline(new KeyFrame(Duration.millis(125), e -> nextFrame()));
     private int index = 0;
     private State state = State.PINGING;
 
     public ServerNetworkLatencyPane() {
-        INSTANCES.add(this);
-        this.pingAnimationItems = Arrays.asList(
-                SVG.SERVER_SIGNAL_0_BAR.createIcon(),
-                SVG.SERVER_SIGNAL_1_BAR.createIcon(),
-                SVG.SERVER_SIGNAL_2_BAR.createIcon(),
-                SVG.SERVER_SIGNAL_3_BAR.createIcon(),
-                SVG.SERVER_SIGNAL_FULL.createIcon(),
-                SVG.SERVER_SIGNAL_3_BAR.createIcon(),
-                SVG.SERVER_SIGNAL_2_BAR.createIcon(),
-                SVG.SERVER_SIGNAL_1_BAR.createIcon()
-        );
-        this.pingAnimationItems.forEach(c -> {
-            c.setOpacity(0.3);
-            c.setManaged(false);
-            c.setVisible(false);
-        });
+        timeline.setCycleCount(Animation.INDEFINITE);
+        getChildren().setAll(icon);
+        sceneProperty().addListener((obs, o, n) -> updateTimeline());
+        ping();
     }
 
-    private void next() {
-        Node currentNode = pingAnimationItems.get(index++ % pingAnimationItems.size());
-        Node nextNode = pingAnimationItems.get(index % pingAnimationItems.size());
-
-        currentNode.setVisible(false);
-        currentNode.setManaged(false);
-        nextNode.setVisible(true);
-        nextNode.setManaged(true);
+    private void nextFrame() {
+        setIcon(FRAMES[index++ % FRAMES.length], "", 0.3);
     }
 
-    public void error() {
-        state = State.ERROR;
-        getChildren().clear();
-        getChildren().add(createIcon(SVG.SERVER_SIGNAL_ERROR, "-fx-fill: -monet-error;"));
-    }
-
-    private SVGPath createIcon(SVG svg, String style) {
-        SVGPath icon = createIcon(svg);
-        icon.setStyle(style);
-        return icon;
-    }
-
-    private SVGPath createIcon(SVG svg) {
-        return svg.createIcon();
-    }
-
-    public void pong(long networkLatency) {
-        state = State.PONG;
-        getChildren().clear();
-        if (networkLatency < 150) {
-            getChildren().add(createIcon(SVG.SERVER_SIGNAL_FULL));
-        } else if (networkLatency < 300) {
-            getChildren().add(createIcon(SVG.SERVER_SIGNAL_3_BAR));
-        } else if (networkLatency < 600) {
-            getChildren().add(createIcon(SVG.SERVER_SIGNAL_2_BAR));
-        } else if (networkLatency < 1000) {
-            getChildren().add(createIcon(SVG.SERVER_SIGNAL_1_BAR));
+    private void updateTimeline() {
+        if (state == State.PINGING && getScene() != null) {
+            timeline.play();
         } else {
-            getChildren().add(createIcon(SVG.SERVER_SIGNAL_0_BAR));
+            timeline.stop();
         }
     }
 
     public void ping() {
         state = State.PINGING;
-        getChildren().clear();
-        getChildren().addAll(pingAnimationItems);
+        index = 0;
+        nextFrame();
+        updateTimeline();
+    }
+
+    public void pong(long latency) {
+        state = State.PONG;
+        updateTimeline();
+
+        SVG svg = latency < 150 ? SVG.SERVER_SIGNAL_FULL
+                : latency < 300 ? SVG.SERVER_SIGNAL_3_BAR
+                : latency < 600 ? SVG.SERVER_SIGNAL_2_BAR
+                : latency < 1000 ? SVG.SERVER_SIGNAL_1_BAR
+                : SVG.SERVER_SIGNAL_0_BAR;
+        setIcon(svg, "", 1);
+    }
+
+    public void error() {
+        state = State.ERROR;
+        updateTimeline();
+        setIcon(SVG.SERVER_SIGNAL_ERROR, "-fx-fill: -monet-error;", 1);
+    }
+
+    private void setIcon(SVG svg, String style, double opacity) {
+        icon.setContent(svg.getPath());
+        icon.setStyle(style);
+        icon.setOpacity(opacity);
     }
 
     private enum State {

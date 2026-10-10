@@ -37,30 +37,35 @@ public interface ServerStatusPinger {
     );
 
     static @NotNull ServerStatusResult getStatus(@NotNull String serverIp) throws IOException {
-        ModernServerAddress address = ModernServerAddress.fromString(serverIp);
-        ServerAddressResolveResult resolveResult = address.resolve();
+        try {
+            ModernServerAddress address = ModernServerAddress.fromString(serverIp);
+            ServerAddressResolveResult resolveResult = address.resolve();
 
-        if (resolveResult instanceof ServerAddressResolveResult.FailureResult failureResult) {
-            return ServerStatusResult.failure(failureResult.getReason().getStatusReason(), failureResult.getException());
-        }
-
-        ServerAddressResolveResult.SuccessResult successResult = (ServerAddressResolveResult.SuccessResult) resolveResult;
-        List<ServerStatusResult.FailureResult> failures = new ArrayList<>();
-        for (ServerStatusPinger pinger : PINGERS) {
-            ServerStatusResult statusResult = pinger.getStatus(successResult);
-            if (statusResult.isSuccess()) {
-                return statusResult;
-            } else {
-                failures.add((ServerStatusResult.FailureResult) statusResult);
+            if (resolveResult instanceof ServerAddressResolveResult.FailureResult failureResult) {
+                return ServerStatusResult.failure(failureResult.getReason().getStatusReason(), failureResult.getException());
             }
-        }
 
-        Exception collectException = new IOException("Failed to get server status");
-        for (ServerStatusResult.FailureResult failureResult : failures) {
-            collectException.addSuppressed(failureResult.getException());
+            ServerAddressResolveResult.SuccessResult successResult = (ServerAddressResolveResult.SuccessResult) resolveResult;
+            List<ServerStatusResult.FailureResult> failures = new ArrayList<>();
+            for (ServerStatusPinger pinger : PINGERS) {
+                ServerStatusResult statusResult = pinger.getStatus(successResult);
+                if (statusResult.isSuccess()) {
+                    return statusResult;
+                } else {
+                    failures.add((ServerStatusResult.FailureResult) statusResult);
+                }
+            }
+
+            Exception collectException = new IOException("Failed to get server status");
+            for (ServerStatusResult.FailureResult failureResult : failures) {
+                collectException.addSuppressed(failureResult.getException());
+            }
+            LOG.error("Failed to get the status of server " + resolveResult.getRawAddress().getRawServerIp(), collectException);
+            return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, collectException);
+        } catch (Exception e) {
+            LOG.error("Failed to get the status of server " + serverIp, e);
+            return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, e);
         }
-        LOG.error("Failed to get the status of server " + resolveResult.getRawAddress().getRawServerIp(), collectException);
-        return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, collectException);
     }
 
     @NotNull ServerStatusResult getStatus(@NotNull ServerAddressResolveResult.SuccessResult successResult);
