@@ -17,86 +17,126 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.server.ServerBlockedByMojangException;
+import org.jackhuang.hmcl.server.resolver.MojangBlockServerChecker;
+import org.jackhuang.hmcl.server.resolver.ServerAddressResolveResult;
+import org.jackhuang.hmcl.server.resolver.ServerDnsSrvRedirector;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
+import java.net.InetSocketAddress;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Glavo
  */
-public record ServerAddress(String host, int port) {
+public record ServerAddress(
+        HostAndPort hostAndPort,
+        Map<String, String> queryProperties
+) {
 
-    private static final int UNKNOWN_PORT = -1;
+    private static final int DEFAULT_SERVER_PORT = 25565;
+
+    public ServerAddress(@NotNull String host) {
+        this(host, DEFAULT_SERVER_PORT);
+    }
 
     private static IllegalArgumentException illegalAddress(String address) {
         return new IllegalArgumentException("Invalid server address: " + address);
     }
 
+    public ServerAddress(@NotNull String host, int port) {
+        this(new HostAndPort(host, port), new LinkedHashMap<>());
+    }
+
     /**
-     * @throws IllegalArgumentException if the address is not a valid server address
+     * @throws IllegalArgumentException if the input is not a valid server address
      */
-    public static @NotNull ServerAddress parse(@NotNull String address) {
-        Objects.requireNonNull(address);
+    public static @NotNull ServerAddress parse(@NotNull final String raw) {
+        String input = raw;
+        try {
+            input = input.trim();
 
-        if (!address.startsWith("[")) {
-            int colonPos = address.indexOf(':');
-            if (colonPos >= 0) {
-                if (colonPos == address.length() - 1)
-                    throw illegalAddress(address);
+            Map<String, String> queryProperties = new LinkedHashMap<>();
 
-                String host = address.substring(0, colonPos);
-                int port;
-                try {
-                    port = Integer.parseInt(address.substring(colonPos + 1));
-                } catch (NumberFormatException e) {
-                    throw illegalAddress(address);
+            // parse query properties
+            int queryStart = input.lastIndexOf('?');
+            if (queryStart != -1) {
+                String queryPropertyStr = input.substring(queryStart + 1);
+                String[] args = queryPropertyStr.split("&");
+                for (String arg : args) {
+                    int separator = arg.indexOf('=');
+
+                    String key;
+                    String value;
+                    if (separator >= 0) {
+                        key = URLDecoder.decode(arg.substring(0, separator), StandardCharsets.UTF_8);
+                        value = URLDecoder.decode(arg.substring(separator + 1), StandardCharsets.UTF_8);
+                    } else {
+                        key = URLDecoder.decode(arg, StandardCharsets.UTF_8);
+                        value = "";
+                    }
+                    queryProperties.put(key, value);
                 }
-                if (port < 0 || port > 0xFFFF)
-                    throw illegalAddress(address);
-                return new ServerAddress(host, port);
-            } else {
-                return new ServerAddress(address);
+                input = input.substring(0, queryStart);
             }
-        } else {
-            // Parse IPv6 address
-            int colonIndex = address.indexOf(':');
-            int closeBracketIndex = address.lastIndexOf(']');
-
-            if (colonIndex < 0 || closeBracketIndex < colonIndex)
-                throw illegalAddress(address);
-
-            String host = address.substring(1, closeBracketIndex);
-            if (closeBracketIndex == address.length() - 1)
-                return new ServerAddress(host);
-
-            if (address.length() < closeBracketIndex + 3 || address.charAt(closeBracketIndex + 1) != ':')
-                throw illegalAddress(address);
-
-            int port;
-            try {
-                port = Integer.parseInt(address.substring(closeBracketIndex + 2));
-            } catch (NumberFormatException e) {
-                throw illegalAddress(address);
+            int atEnd = input.indexOf('@');
+            if (atEnd != -1) {
+                queryProperties.put("_id", input.substring(0, atEnd));
+                input = input.substring(atEnd + 1);
             }
 
-            if (port < 0 || port > 0xFFFF)
-                throw illegalAddress(address);
-
-            return new ServerAddress(host, port);
+            return new ServerAddress(HostAndPort.parseHostAndPort(input, 25565), queryProperties);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to parse URL " + raw, e);
         }
     }
 
-    public ServerAddress(@NotNull String host) {
-        this(host, UNKNOWN_PORT);
+    public ServerAddressResolveResult resolve() {
+        try {
+            InetSocketAddress inetSocketAddress = hostAndPort.createInetSocketAddress();
+            if (MojangBlockServerChecker.isBlocking(inetSocketAddress)) {
+                return ServerAddressResolveResult.failed(this, ServerAddressResolveResult.FailureResult.Reason.BLOCKED_BY_MOJANG, new ServerBlockedByMojangException("blocked by mojang block server"));
+            }
+            HostAndPort lookupDnsResult = ServerDnsSrvRedirector.lookup(this);
+            if (lookupDnsResult != null) {
+                inetSocketAddress = lookupDnsResult.createInetSocketAddress();
+                if (MojangBlockServerChecker.isBlocking(inetSocketAddress)) {
+                    return ServerAddressResolveResult.failed(this, ServerAddressResolveResult.FailureResult.Reason.BLOCKED_BY_MOJANG, new ServerBlockedByMojangException("blocked by mojang block server"));
+                }
+            }
+            return ServerAddressResolveResult.succeed(this, inetSocketAddress);
+        } catch (UnknownHostException e) {
+            return ServerAddressResolveResult.failed(this, ServerAddressResolveResult.FailureResult.Reason.UNKNOWN_HOST, e);
+        }
     }
 
-    public ServerAddress(@NotNull String host, int port) {
-        this.host = Objects.requireNonNull(host);
-        this.port = port;
-    }
+    public String toServerIp(boolean containQueryArgs) {
+        StringBuilder sb = new StringBuilder(hostAndPort.toString());
+        if (containQueryArgs) {
+            if (!queryProperties.isEmpty()) {
+                StringBuilder queryArgBuilder = new StringBuilder();
+                boolean first = true;
 
-    @Override
-    public @NotNull String toString() {
-        return String.format("ServerAddress[host='%s', port=%d]", host, port);
+                for (Map.Entry<String, String> entry : queryProperties.entrySet()) {
+                    String key = entry.getKey();
+                    if (!first) {
+                        queryArgBuilder.append("&");
+                    }
+                    first = false;
+
+                    queryArgBuilder.append(URLEncoder.encode(key, StandardCharsets.UTF_8));
+                    queryArgBuilder.append("=");
+                    queryArgBuilder.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+                }
+                sb.append("?");
+                sb.append(queryArgBuilder);
+            }
+        }
+        return sb.toString();
     }
 }
