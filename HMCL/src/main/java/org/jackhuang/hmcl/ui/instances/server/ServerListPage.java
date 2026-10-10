@@ -32,8 +32,10 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseButton;
-import javafx.scene.layout.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import javafx.util.Subscription;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
@@ -140,16 +142,23 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
         FXUtils.copyText(item.server.getIp(), i18n("server.manage.copy.server.ip.ok.toast"));
     }
 
-    public void delete(ServerListItem item) {
+    private void delete(ServerListItem... items) {
         Controllers.confirm(
                 i18n("button.remove.confirm"),
                 i18n("server.delete"),
-                () -> Task.runAsync(Schedulers.io(), item.storageEntry::delete
-                ).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    if (exception != null) {
-                        LOG.warning("Failed to save server data.", exception);
-                    } else {
-                        serverListEntries.remove(item);
+                () -> Task.supplyAsync(Schedulers.io(), () -> {
+                    boolean result = false;
+                    for (ServerListItem item : items) {
+                        try {
+                            item.storageEntry.delete();
+                            serverListEntries.remove(item);
+                            result = true;
+                        } catch (IOException ignored) {
+                        }
+                    }
+                    return result;
+                }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (result) {
                         updateServerList();
                     }
                 }).start(),
@@ -441,120 +450,85 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
         }
     }
 
-    private final class ServerListCell extends ListCell<ServerListItem> {
+    private final class ServerListCell extends MDListCell<ServerListItem> {
 
         private final ServerListPage page;
 
-        private final RipplerContainer graphic;
-        private final ImageContainer serverIcon;
-        private final TwoLineListItem contentLine1;
-        private final ServerAddressMaskPane contentLine2AddressMaskPane;
-        private final ServerNetworkLatencyPane serverNetworkLatencyPane;
+        private final ImageContainer serverIcon = new ImageContainer(32);
+        private final TwoLineListItem contentLine1 = new TwoLineListItem();
+        private final ServerAddressMaskPane contentLine2AddressMaskPane = new ServerAddressMaskPane("");
+        private final ServerNetworkLatencyPane serverNetworkLatencyPane = new ServerNetworkLatencyPane();
 
-        private final JFXButton statusBtn;
-        private final Tooltip statusBtnTooltip;
+        private final Tooltip statusBtnTooltip = new Tooltip();
 
         private Subscription serverStatusResultValueSubscription;
         private Subscription serverStatusPingingValueSubscription;
 
-        public ServerListCell(ServerListPage page) {
+        public ServerListCell(JFXListView<ServerListItem> listView, ServerListPage page) {
+            super(listView);
             this.page = page;
 
-            BorderPane root = new BorderPane();
-            root.getStyleClass().add("md-list-cell");
-            root.setPadding(new Insets(8));
+            this.getStyleClass().add("server-list-cell");
 
-            // server icon
-            {
-                StackPane left = new StackPane();
-                root.setLeft(left);
-                left.setPadding(new Insets(0, 8, 0, 0));
+            HBox container = new HBox(8);
+            container.setPickOnBounds(false);
+            container.setAlignment(Pos.CENTER_LEFT);
+            VBox content = new VBox(contentLine1, contentLine2AddressMaskPane);
+            HBox.setHgrow(content, Priority.ALWAYS);
+            content.setMouseTransparent(true);
+            setSelectable();
 
-                this.serverIcon = new ImageContainer(32);
-                left.getChildren().add(serverIcon);
-            }
+            contentLine2AddressMaskPane.labelAddStyleClass("subtitle");
 
-            {
-                this.contentLine1 = new TwoLineListItem();
-                this.contentLine2AddressMaskPane = new ServerAddressMaskPane("");
-                contentLine2AddressMaskPane.labelAddStyleClass("subtitle");
-
-                HBox contentLine2 = new HBox(contentLine2AddressMaskPane);
-                VBox center = new VBox(contentLine1, contentLine2);
-                root.setCenter(center);
-            }
-
-            {
-                HBox right = new HBox(8);
-                root.setRight(right);
-                right.setAlignment(Pos.CENTER_RIGHT);
-
-                StackPane statusPane = new StackPane();
-                statusBtn = FXUtils.newToggleButton4(SVG.NONE);
-                statusBtn.managedProperty().bind(statusBtn.visibleProperty());
-                statusBtn.setOnAction(event -> {
-                    ServerListItem item = getItem();
-                    if (item != null)
-                        page.showServerStatus(item);
-                });
-                serverNetworkLatencyPane = new ServerNetworkLatencyPane();
-
-                statusPane.getChildren().add(serverNetworkLatencyPane);
-                statusPane.getChildren().add(statusBtn);
-                right.getChildren().add(statusPane);
-
-                statusBtnTooltip = new Tooltip();
-                FXUtils.installFastTooltip(statusBtn, statusBtnTooltip);
-
-                JFXButton editBtn = FXUtils.newToggleButton4(SVG.EDIT);
-                right.getChildren().add(editBtn);
-                FXUtils.installFastTooltip(editBtn, i18n("server.manage.edit"));
-                editBtn.setOnAction(event -> {
-                    ServerListItem item = getItem();
-                    if (item != null)
-                        page.editServer(item);
-                });
-
-                JFXButton launchBtn = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
-                right.getChildren().add(launchBtn);
-                FXUtils.installFastTooltip(launchBtn, i18n("instance.launch"));
-                launchBtn.setOnAction(event -> {
-                    ServerListItem item = getItem();
-                    if (item != null)
-                        page.launchAndEnterServer(item);
-                });
-
-                JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
-                right.getChildren().add(btnMore);
-                btnMore.setOnAction(event -> {
-                    ServerListItem item = getItem();
-                    if (item != null)
-                        showPopupMenu(item, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
-                });
-            }
-
-            this.graphic = new RipplerContainer(root);
-            graphic.setOnMouseClicked(event -> {
-                if (event.getClickCount() != 1)
-                    return;
-
+            JFXButton statusBtn = FXUtils.newToggleButton4(SVG.NONE);
+            statusBtn.managedProperty().bind(statusBtn.visibleProperty());
+            statusBtn.setOnAction(event -> {
                 ServerListItem item = getItem();
-                if (item == null)
-                    return;
-
-                if (event.getButton() == MouseButton.SECONDARY)
-                    showPopupMenu(item, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
+                if (item != null)
+                    page.showServerStatus(item);
             });
+            FXUtils.installFastTooltip(statusBtn, statusBtnTooltip);
+
+            JFXButton editBtn = FXUtils.newToggleButton4(SVG.EDIT);
+            FXUtils.installFastTooltip(editBtn, i18n("server.manage.edit"));
+            editBtn.setOnAction(event -> {
+                ServerListItem item = getItem();
+                if (item != null)
+                    page.editServer(item);
+            });
+
+            JFXButton launchBtn = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
+            FXUtils.installFastTooltip(launchBtn, i18n("instance.launch"));
+            launchBtn.setOnAction(event -> {
+                ServerListItem item = getItem();
+                if (item != null) {
+                    page.launchAndEnterServer(item);
+                }
+            });
+
+            JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
+            btnMore.setOnAction(event -> {
+                ServerListItem item = getItem();
+                if (item != null) {
+                    showPopupMenu(item, JFXPopup.PopupHPosition.RIGHT, 0, getHeight());
+                }
+            });
+
+            container.getChildren().setAll(
+                    serverIcon,
+                    content,
+                    new StackPane(serverNetworkLatencyPane, statusBtn),
+                    editBtn,
+                    launchBtn,
+                    btnMore
+            );
+
+            StackPane.setMargin(container, new Insets(8));
+            getContainer().getChildren().setAll(container);
         }
 
         @Override
-        protected void updateItem(ServerListItem item, boolean empty) {
-            ServerListItem oldItem = getItem();
-            boolean oldEmpty = isEmpty();
-
-            super.updateItem(item, empty);
-            if (oldItem == item && oldEmpty == empty) return;
-
+        protected void updateControl(ServerListItem item, boolean empty) {
             if (serverStatusPingingValueSubscription != null) {
                 serverStatusPingingValueSubscription.unsubscribe();
                 serverStatusPingingValueSubscription = null;
@@ -564,7 +538,6 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 serverStatusResultValueSubscription = null;
             }
 
-            this.graphic.releaseRippleImmediately();
             this.contentLine1.getTags().clear();
 
             if (empty || item == null) {
@@ -595,8 +568,6 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                             .map(gameInstance -> gameInstance.getId().id())
                             .forEach(contentLine1::addTag);
                 }
-
-                setGraphic(graphic);
 
                 item.observableServerStatus.refreshIfNoResultAsync(false);
 
@@ -658,9 +629,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
             }
         }
 
-        // Popup Menu
-
-        public void showPopupMenu(ServerListPage.ServerListItem holder, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
+        private void showPopupMenu(ServerListPage.ServerListItem holder, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
 
@@ -705,9 +674,9 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
         private final PauseTransition searchPause = new PauseTransition(Duration.millis(100));
 
         private final TransitionPane toolbarPane = new TransitionPane();
-
         private final HBox searchBar = new HBox();
         private final HBox toolbarNormal = new HBox();
+        private final HBox toolbarSelecting = new HBox();
 
         ServerListPageSkin() {
             super(ServerListPage.this);
@@ -722,12 +691,13 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
             root.getStyleClass().add("no-padding");
 
             listView.getStyleClass().add("no-horizontal-scrollbar");
-            listView.setCellFactory(param -> new ServerListCell(ServerListPage.this));
+            listView.setCellFactory(param -> new ServerListCell(listView, ServerListPage.this));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
             {
                 root.getContent().add(toolbarPane);
                 FXUtils.setOverflowHidden(toolbarPane, 8);
+                toolbarPane.setContent(toolbarNormal, ContainerAnimations.NONE);
 
                 Insets toolbarPadding = new Insets(0, 5, 0, 5);
 
@@ -759,7 +729,6 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                         searchPause.playFromStart();
                     }
                 });
-
                 JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
                     changeToolbar(toolbarNormal);
                     searchField.clear();
@@ -767,9 +736,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                     isSearching.set(false);
                     Bindings.bindContent(listView.getItems(), ServerListPage.this.getItems());
                 });
-
                 onEscPressed(searchField, closeSearchBar::fire);
-
                 searchBar.getChildren().setAll(
                         createCheckBox(box -> {
                             box.setText(i18n("server.manage.show_all"));
@@ -783,7 +750,29 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                         searchField,
                         closeSearchBar
                 );
-                toolbarPane.setContent(toolbarNormal, ContainerAnimations.NONE);
+
+                var selectAll = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
+                ListChangeListener<Object> listener = change -> {
+                    selectAll.setDisable(!listView.getItems().isEmpty()
+                            && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
+                };
+                listView.getSelectionModel().getSelectedItems().addListener(listener);
+                listView.getItems().addListener(listener);
+                toolbarSelecting.getChildren().setAll(
+                        createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
+                            ServerListPage.this.delete(listView.getSelectionModel().getSelectedItems().toArray(ServerListItem[]::new));
+                        }),
+                        selectAll,
+                        createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
+                                listView.getSelectionModel().clearSelection())
+                );
+                FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(), selectedItem -> {
+                    if (selectedItem == null) {
+                        changeToolbar(isSearching.get() ? searchBar : toolbarNormal);
+                    } else {
+                        changeToolbar(toolbarSelecting);
+                    }
+                });
             }
 
             StackPane placeholderContainer = new StackPane();
