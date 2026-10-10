@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXSnackbar;
 import com.jfoenix.controls.JFXSnackbarLayout;
+import com.jfoenix.skins.JFXDatePickerContent;
+import com.jfoenix.skins.JFXDatePickerSkin;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -81,6 +83,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.Stack;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -1130,13 +1133,23 @@ public final class Decorator {
             }
 
             Node newTarget;
-            @Nullable JFXDialogPane currentDialogPane =
-                    (JFXDialogPane) getDialogContainer().getProperties()
-                            .get(DialogUtils.PROPERTY_DIALOG_PANE_INSTANCE);
-            if (currentDialogPane != null && currentDialogPane.peek().isPresent()) {
-                newTarget = currentDialogPane.peek().orElseThrow();
-            } else {
-                newTarget = navigator.getCurrentPage();
+            {
+                //noinspection unchecked
+                @Nullable Stack<JFXDatePickerContent> stack =
+                        (Stack<JFXDatePickerContent>) getDialogContainer().getProperties()
+                        .get(JFXDatePickerSkin.PROPERTY_DATE_PICKER_CONTENTS);
+                if (stack != null && !stack.isEmpty()) {
+                    newTarget = stack.peek();
+                } else {
+                    @Nullable JFXDialogPane currentDialogPane =
+                            (JFXDialogPane) getDialogContainer().getProperties()
+                                    .get(DialogUtils.PROPERTY_DIALOG_PANE_INSTANCE);
+                    if (currentDialogPane != null && currentDialogPane.peek().isPresent()) {
+                        newTarget = currentDialogPane.peek().orElseThrow();
+                    } else {
+                        newTarget = navigator.getCurrentPage();
+                    }
+                }
             }
 
             for (@Nullable Node node = target; node != null; node = node.getParent()) {
