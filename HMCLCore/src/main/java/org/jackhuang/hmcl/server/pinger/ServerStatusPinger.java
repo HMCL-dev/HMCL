@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.server.pinger;
 
 import org.jackhuang.hmcl.server.ServerStatusResult;
-import org.jackhuang.hmcl.server.resolver.ModernServerAddress;
 import org.jackhuang.hmcl.server.resolver.ServerAddressResolveResult;
+import org.jackhuang.hmcl.util.ServerAddress;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
@@ -38,7 +38,7 @@ public interface ServerStatusPinger {
 
     static @NotNull ServerStatusResult getStatus(@NotNull String serverIp) throws IOException {
         try {
-            ModernServerAddress address = ModernServerAddress.parse(serverIp);
+            ServerAddress address = ServerAddress.parse(serverIp);
             ServerAddressResolveResult resolveResult = address.resolve();
 
             if (resolveResult instanceof ServerAddressResolveResult.FailureResult failureResult) {
@@ -60,7 +60,7 @@ public interface ServerStatusPinger {
             for (ServerStatusResult.FailureResult failureResult : failures) {
                 collectException.addSuppressed(failureResult.getException());
             }
-            LOG.error("Failed to get the status of server " + resolveResult.getRawAddress().getRawServerIp(), collectException);
+            LOG.error("Failed to get the status of server " + serverIp, collectException);
             return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, collectException);
         } catch (Exception e) {
             LOG.error("Failed to get the status of server " + serverIp, e);

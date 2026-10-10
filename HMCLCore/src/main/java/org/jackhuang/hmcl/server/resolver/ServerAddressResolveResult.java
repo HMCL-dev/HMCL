@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.server.resolver;
 
 import org.jackhuang.hmcl.server.ServerStatusResult;
+import org.jackhuang.hmcl.util.ServerAddress;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
@@ -27,22 +28,22 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public sealed class ServerAddressResolveResult {
-    private final ModernServerAddress rawAddress;
+    private final ServerAddress rawAddress;
 
-    private ServerAddressResolveResult(ModernServerAddress rawAddress) {
+    private ServerAddressResolveResult(ServerAddress rawAddress) {
         this.rawAddress = rawAddress;
     }
 
-    public static @NotNull ServerAddressResolveResult.FailureResult failed(ModernServerAddress rawAddress, FailureResult.Reason reason, Exception exception) {
+    public static @NotNull ServerAddressResolveResult.FailureResult failed(ServerAddress rawAddress, FailureResult.Reason reason, Exception exception) {
         return new FailureResult(rawAddress, reason, exception);
     }
 
-    public static SuccessResult succeed(ModernServerAddress rawAddress, InetSocketAddress resolvedAddress) {
-        Map<String, String> queryProperties = new LinkedHashMap<>(rawAddress.getQueryProperties());
-        boolean isSame = rawAddress.getHostAndPort().equals(resolvedAddress.getHostName(), resolvedAddress.getPort());
+    public static SuccessResult succeed(ServerAddress rawAddress, InetSocketAddress resolvedAddress) {
+        Map<String, String> queryProperties = new LinkedHashMap<>(rawAddress.queryProperties());
+        boolean isSame = rawAddress.hostAndPort().equals(resolvedAddress.getHostName(), resolvedAddress.getPort());
 
         if (!isSame || queryProperties.get("_o") != null) {
-            queryProperties.put("_o", rawAddress.getHostAndPort().host() + ":" + rawAddress.getHostAndPort().port());
+            queryProperties.put("_o", rawAddress.hostAndPort().host() + ":" + rawAddress.hostAndPort().port());
         }
 
         StringBuilder queryArgBuilder = new StringBuilder();
@@ -60,6 +61,7 @@ public sealed class ServerAddressResolveResult {
             queryArgBuilder.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
         }
 
+        // include port
         if (queryArgBuilder.isEmpty()) {
             queryArgBuilder.insert(0, resolvedAddress.getHostName());
         } else {
@@ -68,7 +70,7 @@ public sealed class ServerAddressResolveResult {
         return new SuccessResult(rawAddress, resolvedAddress, queryArgBuilder.toString(), resolvedAddress.getPort());
     }
 
-    public ModernServerAddress getRawAddress() {
+    public ServerAddress getRawAddress() {
         return rawAddress;
     }
 
@@ -76,7 +78,7 @@ public sealed class ServerAddressResolveResult {
         private final Reason reason;
         private final Exception exception;
 
-        public FailureResult(ModernServerAddress rawAddress, Reason reason, Exception exception) {
+        public FailureResult(ServerAddress rawAddress, Reason reason, Exception exception) {
             super(rawAddress);
             this.reason = reason;
             this.exception = exception;
@@ -108,7 +110,7 @@ public sealed class ServerAddressResolveResult {
         private final String packerHandshakeAddress;
         private final int packerHandshakePort;
 
-        public SuccessResult(ModernServerAddress rawAddress, InetSocketAddress connectAddress, String packerHandshakeAddress, int packerHandshakePort) {
+        public SuccessResult(ServerAddress rawAddress, InetSocketAddress connectAddress, String packerHandshakeAddress, int packerHandshakePort) {
             super(rawAddress);
             this.connectAddress = connectAddress;
             this.packerHandshakeAddress = packerHandshakeAddress;

@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.scene.control.TextInputControl;
-import org.jackhuang.hmcl.server.resolver.ModernServerAddress;
+import org.jackhuang.hmcl.util.ServerAddress;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -40,7 +40,7 @@ public class MinecraftServerAddressValidator extends ValidatorBase {
         TextInputControl textField = ((TextInputControl) srcControl.get());
 
         try {
-            ModernServerAddress.parse(textField.getText());
+            ServerAddress.parse(textField.getText());
             hasErrors.set(false);
         } catch (Exception e) {
             hasErrors.set(true);

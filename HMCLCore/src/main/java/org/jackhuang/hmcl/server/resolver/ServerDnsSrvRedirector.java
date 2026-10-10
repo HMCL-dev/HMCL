@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.server.resolver;
 
+import org.jackhuang.hmcl.util.HostAndPort;
+import org.jackhuang.hmcl.util.ServerAddress;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +37,7 @@ public final class ServerDnsSrvRedirector {
 
     }
 
-    static @Nullable HostAndPort lookup(ModernServerAddress address0) {
+    public static @Nullable HostAndPort lookup(ServerAddress address0) {
         if (redirector == null) {
             synchronized (ServerDnsSrvRedirector.class) {
                 if (redirector == null) {
@@ -49,9 +51,9 @@ public final class ServerDnsSrvRedirector {
                         DirContext context = new InitialDirContext(env);
 
                         redirector = (address) -> {
-                            if (address.getHostAndPort().port() == 25565) {
+                            if (address.hostAndPort().port() == 25565) {
                                 try {
-                                    Attributes attributes = context.getAttributes("_minecraft._tcp." + address.getHostAndPort().host(), new String[]{"SRV"});
+                                    Attributes attributes = context.getAttributes("_minecraft._tcp." + address.hostAndPort().host(), new String[]{"SRV"});
                                     Attribute srvAttribute = attributes.get("srv");
                                     if (srvAttribute != null) {
                                         String[] arguments = srvAttribute.get().toString().split(" ", 4);
@@ -81,6 +83,6 @@ public final class ServerDnsSrvRedirector {
 
     @FunctionalInterface
     private interface DnsSrvRedirector {
-        @Nullable HostAndPort lookup(@NotNull ModernServerAddress address);
+        @Nullable HostAndPort lookup(@NotNull ServerAddress address);
     }
 }

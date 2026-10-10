@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.server.resolver;
+package org.jackhuang.hmcl.util;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -28,12 +28,10 @@ public record HostAndPort(
         int port
 ) {
 
-    @NotNull InetSocketAddress toInetSocketAddress() throws UnknownHostException {
-        return new InetSocketAddress(InetAddress.getByName(host), port);
-    }
-
-    public boolean equals(@NotNull String host, int port) {
-        return host.equals(this.host) && port == this.port;
+    public HostAndPort {
+        if (port < 0 || port > 65535) {
+            throw new IllegalArgumentException("Invalid server address: " + port);
+        }
     }
 
     public static @NotNull HostAndPort parseHostAndPort(@NotNull String input, int defaultPort) {
@@ -80,9 +78,6 @@ public record HostAndPort(
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Invalid server address: " + input, e);
             }
-            if (port < 0 || port > 65535) {
-                throw new IllegalArgumentException("Invalid server address: " + input);
-            }
         } else {
             port = defaultPort;
         }
@@ -92,4 +87,27 @@ public record HostAndPort(
 
         return new HostAndPort(host, port);
     }
+
+    @NotNull InetSocketAddress createInetSocketAddress() throws UnknownHostException {
+        return new InetSocketAddress(InetAddress.getByName(host), port);
+    }
+
+    public boolean equals(@NotNull String host, int port) {
+        return host.equals(this.host) && port == this.port;
+    }
+
+    @Override
+    public @NotNull String toString() {
+        StringBuilder builder = new StringBuilder();
+
+        if (host.indexOf(':') >= 0) {
+            builder.append('[').append(host).append(']');
+        } else {
+            builder.append(host);
+        }
+        builder.append(':').append(port);
+
+        return builder.toString();
+    }
+
 }

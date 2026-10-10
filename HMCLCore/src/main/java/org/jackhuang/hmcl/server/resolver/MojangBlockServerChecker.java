@@ -40,7 +40,7 @@ public final class MojangBlockServerChecker {
 
     }
 
-    static boolean isBlocking(InetSocketAddress inetSocketAddress0) {
+    public static boolean isBlocking(InetSocketAddress inetSocketAddress0) {
         if (predicate == null) {
             synchronized (MojangBlockServerChecker.class) {
                 if (predicate == null) {
