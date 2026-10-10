@@ -197,6 +197,13 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         JavaPageSkin(JavaManagementPage skinnable) {
             super(skinnable);
+
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("java.empty"));
+            placeholderContainer.getChildren().add(placeholderLabel);
+
+            listView.setPlaceholder(placeholderContainer);
         }
 
         @Override
