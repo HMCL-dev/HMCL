@@ -237,7 +237,7 @@ public final class World {
     }
 
     public static boolean supportQueryArgServerAddress(GameVersionNumber gameVersionNumber) {
-        return gameVersionNumber != null && gameVersionNumber.isAtLeast("26.4", "26.4-snapshot-1");
+        return gameVersionNumber != null && gameVersionNumber.compareTo("26.2-snapshot-2") >= 0;
     }
 
     private void loadAndCheckWorldData() throws IOException {
