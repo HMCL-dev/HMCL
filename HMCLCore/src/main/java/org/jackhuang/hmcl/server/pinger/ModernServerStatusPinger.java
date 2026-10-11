@@ -71,6 +71,11 @@ final class ModernServerStatusPinger implements ServerStatusPinger {
         }
     }
 
+    @Override
+    public @NotNull String getName() {
+        return "Modern Server Status Pinger";
+    }
+
     private ServerStatus parseServerStatus(long networkLatency, JsonObject rootStatus) {
         JsonObject versionJsonObject = rootStatus.getAsJsonObject("version");
         ServerStatus.Version version = new ServerStatus.Version(versionJsonObject.get("name").getAsString(), versionJsonObject.get("protocol").getAsInt());
@@ -130,6 +135,7 @@ final class ModernServerStatusPinger implements ServerStatusPinger {
         }
 
         return new ServerStatus(
+                this,
                 networkLatency,
                 version,
                 players,

@@ -127,13 +127,10 @@ public final class MinecraftChatComponentUtils {
     }
 
     private static void extractScore(JsonObject scoreObj, StringBuilder sb) {
-        if (hasJsonPrimitive(scoreObj, "value")) {
-            extractText(scoreObj.getAsJsonPrimitive("value"), sb);
-            return;
-        }
         if (hasJsonPrimitive(scoreObj, "name")) {
             extractText(scoreObj.getAsJsonPrimitive("name"), sb);
         }
+
         if (hasJsonPrimitive(scoreObj, "objective")) {
             sb.append(':').append(scoreObj.get("objective").getAsString());
         }

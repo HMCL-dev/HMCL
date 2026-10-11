@@ -30,7 +30,7 @@ import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public interface ServerStatusPinger {
+public sealed interface ServerStatusPinger permits LegacyServerStatusPinger, ModernServerStatusPinger {
     List<ServerStatusPinger> PINGERS = List.of(
             ModernServerStatusPinger.instance,
             LegacyServerStatusPinger.instance
@@ -69,6 +69,8 @@ public interface ServerStatusPinger {
     }
 
     @NotNull ServerStatusResult getStatus(@NotNull ServerAddressResolveResult.SuccessResult successResult);
+
+    @NotNull String getName();
 
     @FunctionalInterface
     interface DataWriter {

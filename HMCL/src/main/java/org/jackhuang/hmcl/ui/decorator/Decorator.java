@@ -258,6 +258,7 @@ public final class Decorator {
         root.addEventFilter(DragEvent.DRAG_DROPPED, AuthlibInjectorDnD.dragDroppedHandler(
                 url -> Controllers.dialog(new AddAuthlibInjectorServerPane(url))));
 
+        // Setup Minecraft server DnD
         root.addEventFilter(DragEvent.DRAG_OVER, ServerDnD.dragOverHandler());
         root.addEventFilter(DragEvent.DRAG_DROPPED, ServerDnD.dragDroppedHandler(
                 server -> Controllers.dialog(new ServerStatusPane(null, ServerListPage.IconedServer.pack(server), true))));

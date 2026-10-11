@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public sealed class ServerAddressResolveResult {
+public abstract sealed class ServerAddressResolveResult {
     private final ServerAddress rawAddress;
 
     private ServerAddressResolveResult(ServerAddress rawAddress) {

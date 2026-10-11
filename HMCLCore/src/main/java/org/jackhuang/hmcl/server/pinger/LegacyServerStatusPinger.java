@@ -81,6 +81,11 @@ final class LegacyServerStatusPinger implements ServerStatusPinger {
         }
     }
 
+    @Override
+    public @NotNull String getName() {
+        return "Legacy Server Status Pinger";
+    }
+
     private @NotNull ServerStatus parseResult(long networkLatency, @NotNull String input) throws IOException {
         ServerStatus.Version version;
         String motd;
@@ -117,6 +122,7 @@ final class LegacyServerStatusPinger implements ServerStatusPinger {
             }
 
             return new ServerStatus(
+                    this,
                     networkLatency,
                     version,
                     players,

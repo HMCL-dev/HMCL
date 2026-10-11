@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.server;
 
 import org.jetbrains.annotations.Nullable;
 
-public sealed class ServerStatusResult {
+public abstract sealed class ServerStatusResult {
     public static ServerStatusResult success(ServerStatus serverStatus) {
         return new SuccessResult(serverStatus);
     }
