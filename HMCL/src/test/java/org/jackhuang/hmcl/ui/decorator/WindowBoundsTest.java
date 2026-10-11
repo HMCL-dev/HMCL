@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.decorator;
 
 import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
@@ -35,10 +37,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -151,6 +156,66 @@ final class WindowBoundsTest {
         }
     }
 
+    /// Verifies saving bounds on detach cannot turn overlapping size notifications into new window minimums.
+    @Test
+    void keepsMinimumSizeStableWhenDetachedDuringResize() throws Exception {
+        Fixture fixture = onFxThread(Fixture::new);
+        AtomicBoolean resizeAgain = new AtomicBoolean();
+        AtomicBoolean detached = new AtomicBoolean();
+        InvalidationListener clientSizeListener = observable -> {
+            if (resizeAgain.getAndSet(false)) {
+                // Leave a second outer-size request pending while the first client notification is delivered.
+                fixture.stage.setWidth(fixture.stage.getWidth() + 60);
+            }
+        };
+        ChangeListener<Number> detachListener = (observable, oldValue, newValue) -> {
+            if (detached.compareAndSet(false, true)) {
+                Objects.requireNonNull(fixture.bounds).close();
+            }
+        };
+        try {
+            onFxThread(() -> {
+                fixture.scene.widthProperty().addListener(clientSizeListener);
+                return null;
+            });
+            for (StageStyle style : new StageStyle[] {StageStyle.TRANSPARENT, nativeStyle()}) {
+                onFxThread(() -> {
+                    fixture.replace(style, false);
+                    return null;
+                });
+                awaitContent(fixture, INITIAL);
+                List<Double> minimumChanges = new ArrayList<>();
+                onFxThread(() -> {
+                    fixture.stage.minWidthProperty().addListener((observable, oldValue, newValue) ->
+                            minimumChanges.add(newValue.doubleValue()));
+                    fixture.stage.minHeightProperty().addListener((observable, oldValue, newValue) ->
+                            minimumChanges.add(newValue.doubleValue()));
+                    detached.set(false);
+                    fixture.scene.widthProperty().addListener(detachListener);
+                    resizeAgain.set(true);
+                    fixture.stage.setWidth(fixture.stage.getWidth() + 20);
+                    fixture.stage.setHeight(fixture.stage.getHeight() + 20);
+                    return null;
+                });
+                await(detached::get);
+                onFxThread(() -> {
+                    fixture.scene.widthProperty().removeListener(detachListener);
+                    fixture.close();
+                    assertTrue(minimumChanges.isEmpty(), () -> "Minimum sizes changed during resizing: " + minimumChanges);
+                    fixture.saved = INITIAL;
+                    return null;
+                });
+            }
+        } finally {
+            onFxThread(() -> {
+                fixture.scene.widthProperty().removeListener(clientSizeListener);
+                fixture.scene.widthProperty().removeListener(detachListener);
+                fixture.close();
+                return null;
+            });
+        }
+    }
+
     /// Verifies a style switch while maximized retains the normal rectangle for subsequent restoration.
     @Test
     void preservesNormalBoundsWhenMaximized() throws Exception {
@@ -170,6 +235,14 @@ final class WindowBoundsTest {
             onFxThread(() -> {
                 assertRectangle(INITIAL, fixture.saved);
                 fixture.replace(nativeStyle(), true);
+                return null;
+            });
+            await(() -> fixture.stage.isMaximized() && fixture.content.getWidth() > INITIAL.getWidth());
+            onFxThread(() -> {
+                assertRectangle(INITIAL, fixture.saved);
+                fixture.stage.hide();
+                assertRectangle(INITIAL, fixture.saved);
+                fixture.stage.show();
                 return null;
             });
             await(() -> fixture.stage.isMaximized() && fixture.content.getWidth() > INITIAL.getWidth());
@@ -257,6 +330,8 @@ final class WindowBoundsTest {
             assertRectangle(expected, fixture.saved);
             assertEquals(expected.getWidth(), fixture.bounds.contentWidthProperty().get(), 0.01);
             assertEquals(expected.getHeight(), fixture.bounds.contentHeightProperty().get(), 0.01);
+            assertEquals(800 + fixture.stage.getWidth() - fixture.content.getWidth(), fixture.stage.getMinWidth(), 0.01);
+            assertEquals(490 + fixture.stage.getHeight() - fixture.content.getHeight(), fixture.stage.getMinHeight(), 0.01);
             return true;
         });
     }

@@ -158,7 +158,7 @@ public class DownloadProvider {
             GameVersionNumber gameVersion,
             Function<RemoteAddon.Version, V> mapper
     ) {
-        return Task.supplyAsync(Schedulers.io(), () -> ComponentRemoteVersionList.of(type, ModrinthRemoteAddonRepository.MODS.getRemoteVersionsById(this, modId)
+        return Task.supplyAsync(Schedulers.io(), () -> ComponentRemoteVersionList.of(type, ModrinthRemoteAddonRepository.getInstance().getRemoteVersionsById(this, modId)
                 .filter(it -> {
                     for (String supportedGameVersion : it.gameVersions()) {
                         if (GameVersionNumber.asGameVersion(supportedGameVersion).equals(gameVersion)) {
