@@ -137,6 +137,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
         } catch (IOException e) {
             LOG.warning("Failed to clear screenshots at: " + screenshotsDir, e);
         }
+        refresh();
     }
 
     private void selectDate(JFXListView<Screenshot> listView) {
