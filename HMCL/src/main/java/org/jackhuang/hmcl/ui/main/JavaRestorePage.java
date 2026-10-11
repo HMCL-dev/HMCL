@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 
@@ -80,6 +81,10 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
                 return a.path.compareTo(b.path);
             });
             this.setItems(FXCollections.observableList(result));
+
+            if (result.isEmpty()) {
+                fireEvent(new PageCloseEvent());
+            }
         };
         disabledJava.addListener(new WeakInvalidationListener(listener));
         listener.invalidated(disabledJava);

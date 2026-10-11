@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -54,8 +55,6 @@ public record RemoteAddon(String slug, String author, String title, String descr
     public enum DependencyType {
         REQUIRED,
         OPTIONAL,
-        TOOL,
-        INCLUDE,
         EMBEDDED,
         INCOMPATIBLE,
         BROKEN
@@ -112,7 +111,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
                 if (this.type == DependencyType.BROKEN) {
                     this.remoteAddon = RemoteAddon.BROKEN;
                 } else {
-                    this.remoteAddon = this.source.getCommonRepo().resolveDependency(downloadProvider, this.id);
+                    this.remoteAddon = this.source.getRepository().resolveDependency(downloadProvider, this.id);
                 }
             }
             return this.remoteAddon;
@@ -140,65 +139,18 @@ public record RemoteAddon(String slug, String author, String title, String descr
     }
 
     public enum Source {
-        CURSEFORGE(
-                CurseForgeRemoteAddonRepository.COMMON,
-                CurseForgeRemoteAddonRepository.MODS,
-                CurseForgeRemoteAddonRepository.RESOURCE_PACKS,
-                CurseForgeRemoteAddonRepository.SHADERS,
-                CurseForgeRemoteAddonRepository.WORLDS,
-                CurseForgeRemoteAddonRepository.MODPACKS,
-                CurseForgeRemoteAddonRepository.CUSTOMIZATIONS
-        ),
-        MODRINTH(
-                ModrinthRemoteAddonRepository.COMMON,
-                ModrinthRemoteAddonRepository.MODS,
-                ModrinthRemoteAddonRepository.RESOURCE_PACKS,
-                ModrinthRemoteAddonRepository.SHADER_PACKS,
-                null,
-                ModrinthRemoteAddonRepository.MODPACKS,
-                null
-        );
+        CURSEFORGE(CurseForgeRemoteAddonRepository.getInstance()),
+        MODRINTH(ModrinthRemoteAddonRepository.getInstance());
 
-        private final RemoteAddonRepository commonRepo;
-        private final RemoteAddonRepository modRepo;
-        private final RemoteAddonRepository resourcePackRepo;
-        private final RemoteAddonRepository shaderPackRepo;
-        private final RemoteAddonRepository worldRepo;
-        private final RemoteAddonRepository modpackRepo;
-        private final RemoteAddonRepository customizationRepo;
+        private final RemoteAddonRepository repo;
 
-        @Nullable
-        public RemoteAddonRepository getRepoForType(Type type) {
-            return switch (type) {
-                case MOD -> modRepo;
-                case RESOURCE_PACK -> resourcePackRepo;
-                case SHADER_PACK -> shaderPackRepo;
-                case WORLD -> worldRepo;
-                case MODPACK -> modpackRepo;
-                case CUSTOMIZATION -> customizationRepo;
-            };
+        @NotNull
+        public RemoteAddonRepository getRepository() {
+            return repo;
         }
 
-        public RemoteAddonRepository getCommonRepo() {
-            return commonRepo;
-        }
-
-        Source(
-                RemoteAddonRepository commonRepo,
-                RemoteAddonRepository modRepo,
-                RemoteAddonRepository resourcePackRepo,
-                RemoteAddonRepository shaderPackRepo,
-                RemoteAddonRepository worldRepo,
-                RemoteAddonRepository modpackRepo,
-                RemoteAddonRepository customizationRepo
-        ) {
-            this.commonRepo = commonRepo;
-            this.modRepo = modRepo;
-            this.resourcePackRepo = resourcePackRepo;
-            this.shaderPackRepo = shaderPackRepo;
-            this.worldRepo = worldRepo;
-            this.modpackRepo = modpackRepo;
-            this.customizationRepo = customizationRepo;
+        Source(RemoteAddonRepository repo) {
+            this.repo = repo;
         }
     }
 
@@ -217,11 +169,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
         Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException;
     }
 
-    public interface IVersion {
-        Source getSource();
-    }
-
-    public record Version(IVersion self, String versionId, String projectId, String name, String version,
+    public record Version(RemoteAddon.Source source, String versionId, String projectId, String name, String version,
                           Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
                           List<String> gameVersions, List<AddonLoader> loaders) {
     }

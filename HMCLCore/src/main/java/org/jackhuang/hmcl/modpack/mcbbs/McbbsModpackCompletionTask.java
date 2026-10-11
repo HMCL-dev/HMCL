@@ -97,6 +97,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
         this.configuration = configuration;
 
         setStage("hmcl.modpack.download");
+        setSignificance(TaskSignificance.MODERATE);
     }
 
     @Override
@@ -120,7 +121,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                     throw new CustomException();
                 }
             })).thenComposeAsync(wrap(unused1 -> {
-                return executor.one(new GetTask(manifest.getFileApi() + "/manifest.json"));
+                return executor.one(new GetTask(WebURL.parse(manifest.getFileApi() + "/manifest.json")));
             })).thenComposeAsync(wrap(remoteManifestJson -> {
                 McbbsModpackManifest remoteManifest;
                 // We needs to update modpack from online server.

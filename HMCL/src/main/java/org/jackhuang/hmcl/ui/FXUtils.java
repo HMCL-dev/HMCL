@@ -60,6 +60,7 @@ import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -79,6 +80,7 @@ import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
+import org.jackhuang.hmcl.util.javafx.Subscription;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
@@ -824,7 +826,7 @@ public final class FXUtils {
         property.addListener(binding);
     }
 
-    public static void bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
+    public static List<Subscription> bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
         int itemCount = children.length;
         int childSelectedCount = 0;
         for (BooleanProperty child : children) {
@@ -834,49 +836,46 @@ public final class FXUtils {
 
         allEnabled.set(childSelectedCount == itemCount);
 
-        class Listener implements InvalidationListener {
+        class AllListener {
             private int childSelectedCount;
             private boolean updating = false;
+            private final List<Subscription> subscriptions = new ArrayList<>(children.length + 1);
 
-            public Listener(int childSelectedCount) {
+            public AllListener(int childSelectedCount) {
                 this.childSelectedCount = childSelectedCount;
             }
 
-            @Override
-            public void invalidated(Observable observable) {
-                if (updating)
-                    return;
-
-                updating = true;
-                try {
-                    boolean value = ((BooleanProperty) observable).get();
-
-                    if (observable == allEnabled) {
+            {
+                subscriptions.add(Subscription.subscribe(allEnabled, () -> {
+                    if (updating) return;
+                    updating = true;
+                    try {
+                        boolean value = allEnabled.get();
                         for (BooleanProperty child : children) {
-                            child.setValue(value);
+                            child.set(value);
                         }
                         childSelectedCount = value ? itemCount : 0;
-                    } else {
-                        if (value)
-                            childSelectedCount++;
-                        else
-                            childSelectedCount--;
-
-                        allEnabled.set(childSelectedCount == itemCount);
+                    } finally {
+                        updating = false;
                     }
-                } finally {
-                    updating = false;
+                }));
+                for (var child : children) {
+                    subscriptions.add(Subscription.subscribe(child, () -> {
+                        if (updating) return;
+                        updating = true;
+                        try {
+                            if (child.get()) childSelectedCount++;
+                            else childSelectedCount--;
+                            allEnabled.set(childSelectedCount == itemCount);
+                        } finally {
+                            updating = false;
+                        }
+                    }));
                 }
             }
         }
 
-        InvalidationListener listener = new Listener(childSelectedCount);
-
-        WeakInvalidationListener weakListener = new WeakInvalidationListener(listener);
-        allEnabled.addListener(listener);
-        for (BooleanProperty child : children) {
-            child.addListener(weakListener);
-        }
+        return new AllListener(childSelectedCount).subscriptions;
     }
 
     public static void setIcon(Stage stage) {
@@ -1004,8 +1003,8 @@ public final class FXUtils {
     }
 
     /// Creates a task that caches an image from HTTP(S) candidates and loads it with the requested sizing options.
-    public static Task<Image> getRemoteImageTask(List<WebURL> urls, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
-        return new CacheFileTask(urls)
+    public static Task<Image> getRemoteImageTask(DownloadCandidates candidates, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
+        return new CacheFileTask(candidates)
                 .setSignificance(Task.TaskSignificance.MINOR)
                 .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);

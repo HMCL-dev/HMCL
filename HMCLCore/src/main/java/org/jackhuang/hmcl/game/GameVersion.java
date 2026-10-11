@@ -24,6 +24,8 @@ import org.jenkinsci.constant_pool_scanner.ConstantPool;
 import org.jenkinsci.constant_pool_scanner.ConstantPoolScanner;
 import org.jenkinsci.constant_pool_scanner.ConstantType;
 import org.jenkinsci.constant_pool_scanner.StringConstant;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,10 +48,12 @@ final class GameVersion {
     private GameVersion() {
     }
 
-    // For Minecraft 1.0 rc versions and versions earlier than Alpha 1.0.6,
-    // it is difficult to obtain the game version from the JAR.
-    // For these versions, we get the version number based on their SHA-1 hash.
-    private static final Map<String, String> KNOWN_VERSIONS = Map.<String, String>ofEntries(
+    /// Maps JAR SHA-1 hashes to versions whose embedded version strings are absent or ambiguous,
+    /// including early versions, Minecraft 1.0 release candidates, and Minecraft 2.0 color variants.
+    private static final @Unmodifiable Map<String, String> KNOWN_VERSIONS = Map.<String, String>ofEntries(
+            Map.entry("a9add3b4aca10f190fec4dd460ccb4f0f9115d5f", "2.0_blue"),
+            Map.entry("8da6087efaed9e2397d76e74dd558337cc47538f", "2.0_red"),
+            Map.entry("ab9e35004d8dfa8f87419876cd9e0c0df9d2d949", "2.0_purple"),
             Map.entry("4df7880d26414b400640f0b8e54344df2b66c51a", "1.0.0-rc1"),
             Map.entry("9e04e60eef3fb4657b406dcb3ad5e3a675ecf6af", "1.0.0-rc2-1"),
             Map.entry("6a6b67d34149afc47cf9608b3967582639097df9", "1.0.0-rc2-2"),
@@ -184,19 +188,27 @@ final class GameVersion {
         return Optional.empty();
     }
 
-    public static Optional<String> minecraftVersion(Path file) {
+    /// Detects the Minecraft version from a JAR's metadata, class constants, or known SHA-1 hash.
+    ///
+    /// A client version string of `2.0` is refined to a color variant when the JAR's hash is known;
+    /// otherwise, `2.0` is retained, including when the hash cannot be read.
+    ///
+    /// @param file the JAR to inspect, or `null`
+    /// @return the detected version, or an empty optional if the path is null, is not a regular file,
+    ///         or no version can be identified
+    public static Optional<String> minecraftVersion(@Nullable Path file) {
         if (file == null || !Files.isRegularFile(file))
             return Optional.empty();
 
         try (var gameJar = new ZipFile(file.toFile())) {
-            ZipEntry versionJson = gameJar.getEntry("version.json");
+            @Nullable ZipEntry versionJson = gameJar.getEntry("version.json");
             if (versionJson != null) {
                 Optional<String> result = getVersionFromJson(gameJar.getInputStream(versionJson));
                 if (result.isPresent())
                     return result;
             }
 
-            ZipEntry minecraft = gameJar.getEntry("net/minecraft/client/Minecraft.class");
+            @Nullable ZipEntry minecraft = gameJar.getEntry("net/minecraft/client/Minecraft.class");
             if (minecraft != null) {
                 try (InputStream is = gameJar.getInputStream(minecraft)) {
                     Optional<String> result = getVersionOfClassMinecraft(is);
@@ -205,6 +217,9 @@ final class GameVersion {
                         // For Minecraft 1.0 rc1/rc2-1/rc2-2, this value is "RC1"
                         // For Minecraft 1.0 rc2-3, this value is "RC2"
                         if (!version.equals("RC1") && !version.equals("RC2")) {
+                            if (version.equals("2.0")) {
+                                return getKnownVersion(file).or(() -> Optional.of(version));
+                            }
                             if (version.startsWith("Beta ")) {
                                 result = Optional.of("b" + version.substring("Beta ".length()));
                             } else if (version.startsWith("Alpha v")) {
@@ -216,7 +231,7 @@ final class GameVersion {
                 }
             }
 
-            ZipEntry minecraftServer = gameJar.getEntry("net/minecraft/server/MinecraftServer.class");
+            @Nullable ZipEntry minecraftServer = gameJar.getEntry("net/minecraft/server/MinecraftServer.class");
             if (minecraftServer != null) {
                 try (InputStream is = gameJar.getInputStream(minecraftServer)) {
                     return getVersionFromClassMinecraftServer(is);
@@ -225,6 +240,14 @@ final class GameVersion {
         } catch (IOException ignored) {
         }
 
+        return getKnownVersion(file);
+    }
+
+    /// Looks up a JAR's version by its SHA-1 hash.
+    ///
+    /// @param file the JAR to hash
+    /// @return the known version, or an empty optional if the hash is unknown or an I/O error occurs
+    private static Optional<String> getKnownVersion(Path file) {
         try {
             String digest = DigestUtils.digestToString("SHA-1", file);
             return Optional.ofNullable(KNOWN_VERSIONS.get(digest));
