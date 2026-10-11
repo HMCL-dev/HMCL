@@ -19,12 +19,11 @@ package org.jackhuang.hmcl.addon.mod;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
-import org.jackhuang.hmcl.addon.RemoteAddon;
-import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.meta.CoreModInfo;
-import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.addon.update.AddonUpdateConditions;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +31,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -209,19 +209,8 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     @Override
-    public AddonUpdate checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
-        RemoteAddonRepository repository = source.getRepoForType(RemoteAddon.Type.MOD);
-        if (repository == null) return null;
-        Optional<RemoteAddon.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
-        if (currentVersion.isEmpty()) return null;
-        List<RemoteAddon.Version> remoteVersions = repository.getRemoteVersionsById(downloadProvider, currentVersion.get().projectId())
-                .filter(version -> version.gameVersions().contains(gameVersion))
-                .filter(version -> version.loaders().stream().anyMatch(it -> it.type() == getModLoaderType()))
-                .filter(version -> version.datePublished().compareTo(currentVersion.get().datePublished()) > 0)
-                .sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed())
-                .toList();
-        if (remoteVersions.isEmpty()) return null;
-        return new AddonUpdate(source, RemoteAddon.Type.MOD, this, currentVersion.get(), remoteVersions.get(0), true);
+    protected AddonUpdateConditions getTargetVersionRestrictions() {
+        return new AddonUpdateConditions(v -> v.loaders().stream().map(AddonLoader::type).collect(Collectors.toSet()).contains(getModLoaderType()));
     }
 
     @Override

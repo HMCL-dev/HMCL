@@ -17,9 +17,7 @@
  */
 package org.jackhuang.hmcl.download.optifine;
 
-import org.jackhuang.hmcl.download.DefaultDependencyManager;
-import org.jackhuang.hmcl.download.UnsupportedInstallationException;
-import org.jackhuang.hmcl.download.VersionMismatchException;
+import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -29,6 +27,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jenkinsci.constant_pool_scanner.ConstantPool;
 import org.jenkinsci.constant_pool_scanner.ConstantPoolScanner;
@@ -122,8 +121,9 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
         dest = installerFile;
 
         if (installer == null) {
+            DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
             var task = new FileDownloadTask(
-                    dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()),
+                    downloadProvider.getDownloadCandidates(remote),
                     installerFile, null);
             task.setCacheRepository(dependencyManager.getCacheRepository());
             task.setCaching(true);
@@ -283,7 +283,7 @@ public final class OptiFineInstallTask extends Task<GameInstancePatch> {
                 throw new VersionMismatchException(mcVersion, gameVersion);
 
             OptiFineRemoteVersion remoteVersion = new OptiFineRemoteVersion(
-                    mcVersion,
+                    GameVersionNumber.asGameVersion(mcVersion),
                     ofEdition + "_" + ofRelease,
                     Collections.singletonList(""),
                     false);

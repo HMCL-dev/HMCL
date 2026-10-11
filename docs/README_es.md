@@ -60,9 +60,9 @@ Antes de contribuir, lee la [guía de contribución](./Contributing.md), que inc
 
 ## Colaboradores
 
-Desde 2015, más de 120 colaboradores han participado en HMCL. Gracias por su trabajo.
+Desde 2015, más de 130 colaboradores han participado en HMCL. Gracias por su trabajo.
 
-[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL&max=200)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## Licencia
 

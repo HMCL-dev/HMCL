@@ -86,6 +86,10 @@ public enum OperatingSystem {
         return this == LINUX || this == FREEBSD;
     }
 
+    public boolean isUnixLike() {
+        return isLinuxOrBSD() || this == MACOS;
+    }
+
     public String getJavaExecutable() {
         return this == WINDOWS ? "java.exe" : "java";
     }

@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstance;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
@@ -99,10 +98,4 @@ public interface DependencyManager {
     ///                                  another repository draft is open
     GameBuilder newGameBuilder(GameInstance instance);
 
-    /// Returns a registered remote-version list.
-    ///
-    /// @param componentType the component type, such as `game`, `forge`, or `optifine`
-    /// @return the registered version list
-    /// @throws IllegalArgumentException if no list is registered for `id`
-    ComponentVersionList<?> getVersionList(GameComponentType componentType);
 }
