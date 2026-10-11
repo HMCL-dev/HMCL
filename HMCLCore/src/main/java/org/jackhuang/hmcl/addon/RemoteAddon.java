@@ -54,8 +54,6 @@ public record RemoteAddon(String slug, String author, String title, String descr
     public enum DependencyType {
         REQUIRED,
         OPTIONAL,
-        TOOL,
-        INCLUDE,
         EMBEDDED,
         INCOMPATIBLE,
         BROKEN
