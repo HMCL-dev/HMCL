@@ -26,6 +26,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
+import javafx.stage.Screen;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -1000,12 +1001,18 @@ public sealed abstract class GameSettings extends ObservableSetting {
 
         /// Returns the effective game window width.
         public int getWidth() {
-            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(getInheritable(GameSettings::widthProperty))), 0));
+            double width = getInheritable(GameSettings::windowTypeProperty) == GameWindowType.MAXIMIZED ?
+                    Screen.getPrimary().getVisualBounds().getWidth() :
+                    getInheritable(GameSettings::widthProperty);
+            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(width)), 0));
         }
 
         /// Returns the effective game window height.
         public int getHeight() {
-            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(getInheritable(GameSettings::heightProperty))), 0));
+            double height = getInheritable(GameSettings::windowTypeProperty) == GameWindowType.MAXIMIZED ?
+                    Screen.getPrimary().getVisualBounds().getHeight() :
+                    getInheritable(GameSettings::heightProperty);
+            return Math.max(0, Lang.parseInt(String.valueOf(Math.round(height)), 0));
         }
 
         /// Returns the effective renderer.
