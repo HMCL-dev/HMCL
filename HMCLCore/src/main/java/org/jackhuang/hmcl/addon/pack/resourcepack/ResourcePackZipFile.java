@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.addon.update.AddonUpdateConditions;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -58,12 +57,6 @@ final class ResourcePackZipFile extends ResourcePackFile {
             LOG.warning("Failed to load resource pack icon", e);
         }
         return null;
-    }
-
-    @Override
-    public void onUpdated(String newFileNameWithExt) {
-        super.onUpdated(newFileNameWithExt);
-        manager.updateOptions(getFileNameWithExtension(), newFileNameWithExt);
     }
 
     @Override

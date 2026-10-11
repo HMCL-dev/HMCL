@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.shader.ShaderPackFile;
 import org.jackhuang.hmcl.addon.shader.ShaderPackManager;
+import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -180,17 +181,19 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
         Controllers.taskDialog(
                 Task.composeAsync(() -> {
                     GameVersionNumber version = gameInstance.getVersion();
-                    return version != GameVersionNumber.unknown()
-                            ? new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(),
-                            version.toString(), shaderPacks)
-                            : null;
+                    if (version != GameVersionNumber.unknown()) {
+                        return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), shaderPacks);
+                    } else {
+                        LOG.warning("Failed to check for updates, due to unable to get instance game version");
+                        return null;
+                    }
                 }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception != null || result == null) {
                         Controllers.dialog(I18n.i18n("addon.check_update.failed_check"), I18n.i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
-                    } else if (result.isEmpty()) {
+                    } else if (result.commonUpdates().isEmpty()) {
                         Controllers.dialog(I18n.i18n("addon.check_update.empty"));
                     } else {
-                        Controllers.navigateForward(new AddonUpdatesPage(shaderPackDir, result));
+                        Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), shaderPackDir, result));
                     }
                 }).withStagesHints("update.checking"),
                 I18n.i18n("addon.check_update"), TaskCancellationAction.NORMAL);
