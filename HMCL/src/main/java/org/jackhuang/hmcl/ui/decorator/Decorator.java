@@ -59,7 +59,6 @@ import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jackhuang.hmcl.ui.construct.Navigator;
-import org.jackhuang.hmcl.ui.instances.server.ServerListPage;
 import org.jackhuang.hmcl.ui.instances.server.ServerStatusPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
@@ -261,7 +260,7 @@ public final class Decorator {
         // Setup Minecraft server DnD
         root.addEventFilter(DragEvent.DRAG_OVER, ServerDnD.dragOverHandler());
         root.addEventFilter(DragEvent.DRAG_DROPPED, ServerDnD.dragDroppedHandler(
-                server -> Controllers.dialog(new ServerStatusPane(null, ServerListPage.IconedServer.pack(server), true))));
+                server -> Controllers.dialog(new ServerStatusPane(null, server, true))));
     }
 
     /// Returns the node that must be installed as the scene root.

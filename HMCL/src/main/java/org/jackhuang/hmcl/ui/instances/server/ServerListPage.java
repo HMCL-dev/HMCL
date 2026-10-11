@@ -80,10 +80,16 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
 
     private int refreshCount = 0;
 
-    public void launchAndEnterServer(ServerListItem item) {
-        if (gameInstance != null) {
-            Instances.launchAndEnterServer(gameInstance, item.server.getIp());
+    public static @NotNull Image parseServerFaviconImageOrDefault(@Nullable String imageBase64String) {
+        if (imageBase64String != null && !imageBase64String.isEmpty()) {
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(imageBase64String))) {
+                // png format.
+                return FXUtils.loadImage(bais, "icon.png", 0, 0, true, true);
+            } catch (Exception e) {
+                LOG.warning("Failed to decode server icon", e);
+            }
         }
+        return FXUtils.newBuiltinImage("/assets/img/unknown_server.png");
     }
 
     public ServerListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
@@ -104,21 +110,27 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
         return new ServerListPageSkin();
     }
 
+    public void launchAndEnterServer(ServerListItem item) {
+        if (gameInstance != null) {
+            Instances.launchAndEnterServer(gameInstance, item.getServer().ip());
+        }
+    }
+
     public void showServerStatus(ServerListItem item) {
         if (gameInstance != null) {
-            runInFX(() -> Controllers.dialog(new ServerStatusPane(item.observableServerStatus, item.server)));
+            runInFX(() -> Controllers.dialog(new ServerStatusPane(item.observableServerStatus, item.getServer())));
         }
     }
 
     public void editServer(ServerListItem item) {
         if (gameInstance != null) {
-            runInFX(() -> Controllers.dialog(new EditServerPane(EditServerPane.Type.EDIT, item.server, (server) -> {
-                if (!server.equals(item.server)) {
+            runInFX(() -> Controllers.dialog(new EditServerPane(EditServerPane.Type.EDIT, item.getServer(), (server) -> {
+                if (!server.equals(item.getServer())) {
                     Task.supplyAsync(Schedulers.io(), () -> {
                         ServerStorage storage = item.storageEntry.rootStorage();
                         return storage.updateEntry(item.storageEntry, oldValue -> oldValue
-                                .withIpAndName(server.getIp(), server.getName())
-                                .withPackStatus(server.getServerPackStatus()));
+                                .withIpAndName(server.ip(), server.name())
+                                .withPackStatus(server.serverPackStatus()));
                     }).whenComplete(Schedulers.javafx(), (updated, exception) -> {
                         if (exception != null)
                             LOG.warning("Failed to save server data.", exception);
@@ -136,10 +148,6 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 }
             })));
         }
-    }
-
-    public void copyServerIp(ServerListItem item) {
-        FXUtils.copyText(item.server.getIp(), i18n("server.manage.copy.server.ip.ok.toast"));
     }
 
     private void delete(ServerListItem... items) {
@@ -166,8 +174,12 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
         );
     }
 
+    public void copyServerIp(ServerListItem item) {
+        FXUtils.copyText(item.getServer().ip(), i18n("server.manage.copy.server.ip.ok.toast"));
+    }
+
     public void copyToInstance(ServerListItem item) {
-        addServer(item.server);
+        addServer(item.getServer());
     }
 
     public void addServer(Server server) {
@@ -183,7 +195,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                     storage.getHoldInstances().add(gameInstance);
                     serverStorageMap.put(gameInstance.getServersDatFilePath(), storage);
                 }
-                storageEntry = storage.add(IconedServer.pack(server));
+                storageEntry = storage.add(server);
             }
             return storageEntry;
         }).whenComplete(Schedulers.javafx(), (storageEntry, exception) -> {
@@ -200,25 +212,8 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
 
     public void generateLaunchScript(ServerListItem item) {
         if (gameInstance != null) {
-            Instances.generateLaunchScriptForQuickConnectServer(gameInstance, item.server.getIp());
+            Instances.generateLaunchScriptForQuickConnectServer(gameInstance, item.getServer().ip());
         }
-    }
-
-    private void updateServerList() {
-        if (serverListEntries == null || gameInstance == null) {
-            getItems().clear();
-            return;
-        }
-
-        var stream = serverListEntries.stream();
-        if (!showAll.get()) {
-            stream = stream.filter(entry -> entry.storageEntry.getServerDatFilePath().equals(gameInstance.getServersDatFilePath()));
-        }
-        if (!showHide.get()) {
-            stream = stream.filter(entry -> !entry.server.isHidden());
-        }
-
-        getItems().setAll(stream.toList());
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
@@ -276,55 +271,42 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
         runInFX(() -> Controllers.dialog(new EditServerPane(EditServerPane.Type.ADD, null, this::addServer)));
     }
 
+    private void updateServerList() {
+        if (serverListEntries == null || gameInstance == null) {
+            getItems().clear();
+            return;
+        }
+
+        var stream = serverListEntries.stream();
+        if (!showAll.get()) {
+            stream = stream.filter(entry -> entry.storageEntry.getServerDatFilePath().equals(gameInstance.getServersDatFilePath()));
+        }
+        if (!showHide.get()) {
+            stream = stream.filter(entry -> !entry.getServer().hidden());
+        }
+
+        getItems().setAll(stream.toList());
+    }
+
     public static final class ServerListItem {
-        final @NotNull ServerStorage.ServerStorageEntry storageEntry;
-        final @NotNull IconedServer server;
+        private final @NotNull ServerStorage.ServerStorageEntry storageEntry;
+        private final Image serverFaviconImage;
 
         final @NotNull ObservableServerStatus observableServerStatus;
 
         public ServerListItem(@NotNull ServerStorage.ServerStorageEntry storageEntry) {
-            this(storageEntry, new ObservableServerStatus(storageEntry.getServer().getIp()));
+            this(storageEntry, new ObservableServerStatus(storageEntry.getServer().ip()));
         }
 
         public ServerListItem(@NotNull ServerStorage.ServerStorageEntry storageEntry, @NotNull ObservableServerStatus observableServerStatus) {
             this.storageEntry = storageEntry;
-            this.server = IconedServer.pack(storageEntry.getServer());
             this.observableServerStatus = observableServerStatus;
-        }
-    }
 
-    public static class IconedServer extends Server {
-        final Image iconImage;
-
-        public IconedServer(ServerPackStatus serverPackStatus, boolean hidden, @Nullable String icon, @Nullable String ip, @Nullable String name) {
-            super(serverPackStatus, hidden, icon, ip, name);
-
-            iconImage = parseImageOrDefault(icon);
+            this.serverFaviconImage = parseServerFaviconImageOrDefault(storageEntry.getServer().icon());
         }
 
-        public static IconedServer pack(Server server) {
-            if (server instanceof IconedServer) {
-                return (IconedServer) server;
-            }
-            return new IconedServer(
-                    server.getServerPackStatus(),
-                    server.isHidden(),
-                    server.getIcon(),
-                    server.getIp(),
-                    server.getName()
-            );
-        }
-
-        public static @NotNull Image parseImageOrDefault(@Nullable String imageBase64String) {
-            if (imageBase64String != null && !imageBase64String.isEmpty()) {
-                try (ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(imageBase64String))) {
-                    // png format.
-                    return FXUtils.loadImage(bais, "icon.png", 0, 0, true, true);
-                } catch (Exception e) {
-                    LOG.warning("Failed to decode server icon", e);
-                }
-            }
-            return FXUtils.newBuiltinImage("/assets/img/unknown_server.png");
+        public Server getServer() {
+            return storageEntry.getServer();
         }
     }
 
@@ -426,12 +408,12 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 statusBtnTooltip.setText("");
                 contentLine2AddressMaskPane.set("");
             } else {
-                serverIcon.setImage(item.server.iconImage);
-                contentLine1.setTitle(item.server.getName() != null ? parseColorEscapes(item.server.getName()) : "");
+                serverIcon.setImage(parseServerFaviconImageOrDefault(item.getServer().icon()));
+                contentLine1.setTitle(item.getServer().name() != null ? parseColorEscapes(item.getServer().name()) : "");
 
-                contentLine2AddressMaskPane.set(item.server.getIp());
+                contentLine2AddressMaskPane.set(item.getServer().ip());
 
-                if (item.server.isHidden()) {
+                if (item.getServer().hidden()) {
                     contentLine1.addTag(i18n("server.tag.hide"));
                 }
 
@@ -482,14 +464,14 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 serverNetworkLatencyPane.pong(serverStatus.networkLatency());
                 statusBtnTooltip.setText(i18n("server.manage.status.outside.pong", String.format("%,d", serverStatus.networkLatency())));
                 // update latest server icon
-                serverIcon.setImage(IconedServer.parseImageOrDefault(serverStatus.favicon()));
+                serverIcon.setImage(parseServerFaviconImageOrDefault(serverStatus.favicon()));
 
-                if (!Objects.equals(serverStatus.favicon(), item.server.getIcon())) {
+                if (!Objects.equals(serverStatus.favicon(), item.getServer().icon())) {
                     // save latest icon
                     Task.supplyAsync(Schedulers.io(), () -> {
                         ServerStorage storage = item.storageEntry.rootStorage();
                         return storage.updateEntry(item.storageEntry, server -> {
-                            if (Objects.equals(server.getIp(), item.server.getIp())) {
+                            if (Objects.equals(server.ip(), item.getServer().ip())) {
                                 return server.withIcon(serverStatus.favicon());
                             }
                             return server;
@@ -727,8 +709,8 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 }
 
                 for (ServerListItem item : ServerListPage.this.getItems()) {
-                    String serverIp = item.server.getIp();
-                    String serverName = item.server.getName();
+                    String serverIp = item.getServer().ip();
+                    String serverName = item.getServer().name();
 
                     if (predicate.test(serverIp) || predicate.test(serverName)) {
                         listView.getItems().add(item);

@@ -48,9 +48,9 @@ import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class EditServerPane extends TransitionPane implements DialogAware {
-    private final Consumer<ServerListPage.IconedServer> handleCallback;
+    private final Consumer<Server> handleCallback;
 
-    private final ServerListPage.IconedServer reference;
+    private final Server reference;
     private final Type type;
     private final GridPane body = new GridPane();
     private final JFXTextField serverNameField = new JFXTextField();
@@ -64,7 +64,7 @@ public class EditServerPane extends TransitionPane implements DialogAware {
 
     private final SimpleBooleanProperty stillActionProgress = new SimpleBooleanProperty(false);
 
-    public EditServerPane(Type type, @Nullable ServerListPage.IconedServer reference, Consumer<ServerListPage.IconedServer> handleCallback) {
+    public EditServerPane(Type type, @Nullable Server reference, Consumer<Server> handleCallback) {
         this.type = type;
         this.reference = reference;
         this.handleCallback = handleCallback;
@@ -75,9 +75,9 @@ public class EditServerPane extends TransitionPane implements DialogAware {
         String referenceServerIP;
         Server.ServerPackStatus referenceServerPackStatus;
         if (reference != null) {
-            referenceServerName = reference.getName();
-            referenceServerIP = reference.getIp();
-            referenceServerPackStatus = reference.getServerPackStatus();
+            referenceServerName = reference.name();
+            referenceServerIP = reference.ip();
+            referenceServerPackStatus = reference.serverPackStatus();
         } else {
             referenceServerName = null;
             referenceServerIP = null;
@@ -223,11 +223,9 @@ public class EditServerPane extends TransitionPane implements DialogAware {
 
             fireEvent(new DialogCloseEvent());
             if (reference != null) {
-                handleCallback.accept(ServerListPage.IconedServer.pack(reference.withIpNameAndPackStatus(
-                        serverIP, serverName, serverPackStatus)
-                ));
+                handleCallback.accept(reference.withIpNameAndPackStatus(serverIP, serverName, serverPackStatus));
             } else {
-                handleCallback.accept(new ServerListPage.IconedServer(serverPackStatus, false, null, serverIP, serverName));
+                handleCallback.accept(new Server(serverPackStatus, false, null, serverIP, serverName));
             }
         });
 
@@ -280,11 +278,9 @@ public class EditServerPane extends TransitionPane implements DialogAware {
             } else {
                 fireEvent(new DialogCloseEvent());
                 if (reference != null) {
-                    handleCallback.accept(ServerListPage.IconedServer.pack(reference.withIpNameAndPackStatus(
-                            serverIP, serverName, packStatus)
-                    ));
+                    handleCallback.accept(reference.withIpNameAndPackStatus(serverIP, serverName, packStatus));
                 } else {
-                    handleCallback.accept(new ServerListPage.IconedServer(packStatus, false, status.favicon(), serverIP, serverName));
+                    handleCallback.accept(new Server(packStatus, false, status.favicon(), serverIP, serverName));
                 }
             }
         }).start();

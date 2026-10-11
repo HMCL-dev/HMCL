@@ -27,15 +27,14 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-public class Server {
-    private final @NotNull ServerPackStatus serverPackStatus;
-    private final boolean hidden;
-    private final @Nullable String icon;
-    private final @Nullable String ip;
-    private final @Nullable String name;
-
+public record Server(
+        @NotNull ServerPackStatus serverPackStatus,
+        boolean hidden,
+        @Nullable String icon,
+        @Nullable String ip,
+        @Nullable String name
+) {
     public Server(@NotNull ServerPackStatus serverPackStatus, boolean hidden, @Nullable String icon, @Nullable String ip, @Nullable String name) {
         this.serverPackStatus = serverPackStatus;
         this.hidden = hidden;
@@ -103,49 +102,6 @@ public class Server {
         if (icon != null) tag.addString("icon", icon);
         if (ip != null) tag.addString("ip", ip);
         if (name != null) tag.addString("name", name);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        Server server = (Server) o;
-        return serverPackStatus == server.serverPackStatus && hidden == server.hidden && Objects.equals(icon, server.icon) && Objects.equals(ip, server.ip) && Objects.equals(name, server.name);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(serverPackStatus, hidden, icon, ip, name);
-    }
-
-    public @NotNull ServerPackStatus getServerPackStatus() {
-        return serverPackStatus;
-    }
-
-    public boolean isHidden() {
-        return hidden;
-    }
-
-    public @Nullable String getIcon() {
-        return icon;
-    }
-
-    public @Nullable String getIp() {
-        return ip;
-    }
-
-    public @Nullable String getName() {
-        return name;
-    }
-
-    @Override
-    public String toString() {
-        return "Server{" +
-                "acceptTextures=" + serverPackStatus +
-                ", hidden=" + hidden +
-                ", icon='" + icon + '\'' +
-                ", ip='" + ip + '\'' +
-                ", name='" + name + '\'' +
-                '}';
     }
 
     public enum ServerPackStatus {

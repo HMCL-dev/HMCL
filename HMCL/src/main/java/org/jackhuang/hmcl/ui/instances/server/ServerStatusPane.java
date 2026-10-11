@@ -31,6 +31,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.server.Server;
 import org.jackhuang.hmcl.server.ServerStatus;
 import org.jackhuang.hmcl.server.ServerStatusResult;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -49,20 +50,20 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class ServerStatusPane extends TransitionPane implements DialogAware {
-    private final ServerListPage.IconedServer iconedServer;
+    private final Server server;
     private final SpinnerPane refreshSpinner = new SpinnerPane();
     private final JFXDialogLayout rootLayout = new JFXDialogLayout();
     private final Label lblErrorMessage = new Label();
     private final ObservableServerStatus observableServerStatus;
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
-    public ServerStatusPane(ObservableServerStatus reference, ServerListPage.IconedServer iconedServer) {
-        this(reference, iconedServer, false);
+    public ServerStatusPane(ObservableServerStatus reference, Server server) {
+        this(reference, server, false);
     }
 
-    public ServerStatusPane(ObservableServerStatus reference, ServerListPage.IconedServer iconedServer, boolean fromDnD) {
-        this.iconedServer = iconedServer;
-        this.observableServerStatus = Objects.requireNonNullElseGet(reference, () -> new ObservableServerStatus(iconedServer.getIp()));
+    public ServerStatusPane(ObservableServerStatus reference, Server server, boolean fromDnD) {
+        this.server = server;
+        this.observableServerStatus = Objects.requireNonNullElseGet(reference, () -> new ObservableServerStatus(server.ip()));
 
         getStyleClass().add("skin-pane");
         getChildren().setAll(rootLayout);
@@ -100,11 +101,11 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
                             null);
                 } else {
                     if (Controllers.getGameInstancePage().getSelectedTab() instanceof ServerListPage listPage) {
-                        listPage.addServer(iconedServer);
+                        listPage.addServer(server);
                     } else {
                         Instances.modifyServerList(selectedInstance);
                         if (Controllers.getGameInstancePage().getSelectedTab() instanceof ServerListPage listPage) {
-                            listPage.addServer(iconedServer);
+                            listPage.addServer(server);
                         }
                     }
                 }
@@ -118,7 +119,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
             fireEvent(new DialogCloseEvent());
             HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
             HMCLGameInstance selectedInstance = repository.getSelectedInstance();
-            Instances.launchAndEnterServer(selectedInstance, iconedServer.getIp());
+            Instances.launchAndEnterServer(selectedInstance, server.ip());
         });
         actions.getChildren().add(launchBtn);
 
@@ -181,9 +182,9 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
             }
         }
 
-        Image serverIcon = iconedServer.iconImage;
+        Image serverIcon = ServerListPage.parseServerFaviconImageOrDefault(server.icon());
         if (status != null) {
-            serverIcon = ServerListPage.IconedServer.parseImageOrDefault(status.favicon());
+            serverIcon = ServerListPage.parseServerFaviconImageOrDefault(status.favicon());
         }
 
         VBox rootContent = new VBox();
@@ -208,10 +209,10 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
 
         TwoLineListItem title = new TwoLineListItem();
         title.getTitleLabel().setWrapText(true);
-        title.setTitle(iconedServer.getName());
+        title.setTitle(server.name());
         titleContent.getChildren().add(title);
 
-        ServerAddressMaskPane addressMaskPane = new ServerAddressMaskPane(iconedServer.getIp());
+        ServerAddressMaskPane addressMaskPane = new ServerAddressMaskPane(server.ip());
         addressMaskPane.labelAddStyleClass("subtitle");
         titleContent.getChildren().add(addressMaskPane);
 
