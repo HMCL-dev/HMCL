@@ -60,6 +60,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private final TabHeader.Tab<WorldListPage> worldListTab = new TabHeader.Tab<>("worldList");
     private final TabHeader.Tab<SchematicsPage> schematicsTab = new TabHeader.Tab<>("schematicsTab");
     private final TabHeader.Tab<ResourcePackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
+    private final TabHeader.Tab<ScreenshotsPage> screenshotsTab = new TabHeader.Tab<>("screenshotsTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentInstanceUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<HMCLGameInstance.@Nullable Optional> instance =
@@ -92,8 +93,9 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         resourcePackTab.setNodeSupplier(() -> new ResourcePackListPage(instance));
         worldListTab.setNodeSupplier(() -> new WorldListPage(instance));
         schematicsTab.setNodeSupplier(() -> new SchematicsPage(instance));
+        screenshotsTab.setNodeSupplier(() -> new ScreenshotsPage(instance));
 
-        tab = new TabHeader(transitionPane, gameSettingsTab, installerListTab, modListTab, resourcePackTab, worldListTab, schematicsTab);
+        tab = new TabHeader(transitionPane, gameSettingsTab, installerListTab, modListTab, resourcePackTab, worldListTab, schematicsTab, screenshotsTab);
         tab.select(gameSettingsTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
@@ -386,6 +388,10 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         new IconedMenuItem(SVG.FOLDER_COPY, i18n("instance.manage.duplicate"), control::duplicate, managementPopup),
                         new IconedMenuItem(SVG.DELETE, i18n("instance.manage.remove"), control::remove, managementPopup),
                         new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), control::export, managementPopup),
+                        new MenuSeparator(),
+                        // Due to the sidebar height limit, we temporarily place the entries for these tabs
+                        // in the management menu; they will be moved back to the sidebar after a future UI refactor.
+                        new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("screenshots.manage"), () -> control.tab.select(control.screenshotsTab), managementPopup),
                         new MenuSeparator(),
                         new IconedMenuItem(null, i18n("instance.manage.redownload_assets_index"), control::redownloadAssetIndex, managementPopup),
                         new IconedMenuItem(null, i18n("instance.manage.remove_assets"), control::clearAssets, managementPopup),
