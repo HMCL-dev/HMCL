@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.server.Server;
 import org.jackhuang.hmcl.server.ServerStatus;
 import org.jackhuang.hmcl.server.ServerStatusResult;
+import org.jackhuang.hmcl.server.ServerStorage;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -55,13 +56,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.function.UnaryOperator;
 
 import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
@@ -182,7 +180,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 ServerStorage storage = serverStorageMap.get(gameInstance.getServersDatFilePath());
                 if (storage == null) {
                     storage = new ServerStorage(gameInstance.getServersDatFilePath());
-                    storage.holdInstances.add(gameInstance);
+                    storage.getHoldInstances().add(gameInstance);
                     serverStorageMap.put(gameInstance.getServersDatFilePath(), storage);
                 }
                 storageEntry = storage.add(IconedServer.pack(server));
@@ -243,11 +241,11 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
 
                 for (HMCLGameInstance instance : gameInstance.getRepository().getSnapshot().getInstances()) {
                     if (serverStorageMap.containsKey(instance.getServersDatFilePath())) {
-                        serverStorageMap.get(instance.getServersDatFilePath()).holdInstances.add(instance);
+                        serverStorageMap.get(instance.getServersDatFilePath()).getHoldInstances().add(instance);
                     } else {
                         try {
                             ServerStorage storage = new ServerStorage(instance.getServersDatFilePath());
-                            storage.holdInstances.add(instance);
+                            storage.getHoldInstances().add(instance);
                             serverStorageMap.put(instance.getServersDatFilePath(), storage);
                         } catch (IOException e) {
                             LOG.error("Failed to load servers from dat file: " + instance.getServersDatFilePath(), e);
@@ -255,7 +253,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                     }
                 }
 
-                return serverStorageMap.values().stream().flatMap(e -> e.storageEntries.stream()).map(ServerListItem::new).toList();
+                return serverStorageMap.values().stream().flatMap(e -> e.getStorageEntries().stream()).map(ServerListItem::new).toList();
             }
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh) {
@@ -278,133 +276,19 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
         runInFX(() -> Controllers.dialog(new EditServerPane(EditServerPane.Type.ADD, null, this::addServer)));
     }
 
-    private static final class ServerStorage {
-        private final List<HMCLGameInstance> holdInstances = new ArrayList<>();
-        private final Path serverDatFilePath;
-        private final List<ServerStorageEntry> storageEntries;
-        private boolean storageValid = true;
-
-        private ServerStorage(Path serverDatFilePath) throws IOException {
-            this.serverDatFilePath = serverDatFilePath;
-
-            synchronized (serversFileHandleLockObject) {
-                if (Files.exists(serverDatFilePath)) {
-                    List<Server> servers = Server.loadFromServersDat(serverDatFilePath);
-                    storageEntries = new CopyOnWriteArrayList<>();
-                    for (Server server : servers) {
-                        ServerStorageEntry entry = new ServerStorageEntry(IconedServer.pack(server));
-                        storageEntries.add(entry);
-                    }
-                } else {
-                    storageEntries = new CopyOnWriteArrayList<>();
-                }
-            }
-        }
-
-        private void save() throws IOException {
-            synchronized (serversFileHandleLockObject) {
-                if (!storageValid) return;
-
-                Server.saveToServersDat(storageEntries.stream().map(e -> e.server).toList(), serverDatFilePath);
-            }
-        }
-
-        private void invalid() {
-            storageValid = false;
-        }
-
-        private void deleteEntry(ServerStorageEntry entry) throws IOException {
-            synchronized (serversFileHandleLockObject) {
-                if (!storageValid) return;
-
-                int index = storageEntries.indexOf(entry);
-                if (index != -1) {
-                    ServerStorageEntry removed = storageEntries.remove(index);
-                    try {
-                        save();
-                    } catch (IOException e) {
-                        storageEntries.add(index, removed);
-                        throw e;
-                    }
-                }
-            }
-        }
-
-        private boolean updateEntry(ServerStorageEntry entry, UnaryOperator<@NotNull IconedServer> updater) throws IOException {
-            synchronized (serversFileHandleLockObject) {
-                if (!storageValid) return false;
-
-                int index = storageEntries.indexOf(entry);
-                if (index == -1) return false;
-
-                IconedServer oldValue = entry.server;
-                IconedServer newValue = updater.apply(oldValue);
-
-                if (oldValue.equals(newValue)) return false;
-
-                try {
-                    entry.server = newValue;
-                    save();
-                } catch (IOException e) {
-                    entry.server = oldValue;
-                    throw e;
-                }
-
-                return true;
-            }
-        }
-
-        public @Nullable ServerStorageEntry add(IconedServer server) throws IOException {
-            synchronized (serversFileHandleLockObject) {
-                if (!storageValid) return null;
-                ServerStorageEntry entry = new ServerStorageEntry(IconedServer.pack(server));
-
-                try {
-                    storageEntries.add(entry);
-                    save();
-                } catch (IOException e) {
-                    storageEntries.remove(entry);
-                    throw e;
-                }
-
-                return entry;
-            }
-        }
-
-        public class ServerStorageEntry {
-            private volatile IconedServer server;
-
-            public ServerStorageEntry(IconedServer server) {
-                this.server = server;
-            }
-
-            private void delete() throws IOException {
-                ServerStorage.this.deleteEntry(this);
-            }
-
-            private ServerStorage rootStorage() {
-                return ServerStorage.this;
-            }
-
-            private Path getServerDatFilePath() {
-                return serverDatFilePath;
-            }
-        }
-    }
-
     public static final class ServerListItem {
-        final @NotNull ServerListPage.ServerStorage.ServerStorageEntry storageEntry;
+        final @NotNull ServerStorage.ServerStorageEntry storageEntry;
         final @NotNull IconedServer server;
 
         final @NotNull ObservableServerStatus observableServerStatus;
 
-        public ServerListItem(@NotNull ServerListPage.ServerStorage.ServerStorageEntry storageEntry) {
-            this(storageEntry, new ObservableServerStatus(storageEntry.server.getIp()));
+        public ServerListItem(@NotNull ServerStorage.ServerStorageEntry storageEntry) {
+            this(storageEntry, new ObservableServerStatus(storageEntry.getServer().getIp()));
         }
 
-        public ServerListItem(@NotNull ServerListPage.ServerStorage.ServerStorageEntry storageEntry, @NotNull ObservableServerStatus observableServerStatus) {
+        public ServerListItem(@NotNull ServerStorage.ServerStorageEntry storageEntry, @NotNull ObservableServerStatus observableServerStatus) {
             this.storageEntry = storageEntry;
-            this.server = storageEntry.server;
+            this.server = IconedServer.pack(storageEntry.getServer());
             this.observableServerStatus = observableServerStatus;
         }
     }
@@ -441,18 +325,6 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 }
             }
             return FXUtils.newBuiltinImage("/assets/img/unknown_server.png");
-        }
-
-        public IconedServer withIcon(@Nullable String newIcon) {
-            return new IconedServer(getServerPackStatus(), isHidden(), newIcon, getIp(), getName());
-        }
-
-        public IconedServer withIpAndName(@Nullable String newIp, @Nullable String newName) {
-            return new IconedServer(getServerPackStatus(), isHidden(), getIcon(), newIp, newName);
-        }
-
-        public IconedServer withPackStatus(ServerPackStatus status) {
-            return new IconedServer(status, isHidden(), getIcon(), getIp(), getName());
         }
     }
 
@@ -563,14 +435,14 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                     contentLine1.addTag(i18n("server.tag.hide"));
                 }
 
-                if (item.storageEntry.rootStorage().holdInstances.contains(page.gameInstance)) {
+                if (item.storageEntry.rootStorage().getHoldInstances().contains(page.gameInstance)) {
                     contentLine1.addTag(i18n("server.tag.hold.current"));
-                    item.storageEntry.rootStorage().holdInstances.stream()
+                    item.storageEntry.rootStorage().getHoldInstances().stream()
                             .filter(e -> !e.equals(page.gameInstance))
                             .map(gameInstance -> gameInstance.getId().id())
                             .forEach(contentLine1::addTag);
                 } else {
-                    item.storageEntry.rootStorage().holdInstances.stream()
+                    item.storageEntry.rootStorage().getHoldInstances().stream()
                             .map(gameInstance -> gameInstance.getId().id())
                             .forEach(contentLine1::addTag);
                 }
@@ -644,7 +516,9 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
 
-            IconedMenuItem copyToInstanceMEnuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("server.manage.copy.to.instance"), () -> page.copyToInstance(holder), popup);
+            IconedMenuItem copyToInstanceMEnuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("server.manage.copy.to.instance"),
+                    () -> page.copyToInstance(holder), popup
+            );
             popupMenu.getContent().addAll(
                     new IconedMenuItem(SVG.EDIT, i18n("server.manage.edit"), () ->
                             page.editServer(holder), popup

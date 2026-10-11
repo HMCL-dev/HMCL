@@ -153,4 +153,20 @@ public class Server {
         DISABLED(),
         PROMPT();
     }
+
+    public @NotNull Server withIcon(@Nullable String icon) {
+        return new Server(serverPackStatus, hidden, icon, ip, name);
+    }
+
+    public @NotNull Server withIpAndName(@Nullable String ip, @Nullable String name) {
+        return new Server(serverPackStatus, hidden, icon, ip, name);
+    }
+
+    public @NotNull Server withIpNameAndPackStatus(@Nullable String ip, @Nullable String name, @NotNull ServerPackStatus serverPackStatus) {
+        return new Server(serverPackStatus, hidden, icon, ip, name);
+    }
+
+    public @NotNull Server withPackStatus(@NotNull ServerPackStatus serverPackStatus) {
+        return new Server(serverPackStatus, hidden, icon, ip, name);
+    }
 }

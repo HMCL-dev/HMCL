@@ -223,7 +223,9 @@ public class EditServerPane extends TransitionPane implements DialogAware {
 
             fireEvent(new DialogCloseEvent());
             if (reference != null) {
-                handleCallback.accept(reference.withIpAndName(serverIP, serverName).withPackStatus(serverPackStatus));
+                handleCallback.accept(ServerListPage.IconedServer.pack(reference.withIpNameAndPackStatus(
+                        serverIP, serverName, serverPackStatus)
+                ));
             } else {
                 handleCallback.accept(new ServerListPage.IconedServer(serverPackStatus, false, null, serverIP, serverName));
             }
@@ -278,7 +280,9 @@ public class EditServerPane extends TransitionPane implements DialogAware {
             } else {
                 fireEvent(new DialogCloseEvent());
                 if (reference != null) {
-                    handleCallback.accept(reference.withIpAndName(serverIP, serverName).withPackStatus(packStatus));
+                    handleCallback.accept(ServerListPage.IconedServer.pack(reference.withIpNameAndPackStatus(
+                            serverIP, serverName, packStatus)
+                    ));
                 } else {
                     handleCallback.accept(new ServerListPage.IconedServer(packStatus, false, status.favicon(), serverIP, serverName));
                 }
