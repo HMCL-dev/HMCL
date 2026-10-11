@@ -20,21 +20,21 @@ package org.jackhuang.hmcl.ui.account;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.effects.JFXDepthManager;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
+import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -42,8 +42,13 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.account.friend.FriendPage;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+
+import java.io.IOException;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -69,21 +74,18 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         Canvas canvas = new Canvas(32, 32);
         TexturesLoader.bindAvatar(canvas, skinnable.getAccount());
 
-        Label title = new Label();
-        title.getStyleClass().add("title");
-        title.textProperty().bind(skinnable.titleProperty());
-        Label subtitle = new Label();
-        subtitle.getStyleClass().add("subtitle");
-        subtitle.textProperty().bind(skinnable.subtitleProperty());
+        TwoLineListItem item = new TwoLineListItem();
+        item.getFirstLine().getStyleClass().clear();
+        BorderPane.setAlignment(item, Pos.CENTER);
+
+        item.titleProperty().bind(skinnable.titleProperty());
+        item.subtitleProperty().bind(skinnable.subtitleProperty());
         if (skinnable.getAccount() instanceof AuthlibInjectorAccount) {
             Tooltip tooltip = new Tooltip();
             AuthlibInjectorServer server = ((AuthlibInjectorAccount) skinnable.getAccount()).getServer();
             tooltip.textProperty().bind(BindingMapping.of(server, AuthlibInjectorServer::toString));
-            FXUtils.installSlowTooltip(subtitle, tooltip);
+            FXUtils.installSlowTooltip(item, tooltip);
         }
-        VBox item = new VBox(title, subtitle);
-        item.getStyleClass().add("two-line-list-item");
-        BorderPane.setAlignment(item, Pos.CENTER);
 
         center.getChildren().setAll(canvas, item);
         root.setCenter(center);
@@ -128,15 +130,13 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         }
         btnRefresh.setOnAction(e -> {
             spinnerRefresh.showSpinner();
-            skinnable.refreshAsync()
-                    .whenComplete(Schedulers.javafx(), ex -> {
-                        spinnerRefresh.hideSpinner();
+            skinnable.refreshAsync().whenComplete(Schedulers.javafx(), ex -> {
+                spinnerRefresh.hideSpinner();
 
-                        if (ex != null) {
-                            Controllers.showToast(Accounts.localizeErrorMessage(ex));
-                        }
-                    })
-                    .start();
+                if (ex != null) {
+                    Controllers.showToast(Accounts.localizeErrorMessage(ex));
+                }
+            }).start();
         });
         FXUtils.installFastTooltip(btnRefresh, i18n("button.refresh"));
         spinnerRefresh.setContent(btnRefresh);
@@ -148,9 +148,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
             Task<?> uploadTask = skinnable.uploadSkin();
             if (uploadTask != null) {
                 spinnerUpload.showSpinner();
-                uploadTask
-                        .whenComplete(Schedulers.javafx(), ex -> spinnerUpload.hideSpinner())
-                        .start();
+                uploadTask.whenComplete(Schedulers.javafx(), ex -> spinnerUpload.hideSpinner()).start();
             }
         });
         FXUtils.installFastTooltip(btnUpload, i18n("account.skin.upload"));
@@ -158,6 +156,46 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         spinnerUpload.setContent(btnUpload);
         spinnerUpload.getStyleClass().add("small-spinner-pane");
         right.getChildren().add(spinnerUpload);
+
+        SpinnerPane spinnerFriend = new SpinnerPane();
+        spinnerFriend.getStyleClass().add("small-spinner-pane");
+        JFXButton btnFriend = FXUtils.newToggleButton4(SVG.GROUP);
+        btnFriend.disableProperty().bind(Bindings.not(skinnable.canAddFriend()));
+        FXUtils.installFastTooltip(btnFriend, i18n("account.friend"));
+        spinnerFriend.setContent(btnFriend);
+        btnFriend.setOnAction(actionEvent -> {
+            spinnerFriend.showSpinner();
+
+            var account = skinnable.getAccount();
+
+            skinnable.refreshAsync().whenComplete(exception -> {
+                Platform.runLater(spinnerFriend::hideSpinner);
+
+                if (exception != null) {
+                    Platform.runLater(() -> Controllers.showToast(Accounts.localizeErrorMessage(exception)));
+                    return;
+                }
+
+                if (account instanceof MicrosoftAccount microsoftAccount) {
+                    Platform.runLater(() -> Controllers.navigate(new FriendPage(account, microsoftAccount)));
+                } else if (account instanceof YggdrasilAccount yggdrasilAccount) {
+                    try {
+                        yggdrasilAccount.getFriendList();
+                        Platform.runLater(() -> Controllers.navigate(new FriendPage(account, yggdrasilAccount)));
+                    } catch (IOException e) {
+                        Platform.runLater(() -> {
+                            if (e instanceof ResponseCodeException responseCodeException && responseCodeException.getResponseCode() == 404) {
+                                Controllers.dialog(i18n("account.friend.unsupported"));
+                                return;
+                            }
+
+                            Controllers.showToast(Accounts.localizeErrorMessage(e));
+                        });
+                    }
+                }
+            }).start();
+        });
+        right.getChildren().add(spinnerFriend);
 
         JFXButton btnCopyUUID = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
         btnCopyUUID.setOnAction(e -> FXUtils.copyText(skinnable.getAccount().getProfileID().toString()));
@@ -184,8 +222,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         Accounts.getAccounts().remove(account);
         if (account.isPortable()) {
             account.setPortable(false);
-            if (!Accounts.getAccounts().contains(account))
-                Accounts.getAccounts().add(account);
+            if (!Accounts.getAccounts().contains(account)) Accounts.getAccounts().add(account);
         } else {
             account.setPortable(true);
             if (!Accounts.getAccounts().contains(account)) {

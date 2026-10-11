@@ -28,16 +28,16 @@ import java.util.UUID;
 public interface YggdrasilProvider {
 
     /// Returns the endpoint for authenticating credentials.
-    WebURL getAuthenticationURL() throws AuthenticationException;
+    WebURL getAuthenticationURL();
 
     /// Returns the endpoint for refreshing an access token.
-    WebURL getRefreshmentURL() throws AuthenticationException;
+    WebURL getRefreshmentURL();
 
     /// Returns the endpoint for validating an access token.
-    WebURL getValidationURL() throws AuthenticationException;
+    WebURL getValidationURL();
 
     /// Returns the endpoint for invalidating an access token.
-    WebURL getInvalidationURL() throws AuthenticationException;
+    WebURL getInvalidationURL();
 
     /// URL to upload skin.
     ///
@@ -58,4 +58,7 @@ public interface YggdrasilProvider {
     /// Returns the endpoint for reading the profile properties of the given player UUID.
     WebURL getProfilePropertiesURL(UUID uuid) throws AuthenticationException;
 
+    WebURL getFriendsURL();
+
+    WebURL getPresenceURL();
 }
