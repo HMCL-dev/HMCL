@@ -483,7 +483,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     LocalAddonFile.Description description = resourcePack.getDescription();
                     Stream<String> descriptionParts = description == null
                             ? Stream.empty()
-                            : description.getParts().stream().map(LocalAddonFile.Description.Part::getText);
+                            : description.parts().stream().map(LocalAddonFile.Description.Part::text);
                     if (predicate.test(resourcePack.getFileNameWithExtension())
                             || predicate.test(resourcePack.getFileName())
                             || descriptionParts.anyMatch(predicate)) {
@@ -662,8 +662,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             setBody(descriptionPane);
 
             for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
-                    pair("addon.curseforge", CurseForgeRemoteAddonRepository.RESOURCE_PACKS),
-                    pair("addon.modrinth", ModrinthRemoteAddonRepository.RESOURCE_PACKS)
+                    pair("addon.curseforge", CurseForgeRemoteAddonRepository.getInstance()),
+                    pair("addon.modrinth", ModrinthRemoteAddonRepository.getInstance())
             )) {
                 RemoteAddonRepository repository = item.getValue();
                 JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));

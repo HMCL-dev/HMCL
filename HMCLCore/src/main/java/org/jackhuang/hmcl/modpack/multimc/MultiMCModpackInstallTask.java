@@ -378,7 +378,8 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
             Path instanceJar = getPrimaryJarFile();
             dependencies.add(new GameDownloadTask(dependencyManager, instanceManifest)
-                    .thenAcceptAsync(cachedJar -> FileUtils.copyFile(cachedJar, instanceJar)));
+                    .thenAcceptAsync(cachedJar -> FileUtils.copyFile(cachedJar, instanceJar))
+                    .withStage("hmcl.modpack.download"));
         }
 
         setResult(artifact);

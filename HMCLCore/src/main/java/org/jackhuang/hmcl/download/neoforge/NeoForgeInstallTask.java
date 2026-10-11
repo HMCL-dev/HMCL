@@ -56,6 +56,7 @@ public final class NeoForgeInstallTask extends Task<GameInstancePatch> {
         this.dependencyManager = dependencyManager;
         this.manifest = manifest;
         this.remoteVersion = remoteVersion;
+        setSignificance(TaskSignificance.MODERATE);
     }
 
     @Override

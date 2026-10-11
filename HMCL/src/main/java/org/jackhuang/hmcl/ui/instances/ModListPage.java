@@ -657,8 +657,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
                 for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
-                        pair("addon.curseforge", CurseForgeRemoteAddonRepository.MODS),
-                        pair("addon.modrinth", ModrinthRemoteAddonRepository.MODS)
+                        pair("addon.curseforge", CurseForgeRemoteAddonRepository.getInstance()),
+                        pair("addon.modrinth", ModrinthRemoteAddonRepository.getInstance())
                 )) {
                     RemoteAddonRepository repository = item.getValue();
                     JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
