@@ -105,97 +105,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             setMargin(listView, new Insets(0, 10, 0, 10));
             VBox.setVgrow(listView, Priority.ALWAYS);
 
-            listView.setCellFactory(listView -> new ListCell<AddonUpdateObject>() {
-                private final StackPane pane = new StackPane();
-                private final RipplerContainer ripplerContainer;
-
-                private final JFXCheckBox enabledBox = new JFXCheckBox();
-                private final ImageContainer imageContainer = new ImageContainer(40);
-                private final TwoLineListItem content = new TwoLineListItem();
-                private final JFXButton changelogButton = FXUtils.newToggleButton4(SVG.INFO);
-
-                {
-                    HBox hbox = new HBox(16);
-                    HBox.setHgrow(content, Priority.ALWAYS);
-                    content.setAlignment(Pos.CENTER);
-                    hbox.setAlignment(Pos.CENTER);
-
-                    hbox.getChildren().setAll(enabledBox, imageContainer, content, changelogButton);
-
-                    pane.getStyleClass().add("md-list-cell");
-                    StackPane.setMargin(hbox, new Insets(10, 16, 10, 16));
-
-                    ripplerContainer = new RipplerContainer(hbox);
-                    pane.getChildren().setAll(ripplerContainer);
-
-                    enabledBox.setMouseTransparent(false);
-                    imageContainer.setMouseTransparent(true);
-
-                    FXUtils.installFastTooltip(changelogButton, i18n("addon.changelog"));
-                    changelogButton.setOnAction(event -> {
-                        AddonUpdateObject item = getItem();
-                        if (item != null) {
-                            Controllers.dialog(new AddonChangelog(item));
-                        }
-                    });
-
-                    FXUtils.onClicked(this, () -> {
-                        System.out.println("Clicked: " + getItem());
-
-                        AddonUpdateObject item = getItem();
-                        if (item != null) {
-                            item.setEnabled(!item.isEnabled());
-                        }
-                    });
-                }
-
-                @Override
-                public void updateItem(AddonUpdateObject item, boolean empty) {
-                    AddonUpdateObject oldItem = getItem();
-
-                    if (oldItem != null) {
-                        enabledBox.selectedProperty().unbindBidirectional(oldItem.enabledProperty());
-                    }
-
-                    super.updateItem(item, empty);
-
-                    if (empty || item == null) {
-                        setGraphic(null);
-                        return;
-                    }
-
-                    enabledBox.selectedProperty().bindBidirectional(item.enabledProperty());
-
-                    item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
-
-                    LocalAddonFile addonFile = item.getLocalAddonFile();
-
-                    if (oldItem != item) {
-                        content.getTags().clear();
-
-                        if (addonFile instanceof LocalModFile modFile) {
-                            content.addTag(modFile.getId());
-                            content.addTag(item.getSource());
-                        } else if (addonFile instanceof ResourcePackFile) {
-                            content.addTag(item.getSource());
-                        }
-                    }
-
-                    if (addonFile instanceof LocalModFile modFile) {
-                        content.setTitle(modFile.getName());
-                    } else if (addonFile instanceof ResourcePackFile resourcePackFile) {
-                        content.setTitle(resourcePackFile.getFileName());
-                    }
-
-                    content.setSubtitle(
-                        item.getCurrentVersion()
-                        + " → "
-                        + item.getTargetVersion()
-                    );
-
-                    setGraphic(pane);
-                }
-            });
+            listView.setCellFactory(listView -> new AddonUpdateListCell());
 
             ComponentList.setVgrow(listView, Priority.ALWAYS);
 
@@ -461,6 +371,96 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             }
 
             return getDefaultIcon();
+        }
+    }
+
+    private static class AddonUpdateListCell extends ListCell<AddonUpdateObject> {
+        private final StackPane pane = new StackPane();
+        private final RipplerContainer ripplerContainer;
+
+        private final JFXCheckBox enabledBox = new JFXCheckBox();
+        private final ImageContainer imageContainer = new ImageContainer(40);
+        private final TwoLineListItem content = new TwoLineListItem();
+        private final JFXButton changelogButton = FXUtils.newToggleButton4(SVG.INFO);
+
+        AddonUpdateListCell() {
+            HBox hbox = new HBox(16);
+            HBox.setHgrow(content, Priority.ALWAYS);
+            content.setAlignment(Pos.CENTER);
+            hbox.setAlignment(Pos.CENTER);
+
+            hbox.getChildren().setAll(enabledBox, imageContainer, content, changelogButton);
+
+            pane.getStyleClass().add("md-list-cell");
+            StackPane.setMargin(hbox, new Insets(10, 16, 10, 16));
+
+            ripplerContainer = new RipplerContainer(hbox);
+            pane.getChildren().setAll(ripplerContainer);
+
+            enabledBox.setMouseTransparent(false);
+            imageContainer.setMouseTransparent(true);
+
+            FXUtils.installFastTooltip(changelogButton, i18n("addon.changelog"));
+            changelogButton.setOnAction(event -> {
+                AddonUpdateObject item = getItem();
+                if (item != null) {
+                    Controllers.dialog(new AddonChangelog(item));
+                }
+            });
+
+            FXUtils.onClicked(this, () -> {
+                AddonUpdateObject item = getItem();
+                if (item != null) {
+                    item.setEnabled(!item.isEnabled());
+                }
+            });
+        }
+
+        @Override
+        public void updateItem(AddonUpdateObject item, boolean empty) {
+            AddonUpdateObject oldItem = getItem();
+
+            if (oldItem != null) {
+                enabledBox.selectedProperty().unbindBidirectional(oldItem.enabledProperty());
+            }
+
+            super.updateItem(item, empty);
+
+            if (empty || item == null) {
+                setGraphic(null);
+                return;
+            }
+
+            enabledBox.selectedProperty().bindBidirectional(item.enabledProperty());
+
+            item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
+
+            LocalAddonFile addonFile = item.getLocalAddonFile();
+
+            if (oldItem != item) {
+                content.getTags().clear();
+
+                if (addonFile instanceof LocalModFile modFile) {
+                    content.addTag(modFile.getId());
+                    content.addTag(item.getSource());
+                } else if (addonFile instanceof ResourcePackFile) {
+                    content.addTag(item.getSource());
+                }
+            }
+
+            if (addonFile instanceof LocalModFile modFile) {
+                content.setTitle(modFile.getName());
+            } else if (addonFile instanceof ResourcePackFile resourcePackFile) {
+                content.setTitle(resourcePackFile.getFileName());
+            }
+
+            content.setSubtitle(
+                item.getCurrentVersion()
+                + " → "
+                + item.getTargetVersion()
+            );
+
+            setGraphic(pane);
         }
     }
 
