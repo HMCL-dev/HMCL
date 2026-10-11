@@ -283,7 +283,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), modManager.getDirectory(), result));
+                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), result));
                             }
                         })
                         .withStagesHints("update.checking"),
