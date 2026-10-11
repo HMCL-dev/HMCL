@@ -20,7 +20,10 @@ package org.jackhuang.hmcl.modpack.server;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.MinecraftInstanceTask;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
@@ -124,7 +127,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
             if (this.updateTarget != null && Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));
 
-                if (config == null || !ServerModpackProvider.INSTANCE.getName().equals(config.getType()))
+                if (config == null || !ServerModpackProvider.INSTANCE.getName().equals(config.type()))
                     throw new IllegalArgumentException("Instance " + instanceId + " is not a Server modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {

@@ -52,11 +52,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -254,7 +250,7 @@ public final class ModpackHelper {
 
     /// Updates a server modpack with backup, repository refresh, and modpack stage hints.
     public static Task<Void> getUpdateTask(HMCLGameRepository repository, ServerModpackManifest manifest, Charset charset, GameInstanceID instanceId, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
-        switch (configuration.getType()) {
+        switch (configuration.type()) {
             case ServerModpackRemoteInstallTask.MODPACK_TYPE: {
                 HMCLGameInstance instance = repository.getInstance(instanceId);
                 return new ModpackUpdateTask(
@@ -292,7 +288,7 @@ public final class ModpackHelper {
             @Nullable Set<String> excludedFiles)
             throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile, charset);
-        @Nullable ModpackProvider provider = getProviderByType(configuration.getType());
+        @Nullable ModpackProvider provider = getProviderByType(configuration.type());
         if (provider == null) {
             throw new UnsupportedModpackException();
         }

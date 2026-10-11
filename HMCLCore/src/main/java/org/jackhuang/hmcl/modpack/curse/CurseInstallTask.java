@@ -22,7 +22,10 @@ import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Task;
@@ -165,7 +168,7 @@ public final class CurseInstallTask extends Task<Void> {
             if (this.updateTarget != null && Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(CurseManifest.class));
 
-                if (config == null || !CurseModpackProvider.INSTANCE.getName().equals(config.getType()))
+                if (config == null || !CurseModpackProvider.INSTANCE.getName().equals(config.type()))
                     throw new IllegalArgumentException("Instance " + instanceId + " is not a Curse modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {
@@ -257,7 +260,7 @@ public final class CurseInstallTask extends Task<Void> {
             // resolves those file names and writes the enriched manifest to
             // manifest.json, so read from there when available.
             Path oldManifestFile = repository.getLayout().getInstanceRoot(instanceId).resolve("manifest.json");
-            @Nullable List<CurseManifestFile> oldFiles = config.getManifest().files();
+            @Nullable List<CurseManifestFile> oldFiles = config.manifest().files();
             if (Files.exists(oldManifestFile)) {
                 try {
                     @Nullable CurseManifest oldManifest = JsonUtils.fromJsonFile(oldManifestFile, CurseManifest.class);

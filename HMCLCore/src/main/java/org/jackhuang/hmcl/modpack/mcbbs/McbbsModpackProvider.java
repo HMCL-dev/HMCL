@@ -26,14 +26,13 @@ import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Set;
-
-import org.jetbrains.annotations.Nullable;
 
 public final class McbbsModpackProvider implements ModpackProvider {
     public static final McbbsModpackProvider INSTANCE = new McbbsModpackProvider();
@@ -65,11 +64,11 @@ public final class McbbsModpackProvider implements ModpackProvider {
     public void injectLaunchOptions(String modpackConfigurationJson, LaunchOptions.Builder builder) {
         ModpackConfiguration<McbbsModpackManifest> config = JsonUtils.GSON.fromJson(modpackConfigurationJson, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
-        if (!getName().equals(config.getType())) {
-            throw new IllegalArgumentException("Incorrect manifest type, actual=" + config.getType() + ", expected=" + getName());
+        if (!getName().equals(config.type())) {
+            throw new IllegalArgumentException("Incorrect manifest type, actual=" + config.type() + ", expected=" + getName());
         }
 
-        config.getManifest().injectLaunchOptions(builder);
+        config.manifest().injectLaunchOptions(builder);
     }
 
     private static Modpack fromManifestFile(InputStream json, Charset encoding) throws IOException, JsonParseException {

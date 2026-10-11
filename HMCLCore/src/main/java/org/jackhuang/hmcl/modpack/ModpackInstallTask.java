@@ -54,7 +54,7 @@ public class ModpackInstallTask<T> extends Task<Void> {
         if (oldConfiguration == null)
             overrides = Collections.emptyList();
         else
-            overrides = oldConfiguration.getOverrides();
+            overrides = oldConfiguration.overrides();
     }
 
     @Override
@@ -64,7 +64,7 @@ public class ModpackInstallTask<T> extends Task<Void> {
 
         HashMap<String, ModpackConfiguration.FileInformation> files = new HashMap<>();
         for (ModpackConfiguration.FileInformation file : overrides)
-            files.put(file.getPath(), file);
+            files.put(file.path(), file);
 
 
         for (String subDirectory : subDirectories) {
@@ -88,7 +88,7 @@ public class ModpackInstallTask<T> extends Task<Void> {
                             // If both old and new modpacks have this entry, and user has modified this file,
                             // we will not replace it since this modified file is what user expects.
                             String fileHash = DigestUtils.digestToString("SHA-1", destFile);
-                            String oldHash = files.get(relativePath).getHash();
+                            String oldHash = files.get(relativePath).hash();
                             return Objects.equals(oldHash, fileHash);
                         }
                     }).unzip();
@@ -96,8 +96,8 @@ public class ModpackInstallTask<T> extends Task<Void> {
 
         // If old modpack have this entry, and new modpack deleted it. Delete this file.
         for (ModpackConfiguration.FileInformation file : overrides) {
-            Path original = dest.resolve(file.getPath());
-            if (Files.exists(original) && !entries.contains(file.getPath()))
+            Path original = dest.resolve(file.path());
+            if (Files.exists(original) && !entries.contains(file.path()))
                 Files.deleteIfExists(original);
         }
     }

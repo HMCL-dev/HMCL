@@ -22,7 +22,10 @@ import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Task;
@@ -162,7 +165,7 @@ public class ModrinthInstallTask extends Task<Void> {
             if (this.updateTarget != null && Files.exists(json)) {
                 config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ModrinthManifest.class));
 
-                if (config == null || !ModrinthModpackProvider.INSTANCE.getName().equals(config.getType()))
+                if (config == null || !ModrinthModpackProvider.INSTANCE.getName().equals(config.type()))
                     throw new IllegalArgumentException("Instance " + instanceId + " is not a Modrinth modpack. Cannot update this instance.");
             }
         } catch (JsonParseException | IOException ignore) {
@@ -238,7 +241,7 @@ public class ModrinthInstallTask extends Task<Void> {
     public void execute() throws Exception {
         if (config != null) {
             // For update, remove mods not listed in new manifest
-            for (ModrinthManifest.File oldManifestFile : config.getManifest().getFiles()) {
+            for (ModrinthManifest.File oldManifestFile : config.manifest().getFiles()) {
                 Path oldFile = run.resolve(oldManifestFile.path());
                 if (!Files.exists(oldFile)) continue;
                 if (manifest.getFiles().stream().noneMatch(oldManifestFile::equals)) {
