@@ -288,7 +288,7 @@ public final class ModpackHelper {
             @Nullable Set<String> excludedFiles)
             throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile, charset);
-        @Nullable ModpackProvider provider = getProviderByType(configuration.getType());
+        @Nullable ModpackProvider provider = getProviderByType(configuration.type());
         if (provider == null) {
             throw new UnsupportedModpackException();
         }
