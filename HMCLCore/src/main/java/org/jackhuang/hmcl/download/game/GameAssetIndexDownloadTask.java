@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download.game;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
@@ -94,8 +95,9 @@ public final class GameAssetIndexDownloadTask extends Task<Void> {
 
         // We should not check the hash code of asset index file since this file is not consistent
         // And Mojang will modify this file anytime. So assetIndex.hash might be outdated.
+        DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
         var task = new FileDownloadTask(
-                dependencyManager.getDownloadProvider().injectURLWithCandidates(assetIndexInfo.getUrl()),
+                downloadProvider.getDownloadCandidates(assetIndexInfo.getUrl()),
                 assetIndexFile,
                 verifyHashCode ? new FileDownloadTask.IntegrityCheck("SHA-1", assetIndexInfo.getSha1()) : null
         );

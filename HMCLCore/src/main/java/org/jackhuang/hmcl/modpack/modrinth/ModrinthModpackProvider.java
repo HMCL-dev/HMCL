@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -67,11 +66,11 @@ public final class ModrinthModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipArchiveReader zip, Path file, Charset encoding) throws IOException, JsonParseException {
+    public Modpack readManifest(ZipArchiveReader zip, Path file) throws IOException, JsonParseException {
         try {
             ModrinthManifest manifest = JsonUtils.fromNonNullJson(CompressingUtils.readTextZipEntry(zip, "modrinth.index.json"), ModrinthManifest.class);
 
-            return new Modpack(manifest.getName(), "", manifest.getVersionId(), manifest.getGameVersion(), manifest.getSummary(), encoding, manifest) {
+            return new Modpack(manifest.getName(), "", manifest.getVersionId(), manifest.getGameVersion(), manifest.getSummary(), manifest) {
                 @Override
                 public Task<?> getInstallTask(
                         DefaultDependencyManager dependencyManager,
@@ -101,11 +100,11 @@ public final class ModrinthModpackProvider implements ModpackProvider {
                     if (sha1 == null) {
                         return file.withAddon(null);
                     }
-                    RemoteAddon.Version version = ModrinthRemoteAddonRepository.MODS.getRemoteVersionBySHA1(sha1).orElse(null);
+                    RemoteAddon.Version version = ModrinthRemoteAddonRepository.getInstance().getRemoteVersionBySHA1(sha1).orElse(null);
                     if (version == null) {
                         return file.withAddon(null);
                     }
-                    RemoteAddon addon = ModrinthRemoteAddonRepository.MODS.getAddonById(downloadProvider, version.projectId());
+                    RemoteAddon addon = ModrinthRemoteAddonRepository.getInstance().getAddonById(downloadProvider, version.projectId());
                     return file.withAddon(addon);
                 } catch (FileNotFoundException fof) {
                     LOG.warning("Could not query modrinth for deleted mods: " + file.fileName(), fof);

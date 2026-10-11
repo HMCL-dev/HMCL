@@ -22,6 +22,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
@@ -894,6 +895,7 @@ public abstract class Task<T> {
 
         public StagesHintTask(List<StagesHint> hints) {
             this.hints = hints;
+            setSignificance(TaskSignificance.MODERATE);
         }
 
         @Override
@@ -1018,6 +1020,24 @@ public abstract class Task<T> {
             @Override
             public Collection<? extends Task<?>> getDependents() {
                 return tasks;
+            }
+        };
+    }
+
+    public static <T, U> Task<Pair<T, U>> combine(Task<? extends T> task1, Task<? extends U> task2) {
+        return new Task<>() {
+            {
+                setSignificance(TaskSignificance.MINOR);
+            }
+
+            @Override
+            public void execute() {
+                setResult(Pair.pair(task1.getResult(), task2.getResult()));
+            }
+
+            @Override
+            public Collection<? extends Task<?>> getDependents() {
+                return List.of(task1, task2);
             }
         };
     }
@@ -1191,6 +1211,7 @@ public abstract class Task<T> {
     private final class StageTask extends Task<T> {
         private StageTask(String stage) {
             this.setStage(stage);
+            setSignificance(TaskSignificance.MODERATE);
         }
 
         @Override

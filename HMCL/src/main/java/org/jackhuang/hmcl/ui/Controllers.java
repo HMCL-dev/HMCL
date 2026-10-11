@@ -62,7 +62,6 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -71,7 +70,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -98,6 +96,7 @@ public final class Controllers {
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     /// The coordinator for the main window's scene graph and navigation stack.
     private static @Nullable Decorator decorator;
+
     private static DownloadPage downloadPage;
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
@@ -212,6 +211,16 @@ public final class Controllers {
         }
     }
 
+    /// Configures the main stage's application identity, shutdown action, and taskbar relaunch information.
+    ///
+    /// @param stage the unshown main stage
+    private static void configureMainStage(Stage stage) {
+        stage.setOnCloseRequest(event -> Launcher.stopApplication());
+        FXUtils.setIcon(stage);
+        stage.setTitle(Metadata.FULL_TITLE);
+        WindowsNativeUtils.installWindowsAppUserModelRelaunchProperties(stage);
+    }
+
     /// Initializes the main application stage, scene graph, and background services.
     ///
     /// @param stage the primary application stage, which must not have been shown
@@ -232,9 +241,9 @@ public final class Controllers {
             }
         }
 
-        stage.setOnCloseRequest(e -> Launcher.stopApplication());
+        configureMainStage(stage);
 
-        decorator = new Decorator(getRootPage());
+        decorator = new Decorator(getRootPage(), Controllers::configureMainStage);
         Scene mainScene = decorator.attachStage(stage);
         getRootPage().getMainPage().showUpdateProperty().bind(UpdateChecker.checkingUpdateProperty().not().and(UpdateChecker.outdatedProperty()));
         getRootPage().getMainPage().showUpdateDialogProperty().bind(
@@ -252,9 +261,6 @@ public final class Controllers {
         Lang.thread(JavaManager::initialize, "Search Java", true);
 
         StyleSheets.init(mainScene);
-
-        FXUtils.setIcon(stage);
-        stage.setTitle(Metadata.FULL_TITLE);
 
         if (!Architecture.SYSTEM_ARCH.isX86() && SettingsManager.userState().platformPromptVersionProperty().get() < 1) {
             Runnable continueAction = () -> {
@@ -400,8 +406,7 @@ public final class Controllers {
 
         Controllers.taskDialog(
                 Task.composeAsync(Schedulers.io(), () -> {
-                            Charset encoding = CompressingUtils.findSuitableEncoding(modpackFile);
-                            Modpack modpack = ModpackHelper.readModpackManifest(modpackFile, encoding);
+                            Modpack modpack = ModpackHelper.readModpackManifest(modpackFile);
                             return ModpackHelper.getInstallTask(
                                     repository, modpackFile, new GameInstanceID(modpack.getName()), modpack, null);
                         })
@@ -626,20 +631,20 @@ public final class Controllers {
         }
     }
 
-    public static void openUriOrCopy(@Nullable URI uri) {
-        if (uri == null) return;
-        openUriOrCopy(uri.toString());
+    public static void openUriOrCopy(@Nullable URI url) {
+        if (url == null) return;
+        openUriOrCopy(url.toString());
     }
 
-    public static void openUriOrCopy(@Nullable String uri) {
-        if (uri == null) return;
+    public static void openUriOrCopy(@Nullable String url) {
+        if (url == null) return;
         var dialog = new MessageDialogPane.Builder(
-                i18n("web.open_in_browser", uri),
+                i18n("web.open_in_browser", url),
                 i18n("message.confirm"),
                 MessageDialogPane.MessageType.QUESTION
         )
-                .addAction(i18n("button.copy"), () -> FXUtils.copyText(uri))
-                .yesOrNo(() -> FXUtils.openLink(uri), null)
+                .addAction(i18n("button.copy"), () -> FXUtils.copyText(url))
+                .yesOrNo(() -> FXUtils.openLink(url), null)
                 .build();
         dialog(dialog);
     }
