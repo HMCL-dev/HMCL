@@ -62,7 +62,7 @@ public final class CSVTableTest {
         table.set(1, 2, "c");
         table.set(3, 2, "d\"e\n");
 
-        assertEquals("a,b,,c\n,,,\n\"a,b\",c,,\"d\\\"e\\n\"\n", table.toString());
+        assertEquals("a,b,,c\n,,,\n\"a,b\",c,,\"d\"\"e\n\"\n", table.toString());
 
     }
 }

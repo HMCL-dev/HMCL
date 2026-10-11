@@ -61,6 +61,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private final TabHeader.Tab<SchematicsPage> schematicsTab = new TabHeader.Tab<>("schematicsTab");
     private final TabHeader.Tab<ResourcePackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TabHeader.Tab<ShaderPackListPage> shaderListTab = new TabHeader.Tab<>("shaderListTab");
+    private final TabHeader.Tab<ScreenshotsPage> screenshotsTab = new TabHeader.Tab<>("screenshotsTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentInstanceUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<HMCLGameInstance.@Nullable Optional> instance =
@@ -94,8 +95,9 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         shaderListTab.setNodeSupplier(() -> new ShaderPackListPage(instance));
         worldListTab.setNodeSupplier(() -> new WorldListPage(instance));
         schematicsTab.setNodeSupplier(() -> new SchematicsPage(instance));
+        screenshotsTab.setNodeSupplier(() -> new ScreenshotsPage(instance));
 
-        tab = new TabHeader(transitionPane, gameSettingsTab, installerListTab, modListTab, resourcePackTab, shaderListTab, worldListTab, schematicsTab);
+        tab = new TabHeader(transitionPane, gameSettingsTab, installerListTab, modListTab, resourcePackTab, shaderListTab, worldListTab, schematicsTab, screenshotsTab);
         tab.select(gameSettingsTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
@@ -366,13 +368,15 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                 JFXPopup browsePopup = new JFXPopup(browseList);
                 browseList.getContent().setAll(
                         new IconedMenuItem(SVG.STADIA_CONTROLLER, i18n("folder.game"), () -> control.onBrowse(""), browsePopup),
+                        new IconedMenuItem(SVG.SETTINGS, i18n("folder.config"), () -> control.onBrowse("config"), browsePopup),
+                        new MenuSeparator(),
                         new IconedMenuItem(SVG.EXTENSION, i18n("folder.mod"), () -> control.onBrowse("mods"), browsePopup),
                         new IconedMenuItem(SVG.TEXTURE, i18n("folder.resourcepacks"), () -> control.onBrowse("resourcepacks"), browsePopup),
                         new IconedMenuItem(SVG.WB_SUNNY, i18n("folder.shaderpacks"), () -> control.onBrowse("shaderpacks"), browsePopup),
                         new IconedMenuItem(SVG.PUBLIC, i18n("folder.saves"), () -> control.onBrowse("saves"), browsePopup),
                         new IconedMenuItem(SVG.SCHEMA, i18n("folder.schematics"), control::onBrowseSchematics, browsePopup),
                         new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("folder.screenshots"), () -> control.onBrowse("screenshots"), browsePopup),
-                        new IconedMenuItem(SVG.SETTINGS, i18n("folder.config"), () -> control.onBrowse("config"), browsePopup),
+                        new MenuSeparator(),
                         new IconedMenuItem(SVG.SCRIPT, i18n("folder.logs"), () -> control.onBrowse("logs"), browsePopup),
                         new IconedMenuItem(SVG.FRAME_BUG, i18n("folder.crash-reports"), () -> control.onBrowse("crash-reports"), browsePopup)
                 );
@@ -387,6 +391,10 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         new IconedMenuItem(SVG.FOLDER_COPY, i18n("instance.manage.duplicate"), control::duplicate, managementPopup),
                         new IconedMenuItem(SVG.DELETE, i18n("instance.manage.remove"), control::remove, managementPopup),
                         new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), control::export, managementPopup),
+                        new MenuSeparator(),
+                        // Due to the sidebar height limit, we temporarily place the entries for these tabs
+                        // in the management menu; they will be moved back to the sidebar after a future UI refactor.
+                        new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("screenshots.manage"), () -> control.tab.select(control.screenshotsTab), managementPopup),
                         new MenuSeparator(),
                         new IconedMenuItem(null, i18n("instance.manage.redownload_assets_index"), control::redownloadAssetIndex, managementPopup),
                         new IconedMenuItem(null, i18n("instance.manage.remove_assets"), control::clearAssets, managementPopup),
