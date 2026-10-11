@@ -55,11 +55,9 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -175,28 +173,8 @@ public class ShaderPackListPage extends ListPageBase<ShaderPackListPage.ShaderPa
     }
 
     public void checkUpdates(Collection<ShaderPackFile> shaderPacks) {
-        HMCLGameInstance gameInstance = this.gameInstance;
-        if (gameInstance == null) return;
-
-        Controllers.taskDialog(
-                Task.composeAsync(() -> {
-                    GameVersionNumber version = gameInstance.getVersion();
-                    if (version != GameVersionNumber.unknown()) {
-                        return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), shaderPacks);
-                    } else {
-                        LOG.warning("Failed to check for updates, due to unable to get instance game version");
-                        return null;
-                    }
-                }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    if (exception != null || result == null) {
-                        Controllers.dialog(I18n.i18n("addon.check_update.failed_check"), I18n.i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
-                    } else if (result.commonUpdates().isEmpty()) {
-                        Controllers.dialog(I18n.i18n("addon.check_update.empty"));
-                    } else {
-                        Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), shaderPackDir, result));
-                    }
-                }).withStagesHints("update.checking"),
-                I18n.i18n("addon.check_update"), TaskCancellationAction.NORMAL);
+        if (gameInstance != null)
+            AddonCheckUpdatesTask.openAddonsCheckUpdateDialog(gameInstance, shaderPacks, shaderPackDir);
     }
 
     private void onAddFiles() {

@@ -60,7 +60,6 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -259,27 +258,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             return;
         }
 
-        Runnable action = () -> Controllers.taskDialog(Task
-                        .composeAsync(() -> {
-                            GameVersionNumber version = gameInstance.getVersion();
-                            if (version != GameVersionNumber.unknown()) {
-                                return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), resourcePacks);
-                            } else {
-                                LOG.warning("Failed to check for updates, due to unable to get instance game version");
-                                return null;
-                            }
-                        })
-                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                            if (exception != null || result == null) {
-                                Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
-                            } else if (result.commonUpdates().isEmpty()) {
-                                Controllers.dialog(i18n("addon.check_update.empty"));
-                            } else {
-                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), resourcePackDirectory, result));
-                            }
-                        })
-                        .withStagesHints("update.checking"),
-                i18n("addon.check_update"), TaskCancellationAction.NORMAL);
+        Runnable action = () -> AddonCheckUpdatesTask.openAddonsCheckUpdateDialog(gameInstance, resourcePacks, resourcePackDirectory);
 
         if (gameInstance.isModpack()) {
             Controllers.confirm(
