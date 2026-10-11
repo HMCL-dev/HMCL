@@ -21,6 +21,8 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -43,17 +45,18 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
@@ -61,6 +64,7 @@ import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Lists screenshots of the current game instance and provides preview and file actions.
 public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screenshot> {
 
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
@@ -160,11 +164,18 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
         });
     }
 
+    /// Describes a screenshot file and loads its preview images on demand.
     public static final class Screenshot implements Comparable<Screenshot> {
         private final Path path;
         private final String fileName;
         private final BasicFileAttributes attributes;
-        private Image thumbnail, fullImage;
+
+        /// Caches asynchronous thumbnail loads with a soft reference.
+        private final ItemPropertyAsyncCache<@Nullable Image, Screenshot> thumbnailCache =
+                new ItemPropertyAsyncCache.Soft<>(this, this::loadThumbnail, null);
+
+        /// Retains the full image after a successful load, or is null before one succeeds.
+        private @Nullable Image fullImage;
 
         public static boolean isFileScreenshot(Path path) {
             return Files.isRegularFile(path) && "png".equalsIgnoreCase(FileUtils.getExtension(path));
@@ -209,24 +220,21 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
             return attributes.size();
         }
 
-        public boolean isThumbnailLoaded() {
-            return thumbnail != null;
-        }
-
         public boolean isFullImageLoaded() {
             return fullImage != null;
         }
 
+        /// Loads an aspect-ratio-preserving thumbnail bounded by 72 by 72 pixels.
+        ///
+        /// @return the thumbnail, or null if loading throws an exception
         @Nullable
-        public Image getThumbnail() {
-            if (thumbnail == null) {
-                try {
-                    thumbnail = FXUtils.loadImage(path, 72, 72, true, false);
-                } catch (Exception e) {
-                    LOG.warning("Failed to load screenshot thumbnail at: " + path, e);
-                }
+        private Image loadThumbnail() {
+            try {
+                return FXUtils.loadImage(path, 72, 72, true, false);
+            } catch (Exception e) {
+                LOG.warning("Failed to load screenshot thumbnail at: " + path, e);
+                return null;
             }
-            return thumbnail;
         }
 
         @Nullable
@@ -258,15 +266,24 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
 
     }
 
+    /// Displays a screenshot thumbnail, metadata, and file actions in a reusable cell.
     private static final class ScreenshotCell extends MDListCell<Screenshot> {
 
+        /// Holds the thumbnail or the placeholder icon when no thumbnail is available.
         private final StackPane imagePane = new StackPane();
+        /// Receives the cached thumbnail for the current item.
+        private final ObjectProperty<@Nullable Image> thumbnail = new SimpleObjectProperty<>();
+        /// Displays the screenshot file name and creation time.
         private final TwoLineListItem content = new TwoLineListItem();
 
+        /// Creates a cell whose file actions operate on the supplied page.
         public ScreenshotCell(JFXListView<Screenshot> listView, ScreenshotsPage page) {
             super(listView);
 
             setSelectable();
+
+            FXUtils.onChangeAndOperate(thumbnail, image -> imagePane.getChildren().setAll(
+                    image == null ? SVG.SCREENSHOT_MONITOR.createIcon(36) : new ImageContainer(image, 36, 36)));
 
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
@@ -277,16 +294,16 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
 
             JFXButton copyButton = FXUtils.newToggleButton4(SVG.CONTENT_COPY);
             copyButton.setOnAction(e -> {
-                Screenshot screenshot = getItem();
+                @Nullable Screenshot screenshot = getItem();
                 if (screenshot != null) {
-                    var image = screenshot.getFullImage();
+                    @Nullable Image image = screenshot.getFullImage();
                     if (image != null) FXUtils.copyImage(image);
                 }
             });
 
             JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
             revealButton.setOnAction(e -> {
-                Screenshot screenshot = getItem();
+                @Nullable Screenshot screenshot = getItem();
                 if (screenshot != null) {
                     FXUtils.showFileInExplorer(screenshot.getPath());
                 }
@@ -294,7 +311,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
 
             JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
             infoButton.setOnAction(e -> {
-                Screenshot screenshot = getItem();
+                @Nullable Screenshot screenshot = getItem();
                 if (screenshot != null) {
                     Controllers.dialog(new ScreenshotDialog(screenshot));
                 }
@@ -303,7 +320,7 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
 
             JFXButton deleteButton = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
             deleteButton.setOnAction(e -> {
-                Screenshot screenshot = getItem();
+                @Nullable Screenshot screenshot = getItem();
                 if (screenshot != null) {
                     Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
                             () -> page.delete(screenshot), null);
@@ -316,23 +333,19 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
             getContainer().getChildren().setAll(container);
         }
 
+        /// Attaches the current item's cached thumbnail and updates its metadata.
+        /// Clears the displayed thumbnail when the cell becomes empty.
         @Override
-        protected void updateControl(Screenshot item, boolean empty) {
-            if (item == null || empty) return;
-
-            if (item.isThumbnailLoaded()) {
-                imagePane.getChildren().setAll(new ImageContainer(item.getThumbnail(), 36, 36));
-            } else {
-                imagePane.getChildren().setAll(SVG.SCREENSHOT_MONITOR.createIcon(36));
-                CompletableFuture
-                        .supplyAsync(item::getThumbnail, Schedulers.io())
-                        .whenCompleteAsync((image, t) -> {
-                            if (image != null) imagePane.getChildren().setAll(new ImageContainer(image, 36, 36));
-                        }, Schedulers.javafx());
+        protected void updateControl(@Nullable Screenshot item, boolean empty) {
+            if (item == null || empty) {
+                thumbnail.set(null);
+                return;
             }
 
+            item.thumbnailCache.attachValue(thumbnail, new WeakReference<>(itemProperty()));
+
             content.setTitle(item.getFileName());
-            var creationTime = item.getCreationTime();
+            @Nullable Instant creationTime = item.getCreationTime();
             if (creationTime != null) content.setSubtitle(I18n.formatDateTime(creationTime));
         }
     }
