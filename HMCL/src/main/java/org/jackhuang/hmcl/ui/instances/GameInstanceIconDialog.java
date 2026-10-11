@@ -21,7 +21,6 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.Metadata;
@@ -172,9 +171,9 @@ public class GameInstanceIconDialog extends JFXDialogLayout {
     }
 
     private Node createIcon(GameInstanceIconType type) {
-        ImageView imageView = new ImageView(type.getIcon());
-        imageView.setMouseTransparent(true);
-        RipplerContainer container = new RipplerContainer(imageView);
+        ImageContainer imageContainer = new ImageContainer(type.getIcon(), 32D, 32D);
+        imageContainer.setMouseTransparent(true);
+        RipplerContainer container = new RipplerContainer(imageContainer);
         FXUtils.setLimitWidth(container, 36);
         FXUtils.setLimitHeight(container, 36);
         FXUtils.onClicked(container, () -> {
@@ -189,7 +188,7 @@ public class GameInstanceIconDialog extends JFXDialogLayout {
     private Node createIcon(Path path) {
         ImageContainer imageContainer;
         try {
-            imageContainer = new ImageContainer(32, FXUtils.loadImage(path, 64, 64, true, true));
+            imageContainer = new ImageContainer(FXUtils.loadImage(path, 64, 64, true, true), 32D, 32D);
         } catch (Exception e) {
             LOG.warning("Failed to load custom instance icon at " + path, e);
             return null;

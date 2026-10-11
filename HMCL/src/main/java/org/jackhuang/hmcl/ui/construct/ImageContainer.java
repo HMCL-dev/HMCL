@@ -64,11 +64,6 @@ public class ImageContainer extends StackPane {
         this.getChildren().setAll(imageView);
     }
 
-    public ImageContainer(double size, Image image) {
-        this(size);
-        setImage(image);
-    }
-
     public ImageContainer(Image image, double maxWidth, double maxHeight) {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
