@@ -36,7 +36,7 @@ public class ServerStorage {
     private final List<GameInstance> holdInstances = new ArrayList<>();
     private final Path serverDatFilePath;
     private final List<ServerStorageEntry> storageEntries;
-    private boolean storageValid = true;
+    private volatile boolean storageValid = true;
 
     public ServerStorage(Path serverDatFilePath) throws IOException {
         this.serverDatFilePath = serverDatFilePath;
@@ -78,7 +78,12 @@ public class ServerStorage {
     }
 
     public void invalid() {
-        storageValid = false;
+        handleLock.lock();
+        try {
+            storageValid = false;
+        } finally {
+            handleLock.unlock();
+        }
     }
 
     private void deleteEntry(ServerStorageEntry entry) throws IOException {

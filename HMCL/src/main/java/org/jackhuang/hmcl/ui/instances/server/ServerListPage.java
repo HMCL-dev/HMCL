@@ -124,13 +124,18 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
 
     public void editServer(ServerListItem item) {
         if (gameInstance != null) {
-            runInFX(() -> Controllers.dialog(new EditServerPane(EditServerPane.Type.EDIT, item.getServer(), (server) -> {
-                if (!server.equals(item.getServer())) {
+            runInFX(() -> Controllers.dialog(new EditServerPane(EditServerPane.Type.EDIT, item.getServer(), (newServer) -> {
+                if (!newServer.equals(item.getServer())) {
                     Task.supplyAsync(Schedulers.io(), () -> {
                         ServerStorage storage = item.storageEntry.rootStorage();
-                        return storage.updateEntry(item.storageEntry, oldValue -> oldValue
-                                .withIpAndName(server.ip(), server.name())
-                                .withPackStatus(server.serverPackStatus()));
+                        return storage.updateEntry(item.storageEntry, oldServer -> {
+                            if (oldServer.equals(item.getServer())) {
+                                return oldServer
+                                        .withIpAndName(newServer.ip(), newServer.name())
+                                        .withPackStatus(newServer.serverPackStatus());
+                            }
+                            return oldServer;
+                        });
                     }).whenComplete(Schedulers.javafx(), (updated, exception) -> {
                         if (exception != null)
                             LOG.warning("Failed to save server data.", exception);
