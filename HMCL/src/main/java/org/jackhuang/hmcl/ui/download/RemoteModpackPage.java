@@ -45,7 +45,7 @@ public final class RemoteModpackPage extends ModpackPage {
             throw new IllegalStateException("MODPACK_SERVER_MANIFEST should exist");
 
         try {
-            controller.getSettings().put(MODPACK_MANIFEST, manifest.toModpack(null));
+            controller.getSettings().put(MODPACK_MANIFEST, manifest.toModpack());
         } catch (IOException e) {
             Controllers.dialog(i18n("modpack.type.server.malformed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             Platform.runLater(controller::onEnd);
