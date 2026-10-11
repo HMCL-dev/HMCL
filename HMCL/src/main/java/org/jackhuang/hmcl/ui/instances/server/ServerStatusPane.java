@@ -100,13 +100,11 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
                             gotoDownload,
                             null);
                 } else {
+                    if (Controllers.getGameInstancePage().getScene() == null) {
+                        Instances.modifyServerList(selectedInstance);
+                    }
                     if (Controllers.getGameInstancePage().getSelectedTab() instanceof ServerListPage listPage) {
                         listPage.addServer(server);
-                    } else {
-                        Instances.modifyServerList(selectedInstance);
-                        if (Controllers.getGameInstancePage().getSelectedTab() instanceof ServerListPage listPage) {
-                            listPage.addServer(server);
-                        }
                     }
                 }
             });
