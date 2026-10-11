@@ -52,9 +52,9 @@ public final class RemoteModpackPage extends ModpackPage {
             return;
         }
 
-        nameProperty.set(manifest.getName());
-        versionProperty.set(manifest.getVersion());
-        authorProperty.set(manifest.getAuthor());
+        nameProperty.set(manifest.name());
+        versionProperty.set(manifest.version());
+        authorProperty.set(manifest.author());
 
         HMCLGameRepository repository = controller.getSettings().get(ModpackPage.REPOSITORY);
         String name = controller.getSettings().get(MODPACK_NAME);
@@ -62,14 +62,14 @@ public final class RemoteModpackPage extends ModpackPage {
             txtModpackName.setText(name);
             txtModpackName.setDisable(true);
         } else {
-            txtModpackName.setText(LocalModpackPage.processModpackName(manifest.getName()));
+            txtModpackName.setText(LocalModpackPage.processModpackName(manifest.name()));
             txtModpackName.getValidators().addAll(
                     new RequiredValidator(),
                     new Validator(i18n("install.new_game.already_exists"), str -> !repository.instanceIdConflicts(str)),
                     new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId));
         }
 
-        btnDescription.setVisible(StringUtils.isNotBlank(manifest.getDescription()));
+        btnDescription.setVisible(StringUtils.isNotBlank(manifest.description()));
     }
 
     @Override
@@ -84,7 +84,7 @@ public final class RemoteModpackPage extends ModpackPage {
     }
 
     protected void onDescribe() {
-        Controllers.navigate(new WebPage(i18n("modpack.description"), manifest.getDescription()));
+        Controllers.navigate(new WebPage(i18n("modpack.description"), manifest.description()));
     }
 
     public static final SettingsMap.Key<ServerModpackManifest> MODPACK_SERVER_MANIFEST = new SettingsMap.Key<>("MODPACK_SERVER_MANIFEST");

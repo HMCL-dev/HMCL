@@ -20,7 +20,10 @@ package org.jackhuang.hmcl.modpack.server;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -120,10 +123,10 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
                 ? dependencyManager.newGameBuilder(instanceId)
                 : dependencyManager.newGameBuilder(this.updateTarget)) {
             builder.enableIsolation();
-            for (ServerModpackManifest.Addon addon : manifest.getAddons()) {
-                @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.getId());
+            for (ServerModpackManifest.Addon addon : manifest.addons()) {
+                @Nullable GameComponentType componentType = GameComponentType.fromPatchId(addon.id());
                 if (componentType != null)
-                    builder.component(componentType, addon.getVersion());
+                    builder.component(componentType, addon.version());
             }
             dependents.add(builder.buildAsync());
         }
@@ -144,7 +147,7 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
         dependencies.add(new ServerModpackCompletionTask(
                 dependency,
                 repository.getInstance(instanceId),
-                new ModpackConfiguration<>(manifest, MODPACK_TYPE, manifest.getName(), manifest.getVersion(), Collections.emptyList())));
+                new ModpackConfiguration<>(manifest, MODPACK_TYPE, manifest.name(), manifest.version(), Collections.emptyList())));
     }
 
     public static final String MODPACK_TYPE = "Server";
