@@ -118,7 +118,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
 
     public void showServerStatus(ServerListItem item) {
         if (gameInstance != null) {
-            runInFX(() -> Controllers.dialog(new ServerStatusPane(item.observableServerStatus, item.getServer())));
+            runInFX(item::openServerStatusPane);
         }
     }
 
@@ -307,6 +307,10 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
 
         public Server getServer() {
             return storageEntry.getServer();
+        }
+
+        public void openServerStatusPane() {
+            Controllers.dialog(new ServerStatusPane(observableServerStatus, getServer()));
         }
     }
 
@@ -596,6 +600,15 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                         searchPause.playFromStart();
                     }
                 });
+
+                listView.setOnContextMenuRequested(event -> {
+                    ServerListItem selectedItem = listView.getSelectionModel().getSelectedItem();
+                    if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
+                        listView.getSelectionModel().clearSelection();
+                        selectedItem.openServerStatusPane();
+                    }
+                });
+
                 JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
                     changeToolbar(toolbarNormal);
                     searchField.clear();
