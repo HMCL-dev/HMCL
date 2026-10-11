@@ -21,13 +21,12 @@ import com.google.gson.JsonObject;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
-import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
+import org.jackhuang.hmcl.game.skin.TextureType;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
@@ -35,7 +34,7 @@ import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Path;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -93,7 +92,7 @@ public abstract class Account implements Observable {
         return false;
     }
 
-    public void uploadSkin(boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
+    public void uploadSkin(boolean isSlim, InputStream file) throws AuthenticationException, UnsupportedOperationException {
         throw new UnsupportedOperationException("Unsupported Operation");
     }
 

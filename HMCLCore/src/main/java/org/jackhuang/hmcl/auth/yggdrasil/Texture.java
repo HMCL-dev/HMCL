@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,21 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 @Immutable
-public record Texture(String url, Map<String, String> metadata) {
-
+public record Texture(@Nullable String url, @Nullable Map<String, String> metadata) {
     public Texture() {
         this(null, null);
-    }
-
-    @Override
-    @Nullable
-    public String url() {
-        return url;
-    }
-
-    @Override
-    @Nullable
-    public Map<String, String> metadata() {
-        return metadata;
     }
 }
