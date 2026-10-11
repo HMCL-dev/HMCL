@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.gradle.terracotta;
 
 import com.google.gson.JsonObject;
 import org.gradle.api.GradleException;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.*;
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +35,12 @@ public abstract class TerracottaConfigValidateTask extends AbstractTerracottaTas
     @Input
     public abstract Property<@NotNull String> getUpgradeTaskPath();
 
+    @InputFile
+    public abstract RegularFileProperty getConfigFile();
+
     @TaskAction
     public void run() throws IOException {
-        Path output = getOutputFile().get().getAsFile().toPath();
+        Path output = getConfigFile().get().getAsFile().toPath();
         if (Files.isReadable(output)) {
             String version = GSON.fromJson(Files.readString(output, StandardCharsets.UTF_8), JsonObject.class)
                     .get("version_latest").getAsJsonPrimitive().getAsString();

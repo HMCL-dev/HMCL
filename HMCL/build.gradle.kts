@@ -365,27 +365,27 @@ tasks.register<JavaExec>("run") {
 val terracottaConfigFile = layout.projectDirectory.file("src/main/resources/assets/terracotta.json")
 
 val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgradeTerracottaConfig") {
-    classifiers.set(
-        listOf(
-            "windows-x86_64", "windows-arm64",
-            "macos-x86_64", "macos-arm64",
-            "linux-x86_64", "linux-arm64", "linux-loongarch64", "linux-riscv64",
-            "freebsd-x86_64"
-        )
+    configFile = terracottaConfigFile
+
+    classifiers = listOf(
+        "windows-x86_64", "windows-arm64",
+        "macos-x86_64", "macos-arm64",
+        "linux-x86_64", "linux-arm64", "linux-loongarch64", "linux-riscv64",
+        "freebsd-x86_64"
     )
 
-    downloadURL.set($$"https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz")
+    downloadURL = $$"https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz"
 
-    templateFile.set(layout.projectDirectory.file("terracotta-template.json"))
+    templateFile = layout.projectDirectory.file("terracotta-template.json")
 }
 
 val validateTerracottaConfig = tasks.register<TerracottaConfigValidateTask>("validateTerracottaConfig") {
-    upgradeTaskPath.set(upgradeTerracottaConfig.get().path)
+    configFile = terracottaConfigFile
+    upgradeTaskPath = upgradeTerracottaConfig.get().path
 }
 
 tasks.withType<AbstractTerracottaTask> {
-    version.set(libs.versions.terracotta)
-    outputFile.set(terracottaConfigFile)
+    version = libs.versions.terracotta
 }
 
 // Check Translations

@@ -60,6 +60,9 @@ public abstract class TerracottaConfigUpgradeTask extends AbstractTerracottaTask
     @InputFile
     public abstract RegularFileProperty getTemplateFile();
 
+    @OutputFile
+    public abstract RegularFileProperty getConfigFile();
+
     @TaskAction
     public void run() throws Exception {
         JsonObject config = GSON.fromJson(
@@ -142,7 +145,7 @@ public abstract class TerracottaConfigUpgradeTask extends AbstractTerracottaTask
         config.add("version_latest", new JsonPrimitive(getVersion().get()));
         config.add("packages", GSON.toJsonTree(bundles));
 
-        Files.writeString(getOutputFile().get().getAsFile().toPath(), GSON.toJson(config), StandardCharsets.UTF_8);
+        Files.writeString(getConfigFile().get().getAsFile().toPath(), GSON.toJson(config), StandardCharsets.UTF_8);
     }
 
     private record Bundle(
