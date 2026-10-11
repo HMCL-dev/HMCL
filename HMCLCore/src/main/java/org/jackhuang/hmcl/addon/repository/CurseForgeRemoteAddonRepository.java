@@ -468,9 +468,9 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                 pair(1, RemoteAddon.DependencyType.EMBEDDED),
                 pair(2, RemoteAddon.DependencyType.OPTIONAL),
                 pair(3, RemoteAddon.DependencyType.REQUIRED),
-                pair(4, RemoteAddon.DependencyType.TOOL),
+                pair(4, RemoteAddon.DependencyType.OPTIONAL), // CF name: TOOL
                 pair(5, RemoteAddon.DependencyType.INCOMPATIBLE),
-                pair(6, RemoteAddon.DependencyType.INCLUDE)
+                pair(6, RemoteAddon.DependencyType.EMBEDDED) // CF name: INCLUDE, should never appear because CF hides this
         );
 
         @Override
