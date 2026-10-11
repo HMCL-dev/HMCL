@@ -39,6 +39,10 @@ import java.util.Set;
 public record ServerModpackManifest(String name, String author, String version, String description, String fileApi,
                                     List<ModpackConfiguration.FileInformation> files,
                                     List<Addon> addons) implements ModpackManifest, Validation {
+    public ServerModpackManifest() {
+        this("", "", "", "", "", Collections.emptyList(), Collections.emptyList());
+    }
+    
     @Override
     public ModpackProvider getProvider() {
         return ServerModpackProvider.INSTANCE;
