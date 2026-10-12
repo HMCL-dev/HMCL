@@ -39,8 +39,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class ServerStorage {
     private final Lock handleLock = new ReentrantLock();
     private final List<GameInstance> holdInstances = new CopyOnWriteArrayList<>();
+    private final List<ServerStorageEntry> storageEntries = new CopyOnWriteArrayList<>();
     private final Path serverDatFilePath;
-    private final List<ServerStorageEntry> storageEntries;
     private static volatile HashCalcer hashCalcer;
     private volatile boolean storageValid = true;
     private byte[] currentFileHash;
@@ -51,15 +51,13 @@ public class ServerStorage {
 
         handleLock.lock();
         try {
+            storageEntries.clear();
             if (Files.exists(serverDatFilePath)) {
                 List<Server> servers = Server.loadFromServersDat(serverDatFilePath);
-                storageEntries = new CopyOnWriteArrayList<>();
                 for (Server server : servers) {
                     ServerStorageEntry entry = new ServerStorageEntry(server);
                     storageEntries.add(entry);
                 }
-            } else {
-                storageEntries = new CopyOnWriteArrayList<>();
             }
         } finally {
             handleLock.unlock();
@@ -118,10 +116,15 @@ public class ServerStorage {
         }
     }
 
-    public void forceOverwrite() throws IOException {
+    public void forceOverwrite(@NotNull List<Server> servers) throws IOException {
         handleLock.lock();
         try {
-            Server.saveToServersDat(storageEntries.stream().map(e -> e.server).toList(), serverDatFilePath);
+            storageEntries.clear();
+            for (Server server : servers) {
+                ServerStorageEntry entry = new ServerStorageEntry(server);
+                storageEntries.add(entry);
+            }
+            Server.saveToServersDat(servers, serverDatFilePath);
             currentFileHash = calcServerDatFileHash();
         } finally {
             handleLock.unlock();
@@ -206,7 +209,7 @@ public class ServerStorage {
 
     public void checkHash() throws IOException {
         if (!Arrays.equals(currentFileHash, calcServerDatFileHash())) {
-            throw new DatFileModifiedExternalException(this, serverDatFilePath.toAbsolutePath().toString());
+            throw new DatFileModifiedExternalException(this, storageEntries.stream().map(e -> e.server).toList(), serverDatFilePath.toAbsolutePath().toString());
         }
     }
 

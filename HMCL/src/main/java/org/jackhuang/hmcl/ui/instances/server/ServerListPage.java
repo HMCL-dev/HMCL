@@ -195,7 +195,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
         Controllers.dialog(new MessageDialogPane.Builder(i18n("server.manage.error.file.modified"), null, MessageDialogPane.MessageType.ERROR)
                 .addAction(i18n("server.manage.error.file.modified.overwrite"), () -> {
                     Task.runAsync(Schedulers.io(), () -> {
-                        e.getStorage().forceOverwrite();
+                        e.getStorage().forceOverwrite(e.getDirtyServers());
                     }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to overwrite server data.", exception);
