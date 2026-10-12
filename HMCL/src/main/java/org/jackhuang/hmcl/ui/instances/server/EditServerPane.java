@@ -276,11 +276,13 @@ public class EditServerPane extends TransitionPane implements DialogAware {
                     case BLOCKED_BY_MOJANG -> i18n("server.manage.status.error.blocked");
                 });
             } else {
-                fireEvent(new DialogCloseEvent());
-                if (reference != null) {
-                    handleCallback.accept(reference.withIpNameAndPackStatus(serverIP, serverName, packStatus));
-                } else {
-                    handleCallback.accept(new Server(packStatus, false, status.favicon(), serverIP, serverName));
+                if (getScene() != null) {
+                    fireEvent(new DialogCloseEvent());
+                    if (reference != null) {
+                        handleCallback.accept(reference.withIpNameAndPackStatus(serverIP, serverName, packStatus));
+                    } else {
+                        handleCallback.accept(new Server(packStatus, false, status.favicon(), serverIP, serverName));
+                    }
                 }
             }
         }).start();
