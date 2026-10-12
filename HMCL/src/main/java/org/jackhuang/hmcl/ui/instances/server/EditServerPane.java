@@ -64,10 +64,13 @@ public class EditServerPane extends TransitionPane implements DialogAware {
 
     private final SimpleBooleanProperty stillActionProgress = new SimpleBooleanProperty(false);
 
+    private boolean cancelled;
+
     public EditServerPane(Type type, @Nullable Server reference, Consumer<Server> handleCallback) {
         this.type = type;
         this.reference = reference;
         this.handleCallback = handleCallback;
+        this.cancelled = false;
 
         getStyleClass().add("skin-pane");
 
@@ -279,23 +282,25 @@ public class EditServerPane extends TransitionPane implements DialogAware {
                     case BLOCKED_BY_MOJANG -> i18n("server.manage.status.error.blocked");
                 });
             } else {
-                if (getScene() != null) {
-                    fireEvent(new DialogCloseEvent());
-                    if (reference != null) {
-                        handleCallback.accept(reference
-                                .withIpAndName(serverIP, serverName)
-                                .withPackStatus(packStatus)
-                                .withIcon(status.favicon())
-                        );
-                    } else {
-                        handleCallback.accept(new Server(packStatus, false, status.favicon(), serverIP, serverName));
-                    }
+                if (getScene() == null || cancelled) {
+                    return;
+                }
+                fireEvent(new DialogCloseEvent());
+                if (reference != null) {
+                    handleCallback.accept(reference
+                            .withIpAndName(serverIP, serverName)
+                            .withPackStatus(packStatus)
+                            .withIcon(status.favicon())
+                    );
+                } else {
+                    handleCallback.accept(new Server(packStatus, false, status.favicon(), serverIP, serverName));
                 }
             }
         }).start();
     }
 
     private void onCancel() {
+        cancelled = true;
         fireEvent(new DialogCloseEvent());
     }
 
