@@ -97,21 +97,41 @@ public record ServerAddress(
     }
 
     public ServerAddressResolveResult resolve() {
+        InetSocketAddress resolvedAddress = null;
+        UnknownHostException originalResolveException = null;
         try {
-            InetSocketAddress inetSocketAddress = hostAndPort.createInetSocketAddress();
-            if (MojangBlockServerChecker.isBlocking(inetSocketAddress)) {
+            resolvedAddress = hostAndPort.createInetSocketAddress();
+        } catch (UnknownHostException e) {
+            originalResolveException = e;
+        }
+
+        if (resolvedAddress != null) {
+            if (MojangBlockServerChecker.isBlocking(resolvedAddress)) {
                 return ServerAddressResolveResult.failed(this, ServerAddressResolveResult.FailureResult.Reason.BLOCKED_BY_MOJANG, new ServerBlockedByMojangException("blocked by mojang block server"));
             }
-            HostAndPort lookupDnsResult = ServerDnsSrvRedirector.lookup(this);
-            if (lookupDnsResult != null) {
-                inetSocketAddress = lookupDnsResult.createInetSocketAddress();
-                if (MojangBlockServerChecker.isBlocking(inetSocketAddress)) {
+        }
+
+        if (MojangBlockServerChecker.isBlocking(this.hostAndPort())) {
+            return ServerAddressResolveResult.failed(this, ServerAddressResolveResult.FailureResult.Reason.BLOCKED_BY_MOJANG, new ServerBlockedByMojangException("blocked by mojang block server"));
+        }
+
+        try {
+            HostAndPort lookupDnsResultHostAndPort = ServerDnsSrvRedirector.lookup(this);
+            if (lookupDnsResultHostAndPort != null) {
+                InetSocketAddress redirectResolvedAddress = lookupDnsResultHostAndPort.createInetSocketAddress();
+                if (MojangBlockServerChecker.isBlocking(redirectResolvedAddress)) {
                     return ServerAddressResolveResult.failed(this, ServerAddressResolveResult.FailureResult.Reason.BLOCKED_BY_MOJANG, new ServerBlockedByMojangException("blocked by mojang block server"));
                 }
+                return ServerAddressResolveResult.succeed(this, redirectResolvedAddress);
             }
-            return ServerAddressResolveResult.succeed(this, inetSocketAddress);
         } catch (UnknownHostException e) {
             return ServerAddressResolveResult.failed(this, ServerAddressResolveResult.FailureResult.Reason.UNKNOWN_HOST, e);
+        }
+
+        if (resolvedAddress != null) {
+            return ServerAddressResolveResult.succeed(this, resolvedAddress);
+        } else {
+            return ServerAddressResolveResult.failed(this, ServerAddressResolveResult.FailureResult.Reason.UNKNOWN_HOST, originalResolveException);
         }
     }
 
