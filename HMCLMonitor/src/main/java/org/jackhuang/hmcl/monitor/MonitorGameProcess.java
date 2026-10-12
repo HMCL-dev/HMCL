@@ -92,25 +92,14 @@ public final class MonitorGameProcess implements ProcessInfo {
 
     @Override
     public void stop() {
-        // The monitor cannot be interrupted the way the direct launch path's ExitWaiter is; the
-        // rewritten spec file is the cancellation signal, so write it before destroying the process.
-        Path specFile = this.specFile;
         if (specFile != null)
-            writeCancelSpec(specFile);
-        ProcessHandle handle = this.handle;
+            try {
+                // notify the monitor
+                JsonUtils.writeToJsonFile(specFile, ProcessSpec.canceledSpec());
+            } catch (IOException e) {
+                LOG.warning("Failed to rewrite the monitor spec file " + specFile + " to mark the cancellation", e);
+            }
         if (handle != null)
             handle.destroy();
-    }
-
-    /// Rewrites the consumed spec file to mark the game process as manually canceled. Best-effort:
-    /// on a failure the monitor classifies the exit as it does for any other abnormal exit.
-    private static void writeCancelSpec(Path specFile) {
-        try {
-            ProcessSpec spec = new ProcessSpec();
-            spec.canceled = true;
-            JsonUtils.writeToJsonFile(specFile, spec);
-        } catch (IOException e) {
-            LOG.warning("Failed to rewrite the monitor spec file " + specFile + " to mark the cancellation", e);
-        }
     }
 }

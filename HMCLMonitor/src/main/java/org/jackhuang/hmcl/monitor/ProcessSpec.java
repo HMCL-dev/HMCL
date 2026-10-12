@@ -17,24 +17,16 @@
  */
 package org.jackhuang.hmcl.monitor;
 
+import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /// The specification of the game process to supervise, exchanged with the monitor process as JSON.
-///
-/// ```json
-/// {
-///   "command": ["javaw", "-Xmx4G", "net.minecraft.client.main.Main"],
-///   "directory": "D:\\Game\\.minecraft",
-///   "environment": { "APPDATA": "C:\\Users\\user\\AppData\\Roaming" },
-///   "encoding": "UTF-8",
-///   "relaunchAlways": false,
-///   "relaunchOnCrash": true
-/// }
-/// ```
 @NotNullByDefault
 final class ProcessSpec {
     /// The command line to execute, passed to [ProcessBuilder] verbatim.
@@ -57,21 +49,35 @@ final class ProcessSpec {
     boolean relaunchAlways;
     /// Whether to relaunch the launcher after the game exits abnormally.
     boolean relaunchOnCrash;
-    /// The id of the launched instance, or `null` when unknown.
-    @Nullable String instanceId;
     /// The persistent id of the registered game directory owning the launched instance, or `null`
     /// when unknown.
     @Nullable String gameDirectoryId;
-    /// The display name of the launched version, or `null` when unknown.
-    @Nullable String versionName;
-    /// The game directory of the launched instance, or `null` when unknown.
-    @Nullable String gameDir;
-    /// The maximum memory of the game process in MiB, or `null` when unset.
-    @Nullable Integer maxMemory;
-    /// The binary path of the Java runtime the game runs on, or `null` when unknown.
-    @Nullable String javaBinary;
-    /// The version string of the Java runtime the game runs on, or `null` when unknown.
-    @Nullable String javaVersion;
-    /// The architecture name of the Java runtime the game runs on, or `null` when unknown.
-    @Nullable String javaArchitecture;
+
+    @Nullable LaunchOptions launchOptions;
+
+    public static ProcessSpec canceledSpec() {
+        ProcessSpec spec = new ProcessSpec();
+        spec.canceled = true;
+        return spec;
+    }
+
+    public ProcessSpec() {}
+
+    public ProcessSpec(MonitorClient.MonitorLaunchContext context) {
+        ProcessBuilder builder = context.builder();
+
+        command = new ArrayList<>(builder.command());
+        if (builder.directory() != null)
+            directory = builder.directory().getAbsolutePath();
+        environment = new LinkedHashMap<>(builder.environment());
+
+        encoding = context.encoding().name();
+        inheritStdin = context.listener() == null;
+        postExitCommand = context.postExitCommand();
+        relaunchAlways = context.relaunchPolicy() == MonitorClient.RelaunchPolicy.ALWAYS;
+        relaunchOnCrash = context.relaunchPolicy() == MonitorClient.RelaunchPolicy.ON_CRASH;
+        gameDirectoryId = context.gameDirectoryId();
+
+        launchOptions = context.options();
+    }
 }

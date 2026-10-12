@@ -181,8 +181,11 @@ public final class MonitorSupervisor {
 
                 @Nullable Path resultFile = null;
                 if (relaunch && parentGone.get()) {
-                    if (crashed)
-                        resultFile = writeResult(spec, gameProcess.getPid(), processStartTime, reportedType, logFile);
+                    if (crashed) {
+                        resultFile = Files.createTempFile("hmcl-monitor-result-", ".json");
+                        ResultSpec result = new ResultSpec(spec, gameProcess.getPid(), processStartTime, exitType, logFile);
+                        MonitorClient.writeSpec(result, resultFile);
+                    }
                     relaunch(resultFile);
                 }
 
@@ -212,8 +215,8 @@ public final class MonitorSupervisor {
             // The direct launch path runs the post-exit command in the game directory, which is
             // not necessarily the game process's working directory when version isolation is on.
             ProcessBuilder builder = new ProcessBuilder(spec.postExitCommand);
-            if (spec.gameDir != null && !spec.gameDir.isEmpty())
-                builder.directory(new File(spec.gameDir));
+            if (spec.launchOptions != null)
+                builder.directory(spec.launchOptions.getGameDir().toFile());
             else if (spec.directory != null && !spec.directory.isEmpty())
                 builder.directory(new File(spec.directory));
             if (spec.environment != null)
@@ -243,28 +246,6 @@ public final class MonitorSupervisor {
             }
         }
         return canceled;
-    }
-
-    /// Writes the [ResultSpec] consumed by a relaunched launcher to a temp file.
-    private static Path writeResult(ProcessSpec spec, long pid, long processStartTime,
-                                    ProcessListener.ExitType exitType, Path logFile) throws IOException {
-        Path resultFile = Files.createTempFile("hmcl-monitor-result-", ".json");
-        ResultSpec result = new ResultSpec();
-        result.pid = pid;
-        result.processStartTime = processStartTime;
-        result.exitType = exitType.name();
-        result.logFile = logFile.toString();
-        result.instanceId = spec.instanceId;
-        result.gameDirectoryId = spec.gameDirectoryId;
-        result.versionName = spec.versionName;
-        result.gameDir = spec.gameDir;
-        result.maxMemory = spec.maxMemory;
-        result.javaBinary = spec.javaBinary;
-        result.javaVersion = spec.javaVersion;
-        result.javaArchitecture = spec.javaArchitecture;
-        result.commands = spec.command;
-        JsonUtils.writeToJsonFile(resultFile, result);
-        return resultFile;
     }
 
     /// Starts a new HMCL main process. Fire-and-forget; the current monitor process exits right after.

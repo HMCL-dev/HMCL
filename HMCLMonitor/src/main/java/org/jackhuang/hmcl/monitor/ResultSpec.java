@@ -17,9 +17,12 @@
  */
 package org.jackhuang.hmcl.monitor;
 
+import org.jackhuang.hmcl.game.LaunchOptions;
+import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.List;
 
 /// The result of a supervised game process, written by the monitor and consumed by a relaunched
@@ -34,23 +37,21 @@ public final class ResultSpec {
     @Nullable String exitType;
     /// The session log file collecting the game output, or `null` when unavailable.
     @Nullable String logFile;
-    /// The id of the launched instance, or `null` when unknown.
-    @Nullable String instanceId;
     /// The persistent id of the registered game directory owning the launched instance, or `null`
     /// when unknown.
     @Nullable String gameDirectoryId;
-    /// The display name of the launched version, or `null` when unknown.
-    @Nullable String versionName;
-    /// The game directory of the launched instance, or `null` when unknown.
-    @Nullable String gameDir;
-    /// The maximum memory of the game process in MiB, or `null` when unset.
-    @Nullable Integer maxMemory;
-    /// The binary path of the Java runtime the game runs on, or `null` when unknown.
-    @Nullable String javaBinary;
-    /// The version string of the Java runtime the game runs on, or `null` when unknown.
-    @Nullable String javaVersion;
-    /// The architecture name of the Java runtime the game runs on, or `null` when unknown.
-    @Nullable String javaArchitecture;
     /// The command line of the game process, or `null` when unknown.
     @Nullable List<String> commands;
+
+    @Nullable LaunchOptions launchOptions;
+
+    ResultSpec(ProcessSpec spec, long pid, long processStartTime, ProcessListener.ExitType exitType, Path logFile) {
+        this.pid = pid;
+        this.processStartTime = processStartTime;
+        this.exitType = exitType.name();
+        this.logFile = logFile.toString();
+        gameDirectoryId = spec.gameDirectoryId;
+        commands = spec.command;
+        launchOptions = spec.launchOptions;
+    }
 }

@@ -17,15 +17,20 @@
  */
 package org.jackhuang.hmcl.monitor;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.JVMLaunchFailedEvent;
 import org.jackhuang.hmcl.event.ProcessExitedAbnormallyEvent;
 import org.jackhuang.hmcl.event.ProcessStoppedEvent;
 import org.jackhuang.hmcl.game.LaunchOptions;
-import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.game.ProxyOption;
+import org.jackhuang.hmcl.game.Renderer;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.JavaProcessLauncher;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -38,9 +43,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -53,13 +58,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public final class MonitorClient {
 
-    /// Whether the monitor feature is enabled through the {@code HMCL_USE_HMCLMONITOR} environment variable.
     private static final boolean MONITOR_ENABLED = System.getenv("HMCL_USE_HMCLMONITOR") != null;
 
     private MonitorClient() {
     }
 
-    /// Returns whether the monitor feature is enabled.
     public static boolean isEnabled() {
         return MONITOR_ENABLED;
     }
@@ -82,25 +85,42 @@ public final class MonitorClient {
         ALWAYS
     }
 
-    /// Launches the game process via a new HMCL monitor process and returns a view of it.
-    ///
-    /// <p>Blocks until the monitor has created the game process and reported its id back; game
-    /// output and the exit event are dispatched to the [listener][MonitorLaunchContext#listener()]
-    /// asynchronously afterward.
-    ///
-    /// @param context the launch context prepared by [org.jackhuang.hmcl.launch.DefaultLauncher]
-    /// @return a view of the game process managed by the monitor
-    /// @throws IOException if the monitor process could not be started, failed to create the game
-    ///                     process, or did not complete the handshake in time
+    private static final Gson gsonForGameOptions = new GsonBuilder()
+            .enableComplexMapKeySerialization()
+            .setPrettyPrinting()
+            .registerTypeAdapter(Instant.class, InstantTypeAdapter.INSTANCE)
+            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
+            .registerTypeHierarchyAdapter(Path.class, PathTypeAdapter.INSTANCE) // fix Path
+            .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
+            .registerTypeAdapterFactory(LowerCaseEnumTypeAdapter.FACTORY)
+            .registerTypeAdapterFactory(JsonTypeAdapterFactory.INSTANCE)
+            .addSerializationExclusionStrategy(new ExclusionStrategy() {
+                @Override
+                public boolean shouldSkipField(FieldAttributes f) {
+                    return false;
+                }
+
+                @Override
+                public boolean shouldSkipClass(Class<?> clazz) {
+                    return ProxyOption.class.isAssignableFrom(clazz)
+                            || Renderer.class.isAssignableFrom(clazz); // ignoring these
+                }
+            })
+            .create();
+
+    static void writeSpec(Object obj, Path specFile) throws IOException {
+        try (var writer = Files.newBufferedWriter(specFile)) {
+            gsonForGameOptions.toJson(obj, writer);
+        }
+    }
+
     public static MonitorGameProcess launchNewMonitor(MonitorLaunchContext context) throws IOException {
         Path thisJar = JarUtils.thisJarPath();
         if (thisJar == null)
             throw new IOException("Failed to find current HMCL location");
 
-        LaunchOptions options = context.options();
-
         Path specFile = Files.createTempFile("hmcl-monitor-spec-", ".json");
-        JsonUtils.writeToJsonFile(specFile, buildSpec(context, options));
+        writeSpec(new ProcessSpec(context), specFile);
 
         List<String> commandline = JavaProcessLauncher.buildJavaCommandLine(thisJar,
                 "--monitor", specFile.toAbsolutePath().toString());
@@ -145,36 +165,6 @@ public final class MonitorClient {
         }, "hmcl-monitor-reader", true);
 
         return process;
-    }
-
-    /// Builds the [ProcessSpec] to exchange with the monitor as JSON.
-    private static ProcessSpec buildSpec(MonitorLaunchContext context, LaunchOptions options) {
-        ProcessBuilder builder = context.builder();
-        ProcessSpec spec = new ProcessSpec();
-        spec.command = new ArrayList<>(builder.command());
-        if (builder.directory() != null)
-            spec.directory = builder.directory().getAbsolutePath();
-        spec.environment = new LinkedHashMap<>(builder.environment());
-        spec.encoding = context.encoding().name();
-        spec.inheritStdin = context.listener() == null;
-        spec.postExitCommand = context.postExitCommand();
-        RelaunchPolicy relaunchPolicy = context.relaunchPolicy();
-        spec.relaunchAlways = relaunchPolicy == RelaunchPolicy.ALWAYS;
-        spec.relaunchOnCrash = relaunchPolicy == RelaunchPolicy.ON_CRASH;
-        if (options.getInstanceId() != null)
-            spec.instanceId = options.getInstanceId().toString();
-        spec.gameDirectoryId = context.gameDirectoryId();
-        spec.versionName = options.getVersionName();
-        if (options.getGameDir() != null)
-            spec.gameDir = options.getGameDir().toString();
-        spec.maxMemory = options.getMaxMemory();
-        JavaRuntime java = options.getJava();
-        if (java != null) {
-            spec.javaBinary = java.getBinary().toString();
-            spec.javaVersion = java.getVersion();
-            spec.javaArchitecture = java.getArchitecture().name();
-        }
-        return spec;
     }
 
     /// Dispatches one protocol message received from the monitor.
