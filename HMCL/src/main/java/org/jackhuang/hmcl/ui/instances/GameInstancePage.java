@@ -80,6 +80,10 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     /// Last concrete instance displayed by this page.
     private @Nullable GameInstanceID preferredInstanceId;
 
+    public TabHeader.Tab<ServerListPage> getServerListTab() {
+        return serverListTab;
+    }
+
     public static class WorkingDirChangedEvent extends Event {
         public static final EventType<WorkingDirChangedEvent> EVENT_TYPE = new EventType<>(Event.ANY, "WORKING_DIR_CHANGED");
 
