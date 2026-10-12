@@ -289,7 +289,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
         getItems().setAll(stream.toList());
     }
 
-    public static final class ServerListItem {
+    public final class ServerListItem {
         private final @NotNull ServerStorage.ServerStorageEntry storageEntry;
         private final Image serverFaviconImage;
 
@@ -311,7 +311,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
         }
 
         public void openServerStatusPane() {
-            Controllers.dialog(new ServerStatusPane(observableServerStatus, getServer()));
+            Controllers.dialog(new ServerStatusPane(observableServerStatus, getServer(), ServerListPage.this.gameInstance));
         }
     }
 

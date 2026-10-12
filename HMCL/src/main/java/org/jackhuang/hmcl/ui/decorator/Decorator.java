@@ -263,7 +263,7 @@ public final class Decorator {
         // Setup Minecraft server DnD
         root.addEventFilter(DragEvent.DRAG_OVER, ServerDnD.dragOverHandler());
         root.addEventFilter(DragEvent.DRAG_DROPPED, ServerDnD.dragDroppedHandler(
-                server -> Controllers.dialog(new ServerStatusPane(null, server, true))));
+                server -> Controllers.dialog(new ServerStatusPane(null, server, true, null))));
     }
 
     /// Returns the node that must be installed as the scene root.

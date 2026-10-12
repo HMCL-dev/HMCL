@@ -30,7 +30,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.server.Server;
 import org.jackhuang.hmcl.server.ServerStatus;
 import org.jackhuang.hmcl.server.ServerStatusResult;
@@ -56,13 +55,19 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
     private final Label lblErrorMessage = new Label();
     private final ObservableServerStatus observableServerStatus;
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
+    private final @Nullable HMCLGameInstance currentGameInstance;
 
-    public ServerStatusPane(ObservableServerStatus reference, Server server) {
-        this(reference, server, false);
+    public ServerStatusPane(ObservableServerStatus reference, Server server, @Nullable HMCLGameInstance gameInstance) {
+        this(reference, server, false, gameInstance);
     }
 
-    public ServerStatusPane(ObservableServerStatus reference, Server server, boolean fromDnD) {
+    public ServerStatusPane(ObservableServerStatus reference, Server server, boolean fromDnD, @Nullable HMCLGameInstance gameInstance) {
         this.server = server;
+        if (gameInstance == null) {
+            this.currentGameInstance = GameDirectoryManager.getSelectedRepository().getSelectedInstance();
+        } else {
+            this.currentGameInstance = gameInstance;
+        }
         this.observableServerStatus = Objects.requireNonNullElseGet(reference, () -> new ObservableServerStatus(server.ip()));
 
         getStyleClass().add("skin-pane");
@@ -88,9 +93,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
             addToInstallBtn.setOnAction(ignored0 -> {
                 fireEvent(new DialogCloseEvent());
                 // open server manager
-                HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
-                HMCLGameInstance selectedInstance = repository.getSelectedInstance();
-                if (selectedInstance == null) {
+                if (currentGameInstance == null) {
                     JFXButton gotoDownload = new JFXButton(i18n("instance.empty.launch.goto_download"));
                     gotoDownload.getStyleClass().add("dialog-accept");
                     gotoDownload.setOnAction(ignored1 -> Controllers.navigate(Controllers.getDownloadPage()));
@@ -101,7 +104,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
                             null);
                 } else {
                     if (Controllers.getGameInstancePage().getScene() == null) {
-                        Instances.modifyServerList(selectedInstance);
+                        Instances.modifyServerList(currentGameInstance);
                     }
 
                     if (!(Controllers.getGameInstancePage().getSelectedTab() instanceof ServerListPage)) {
@@ -121,9 +124,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
         launchBtn.getStyleClass().add("dialog-accept");
         launchBtn.setOnAction(e -> {
             fireEvent(new DialogCloseEvent());
-            HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
-            HMCLGameInstance selectedInstance = repository.getSelectedInstance();
-            Instances.launchAndEnterServer(selectedInstance, server.ip());
+            Instances.launchAndEnterServer(currentGameInstance, server.ip());
         });
         actions.getChildren().add(launchBtn);
 
