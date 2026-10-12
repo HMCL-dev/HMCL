@@ -23,18 +23,19 @@ import org.jackhuang.hmcl.event.ProcessExitedAbnormallyEvent;
 import org.jackhuang.hmcl.event.ProcessStoppedEvent;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.launch.DefaultLauncher.MonitorLaunchContext;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.JavaProcessLauncher;
+import org.jackhuang.hmcl.util.platform.ProcessInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -62,6 +63,24 @@ public final class MonitorClient {
     /// Returns whether the monitor feature is enabled.
     public static boolean isEnabled() {
         return MONITOR_ENABLED;
+    }
+
+    public record MonitorLaunchContext(
+            ProcessBuilder builder,
+            @Nullable ProcessListener listener,
+            Charset encoding,
+            LaunchOptions options,
+            @Nullable String gameDirectoryId,
+            @Nullable List<String> postExitCommand,
+            RelaunchPolicy relaunchPolicy) {}
+
+    public enum RelaunchPolicy {
+        /// Never relaunch the launcher after the game exits.
+        NEVER,
+        /// Relaunch the launcher when the game exits abnormally.
+        ON_CRASH,
+        /// Relaunch the launcher unconditionally after the game exits.
+        ALWAYS
     }
 
     /// Launches the game process via a new HMCL monitor process and returns a view of it.
@@ -140,9 +159,9 @@ public final class MonitorClient {
         spec.encoding = context.encoding().name();
         spec.inheritStdin = context.listener() == null;
         spec.postExitCommand = context.postExitCommand();
-        MonitorLaunchContext.RelaunchPolicy relaunchPolicy = context.relaunchPolicy();
-        spec.relaunchAlways = relaunchPolicy == MonitorLaunchContext.RelaunchPolicy.ALWAYS;
-        spec.relaunchOnCrash = relaunchPolicy == MonitorLaunchContext.RelaunchPolicy.ON_CRASH;
+        RelaunchPolicy relaunchPolicy = context.relaunchPolicy();
+        spec.relaunchAlways = relaunchPolicy == RelaunchPolicy.ALWAYS;
+        spec.relaunchOnCrash = relaunchPolicy == RelaunchPolicy.ON_CRASH;
         if (options.getInstanceId() != null)
             spec.instanceId = options.getInstanceId().toString();
         spec.gameDirectoryId = context.gameDirectoryId();

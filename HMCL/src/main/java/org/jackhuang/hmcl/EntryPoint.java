@@ -51,8 +51,7 @@ public final class EntryPoint {
         createHMCLDirectories();
         LOG.start(Metadata.HMCL_LOCAL_HOME.resolve("logs"));
 
-        // The monitor role must be dispatched before JavaFX is initialized, so that the monitor
-        // process stays lightweight and works without a JavaFX installation.
+        // start HMCL monitor before JavaFX initialized
         if (MonitorSupervisor.processArguments(args)) {
             exit(0);
         }

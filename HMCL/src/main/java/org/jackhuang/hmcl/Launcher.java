@@ -151,8 +151,7 @@ public final class Launcher extends Application {
                 WindowsNativeUtils.installWindowsAppUserModelRelaunchProperties(primaryStage);
                 primaryStage.show();
 
-                // This process may have been relaunched by the HMCL monitor to present the crash
-                // window of a supervised game process.
+                // check wheather to show log from HMCL monitor
                 Path pendingCrashReport = MonitorCrashReporter.processArguments(getParameters().getRaw().toArray(new String[0]));
                 if (pendingCrashReport != null)
                     MonitorCrashReporter.show(pendingCrashReport);

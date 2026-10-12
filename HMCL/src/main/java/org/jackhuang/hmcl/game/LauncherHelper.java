@@ -284,7 +284,7 @@ public final class LauncherHelper {
 
                     LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(gameInstance.getModsDirectory(), 10));
 
-                    HMCLGameLauncher launcher = new HMCLGameLauncher(
+                    return new HMCLGameLauncher(
                             gameInstance,
                             launchManifest.get(),
                             authInfo,
@@ -293,20 +293,6 @@ public final class LauncherHelper {
                                     ? null // Unnecessary to start listening to game process output when close launcher immediately after game launched.
                                     : new HMCLProcessListener(authInfo, launchOptions, launchingLatch, gameInstance.getVersion().compareTo(GameVersionNumber.unknown()) != 0)
                     );
-
-                    // The monitor relaunches HMCL after the game exits, so the launcher may exit
-                    // once the game window is up. With the log window shown, the launcher stays
-                    // alive and handles the game exit itself, so nothing should be relaunched.
-                    launcher.setRelaunchPolicy(showLogs
-                            ? DefaultLauncher.MonitorLaunchContext.RelaunchPolicy.NEVER
-                            : switch (launcherVisibility) {
-                                case HIDE_AND_REOPEN -> DefaultLauncher.MonitorLaunchContext.RelaunchPolicy.ALWAYS;
-                                case HIDE -> DefaultLauncher.MonitorLaunchContext.RelaunchPolicy.ON_CRASH;
-                                default -> DefaultLauncher.MonitorLaunchContext.RelaunchPolicy.NEVER;
-                            });
-                    launcher.setGameDirectoryId(gameInstance.getRepository().getGameDirectory().getId().toString());
-
-                    return launcher;
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
                         return Task.supplyAsync(launcher::launch);
@@ -940,22 +926,6 @@ public final class LauncherHelper {
             }
         }
 
-        /// Called when the game window has been detected and the launch has succeeded.
-        ///
-        /// <p>When the game exit is handled by the HMCL monitor, the application exits right away for
-        /// the [LauncherVisibility#HIDE] and [LauncherVisibility#HIDE_AND_REOPEN] visibilities;
-        /// otherwise this method delegates to [finishLaunch].
-        private void finishLaunchAfterWindowDetected() {
-            if (MonitorClient.isEnabled() && !showLogs
-                    && (launcherVisibility == LauncherVisibility.HIDE
-                    || launcherVisibility == LauncherVisibility.HIDE_AND_REOPEN)) {
-                launchingLatch.countDown();
-                runLater(Launcher::stopApplication);
-            } else {
-                finishLaunch();
-            }
-        }
-
         private void finishLaunch() {
             switch (launcherVisibility) {
                 case HIDE_AND_REOPEN:
@@ -1026,7 +996,14 @@ public final class LauncherHelper {
                     try {
                         if (!lwjgl) {
                             lwjgl = true;
-                            finishLaunchAfterWindowDetected();
+                            if (MonitorClient.isEnabled() && !showLogs
+                                    && (launcherVisibility == LauncherVisibility.HIDE
+                                    || launcherVisibility == LauncherVisibility.HIDE_AND_REOPEN)) {
+                                launchingLatch.countDown();
+                                runLater(Launcher::stopApplication);
+                            } else {
+                                finishLaunch();
+                            }
                         }
                     } finally {
                         lock.unlock();

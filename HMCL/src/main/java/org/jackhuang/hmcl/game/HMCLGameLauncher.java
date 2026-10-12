@@ -17,12 +17,15 @@
  */
 package org.jackhuang.hmcl.game;
 
-import org.jackhuang.hmcl.monitor.MonitorClient;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.monitor.MonitorClient;
+import org.jackhuang.hmcl.setting.GameSettings;
+import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.util.NativePatcher;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -32,8 +35,13 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.charset.Charset;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -52,10 +60,6 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     /// @param listener process listener, or `null` to inherit IO
     public HMCLGameLauncher(GameInstance instance, GameInstanceManifest manifest, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
         this(instance, manifest, authInfo, options, listener, true);
-
-        if (MonitorClient.isEnabled()) {
-            setLaunchMonitor(MonitorClient::launchNewMonitor);
-        }
     }
 
     /// Creates a launcher for the given instance and launch plan.
@@ -162,6 +166,36 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     public ProcessInfo launch() throws IOException, InterruptedException {
         generateOptionsTxt();
         return super.launch();
+    }
+
+    @Override
+    protected ProcessInfo startProcess(ProcessBuilder builder, Charset encoding, Path nativeFolder) throws IOException {
+        if (!MonitorClient.isEnabled())
+            return super.startProcess(builder, encoding, nativeFolder);
+
+        String gameDirectoryId = null;
+        MonitorClient.RelaunchPolicy relaunchPolicy = MonitorClient.RelaunchPolicy.NEVER;
+        if (instance instanceof HMCLGameInstance hmclGameInstance) {
+            gameDirectoryId = hmclGameInstance.getRepository().getGameDirectory().getId().toString();
+
+            GameSettings.Effective setting = hmclGameInstance.getEffectiveSettings();
+            LauncherVisibility x = setting.getInheritable(GameSettings::launcherVisibilityProperty);
+            boolean showLogs = setting.getInheritable(GameSettings::showLogsProperty);
+            relaunchPolicy = showLogs
+                    ? MonitorClient.RelaunchPolicy.NEVER
+                    : switch (x) {
+                case HIDE_AND_REOPEN -> MonitorClient.RelaunchPolicy.ALWAYS;
+                case HIDE -> MonitorClient.RelaunchPolicy.ON_CRASH;
+                default -> MonitorClient.RelaunchPolicy.NEVER;
+            };
+        }
+
+        List<String> postExitCommand = null;
+        if (StringUtils.isNotBlank(options.getPostExitCommand()))
+            postExitCommand = StringUtils.tokenize(options.getPostExitCommand(), getEnvVars(nativeFolder));
+
+        return MonitorClient.launchNewMonitor(new MonitorClient.MonitorLaunchContext(builder, listener,
+                encoding, options, gameDirectoryId, postExitCommand, relaunchPolicy));
     }
 
     @Override
