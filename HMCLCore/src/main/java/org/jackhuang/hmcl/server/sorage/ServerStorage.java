@@ -15,30 +15,39 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.server;
+package org.jackhuang.hmcl.server.sorage;
 
 import org.jackhuang.hmcl.game.GameInstance;
+import org.jackhuang.hmcl.server.Server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.UnaryOperator;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 public class ServerStorage {
     private final Lock handleLock = new ReentrantLock();
     private final List<GameInstance> holdInstances = new CopyOnWriteArrayList<>();
     private final Path serverDatFilePath;
     private final List<ServerStorageEntry> storageEntries;
+    private static volatile HashCalcer hashCalcer;
     private volatile boolean storageValid = true;
+    private byte[] currentFileHash;
 
     public ServerStorage(Path serverDatFilePath) throws IOException {
         this.serverDatFilePath = serverDatFilePath;
+        this.currentFileHash = calcServerDatFileHash();
 
         handleLock.lock();
         try {
@@ -57,6 +66,37 @@ public class ServerStorage {
         }
     }
 
+    private HashCalcer createMd5Calcer() {
+        try {
+            MessageDigest md5MessageDigest = MessageDigest.getInstance("MD5");
+            return file -> {
+                if (Files.exists(file)) {
+                    byte[] hash;
+                    byte[] bytes = Files.readAllBytes(file);
+                    synchronized (md5MessageDigest) {
+                        hash = md5MessageDigest.digest(bytes);
+                    }
+                    return hash;
+                }
+                return new byte[0];
+            };
+        } catch (NoSuchAlgorithmException e) {
+            LOG.error("Failed to create md5 calcer.", e);
+            return bytes -> new byte[0];
+        }
+    }
+
+    private byte[] calcServerDatFileHash() throws IOException {
+        if (hashCalcer == null) {
+            synchronized (ServerStorage.class) {
+                if (hashCalcer == null) {
+                    hashCalcer = createMd5Calcer();
+                }
+            }
+        }
+        return hashCalcer.calc(serverDatFilePath);
+    }
+
     public List<GameInstance> getHoldInstances() {
         return holdInstances;
     }
@@ -70,7 +110,19 @@ public class ServerStorage {
         try {
             if (!storageValid) return;
 
+            checkHash();
             Server.saveToServersDat(storageEntries.stream().map(e -> e.server).toList(), serverDatFilePath);
+            currentFileHash = calcServerDatFileHash();
+        } finally {
+            handleLock.unlock();
+        }
+    }
+
+    public void forceOverwrite() throws IOException {
+        handleLock.lock();
+        try {
+            Server.saveToServersDat(storageEntries.stream().map(e -> e.server).toList(), serverDatFilePath);
+            currentFileHash = calcServerDatFileHash();
         } finally {
             handleLock.unlock();
         }
@@ -152,6 +204,12 @@ public class ServerStorage {
         }
     }
 
+    public void checkHash() throws IOException {
+        if (!Arrays.equals(currentFileHash, calcServerDatFileHash())) {
+            throw new DatFileModifiedExternalException(this, serverDatFilePath.toAbsolutePath().toString());
+        }
+    }
+
     public class ServerStorageEntry {
         private volatile Server server;
 
@@ -174,5 +232,10 @@ public class ServerStorage {
         public Path getServerDatFilePath() {
             return serverDatFilePath;
         }
+    }
+
+    @FunctionalInterface
+    private interface HashCalcer {
+        byte[] calc(Path file) throws IOException;
     }
 }

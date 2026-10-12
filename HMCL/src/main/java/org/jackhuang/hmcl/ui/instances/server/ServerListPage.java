@@ -42,7 +42,8 @@ import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.server.Server;
 import org.jackhuang.hmcl.server.ServerStatus;
 import org.jackhuang.hmcl.server.ServerStatusResult;
-import org.jackhuang.hmcl.server.ServerStorage;
+import org.jackhuang.hmcl.server.sorage.DatFileModifiedExternalException;
+import org.jackhuang.hmcl.server.sorage.ServerStorage;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -135,8 +136,14 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                                 .withPackStatus(server.serverPackStatus())
                         );
                     }).whenComplete(Schedulers.javafx(), (updated, exception) -> {
-                        if (exception != null)
+                        if (exception != null) {
                             LOG.warning("Failed to save server data.", exception);
+                        }
+
+                        if (exception instanceof DatFileModifiedExternalException e) {
+                            showFileModifiedExternalWarnDialog(e);
+                            return;
+                        }
 
                         if (updated != null && updated) {
                             int index = serverListEntries.indexOf(item);
@@ -145,7 +152,6 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                             }
                             updateServerList();
                         }
-
 
                     }).start();
                 }
@@ -163,12 +169,21 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                         try {
                             item.storageEntry.delete();
                             result.add(item);
+                        } catch (DatFileModifiedExternalException e) {
+                            throw e;
                         } catch (IOException e) {
                             LOG.error("Failed to delete server entry.", e);
                         }
                     }
                     return result;
                 }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception != null) {
+                        LOG.warning("Failed to delete server data.", exception);
+                    }
+                    if (exception instanceof DatFileModifiedExternalException e) {
+                        showFileModifiedExternalWarnDialog(e);
+                        return;
+                    }
                     if (result == null || result.isEmpty()) return;
                     serverListEntries.removeAll(result);
                     updateServerList();
@@ -177,26 +192,48 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
         );
     }
 
+    private void showFileModifiedExternalWarnDialog(@NotNull DatFileModifiedExternalException e) {
+        Controllers.dialog(new MessageDialogPane.Builder(i18n("server.manage.error.file.modified"), null, MessageDialogPane.MessageType.ERROR)
+                .addAction(i18n("server.manage.error.file.modified.overwrite"), () -> {
+                    Task.runAsync(Schedulers.io(), () -> {
+                        e.getStorage().forceOverwrite();
+                    }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception != null) {
+                            LOG.warning("Failed to overwrite server data.", exception);
+                        }
+                        refresh();
+                    }).start();
+                })
+                .addCancel(this::refresh)
+                .build()
+        );
+    }
+
     public void copyServerIp(ServerListItem item) {
         FXUtils.copyText(item.getServer().ip(), i18n("server.manage.copy.server.ip.ok.toast"));
     }
 
     public void copyToInstance(ServerListItem item) {
-        addServer(item.getServer());
+        if (gameInstance != null) {
+            addServer(item.getServer(), gameInstance);
+        }
     }
 
     public void addServer(Server server) {
-        HMCLGameInstance gameInstance = this.gameInstance;
-        if (gameInstance == null) return;
+        if (gameInstance != null) {
+            addServer(server, gameInstance);
+        }
+    }
 
+    public void addServer(Server server, @NotNull HMCLGameInstance toInstance) {
         Task.supplyAsync(Schedulers.io(), () -> {
             ServerStorage.ServerStorageEntry storageEntry;
             synchronized (serversFileHandleLockObject) {
-                ServerStorage storage = serverStorageMap.get(gameInstance.getServersDatFilePath());
+                ServerStorage storage = serverStorageMap.get(toInstance.getServersDatFilePath());
                 if (storage == null) {
-                    storage = new ServerStorage(gameInstance.getServersDatFilePath());
-                    storage.getHoldInstances().add(gameInstance);
-                    serverStorageMap.put(gameInstance.getServersDatFilePath(), storage);
+                    storage = new ServerStorage(toInstance.getServersDatFilePath());
+                    storage.getHoldInstances().add(toInstance);
+                    serverStorageMap.put(toInstance.getServersDatFilePath(), storage);
                 }
                 storageEntry = storage.add(server);
             }
@@ -204,6 +241,11 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
         }).whenComplete(Schedulers.javafx(), (storageEntry, exception) -> {
             if (exception != null) {
                 LOG.warning("Failed to save server data.", exception);
+            }
+
+            if (exception instanceof DatFileModifiedExternalException e) {
+                showFileModifiedExternalWarnDialog(e);
+                return;
             }
 
             if (storageEntry != null) {
@@ -473,34 +515,40 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 // update latest server icon
                 serverIcon.setImage(parseServerFaviconImageOrDefault(serverStatus.favicon()));
 
-                if (!Objects.equals(serverStatus.favicon(), item.getServer().icon())) {
-                    // save latest icon
-                    Task.supplyAsync(Schedulers.io(), () -> {
-                        ServerStorage storage = item.storageEntry.rootStorage();
-                        return storage.updateEntry(item.storageEntry, server -> {
-                            if (Objects.equals(
-                                    ServerAddress.parse(Objects.requireNonNull(server.ip())),
-                                    ((ServerStatusResult.SuccessResult) result).getRawServerAddress())
-                            ) {
-                                return server.withIcon(serverStatus.favicon());
-                            }
-                            return server;
-                        });
-                    }).whenComplete(Schedulers.javafx(), (updated, exception) -> {
-                        if (exception != null)
-                            LOG.warning("Failed to save server data.", exception);
-
-                        if (updated != null && updated) {
-                            int index = serverListEntries.indexOf(item);
-                            if (index != -1) {
-                                serverListEntries.set(index, new ServerListItem(item.storageEntry, item.observableServerStatus));
-
-                                updateServerList();
-                            }
-                        }
-
-                    }).start();
-                }
+//                if (!Objects.equals(serverStatus.favicon(), item.getServer().icon())) {
+//                    // save latest icon
+//                    Task.supplyAsync(Schedulers.io(), () -> {
+//                        ServerStorage storage = item.storageEntry.rootStorage();
+//                        return storage.updateEntry(item.storageEntry, server -> {
+//                            if (Objects.equals(
+//                                    ServerAddress.parse(Objects.requireNonNull(server.ip())),
+//                                    ((ServerStatusResult.SuccessResult) result).getRawServerAddress())
+//                            ) {
+//                                return server.withIcon(serverStatus.favicon());
+//                            }
+//                            return server;
+//                        });
+//                    }).whenComplete(Schedulers.javafx(), (updated, exception) -> {
+//                        if (exception != null) {
+//                            LOG.warning("Failed to save server data.", exception);
+//                        }
+//
+//                        if (exception instanceof DatFileModifiedExternalException e) {
+//                            showFileModifiedExternalWarnDialog(e);
+//                            return;
+//                        }
+//
+//                        if (updated != null && updated) {
+//                            int index = serverListEntries.indexOf(item);
+//                            if (index != -1) {
+//                                serverListEntries.set(index, new ServerListItem(item.storageEntry, item.observableServerStatus));
+//
+//                                updateServerList();
+//                            }
+//                        }
+//
+//                    }).start();
+//                }
             }
         }
 
