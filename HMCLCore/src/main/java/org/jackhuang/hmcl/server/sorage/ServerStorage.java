@@ -116,21 +116,6 @@ public class ServerStorage {
         }
     }
 
-    public void forceOverwrite(@NotNull List<Server> servers) throws IOException {
-        handleLock.lock();
-        try {
-            storageEntries.clear();
-            for (Server server : servers) {
-                ServerStorageEntry entry = new ServerStorageEntry(server);
-                storageEntries.add(entry);
-            }
-            Server.saveToServersDat(servers, serverDatFilePath);
-            currentFileHash = calcServerDatFileHash();
-        } finally {
-            handleLock.unlock();
-        }
-    }
-
     public void invalid() {
         handleLock.lock();
         try {
@@ -209,7 +194,7 @@ public class ServerStorage {
 
     public void checkHash() throws IOException {
         if (!Arrays.equals(currentFileHash, calcServerDatFileHash())) {
-            throw new DatFileModifiedExternalException(this, storageEntries.stream().map(e -> e.server).toList(), serverDatFilePath.toAbsolutePath().toString());
+            throw new DatFileModifiedExternalException(this, serverDatFilePath.toAbsolutePath().toString());
         }
     }
 

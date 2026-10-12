@@ -17,26 +17,17 @@
  */
 package org.jackhuang.hmcl.server.sorage;
 
-import org.jackhuang.hmcl.server.Server;
-
 import java.io.IOException;
-import java.util.List;
 
 public class DatFileModifiedExternalException extends IOException {
     private final ServerStorage storage;
-    private final List<Server> dirtyServers;
 
-    public DatFileModifiedExternalException(ServerStorage storage, List<Server> dirtyServers, String message) {
+    public DatFileModifiedExternalException(ServerStorage storage, String message) {
         super(message);
         this.storage = storage;
-        this.dirtyServers = dirtyServers;
     }
 
     public ServerStorage getStorage() {
         return storage;
-    }
-
-    public List<Server> getDirtyServers() {
-        return dirtyServers;
     }
 }
