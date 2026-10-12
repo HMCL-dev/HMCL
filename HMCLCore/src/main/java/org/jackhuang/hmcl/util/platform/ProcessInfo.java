@@ -22,32 +22,31 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/// The information about a game process that process listeners and UIs can rely on, regardless of
+/// The information about a process that process listeners and UIs can rely on, regardless of
 /// whether the process is owned by this JVM ([ManagedProcess]) or supervised by another process,
 /// e.g. the HMCL monitor.
 @NotNullByDefault
 public interface ProcessInfo {
 
-    /// The process id of the game process.
+    /// The process id of the process.
     long getPid();
 
-    /// The handle of the game process, or `null` if it cannot be resolved anymore, e.g. a dead
+    /// The handle of the process, or `null` if it cannot be resolved anymore, e.g. a dead
     /// process whose id has already been reaped by the operating system.
     @Nullable ProcessHandle getHandle();
 
-    /// The command line of the game process.
+    /// The command line of the process.
     List<String> getCommands();
 
-    /// The classpath of the game process, or `null` when unknown.
+    /// The classpath of the process, or `null` when unknown.
     @Nullable String getClasspath();
 
-    /// The epoch millisecond at which the game process started.
+    /// The epoch millisecond at which the process started.
     long getProcessStartTime();
 
-    /// Returns whether the game process is still running.
+    /// Returns whether the process is still running.
     boolean isRunning();
 
-    /// Destroys the game process, in a way that lets the exit classifier recognize the exit as a
-    /// manual cancellation rather than a crash.
+    /// Destroys the process.
     void stop();
 }
