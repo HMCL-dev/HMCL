@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.server.sorage;
+package org.jackhuang.hmcl.server.storage;
 
 import java.io.IOException;
 
