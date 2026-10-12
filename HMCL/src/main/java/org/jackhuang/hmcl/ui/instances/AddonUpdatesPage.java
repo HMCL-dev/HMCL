@@ -69,6 +69,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
     private final DownloadProvider downloadProvider;
     private final Path localAddonDirectory;
     private final ObservableList<AddonUpdateObject> objects;
+    private final BooleanProperty showPreview = new SimpleBooleanProperty(false);
 
     @SuppressWarnings("unchecked")
     public AddonUpdatesPage(DownloadProvider downloadProvider, Path localAddonDirectory, AddonUpdates updates) {
@@ -126,7 +127,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
         objects = FXCollections.observableArrayList();
 
-        BooleanProperty showPreview = new SimpleBooleanProperty();
         {
             List<Subscription> subscriptions = new ArrayList<>();
             FXUtils.onChangeAndOperate(showPreview, preview -> {
