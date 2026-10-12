@@ -19,12 +19,11 @@ package org.jackhuang.hmcl.server;
 
 import org.glavo.nbt.io.NBTCodec;
 import org.glavo.nbt.tag.*;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Path;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,10 +52,9 @@ public record Server(
         );
     }
 
-    public static List<Server> loadFromServersDat(@NotNull Path file) throws IOException {
+    public static List<Server> loadFromServersDat(byte[] data) throws IOException {
         List<Server> servers = new ArrayList<>();
-
-        CompoundTag root = NBTCodec.of().readTag(file, TagType.COMPOUND);
+        CompoundTag root = NBTCodec.of().readTag(data, TagType.COMPOUND);
         Tag serversTag = root.get("servers");
         if (serversTag == null) {
             throw new IOException("servers tag not found");
@@ -75,7 +73,7 @@ public record Server(
         return servers;
     }
 
-    public static <T extends Server> void saveToServersDat(@NotNull List<T> servers, @NotNull Path file) throws IOException {
+    public static <T extends Server> void saveServersDat(@NotNull List<T> servers, OutputStream outputStream) throws IOException {
         ListTag<CompoundTag> tag = new ListTag<>();
         for (Server server : servers) {
             CompoundTag serverTag = new CompoundTag();
@@ -86,9 +84,7 @@ public record Server(
         CompoundTag root = new CompoundTag();
         root.addTag("servers", tag);
 
-        FileUtils.saveSafely(file, outputStream ->
-                NBTCodec.of().writeTag(outputStream, root)
-        );
+        NBTCodec.of().writeTag(outputStream, root);
     }
 
     public void writeToCompoundTag(CompoundTag tag) {

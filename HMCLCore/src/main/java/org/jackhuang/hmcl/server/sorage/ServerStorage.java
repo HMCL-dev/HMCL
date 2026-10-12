@@ -19,9 +19,11 @@ package org.jackhuang.hmcl.server.sorage;
 
 import org.jackhuang.hmcl.game.GameInstance;
 import org.jackhuang.hmcl.server.Server;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,17 +45,18 @@ public class ServerStorage {
     private final Path serverDatFilePath;
     private static volatile HashCalcer hashCalcer;
     private volatile boolean storageValid = true;
-    private byte[] currentFileHash;
+    private byte[] currentFileHash = new byte[0];
 
     public ServerStorage(Path serverDatFilePath) throws IOException {
         this.serverDatFilePath = serverDatFilePath;
-        this.currentFileHash = calcServerDatFileHash();
 
         handleLock.lock();
         try {
             storageEntries.clear();
             if (Files.exists(serverDatFilePath)) {
-                List<Server> servers = Server.loadFromServersDat(serverDatFilePath);
+                byte[] bytes = Files.readAllBytes(serverDatFilePath);
+                this.currentFileHash = calcServerDatFileHash(bytes);
+                List<Server> servers = Server.loadFromServersDat(bytes);
                 for (Server server : servers) {
                     ServerStorageEntry entry = new ServerStorageEntry(server);
                     storageEntries.add(entry);
@@ -67,16 +70,12 @@ public class ServerStorage {
     private HashCalcer createMd5Calcer() {
         try {
             MessageDigest md5MessageDigest = MessageDigest.getInstance("MD5");
-            return file -> {
-                if (Files.exists(file)) {
+            return input -> {
                     byte[] hash;
-                    byte[] bytes = Files.readAllBytes(file);
                     synchronized (md5MessageDigest) {
-                        hash = md5MessageDigest.digest(bytes);
+                        hash = md5MessageDigest.digest(input);
                     }
                     return hash;
-                }
-                return new byte[0];
             };
         } catch (NoSuchAlgorithmException e) {
             LOG.error("Failed to create md5 calcer.", e);
@@ -84,7 +83,7 @@ public class ServerStorage {
         }
     }
 
-    private byte[] calcServerDatFileHash() throws IOException {
+    private byte[] calcServerDatFileHash(byte[] data) throws IOException {
         if (hashCalcer == null) {
             synchronized (ServerStorage.class) {
                 if (hashCalcer == null) {
@@ -92,7 +91,7 @@ public class ServerStorage {
                 }
             }
         }
-        return hashCalcer.calc(serverDatFilePath);
+        return hashCalcer.calc(data);
     }
 
     public List<GameInstance> getHoldInstances() {
@@ -109,8 +108,18 @@ public class ServerStorage {
             if (!storageValid) return;
 
             checkHash();
-            Server.saveToServersDat(storageEntries.stream().map(e -> e.server).toList(), serverDatFilePath);
-            currentFileHash = calcServerDatFileHash();
+
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                Server.saveServersDat(storageEntries.stream().map(e -> e.server).toList(), outputStream);
+                byte[] bytes = outputStream.toByteArray();
+
+                FileUtils.saveSafely(serverDatFilePath, op ->
+                        op.write(bytes)
+                );
+
+                currentFileHash = calcServerDatFileHash(bytes);
+            }
+
         } finally {
             handleLock.unlock();
         }
@@ -193,8 +202,14 @@ public class ServerStorage {
     }
 
     public void checkHash() throws IOException {
-        if (!Arrays.equals(currentFileHash, calcServerDatFileHash())) {
-            throw new DatFileModifiedExternalException(this, serverDatFilePath.toAbsolutePath().toString());
+        if (Files.exists(serverDatFilePath)) {
+            if (!Arrays.equals(currentFileHash, calcServerDatFileHash(Files.readAllBytes(serverDatFilePath)))) {
+                throw new DatFileModifiedExternalException(this, serverDatFilePath.toAbsolutePath().toString());
+            }
+        } else {
+            if (!Arrays.equals(currentFileHash, new byte[0])) {
+                throw new DatFileModifiedExternalException(this, serverDatFilePath.toAbsolutePath().toString());
+            }
         }
     }
 
@@ -224,6 +239,6 @@ public class ServerStorage {
 
     @FunctionalInterface
     private interface HashCalcer {
-        byte[] calc(Path file) throws IOException;
+        byte[] calc(byte[] input) throws IOException;
     }
 }
