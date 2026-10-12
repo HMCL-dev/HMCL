@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
@@ -33,7 +32,7 @@ import java.util.function.UnaryOperator;
 
 public class ServerStorage {
     private final Lock handleLock = new ReentrantLock();
-    private final List<GameInstance> holdInstances = new ArrayList<>();
+    private final List<GameInstance> holdInstances = new CopyOnWriteArrayList<>();
     private final Path serverDatFilePath;
     private final List<ServerStorageEntry> storageEntries;
     private volatile boolean storageValid = true;

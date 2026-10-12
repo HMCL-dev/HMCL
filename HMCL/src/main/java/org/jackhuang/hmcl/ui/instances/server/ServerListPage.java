@@ -131,7 +131,9 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                         ServerStorage storage = item.storageEntry.rootStorage();
                         return storage.updateEntry(item.storageEntry, oldValue -> oldValue
                                 .withIpAndName(server.ip(), server.name())
-                                .withPackStatus(server.serverPackStatus()));
+                                .withIcon(server.icon())
+                                .withPackStatus(server.serverPackStatus())
+                        );
                     }).whenComplete(Schedulers.javafx(), (updated, exception) -> {
                         if (exception != null)
                             LOG.warning("Failed to save server data.", exception);

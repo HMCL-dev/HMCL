@@ -118,10 +118,6 @@ public record Server(
         return new Server(serverPackStatus, hidden, icon, ip, name);
     }
 
-    public @NotNull Server withIpNameAndPackStatus(@Nullable String ip, @Nullable String name, @NotNull ServerPackStatus serverPackStatus) {
-        return new Server(serverPackStatus, hidden, icon, ip, name);
-    }
-
     public @NotNull Server withPackStatus(@NotNull ServerPackStatus serverPackStatus) {
         return new Server(serverPackStatus, hidden, icon, ip, name);
     }
