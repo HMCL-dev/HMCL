@@ -17,11 +17,13 @@
  */
 package org.jackhuang.hmcl.server;
 
+import org.jackhuang.hmcl.server.pinger.ServerStatusPinger;
+import org.jackhuang.hmcl.util.ServerAddress;
 import org.jetbrains.annotations.Nullable;
 
 public abstract sealed class ServerStatusResult {
-    public static ServerStatusResult success(ServerStatus serverStatus) {
-        return new SuccessResult(serverStatus);
+    public static ServerStatusResult success(ServerAddress rawServerAddress, ServerStatusPinger pinger, ServerStatus status) {
+        return new SuccessResult(rawServerAddress, pinger, status);
     }
 
     public static ServerStatusResult failure(FailureResult.Reason reason, Exception exception) {
@@ -30,7 +32,7 @@ public abstract sealed class ServerStatusResult {
 
     public @Nullable ServerStatus getIfSucceed() {
         if (this instanceof SuccessResult success) {
-            return success.serverStatus;
+            return success.status;
         }
         return null;
     }
@@ -51,10 +53,26 @@ public abstract sealed class ServerStatusResult {
     }
 
     public static final class SuccessResult extends ServerStatusResult {
-        public final ServerStatus serverStatus;
+        private final ServerAddress rawServerAddress;
+        private final ServerStatusPinger pinger;
+        private final ServerStatus status;
 
-        private SuccessResult(ServerStatus serverStatus) {
-            this.serverStatus = serverStatus;
+        private SuccessResult(ServerAddress rawServerAddress, ServerStatusPinger pinger, ServerStatus status) {
+            this.rawServerAddress = rawServerAddress;
+            this.pinger = pinger;
+            this.status = status;
+        }
+
+        public ServerAddress getRawServerAddress() {
+            return rawServerAddress;
+        }
+
+        public ServerStatusPinger getPinger() {
+            return pinger;
+        }
+
+        public ServerStatus getServerStatus() {
+            return status;
         }
     }
 

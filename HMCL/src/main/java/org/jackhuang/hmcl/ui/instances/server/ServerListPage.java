@@ -50,6 +50,7 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.instances.Instances;
+import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -475,7 +476,10 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                     Task.supplyAsync(Schedulers.io(), () -> {
                         ServerStorage storage = item.storageEntry.rootStorage();
                         return storage.updateEntry(item.storageEntry, server -> {
-                            if (Objects.equals(server.ip(), item.getServer().ip())) {
+                            if (Objects.equals(
+                                    ServerAddress.parse(Objects.requireNonNull(server.ip())),
+                                    ((ServerStatusResult.SuccessResult) result).getRawServerAddress())
+                            ) {
                                 return server.withIcon(serverStatus.favicon());
                             }
                             return server;

@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.server;
 
 import com.google.gson.JsonElement;
-import org.jackhuang.hmcl.server.pinger.ServerStatusPinger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +25,6 @@ import java.util.List;
 import java.util.UUID;
 
 public record ServerStatus(
-        @NotNull ServerStatusPinger pinger,
         long networkLatency,
         @Nullable Version version,
         @NotNull Players players,

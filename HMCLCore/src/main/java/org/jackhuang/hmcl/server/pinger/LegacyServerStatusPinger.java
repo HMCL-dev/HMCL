@@ -74,7 +74,7 @@ final class LegacyServerStatusPinger implements ServerStatusPinger {
 
                 String response = readString(in);
                 long networkLatency = System.currentTimeMillis() - sendTime;
-                return ServerStatusResult.success(parseResult(networkLatency, response));
+                return ServerStatusResult.success(successResult.getRawAddress(), this, parseResult(networkLatency, response));
             }
         } catch (Exception e) {
             return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, e);
@@ -122,7 +122,6 @@ final class LegacyServerStatusPinger implements ServerStatusPinger {
             }
 
             return new ServerStatus(
-                    this,
                     networkLatency,
                     version,
                     players,

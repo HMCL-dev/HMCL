@@ -38,8 +38,8 @@ public sealed interface ServerStatusPinger permits LegacyServerStatusPinger, Mod
 
     static @NotNull ServerStatusResult getStatus(@NotNull String serverIp) throws IOException {
         try {
-            ServerAddress address = ServerAddress.parse(serverIp);
-            ServerAddressResolveResult resolveResult = address.resolve();
+            ServerAddress rawAddress = ServerAddress.parse(serverIp);
+            ServerAddressResolveResult resolveResult = rawAddress.resolve();
 
             if (resolveResult instanceof ServerAddressResolveResult.FailureResult failureResult) {
                 return ServerStatusResult.failure(failureResult.getReason().getStatusReason(), failureResult.getException());

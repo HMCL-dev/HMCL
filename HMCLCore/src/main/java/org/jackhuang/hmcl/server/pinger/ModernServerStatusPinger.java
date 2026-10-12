@@ -64,7 +64,7 @@ final class ModernServerStatusPinger implements ServerStatusPinger {
                 JsonObject rootStatus = JsonParser.parseString(status).getAsJsonObject();
 
                 ServerStatus parseServerStatus = parseServerStatus(networkLatency, rootStatus);
-                return ServerStatusResult.success(parseServerStatus);
+                return ServerStatusResult.success(successResult.getRawAddress(), this, parseServerStatus);
             }
         } catch (Exception e) {
             return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, e);
@@ -135,7 +135,6 @@ final class ModernServerStatusPinger implements ServerStatusPinger {
         }
 
         return new ServerStatus(
-                this,
                 networkLatency,
                 version,
                 players,
