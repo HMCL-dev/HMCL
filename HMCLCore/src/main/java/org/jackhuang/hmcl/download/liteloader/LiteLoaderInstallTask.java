@@ -60,7 +60,7 @@ public final class LiteLoaderInstallTask extends Task<GameInstancePatch> {
     public void execute() {
         Library library = new Library(
                 new Artifact("com.mumfrey", "liteloader", remote.getSelfVersion()),
-                "http://dl.liteloader.com/versions/",
+                "https://dl.liteloader.com/versions/",
                 new LibrariesDownloadInfo(new LibraryDownloadInfo(null, remote.getUrls().get(0)))
         );
 

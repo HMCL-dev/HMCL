@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.terracotta;
 
 import kala.compress.archivers.tar.TarArchiveEntry;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -29,13 +30,12 @@ import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jetbrains.annotations.Nullable;
 import org.jackhuang.hmcl.util.tree.TarFileTree;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestInputStream;
@@ -50,13 +50,16 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class TerracottaBundle {
     private final Path root;
 
-    private final List<URI> links;
+    /// Candidate bundle URLs in attempt order.
+    private final List<WebURL> links;
 
     private final FileDownloadTask.IntegrityCheck hash;
 
     private final Map<String, FileDownloadTask.IntegrityCheck> files;
 
-    public TerracottaBundle(Path root, List<URI> links, FileDownloadTask.IntegrityCheck hash, Map<String, FileDownloadTask.IntegrityCheck> files) {
+    /// Creates a bundle using the supplied download candidates and archive/file integrity metadata.
+    /// The candidate list and file map are retained without copying.
+    public TerracottaBundle(Path root, List<WebURL> links, FileDownloadTask.IntegrityCheck hash, Map<String, FileDownloadTask.IntegrityCheck> files) {
         this.root = root;
         this.links = links;
         this.hash = hash;

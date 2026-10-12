@@ -62,7 +62,7 @@ public class DataPack {
     public static void installPack(Path sourceDataPackPath, Path targetDataPackDirectory, GameVersionNumber gameVersionNumber) throws IOException {
         boolean containsMultiplePacks;
         Set<String> packs = new HashSet<>();
-        try (FileSystem fs = CompressingUtils.readonly(sourceDataPackPath).setAutoDetectEncoding(true).build()) {
+        try (FileSystem fs = CompressingUtils.readonly(sourceDataPackPath).build()) {
             Path dataPacks = fs.getPath("datapacks");
             Path mcmeta = fs.getPath("pack.mcmeta");
 
