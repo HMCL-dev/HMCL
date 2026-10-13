@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.modpack.modrinth;
 import com.google.gson.JsonParseException;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.*;
@@ -178,8 +179,8 @@ public class ModrinthInstallTask extends Task<Void> {
         });
 
         List<String> subDirectories = Arrays.asList("/client-overrides", "/overrides");
-        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, subDirectories, any -> true, config).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
 
         @Nullable WebURL iconUri = NetworkUtils.toWebURLOrNull(iconUrl);
         if (iconUri != null) {
@@ -187,7 +188,8 @@ public class ModrinthInstallTask extends Task<Void> {
             if (Modpack.SUPPORTED_ICON_EXTS.contains(ext)) {
                 iconExt = ext;
 
-                dependents.add(downloadIconTask = new CacheFileTask(dependencyManager.getDownloadProvider().injectURLWithCandidates(iconUrl)));
+                DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
+                dependents.add(downloadIconTask = new CacheFileTask(downloadProvider.getDownloadCandidates(iconUrl)));
             }
         }
 

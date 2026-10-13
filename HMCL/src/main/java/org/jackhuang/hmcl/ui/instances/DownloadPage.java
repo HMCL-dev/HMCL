@@ -79,7 +79,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
-        this.type = Objects.requireNonNullElse(addon.type(), repository.getType());
+        this.type = Objects.requireNonNullElse(addon.type(), page.type);
         this.translations = ModTranslations.getTranslationsByAddonType(this.type);
         this.mod = translations.getModByCurseForgeId(addon.slug());
         this.instanceReference = instanceReference;
@@ -301,6 +301,22 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 }
                             }
                         }
+                    } else if (getSkinnable().type == RemoteAddon.Type.MODPACK) {
+                        control.versions
+                                .keys()
+                                .stream()
+                                .max(Comparator.comparing(GameVersionNumber::asGameVersion))
+                                .flatMap(gameVersion ->
+                                        control.versions.get(gameVersion)
+                                                .stream()
+                                                .max(Comparator.comparing(RemoteAddon.Version::datePublished))
+                                                .map(v -> Pair.pair(gameVersion, v))
+                                ).ifPresent(pair ->
+                                    list.getContent().addAll(
+                                            ComponentList.createComponentListTitle(i18n("addon.download.recommend", pair.key())),
+                                            new AddonItem(control.addon, pair.value(), control)
+                                    )
+                                );
                     }
 
                     final class Versions {
@@ -361,15 +377,14 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class DependencyAddonItem extends LineButton {
-        public static final EnumMap<RemoteAddon.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
-                Pair.pair(RemoteAddon.DependencyType.EMBEDDED, "addon.dependency.embedded"),
-                Pair.pair(RemoteAddon.DependencyType.OPTIONAL, "addon.dependency.optional"),
-                Pair.pair(RemoteAddon.DependencyType.REQUIRED, "addon.dependency.required"),
-                Pair.pair(RemoteAddon.DependencyType.TOOL, "addon.dependency.tool"),
-                Pair.pair(RemoteAddon.DependencyType.INCLUDE, "addon.dependency.include"),
-                Pair.pair(RemoteAddon.DependencyType.INCOMPATIBLE, "addon.dependency.incompatible"),
-                Pair.pair(RemoteAddon.DependencyType.BROKEN, "addon.dependency.broken")
-        ));
+        public static String translateDependencyType(RemoteAddon.DependencyType dependencyType) {
+            return switch (dependencyType) {
+                case EMBEDDED -> i18n("addon.dependency.embedded");
+                case OPTIONAL -> i18n("addon.dependency.optional");
+                case REQUIRED -> i18n("addon.dependency.required");
+                default -> dependencyType.name().toLowerCase(Locale.ROOT);
+            };
+        }
 
         public final RemoteAddon addon;
 
@@ -582,7 +597,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     if (!dependencies.containsKey(dependency.getType())) {
-                        Label title = new Label(i18n(DependencyAddonItem.I18N_KEY.get(dependency.getType())));
+                        Label title = new Label(DependencyAddonItem.translateDependencyType(dependency.getType()));
                         title.setPadding(new Insets(0, 8, 0, 8));
                         List<DependencyAddonItem> list = new ArrayList<>();
                         dependencies.put(dependency.getType(), Pair.pair(title, list));
@@ -605,7 +620,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 return Task.allOf(queue).thenSupplyAsync(() -> {
                     var dependenciesStream = dependencies.values().stream().flatMap(types -> {
-                        if (types.value().isEmpty()) return Stream.of();
+                        if (types.value().isEmpty()) return Stream.empty();
                         return Stream.concat(
                                 Stream.of(types.key()),
                                 types.value().stream().sorted(Comparator.comparing(item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)));

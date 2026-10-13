@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download.fabric;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
@@ -27,6 +28,7 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.util.*;
@@ -55,7 +57,8 @@ public final class FabricInstallTask extends Task<GameInstancePatch> {
         this.manifest = manifest;
         this.remote = remoteVersion;
 
-        launchMetaTask = new GetTask(dependencyManager.getDownloadProvider().injectURLsWithCandidates(remoteVersion.getUrls()));
+        DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
+        launchMetaTask = new GetTask(downloadProvider.getDownloadCandidates(remoteVersion));
         launchMetaTask.setCacheRepository(dependencyManager.getCacheRepository());
     }
 
@@ -96,7 +99,7 @@ public final class FabricInstallTask extends Task<GameInstancePatch> {
         dependencies.add(new GameLibrariesTask(dependencyManager, manifest, true, getResult().getLibraries()));
     }
 
-    private GameInstancePatch getPatch(FabricInfo fabricInfo, String gameVersion, String loaderVersion) {
+    private GameInstancePatch getPatch(FabricInfo fabricInfo, GameVersionNumber gameVersion, String loaderVersion) {
         JsonObject launcherMeta = fabricInfo.launcherMeta;
         Arguments arguments = new Arguments();
 

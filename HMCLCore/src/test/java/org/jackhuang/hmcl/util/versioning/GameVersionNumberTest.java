@@ -304,6 +304,22 @@ public final class GameVersionNumberTest {
         );
     }
 
+    /// Verifies that color-version aliases preserve equality and ordering across adjacent special versions.
+    @Test
+    public void testCompareSpecialAliases() {
+        assertNormalized("2.0_purple", "2point0_purple");
+        assertNormalized("2.0_red", "2point0_red");
+        assertNormalized("2.0_blue", "2point0_blue");
+
+        for (String purple : List.of("2.0_purple", "2point0_purple")) {
+            for (String red : List.of("2.0_red", "2point0_red")) {
+                for (String blue : List.of("2.0_blue", "2point0_blue")) {
+                    assertOrder("1.5.1", "2.0", purple, red, blue, "1.5.2");
+                }
+            }
+        }
+    }
+
     @Test
     public void testCompareMix() {
         assertOrder(

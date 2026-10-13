@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -38,7 +39,7 @@ public class InstallersPage extends AbstractInstallersPage {
 
     private boolean isNameModifiedByUser = false;
 
-    public InstallersPage(WizardController controller, HMCLGameRepository repository, String gameVersion, DownloadProvider downloadProvider) {
+    public InstallersPage(WizardController controller, HMCLGameRepository repository, GameVersionNumber gameVersion, DownloadProvider downloadProvider) {
         super(controller, gameVersion, downloadProvider);
 
         txtName.getValidators().addAll(
@@ -52,7 +53,7 @@ public class InstallersPage extends AbstractInstallersPage {
 
     @Override
     public String getTitle() {
-        return ((ComponentRemoteVersion) controller.getSettings().get("game")).getGameVersion();
+        return ((ComponentRemoteVersion) controller.getSettings().get("game")).getGameVersion().toString();
     }
 
     private String getVersion(String id) {

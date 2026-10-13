@@ -26,15 +26,11 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.game.GameComponentAnalyzer;
-import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.game.GameJavaVersion;
-import org.jackhuang.hmcl.game.JavaVersionConstraint;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -444,7 +440,7 @@ public final class JavaManager {
         } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
             searcher.searchAllOfficialJava(Path.of(System.getProperty("user.home"), "Library/Application Support/minecraft/runtime"), false);
         }
-        searcher.searchAllOfficialJava(CacheRepository.getInstance().getCacheDirectory().resolve("java"), true);
+        searcher.searchAllOfficialJava(HMCLCacheRepository.REPOSITORY.getCacheDirectory().resolve("java"), true);
 
         // Search in PATH.
         if (System.getenv("PATH") != null) {

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util;
 import javafx.beans.value.WritableValue;
 import javafx.scene.image.Image;
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -51,7 +52,7 @@ public abstract class RemoteImageLoader {
     }
 
     /// Creates a task that loads an image from candidate URLs in attempt order.
-    protected abstract @NotNull Task<Image> createLoadTask(@NotNull List<WebURL> urls);
+    protected abstract @NotNull Task<Image> createLoadTask(DownloadCandidates candidates);
 
     /// Loads an image or assigns the placeholder when the URL is absent or invalid.
     @FXThread
@@ -90,7 +91,7 @@ public abstract class RemoteImageLoader {
             }
         }
 
-        createLoadTask(downloadProvider.injectURLWithCandidates(url)).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        createLoadTask(downloadProvider.getDownloadCandidates(url)).whenComplete(Schedulers.javafx(), (result, exception) -> {
             @Nullable Image image;
             if (exception == null) {
                 image = result;
