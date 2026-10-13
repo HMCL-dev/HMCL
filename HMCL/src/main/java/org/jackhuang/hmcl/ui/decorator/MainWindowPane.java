@@ -135,7 +135,7 @@ final class MainWindowPane extends StackPane {
 
         dialogOverlayPane = new StackPane();
         dialogOverlayPane.setVisible(false);
-        decorator.capableDraggingWindow(dialogOverlayPane);
+        decorator.capableDraggingOverlay(dialogOverlayPane);
 
         windowButtons = createWindowButtons();
         AnchorPane buttonsLayer = new AnchorPane(windowButtons);
