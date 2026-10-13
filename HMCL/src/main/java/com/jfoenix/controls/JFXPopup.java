@@ -146,6 +146,9 @@ public class JFXPopup extends PopupControl {
             double anchorY = parent.getY() + origin.getY() + scene.getY() + (vAlign == PopupVPosition.BOTTOM ? ((Region) node).getHeight() : 0);
 
             if (relocate) {
+                // Reopening skips the normal show layout; alignment needs the updated content size.
+                getScene().getRoot().applyCss();
+                getScene().getRoot().layout();
                 setAnchorX(anchorX);
                 setAnchorY(anchorY);
             } else if (attachToNode) {
