@@ -142,12 +142,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         loadMods(gameInstance.getModManager());
     }
 
-    private final BooleanProperty hasLiteLoader = new SimpleBooleanProperty(this, "hasLiteLoader") {
-        @Override
-        public void invalidated() {
-            if (!isLoading()) Platform.runLater(() -> refresh());
-        }
-    };
+    @SuppressWarnings("FieldCanBeLocal")
+    private BooleanExpression hasLiteLoader = null;
 
     private void loadMods(ModManager modManager) {
         setLoading(true);
@@ -174,12 +170,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             supportedLoaders.clear();
             supportedLoaders.addAll(modManager.getSupportedLoaders());
 
-            hasLiteLoader.unbind();
-            hasLiteLoader.bind(new SimpleBooleanProperty(supportedLoaders.contains(ModLoaderType.LITE_LOADER))
-                    .or(modManager.liteLoaderAsModFiles().stream().map(LocalModFile::activeProperty).map(BooleanBinding::booleanExpression).reduce(
-                            new SimpleBooleanProperty(),
-                            BooleanExpression::or
-            )));
+            hasLiteLoader = modManager.liteLoaderAsModFiles()
+                    .stream()
+                    .map(LocalModFile::activeProperty)
+                    .map(BooleanBinding::booleanExpression)
+                    .reduce(new SimpleBooleanProperty(), BooleanExpression::or);
+            FXUtils.onChangeAndOperate(hasLiteLoader, __ -> {
+                if (!isLoading()) Platform.runLater(this::refresh);
+            });
 
             if (exception == null) {
                 getItems().setAll(list);
