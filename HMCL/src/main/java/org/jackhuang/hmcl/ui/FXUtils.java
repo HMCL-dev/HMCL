@@ -1574,7 +1574,9 @@ public final class FXUtils {
 
             setHeading(new Label(i18n("button.select_date")));
 
-            GridPane body = new GridPane(4, 8);
+            GridPane body = new GridPane();
+            body.setHgap(4);
+            body.setVgap(8);
             {
                 Label fromLabel = new Label(i18n("button.select_date.from"));
                 this.fromPicker = new JFXDatePicker(LocalDate.now());
