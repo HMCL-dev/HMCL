@@ -6,6 +6,7 @@ import org.jackhuang.hmcl.gradle.l10n.CreateLanguageList
 import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
 import org.jackhuang.hmcl.gradle.l10n.SyncTranslations
 import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
+import org.jackhuang.hmcl.gradle.mod.FormatJsonFile
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import org.jackhuang.hmcl.gradle.pack.CreateDeb
 import org.jackhuang.hmcl.gradle.pack.ReleaseType
@@ -470,6 +471,14 @@ val createLocaleNamesResourceBundle = tasks.register<CreateLocaleNamesResourceBu
 }
 
 // mcmod data
+
+tasks.register<FormatJsonFile>("formatModJson") {
+    file.set(layout.projectDirectory.file("mod.json"))
+}
+
+tasks.register<FormatJsonFile>("formatModPackJson") {
+    file.set(layout.projectDirectory.file("modpack.json"))
+}
 
 tasks.register<ParseModDataTask>("parseModData") {
     inputFile.set(layout.projectDirectory.file("mod.json"))
