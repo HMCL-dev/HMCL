@@ -140,7 +140,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
     }
 
-    private void addModInfo(Path file, boolean coreModOnly) {
+    private void addModInfo(Path file) {
         String fileName = StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
         String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
 
@@ -182,7 +182,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                         new LocalAddonFile.Description("LiteLoader working together with Forge as a mod"),
                         coreModInfo
                 );
-            } else if (!coreModOnly) {
+            } else {
                 for (ModMetadataReader reader : supportedReaders) {
                     try {
                         modInfo = reader.fromFile(this, file, tree, coreModInfo);
@@ -264,11 +264,11 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
                         if (supportSubfolders && Files.isDirectory(subitem) && !".connector".equalsIgnoreCase(subitem.getFileName().toString())) {
                             try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
                                 for (Path subsubitem : subitemDirectoryStream) {
-                                    addModInfo(subsubitem, false);
+                                    addModInfo(subsubitem);
                                 }
                             }
                         } else {
-                            addModInfo(subitem, false);
+                            addModInfo(subitem);
                         }
                     }
                 }
@@ -278,7 +278,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             if (coreModsDir != null && Files.isDirectory(coreModsDir)) {
                 try (DirectoryStream<Path> coreModsDirectoryStream = Files.newDirectoryStream(coreModsDir)) {
                     for (Path item : coreModsDirectoryStream) {
-                        addModInfo(item, true);
+                        addModInfo(item);
                     }
                 }
             }
@@ -328,7 +328,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             Path newFile = dir.resolve(file.getFileName());
             FileUtils.copyFile(file, newFile);
 
-            addModInfo(newFile, isLegacyCoreMod);
+            addModInfo(newFile);
         } finally {
             lock.unlock();
         }
