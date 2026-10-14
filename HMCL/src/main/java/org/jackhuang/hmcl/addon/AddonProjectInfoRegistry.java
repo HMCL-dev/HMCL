@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.addon;
 
 import org.jackhuang.hmcl.addon.mod.ModProjectInfo;
+import org.jackhuang.hmcl.modpack.ModpackProjectInfo;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.SoftReference;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,7 +44,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
     public static final AddonProjectInfoRegistry<ModProjectInfo> MOD = new AddonProjectInfoRegistry<>(
-            "/assets/addon/mods.csv",
+            "/assets/addon/mod.csv",
             32768
     ) {
         @Override
@@ -63,11 +66,29 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
         }
     };
 
+    /// Provides metadata for modpacks.
+    public static final AddonProjectInfoRegistry<ModpackProjectInfo> MODPACK = new AddonProjectInfoRegistry<>(
+            "/assets/addon/modpack.csv", 4096
+    ) {
+        @Override
+        protected int getFieldsCount() {
+            return ABBR_NAME_INDEX + 1;
+        }
+
+        @Override
+        protected ModpackProjectInfo parseAddonProjectInfo(String[] fields) {
+            return new ModpackProjectInfo(Integer.parseInt(fields[MCMOD_ID_INDEX]),
+                    fields[CURSEFORGE_ID_INDEX], fields[MODRINTH_ID_INDEX],
+                    fields[MAIN_NAME_INDEX], fields[SUB_NAME_INDEX], fields[ABBR_NAME_INDEX]);
+        }
+    };
+
+    /// Returns the registry for the addon type, or `null` for null or unsupported types.
     public static @Nullable AddonProjectInfoRegistry<?> getByAddonType(@Nullable RemoteAddon.Type type) {
         if (type == null) return null;
         return switch (type) {
             case MOD -> MOD;
-            case MODPACK -> null;
+            case MODPACK -> MODPACK;
             default -> null;
         };
     }
@@ -95,7 +116,11 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
     /// Softly caches projects indexed by CurseForge identifier.
     private volatile @Nullable SoftReference<@Unmodifiable Map<String, I>> curseForgeMapRef;
 
-    private AddonProjectInfoRegistry(String assetsPath, int initialCapacity) {
+    /// Softly caches searchable names in resource and field order.
+    private volatile @Nullable SoftReference<@Unmodifiable List<Pair<String, I>>> keywordsRef;
+
+    /// Creates a registry reading records from the given classpath resource.
+    AddonProjectInfoRegistry(String assetsPath, int initialCapacity) {
         this.assetsPath = assetsPath;
         this.initialCapacity = initialCapacity;
     }
@@ -105,21 +130,21 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
     protected abstract I parseAddonProjectInfo(String[] fields) throws Exception;
 
     private @Unmodifiable List<I> loadInfos() throws IOException {
-        InputStream inputStream = AddonProjectInfoRegistry.class.getResourceAsStream(assetsPath);
+        @Nullable InputStream inputStream = AddonProjectInfoRegistry.class.getResourceAsStream(assetsPath);
         if (inputStream == null) {
             return List.of();
         }
 
-        try (var reader = new BufferedReader(new InputStreamReader(inputStream))) {
+        try (var reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             ArrayList<I> infos = new ArrayList<>(initialCapacity);
-            List<I> result = Collections.unmodifiableList(infos);
+            @Unmodifiable List<I> result = Collections.unmodifiableList(infos);
 
             int fieldsCount = getFieldsCount();
             String[] fields = new String[fieldsCount];
 
-            StringBuilder fieldBuilder = null;
+            @Nullable StringBuilder fieldBuilder = null;
 
-            String line;
+            @Nullable String line;
             loop:
             while ((line = reader.readLine()) != null) {
                 if (line.isEmpty() || line.startsWith("#")) {
@@ -240,7 +265,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
             }
 
             infos.trimToSize();
-            return Collections.unmodifiableList(infos);
+            return result;
         }
     }
 
@@ -370,9 +395,59 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
         return builder.length() == subname.length() ? subname : builder.toString();
     }
 
+    /// Returns searchable names, rebuilding the index after its soft reference is cleared.
+    private @Unmodifiable List<Pair<String, I>> getKeywords() {
+        @Nullable SoftReference<@Unmodifiable List<Pair<String, I>>> reference = keywordsRef;
+        @Nullable @Unmodifiable List<Pair<String, I>> cached = reference != null ? reference.get() : null;
+        if (cached != null)
+            return cached;
+        lock.lock();
+        try {
+            reference = keywordsRef;
+            cached = reference != null ? reference.get() : null;
+            if (cached != null)
+                return cached;
+            List<Pair<String, I>> keywords = new ArrayList<>();
+            for (I info : getInfos()) {
+                for (String name : List.of(info.getMainName(), info.getSubName(), info.getAbbrName())) {
+                    if (StringUtils.isNotBlank(name))
+                        keywords.add(Pair.pair(name, info));
+                }
+            }
+            cached = List.copyOf(keywords);
+            keywordsRef = new SoftReference<>(cached);
+            return cached;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /// Returns projects ranked by descending longest common subsequence length after removing
+    /// space characters from the query. Comparison is case-sensitive and uses UTF-16 units.
+    /// Matches require at least one unit and at least query length minus three units.
+    /// Each matching name contributes a result, so projects may occur more than once.
+    /// Ties preserve resource order, then primary name, secondary name and abbreviation order.
+    public @Unmodifiable List<I> search(String query) {
+        query = query.chars().filter(ch -> !Character.isSpaceChar(ch))
+                .collect(StringBuilder::new, (sb, ch) -> sb.append((char) ch), StringBuilder::append).toString();
+        @Unmodifiable List<Pair<String, I>> keywords = getKeywords();
+        int maxLength = keywords.stream().mapToInt(keyword -> keyword.getKey().length()).max().orElse(0);
+        StringUtils.LongestCommonSubsequence lcs = new StringUtils.LongestCommonSubsequence(query.length(), maxLength);
+        List<Pair<Integer, I>> matches = new ArrayList<>();
+        for (Pair<String, I> keyword : keywords) {
+            int score = lcs.calc(query, keyword.getKey());
+            if (score >= Math.max(1, query.length() - 3))
+                matches.add(Pair.pair(score, keyword.getValue()));
+        }
+        return matches.stream().sorted((a, b) -> Integer.compare(b.getKey(), a.getKey()))
+                .map(Pair::getValue).toList();
+    }
+
+    /// Returns cached project metadata, loading it on demand. Missing resources and I/O failures
+    /// produce an empty list; malformed records are skipped. The cache is softly referenced.
     public @Unmodifiable List<I> getInfos() {
-        SoftReference<@Unmodifiable List<I>> infosRef = this.infosRef;
-        List<I> infos = infosRef != null ? infosRef.get() : null;
+        @Nullable SoftReference<@Unmodifiable List<I>> infosRef = this.infosRef;
+        @Nullable @Unmodifiable List<I> infos = infosRef != null ? infosRef.get() : null;
         if (infos != null)
             return infos;
 

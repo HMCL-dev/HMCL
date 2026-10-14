@@ -58,6 +58,28 @@ public abstract class AddonProjectInfo {
         return subName;
     }
 
+    /// Returns the recorded primary name, possibly empty.
+    public String getMainName() {
+        return mainName;
+    }
+
+    /// Returns the recorded abbreviation, possibly empty.
+    public String getAbbrName() {
+        return abbrName;
+    }
+
+    /// Returns the primary name with a nonblank abbreviation in brackets and a nonblank
+    /// secondary name in parentheses. Only the abbreviation is trimmed.
+    public String getDisplayName() {
+        StringBuilder builder = new StringBuilder();
+        if (!abbrName.isBlank())
+            builder.append('[').append(abbrName.trim()).append("] ");
+        builder.append(mainName);
+        if (!subName.isBlank())
+            builder.append(" (").append(subName).append(')');
+        return builder.toString();
+    }
+
     public void setKeepAlive(@Nullable Object keepAlive) {
         this.keepAlive = keepAlive;
     }
