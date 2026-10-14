@@ -20,29 +20,41 @@ package org.jackhuang.hmcl.addon;
 import org.jackhuang.hmcl.addon.mod.ModProjectInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 
-import java.lang.ref.SoftReference;
-import java.util.List;
-
 /// @author Glavo
 @NotNullByDefault
 public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
     public static final AddonProjectInfoRegistry<ModProjectInfo> MOD = new AddonProjectInfoRegistry<>() {
         @Override
         protected int getFieldsCount() {
-            return 5;
+            return MOD_IDS_INDEX + 1;
         }
 
         @Override
-        protected ModProjectInfo parseAddonProjectInfo(String[] fields) {
-            return null;
+        protected ModProjectInfo parseAddonProjectInfo(String[] fields) throws Exception {
+            return new ModProjectInfo(
+                    Integer.parseInt(fields[MCMOD_ID_INDEX]),
+                    fields[CURSEFORGE_ID_INDEX],
+                    fields[MODRINTH_ID_INDEX],
+                    fields[MAIN_NAME_INDEX],
+                    fields[SUB_NAME_INDEX],
+                    fields[ABBR_NAME_INDEX],
+                    fields[MOD_IDS_INDEX]
+            );
         }
     };
 
     protected static final int MCMOD_ID_INDEX = 0;
     protected static final int CURSEFORGE_ID_INDEX = 1;
     protected static final int MODRINTH_ID_INDEX = 2;
+    protected static final int MAIN_NAME_INDEX = 3;
+    protected static final int SUB_NAME_INDEX = 4;
+    protected static final int ABBR_NAME_INDEX = 5;
+    protected static final int MOD_IDS_INDEX = 6;
+
+    private AddonProjectInfoRegistry() {
+    }
 
     protected abstract int getFieldsCount();
 
-    protected abstract I parseAddonProjectInfo(String[] fields);
+    protected abstract I parseAddonProjectInfo(String[] fields) throws Exception;
 }

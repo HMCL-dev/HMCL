@@ -30,10 +30,19 @@ public abstract class AddonProjectInfo {
     private final @Nullable String curseforgeId;
     private final @Nullable String modrinthId;
 
-    protected AddonProjectInfo(@Range(from = -1, to = Integer.MAX_VALUE) int mcmodId, @Nullable String curseforgeId, @Nullable String modrinthId) {
+    private final String mainName;
+    private final String subName;
+    private final String abbrName;
+
+    protected AddonProjectInfo(
+            int mcmodId, @Nullable String curseforgeId, @Nullable String modrinthId,
+            String mainName, String subName, String abbrName) {
         this.mcmodId = mcmodId;
         this.curseforgeId = curseforgeId;
         this.modrinthId = modrinthId;
+        this.mainName = mainName;
+        this.subName = subName;
+        this.abbrName = abbrName;
     }
 
     protected abstract String mcmodClass();

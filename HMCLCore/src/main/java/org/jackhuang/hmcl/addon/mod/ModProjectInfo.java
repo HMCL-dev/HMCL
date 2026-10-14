@@ -29,28 +29,19 @@ public final class ModProjectInfo extends AddonProjectInfo {
 
     private final @Nullable Object modIds;
 
-    public ModProjectInfo(int mcmodId, @Nullable String curseforgeId, @Nullable String modrinthId) {
-        super(mcmodId, curseforgeId, modrinthId);
+    public ModProjectInfo(
+            int mcmodId, @Nullable String curseforgeId, @Nullable String modrinthId,
+            String mainName, String subName, String abbrName,
+            String modIds) {
+        super(mcmodId, curseforgeId, modrinthId, mainName, subName, abbrName);
 
-        this.modIds = null;
-    }
-
-    public ModProjectInfo(int mcmodId, @Nullable String curseforgeId, @Nullable String modrinthId, String modId) {
-        super(mcmodId, curseforgeId, modrinthId);
-
-        this.modIds = modId;
-    }
-
-    public ModProjectInfo(int mcmodId, @Nullable String curseforgeId, @Nullable String modrinthId, List<String> modIds) {
-        super(mcmodId, curseforgeId, modrinthId);
-
-        //noinspection ConstantValue
-        if (modIds == null || modIds.isEmpty())
+        if (modIds.isEmpty()) {
             this.modIds = null;
-        else if (modIds.size() == 1)
-            this.modIds = modIds.get(0);
-        else
-            this.modIds = List.copyOf(modIds);
+        } else if (modIds.indexOf(';') < 0) {
+            this.modIds = modIds;
+        } else {
+            this.modIds = List.<String>of(modIds.split(";"));
+        }
     }
 
     @Override

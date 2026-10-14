@@ -123,6 +123,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 // Write the fields to the CSV file
                 writer.writeField(String.valueOf(mcmodId));
                 writer.writeField(curseforgeId);
+                writer.writeField(""); // TODO
                 writer.writeField(mainName);
                 writer.writeField(subName);
                 writer.writeField(abbr);

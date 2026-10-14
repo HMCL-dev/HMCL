@@ -24,8 +24,11 @@ import org.jetbrains.annotations.Nullable;
 /// @author Glavo
 @NotNullByDefault
 public final class ModpackProjectInfo extends AddonProjectInfo {
-    public ModpackProjectInfo(int mcmodId, @Nullable String curseforgeId, @Nullable String modrinthId) {
-        super(mcmodId, curseforgeId, modrinthId);
+    public ModpackProjectInfo(
+            int mcmodId, @Nullable String curseforgeId, @Nullable String modrinthId,
+            String mainName, String subName, String abbrName
+    ) {
+        super(mcmodId, curseforgeId, modrinthId, mainName, subName, abbrName);
     }
 
     @Override
