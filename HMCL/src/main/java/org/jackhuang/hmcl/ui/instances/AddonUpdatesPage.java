@@ -463,6 +463,8 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 item.getCurrentVersion()
                 + " → "
                 + item.targetVersion.get()
+                + " | "
+                + item.targetVersionType.get()
             );
 
             setGraphic(pane);
