@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.addon.mod;
 import org.jackhuang.hmcl.addon.AddonProjectInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -42,6 +43,16 @@ public final class ModProjectInfo extends AddonProjectInfo {
         } else {
             this.modIds = List.<String>of(modIds.split(";"));
         }
+    }
+
+    /// Returns an unmodifiable list of recorded mod IDs, or an empty list if none are recorded.
+    @SuppressWarnings("unchecked")
+    public @Unmodifiable List<String> getModIds() {
+        if (modIds == null)
+            return List.of();
+        if (modIds instanceof String id)
+            return List.of(id);
+        return (List<String>) modIds;
     }
 
     @Override

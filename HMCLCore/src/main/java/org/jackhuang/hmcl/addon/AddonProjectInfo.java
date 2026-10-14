@@ -48,6 +48,16 @@ public abstract class AddonProjectInfo {
         this.abbrName = abbrName;
     }
 
+    /// Returns the recorded CurseForge identifier, possibly empty.
+    public String getCurseforgeId() {
+        return curseforgeId;
+    }
+
+    /// Returns the recorded secondary name, possibly empty.
+    public String getSubName() {
+        return subName;
+    }
+
     public void setKeepAlive(@Nullable Object keepAlive) {
         this.keepAlive = keepAlive;
     }

@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.addon;
 
 import org.jackhuang.hmcl.addon.mod.ModProjectInfo;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -29,7 +30,9 @@ import java.io.InputStreamReader;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -82,6 +85,15 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
     private final int initialCapacity;
 
     private volatile @Nullable SoftReference<@Unmodifiable List<I>> infosRef;
+
+    /// Softly caches projects indexed by mod ID.
+    private volatile @Nullable SoftReference<@Unmodifiable Map<String, I>> modIdMapRef;
+
+    /// Softly caches projects indexed by cleaned secondary name.
+    private volatile @Nullable SoftReference<@Unmodifiable Map<String, I>> subnameMapRef;
+
+    /// Softly caches projects indexed by CurseForge identifier.
+    private volatile @Nullable SoftReference<@Unmodifiable Map<String, I>> curseForgeMapRef;
 
     private AddonProjectInfoRegistry(String assetsPath, int initialCapacity) {
         this.assetsPath = assetsPath;
@@ -230,6 +242,132 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
             infos.trimToSize();
             return Collections.unmodifiableList(infos);
         }
+    }
+
+    /// Returns an unmodifiable index, rebuilding it after its soft reference is cleared.
+    /// Duplicate keys retain the first project in resource order.
+    private @Unmodifiable Map<String, I> getModIdMap() {
+        @Nullable SoftReference<@Unmodifiable Map<String, I>> reference = this.modIdMapRef;
+        @Nullable @Unmodifiable Map<String, I> cached = reference != null ? reference.get() : null;
+        if (cached != null)
+            return cached;
+        lock.lock();
+        try {
+            reference = this.modIdMapRef;
+            cached = reference != null ? reference.get() : null;
+            if (cached != null)
+                return cached;
+            Map<String, I> map = new HashMap<>();
+            for (I info : getInfos()) {
+                if (info instanceof ModProjectInfo mod) {
+                    for (String id : mod.getModIds()) {
+                        if (StringUtils.isNotBlank(id))
+                            map.putIfAbsent(id, info);
+                    }
+                }
+            }
+            cached = Collections.unmodifiableMap(map);
+            this.modIdMapRef = new SoftReference<>(cached);
+            return cached;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /// Returns an unmodifiable index, rebuilding it after its soft reference is cleared.
+    /// Duplicate keys retain the first project in resource order.
+    private @Unmodifiable Map<String, I> getSubnameMap() {
+        @Nullable SoftReference<@Unmodifiable Map<String, I>> reference = this.subnameMapRef;
+        @Nullable @Unmodifiable Map<String, I> cached = reference != null ? reference.get() : null;
+        if (cached != null)
+            return cached;
+        lock.lock();
+        try {
+            reference = this.subnameMapRef;
+            cached = reference != null ? reference.get() : null;
+            if (cached != null)
+                return cached;
+            Map<String, I> map = new HashMap<>();
+            for (I info : getInfos()) {
+                String name = cleanSubname(info.getSubName());
+                if (StringUtils.isNotBlank(name))
+                    map.putIfAbsent(name, info);
+            }
+            cached = Collections.unmodifiableMap(map);
+            this.subnameMapRef = new SoftReference<>(cached);
+            return cached;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /// Returns an unmodifiable index, rebuilding it after its soft reference is cleared.
+    /// Duplicate keys retain the first project in resource order.
+    private @Unmodifiable Map<String, I> getCurseForgeMap() {
+        @Nullable SoftReference<@Unmodifiable Map<String, I>> reference = this.curseForgeMapRef;
+        @Nullable @Unmodifiable Map<String, I> cached = reference != null ? reference.get() : null;
+        if (cached != null)
+            return cached;
+        lock.lock();
+        try {
+            reference = this.curseForgeMapRef;
+            cached = reference != null ? reference.get() : null;
+            if (cached != null)
+                return cached;
+            Map<String, I> map = new HashMap<>();
+            for (I info : getInfos()) {
+                String id = info.getCurseforgeId();
+                if (StringUtils.isNotBlank(id))
+                    map.putIfAbsent(id, info);
+            }
+            cached = Collections.unmodifiableMap(map);
+            this.curseForgeMapRef = new SoftReference<>(cached);
+            return cached;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /// Returns the first project with the exact CurseForge identifier, or `null` if the
+    /// identifier is null, blank or unknown.
+    public @Nullable I getInfoByCurseForgeId(@Nullable String id) {
+        return StringUtils.isBlank(id) ? null : getCurseForgeMap().get(id);
+    }
+
+    /// Finds a project by its cleaned secondary name, falling back to its exact mod ID.
+    /// A name match is accepted only when the ID is blank or belongs to that mod project.
+    /// Null and blank inputs are absent; returns `null` if neither lookup matches.
+    /// Duplicate keys resolve to the first project in resource order.
+    public @Nullable I getInfo(@Nullable String id, @Nullable String subname) {
+        String name = cleanSubname(subname);
+        if (StringUtils.isNotBlank(name)) {
+            @Nullable I info = getSubnameMap().get(name);
+            if (info != null && (StringUtils.isBlank(id)
+                    || info instanceof ModProjectInfo mod && mod.getModIds().contains(id)))
+                return info;
+        }
+        return StringUtils.isBlank(id) ? null : getModIdMap().get(id);
+    }
+
+    /// Removes supported separators and pictographs from a secondary name.
+    /// Returns an empty string for null, blank or unsupported names; matching is case-sensitive.
+    private static String cleanSubname(@Nullable String subname) {
+        if (StringUtils.isBlank(subname))
+            return "";
+        StringBuilder builder = new StringBuilder(subname.length());
+        for (int i = 0; i < subname.length(); ) {
+            int ch = subname.codePointAt(i);
+            if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9')
+                    || ".+\\".indexOf(ch) >= 0) {
+                builder.appendCodePoint(ch);
+            } else if (!(Character.isWhitespace(ch)
+                    || "':_-/&()[]{}|,!?~•".indexOf(ch) >= 0
+                    || ch >= 0x1F300 && ch <= 0x1FAFF)) {
+                return "";
+            }
+            i += Character.charCount(ch);
+        }
+        return builder.length() == subname.length() ? subname : builder.toString();
     }
 
     public @Unmodifiable List<I> getInfos() {
