@@ -30,7 +30,7 @@ public final class ModProjectInfo extends AddonProjectInfo {
     private final @Nullable Object modIds;
 
     public ModProjectInfo(
-            int mcmodId, @Nullable String curseforgeId, @Nullable String modrinthId,
+            int mcmodId, String curseforgeId, String modrinthId,
             String mainName, String subName, String abbrName,
             String modIds) {
         super(mcmodId, curseforgeId, modrinthId, mainName, subName, abbrName);

@@ -19,13 +19,12 @@ package org.jackhuang.hmcl.modpack;
 
 import org.jackhuang.hmcl.addon.AddonProjectInfo;
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
 
 /// @author Glavo
 @NotNullByDefault
 public final class ModpackProjectInfo extends AddonProjectInfo {
     public ModpackProjectInfo(
-            int mcmodId, @Nullable String curseforgeId, @Nullable String modrinthId,
+            int mcmodId, String curseforgeId, String modrinthId,
             String mainName, String subName, String abbrName
     ) {
         super(mcmodId, curseforgeId, modrinthId, mainName, subName, abbrName);

@@ -27,15 +27,15 @@ public abstract class AddonProjectInfo {
 
     @Range(from = 0, to = Integer.MAX_VALUE)
     private final int mcmodId;
-    private final @Nullable String curseforgeId;
-    private final @Nullable String modrinthId;
+    private final String curseforgeId;
+    private final String modrinthId;
 
     private final String mainName;
     private final String subName;
     private final String abbrName;
 
     protected AddonProjectInfo(
-            int mcmodId, @Nullable String curseforgeId, @Nullable String modrinthId,
+            int mcmodId, String curseforgeId, String modrinthId,
             String mainName, String subName, String abbrName) {
         this.mcmodId = mcmodId;
         this.curseforgeId = curseforgeId;
