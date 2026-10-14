@@ -34,6 +34,9 @@ public abstract class AddonProjectInfo {
     private final String subName;
     private final String abbrName;
 
+    @SuppressWarnings({"unused", "FieldCanBeLocal"})
+    private @Nullable Object keepAlive;
+
     protected AddonProjectInfo(
             int mcmodId, String curseforgeId, String modrinthId,
             String mainName, String subName, String abbrName) {
@@ -43,6 +46,10 @@ public abstract class AddonProjectInfo {
         this.mainName = mainName;
         this.subName = subName;
         this.abbrName = abbrName;
+    }
+
+    public void setKeepAlive(@Nullable Object keepAlive) {
+        this.keepAlive = keepAlive;
     }
 
     protected abstract String mcmodClass();

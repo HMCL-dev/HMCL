@@ -179,7 +179,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                     case '\n' -> writer.write("\\n");
                     case '\r' -> writer.write("\\r");
                     case '\t' -> writer.write("\\t");
-                    case ',' -> writer.write("\\u002c");
+                    case ',' -> writer.write("\\c");
                     default -> {
 
                         boolean needEscape = switch (UCharacter.getType(ch)) {
