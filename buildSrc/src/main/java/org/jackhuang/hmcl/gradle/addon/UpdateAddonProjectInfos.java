@@ -118,6 +118,14 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                     curseforgeId = null;
                 }
 
+                @Nullable String modrinthId;
+                try {
+                    modrinthId = projectType.getModrinthId(info);
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to get the id of Modrinth for \"{}\"", info.name.main);
+                    modrinthId = null;
+                }
+
                 String mainName = cleanChineseName(info.name.main);
                 String subName = cleanName(info.name.sub);
                 String abbr = cleanName(info.name.abbr);
@@ -142,7 +150,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 // Keep this field order aligned with the runtime project registry parser.
                 writer.writeField(String.valueOf(mcmodId));
                 writer.writeField(curseforgeId);
-                writer.writeField(""); // The Modrinth identifier field is currently unpopulated.
+                writer.writeField(modrinthId);
                 writer.writeField(mainName);
                 writer.writeField(subName);
                 writer.writeField(abbr);
@@ -360,7 +368,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
     /// Selects project-specific link parsing, exclusion rules and output fields.
     public enum AddonProjectType {
         /// Mod projects, excluding Minecraft itself.
-        MOD("class", "mc-mods") {
+        MOD("class", "mc-mods", "mod") {
             /// Returns whether the ID identifies Minecraft rather than a mod.
             @Override
             public boolean shouldSkip(int mcmodId) {
@@ -374,23 +382,29 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             }
         },
         /// Modpack projects.
-        MODPACK("modpack", "modpacks");
+        MODPACK("modpack", "modpacks", "modpack");
 
         /// Recognizes project URLs on mcmod.cn.
         private final Pattern mcmodUrlPattern;
         /// CurseForge category for this project type.
         private final String curseforgeType;
 
-        /// Creates a project type for the specified mcmod.cn path and CurseForge category.
+        /// Modrinth category for this project type.
+        private final String modrinthType;
+
+        /// Creates a project type for the specified mcmod.cn path and hosting-platform categories.
         ///
-        /// @param mcmodSlug mcmod.cn path segment used in the canonical URL pattern
+        /// @param mcmodSlug      mcmod.cn path segment used in the canonical URL pattern
         /// @param curseforgeType CurseForge category accepted during slug extraction
+        /// @param modrinthType   Modrinth category accepted during identifier extraction
         AddonProjectType(
                 String mcmodSlug,
-                String curseforgeType
+                String curseforgeType,
+                String modrinthType
         ) {
             this.mcmodUrlPattern = Pattern.compile("https://www\\.mcmod\\.cn/" + mcmodSlug + "/(?<id>\\d+)\\.html");
             this.curseforgeType = curseforgeType;
+            this.modrinthType = modrinthType;
         }
 
         /// Extracts the project ID from the first mcmod.cn link.
@@ -484,6 +498,71 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             return null;
         }
 
+        /// Recognizes Modrinth project paths.
+        private static final Pattern MODRINTH_PATH_PATTERNS = Pattern.compile(
+                "^/(?<type>[a-zA-Z0-9-]+)/(?<id>[^/]+)(/(.*?))?$"
+        );
+
+        /// Returns a Modrinth project identifier from a link for this project type,
+        /// or null if no applicable link is present. The identifier may be a slug or project ID.
+        /// No network requests are made.
+        ///
+        /// @throws Exception if no suitable link is found and at least one link is invalid
+        @Nullable String getModrinthId(AddonInfo info) throws Exception {
+            var links = info.links.list.get("modrinth");
+
+            if (links == null || links.isEmpty()) {
+                return null;
+            }
+
+            Exception cause = null;
+
+            for (AddonInfo.Link link : links) {
+                try {
+                    WebURL url = WebURL.parse(link.url());
+
+                    if (!url.getScheme().equals("https") && !url.getScheme().equals("http")) {
+                        throw new GradleException("Invalid Modrinth URL: " + url);
+                    }
+
+                    switch (Objects.requireNonNull(url.getHost(), "host")) {
+                        case "github.com",
+                             "cdn.modrinth.com" -> {
+                            continue;
+                        }
+                        case "modrinth.com",
+                             "www.modrinth.com" -> {
+                            String path = url.getPath();
+
+                            var matcher = MODRINTH_PATH_PATTERNS.matcher(path);
+                            if (!matcher.matches()) {
+                                throw new GradleException("Invalid Modrinth URL: " + url);
+                            }
+
+                            String type = matcher.group("type");
+                            if (!type.equals(modrinthType) && !(this == MOD && type.equals("project"))) {
+                                continue;
+                            }
+
+                            return matcher.group("id");
+                        }
+                        default -> throw new GradleException("Invalid Modrinth URL: " + url);
+                    }
+                } catch (Exception e) {
+                    if (cause == null) {
+                        cause = e;
+                    } else {
+                        cause.addSuppressed(e);
+                    }
+                }
+            }
+
+            if (cause != null)
+                throw cause;
+
+            return null;
+        }
+
         /// Returns whether the project identified by the mcmod.cn ID is excluded from output.
         ///
         /// @implSpec The default implementation returns false.
@@ -494,7 +573,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
 
     /// Represents one project in the JSON export.
     ///
-    /// @param name primary, secondary and abbreviated project names
+    /// @param name  primary, secondary and abbreviated project names
     /// @param modid optional mod IDs decoded from an array or a wrapper object's `list` field
     /// @param links links grouped by source name
     private record AddonInfo(
@@ -506,14 +585,14 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
         /// Contains the exported project names before cleanup.
         ///
         /// @param main primary name
-        /// @param sub secondary name
+        /// @param sub  secondary name
         /// @param abbr abbreviation
         record Name(String main, String sub, String abbr) {
         }
 
         /// Contains a source URL and its accompanying text.
         ///
-        /// @param url exported URL, not yet validated
+        /// @param url     exported URL, not yet validated
         /// @param content accompanying text, unused by metadata generation
         record Link(String url, String content) {
         }
@@ -531,7 +610,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
 
             /// Decodes a mod ID list, returning null if the list is absent or JSON null.
             ///
-            /// @throws JsonParseException if Gson cannot decode the selected value as a string list
+            /// @throws JsonParseException    if Gson cannot decode the selected value as a string list
             /// @throws IllegalStateException if a non-null, non-array value is not a JSON object
             @Override
             public @Nullable List<String> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
