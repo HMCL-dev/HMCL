@@ -263,17 +263,10 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 case "morecuriostotemsofundying:" -> "mtca";
                 // https://www.mcmod.cn/class/12820.html
                 case "caves_&_canyons" -> "caves_canyons";
+                // https://www.mcmod.cn/class/30957.html
+                case "minecraft:" -> "moderncontentbackport";
                 default -> cleanedModid;
             };
-
-
-            switch (cleanedModid) {
-                // https://www.mcmod.cn/class/30957.html
-                // TODO: Temporary workaround
-                case "minecraft:" -> {
-                    continue;
-                }
-            }
 
             if (!MODID_PATTERN.matcher(cleanedModid).matches() && !MODID_WHITELIST.contains(cleanedModid)) {
                 throw new GradleException("Invalid modid: " + modid);
