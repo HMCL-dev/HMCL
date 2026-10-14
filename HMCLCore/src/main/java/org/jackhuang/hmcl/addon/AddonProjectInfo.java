@@ -101,13 +101,13 @@ public abstract class AddonProjectInfo {
     }
 
     public @Nullable String curseforgeUrl() {
-        return curseforgeId != null
+        return !curseforgeId.isEmpty()
                 ? "https://www.curseforge.com/minecraft/" + curseforgeClass() + "/" + curseforgeId + "/rarity-system"
                 : null;
     }
 
     public @Nullable String modrinthUrl() {
-        return modrinthId != null
+        return !modrinthId.isEmpty()
                 ? "https://modrinth.com/" + modrinthClass() + "/" + modrinthId
                 : null;
     }
