@@ -68,7 +68,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
 
     /// Provides metadata for modpacks.
     public static final AddonProjectInfoRegistry<ModpackProjectInfo> MODPACK = new AddonProjectInfoRegistry<>(
-            "/assets/addon/modpack.csv", 4096
+            "/assets/addon/modpack.csv", 2048
     ) {
         @Override
         protected int getFieldsCount() {
