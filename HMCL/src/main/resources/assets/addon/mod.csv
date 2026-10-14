@@ -2952,7 +2952,7 @@
 3081,super-sentai-craft,super-sentai-craft,超级战队工艺,Super Sentai Craft,SSC,supersentaicraft
 3082,wildly-eat,,狼吞虎咽,Wildly Eat,,wildly_eat
 3083,gotta-climb-fast,,快速爬梯,Gotta Climb Fast!,,gottaclimbfast
-3084,can-i-mine-this-block,can-i-mine-this-block,我\u00ad\u00ad 能 挖 它 吗？,cAn i MiNe thIS bLOCk?,cimtb,can-i-mine-this-block
+3084,can-i-mine-this-block,can-i-mine-this-block,我 能 挖 它 吗？,cAn i MiNe thIS bLOCk?,cimtb,can-i-mine-this-block
 3085,rotten-creatures,rottencreatures,腐烂生物,Rotten Creatures,,rotten_creatures;rottencreatures
 3086,fairy-lights,,圣诞彩灯,Fairy Lights,,fairylights
 3087,packmode,,PackMode,,,packmode
@@ -7341,7 +7341,7 @@
 7547,flighthud,,FlightHUD,,,flighthud
 7548,meal-api,mealapi,Meal API,,,mealapi
 7549,seed-drop,,Seed Drop,,,seeddrop
-7550,fishery-expansion,fishery,🎣 Fishery\u200e\u200e\u200e\u200f\u200f\u200e \u200e,,,fishery
+7550,fishery-expansion,fishery,🎣 Fishery,,,fishery
 7551,,,FTB Quests: Localization Keys Refabricated,,,ftbconv
 7552,arrowcamfabric,,ArrowCam,,,arrowcam
 7553,overpowered-mending,overpoweredmending,OverpoweredMending,,,overpoweredmending
@@ -22073,7 +22073,7 @@
 22424,mbc-projectez,,ProjectEZ,,,
 22425,comfy-cozy-brickery,comfy-cozy-brickery-patch,Comfy\c Cozy & Brickery (Patched),,,
 22426,spear-downport,spear-downport,矛：向下移植版,Spear Downport,,spear_downport
-22427,accurate-spears,accurate-spears,\u200c精准长矛\u200c,Accurate Spears,,spear
+22427,accurate-spears,accurate-spears,精准长矛,Accurate Spears,,spear
 22428,soundreload,,SoundReload,,,soundreload
 22429,world-mod-cacher,,World Mod Cacher,,,cachemod
 22430,orbital-railgun-by-mishkis,orbital-railgun,Orbital Railgun,,,orbital_railgun
@@ -26806,7 +26806,7 @@
 27209,mythic-tinkers,mythic-tinkers,Mythic Tinkers,,,mythictinkers
 27210,,,观览车 / 摩天轮,MineFerrisWheel,,mfw
 27211,,cataclysm-era,灾变纪元,Cataclysm Era,,cataclysm_era
-27212,hive-collective,hive-collective,虫巢集群,Hive Collective\u200c,,hive_collective
+27212,hive-collective,hive-collective,虫巢集群,Hive Collective,,hive_collective
 27213,,stacksizetweaks,Stack Size Tweaks,,,stacksizetweaks
 27214,,,更多附魔2,,,more_enchants2
 27215,,,更多成就,,,more_advancements

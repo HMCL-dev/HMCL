@@ -270,10 +270,21 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
 
     /// Cleans an exported name by trimming, removing zero-width spaces and decoding selected HTML entities.
     private static String cleanName(String name) {
-        name = name.trim();
-
         // Remove zero-width space (U+200B) characters.
         name = name.replace("\u200b", "");
+
+        // Remove zero-width non-joiner (U+200C) characters.
+        name = name.replace("\u200c", "");
+
+        // Remove soft hyphen (U+00AD) characters.
+        // TODO: Temporary workaround for https://www.mcmod.cn/class/3084.html
+        name = name.replace("\u00ad", "");
+
+        // Remove left-to-right mark (U+200E) and right-to-left mark (U+200F) characters.
+        // TODO: Temporary workaround for https://www.mcmod.cn/class/7550.html
+        name = name
+                .replace("\u200e", "")
+                .replace("\u200f", "");
 
         if (name.indexOf('&') >= 0) {
             // Most string values in the original JSON data contain HTML-escaped characters, such as `&amp;`, `&lt;`, and `&gt;`.
@@ -282,6 +293,8 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                     .replace("&lt;", "<")
                     .replace("&gt;", ">");
         }
+
+        name = name.trim();
 
         return name;
     }
