@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.addon.datapack;
 
+import com.google.gson.JsonParseException;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -172,7 +173,7 @@ public class DataPack {
                     .map(packPath -> {
                         try {
                             return new Pack(packPath, this);
-                        } catch (IOException e) {
+                        } catch (IOException | JsonParseException e) {
                             LOG.warning("Failed to load pack " + packPath, e);
                         }
                         return null;
@@ -203,21 +204,21 @@ public class DataPack {
                 idd = FileUtils.getNameWithoutExtension(idd);
             id = idd;
 
-            Path mcmetaPath;
             if (isDirectory) {
                 Path mcmeta1 = path.resolve("pack.mcmeta");
-                mcmetaPath = Files.exists(mcmeta1) ? mcmeta1 : path.resolve("pack.mcmeta.disabled");
-            } else
+                Path mcmetaPath = Files.exists(mcmeta1) ? mcmeta1 : path.resolve("pack.mcmeta.disabled");
+                info = JsonUtils.fromNonNullJson(Files.readString(mcmetaPath), PackMcMeta.class).pack();
+                statusFile = mcmetaPath;
+            } else {
                 try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(path)) {
-                    mcmetaPath = fs.getPath("pack.mcmeta");
+                    info = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("pack.mcmeta")), PackMcMeta.class).pack();
                 }
-
-            info = JsonUtils.fromNonNullJson(Files.readString(mcmetaPath), PackMcMeta.class).pack();
-            statusFile = isDirectory ? mcmetaPath : path;
+                statusFile = path;
+            }
 
             BooleanProperty property = new SimpleBooleanProperty(this, "active", !FileUtils.getExtension(this.statusFile).equals(DISABLED_EXT));
             property.addListener((obs, wasActive, isNowActive) -> {
-                if (isNowActive == wasActive)
+                if (isNowActive == !FileUtils.getExtension(this.statusFile).equals(DISABLED_EXT))
                     return;
 
                 Path newStatusFile = isNowActive
@@ -226,13 +227,12 @@ public class DataPack {
 
                 try {
                     Files.move(statusFile, newStatusFile);
+                    statusFile = newStatusFile;
+                    if (!isDirectory)
+                        this.path = newStatusFile;
                 } catch (IOException e) {
                     LOG.warning("Unable to rename file from " + this.statusFile + " to " + newStatusFile, e);
                 }
-
-                statusFile = newStatusFile;
-                if (!isDirectory)
-                    this.path = newStatusFile;
             });
             this.activeProperty = property;
         }
