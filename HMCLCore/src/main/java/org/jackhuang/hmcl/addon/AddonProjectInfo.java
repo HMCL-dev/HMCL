@@ -59,47 +59,4 @@ public abstract class AddonProjectInfo {
                 : null;
     }
 
-    @NotNullByDefault
-    public static final class Mod extends AddonProjectInfo {
-        public Mod(int mcmodId, @Nullable String curseforgeId, @Nullable String modrinthId) {
-            super(mcmodId, curseforgeId, modrinthId);
-        }
-
-        @Override
-        protected String mcmodClass() {
-            return "class";
-        }
-
-        @Override
-        protected String curseforgeClass() {
-            return "mc-mods";
-        }
-
-        @Override
-        protected String modrinthClass() {
-            return "mod";
-        }
-    }
-
-    @NotNullByDefault
-    public static final class Modpack extends AddonProjectInfo {
-        public Modpack(int mcmodId, @Nullable String curseforgeId, @Nullable String modrinthId) {
-            super(mcmodId, curseforgeId, modrinthId);
-        }
-
-        @Override
-        protected String mcmodClass() {
-            return "modpack";
-        }
-
-        @Override
-        protected String curseforgeClass() {
-            return "modpacks";
-        }
-
-        @Override
-        protected String modrinthClass() {
-            return "modpack";
-        }
-    }
 }
