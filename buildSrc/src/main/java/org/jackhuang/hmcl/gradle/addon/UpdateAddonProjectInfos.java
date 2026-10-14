@@ -96,6 +96,8 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                     
                     """);
 
+            Map<String, TreeSet<Integer>> modIdTomcmodId = new HashMap<>();
+
             for (AddonInfo info : infos) {
                 int mcmodId;
 
@@ -138,7 +140,13 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 String modids;
                 if (projectType == AddonProjectType.MOD) {
                     try {
-                        modids = String.join(";", cleanModIds(info));
+                        Collection<String> idList = cleanModIds(info);
+
+                        for (String modid : idList) {
+                            modIdTomcmodId.computeIfAbsent(modid, k -> new TreeSet<>()).add(mcmodId);
+                        }
+
+                        modids = String.join(";", idList);
                     } catch (Exception e) {
                         LOGGER.warn("Mod \"{}\" has invalid modid list: {}", info.name.main, info.modid);
                         modids = "";
@@ -161,6 +169,12 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
 
                 writer.writeNewLine();
             }
+
+            modIdTomcmodId.forEach((modid, mcmodIds) -> {
+                if (mcmodIds.size() > 1) {
+                    LOGGER.info("Mod id \"{}\" is used by multiple mods: {}", modid, mcmodIds);
+                }
+            });
         }
     }
 
