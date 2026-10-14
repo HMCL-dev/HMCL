@@ -95,9 +95,9 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                     continue;
                 }
 
-                String mainName = cleanChineseName(unescapeHtmlEntity(info.name.main));
-                String subName = unescapeHtmlEntity(info.name.sub);
-                String abbr = unescapeHtmlEntity(info.name.abbr);
+                String mainName = cleanChineseName(cleanName(info.name.main));
+                String subName = cleanName(info.name.sub);
+                String abbr = cleanName(info.name.abbr);
 
                 String modids;
                 if (projectType == AddonProjectType.MOD) {
@@ -163,7 +163,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                     case '\n' -> writer.write("\\n");
                     case '\r' -> writer.write("\\r");
                     case '\t' -> writer.write("\\t");
-                    case ',' -> writer.write("\\,");
+                    case ',' -> writer.write("\\u002c");
                     default -> {
                         boolean needEscape = switch (Character.getType(ch)) {
                             case Character.CONTROL,
@@ -205,15 +205,19 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
         }
     }
 
-    // Most string values in the original JSON data contain HTML-escaped characters, such as `&amp;`, `&lt;`, and `&gt;`.
-    private static String unescapeHtmlEntity(String name) {
+
+    private static String cleanName(String name) {
         if (name.indexOf('&') < 0) {
             return name;
         }
 
-        return name.replace("&amp;", "&")
+        return name
+                // Most string values in the original JSON data contain HTML-escaped characters, such as `&amp;`, `&lt;`, and `&gt;`.
+                .replace("&amp;", "&")
                 .replace("&lt;", "<")
-                .replace("&gt;", ">");
+                .replace("&gt;", ">")
+                // Remove zero-width space (U+200B) characters.
+                .replace("\u200b", "");
     }
 
     private static String cleanChineseName(String chineseName) {
@@ -259,7 +263,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
         var result = new ArrayList<String>(info.modid.size());
 
         for (String modid : info.modid) {
-            String cleanedModid = unescapeHtmlEntity(modid.trim());
+            String cleanedModid = cleanName(modid.trim());
 
             // TODO: Temporary workaround, remove this after the modid is fixed
             cleanedModid = switch (cleanedModid) {
