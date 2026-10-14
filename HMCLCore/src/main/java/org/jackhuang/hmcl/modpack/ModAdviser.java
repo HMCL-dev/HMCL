@@ -59,7 +59,6 @@ public interface ModAdviser {
         "irisUpdateInfo.json", // Iris
         "modernfix", // ModernFix
         "modtranslations", // Mod translations
-        "schematics", // Schematics mod
         "journeymap/data", // JourneyMap
         "mods/.connector" // Sinytra Connector
     );
@@ -70,6 +69,7 @@ public interface ModAdviser {
             "blueprints" /* BuildCraft */,
             "optionsof.txt" /* OptiFine */,
             "journeymap" /* JourneyMap */,
+            "schematics" /* Schematics mod */,
             "optionsshaders.txt",
             "mods/VoxelMods");
 

@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.modpack;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.task.Task;
+import org.jetbrains.annotations.Nullable;
 
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -40,20 +40,18 @@ public abstract class Modpack {
     private String version;
     private String gameVersion;
     private String description;
-    private transient Charset encoding;
     private ModpackManifest manifest;
 
     public Modpack() {
-        this("", null, null, null, null, null, null);
+        this("", null, null, null, null, null);
     }
 
-    public Modpack(String name, String author, String version, String gameVersion, String description, Charset encoding, ModpackManifest manifest) {
+    public Modpack(String name, String author, String version, String gameVersion, String description, ModpackManifest manifest) {
         this.name = name;
         this.author = author;
         this.version = version;
         this.gameVersion = gameVersion;
         this.description = description;
-        this.encoding = encoding;
         this.manifest = manifest;
     }
 
@@ -102,15 +100,6 @@ public abstract class Modpack {
         return this;
     }
 
-    public Charset getEncoding() {
-        return encoding;
-    }
-
-    public Modpack setEncoding(Charset encoding) {
-        this.encoding = encoding;
-        return this;
-    }
-
     public ModpackManifest getManifest() {
         return manifest;
     }
@@ -120,7 +109,21 @@ public abstract class Modpack {
         return this;
     }
 
-    public abstract Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, GameInstanceID instanceId, String iconUrl);
+    /// Creates the install task for this modpack.
+    ///
+    /// @param dependencyManager the dependency manager
+    /// @param zipFile           the modpack archive
+    /// @param instanceId        the target instance id
+    /// @param iconUrl           the optional icon URL, or `null`
+    /// @param excludedFiles   keys of optional files the user chose not to install; `null` or empty means
+    ///                          install all files. When non-null, must not contain `null` elements.
+    /// @return the install task
+    public abstract Task<?> getInstallTask(
+            DefaultDependencyManager dependencyManager,
+            Path zipFile,
+            GameInstanceID instanceId,
+            String iconUrl,
+            @Nullable Set<String> excludedFiles);
 
     public static boolean acceptFile(String path, List<String> blackList, List<String> whiteList) {
         if (path.isEmpty())

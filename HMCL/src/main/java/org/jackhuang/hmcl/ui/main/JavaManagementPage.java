@@ -182,15 +182,23 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
     @FXThread
     private void loadJava(Collection<JavaRuntime> javaRuntimes) {
-        if (javaRuntimes != null) {
-            // JavaRuntime equality is path-based. setAll can therefore retain a stale item when the
-            // Java installation at an existing path has been upgraded.
-            this.getItems().clear();
-            this.getItems().addAll(javaRuntimes);
-            this.setLoading(false);
-        } else {
+        if (javaRuntimes == null) {
             this.setLoading(true);
+            return;
         }
+
+        // JavaRuntime equality is path-based. setAll can therefore retain a stale item when the
+        // Java installation at an existing path has been upgraded.
+        this.getItems().clear();
+        this.getItems().addAll(javaRuntimes);
+
+        if (javaRuntimes.isEmpty()) {
+            this.setFailedReason(i18n("java.empty"));
+        } else {
+            this.setFailedReason(null);
+        }
+
+        this.setLoading(false);
     }
 
     private static final class JavaPageSkin extends ToolbarListPageSkin<JavaRuntime, JavaManagementPage> {

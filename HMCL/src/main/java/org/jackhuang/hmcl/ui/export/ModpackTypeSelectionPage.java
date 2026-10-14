@@ -26,8 +26,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.modpack.ModpackExportInfo;
 import org.jackhuang.hmcl.modpack.mcbbs.McbbsModpackExportTask;
-import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.modpack.modrinth.ModrinthModpackExportTask;
+import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
@@ -54,8 +54,8 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
         this.getChildren().setAll(
                 title,
                 createButton(MODPACK_TYPE_MCBBS, McbbsModpackExportTask.OPTION),
-                createButton(MODPACK_TYPE_SERVER, ServerModpackExportTask.OPTION),
-                createButton(MODPACK_TYPE_MODRINTH, ModrinthModpackExportTask.OPTION)
+                createButton(MODPACK_TYPE_MODRINTH, ModrinthModpackExportTask.OPTION),
+                createButton(MODPACK_TYPE_SERVER, ServerModpackExportTask.OPTION)
         );
     }
 

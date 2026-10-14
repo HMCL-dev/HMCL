@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DownloadInfo;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.task.CacheFileTask;
@@ -71,14 +72,17 @@ public final class GameDownloadTask extends Task<Path> {
     public void execute() {
         DownloadInfo downloadInfo = manifest.getDownloadInfo();
         @Nullable String sha1 = downloadInfo.getSha1();
-        CacheFileTask cacheTask = sha1 != null
-                ? new CacheFileTask(
-                        dependencyManager.getDownloadProvider()
-                                .injectURLWithCandidates(downloadInfo.getUrl()),
-                        sha1)
-                : new CacheFileTask(
-                        dependencyManager.getDownloadProvider()
-                                .injectURLWithCandidates(downloadInfo.getUrl()));
+        CacheFileTask cacheTask;
+        if (sha1 != null) {
+            cacheTask = new CacheFileTask(
+                    dependencyManager.getDownloadProvider()
+                            .getDownloadCandidates(downloadInfo.getUrl()),
+                    sha1);
+        } else {
+            DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
+            cacheTask = new CacheFileTask(
+                    downloadProvider.getDownloadCandidates(downloadInfo.getUrl()));
+        }
         cacheTask.setCacheRepository(dependencyManager.getCacheRepository());
         cacheTask.storeTo(this::setResult);
         dependencies.add(cacheTask);

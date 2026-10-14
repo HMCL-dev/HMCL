@@ -50,9 +50,7 @@ import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
@@ -62,12 +60,14 @@ import javafx.stage.*;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
@@ -75,12 +75,15 @@ import org.jackhuang.hmcl.ui.image.ImageLoader;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
+import org.jackhuang.hmcl.util.javafx.Subscription;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.w3c.dom.Document;
@@ -105,6 +108,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.*;
@@ -613,21 +617,21 @@ public final class FXUtils {
         if (link == null)
             return;
 
-        String uri = NetworkUtils.encodeLocation(link);
+        String url = NetworkUtils.encodeLocation(link);
         thread(() -> {
             try {
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                    Runtime.getRuntime().exec(new String[]{"rundll32.exe", "url.dll,FileProtocolHandler", uri});
+                    Runtime.getRuntime().exec(new String[]{"rundll32.exe", "url.dll,FileProtocolHandler", url});
                     return;
                 } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                    Runtime.getRuntime().exec(new String[]{"open", uri});
+                    Runtime.getRuntime().exec(new String[]{"open", url});
                     return;
                 } else {
                     for (String browser : linuxBrowsers) {
                         Path path = SystemUtils.which(browser);
                         if (path != null) {
                             try {
-                                Runtime.getRuntime().exec(new String[]{path.toString(), uri});
+                                Runtime.getRuntime().exec(new String[]{path.toString(), url});
                                 return;
                             } catch (Throwable ignored) {
                             }
@@ -640,7 +644,7 @@ public final class FXUtils {
             }
 
             try {
-                java.awt.Desktop.getDesktop().browse(new URI(uri));
+                java.awt.Desktop.getDesktop().browse(new URI(url));
             } catch (Throwable e) {
                 LOG.warning("Failed to open link: " + link, e);
             }
@@ -822,7 +826,7 @@ public final class FXUtils {
         property.addListener(binding);
     }
 
-    public static void bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
+    public static List<Subscription> bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
         int itemCount = children.length;
         int childSelectedCount = 0;
         for (BooleanProperty child : children) {
@@ -832,49 +836,46 @@ public final class FXUtils {
 
         allEnabled.set(childSelectedCount == itemCount);
 
-        class Listener implements InvalidationListener {
+        class AllListener {
             private int childSelectedCount;
             private boolean updating = false;
+            private final List<Subscription> subscriptions = new ArrayList<>(children.length + 1);
 
-            public Listener(int childSelectedCount) {
+            public AllListener(int childSelectedCount) {
                 this.childSelectedCount = childSelectedCount;
             }
 
-            @Override
-            public void invalidated(Observable observable) {
-                if (updating)
-                    return;
-
-                updating = true;
-                try {
-                    boolean value = ((BooleanProperty) observable).get();
-
-                    if (observable == allEnabled) {
+            {
+                subscriptions.add(Subscription.subscribe(allEnabled, () -> {
+                    if (updating) return;
+                    updating = true;
+                    try {
+                        boolean value = allEnabled.get();
                         for (BooleanProperty child : children) {
-                            child.setValue(value);
+                            child.set(value);
                         }
                         childSelectedCount = value ? itemCount : 0;
-                    } else {
-                        if (value)
-                            childSelectedCount++;
-                        else
-                            childSelectedCount--;
-
-                        allEnabled.set(childSelectedCount == itemCount);
+                    } finally {
+                        updating = false;
                     }
-                } finally {
-                    updating = false;
+                }));
+                for (var child : children) {
+                    subscriptions.add(Subscription.subscribe(child, () -> {
+                        if (updating) return;
+                        updating = true;
+                        try {
+                            if (child.get()) childSelectedCount++;
+                            else childSelectedCount--;
+                            allEnabled.set(childSelectedCount == itemCount);
+                        } finally {
+                            updating = false;
+                        }
+                    }));
                 }
             }
         }
 
-        InvalidationListener listener = new Listener(childSelectedCount);
-
-        WeakInvalidationListener weakListener = new WeakInvalidationListener(listener);
-        allEnabled.addListener(listener);
-        for (BooleanProperty child : children) {
-            child.addListener(weakListener);
-        }
+        return new AllListener(childSelectedCount).subscriptions;
     }
 
     public static void setIcon(Stage stage) {
@@ -1001,8 +1002,9 @@ public final class FXUtils {
                 .setSignificance(Task.TaskSignificance.MINOR);
     }
 
-    public static Task<Image> getRemoteImageTask(List<URI> uris, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
-        return new CacheFileTask(uris)
+    /// Creates a task that caches an image from HTTP(S) candidates and loads it with the requested sizing options.
+    public static Task<Image> getRemoteImageTask(DownloadCandidates candidates, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
+        return new CacheFileTask(candidates)
                 .setSignificance(Task.TaskSignificance.MINOR)
                 .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);
@@ -1195,6 +1197,15 @@ public final class FXUtils {
         });
     }
 
+    public static void onDoubleClicked(Node node, Runnable action) {
+        node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+                action.run();
+                e.consume();
+            }
+        });
+    }
+
     public static void addMacOSCloseWindowHandler(Window window, @Nullable Supplier<Boolean> restriction) {
         window.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
@@ -1265,6 +1276,34 @@ public final class FXUtils {
     public static void copyText(String text, @Nullable String toastMessage) {
         ClipboardContent content = new ClipboardContent();
         content.putString(text);
+        Clipboard.getSystemClipboard().setContent(content);
+
+        if (toastMessage != null && !Controllers.isStopped()) {
+            Controllers.showToast(toastMessage);
+        }
+    }
+
+    public static void copyFiles(List<Path> paths) {
+        copyFiles(paths.stream().map(Path::toFile).toList(), i18n("message.copied"));
+    }
+
+    public static void copyFiles(List<File> files, @Nullable String toastMessage) {
+        ClipboardContent content = new ClipboardContent();
+        content.putFiles(files);
+        Clipboard.getSystemClipboard().setContent(content);
+
+        if (toastMessage != null && !Controllers.isStopped()) {
+            Controllers.showToast(toastMessage);
+        }
+    }
+
+    public static void copyImage(Image image) {
+        copyImage(image, i18n("message.copied"));
+    }
+
+    public static void copyImage(Image image, @Nullable String toastMessage) {
+        ClipboardContent content = new ClipboardContent();
+        content.putImage(image);
         Clipboard.getSystemClipboard().setContent(content);
 
         if (toastMessage != null && !Controllers.isStopped()) {
@@ -1522,4 +1561,52 @@ public final class FXUtils {
 
     }
 
+    public static void chooseDateRange(Consumer<@NotNull Pair<@Nullable LocalDate, @Nullable LocalDate>> onConfirm) {
+        Controllers.dialog(new DateRangeDialog(onConfirm));
+    }
+
+    private static class DateRangeDialog extends JFXDialogLayout {
+
+        private final JFXDatePicker fromPicker, toPicker;
+
+        public DateRangeDialog(Consumer<Pair<LocalDate, LocalDate>> onConfirm) {
+            super();
+
+            setHeading(new Label(i18n("button.select_date")));
+
+            GridPane body = new GridPane(4, 8);
+            {
+                Label fromLabel = new Label(i18n("button.select_date.from"));
+                this.fromPicker = new JFXDatePicker(LocalDate.now());
+                fromPicker.setOverLay(true);
+                fromPicker.setDialogParent(Controllers.getDecorator().getDialogContainer());
+                body.add(fromLabel, 0, 0);
+                body.add(fromPicker, 1, 0);
+            }
+            {
+                Label toLabel = new Label(i18n("button.select_date.to"));
+                this.toPicker = new JFXDatePicker(LocalDate.now());
+                toPicker.setOverLay(true);
+                toPicker.setDialogParent(Controllers.getDecorator().getDialogContainer());
+                body.add(toLabel, 0, 1);
+                body.add(toPicker, 1, 1);
+            }
+            setBody(body);
+
+            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+            cancelButton.getStyleClass().add("dialog-cancel");
+            cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+            JFXButton okButton = new JFXButton(i18n("button.ok"));
+            okButton.getStyleClass().add("dialog-accept");
+            okButton.setOnAction(e -> {
+                if (onConfirm != null) onConfirm.accept(Pair.pair(fromPicker.getValue(), toPicker.getValue()));
+                fireEvent(new DialogCloseEvent());
+            });
+
+            setActions(cancelButton, okButton);
+            onEscPressed(this, cancelButton::fire);
+        }
+
+    }
 }
