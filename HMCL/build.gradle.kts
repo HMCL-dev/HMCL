@@ -1,4 +1,6 @@
 import org.jackhuang.hmcl.gradle.TerracottaConfigUpgradeTask
+import org.jackhuang.hmcl.gradle.addon.FormatJsonFile
+import org.jackhuang.hmcl.gradle.addon.UpdateAddonProjectInfos
 import org.jackhuang.hmcl.gradle.ci.GitHubActionUtils
 import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
 import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
@@ -6,7 +8,6 @@ import org.jackhuang.hmcl.gradle.l10n.CreateLanguageList
 import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
 import org.jackhuang.hmcl.gradle.l10n.SyncTranslations
 import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
-import org.jackhuang.hmcl.gradle.mod.FormatJsonFile
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import org.jackhuang.hmcl.gradle.pack.CreateDeb
 import org.jackhuang.hmcl.gradle.pack.ReleaseType
@@ -463,12 +464,13 @@ val createLanguageList = tasks.register<CreateLanguageList>("createLanguageList"
     outputFile.set(generatedDir.map { it.file("languages.json") })
 }
 
-val createLocaleNamesResourceBundle = tasks.register<CreateLocaleNamesResourceBundle>("createLocaleNamesResourceBundle") {
-    dependsOn(createLanguageList)
+val createLocaleNamesResourceBundle =
+    tasks.register<CreateLocaleNamesResourceBundle>("createLocaleNamesResourceBundle") {
+        dependsOn(createLanguageList)
 
-    languagesFile.set(createLanguageList.flatMap { it.outputFile })
-    outputDirectory.set(generatedDir.map { it.dir("generated/LocaleNames") })
-}
+        languagesFile.set(createLanguageList.flatMap { it.outputFile })
+        outputDirectory.set(generatedDir.map { it.dir("generated/LocaleNames") })
+    }
 
 // mcmod data
 
@@ -478,6 +480,18 @@ tasks.register<FormatJsonFile>("formatModJson") {
 
 tasks.register<FormatJsonFile>("formatModPackJson") {
     file.set(layout.projectDirectory.file("modpack.json"))
+}
+
+tasks.register<UpdateAddonProjectInfos>("updateModProjectInfos") {
+    inputFile.set(layout.projectDirectory.file("mod.json"))
+    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/addon/mod.csv"))
+    projectType.set(UpdateAddonProjectInfos.AddonProjectType.MOD)
+}
+
+tasks.register<UpdateAddonProjectInfos>("updateModpackProjectInfos") {
+    inputFile.set(layout.projectDirectory.file("modpack.json"))
+    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/addon/modpack.csv"))
+    projectType.set(UpdateAddonProjectInfos.AddonProjectType.MODPACK)
 }
 
 tasks.register<ParseModDataTask>("parseModData") {
