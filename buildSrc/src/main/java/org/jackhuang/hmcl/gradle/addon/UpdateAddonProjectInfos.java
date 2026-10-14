@@ -86,10 +86,18 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                     """);
 
             for (AddonInfo info : infos) {
+                int mcmodId;
+
+                try {
+                    mcmodId = projectType.getMcmodId(info);
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to get the id of mcmod.cn for \"{}\"", info.name.main);
+                    continue;
+                }
+
                 String mainName = cleanChineseName(unescapeHtmlEntity(info.name.main));
                 String subName = unescapeHtmlEntity(info.name.sub);
                 String abbr = unescapeHtmlEntity(info.name.abbr);
-
 
                 String modids;
                 if (projectType == AddonProjectType.MOD) {
@@ -104,16 +112,13 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 }
 
                 // Write the fields to the CSV file
+                writer.writeField(String.valueOf(mcmodId));
                 writer.writeField(mainName);
-                writer.writeSeparator();
                 writer.writeField(subName);
-                writer.writeSeparator();
                 writer.writeField(abbr);
-                writer.writeSeparator();
 
                 if (projectType == AddonProjectType.MOD) {
                     writer.writeField(modids);
-                    writer.writeSeparator();
                 }
 
                 writer.writeNewLine();
@@ -122,6 +127,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
     }
 
     private static final class CSVWriter implements Closeable {
+        private boolean firstField = true;
         private final BufferedWriter writer;
 
         private CSVWriter(BufferedWriter writer) {
@@ -139,9 +145,16 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 writer.write(line);
                 writer.write('\n');
             }
+            firstField = true;
         }
 
         public void writeField(String field) throws IOException {
+            if (firstField) {
+                firstField = false;
+            } else {
+                writer.write(',');
+            }
+
             for (int i = 0; i < field.length(); ) {
                 int ch = field.codePointAt(i);
 
@@ -186,15 +199,13 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             }
         }
 
-        public void writeSeparator() throws IOException {
-            writer.write(',');
-        }
-
         public void writeNewLine() throws IOException {
             writer.newLine();
+            firstField = true;
         }
     }
 
+    // Most string values in the original JSON data contain HTML-escaped characters, such as `&amp;`, `&lt;`, and `&gt;`.
     private static String unescapeHtmlEntity(String name) {
         if (name.indexOf('&') < 0) {
             return name;
@@ -279,8 +290,24 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
     }
 
     public enum AddonProjectType {
-        MOD,
-        MODPACK
+        MOD("class"),
+        MODPACK("modpack");
+
+        private final Pattern urlPattern;
+
+        AddonProjectType(String slug) {
+            urlPattern = Pattern.compile("https://www\\.mcmod\\.cn/" + slug + "/(?<id>\\d+)\\.html");
+        }
+
+        int getMcmodId(AddonInfo info) {
+            String url = info.links.list.get("mcmod").get(0).url();
+            var matcher = urlPattern.matcher(url);
+            if (!matcher.matches()) {
+                throw new GradleException("Invalid mcmod.cn URL: " + url);
+            }
+
+            return Integer.parseInt(matcher.group("id"));
+        }
     }
 
     // Json Model
@@ -289,7 +316,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             AddonInfo.Name name,
             @JsonAdapter(AddonInfo.ModIdDeserializer.class)
             @Nullable List<String> modid,
-            Links link
+            Links links
     ) {
         record Name(String main, String sub, String abbr) {
         }
