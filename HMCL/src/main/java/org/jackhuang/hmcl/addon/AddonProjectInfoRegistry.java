@@ -410,7 +410,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
             List<Pair<String, I>> keywords = new ArrayList<>();
             for (I info : getInfos()) {
                 for (String name : List.of(info.mainName(), info.subName(), info.abbrName())) {
-                    if (StringUtils.isNotBlank(name))
+                    if (!name.isEmpty())
                         keywords.add(Pair.pair(name, info));
                 }
             }
