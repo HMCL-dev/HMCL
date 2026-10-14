@@ -40,6 +40,10 @@ public abstract class AddonProjectInfo {
     protected AddonProjectInfo(
             int mcmodId, String curseforgeId, String modrinthId,
             String mainName, String subName, String abbrName) {
+        if (mainName.isEmpty()) {
+            throw new IllegalArgumentException("main name must not be empty");
+        }
+
         this.mcmodId = mcmodId;
         this.curseforgeId = curseforgeId;
         this.modrinthId = modrinthId;
@@ -58,7 +62,7 @@ public abstract class AddonProjectInfo {
         return subName;
     }
 
-    /// Returns the recorded primary name, possibly empty.
+    /// Returns the recorded primary name.
     public String getMainName() {
         return mainName;
     }

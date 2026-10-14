@@ -108,6 +108,11 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 String subName = cleanName(info.name.sub);
                 String abbr = cleanName(info.name.abbr);
 
+                if (mainName.isEmpty()) {
+                    LOGGER.warn("Mod \"{}\" has empty main name", info.name.main);
+                    continue;
+                }
+
                 String modids;
                 if (projectType == AddonProjectType.MOD) {
                     try {
