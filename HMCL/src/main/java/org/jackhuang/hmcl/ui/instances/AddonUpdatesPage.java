@@ -105,9 +105,15 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             ComponentList centrePane = new ComponentList();
             centrePane.getStyleClass().add("no-padding");
 
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("addon.check_update.only_preview"));
+            placeholderContainer.getChildren().add(placeholderLabel);
+
             listView = new JFXListView<>();
             listView.setItems(objects);
             listView.getStyleClass().add("jfx-list-view-float");
+            listView.setPlaceholder(placeholderContainer);
 
             setMargin(listView, new Insets(0, 10, 0, 10));
             VBox.setVgrow(listView, Priority.ALWAYS);
