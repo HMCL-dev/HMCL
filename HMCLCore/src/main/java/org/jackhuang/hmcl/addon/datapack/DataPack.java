@@ -215,43 +215,26 @@ public class DataPack {
             info = JsonUtils.fromNonNullJson(Files.readString(mcmetaPath), PackMcMeta.class).pack();
             statusFile = isDirectory ? mcmetaPath : path;
 
-            this.activeProperty = initializeActiveProperty();
-        }
-
-        private BooleanProperty initializeActiveProperty() {
             BooleanProperty property = new SimpleBooleanProperty(this, "active", !FileUtils.getExtension(this.statusFile).equals(DISABLED_EXT));
             property.addListener((obs, wasActive, isNowActive) -> {
-                if (wasActive != isNowActive) {
-                    handleFileRename(isNowActive);
-                }
-            });
-            return property;
-        }
+                if (isNowActive == wasActive)
+                    return;
 
-        private void handleFileRename(boolean isNowActive) {
-            Path newStatusFile = calculateNewStatusFilePath(isNowActive);
-            if (statusFile.equals(newStatusFile)) {
-                return;
-            }
-            try {
-                Files.move(this.statusFile, newStatusFile);
-                this.statusFile = newStatusFile;
-                if (!this.isDirectory) {
+                Path newStatusFile = isNowActive
+                        ? statusFile.getParent().resolve(FileUtils.getNameWithoutExtension(statusFile))
+                        : statusFile.getParent().resolve(FileUtils.getName(statusFile) + "." + DISABLED_EXT);
+
+                try {
+                    Files.move(statusFile, newStatusFile);
+                } catch (IOException e) {
+                    LOG.warning("Unable to rename file from " + this.statusFile + " to " + newStatusFile, e);
+                }
+
+                statusFile = newStatusFile;
+                if (!isDirectory)
                     this.path = newStatusFile;
-                }
-            } catch (IOException e) {
-                LOG.warning("Unable to rename file from " + this.statusFile + " to " + newStatusFile, e);
-            }
-        }
-
-        private Path calculateNewStatusFilePath(boolean isActive) {
-            boolean isFileDisabled = DISABLED_EXT.equals(FileUtils.getExtension(this.statusFile));
-            if (isActive && isFileDisabled) {
-                return this.statusFile.getParent().resolve(FileUtils.getNameWithoutExtension(this.statusFile));
-            } else if (!isActive && !isFileDisabled) {
-                return this.statusFile.getParent().resolve(FileUtils.getName(this.statusFile) + "." + DISABLED_EXT);
-            }
-            return this.statusFile;
+            });
+            this.activeProperty = property;
         }
 
         public String getId() {
