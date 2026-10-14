@@ -98,13 +98,13 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
 
                 @Nullable String curseforgeId;
                 try {
-                      curseforgeId = projectType.getCurseForgeId(info);
-                 } catch (Exception e) {
-                      LOGGER.warn("Failed to get the id of CurseForge for \"{}\"", info.name.main);
-                      curseforgeId = null;
-                 }
+                    curseforgeId = projectType.getCurseForgeId(info);
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to get the id of CurseForge for \"{}\"", info.name.main);
+                    curseforgeId = null;
+                }
 
-                String mainName = cleanChineseName(cleanName(info.name.main));
+                String mainName = cleanChineseName(info.name.main);
                 String subName = cleanName(info.name.sub);
                 String abbr = cleanName(info.name.abbr);
 
@@ -223,21 +223,24 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
     }
 
     private static String cleanName(String name) {
-        if (name.indexOf('&') < 0) {
-            return name;
+        name = name.trim();
+
+        // Remove zero-width space (U+200B) characters.
+        name = name.replace("\u200b", "");
+
+        if (name.indexOf('&') >= 0) {
+            // Most string values in the original JSON data contain HTML-escaped characters, such as `&amp;`, `&lt;`, and `&gt;`.
+            name = name
+                    .replace("&amp;", "&")
+                    .replace("&lt;", "<")
+                    .replace("&gt;", ">");
         }
 
-        return name
-                // Most string values in the original JSON data contain HTML-escaped characters, such as `&amp;`, `&lt;`, and `&gt;`.
-                .replace("&amp;", "&")
-                .replace("&lt;", "<")
-                .replace("&gt;", ">")
-                // Remove zero-width space (U+200B) characters.
-                .replace("\u200b", "");
+        return name;
     }
 
     private static String cleanChineseName(String chineseName) {
-        chineseName = chineseName.trim();
+        chineseName = cleanName(chineseName);
 
         if (chineseName.isEmpty()) {
             return "";
