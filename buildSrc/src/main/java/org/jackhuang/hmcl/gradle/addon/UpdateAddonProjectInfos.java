@@ -47,13 +47,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/// Converts mcmod.cn JSON exports into UTF-8 project metadata with comma-separated,
-/// backslash-escaped fields. Records retain input order and contain the mcmod.cn ID,
-/// CurseForge slug, an empty Modrinth ID, primary name, secondary name and abbreviation.
-/// Mod records additionally contain semicolon-separated mod IDs.
-///
-/// This format uses custom field escapes rather than CSV quoting. The generated resources
-/// are consumed by the launcher's addon project registries.
+/// Converts mcmod.cn JSON exports into UTF-8 metadata resources for the launcher's addon project registries.
 @NotNullByDefault
 public abstract class UpdateAddonProjectInfos extends DefaultTask {
 
@@ -64,22 +58,19 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
     @InputFile
     public abstract RegularFileProperty getInputFile();
 
-    /// Returns the output file property. Execution creates parent directories and replaces
-    /// existing file contents; output is not committed atomically.
+    /// Returns the output file property. Existing contents are replaced during execution.
     @OutputFile
     public abstract RegularFileProperty getOutputFile();
 
-    /// Returns the project type used to interpret links, exclude records and select output fields.
+    /// Returns the type of projects to export.
     @Input
     public abstract Property<AddonProjectType> getProjectType();
 
     /// Reads the export and writes the selected project type's metadata.
-    /// Records with unreadable mcmod.cn IDs, excluded IDs or empty cleaned primary names
-    /// are skipped. Failures to extract a CurseForge slug or validate mod IDs are logged
-    /// and leave the corresponding field empty. Other failures propagate and may leave
-    /// a partially written output file. Both input and output streams are closed.
+    /// Invalid records are skipped where possible, and invalid optional metadata is omitted.
+    /// A failure may leave a partially written output file.
     ///
-    /// @throws Exception if reading, parsing or writing fails outside the per-field recovery paths
+    /// @throws Exception if the export cannot be read, converted or written
     @TaskAction
     public void run() throws Exception {
         Path inputFile = getInputFile().getAsFile().get().toPath();
@@ -166,9 +157,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
     }
 
     /// Writes comma-delimited records using backslash escapes instead of quoted CSV fields.
-    /// Null fields are empty, record separators are LF, and closing this writer closes
-    /// its underlying writer. Writes are incremental: an I/O failure may leave both output
-    /// and field-separator state partially advanced, with no rollback.
+    /// Closing this writer closes its underlying writer.
     private static final class CSVWriter implements Closeable {
         /// Whether the next field omits the leading comma.
         private boolean firstField = true;
@@ -188,10 +177,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             writer.close();
         }
 
-        /// Writes each line returned by [String#lines()] with a `# ` prefix and an LF suffix,
-        /// then resets the field-separator state. Callers must be at a record boundary:
-        /// this method does not terminate an existing record before writing the comment.
-        /// An empty comment writes nothing but still resets the state.
+        /// Writes comment lines prefixed with `# `. Must be called at a record boundary.
         ///
         /// @throws IOException if writing to the destination fails
         public void writeComment(String comment) throws IOException {
@@ -203,14 +189,8 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             firstField = true;
         }
 
-        /// Appends a field, preceded by a comma unless it is the first field in the record.
-        /// Null and empty values produce empty fields. NUL, backslash, LF, CR, tab and comma
-        /// use the short escapes `\0`, `\\`, `\n`, `\r`, `\t` and `\c`, respectively.
-        /// Controls, format characters, unassigned code points, surrogates, private-use
-        /// characters and line or paragraph separators otherwise use four-digit hexadecimal
-        /// escapes for each UTF-16 code unit. Other characters, including quotes, are literal.
-        /// The Unicode categories come from ICU; this method neither terminates the record
-        /// nor explicitly flushes the destination.
+        /// Appends a backslash-escaped field with a delimiter when needed.
+        /// Null values produce empty fields. The record is not terminated.
         ///
         /// @throws IOException if writing to the destination fails
         public void writeField(@Nullable String field) throws IOException {
@@ -271,8 +251,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             }
         }
 
-        /// Writes an LF record separator and resets the field-separator state.
-        /// Calling this before any fields writes an empty record.
+        /// Terminates the current record with LF and starts a new record.
         ///
         /// @throws IOException if writing the separator fails
         public void writeNewLine() throws IOException {
@@ -281,9 +260,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
         }
     }
 
-    /// Trims the name using [String#trim()], removes U+200B, then replaces `&amp;`, `&lt;`
-    /// and `&gt;` in that order. Other HTML entities are left unchanged; the result is not
-    /// trimmed again after removals or replacements.
+    /// Cleans an exported name by trimming, removing zero-width spaces and decoding selected HTML entities.
     private static String cleanName(String name) {
         name = name.trim();
 
@@ -301,10 +278,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
         return name;
     }
 
-    /// Cleans a primary name with [#cleanName(String)] and converts fullwidth parentheses
-    /// to ASCII parentheses. An opening parenthesis is preceded by an inserted space unless
-    /// the preceding input code point is Java whitespace, a fullwidth exclamation mark or
-    /// an ideographic full stop. The final result is trimmed using [String#trim()].
+    /// Cleans a primary name and normalizes fullwidth parentheses and their spacing.
     private static String cleanChineseName(String chineseName) {
         chineseName = cleanName(chineseName);
 
@@ -332,8 +306,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
         return builder.toString().trim();
     }
 
-    /// Accepts nonempty IDs containing ASCII letters, digits, dots, underscores, vertical bars,
-    /// plus signs, apostrophes, spaces and hyphens.
+    /// Recognizes accepted mod ID syntax.
     private static final Pattern MODID_PATTERN = Pattern.compile("^[a-zA-Z0-9._|+' -]+$");
     /// Explicitly accepted IDs that do not match [#MODID_PATTERN].
     private static final Set<String> MODID_WHITELIST = Set.of(
@@ -343,10 +316,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             "EFFLL (LiteLoader ObjectHolder fix)"
     );
 
-    /// Cleans each recorded mod ID, applies known data corrections and validates the result.
-    /// Returns a new mutable collection without duplicates, preserving first-occurrence order.
-    /// An empty input list produces an empty collection; no partial result is returned if
-    /// any ID is invalid.
+    /// Returns cleaned, validated mod IDs without duplicates, preserving their original order.
     ///
     /// @throws GradleException if the mod ID list is null or a cleaned ID is not accepted
     private static Collection<String> cleanModIds(AddonInfo info) {
@@ -389,7 +359,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
 
     /// Selects project-specific link parsing, exclusion rules and output fields.
     public enum AddonProjectType {
-        /// Mod projects, excluding mcmod.cn entry 1, which represents Minecraft itself.
+        /// Mod projects, excluding Minecraft itself.
         MOD("class", "mc-mods") {
             /// Returns whether the ID identifies Minecraft rather than a mod.
             @Override
@@ -403,12 +373,12 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 return false;
             }
         },
-        /// Modpack projects, with no ID-based exclusions and no mod ID output field.
+        /// Modpack projects.
         MODPACK("modpack", "modpacks");
 
-        /// Matches a complete canonical mcmod.cn URL and captures its decimal project ID.
+        /// Recognizes project URLs on mcmod.cn.
         private final Pattern mcmodUrlPattern;
-        /// Required, case-sensitive CurseForge project category path segment.
+        /// CurseForge category for this project type.
         private final String curseforgeType;
 
         /// Creates a project type for the specified mcmod.cn path and CurseForge category.
@@ -423,13 +393,9 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             this.curseforgeType = curseforgeType;
         }
 
-        /// Extracts the decimal ID from the first `mcmod` link; later links are not examined.
-        /// The link must match this type's canonical HTTPS URL, including the `.html` suffix.
+        /// Extracts the project ID from the first mcmod.cn link.
         ///
-        /// @throws GradleException if the URL does not match the expected pattern
-        /// @throws NumberFormatException if the captured ID is outside the range of an int
-        /// @throws NullPointerException if required link metadata is absent or null
-        /// @throws IndexOutOfBoundsException if the `mcmod` link list is empty
+        /// @throws GradleException if the URL is not valid for this project type
         int getMcmodId(AddonInfo info) {
             String url = info.links.list.get("mcmod").get(0).url();
             var matcher = mcmodUrlPattern.matcher(url);
@@ -440,23 +406,16 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             return Integer.parseInt(matcher.group("id"));
         }
 
-        /// Matches game, category and project-slug path segments, allowing a trailing subpath.
+        /// Recognizes CurseForge project paths.
         private static final Pattern CURSEFORGE_PATH_PATTERNS = Pattern.compile(
                 "^/(?<game>[a-zA-Z-]+)/(?<type>[a-zA-Z0-9-]+)/+(?<id>[\\w-]+)(/(.*?))?$"
         );
 
 
-        /// Returns the slug from the first accepted HTTP(S) CurseForge link for Minecraft
-        /// and this project category. Known download hosts and obsolete domains are skipped,
-        /// as are valid links for other games or categories. No network requests are made.
+        /// Returns a CurseForge project slug for Minecraft and this project type,
+        /// or null if no applicable link is present. No network requests are made.
         ///
-        /// Returns null if links are absent, empty or all skipped without errors. Invalid
-        /// links are collected while later links are tried; a later accepted link wins even
-        /// if earlier links failed. If none is accepted, the first collected exception is
-        /// thrown with subsequent exceptions suppressed.
-        ///
-        /// @throws Exception if no link is accepted and at least one link cannot be parsed
-        ///                   or has an unsupported scheme, host or path
+        /// @throws Exception if no suitable link is found and at least one link is invalid
         @Nullable String getCurseForgeId(AddonInfo info) throws Exception {
             var links = info.links.list.get("curseforge");
 
@@ -533,7 +492,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
         }
     }
 
-    /// Represents one JSON export record; fields are consumed without schema validation.
+    /// Represents one project in the JSON export.
     ///
     /// @param name primary, secondary and abbreviated project names
     /// @param modid optional mod IDs decoded from an array or a wrapper object's `list` field
@@ -570,9 +529,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             /// Generic target type passed to Gson for mod ID arrays.
             private static final Type STRING_LIST = TypeToken.getParameterized(List.class, String.class).getType();
 
-            /// Delegates arrays to Gson and otherwise decodes an object's `list` member.
-            /// Returns null for JSON null, a missing member or a member decoded as null.
-            /// The requested target type is ignored; elements are decoded as strings.
+            /// Decodes a mod ID list, returning null if the list is absent or JSON null.
             ///
             /// @throws JsonParseException if Gson cannot decode the selected value as a string list
             /// @throws IllegalStateException if a non-null, non-array value is not a JSON object
