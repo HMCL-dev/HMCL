@@ -31,7 +31,7 @@ import java.util.zip.ZipFile
 class ArtifactUtils {
 
     companion object {
-        val algorithms = linkedMapOf(
+        val algorithms = mapOf(
             "SHA-1" to "sha1",
             "SHA-256" to "sha256",
             "SHA-512" to "sha512"
