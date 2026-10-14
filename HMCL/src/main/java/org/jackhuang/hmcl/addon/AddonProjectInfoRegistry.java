@@ -273,7 +273,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
     /// Duplicate keys retain the first project in resource order.
     private @Unmodifiable Map<String, I> getModIdMap() {
         @Nullable SoftReference<@Unmodifiable Map<String, I>> reference = this.modIdMapRef;
-        @Nullable @Unmodifiable Map<String, I> cached = reference != null ? reference.get() : null;
+        @Unmodifiable Map<String, I> cached = reference != null ? reference.get() : null;
         if (cached != null)
             return cached;
         lock.lock();
@@ -303,7 +303,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
     /// Duplicate keys retain the first project in resource order.
     private @Unmodifiable Map<String, I> getSubnameMap() {
         @Nullable SoftReference<@Unmodifiable Map<String, I>> reference = this.subnameMapRef;
-        @Nullable @Unmodifiable Map<String, I> cached = reference != null ? reference.get() : null;
+        @Unmodifiable Map<String, I> cached = reference != null ? reference.get() : null;
         if (cached != null)
             return cached;
         lock.lock();
@@ -330,7 +330,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
     /// Duplicate keys retain the first project in resource order.
     private @Unmodifiable Map<String, I> getCurseForgeMap() {
         @Nullable SoftReference<@Unmodifiable Map<String, I>> reference = this.curseForgeMapRef;
-        @Nullable @Unmodifiable Map<String, I> cached = reference != null ? reference.get() : null;
+        @Unmodifiable Map<String, I> cached = reference != null ? reference.get() : null;
         if (cached != null)
             return cached;
         lock.lock();
@@ -416,7 +416,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
     /// Returns searchable names, rebuilding the index after its soft reference is cleared.
     private @Unmodifiable List<Pair<String, I>> getKeywords() {
         @Nullable SoftReference<@Unmodifiable List<Pair<String, I>>> reference = keywordsRef;
-        @Nullable @Unmodifiable List<Pair<String, I>> cached = reference != null ? reference.get() : null;
+        @Unmodifiable List<Pair<String, I>> cached = reference != null ? reference.get() : null;
         if (cached != null)
             return cached;
         lock.lock();
@@ -427,10 +427,12 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
                 return cached;
             List<Pair<String, I>> keywords = new ArrayList<>();
             for (I info : getInfos()) {
-                for (String name : List.of(info.mainName(), info.subName(), info.abbrName())) {
-                    if (!name.isEmpty())
-                        keywords.add(Pair.pair(name, info));
-                }
+                if (!info.mainName().isEmpty())
+                    keywords.add(Pair.pair(info.mainName(), info));
+                if (!info.subName().isEmpty())
+                    keywords.add(Pair.pair(info.subName(), info));
+                if (!info.abbrName().isEmpty())
+                    keywords.add(Pair.pair(info.abbrName(), info));
             }
             cached = List.copyOf(keywords);
             keywordsRef = new SoftReference<>(cached);
@@ -465,7 +467,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
     /// produce an empty list; malformed records are skipped. The cache is softly referenced.
     public @Unmodifiable List<I> getInfos() {
         @Nullable SoftReference<@Unmodifiable List<I>> infosRef = this.infosRef;
-        @Nullable @Unmodifiable List<I> infos = infosRef != null ? infosRef.get() : null;
+        @Unmodifiable List<I> infos = infosRef != null ? infosRef.get() : null;
         if (infos != null)
             return infos;
 
