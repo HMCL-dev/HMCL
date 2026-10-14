@@ -478,7 +478,7 @@ tasks.register<FormatJsonFile>("formatModJson") {
     file.set(layout.projectDirectory.file("mod.json"))
 }
 
-tasks.register<FormatJsonFile>("formatModPackJson") {
+tasks.register<FormatJsonFile>("formatModpackJson") {
     file.set(layout.projectDirectory.file("modpack.json"))
 }
 

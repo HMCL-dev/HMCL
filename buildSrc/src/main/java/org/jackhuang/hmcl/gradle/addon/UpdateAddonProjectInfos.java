@@ -93,6 +93,14 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                     continue;
                 }
 
+                @Nullable String curseforgeId;
+                try {
+                      curseforgeId = projectType.getCurseForgeId(info);
+                 } catch (Exception e) {
+                      LOGGER.warn("Failed to get the id of CurseForge for \"{}\"", info.name.main);
+                      curseforgeId = null;
+                 }
+
                 String mainName = cleanChineseName(cleanName(info.name.main));
                 String subName = cleanName(info.name.sub);
                 String abbr = cleanName(info.name.abbr);
@@ -100,7 +108,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 String modids;
                 if (projectType == AddonProjectType.MOD) {
                     try {
-                        modids = String.join(":", cleanModIds(info));
+                        modids = String.join(";", cleanModIds(info));
                     } catch (Exception e) {
                         LOGGER.warn("Mod \"{}\" has invalid modid list: {}", info.name.main, info.modid);
                         modids = "";
@@ -111,6 +119,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
 
                 // Write the fields to the CSV file
                 writer.writeField(String.valueOf(mcmodId));
+                writer.writeField(curseforgeId);
                 writer.writeField(mainName);
                 writer.writeField(subName);
                 writer.writeField(abbr);
@@ -146,17 +155,22 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             firstField = true;
         }
 
-        public void writeField(String field) throws IOException {
+        public void writeField(@Nullable String field) throws IOException {
             if (firstField) {
                 firstField = false;
             } else {
                 writer.write(',');
             }
 
+            if (field == null || field.isEmpty()) {
+                return;
+            }
+
             for (int i = 0; i < field.length(); ) {
                 int ch = field.codePointAt(i);
 
                 switch (ch) {
+                    case '\0' -> writer.write("\\0");
                     case '\\' -> writer.write("\\\\");
                     case '\n' -> writer.write("\\n");
                     case '\r' -> writer.write("\\r");
@@ -198,7 +212,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
         }
 
         public void writeNewLine() throws IOException {
-            writer.newLine();
+            writer.write('\n');
             firstField = true;
         }
     }
@@ -252,12 +266,12 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             "EFFLL (LiteLoader ObjectHolder fix)"
     );
 
-    private static List<String> cleanModIds(AddonInfo info) {
+    private static Collection<String> cleanModIds(AddonInfo info) {
         if (info.modid() == null) {
             throw new GradleException("Modid list is null");
         }
 
-        var result = new ArrayList<String>(info.modid.size());
+        var result = new LinkedHashSet<String>(info.modid.size());
 
         for (String modid : info.modid) {
             String cleanedModid = cleanName(modid.trim());
@@ -291,23 +305,18 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
     }
 
     public enum AddonProjectType {
-        MOD("class") {
-            @Override
-            String getCurseForgeId(String path) {
-                return ""; // TODO
-            }
-        },
-        MODPACK("modpack") {
-            @Override
-            String getCurseForgeId(String path) {
-                return ""; // TODO
-            }
-        };
+        MOD("class", "mc-mods"),
+        MODPACK("modpack", "modpacks");
 
         private final Pattern mcmodUrlPattern;
+        private final String curseforgeType;
 
-        AddonProjectType(String slug) {
-            mcmodUrlPattern = Pattern.compile("https://www\\.mcmod\\.cn/" + slug + "/(?<id>\\d+)\\.html");
+        AddonProjectType(
+                String mcmodSlug,
+                String curseforgeType
+        ) {
+            this.mcmodUrlPattern = Pattern.compile("https://www\\.mcmod\\.cn/" + mcmodSlug + "/(?<id>\\d+)\\.html");
+            this.curseforgeType = curseforgeType;
         }
 
         int getMcmodId(AddonInfo info) {
@@ -320,33 +329,77 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             return Integer.parseInt(matcher.group("id"));
         }
 
-        abstract String getCurseForgeId(String path);
+        private static final Pattern CURSEFORGE_PATH_PATTERNS = Pattern.compile(
+                "^/(?<game>[a-zA-Z-]+)/(?<type>[a-zA-Z0-9-]+)/+(?<id>[\\w-]+)(/(.*?))?$"
+        );
 
-        @Nullable String getCurseForgeId(AddonInfo info) {
-            var link = info.links.list.get("curseforge");
 
-            if (link == null || link.isEmpty()) {
+        @Nullable String getCurseForgeId(AddonInfo info) throws Exception {
+            var links = info.links.list.get("curseforge");
+
+            if (links == null || links.isEmpty()) {
                 return null;
             }
 
-            WebURL url = WebURL.parse(link.get(0).url());
+            Exception cause = null;
 
-            if (!url.getScheme().equals("https") && !url.getScheme().equals("http")) {
-                throw new GradleException("Invalid CurseForge URL: " + url);
+            for (AddonInfo.Link link : links) {
+                try {
+                    WebURL url = WebURL.parse(link.url());
+
+                    if (!url.getScheme().equals("https") && !url.getScheme().equals("http")) {
+                        throw new GradleException("Invalid CurseForge URL: " + url);
+                    }
+
+                    switch (Objects.requireNonNull(url.getHost(), "host")) {
+                        case "files.xmdhs.com",
+                             "edge.forgecdn.net",
+                             "minecraft.curseforge.com",
+                             "mediafilez.forgecdn.net",
+                             // Deprecated domain names
+                             "www.curse.com",
+                             "mods.curse.com" -> {
+                            continue;
+                        }
+                        case "curseforge.com",
+                             "www.curseforge.com",
+                             "legacy.curseforge.com",
+                             "beta.curseforge.com" -> {
+                            String path = url.getPath();
+
+                            var matcher = CURSEFORGE_PATH_PATTERNS.matcher(path);
+                            if (!matcher.matches()) {
+                                throw new GradleException("Invalid CurseForge URL: " + url);
+                            }
+
+                            String game = matcher.group("game");
+                            if (!game.equalsIgnoreCase("minecraft")) {
+                                // Ignore minecraft-bedrock and other non-minecraft projects
+                                continue;
+                            }
+
+                            String type = matcher.group("type");
+                            if (type.equals(curseforgeType)) {
+                                return matcher.group("id");
+                            } else {
+                                continue;
+                            }
+                        }
+                        default -> throw new GradleException("Invalid CurseForge URL: " + url);
+                    }
+                } catch (Exception e) {
+                    if (cause == null) {
+                        cause = e;
+                    } else {
+                        cause.addSuppressed(e);
+                    }
+                }
             }
 
-            switch (Objects.requireNonNull(url.getHost(), "host")) {
-                case "files.xmdhs.com",
-                     "edge.forgecdn.net",
-                     "minecraft.curseforge.com",
-                     "mediafilez.forgecdn.net" -> {
-                    return null;
-                }
-                case "www.curseforge.com", "curseforge.com" -> {
-                    return getCurseForgeId(url.getPath());
-                }
-                default -> throw new GradleException("Invalid CurseForge URL: " + url);
-            }
+            if (cause != null)
+                throw cause;
+
+            return null;
         }
     }
 
