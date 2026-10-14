@@ -374,25 +374,43 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
         return StringUtils.isBlank(id) ? null : getModIdMap().get(id);
     }
 
+    private static boolean isSupportedSubnameChar(int ch) {
+        return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9')
+                || ".+\\".indexOf(ch) >= 0;
+    }
+
     /// Removes supported separators and pictographs from a secondary name.
     /// Returns an empty string for null, blank or unsupported names; matching is case-sensitive.
     private static String cleanSubname(@Nullable String subname) {
         if (StringUtils.isBlank(subname))
             return "";
+
+        int offset = 0;
+        while (offset < subname.length()) {
+            int ch = subname.charAt(offset);
+            if (!isSupportedSubnameChar(ch))
+                break;
+            offset++;
+        }
+
+        if (offset == subname.length())
+            return subname;
+
         StringBuilder builder = new StringBuilder(subname.length());
-        for (int i = 0; i < subname.length(); ) {
-            int ch = subname.codePointAt(i);
-            if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9')
-                    || ".+\\".indexOf(ch) >= 0) {
+        builder.append(subname, 0, offset);
+
+        while (offset < subname.length()) {
+            int ch = subname.codePointAt(offset);
+            if (isSupportedSubnameChar(ch)) {
                 builder.appendCodePoint(ch);
             } else if (!(Character.isWhitespace(ch)
                     || "':_-/&()[]{}|,!?~•".indexOf(ch) >= 0
                     || ch >= 0x1F300 && ch <= 0x1FAFF)) {
                 return "";
             }
-            i += Character.charCount(ch);
+            offset += Character.charCount(ch);
         }
-        return builder.length() == subname.length() ? subname : builder.toString();
+        return builder.toString();
     }
 
     /// Returns searchable names, rebuilding the index after its soft reference is cleared.
@@ -466,7 +484,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
             }
             this.infosRef = new SoftReference<>(infos);
             return infos;
-        }  finally {
+        } finally {
             lock.unlock();
         }
     }
