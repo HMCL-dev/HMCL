@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/// @author Glavo
 @NotNullByDefault
 public final class ModProjectInfo extends AddonProjectInfo {
 

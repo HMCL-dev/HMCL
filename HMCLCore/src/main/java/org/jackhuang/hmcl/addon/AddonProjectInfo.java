@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
+/// @author Glavo
 @NotNullByDefault
 public abstract class AddonProjectInfo {
 

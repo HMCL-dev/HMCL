@@ -34,6 +34,9 @@ jimfs = "1.3.0"
 # plugins
 shadow = "9.6.1"
 
+# build scripts
+icu4j = "78.3"
+
 [libraries]
 hmclauncher = { module = "org.glavo.hmcl:HMCLauncher", version.ref = "hmclauncher" }
 jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
@@ -72,6 +75,9 @@ commonmark-table = { module = "org.commonmark:commonmark-ext-gfm-tables", versio
 # testing
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 jimfs = { module = "com.google.jimfs:jimfs", version.ref = "jimfs" }
+
+# build scripts
+icu4j = { module = "com.ibm.icu:icu4j", version.ref = "icu4j" }
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }

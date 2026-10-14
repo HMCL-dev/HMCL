@@ -20,6 +20,9 @@ package org.jackhuang.hmcl.gradle.addon;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
+import com.ibm.icu.lang.UCharacter;
+import com.ibm.icu.lang.UCharacterCategory;
+import com.ibm.icu.util.ULocale;
 import org.glavo.url.WebURL;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -177,15 +180,16 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                     case '\t' -> writer.write("\\t");
                     case ',' -> writer.write("\\u002c");
                     default -> {
-                        boolean needEscape = switch (Character.getType(ch)) {
-                            case Character.CONTROL,
-                                 Character.FORMAT,
-                                 Character.UNASSIGNED,
-                                 Character.SURROGATE,
-                                 Character.PRIVATE_USE,
-                                 Character.LINE_SEPARATOR,
-                                 Character.PARAGRAPH_SEPARATOR -> true;
-                            default -> ch < 0x1F300 && ch > 0x1FAFF; // emoji
+
+                        boolean needEscape = switch (UCharacter.getType(ch)) {
+                            case UCharacterCategory.CONTROL,
+                                 UCharacterCategory.FORMAT,
+                                 UCharacterCategory.UNASSIGNED,
+                                 UCharacterCategory.SURROGATE,
+                                 UCharacterCategory.PRIVATE_USE,
+                                 UCharacterCategory.LINE_SEPARATOR,
+                                 UCharacterCategory.PARAGRAPH_SEPARATOR -> true;
+                            default -> false;
                         };
 
                         if (Character.isBmpCodePoint(ch)) {
@@ -405,7 +409,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
 
     // Json Model
 
-    private static record AddonInfo(
+    private record AddonInfo(
             AddonInfo.Name name,
             @JsonAdapter(AddonInfo.ModIdDeserializer.class)
             @Nullable List<String> modid,
@@ -424,7 +428,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             private static final Type STRING_LIST = TypeToken.getParameterized(List.class, String.class).getType();
 
             @Override
-            public List<String> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            public @Nullable List<String> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
                 if (json.isJsonNull()) {
                     return null;
                 }

@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.addon.AddonProjectInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+/// @author Glavo
 @NotNullByDefault
 public final class ModpackProjectInfo extends AddonProjectInfo {
     public ModpackProjectInfo(int mcmodId, @Nullable String curseforgeId, @Nullable String modrinthId) {
