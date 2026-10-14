@@ -493,13 +493,3 @@ tasks.register<UpdateAddonProjectInfos>("updateModpackProjectInfos") {
     outputFile.set(layout.projectDirectory.file("src/main/resources/assets/addon/modpack.csv"))
     projectType.set(UpdateAddonProjectInfos.AddonProjectType.MODPACK)
 }
-
-tasks.register<ParseModDataTask>("parseModData") {
-    inputFile.set(layout.projectDirectory.file("mod.json"))
-    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/mod_data.txt"))
-}
-
-tasks.register<ParseModDataTask>("parseModPackData") {
-    inputFile.set(layout.projectDirectory.file("modpack.json"))
-    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/modpack_data.txt"))
-}
