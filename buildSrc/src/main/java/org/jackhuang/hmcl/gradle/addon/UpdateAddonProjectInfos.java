@@ -96,6 +96,10 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                     continue;
                 }
 
+                if (projectType.shouldSkip(mcmodId)) {
+                    continue;
+                }
+
                 @Nullable String curseforgeId;
                 try {
                     curseforgeId = projectType.getCurseForgeId(info);
@@ -318,7 +322,18 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
     }
 
     public enum AddonProjectType {
-        MOD("class", "mc-mods"),
+        MOD("class", "mc-mods") {
+            @Override
+            public boolean shouldSkip(int mcmodId) {
+                if (mcmodId == 1) {
+                    // Should skip the "Minecraft" project, which is the Minecraft game itself, not a mod.
+                    // https://www.mcmod.cn/class/1.html
+                    return true;
+                }
+
+                return false;
+            }
+        },
         MODPACK("modpack", "modpacks");
 
         private final Pattern mcmodUrlPattern;
@@ -413,6 +428,10 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 throw cause;
 
             return null;
+        }
+
+        public boolean shouldSkip(int mcmodId) {
+            return false;
         }
     }
 
