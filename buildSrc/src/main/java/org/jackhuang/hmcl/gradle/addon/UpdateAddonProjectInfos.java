@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.gradle.addon;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
+import org.glavo.url.WebURL;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
@@ -40,10 +41,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @NotNullByDefault
@@ -205,7 +203,6 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
         }
     }
 
-
     private static String cleanName(String name) {
         if (name.indexOf('&') < 0) {
             return name;
@@ -294,23 +291,62 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
     }
 
     public enum AddonProjectType {
-        MOD("class"),
-        MODPACK("modpack");
+        MOD("class") {
+            @Override
+            String getCurseForgeId(String path) {
+                return ""; // TODO
+            }
+        },
+        MODPACK("modpack") {
+            @Override
+            String getCurseForgeId(String path) {
+                return ""; // TODO
+            }
+        };
 
-        private final Pattern urlPattern;
+        private final Pattern mcmodUrlPattern;
 
         AddonProjectType(String slug) {
-            urlPattern = Pattern.compile("https://www\\.mcmod\\.cn/" + slug + "/(?<id>\\d+)\\.html");
+            mcmodUrlPattern = Pattern.compile("https://www\\.mcmod\\.cn/" + slug + "/(?<id>\\d+)\\.html");
         }
 
         int getMcmodId(AddonInfo info) {
             String url = info.links.list.get("mcmod").get(0).url();
-            var matcher = urlPattern.matcher(url);
+            var matcher = mcmodUrlPattern.matcher(url);
             if (!matcher.matches()) {
                 throw new GradleException("Invalid mcmod.cn URL: " + url);
             }
 
             return Integer.parseInt(matcher.group("id"));
+        }
+
+        abstract String getCurseForgeId(String path);
+
+        @Nullable String getCurseForgeId(AddonInfo info) {
+            var link = info.links.list.get("curseforge");
+
+            if (link == null || link.isEmpty()) {
+                return null;
+            }
+
+            WebURL url = WebURL.parse(link.get(0).url());
+
+            if (!url.getScheme().equals("https") && !url.getScheme().equals("http")) {
+                throw new GradleException("Invalid CurseForge URL: " + url);
+            }
+
+            switch (Objects.requireNonNull(url.getHost(), "host")) {
+                case "files.xmdhs.com",
+                     "edge.forgecdn.net",
+                     "minecraft.curseforge.com",
+                     "mediafilez.forgecdn.net" -> {
+                    return null;
+                }
+                case "www.curseforge.com", "curseforge.com" -> {
+                    return getCurseForgeId(url.getPath());
+                }
+                default -> throw new GradleException("Invalid CurseForge URL: " + url);
+            }
         }
     }
 
