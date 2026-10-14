@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.addon.datapack;
 
-import com.google.gson.JsonParseException;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -31,6 +30,7 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -42,7 +42,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DataPack {
     private static final String DISABLED_EXT = "disabled";
-    private static final String ZIP_EXT = "zip";
 
     private final Path path;
     private final ObservableList<Pack> packs = FXCollections.observableArrayList();
@@ -157,16 +156,6 @@ public class DataPack {
         loadFromDir();
     }
 
-    public void deletePack(Pack packToDelete) throws IOException {
-        Path pathToDelete = packToDelete.path;
-        if (Files.isDirectory(pathToDelete))
-            FileUtils.deleteDirectory(pathToDelete);
-        else if (Files.isRegularFile(pathToDelete))
-            Files.delete(pathToDelete);
-
-        Platform.runLater(() -> packs.removeIf(p -> p.getId().equals(packToDelete.getId())));
-    }
-
     public void loadFromDir() {
         try {
             loadFromDir(path);
@@ -180,94 +169,53 @@ public class DataPack {
         try (Stream<Path> stream = Files.list(dir)) {
             discoveredPacks = stream
                     .parallel()
-                    .map(this::loadSinglePackFromPath)
-                    .flatMap(Optional::stream)
-                    .sorted(Comparator.comparing(Pack::getId, String.CASE_INSENSITIVE_ORDER))
-                    .collect(Collectors.toList());
+                    .map(packPath -> {
+                        try {
+                            return new Pack(packPath, this);
+                        } catch (IOException e) {
+                            LOG.warning("Failed to load pack " + packPath, e);
+                        }
+                        return null;
+                    })
+                    .filter(Objects::nonNull)
+                    .sorted()
+                    .toList();
         }
         Platform.runLater(() -> this.packs.setAll(discoveredPacks));
     }
 
-    private Optional<Pack> loadSinglePackFromPath(Path path) {
-        if (Files.isDirectory(path)) {
-            return loadSinglePackFromDirectory(path);
-        } else if (Files.isRegularFile(path)) {
-            return loadSinglePackFromZipFile(path);
-        }
-        return Optional.empty();
-    }
-
-    private Optional<Pack> loadSinglePackFromDirectory(Path path) {
-        Path mcmeta = path.resolve("pack.mcmeta");
-        Path mcmetaDisabled = path.resolve("pack.mcmeta.disabled");
-
-        if (!Files.exists(mcmeta) && !Files.exists(mcmetaDisabled)) {
-            return Optional.empty();
-        }
-
-        Path targetPath = Files.exists(mcmeta) ? mcmeta : mcmetaDisabled;
-        return parsePack(path, true, FileUtils.getNameWithoutExtension(path), targetPath);
-    }
-
-    private Optional<Pack> loadSinglePackFromZipFile(Path path) {
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(path)) {
-            Path mcmeta = fs.getPath("pack.mcmeta");
-
-            if (!Files.exists(mcmeta)) {
-                return Optional.empty();
-            }
-
-            String packName = FileUtils.getName(path);
-            if (FileUtils.getExtension(path).equals(DISABLED_EXT)) {
-                packName = FileUtils.getNameWithoutExtension(packName);
-            }
-            packName = FileUtils.getNameWithoutExtension(packName);
-
-            return parsePack(path, false, packName, mcmeta);
-        } catch (IOException e) {
-            LOG.warning("IO error reading " + path, e);
-            return Optional.empty();
-        }
-    }
-
-    private Optional<Pack> parsePack(Path dataPackPath, boolean isDirectory, String name, Path mcmetaPath) {
-        try {
-            PackMcMeta mcMeta = JsonUtils.fromNonNullJson(Files.readString(mcmetaPath), PackMcMeta.class);
-            return Optional.of(new Pack(dataPackPath, isDirectory, name, mcMeta.pack().description(), this));
-        } catch (JsonParseException e) {
-            LOG.warning("Invalid pack.mcmeta format in " + dataPackPath, e);
-        } catch (IOException e) {
-            LOG.warning("IO error reading " + dataPackPath, e);
-        }
-        return Optional.empty();
-    }
-
-    public static class Pack {
+    public static class Pack extends LocalAddonFile implements Comparable<Pack> {
         private Path path;
         private final boolean isDirectory;
         private Path statusFile;
         private final BooleanProperty activeProperty;
         private final String id;
-        private final LocalAddonFile.Description description;
-        private final DataPack parentDataPack;
+        private final PackMcMeta.PackInfo info;
+        private final DataPack manager;
 
-        public Pack(Path path, boolean isDirectory, String id, LocalAddonFile.Description description, DataPack parentDataPack) {
+        public Pack(Path path, DataPack manager) throws IOException {
             this.path = path;
-            this.isDirectory = isDirectory;
-            this.id = id;
-            this.description = description;
-            this.parentDataPack = parentDataPack;
+            this.manager = manager;
+            isDirectory = Files.isDirectory(path);
 
-            this.statusFile = initializeStatusFile(path, isDirectory);
-            this.activeProperty = initializeActiveProperty();
-        }
+            String idd = FileUtils.getNameWithoutExtension(path);
+            if (!isDirectory && FileUtils.getExtension(path).equals(DISABLED_EXT))
+                idd = FileUtils.getNameWithoutExtension(idd);
+            id = idd;
 
-        private Path initializeStatusFile(Path path, boolean isDirectory) {
+            Path mcmetaPath;
             if (isDirectory) {
-                Path mcmeta = path.resolve("pack.mcmeta");
-                return Files.exists(mcmeta) ? mcmeta : path.resolve("pack.mcmeta.disabled");
-            }
-            return path;
+                Path mcmeta1 = path.resolve("pack.mcmeta");
+                mcmetaPath = Files.exists(mcmeta1) ? mcmeta1 : path.resolve("pack.mcmeta.disabled");
+            } else
+                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(path)) {
+                    mcmetaPath = fs.getPath("pack.mcmeta");
+                }
+
+            info = JsonUtils.fromNonNullJson(Files.readString(mcmetaPath), PackMcMeta.class).pack();
+            statusFile = isDirectory ? mcmetaPath : path;
+
+            this.activeProperty = initializeActiveProperty();
         }
 
         private BooleanProperty initializeActiveProperty() {
@@ -310,12 +258,8 @@ public class DataPack {
             return id;
         }
 
-        public LocalAddonFile.Description getDescription() {
-            return description;
-        }
-
-        public DataPack getParentDataPack() {
-            return parentDataPack;
+        public PackMcMeta.PackInfo getInfo() {
+            return info;
         }
 
         public BooleanProperty activeProperty() {
@@ -330,12 +274,46 @@ public class DataPack {
             this.activeProperty.set(active);
         }
 
-        public Path getPath() {
+        @Override
+        public Path getFile() {
             return path;
         }
 
         public boolean isDirectory() {
             return isDirectory;
+        }
+
+        @Override
+        public String getFileName() {
+            return id;
+        }
+
+        @Override
+        public void markDisabled() {
+        }
+
+        @Override
+        public void setOld(boolean old) {
+        }
+
+        @Override
+        public boolean keepOldFiles() {
+            return false;
+        }
+
+        @Override
+        public void delete() throws IOException {
+            if (isDirectory)
+                FileUtils.deleteDirectory(path);
+            else
+                Files.delete(path);
+
+            Platform.runLater(() -> manager.packs.removeIf(p -> p.getId().equals(id)));
+        }
+
+        @Override
+        public int compareTo(@NotNull DataPack.Pack o) {
+            return String.CASE_INSENSITIVE_ORDER.compare(id, o.id);
         }
     }
 

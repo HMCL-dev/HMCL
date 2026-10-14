@@ -273,7 +273,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         }
 
         String getSubtitle() {
-            return packInfo.getDescription().toString();
+            return packInfo.getInfo().description().toString();
         }
 
         DataPack.Pack getPackInfo() {
@@ -288,20 +288,20 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             Image image = null;
             Path imagePath;
             if (this.getPackInfo().isDirectory()) {
-                imagePath = getPackInfo().getPath().resolve("pack.png");
+                imagePath = getPackInfo().getFile().resolve("pack.png");
                 try {
                     image = FXUtils.loadImage(imagePath, 64, 64, true, true);
                 } catch (Exception e) {
-                    LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
+                    LOG.warning("fail to load image, datapack path: " + getPackInfo().getFile(), e);
                 }
             } else {
-                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(getPackInfo().getPath())) {
+                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(getPackInfo().getFile())) {
                     imagePath = fs.getPath("/pack.png");
                     if (Files.exists(imagePath)) {
                         image = FXUtils.loadImage(imagePath, 64, 64, true, true);
                     }
                 } catch (Exception e) {
-                    LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
+                    LOG.warning("fail to load image, datapack path: " + getPackInfo().getFile(), e);
                 }
             }
 

@@ -104,7 +104,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
                 .map(DataPackListPageSkin.DataPackInfoObject::getPackInfo)
                 .forEach(pack -> {
                     try {
-                        dataPack.deletePack(pack);
+                        pack.delete();
                     } catch (IOException e) {
                         // Fail to remove mods if the game is running or the datapack is absent.
                         LOG.warning("Failed to delete datapack \"" + pack.getId() + "\"", e);
@@ -148,7 +148,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
 
         return dataPack -> {
             String id = dataPack.getPackInfo().getId();
-            String description = dataPack.getPackInfo().getDescription().toString();
+            String description = dataPack.getPackInfo().getInfo().description().toString();
             return stringPredicate.test(id) || stringPredicate.test(description);
         };
     }
