@@ -543,7 +543,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             || predicate.test(modInfo.getGameVersion())
                             || predicate.test(modInfo.getId())
                             || predicate.test(Objects.toString(modInfo.getModLoaderType()))
-                            || predicate.test((item.getProjectInfo() != null ? item.getProjectInfo().getDisplayName() : null))) {
+                            || predicate.test((item.getProjectInfo() != null ? item.getProjectInfo().displayName() : null))) {
                         listView.getItems().add(item);
                     }
                 }
@@ -626,7 +626,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             TwoLineListItem title = new TwoLineListItem();
             title.getTitleLabel().setWrapText(true);
             if (modInfo.getProjectInfo() != null && I18n.isUseChinese())
-                title.setTitle(modInfo.getProjectInfo().getDisplayName());
+                title.setTitle(modInfo.getProjectInfo().displayName());
             else
                 title.setTitle(modInfo.getModInfo().getName());
 
@@ -788,7 +788,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             String displayName = modInfo.getName();
             if (projectInfo != null && I18n.isUseChinese()) {
-                String chineseName = projectInfo.getMainName();
+                String chineseName = projectInfo.mainName();
                 if (StringUtils.containsChinese(chineseName)) {
                     if (StringUtils.containsEmoji(chineseName)) {
                         StringBuilder builder = new StringBuilder();

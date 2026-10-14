@@ -610,7 +610,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
                             @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(getSkinnable().type);
                             @Nullable AddonProjectInfo mod = registry != null ? registry.getInfoByCurseForgeId(item.slug()) : null;
-                            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : item.title());
+                            content.setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : item.title());
                             String description = item.description();
                             if (description != null) {
                                 description = description.replaceAll("\\R", " ");

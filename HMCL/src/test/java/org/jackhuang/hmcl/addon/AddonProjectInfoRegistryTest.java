@@ -97,8 +97,8 @@ class AddonProjectInfoRegistryTest {
     void readsAndDisplaysNames() {
         var registry = registry();
         var third = registry.getInfos().get(2);
-        assertEquals("\u673a\u68b0\u52a8\u529b", third.getMainName());
-        assertEquals("[EX] \u673a\u68b0\u52a8\u529b (Example, Name)", third.getDisplayName());
+        assertEquals("\u673a\u68b0\u52a8\u529b", third.mainName());
+        assertEquals("[EX] \u673a\u68b0\u52a8\u529b (Example, Name)", third.displayName());
         assertEquals(List.of(third), registry.search("\u673a\u68b0\u52a8\u529b"));
         assertTrue(registry.search(" ").isEmpty());
         assertThrows(UnsupportedOperationException.class, () -> registry.search("First").clear());

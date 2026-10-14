@@ -314,7 +314,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
                 return cached;
             Map<String, I> map = new HashMap<>();
             for (I info : getInfos()) {
-                String name = cleanSubname(info.getSubName());
+                String name = cleanSubname(info.subName());
                 if (StringUtils.isNotBlank(name))
                     map.putIfAbsent(name, info);
             }
@@ -341,7 +341,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
                 return cached;
             Map<String, I> map = new HashMap<>();
             for (I info : getInfos()) {
-                String id = info.getCurseforgeId();
+                String id = info.curseforgeId();
                 if (StringUtils.isNotBlank(id))
                     map.putIfAbsent(id, info);
             }
@@ -409,7 +409,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
                 return cached;
             List<Pair<String, I>> keywords = new ArrayList<>();
             for (I info : getInfos()) {
-                for (String name : List.of(info.getMainName(), info.getSubName(), info.getAbbrName())) {
+                for (String name : List.of(info.mainName(), info.subName(), info.abbrName())) {
                     if (StringUtils.isNotBlank(name))
                         keywords.add(Pair.pair(name, info));
                 }

@@ -53,28 +53,28 @@ public abstract class AddonProjectInfo {
     }
 
     /// Returns the recorded CurseForge identifier, possibly empty.
-    public String getCurseforgeId() {
+    public String curseforgeId() {
         return curseforgeId;
     }
 
-    /// Returns the recorded secondary name, possibly empty.
-    public String getSubName() {
-        return subName;
-    }
-
     /// Returns the recorded primary name.
-    public String getMainName() {
+    public String mainName() {
         return mainName;
     }
 
+    /// Returns the recorded secondary name, possibly empty.
+    public String subName() {
+        return subName;
+    }
+
     /// Returns the recorded abbreviation, possibly empty.
-    public String getAbbrName() {
+    public String abbrName() {
         return abbrName;
     }
 
     /// Returns the primary name with a nonblank abbreviation in brackets and a nonblank
     /// secondary name in parentheses. Only the abbreviation is trimmed.
-    public String getDisplayName() {
+    public String displayName() {
         StringBuilder builder = new StringBuilder();
         if (!abbrName.isBlank())
             builder.append('[').append(abbrName.trim()).append("] ");

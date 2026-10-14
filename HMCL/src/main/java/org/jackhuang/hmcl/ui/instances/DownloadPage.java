@@ -223,7 +223,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 TwoLineListItem content = new TwoLineListItem();
                 HBox.setHgrow(content, Priority.ALWAYS);
                 @Nullable AddonProjectInfo mod = getSkinnable().mod;
-                content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : getSkinnable().addon.title());
+                content.setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : getSkinnable().addon.title());
                 content.setSubtitle(getSkinnable().addon.description());
                 content.getSubtitleLabel().setWrapText(true);
                 getSkinnable().addon.categories().stream()
@@ -419,7 +419,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(type);
             @Nullable AddonProjectInfo mod = registry != null ? registry.getInfoByCurseForgeId(addon.slug()) : null;
-            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
+            content.setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : addon.title());
             content.setSubtitle(addon.description());
             for (String category : addon.categories()) {
                 if (page.shouldDisplayCategory(category))
