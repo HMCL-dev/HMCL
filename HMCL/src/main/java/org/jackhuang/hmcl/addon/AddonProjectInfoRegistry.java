@@ -286,7 +286,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
             for (I info : getInfos()) {
                 if (info instanceof ModProjectInfo mod) {
                     for (String id : mod.getModIds()) {
-                        if (StringUtils.isNotBlank(id))
+                        if (!id.isEmpty())
                             map.putIfAbsent(id, info);
                     }
                 }
@@ -315,7 +315,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
             Map<String, I> map = new HashMap<>();
             for (I info : getInfos()) {
                 String name = cleanSubname(info.subName());
-                if (StringUtils.isNotBlank(name))
+                if (!name.isEmpty())
                     map.putIfAbsent(name, info);
             }
             cached = Collections.unmodifiableMap(map);
