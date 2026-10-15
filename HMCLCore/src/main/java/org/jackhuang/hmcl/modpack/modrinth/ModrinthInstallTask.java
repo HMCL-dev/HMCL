@@ -179,8 +179,8 @@ public class ModrinthInstallTask extends Task<Void> {
         });
 
         List<String> subDirectories = Arrays.asList("/client-overrides", "/overrides");
-        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, subDirectories, any -> true, config).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
 
         @Nullable WebURL iconUri = NetworkUtils.toWebURLOrNull(iconUrl);
         if (iconUri != null) {

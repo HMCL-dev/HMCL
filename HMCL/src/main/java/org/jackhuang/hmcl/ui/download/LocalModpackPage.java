@@ -44,26 +44,20 @@ import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class LocalModpackPage extends ModpackPage {
 
     private final BooleanProperty installAsVersion = new SimpleBooleanProperty(true);
     private Modpack manifest = null;
-    private Charset charset;
     private final ObservableList<ModpackFile> allFiles = FXCollections.observableList(new ArrayList<>());
     private final ObservableSet<String> excludedFiles = FXCollections.observableSet(new HashSet<>());
     private final BooleanProperty loadingOptionalFiles = new SimpleBooleanProperty(false);
@@ -98,8 +92,8 @@ public final class LocalModpackPage extends ModpackPage {
                             new RequiredValidator(),
                             new Validator(i18n("install.new_game.already_exists"), str -> !ModpackHelper.isExternalGameNameConflicts(str)
                                     && GameDirectoryManager.getGameDirectories().stream()
-                                            .noneMatch(existingProfile ->
-                                                    str.equals(GameDirectoryManager.getGameDirectoryCustomName(existingProfile)))),
+                                    .noneMatch(existingProfile ->
+                                            str.equals(GameDirectoryManager.getGameDirectoryCustomName(existingProfile)))),
                             new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId));
                 }
             });
@@ -125,11 +119,7 @@ public final class LocalModpackPage extends ModpackPage {
         }
 
         showSpinner();
-        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(selectedFile))
-                .thenApplyAsync(encoding -> {
-                    charset = encoding;
-                    return ModpackHelper.readModpackManifest(selectedFile, encoding);
-                })
+        Task.supplyAsync(() -> ModpackHelper.readModpackManifest(selectedFile))
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
                     if (exception instanceof ManuallyCreatedModpackException) {
                         hideSpinner();
@@ -142,7 +132,8 @@ public final class LocalModpackPage extends ModpackPage {
                         }
 
                         Controllers.confirm(i18n("modpack.type.manual.warning"), i18n("install.modpack"), MessageDialogPane.MessageType.WARNING,
-                                () -> {},
+                                () -> {
+                                },
                                 controller::onEnd);
 
                         controller.getSettings().put(MODPACK_MANUALLY_CREATED, true);
@@ -163,7 +154,7 @@ public final class LocalModpackPage extends ModpackPage {
 
                         if (name == null) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
-                            txtModpackName.setText(manifest.getName().trim());
+                            txtModpackName.setText(processModpackName(manifest.getName()));
                         }
 
                         btnDescription.setVisible(StringUtils.isNotBlank(manifest.getDescription()));
@@ -223,7 +214,6 @@ public final class LocalModpackPage extends ModpackPage {
 
     private void finishInstall(String name) {
         controller.getSettings().put(MODPACK_NAME, name);
-        controller.getSettings().put(MODPACK_CHARSET, charset);
         controller.getSettings().put(MODPACK_EXCLUDED_FILES, getExcludedFiles());
         controller.onFinish();
     }
@@ -239,10 +229,20 @@ public final class LocalModpackPage extends ModpackPage {
             Controllers.navigate(new WebPage(i18n("modpack.description"), manifest.getDescription()));
     }
 
+    @Contract("null->null;!null->!null")
+    public static @Nullable String processModpackName(@Nullable String name) {
+        if (name == null)
+            return null;
+
+        return name.trim()
+                .replace(':', '_')
+                .replace('/', '_')
+                .replace('\\', '_');
+    }
+
     public static final SettingsMap.Key<Path> MODPACK_FILE = new SettingsMap.Key<>("MODPACK_FILE");
     public static final SettingsMap.Key<String> MODPACK_NAME = new SettingsMap.Key<>("MODPACK_NAME");
     public static final SettingsMap.Key<Modpack> MODPACK_MANIFEST = new SettingsMap.Key<>("MODPACK_MANIFEST");
-    public static final SettingsMap.Key<Charset> MODPACK_CHARSET = new SettingsMap.Key<>("MODPACK_CHARSET");
     public static final SettingsMap.Key<Boolean> MODPACK_MANUALLY_CREATED = new SettingsMap.Key<>("MODPACK_MANUALLY_CREATED");
     public static final SettingsMap.Key<String> MODPACK_ICON_URL = new SettingsMap.Key<>("MODPACK_ICON_URL");
     public static final SettingsMap.Key<Set<String>> MODPACK_EXCLUDED_FILES = new SettingsMap.Key<>("MODPACK_EXCLUDED_FILES");
