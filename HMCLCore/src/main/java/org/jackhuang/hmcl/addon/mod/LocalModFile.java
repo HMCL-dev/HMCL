@@ -37,7 +37,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  *
  * @author huangyuhui
  */
-public final class LocalModFile extends LocalAddonFile implements Comparable<LocalModFile> {
+public final class LocalModFile extends LocalAddonFile<LocalModFile> {
 
     private Path file;
     private final ModManager modManager;
