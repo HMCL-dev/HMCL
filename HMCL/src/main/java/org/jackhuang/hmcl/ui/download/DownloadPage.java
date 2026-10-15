@@ -73,6 +73,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage {
 
+    public static final DownloadCallback DEFAULT_CALLBACK = (downloadProvider, repository, instanceId, addon, file) ->
+            download(null, downloadProvider, repository, instanceId, addon, file);
+
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
     private final TabHeader tab;
     private final TabHeader.Tab<VersionsPage> newGameTab = new TabHeader.Tab<>("newGameTab");
@@ -84,20 +87,17 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
 
-    private final @Nullable GameInstanceID updateInstance;
-
     private WeakListenerHolder listenerHolder;
 
     public DownloadPage() {
-        this(null);
+        this(DEFAULT_CALLBACK);
     }
 
-    public DownloadPage(@Nullable GameInstanceID updateInstance) {
-        this.updateInstance = updateInstance;
+    public DownloadPage(DownloadCallback callback) {
         newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), GameVersionNumber.unknown(), DownloadProviders.getDownloadProvider(),
                 GameComponentType.GAME, versionPageNavigator::onGameSelected)));
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
-            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack(this::download, false);
+            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack(callback, false);
 
             JFXButton installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
             installLocalModpackButton.setOnAction(e -> Instances.importModpack());
@@ -105,10 +105,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             page.getActions().add(installLocalModpackButton);
             return page;
         }));
-        modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod(this::download, true)));
-        resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack(this::download, true)));
-        shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack(this::download, true)));
-        worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(RemoteAddon.Type.WORLD, CurseForgeRemoteAddonRepository.getInstance(), this::download, false)));
+        modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod(callback, true)));
+        resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack(callback, true)));
+        shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack(callback, true)));
+        worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(RemoteAddon.Type.WORLD, CurseForgeRemoteAddonRepository.getInstance(), callback, false)));
         tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
 
         GameDirectoryManager.registerVersionsListener(this::loadVersions);
@@ -188,9 +188,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     }
 
-    public static final DownloadCallback DEFAULT_CALLBACK = (downloadProvider, repository, instanceId, addon, file) ->
-                    download(null, downloadProvider, repository, instanceId, addon, file);
-
+    /// @param updateInstance id of instance to upgrade, only for modpacks
     public static void download(@Nullable GameInstanceID updateInstance, DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon addon, RemoteAddon.Version file) {
         if (addon.type() == null || !canDownload(addon)) return;
         switch (addon.type()) {
@@ -199,10 +197,6 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             case RESOURCE_PACK -> download(downloadProvider, repository, instanceId, file, "resourcepacks");
             case SHADER_PACK -> download(downloadProvider, repository, instanceId, file, "shaderpacks");
         }
-    }
-
-    public void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon addon, RemoteAddon.Version file) {
-        download(updateInstance, downloadProvider, repository, instanceId, addon, file);
     }
 
     private void loadVersions(HMCLGameRepository repository) {

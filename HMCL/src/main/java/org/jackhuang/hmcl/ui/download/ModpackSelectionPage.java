@@ -28,7 +28,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -44,6 +47,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -165,7 +169,9 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
 
     public void onChooseRepository() {
         String modPackName = controller.getSettings().get(MODPACK_NAME);
-        DownloadPage downloadPage = new DownloadPage(modPackName != null ? new GameInstanceID(modPackName) : null);
+        GameInstanceID updateInstanceId = modPackName != null ? new GameInstanceID(modPackName) : null;
+        DownloadPage downloadPage = new DownloadPage((downloadProvider, repository, instanceId, addon, file) ->
+                DownloadPage.download(updateInstanceId, downloadProvider, repository, instanceId, addon, file));
         downloadPage.showModpackDownloads();
         Controllers.navigate(downloadPage);
     }
