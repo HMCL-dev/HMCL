@@ -406,6 +406,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         VBox.setVgrow(list, Priority.ALWAYS);
 
                         control.versions.addListener((InvalidationListener) o -> updateList());
+                        if (!control.versions.isEmpty())
+                            updateList();
 
                         list.setCellFactory(listView -> new RemoteVersionListCell(control));
 
@@ -493,7 +495,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             }
 
             //noinspection DataFlowIssue
-            list.getItems().setAll(versions.collect(Collectors.toList()));
+            list.getItems().setAll(versions.toList());
             list.scrollTo(0);
         }
     }
