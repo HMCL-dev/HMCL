@@ -105,7 +105,7 @@ public abstract class AddonProjectInfo {
 
     public @Nullable String curseforgeUrl() {
         return !curseforgeId.isEmpty()
-                ? "https://www.curseforge.com/minecraft/" + curseforgeClass() + "/" + curseforgeId + "/rarity-system"
+                ? "https://www.curseforge.com/minecraft/" + curseforgeClass() + "/" + curseforgeId
                 : null;
     }
 
