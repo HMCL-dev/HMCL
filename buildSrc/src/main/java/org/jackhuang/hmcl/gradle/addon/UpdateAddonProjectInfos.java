@@ -140,7 +140,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 String modids;
                 if (projectType == AddonProjectType.MOD) {
                     try {
-                        Collection<String> idList = cleanModIds(info);
+                        Collection<String> idList = cleanModIds(info, mcmodId);
 
                         for (String modid : idList) {
                             modIdTomcmodId.computeIfAbsent(modid, k -> new TreeSet<>()).add(mcmodId);
@@ -354,7 +354,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
     /// Returns cleaned, validated mod IDs without duplicates, preserving their original order.
     ///
     /// @throws GradleException if the mod ID list is null or a cleaned ID is not accepted
-    private static Collection<String> cleanModIds(AddonInfo info) {
+    private static Collection<String> cleanModIds(AddonInfo info, int mcmodId) {
         if (info.modid() == null) {
             throw new GradleException("Modid list is null");
         }
@@ -381,6 +381,21 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 case "minecraft:" -> "moderncontentbackport";
                 default -> cleanedModid;
             };
+
+            // https://www.mcmod.cn/class/31322.html
+            if (cleanedModid.equals("minecraft")) {
+                continue;
+            }
+
+            // https://www.mcmod.cn/class/4.html
+            if (mcmodId == 10 && cleanedModid.equals("kamenridercraft4th")) {
+                continue;
+            }
+
+            // https://www.mcmod.cn/class/15744.html
+            if (mcmodId == 15744 && cleanedModid.equals("Fabric API")) {
+                cleanedModid = "impropers3dminimap";
+            }
 
             if (!MODID_PATTERN.matcher(cleanedModid).matches() && !MODID_WHITELIST.contains(cleanedModid)) {
                 throw new GradleException("Invalid modid: " + modid);

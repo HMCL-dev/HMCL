@@ -15454,7 +15454,7 @@
 15741,,sectionsign,SectionSign§,,,sectionsign
 15742,,allow-chat,Allow Chat,,,allowchat
 15743,retro-damage-indicators,retro-damage-indicators,Retro Damage Indicators,,,retrodamageindicators
-15744,,impropers-3d-minimap,Improper's 3D Minimap,,,Fabric API
+15744,,impropers-3d-minimap,Improper's 3D Minimap,,,impropers3dminimap
 15745,beddium,beddium,Beddium,,,beddium
 15746,create-thermal-compat,,Create Thermal Compat,,,create_thermal
 15747,create-lagless,create-lagless,Create: Lagless,,,createlagless
@@ -30880,7 +30880,7 @@
 31319,,jei-sdfalt,格雷科技与 JEI 兼容性修复,GTM JEI Startup Crash Fix,,gtm_jei_startup_fix
 31320,sweatyfeet,,汗脚,,SF,sweatyfeet
 31321,,,超级敌对模式,Super Hostile Mode,SHM,
-31322,modern-trials-integration,,现代试炼大厅移植,Modern Trials Integration,MTI,minecraft;mti
+31322,modern-trials-integration,,现代试炼大厅移植,Modern Trials Integration,MTI,mti
 31323,,,MusicParty,,,mpsync
 31324,echoes-of-horizons,,Echoes of Horizons,,EON,eoh
 31325,crycraft,,晶体工艺,Crystal Craft,,crycraft
