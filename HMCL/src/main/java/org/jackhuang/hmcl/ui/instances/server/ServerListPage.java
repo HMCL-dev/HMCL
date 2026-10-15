@@ -37,7 +37,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
-import javafx.util.Subscription;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.server.Server;
 import org.jackhuang.hmcl.server.ServerStatus;
@@ -52,6 +51,7 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.javafx.Subscription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -470,10 +470,10 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 item.observableServerStatus.refreshIfNoResultAsync(false);
 
                 applyServerStatusResult(item, item.observableServerStatus.resultProperty().get());
-                serverStatusResultValueSubscription = item.observableServerStatus.resultProperty().subscribe(result -> applyServerStatusResult(item, result));
+                serverStatusResultValueSubscription = Subscription.subscribe(item.observableServerStatus.resultProperty(), result -> applyServerStatusResult(item, result));
 
                 applyServerPinging(item, item.observableServerStatus.pingingProperty().get());
-                serverStatusPingingValueSubscription = item.observableServerStatus.pingingProperty().subscribe(pinging -> applyServerPinging(item, pinging));
+                serverStatusPingingValueSubscription = Subscription.subscribe(item.observableServerStatus.pingingProperty(), pinging -> applyServerPinging(item, pinging));
             }
         }
 
