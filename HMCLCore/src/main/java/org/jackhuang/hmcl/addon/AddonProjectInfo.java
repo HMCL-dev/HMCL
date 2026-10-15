@@ -34,6 +34,9 @@ public abstract class AddonProjectInfo {
     private final String subName;
     private final String abbrName;
 
+    /// This field is typically used to keep a reference to the `List<AddonProjectInfo>` that stores this object,
+    /// so that the cached `List<AddonProjectInfo>` is not collected while the `AddonProjectInfo` object itself
+    /// has not yet been collected, which could result in multiple identical `AddonProjectInfo` objects on the heap.
     @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private @Nullable Object keepAlive;
 
