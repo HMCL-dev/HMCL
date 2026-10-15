@@ -42,6 +42,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class World {
 
     private final Path file;
+    private final DefaultGameInstance gameInstance;
     private String fileName;
     private Image icon;
 
@@ -56,8 +57,9 @@ public final class World {
     private CompoundTag playerData; // Use for both reading/modification and writing back to the file
     private Path playerDataPath;
 
-    public World(Path file) throws IOException {
+    public World(Path file, DefaultGameInstance gameInstance) throws IOException {
         this.file = file;
+        this.gameInstance = gameInstance;
 
         if (Files.isDirectory(file)) {
             fileName = FileUtils.getName(this.file);
@@ -125,6 +127,10 @@ public final class World {
 
     public Path getFile() {
         return file;
+    }
+
+    public DefaultGameInstance getGameInstance() {
+        return gameInstance;
     }
 
     public String getFileName() {
@@ -348,7 +354,7 @@ public final class World {
                 }
 
             }
-            new World(worldDir).rename(name);
+            new World(worldDir, gameInstance).rename(name);
         } else if (Files.isDirectory(file)) {
             FileUtils.copyDirectory(file, worldDir);
         }
@@ -381,7 +387,7 @@ public final class World {
 
         Path newPath = file.resolveSibling(newName);
         FileUtils.copyDirectory(file, newPath, path -> !path.contains("session.lock"));
-        World newWorld = new World(newPath);
+        World newWorld = new World(newPath, gameInstance);
         newWorld.rename(newName);
     }
 
@@ -443,26 +449,5 @@ public final class World {
             LOG.warning("Failed to open the lock file " + sessionLockFile, e);
             return false;
         }
-    }
-
-    public static List<World> getWorlds(Path savesDir) {
-        if (Files.exists(savesDir)) {
-            try (Stream<Path> stream = Files.list(savesDir)) {
-                return stream
-                        .filter(Files::isDirectory)
-                        .flatMap(world -> {
-                            try {
-                                return Stream.of(new World(world.toAbsolutePath().normalize()));
-                            } catch (IOException e) {
-                                LOG.warning("Failed to read world " + world, e);
-                                return Stream.empty();
-                            }
-                        })
-                        .toList();
-            } catch (IOException e) {
-                LOG.warning("Failed to read saves", e);
-            }
-        }
-        return List.of();
     }
 }

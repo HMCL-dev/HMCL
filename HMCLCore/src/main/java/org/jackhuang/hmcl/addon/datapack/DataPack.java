@@ -18,13 +18,12 @@
 package org.jackhuang.hmcl.addon.datapack;
 
 import com.google.gson.JsonParseException;
-import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
+import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
+import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -41,28 +40,20 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class DataPack {
+public class DataPack extends LocalAddonManager<DataPack.Pack> {
     private static final String DISABLED_EXT = "disabled";
 
     private final Path path;
-    private final ObservableList<Pack> packs = FXCollections.observableArrayList();
 
-    public DataPack(Path path) {
-        this.path = path;
+    public DataPack(World world) {
+        super(world.getGameInstance());
+        this.path = world.getFile().resolve("datapacks");
     }
 
-    public Path getPath() {
-        return path;
-    }
-
-    public ObservableList<Pack> getPacks() {
-        return packs;
-    }
-
-    public static void installPack(Path sourceDataPackPath, Path targetDataPackDirectory, GameVersionNumber gameVersionNumber) throws IOException {
+    public void installPack(Path sourcePackPath, GameVersionNumber gameVersionNumber) throws IOException {
         boolean containsMultiplePacks;
-        Set<String> packs = new HashSet<>();
-        try (FileSystem fs = CompressingUtils.readonly(sourceDataPackPath).build()) {
+        Set<String> packs1 = new HashSet<>();
+        try (FileSystem fs = CompressingUtils.readonly(sourcePackPath).build()) {
             Path dataPacks = fs.getPath("datapacks");
             Path mcmeta = fs.getPath("pack.mcmeta");
 
@@ -76,20 +67,20 @@ public class DataPack {
 
             if (containsMultiplePacks) {
                 try (Stream<Path> s = Files.list(dataPacks)) {
-                    packs = s.map(FileUtils::getNameWithoutExtension).collect(Collectors.toSet());
+                    packs1 = s.map(FileUtils::getNameWithoutExtension).collect(Collectors.toSet());
                 }
             } else {
-                packs.add(FileUtils.getNameWithoutExtension(sourceDataPackPath));
+                packs1.add(FileUtils.getNameWithoutExtension(sourcePackPath));
             }
 
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(targetDataPackDirectory)) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
                 for (Path dir : stream) {
                     String packName = FileUtils.getName(dir);
                     if (FileUtils.getExtension(dir).equals(DISABLED_EXT)) {
                         packName = StringUtils.removeSuffix(packName, "." + DISABLED_EXT);
                     }
                     packName = FileUtils.getNameWithoutExtension(packName);
-                    if (packs.contains(packName)) {
+                    if (packs1.contains(packName)) {
                         if (Files.isDirectory(dir)) {
                             FileUtils.deleteDirectory(dir);
                         } else if (Files.isRegularFile(dir)) {
@@ -101,9 +92,9 @@ public class DataPack {
         }
 
         if (!containsMultiplePacks) {
-            FileUtils.copyFile(sourceDataPackPath, targetDataPackDirectory.resolve(FileUtils.getName(sourceDataPackPath)));
+            FileUtils.copyFile(sourcePackPath, path.resolve(FileUtils.getName(sourcePackPath)));
         } else {
-            new Unzipper(sourceDataPackPath, targetDataPackDirectory)
+            new Unzipper(sourcePackPath, path)
                     .setReplaceExistentFile(true)
                     .setSubDirectory("/datapacks/")
                     .unzip();
@@ -114,14 +105,14 @@ public class DataPack {
                     && gameVersionNumber.compareTo("26.1-snapshot-6") >= 0;
 
             if (useNewResourcePath) {
-                Files.createDirectories(targetDataPackDirectory.getParent().resolve("resourcepacks"));
-                targetResourceZipPath = targetDataPackDirectory.getParent().resolve("resourcepacks/resources.zip");
+                Files.createDirectories(path.getParent().resolve("resourcepacks"));
+                targetResourceZipPath = path.getParent().resolve("resourcepacks/resources.zip");
             } else {
-                targetResourceZipPath = targetDataPackDirectory.getParent().resolve("resources.zip");
+                targetResourceZipPath = path.getParent().resolve("resources.zip");
             }
 
             try (FileSystem outputResourcesZipFS = CompressingUtils.createWritableZipFileSystem(targetResourceZipPath);
-                 FileSystem inputPackZipFS = CompressingUtils.createReadOnlyZipFileSystem(sourceDataPackPath)) {
+                 FileSystem inputPackZipFS = CompressingUtils.createReadOnlyZipFileSystem(sourcePackPath)) {
                 Path resourcesZip = inputPackZipFS.getPath("resources.zip");
                 if (Files.isRegularFile(resourcesZip)) {
                     Path tempResourcesFile = Files.createTempFile("hmcl", ".zip");
@@ -150,39 +141,53 @@ public class DataPack {
                     Files.delete(packPng);
             }
         }
+        refresh();
     }
 
-    public void installPack(Path sourcePackPath, GameVersionNumber gameVersionNumber) throws IOException {
-        installPack(sourcePackPath, path, gameVersionNumber);
-        loadFromDir();
-    }
-
-    public void loadFromDir() {
+    public boolean removePacks(List<Pack> datapacks) throws IOException {
+        lock.lock();
         try {
-            loadFromDir(path);
-        } catch (Exception e) {
-            LOG.warning("Failed to read datapacks " + path, e);
+            boolean modified = false;
+            for (Pack pack : datapacks) {
+                if (pack != null && pack.manager == this) {
+                    pack.delete();
+                    localFiles.remove(pack);
+                    modified = true;
+                }
+            }
+            return modified;
+        } finally {
+            lock.unlock();
         }
     }
 
-    private void loadFromDir(Path dir) throws IOException {
-        List<Pack> discoveredPacks;
-        try (Stream<Path> stream = Files.list(dir)) {
-            discoveredPacks = stream
-                    .parallel()
-                    .map(packPath -> {
-                        try {
-                            return new Pack(packPath, this);
-                        } catch (IOException | JsonParseException e) {
-                            LOG.warning("Failed to load pack " + packPath, e);
-                        }
-                        return null;
-                    })
-                    .filter(Objects::nonNull)
-                    .sorted()
-                    .toList();
+    @Override
+    public Path getDirectory() {
+        return path;
+    }
+
+    @Override
+    public void refresh() throws IOException {
+        lock.lock();
+        try {
+            localFiles.clear();
+            try (Stream<Path> stream = Files.list(path)) {
+                stream.forEach(packPath -> {
+                    try {
+                        localFiles.add(new Pack(packPath, this));
+                    } catch (IOException | JsonParseException e) {
+                        LOG.warning("Failed to load pack " + packPath, e);
+                    }
+                });
+            }
+        } finally {
+            lock.unlock();
         }
-        Platform.runLater(() -> this.packs.setAll(discoveredPacks));
+    }
+
+    @Override
+    public Comparator<Pack> getComparator() {
+        return Pack::compareTo;
     }
 
     public static class Pack extends LocalAddonFile implements Comparable<Pack> {
@@ -290,8 +295,6 @@ public class DataPack {
                 FileUtils.deleteDirectory(path);
             else
                 Files.delete(path);
-
-            Platform.runLater(() -> manager.packs.removeIf(p -> p.getId().equals(id)));
         }
 
         @Override
