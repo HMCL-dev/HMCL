@@ -41,8 +41,6 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DataPack extends LocalAddonManager<DataPack.Pack> {
-    private static final String DISABLED_EXT = "disabled";
-
     private final Path path;
 
     public DataPack(World world) {
@@ -76,8 +74,8 @@ public class DataPack extends LocalAddonManager<DataPack.Pack> {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
                 for (Path dir : stream) {
                     String packName = FileUtils.getName(dir);
-                    if (FileUtils.getExtension(dir).equals(DISABLED_EXT)) {
-                        packName = StringUtils.removeSuffix(packName, "." + DISABLED_EXT);
+                    if (FileUtils.getName(dir).endsWith(DISABLED_EXTENSION)) {
+                        packName = StringUtils.removeSuffix(packName, DISABLED_EXTENSION);
                     }
                     packName = FileUtils.getNameWithoutExtension(packName);
                     if (packs.contains(packName)) {
@@ -205,7 +203,7 @@ public class DataPack extends LocalAddonManager<DataPack.Pack> {
             isDirectory = Files.isDirectory(path);
 
             String idd = FileUtils.getNameWithoutExtension(path);
-            if (!isDirectory && FileUtils.getExtension(path).equals(DISABLED_EXT))
+            if (!isDirectory && FileUtils.getName(path).endsWith(DISABLED_EXTENSION))
                 idd = FileUtils.getNameWithoutExtension(idd);
             id = idd;
 
@@ -221,14 +219,14 @@ public class DataPack extends LocalAddonManager<DataPack.Pack> {
                 statusFile = path;
             }
 
-            BooleanProperty property = new SimpleBooleanProperty(this, "active", !FileUtils.getExtension(this.statusFile).equals(DISABLED_EXT));
+            BooleanProperty property = new SimpleBooleanProperty(this, "active", !FileUtils.getName(statusFile).endsWith(DISABLED_EXTENSION));
             property.addListener((obs, wasActive, isNowActive) -> {
-                if (isNowActive == !FileUtils.getExtension(this.statusFile).equals(DISABLED_EXT))
+                if (isNowActive == !FileUtils.getName(statusFile).endsWith(DISABLED_EXTENSION))
                     return;
 
                 Path newStatusFile = isNowActive
-                        ? statusFile.getParent().resolve(FileUtils.getNameWithoutExtension(statusFile))
-                        : statusFile.getParent().resolve(FileUtils.getName(statusFile) + "." + DISABLED_EXT);
+                        ? statusFile.resolveSibling(FileUtils.getNameWithoutExtension(statusFile))
+                        : statusFile.resolveSibling(FileUtils.getName(statusFile) + DISABLED_EXTENSION);
 
                 try {
                     Files.move(statusFile, newStatusFile);
@@ -240,10 +238,6 @@ public class DataPack extends LocalAddonManager<DataPack.Pack> {
                 }
             });
             this.activeProperty = property;
-        }
-
-        public String getId() {
-            return id;
         }
 
         public PackMcMeta.PackInfo getInfo() {

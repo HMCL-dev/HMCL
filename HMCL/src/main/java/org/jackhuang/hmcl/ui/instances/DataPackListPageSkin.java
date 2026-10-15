@@ -269,7 +269,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         }
 
         String getTitle() {
-            return packInfo.getId();
+            return packInfo.getFileName();
         }
 
         String getSubtitle() {

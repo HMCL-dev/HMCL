@@ -154,7 +154,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
         }
 
         return dataPack -> {
-            String id = dataPack.getPackInfo().getId();
+            String id = dataPack.getPackInfo().getFileName();
             String description = dataPack.getPackInfo().getInfo().description().toString();
             return stringPredicate.test(id) || stringPredicate.test(description);
         };
