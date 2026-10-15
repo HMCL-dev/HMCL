@@ -45,7 +45,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
 
-    public static TaskExecutorDialogPane openAddonsCheckUpdateDialog(HMCLGameInstance instance, Collection<? extends LocalAddonFile> addons, Path addonsDirectory) {
+    public static TaskExecutorDialogPane openAddonsCheckUpdateDialog(HMCLGameInstance instance, Collection<? extends LocalAddonFile<?>> addons, Path addonsDirectory) {
         return Controllers.taskDialog(
                 Task.composeAsync(() -> {
                     GameVersionNumber version = instance.getVersion();

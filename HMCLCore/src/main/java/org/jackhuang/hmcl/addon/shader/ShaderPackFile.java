@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
-public sealed abstract class ShaderPackFile extends LocalAddonFile implements Comparable<ShaderPackFile> permits ShaderPackZipFile, ShaderPackFolder {
+public sealed abstract class ShaderPackFile extends LocalAddonFile<ShaderPackFile> permits ShaderPackZipFile, ShaderPackFolder {
     public static @Nullable ShaderPackFile fromFile(ShaderPackManager manager, Path file) throws IOException {
         return Files.isRegularFile(file) ? ShaderPackZipFile.load(manager, file) : ShaderPackFolder.load(manager, file);
     }
