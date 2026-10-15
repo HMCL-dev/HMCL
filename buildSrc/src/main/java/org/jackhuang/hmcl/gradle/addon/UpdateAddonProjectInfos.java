@@ -388,7 +388,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             }
 
             // https://www.mcmod.cn/class/4.html
-            if (mcmodId == 10 && cleanedModid.equals("kamenridercraft4th")) {
+            if (mcmodId == 4 && cleanedModid.equals("kamenridercraft4th")) {
                 continue;
             }
 
