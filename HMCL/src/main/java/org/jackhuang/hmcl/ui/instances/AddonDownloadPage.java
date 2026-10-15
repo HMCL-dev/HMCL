@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.SVGContainer;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -61,7 +62,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class DownloadPage extends Control implements DecoratorPage {
+public class AddonDownloadPage extends Control implements DecoratorPage {
 
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
@@ -72,13 +73,13 @@ public class DownloadPage extends Control implements DecoratorPage {
     /// Localized project metadata, or null when no registry or matching project is available.
     private final @Nullable AddonProjectInfo mod;
     private final HMCLGameInstance.Optional instanceReference;
-    private final @NotNull org.jackhuang.hmcl.ui.download.DownloadPage.DownloadCallback callback;
+    private final @NotNull DownloadPage.DownloadCallback callback;
     private final DownloadListPage page;
     private final RemoteAddon.Type type;
 
     private SimpleMultimap<String, RemoteAddon.Version, List<RemoteAddon.Version>> versions;
 
-    public DownloadPage(DownloadListPage page, RemoteAddon addon, HMCLGameInstance.Optional instanceReference, org.jackhuang.hmcl.ui.download.DownloadPage.DownloadCallback callback) {
+    public AddonDownloadPage(DownloadListPage page, RemoteAddon addon, HMCLGameInstance.Optional instanceReference, DownloadPage.DownloadCallback callback) {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
@@ -86,7 +87,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(this.type);
         this.mod = registry != null ? registry.getInfoByCurseForgeId(addon.slug()) : null;
         this.instanceReference = instanceReference;
-        this.callback = Objects.requireNonNullElse(callback, org.jackhuang.hmcl.ui.download.DownloadPage.DEFAULT_CALLBACK);
+        this.callback = Objects.requireNonNullElse(callback, DownloadPage.DEFAULT_CALLBACK);
         loadAddonVersions();
 
         this.state.set(State.fromTitle(addon.title()));
@@ -161,7 +162,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     public void download(RemoteAddon addon, RemoteAddon.Version file) {
-        if (!org.jackhuang.hmcl.ui.download.DownloadPage.canDownload(addon)) {
+        if (!DownloadPage.canDownload(addon)) {
             saveAs(file);
         } else {
             callback.download(page.getDownloadProvider(), instanceReference.repository(), instanceReference.instanceId(), addon, file);
@@ -200,9 +201,9 @@ public class DownloadPage extends Control implements DecoratorPage {
         return new DownloadPageSkin(this);
     }
 
-    private static class DownloadPageSkin extends SkinBase<DownloadPage> {
+    private static class DownloadPageSkin extends SkinBase<AddonDownloadPage> {
 
-        protected DownloadPageSkin(DownloadPage control) {
+        protected DownloadPageSkin(AddonDownloadPage control) {
             super(control);
 
             VBox pane = new VBox(8);
@@ -324,7 +325,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     final class Versions {
-                        static ComponentSublist createSublist(DownloadPage control, String title, List<String> target) {
+                        static ComponentSublist createSublist(AddonDownloadPage control, String title, List<String> target) {
                             var sublist = new ComponentSublist(() -> {
                                 ArrayList<AddonItem> items = new ArrayList<>();
                                 for (String gv : target) {
@@ -407,7 +408,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             setOnAction((e) -> {
                 fireEvent(new DialogCloseEvent());
-                Controllers.navigate(new DownloadPage(page, addon, instanceReference, page.getCallback()));
+                Controllers.navigate(new AddonDownloadPage(page, addon, instanceReference, page.getCallback()));
             });
             setNode(IDX_LEADING, pane);
 
@@ -427,7 +428,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class AddonItem extends StackPane {
 
-        AddonItem(RemoteAddon mod, RemoteAddon.Version dataItem, DownloadPage selfPage) {
+        AddonItem(RemoteAddon mod, RemoteAddon.Version dataItem, AddonDownloadPage selfPage) {
             VBox pane = new VBox(8);
             pane.setPadding(new Insets(8, 0, 8, 0));
 
@@ -496,7 +497,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class AddonVersion extends JFXDialogLayout {
-        public AddonVersion(RemoteAddon addon, RemoteAddon.Version version, DownloadPage selfPage) {
+        public AddonVersion(RemoteAddon addon, RemoteAddon.Version version, AddonDownloadPage selfPage) {
             RemoteAddon.Type type = selfPage.type;
 
             String title = switch (type) {
@@ -544,7 +545,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             this.setBody(box);
 
             JFXButton downloadButton = null;
-            if (org.jackhuang.hmcl.ui.download.DownloadPage.canDownload(addon)) {
+            if (DownloadPage.canDownload(addon)) {
                 downloadButton = new JFXButton(type == RemoteAddon.Type.MODPACK ? i18n("install.modpack") : i18n("addon.install"));
                 downloadButton.getStyleClass().add("dialog-accept");
                 downloadButton.setOnAction(e -> {
@@ -580,7 +581,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             onEscPressed(this, cancelButton::fire);
         }
 
-        private void loadDependencies(RemoteAddon.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
+        private void loadDependencies(RemoteAddon.Version version, AddonDownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
             spinnerPane.setLoading(true);
             Task.composeAsync(() -> {
                 // TODO: Massive tasks may cause OOM.

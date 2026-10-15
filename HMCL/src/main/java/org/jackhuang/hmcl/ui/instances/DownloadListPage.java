@@ -53,6 +53,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
@@ -79,7 +80,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
     private final ListProperty<RemoteAddon> items = new SimpleListProperty<>(this, "items", FXCollections.observableArrayList());
     private final ObservableList<GameInstanceID> instances = FXCollections.observableArrayList();
     private final ObjectProperty<GameInstanceID> selectedInstance = new SimpleObjectProperty<>();
-    private final org.jackhuang.hmcl.ui.download.DownloadPage.DownloadCallback callback;
+    private final DownloadPage.DownloadCallback callback;
     private boolean searchInitialized = false;
     protected final BooleanProperty supportChinese = new SimpleBooleanProperty();
     private final ObservableList<Node> actions = FXCollections.observableArrayList();
@@ -93,7 +94,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
     private Runnable retrySearch;
 
-    public DownloadListPage(@NotNull RemoteAddon.Type type, RemoteAddonRepository repository, org.jackhuang.hmcl.ui.download.DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+    public DownloadListPage(@NotNull RemoteAddon.Type type, RemoteAddonRepository repository, DownloadPage.DownloadCallback callback, boolean instanceSelection) {
         this.type = Objects.requireNonNull(type);
         this.repository = repository;
         this.callback = callback;
@@ -158,7 +159,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
         FXUtils.runInFX(() -> selectedInstance.set(instanceId));
     }
 
-    public org.jackhuang.hmcl.ui.download.DownloadPage.DownloadCallback getCallback() {
+    public DownloadPage.DownloadCallback getCallback() {
         return callback;
     }
 
@@ -575,7 +576,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                         FXUtils.onClicked(wrapper, () -> {
                             RemoteAddon item = getItem();
                             if (item != null)
-                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getInstanceOptional(), getSkinnable().callback));
+                                Controllers.navigate(new AddonDownloadPage(getSkinnable(), item, getSkinnable().getInstanceOptional(), getSkinnable().callback));
                         });
 
                         setPrefWidth(0);
