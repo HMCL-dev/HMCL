@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -41,14 +40,16 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DataPack extends LocalAddonManager<DataPack.Pack> {
+    private final World world;
     private final Path path;
 
     public DataPack(World world) {
         super(world.getGameInstance());
+        this.world = world;
         this.path = world.getFile().resolve("datapacks");
     }
 
-    public void installPack(Path sourcePackPath, GameVersionNumber gameVersionNumber) throws IOException {
+    public void installPack(Path sourcePackPath) throws IOException {
         boolean containsMultiplePacks;
         Set<String> packs = new HashSet<>();
         try (FileSystem fs = CompressingUtils.readonly(sourcePackPath).build()) {
@@ -73,11 +74,7 @@ public class DataPack extends LocalAddonManager<DataPack.Pack> {
 
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
                 for (Path dir : stream) {
-                    String packName = FileUtils.getName(dir);
-                    if (FileUtils.getName(dir).endsWith(DISABLED_EXTENSION)) {
-                        packName = StringUtils.removeSuffix(packName, DISABLED_EXTENSION);
-                    }
-                    packName = FileUtils.getNameWithoutExtension(packName);
+                    String packName = FileUtils.getNameWithoutExtension(StringUtils.removeSuffix(FileUtils.getName(dir), DISABLED_EXTENSION));
                     if (packs.contains(packName)) {
                         if (Files.isDirectory(dir)) {
                             FileUtils.deleteDirectory(dir);
@@ -99,14 +96,14 @@ public class DataPack extends LocalAddonManager<DataPack.Pack> {
 
             Path targetResourceZipPath;
             // When the version cannot be obtained, the old version logic is used by default.
-            boolean useNewResourcePath = gameVersionNumber != null
-                    && gameVersionNumber.compareTo("26.1-snapshot-6") >= 0;
+            boolean useNewResourcePath = world.getGameVersion() != null
+                    && world.getGameVersion().compareTo("26.1-snapshot-6") >= 0;
 
             if (useNewResourcePath) {
-                Files.createDirectories(path.getParent().resolve("resourcepacks"));
-                targetResourceZipPath = path.getParent().resolve("resourcepacks/resources.zip");
+                Files.createDirectories(path.resolveSibling("resourcepacks"));
+                targetResourceZipPath = path.resolveSibling("resourcepacks/resources.zip");
             } else {
-                targetResourceZipPath = path.getParent().resolve("resources.zip");
+                targetResourceZipPath = path.resolveSibling("resources.zip");
             }
 
             try (FileSystem outputResourcesZipFS = CompressingUtils.createWritableZipFileSystem(targetResourceZipPath);
@@ -202,10 +199,8 @@ public class DataPack extends LocalAddonManager<DataPack.Pack> {
             this.manager = manager;
             isDirectory = Files.isDirectory(path);
 
-            String idd = FileUtils.getNameWithoutExtension(path);
-            if (!isDirectory && FileUtils.getName(path).endsWith(DISABLED_EXTENSION))
-                idd = FileUtils.getNameWithoutExtension(idd);
-            id = idd;
+            String name = FileUtils.getName(path);
+            id = isDirectory ? name : FileUtils.getNameWithoutExtension(StringUtils.removeSuffix(name, DISABLED_EXTENSION));
 
             if (isDirectory) {
                 Path mcmeta1 = path.resolve("pack.mcmeta");

@@ -21,7 +21,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.addon.datapack.DataPack;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -45,14 +44,12 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.DataPackInfoObject> implements WorldManagePage.WorldRefreshable {
-    private final World world;
     private final DataPack dataPack;
     final BooleanProperty readOnly;
     private final ReentrantLock lock = new ReentrantLock();
 
     public DataPackListPage(WorldManagePage worldManagePage) {
-        world = worldManagePage.getWorld();
-        dataPack = new DataPack(world);
+        dataPack = new DataPack(worldManagePage.getWorld());
         readOnly = worldManagePage.readOnlyProperty();
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
                 this::installMultiDataPack);
@@ -62,7 +59,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
     private void installMultiDataPack(List<Path> dataPackPath) {
         dataPackPath.forEach(pack -> {
             try {
-                dataPack.installPack(pack, world.getGameVersion());
+                dataPack.installPack(pack);
             } catch (IOException e) {
                 LOG.warning("Unable to parse datapack file " + pack, e);
             }
