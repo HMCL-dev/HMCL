@@ -73,6 +73,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage {
 
+    public static final Set<RemoteAddon.Type> SUPPORTED_TYPES = Set.of(
+            RemoteAddon.Type.MOD,
+            RemoteAddon.Type.RESOURCE_PACK,
+            RemoteAddon.Type.SHADER_PACK,
+            RemoteAddon.Type.MODPACK
+    );
+
     public static final DownloadCallback DEFAULT_CALLBACK = (downloadProvider, repository, instanceId, addon, file) ->
             download(null, downloadProvider, repository, instanceId, addon, file);
 
@@ -139,13 +146,6 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             return node;
         };
     }
-
-    public static final Set<RemoteAddon.Type> SUPPORTED_TYPES = Set.of(
-            RemoteAddon.Type.MOD,
-            RemoteAddon.Type.RESOURCE_PACK,
-            RemoteAddon.Type.SHADER_PACK,
-            RemoteAddon.Type.MODPACK
-    );
 
     public static boolean canDownload(RemoteAddon addon) {
         return SUPPORTED_TYPES.contains(addon.type());
