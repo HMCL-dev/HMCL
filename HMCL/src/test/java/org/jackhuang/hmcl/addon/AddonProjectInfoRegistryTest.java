@@ -74,7 +74,7 @@ class AddonProjectInfoRegistryTest {
     @Test
     void rebuildsClearedIndices() throws ReflectiveOperationException {
         var registry = registry();
-        var first = registry.getInfos().getFirst();
+        var first = registry.getInfos().get(0);
         assertSame(first, registry.getInfo("first", "First Name"));
         assertSame(first, registry.getInfo("first", null));
         assertSame(first, registry.getInfoByCurseForgeId("shared"));
