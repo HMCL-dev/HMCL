@@ -52,7 +52,7 @@ public class DataPack extends LocalAddonManager<DataPack.Pack> {
 
     public void installPack(Path sourcePackPath, GameVersionNumber gameVersionNumber) throws IOException {
         boolean containsMultiplePacks;
-        Set<String> packs1 = new HashSet<>();
+        Set<String> packs = new HashSet<>();
         try (FileSystem fs = CompressingUtils.readonly(sourcePackPath).build()) {
             Path dataPacks = fs.getPath("datapacks");
             Path mcmeta = fs.getPath("pack.mcmeta");
@@ -67,10 +67,10 @@ public class DataPack extends LocalAddonManager<DataPack.Pack> {
 
             if (containsMultiplePacks) {
                 try (Stream<Path> s = Files.list(dataPacks)) {
-                    packs1 = s.map(FileUtils::getNameWithoutExtension).collect(Collectors.toSet());
+                    packs = s.map(FileUtils::getNameWithoutExtension).collect(Collectors.toSet());
                 }
             } else {
-                packs1.add(FileUtils.getNameWithoutExtension(sourcePackPath));
+                packs.add(FileUtils.getNameWithoutExtension(sourcePackPath));
             }
 
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
@@ -80,7 +80,7 @@ public class DataPack extends LocalAddonManager<DataPack.Pack> {
                         packName = StringUtils.removeSuffix(packName, "." + DISABLED_EXT);
                     }
                     packName = FileUtils.getNameWithoutExtension(packName);
-                    if (packs1.contains(packName)) {
+                    if (packs.contains(packName)) {
                         if (Files.isDirectory(dir)) {
                             FileUtils.deleteDirectory(dir);
                         } else if (Files.isRegularFile(dir)) {
