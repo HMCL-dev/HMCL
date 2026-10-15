@@ -397,6 +397,11 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 cleanedModid = "impropers3dminimap";
             }
 
+            // https://www.mcmod.cn/class/26546.html
+            if (mcmodId == 26546 && cleanedModid.equals("swem")) {
+                cleanedModid = "sweconm";
+            }
+
             if (!MODID_PATTERN.matcher(cleanedModid).matches() && !MODID_WHITELIST.contains(cleanedModid)) {
                 throw new GradleException("Invalid modid: " + modid);
             }
