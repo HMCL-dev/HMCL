@@ -36,8 +36,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/// Sub-classes should implement `Comparable`
-public abstract class LocalAddonFile {
+/// @param <T> this type of addon
+public abstract class LocalAddonFile<T> implements Comparable<T> {
 
     protected LocalAddonFile() {
     }

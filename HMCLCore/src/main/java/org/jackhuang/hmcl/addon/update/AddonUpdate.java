@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 @NotNullByDefault
 public record AddonUpdate(
-        LocalAddonFile localAddonFile,
+        LocalAddonFile<?> localAddonFile,
         RemoteAddon.Version currentVersion,
         RemoteAddon.Version targetVersion
 ) {

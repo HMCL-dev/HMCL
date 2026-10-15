@@ -33,7 +33,7 @@ import java.util.Locale;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public sealed abstract class ResourcePackFile extends LocalAddonFile implements Comparable<ResourcePackFile> permits ResourcePackFolder, ResourcePackZipFile {
+public sealed abstract class ResourcePackFile extends LocalAddonFile<ResourcePackFile> permits ResourcePackFolder, ResourcePackZipFile {
 
     static @Nullable ResourcePackFile fromFile(ResourcePackManager manager, Path path) {
         if (!isFileResourcePack(path)) return null;
