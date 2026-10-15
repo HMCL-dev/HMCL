@@ -49,6 +49,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
@@ -62,26 +63,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends Control implements DecoratorPage {
 
-    public static final DownloadCallback FOR_MOD =
-            (downloadProvider, repository, version, mod, file) ->
-                    org.jackhuang.hmcl.ui.download.DownloadPage.download(downloadProvider, repository, version, file, "mods");
-    public static final DownloadCallback FOR_RESOURCE_PACK =
-            (downloadProvider, repository, version, pack, file) ->
-                    org.jackhuang.hmcl.ui.download.DownloadPage.download(downloadProvider, repository, version, file, "resourcepacks");
-    public static final DownloadCallback FOR_SHADER =
-            (downloadProvider, repository, version, shader, file) ->
-                    org.jackhuang.hmcl.ui.download.DownloadPage.download(downloadProvider, repository, version, file, "shaderpacks");
-
-    public static @Nullable DownloadCallback getDownloadCallbackFor(@Nullable RemoteAddon.Type addonType) {
-        if (addonType == null) return null;
-        return switch (addonType) {
-            case MOD -> FOR_MOD;
-            case RESOURCE_PACK -> FOR_RESOURCE_PACK;
-            case SHADER_PACK -> FOR_SHADER;
-            default -> null;
-        };
-    }
-
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
@@ -91,13 +72,13 @@ public class DownloadPage extends Control implements DecoratorPage {
     /// Localized project metadata, or null when no registry or matching project is available.
     private final @Nullable AddonProjectInfo mod;
     private final HMCLGameInstance.Optional instanceReference;
-    private final DownloadCallback callback; // ONLY FOR MODPACKS
+    private final @NotNull org.jackhuang.hmcl.ui.download.DownloadPage.DownloadCallback callback;
     private final DownloadListPage page;
     private final RemoteAddon.Type type;
 
     private SimpleMultimap<String, RemoteAddon.Version, List<RemoteAddon.Version>> versions;
 
-    public DownloadPage(DownloadListPage page, RemoteAddon addon, HMCLGameInstance.Optional instanceReference, @Nullable DownloadCallback callback) {
+    public DownloadPage(DownloadListPage page, RemoteAddon addon, HMCLGameInstance.Optional instanceReference, org.jackhuang.hmcl.ui.download.DownloadPage.DownloadCallback callback) {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
@@ -105,7 +86,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(this.type);
         this.mod = registry != null ? registry.getInfoByCurseForgeId(addon.slug()) : null;
         this.instanceReference = instanceReference;
-        this.callback = callback;
+        this.callback = Objects.requireNonNullElse(callback, org.jackhuang.hmcl.ui.download.DownloadPage.DEFAULT_CALLBACK);
         loadAddonVersions();
 
         this.state.set(State.fromTitle(addon.title()));
@@ -179,14 +160,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.failed.set(failed);
     }
 
-    public @Nullable DownloadCallback getCallbackFor(RemoteAddon addon) {
-        if (addon.type() == RemoteAddon.Type.MODPACK) return this.callback;
-        return getDownloadCallbackFor(addon.type());
-    }
-
     public void download(RemoteAddon addon, RemoteAddon.Version file) {
-        var callback = getCallbackFor(addon);
-        if (callback == null) {
+        if (!org.jackhuang.hmcl.ui.download.DownloadPage.canDownload(addon)) {
             saveAs(file);
         } else {
             callback.download(page.getDownloadProvider(), instanceReference.repository(), instanceReference.instanceId(), addon, file);
@@ -432,7 +407,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             setOnAction((e) -> {
                 fireEvent(new DialogCloseEvent());
-                Controllers.navigate(new DownloadPage(page, addon, instanceReference, null));
+                Controllers.navigate(new DownloadPage(page, addon, instanceReference, page.getCallback()));
             });
             setNode(IDX_LEADING, pane);
 
@@ -569,7 +544,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             this.setBody(box);
 
             JFXButton downloadButton = null;
-            if (selfPage.getCallbackFor(addon) != null) {
+            if (org.jackhuang.hmcl.ui.download.DownloadPage.canDownload(addon)) {
                 downloadButton = new JFXButton(type == RemoteAddon.Type.MODPACK ? i18n("install.modpack") : i18n("addon.install"));
                 downloadButton.getStyleClass().add("dialog-accept");
                 downloadButton.setOnAction(e -> {
@@ -742,8 +717,4 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
-    @FunctionalInterface
-    public interface DownloadCallback {
-        void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon addon, RemoteAddon.Version file);
-    }
 }

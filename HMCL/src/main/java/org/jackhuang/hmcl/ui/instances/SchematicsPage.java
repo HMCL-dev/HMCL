@@ -177,7 +177,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> {
 
     public void downloadLitematica() {
         if (downloadTarget.get() != null && gameInstance != null) {
-            var modDownloads = HMCLLocalizedDownloadListPage.ofModrinthMod(false);
+            var modDownloads = HMCLLocalizedDownloadListPage.ofModrinthMod(org.jackhuang.hmcl.ui.download.DownloadPage.DEFAULT_CALLBACK, false);
             modDownloads.loadInstance(HMCLGameInstance.Optional.of(gameInstance));
             Controllers.navigate(new DownloadPage(
                     modDownloads,
