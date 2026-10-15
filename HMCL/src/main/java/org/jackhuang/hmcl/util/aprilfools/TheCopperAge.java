@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.aprilfools;
 
+import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
@@ -36,7 +37,16 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class TheCopperAge {
 
     private static final ReadOnlyObjectWrapper<Degree> oxidationDegree = new ReadOnlyObjectWrapper<>(Degree.UNOXIDIZED);
-    private static final ObservableValue<Color> color = oxidationDegree.map(Degree::getColor);
+    private static final ObjectBinding<Color> color = new ObjectBinding<>() {
+        {
+            bind(oxidationDegree);
+        }
+
+        @Override
+        protected Color computeValue() {
+            return oxidationDegree.get().getColor();
+        }
+    };
     private static final BooleanProperty waxed = new SimpleBooleanProperty(false);
 
     private static final ReadOnlyBooleanWrapper oxidizing = new ReadOnlyBooleanWrapper(false);
