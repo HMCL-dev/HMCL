@@ -30,6 +30,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.addon.AddonLoader;
+import org.jackhuang.hmcl.addon.AddonProjectInfo;
+import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
@@ -65,9 +67,9 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final RemoteAddonRepository repository;
-    private final ModTranslations translations;
     private final RemoteAddon addon;
-    private final ModTranslations.Mod mod;
+    /// Localized project metadata, or null when no registry or matching project is available.
+    private final @Nullable AddonProjectInfo mod;
     private final HMCLGameInstance.Optional instanceReference;
     private final DownloadCallback callback;
     private final DownloadListPage page;
@@ -80,8 +82,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.repository = page.repository;
         this.addon = addon;
         this.type = Objects.requireNonNullElse(addon.type(), page.type);
-        this.translations = ModTranslations.getTranslationsByAddonType(this.type);
-        this.mod = translations.getModByCurseForgeId(addon.slug());
+        @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(this.type);
+        this.mod = registry != null ? registry.getInfoByCurseForgeId(addon.slug()) : null;
         this.instanceReference = instanceReference;
         this.callback = callback;
         loadAddonVersions();
@@ -220,8 +222,8 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 TwoLineListItem content = new TwoLineListItem();
                 HBox.setHgrow(content, Priority.ALWAYS);
-                ModTranslations.Mod mod = getSkinnable().translations.getModByCurseForgeId(getSkinnable().addon.slug());
-                content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : getSkinnable().addon.title());
+                @Nullable AddonProjectInfo mod = getSkinnable().mod;
+                content.setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : getSkinnable().addon.title());
                 content.setSubtitle(getSkinnable().addon.description());
                 content.getSubtitleLabel().setWrapText(true);
                 getSkinnable().addon.categories().stream()
@@ -231,9 +233,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                 content.getFirstLine().setMinWidth(0);
                 descriptionPane.getChildren().add(content);
 
-                if (getSkinnable().mod != null) {
+                @Nullable String mcmodUrl = mod != null ? mod.mcmodUrl() : null;
+                if (mcmodUrl != null) {
                     JFXHyperlink openMcmodButton = new JFXHyperlink(i18n("mods.mcmod"));
-                    openMcmodButton.setExternalLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod));
+                    openMcmodButton.setExternalLink(mcmodUrl);
                     descriptionPane.getChildren().add(openMcmodButton);
                     openMcmodButton.setMinWidth(Region.USE_PREF_SIZE);
                 }
@@ -415,8 +418,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             });
             setNode(IDX_LEADING, pane);
 
-            ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(type).getModByCurseForgeId(addon.slug());
-            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
+            @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(type);
+            @Nullable AddonProjectInfo mod = registry != null ? registry.getInfoByCurseForgeId(addon.slug()) : null;
+            content.setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : addon.title());
             content.setSubtitle(addon.description());
             for (String category : addon.categories()) {
                 if (page.shouldDisplayCategory(category))
