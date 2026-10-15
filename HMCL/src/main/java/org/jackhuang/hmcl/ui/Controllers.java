@@ -62,7 +62,6 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.aprilfools.AprilFools;
 import org.jackhuang.hmcl.util.aprilfools.Lzh;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -71,7 +70,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -399,8 +397,7 @@ public final class Controllers {
 
         Controllers.taskDialog(
                 Task.composeAsync(Schedulers.io(), () -> {
-                            Charset encoding = CompressingUtils.findSuitableEncoding(modpackFile);
-                            Modpack modpack = ModpackHelper.readModpackManifest(modpackFile, encoding);
+                            Modpack modpack = ModpackHelper.readModpackManifest(modpackFile);
                             return ModpackHelper.getInstallTask(
                                     repository, modpackFile, new GameInstanceID(modpack.getName()), modpack, null);
                         })

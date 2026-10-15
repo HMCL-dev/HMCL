@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -69,7 +68,7 @@ public final class CurseModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipArchiveReader zip, Path file, Charset encoding) throws IOException, JsonParseException {
+    public Modpack readManifest(ZipArchiveReader zip, Path file) throws IOException, JsonParseException {
         CurseManifest manifest = JsonUtils.fromNonNullJson(CompressingUtils.readTextZipEntry(zip, "manifest.json"), CurseManifest.class);
         String description = "No description";
         try {
@@ -79,7 +78,7 @@ public final class CurseModpackProvider implements ModpackProvider {
         } catch (Throwable ignored) {
         }
 
-        return new Modpack(manifest.name(), manifest.author(), manifest.version(), manifest.minecraft().gameVersion(), description, encoding, manifest) {
+        return new Modpack(manifest.name(), manifest.author(), manifest.version(), manifest.minecraft().gameVersion(), description, manifest) {
             @Override
             public Task<?> getInstallTask(
                     DefaultDependencyManager dependencyManager,
@@ -105,12 +104,12 @@ public final class CurseModpackProvider implements ModpackProvider {
                             try {
                                 CurseManifestFile result = file;
                                 if (StringUtils.isBlank(file.fileName()) || file.url() == null) {
-                                    RemoteAddon.File remoteFile = CurseForgeRemoteAddonRepository.MODS.getAddonFile(
+                                    RemoteAddon.File remoteFile = CurseForgeRemoteAddonRepository.getInstance().getAddonFile(
                                             Integer.toString(file.projectID()), Integer.toString(file.fileID()));
                                     result = result.withFileName(remoteFile.filename()).withURL(remoteFile.url());
                                 }
                                 if (!file.addonQueried()) {
-                                    RemoteAddon addon = CurseForgeRemoteAddonRepository.MODS.getAddonById(
+                                    RemoteAddon addon = CurseForgeRemoteAddonRepository.getInstance().getAddonById(
                                             downloadProvider, Integer.toString(file.projectID()));
                                     result = result.withAddon(addon);
                                 }

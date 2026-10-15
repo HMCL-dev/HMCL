@@ -711,7 +711,7 @@ public final class DefaultGameInstanceTest {
     /// @param manifest the MultiMC configuration
     /// @return the test modpack metadata
     private static Modpack createMultiMCModpack(MultiMCInstanceConfiguration manifest) {
-        return new Modpack("Test", "", "", manifest.getGameVersion(), "", StandardCharsets.UTF_8, manifest) {
+        return new Modpack("Test", "", "", manifest.getGameVersion(), "", manifest) {
             /// This test invokes the concrete installation task directly.
             @Override
             public Task<?> getInstallTask(

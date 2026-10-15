@@ -56,11 +56,12 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @see <a href="https://docs.modrinth.com/api">Modrinth API Doc</a>
 public final class ModrinthRemoteAddonRepository implements RemoteAddonRepository {
-    public static final ModrinthRemoteAddonRepository COMMON = new ModrinthRemoteAddonRepository();
-    public static final ModrinthRemoteAddonRepository MODS = new ModrinthRemoteAddonRepository("mod");
-    public static final ModrinthRemoteAddonRepository MODPACKS = new ModrinthRemoteAddonRepository("modpack");
-    public static final ModrinthRemoteAddonRepository RESOURCE_PACKS = new ModrinthRemoteAddonRepository("resourcepack");
-    public static final ModrinthRemoteAddonRepository SHADER_PACKS = new ModrinthRemoteAddonRepository("shader");
+
+    private static final ModrinthRemoteAddonRepository INSTANCE = new ModrinthRemoteAddonRepository();
+
+    public static ModrinthRemoteAddonRepository getInstance() {
+        return INSTANCE;
+    }
 
     private static final Comparator<String> TAG_COMPARATOR = PriorityComparator.of(
             List.of("babric",
@@ -108,31 +109,23 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         };
     }
 
+    private static @Nullable String toProjectType(RemoteAddon.Type type) {
+        return switch (type) {
+            case MOD -> "mod";
+            case MODPACK -> "modpack";
+            case RESOURCE_PACK -> "resourcepack";
+            case SHADER_PACK -> "shader";
+            default -> null;
+        };
+    }
+
     private static final Semaphore SEMAPHORE = new Semaphore(16);
 
     private static final String PREFIX = "https://api.modrinth.com";
 
     private static final String BASE = "https://modrinth.com";
 
-    private final @Nullable String projectType;
-
-    private final @Nullable RemoteAddon.Type type;
-
     private ModrinthRemoteAddonRepository() {
-        this.projectType = null;
-        this.type = null;
-    }
-
-    private ModrinthRemoteAddonRepository(@NotNull String projectType) {
-        this.projectType = projectType;
-        this.type = toAddonType(projectType);
-        if (type == null) throw new IllegalArgumentException("Unsupported Modrinth project type: " + projectType);
-    }
-
-    @Override
-    public RemoteAddon.Type getType() {
-        if (type == null) throw new UnsupportedOperationException();
-        return this.type;
     }
 
     @Override
@@ -163,8 +156,9 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     }
 
     @Override
-    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
-        if (projectType == null) throw new UnsupportedOperationException();
+    public SearchResult search(DownloadProvider downloadProvider, RemoteAddon.Type type, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
+        String projectType = toProjectType(type);
+        if (projectType == null) return SearchResult.empty();
         SEMAPHORE.acquireUninterruptibly();
         try {
             List<List<String>> facets = new ArrayList<>();
@@ -367,8 +361,9 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     }
 
     @Override
-    public Stream<RemoteAddonRepository.Category> getCategories() throws IOException {
-        if (projectType == null) throw new UnsupportedOperationException();
+    public Stream<RemoteAddonRepository.Category> getCategories(RemoteAddon.Type type) throws IOException {
+        String projectType = toProjectType(type);
+        if (projectType == null) return Stream.empty();
         SEMAPHORE.acquireUninterruptibly();
         try {
             List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(listTypeOf(Category.class));
@@ -448,7 +443,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                                  @SerializedName("author_id") String authorId,
                                  @SerializedName("date_published") Instant datePublished, int downloads,
                                  @SerializedName("changelog_url") String changelogUrl,
-                                 List<ProjectVersionFile> files) implements RemoteAddon.IVersion {
+                                 List<ProjectVersionFile> files) {
         private static final Map<String, RemoteAddon.@Nullable DependencyType> DEPENDENCY_TYPE = mapOf(
                 pair("required", RemoteAddon.DependencyType.REQUIRED),
                 pair("optional", RemoteAddon.DependencyType.OPTIONAL),
@@ -456,29 +451,20 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                 pair("incompatible", RemoteAddon.DependencyType.INCOMPATIBLE)
         );
 
-        @Override
-        public RemoteAddon.Source getSource() {
-            return RemoteAddon.Source.MODRINTH;
-        }
-
         public Optional<RemoteAddon.Version> toVersion() {
-            RemoteAddon.VersionType type;
-            if ("release".equals(versionType)) {
-                type = RemoteAddon.VersionType.Release;
-            } else if ("beta".equals(versionType)) {
-                type = RemoteAddon.VersionType.Beta;
-            } else if ("alpha".equals(versionType)) {
-                type = RemoteAddon.VersionType.Alpha;
-            } else {
-                type = RemoteAddon.VersionType.Release;
-            }
+            RemoteAddon.VersionType type = switch (versionType) {
+                case "release" -> RemoteAddon.VersionType.Release;
+                case "beta" -> RemoteAddon.VersionType.Beta;
+                case "alpha" -> RemoteAddon.VersionType.Alpha;
+                default -> RemoteAddon.VersionType.Release;
+            };
 
             if (files.isEmpty()) {
                 return Optional.empty();
             }
 
             return Optional.of(new RemoteAddon.Version(
-                    this,
+                    RemoteAddon.Source.MODRINTH,
                     id,
                     projectId,
                     name,
