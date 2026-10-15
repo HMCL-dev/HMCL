@@ -43,6 +43,8 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.AddonLoader;
+import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
+import org.jackhuang.hmcl.addon.mod.ModProjectInfo;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
@@ -555,7 +557,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             || predicate.test(modInfo.getGameVersion())
                             || predicate.test(modInfo.getId())
                             || predicate.test(Objects.toString(modInfo.getModLoaderType()))
-                            || predicate.test((item.getModTranslations() != null ? item.getModTranslations().getDisplayName() : null))) {
+                            || predicate.test((item.getProjectInfo() != null ? item.getProjectInfo().displayName() : null))) {
                         listView.getItems().add(item);
                     }
                 }
@@ -567,7 +569,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     public static final class ModInfoObject {
         private final BooleanProperty active;
         private final LocalModFile localModFile;
-        private final @Nullable ModTranslations.Mod modTranslations;
+        /// Matching project metadata, or null if the local mod cannot be identified.
+        private final @Nullable ModProjectInfo projectInfo;
 
         private final ItemPropertyAsyncCache<Image, ModInfoObject> iconCache;
 
@@ -575,7 +578,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             this.localModFile = localModFile;
             this.active = localModFile.activeProperty();
 
-            this.modTranslations = ModTranslations.MOD.getMod(localModFile.getId(), localModFile.getName());
+            this.projectInfo = AddonProjectInfoRegistry.MOD.getInfo(localModFile.getId(), localModFile.getName());
 
             this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
@@ -584,8 +587,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return localModFile;
         }
 
-        public @Nullable ModTranslations.Mod getModTranslations() {
-            return modTranslations;
+        /// Returns matching project metadata, or null if no project was found.
+        public @Nullable ModProjectInfo getProjectInfo() {
+            return projectInfo;
         }
 
         private Image getDefaultIcon() {
@@ -635,8 +639,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             TwoLineListItem title = new TwoLineListItem();
             title.getTitleLabel().setWrapText(true);
-            if (modInfo.getModTranslations() != null && I18n.isUseChinese())
-                title.setTitle(modInfo.getModTranslations().getDisplayName());
+            if (modInfo.getProjectInfo() != null && I18n.isUseChinese())
+                title.setTitle(modInfo.getProjectInfo().displayName());
             else
                 title.setTitle(modInfo.getModInfo().getName());
 
@@ -708,7 +712,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 getActions().add(officialPageButton);
             }
 
-            if (modInfo.getModTranslations() == null || StringUtils.isBlank(modInfo.getModTranslations().getMcmod())) {
+            @Nullable String mcmodUrl = modInfo.getProjectInfo() != null ? modInfo.getProjectInfo().mcmodUrl() : null;
+            if (mcmodUrl == null) {
                 JFXHyperlink searchButton = new JFXHyperlink(i18n("mods.mcmod.search"));
                 searchButton.setExternalLink(NetworkUtils.withQuery("https://search.mcmod.cn/s", mapOf(
                         pair("key", modInfo.getModInfo().getName()),
@@ -718,7 +723,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 getActions().add(searchButton);
             } else {
                 JFXHyperlink mcmodButton = new JFXHyperlink(i18n("mods.mcmod.page"));
-                mcmodButton.setExternalLink(ModTranslations.MOD.getMcmodUrl(modInfo.getModTranslations()));
+                mcmodButton.setExternalLink(mcmodUrl);
                 getActions().add(mcmodButton);
             }
 
@@ -789,15 +794,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             content.getTags().clear();
 
             LocalModFile modInfo = dataItem.getModInfo();
-            ModTranslations.Mod modTranslations = dataItem.getModTranslations();
+            @Nullable ModProjectInfo projectInfo = dataItem.getProjectInfo();
 
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
 
             dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
 
             String displayName = modInfo.getName();
-            if (modTranslations != null && I18n.isUseChinese()) {
-                String chineseName = modTranslations.getName();
+            if (projectInfo != null && I18n.isUseChinese()) {
+                String chineseName = projectInfo.mainName();
                 if (StringUtils.containsChinese(chineseName)) {
                     if (StringUtils.containsEmoji(chineseName)) {
                         StringBuilder builder = new StringBuilder();
