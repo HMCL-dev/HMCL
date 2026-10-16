@@ -352,7 +352,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             content.setTitle(dataItem.getTitle());
             content.setSubtitle(dataItem.getSubtitle());
 
-            DataPack.Pack packInfo = dataItem.getPackInfo();
+            DataPacks.Pack packInfo = dataItem.getPackInfo();
             (observedActiveProperty = packInfo.activeProperty()).addListener(weakActiveListener);
             checkBox.setSelected(packInfo.isActive());
             checkBox.setOnAction(event -> {
