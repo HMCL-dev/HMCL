@@ -18,16 +18,30 @@
 package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.function.Consumer;
 
-public record TaskCancellationAction(Consumer<TaskExecutorDialogPane> cancellationAction) {
-    public static TaskCancellationAction NO_CANCEL = new TaskCancellationAction((Consumer<TaskExecutorDialogPane>) null);
-    public static TaskCancellationAction NORMAL = new TaskCancellationAction(() -> {
-    });
+@NotNullByDefault
+@FunctionalInterface
+public interface TaskCancellationAction extends Consumer<TaskExecutorDialogPane> {
 
-    public TaskCancellationAction(Runnable cancellationAction) {
-        this(it -> cancellationAction.run());
+    TaskCancellationAction NO_CANCEL = new TaskCancellationAction() {
+        @Override
+        public boolean isEnabled() {
+            return false;
+        }
+
+        @Override
+        public void accept(TaskExecutorDialogPane taskExecutorDialogPane) {
+        }
+    };
+
+    TaskCancellationAction NORMAL = ignored -> {
+    };
+
+    default boolean isEnabled() {
+        return true;
     }
 
 }
