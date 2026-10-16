@@ -36,6 +36,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /**
  *
  * @author huangyuhui
@@ -104,6 +106,7 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
         return mod.getId();
     }
 
+    @Override
     public String getName() {
         return name;
     }

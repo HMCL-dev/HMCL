@@ -94,8 +94,9 @@ public sealed abstract class ShaderPackFile extends LocalAddonFile<ShaderPackFil
         return meta;
     }
 
+    @Override
     public String getName() {
-        return StringUtils.isBlank(getMeta().name()) ? getFile().getFileName().toString() : getMeta().name();
+        return StringUtils.isBlank(getMeta().name()) ? getFileName() : getMeta().name();
     }
 
     @Override

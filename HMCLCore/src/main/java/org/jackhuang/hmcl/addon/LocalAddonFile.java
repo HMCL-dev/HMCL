@@ -44,6 +44,10 @@ public abstract class LocalAddonFile<T> implements Comparable<T> {
 
     public abstract Path getFile();
 
+    public String getName() {
+        return getFileName();
+    }
+
     /// Without extension
     public abstract String getFileName();
 
