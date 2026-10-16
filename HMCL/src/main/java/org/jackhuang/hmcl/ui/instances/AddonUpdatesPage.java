@@ -126,18 +126,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
         objects = FXCollections.observableArrayList();
 
-        BooleanProperty showPreview = new SimpleBooleanProperty();
-        {
-            List<Subscription> subscriptions = new ArrayList<>();
-            FXUtils.onChangeAndOperate(showPreview, preview -> {
-                if (preview) objects.setAll(common.get());
-                else objects.setAll(release.get());
-                subscriptions.forEach(Subscription::unsubscribe);
-                subscriptions.clear();
-                subscriptions.addAll(FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(AddonUpdateObject::enabledProperty).toArray(BooleanProperty[]::new)));
-            });
-        }
-
         TableView<AddonUpdateObject> table = new TableView<>(objects);
         table.setEditable(true);
         table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, targetVersionTypeColumn, sourceColumn, changelogColumn);
@@ -150,7 +138,16 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         actions.setAlignment(Pos.CENTER_RIGHT);
 
         JFXCheckBox showPreviewCheck = new JFXCheckBox(i18n("addon.check_update.preview"));
-        showPreviewCheck.selectedProperty().bindBidirectional(showPreview);
+        {
+            List<Subscription> subscriptions = new ArrayList<>();
+            FXUtils.onChangeAndOperate(showPreviewCheck.selectedProperty(), preview -> {
+                if (preview) objects.setAll(common.get());
+                else objects.setAll(release.get());
+                subscriptions.forEach(Subscription::unsubscribe);
+                subscriptions.clear();
+                subscriptions.addAll(FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(AddonUpdateObject::enabledProperty).toArray(BooleanProperty[]::new)));
+            });
+        }
 
         JFXButton exportListButton = FXUtils.newRaisedButton(i18n("button.export"));
         exportListButton.setOnAction(e -> exportList());
