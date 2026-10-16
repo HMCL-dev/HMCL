@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.addon.datapack;
 
 import com.google.gson.JsonParseException;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
@@ -185,11 +185,11 @@ public class DataPack extends LocalAddonManager<DataPack.Pack> {
         return Pack::compareTo;
     }
 
-    public static class Pack extends LocalAddonFile implements Comparable<Pack> {
+    public static class Pack extends LocalAddonFile<Pack> {
         private Path path;
         private final boolean isDirectory;
         private Path statusFile;
-        private final BooleanProperty activeProperty;
+        private final ReadOnlyBooleanWrapper activeProperty;
         private final String id;
         private final PackMcMeta.PackInfo info;
         private final DataPack manager;
@@ -214,41 +214,35 @@ public class DataPack extends LocalAddonManager<DataPack.Pack> {
                 statusFile = path;
             }
 
-            BooleanProperty property = new SimpleBooleanProperty(this, "active", !FileUtils.getName(statusFile).endsWith(DISABLED_EXTENSION));
-            property.addListener((obs, wasActive, isNowActive) -> {
-                if (isNowActive == !FileUtils.getName(statusFile).endsWith(DISABLED_EXTENSION))
-                    return;
-
-                Path newStatusFile = isNowActive
-                        ? statusFile.resolveSibling(FileUtils.getNameWithoutExtension(statusFile))
-                        : statusFile.resolveSibling(FileUtils.getName(statusFile) + DISABLED_EXTENSION);
-
-                try {
-                    Files.move(statusFile, newStatusFile);
-                    statusFile = newStatusFile;
-                    if (!isDirectory)
-                        this.path = newStatusFile;
-                } catch (IOException e) {
-                    LOG.warning("Unable to rename file from " + this.statusFile + " to " + newStatusFile, e);
-                }
-            });
-            this.activeProperty = property;
+            this.activeProperty = new ReadOnlyBooleanWrapper(this, "active", !FileUtils.getName(statusFile).endsWith(DISABLED_EXTENSION));
         }
 
         public PackMcMeta.PackInfo getInfo() {
             return info;
         }
 
-        public BooleanProperty activeProperty() {
-            return activeProperty;
+        public ReadOnlyBooleanProperty activeProperty() {
+            return activeProperty.getReadOnlyProperty();
         }
 
         public boolean isActive() {
             return activeProperty.get();
         }
 
-        public void setActive(boolean active) {
-            this.activeProperty.set(active);
+        public void setActive(boolean active) throws IOException {
+            if (active == isActive())
+                return;
+
+            Path newStatusFile = active
+                    ? statusFile.resolveSibling(FileUtils.getNameWithoutExtension(statusFile))
+                    : statusFile.resolveSibling(FileUtils.getName(statusFile) + DISABLED_EXTENSION);
+
+            Files.move(statusFile, newStatusFile);
+            statusFile = newStatusFile;
+            if (!isDirectory)
+                path = newStatusFile;
+
+            activeProperty.set(active);
         }
 
         @Override

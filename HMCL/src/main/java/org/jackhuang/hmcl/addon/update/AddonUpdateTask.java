@@ -37,14 +37,14 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AddonUpdateTask extends Task<Void> {
     private final Collection<Task<?>> dependents = new ArrayList<>();
-    private final List<LocalAddonFile> failedAddons = new ArrayList<>();
+    private final List<LocalAddonFile<?>> failedAddons = new ArrayList<>();
 
     public AddonUpdateTask(DownloadProvider downloadProvider, Path addonDirectory, List<AddonUpdate> addons) {
         setStage("addon.check_update.confirm");
         getProperties().put("total", addons.size());
 
         for (AddonUpdate addon : addons) {
-            LocalAddonFile local = addon.localAddonFile();
+            LocalAddonFile<?> local = addon.localAddonFile();
             RemoteAddon.Version remote = addon.targetVersion();
             boolean isDisabled = local.isDisabled();
             String fileName = remote.file().filename();
@@ -91,7 +91,7 @@ public class AddonUpdateTask extends Task<Void> {
         }
     }
 
-    public List<LocalAddonFile> getFailedAddons() {
+    public List<LocalAddonFile<?>> getFailedAddons() {
         return failedAddons;
     }
 
