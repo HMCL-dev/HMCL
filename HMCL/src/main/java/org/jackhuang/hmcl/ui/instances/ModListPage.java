@@ -20,9 +20,12 @@ package org.jackhuang.hmcl.ui.instances;
 import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -208,29 +211,39 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     void removeSelected(ObservableList<ModInfoObject> selectedItems) {
-        try {
-            modManager.removeMods(selectedItems.stream()
-                    .filter(Objects::nonNull)
-                    .map(ModInfoObject::getModInfo)
-                    .toArray(LocalModFile[]::new));
-            loadMods(modManager);
-        } catch (IOException ignore) {
-            // Fail to remove mods if the game is running or the mod is absent.
-        }
-    }
-
-    void enableSelected(ObservableList<ModInfoObject> selectedItems) {
+        List<String> failed = new ArrayList<>();
         selectedItems.stream()
                 .filter(Objects::nonNull)
                 .map(ModInfoObject::getModInfo)
-                .forEach(info -> info.setActive(true));
+                .forEach(info -> {
+                    try {
+                        info.delete();
+                    } catch (IOException e) {
+                        failed.add(info.getFile().toString());
+                        LOG.warning("Failed to delete mod \"" + info.getId() + "\"", e);
+                    }
+                });
+        loadMods(modManager);
+        if (!failed.isEmpty())
+            Controllers.dialog(i18n("mods.delete.failed") + "\n" + String.join(",\n", failed),
+                    i18n("message.error"), MessageDialogPane.MessageType.ERROR);
     }
 
-    void disableSelected(ObservableList<ModInfoObject> selectedItems) {
+    void setSelectedEnabled(ObservableList<ModInfoObject> selectedItems, boolean enabled) {
+        List<String> failed = new ArrayList<>();
         selectedItems.stream()
                 .filter(Objects::nonNull)
                 .map(ModInfoObject::getModInfo)
-                .forEach(info -> info.setActive(false));
+                .forEach(info -> {
+                    try {
+                        info.setActive(enabled);
+                    } catch (IOException e) {
+                        failed.add(info.getFile().toString());
+                    }
+                });
+        if (!failed.isEmpty())
+            Controllers.dialog(i18n("mods.toggle.failed") + "\n" + String.join(",\n", failed),
+                    i18n("message.error"), MessageDialogPane.MessageType.ERROR);
     }
 
     public void openModFolder() {
@@ -390,9 +403,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             }, null);
                         }),
                         createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
-                                skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
+                                skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
                         createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
-                                skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
+                                skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                                 skinnable.checkUpdates(
                                         listView.getSelectionModel().getSelectedItems().stream()
@@ -526,7 +539,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     public static final class ModInfoObject {
-        private final BooleanProperty active;
         private final LocalModFile localModFile;
         /// Matching project metadata, or null if the local mod cannot be identified.
         private final @Nullable ModProjectInfo projectInfo;
@@ -535,8 +547,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         ModInfoObject(LocalModFile localModFile) {
             this.localModFile = localModFile;
-            this.active = localModFile.activeProperty();
-
             this.projectInfo = AddonProjectInfoRegistry.MOD.getInfo(localModFile.getId(), localModFile.getName());
 
             this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
@@ -692,7 +702,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
 
-        private BooleanProperty booleanProperty;
+        private final InvalidationListener activeListener = obs -> checkBox.setSelected(getItem().getModInfo().isActive());
+        private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
+        private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
         private Tooltip warningTooltip;
 
@@ -721,6 +733,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         @Override
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
+            if (observedActiveProperty != null)
+                observedActiveProperty.removeListener(weakActiveListener);
+
             pseudoClassStateChanged(WARNING, false);
             if (warningTooltip != null) {
                 Tooltip.uninstall(this, warningTooltip);
@@ -782,10 +797,18 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 content.addTag(modVersion);
             }
 
-            if (booleanProperty != null) {
-                checkBox.selectedProperty().unbindBidirectional(booleanProperty);
-            }
-            checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
+            (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
+            checkBox.setSelected(modInfo.isActive());
+            checkBox.setOnAction(event -> {
+                try {
+                    modInfo.setActive(checkBox.isSelected());
+                } catch (IOException e) {
+                    LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
+                    Controllers.showToast(i18n("mods.toggle.failed"));
+                } finally {
+                    checkBox.setSelected(modInfo.isActive());
+                }
+            });
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
             restoreButton.setOnAction(e -> {
                 menu.get().getContent().setAll(modInfo.getMod().getOldFiles().stream()
