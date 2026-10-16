@@ -135,8 +135,8 @@ public class WizardController implements Navigation {
     @Override
     public void onFinish() {
         Object result = provider.finish(settings);
-        if (result instanceof Summary summary) displayer.navigateTo(summary.getComponent(), NavigationDirection.NEXT);
-        else if (result instanceof Task<?> task) displayer.handleTask(settings, task);
+        if (result instanceof Summary) displayer.navigateTo(((Summary) result).getComponent(), NavigationDirection.NEXT);
+        else if (result instanceof Task<?>) displayer.handleTask(settings, ((Task<?>) result));
         else if (result != null) throw new IllegalStateException("Unrecognized wizard result: " + result);
     }
 
