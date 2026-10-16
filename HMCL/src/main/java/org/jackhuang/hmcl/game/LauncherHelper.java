@@ -746,7 +746,7 @@ public final class LauncherHelper {
                                     }
                                     future.completeExceptionally(new CancellationException());
                                 }
-                            }), i18n("download.java"), pane -> future.completeExceptionally(new CancellationException()));
+                            }), i18n("download.java"), it -> future.completeExceptionally(new CancellationException()));
                 }, () -> future.completeExceptionally(new CancellationException())).build());
 
         return future;
