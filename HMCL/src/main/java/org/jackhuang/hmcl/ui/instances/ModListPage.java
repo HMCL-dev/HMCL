@@ -849,7 +849,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 try {
                     modInfo.setActive(checkBox.isSelected());
                 } catch (IOException e) {
-                    LOG.error("Unable to change state of mod file " + modInfo.getFile(), e);
+                    LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
                     Controllers.showToast(i18n("mods.toggle.failed"));
                 } finally {
                     checkBox.setSelected(modInfo.isActive());

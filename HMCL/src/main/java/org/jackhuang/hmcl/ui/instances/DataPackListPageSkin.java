@@ -359,7 +359,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                 try {
                     packInfo.setActive(checkBox.isSelected());
                 } catch (IOException e) {
-                    LOG.error("Unable to change state of datapack " + packInfo.getPath(), e);
+                    LOG.warning("Unable to change state of datapack " + packInfo.getPath(), e);
                     Controllers.showToast(i18n("datapack.toggle.failed"));
                 } finally {
                     checkBox.setSelected(packInfo.isActive());
