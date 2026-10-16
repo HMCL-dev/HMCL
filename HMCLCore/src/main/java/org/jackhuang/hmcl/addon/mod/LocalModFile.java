@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.addon.mod;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
@@ -30,8 +30,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  *
@@ -50,7 +48,7 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
     private final String url;
     private final String fileName;
     private final String logoPath;
-    private final BooleanProperty activeProperty;
+    private final ReadOnlyBooleanWrapper activeProperty;
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
         this(modManager, mod, file, name, description, "", "", "", "", "");
@@ -69,23 +67,7 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
         this.url = url;
         this.logoPath = logoPath;
 
-        activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
-            @Override
-            protected void invalidated() {
-                if (isOld()) return;
-
-                Path path = LocalModFile.this.file.toAbsolutePath();
-
-                try {
-                    if (get())
-                        LocalModFile.this.file = modManager.enableMod(path);
-                    else
-                        LocalModFile.this.file = modManager.disableMod(path);
-                } catch (IOException e) {
-                    LOG.error("Unable to invert state of mod file " + path, e);
-                }
-            }
-        };
+        activeProperty = new ReadOnlyBooleanWrapper(this, "active", !modManager.isDisabled(file));
 
         fileName = FileUtils.getNameWithoutExtension(LocalAddonManager.getLocalAddonName(file));
 
@@ -145,15 +127,21 @@ public final class LocalModFile extends LocalAddonFile<LocalModFile> {
         return logoPath;
     }
 
-    public BooleanProperty activeProperty() {
-        return activeProperty;
+    public ReadOnlyBooleanProperty activeProperty() {
+        return activeProperty.getReadOnlyProperty();
     }
 
     public boolean isActive() {
         return activeProperty.get();
     }
 
-    public void setActive(boolean active) {
+    public void setActive(boolean active) throws IOException {
+        if (isOld() || active == isActive()) {
+            return;
+        }
+
+        Path path = file.toAbsolutePath();
+        file = active ? modManager.enableMod(path) : modManager.disableMod(path);
         activeProperty.set(active);
     }
 

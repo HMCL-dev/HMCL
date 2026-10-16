@@ -19,8 +19,8 @@ package org.jackhuang.hmcl.addon.datapack;
 
 import com.google.gson.JsonParseException;
 import javafx.application.Platform;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
@@ -246,7 +246,7 @@ public class DataPack {
         private Path path;
         private final boolean isDirectory;
         private Path statusFile;
-        private final BooleanProperty activeProperty;
+        private final ReadOnlyBooleanWrapper activeProperty;
         private final String id;
         private final LocalAddonFile.Description description;
         private final DataPack parentDataPack;
@@ -259,7 +259,7 @@ public class DataPack {
             this.parentDataPack = parentDataPack;
 
             this.statusFile = initializeStatusFile(path, isDirectory);
-            this.activeProperty = initializeActiveProperty();
+            this.activeProperty = new ReadOnlyBooleanWrapper(this, "active", !FileUtils.getExtension(this.statusFile).equals(DISABLED_EXT));
         }
 
         private Path initializeStatusFile(Path path, boolean isDirectory) {
@@ -268,42 +268,6 @@ public class DataPack {
                 return Files.exists(mcmeta) ? mcmeta : path.resolve("pack.mcmeta.disabled");
             }
             return path;
-        }
-
-        private BooleanProperty initializeActiveProperty() {
-            BooleanProperty property = new SimpleBooleanProperty(this, "active", !FileUtils.getExtension(this.statusFile).equals(DISABLED_EXT));
-            property.addListener((obs, wasActive, isNowActive) -> {
-                if (wasActive != isNowActive) {
-                    handleFileRename(isNowActive);
-                }
-            });
-            return property;
-        }
-
-        private void handleFileRename(boolean isNowActive) {
-            Path newStatusFile = calculateNewStatusFilePath(isNowActive);
-            if (statusFile.equals(newStatusFile)) {
-                return;
-            }
-            try {
-                Files.move(this.statusFile, newStatusFile);
-                this.statusFile = newStatusFile;
-                if (!this.isDirectory) {
-                    this.path = newStatusFile;
-                }
-            } catch (IOException e) {
-                LOG.warning("Unable to rename file from " + this.statusFile + " to " + newStatusFile, e);
-            }
-        }
-
-        private Path calculateNewStatusFilePath(boolean isActive) {
-            boolean isFileDisabled = DISABLED_EXT.equals(FileUtils.getExtension(this.statusFile));
-            if (isActive && isFileDisabled) {
-                return this.statusFile.getParent().resolve(FileUtils.getNameWithoutExtension(this.statusFile));
-            } else if (!isActive && !isFileDisabled) {
-                return this.statusFile.getParent().resolve(FileUtils.getName(this.statusFile) + "." + DISABLED_EXT);
-            }
-            return this.statusFile;
         }
 
         public String getId() {
@@ -318,16 +282,28 @@ public class DataPack {
             return parentDataPack;
         }
 
-        public BooleanProperty activeProperty() {
-            return activeProperty;
+        public ReadOnlyBooleanProperty activeProperty() {
+            return activeProperty.getReadOnlyProperty();
         }
 
         public boolean isActive() {
             return activeProperty.get();
         }
 
-        public void setActive(boolean active) {
-            this.activeProperty.set(active);
+        public void setActive(boolean active) throws IOException {
+            if (active == isActive())
+                return;
+
+            Path newStatusFile = active
+                    ? statusFile.getParent().resolve(FileUtils.getNameWithoutExtension(statusFile))
+                    : statusFile.getParent().resolve(FileUtils.getName(statusFile) + "." + DISABLED_EXT);
+
+            Files.move(statusFile, newStatusFile);
+            statusFile = newStatusFile;
+            if (!isDirectory)
+                path = newStatusFile;
+
+            activeProperty.set(active);
         }
 
         public Path getPath() {
