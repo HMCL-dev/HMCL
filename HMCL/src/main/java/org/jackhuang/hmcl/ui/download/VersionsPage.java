@@ -69,7 +69,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.*;
