@@ -334,12 +334,6 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
     }
 
-    public void removeMods(LocalModFile... localModFiles) throws IOException {
-        for (LocalModFile localModFile : localModFiles) {
-            localModFile.delete();
-        }
-    }
-
     private void updateSupportedLoaders() {
         supportedLoaders.clear();
 

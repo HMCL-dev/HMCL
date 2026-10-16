@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Queue;
@@ -46,7 +45,7 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
     @Override
     public void handleTask(SettingsMap settings, Task<?> task) {
         @Nullable WizardProvider.TaskCleanup cleanup = settings.remove(WizardProvider.TaskCleanup.KEY);
-        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(new TaskCancellationAction(it -> {
+        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(it -> {
             if (cleanup != null) {
                 // Keep the installation modal until onStop has released its repository draft.
                 it.setCancel(null);
@@ -54,7 +53,7 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
             }
             it.fireEvent(new DialogCloseEvent());
             onEnd();
-        }));
+        });
 
         pane.setTitle(i18n("message.doing"));
         if (settings.containsKey("title")) {
