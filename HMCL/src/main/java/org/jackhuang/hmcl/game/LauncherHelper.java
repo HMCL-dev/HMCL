@@ -308,10 +308,10 @@ public final class LauncherHelper {
                         if (launcherVisibility == LauncherVisibility.CLOSE)
                             Launcher.stopApplication();
                         else
-                            launchingStepsPane.setCancel(new TaskCancellationAction(it -> {
+                            launchingStepsPane.setCancel(it -> {
                                 process.stop();
                                 it.fireEvent(new DialogCloseEvent());
-                            }));
+                            });
                     } else {
                         runLater(() -> {
                             launchingStepsPane.fireEvent(new DialogCloseEvent());
@@ -749,7 +749,7 @@ public final class LauncherHelper {
                                     }
                                     future.completeExceptionally(new CancellationException());
                                 }
-                            }), i18n("download.java"), new TaskCancellationAction(() -> future.completeExceptionally(new CancellationException())));
+                            }), i18n("download.java"), it -> future.completeExceptionally(new CancellationException()));
                 }, () -> future.completeExceptionally(new CancellationException())).build());
 
         return future;
