@@ -66,7 +66,7 @@ public final class ExportWizardProvider implements WizardProvider {
     }
 
     private Task<?> exportWithLauncher(String modpackType, ModpackExportInfo exportInfo, Path modpackFile) {
-        @Nullable Path launcherJar = JarUtils.thisJarPath();
+        @Nullable Path launcherJar = JarUtils.tryGetThisJarPath();
         boolean packWithLauncher = exportInfo.isPackWithLauncher() && launcherJar != null;
         return new Task<>() {
             @Nullable Path tempModpack;

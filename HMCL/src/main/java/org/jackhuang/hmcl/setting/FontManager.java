@@ -78,7 +78,7 @@ public final class FontManager {
         if (font != null)
             return font;
 
-        Path thisJar = JarUtils.thisJarPath();
+        Path thisJar = JarUtils.tryGetThisJarPath();
         if (thisJar != null && thisJar.getParent() != null) {
             font = tryLoadDefaultFont(thisJar.getParent());
             if (font != null)
