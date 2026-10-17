@@ -109,7 +109,8 @@ public abstract class CreateDeb extends DefaultTask {
     }
 
     private String getDesktopFilePath() {
-        return "/usr/share/applications/hmcl-%s.desktop".formatted(getCurrentTypeName());
+        // .desktop file's name must be GUI WMClass name (org.jackhuang.hmcl.Launcher)
+        return "/usr/share/applications/%s.desktop".formatted(getLauncherClassName().get());
     }
 
     private String getIconTargetPath() {
@@ -224,7 +225,7 @@ public abstract class CreateDeb extends DefaultTask {
     /// leaves runtime dependency resolution to the target environment.
     private String getControl(long appSize, long launcherScriptSize, long desktopInfoSize, long iconSize) {
         long installedSize = (appSize + launcherScriptSize + desktopInfoSize + iconSize + 1023) / 1024;
-
+        // hmcl-stable hmcl-beta hmcl-nightly should be conflict with each other.
         return """
                 Package: %s
                 Version: %s
@@ -235,7 +236,23 @@ public abstract class CreateDeb extends DefaultTask {
                 Maintainer: Glavo <zjx001202@gmail.com>
                 Description: Hello Minecraft! Launcher
                 Homepage: https://github.com/HMCL-dev/HMCL
-                """.formatted(getCurrentType().getPackageName(), getVersion().get(), Math.max(installedSize, 1)) + "\n";
+                Conflicts: %s
+                Replaces: %s
+                """.formatted(getCurrentType().getPackageName(), getVersion().get(), Math.max(installedSize, 1), getConflicts(getCurrentType().getPackageName()), getConflicts(getCurrentType().getPackageName())) + "\n";
+    }
+    
+    // provide Conflicts & Replaces Content String.
+    private String getConflicts(String packageName) {
+        switch (packageName) {
+            case "hmcl-stable":
+                return "hmcl-beta, hmcl-nightly";
+            case "hmcl-beta":
+                return "hmcl-stable, hmcl-nightly";
+            case "hmcl-nightly":
+                return "hmcl-stable, hmcl-beta";
+            default:
+                throw new IllegalArgumentException("Unknown package name: " + packageName);
+        }
     }
 
     private static final String COMMON_LAUNCHER_PATH = "/usr/bin/hmcl";
