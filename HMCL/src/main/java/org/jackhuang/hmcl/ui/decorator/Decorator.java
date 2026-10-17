@@ -327,6 +327,13 @@ public final class Decorator {
         return mainWindowPane;
     }
 
+    /// Returns the pane that behaves as the overlay of dialogs.
+    ///
+    /// @return the dialog overlay pane
+    public StackPane getDialogOverlayPane() {
+        return mainWindowPane.getDialogOverlayPane();
+    }
+
     /// Returns the navigation stack rendered by the main window.
     ///
     /// @return this decorator's navigator
@@ -1240,5 +1247,4 @@ public final class Decorator {
         root.setScaleY(1);
         root.setScaleZ(1);
     }
-
 }
