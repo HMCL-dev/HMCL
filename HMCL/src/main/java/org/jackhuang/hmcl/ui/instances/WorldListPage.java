@@ -137,7 +137,7 @@ public final class WorldListPage extends ListPageBase<World> {
                 return stream.filter(Files::isDirectory)
                         .flatMap(world -> {
                             try {
-                                return Stream.of(new World(world.toAbsolutePath().normalize(), this.gameInstance));
+                                return Stream.of(new World(world.toAbsolutePath().normalize()));
                             } catch (IOException e) {
                                 LOG.warning("Failed to read world " + world, e);
                                 return Stream.empty();
@@ -184,7 +184,7 @@ public final class WorldListPage extends ListPageBase<World> {
     private void installWorld(Path zipFile) {
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
-        Task.supplyAsync(() -> new World(zipFile, gameInstance))
+        Task.supplyAsync(() -> new World(zipFile))
                 .whenComplete(Schedulers.javafx(), world -> {
                     Controllers.prompt(i18n("world.name.enter"), (name, handler) -> {
                         Task.runAsync(() -> world.install(savesDir, name))

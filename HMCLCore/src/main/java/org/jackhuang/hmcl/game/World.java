@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import javafx.scene.image.Image;
 import org.glavo.nbt.io.NBTCodec;
 import org.glavo.nbt.tag.*;
+import org.jackhuang.hmcl.addon.datapack.DataPackManager;
 import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class World {
 
     private final Path file;
-    private final DefaultGameInstance gameInstance;
     private String fileName;
     private Image icon;
 
@@ -57,9 +57,11 @@ public final class World {
     private CompoundTag playerData; // Use for both reading/modification and writing back to the file
     private Path playerDataPath;
 
-    public World(Path file, DefaultGameInstance gameInstance) throws IOException {
+    /// Lazily created data pack manager.
+    private @Nullable DataPackManager dataPackManager;
+
+    public World(Path file) throws IOException {
         this.file = file;
-        this.gameInstance = gameInstance;
 
         if (Files.isDirectory(file)) {
             fileName = FileUtils.getName(this.file);
@@ -127,10 +129,6 @@ public final class World {
 
     public Path getFile() {
         return file;
-    }
-
-    public DefaultGameInstance getGameInstance() {
-        return gameInstance;
     }
 
     public String getFileName() {
@@ -354,7 +352,7 @@ public final class World {
                 }
 
             }
-            new World(worldDir, gameInstance).rename(name);
+            new World(worldDir).rename(name);
         } else if (Files.isDirectory(file)) {
             FileUtils.copyDirectory(file, worldDir);
         }
@@ -387,7 +385,7 @@ public final class World {
 
         Path newPath = file.resolveSibling(newName);
         FileUtils.copyDirectory(file, newPath, path -> !path.contains("session.lock"));
-        World newWorld = new World(newPath, gameInstance);
+        World newWorld = new World(newPath);
         newWorld.rename(newName);
     }
 
@@ -449,5 +447,13 @@ public final class World {
             LOG.warning("Failed to open the lock file " + sessionLockFile, e);
             return false;
         }
+    }
+
+    /// Returns the data pack manager for this world.
+    public DataPackManager getDataPackManager() {
+        if (dataPackManager == null) {
+            dataPackManager = new DataPackManager(this);
+        }
+        return dataPackManager;
     }
 }
