@@ -15,41 +15,49 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.instances.server;
+package org.jackhuang.hmcl.ui.instances;
 
+import com.google.gson.JsonPrimitive;
 import com.jfoenix.controls.*;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.effect.BoxBlur;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.*;
+import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.server.Server;
 import org.jackhuang.hmcl.server.ServerStatus;
 import org.jackhuang.hmcl.server.ServerStatusResult;
+import org.jackhuang.hmcl.server.pinger.ServerStatusPinger;
 import org.jackhuang.hmcl.server.storage.DatFileModifiedExternalException;
 import org.jackhuang.hmcl.server.storage.ServerStorage;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.ui.instances.Instances;
+import org.jackhuang.hmcl.util.MinecraftChatComponentUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.Subscription;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +67,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -125,7 +135,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
 
     public void editServer(ServerListItem item) {
         if (gameInstance != null) {
-            runInFX(() -> Controllers.dialog(new EditServerPane(EditServerPane.Type.EDIT, item.getServer(), (server) -> {
+            runInFX(() -> Controllers.dialog(new EditServerDialog(EditServerDialog.Type.EDIT, item.getServer(), (server) -> {
                 if (!server.equals(item.getServer())) {
                     Task.supplyAsync(Schedulers.io(), () -> {
                         ServerStorage storage = item.storageEntry.rootStorage();
@@ -302,7 +312,7 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
     }
 
     private void addServer() {
-        runInFX(() -> Controllers.dialog(new EditServerPane(EditServerPane.Type.ADD, null, this::addServer)));
+        runInFX(() -> Controllers.dialog(new EditServerDialog(EditServerDialog.Type.ADD, null, this::addServer)));
     }
 
     private void updateServerList() {
@@ -322,29 +332,77 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
         getItems().setAll(stream.toList());
     }
 
-    public final class ServerListItem {
-        private final @NotNull ServerStorage.ServerStorageEntry storageEntry;
-        private final Image serverFaviconImage;
+    private static class ServerNetworkLatencyPane extends StackPane {
+        private static final SVG[] FRAMES = {
+                SVG.SERVER_SIGNAL_0_BAR,
+                SVG.SERVER_SIGNAL_1_BAR,
+                SVG.SERVER_SIGNAL_2_BAR,
+                SVG.SERVER_SIGNAL_3_BAR,
+                SVG.SERVER_SIGNAL_FULL,
+                SVG.SERVER_SIGNAL_3_BAR,
+                SVG.SERVER_SIGNAL_2_BAR,
+                SVG.SERVER_SIGNAL_1_BAR
+        };
 
-        final @NotNull ObservableServerStatus observableServerStatus;
+        private final SVGPath icon = SVG.NONE.createIcon();
+        private final Timeline timeline = new Timeline(new KeyFrame(Duration.millis(125), e -> nextFrame()));
+        private int index = 0;
+        private State state = State.PINGING;
 
-        public ServerListItem(@NotNull ServerStorage.ServerStorageEntry storageEntry) {
-            this(storageEntry, new ObservableServerStatus(storageEntry.getServer().ip()));
+        public ServerNetworkLatencyPane() {
+            timeline.setCycleCount(Animation.INDEFINITE);
+            getChildren().setAll(icon);
+            sceneProperty().addListener((obs, o, n) -> updateTimeline());
+            ping();
         }
 
-        public ServerListItem(@NotNull ServerStorage.ServerStorageEntry storageEntry, @NotNull ObservableServerStatus observableServerStatus) {
-            this.storageEntry = storageEntry;
-            this.observableServerStatus = observableServerStatus;
-
-            this.serverFaviconImage = parseServerFaviconImageOrDefault(storageEntry.getServer().icon());
+        private void nextFrame() {
+            setIcon(FRAMES[index++ % FRAMES.length], "", 0.3);
         }
 
-        public Server getServer() {
-            return storageEntry.getServer();
+        private void updateTimeline() {
+            if (state == State.PINGING && getScene() != null) {
+                timeline.play();
+            } else {
+                timeline.stop();
+            }
         }
 
-        public void openServerStatusPane() {
-            Controllers.dialog(new ServerStatusPane(observableServerStatus, getServer(), ServerListPage.this.gameInstance));
+        public void ping() {
+            state = State.PINGING;
+            index = 0;
+            nextFrame();
+            updateTimeline();
+        }
+
+        public void pong(long latency) {
+            state = State.PONG;
+            updateTimeline();
+
+            SVG svg = latency < 150 ? SVG.SERVER_SIGNAL_FULL
+                    : latency < 300 ? SVG.SERVER_SIGNAL_3_BAR
+                    : latency < 600 ? SVG.SERVER_SIGNAL_2_BAR
+                    : latency < 1000 ? SVG.SERVER_SIGNAL_1_BAR
+                    : SVG.SERVER_SIGNAL_0_BAR;
+            setIcon(svg, "", 1);
+        }
+
+        public void error() {
+            state = State.ERROR;
+            updateTimeline();
+            setIcon(SVG.SERVER_SIGNAL_ERROR, "-fx-fill: -monet-error;", 1);
+        }
+
+        private void setIcon(SVG svg, String style, double opacity) {
+            icon.setContent(svg.getPath());
+            icon.setStyle(style);
+            icon.setOpacity(opacity);
+        }
+
+        private enum State {
+            PINGING,
+            PONG,
+            ERROR;
         }
     }
 
@@ -774,6 +832,713 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                     }
                 }
             }
+        }
+    }
+
+    public static class ServerStatusDialog extends TransitionPane implements DialogAware {
+        private final Server server;
+        private final SpinnerPane refreshSpinner = new SpinnerPane();
+        private final JFXDialogLayout rootLayout = new JFXDialogLayout();
+        private final Label lblErrorMessage = new Label();
+        private final ObservableServerStatus observableServerStatus;
+        private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
+        private final @Nullable HMCLGameInstance currentGameInstance;
+
+        public ServerStatusDialog(ObservableServerStatus reference, Server server, @Nullable HMCLGameInstance gameInstance) {
+            this(reference, server, false, gameInstance);
+        }
+
+        public ServerStatusDialog(ObservableServerStatus reference, Server server, boolean fromDnD, @Nullable HMCLGameInstance gameInstance) {
+            this.server = server;
+            if (gameInstance == null) {
+                this.currentGameInstance = GameDirectoryManager.getSelectedRepository().getSelectedInstance();
+            } else {
+                this.currentGameInstance = gameInstance;
+            }
+            this.observableServerStatus = Objects.requireNonNullElseGet(reference, () -> new ObservableServerStatus(server.ip()));
+
+            getStyleClass().add("skin-pane");
+            getChildren().setAll(rootLayout);
+            rootLayout.setHeading(new Label(i18n("server.manage.status.head")));
+
+            {
+                JFXButton refreshBtn = new JFXButton(i18n("button.refresh"));
+                refreshBtn.getStyleClass().add("dialog-refresh");
+                refreshBtn.setOnAction(e -> observableServerStatus.refreshAsync(true));
+                refreshSpinner.getStyleClass().add("small-spinner-pane");
+                refreshSpinner.setContent(refreshBtn);
+            }
+
+            HBox actions = new HBox(refreshSpinner);
+            actions.setAlignment(Pos.CENTER_RIGHT);
+
+            if (fromDnD) {
+                // add to current instance
+
+                JFXButton addToInstallBtn = new JFXButton(i18n("server.dnd.add"));
+                addToInstallBtn.getStyleClass().add("dialog-accept");
+                addToInstallBtn.setOnAction(ignored0 -> {
+                    fireEvent(new DialogCloseEvent());
+                    // open server manager
+                    if (currentGameInstance == null) {
+                        JFXButton gotoDownload = new JFXButton(i18n("instance.empty.launch.goto_download"));
+                        gotoDownload.getStyleClass().add("dialog-accept");
+                        gotoDownload.setOnAction(ignored1 -> Controllers.navigate(Controllers.getDownloadPage()));
+
+                        Controllers.confirmAction(i18n("server.dnd.add.instanceempty.desc"), i18n("server.dnd.add.instanceempty"),
+                                MessageDialogPane.MessageType.ERROR,
+                                gotoDownload,
+                                null);
+                    } else {
+                        if (Controllers.getGameInstancePage().getScene() == null) {
+                            Instances.modifyServerList(currentGameInstance);
+                        }
+
+                        if (!(Controllers.getGameInstancePage().getSelectedTab() instanceof ServerListPage)) {
+                            Controllers.getGameInstancePage().showServerList();
+                        }
+
+                        ServerListPage serverListPage = Controllers.getGameInstancePage().getServerListTab().getNode();
+                        if (serverListPage != null) {
+                            serverListPage.addServer(server, currentGameInstance);
+                        }
+                    }
+                });
+                actions.getChildren().add(addToInstallBtn);
+            }
+
+            JFXButton launchBtn = new JFXButton(i18n("instance.launch"));
+            launchBtn.getStyleClass().add("dialog-accept");
+            launchBtn.setOnAction(e -> {
+                fireEvent(new DialogCloseEvent());
+                Instances.launchAndEnterServer(currentGameInstance, server.ip());
+            });
+            actions.getChildren().add(launchBtn);
+
+            JFXButton cancelBtn = new JFXButton(i18n("button.cancel"));
+            cancelBtn.getStyleClass().add("dialog-cancel");
+            cancelBtn.setOnAction(e -> onClose());
+            onEscPressed(this, cancelBtn::fire);
+            actions.getChildren().add(cancelBtn);
+
+            lblErrorMessage.setWrapText(true);
+            lblErrorMessage.setMaxWidth(400);
+            rootLayout.getActions().addAll(lblErrorMessage, actions);
+
+            applyResult(observableServerStatus.resultProperty().get());
+            listenerHolder.add(onWeakChangeAndOperate(observableServerStatus.resultProperty(), this::applyResult));
+
+            applyPinging(observableServerStatus.pingingProperty().get());
+            listenerHolder.add(onWeakChangeAndOperate(observableServerStatus.pingingProperty(), this::applyPinging));
+
+            observableServerStatus.refreshIfNoResultOrFailedAsync(true);
+        }
+
+        private static Node createDescriptionRow(String title, String content, @Nullable String tooltip, Insets inVBoxInsets) {
+            BorderPane row = new BorderPane();
+            VBox.setMargin(row, inVBoxInsets);
+            row.setLeft(new Label(title));
+            Label right = new Label(content);
+            if (tooltip != null) {
+                installFastTooltip(right, tooltip);
+            }
+            row.setRight(right);
+            return row;
+        }
+
+        public void applyPinging(boolean pinging) {
+            if (pinging) {
+                lblErrorMessage.setText("");
+                refreshSpinner.showSpinner();
+            } else {
+                refreshSpinner.hideSpinner();
+            }
+        }
+
+        public void applyResult(ServerStatusResult statusResult) {
+            ServerStatus status;
+
+            if (statusResult == null) {
+                // pinging..., continue
+                status = null;
+            } else {
+                // ping failed
+                status = statusResult.getIfSucceed();
+                if (status == null) {
+                    ServerStatusResult.FailureResult.Reason reason = statusResult.getFailureReasonIfFailed();
+                    lblErrorMessage.setText(switch (Objects.requireNonNull(reason)) {
+                        case EXCEPTION -> i18n("server.manage.status.error");
+                        case UNKNOWN_HOST -> i18n("server.manage.status.error.unknownhost");
+                        case BLOCKED_BY_MOJANG -> i18n("server.manage.status.error.blocked");
+                    });
+                }
+            }
+
+            Image serverIcon = parseServerFaviconImageOrDefault(server.icon());
+            if (status != null) {
+                serverIcon = parseServerFaviconImageOrDefault(status.favicon());
+            }
+
+            VBox rootContent = new VBox();
+            rootContent.setSpacing(10);
+            rootLayout.setBody(rootContent);
+
+            HBox titleContainer = new HBox();
+            titleContainer.setSpacing(8);
+            titleContainer.setAlignment(Pos.CENTER_LEFT);
+            VBox.setMargin(titleContainer, new Insets(12, 0, 0, 0));
+            rootContent.getChildren().add(titleContainer);
+
+            ImageContainer imageView = new ImageContainer(64);
+            imageView.setImage(serverIcon);
+            titleContainer.getChildren().add(imageView);
+
+            VBox titleContent = new VBox();
+            titleContent.setAlignment(Pos.CENTER_LEFT);
+            titleContent.setSpacing(8);
+            HBox.setMargin(titleContent, new Insets(0, 0, 0, 12));
+            titleContainer.getChildren().add(titleContent);
+
+            TwoLineListItem title = new TwoLineListItem();
+            title.getTitleLabel().setWrapText(true);
+            title.setTitle(server.name());
+            titleContent.getChildren().add(title);
+
+            ServerAddressMaskPane addressMaskPane = new ServerAddressMaskPane(server.ip());
+            addressMaskPane.labelAddStyleClass("subtitle");
+            titleContent.getChildren().add(addressMaskPane);
+
+            if (status != null) {
+                VBox motdContentBox = new VBox();
+                motdContentBox.setSpacing(5);
+                motdContentBox.setAlignment(Pos.CENTER_LEFT);
+
+                VBox.setMargin(motdContentBox, new Insets(4, 0, 0, 4));
+                rootContent.getChildren().add(motdContentBox);
+
+                String[] motdLines = MinecraftChatComponentUtils
+                        .toPlainStringFromChatComponent(status.description())
+                        .split("\\r?\\n");
+                for (int i = 0; i < Math.min(motdLines.length, 2); i++) {
+                    String line = motdLines[i].trim();
+                    if (line.length() > 80) {
+                        line = line.substring(0, 77).trim() + "...";
+                    }
+                    Label lineLabel = new Label(line);
+                    lineLabel.setMaxWidth(560);
+                    lineLabel.setWrapText(true);
+                    motdContentBox.getChildren().add(lineLabel);
+                }
+
+                Separator titleEndSeparator = new Separator();
+                titleEndSeparator.setMaxWidth(Double.MAX_VALUE);
+                titleEndSeparator.setPadding(new Insets(4, 0, 0, 0));
+                rootContent.getChildren().add(titleEndSeparator);
+
+                String playersTooltip = null;
+                if (!status.players().samples().isEmpty()) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(String.join("\n", status.players().samples().stream()
+                            .map(sample -> {
+                                if (ServerStatus.Players.Sample.ANONYMOUS_PLAYER.equals(sample)) {
+                                    return i18n("server.anonymous_player");
+                                }
+                                return MinecraftChatComponentUtils.toPlainStringFromChatComponent(new JsonPrimitive(sample.name()));
+                            })
+                            .toList())
+                    );
+
+                    if (status.players().samples().size() < status.players().online()) {
+                        sb.append("\n");
+                        sb.append(i18n("server.and_more_players", String.valueOf(status.players().online() - status.players().samples().size())));
+                    }
+
+                    playersTooltip = sb.toString();
+                }
+
+                String modsTooltip = null;
+                int showCount = 15;
+                if (status.modInfo() != null && !status.modInfo().modList().isEmpty()) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(String.join("\n", status.modInfo().modList().stream()
+                            .limit(showCount)
+                            .map(it -> it.modId() + " - " + it.version())
+                            .toList())
+                    );
+                    if (showCount < status.modInfo().modList().size()) {
+                        sb.append("\n");
+                        sb.append(i18n("server.and_more_mods", String.valueOf(status.modInfo().modList().size() - showCount)));
+                    }
+
+                    modsTooltip = sb.toString();
+                }
+
+                rootContent.getChildren().add(createDescriptionRow(i18n("server.type"), status.modInfo() != null ? i18n("server.type.mod", status.modInfo().type(), status.modInfo().modList().size()) : i18n("server.type.vanilla"), modsTooltip, new Insets(0, 4, 0, 4)));
+                rootContent.getChildren().add(createDescriptionRow(i18n("server.onlineplayers"), String.format("%,d/%,d", status.players().online(), status.players().max()), playersTooltip, new Insets(0, 4, 0, 4)));
+                if (status.version() != null) {
+                    rootContent.getChildren().add(createDescriptionRow(i18n("server.playversion"), MinecraftChatComponentUtils.toPlainStringFromChatComponent(new JsonPrimitive(status.version().name())) + "(" + status.version().version() + ")", null, new Insets(0, 4, 0, 4)));
+                } else {
+                    rootContent.getChildren().add(createDescriptionRow(i18n("server.playversion"), i18n("server.playversion.unknown"), null, new Insets(0, 4, 0, 4)));
+                }
+                rootContent.getChildren().add(createDescriptionRow(i18n("server.latency"), String.format("%,dms", ((ServerStatusResult.SuccessResult) statusResult).getNetworkLatency()), null, new Insets(0, 4, 0, 4)));
+            }
+
+        }
+
+        private void onClose() {
+            fireEvent(new DialogCloseEvent());
+        }
+    }
+
+    public static class ServerAddressMaskPane extends HBox {
+        private final Label atLabel = new Label();
+        private final Label realServerLabel = new Label();
+        private final Label queryLabel = new Label();
+
+        private final Tooltip atLabelTooltip = new Tooltip();
+        private final Tooltip queryLabelTooltip = new Tooltip();
+
+        public ServerAddressMaskPane(@Nullable String serverIP) {
+            getChildren().add(atLabel);
+            getChildren().add(realServerLabel);
+            getChildren().add(queryLabel);
+
+            atLabel.setPickOnBounds(true);
+            queryLabel.setPickOnBounds(true);
+
+            //        FXUtils.installFastTooltip(atLabel, atLabelTooltip);
+            //        FXUtils.installFastTooltip(queryLabel, queryLabelTooltip);
+            set(serverIP);
+
+            BoxBlur blur = new BoxBlur();
+            blur.setIterations(3);
+
+            atLabel.setEffect(blur);
+            queryLabel.setEffect(blur);
+
+            atLabel.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
+                atLabel.setEffect(null);
+            });
+            atLabel.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
+                atLabel.setEffect(blur);
+            });
+
+            queryLabel.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> {
+                queryLabel.setEffect(null);
+            });
+            queryLabel.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> {
+                queryLabel.setEffect(blur);
+            });
+        }
+
+        public void set(@Nullable String serverIP) {
+            if (serverIP == null) {
+                atLabel.setText("");
+                realServerLabel.setText("");
+                queryLabel.setText("");
+
+                atLabelTooltip.setText("");
+                queryLabelTooltip.setText("");
+                return;
+            }
+            int queryStart = serverIP.lastIndexOf('?');
+            if (queryStart != -1) {
+                String queryStr = serverIP.substring(queryStart);
+                queryLabel.setText(queryStr);
+                atLabelTooltip.setText(queryStr);
+                serverIP = serverIP.substring(0, queryStart);
+            } else {
+                queryLabel.setText("");
+                atLabelTooltip.setText("");
+            }
+
+            int atEnd = serverIP.indexOf('@');
+            if (atEnd != -1) {
+                String atStr = serverIP.substring(0, atEnd + 1);
+                atLabel.setText(atStr);
+                atLabelTooltip.setText(atStr);
+                serverIP = serverIP.substring(atEnd + 1);
+            } else {
+                atLabel.setText("");
+                atLabelTooltip.setText("");
+            }
+
+            realServerLabel.setText(serverIP);
+        }
+
+        public void labelAddStyleClass(String styleClass) {
+            atLabel.getStyleClass().add(styleClass);
+            realServerLabel.getStyleClass().add(styleClass);
+            queryLabel.getStyleClass().add(styleClass);
+        }
+    }
+
+    public static class ObservableServerStatus {
+
+        private static final Semaphore PING_SEMAPHORE = new Semaphore(5);
+
+        private final String serverIp;
+        private final ReadOnlyObjectWrapper<ServerStatusResult> resultProperty = new ReadOnlyObjectWrapper<>();
+        private final ReadOnlyBooleanWrapper pingingProperty = new ReadOnlyBooleanWrapper();
+        private final AtomicInteger refreshId = new AtomicInteger();
+
+        public ObservableServerStatus(String serverIp) {
+            this.serverIp = serverIp;
+        }
+
+        public void refreshIfNoResultAsync(boolean urgent) {
+            if (resultProperty.get() == null) {
+                refreshAsync(urgent);
+            }
+        }
+
+        public void refreshIfNoResultOrFailedAsync(boolean urgent) {
+            ServerStatusResult result = resultProperty.get();
+            if (result == null || result.isFailure()) {
+                refreshAsync(urgent);
+            }
+        }
+
+        public void refreshAsync(boolean urgent) {
+            Task.runAsync(Schedulers.javafx(), () -> {
+
+                if (pingingProperty.get() && !urgent) {
+                    return;
+                }
+
+                int currentRefreshId = refreshId.incrementAndGet();
+                pingingProperty.set(true);
+
+                Task.supplyAsync(Schedulers.io(), () -> {
+                    // expired.
+                    if (currentRefreshId != refreshId.get()) return null;
+
+                    if (urgent) {
+                        return ServerStatusPinger.getStatus(serverIp);
+                    }
+
+                    PING_SEMAPHORE.acquireUninterruptibly();
+                    try {
+                        // expired.
+                        if (currentRefreshId != refreshId.get()) return null;
+
+                        return ServerStatusPinger.getStatus(serverIp);
+                    } finally {
+                        PING_SEMAPHORE.release();
+                    }
+                }).whenComplete(Schedulers.javafx(), (result, ignored) -> {
+                    // expired.
+                    if (currentRefreshId != refreshId.get()) return;
+
+                    try {
+                        resultProperty.set(result);
+                    } finally {
+                        pingingProperty.set(false);
+                    }
+                }).start();
+            }).start();
+        }
+
+        public ReadOnlyBooleanProperty pingingProperty() {
+            return pingingProperty.getReadOnlyProperty();
+        }
+
+        public ReadOnlyObjectProperty<ServerStatusResult> resultProperty() {
+            return resultProperty.getReadOnlyProperty();
+        }
+    }
+
+    public static class EditServerDialog extends TransitionPane implements DialogAware {
+        private final Consumer<Server> handleCallback;
+
+        private final Server reference;
+        private final Type type;
+        private final GridPane body = new GridPane();
+        private final JFXTextField serverNameField = new JFXTextField();
+        private final JFXTextField serverIpField = new JFXTextField();
+        private final JFXComboBox<Server.ServerPackStatus> serverPackStatusField = new JFXComboBox<>();
+
+        private final JFXButton btnAccept = new JFXButton();
+        private final JFXButton btnCancel = new JFXButton();
+        private final SpinnerPane spinner = new SpinnerPane();
+        private final Label lblErrorLabel = new Label();
+
+        private final SimpleBooleanProperty stillActionProgress = new SimpleBooleanProperty(false);
+
+        private boolean cancelled;
+
+        public EditServerDialog(Type type, @Nullable Server reference, Consumer<Server> handleCallback) {
+            this.type = type;
+            this.reference = reference;
+            this.handleCallback = handleCallback;
+            this.cancelled = false;
+
+            getStyleClass().add("skin-pane");
+
+            String referenceServerName;
+            String referenceServerIP;
+            Server.ServerPackStatus referenceServerPackStatus;
+            if (reference != null) {
+                referenceServerName = reference.name();
+                referenceServerIP = reference.ip();
+                referenceServerPackStatus = reference.serverPackStatus();
+            } else {
+                referenceServerName = null;
+                referenceServerIP = null;
+                referenceServerPackStatus = null;
+            }
+
+            JFXDialogLayout rootLayout = new JFXDialogLayout();
+            getChildren().setAll(rootLayout);
+
+            rootLayout.setHeading(new Label(switch (type) {
+                    case EDIT -> i18n("server.manage.edit.head");
+                    case ADD -> i18n("server.manage.add.head");
+                }));
+
+            VBox bodyVbox = new VBox();
+            bodyVbox.setSpacing(8);
+
+            VBox.setMargin(body, new Insets(20, 0, 0, 0));
+            body.setVgap(22);
+            body.setHgap(15);
+            body.setAlignment(Pos.CENTER);
+
+            ColumnConstraints col0 = new ColumnConstraints();
+            col0.setMinWidth(USE_PREF_SIZE);
+            body.getColumnConstraints().add(col0);
+            ColumnConstraints col1 = new ColumnConstraints();
+            col1.setHgrow(Priority.ALWAYS);
+            body.getColumnConstraints().add(col1);
+
+
+            // server name
+            {
+                Label label = new Label();
+                label.setText(i18n("server.name"));
+                GridPane.setHalignment(label, HPos.LEFT);
+                body.add(label, 0, 0);
+
+                serverNameField.setPromptText(i18n("server.name.def"));
+                serverNameField.setTextFormatter(new TextFormatter<>(change -> {
+                    if (change.getControlNewText().length() <= 32) {
+                        return change;
+                    }
+                    return null;
+                }));
+                body.add(serverNameField, 1, 0);
+
+                if (referenceServerName != null) {
+                    serverNameField.setText(referenceServerName);
+                }
+            }
+
+            // server ip
+            {
+                Label label = new Label();
+                label.setText(i18n("server.ip"));
+                GridPane.setHalignment(label, HPos.LEFT);
+                body.add(label, 0, 1);
+
+                serverIpField.setValidators(
+                        new RequiredValidator(),
+                        new MinecraftServerAddressValidator(i18n("server.address.malformed"), false)
+                );
+                setValidateWhileTextChanged(serverIpField, true);
+
+                body.add(serverIpField, 1, 1);
+
+                if (referenceServerIP != null) {
+                    serverIpField.setText(referenceServerIP);
+                }
+
+            }
+
+            // serverPackStatusField
+            {
+                Label label = new Label();
+                label.setText(i18n("server.resourcepack"));
+                GridPane.setHalignment(label, HPos.LEFT);
+                body.add(label, 0, 2);
+
+                serverPackStatusField.setConverter(stringConverter(status -> i18n("server.resourcepack." + status.name().toLowerCase(Locale.ROOT))));
+                serverPackStatusField.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+                    if (newVal == null && oldVal != null) {
+                        serverPackStatusField.setValue(oldVal);
+                    }
+                });
+                serverPackStatusField.getItems().setAll(Server.ServerPackStatus.values());
+                body.add(serverPackStatusField, 1, 2);
+                serverPackStatusField.setValue(
+                        Objects.requireNonNullElse(referenceServerPackStatus, Server.ServerPackStatus.PROMPT)
+                );
+            }
+
+            bodyVbox.getChildren().add(body);
+            rootLayout.setBody(bodyVbox);
+
+            btnAccept.setText(switch (type) {
+                case EDIT -> i18n("server.manage.edit.accept");
+                case ADD -> i18n("server.manage.add.accept");
+            });
+            btnAccept.getStyleClass().add("dialog-accept");
+            btnAccept.disableProperty().bind(new BooleanBinding() {
+                {
+                    bind(serverIpField.textProperty());
+                }
+
+                @Override
+                protected boolean computeValue() {
+                    return !serverIpField.validate();
+                }
+            });
+
+            lblErrorLabel.setWrapText(true);
+            lblErrorLabel.setMaxWidth(400);
+
+            btnCancel.setText(i18n("button.cancel"));
+            btnCancel.getStyleClass().add("dialog-cancel");
+            onEscPressed(this, btnCancel::fire);
+
+            spinner.getStyleClass().add("small-spinner-pane");
+            spinner.setContent(btnAccept);
+
+            HBox actions = new HBox(spinner, btnCancel);
+            actions.setAlignment(Pos.CENTER_RIGHT);
+
+            rootLayout.setActions(lblErrorLabel, actions);
+
+            btnCancel.setOnAction(e -> onCancel());
+            btnAccept.setOnAction(ignored -> {
+                String serverName;
+                String serverIP = serverIpField.getText();
+                Server.ServerPackStatus serverPackStatus = serverPackStatusField.getValue();
+                if (serverIP == null) return;
+                if (serverNameField.getText() == null || serverNameField.getText().isEmpty()) {
+                    serverName = i18n("server.name.def");
+                } else {
+                    serverName = serverNameField.getText();
+                }
+
+                if (!stillActionProgress.get()) {
+                    onAdd(serverPackStatus, serverName, serverIP);
+                    return;
+                }
+
+                fireEvent(new DialogCloseEvent());
+                if (reference != null) {
+                    handleCallback.accept(reference
+                            .withIpAndName(serverIP, serverName)
+                            .withPackStatus(serverPackStatus)
+                    );
+                } else {
+                    handleCallback.accept(new Server(serverPackStatus, false, null, serverIP, serverName));
+                }
+            });
+
+            ChangeListener<String> contentChangeListener = (ignored0, ignored1, ignored2) -> {
+                if (stillActionProgress.get()) {
+                    hideStillAction();
+                }
+            };
+            //        serverNameField.textProperty().addListener(contentChangeListener);
+            serverIpField.textProperty().addListener(contentChangeListener);
+        }
+
+        private void showStillAction(String errorMessage) {
+            stillActionProgress.set(true);
+            lblErrorLabel.setText(errorMessage);
+            btnAccept.setText(switch (type) {
+                case EDIT -> i18n("server.manage.edit.still");
+                case ADD -> i18n("server.manage.add.still");
+            });
+        }
+
+        private void hideStillAction() {
+            stillActionProgress.set(false);
+            lblErrorLabel.setText("");
+            btnAccept.setText(switch (type) {
+                case EDIT -> i18n("server.manage.edit.accept");
+                case ADD -> i18n("server.manage.add.accept");
+            });
+        }
+
+        private void onAdd(Server.ServerPackStatus packStatus, String serverName, String serverIP) {
+            body.setDisable(true);
+            spinner.showSpinner();
+
+            Task.supplyAsync(Schedulers.io(), () ->
+                    ServerStatusPinger.getStatus(serverIP)
+            ).whenComplete(Schedulers.javafx(), (result, ignored) -> {
+
+                ServerStatus status = result.getIfSucceed();
+                if (status == null) {
+                    spinner.hideSpinner();
+                    body.setDisable(false);
+
+                    ServerStatusResult.FailureResult.Reason reason = result.getFailureReasonIfFailed();
+                    showStillAction(switch (Objects.requireNonNull(reason)) {
+                        case EXCEPTION -> i18n("server.manage.status.error");
+                        case UNKNOWN_HOST -> i18n("server.manage.status.error.unknownhost");
+                        case BLOCKED_BY_MOJANG -> i18n("server.manage.status.error.blocked");
+                    });
+                } else {
+                    if (getScene() == null || cancelled) {
+                        return;
+                    }
+                    fireEvent(new DialogCloseEvent());
+                    if (reference != null) {
+                        handleCallback.accept(reference
+                                .withIpAndName(serverIP, serverName)
+                                .withPackStatus(packStatus)
+                                .withIcon(status.favicon())
+                        );
+                    } else {
+                        handleCallback.accept(new Server(packStatus, false, status.favicon(), serverIP, serverName));
+                    }
+                }
+            }).start();
+        }
+
+        private void onCancel() {
+            cancelled = true;
+            fireEvent(new DialogCloseEvent());
+        }
+
+        @Override
+        public void onDialogShown() {
+            serverNameField.requestFocus();
+        }
+
+        public enum Type {
+            EDIT,
+            ADD
+        }
+    }
+
+    public final class ServerListItem {
+        private final @NotNull ServerStorage.ServerStorageEntry storageEntry;
+        private final Image serverFaviconImage;
+
+        final @NotNull ObservableServerStatus observableServerStatus;
+
+        public ServerListItem(@NotNull ServerStorage.ServerStorageEntry storageEntry) {
+            this(storageEntry, new ObservableServerStatus(storageEntry.getServer().ip()));
+        }
+
+        public ServerListItem(@NotNull ServerStorage.ServerStorageEntry storageEntry, @NotNull ObservableServerStatus observableServerStatus) {
+            this.storageEntry = storageEntry;
+            this.observableServerStatus = observableServerStatus;
+
+            this.serverFaviconImage = parseServerFaviconImageOrDefault(storageEntry.getServer().icon());
+        }
+
+        public Server getServer() {
+            return storageEntry.getServer();
+        }
+
+        public void openServerStatusPane() {
+            Controllers.dialog(new ServerStatusDialog(observableServerStatus, getServer(), ServerListPage.this.gameInstance));
         }
     }
 }
