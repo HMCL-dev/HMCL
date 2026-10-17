@@ -23,6 +23,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
+import javafx.beans.binding.StringBinding;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -37,10 +38,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
@@ -66,6 +64,7 @@ import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.aprilfools.TheCopperAge;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -126,6 +125,28 @@ public final class MainPage extends StackPane implements DecoratorPage {
         titleLabel.getStyleClass().add("jfx-decorator-title");
         titleLabel.textFillProperty().bind(Themes.titleFillProperty());
         titleNode.getChildren().setAll(titleIcon, titleLabel);
+
+        Label copperStateLabel = new Label();
+        copperStateLabel.getStyleClass().add("jfx-decorator-title");
+        copperStateLabel.textFillProperty().bind(Themes.titleFillProperty());
+        copperStateLabel.textProperty().bind(new StringBinding() {
+            {
+                bind(TheCopperAge.displayedState());
+            }
+
+            @Override
+            protected String computeValue() {
+                var copperState = TheCopperAge.displayedState().get();
+                if (copperState.isEmpty()) return "";
+                return "(%s)".formatted(copperState);
+            }
+        });
+        if (I18n.isUpsideDown()) {
+            // Not rotating because we're already in upside-down English
+            titleNode.getChildren().add(1, copperStateLabel); // Place it between icon and title
+        } else {
+            titleNode.getChildren().add(copperStateLabel);
+        }
 
         state.setValue(new State(null, titleNode, false, false, true));
 
@@ -313,8 +334,28 @@ public final class MainPage extends StackPane implements DecoratorPage {
             launchPane.getChildren().setAll(launchButton, menuButton);
         }
 
-        getChildren().addAll(updatePane, launchPane);
+        HBox copperUtilities = new HBox(16);
+        copperUtilities.getStyleClass().add("card");
+        copperUtilities.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        copperUtilities.visibleProperty().bind(TheCopperAge.oxidizingProperty());
+        StackPane.setAlignment(copperUtilities, Pos.BOTTOM_LEFT);
+        {
+            JFXButton btnAxe = new JFXButton();
+            btnAxe.getStyleClass().add("toggle-icon4");
+            btnAxe.setGraphic(new ImageView(FXUtils.newBuiltinImage("/assets/img/iron_axe.png", 32D, 32D, true, true)));
+            FXUtils.installFastTooltip(btnAxe, i18n("launcher.april_fools.copper.action.axe"));
+            btnAxe.setOnAction(e -> TheCopperAge.useAxe());
 
+            JFXButton btnWax = new JFXButton();
+            btnWax.getStyleClass().add("toggle-icon4");
+            btnWax.setGraphic(new ImageView(FXUtils.newBuiltinImage("/assets/img/honeycomb.png", 32D, 32D, true, true)));
+            FXUtils.installFastTooltip(btnWax, i18n("launcher.april_fools.copper.action.wax"));
+            btnWax.setOnAction(e -> TheCopperAge.wax());
+
+            copperUtilities.getChildren().setAll(btnAxe, btnWax);
+        }
+
+        getChildren().addAll(updatePane, launchPane, copperUtilities);
     }
 
     private void showUpdateDialog(boolean show) {
