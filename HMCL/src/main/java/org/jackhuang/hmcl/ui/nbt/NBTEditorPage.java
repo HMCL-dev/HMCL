@@ -18,8 +18,10 @@
 package org.jackhuang.hmcl.ui.nbt;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Skin;
@@ -40,6 +42,7 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -54,15 +57,23 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state;
     private final Path file;
+    private final String name;
     private final NBTFileType type;
 
     private final BorderPane root = new BorderPane();
 
+    private final BooleanProperty readOnly = new SimpleBooleanProperty(true);
+
     public NBTEditorPage(Path file) throws IOException {
+        this(file, null);
+    }
+
+    public NBTEditorPage(Path file, @Nullable String name) throws IOException {
         getStyleClass().add("gray-background");
 
         this.state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("nbt.title", file.toString())));
         this.file = file;
+        this.name = StringUtils.isBlank(name) ? FileUtils.getName(file) : name;
 
         //noinspection DataFlowIssue
         this.type = NBTFileType.ofFile(file);
@@ -74,7 +85,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
         setLoading(true);
 
         HBox actions = new HBox(8);
-        actions.setPadding(new Insets(8));
+        actions.setPadding(new Insets(8, 16, 16, 8));
         actions.setAlignment(Pos.CENTER_RIGHT);
 
         JFXButton saveButton = FXUtils.newRaisedButton(i18n("button.save"));
@@ -86,19 +97,21 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                 Controllers.dialog(i18n("nbt.save.failed") + "\n\n" + StringUtils.getStackTrace(ex));
             }
         });
+        saveButton.disableProperty().bind(readOnlyProperty());
 
         JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
         cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 
         actions.getChildren().setAll(saveButton, cancelButton);
+        root.setBottom(actions);
 
         Task.supplyAsync(() -> type.read(file))
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
                         setLoading(false);
 
-                        NBTTreeItem root = new NBTTreeItem(result, FileUtils.getName(file));
+                        NBTTreeItem root = new NBTTreeItem(result, name);
                         var view = new TreeView<>(root) {
                             @Override
                             protected Skin<?> createDefaultSkin() {
@@ -134,5 +147,9 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state;
+    }
+
+    public BooleanProperty readOnlyProperty() {
+        return readOnly;
     }
 }

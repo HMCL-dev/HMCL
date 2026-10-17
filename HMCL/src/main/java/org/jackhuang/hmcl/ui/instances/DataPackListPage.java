@@ -22,7 +22,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.World;
-import org.jackhuang.hmcl.addon.datapack.DataPack;
+import org.jackhuang.hmcl.addon.datapack.DataPacks;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -48,13 +48,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.DataPackInfoObject> implements WorldManagePage.WorldRefreshable {
     private final World world;
-    private final DataPack dataPack;
+    private final DataPacks dataPacks;
     final BooleanProperty readOnly;
 
     public DataPackListPage(WorldManagePage worldManagePage) {
         world = worldManagePage.getWorld();
-        dataPack = new DataPack(world.getFile().resolve("datapacks"));
-        setItems(MappedObservableList.create(dataPack.getPacks(), DataPackListPageSkin.DataPackInfoObject::new));
+        dataPacks = new DataPacks(world.getFile().resolve("datapacks"));
+        setItems(MappedObservableList.create(dataPacks.getPacks(), DataPackListPageSkin.DataPackInfoObject::new));
         readOnly = worldManagePage.readOnlyProperty();
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
                 this::installMultiDataPack, this::refresh);
@@ -71,7 +71,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
 
     private void installSingleDataPack(Path dataPack) {
         try {
-            this.dataPack.installPack(dataPack, world.getGameVersion());
+            this.dataPacks.installPack(dataPack, world.getGameVersion());
         } catch (IOException | IllegalArgumentException e) {
             LOG.warning("Unable to parse datapack file " + dataPack, e);
         }
@@ -84,7 +84,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
 
     public void refresh() {
         setLoading(true);
-        Task.runAsync(dataPack::loadFromDir)
+        Task.runAsync(dataPacks::loadFromDir)
                 .withRunAsync(Schedulers.javafx(), () -> setLoading(false))
                 .start();
     }
@@ -98,7 +98,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
             installMultiDataPack(res);
         }
 
-        dataPack.loadFromDir();
+        dataPacks.loadFromDir();
     }
 
     void removeSelected(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems) {
@@ -107,7 +107,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
                 .map(DataPackListPageSkin.DataPackInfoObject::getPackInfo)
                 .forEach(pack -> {
                     try {
-                        dataPack.deletePack(pack);
+                        dataPacks.deletePack(pack);
                     } catch (IOException e) {
                         failed.add(pack.getPath().toString());
                         LOG.warning("Failed to delete datapack \"" + pack.getId() + "\"", e);
@@ -136,7 +136,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
     }
 
     void openDataPackFolder() {
-        FXUtils.openFolder(dataPack.getPath());
+        FXUtils.openFolder(dataPacks.getPath());
     }
 
     @NotNull Predicate<DataPackListPageSkin.DataPackInfoObject> updateSearchPredicate(String queryString) {
