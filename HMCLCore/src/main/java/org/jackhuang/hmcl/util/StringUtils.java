@@ -64,6 +64,7 @@ public final class StringUtils {
         return builder.toString();
     }
 
+    @Contract(value = "null -> true", pure = true)
     public static boolean isBlank(String str) {
         return str == null || str.isBlank();
     }
