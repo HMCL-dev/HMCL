@@ -55,6 +55,7 @@ public final class JavaRunner {
         }).collect(Collectors.joining(" "));
     }
 
+    /// Starts the specified JAR in a new process using the default Java runtime.
     public static void runJava(Path jar, String... appArgs) throws IOException {
         List<String> commandline = new ArrayList<>();
         commandline.add(JavaRuntime.getDefault().getBinary().toString());

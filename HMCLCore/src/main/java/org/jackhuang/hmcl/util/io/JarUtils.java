@@ -28,7 +28,7 @@ import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.CodeSource;
-import java.util.*;
+import java.util.Properties;
 
 public final class JarUtils {
     private JarUtils() {
@@ -69,13 +69,13 @@ public final class JarUtils {
         }
     }
 
-    /// Get the jar location of current application
+    /// Get the jar location of current application. Return null if not found
     @Nullable
     public static Path tryGetThisJarPath() {
         return THIS_JAR;
     }
 
-    /// Get the jar location of current application
+    /// Get the jar location of current application. Throw [IOException] if not found
     public static Path getThisJarPath() throws IOException {
         if (THIS_JAR == null)
             throw new IOException("Failed to find current HMCL location");
