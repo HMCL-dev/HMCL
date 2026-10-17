@@ -62,7 +62,6 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
@@ -394,7 +393,8 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         private final JFXCheckBox enabledBox = new JFXCheckBox();
         private final ImageContainer imageContainer = new ImageContainer(40);
         private final TwoLineListItem content = new TwoLineListItem();
-        private final JFXButton changelogButton = FXUtils.newToggleButton4(SVG.INFO);
+        /// by "edit", it means "select target version"
+        private final JFXButton editButton = FXUtils.newToggleButton4(SVG.EDIT);
 
         AddonUpdateListCell() {
             HBox hbox = new HBox(16);
@@ -402,7 +402,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             content.setAlignment(Pos.CENTER);
             hbox.setAlignment(Pos.CENTER);
 
-            hbox.getChildren().setAll(enabledBox, imageContainer, content, changelogButton);
+            hbox.getChildren().setAll(enabledBox, imageContainer, content, editButton);
 
             pane.getStyleClass().add("md-list-cell");
             StackPane.setMargin(hbox, new Insets(10, 16, 10, 16));
@@ -413,8 +413,8 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             enabledBox.setMouseTransparent(false);
             imageContainer.setMouseTransparent(true);
 
-            FXUtils.installFastTooltip(changelogButton, i18n("addon.changelog"));
-            changelogButton.setOnAction(event -> {
+            FXUtils.installFastTooltip(editButton, i18n("addon.select_target_version"));
+            editButton.setOnAction(event -> {
                 AddonUpdateObject item = getItem();
                 if (item != null) {
                     Controllers.dialog(new AddonChangelog(item));
