@@ -320,7 +320,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                     .getIcon();
             }
 
-            return null;
+            return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
         }
 
         private Image loadIcon() {
