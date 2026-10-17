@@ -33,6 +33,7 @@ language-subtag-registry
 /HMCL/build/
 /HMCLCore/build/
 /HMCLBoot/build/
+/HMCLMonitor/build/
 /minecraft/libraries/HMCLTransformerDiscoveryService/build/
 /minecraft/libraries/HMCLMultiMCBootstrap/build/
 /buildSrc/build/
@@ -42,6 +43,7 @@ language-subtag-registry
 /out/
 /HMCL/out/
 /HMCLCore/out/
+/HMCLMonitor/out/
 /minecraft/libraries/HMCLTransformerDiscoveryService/out/
 /minecraft/libraries/HMCLMultiMCBootstrap/out/
 
@@ -50,6 +52,7 @@ language-subtag-registry
 /HMCL/bin/
 /HMCLBoot/bin/
 /HMCLCore/bin/
+/HMCLMonitor/bin/
 /minecraft/libraries/HMCLTransformerDiscoveryService/bin/
 /minecraft/libraries/HMCLMultiMCBootstrap/bin/
 .classpath

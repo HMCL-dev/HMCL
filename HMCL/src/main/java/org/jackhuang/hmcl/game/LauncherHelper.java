@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
+import org.jackhuang.hmcl.monitor.MonitorClient;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.game.*;
@@ -836,7 +837,7 @@ public final class LauncherHelper {
 
         private final ReentrantLock lock = new ReentrantLock();
         private final LaunchOptions launchOptions;
-        private ManagedProcess process;
+        private ProcessInfo process;
         private volatile boolean lwjgl;
         private LogWindow logWindow;
         private final boolean detectWindow;
@@ -855,7 +856,7 @@ public final class LauncherHelper {
         }
 
         @Override
-        public void setProcess(ManagedProcess process) {
+        public void setProcess(ProcessInfo process) {
             this.process = process;
 
             String command = new CommandBuilder().addAll(process.getCommands()).toString();
@@ -993,7 +994,14 @@ public final class LauncherHelper {
                     try {
                         if (!lwjgl) {
                             lwjgl = true;
-                            finishLaunch();
+                            if (MonitorClient.isEnabled() && !showLogs
+                                    && (launcherVisibility == LauncherVisibility.HIDE
+                                    || launcherVisibility == LauncherVisibility.HIDE_AND_REOPEN)) {
+                                launchingLatch.countDown();
+                                runLater(Launcher::stopApplication);
+                            } else {
+                                finishLaunch();
+                            }
                         }
                     } finally {
                         lock.unlock();
@@ -1040,11 +1048,11 @@ public final class LauncherHelper {
 
     }
 
-    private static final Queue<WeakReference<ManagedProcess>> PROCESSES = new ConcurrentLinkedQueue<>();
+    private static final Queue<WeakReference<ProcessInfo>> PROCESSES = new ConcurrentLinkedQueue<>();
 
     public static int countMangedProcesses() {
         PROCESSES.removeIf(it -> {
-            ManagedProcess process = it.get();
+            ProcessInfo process = it.get();
             return process == null || !process.isRunning();
         });
         return PROCESSES.size();
@@ -1052,6 +1060,6 @@ public final class LauncherHelper {
 
     public static void stopManagedProcesses() {
         while (!PROCESSES.isEmpty())
-            Optional.ofNullable(PROCESSES.poll()).map(WeakReference::get).ifPresent(ManagedProcess::stop);
+            Optional.ofNullable(PROCESSES.poll()).map(WeakReference::get).ifPresent(ProcessInfo::stop);
     }
 }

@@ -662,7 +662,7 @@ public class DefaultLauncher extends Launcher {
     }
 
     @Override
-    public ManagedProcess launch() throws IOException, InterruptedException {
+    public ProcessInfo launch() throws IOException, InterruptedException {
         Path nativeFolder = getNativeFolder();
 
         final Command command = generateCommandLine(nativeFolder);
@@ -694,7 +694,6 @@ public class DefaultLauncher extends Launcher {
             SystemUtils.callExternalProcess(builder);
         }
 
-        Process process;
         try {
             ProcessBuilder builder = new ProcessBuilder(rawCommandLine).directory(runDirectory.toFile());
             if (listener == null) {
@@ -704,18 +703,22 @@ public class DefaultLauncher extends Launcher {
             if (appdata != null) builder.environment().put("APPDATA", appdata.toString());
 
             builder.environment().putAll(getEnvVars(nativeFolder));
-            process = builder.start();
+
+            return startProcess(builder, command.encoding, nativeFolder);
         } catch (IOException e) {
             throw new ProcessCreationException(e);
         }
+    }
 
-        ManagedProcess p = new ManagedProcess(process, rawCommandLine);
+    protected ProcessInfo startProcess(ProcessBuilder builder, Charset encoding, Path nativeFolder) throws IOException {
+        Process process = builder.start();
+        ManagedProcess p = new ManagedProcess(process, builder.command());
         if (listener != null)
-            startMonitors(p, nativeFolder, listener, command.encoding, daemon);
+            startMonitors(p, nativeFolder, listener, encoding, daemon);
         return p;
     }
 
-    private Map<String, String> getEnvVars(Path nativeFolder) {
+    protected Map<String, String> getEnvVars(Path nativeFolder) {
         String versionName = Optional.ofNullable(options.getVersionName()).orElse(manifest.id().toString());
 
         Map<String, String> env = new LinkedHashMap<>();
