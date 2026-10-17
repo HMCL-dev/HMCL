@@ -504,7 +504,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             versionComboBox.setMaxWidth(Double.MAX_VALUE);
             HBox.setHgrow(versionComboBox, Priority.ALWAYS);
 
-            HBox versionSelector = new HBox(8, new Label(i18n("addon.changelog.view_other_log")), versionComboBox);
+            HBox versionSelector = new HBox(8, new Label(i18n("addon.changelog.select_version")), versionComboBox);
             versionSelector.setAlignment(Pos.CENTER_LEFT);
             versionSelector.setPadding(new Insets(0, 0, 4, 0));
 
