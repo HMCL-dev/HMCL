@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.ui.UpgradeDialog;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.platform.JavaRunner;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -181,14 +182,14 @@ public final class UpdateHandler {
             }
         }
 
-        JarUtils.runJava(target);
+        JavaRunner.runJava(target);
     }
 
     private static void requestUpdate(Path updateTo, Path self) throws IOException {
         if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
             IntegrityChecker.verifyJar(updateTo);
         }
-        JarUtils.runJava(updateTo, "--apply-to", self.toString());
+        JavaRunner.runJava(updateTo, "--apply-to", self.toString());
     }
 
     private static Optional<Path> tryRename(Path path, String newVersion) {

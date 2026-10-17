@@ -62,8 +62,8 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.JavaRunner;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -377,7 +377,7 @@ public final class Controllers {
                             }
 
                             try {
-                                JarUtils.restartSelf();
+                                JavaRunner.restartSelf();
                             } catch (IOException e) {
                                 LOG.warning("Failed to restart self", e);
                             }
