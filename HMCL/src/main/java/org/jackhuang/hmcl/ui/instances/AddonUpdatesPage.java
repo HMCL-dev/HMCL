@@ -23,7 +23,6 @@ import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -214,7 +213,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             for (int i = 0; i < objects.size(); i++) {
                 csvTable.set(0, i + 1, objects.get(i).fileName.get());
                 csvTable.set(1, i + 1, objects.get(i).currentVersion.get());
-                csvTable.set(2, i + 1, objects.get(i).targetVersion.get());
+                csvTable.set(2, i + 1, objects.get(i).selectedVersion.get().version());
                 csvTable.set(3, i + 1, objects.get(i).source.get());
             }
 
@@ -244,8 +243,8 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         final BooleanProperty enabled = new SimpleBooleanProperty();
         final StringProperty fileName = new SimpleStringProperty();
         final StringProperty currentVersion = new SimpleStringProperty();
-        final StringProperty targetVersion = new SimpleStringProperty();
-        final StringProperty targetVersionType = new SimpleStringProperty();
+        /// `<current version> → <target version> | <version type>`.
+        final StringProperty updateInfo = new SimpleStringProperty();
         final StringProperty source = new SimpleStringProperty();
 
         final ItemPropertyAsyncCache<Image, AddonUpdateObject> iconCache;
@@ -258,8 +257,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             currentVersion.set(data.currentVersion().version());
             FXUtils.onChange(selectedVersion, version -> {
                 if (version != null) {
-                    targetVersion.set(version.version());
-                    targetVersionType.set(version.versionType().name());
+                    updateInfo.set(currentVersion.get() + " → " + version.version() + " | " + version.versionType().name());
                 }
             });
             selectedVersion.set(data.targetVersion());
@@ -307,12 +305,8 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             return currentVersion;
         }
 
-        public StringProperty targetVersionProperty() {
-            return targetVersion;
-        }
-
-        public StringProperty targetVersionTypeProperty() {
-            return targetVersionType;
+        public StringProperty updateInfoProperty() {
+            return updateInfo;
         }
 
         public StringProperty sourceProperty() {
@@ -468,14 +462,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 content.setTitle(resourcePackFile.getFileName());
             }
 
-            // `targetVersion` and `targetVersionType` syncs with `currentVersion`, so only bind `currentVersion`
-            content.subtitleProperty().bind(Bindings.createStringBinding(
-                    () -> item.getCurrentVersion()
-                            + " → "
-                            + item.targetVersion.get()
-                            + " | "
-                            + item.targetVersionType.get(),
-                    item.currentVersionProperty()));
+            content.subtitleProperty().bind(item.updateInfoProperty());
 
             setGraphic(pane);
         }
