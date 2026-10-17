@@ -152,6 +152,22 @@ if [ "$_HMCL_OS" == "freebsd" ] && [ -x "$(command -v javavm)" ]; then
   exec javavm $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
 fi
 
+# Find SDKMAN's selected Java without loading shell startup files
+if [ "$_HMCL_OS" == "linux" ] || [ "$_HMCL_OS" == "macos" ]; then
+  _HMCL_SDKMAN_CANDIDATES_DIR=""
+  if [ -n "$SDKMAN_CANDIDATES_DIR" ]; then
+    _HMCL_SDKMAN_CANDIDATES_DIR="$SDKMAN_CANDIDATES_DIR"
+  elif [ -n "$SDKMAN_DIR" ]; then
+    _HMCL_SDKMAN_CANDIDATES_DIR="$SDKMAN_DIR/candidates"
+  elif [ -n "$HOME" ]; then
+    _HMCL_SDKMAN_CANDIDATES_DIR="$HOME/.sdkman/candidates"
+  fi
+
+  if [ -n "$_HMCL_SDKMAN_CANDIDATES_DIR" ] && [ -x "$_HMCL_SDKMAN_CANDIDATES_DIR/java/current/bin/java" ]; then
+    exec "$_HMCL_SDKMAN_CANDIDATES_DIR/java/current/bin/java" $_HMCL_VM_OPTIONS -jar "$_HMCL_PATH"
+  fi
+fi
+
 # Java not found
 
 case "$_HMCL_OS-$_HMCL_ARCH" in
