@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class JavaRunner {
+public final class JavaRunner {
     private static String maskCommandline(List<String> commandline) {
         return commandline.stream().map(str -> {
             if (str.startsWith("-D")) {
