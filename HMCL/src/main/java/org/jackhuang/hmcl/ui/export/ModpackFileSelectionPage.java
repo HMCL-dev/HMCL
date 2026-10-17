@@ -32,6 +32,7 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.modpack.ModAdviser;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
@@ -221,6 +222,12 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
     private void onNext() {
         ArrayList<String> list = new ArrayList<>();
         getFilesNeeded(rootNode, "minecraft", list);
+
+        if (list.isEmpty()) {
+            Controllers.dialog(i18n("modpack.files.empty"));
+            return;
+        }
+
         controller.getSettings().put(MODPACK_FILE_SELECTION, list);
         controller.onFinish();
     }
