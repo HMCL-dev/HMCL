@@ -127,13 +127,13 @@ public final class LogWindow extends Stage {
         for (Log log : logs) {
             Log4jLevel level = log.getLevel();
             this.logs.add(log);
-            this.lastLogLine.set(log.getLog());
             if (levelShownMap.get(level).get())
                 impl.listView.getItems().add(log);
 
             SimpleIntegerProperty property = levelCountMap.get(log.getLevel());
             property.set(property.get() + 1);
         }
+        this.lastLogLine.set(logs.get(logs.size() - 1).getLog());
         checkLogCount();
         autoScroll();
     }
