@@ -80,7 +80,7 @@ public final class LogWindow extends Stage {
         }
     }
 
-    private final LogWindowImpl impl;
+    private final LogWindowContent content;
     private final @Nullable ManagedProcess gameProcess;
 
     public LogWindow() {
@@ -95,8 +95,8 @@ public final class LogWindow extends Stage {
         Themes.applyNativeDarkMode(this);
 
         this.logs = logs;
-        this.impl = new LogWindowImpl();
-        setScene(new Scene(impl, 800, 480));
+        this.content = new LogWindowContent();
+        setScene(new Scene(content, 800, 480));
         StyleSheets.init(getScene());
         setTitle(i18n("logwindow.title"));
         FXUtils.setIcon(this);
@@ -115,7 +115,7 @@ public final class LogWindow extends Stage {
         logs.add(log);
         lastLogLine.set(log.getLog());
         if (levelShownMap.get(level).get())
-            impl.listView.getItems().add(log);
+            content.listView.getItems().add(log);
 
         SimpleIntegerProperty property = levelCountMap.get(log.getLevel());
         property.set(property.get() + 1);
@@ -128,7 +128,7 @@ public final class LogWindow extends Stage {
             Log4jLevel level = log.getLevel();
             this.logs.add(log);
             if (levelShownMap.get(level).get())
-                impl.listView.getItems().add(log);
+                content.listView.getItems().add(log);
 
             SimpleIntegerProperty property = levelCountMap.get(log.getLevel());
             property.set(property.get() + 1);
@@ -143,7 +143,7 @@ public final class LogWindow extends Stage {
     }
 
     private void shakeLogs() {
-        impl.listView.getItems().setAll(logs.stream().filter(log -> levelShownMap.get(log.getLevel()).get()).collect(Collectors.toList()));
+        content.listView.getItems().setAll(logs.stream().filter(log -> levelShownMap.get(log.getLevel()).get()).collect(Collectors.toList()));
         autoScroll();
     }
 
@@ -152,7 +152,7 @@ public final class LogWindow extends Stage {
         if (nRemove <= 0)
             return;
 
-        ObservableList<Log> items = impl.listView.getItems();
+        ObservableList<Log> items = content.listView.getItems();
         int itemsSize = items.size();
         int count = 0;
 
@@ -166,11 +166,11 @@ public final class LogWindow extends Stage {
     }
 
     private void autoScroll() {
-        if (!impl.listView.getItems().isEmpty() && impl.autoScroll.get())
-            impl.listView.scrollTo(impl.listView.getItems().size() - 1);
+        if (!content.listView.getItems().isEmpty() && content.autoScroll.get())
+            content.listView.scrollTo(content.listView.getItems().size() - 1);
     }
 
-    private final class LogWindowImpl extends Control {
+    private final class LogWindowContent extends Control {
 
         private final ListView<Log> listView = new JFXListView<>();
         private final BooleanProperty autoScroll = new SimpleBooleanProperty();
@@ -182,7 +182,7 @@ public final class LogWindow extends Stage {
         private final JFXComboBox<Integer> cboLines = new JFXComboBox<>();
         private final StackPane stackPane = new StackPane();
 
-        LogWindowImpl() {
+        LogWindowContent() {
             getStyleClass().add("log-window");
 
             listView.getProperties().put("no-smooth-scrolling", true);
@@ -214,7 +214,7 @@ public final class LogWindow extends Stage {
         }
 
         private void onClear() {
-            impl.listView.getItems().clear();
+            content.listView.getItems().clear();
             logs.clear();
         }
 
@@ -273,7 +273,7 @@ public final class LogWindow extends Stage {
         }
     }
 
-    private static final class LogWindowSkin extends SkinBase<LogWindowImpl> {
+    private static final class LogWindowSkin extends SkinBase<LogWindowContent> {
         private static final PseudoClass EMPTY = PseudoClass.getPseudoClass("empty");
         private static final PseudoClass FATAL = PseudoClass.getPseudoClass("fatal");
         private static final PseudoClass ERROR = PseudoClass.getPseudoClass("error");
@@ -283,7 +283,7 @@ public final class LogWindow extends Stage {
         private static final PseudoClass TRACE = PseudoClass.getPseudoClass("trace");
         private final JFXSnackbar snackbar = new JFXSnackbar();
 
-        LogWindowSkin(LogWindowImpl control) {
+        LogWindowSkin(LogWindowContent control) {
             super(control);
 
             VBox vbox = new VBox(3);
