@@ -12,6 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
+        java: ['17', '25']
 
     runs-on: ${{ matrix.os }}
 
@@ -21,7 +22,7 @@ jobs:
       uses: actions/setup-java@v6
       with:
         distribution: 'liberica'
-        java-version: '17'
+        java-version: ${{ matrix.java }}
         java-package: 'jdk+fx'
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v5
