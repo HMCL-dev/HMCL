@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,9 @@ package org.jackhuang.hmcl.util;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Glavo
@@ -29,34 +30,28 @@ public final class ServerAddressTest {
 
     @Test
     public void testParse() {
-        assertEquals(new ServerAddress("example.com"), ServerAddress.parse("example.com"));
-        assertEquals(new ServerAddress("example.com", 25565), ServerAddress.parse("example.com:25565"));
+        ServerAddress address = ServerAddress.parse("override@example.com:12345?mode=survival&name=hello+world%21&_id=testId");
+        assertEquals(new ServerAddress(new HostAndPort("example.com", 12345), Map.of(
+                "mode", "survival",
+                "name", "hello world!",
+                "_id", "override"
+        )), address);
 
-        assertEquals(new ServerAddress("127.0.0.0"), ServerAddress.parse("127.0.0.0"));
-        assertEquals(new ServerAddress("127.0.0.0", 0), ServerAddress.parse("127.0.0.0:0"));
-        assertEquals(new ServerAddress("127.0.0.0", 12345), ServerAddress.parse("127.0.0.0:12345"));
+        assertEquals(new ServerAddress(new HostAndPort("example.com", 25565), Map.of("key", "value", "empty", "")),
+                ServerAddress.parse("example.com?key=value&empty"));
+        assertEquals(new ServerAddress(new HostAndPort("example.com", 25565), Map.of("_id", "testId")),
+                ServerAddress.parse("testId@example.com"));
+        assertEquals(new ServerAddress(new HostAndPort("example.com", 25565), Map.of("k", "v", "x", "1")),
+                ServerAddress.parse("example.com?x=1&k=v"));
+    }
 
-        assertEquals(new ServerAddress("::1"), ServerAddress.parse("[::1]"));
-        assertEquals(new ServerAddress("::1", 0), ServerAddress.parse("[::1]:0"));
-        assertEquals(new ServerAddress("::1", 12345), ServerAddress.parse("[::1]:12345"));
-        assertEquals(new ServerAddress("2001:db8::1"), ServerAddress.parse("[2001:db8::1]"));
-        assertEquals(new ServerAddress("2001:db8::1", 0), ServerAddress.parse("[2001:db8::1]:0"));
-        assertEquals(new ServerAddress("2001:db8::1", 12345), ServerAddress.parse("[2001:db8::1]:12345"));
+    @Test
+    public void testToServerIp() {
+        ServerAddress address = ServerAddress.parse("serverId@example.com:12345?mode=survival&name=hello+world%21");
+        assertEquals("example.com:12345?mode=survival&name=hello+world%21&_id=serverId", address.toServerIp(true));
+        assertEquals("example.com:12345", address.toServerIp(false));
 
-        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("["));
-        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("[]]"));
-        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("[]:0"));
-        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("[::1]:"));
-        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("[::1]|"));
-        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("[::1]|0"));
-        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("[::1]:a"));
-        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("[::1]:65536"));
-        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("[::1]:-1"));
-        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("[ ]:-1"));
-        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("[-]:-1"));
-        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("example.com:"));
-        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("example.com:a"));
-        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("example.com:65536"));
-        assertThrows(IllegalArgumentException.class, () -> ServerAddress.parse("example.com:-1"));
+        assertEquals("[::1]:25565?key=value", ServerAddress.parse("[::1]?key=value").toServerIp(true));
+        assertEquals("[::1]:25565", ServerAddress.parse("[::1]").toServerIp(false));
     }
 }

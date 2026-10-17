@@ -27,14 +27,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyBooleanProperty;
-import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -45,24 +38,17 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.input.DragEvent;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.*;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.stage.Screen;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-import javafx.stage.Window;
-import javafx.stage.WindowEvent;
+import javafx.stage.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
+import org.jackhuang.hmcl.server.ServerDnD;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -75,6 +61,7 @@ import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
 import org.jackhuang.hmcl.ui.construct.Navigator;
+import org.jackhuang.hmcl.ui.instances.ServerListPage;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
@@ -272,6 +259,11 @@ public final class Decorator {
         root.addEventFilter(DragEvent.DRAG_OVER, AuthlibInjectorDnD.dragOverHandler());
         root.addEventFilter(DragEvent.DRAG_DROPPED, AuthlibInjectorDnD.dragDroppedHandler(
                 url -> Controllers.dialog(new AddAuthlibInjectorServerPane(url))));
+
+        // Setup Minecraft server DnD
+        root.addEventFilter(DragEvent.DRAG_OVER, ServerDnD.dragOverHandler());
+        root.addEventFilter(DragEvent.DRAG_DROPPED, ServerDnD.dragDroppedHandler(
+                server -> Controllers.dialog(new ServerListPage.ServerStatusDialog(null, server, true, null))));
     }
 
     /// Returns the node that must be installed as the scene root.
