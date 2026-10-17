@@ -27,13 +27,27 @@ jobs:
       uses: gradle/actions/setup-gradle@v5
       with:
         cache-cleanup: never
-    - name: Build with Gradle
+    - name: Build with Gradle on Ubuntu
+      if: runner.os == 'Linux'
       run: xvfb-run --auto-servernum ./gradlew build --no-daemon --parallel
       env:
         JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
         MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
         CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+    - name: Build with Gradle on Windows
+      if: runner.os == 'Windows'
+      run: .\gradlew.bat build --no-daemon --parallel
+      env:
+        MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
+        CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+    - name: Build with Gradle on macOS
+      if: runner.os == 'macOS'
+      run: ./gradlew build --no-daemon --parallel
+      env:
+        MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
+        CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
     - name: Get short SHA
+      shell: bash
       run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
     - name: Upload JAR
       uses: actions/upload-artifact@v7
