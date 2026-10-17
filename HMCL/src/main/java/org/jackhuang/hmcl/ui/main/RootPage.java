@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.GameProcessManager;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.Accounts;
@@ -153,6 +154,12 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             }
 
             // fifth item in left sidebar
+            AdvancedListItem gameProcessItem = new AdvancedListItem();
+            gameProcessItem.setLeftIcon(SVG.TERMINAL);
+            gameProcessItem.titleProperty().bind(GameProcessManager.aliveProcessCount.asString(i18n("game.process") + " (%d)"));
+            gameProcessItem.setOnAction(e -> Controllers.navigate(Controllers.getGameProcessPage()));
+
+            // sixth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
             launcherSettingsItem.setLeftIcon(SVG.SETTINGS);
             launcherSettingsItem.setTitle(i18n("settings"));
@@ -164,7 +171,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 FXUtils.prepareOnMouseEnter(launcherSettingsItem, Controllers::prepareSettingsPage);
             }
 
-            // sixth item in left sidebar
+            // seventh item in left sidebar
             AdvancedListItem terracottaItem = new AdvancedListItem();
             terracottaItem.setLeftIcon(SVG.GRAPH2);
             terracottaItem.setTitle(i18n("terracotta"));
@@ -195,6 +202,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     .add(gameListItem)
                     .add(gameItem)
                     .add(downloadItem)
+                    .add(gameProcessItem)
                     .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
                     .add(launcherSettingsItem)
                     .add(terracottaItem)
