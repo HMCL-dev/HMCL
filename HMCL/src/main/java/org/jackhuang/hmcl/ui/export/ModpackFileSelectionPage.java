@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.export;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckTreeCell;
 import com.jfoenix.controls.JFXTreeView;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -108,6 +109,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
 
     private void loadRoot(JFXTreeView<String> treeView, StackPane placeholderPane, SpinnerPane spinnerPane, JFXButton btnNext) {
         spinnerPane.setLoading(true);
+        btnNext.disableProperty().unbind();
         btnNext.setDisable(true);
         CompletableFuture
                 .supplyAsync(() -> getTreeItem(gameInstance.getRunDirectory(), "minecraft", 0), Schedulers.io())
@@ -115,11 +117,13 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
                     if (throwable == null) {
                         if (root != null) {
                             treeView.setRoot(rootNode = root);
+                            btnNext.disableProperty().bind(Bindings.createBooleanBinding(
+                                    () -> !root.isSelected() && !root.isIndeterminate(), root.selectedProperty(), root.indeterminateProperty()
+                            ));
                         } else {
                             placeholderPane.setVisible(true);
                         }
                         spinnerPane.setFailedReason(null);
-                        btnNext.setDisable(false);
                     } else {
                         LOG.warning("Failed to load modpack file tree", throwable);
                         spinnerPane.setFailedReason(i18n("modpack.files.load_failed"));
