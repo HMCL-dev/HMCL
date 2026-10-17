@@ -19,40 +19,38 @@ package org.jackhuang.hmcl.util;
 
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+
+import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
+import static org.jackhuang.hmcl.util.gson.JsonUtils.mapTypeOf;
 
 public final class ChunkBaseApp {
     private static final String CHUNK_BASE_URL = "https://www.chunkbase.com";
 
+    private static final String GAME_VERSIONS_RESOURCE = "/assets/chunkbase/game_versions.json";
+
     private static final GameVersionNumber MIN_GAME_VERSION = GameVersionNumber.asGameVersion("1.7");
     private static final GameVersionNumber MIN_END_CITY_VERSION = GameVersionNumber.asGameVersion("1.13");
 
-    private static final String[] SEED_MAP_GAME_VERSIONS = {
-            "26.3", "26.2", "26.1", "1.21.9", "1.21.6", "1.21.5", "1.21.4",
-            "1.21.2", "1.21", "1.20", "1.19.3", "1.19", "1.18", "1.17", "1.16",
-            "1.15", "1.14", "1.13", "1.12", "1.11", "1.10", "1.9", "1.8", "1.7"
-    };
+    private static final @NotNull @Unmodifiable Map<String, @Unmodifiable List<String>> GAME_VERSIONS = loadGameVersions();
 
-    public static final String[] STRONGHOLD_FINDER_GAME_VERSIONS = {
-            "26.3", "26.2", "26.1", "1.21.9", "1.21.6", "1.21.5", "1.21.4",
-            "1.21.2", "1.21", "1.20", "1.19.3", "1.19", "1.18", "1.17", "1.16",
-            "1.15", "1.14", "1.13", "1.12", "1.11", "1.10", "1.9", "1.8", "1.7"
-    };
+    public static final String @NotNull @Unmodifiable [] SEED_MAP_GAME_VERSIONS = getGameVersions("seed-map");
 
-    public static final String[] NETHER_FORTRESS_GAME_VERSIONS = {
-            "26.3", "26.2", "26.1", "1.21.9", "1.21.6", "1.21.5", "1.21.4",
-            "1.21.2", "1.21", "1.20", "1.19.3", "1.19", "1.18", "1.17", "1.16",
-            "1.15", "1.14", "1.13", "1.12", "1.11", "1.10", "1.9", "1.8", "1.7"
-    };
+    public static final String @NotNull @Unmodifiable [] STRONGHOLD_FINDER_GAME_VERSIONS = getGameVersions("stronghold-finder");
 
-    public static final String[] END_CITY_GAME_VERSIONS = {
-            "26.3", "26.2", "26.1", "1.21.9", "1.21.6", "1.21.5", "1.21.4",
-            "1.21.2", "1.21", "1.20", "1.19.3", "1.19", "1.18", "1.17", "1.16",
-            "1.15", "1.14", "1.13"
-    };
+    public static final String @NotNull @Unmodifiable [] NETHER_FORTRESS_GAME_VERSIONS = getGameVersions("nether-fortress");
+
+    public static final String @NotNull @Unmodifiable [] END_CITY_GAME_VERSIONS = getGameVersions("end-city");
 
     public static boolean isSupported(@NotNull World world) {
         return world.getSeed() != null && world.getGameVersion() != null &&
@@ -98,6 +96,25 @@ public final class ChunkBaseApp {
         newBuilder("endcity-finder", Objects.requireNonNull(world.getSeed()))
                 .addPlatform(world.getGameVersion(), false, END_CITY_GAME_VERSIONS)
                 .open();
+    }
+
+    private static @NotNull @Unmodifiable Map<String, @Unmodifiable List<String>> loadGameVersions() {
+        try (InputStream in = ChunkBaseApp.class.getResourceAsStream(GAME_VERSIONS_RESOURCE)) {
+            Map<String, List<String>> raw =
+                    JsonUtils.fromNonNullJsonFully(in, mapTypeOf(String.class, listTypeOf(String.class)));
+
+            Map<String, List<String>> gameVersions = new LinkedHashMap<>(raw.size());
+            raw.forEach((key, versions) -> gameVersions.put(key, List.copyOf(versions)));
+            return Map.copyOf(gameVersions);
+        } catch (IOException e) {
+            throw new AssertionError("Failed to load " + GAME_VERSIONS_RESOURCE, e);
+        }
+    }
+
+    private static String @NotNull @Unmodifiable [] getGameVersions(@NotNull String key) {
+        List<String> versions = Objects.requireNonNull(GAME_VERSIONS.get(key),
+                "Missing game version list in " + GAME_VERSIONS_RESOURCE + ": " + key);
+        return versions.toArray(new String[0]);
     }
 
     private final StringBuilder builder;
