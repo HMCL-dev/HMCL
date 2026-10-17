@@ -43,7 +43,6 @@ import org.jackhuang.hmcl.ui.instances.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.ui.nbt.NBTFileType;
-import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -99,7 +98,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     });
 
             FXUtils.onChangeAndOperate(GameDirectoryManager.selectedInstanceProperty(), mainPage::setCurrentGame);
-            mainPage.latestVersionProperty().bind(UpdateChecker.latestVersionProperty());
             this.mainPage = mainPage;
         }
         return mainPage;
