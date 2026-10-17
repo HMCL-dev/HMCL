@@ -101,7 +101,7 @@ public final class EntryPoint {
     }
 
     private static boolean isInsideMacAppBundle() {
-        Path thisJar = JarUtils.thisJarPath();
+        Path thisJar = JarUtils.tryGetThisJarPath();
         if (thisJar == null)
             return false;
 

@@ -1100,7 +1100,7 @@ public final class LegacyConfigMigrator {
         }
 
         try {
-            @Nullable Path jarPath = JarUtils.thisJarPath();
+            @Nullable Path jarPath = JarUtils.tryGetThisJarPath();
             if (jarPath != null && Files.isRegularFile(jarPath) && Files.isWritable(jarPath)) {
                 Path jarDirectory = jarPath.getParent();
 

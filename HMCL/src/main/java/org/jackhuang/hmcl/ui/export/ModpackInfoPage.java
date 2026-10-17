@@ -102,7 +102,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         launchArguments.set(versionSetting.getInheritable(GameSettings::gameArgumentsProperty));
         javaArguments.set(versionSetting.getInheritable(GameSettings::jvmOptionsProperty));
 
-        canIncludeLauncher = JarUtils.thisJarPath() != null;
+        canIncludeLauncher = JarUtils.tryGetThisJarPath() != null;
     }
 
     private void onNext() {
