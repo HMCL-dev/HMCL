@@ -24,8 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.UUID;
 
+// https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#Status_Response
 public record ServerStatus(
-        long networkLatency,
         @Nullable Version version,
         @NotNull Players players,
         @NotNull JsonElement description,

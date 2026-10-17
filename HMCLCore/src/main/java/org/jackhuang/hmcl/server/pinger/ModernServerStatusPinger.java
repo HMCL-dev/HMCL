@@ -63,8 +63,8 @@ final class ModernServerStatusPinger implements ServerStatusPinger {
 
                 JsonObject rootStatus = JsonParser.parseString(status).getAsJsonObject();
 
-                ServerStatus parseServerStatus = parseServerStatus(networkLatency, rootStatus);
-                return ServerStatusResult.success(successResult.getRawAddress(), this, parseServerStatus);
+                ServerStatus parseServerStatus = parseServerStatus(rootStatus);
+                return ServerStatusResult.success(successResult.getRawAddress(), this, networkLatency, parseServerStatus);
             }
         } catch (Exception e) {
             return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, e);
@@ -76,7 +76,7 @@ final class ModernServerStatusPinger implements ServerStatusPinger {
         return "Modern Server Status Pinger";
     }
 
-    private ServerStatus parseServerStatus(long networkLatency, JsonObject rootStatus) {
+    private ServerStatus parseServerStatus(@NotNull JsonObject rootStatus) {
         JsonObject versionJsonObject = rootStatus.getAsJsonObject("version");
         ServerStatus.Version version = new ServerStatus.Version(versionJsonObject.get("name").getAsString(), versionJsonObject.get("protocol").getAsInt());
 
@@ -135,7 +135,6 @@ final class ModernServerStatusPinger implements ServerStatusPinger {
         }
 
         return new ServerStatus(
-                networkLatency,
                 version,
                 players,
                 Objects.requireNonNullElse(rootStatus.get("description"), JsonNull.INSTANCE),

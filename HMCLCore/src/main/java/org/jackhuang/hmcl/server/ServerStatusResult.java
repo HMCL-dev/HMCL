@@ -19,11 +19,12 @@ package org.jackhuang.hmcl.server;
 
 import org.jackhuang.hmcl.server.pinger.ServerStatusPinger;
 import org.jackhuang.hmcl.util.ServerAddress;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract sealed class ServerStatusResult {
-    public static ServerStatusResult success(ServerAddress rawServerAddress, ServerStatusPinger pinger, ServerStatus status) {
-        return new SuccessResult(rawServerAddress, pinger, status);
+    public static ServerStatusResult success(@NotNull ServerAddress rawServerAddress, @NotNull ServerStatusPinger pinger, long networkLatency, @NotNull ServerStatus status) {
+        return new SuccessResult(rawServerAddress, pinger, networkLatency, status);
     }
 
     public static ServerStatusResult failure(FailureResult.Reason reason, Exception exception) {
@@ -55,11 +56,13 @@ public abstract sealed class ServerStatusResult {
     public static final class SuccessResult extends ServerStatusResult {
         private final ServerAddress rawServerAddress;
         private final ServerStatusPinger pinger;
+        private final long networkLatency;
         private final ServerStatus status;
 
-        private SuccessResult(ServerAddress rawServerAddress, ServerStatusPinger pinger, ServerStatus status) {
+        private SuccessResult(ServerAddress rawServerAddress, ServerStatusPinger pinger, long networkLatency, ServerStatus status) {
             this.rawServerAddress = rawServerAddress;
             this.pinger = pinger;
+            this.networkLatency = networkLatency;
             this.status = status;
         }
 
@@ -73,6 +76,10 @@ public abstract sealed class ServerStatusResult {
 
         public ServerStatus getServerStatus() {
             return status;
+        }
+
+        public long getNetworkLatency() {
+            return networkLatency;
         }
     }
 

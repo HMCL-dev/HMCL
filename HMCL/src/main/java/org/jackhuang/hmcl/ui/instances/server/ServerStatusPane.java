@@ -293,7 +293,7 @@ public class ServerStatusPane extends TransitionPane implements DialogAware {
             } else {
                 rootContent.getChildren().add(createDescriptionRow(i18n("server.playversion"), i18n("server.playversion.unknown"), null, new Insets(0, 4, 0, 4)));
             }
-            rootContent.getChildren().add(createDescriptionRow(i18n("server.latency"), String.format("%,dms", status.networkLatency()), null, new Insets(0, 4, 0, 4)));
+            rootContent.getChildren().add(createDescriptionRow(i18n("server.latency"), String.format("%,dms", ((ServerStatusResult.SuccessResult) statusResult).getNetworkLatency()), null, new Insets(0, 4, 0, 4)));
         }
 
     }

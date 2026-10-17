@@ -499,8 +499,9 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                     case BLOCKED_BY_MOJANG -> i18n("server.manage.status.outside.error.blocked");
                 });
             } else {
-                serverNetworkLatencyPane.pong(serverStatus.networkLatency());
-                statusBtnTooltip.setText(i18n("server.manage.status.outside.pong", String.format("%,d", serverStatus.networkLatency())));
+                ServerStatusResult.SuccessResult successResult = (ServerStatusResult.SuccessResult) result;
+                serverNetworkLatencyPane.pong(successResult.getNetworkLatency());
+                statusBtnTooltip.setText(i18n("server.manage.status.outside.pong", String.format("%,d", successResult.getNetworkLatency())));
                 // update latest server icon
                 serverIcon.setImage(parseServerFaviconImageOrDefault(serverStatus.favicon()));
 

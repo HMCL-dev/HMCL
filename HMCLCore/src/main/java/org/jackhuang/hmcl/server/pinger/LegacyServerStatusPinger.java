@@ -74,7 +74,7 @@ final class LegacyServerStatusPinger implements ServerStatusPinger {
 
                 String response = readString(in);
                 long networkLatency = System.currentTimeMillis() - sendTime;
-                return ServerStatusResult.success(successResult.getRawAddress(), this, parseResult(networkLatency, response));
+                return ServerStatusResult.success(successResult.getRawAddress(), this, networkLatency, parseResult(response));
             }
         } catch (Exception e) {
             return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, e);
@@ -86,7 +86,7 @@ final class LegacyServerStatusPinger implements ServerStatusPinger {
         return "Legacy Server Status Pinger";
     }
 
-    private @NotNull ServerStatus parseResult(long networkLatency, @NotNull String input) throws IOException {
+    private @NotNull ServerStatus parseResult(@NotNull String input) throws IOException {
         ServerStatus.Version version;
         String motd;
         ServerStatus.Players players;
@@ -122,7 +122,6 @@ final class LegacyServerStatusPinger implements ServerStatusPinger {
             }
 
             return new ServerStatus(
-                    networkLatency,
                     version,
                     players,
                     new JsonPrimitive(motd), null, false, null);
