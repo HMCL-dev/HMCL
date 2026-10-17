@@ -64,6 +64,11 @@ public abstract class LocalAddonFile<T> implements Comparable<T> {
         return null;
     }
 
+    /// Checks whether a newer remote version of this addon is available.
+    ///
+    /// Both returned updates carry every version that is a valid update target for the corresponding channel,
+    /// sorted by publish date in descending order, so that the caller can offer the user an alternative target.
+    ///
     /// @return A pair of addon update info, the first for all versions and the second for release versions only (might be null).
     @Nullable
     public Pair<AddonUpdate, @Nullable AddonUpdate> checkUpdates(DownloadProvider downloadProvider, String gameVersion, RemoteAddon.Source source) throws IOException {
@@ -84,13 +89,13 @@ public abstract class LocalAddonFile<T> implements Comparable<T> {
 
         List<RemoteAddon.Version> remoteVersions = stream.sorted(Comparator.comparing(RemoteAddon.Version::datePublished).reversed()).toList();
         if (remoteVersions.isEmpty()) return null;
-        var release = remoteVersions.stream()
+        List<RemoteAddon.Version> releaseVersions = remoteVersions.stream()
                 .filter(v -> v.versionType() == RemoteAddon.VersionType.Release)
-                .findFirst().orElse(null);
+                .toList();
 
         return Pair.pair(
-                new AddonUpdate(this, current, remoteVersions.get(0)), // All channels
-                release != null ? new AddonUpdate(this, current, release) : null // Release channel
+                new AddonUpdate(this, current, remoteVersions.get(0), remoteVersions), // All channels
+                releaseVersions.isEmpty() ? null : new AddonUpdate(this, current, releaseVersions.get(0), releaseVersions) // Release channel
         );
     }
 
