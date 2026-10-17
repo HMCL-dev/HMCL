@@ -39,7 +39,7 @@ public class AddonUpdateTask extends Task<Void> {
     private final Collection<Task<?>> dependents = new ArrayList<>();
     private final List<LocalAddonFile<?>> failedAddons = new ArrayList<>();
 
-    public AddonUpdateTask(DownloadProvider downloadProvider, Path addonDirectory, List<AddonUpdate> addons) {
+    public AddonUpdateTask(DownloadProvider downloadProvider, List<AddonUpdate> addons) {
         setStage("addon.check_update.confirm");
         getProperties().put("total", addons.size());
 
@@ -51,7 +51,7 @@ public class AddonUpdateTask extends Task<Void> {
             if (isDisabled)
                 fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
             String newFileName = fileName;
-            Path targetFile = addonDirectory.resolve(newFileName);
+            Path targetFile = addon.localAddonFile().getFile().resolveSibling(newFileName);
 
             dependents.add(Task
                     .supplyAsync(Schedulers.io(), () -> Files.createTempFile("hmcl-addon-update-", ".tmp"))
