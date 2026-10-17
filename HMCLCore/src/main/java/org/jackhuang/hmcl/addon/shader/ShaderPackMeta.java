@@ -15,15 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.addon.meta;
+package org.jackhuang.hmcl.addon.shader;
 
+import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
-/// @author Glavo
 @JsonSerializable
-public record ForgeOldModMetadataLst(
-        int modListVersion,
-        List<ForgeOldModMetadata> modList) {
+public record ShaderPackMeta(@Nullable String name, @Nullable String version,
+                             @SerializedName(value = "shaderDescription") @Nullable String description,
+                             @SerializedName(value = "api") @Nullable String apertureApiVersion
+) {
+    public static final ShaderPackMeta EMPTY = new ShaderPackMeta(null, null, null, null);
+
 }
