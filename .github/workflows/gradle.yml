@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
-        java: ['17', '25']
+        java: ['17', '25', '27']
 
     runs-on: ${{ matrix.os }}
 
