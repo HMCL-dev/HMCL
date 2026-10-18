@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Contract;
@@ -210,8 +211,11 @@ public class HMCLGameInstance extends DefaultGameInstance {
 
     /// Rebinds list metadata with defaults for null values while preserving existing property observers.
     private void bindListSettings(GameSettings.Instance settings) {
-        category.bind(settings.categoryProperty().orElse(""));
-        shownInLaunchMenu.bind(settings.showInLaunchMenuProperty().orElse(true));
+        // Use the project's mapping binding to remain compatible with JavaFX 17.
+        category.bind(BindingMapping.of(settings.categoryProperty())
+                .map((@Nullable String value) -> Objects.requireNonNullElse(value, "")));
+        shownInLaunchMenu.bind(BindingMapping.of(settings.showInLaunchMenuProperty())
+                .map((@Nullable Boolean value) -> value == null || value));
     }
 
     /// Returns the instance-local game settings, creating an empty settings object when absent.
