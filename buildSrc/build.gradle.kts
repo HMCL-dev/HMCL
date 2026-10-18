@@ -14,6 +14,9 @@ dependencies {
     implementation(libs.kala.compress.tar)
     implementation(libs.kala.compress.ar)
     implementation(libs.weburl)
+    implementation(libs.jsoup)
+    implementation(libs.icu4j)
+    implementation("org.apache.maven:maven-artifact:3.9.16")
 
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

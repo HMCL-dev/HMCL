@@ -24,12 +24,17 @@ import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 
-public class QuiltAPIRemoteVersion extends ComponentRemoteVersion {
+@NotNullByDefault
+public final class QuiltAPIRemoteVersion extends ComponentRemoteVersion {
+    public static final String MODRINTH_ID = "qsl";
+
     private final String fullVersion;
     private final RemoteAddon.Version version;
 
@@ -40,8 +45,8 @@ public class QuiltAPIRemoteVersion extends ComponentRemoteVersion {
      * @param selfVersion the version string of the remote version.
      * @param urls        the installer or universal jar original URL.
      */
-    QuiltAPIRemoteVersion(String gameVersion, String selfVersion, String fullVersion, Instant datePublished, RemoteAddon.Version version, List<String> urls) {
-        super(GameComponentType.QUILT_API, gameVersion, selfVersion, datePublished, urls);
+    public QuiltAPIRemoteVersion(GameVersionNumber gameVersion, String selfVersion, String fullVersion, Instant datePublished, RemoteAddon.Version version, List<String> urls) {
+        super(GameComponentType.QUILT_API, gameVersion, selfVersion, datePublished, Type.UNCATEGORIZED, urls);
 
         this.fullVersion = fullVersion;
         this.version = version;

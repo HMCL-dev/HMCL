@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -100,28 +102,37 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
     }
 
     void removeSelected(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems) {
+        List<String> failed = new ArrayList<>();
         selectedItems.stream()
                 .map(DataPackListPageSkin.DataPackInfoObject::getPackInfo)
                 .forEach(pack -> {
                     try {
                         dataPack.deletePack(pack);
                     } catch (IOException e) {
-                        // Fail to remove mods if the game is running or the datapack is absent.
+                        failed.add(pack.getPath().toString());
                         LOG.warning("Failed to delete datapack \"" + pack.getId() + "\"", e);
                     }
                 });
+        if (!failed.isEmpty())
+            Controllers.dialog(i18n("datapack.delete.failed") + "\n" + String.join(",\n", failed),
+                    i18n("message.error"), MessageDialogPane.MessageType.ERROR);
     }
 
-    void enableSelected(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems) {
+    void setSelectedEnabled(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems, boolean enabled) {
+        List<String> failed = new ArrayList<>();
         selectedItems.stream()
                 .map(DataPackListPageSkin.DataPackInfoObject::getPackInfo)
-                .forEach(pack -> pack.setActive(true));
-    }
-
-    void disableSelected(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems) {
-        selectedItems.stream()
-                .map(DataPackListPageSkin.DataPackInfoObject::getPackInfo)
-                .forEach(pack -> pack.setActive(false));
+                .forEach(pack -> {
+                    try {
+                        pack.setActive(enabled);
+                    } catch (IOException e) {
+                        failed.add(pack.getPath().toString());
+                        LOG.warning("Failed to enable or disable datapack \"" + pack.getId() + "\"", e);
+                    }
+                });
+        if (!failed.isEmpty())
+            Controllers.dialog(i18n("datapack.toggle.failed") + "\n" + String.join(",\n", failed),
+                    i18n("message.error"), MessageDialogPane.MessageType.ERROR);
     }
 
     void openDataPackFolder() {

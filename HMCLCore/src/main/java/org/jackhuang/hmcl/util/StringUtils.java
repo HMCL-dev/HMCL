@@ -637,6 +637,13 @@ public final class StringUtils {
         return true;
     }
 
+    public static boolean isASCII(byte[] array) {
+        for (byte b : array)
+            if (b < 0)
+                return false;
+        return true;
+    }
+
     public static boolean isAlphabetic(char ch) {
         return ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z';
     }

@@ -30,6 +30,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.addon.AddonLoader;
+import org.jackhuang.hmcl.addon.AddonProjectInfo;
+import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
@@ -65,9 +67,9 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
     private final RemoteAddonRepository repository;
-    private final ModTranslations translations;
     private final RemoteAddon addon;
-    private final ModTranslations.Mod mod;
+    /// Localized project metadata, or null when no registry or matching project is available.
+    private final @Nullable AddonProjectInfo mod;
     private final HMCLGameInstance.Optional instanceReference;
     private final DownloadCallback callback;
     private final DownloadListPage page;
@@ -79,9 +81,9 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
-        this.type = Objects.requireNonNullElse(addon.type(), repository.getType());
-        this.translations = ModTranslations.getTranslationsByAddonType(this.type);
-        this.mod = translations.getModByCurseForgeId(addon.slug());
+        this.type = Objects.requireNonNullElse(addon.type(), page.type);
+        @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(this.type);
+        this.mod = registry != null ? registry.getInfoByCurseForgeId(addon.slug()) : null;
         this.instanceReference = instanceReference;
         this.callback = callback;
         loadAddonVersions();
@@ -220,8 +222,8 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 TwoLineListItem content = new TwoLineListItem();
                 HBox.setHgrow(content, Priority.ALWAYS);
-                ModTranslations.Mod mod = getSkinnable().translations.getModByCurseForgeId(getSkinnable().addon.slug());
-                content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : getSkinnable().addon.title());
+                @Nullable AddonProjectInfo mod = getSkinnable().mod;
+                content.setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : getSkinnable().addon.title());
                 content.setSubtitle(getSkinnable().addon.description());
                 content.getSubtitleLabel().setWrapText(true);
                 getSkinnable().addon.categories().stream()
@@ -231,9 +233,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                 content.getFirstLine().setMinWidth(0);
                 descriptionPane.getChildren().add(content);
 
-                if (getSkinnable().mod != null) {
+                @Nullable String mcmodUrl = mod != null ? mod.mcmodUrl() : null;
+                if (mcmodUrl != null) {
                     JFXHyperlink openMcmodButton = new JFXHyperlink(i18n("mods.mcmod"));
-                    openMcmodButton.setExternalLink(getSkinnable().translations.getMcmodUrl(getSkinnable().mod));
+                    openMcmodButton.setExternalLink(mcmodUrl);
                     descriptionPane.getChildren().add(openMcmodButton);
                     openMcmodButton.setMinWidth(Region.USE_PREF_SIZE);
                 }
@@ -301,6 +304,22 @@ public class DownloadPage extends Control implements DecoratorPage {
                                 }
                             }
                         }
+                    } else if (getSkinnable().type == RemoteAddon.Type.MODPACK) {
+                        control.versions
+                                .keys()
+                                .stream()
+                                .max(Comparator.comparing(GameVersionNumber::asGameVersion))
+                                .flatMap(gameVersion ->
+                                        control.versions.get(gameVersion)
+                                                .stream()
+                                                .max(Comparator.comparing(RemoteAddon.Version::datePublished))
+                                                .map(v -> Pair.pair(gameVersion, v))
+                                ).ifPresent(pair ->
+                                    list.getContent().addAll(
+                                            ComponentList.createComponentListTitle(i18n("addon.download.recommend", pair.key())),
+                                            new AddonItem(control.addon, pair.value(), control)
+                                    )
+                                );
                     }
 
                     final class Versions {
@@ -361,15 +380,14 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class DependencyAddonItem extends LineButton {
-        public static final EnumMap<RemoteAddon.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
-                Pair.pair(RemoteAddon.DependencyType.EMBEDDED, "addon.dependency.embedded"),
-                Pair.pair(RemoteAddon.DependencyType.OPTIONAL, "addon.dependency.optional"),
-                Pair.pair(RemoteAddon.DependencyType.REQUIRED, "addon.dependency.required"),
-                Pair.pair(RemoteAddon.DependencyType.TOOL, "addon.dependency.tool"),
-                Pair.pair(RemoteAddon.DependencyType.INCLUDE, "addon.dependency.include"),
-                Pair.pair(RemoteAddon.DependencyType.INCOMPATIBLE, "addon.dependency.incompatible"),
-                Pair.pair(RemoteAddon.DependencyType.BROKEN, "addon.dependency.broken")
-        ));
+        public static String translateDependencyType(RemoteAddon.DependencyType dependencyType) {
+            return switch (dependencyType) {
+                case EMBEDDED -> i18n("addon.dependency.embedded");
+                case OPTIONAL -> i18n("addon.dependency.optional");
+                case REQUIRED -> i18n("addon.dependency.required");
+                default -> dependencyType.name().toLowerCase(Locale.ROOT);
+            };
+        }
 
         public final RemoteAddon addon;
 
@@ -399,8 +417,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             });
             setNode(IDX_LEADING, pane);
 
-            ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(type).getModByCurseForgeId(addon.slug());
-            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.title());
+            @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(type);
+            @Nullable AddonProjectInfo mod = registry != null ? registry.getInfoByCurseForgeId(addon.slug()) : null;
+            content.setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : addon.title());
             content.setSubtitle(addon.description());
             for (String category : addon.categories()) {
                 if (page.shouldDisplayCategory(category))
@@ -582,7 +601,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     if (!dependencies.containsKey(dependency.getType())) {
-                        Label title = new Label(i18n(DependencyAddonItem.I18N_KEY.get(dependency.getType())));
+                        Label title = new Label(DependencyAddonItem.translateDependencyType(dependency.getType()));
                         title.setPadding(new Insets(0, 8, 0, 8));
                         List<DependencyAddonItem> list = new ArrayList<>();
                         dependencies.put(dependency.getType(), Pair.pair(title, list));
@@ -605,7 +624,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                 return Task.allOf(queue).thenSupplyAsync(() -> {
                     var dependenciesStream = dependencies.values().stream().flatMap(types -> {
-                        if (types.value().isEmpty()) return Stream.of();
+                        if (types.value().isEmpty()) return Stream.empty();
                         return Stream.concat(
                                 Stream.of(types.key()),
                                 types.value().stream().sorted(Comparator.comparing(item -> item.addon.slug(), String.CASE_INSENSITIVE_ORDER)));

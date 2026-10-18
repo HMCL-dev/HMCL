@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.game;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.stage.Stage;
-import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
@@ -33,7 +32,6 @@ import org.jackhuang.hmcl.launch.*;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
 import org.jackhuang.hmcl.modpack.ModpackConfiguration;
 import org.jackhuang.hmcl.modpack.ModpackProvider;
-import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.JavaVersionType;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
@@ -307,10 +305,10 @@ public final class LauncherHelper {
                         if (launcherVisibility == LauncherVisibility.CLOSE)
                             Launcher.stopApplication();
                         else
-                            launchingStepsPane.setCancel(new TaskCancellationAction(it -> {
+                            launchingStepsPane.setCancel(it -> {
                                 process.stop();
                                 it.fireEvent(new DialogCloseEvent());
-                            }));
+                            });
                     } else {
                         runLater(() -> {
                             launchingStepsPane.fireEvent(new DialogCloseEvent());
@@ -365,7 +363,7 @@ public final class LauncherHelper {
                                         message += StringUtils.getStackTrace(ex.getCause());
                                     }
                                 } else if (ex instanceof DownloadException de) {
-                                    WebURL url = de.getUrl();
+                                    String url = de.getUrl();
                                     if (ex.getCause() instanceof SocketTimeoutException) {
                                         message = i18n("install.failed.downloading.timeout", url);
                                     } else if (ex.getCause() instanceof ResponseCodeException responseCodeException) {
@@ -744,11 +742,11 @@ public final class LauncherHelper {
                                     Throwable resolvedException = resolveException(exception);
                                     LOG.warning("Failed to download java", exception);
                                     if (!(resolvedException instanceof CancellationException)) {
-                                        Controllers.dialog(DownloadProviders.localizeErrorMessage(resolvedException), i18n("install.failed"));
+                                        Controllers.dialog(I18n.localizeErrorMessage(resolvedException), i18n("install.failed"));
                                     }
                                     future.completeExceptionally(new CancellationException());
                                 }
-                            }), i18n("download.java"), new TaskCancellationAction(() -> future.completeExceptionally(new CancellationException())));
+                            }), i18n("download.java"), it -> future.completeExceptionally(new CancellationException()));
                 }, () -> future.completeExceptionally(new CancellationException())).build());
 
         return future;
