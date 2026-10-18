@@ -23,7 +23,6 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 
 import javafx.beans.property.*;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -71,7 +70,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -168,10 +166,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
             setBottom(actions);
         }
-    }
-
-    private <T> void setupCellValueFactory(TableColumn<AddonUpdateObject, T> column, Function<AddonUpdateObject, ObservableValue<T>> mapper) {
-        column.setCellValueFactory(param -> mapper.apply(param.getValue()));
     }
 
     private void updateFiles() {
@@ -424,12 +418,19 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         @Override
         public void updateItem(AddonUpdateObject item, boolean empty) {
             AddonUpdateObject oldItem = getItem();
+            boolean oldEmpty = isEmpty();
 
             if (oldItem != null) {
                 enabledBox.selectedProperty().unbindBidirectional(oldItem.enabledProperty());
             }
 
             super.updateItem(item, empty);
+
+            if (oldItem == item && oldEmpty == empty) {
+                return;
+            }
+
+            ripplerContainer.releaseRippleImmediately();
 
             if (empty || item == null) {
                 setGraphic(null);
@@ -440,18 +441,16 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
             item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
 
-            LocalAddonFile addonFile = item.getLocalAddonFile();
+            LocalAddonFile<?> addonFile = item.getLocalAddonFile();
 
-            if (oldItem != item) {
-                content.getTags().clear();
-
-                if (addonFile instanceof LocalModFile modFile) {
-                    content.addTag(modFile.getId());
-                    content.addTag(item.source.get());
-                } else if (addonFile instanceof ResourcePackFile) {
-                    content.addTag(item.source.get());
-                }
+            content.getTags().clear();
+            if (addonFile instanceof LocalModFile modFile) {
+                content.addTag(modFile.getId());
+                content.addTag(item.source.get());
+            } else if (addonFile instanceof ResourcePackFile) {
+                content.addTag(item.source.get());
             }
+            content.addTag(item.targetVersionType.get());
 
             if (addonFile instanceof LocalModFile modFile) {
                 content.setTitle(modFile.getName());
@@ -459,13 +458,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 content.setTitle(resourcePackFile.getFileName());
             }
 
-            content.setSubtitle(
-                item.getCurrentVersion()
-                + " → "
-                + item.targetVersion.get()
-                + " | "
-                + item.targetVersionType.get()
-            );
+            content.setSubtitle(item.getCurrentVersion() + " → " + item.targetVersion.get());
 
             setGraphic(pane);
         }
