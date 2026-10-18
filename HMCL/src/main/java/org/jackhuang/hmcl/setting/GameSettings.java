@@ -159,6 +159,24 @@ public sealed abstract class GameSettings extends ObservableSetting {
             return icon;
         }
 
+        /// Stored instance category; an empty string or JSON null denotes an uncategorized instance.
+        @SerializedName("category")
+        private final SettingProperty<@Nullable String> category = newSettingProperty("category", "");
+
+        /// Returns the stored category, which may be null and does not inherit from a preset.
+        public SettingProperty<@Nullable String> categoryProperty() {
+            return category;
+        }
+
+        /// Stored launch-list visibility; JSON null uses the default visible behavior.
+        @SerializedName("showInLaunchMenu")
+        private final SettingProperty<@Nullable Boolean> showInLaunchMenu = newSettingProperty("showInLaunchMenu", true);
+
+        /// Returns the stored visibility, which may be null; new instances default to visible.
+        public SettingProperty<@Nullable Boolean> showInLaunchMenuProperty() {
+            return showInLaunchMenu;
+        }
+
         /// Setting property names overridden by this instance.
         @SerializedName("overrideProperties")
         private final ObservableSet<String> overrideProperties = FXCollections.observableSet();

@@ -18,18 +18,26 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -37,13 +45,18 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.game.GameComponentAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentType;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
+import org.jackhuang.hmcl.setting.InstanceSortType;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -57,18 +70,26 @@ import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+@NotNullByDefault
 public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("instance.manage")));
     /// Navigation drawer items for configured game directories.
@@ -141,37 +162,122 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         return state.getReadOnlyProperty();
     }
 
+    /// Combines the current repository's instances with search, filtering and persisted sorting.
     private static class GameList extends ListPageBase<GameListItem> {
-        private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
-
         private final ObservableList<GameListItem> sourceList = FXCollections.observableArrayList();
         private final FilteredList<GameListItem> filteredList = new FilteredList<>(sourceList);
+        /// Filtered instances in the user's persisted display order.
+        private final SortedList<GameListItem> sortedList = new SortedList<>(filteredList);
+        /// Search query, including the existing optional `regex:` prefix.
+        private final StringProperty search = new SimpleStringProperty("");
+        /// Built-in instance type or loader filter.
+        private final ObjectProperty<InstanceFilter> type = new SimpleObjectProperty<>(InstanceFilter.ALL);
+        /// User-defined category selected for filtering.
+        private final ObjectProperty<CategoryFilter> category = new SimpleObjectProperty<>(CategoryFilter.ALL);
+        /// Whether to show all instances or only those with a given launch-menu visibility.
+        private final ObjectProperty<LaunchMenuFilter> launchMenu = new SimpleObjectProperty<>(LaunchMenuFilter.ALL);
+        /// Available custom categories, preceded by all and uncategorized choices.
+        private final ObservableList<CategoryFilter> categories = FXCollections.observableArrayList();
+        /// Unsubscribes metadata listeners before replacing the repository's instance list.
+        private final List<Runnable> subscriptions = new ArrayList<>();
 
+        /// Observes list controls and repository publications without creating local instance settings.
         public GameList() {
-            setItems(filteredList);
+            setItems(sortedList);
+
+            search.addListener(ignored -> updateFilter());
+            type.addListener(ignored -> updateFilter());
+            category.addListener(ignored -> updateFilter());
+            launchMenu.addListener(ignored -> updateFilter());
+            settings().instanceSortTypeProperty().addListener(ignored -> updateSort());
+            updateSort();
 
             GameDirectoryManager.registerVersionsListener(this::loadVersions);
 
             setOnFailedAction(e -> Instances.addNewGame());
         }
 
+        /// Replaces snapshot members and their metadata subscriptions after repository publications.
         @FXThread
         private void loadVersions(HMCLGameRepository repository) {
-            listenerHolder.clear();
+            subscriptions.forEach(Runnable::run);
+            subscriptions.clear();
             setLoading(true);
             setFailedReason(null);
 
-            List<GameListItem> instanceItems = repository.getDisplayInstances()
+            @Unmodifiable List<GameListItem> instanceItems = repository.getDisplayInstances()
                     .map(GameListItem::new)
                     .toList();
 
             sourceList.setAll(instanceItems);
+
+            /// Subscribes to list metadata so category choices and filters stay current; retains removers for the next reload.
+            for (GameListItem item : instanceItems) {
+                HMCLGameInstance instance = item.getGameInstance();
+                ChangeListener<String> categoryListener = (observable, oldValue, newValue) -> {
+                    updateCategories();
+                    updateFilter();
+                };
+                ChangeListener<Boolean> visibilityListener = (observable, oldValue, newValue) -> updateFilter();
+                instance.categoryProperty().addListener(categoryListener);
+                instance.shownInLaunchMenuProperty().addListener(visibilityListener);
+                subscriptions.add(() -> {
+                    instance.categoryProperty().removeListener(categoryListener);
+                    instance.shownInLaunchMenuProperty().removeListener(visibilityListener);
+                });
+            }
+            updateCategories();
+            updateFilter();
 
             if (instanceItems.isEmpty()) {
                 setFailedReason(i18n("instance.empty.hint"));
             }
 
             setLoading(false);
+        }
+
+        /// Rebuilds category choices and resets a category that no longer exists in this directory.
+        private void updateCategories() {
+            List<CategoryFilter> choices = new ArrayList<>();
+            choices.add(CategoryFilter.ALL);
+            choices.add(new CategoryFilter(""));
+            // Build category choices from every instance, independent of the active filters.
+            sourceList.stream()
+                    .map(item -> item.getGameInstance().getCategory())
+                    .filter(name -> !name.isEmpty())
+                    .distinct()
+                    .sorted(String.CASE_INSENSITIVE_ORDER)
+                    .map(CategoryFilter::new)
+                    .forEach(choices::add);
+            // Avoid notifying the UI when the available category choices have not changed.
+            if (!categories.equals(choices)) {
+                categories.setAll(choices);
+            }
+            // The selected category may disappear after its last instance is reassigned.
+            if (!choices.contains(category.get())) {
+                category.set(CategoryFilter.ALL);
+            }
+        }
+
+        /// Applies all filters together without replacing the sort order or selected instance.
+        /// The sorted view reapplies its current comparator when the filtered source changes.
+        private void updateFilter() {
+            Predicate<GameListItem> matchesSearch = createPredicate(search.get());
+            filteredList.setPredicate(item -> {
+                HMCLGameInstance instance = item.getGameInstance();
+                @Nullable String categoryName = category.get().name();
+                return matchesSearch.test(item)
+                        && type.get().matches(instance)
+                        && (categoryName == null || categoryName.equals(instance.getCategory()))
+                        && launchMenu.get().matches(instance);
+            });
+        }
+
+        /// Applies the persisted display order when its sort mode changes.
+        private void updateSort() {
+            InstanceSortType sort = settings().instanceSortTypeProperty().get();
+            sortedList.setComparator(sort == InstanceSortType.DEFAULT ? null
+                    : Comparator.comparing(GameListItem::getGameInstance, sort.comparator()));
         }
 
         private Predicate<GameListItem> createPredicate(String searchText) {
@@ -188,7 +294,8 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     return item -> false;
                 }
             } else {
-                return item -> item.getId().toLowerCase(Locale.ROOT).contains(searchText.toLowerCase(Locale.ROOT));
+                String query = searchText.toLowerCase(Locale.ROOT);
+                return item -> item.getId().toLowerCase(Locale.ROOT).contains(query);
             }
         }
 
@@ -208,6 +315,9 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
             /// Whether the search mechanism is currently active.
             private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+
+            /// Whether the filter and sort controls are expanded; initially folded.
+            private final BooleanProperty filtersExpanded = new SimpleBooleanProperty(false);
 
             private final JFXTextField searchField;
 
@@ -234,7 +344,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     searchField.setPromptText(i18n("search"));
                     HBox.setHgrow(searchField, Priority.ALWAYS);
                     PauseTransition pause = new PauseTransition(Duration.millis(100));
-                    pause.setOnFinished(e -> skinnable.filteredList.setPredicate(skinnable.createPredicate(searchField.getText())));
+                    pause.setOnFinished(e -> skinnable.search.set(searchField.getText()));
                     searchField.textProperty().addListener((observable, oldValue, newValue) -> {
                         if (isSearching.get() || !StringUtils.isBlank(newValue)) {
                             pause.setRate(1);
@@ -247,7 +357,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                         searchField.clear();
 
                         pause.stop();
-                        skinnable.filteredList.setPredicate(null);
+                        skinnable.search.set("");
                         isSearching.set(false);
                     });
 
@@ -261,7 +371,69 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
                     FXUtils.setOverflowHidden(toolbarPane, 8);
 
-                    root.getContent().add(toolbarPane);
+                    JFXButton filterButton = createToolbarButton2(null, SVG.ARROW_DROP_DOWN,
+                            () -> filtersExpanded.set(!filtersExpanded.get()));
+                    filterButton.graphicProperty().bind(Bindings.createObjectBinding(
+                            () -> (filtersExpanded.get() ? SVG.ARROW_DROP_UP : SVG.ARROW_DROP_DOWN).createIcon(20),
+                            filtersExpanded));
+                    filterButton.setMinWidth(Region.USE_PREF_SIZE);
+                    Tooltip filterTooltip = new Tooltip();
+                    filterTooltip.textProperty().bind(Bindings.when(filtersExpanded)
+                            .then(i18n("instance.filter.hide")).otherwise(i18n("instance.filter.show")));
+                    filterButton.accessibleTextProperty().bind(filterTooltip.textProperty());
+                    FXUtils.installFastTooltip(filterButton, filterTooltip);
+
+                    HBox toolbar = new HBox(toolbarPane, filterButton);
+                    toolbar.setAlignment(Pos.CENTER_LEFT);
+                    HBox.setHgrow(toolbarPane, Priority.ALWAYS);
+                    toolbarPane.setMinWidth(0);
+                    root.getContent().add(toolbar);
+                }
+
+                {
+                    GridPane filters = new GridPane();
+                    filters.visibleProperty().bind(filtersExpanded);
+                    filters.managedProperty().bind(filtersExpanded);
+                    filters.setHgap(16);
+                    filters.setVgap(10);
+                    filters.setPadding(new Insets(8, 12, 16, 12));
+                    ColumnConstraints labelColumn = new ColumnConstraints();
+                    labelColumn.setMinWidth(Region.USE_PREF_SIZE);
+                    filters.getColumnConstraints().setAll(labelColumn, FXUtils.getColumnHgrowing(),
+                            labelColumn, FXUtils.getColumnHgrowing());
+
+                    JFXComboBox<InstanceFilter> typeBox = new JFXComboBox<>();
+                    typeBox.getItems().setAll(InstanceFilter.values());
+                    typeBox.setConverter(stringConverter(value -> i18n("instance.filter.type." + value.name().toLowerCase(Locale.ROOT))));
+                    typeBox.valueProperty().bindBidirectional(skinnable.type);
+
+                    JFXComboBox<CategoryFilter> categoryBox = new JFXComboBox<>();
+                    categoryBox.setConverter(stringConverter(value -> value.name() == null ? i18n("instance.category.all")
+                            : value.name().isEmpty() ? i18n("instance.category.uncategorized") : value.name()));
+                    categoryBox.setItems(skinnable.categories);
+                    categoryBox.valueProperty().bindBidirectional(skinnable.category);
+                    skinnable.categories.addListener((InvalidationListener) ignored -> categoryBox.setValue(skinnable.category.get()));
+
+                    JFXComboBox<LaunchMenuFilter> launchMenuBox = new JFXComboBox<>();
+                    launchMenuBox.getItems().setAll(LaunchMenuFilter.values());
+                    launchMenuBox.setConverter(stringConverter(value -> i18n("instance.filter.launch_menu." + value.name().toLowerCase(Locale.ROOT))));
+                    launchMenuBox.valueProperty().bindBidirectional(skinnable.launchMenu);
+
+                    JFXComboBox<InstanceSortType> sortBox = new JFXComboBox<>();
+                    sortBox.getItems().setAll(InstanceSortType.values());
+                    sortBox.setConverter(stringConverter(value -> i18n("instance.sort." + value.name().toLowerCase(Locale.ROOT))));
+                    sortBox.valueProperty().bindBidirectional(settings().instanceSortTypeProperty());
+
+                    @Unmodifiable List<JFXComboBox<?>> filterBoxes = List.of(typeBox, categoryBox, launchMenuBox, sortBox);
+                    for (JFXComboBox<?> box : filterBoxes) {
+                        box.setMinWidth(0);
+                        box.setMaxWidth(Double.MAX_VALUE);
+                    }
+                    filters.addRow(0, new Label(i18n("instance.filter.type")), typeBox,
+                            new Label(i18n("instance.category")), categoryBox);
+                    filters.addRow(1, new Label(i18n("instance.launch_menu")), launchMenuBox,
+                            new Label(i18n("search.sort")), sortBox);
+                    root.getContent().add(filters);
                 }
 
                 {
@@ -278,9 +450,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     StackPane placeholderContainer = new StackPane();
                     placeholderContainer.getStyleClass().add("notice-pane");
                     Label placeholderLabel = new Label();
-                    placeholderLabel.textProperty().bind(
-                        Bindings.when(isSearching).then(i18n("search.no_results_found")).otherwise("")
-                    );
+                    placeholderLabel.setText(i18n("search.no_results_found"));
                     placeholderContainer.getChildren().add(placeholderLabel);
                     listView.setPlaceholder(placeholderContainer);
 
@@ -303,6 +473,82 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     }
                 }
             }
+        }
+    }
+
+    /// A category choice; `null` denotes all categories and an empty name denotes uncategorized.
+    private record CategoryFilter(@Nullable String name) {
+        /// Shared all-categories choice, distinct from every user-entered category name.
+        private static final CategoryFilter ALL = new CategoryFilter(null);
+    }
+
+    /// Launch-menu visibility choices for finding instances in the full management list.
+    private enum LaunchMenuFilter {
+        /// Includes every instance regardless of visibility.
+        ALL,
+        /// Includes instances shown in instance switchers.
+        SHOWN,
+        /// Includes instances excluded from instance switchers.
+        HIDDEN;
+
+        /// Tests the stored visibility, treating instances without settings as visible.
+        private boolean matches(HMCLGameInstance instance) {
+            return this == ALL || instance.isShownInLaunchMenu() == (this == SHOWN);
+        }
+    }
+
+    /// Built-in instance and loader choices independent of custom categories.
+    private enum InstanceFilter {
+        /// Includes every instance.
+        ALL(null),
+        /// Includes instances without extra game components.
+        VANILLA(null),
+        /// Includes instances with extra game components.
+        MODDED(null),
+        /// Includes HMCL-managed modpacks.
+        MODPACK(null),
+        /// Includes instances with Forge installed.
+        FORGE(GameComponentType.FORGE),
+        /// Includes instances with NeoForge installed.
+        NEOFORGE(GameComponentType.NEO_FORGE),
+        /// Includes instances with Fabric installed.
+        FABRIC(GameComponentType.FABRIC),
+        /// Includes instances with Quilt installed.
+        QUILT(GameComponentType.QUILT),
+        /// Includes instances with OptiFine installed.
+        OPTIFINE(GameComponentType.OPTIFINE),
+        /// Includes instances with a mod loader that has no dedicated filter, such as LiteLoader.
+        OTHER_MOD_LOADER(null);
+
+        /// Loader types with dedicated filter options.
+        private static final @Unmodifiable Set<GameComponentType> MOD_LOADERS_WITH_DEDICATED_FILTERS = Set.of(
+                GameComponentType.FORGE,
+                GameComponentType.NEO_FORGE,
+                GameComponentType.FABRIC,
+                GameComponentType.QUILT);
+
+        /// Required game component, or `null` for a built-in aggregate choice.
+        private final @Nullable GameComponentType component;
+
+        /// Creates a built-in aggregate or component-specific filter.
+        InstanceFilter(@Nullable GameComponentType component) {
+            this.component = component;
+        }
+
+        /// Matches against the instance's cached component analysis and modpack metadata.
+        private boolean matches(HMCLGameInstance instance) {
+            if (this == ALL) return true;
+            if (this == MODPACK) return instance.isModpack();
+            if (component != null) return instance.getAnalyzer().has(component);
+            if (this == OTHER_MOD_LOADER) {
+                return GameComponentType.MOD_LOADERS.stream()
+                        .filter(type -> !MOD_LOADERS_WITH_DEDICATED_FILTERS.contains(type))
+                        .anyMatch(instance.getAnalyzer()::has);
+            }
+            for (GameComponentAnalyzer.Mark mark : instance.getAnalyzer()) {
+                if (mark.componentType() != GameComponentType.GAME) return this == MODDED;
+            }
+            return this == VANILLA;
         }
     }
 }

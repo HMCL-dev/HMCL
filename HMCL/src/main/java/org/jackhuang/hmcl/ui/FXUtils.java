@@ -1236,24 +1236,42 @@ public final class FXUtils {
         });
     }
 
+    /// Cycles through available items on vertical scroll and consumes events that select an item.
+    /// Empty lists, absent current items and events with no vertical movement are ignored.
+    ///
+    /// @param node the node receiving scroll events
+    /// @param list the available items, in display order
+    /// @param finder returns the current item's index, or a negative value when it is absent
+    /// @param updater selects the next item
+    /// @param <T> the item type
     public static <T> void onScroll(Node node, List<T> list,
                                     ToIntFunction<List<T>> finder,
                                     Consumer<T> updater
     ) {
-        node.addEventHandler(ScrollEvent.SCROLL, event -> {
-            double deltaY = event.getDeltaY();
-            if (deltaY == 0)
-                return;
+        onScroll(node, direction -> {
+            if (list.isEmpty())
+                return false;
 
             int index = finder.applyAsInt(list);
-            if (index < 0) return;
-            if (deltaY > 0) // up
-                index--;
-            else // down
-                index++;
+            if (index < 0)
+                return false;
 
-            updater.accept(list.get((index + list.size()) % list.size()));
-            event.consume();
+            updater.accept(list.get(Math.floorMod(index + direction, list.size())));
+            return true;
+        });
+    }
+
+    /// Converts vertical scrolling to a navigation direction and consumes handled events.
+    ///
+    /// @param node the node receiving scroll events
+    /// @param selector receives `-1` for scrolling up and `1` for scrolling down, and returns
+    ///                 whether it handled navigation; events with no vertical movement are ignored
+    public static void onScroll(Node node, IntPredicate selector) {
+        node.addEventHandler(ScrollEvent.SCROLL, event -> {
+            double deltaY = event.getDeltaY();
+            if (deltaY != 0 && selector.test(deltaY > 0 ? -1 : 1)) {
+                event.consume();
+            }
         });
     }
 

@@ -273,6 +273,10 @@
     -jfx-rippler-fill: -monet-secondary-container;
 }
 
+.iconed-menu-item:disabled {
+    -fx-opacity: 0.4;
+}
+
 .iconed-menu-item .iconed-item-container {
     -fx-padding: 8 16 8 16;
     -fx-spacing: 10;

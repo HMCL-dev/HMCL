@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -105,7 +106,9 @@ public final class GameListPopupMenu extends StackPane {
     private final JFXListView<GameItem> listView = new JFXListView<>();
     private final BooleanBinding isEmpty = Bindings.isEmpty(listView.getItems());
 
+    /// Creates the instance switcher popup.
     public GameListPopupMenu() {
+        this.setPrefWidth(300);
         this.setMaxHeight(365);
         this.getStyleClass().add("popup-menu-content");
 
@@ -113,11 +116,13 @@ public final class GameListPopupMenu extends StackPane {
 
         listView.setFixedCellSize(50);
         listView.setPrefWidth(300);
+        listView.setMinHeight(0);
 
         listView.prefHeightProperty().bind(Bindings.size(getItems()).multiply(50).add(2));
 
-        Label placeholder = new Label(i18n("instance.empty"));
+        Label placeholder = new Label(i18n("instance.launch_menu.empty"));
         placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
+        placeholder.setWrapText(true);
 
         FXUtils.onChangeAndOperate(isEmpty, empty -> getChildren().setAll(empty ? placeholder : listView));
     }
@@ -126,6 +131,7 @@ public final class GameListPopupMenu extends StackPane {
         return listView.getItems();
     }
 
+    /// Renders an instance row inside the popup selector.
     private static final class Cell extends ListCell<GameItem> {
 
         private final Region graphic;
@@ -134,8 +140,10 @@ public final class GameListPopupMenu extends StackPane {
         private final ImageContainer imageView;
         private final TwoLineListItem content;
 
-        private final StringProperty tag = new SimpleStringProperty();
+        /// Modpack version displayed beside the instance title.
+        private final StringProperty modpackVersion = new SimpleStringProperty();
 
+        /// Creates a popup row sized to its containing list.
         public Cell(ListView<GameItem> listView) {
             this.setPadding(Insets.EMPTY);
 
@@ -145,10 +153,10 @@ public final class GameListPopupMenu extends StackPane {
 
             this.content = new TwoLineListItem();
             this.content.setMouseTransparent(true);
-            FXUtils.onChangeAndOperate(tag, tag -> {
+            FXUtils.onChangeAndOperate(modpackVersion, version -> {
                 content.getTags().clear();
-                if (StringUtils.isNotBlank(tag)) {
-                    content.addTag(tag);
+                if (StringUtils.isNotBlank(version)) {
+                    content.addTag(version);
                 }
             });
 
@@ -177,8 +185,9 @@ public final class GameListPopupMenu extends StackPane {
             this.graphic = rootPane;
         }
 
+        /// Rebinds this recycled popup row to its current game item.
         @Override
-        protected void updateItem(GameItem item, boolean empty) {
+        protected void updateItem(@Nullable GameItem item, boolean empty) {
             GameItem oldItem = getItem();
             boolean oldEmpty = isEmpty();
 
@@ -190,7 +199,7 @@ public final class GameListPopupMenu extends StackPane {
             this.imageView.imageProperty().unbind();
             this.content.titleProperty().unbind();
             this.content.subtitleProperty().unbind();
-            this.tag.unbind();
+            this.modpackVersion.unbind();
 
             if (empty || item == null) {
                 setGraphic(null);
@@ -200,7 +209,7 @@ public final class GameListPopupMenu extends StackPane {
                 this.imageView.imageProperty().bind(item.imageProperty());
                 this.content.titleProperty().bind(item.titleProperty());
                 this.content.subtitleProperty().bind(item.subtitleProperty());
-                this.tag.bind(item.tagProperty());
+                this.modpackVersion.bind(item.modpackVersionProperty());
             }
         }
     }
