@@ -43,6 +43,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
@@ -240,7 +241,7 @@ public final class GameListCell extends ListCell<GameListItem> {
         }
     }
 
-    /// Edits category and launch-menu visibility in the launcher's standard prompt dialog.
+    /// Edits category and launch-menu visibility, keeping the prompt open if the settings cannot be saved.
     private static void editListSettings(GameListItem item) {
         HMCLGameInstance instance = item.getGameInstance();
         PromptDialogPane.Builder.StringQuestion categoryQuestion = new PromptDialogPane.Builder.StringQuestion(
@@ -261,14 +262,16 @@ public final class GameListCell extends ListCell<GameListItem> {
             }
             localSettings.categoryProperty().setValue(categoryQuestion.getValue().strip());
             localSettings.showInLaunchMenuProperty().setValue(visibilityQuestion.getValue());
-            Task.runAsync(Schedulers.io(), () -> {
+            Task.supplyAsync(Schedulers.io(), () -> {
                         FileSaver.waitForAllSaves();
-                        current.saveSettingsSync();
+                        return current.saveSettingsSync();
                     })
-                    .whenComplete(Schedulers.javafx(), (@Nullable Exception exception) -> {
+                    .whenComplete(Schedulers.javafx(), (@NotNull Boolean saved, @Nullable Exception exception) -> {
                         if (exception != null) {
                             handler.reject(i18n("instance.list_settings.save_failed"));
                             LOG.warning("Failed to save list settings for instance " + current.getId(), exception);
+                        } else if (!saved) {
+                            handler.reject(i18n("instance.list_settings.changed"));
                         } else {
                             handler.resolve();
                         }

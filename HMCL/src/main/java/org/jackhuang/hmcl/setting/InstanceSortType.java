@@ -40,6 +40,11 @@ public enum InstanceSortType {
     /// Groups instances by their user-defined category, then sorts their names alphabetically.
     CATEGORY;
 
+    /// Returns a shared category ordering that ignores case first and uses natural order to break ties.
+    public static Comparator<String> categoryNameComparator() {
+        return String.CASE_INSENSITIVE_ORDER.thenComparing(Comparator.naturalOrder());
+    }
+
     /// Returns a deterministic comparator; the default keeps the repository's input order.
     public Comparator<HMCLGameInstance> comparator() {
         Comparator<HMCLGameInstance> name = Comparator
@@ -57,7 +62,7 @@ public enum InstanceSortType {
             case NAME_DESC -> name.reversed();
             case VERSION_ASC -> version.thenComparing(name);
             case VERSION_DESC -> version.reversed().thenComparing(name);
-            case CATEGORY -> Comparator.comparing(HMCLGameInstance::getCategory, String.CASE_INSENSITIVE_ORDER)
+            case CATEGORY -> Comparator.comparing(HMCLGameInstance::getCategory, categoryNameComparator())
                     .thenComparing(name);
         };
     }

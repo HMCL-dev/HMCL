@@ -341,7 +341,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     updateLaunchInstances();
                 }
             };
-            ChangeListener<Boolean> visibilityListener = (observable, oldValue, newValue) -> updateLaunchInstances();
+            ChangeListener<Boolean> visibilityListener = (observable, oldValue, newValue) -> updateVisibleLaunchInstances();
             instance.categoryProperty().addListener(categoryListener);
             instance.shownInLaunchMenuProperty().addListener(visibilityListener);
             instanceSubscriptions.add(() -> {
@@ -352,11 +352,16 @@ public final class MainPage extends StackPane implements DecoratorPage {
         updateLaunchInstances();
     }
 
-    /// Applies persisted visibility and sorting without changing the current launch target.
+    /// Rebuilds the complete sort order and visible instance list without changing the launch target.
     private void updateLaunchInstances() {
         orderedInstances = allInstances.stream()
                 .sorted(settings().instanceSortTypeProperty().get().comparator())
                 .toList();
+        updateVisibleLaunchInstances();
+    }
+
+    /// Applies launch-list visibility to the cached complete sort order without sorting again.
+    private void updateVisibleLaunchInstances() {
         mutableInstances.setAll(orderedInstances.stream()
                 .filter(HMCLGameInstance::isShownInLaunchMenu)
                 .toList());

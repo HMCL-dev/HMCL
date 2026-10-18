@@ -327,10 +327,11 @@ public class HMCLGameInstance extends DefaultGameInstance {
 
     /// Saves the settings synchronously when writable and still owned by the current instance.
     ///
+    /// @return whether the settings were written; `false` when absent, read-only, or no longer owned
     /// @throws IOException if saving the file fails
-    public void saveSettingsSync() throws IOException {
+    public boolean saveSettingsSync() throws IOException {
         if (gameSettings == null || gameSettingsReadOnly || !ownsGameSettings()) {
-            return;
+            return false;
         }
 
         GameSettings.Instance setting = gameSettings;
@@ -341,6 +342,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
             SettingFileUtils.backupInvalidConfig(file);
         }
         FileUtils.saveSafely(file, LauncherSettings.SETTINGS_GSON.toJson(setting));
+        return true;
     }
 
     /// Initializes this instance with the given settings object.

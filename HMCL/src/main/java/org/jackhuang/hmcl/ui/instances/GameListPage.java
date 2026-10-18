@@ -246,7 +246,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     .map(item -> item.getGameInstance().getCategory())
                     .filter(name -> !name.isEmpty())
                     .distinct()
-                    .sorted(String.CASE_INSENSITIVE_ORDER)
+                    .sorted(InstanceSortType.categoryNameComparator())
                     .map(CategoryFilter::new)
                     .forEach(choices::add);
             // Avoid notifying the UI when the available category choices have not changed.
