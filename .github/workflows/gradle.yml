@@ -43,7 +43,7 @@ jobs:
       if: runner.os == 'Windows'
       run: .\gradlew.bat build --no-daemon --parallel
       env:
-        JAVA_TOOL_OPTIONS: "-Dhmcl.native.encoding=GBK"
+        JAVA_TOOL_OPTIONS: "-Dhmcl.native.encoding=GB18030"
         MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
         CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
     - name: Build with Gradle on macOS
