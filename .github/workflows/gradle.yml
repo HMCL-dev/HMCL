@@ -48,11 +48,6 @@ jobs:
       env:
         MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
         CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
-    - name: Build with Gradle in FreeBSD VM
-      if: runner.os == 'Linux'
-      uses: vmactions/freebsd-vm@v1
-      with:
-        run: ./gradlew build --no-daemon --parallel
     - name: Get short SHA
       shell: bash
       run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
