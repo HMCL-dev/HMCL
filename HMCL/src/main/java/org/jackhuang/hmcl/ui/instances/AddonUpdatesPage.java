@@ -36,6 +36,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.addon.shader.ShaderPackFile;
 import org.jackhuang.hmcl.addon.update.AddonUpdate;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
@@ -318,6 +319,13 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 return GameInstanceIconType
                     .getIconType(localModFile.getModLoaderType())
                     .getIcon();
+            }
+
+            if (data.localAddonFile() instanceof ShaderPackFile shaderPackFile) {
+                return switch (shaderPackFile.getShaderLoaderType()) {
+                    case OPTIFINE_IRIS -> FXUtils.newBuiltinImage("/assets/img/opti-iris.png");
+                    default -> FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+                };
             }
 
             return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
