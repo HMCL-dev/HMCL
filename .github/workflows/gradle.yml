@@ -58,24 +58,24 @@ jobs:
     - name: Upload JAR
       uses: actions/upload-artifact@v7
       with:
-        name: HMCL-${{ env.SHORT_SHA }}-${{ runner.os }}-JDK${{ matrix.java }}-jar
+        name: HMCL-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}-jar
         path: HMCL/build/libs/HMCL-*.jar
         archive: false
     - name: Upload EXE
       uses: actions/upload-artifact@v7
       with:
-        name: HMCL-${{ env.SHORT_SHA }}-${{ runner.os }}-JDK${{ matrix.java }}-exe
+        name: HMCL-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}-exe
         path: HMCL/build/libs/HMCL-*.exe
         archive: false
     - name: Upload SH
       uses: actions/upload-artifact@v7
       with:
-        name: HMCL-${{ env.SHORT_SHA }}-${{ runner.os }}-JDK${{ matrix.java }}-sh
+        name: HMCL-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}-sh
         path: HMCL/build/libs/HMCL-*.sh
         archive: false
     - name: Upload DEB
       uses: actions/upload-artifact@v7
       with:
-        name: HMCL-${{ env.SHORT_SHA }}-${{ runner.os }}-JDK${{ matrix.java }}-deb
+        name: HMCL-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}-deb
         path: HMCL/build/libs/HMCL-*.deb
         archive: false
