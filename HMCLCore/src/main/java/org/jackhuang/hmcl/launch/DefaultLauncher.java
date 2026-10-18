@@ -102,7 +102,7 @@ public class DefaultLauncher extends Launcher {
         JavaRuntime java = options.getJava();
 
         Path javaBinary = java.getBinary();
-        if (java.getPlatform().os() == OperatingSystem.WINDOWS) {
+        if (!options.isNotUseJavaw() && java.getPlatform().os() == OperatingSystem.WINDOWS) {
             Path javawBinary = javaBinary.resolveSibling("javaw.exe");
             if (Files.isRegularFile(javawBinary)) {
                 javaBinary = javawBinary;

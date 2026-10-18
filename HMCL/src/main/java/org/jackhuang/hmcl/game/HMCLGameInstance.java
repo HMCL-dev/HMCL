@@ -586,6 +586,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
                 .setInstanceId(getId())
                 .setGameDir(gameDir)
                 .setJava(javaVersion)
+                .setNotUseJavaw(vs.getInheritable(GameSettings::notUseJavawProperty))
                 .setVersionType(Metadata.TITLE)
                 .setVersionName(getId().id())
                 .setProfileName(Metadata.TITLE)

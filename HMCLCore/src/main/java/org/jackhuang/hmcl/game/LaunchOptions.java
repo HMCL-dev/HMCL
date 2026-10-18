@@ -33,6 +33,7 @@ public class LaunchOptions implements Serializable {
     private GameInstanceID instanceId;
     private Path gameDir;
     private JavaRuntime java;
+    private boolean notUseJavaw;
     private String versionName;
     private String versionType;
     private String profileName;
@@ -83,6 +84,13 @@ public class LaunchOptions implements Serializable {
      */
     public JavaRuntime getJava() {
         return java;
+    }
+
+    /// Returns whether automatic replacement of a Windows Java executable with a sibling `javaw.exe` file is disabled.
+    /// Defaults to `false`, allowing replacement when the sibling is a regular file.
+    /// If `true`, the selected executable is used unchanged.
+    public boolean isNotUseJavaw() {
+        return notUseJavaw;
     }
 
     /**
@@ -333,6 +341,15 @@ public class LaunchOptions implements Serializable {
 
         public Builder setJava(JavaRuntime java) {
             options.java = java;
+            return this;
+        }
+
+        /// Sets whether to disable automatic replacement with a sibling `javaw.exe` file for a Windows Java runtime.
+        ///
+        /// @param notUseJavaw whether to keep the selected executable unchanged; ignored for other runtime platforms
+        /// @return this builder
+        public @NotNull Builder setNotUseJavaw(boolean notUseJavaw) {
+            options.notUseJavaw = notUseJavaw;
             return this;
         }
 
