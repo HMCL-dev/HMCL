@@ -249,7 +249,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             fileName.set(data.localAddonFile().getFileName());
             currentVersion.set(data.currentVersion().version());
             targetVersion.set(data.targetVersion().version());
-            targetVersionType.set(data.targetVersion().versionType().name());
+            targetVersionType.set(i18n("addon.channel." + data.targetVersion().versionType().name().toLowerCase(Locale.ROOT)));
             source.set(switch (data.currentVersion().source()) {
                 case CURSEFORGE -> i18n("addon.curseforge");
                 case MODRINTH -> i18n("addon.modrinth");
