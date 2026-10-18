@@ -207,10 +207,10 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             csvTable.set(3, 0, "Update Source");
 
             for (int i = 0; i < objects.size(); i++) {
-                csvTable.set(0, i + 1, objects.get(i).fileName.get());
-                csvTable.set(1, i + 1, objects.get(i).currentVersion.get());
-                csvTable.set(2, i + 1, objects.get(i).targetVersion.get());
-                csvTable.set(3, i + 1, objects.get(i).source.get());
+                csvTable.set(0, i + 1, objects.get(i).fileName);
+                csvTable.set(1, i + 1, objects.get(i).currentVersion);
+                csvTable.set(2, i + 1, objects.get(i).targetVersion);
+                csvTable.set(3, i + 1, objects.get(i).source);
             }
 
             csvTable.write(path);
@@ -232,34 +232,36 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
     private static final class AddonUpdateObject {
         final AddonUpdate data;
-        final BooleanProperty enabled = new SimpleBooleanProperty();
-        final StringProperty fileName = new SimpleStringProperty();
-        final StringProperty currentVersion = new SimpleStringProperty();
-        final StringProperty targetVersion = new SimpleStringProperty();
-        final StringProperty targetVersionType = new SimpleStringProperty();
-        final StringProperty source = new SimpleStringProperty();
+        final String fileName;
+        final String currentVersion;
+        final String targetVersion;
+        final String targetVersionType;
+        final String source;
         String changelog = null;
+
+        final BooleanProperty enabled = new SimpleBooleanProperty();
 
         final ItemPropertyAsyncCache<Image, AddonUpdateObject> iconCache;
 
         public AddonUpdateObject(AddonUpdate data) {
             this.data = data;
 
-            enabled.set(!data.localAddonFile().isDisabled());
-            fileName.set(data.localAddonFile().getFileName());
-            currentVersion.set(data.currentVersion().version());
-            targetVersion.set(data.targetVersion().version());
-            targetVersionType.set(i18n("addon.channel." + data.targetVersion().versionType().name().toLowerCase(Locale.ROOT)));
-            source.set(switch (data.currentVersion().source()) {
+            this.fileName = data.localAddonFile().getFileName();
+            this.currentVersion = data.currentVersion().version();
+            this.targetVersion = data.targetVersion().version();
+            this.targetVersionType = switch (data.targetVersion().versionType()) {
+                case Release -> i18n("addon.channel.release");
+                case Beta -> i18n("addon.channel.beta");
+                case Alpha -> i18n("addon.channel.alpha");
+            };
+            this.source = switch (data.currentVersion().source()) {
                 case CURSEFORGE -> i18n("addon.curseforge");
                 case MODRINTH -> i18n("addon.modrinth");
-            });
+            };
 
-            iconCache = new ItemPropertyAsyncCache.Soft<>(
-                this,
-                this::loadIcon,
-                this::getDefaultIcon
-            );
+            this.enabled.set(!data.localAddonFile().isDisabled());
+
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
         public AddonUpdate getData() {
@@ -412,13 +414,10 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             LocalAddonFile<?> addonFile = item.getLocalAddonFile();
 
             content.getTags().clear();
-            if (addonFile instanceof LocalModFile modFile) {
+            if (addonFile instanceof LocalModFile modFile)
                 content.addTag(modFile.getId());
-                content.addTag(item.source.get());
-            } else if (addonFile instanceof ResourcePackFile) {
-                content.addTag(item.source.get());
-            }
-            content.addTag(item.targetVersionType.get());
+            content.addTag(item.source);
+            content.addTag(item.targetVersionType);
 
             if (addonFile instanceof LocalModFile modFile) {
                 content.setTitle(modFile.getName());
@@ -426,7 +425,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 content.setTitle(resourcePackFile.getFileName());
             }
 
-            content.setSubtitle(item.currentVersion.get() + " → " + item.targetVersion.get());
+            content.setSubtitle(item.currentVersion + " → " + item.targetVersion);
 
             setGraphic(pane);
         }
