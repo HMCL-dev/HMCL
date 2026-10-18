@@ -406,10 +406,8 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
             if (oldItem != item) {
                 content.getTags().clear();
-
-                if (addonFile instanceof LocalModFile modFile) {
+                if (addonFile instanceof LocalModFile modFile)
                     content.addTag(modFile.getId());
-                }
                 content.addTag(item.source.get());
             }
 
