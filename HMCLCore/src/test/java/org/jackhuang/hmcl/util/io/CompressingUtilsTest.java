@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -53,6 +54,10 @@ public final class CompressingUtilsTest {
     @ParameterizedTest
     @MethodSource("arguments")
     public void testFindSuitableEncoding(Path path, Charset charset) throws IOException {
-        assertEquals(charset, CompressingUtils.findSuitableEncoding(path));
+        var c = CompressingUtils.findSuitableEncoding(path);
+        System.out.println("Desired: " + charset.name());
+        System.out.println("Found: " + c.name());
+        System.out.println("Native: " + OperatingSystem.NATIVE_CHARSET.name());
+        assertEquals(charset, c);
     }
 }
