@@ -3,19 +3,19 @@ const fs = require("fs");
 module.exports = async ({ github, context, core }) => {
     const prNumberPath = process.env.PULL_REQUEST_NUMBER_PATH;
     if (!prNumberPath || !fs.existsSync(prNumberPath) || !fs.statSync(prNumberPath).isFile()) {
-        core.setFailed("Pull request number file not found.");
+        core.info("Pull request number file not found.");
         return;
     }
 
     const reportsPath = process.env.REPORTS_PATH;
     if (!reportsPath || !fs.existsSync(reportsPath) || !fs.statSync(reportsPath).isFile()) {
-        core.setFailed("Reports file not found.");
+        core.info("Reports file not found.");
         return;
     }
 
     const PULL_REQUEST_NUMBER = parseInt(fs.readFileSync(prNumberPath, "utf8").trim(), 10);
     if (isNaN(PULL_REQUEST_NUMBER)) {
-        core.setFailed("Failed to parse the pull request number.");
+        core.info("Failed to parse the pull request number.");
         return;
     }
 
@@ -30,42 +30,58 @@ module.exports = async ({ github, context, core }) => {
         });
         pr = response.data;
     } catch (error) {
-        core.setFailed(`Failed to fetch PR #${PULL_REQUEST_NUMBER}: ${error.message}`);
+        core.info(`Failed to fetch PR #${PULL_REQUEST_NUMBER}: ${error.message}`);
         return;
     }
 
     core.info(`Current PR state: ${pr.state}`);
     if (pr.state !== "open") {
-        core.setFailed("The pull request is not open. Skipping comment creation.");
+        core.info("The pull request is not open. Skipping comment creation.");
         return;
     }
 
     const run = context.payload.workflow_run;
     if (!run) {
-        core.setFailed("context.payload.workflow_run is undefined. Ensure this script runs on the 'workflow_run' event.");
+        core.info("context.payload.workflow_run is undefined. Ensure this script runs on the 'workflow_run' event.");
         return;
     }
 
     if (pr.head.sha !== run.head_sha) {
-        core.setFailed("PR head SHA does not match the workflow run head SHA. Skipping.");
+        core.info("PR head SHA does not match the workflow run head SHA. Skipping.");
         return;
     }
 
     if (pr.head.ref !== run.head_branch) {
-        core.setFailed("PR head branch does not match the workflow run head branch. Skipping.");
+        core.info("PR head branch does not match the workflow run head branch. Skipping.");
         return;
     }
 
     if (pr.head.repo.full_name !== run.head_repository.full_name) {
-        core.setFailed("PR head repository fullname does not match the workflow run head repository fullname. Skipping.");
+        core.info("PR head repository fullname does not match the workflow run head repository fullname. Skipping.");
         return;
     }
 
-    const comments = [];
+    const changedFiles = new Set();
+    try {
+        const files = await github.paginate(github.rest.pulls.listFiles, {
+            owner,
+            repo,
+            pull_number: PULL_REQUEST_NUMBER,
+        });
+
+        for (const file of files) {
+            changedFiles.add(file.filename);
+        }
+    } catch (error) {
+        core.info(`Failed to fetch PR files: ${error.message}`);
+        return;
+    }
+
     const maxCommentCount = 10;
+    const comments = [`<!-- check codes comment flag -->Static analysis found the following issues (max comment count ${maxCommentCount}):`];
     const reports = fs.readFileSync(reportsPath, "utf8").trim().split("\n").filter(Boolean);
     for (const report of reports) {
-        if (comments.length >= maxCommentCount) break;
+        if (comments.length > maxCommentCount) break;
         try {
             const data = JSON.parse(report);
             if (typeof data !== "object" || Array.isArray(data)) continue;
@@ -79,42 +95,36 @@ module.exports = async ({ github, context, core }) => {
             if (typeof code !== "object" || Array.isArray(code)) continue;
 
             const path = location.path;
-            const line = location.range?.start?.line;
-            const codeText = code.value ? `[${code.value}] ` : "";
+            if (!changedFiles.has(path)) continue;
 
-            if (path && line) {
-                comments.push({
-                    path,
-                    line,
-                    side: "RIGHT",
-                    body: `**[${severityText}]** ${codeText}\n\n${message}`
-                });
-            }
+            const startLine = location.range?.start?.line;
+            if (typeof startLine !== "number") continue;
+
+            const endLine = location.range?.end?.line ?? startLine;
+            if (typeof endLine !== "number") continue;
+
+            const codeText = code.value ? `[${code.value}] ` : "";
+            comments.push(`https://github.com/${owner}/${repo}/blob/${run.head_sha}/${path}#L${startLine}-L${endLine}\n\n**[${severityText}]** ${codeText}\n\n${message}`);
         } catch (error) {
             core.warning(`Failed to parse report: ${error.message}`);
         }
     }
 
-    if (comments.length === 0) {
+    if (comments.length <= 1) {
         core.info("No diagnostics found to report as comments.");
-        return;
+        comments.push("None.");
     }
 
-    core.info(`Successfully prepared ${comments.length} comment${comments.length > 1 ? "s" : ""} to post.`);
-
     try {
-        await github.rest.pulls.createReview({
+        await github.rest.issues.createComment({
             owner,
             repo,
-            pull_number: PULL_REQUEST_NUMBER,
-            commit_id: run.head_sha,
-            body: "🤖 Static analysis found the following issues (max count 10):",
-            event: "COMMENT",
-            comments: comments
+            issue_number: PULL_REQUEST_NUMBER,
+            body: comments.join("\n\n---\n\n"),
         });
         core.info("Review comments successfully posted to the pull request.");
     } catch (error) {
-        core.setFailed(`Failed to post review comments to GitHub: ${error.message}`);
+        core.info(`Failed to post review comments to GitHub: ${error.message}`);
         return;
     }
 }
