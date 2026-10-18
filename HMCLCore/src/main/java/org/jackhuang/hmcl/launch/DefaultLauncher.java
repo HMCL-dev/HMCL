@@ -21,6 +21,7 @@ import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -98,7 +99,17 @@ public class DefaultLauncher extends Launcher {
         if (StringUtils.isNotBlank(options.getWrapper()))
             res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), getEnvVars(nativeFolder)));
 
-        res.add(options.getJava().getBinary().toString());
+        JavaRuntime java = options.getJava();
+
+        Path javaBinary = java.getBinary();
+        if (java.getPlatform().os() == OperatingSystem.WINDOWS) {
+            Path javawBinary = javaBinary.resolveSibling("javaw.exe");
+            if (Files.isRegularFile(javawBinary)) {
+                javaBinary = javawBinary;
+            }
+        }
+
+        res.add(javaBinary.toString());
 
         res.addAllWithoutParsingAndReadExternal(options.getOverrideJavaArguments());
 
