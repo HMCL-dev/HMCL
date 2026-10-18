@@ -28,8 +28,6 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v5
     - name: Build with Gradle on Ubuntu
-      with:
-        cache-read-only: false
       if: runner.os == 'Linux'
       run: xvfb-run --auto-servernum ./gradlew build --no-daemon --parallel
       env:
