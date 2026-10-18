@@ -40,12 +40,14 @@ jobs:
       if: runner.os == 'Windows'
       run: .\gradlew.bat build --no-daemon --parallel
       env:
+        JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
         MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
         CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
     - name: Build with Gradle on macOS
       if: runner.os == 'macOS'
       run: ./gradlew build --no-daemon --parallel
       env:
+        JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
         MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
         CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
     - name: Get short SHA
