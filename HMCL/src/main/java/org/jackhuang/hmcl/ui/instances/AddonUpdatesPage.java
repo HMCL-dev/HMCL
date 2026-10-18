@@ -274,40 +274,8 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             return enabled;
         }
 
-        public StringProperty fileNameProperty() {
-            return fileName;
-        }
-
-        public void setFileName(String fileName) {
-            this.fileName.set(fileName);
-        }
-
-        public LocalAddonFile getLocalAddonFile() {
+        public LocalAddonFile<?> getLocalAddonFile() {
             return data.localAddonFile();
-        }
-
-        public String getCurrentVersion() {
-            return currentVersion.get();
-        }
-
-        public StringProperty currentVersionProperty() {
-            return currentVersion;
-        }
-
-        public StringProperty targetVersionProperty() {
-            return targetVersion;
-        }
-
-        public StringProperty targetVersionTypeProperty() {
-            return targetVersionType;
-        }
-
-        public StringProperty sourceProperty() {
-            return source;
-        }
-
-        public void setSource(String source) {
-            this.source.set(source);
         }
 
         private Image getDefaultIcon() {
@@ -458,7 +426,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 content.setTitle(resourcePackFile.getFileName());
             }
 
-            content.setSubtitle(item.getCurrentVersion() + " → " + item.targetVersion.get());
+            content.setSubtitle(item.currentVersion.get() + " → " + item.targetVersion.get());
 
             setGraphic(pane);
         }
