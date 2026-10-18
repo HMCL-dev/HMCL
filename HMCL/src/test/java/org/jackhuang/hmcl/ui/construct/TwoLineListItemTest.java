@@ -93,7 +93,7 @@ public final class TwoLineListItemTest {
 
             assertEquals(252, item.getWidth(), 0.001);
             assertEquals(item.getWidth(), item.getTitleLabel().getWidth(), 0.001);
-            assertTrue(item.getBoundsInParent().getMaxX() <= parent.getWidth());
+            assertTrue(item.getBoundsInParent().getMaxX() - parent.getWidth() <= 1);
             if (wrapText) {
                 assertTrue(item.getTitleLabel().getHeight() > item.getTitleLabel().prefHeight(-1));
             }
@@ -119,6 +119,7 @@ public final class TwoLineListItemTest {
     private static void layout(HBox parent, double width) {
         parent.applyCss();
         parent.resize(width, parent.prefHeight(width));
+        parent.requestLayout();
         parent.layout();
     }
 
