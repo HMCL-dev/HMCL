@@ -17,6 +17,9 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    env:
+      ADDITIONAL_CLASSIFIER: ${{ matrix.os }}-JDK${{ matrix.java }}
+
     steps:
     - uses: actions/checkout@v6
     - name: Set up JDK
