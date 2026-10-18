@@ -119,8 +119,8 @@ public final class TwoLineListItemTest {
     private static void layout(HBox parent, double width) {
         parent.applyCss();
         parent.resize(width, parent.prefHeight(width));
-        parent.layout();
         parent.requestLayout();
+        parent.layout();
     }
 
     /// Verifies every tag fits within the region that clips its contents.
