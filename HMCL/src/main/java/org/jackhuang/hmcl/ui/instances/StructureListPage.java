@@ -42,16 +42,14 @@ import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.util.Identifier;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -74,12 +72,12 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
         if (dataVersion <= 500) { // lower than 1.10 16w20a, unsupported
             directory = null;
             flattened = false;
-        } else if (dataVersion >= 1451) { // 1.13 17w47a
-            directory = world.getFile().resolve("generated");
-            flattened = true;
-        } else {
+        } else if (dataVersion < 1451) { // lower than 1.13 17w47a
             directory = world.getFile().resolve("structures");
             flattened = false;
+        } else {
+            directory = world.getFile().resolve("generated");
+            flattened = true;
         }
 
         FXUtils.applyDragListener(this, p -> SchematicType.getType(p) == SchematicType.NBT_STRUCTURE, this::addFiles);
@@ -87,23 +85,39 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
         refresh();
     }
 
-    private static List<NBTStructureInfoObject> listStructureFiles(Path dir, @Nullable String namespace) throws IOException {
-        try (var stream = Files.list(dir)) {
-            return stream
-                    .filter(p -> SchematicType.getType(p) == SchematicType.NBT_STRUCTURE)
-                    .map(p -> {
-                        try {
-                            return NBTStructureFile.load(p);
-                        } catch (IOException e) {
-                            LOG.warning("Failed to load nbt structure file at " + p, e);
-                            return null;
+    private static @Unmodifiable List<NBTStructureInfoObject> listStructureFiles(Path dir, @Nullable String namespace) throws IOException {
+        List<NBTStructureInfoObject> objects = new ArrayList<>();
+        Files.walkFileTree(
+                dir,
+                Set.of(),
+                namespace != null ? Integer.MAX_VALUE : 1, // No file tree for non-flattened versions
+                new SimpleFileVisitor<>() {
+                    @Override
+                    public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) {
+                        if (SchematicType.getType(file) == SchematicType.NBT_STRUCTURE) {
+                            try {
+                                objects.add(new NBTStructureInfoObject(namespace, NBTStructureFile.load(file, dir.relativize(file))));
+                            } catch (IOException e) {
+                                LOG.warning("Failed to load nbt structure file at " + file, e);
+                            }
                         }
-                    })
-                    .filter(Objects::nonNull)
-                    .map(structureFile ->
-                            new NBTStructureInfoObject(namespace, structureFile))
-                    .toList();
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+        return List.copyOf(objects);
+    }
+
+    private static boolean isValid(String id, boolean flattened) {
+        if (Identifier.isValid(id)) {
+            if (flattened)
+                return Arrays.stream(Identifier.of(id).path().split("/")).allMatch(s -> switch (s) {
+                    case ".", "..", "" -> false;
+                    default -> true;
+                });
+            else
+                return !Identifier.of(id).path().contains("/");
         }
+        return false;
     }
 
     @Override
@@ -170,8 +184,10 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
                 i18n("world.structure.rename"),
                 (result, handler) -> {
                     Path file = object.structureFile.getFile();
+                    Path newPath = getPathFor(result);
                     try {
-                        Files.move(file, getPathFor(result), StandardCopyOption.REPLACE_EXISTING);
+                        Files.createDirectories(newPath.getParent());
+                        Files.move(file, newPath, StandardCopyOption.REPLACE_EXISTING);
                         refresh();
                         handler.resolve();
                     } catch (Exception e) {
@@ -180,21 +196,21 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
                     }
                     },
                 initial,
-                new Validator(i18n("world.structure.rename.invalid_id"), flattened ? Identifier::isValid : FileUtils::isNameValid),
+                new Validator(i18n("world.structure.rename.invalid_id"), id -> isValid(id, flattened)),
                 new Validator(i18n("world.structure.rename.already_exists"), id -> initial.equals(id) || !Files.exists(getPathFor(id)))
         );
     }
 
-    private Path getPathFor(String identifier) {
+    private Path getPathFor(String id) {
         if (directory == null) throw new IllegalStateException("Unsupported world game version");
         if (flattened) {
-            Identifier id = Identifier.of(identifier);
             var structureDirName = dataVersion >= 3946
                     ? "structure"
                     : "structures";
-            return directory.resolve(id.namespace()).resolve(structureDirName).resolve(id.path() + ".nbt");
+            var identifier = Identifier.of(id);
+            return directory.resolve(identifier.namespace()).resolve(structureDirName).resolve(identifier.path() + ".nbt");
         } else {
-            return directory.resolve(identifier + ".nbt");
+            return directory.resolve(id + ".nbt");
         }
     }
 
@@ -216,7 +232,7 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
                     var target = getPathFor(FileUtils.getNameWithoutExtension(file));
                     Files.createDirectories(target.getParent());
                     Files.copy(file, target);
-                } catch (IOException e) {
+                } catch (IOException | IllegalArgumentException e) {
                     failures.add(file);
                     LOG.warning("Failed to add structure file " + file, e);
                 }
