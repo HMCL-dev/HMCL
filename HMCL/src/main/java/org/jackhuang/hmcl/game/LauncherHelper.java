@@ -161,11 +161,11 @@ public final class LauncherHelper {
         List<String> javaAgents = new ArrayList<>(0);
         List<String> javaArguments = new ArrayList<>(0);
 
-        AtomicReference<JavaRuntime> javaVersionRef = new AtomicReference<>();
+        AtomicReference<JavaRuntime> javaRuntimeRef = new AtomicReference<>();
 
         TaskExecutor executor = checkGameState(gameInstance, setting, launchManifest.get())
                 .thenComposeAsync(java -> {
-                    javaVersionRef.set(Objects.requireNonNull(java));
+                    javaRuntimeRef.set(Objects.requireNonNull(java));
                     launchManifest.set(NativePatcher.patchNative(gameInstance, launchManifest.get(), java, setting, javaArguments));
                     if (setting.getInheritable(GameSettings::notCheckGameProperty))
                         return null;
@@ -219,7 +219,7 @@ public final class LauncherHelper {
                             || setting.getInheritable(GameSettings::noJVMOptionsProperty)
                             || setting.getInheritable(GameSettings::noOptimizingJVMOptionsProperty)
                             || Boolean.TRUE.equals(state().getShownTips().get(LWJGL_3_4_1_TIP))
-                            || !NativePatcher.needPatchMemoryUtil(launchManifest.get(), javaVersionRef.get().getParsedVersion())) {
+                            || !NativePatcher.needPatchMemoryUtil(launchManifest.get(), javaRuntimeRef.get().getParsedVersion())) {
                         return Task.completed(null);
                     } else {
                         CompletableFuture<Void> future = new CompletableFuture<>();
@@ -239,7 +239,7 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions.Builder launchOptionsBuilder = gameInstance.getLaunchOptions(
-                            javaVersionRef.get(), repository.getBaseDirectory(), javaAgents, javaArguments, scriptFile != null);
+                            javaRuntimeRef.get(), repository.getBaseDirectory(), javaAgents, javaArguments, scriptFile != null);
                     if (disableOfflineSkin) {
                         launchOptionsBuilder.setDaemon(false);
                     }
@@ -248,7 +248,7 @@ public final class LauncherHelper {
                     }
 
                     if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && setting.getInheritable(GameSettings::highPerformanceProperty)) {
-                        @Nullable String javaPathGpuReg = FileUtils.getAbsolutePath(javaVersionRef.get().getBinary());
+                        @Nullable String javaPathGpuReg = FileUtils.getAbsolutePath(javaRuntimeRef.get().getBinary());
                         try {
                             WinReg reg = WinReg.INSTANCE;
                             if (reg != null) {
