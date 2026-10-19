@@ -388,6 +388,19 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return detectedJava;
     }
 
+    /// Property name for disabling automatic replacement with `javaw.exe` on Windows.
+    public static final String PROPERTY_NOT_USE_JAVAW = "notUseJavaw";
+
+    /// Whether to keep the selected Java executable instead of replacing it with `javaw.exe`; defaults to `false`.
+    @SerializedName(PROPERTY_NOT_USE_JAVAW)
+    private final InheritableProperty<Boolean> notUseJavaw = newInheritableProperty(PROPERTY_NOT_USE_JAVAW, false);
+
+    /// Returns the property disabling automatic replacement of a Windows Java executable with a sibling `javaw.exe` file.
+    /// If `true`, the selected executable is used unchanged. This property has no effect on other runtime platforms.
+    public InheritableProperty<Boolean> notUseJavawProperty() {
+        return notUseJavaw;
+    }
+
     /// Property name for customized JVM options.
     public static final String PROPERTY_JVM_OPTIONS = "jvmOptions";
 
