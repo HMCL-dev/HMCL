@@ -57,11 +57,11 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.SocketTimeoutException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -156,6 +156,7 @@ public final class LauncherHelper {
         final var context = new Object() {
             volatile GameInstanceManifest launchManifest;
             volatile JavaRuntime javaRuntime;
+            volatile Path javaExecutable;
         };
 
         HMCLGameRepository repository = repository();
@@ -171,6 +172,17 @@ public final class LauncherHelper {
         TaskExecutor executor = checkGameState(gameInstance, setting, context.launchManifest)
                 .thenComposeAsync(java -> {
                     context.javaRuntime = Objects.requireNonNull(java);
+                    context.javaExecutable = java.getBinary();
+                    if (java.getPlatform().os() == OperatingSystem.WINDOWS
+                            && scriptFile == null
+                            && !setting.getInheritable(GameSettings::notUseJavawProperty)
+                            && FileUtils.getName(java.getBinary()).equalsIgnoreCase("java.exe")) {
+                        Path javawBinary = java.getBinary().resolveSibling("javaw.exe");
+                        if (Files.isRegularFile(javawBinary)) {
+                            context.javaExecutable = javawBinary;
+                        }
+                    }
+
                     context.launchManifest = NativePatcher.patchNative(gameInstance, context.launchManifest, java, setting, javaArguments);
                     if (setting.getInheritable(GameSettings::notCheckGameProperty))
                         return null;
@@ -244,7 +256,12 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions.Builder launchOptionsBuilder = gameInstance.getLaunchOptions(
-                            context.javaRuntime, repository.getBaseDirectory(), javaAgents, javaArguments, scriptFile != null);
+                            context.javaRuntime,
+                            context.javaExecutable,
+                            repository.getBaseDirectory(),
+                            javaAgents,
+                            javaArguments,
+                            scriptFile != null);
                     if (disableOfflineSkin) {
                         launchOptionsBuilder.setDaemon(false);
                     }
@@ -253,7 +270,7 @@ public final class LauncherHelper {
                     }
 
                     if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && setting.getInheritable(GameSettings::highPerformanceProperty)) {
-                        @Nullable String javaPathGpuReg = FileUtils.getAbsolutePath(context.javaRuntime.getBinary());
+                        @Nullable String javaPathGpuReg = FileUtils.getAbsolutePath(context.javaExecutable);
                         try {
                             WinReg reg = WinReg.INSTANCE;
                             if (reg != null) {

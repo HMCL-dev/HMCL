@@ -565,7 +565,13 @@ public class HMCLGameInstance extends DefaultGameInstance {
         return getLayout().getInstanceGameSettingsFile(id);
     }
 
-    public LaunchOptions.Builder getLaunchOptions(JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
+    public LaunchOptions.Builder getLaunchOptions(
+            JavaRuntime javaRuntime,
+            Path javaExecutable,
+            Path gameDir,
+            List<String> javaAgents,
+            List<String> javaArguments,
+            boolean makeLaunchScript) {
         GameSettings.Effective vs = getEffectiveSettings();
         boolean noJVMOptions = vs.getInheritable(GameSettings::noJVMOptionsProperty);
         boolean autoMemory = vs.getInheritable(GameSettings::autoMemoryProperty);
@@ -577,7 +583,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
                     ? null
                     : Math.toIntExact(HMCLGameRepository.getAutoAllocatedMemory(
                             SystemInfo.getPhysicalMemoryStatus().available(),
-                            javaVersion.getPlatform()) / 1024L / 1024L);
+                            javaRuntime.getPlatform()) / 1024L / 1024L);
         } else {
             maxMemory = vs.getMaxMemory();
         }
@@ -585,8 +591,8 @@ public class HMCLGameInstance extends DefaultGameInstance {
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
                 .setInstanceId(getId())
                 .setGameDir(gameDir)
-                .setJava(javaVersion)
-                .setNotUseJavaw(vs.getInheritable(GameSettings::notUseJavawProperty))
+                .setJava(javaRuntime)
+                .setJavaExecutable(javaExecutable)
                 .setVersionType(Metadata.TITLE)
                 .setVersionName(getId().id())
                 .setProfileName(Metadata.TITLE)

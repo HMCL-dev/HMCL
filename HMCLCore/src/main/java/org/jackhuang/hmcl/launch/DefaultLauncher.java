@@ -21,7 +21,6 @@ import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -58,7 +57,7 @@ public class DefaultLauncher extends Launcher {
         super(instance, manifest, authInfo, options, listener, daemon);
     }
 
-    private Command generateCommandLine(Path nativeFolder, boolean script) throws IOException {
+    private Command generateCommandLine(Path nativeFolder) throws IOException {
         CommandBuilder res = new CommandBuilder();
 
         switch (options.getProcessPriority()) {
@@ -99,20 +98,7 @@ public class DefaultLauncher extends Launcher {
         if (StringUtils.isNotBlank(options.getWrapper()))
             res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), getEnvVars(nativeFolder)));
 
-        JavaRuntime java = options.getJava();
-
-        Path javaBinary = java.getBinary();
-        if (java.getPlatform().os() == OperatingSystem.WINDOWS
-                && !script
-                && !options.isNotUseJavaw()
-                && FileUtils.getName(javaBinary).equalsIgnoreCase("java.exe")) {
-            Path javawBinary = javaBinary.resolveSibling("javaw.exe");
-            if (Files.isRegularFile(javawBinary)) {
-                javaBinary = javawBinary;
-            }
-        }
-
-        res.add(javaBinary.toString());
+        res.add(options.getJavaExecutable().toString());
 
         res.addAllWithoutParsingAndReadExternal(options.getOverrideJavaArguments());
 
@@ -679,7 +665,7 @@ public class DefaultLauncher extends Launcher {
     public ManagedProcess launch() throws IOException, InterruptedException {
         Path nativeFolder = getNativeFolder();
 
-        final Command command = generateCommandLine(nativeFolder, false);
+        final Command command = generateCommandLine(nativeFolder);
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = command.commandLine.asList();
@@ -888,7 +874,7 @@ public class DefaultLauncher extends Launcher {
                 throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh', 'bash', 'ps1' or 'command' in macOS/Linux");
         }
 
-        final Command commandLine = generateCommandLine(nativeFolder, true);
+        final Command commandLine = generateCommandLine(nativeFolder);
         final String command = usePowerShell ? null : commandLine.commandLine.toString();
         Map<String, String> envVars = getEnvVars(nativeFolder);
 

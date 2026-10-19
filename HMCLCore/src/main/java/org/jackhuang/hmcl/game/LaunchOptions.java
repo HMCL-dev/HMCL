@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.nio.file.Path;
@@ -33,7 +34,7 @@ public class LaunchOptions implements Serializable {
     private GameInstanceID instanceId;
     private Path gameDir;
     private JavaRuntime java;
-    private boolean notUseJavaw;
+    private Path javaExecutable;
     private String versionName;
     private String versionType;
     private String profileName;
@@ -86,11 +87,14 @@ public class LaunchOptions implements Serializable {
         return java;
     }
 
-    /// Returns whether automatic replacement of a Windows Java executable with a sibling `javaw.exe` file is disabled.
-    /// Defaults to `false`, allowing replacement when the sibling is a regular file.
-    /// If `true`, the selected executable is used unchanged.
-    public boolean isNotUseJavaw() {
-        return notUseJavaw;
+    /// Returns the executable selected for launch, falling back to [JavaRuntime#getBinary()] if none is specified.
+    /// The path is used without automatic executable substitution or file validation.
+    public Path getJavaExecutable() {
+        if (javaExecutable != null)
+            return javaExecutable;
+        if (java != null)
+            return java.getBinary();
+        return null;
     }
 
     /**
@@ -344,12 +348,8 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        /// Sets whether to disable automatic replacement with a sibling `javaw.exe` file for a Windows Java runtime.
-        ///
-        /// @param notUseJavaw whether to keep the selected executable unchanged; ignored for other runtime platforms
-        /// @return this builder
-        public @NotNull Builder setNotUseJavaw(boolean notUseJavaw) {
-            options.notUseJavaw = notUseJavaw;
+        public Builder setJavaExecutable(Path javaExecutable) {
+            options.javaExecutable = javaExecutable;
             return this;
         }
 
