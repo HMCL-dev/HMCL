@@ -58,7 +58,7 @@ public class DefaultLauncher extends Launcher {
         super(instance, manifest, authInfo, options, listener, daemon);
     }
 
-    private Command generateCommandLine(Path nativeFolder) throws IOException {
+    private Command generateCommandLine(Path nativeFolder, boolean script) throws IOException {
         CommandBuilder res = new CommandBuilder();
 
         switch (options.getProcessPriority()) {
@@ -102,7 +102,10 @@ public class DefaultLauncher extends Launcher {
         JavaRuntime java = options.getJava();
 
         Path javaBinary = java.getBinary();
-        if (!options.isNotUseJavaw() && java.getPlatform().os() == OperatingSystem.WINDOWS) {
+        if (java.getPlatform().os() == OperatingSystem.WINDOWS
+                && !script
+                && !options.isNotUseJavaw()
+                && FileUtils.getName(javaBinary).equalsIgnoreCase("java.exe")) {
             Path javawBinary = javaBinary.resolveSibling("javaw.exe");
             if (Files.isRegularFile(javawBinary)) {
                 javaBinary = javawBinary;
@@ -676,7 +679,7 @@ public class DefaultLauncher extends Launcher {
     public ManagedProcess launch() throws IOException, InterruptedException {
         Path nativeFolder = getNativeFolder();
 
-        final Command command = generateCommandLine(nativeFolder);
+        final Command command = generateCommandLine(nativeFolder, false);
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = command.commandLine.asList();
@@ -885,7 +888,7 @@ public class DefaultLauncher extends Launcher {
                 throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh', 'bash', 'ps1' or 'command' in macOS/Linux");
         }
 
-        final Command commandLine = generateCommandLine(nativeFolder);
+        final Command commandLine = generateCommandLine(nativeFolder, true);
         final String command = usePowerShell ? null : commandLine.commandLine.toString();
         Map<String, String> envVars = getEnvVars(nativeFolder);
 
