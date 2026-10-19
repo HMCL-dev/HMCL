@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.instances;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
+import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -65,10 +66,12 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
     private final @Nullable Path directory;
     private final int dataVersion;
     private final boolean flattened;
+    private final BooleanProperty readOnly;
 
     public StructureListPage(WorldManagePage worldManagePage) {
         this.world = worldManagePage.getWorld();
         this.dataVersion = world.getDataVersion();
+        this.readOnly = worldManagePage.readOnlyProperty();
         if (dataVersion <= 500) { // lower than 1.10 16w20a, unsupported
             directory = null;
             flattened = false;
@@ -80,7 +83,7 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
             flattened = true;
         }
 
-        FXUtils.applyDragListener(this, p -> SchematicType.getType(p) == SchematicType.NBT_STRUCTURE, this::addFiles);
+        FXUtils.applyDragListener(this, p -> !readOnly.get() && SchematicType.getType(p) == SchematicType.NBT_STRUCTURE, this::addFiles);
 
         refresh();
     }
@@ -279,10 +282,12 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
 
         @Override
         protected List<Node> initializeToolbar(StructureListPage skinnable) {
+            var addBtn = ToolbarListPageSkin.createToolbarButton2(i18n("world.structure.add"), SVG.ADD, skinnable::chooseAndAdd);
+            addBtn.disableProperty().bind(skinnable.readOnly);
             return List.of(
                     ToolbarListPageSkin.createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     ToolbarListPageSkin.createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::reveal),
-                    ToolbarListPageSkin.createToolbarButton2(i18n("world.structure.add"), SVG.ADD, skinnable::chooseAndAdd)
+                    addBtn
             );
         }
     }
@@ -307,12 +312,15 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
             renameButton.setOnAction(e -> {
                 if (getItem() != null && !isEmpty()) page.rename(getItem());
             });
+            renameButton.disableProperty().bind(page.readOnly);
 
             JFXButton exploreButton = FXUtils.newToggleButton4(SVG.EXPLORE); // Change the icon if allows editing
             exploreButton.setOnAction(e -> {
                 if (getItem() == null || isEmpty()) return;
                 try {
-                    Controllers.navigate(new NBTEditorPage(getItem().structureFile.getFile(), getItem().getIdString()));
+                    var nbtEditorPage = new NBTEditorPage(getItem().structureFile.getFile(), getItem().getIdString());
+                    nbtEditorPage.readOnlyProperty().bind(page.readOnly);
+                    Controllers.navigate(nbtEditorPage);
                 } catch (IOException ignored) { // should never happen
                 }
             });
@@ -337,6 +345,7 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
                     }, null);
                 }
             });
+            deleteButton.disableProperty().bind(page.readOnly);
 
             container.getChildren().setAll(content, renameButton, exploreButton, revealButton, deleteButton);
 
