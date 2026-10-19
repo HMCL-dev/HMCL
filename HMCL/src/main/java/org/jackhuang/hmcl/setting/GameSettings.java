@@ -82,7 +82,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
     public static final class Instance extends GameSettings implements JsonSchemaSetting {
         /// The JSON schema supported by instance-specific game settings.
         public static final JsonSchema CURRENT_SCHEMA =
-                new JsonSchema("instance-game-settings", new JsonSchema.Version(1, 0, 0));
+                new JsonSchema("instance-game-settings", new JsonSchema.Version(1, 0, 1));
 
         /// Creates an empty instance setting.
         public Instance() {
