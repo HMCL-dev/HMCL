@@ -267,7 +267,7 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
         }
 
         public String getIdString() {
-            if (namespace == null) return getName();
+            if (namespace == null) return "";
             return namespace + ":" + getName();
         }
     }
@@ -361,8 +361,8 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
         protected void updateControl(NBTStructureInfoObject item, boolean empty) {
             if (item == null || empty) return;
 
-            content.setTitle(item.structureFile.getName());
-            content.setSubtitle(item.namespace + ":" + item.structureFile.getName());
+            content.setTitle(item.getName());
+            content.setSubtitle(item.getIdString());
 
             int nbtDataVersion = item.structureFile.getMinecraftDataVersion().orElse(500);
             if (nbtDataVersion > dataVersion)
