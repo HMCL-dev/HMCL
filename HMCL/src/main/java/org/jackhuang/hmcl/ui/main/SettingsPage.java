@@ -118,10 +118,10 @@ public final class SettingsPage extends ScrollPane {
                             updateButton.setManaged(outdated);
                             updatePane.pseudoClassStateChanged(PseudoClass.getPseudoClass("active"), outdated);
 
-                            if (outdated) {
-                                lblUpdateSubProperty.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().version()));
-                            } else if (UpdateChecker.isCheckingUpdate()) {
+                            if (UpdateChecker.isCheckingUpdate()) {
                                 lblUpdateSubProperty.set(i18n("update.checking"));
+                            } else if (outdated) {
+                                lblUpdateSubProperty.set(i18n("update.newest_version", UpdateChecker.getLatestVersion().version()));
                             } else if (UpdateChecker.errorProperty().get() != null) {
                                 Throwable t = UpdateChecker.errorProperty().get();
                                 if (t instanceof SelfVerificationException) {
