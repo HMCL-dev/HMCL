@@ -390,10 +390,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             AddonUpdateObject oldItem = getItem();
             boolean oldEmpty = isEmpty();
 
-            if (oldItem != null) {
-                enabledBox.selectedProperty().unbindBidirectional(oldItem.enabledProperty());
-            }
-
             super.updateItem(item, empty);
 
             if (oldItem == item && oldEmpty == empty) {
@@ -401,6 +397,10 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             }
 
             ripplerContainer.releaseRippleImmediately();
+
+            if (oldItem != null) {
+                enabledBox.selectedProperty().unbindBidirectional(oldItem.enabledProperty());
+            }
 
             if (empty || item == null) {
                 setGraphic(null);
