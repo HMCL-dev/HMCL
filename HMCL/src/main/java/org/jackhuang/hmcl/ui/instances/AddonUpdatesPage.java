@@ -64,6 +64,7 @@ import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import org.jackhuang.hmcl.util.javafx.Subscription;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -207,10 +208,10 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             csvTable.set(3, 0, "Update Source");
 
             for (int i = 0; i < objects.size(); i++) {
-                csvTable.set(0, i + 1, objects.get(i).fileName);
-                csvTable.set(1, i + 1, objects.get(i).currentVersion);
-                csvTable.set(2, i + 1, objects.get(i).targetVersion);
-                csvTable.set(3, i + 1, objects.get(i).source);
+                csvTable.set(0, i + 1, objects.get(i).getFileName());
+                csvTable.set(1, i + 1, objects.get(i).getCurrentVersion());
+                csvTable.set(2, i + 1, objects.get(i).getTargetVersion());
+                csvTable.set(3, i + 1, objects.get(i).getSource());
             }
 
             csvTable.write(path);
@@ -232,9 +233,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
     private static final class AddonUpdateObject {
         final AddonUpdate data;
-        final String fileName;
-        final String currentVersion;
-        final String targetVersion;
         final String targetVersionType;
         final String source;
         String changelog = null;
@@ -246,9 +244,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         public AddonUpdateObject(AddonUpdate data) {
             this.data = data;
 
-            this.fileName = data.localAddonFile().getFileName();
-            this.currentVersion = data.currentVersion().version();
-            this.targetVersion = data.targetVersion().version();
             this.targetVersionType = switch (data.targetVersion().versionType()) {
                 case Release -> i18n("addon.channel.release");
                 case Beta -> i18n("addon.channel.beta");
@@ -278,6 +273,26 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
         public LocalAddonFile<?> getLocalAddonFile() {
             return data.localAddonFile();
+        }
+
+        public String getFileName() {
+            return data.localAddonFile().getFileName();
+        }
+
+        public String getCurrentVersion() {
+            return data.currentVersion().version();
+        }
+
+        public String getTargetVersion() {
+            return data.targetVersion().version();
+        }
+
+        public String getTargetVersionType() {
+            return targetVersionType;
+        }
+
+        public String getSource() {
+            return source;
         }
 
         private Image getDefaultIcon() {
@@ -416,8 +431,8 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             content.getTags().clear();
             if (addonFile instanceof LocalModFile modFile)
                 content.addTag(modFile.getId());
-            content.addTag(item.source);
-            content.addTag(item.targetVersionType);
+            content.addTag(item.getSource());
+            content.addTag(item.getTargetVersionType());
 
             if (addonFile instanceof LocalModFile modFile) {
                 content.setTitle(modFile.getName());
@@ -425,7 +440,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 content.setTitle(resourcePackFile.getFileName());
             }
 
-            content.setSubtitle(item.currentVersion + " → " + item.targetVersion);
+            content.setSubtitle(item.getCurrentVersion() + " → " + item.getTargetVersion());
 
             setGraphic(pane);
         }
