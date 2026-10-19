@@ -41,12 +41,16 @@ public final class JavaInfoUtils {
 
     public static @NotNull JavaInfo fromExecutable(Path executable) throws IOException {
         assert executable.isAbsolute();
+        Path thisPath = JarUtils.thisJarPath();
+        if (thisPath == null) {
+            throw new IOException("Failed to find current HMCL location");
+        }
 
         try {
             Result result = JsonUtils.GSON.fromJson(SystemUtils.run(
                     executable.toString(),
                     "-classpath",
-                    JarUtils.getThisJarPath().toString(),
+                    thisPath.toString(),
                     org.glavo.info.Main.class.getName()
             ), Result.class);
 

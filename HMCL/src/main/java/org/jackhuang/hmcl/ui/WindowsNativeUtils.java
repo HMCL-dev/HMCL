@@ -85,7 +85,7 @@ public final class WindowsNativeUtils {
         if (!NativeUtils.USE_JNA || Shell32.INSTANCE == null)
             return;
 
-        @Nullable Path thisJar = JarUtils.tryGetThisJarPath();
+        @Nullable Path thisJar = JarUtils.thisJarPath();
         if (thisJar == null || !Files.isRegularFile(thisJar) || !"exe".equalsIgnoreCase(FileUtils.getExtension(thisJar)))
             return;
 

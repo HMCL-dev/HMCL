@@ -65,7 +65,7 @@ public final class AuthlibInjectorServers implements Validation {
 
     public static void init() {
         Path configLocation;
-        Path jarPath = JarUtils.tryGetThisJarPath();
+        Path jarPath = JarUtils.thisJarPath();
         if (jarPath != null && Files.isRegularFile(jarPath) && Files.isWritable(jarPath)) {
             configLocation = jarPath.getParent().resolve(CONFIG_FILENAME);
         } else {

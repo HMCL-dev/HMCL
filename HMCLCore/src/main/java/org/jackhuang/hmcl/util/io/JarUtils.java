@@ -71,14 +71,7 @@ public final class JarUtils {
 
     /// Get the jar location of current application. Return null if not found
     @Nullable
-    public static Path tryGetThisJarPath() {
-        return THIS_JAR;
-    }
-
-    /// Get the jar location of current application. Throw [IOException] if not found
-    public static Path getThisJarPath() throws IOException {
-        if (THIS_JAR == null)
-            throw new IOException("Failed to find current HMCL location");
+    public static Path thisJarPath() {
         return THIS_JAR;
     }
 

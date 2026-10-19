@@ -91,6 +91,10 @@ public final class JavaRunner {
     /// Restart the current application.
     public static void restartSelf() throws IOException {
         LOG.info("Restarting HMCL");
-        runJava(JarUtils.getThisJarPath());
+        Path jarPath = JarUtils.thisJarPath();
+        if (jarPath == null)
+            throw new IOException("Failed to find current HMCL location");
+
+        runJava(jarPath);
     }
 }

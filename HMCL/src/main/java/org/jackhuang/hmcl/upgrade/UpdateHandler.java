@@ -144,7 +144,7 @@ public final class UpdateHandler {
                             // Ignore
                         }
 
-                        requestUpdate(downloaded, JarUtils.getThisJarPath());
+                        requestUpdate(downloaded, getCurrentLocation());
                         EntryPoint.exit(0);
                     } catch (IOException e) {
                         LOG.warning("Failed to update to " + version, e);
@@ -165,7 +165,7 @@ public final class UpdateHandler {
     private static void applyUpdate(Path target) throws IOException {
         LOG.info("Applying update to " + target);
 
-        Path self = JarUtils.getThisJarPath();
+        Path self = getCurrentLocation();
         if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK && !IntegrityChecker.isSelfVerified()) {
             throw new SelfVerificationException();
         }
@@ -204,6 +204,14 @@ public final class UpdateHandler {
         return Optional.empty();
     }
 
+    private static Path getCurrentLocation() throws IOException {
+        Path path = JarUtils.thisJarPath();
+        if (path == null) {
+            throw new IOException("Failed to find current HMCL location");
+        }
+        return path;
+    }
+
     // ==== support for old versions ===
     private static void performMigration() throws IOException {
         LOG.info("Migrating from old versions");
@@ -211,7 +219,7 @@ public final class UpdateHandler {
         Path location = getParentApplicationLocation()
                 .orElseThrow(() -> new IOException("Failed to get parent application location"));
 
-        requestUpdate(JarUtils.getThisJarPath(), location);
+        requestUpdate(getCurrentLocation(), location);
     }
 
     /**
@@ -241,7 +249,7 @@ public final class UpdateHandler {
     }
 
     private static boolean isFirstLaunchAfterUpgrade() {
-        Path currentPath = JarUtils.tryGetThisJarPath();
+        Path currentPath = JarUtils.thisJarPath();
         if (currentPath != null) {
             Path updated = Metadata.HMCL_USER_HOME.resolve("HMCL-" + Metadata.VERSION + ".jar");
             return currentPath.equals(updated.toAbsolutePath());
