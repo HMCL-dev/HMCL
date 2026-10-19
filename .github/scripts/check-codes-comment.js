@@ -140,7 +140,7 @@ module.exports = async ({ github, context, core }) => {
 
         for await (const item of iterator) {
             const comments = item.data;
-            const comment = comments.find(comment => comment.body && comment.body.startsWith(commentFlag));
+            const comment = comments.find(comment => comment.body && comment.body.startsWith(commentFlag) && comment.user && comment.user.id === 41898282);
             if (comment) {
                 commentId = comment.id;
                 core.info(`Found existing review comment (${commentId}).`);
