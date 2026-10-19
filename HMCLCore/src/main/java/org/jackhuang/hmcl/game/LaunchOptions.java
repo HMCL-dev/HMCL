@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.nio.file.Path;
