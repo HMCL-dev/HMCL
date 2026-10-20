@@ -91,9 +91,6 @@ public final class RegionUtils {
         if (!IS_CHINA_MAINLAND_MACHINE)
             return false;
 
-        if (ZonedDateTime.now().getOffset().getTotalSeconds() != Duration.ofHours(8).toSeconds())
-            return false;
-
         if (NOT_CHINA_MAINLAND_REGION_TIMEZONES.contains(ZoneId.systemDefault().getId()))
             return false;
 
