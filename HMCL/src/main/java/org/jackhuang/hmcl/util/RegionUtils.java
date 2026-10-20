@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
@@ -36,6 +37,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
 public final class RegionUtils {
+
+    /// Pre-check if the network is in China Mainland to avoid blocking the UI thread.
+    public static void init() {
+        if (IS_CHINA_MAINLAND_MACHINE) {
+            Schedulers.io().execute(RegionUtils::isIsChinaMainlandNetwork);
+        }
+    }
 
     private static final boolean IS_CHINA_MAINLAND_MACHINE = checkMachineIsChinaMainland();
 
