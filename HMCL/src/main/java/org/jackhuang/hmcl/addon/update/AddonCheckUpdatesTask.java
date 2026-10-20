@@ -36,7 +36,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class AddonCheckUpdatesTask extends Task<AddonUpdates> {
     private final List<Task<Pair<AddonUpdate, @Nullable AddonUpdate>>> dependents;
 
-    public AddonCheckUpdatesTask(DownloadProvider downloadProvider, String gameVersion, Collection<? extends LocalAddonFile> addons) {
+    public AddonCheckUpdatesTask(DownloadProvider downloadProvider, String gameVersion, Collection<? extends LocalAddonFile<?>> addons) {
         dependents = addons.stream().map(addon ->
                 Task.supplyAsync(Schedulers.io(), () -> {
                     AddonUpdate candidate = null;
