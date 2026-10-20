@@ -54,6 +54,7 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
             it.fireEvent(new DialogCloseEvent());
             onEnd();
         });
+        pane.setOnBackground(this::onEnd);
 
         pane.setTitle(i18n("message.doing"));
         if (settings.containsKey("title")) {

@@ -44,9 +44,7 @@ import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorScheme;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.WeakListenerHolder;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -193,6 +191,13 @@ final class MainWindowPane extends StackPane {
         decorator.capableDraggingWindow(buttons);
         buttons.setMaxSize(Region.USE_PREF_SIZE, 40);
 
+        JFXButton tasksButton = new JFXButton();
+        tasksButton.setFocusTraversable(false);
+        tasksButton.setGraphic(SVG.LISTS.createIcon(Themes.titleFillProperty()));
+        tasksButton.getStyleClass().add("jfx-decorator-button");
+        tasksButton.setOnAction(event -> Controllers.navigate(new TaskManagerPage()));
+        decorator.forbidDraggingWindow(tasksButton);
+
         JFXButton helpButton = new JFXButton();
         helpButton.setFocusTraversable(false);
         helpButton.setGraphic(SVG.HELP.createIcon(Themes.titleFillProperty()));
@@ -214,7 +219,7 @@ final class MainWindowPane extends StackPane {
         closeButton.setOnAction(event -> decorator.closeWindow());
         decorator.forbidDraggingWindow(closeButton);
 
-        buttons.getChildren().setAll(helpButton, minimizeButton, closeButton);
+        buttons.getChildren().setAll(tasksButton, helpButton, minimizeButton, closeButton);
         return buttons;
     }
 
