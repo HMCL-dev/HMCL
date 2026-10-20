@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Set;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -73,26 +72,25 @@ public final class RegionUtils {
 
     private static volatile @Nullable Boolean isChinaMainlandNetwork;
 
-    private static final Set<String> NOT_CHINA_MAINLAND_REGION_TIMEZONES = Set.of(
-            "Antarctica/Casey",
-            "Asia/Hong_Kong",
-            "Asia/Irkutsk",
-            "Asia/Kuching",
-            "Asia/Macau",
-            "Asia/Makassar",
-            "Asia/Manila",
-            "Asia/Singapore",
-            "Asia/Taipei",
-            "Asia/Ulaanbaatar",
-            "Australia/Perth"
-    );
-
     private static boolean checkChinaMainlandNetwork() {
         if (!IS_CHINA_MAINLAND_MACHINE)
             return false;
 
-        if (NOT_CHINA_MAINLAND_REGION_TIMEZONES.contains(ZoneId.systemDefault().getId()))
-            return false;
+        switch (ZoneId.systemDefault().getId()) {
+            case "Antarctica/Casey",
+                 "Asia/Hong_Kong",
+                 "Asia/Irkutsk",
+                 "Asia/Kuching",
+                 "Asia/Macau",
+                 "Asia/Makassar",
+                 "Asia/Manila",
+                 "Asia/Singapore",
+                 "Asia/Taipei",
+                 "Asia/Ulaanbaatar",
+                 "Australia/Perth" -> {
+                return false;
+            }
+        }
 
         @NotNullByDefault
         @JsonSerializable
