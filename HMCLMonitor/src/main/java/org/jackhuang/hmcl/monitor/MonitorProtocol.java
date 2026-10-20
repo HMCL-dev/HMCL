@@ -44,7 +44,7 @@ public final class MonitorProtocol {
     static final long HANDSHAKE_TIMEOUT = 20_000;
 
     /// The shared protocol output on raw stderr, also used to detect failures when writing messages.
-    static final PrintStream protocol = new PrintStream(new FileOutputStream(FileDescriptor.err), true, MonitorProtocol.CHARSET);
+    static private final PrintStream protocol = new PrintStream(new FileOutputStream(FileDescriptor.err), true, MonitorProtocol.CHARSET);
 
     /// Message tag of the handshake message.
     static final String TAG_PID = "P";
@@ -69,5 +69,9 @@ public final class MonitorProtocol {
     /// Writes and flushes the game exit message carrying the exit code and its classified type.
     static void exitMessage(int exitCode, ProcessListener.ExitType exitType) {
         protocol.println(TAG_EXIT + "\t" + exitCode + "\t" + exitType.name());
+    }
+
+    static boolean parentGone() {
+        return protocol.checkError();
     }
 }

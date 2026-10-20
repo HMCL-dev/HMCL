@@ -34,7 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -120,7 +119,6 @@ public final class MonitorSupervisor {
 
     private static void startMonitors(ManagedProcess gameProcess, BufferedWriter logWriter,
                                       ProcessSpec spec, Path logFile, Path specPath) throws InterruptedException {
-        AtomicBoolean parentGone = new AtomicBoolean(false);
         BiConsumer<String, Boolean> sink = (line, isErrorStream) -> {
             try {
                 synchronized (logWriter) {
@@ -132,11 +130,7 @@ public final class MonitorSupervisor {
                 LOG.warning("Failed to write the session log", e);
             }
             gameProcess.addLine(line);
-            if (!parentGone.get()) {
-                MonitorProtocol.logMessage(isErrorStream, line);
-                if (MonitorProtocol.protocol.checkError())
-                    parentGone.set(true);
-            }
+            MonitorProtocol.logMessage(isErrorStream, line);
         };
 
         Charset encoding = Charset.forName(Objects.requireNonNull(spec.encoding));
@@ -152,10 +146,7 @@ public final class MonitorSupervisor {
             ProcessListener.ExitType reportedType = readCanceled(specPath) ? ProcessListener.ExitType.INTERRUPTED : exitType;
             crashed = reportedType != ProcessListener.ExitType.NORMAL;
 
-            if (MonitorProtocol.protocol.checkError())
-                parentGone.set(true);
-
-            shouldRestart = parentGone.get() && switch (spec.relaunchPolicy) {
+            shouldRestart = MonitorProtocol.parentGone() && switch (spec.relaunchPolicy) {
                 case ALWAYS -> true;
                 case ON_CRASH -> crashed;
                 case NEVER -> false;
