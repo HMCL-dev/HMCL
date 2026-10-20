@@ -33,6 +33,9 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import java.net.URI;
+import java.net.http.*;
+
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
@@ -100,10 +103,30 @@ public final class RegionUtils {
         try {
             LOG.info("Fetching network information");
             IpWhoIsResponse result = JsonUtils.fromNonNullJson(NetworkUtils.doGet("https://ipwho.is"), IpWhoIsResponse.class);
-            return !result.success || "CN".equalsIgnoreCase(result.country_code);
+            return !result.success || "CN".equalsIgnoreCase(result.country_code) || checkChinaMainlandNetworkStrong();
         } catch (Throwable e) {
             LOG.warning("Failed to get the network information", e);
             return true;
+        }
+    }
+
+    private static boolean checkChinaMainlandNetworkStrong() {
+        try {
+            HttpResponse<String> r = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofSeconds(5))
+                    .followRedirects(HttpClient.Redirect.ALWAYS)
+                    .build()
+                    .send(HttpRequest.newBuilder()
+                                    .uri(URI.create("https://www.anthropic.com"))
+                                    .timeout(Duration.ofSeconds(10))
+                                    .GET().build(),
+                            HttpResponse.BodyHandlers.ofString());
+
+            int s = r.statusCode();
+            return s == 403 || s == 451
+                    || r.uri().toString().contains("unavailable-in-region");
+        } catch (Exception e) {
+            return false;
         }
     }
 
