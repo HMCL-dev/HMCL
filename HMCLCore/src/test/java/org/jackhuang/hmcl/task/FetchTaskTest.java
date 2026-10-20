@@ -39,6 +39,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -74,7 +76,6 @@ public final class FetchTaskTest {
             });
             server.handle("/slow", exchange -> {
                 slowRequests.incrementAndGet();
-                exchange.getResponseHeaders().set("Accept-Ranges", "bytes");
                 exchange.getResponseHeaders().set("ETag", "W/\"node-a\"");
                 exchange.sendResponseHeaders(200, content.length);
                 try {
@@ -137,9 +138,18 @@ public final class FetchTaskTest {
                 ifRanges.add(Objects.requireNonNullElse(exchange.getRequestHeaders().getFirst("If-Range"), ""));
                 if (attempt == 1) {
                     // This node provides a content hash and byte ranges without reusable HTTP validators.
-                    sendContent(exchange, content, 0, 4096);
+                    if (responseType == ResumeResponse.OMITTED_ACCEPT_RANGES) {
+                        exchange.sendResponseHeaders(200, content.length);
+                        exchange.getResponseBody().write(content, 0, 4096);
+                    } else {
+                        sendContent(exchange, content, 0, 4096);
+                    }
                 } else if (attempt == 2 && responseType == ResumeResponse.UNSATISFIABLE_RANGE) {
                     exchange.sendResponseHeaders(416, -1);
+                } else if (attempt == 2 && responseType == ResumeResponse.CHUNKED_RANGE) {
+                    exchange.getResponseHeaders().set("Content-Range", "bytes 4096-" + (content.length - 1) + "/" + content.length);
+                    exchange.sendResponseHeaders(206, 0);
+                    exchange.getResponseBody().write(content, 4096, content.length - 4096);
                 } else {
                     int offset = responseType == ResumeResponse.IGNORED_RANGE ? 0 : rangeOffset(range);
                     if (responseType == ResumeResponse.INVALID_RANGE && attempt == 2)
@@ -154,11 +164,15 @@ public final class FetchTaskTest {
             Path target = download(server.url("/entry"));
             assertArrayEquals(content, Files.readAllBytes(target));
             assertEquals(dispatches.get(), entries.get());
-            assertEquals(responseType == ResumeResponse.VALID ? 2 : 3, dispatches.get());
+            boolean valid = switch (responseType) {
+                case VALID, OMITTED_ACCEPT_RANGES, CHUNKED_RANGE -> true;
+                default -> false;
+            };
+            assertEquals(valid ? 2 : 3, dispatches.get());
             assertEquals("", ranges.get(0));
             assertEquals("bytes=4096-", ranges.get(1));
             assertTrue(ifRanges.stream().allMatch(String::isEmpty));
-            if (responseType != ResumeResponse.VALID)
+            if (!valid)
                 assertEquals("", ranges.get(2));
         }
     }
@@ -200,6 +214,38 @@ public final class FetchTaskTest {
             assertArrayEquals(content, Files.readAllBytes(download(server.url("/file"))));
             assertEquals(2, requests.get());
             assertEquals("\"stable\"", ifRanges.get(1));
+        }
+    }
+
+    /// Reports total file progress without resetting it when a partial response is appended.
+    @Test
+    public void preservesProgressAcrossResumption() throws Exception {
+        byte[] content = content(64 * 1024);
+        AtomicInteger requests = new AtomicInteger();
+        List<Double> progressValues = new ArrayList<>();
+        try (TestServer server = new TestServer()) {
+            server.handle("/file", exchange -> {
+                int attempt = requests.incrementAndGet();
+                exchange.getResponseHeaders().set("ETag", "\"stable\"");
+                int offset = rangeOffset(exchange.getRequestHeaders().getFirst("Range"));
+                sendContent(exchange, content, offset, attempt == 1 ? 4096 : content.length - offset);
+            });
+            Path target = directory.resolve("download.bin");
+            FileDownloadTask task = new FileDownloadTask(List.of(server.url("/file")), target) {
+                /// Captures progress synchronously instead of dispatching JavaFX property updates.
+                @Override
+                protected void updateProgress(double progress) {
+                    progressValues.add(progress);
+                }
+            };
+            configureRepository(task);
+            task.execute();
+            assertArrayEquals(content, Files.readAllBytes(target));
+            assertEquals(2, requests.get());
+            assertEquals(0.0, progressValues.get(0));
+            assertEquals(1.0, progressValues.get(progressValues.size() - 1));
+            for (int i = 1; i < progressValues.size(); i++)
+                assertTrue(progressValues.get(i) >= progressValues.get(i - 1), "Progress decreased: " + progressValues);
         }
     }
 
@@ -334,6 +380,10 @@ public final class FetchTaskTest {
     private enum ResumeResponse {
         /// Matching content hash and byte range.
         VALID,
+        /// Range support was not advertised in the initial response.
+        OMITTED_ACCEPT_RANGES,
+        /// A valid partial response with chunked framing instead of Content-Length.
+        CHUNKED_RANGE,
         /// A complete response instead of the requested range.
         IGNORED_RANGE,
         /// A byte range starting at the wrong offset.

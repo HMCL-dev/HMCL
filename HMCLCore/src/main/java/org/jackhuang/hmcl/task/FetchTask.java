@@ -148,13 +148,9 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
     private static final class HttpResumeContext {
         private static final Pattern CONTENT_RANGE_PATTERN = Pattern.compile("bytes ([0-9]+)-([0-9]+)/([0-9]+)");
 
-        /// Creates resume state for an uncompressed response with a known length and byte-range support.
+        /// Creates resume state for an uncompressed response with a known length and a file validator.
         static @Nullable FetchTask.HttpResumeContext of(UrlResponseInfo response, @Nullable String bmclapiHash) throws IOException {
             if (response.responseCode() != HttpURLConnection.HTTP_OK)
-                return null;
-
-            boolean acceptRanges = response.headers().firstValue("accept-ranges").orElse("").equalsIgnoreCase("bytes");
-            if (!acceptRanges)
                 return null;
 
             var contentEncoding = ContentEncoding.fromHeaders(response.headers());
@@ -216,7 +212,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                 return false;
 
             long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
-            if (this.contentLength != contentLength + this.countUncompressed)
+            if (contentLength >= 0 && this.contentLength - this.countUncompressed != contentLength)
                 return false;
 
             if (this.bmclapiHash != null) {
@@ -245,10 +241,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                 long end = Long.parseLong(matcher.group(2));
                 long total = Long.parseLong(matcher.group(3));
 
-                if (start != countUncompressed || end < start || total != this.contentLength)
-                    return false;
-
-                return end - start + 1 == contentLength;
+                return start == countUncompressed && total == this.contentLength && end == total - 1;
             } catch (NumberFormatException e) {
                 return false;
             }
@@ -287,7 +280,9 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                 if (resume != null)
                     resume.countUncompressed += len;
 
-                if (contentLength >= 0) {
+                if (resume != null) {
+                    updateProgress(resume.countUncompressed, resume.contentLength);
+                } else if (contentLength >= 0) {
                     // Update progress information per second
                     updateProgress(counter.downloaded, contentLength);
                 }
@@ -295,9 +290,8 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                 updateDownloadSpeed(counter.downloaded - lastDownloaded);
                 lastDownloaded = counter.downloaded;
 
-                if (retryPolicy != null && (contentLength < 0 || counter.downloaded < contentLength)
-                        && retryPolicy.shouldRetry(counter.downloaded, System.nanoTime()))
-                    throw new SocketTimeoutException("BMCLAPI node remained below 128 KiB/s for 10 seconds");
+                if (retryPolicy != null && retryPolicy.shouldRetry(counter.downloaded, contentLength, System.nanoTime()))
+                    throw new SocketTimeoutException("BMCLAPI node is too slow to complete the remaining download promptly");
             }
 
             if (isCancelled())
@@ -346,7 +340,8 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                 @Nullable List<WebURL> redirects = null;
                 try {
                     beforeDownload(url);
-                    updateProgress(0);
+                    if (resumeContext == null || !resumeContext.hasPartialContent())
+                        updateProgress(0);
 
                     @Nullable HttpURLConnection connection;
                     UrlResponseInfo responseInfo;
@@ -362,6 +357,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                     if (useCachedResult && checkETag && !resumeRequested)
                         headers.putAll(repository.injectConnection(url));
                     if (resumeRequested) {
+                        headers.put("accept-encoding", "identity");
                         headers.put("range", "bytes=" + resumeContext.countUncompressed + "-");
                         @Nullable String ifRange = resumeContext.ifRange();
                         if (ifRange != null)
@@ -383,6 +379,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                                 if (bmclapiHash != null && !bmclapiHash.equalsIgnoreCase(responseHash))
                                     throw new IOException("Conflicting BMCLAPI hashes in redirect chain");
                                 bmclapiHash = responseHash;
+                                headers.put("accept-encoding", "identity");
                                 Optional<Path> cache = repository.checkExistentFile(null, "SHA-1", bmclapiHash);
                                 if (cache.isPresent()) {
                                     useCachedResult(cache.get());
@@ -466,6 +463,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                             if (resumeContext.canResume(responseCode, responseInfo, bmclapiHash)) {
                                 // Resume download
                                 LOG.info("Resuming " + resumeContext.url + " from " + resumeContext.countUncompressed);
+                                contentLength = resumeContext.contentLength - resumeContext.countUncompressed;
                             } else {
                                 // Failed to resume download, so we will retry from the beginning
                                 resumeContext = null;
@@ -653,9 +651,10 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
             this.downloaded = 0;
         }
 
-        /// Checks a complete sampling window and consumes one retry when its average rate is too low.
-        boolean shouldRetry(long downloaded, long now) {
-            if (retries >= MAX_SLOW_RETRIES)
+        /// Retries a slow window only when finishing at the current rate would take another full window.
+        /// Unknown-length responses cannot provide a useful estimate and retain normal timeout handling.
+        boolean shouldRetry(long downloaded, long contentLength, long now) {
+            if (retries >= MAX_SLOW_RETRIES || contentLength <= downloaded)
                 return false;
 
             long elapsed = now - started;
@@ -665,7 +664,8 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
             double bytesPerSecond = (downloaded - this.downloaded) * (double) TimeUnit.SECONDS.toNanos(1) / elapsed;
             this.started = now;
             this.downloaded = downloaded;
-            if (bytesPerSecond >= MIN_BYTES_PER_SECOND)
+            if (bytesPerSecond >= MIN_BYTES_PER_SECOND
+                    || contentLength - downloaded <= bytesPerSecond * WINDOW_NANOS / TimeUnit.SECONDS.toNanos(1))
                 return false;
 
             retries++;

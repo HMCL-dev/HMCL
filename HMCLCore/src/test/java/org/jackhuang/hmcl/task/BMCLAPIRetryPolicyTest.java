@@ -30,14 +30,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public final class BMCLAPIRetryPolicyTest {
     /// One second expressed in the policy's monotonic time unit.
     private static final long SECOND = TimeUnit.SECONDS.toNanos(1);
+    /// A large remaining download used when only the sampling window is under test.
+    private static final long CONTENT_LENGTH = 100 * 1024 * 1024;
 
     /// A new connection receives a complete observation window before it can be retried.
     @Test
     public void waitsForCompleteObservationWindow() {
         var policy = new FetchTask.BMCLAPIRetryPolicy();
         policy.startAttempt(SECOND);
-        assertFalse(policy.shouldRetry(1, 10 * SECOND));
-        assertTrue(policy.shouldRetry(1, 11 * SECOND));
+        assertFalse(policy.shouldRetry(1, CONTENT_LENGTH, 10 * SECOND));
+        assertTrue(policy.shouldRetry(1, CONTENT_LENGTH, 11 * SECOND));
     }
 
     /// An earlier fast window does not hide a later persistently slow window.
@@ -46,9 +48,9 @@ public final class BMCLAPIRetryPolicyTest {
         var policy = new FetchTask.BMCLAPIRetryPolicy();
         policy.startAttempt(0);
         long downloaded = 128 * 1024 * 10;
-        assertFalse(policy.shouldRetry(downloaded, 10 * SECOND));
-        assertFalse(policy.shouldRetry(downloaded + 1, 19 * SECOND));
-        assertTrue(policy.shouldRetry(downloaded + 1, 20 * SECOND));
+        assertFalse(policy.shouldRetry(downloaded, CONTENT_LENGTH, 10 * SECOND));
+        assertFalse(policy.shouldRetry(downloaded + 1, CONTENT_LENGTH, 19 * SECOND));
+        assertTrue(policy.shouldRetry(downloaded + 1, CONTENT_LENGTH, 20 * SECOND));
     }
 
     /// Delayed samples use their actual elapsed duration instead of the nominal window length.
@@ -56,7 +58,7 @@ public final class BMCLAPIRetryPolicyTest {
     public void accountsForDelayedSamples() {
         var policy = new FetchTask.BMCLAPIRetryPolicy();
         policy.startAttempt(0);
-        assertTrue(policy.shouldRetry(128 * 1024 * 10, 20 * SECOND));
+        assertTrue(policy.shouldRetry(128 * 1024 * 10, CONTENT_LENGTH, 20 * SECOND));
     }
 
     /// Healthy windows preserve the retry budget, which remains bounded across new connections.
@@ -66,16 +68,47 @@ public final class BMCLAPIRetryPolicyTest {
         policy.startAttempt(0);
         long windowBytes = 128 * 1024 * 10;
         for (int window = 1; window <= 5; window++) {
-            assertFalse(policy.shouldRetry(windowBytes * window, window * 10 * SECOND));
+            assertFalse(policy.shouldRetry(windowBytes * window, CONTENT_LENGTH, window * 10 * SECOND));
         }
-        assertTrue(policy.shouldRetry(windowBytes * 5 + 1, 60 * SECOND));
+        assertTrue(policy.shouldRetry(windowBytes * 5 + 1, CONTENT_LENGTH, 60 * SECOND));
 
         policy.startAttempt(100 * SECOND);
-        assertFalse(policy.shouldRetry(1, 109 * SECOND));
-        assertTrue(policy.shouldRetry(1, 110 * SECOND));
+        assertFalse(policy.shouldRetry(1, CONTENT_LENGTH, 109 * SECOND));
+        assertTrue(policy.shouldRetry(1, CONTENT_LENGTH, 110 * SECOND));
 
         policy.startAttempt(200 * SECOND);
-        assertFalse(policy.shouldRetry(1, 210 * SECOND));
-        assertFalse(policy.shouldRetry(1, 220 * SECOND));
+        assertFalse(policy.shouldRetry(1, CONTENT_LENGTH, 210 * SECOND));
+        assertFalse(policy.shouldRetry(1, CONTENT_LENGTH, 220 * SECOND));
+    }
+
+    /// Small files and nearly completed large files finish without spending a node retry.
+    @Test
+    public void finishesRemainingContentBeforeReselecting() {
+        var policy = new FetchTask.BMCLAPIRetryPolicy();
+        policy.startAttempt(0);
+        assertFalse(policy.shouldRetry(8 * 1024, 12 * 1024, 10 * SECOND));
+
+        policy.startAttempt(0);
+        assertFalse(policy.shouldRetry(64 * 1024 * 10, 64 * 1024 * 20, 10 * SECOND));
+        assertFalse(policy.shouldRetry(64 * 1024 * 20, 64 * 1024 * 20, 20 * SECOND));
+
+        policy.startAttempt(0);
+        assertTrue(policy.shouldRetry(64 * 1024 * 10, CONTENT_LENGTH, 10 * SECOND));
+    }
+
+    /// Small files still reselect a node when their remaining transfer would take too long.
+    @Test
+    public void reselectsStalledSmallFiles() {
+        var policy = new FetchTask.BMCLAPIRetryPolicy();
+        policy.startAttempt(0);
+        assertTrue(policy.shouldRetry(1024, 12 * 1024, 10 * SECOND));
+    }
+
+    /// A missing length cannot justify abandoning a response on an estimated completion time.
+    @Test
+    public void keepsUnknownLengthResponses() {
+        var policy = new FetchTask.BMCLAPIRetryPolicy();
+        policy.startAttempt(0);
+        assertFalse(policy.shouldRetry(1, -1, 10 * SECOND));
     }
 }
