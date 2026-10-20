@@ -65,7 +65,6 @@ import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.plaf.LabelUI;
 import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
