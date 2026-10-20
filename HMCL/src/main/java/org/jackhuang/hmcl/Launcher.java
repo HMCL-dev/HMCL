@@ -36,6 +36,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.monitor.MonitorCrashReporter;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
+import org.jackhuang.hmcl.monitor.MonitorSupervisor;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -147,10 +148,9 @@ public final class Launcher extends Application {
 
                 primaryStage.show();
 
-                // check wheather to show log from HMCL monitor
-                Path pendingCrashReport = MonitorCrashReporter.processArguments(getParameters().getRaw().toArray(new String[0]));
-                if (pendingCrashReport != null)
-                    MonitorCrashReporter.show(pendingCrashReport);
+                // check whether to show log from HMCL monitor
+                if (MonitorSupervisor.isCrashed())
+                    MonitorCrashReporter.show();
             });
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);

@@ -77,11 +77,11 @@ public final class MonitorClient {
             RelaunchPolicy relaunchPolicy) {}
 
     public enum RelaunchPolicy {
-        /// Never relaunch the launcher after the game exits.
+        /// Never continue into the launcher UI after the game exits.
         NEVER,
-        /// Relaunch the launcher when the game exits abnormally.
+        /// Continue into the launcher UI after a non-normal exit if the protocol stream has failed.
         ON_CRASH,
-        /// Relaunch the launcher unconditionally after the game exits.
+        /// Continue into the launcher UI after any exit if the protocol stream has failed.
         ALWAYS
     }
 
@@ -108,19 +108,15 @@ public final class MonitorClient {
             })
             .create();
 
-    static void writeSpec(Object obj, Path specFile) throws IOException {
-        try (var writer = Files.newBufferedWriter(specFile)) {
-            gsonForGameOptions.toJson(obj, writer);
-        }
-    }
-
     public static MonitorGameProcess launchNewMonitor(MonitorLaunchContext context) throws IOException {
         Path thisJar = JarUtils.thisJarPath();
         if (thisJar == null)
             throw new IOException("Failed to find current HMCL location");
 
         Path specFile = Files.createTempFile("hmcl-monitor-spec-", ".json");
-        writeSpec(new ProcessSpec(context), specFile);
+        try (var writer = Files.newBufferedWriter(specFile)) {
+            gsonForGameOptions.toJson(new ProcessSpec(context), writer);
+        }
 
         List<String> commandline = JavaProcessLauncher.buildJavaCommandLine(thisJar,
                 "--monitor", specFile.toAbsolutePath().toString());

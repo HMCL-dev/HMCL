@@ -20,6 +20,9 @@ package org.jackhuang.hmcl.monitor;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jetbrains.annotations.NotNullByDefault;
 
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
@@ -40,6 +43,9 @@ public final class MonitorProtocol {
     /// How long to wait for the monitor's handshake before giving up, in milliseconds.
     static final long HANDSHAKE_TIMEOUT = 20_000;
 
+    /// The shared protocol output on raw stderr, also used to detect failures when writing messages.
+    static final PrintStream protocol = new PrintStream(new FileOutputStream(FileDescriptor.err), true, MonitorProtocol.CHARSET);
+
     /// Message tag of the handshake message.
     static final String TAG_PID = "P";
     /// Message tag of a game output line.
@@ -50,18 +56,18 @@ public final class MonitorProtocol {
     private MonitorProtocol() {
     }
 
-    /// Builds the handshake message carrying the game process id and its start time.
-    static String pidMessage(long pid, long processStartTime) {
-        return TAG_PID + "\t" + pid + "\t" + processStartTime;
+    /// Writes and flushes the handshake message carrying the game process id and its start time.
+    static void pidMessage(long pid, long processStartTime) {
+        protocol.println(TAG_PID + "\t" + pid + "\t" + processStartTime);
     }
 
-    /// Builds a game output line message.
-    static String logMessage(boolean isErrorStream, String line) {
-        return TAG_LOG + "\t" + (isErrorStream ? 1 : 0) + "\t" + line;
+    /// Writes and flushes a game output line message.
+    static void logMessage(boolean isErrorStream, String line) {
+        protocol.println(TAG_LOG + "\t" + (isErrorStream ? 1 : 0) + "\t" + line);
     }
 
-    /// Builds the game exit message carrying the exit code and its classified type.
-    static String exitMessage(int exitCode, ProcessListener.ExitType exitType) {
-        return TAG_EXIT + "\t" + exitCode + "\t" + exitType.name();
+    /// Writes and flushes the game exit message carrying the exit code and its classified type.
+    static void exitMessage(int exitCode, ProcessListener.ExitType exitType) {
+        protocol.println(TAG_EXIT + "\t" + exitCode + "\t" + exitType.name());
     }
 }

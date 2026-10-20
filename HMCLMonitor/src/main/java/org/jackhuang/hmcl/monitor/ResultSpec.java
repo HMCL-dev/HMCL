@@ -19,39 +19,28 @@ package org.jackhuang.hmcl.monitor;
 
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
 
-/// The result of a supervised game process, written by the monitor and consumed by a relaunched
-/// launcher process through the `--crash-report` argument.
+/// The in-memory result of a supervised game process, retained when the monitor JVM continues
+/// into the launcher UI to present the game crash window.
+///
+/// @param process         The supervised game process, which has already exited.
+/// @param exitType        The reported exit type, including `INTERRUPTED` for a recognized cancellation.
+/// @param logFile         The session log file containing the game output.
+/// @param gameDirectoryId The persistent id of the registered game directory owning the launched
+///                        instance, or `null` when unknown.
+/// @param commands        The command line of the game process, or `null` when unknown.
+/// @param launchOptions   The launch options used to identify the instance and present its crash window.
 @NotNullByDefault
-public final class ResultSpec {
-    /// The process id of the game process; `-1` when unknown.
-    long pid;
-    /// The epoch millisecond at which the game process started.
-    long processStartTime;
-    /// The name of the [ProcessListener.ExitType] of the game process.
-    @Nullable String exitType;
-    /// The session log file collecting the game output, or `null` when unavailable.
-    @Nullable String logFile;
-    /// The persistent id of the registered game directory owning the launched instance, or `null`
-    /// when unknown.
-    @Nullable String gameDirectoryId;
-    /// The command line of the game process, or `null` when unknown.
-    @Nullable List<String> commands;
-
-    @Nullable LaunchOptions launchOptions;
-
-    ResultSpec(ProcessSpec spec, long pid, long processStartTime, ProcessListener.ExitType exitType, Path logFile) {
-        this.pid = pid;
-        this.processStartTime = processStartTime;
-        this.exitType = exitType.name();
-        this.logFile = logFile.toString();
-        gameDirectoryId = spec.gameDirectoryId;
-        commands = spec.command;
-        launchOptions = spec.launchOptions;
+public record ResultSpec(ManagedProcess process, ProcessListener.ExitType exitType, Path logFile,
+                         @Nullable String gameDirectoryId, @Nullable List<String> commands, LaunchOptions launchOptions) {
+    /// Combines the launch specification with the supervised process and its reported exit result.
+    public ResultSpec(ProcessSpec spec, ManagedProcess process, ProcessListener.ExitType exitType, Path logFile) {
+        this(process, exitType, logFile, spec.gameDirectoryId, spec.command, spec.launchOptions);
     }
 }

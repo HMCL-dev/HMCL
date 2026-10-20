@@ -22,60 +22,47 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /// The specification of the game process to supervise, exchanged with the monitor process as JSON.
 @NotNullByDefault
-final class ProcessSpec {
+public final class ProcessSpec {
     /// The command line to execute, passed to [ProcessBuilder] verbatim.
-    @Nullable List<String> command;
-    /// The working directory of the process, or `null` to inherit the monitor's working directory.
-    @Nullable String directory;
-    /// Environment variables overlaid on the monitor's environment, or `null` to keep it unchanged.
-    @Nullable Map<String, String> environment;
-    /// The charset of the game process output; required.
-    @Nullable String encoding;
+    public final @Nullable List<String> command;
+    /// The absolute working directory used for the game process and the post-exit command.
+    public final String directory;
+    /// Environment variables overlaid on the monitor's environment for both commands.
+    public final Map<String, String> environment;
+    /// The name of the charset used to decode the game process output.
+    public final String encoding;
     /// Whether the game process should inherit the monitor's standard input; set when no process
     /// listener is present.
-    boolean inheritStdin;
+    public final boolean inheritStdin;
     /// The post-exit command to run after the game exits, already tokenized, or `null`.
-    @Nullable List<String> postExitCommand;
-    /// Whether the main launcher manually canceled the game process; the monitor reports such an
-    /// exit as interrupted.
-    boolean canceled;
-    /// Whether to relaunch the launcher after the game exits unconditionally.
-    boolean relaunchAlways;
-    /// Whether to relaunch the launcher after the game exits abnormally.
-    boolean relaunchOnCrash;
+    public final @Nullable List<String> postExitCommand;
+
+    /// The policy for opening the launcher UI in the monitor JVM after the protocol stream fails.
+    public final MonitorClient.RelaunchPolicy relaunchPolicy;
     /// The persistent id of the registered game directory owning the launched instance, or `null`
     /// when unknown.
-    @Nullable String gameDirectoryId;
+    public final @Nullable String gameDirectoryId;
 
-    @Nullable LaunchOptions launchOptions;
+    /// The launch options retained for presenting the game crash window.
+    public final LaunchOptions launchOptions;
 
-    public static ProcessSpec canceledSpec() {
-        ProcessSpec spec = new ProcessSpec();
-        spec.canceled = true;
-        return spec;
-    }
-
-    public ProcessSpec() {}
-
+    /// Creates a process specification from a launch context whose builder has a working directory.
     public ProcessSpec(MonitorClient.MonitorLaunchContext context) {
         ProcessBuilder builder = context.builder();
 
         command = new ArrayList<>(builder.command());
-        if (builder.directory() != null)
-            directory = builder.directory().getAbsolutePath();
-        environment = new LinkedHashMap<>(builder.environment());
+        directory = builder.directory().getAbsolutePath();
+        environment = builder.environment();
 
         encoding = context.encoding().name();
         inheritStdin = context.listener() == null;
         postExitCommand = context.postExitCommand();
-        relaunchAlways = context.relaunchPolicy() == MonitorClient.RelaunchPolicy.ALWAYS;
-        relaunchOnCrash = context.relaunchPolicy() == MonitorClient.RelaunchPolicy.ON_CRASH;
+        relaunchPolicy = context.relaunchPolicy();
         gameDirectoryId = context.gameDirectoryId();
 
         launchOptions = context.options();

@@ -23,8 +23,6 @@ import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.launch.StreamPump;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.platform.JavaProcessLauncher;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -34,7 +32,6 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -45,36 +42,42 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// The monitor process role of the monitor feature: creating the game process, supervising it until
 /// it exits, and reporting the result.
 ///
-/// <p>The monitor has no user interface. It owns the game process, so it always knows the real exit
-/// code even after the main launcher process has exited. Game output is teed into a session log
-/// file and forwarded to the main launcher process over [the protocol][MonitorProtocol]; after the
-/// game exits, the post-exit command is run, and HMCL is relaunched if the launch options ask for
-/// it and the main launcher process is already gone. The crash result file and the session log are
-/// only kept when a relaunched launcher is going to consume them.
+/// The monitor owns the game process and collects its output in a session log while forwarding it
+/// to the main launcher over [the protocol][MonitorProtocol]. After the game exits, it runs the
+/// post-exit command and stores the result in memory. When the protocol stream has failed and the
+/// relaunch policy requests it, the entry point continues into the launcher UI in this same JVM.
+/// No crash result file is written; the crash window reads the stored result and session log.
 @NotNullByDefault
 public final class MonitorSupervisor {
+    private static boolean shouldRestart = false;
+    private static boolean crashed = false;
+    private static @Nullable ResultSpec resultSpec;
 
     private MonitorSupervisor() {
+    }
+
+    public static @Nullable ResultSpec getResultSpec() {
+        return resultSpec;
+    }
+
+    public static boolean isCrashed() {
+        return crashed;
     }
 
     /// Handles the `--monitor` entry point.
     ///
     /// @param args the process arguments
-    /// @return whether the arguments were consumed; the caller should exit afterward, since
-    ///         [MonitorSupervisor#start] blocks until the game process has exited
+    /// @return `true` when monitor mode has finished and the caller should exit; `false` for
+    ///         non-monitor arguments or when this JVM should continue into the launcher UI
     public static boolean processArguments(String[] args) {
-        if (args.length < 1 || !args[0].equals("--monitor"))
+        if (args.length != 2 || !args[0].equals("--monitor"))
             return false;
-        if (args.length != 2) {
-            LOG.error("Usage: --monitor <specFile>");
-            return true;
-        }
         try {
             start(Path.of(args[1]));
         } catch (IOException | InterruptedException e) {
             LOG.error("Failed to supervise the game process", e);
         }
-        return true;
+        return !shouldRestart;
     }
 
     /// Reads the [ProcessSpec] from `specPath`, creates the process it describes, supervises it
@@ -85,52 +88,38 @@ public final class MonitorSupervisor {
     /// @throws InterruptedException if interrupted while waiting for the game process
     public static void start(Path specPath) throws IOException, InterruptedException {
         LOG.info("*** HMCL MONITOR ***");
-
-        // stdout carries the monitor's log output, so the protocol goes over raw stderr
-        PrintStream protocol = new PrintStream(new FileOutputStream(FileDescriptor.err), true, MonitorProtocol.CHARSET);
-
         ProcessSpec spec;
         try {
             spec = JsonUtils.fromJsonFile(specPath, ProcessSpec.class);
         } catch (JsonParseException e) {
             throw new IOException("Malformed process spec file " + specPath, e);
         }
-        if (spec == null || spec.command == null || spec.command.isEmpty() || spec.encoding == null)
+        if (spec == null || spec.command == null || spec.command.isEmpty())
             throw new IOException("Malformed process spec file " + specPath);
-        Files.delete(specPath);
+        Files.deleteIfExists(specPath);
 
-        ProcessBuilder pb = new ProcessBuilder(spec.command);
-        @Nullable String directory = spec.directory;
-        if (directory != null && !directory.isEmpty())
-            pb.directory(new File(directory));
-        if (spec.environment != null)
-            pb.environment().putAll(spec.environment);
+        ProcessBuilder pb = new ProcessBuilder(spec.command).directory(new File(spec.directory));
+        pb.environment().putAll(spec.environment);
         if (spec.inheritStdin)
             pb.redirectInput(ProcessBuilder.Redirect.INHERIT);
+        ManagedProcess gameProcess = new ManagedProcess(pb.start(), spec.command);
 
-        long fallbackStartTime = System.currentTimeMillis();
-        Process game = pb.start();
-        long processStartTime = game.info().startInstant().map(Instant::toEpochMilli).orElse(fallbackStartTime);
-
-        LOG.info("Game process created, pid " + game.pid() + ", spec " + specPath);
-        protocol.println(MonitorProtocol.pidMessage(game.pid(), processStartTime));
+        LOG.info("Game process created, pid " + gameProcess.getPid() + ", spec " + specPath);
+        MonitorProtocol.pidMessage(gameProcess.getPid(), gameProcess.getProcessStartTime());
 
         Path logFile = Files.createTempFile("hmcl-monitor-game-", ".log");
 
-        // The monitor owns the game process, so the regular [ManagedProcess] applies, and the exit
-        // classification is performed by the very same [ExitWaiter] the direct launch path uses.
-        ManagedProcess gameProcess = new ManagedProcess(game, spec.command);
 
         // Forward one game output line to the log file, the managed process (feeding the exit
         // classification) and the protocol stream. A broken protocol stream (the launcher exited
         // early) only stops forwarding; the log file keeps collecting the remaining output.
         try (BufferedWriter logWriter = Files.newBufferedWriter(logFile, MonitorProtocol.CHARSET)) {
-            startMonitors(gameProcess, logWriter, protocol, spec, processStartTime, logFile, specPath);
+            startMonitors(gameProcess, logWriter, spec, logFile, specPath);
         }
     }
 
-    private static void startMonitors(ManagedProcess gameProcess, BufferedWriter logWriter, PrintStream protocol,
-                                      ProcessSpec spec, long processStartTime, Path logFile, Path specPath) throws InterruptedException {
+    private static void startMonitors(ManagedProcess gameProcess, BufferedWriter logWriter,
+                                      ProcessSpec spec, Path logFile, Path specPath) throws InterruptedException {
         AtomicBoolean parentGone = new AtomicBoolean(false);
         BiConsumer<String, Boolean> sink = (line, isErrorStream) -> {
             try {
@@ -144,8 +133,8 @@ public final class MonitorSupervisor {
             }
             gameProcess.addLine(line);
             if (!parentGone.get()) {
-                protocol.println(MonitorProtocol.logMessage(isErrorStream, line));
-                if (protocol.checkError())
+                MonitorProtocol.logMessage(isErrorStream, line);
+                if (MonitorProtocol.protocol.checkError())
                     parentGone.set(true);
             }
         };
@@ -158,107 +147,51 @@ public final class MonitorSupervisor {
         gameProcess.addRelatedThread(stdoutPump);
         gameProcess.addRelatedThread(stderrPump);
 
-        Thread exitWaiter = Lang.thread(new ExitWaiter(gameProcess, List.of(stdoutPump, stderrPump), (exitCode, exitType) -> {
+        Lang.thread(new ExitWaiter(gameProcess, List.of(stdoutPump, stderrPump), (exitCode, exitType) -> {
             LOG.info("Game exited with code " + exitCode + "(" + Integer.toHexString(exitCode) + "), type " + exitType);
+            ProcessListener.ExitType reportedType = readCanceled(specPath) ? ProcessListener.ExitType.INTERRUPTED : exitType;
+            crashed = reportedType != ProcessListener.ExitType.NORMAL;
 
-            // A present spec file can only mean the main launcher marked a manual cancellation
-            // right before destroying the game process (see MonitorGameProcess#stop); report the
-            // exit as interrupted like the direct launch path does.
-            boolean canceled = readCanceled(specPath);
-            ProcessListener.ExitType reportedType = canceled ? ProcessListener.ExitType.INTERRUPTED : exitType;
-            if (canceled)
-                LOG.info("The game process was canceled by the main launcher, reporting the exit as interrupted");
-            protocol.println(MonitorProtocol.exitMessage(exitCode, reportedType));
+            if (MonitorProtocol.protocol.checkError())
+                parentGone.set(true);
 
-            runPostExitCommand(spec);
+            shouldRestart = parentGone.get() && switch (spec.relaunchPolicy) {
+                case ALWAYS -> true;
+                case ON_CRASH -> crashed;
+                case NEVER -> false;
+            };
 
-            boolean crashed = reportedType != ProcessListener.ExitType.NORMAL;
-            try {
-                boolean relaunch = !canceled && (spec.relaunchAlways || (spec.relaunchOnCrash && crashed));
+            MonitorProtocol.exitMessage(exitCode, reportedType);
 
-                if (protocol.checkError())
-                    parentGone.set(true);
-
-                @Nullable Path resultFile = null;
-                if (relaunch && parentGone.get()) {
-                    if (crashed) {
-                        resultFile = Files.createTempFile("hmcl-monitor-result-", ".json");
-                        ResultSpec result = new ResultSpec(spec, gameProcess.getPid(), processStartTime, exitType, logFile);
-                        MonitorClient.writeSpec(result, resultFile);
-                    }
-                    relaunch(resultFile);
+            if (spec.postExitCommand != null && !spec.postExitCommand.isEmpty()) {
+                try {
+                    ProcessBuilder builder = new ProcessBuilder(spec.postExitCommand).directory(new File(spec.directory));
+                    builder.environment().putAll(spec.environment);
+                    SystemUtils.callExternalProcess(builder);
+                } catch (Throwable e) {
+                    LOG.warning("An Exception happened while running exit command.", e);
                 }
-
-                // The session log is only consumed through a crash result file; deleting it in
-                // every other case keeps it from accumulating in the temporary directory.
-                if (resultFile == null) {
-                    try {
-                        Files.deleteIfExists(logFile);
-                    } catch (IOException e) {
-                        LOG.warning("Failed to delete the session log file " + logFile, e);
-                    }
-                }
-            } catch (IOException e) {
-                LOG.error("Failed to write the monitor result file or relaunch the launcher", e);
             }
-        }), "exit-waiter", true);
 
-        // Keep the monitor process alive until the game has exited and been reported; the caller
-        // exits the process right after this method returns.
-        exitWaiter.join();
-    }
-
-    private static void runPostExitCommand(ProcessSpec spec) {
-        if (spec.postExitCommand == null || spec.postExitCommand.isEmpty())
-            return;
-        try {
-            // The direct launch path runs the post-exit command in the game directory, which is
-            // not necessarily the game process's working directory when version isolation is on.
-            ProcessBuilder builder = new ProcessBuilder(spec.postExitCommand);
-            if (spec.launchOptions != null)
-                builder.directory(spec.launchOptions.getGameDir().toFile());
-            else if (spec.directory != null && !spec.directory.isEmpty())
-                builder.directory(new File(spec.directory));
-            if (spec.environment != null)
-                builder.environment().putAll(spec.environment);
-            SystemUtils.callExternalProcess(builder);
-        } catch (Throwable e) {
-            LOG.warning("An Exception happened while running exit command.", e);
-        }
+            resultSpec = new ResultSpec(spec, gameProcess, reportedType, logFile);
+        }), "exit-waiter", true).join();
     }
 
     /// Returns whether the main launcher rewrote the spec file to mark the game process as manually
-    /// canceled, consuming the rewritten file so that it does not outlive this check.
+    /// canceled. A successfully read file is deleted before checking for the `CANCELED` prefix.
+    ///
+    /// [MonitorGameProcess#stop] writes the marker before requesting process termination. The
+    /// caller reports a recognized cancellation as [ProcessListener.ExitType#INTERRUPTED].
     private static boolean readCanceled(Path specPath) {
         if (!Files.exists(specPath))
             return false;
-        boolean canceled = false;
         try {
-            ProcessSpec spec = JsonUtils.fromJsonFile(specPath, ProcessSpec.class);
-            canceled = spec != null && spec.canceled;
+            String canceled = Files.readString(specPath);
+            Files.deleteIfExists(specPath);
+            return canceled.startsWith("CANCELED");
         } catch (IOException e) {
-            LOG.warning("Failed to read the rewritten monitor spec file " + specPath, e);
-        } finally {
-            try {
-                Files.deleteIfExists(specPath);
-            } catch (IOException e) {
-                LOG.warning("Failed to delete the rewritten monitor spec file " + specPath, e);
-            }
-        }
-        return canceled;
-    }
-
-    /// Starts a new HMCL main process. Fire-and-forget; the current monitor process exits right after.
-    private static void relaunch(@Nullable Path resultFile) throws IOException {
-        Path thisJar = JarUtils.thisJarPath();
-        if (thisJar == null) {
-            LOG.warning("Failed to find the current HMCL jar, cannot relaunch the launcher");
-            return;
-        }
-        if (resultFile != null) { // crashed
-            JavaProcessLauncher.startJava(thisJar, "--crash-report", resultFile.toAbsolutePath().toString());
-        } else {
-            JavaProcessLauncher.startJava(thisJar);
+            LOG.warning("Failed to check whether to cancel " + specPath, e);
+            return false;
         }
     }
 }

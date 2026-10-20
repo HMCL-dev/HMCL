@@ -17,12 +17,12 @@
  */
 package org.jackhuang.hmcl.monitor;
 
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.ProcessInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -30,10 +30,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// A view of the game process supervised by the HMCL monitor.
 ///
-/// <p>Unlike [org.jackhuang.hmcl.util.platform.ManagedProcess], the game process is not spawned nor
-/// owned by this JVM; only the information reported by the monitor's handshake is known. Instances
-/// may also represent already-exited games when presenting the crash window of a relaunched
-/// launcher, in which case the [handle][#getHandle] may be unresolvable and the spec file unknown.
+/// Unlike [org.jackhuang.hmcl.util.platform.ManagedProcess], the game process is not spawned nor
+/// owned by this JVM. Its handle is resolved from the monitor's handshake and may be unavailable
+/// if the game has already exited. The original command line is supplied by the launch context.
 @NotNullByDefault
 public final class MonitorGameProcess implements ProcessInfo {
 
@@ -95,7 +94,7 @@ public final class MonitorGameProcess implements ProcessInfo {
         if (specFile != null)
             try {
                 // notify the monitor
-                JsonUtils.writeToJsonFile(specFile, ProcessSpec.canceledSpec());
+                Files.writeString(specFile, "CANCELED");
             } catch (IOException e) {
                 LOG.warning("Failed to rewrite the monitor spec file " + specFile + " to mark the cancellation", e);
             }
