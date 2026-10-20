@@ -158,7 +158,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 Task<ComponentRemoteVersionList<ForgeRemoteVersion>> fetchOfficial = ForgeRemoteVersion.fetchAsync(this, gameVersion);
 
                 DownloadSource source = versionListSource;
-                if (!RegionUtils.isIsChinaMainlandMachine() && (source == DownloadSource.DEFAULT || source == DownloadSource.OFFICIAL)) {
+                if (source == DownloadSource.DEFAULT || source == DownloadSource.OFFICIAL) {
                     return fetchOfficial;
                 }
 
@@ -173,7 +173,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 Task<ComponentRemoteVersionList<NeoForgeRemoteVersion>> fetchOfficial = NeoForgeRemoteVersion.fetchAsync(this, gameVersion);
 
                 DownloadSource source = versionListSource;
-                if (!RegionUtils.isIsChinaMainlandMachine() && (source == DownloadSource.DEFAULT || source == DownloadSource.OFFICIAL)) {
+                if (source == DownloadSource.DEFAULT || source == DownloadSource.OFFICIAL) {
                     return fetchOfficial;
                 }
                 Task<ComponentRemoteVersionList<NeoForgeRemoteVersion>> fetchBMCL = NeoForgeRemoteVersion.fetchBMCLAsync(bmclRoot, gameVersion);
