@@ -57,9 +57,9 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.NativePatcher;
+import org.jackhuang.hmcl.util.RegionUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -453,7 +453,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 root.setCenter(transitionPane);
             }
 
-            if (LocaleUtils.IS_CHINA_MAINLAND) {
+            if (RegionUtils.isIsChinaMainlandNetwork()) {
                 BorderPane wrapper = new BorderPane();
 
                 HintPane hint = new HintPane(MessageDialogPane.MessageType.WARNING);

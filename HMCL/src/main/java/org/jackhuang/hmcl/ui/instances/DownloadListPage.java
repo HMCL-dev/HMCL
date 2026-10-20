@@ -55,7 +55,6 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
@@ -629,7 +628,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                 });
             }
 
-            if (LocaleUtils.IS_CHINA_MAINLAND) {
+            if (RegionUtils.isIsChinaMainlandNetwork()) {
                 BorderPane wrapper = new BorderPane();
 
                 HintPane hint = new HintPane(MessageDialogPane.MessageType.WARNING);

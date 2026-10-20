@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.HMCLCacheRepository;
 import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.i18n.LocaleUtils;
+import org.jackhuang.hmcl.util.RegionUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +46,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
             DownloadSource source,
             WebURL defaultUrl, WebURL bmclapiUrl
     ) {
-        if (LocaleUtils.IS_CHINA_MAINLAND) {
+        if (RegionUtils.isIsChinaMainlandMachine()) {
             return switch (source) {
                 case DEFAULT, OFFICIAL -> DownloadCandidates.of(defaultUrl, bmclapiUrl);
                 case MIRROR -> DownloadCandidates.of(bmclapiUrl, defaultUrl);
@@ -66,7 +66,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
 
         // true means prefer mirror, false means prefer official, null means do not use mirror
         @Nullable Boolean mirrorFirst;
-        if (LocaleUtils.IS_CHINA_MAINLAND) {
+        if (RegionUtils.isIsChinaMainlandMachine()) {
             mirrorFirst = switch (source) {
                 case DEFAULT, MIRROR -> true;
                 case OFFICIAL -> false;
@@ -158,7 +158,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 Task<ComponentRemoteVersionList<ForgeRemoteVersion>> fetchOfficial = ForgeRemoteVersion.fetchAsync(this, gameVersion);
 
                 DownloadSource source = versionListSource;
-                if (!LocaleUtils.IS_CHINA_MAINLAND && (source == DownloadSource.DEFAULT || source == DownloadSource.OFFICIAL)) {
+                if (!RegionUtils.isIsChinaMainlandMachine() && (source == DownloadSource.DEFAULT || source == DownloadSource.OFFICIAL)) {
                     return fetchOfficial;
                 }
 
@@ -173,7 +173,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 Task<ComponentRemoteVersionList<NeoForgeRemoteVersion>> fetchOfficial = NeoForgeRemoteVersion.fetchAsync(this, gameVersion);
 
                 DownloadSource source = versionListSource;
-                if (!LocaleUtils.IS_CHINA_MAINLAND && (source == DownloadSource.DEFAULT || source == DownloadSource.OFFICIAL)) {
+                if (!RegionUtils.isIsChinaMainlandMachine() && (source == DownloadSource.DEFAULT || source == DownloadSource.OFFICIAL)) {
                     return fetchOfficial;
                 }
                 Task<ComponentRemoteVersionList<NeoForgeRemoteVersion>> fetchBMCL = NeoForgeRemoteVersion.fetchBMCLAsync(bmclRoot, gameVersion);
@@ -224,7 +224,7 @@ public final class HMCLDownloadProvider extends DownloadProvider {
 
     @Override
     public DownloadCandidates getCleanroomVersionListCandidates() {
-        return LocaleUtils.IS_CHINA_MAINLAND
+        return RegionUtils.isIsChinaMainlandMachine()
                 ? DownloadCandidates.of(CleanroomRemoteVersion.LOADER_LIST_URL, WebURL.parse("https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom/index.json"))
                 : DownloadCandidates.of(CleanroomRemoteVersion.LOADER_LIST_URL);
     }
