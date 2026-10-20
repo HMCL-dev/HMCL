@@ -73,7 +73,7 @@ public final class RegionUtils {
     private static volatile @Nullable Boolean isChinaMainlandNetwork;
 
     private static boolean checkChinaMainlandNetwork() {
-        if (!IS_CHINA_MAINLAND_MACHINE)
+        if (!IS_CHINA_MAINLAND_MACHINE || Boolean.getBoolean("hmcl.bypassNetworkRegionCheck"))
             return false;
 
         switch (ZoneId.systemDefault().getId()) {
