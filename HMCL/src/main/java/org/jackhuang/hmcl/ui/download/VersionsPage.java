@@ -52,21 +52,20 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.NativePatcher;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.plaf.LabelUI;
 import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -455,7 +454,23 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 root.setCenter(transitionPane);
             }
 
-            this.getChildren().setAll(root);
+            if (LocaleUtils.IS_CHINA_MAINLAND) {
+                BorderPane wrapper = new BorderPane();
+
+                HintPane hint = new HintPane(MessageDialogPane.MessageType.WARNING);
+                hint.setSegment(i18n("download.china"));
+
+                BorderPane.setMargin(hint, new Insets(10, 10, 0, 10));
+
+                wrapper.setTop(hint);
+
+                root.setDisable(true);
+                wrapper.setCenter(root);
+
+                this.getChildren().setAll(wrapper);
+            } else {
+                this.getChildren().setAll(root);
+            }
         }
 
         private void updateList() {

@@ -55,6 +55,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
@@ -628,7 +629,23 @@ public class DownloadListPage extends Control implements DecoratorPage {
                 });
             }
 
-            getChildren().setAll(pane);
+            if (LocaleUtils.IS_CHINA_MAINLAND) {
+                BorderPane wrapper = new BorderPane();
+
+                HintPane hint = new HintPane(MessageDialogPane.MessageType.WARNING);
+                hint.setSegment(i18n("download.china"));
+
+                BorderPane.setMargin(hint, new Insets(10, 10, 0, 10));
+
+                wrapper.setTop(hint);
+
+                pane.setDisable(true);
+                wrapper.setCenter(pane);
+
+                this.getChildren().setAll(wrapper);
+            } else {
+                this.getChildren().setAll(pane);
+            }
         }
 
         private record CategoryIndented(int indent, RemoteAddonRepository.Category category) {
