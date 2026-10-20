@@ -73,10 +73,11 @@ public final class RegionUtils {
         }
 
         try {
+            LOG.info("Fetching network information");
             IpWhoIsResponse result = JsonUtils.fromNonNullJson(NetworkUtils.doGet("https://ipwho.is"), IpWhoIsResponse.class);
             return !result.success || "CN".equalsIgnoreCase(result.country_code);
         } catch (Throwable e) {
-            LOG.warning("Failed to get the ", e);
+            LOG.warning("Failed to get the network information", e);
             return true;
         }
     }
