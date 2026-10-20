@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
@@ -35,6 +36,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.jackhuang.hmcl.addon.LocalAddonManager.DISABLED_EXTENSION;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+@NotNullByDefault
 public class DataPackManager {
     private final World world;
     private final Path directory;
@@ -144,7 +146,7 @@ public class DataPackManager {
     public void removePack(DataPackFile dataPack) throws IOException {
         lock.lock();
         try {
-            if (dataPack != null && dataPack.manager == this) {
+            if (dataPack.manager == this) {
                 dataPack.delete();
                 localFiles.remove(dataPack);
             }

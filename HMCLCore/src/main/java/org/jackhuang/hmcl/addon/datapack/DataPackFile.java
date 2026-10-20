@@ -25,15 +25,15 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.addon.LocalAddonManager.DISABLED_EXTENSION;
 
+@NotNullByDefault
 public class DataPackFile extends LocalAddonFile<DataPackFile> {
     final DataPackManager manager;
     private Path path;
@@ -54,11 +54,17 @@ public class DataPackFile extends LocalAddonFile<DataPackFile> {
         if (isDirectory) {
             Path mcmeta1 = path.resolve("pack.mcmeta");
             Path mcmetaPath = Files.exists(mcmeta1) ? mcmeta1 : path.resolve("pack.mcmeta.disabled");
-            info = JsonUtils.fromNonNullJson(Files.readString(mcmetaPath), PackMcMeta.class).pack();
+            try {
+                info = JsonUtils.fromNonNullJson(Files.readString(mcmetaPath), PackMcMeta.class).pack();
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
             statusFile = mcmetaPath;
         } else {
-            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(path)) {
-                info = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("pack.mcmeta")), PackMcMeta.class).pack();
+            try (var tree = CompressingUtils.openZipTree(path)) {
+                info = JsonUtils.fromNonNullJson(tree.readTextEntry("/pack.mcmeta"), PackMcMeta.class).pack();
+            } catch (Exception e) {
+                throw new IOException(e);
             }
             statusFile = path;
         }
@@ -130,7 +136,7 @@ public class DataPackFile extends LocalAddonFile<DataPackFile> {
     }
 
     @Override
-    public int compareTo(@NotNull DataPackFile o) {
+    public int compareTo(DataPackFile o) {
         return String.CASE_INSENSITIVE_ORDER.compare(id, o.id);
     }
 }
