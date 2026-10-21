@@ -45,7 +45,7 @@ public final class MonitorCrashReporter {
     }
 
     public static void show() {
-        Monitor.Result result = Monitor.getResultSpec();
+        Monitor.Result result = Monitor.getResult();
         if (result == null || result.gameDirectoryId() == null)
             return;
 
@@ -72,12 +72,8 @@ public final class MonitorCrashReporter {
             HMCLGameInstance loaded = repository.findInstance(instanceId);
             if (loaded != null)
                 presentCrashWindow(result, loaded);
-            else // TODO 把这里的日志改短一点
-                LOG.warning("Cannot resolve the launched instance " + instanceId + " ("
-                        + repository.getSnapshot().getInstanceCount() + " instances, loaded="
-                        + repository.isLoaded() + ", base directory "
-                        + repository.getLayout().getBaseDirectory()
-                        + "), skip showing the crash window.");
+            else
+                LOG.warning("Cannot resolve the launched instance " + instanceId + ", skip showing the crash window");
         }).start();
     }
 

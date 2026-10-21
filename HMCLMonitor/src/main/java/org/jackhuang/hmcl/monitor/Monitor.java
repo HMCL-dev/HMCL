@@ -33,9 +33,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiConsumer;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -50,7 +48,7 @@ public final class Monitor {
     private Monitor() {
     }
 
-    public static @Nullable Monitor.Result getResultSpec() {
+    public static @Nullable Monitor.Result getResult() {
         return result;
     }
 
@@ -58,8 +56,6 @@ public final class Monitor {
         return crashed;
     }
 
-    /// Handles the `--monitor` entry point.
-    ///
     /// @return `true`: should exit, `false`: should continue and launch HMCL
     public static boolean processArguments(String[] args) {
         if (args.length != 2 || !args[0].equals("--monitor"))
@@ -76,9 +72,9 @@ public final class Monitor {
         LOG.info("*** HMCL MONITOR ***");
 
         // read spec
-        ProcessSpec spec;
+        MonitorLauncher.MonitorLaunchSpec spec;
         try {
-            spec = JsonUtils.fromNonNullJson(Files.readString(specPath), ProcessSpec.class);
+            spec = JsonUtils.fromNonNullJson(Files.readString(specPath), MonitorLauncher.MonitorLaunchSpec.class);
         } catch (JsonParseException e) {
             throw new IOException("Malformed process spec file " + specPath, e);
         }
@@ -156,37 +152,5 @@ public final class Monitor {
     public record Result(ManagedProcess process, ProcessListener.ExitType exitType,
                          @Nullable String gameDirectoryId, @Nullable List<String> commands,
                          LaunchOptions launchOptions) {
-    }
-
-    /// The specification of the game process to supervise, exchanged with the monitor process as JSON.
-    ///
-    /// @param command         The command line to execute, passed to [ProcessBuilder] verbatim.
-    /// @param directory       The absolute working directory used for the game process and the post-exit command.
-    /// @param environment     Environment variables overlaid on the monitor's environment for both commands.
-    /// @param encoding        The name of the charset used to decode the game process output.
-    /// @param inheritStdin    Whether the game process should inherit the monitor's standard input; set when no process
-    /// listener is present.
-    /// @param postExitCommand The post-exit command to run after the game exits, already tokenized, or `null`.
-    /// @param relaunchPolicy  The policy for opening the launcher UI in the monitor JVM after the protocol stream fails.
-    /// @param gameDirectoryId The persistent id of the registered game directory owning the launched instance, or `null`
-    /// when unknown.
-    /// @param launchOptions   The launch options retained for presenting the game crash window.
-    @NotNullByDefault
-    public record ProcessSpec(List<String> command, String directory, Map<String, String> environment, String encoding,
-                                     boolean inheritStdin, @Nullable List<String> postExitCommand,
-                                     MonitorLauncher.RelaunchPolicy relaunchPolicy, @Nullable String gameDirectoryId,
-                                     LaunchOptions launchOptions) {
-        /// Creates a process specification from a launch context whose builder has a working directory.
-        public ProcessSpec(MonitorLauncher.MonitorLaunchContext context) {
-            this(new ArrayList<>(context.builder().command()),
-                    context.builder().directory().getAbsolutePath(),
-                    context.builder().environment(),
-                    context.encoding().name(),
-                    context.listener() == null,
-                    context.postExitCommand(),
-                    context.relaunchPolicy(),
-                    context.gameDirectoryId(),
-                    context.options());
-        }
     }
 }

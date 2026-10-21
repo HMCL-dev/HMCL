@@ -42,7 +42,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -81,7 +83,7 @@ public final class MonitorLauncher {
 
         Path specFile = Files.createTempFile("hmcl-monitor-spec-", ".json");
         try (var writer = Files.newBufferedWriter(specFile)) {
-            gsonForGameOptions.toJson(new Monitor.ProcessSpec(context), writer);
+            gsonForGameOptions.toJson(new MonitorLaunchSpec(context), writer);
         }
 
         List<String> commandline = JavaProcessLauncher.buildJavaCommandLine(thisJar,
@@ -200,5 +202,22 @@ public final class MonitorLauncher {
             @Nullable String gameDirectoryId,
             @Nullable List<String> postExitCommand,
             RelaunchPolicy relaunchPolicy) {
+    }
+
+    @NotNullByDefault
+    public record MonitorLaunchSpec(List<String> command, String directory, Map<String, String> environment, String encoding,
+                                    boolean inheritStdin, @Nullable List<String> postExitCommand,
+                                    RelaunchPolicy relaunchPolicy, @Nullable String gameDirectoryId, LaunchOptions launchOptions) {
+        public MonitorLaunchSpec(MonitorLaunchContext context) {
+            this(new ArrayList<>(context.builder().command()),
+                    context.builder().directory().getAbsolutePath(),
+                    context.builder().environment(),
+                    context.encoding().name(),
+                    context.listener() == null,
+                    context.postExitCommand(),
+                    context.relaunchPolicy(),
+                    context.gameDirectoryId(),
+                    context.options());
+        }
     }
 }
