@@ -330,6 +330,10 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
 
     /// Recognizes accepted mod ID syntax.
     private static final Pattern MODID_PATTERN = Pattern.compile("^[a-zA-Z0-9._|+' -]+$");
+
+    /// Recognizes numeric mod IDs that are not accepted by [#MODID_PATTERN] but are explicitly whitelisted.
+    private static final Pattern NUMERIC_PATTERN = Pattern.compile("^[0-9]+$");
+
     /// Explicitly accepted IDs that do not match [#MODID_PATTERN].
     private static final Set<String> MODID_WHITELIST = Set.of(
             // https://www.mcmod.cn/class/866.html
@@ -364,7 +368,8 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 continue;
             }
 
-            if (!MODID_PATTERN.matcher(cleanedModid).matches() && !MODID_WHITELIST.contains(cleanedModid)) {
+            if ((!MODID_PATTERN.matcher(cleanedModid).matches() || NUMERIC_PATTERN.matcher(cleanedModid).matches())
+                    && !MODID_WHITELIST.contains(cleanedModid)) {
                 throw new GradleException("Invalid modid: " + modid);
             }
 
