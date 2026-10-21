@@ -119,7 +119,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         ImageView titleIcon = new ImageView(FXUtils.newBuiltinImage("/assets/img/icon-title.png"));
         Label titleLabel = new Label();
-        titleLabel.textProperty().bind(I18n.launcherTitleProperty());
+        titleLabel.textProperty().bind(Controllers.launcherTitleProperty());
         if (I18n.isUpsideDown()) {
             titleIcon.setRotate(180);
             titleLabel.setRotate(180);
