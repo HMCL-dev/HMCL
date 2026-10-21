@@ -17,11 +17,15 @@
  */
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXPopup;
+import com.jfoenix.controls.JFXRadioButton;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
+import javafx.geometry.NodeOrientation;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
@@ -143,7 +147,15 @@ public final class GameListCell extends ListCell<GameListItem> {
                 }
 
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
-                popup.show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, vPosition == JFXPopup.PopupVPosition.TOP ? root.getHeight() : -root.getHeight());
+                boolean below = vPosition == JFXPopup.PopupVPosition.TOP;
+                Point2D offset = root.localToScene(0, 0).subtract(btnManage.localToScene(0, 0));
+                double offsetX = offset.getX() + root.getWidth() - btnManage.getWidth();
+                double offsetY = offset.getY() + (below ? root.getHeight() : -btnManage.getHeight());
+                if (btnManage.getEffectiveNodeOrientation() == NodeOrientation.RIGHT_TO_LEFT)
+                    offsetX = -offsetX;
+                // Only this button bypasses auto-hide, so its action can toggle the menu.
+                // Keep the popup aligned to the cell while making the button its owner.
+                popup.show(btnManage, vPosition, JFXPopup.PopupHPosition.RIGHT, offsetX, offsetY, true);
             });
             BorderPane.setAlignment(btnManage, Pos.CENTER);
             FXUtils.installFastTooltip(btnManage, i18n("settings.game.management"));
@@ -227,7 +239,6 @@ public final class GameListCell extends ListCell<GameListItem> {
     private static JFXPopup createPopup(GameListItem item) {
         PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
-        popup.setConsumeAutoHidingEvents(true);
 
         menu.getContent().setAll(
                 new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch.test"), item::testGame, popup),
