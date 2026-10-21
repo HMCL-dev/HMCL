@@ -166,12 +166,10 @@ public final class HMCLGameLauncher extends DefaultLauncher {
 
     @Override
     protected ProcessInfo startProcess(ProcessBuilder builder, Charset encoding, Path nativeFolder) throws IOException {
-        if (!MonitorLauncher.isEnabled())
+        if (!MonitorLauncher.isEnabled() || !(instance instanceof HMCLGameInstance hmclGameInstance))
             return super.startProcess(builder, encoding, nativeFolder);
 
-        var hmclGameInstance = (HMCLGameInstance) instance;
         String gameDirectoryId = hmclGameInstance.getRepository().getGameDirectory().getId().toString();
-
         GameSettings.Effective setting = hmclGameInstance.getEffectiveSettings();
         LauncherVisibility x = setting.getInheritable(GameSettings::launcherVisibilityProperty);
         boolean showLogs = setting.getInheritable(GameSettings::showLogsProperty);
