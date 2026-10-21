@@ -83,11 +83,11 @@ public final class Monitor {
         Files.deleteIfExists(specPath);
 
         // start game process
-        ProcessBuilder pb = new ProcessBuilder(spec.command).directory(new File(spec.directory));
-        pb.environment().putAll(spec.environment);
-        if (spec.inheritStdin)
+        ProcessBuilder pb = new ProcessBuilder(spec.command()).directory(new File(spec.directory()));
+        pb.environment().putAll(spec.environment());
+        if (spec.inheritStdin())
             pb.redirectInput(ProcessBuilder.Redirect.INHERIT);
-        ManagedProcess gameProcess = new ManagedProcess(pb.start(), spec.command);
+        ManagedProcess gameProcess = new ManagedProcess(pb.start(), spec.command());
 
         LOG.info("Game process created, pid " + gameProcess.getPid() + ", spec " + specPath);
         MonitorProtocol.pidMessage(gameProcess.getPid(), gameProcess.getProcessStartTime());
@@ -96,7 +96,7 @@ public final class Monitor {
             gameProcess.addLine(line);
             MonitorProtocol.logMessage(isErrorStream, line);
         };
-        Charset encoding = Charset.forName(spec.encoding);
+        Charset encoding = Charset.forName(spec.encoding());
         Thread stdoutPump = Lang.thread(new StreamPump(gameProcess.getProcess().getInputStream(),
                 line -> sink.accept(line, false), encoding), "monitor-stdout-pump", true);
         Thread stderrPump = Lang.thread(new StreamPump(gameProcess.getProcess().getErrorStream(),
@@ -120,24 +120,24 @@ public final class Monitor {
             MonitorProtocol.exitMessage(exitCode, reportedType);
 
             crashed = reportedType != ProcessListener.ExitType.NORMAL;
-            shouldRestart = MonitorProtocol.parentGone() && switch (spec.relaunchPolicy) {
+            shouldRestart = MonitorProtocol.parentGone() && switch (spec.relaunchPolicy()) {
                 case ALWAYS -> true;
                 case ON_CRASH -> crashed;
                 case NEVER -> false;
             };
 
             // run post exit command
-            if (spec.postExitCommand != null && !spec.postExitCommand.isEmpty()) {
+            if (spec.postExitCommand() != null && !spec.postExitCommand().isEmpty()) {
                 try {
-                    ProcessBuilder builder = new ProcessBuilder(spec.postExitCommand).directory(spec.launchOptions.getGameDir().toFile());
-                    builder.environment().putAll(spec.environment);
+                    ProcessBuilder builder = new ProcessBuilder(spec.postExitCommand()).directory(spec.launchOptions().getGameDir().toFile());
+                    builder.environment().putAll(spec.environment());
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {
                     LOG.warning("An Exception happened while running exit command.", e);
                 }
             }
 
-            result = new Result(gameProcess, reportedType, spec.gameDirectoryId, spec.command, spec.launchOptions);
+            result = new Result(gameProcess, reportedType, spec.gameDirectoryId(), spec.command(), spec.launchOptions());
         }), "exit-waiter", true).join();
     }
 
