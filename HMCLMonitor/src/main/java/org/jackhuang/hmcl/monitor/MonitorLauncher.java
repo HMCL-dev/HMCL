@@ -81,7 +81,7 @@ public final class MonitorLauncher {
 
         Path specFile = Files.createTempFile("hmcl-monitor-spec-", ".json");
         try (var writer = Files.newBufferedWriter(specFile)) {
-            gsonForGameOptions.toJson(new ProcessSpec(context), writer);
+            gsonForGameOptions.toJson(new Monitor.ProcessSpec(context), writer);
         }
 
         List<String> commandline = JavaProcessLauncher.buildJavaCommandLine(thisJar,
