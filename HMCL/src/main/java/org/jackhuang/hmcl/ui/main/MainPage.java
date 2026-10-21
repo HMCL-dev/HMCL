@@ -122,7 +122,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
         titleLabel.textProperty().bind(Controllers.launcherTitleProperty());
         if (I18n.isUpsideDown()) {
             titleIcon.setRotate(180);
-            titleLabel.setRotate(180);
         }
         titleLabel.getStyleClass().add("jfx-decorator-title");
         titleLabel.textFillProperty().bind(Themes.titleFillProperty());
