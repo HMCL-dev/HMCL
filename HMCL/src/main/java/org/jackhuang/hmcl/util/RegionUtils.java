@@ -46,7 +46,7 @@ public final class RegionUtils {
     private static final boolean IS_CHINA_MAINLAND_MACHINE = checkMachineIsChinaMainland();
 
     private static boolean checkMachineIsChinaMainland() {
-        if ("Asia/Shanghai".equals(ZoneId.systemDefault().getId()))
+        /*if ("Asia/Shanghai".equals(ZoneId.systemDefault().getId()))
             return true;
 
         // Check if the time zone is UTC+8
@@ -61,7 +61,7 @@ public final class RegionUtils {
                 if (kernel32 != null && kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION) == 45) // China
                     return true;
             }
-        }
+        }*/
 
         return false;
     }
