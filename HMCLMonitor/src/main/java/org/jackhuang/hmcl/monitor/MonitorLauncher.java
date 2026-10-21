@@ -204,7 +204,7 @@ public final class MonitorLauncher {
 
     @NotNullByDefault
     public record MonitorLaunchSpec(List<String> command, String directory, Map<String, String> environment,
-                                    String encoding, boolean inheritStdin, @Nullable List<String> postExitCommand,
+                                    String encoding, boolean inheritStdin, List<String> postExitCommand,
                                     RelaunchPolicy relaunchPolicy, String gameDirectoryId, LaunchOptions launchOptions) {
         public MonitorLaunchSpec(MonitorLaunchContext context) {
             this(new ArrayList<>(context.builder().command()),

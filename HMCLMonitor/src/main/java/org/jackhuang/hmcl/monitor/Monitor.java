@@ -124,10 +124,10 @@ public final class Monitor {
                 case ON_CRASH -> crashed;
                 case NEVER -> false;
             };
-            result = new Result(gameProcess, reportedType, spec.gameDirectoryId(), spec.command(), spec.launchOptions());
+            result = new Result(gameProcess, reportedType, spec.gameDirectoryId(), spec.launchOptions());
 
             // run post exit command
-            if (spec.postExitCommand() != null && !spec.postExitCommand().isEmpty()) {
+            if (!spec.postExitCommand().isEmpty())
                 try {
                     ProcessBuilder builder = new ProcessBuilder(spec.postExitCommand()).directory(spec.launchOptions().getGameDir().toFile());
                     builder.environment().putAll(spec.environment());
@@ -135,22 +135,16 @@ public final class Monitor {
                 } catch (Throwable e) {
                     LOG.warning("An Exception happened while running exit command.", e);
                 }
-            }
         }), "exit-waiter", true).join();
     }
 
-    /// The in-memory result of a supervised game process, retained when the monitor JVM continues
-    /// into the launcher UI to present the game crash window.
+    /// launch result of the latest game process
     ///
     /// @param process         The supervised game process, which has already exited.
     /// @param exitType        The reported exit type, including `INTERRUPTED` for a recognized cancellation.
-    /// @param gameDirectoryId The persistent id of the registered game directory owning the launched
-    ///                        instance, or `null` when unknown.
-    /// @param commands        The command line of the game process, or `null` when unknown.
+    /// @param gameDirectoryId The persistent id of the registered game directory owning the launched instance.
     /// @param launchOptions   The launch options used to identify the instance and present its crash window.
     @NotNullByDefault
-    public record Result(ManagedProcess process, ProcessListener.ExitType exitType,
-                         String gameDirectoryId, @Nullable List<String> commands,
-                         LaunchOptions launchOptions) {
+    public record Result(ManagedProcess process, ProcessListener.ExitType exitType, String gameDirectoryId, LaunchOptions launchOptions) {
     }
 }
