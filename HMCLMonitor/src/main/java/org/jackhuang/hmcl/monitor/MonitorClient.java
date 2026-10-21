@@ -108,6 +108,7 @@ public final class MonitorClient {
         List<String> commandline = JavaProcessLauncher.buildJavaCommandLine(thisJar,
                 "--monitor", specFile.toAbsolutePath().toString());
         LOG.info("Starting monitor process: " + JavaProcessLauncher.maskCommandLine(commandline));
+
         Process monitor = new ProcessBuilder(commandline)
                 .directory(Paths.get("").toAbsolutePath().toFile())
                 .redirectOutput(ProcessBuilder.Redirect.INHERIT)
@@ -116,18 +117,10 @@ public final class MonitorClient {
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(monitor.getErrorStream(), MonitorProtocol.CHARSET));
 
-        String[] handshake = readHandshake(monitor, reader);
-        long pid;
-        long processStartTime;
-        try {
-            pid = Long.parseLong(handshake[1]);
-            processStartTime = Long.parseLong(handshake[2]);
-        } catch (NumberFormatException e) {
-            throw new IOException("Malformed handshake message from HMCL monitor: " + String.join("\t", handshake), e);
-        }
+        MonitorProtocol.Pid handshake = readHandshake(monitor, reader);
 
-        ProcessHandle gameHandle = ProcessHandle.of(pid).orElse(null);
-        MonitorGameProcess process = new MonitorGameProcess(gameHandle, context.builder().command(), processStartTime, specFile);
+        ProcessHandle gameHandle = ProcessHandle.of(handshake.pid()).orElse(null);
+        MonitorGameProcess process = new MonitorGameProcess(gameHandle, context.builder().command(), handshake.processStartTime(), specFile);
 
         ProcessListener listener = context.listener();
         if (listener != null)
@@ -140,7 +133,8 @@ public final class MonitorClient {
             try {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    dispatchProtocolMessage(line, listener, process);
+                    if (listener != null)
+                        dispatchProtocolMessage(line, listener, process);
                 }
             } catch (IOException e) {
                 LOG.error("Failed to read from the HMCL monitor", e);
@@ -151,33 +145,25 @@ public final class MonitorClient {
     }
 
     /// Dispatches one protocol message received from the monitor.
-    private static void dispatchProtocolMessage(String line, @Nullable ProcessListener listener, MonitorGameProcess process) {
-        String[] parts = line.split("\t", 3);
-        switch (parts[0]) {
-            case MonitorProtocol.TAG_LOG -> {
-                String log = parts.length > 2 ? parts[2] : "";
-                if (listener != null)
-                    listener.onLog(log, "1".equals(parts[1]));
-            }
-            case MonitorProtocol.TAG_EXIT -> {
-                if (listener != null && parts.length >= 3) {
-                    try {
-                        int exitCode = Integer.parseInt(parts[1]);
-                        ProcessListener.ExitType exitType = ProcessListener.ExitType.valueOf(parts[2]);
+    private static void dispatchProtocolMessage(String line, ProcessListener listener, MonitorGameProcess process) {
+        MonitorProtocol.Message msg;
+        try {
+             msg = MonitorProtocol.Message.decode(line);
+        } catch (IllegalArgumentException e) {
+            LOG.warning("Unexpected message from HMCL monitor: " + line, e);
+            return;
+        }
 
-                        if (exitType == ProcessListener.ExitType.JVM_ERROR)
-                            EventBus.EVENT_BUS.fireEvent(new JVMLaunchFailedEvent(MonitorClient.class, process));
-                        else if (exitType != ProcessListener.ExitType.NORMAL)
-                            EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(MonitorClient.class, process));
-                        EventBus.EVENT_BUS.fireEvent(new ProcessStoppedEvent(MonitorClient.class, process));
+        if (msg instanceof MonitorProtocol.Log log) {
+            listener.onLog(log.line(), log.isErrorStream());
+        } else if (msg instanceof MonitorProtocol.Exit exit) {
+            if (exit.exitType() == ProcessListener.ExitType.JVM_ERROR)
+                EventBus.EVENT_BUS.fireEvent(new JVMLaunchFailedEvent(MonitorClient.class, process));
+            else if (exit.exitType() != ProcessListener.ExitType.NORMAL)
+                EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(MonitorClient.class, process));
+            EventBus.EVENT_BUS.fireEvent(new ProcessStoppedEvent(MonitorClient.class, process));
 
-                        listener.onExit(exitCode, exitType);
-                    } catch (IllegalArgumentException e) {
-                        LOG.warning("Malformed exit message from HMCL monitor: " + line, e);
-                    }
-                }
-            }
-            default -> LOG.warning("Unknown protocol message from HMCL monitor: " + line);
+            listener.onExit(exit.exitCode(), exit.exitType());
         }
     }
 
@@ -185,29 +171,26 @@ public final class MonitorClient {
     ///
     /// @throws IOException if the monitor exits or fails before the handshake, sends a malformed
     ///                     message, or does not answer within [MonitorProtocol#HANDSHAKE_TIMEOUT]
-    private static String[] readHandshake(Process monitor, BufferedReader reader) throws IOException {
-        CompletableFuture<String[]> future = new CompletableFuture<>();
+    private static MonitorProtocol.Pid readHandshake(Process monitor, BufferedReader reader) throws IOException {
+        CompletableFuture<MonitorProtocol.Pid> future = new CompletableFuture<>();
         Thread waiter = Lang.thread(() -> {
             try {
                 String line = reader.readLine();
-                if (line == null) {
-                    future.completeExceptionally(new IOException("The HMCL monitor exited before the handshake"));
+                if (line == null)
+                    throw new IOException("The HMCL monitor exited before the handshake");
+                if (MonitorProtocol.Message.decode(line) instanceof MonitorProtocol.Pid pid) {
+                    future.complete(pid);
                     return;
                 }
-                String[] parts = line.split("\t");
-                if (!MonitorProtocol.TAG_PID.equals(parts[0]) || parts.length < 3) {
-                    future.completeExceptionally(new IOException("Unexpected handshake message from HMCL monitor: " + line));
-                } else {
-                    future.complete(parts);
-                }
-            } catch (IOException e) {
+                throw new IOException("Unexpected handshake message from HMCL monitor: " + line);
+            } catch (Exception e) {
                 future.completeExceptionally(e);
             }
         }, "hmcl-monitor-handshake", true);
 
         boolean handshakeCompleted = false;
         try {
-            String[] handshake = future.get(MonitorProtocol.HANDSHAKE_TIMEOUT, TimeUnit.MILLISECONDS);
+            MonitorProtocol.Pid handshake = future.get(MonitorProtocol.HANDSHAKE_TIMEOUT, TimeUnit.MILLISECONDS);
             handshakeCompleted = true;
             return handshake;
         } catch (TimeoutException e) {
@@ -220,9 +203,6 @@ public final class MonitorClient {
             throw new IOException(cause.getMessage(), cause);
         } finally {
             waiter.interrupt();
-            // The monitor must not outlive a failed handshake: it would create and supervise the
-            // game process on its own, leaving behind an orphaned game, e.g. when the user cancels
-            // the launch while the handshake is still pending.
             if (!handshakeCompleted)
                 monitor.destroy();
         }

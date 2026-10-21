@@ -35,43 +35,63 @@ import java.nio.charset.StandardCharsets;
 ///     <li>{@code E\t<exitCode>\t<exitType>} &mdash; the game process has exited.</li>
 /// </ul>
 @NotNullByDefault
-public final class MonitorProtocol {
+final class MonitorProtocol {
 
     /// The charset of the protocol stream.
-    public static final Charset CHARSET = StandardCharsets.UTF_8;
+    static final Charset CHARSET = StandardCharsets.UTF_8;
 
     /// How long to wait for the monitor's handshake before giving up, in milliseconds.
     static final long HANDSHAKE_TIMEOUT = 20_000;
-
     /// The shared protocol output on raw stderr, also used to detect failures when writing messages.
     static private final PrintStream protocol = new PrintStream(new FileOutputStream(FileDescriptor.err), true, MonitorProtocol.CHARSET);
-
-    /// Message tag of the handshake message.
-    static final String TAG_PID = "P";
-    /// Message tag of a game output line.
-    static final String TAG_LOG = "L";
-    /// Message tag of the game exit message.
-    static final String TAG_EXIT = "E";
 
     private MonitorProtocol() {
     }
 
     /// Writes and flushes the handshake message carrying the game process id and its start time.
     static void pidMessage(long pid, long processStartTime) {
-        protocol.println(TAG_PID + "\t" + pid + "\t" + processStartTime);
+        protocol.println("P\t" + pid + "\t" + processStartTime);
     }
 
     /// Writes and flushes a game output line message.
     static void logMessage(boolean isErrorStream, String line) {
-        protocol.println(TAG_LOG + "\t" + (isErrorStream ? 1 : 0) + "\t" + line);
+        protocol.println("L\t" + (isErrorStream ? 1 : 0) + "\t" + line);
     }
 
     /// Writes and flushes the game exit message carrying the exit code and its classified type.
     static void exitMessage(int exitCode, ProcessListener.ExitType exitType) {
-        protocol.println(TAG_EXIT + "\t" + exitCode + "\t" + exitType.name());
+        protocol.println("E\t" + exitCode + "\t" + exitType.name());
     }
 
     static boolean parentGone() {
         return protocol.checkError();
+    }
+
+    sealed interface Message permits Pid, Log, Exit {
+        static Message decode(String message) throws IllegalArgumentException {
+            String[] parts = message.split("\t", 3);
+            try {
+                return switch (parts[0]) {
+                    case "P" -> new Pid(Long.parseLong(parts[1]), Long.parseLong(parts[2]));
+                    case "L" -> new Log("1".equals(parts[1]), parts[2]);
+                    case "E" -> new Exit(Integer.parseInt(parts[1]), ProcessListener.ExitType.valueOf(parts[2]));
+                    default -> throw new IllegalStateException("Unexpected value: " + message.charAt(0));
+                };
+            } catch (Exception e) {
+                throw new IllegalArgumentException(e);
+            }
+        }
+    }
+
+    /// handshake message
+    record Pid(long pid, long processStartTime) implements Message {
+    }
+
+    /// game output line
+    record Log(boolean isErrorStream, String line) implements Message {
+    }
+
+    /// game exit message
+    record Exit(int exitCode, ProcessListener.ExitType exitType) implements Message {
     }
 }
