@@ -42,7 +42,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -142,10 +141,7 @@ public final class MonitorLauncher {
         }
     }
 
-    /// Reads the handshake message `P\t<pid>\t<startTime>` from the monitor.
-    ///
-    /// @throws IOException if the monitor exits or fails before the handshake, sends a malformed
-    ///                     message, or does not answer within [MonitorProtocol#HANDSHAKE_TIMEOUT]
+    /// @throws IOException if launcher cannot shake hand with monitor within [MonitorProtocol#HANDSHAKE_TIMEOUT]
     private static MonitorProtocol.Pid readHandshake(Process monitor, BufferedReader reader) throws IOException {
         CompletableFuture<MonitorProtocol.Pid> future = new CompletableFuture<>();
         Thread waiter = Lang.thread(() -> {
@@ -192,30 +188,21 @@ public final class MonitorLauncher {
         ALWAYS
     }
 
-    public record MonitorLaunchContext(
-            ProcessBuilder builder,
-            @Nullable ProcessListener listener,
-            Charset encoding,
-            LaunchOptions options,
-            String gameDirectoryId,
-            List<String> postExitCommand,
-            RelaunchPolicy relaunchPolicy) {
+    public record MonitorLaunchContext(ProcessBuilder builder, @Nullable ProcessListener listener, Charset encoding,
+                                       LaunchOptions options, String gameDirectoryId, List<String> postExitCommand,
+                                       RelaunchPolicy relaunchPolicy) {
     }
 
-    @NotNullByDefault
     public record MonitorLaunchSpec(List<String> command, String directory, Map<String, String> environment,
-                                    String encoding, boolean inheritStdin, List<String> postExitCommand,
-                                    RelaunchPolicy relaunchPolicy, String gameDirectoryId, LaunchOptions launchOptions) {
+                                    boolean inheritStdin, String encoding, LaunchOptions options,
+                                    String gameDirectoryId, List<String> postExitCommand,
+                                    RelaunchPolicy relaunchPolicy) {
         public MonitorLaunchSpec(MonitorLaunchContext context) {
-            this(new ArrayList<>(context.builder().command()),
-                    context.builder().directory().getAbsolutePath(),
-                    context.builder().environment(),
-                    context.encoding().name(),
-                    context.listener() == null,
-                    context.postExitCommand(),
-                    context.relaunchPolicy(),
-                    context.gameDirectoryId(),
-                    context.options());
+            this(context.builder().command(), context.builder().directory().getAbsolutePath(), context.builder().environment(),
+                    context.listener() == null, context.encoding().name(),
+                    context.options(), context.gameDirectoryId(), context.postExitCommand(),
+                    context.relaunchPolicy()
+            );
         }
     }
 }

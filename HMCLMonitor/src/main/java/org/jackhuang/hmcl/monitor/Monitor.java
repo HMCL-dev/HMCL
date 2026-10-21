@@ -124,12 +124,12 @@ public final class Monitor {
                 case ON_CRASH -> crashed;
                 case NEVER -> false;
             };
-            result = new Result(gameProcess, reportedType, spec.gameDirectoryId(), spec.launchOptions());
+            result = new Result(gameProcess, reportedType, spec.gameDirectoryId(), spec.options());
 
             // run post exit command
             if (!spec.postExitCommand().isEmpty())
                 try {
-                    ProcessBuilder builder = new ProcessBuilder(spec.postExitCommand()).directory(spec.launchOptions().getGameDir().toFile());
+                    ProcessBuilder builder = new ProcessBuilder(spec.postExitCommand()).directory(spec.options().getGameDir().toFile());
                     builder.environment().putAll(spec.environment());
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {
