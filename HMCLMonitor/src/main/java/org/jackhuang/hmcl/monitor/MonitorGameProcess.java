@@ -40,8 +40,8 @@ public final class MonitorGameProcess implements ProcessInfo {
     private final long pid;
     private final List<String> commands;
     private final long processStartTime;
-    /// The file the spec was exchanged with the monitor through, or `null` when unknown.
-    private final @Nullable Path specFile;
+    /// The file the spec was exchanged with the monitor through
+    private final Path specFile;
 
     /// Creates a view of the monitor-supervised game process.
     ///
@@ -50,7 +50,7 @@ public final class MonitorGameProcess implements ProcessInfo {
     /// @param processStartTime the epoch millisecond at which the game process started
     /// @param specFile         the file the spec was exchanged with the monitor through, or `null` if unknown
     MonitorGameProcess(@Nullable ProcessHandle handle, List<String> commands, long processStartTime,
-                       @Nullable Path specFile) {
+                       Path specFile) {
         this.handle = handle;
         this.pid = handle != null ? handle.pid() : -1;
         this.commands = List.copyOf(commands);
@@ -91,13 +91,11 @@ public final class MonitorGameProcess implements ProcessInfo {
 
     @Override
     public void stop() {
-        if (specFile != null)
-            try {
-                // notify the monitor
-                Files.writeString(specFile, "CANCELED");
-            } catch (IOException e) {
-                LOG.warning("Failed to rewrite the monitor spec file " + specFile + " to mark the cancellation", e);
-            }
+        try { // notify the monitor
+            Files.writeString(specFile, Monitor.CANCELED);
+        } catch (IOException e) {
+            LOG.warning("Failed to rewrite the monitor spec file " + specFile + " to mark the cancellation", e);
+        }
         if (handle != null)
             handle.destroy();
     }

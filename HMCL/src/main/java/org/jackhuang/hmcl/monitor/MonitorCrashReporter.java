@@ -45,7 +45,7 @@ public final class MonitorCrashReporter {
     }
 
     public static void show() {
-        ResultSpec result = Monitor.getResultSpec();
+        Monitor.Result result = Monitor.getResultSpec();
         if (result == null || result.gameDirectoryId() == null)
             return;
 
@@ -82,7 +82,7 @@ public final class MonitorCrashReporter {
     }
 
     /// Schedules the crash window on the JavaFX thread using the configured tail of captured console output.
-    private static void presentCrashWindow(ResultSpec result, HMCLGameInstance instance) {
+    private static void presentCrashWindow(Monitor.Result result, HMCLGameInstance instance) {
         @Unmodifiable List<String> logs = result.process().getLines(null);
         Platform.runLater(() -> new GameCrashWindow(
                 result.process(),

@@ -36,10 +36,8 @@ import java.nio.charset.StandardCharsets;
 /// </ul>
 @NotNullByDefault
 final class MonitorProtocol {
-
     /// The charset of the protocol stream.
     static final Charset CHARSET = StandardCharsets.UTF_8;
-
     /// How long to wait for the monitor's handshake before giving up, in milliseconds.
     static final long HANDSHAKE_TIMEOUT = 20_000;
     /// The shared protocol output on raw stderr, also used to detect failures when writing messages.

@@ -53,32 +53,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public final class MonitorLauncher {
     private static final boolean MONITOR_ENABLED = System.getenv("HMCL_USE_HMCLMONITOR") != null;
-
-    private MonitorLauncher() {
-    }
-
-    public static boolean isEnabled() {
-        return MONITOR_ENABLED;
-    }
-
-    public record MonitorLaunchContext(
-            ProcessBuilder builder,
-            @Nullable ProcessListener listener,
-            Charset encoding,
-            LaunchOptions options,
-            @Nullable String gameDirectoryId,
-            @Nullable List<String> postExitCommand,
-            RelaunchPolicy relaunchPolicy) {}
-
-    public enum RelaunchPolicy {
-        /// Never continue into the launcher UI after the game exits.
-        NEVER,
-        /// Continue into the launcher UI after a non-normal exit if the protocol stream has failed.
-        ON_CRASH,
-        /// Continue into the launcher UI after any exit if the protocol stream has failed.
-        ALWAYS
-    }
-
     private static final Gson gsonForGameOptions = JsonUtils.defaultGsonBuilder()
             .addSerializationExclusionStrategy(new ExclusionStrategy() {
                 @Override
@@ -92,6 +66,13 @@ public final class MonitorLauncher {
                             || Renderer.class.isAssignableFrom(clazz); // ignoring these
                 }
             }).create();
+
+    private MonitorLauncher() {
+    }
+
+    public static boolean isEnabled() {
+        return MONITOR_ENABLED;
+    }
 
     public static MonitorGameProcess launchNewMonitor(MonitorLaunchContext context) throws IOException {
         Path thisJar = JarUtils.thisJarPath();
@@ -142,7 +123,7 @@ public final class MonitorLauncher {
     private static void dispatchProtocolMessage(String line, ProcessListener listener, MonitorGameProcess process) {
         MonitorProtocol.Message msg;
         try {
-             msg = MonitorProtocol.Message.decode(line);
+            msg = MonitorProtocol.Message.decode(line);
         } catch (IllegalArgumentException e) {
             LOG.warning("Unexpected message from HMCL monitor: " + line, e);
             return;
@@ -200,5 +181,24 @@ public final class MonitorLauncher {
             if (!handshakeCompleted)
                 monitor.destroy();
         }
+    }
+
+    public enum RelaunchPolicy {
+        /// Never continue into the launcher UI after the game exits.
+        NEVER,
+        /// Continue into the launcher UI after a non-normal exit if the protocol stream has failed.
+        ON_CRASH,
+        /// Continue into the launcher UI after any exit if the protocol stream has failed.
+        ALWAYS
+    }
+
+    public record MonitorLaunchContext(
+            ProcessBuilder builder,
+            @Nullable ProcessListener listener,
+            Charset encoding,
+            LaunchOptions options,
+            @Nullable String gameDirectoryId,
+            @Nullable List<String> postExitCommand,
+            RelaunchPolicy relaunchPolicy) {
     }
 }

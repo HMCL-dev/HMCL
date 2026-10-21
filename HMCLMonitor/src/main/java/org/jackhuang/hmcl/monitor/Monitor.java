@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.monitor;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.launch.ExitWaiter;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.launch.StreamPump;
@@ -39,15 +40,16 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
 public final class Monitor {
+    public static final String CANCELED = "CANCELED";
     private static boolean shouldRestart = false;
     private static boolean crashed = false;
-    private static @Nullable ResultSpec resultSpec;
+    private static @Nullable Monitor.Result result;
 
     private Monitor() {
     }
 
-    public static @Nullable ResultSpec getResultSpec() {
-        return resultSpec;
+    public static @Nullable Monitor.Result getResultSpec() {
+        return result;
     }
 
     public static boolean isCrashed() {
@@ -109,7 +111,7 @@ public final class Monitor {
             // reread spec to check canceled
             ProcessListener.ExitType reportedType = exitType;
             try {
-                if (Files.exists(specPath) && Files.readString(specPath).startsWith("CANCELED"))
+                if (Files.exists(specPath) && Files.readString(specPath).startsWith(CANCELED))
                     reportedType = ProcessListener.ExitType.INTERRUPTED;
                 Files.deleteIfExists(specPath);
             } catch (IOException e1) {
@@ -135,7 +137,22 @@ public final class Monitor {
                 }
             }
 
-            resultSpec = new ResultSpec(spec, gameProcess, reportedType);
+            result = new Result(gameProcess, reportedType, spec.gameDirectoryId, spec.command, spec.launchOptions);
         }), "exit-waiter", true).join();
+    }
+
+    /// The in-memory result of a supervised game process, retained when the monitor JVM continues
+    /// into the launcher UI to present the game crash window.
+    ///
+    /// @param process         The supervised game process, which has already exited.
+    /// @param exitType        The reported exit type, including `INTERRUPTED` for a recognized cancellation.
+    /// @param gameDirectoryId The persistent id of the registered game directory owning the launched
+    ///                        instance, or `null` when unknown.
+    /// @param commands        The command line of the game process, or `null` when unknown.
+    /// @param launchOptions   The launch options used to identify the instance and present its crash window.
+    @NotNullByDefault
+    public record Result(ManagedProcess process, ProcessListener.ExitType exitType,
+                         @Nullable String gameDirectoryId, @Nullable List<String> commands,
+                         LaunchOptions launchOptions) {
     }
 }
