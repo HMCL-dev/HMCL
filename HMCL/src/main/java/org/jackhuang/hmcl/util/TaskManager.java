@@ -17,16 +17,16 @@
  */
 package org.jackhuang.hmcl.util;
 
+import javafx.beans.Observable;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.UnmodifiableView;
-
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Tracks active task dialogs in registration order without changing their scheduling.
 ///
@@ -39,14 +39,20 @@ public final class TaskManager {
     private static final TaskManager INSTANCE = new TaskManager();
 
     /// Active dialogs, including dialogs currently displayed in the foreground.
-    private final ObservableList<TaskExecutorDialogPane> tasks = FXCollections.observableArrayList();
+    private final ObservableList<TaskExecutorDialogPane> tasks =
+            FXCollections.observableArrayList(pane -> new Observable[]{pane.runningInBackgroundProperty()});
 
     /// A live view that prevents callers from modifying the task list.
     private final @UnmodifiableView ObservableList<TaskExecutorDialogPane> tasksView =
             FXCollections.unmodifiableObservableList(tasks);
 
+    /// Whether at least one registered task is currently in the background.
+    private final ReadOnlyBooleanWrapper hasBackgroundTasks = new ReadOnlyBooleanWrapper(this, "hasBackgroundTasks");
+
     /// Creates the application-wide manager.
     private TaskManager() {
+        hasBackgroundTasks.bind(Bindings.createBooleanBinding(
+                () -> tasks.stream().anyMatch(pane -> pane.runningInBackgroundProperty().get()), tasks));
     }
 
     /// Returns the application-wide task manager.
@@ -60,6 +66,14 @@ public final class TaskManager {
         return tasksView;
     }
 
+    /// Returns a read-only property indicating whether a registered task is in the background.
+    ///
+    /// Updates when tasks are hidden, shown again, registered, or removed.
+    public ReadOnlyBooleanProperty hasBackgroundTasksProperty() {
+        FXUtils.checkFxUserThread();
+        return hasBackgroundTasks.getReadOnlyProperty();
+    }
+
     /// Registers a dialog; registering an existing entry has no effect.
     public void register(TaskExecutorDialogPane pane) {
         FXUtils.checkFxUserThread();
@@ -71,13 +85,5 @@ public final class TaskManager {
     public void unregister(TaskExecutorDialogPane pane) {
         FXUtils.checkFxUserThread();
         tasks.remove(pane);
-    }
-
-    /// Starts a task with a cancellable progress dialog and returns that dialog.
-    ///
-    /// The task starts immediately and may run concurrently with other registered tasks.
-    public TaskExecutorDialogPane executeTask(Task<?> task) {
-        FXUtils.checkFxUserThread();
-        return Controllers.taskDialog(task, i18n("message.doing"), TaskCancellationAction.NORMAL);
     }
 }

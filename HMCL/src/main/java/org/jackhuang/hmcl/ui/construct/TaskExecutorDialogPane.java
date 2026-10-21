@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -47,7 +49,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// Construction and lifecycle operations must occur on the JavaFX application thread.
 /// Restoring a hidden dialog preserves its task list and does not restart its executor.
 @NotNullByDefault
-public class TaskExecutorDialogPane extends BorderPane {
+public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
 
     /// The executor whose progress is displayed, or `null` if detached.
     private @Nullable TaskExecutor executor;
@@ -57,6 +59,8 @@ public class TaskExecutorDialogPane extends BorderPane {
     private @Nullable Runnable onBackground;
     /// Whether the current executor has started and has not yet reported completion.
     private boolean running;
+    /// Whether the active task has been explicitly sent to the background.
+    private final ReadOnlyBooleanWrapper runningInBackground = new ReadOnlyBooleanWrapper(this, "runningInBackground");
     /// Keeps the weakly registered speed listener alive while this pane is retained.
     @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private final Consumer<FetchTask.SpeedEvent> speedEventHandler;
@@ -154,6 +158,7 @@ public class TaskExecutorDialogPane extends BorderPane {
         TaskManager.getInstance().unregister(this);
         this.executor = executor;
         running = false;
+        runningInBackground.set(false);
         updateButtons();
 
         if (executor != null) {
@@ -179,6 +184,7 @@ public class TaskExecutorDialogPane extends BorderPane {
                         if (TaskExecutorDialogPane.this.executor != stoppedExecutor)
                             return;
                         running = false;
+                        runningInBackground.set(false);
                         TaskManager.getInstance().unregister(TaskExecutorDialogPane.this);
                         updateButtons();
                         if (autoClose) {
@@ -202,6 +208,7 @@ public class TaskExecutorDialogPane extends BorderPane {
         FXUtils.checkFxUserThread();
         if (!running || !DialogUtils.isShowing(this))
             return;
+        runningInBackground.set(true);
         DialogUtils.close(this);
         @Nullable Runnable action = onBackground;
         onBackground = null;
@@ -216,6 +223,20 @@ public class TaskExecutorDialogPane extends BorderPane {
         FXUtils.checkFxUserThread();
         if (running && !DialogUtils.isShowing(this))
             Controllers.dialog(this);
+    }
+
+    /// Returns a read-only property indicating whether the active task was sent to the background
+    /// and has not been shown again.
+    ///
+    /// The value becomes false when execution stops or the executor is detached or replaced.
+    public ReadOnlyBooleanProperty runningInBackgroundProperty() {
+        return runningInBackground.getReadOnlyProperty();
+    }
+
+    /// Clears the background state when this dialog is displayed, including through direct dialog calls.
+    @Override
+    public void onDialogShown() {
+        runningInBackground.set(false);
     }
 
     /// Sets an action to run once when the active dialog is next sent to the background.

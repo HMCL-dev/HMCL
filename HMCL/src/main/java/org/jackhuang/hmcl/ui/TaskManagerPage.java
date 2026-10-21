@@ -66,7 +66,7 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
     }
 
     @Override
-    protected Skin createDefaultSkin() {
+    protected SkinBase<TaskManagerPage> createDefaultSkin() {
         return new Skin(this);
     }
 

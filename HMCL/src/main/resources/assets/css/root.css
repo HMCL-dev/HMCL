@@ -705,6 +705,10 @@
     -fx-fill: -monet-on-primary-container;
 }
 
+.jfx-decorator-button .jfx-spinner .arc {
+    -fx-stroke: -monet-on-primary-container;
+}
+
 .jfx-tool-bar Label {
     -fx-text-fill: -monet-on-surface;
 }
