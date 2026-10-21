@@ -98,7 +98,7 @@ public class DefaultLauncher extends Launcher {
         if (StringUtils.isNotBlank(options.getWrapper()))
             res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), getEnvVars(nativeFolder)));
 
-        res.add(options.getJava().getBinary().toString());
+        res.add(options.getJavaExecutable().toString());
 
         res.addAllWithoutParsingAndReadExternal(options.getOverrideJavaArguments());
 

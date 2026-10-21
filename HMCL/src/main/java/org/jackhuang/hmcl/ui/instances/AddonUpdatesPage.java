@@ -24,6 +24,7 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 
 import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -211,10 +212,10 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             csvTable.set(3, 0, "Update Source");
 
             for (int i = 0; i < objects.size(); i++) {
-                csvTable.set(0, i + 1, objects.get(i).fileName.get());
-                csvTable.set(1, i + 1, objects.get(i).currentVersion.get());
-                csvTable.set(2, i + 1, objects.get(i).selectedVersion.get().version());
-                csvTable.set(3, i + 1, objects.get(i).source.get());
+                csvTable.set(0, i + 1, objects.get(i).getFileName());
+                csvTable.set(1, i + 1, objects.get(i).getCurrentVersion());
+                csvTable.set(2, i + 1, objects.get(i).getTargetVersion());
+                csvTable.set(3, i + 1, objects.get(i).getSource());
             }
 
             csvTable.write(path);
@@ -241,36 +242,22 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         final ObjectProperty<RemoteAddon.Version> selectedVersion = new SimpleObjectProperty<>();
 
         final BooleanProperty enabled = new SimpleBooleanProperty();
-        final StringProperty fileName = new SimpleStringProperty();
-        final StringProperty currentVersion = new SimpleStringProperty();
-        /// `<current version> → <target version> | <version type>`.
-        final StringProperty updateInfo = new SimpleStringProperty();
-        final StringProperty source = new SimpleStringProperty();
+
+        final String source;
 
         final ItemPropertyAsyncCache<Image, AddonUpdateObject> iconCache;
 
         public AddonUpdateObject(AddonUpdate data) {
             this.data = data;
 
-            enabled.set(!data.localAddonFile().isDisabled());
-            fileName.set(data.localAddonFile().getFileName());
-            currentVersion.set(data.currentVersion().version());
-            FXUtils.onChange(selectedVersion, version -> {
-                if (version != null) {
-                    updateInfo.set(currentVersion.get() + " → " + version.version() + " | " + version.versionType().name());
-                }
-            });
-            selectedVersion.set(data.targetVersion());
-            source.set(switch (data.currentVersion().source()) {
+            this.enabled.set(!data.localAddonFile().isDisabled());
+            this.source = switch (data.currentVersion().source()) {
                 case CURSEFORGE -> i18n("addon.curseforge");
                 case MODRINTH -> i18n("addon.modrinth");
-            });
+            };
+            this.selectedVersion.set(data.targetVersion());
 
-            iconCache = new ItemPropertyAsyncCache.Soft<>(
-                this,
-                this::loadIcon,
-                this::getDefaultIcon
-            );
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
         public AddonUpdate getData() {
@@ -285,36 +272,34 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             return enabled;
         }
 
-        public StringProperty fileNameProperty() {
-            return fileName;
-        }
-
-        public void setFileName(String fileName) {
-            this.fileName.set(fileName);
-        }
-
-        public LocalAddonFile getLocalAddonFile() {
+        public LocalAddonFile<?> getLocalAddonFile() {
             return data.localAddonFile();
         }
 
+        public String getFileName() {
+            return data.localAddonFile().getFileName();
+        }
+
         public String getCurrentVersion() {
-            return currentVersion.get();
+            return data.currentVersion().version();
         }
 
-        public StringProperty currentVersionProperty() {
-            return currentVersion;
+        /// Returns the version string of the target version currently selected by the user.
+        public String getTargetVersion() {
+            return selectedVersion.get().version();
         }
 
-        public StringProperty updateInfoProperty() {
-            return updateInfo;
+        /// Returns the localized channel name of the target version currently selected by the user.
+        public String getTargetVersionType() {
+            return switch (selectedVersion.get().versionType()) {
+                case Release -> i18n("addon.channel.release");
+                case Beta -> i18n("addon.channel.beta");
+                case Alpha -> i18n("addon.channel.alpha");
+            };
         }
 
-        public StringProperty sourceProperty() {
+        public String getSource() {
             return source;
-        }
-
-        public void setSource(String source) {
-            this.source.set(source);
         }
 
         private Image getDefaultIcon() {
@@ -387,8 +372,16 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         private final JFXCheckBox enabledBox = new JFXCheckBox();
         private final ImageContainer imageContainer = new ImageContainer(40);
         private final TwoLineListItem content = new TwoLineListItem();
-        /// by "edit", it means "select target version"
         private final JFXButton editButton = FXUtils.newToggleButton4(SVG.EDIT);
+
+        /// Keeps the version type tag in sync when the user selects another target version in the dialog.
+        private final ChangeListener<RemoteAddon.Version> selectedVersionListener =
+                (observable, oldVersion, newVersion) -> {
+                    AddonUpdateObject item = getItem();
+                    if (item != null) {
+                        updateTags(item);
+                    }
+                };
 
         AddonUpdateListCell() {
             HBox hbox = new HBox(16);
@@ -423,16 +416,35 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             });
         }
 
+        /// Rebuilds the tags of `item`, including the channel of the currently selected target version.
+        private void updateTags(AddonUpdateObject item) {
+            content.getTags().clear();
+
+            LocalAddonFile<?> addonFile = item.getLocalAddonFile();
+            if (addonFile instanceof LocalModFile modFile)
+                content.addTag(modFile.getId());
+            content.addTag(item.getSource());
+            content.addTag(item.getTargetVersionType());
+        }
+
         @Override
         public void updateItem(AddonUpdateObject item, boolean empty) {
             AddonUpdateObject oldItem = getItem();
+            boolean oldEmpty = isEmpty();
+
+            super.updateItem(item, empty);
+
+            if (oldItem == item && oldEmpty == empty) {
+                return;
+            }
+
+            ripplerContainer.releaseRippleImmediately();
 
             if (oldItem != null) {
                 enabledBox.selectedProperty().unbindBidirectional(oldItem.enabledProperty());
+                oldItem.selectedVersion.removeListener(selectedVersionListener);
                 content.subtitleProperty().unbind();
             }
-
-            super.updateItem(item, empty);
 
             if (empty || item == null) {
                 setGraphic(null);
@@ -443,18 +455,9 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
             item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
 
-            LocalAddonFile addonFile = item.getLocalAddonFile();
+            LocalAddonFile<?> addonFile = item.getLocalAddonFile();
 
-            if (oldItem != item) {
-                content.getTags().clear();
-
-                if (addonFile instanceof LocalModFile modFile) {
-                    content.addTag(modFile.getId());
-                    content.addTag(item.source.get());
-                } else if (addonFile instanceof ResourcePackFile) {
-                    content.addTag(item.source.get());
-                }
-            }
+            updateTags(item);
 
             if (addonFile instanceof LocalModFile modFile) {
                 content.setTitle(modFile.getName());
@@ -462,7 +465,10 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 content.setTitle(resourcePackFile.getFileName());
             }
 
-            content.subtitleProperty().bind(item.updateInfoProperty());
+            FXUtils.onChangeAndOperate(item.selectedVersion, (value) -> {
+                content.setSubtitle(item.getCurrentVersion() + " → " + value.version());
+            });
+            item.selectedVersion.addListener(selectedVersionListener);
 
             setGraphic(pane);
         }

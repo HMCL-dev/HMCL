@@ -40,7 +40,7 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.ClassTitle;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.i18n.LocaleUtils;
+import org.jackhuang.hmcl.util.RegionUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
@@ -57,7 +57,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
         String property = System.getProperty("hmcl.offline.auth.restricted", "auto");
 
         if ("false".equals(property)
-                || "auto".equals(property) && LocaleUtils.IS_CHINA_MAINLAND
+                || "auto".equals(property) && RegionUtils.isIsChinaMainlandMachine()
                 || SettingsManager.userSettings().enableOfflineAccountProperty().get())
             RESTRICTED.set(false);
         else
