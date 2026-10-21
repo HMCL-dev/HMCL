@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.TaskManager;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -92,11 +93,23 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
         {
             lblTitle = new Label();
             lblTitle.setStyle("-fx-font-size: 14px; -fx-font-weight: BOLD;");
+            lblTitle.setMinWidth(0);
+            lblTitle.setMaxWidth(Double.MAX_VALUE);
+            HBox.setHgrow(lblTitle, Priority.ALWAYS);
+
+            btnBackground = FXUtils.newToggleButton4(SVG.MINIMIZE_CENTER);
+            btnBackground.setAccessibleText(i18n("task.background"));
+            FXUtils.installFastTooltip(btnBackground, i18n("task.background"));
+            btnBackground.setDisable(true);
+            btnBackground.setOnAction(event -> background());
+
+            HBox header = new HBox(8, lblTitle, btnBackground);
+            header.setAlignment(Pos.CENTER_LEFT);
 
             taskListPane = new TaskListPane();
             VBox.setVgrow(taskListPane, Priority.ALWAYS);
 
-            center.getChildren().setAll(lblTitle, taskListPane);
+            center.getChildren().setAll(header, taskListPane);
         }
 
         HBox bottom = new HBox();
@@ -110,10 +123,7 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
             HBox.setHgrow(spacer, Priority.ALWAYS);
             btnCancel = new JFXButton(i18n("button.cancel"));
             btnCancel.getStyleClass().add("dialog-cancel");
-            btnBackground = new JFXButton(i18n("task.background"));
-            btnBackground.setDisable(true);
-            btnBackground.setOnAction(event -> background());
-            bottom.getChildren().setAll(lblProgress, spacer, btnBackground, btnCancel);
+            bottom.getChildren().setAll(lblProgress, spacer, btnCancel);
         }
 
         setCancel(cancel);
