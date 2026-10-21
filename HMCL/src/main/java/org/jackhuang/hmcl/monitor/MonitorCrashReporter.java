@@ -46,8 +46,6 @@ public final class MonitorCrashReporter {
 
     public static void show() {
         Monitor.Result result = Monitor.getResult();
-        if (result == null || result.gameDirectoryId() == null)
-            return;
 
         // find repository
         GameDirectoryID id = GameDirectoryID.parse(result.gameDirectoryId());

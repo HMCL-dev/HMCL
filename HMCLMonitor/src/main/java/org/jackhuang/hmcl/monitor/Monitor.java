@@ -34,6 +34,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -41,22 +42,22 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public final class Monitor {
     public static final String CANCELED = "CANCELED";
-    private static boolean shouldRestart = false;
+    private static boolean shouldRelaunch = false;
     private static boolean crashed = false;
     private static @Nullable Monitor.Result result;
 
     private Monitor() {
     }
 
-    public static @Nullable Monitor.Result getResult() {
-        return result;
+    public static Monitor.Result getResult() throws NullPointerException {
+        return Objects.requireNonNull(result);
     }
 
-    public static boolean isCrashed() {
+    public static boolean wasCrashed() {
         return crashed;
     }
 
-    /// @return `true`: should exit, `false`: should continue and launch HMCL
+    /// @return `true` if should exit, or `false` if should continue and launch HMCL
     public static boolean processArguments(String[] args) {
         if (args.length != 2 || !args[0].equals("--monitor"))
             return false;
@@ -65,7 +66,7 @@ public final class Monitor {
         } catch (IOException | InterruptedException e) {
             LOG.error("Failed to supervise the game process", e);
         }
-        return !shouldRestart;
+        return !shouldRelaunch;
     }
 
     public static void start(Path specPath) throws IOException, InterruptedException {
@@ -118,11 +119,12 @@ public final class Monitor {
             MonitorProtocol.exitMessage(exitCode, reportedType);
 
             crashed = reportedType != ProcessListener.ExitType.NORMAL;
-            shouldRestart = MonitorProtocol.parentGone() && switch (spec.relaunchPolicy()) {
+            shouldRelaunch = MonitorProtocol.parentGone() && switch (spec.relaunchPolicy()) {
                 case ALWAYS -> true;
                 case ON_CRASH -> crashed;
                 case NEVER -> false;
             };
+            result = new Result(gameProcess, reportedType, spec.gameDirectoryId(), spec.command(), spec.launchOptions());
 
             // run post exit command
             if (spec.postExitCommand() != null && !spec.postExitCommand().isEmpty()) {
@@ -134,8 +136,6 @@ public final class Monitor {
                     LOG.warning("An Exception happened while running exit command.", e);
                 }
             }
-
-            result = new Result(gameProcess, reportedType, spec.gameDirectoryId(), spec.command(), spec.launchOptions());
         }), "exit-waiter", true).join();
     }
 
@@ -150,7 +150,7 @@ public final class Monitor {
     /// @param launchOptions   The launch options used to identify the instance and present its crash window.
     @NotNullByDefault
     public record Result(ManagedProcess process, ProcessListener.ExitType exitType,
-                         @Nullable String gameDirectoryId, @Nullable List<String> commands,
+                         String gameDirectoryId, @Nullable List<String> commands,
                          LaunchOptions launchOptions) {
     }
 }

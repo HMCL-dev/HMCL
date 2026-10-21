@@ -169,26 +169,20 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         if (!MonitorLauncher.isEnabled())
             return super.startProcess(builder, encoding, nativeFolder);
 
-        String gameDirectoryId = null;
-        MonitorLauncher.RelaunchPolicy relaunchPolicy = MonitorLauncher.RelaunchPolicy.NEVER;
-        if (instance instanceof HMCLGameInstance hmclGameInstance) {
-            gameDirectoryId = hmclGameInstance.getRepository().getGameDirectory().getId().toString();
+        var hmclGameInstance = (HMCLGameInstance) instance;
+        String gameDirectoryId = hmclGameInstance.getRepository().getGameDirectory().getId().toString();
 
-            GameSettings.Effective setting = hmclGameInstance.getEffectiveSettings();
-            LauncherVisibility x = setting.getInheritable(GameSettings::launcherVisibilityProperty);
-            boolean showLogs = setting.getInheritable(GameSettings::showLogsProperty);
-            relaunchPolicy = showLogs
-                    ? MonitorLauncher.RelaunchPolicy.NEVER
-                    : switch (x) {
-                case HIDE_AND_REOPEN -> MonitorLauncher.RelaunchPolicy.ALWAYS;
-                case HIDE -> MonitorLauncher.RelaunchPolicy.ON_CRASH;
-                default -> MonitorLauncher.RelaunchPolicy.NEVER;
-            };
-        }
-
-        List<String> postExitCommand = null;
-        if (StringUtils.isNotBlank(options.getPostExitCommand()))
-            postExitCommand = StringUtils.tokenize(options.getPostExitCommand(), getEnvVars(nativeFolder));
+        GameSettings.Effective setting = hmclGameInstance.getEffectiveSettings();
+        LauncherVisibility x = setting.getInheritable(GameSettings::launcherVisibilityProperty);
+        boolean showLogs = setting.getInheritable(GameSettings::showLogsProperty);
+        MonitorLauncher.RelaunchPolicy relaunchPolicy = showLogs
+                ? MonitorLauncher.RelaunchPolicy.NEVER
+                : switch (x) {
+            case HIDE_AND_REOPEN -> MonitorLauncher.RelaunchPolicy.ALWAYS;
+            case HIDE -> MonitorLauncher.RelaunchPolicy.ON_CRASH;
+            default -> MonitorLauncher.RelaunchPolicy.NEVER;
+        };
+        List<String> postExitCommand = StringUtils.tokenize(options.getPostExitCommand(), getEnvVars(nativeFolder));
 
         return MonitorLauncher.launchNewMonitor(new MonitorLauncher.MonitorLaunchContext(builder, listener,
                 encoding, options, gameDirectoryId, postExitCommand, relaunchPolicy));

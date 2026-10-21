@@ -64,8 +64,7 @@ public final class MonitorLauncher {
 
                 @Override
                 public boolean shouldSkipClass(Class<?> clazz) {
-                    return ProxyOption.class.isAssignableFrom(clazz)
-                            || Renderer.class.isAssignableFrom(clazz); // ignoring these
+                    return ProxyOption.class.isAssignableFrom(clazz) || Renderer.class.isAssignableFrom(clazz);
                 }
             }).create();
 
@@ -90,8 +89,7 @@ public final class MonitorLauncher {
                 "--monitor", specFile.toAbsolutePath().toString());
         LOG.info("Starting monitor process: " + JavaProcessLauncher.maskCommandLine(commandline));
 
-        Process monitor = new ProcessBuilder(commandline)
-                .directory(Paths.get("").toAbsolutePath().toFile())
+        Process monitor = new ProcessBuilder(commandline).directory(Paths.get("").toAbsolutePath().toFile())
                 .redirectOutput(ProcessBuilder.Redirect.INHERIT)
                 .redirectError(ProcessBuilder.Redirect.PIPE)
                 .start();
@@ -199,15 +197,15 @@ public final class MonitorLauncher {
             @Nullable ProcessListener listener,
             Charset encoding,
             LaunchOptions options,
-            @Nullable String gameDirectoryId,
-            @Nullable List<String> postExitCommand,
+            String gameDirectoryId,
+            List<String> postExitCommand,
             RelaunchPolicy relaunchPolicy) {
     }
 
     @NotNullByDefault
     public record MonitorLaunchSpec(List<String> command, String directory, Map<String, String> environment, String encoding,
                                     boolean inheritStdin, @Nullable List<String> postExitCommand,
-                                    RelaunchPolicy relaunchPolicy, @Nullable String gameDirectoryId, LaunchOptions launchOptions) {
+                                    RelaunchPolicy relaunchPolicy, String gameDirectoryId, LaunchOptions launchOptions) {
         public MonitorLaunchSpec(MonitorLaunchContext context) {
             this(new ArrayList<>(context.builder().command()),
                     context.builder().directory().getAbsolutePath(),
