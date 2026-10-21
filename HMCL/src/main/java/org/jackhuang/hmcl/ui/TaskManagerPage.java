@@ -104,7 +104,7 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
 
     /// Displays a live task title and an action to restore its dialog.
     @NotNullByDefault
-    private static final class TaskCell extends ListCell<TaskExecutorDialogPane> {
+    private static final class TaskCell extends ListCell<@Nullable TaskExecutorDialogPane> {
 
         /// The list item whose title is bound to the current dialog.
         private final TwoLineListItem content = new TwoLineListItem();
