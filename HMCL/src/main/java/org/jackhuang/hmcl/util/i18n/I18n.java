@@ -17,6 +17,10 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonLoaderType;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
@@ -55,7 +59,10 @@ import org.jackhuang.hmcl.modpack.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.modpack.server.ServerModpackLocalInstallTask;
 import org.jackhuang.hmcl.task.DownloadException;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.translator.Translator;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
@@ -162,6 +169,29 @@ public final class I18n {
         } catch (IOException e) {
             return null;
         }
+    }
+
+    /// The shared launcher title, populated during UI initialization.
+    private static @Nullable StringProperty launcherTitle;
+
+    public static ReadOnlyStringProperty launcherTitleProperty() {
+        if (launcherTitle == null) {
+            launcherTitle = new SimpleStringProperty(Metadata.OFFICIAL_BUILD
+                    ? i18n("launcher.title", Metadata.VERSION)
+                    : i18n("launcher.title.unofficial", Metadata.VERSION));
+            if (Metadata.OFFICIAL_BUILD) {
+                Schedulers.io().execute(() -> {
+                    if (!IntegrityChecker.isSelfVerified()) {
+                        FXUtils.runInFX(() -> {
+                            //noinspection DataFlowIssue
+                            launcherTitle.set(i18n("launcher.title.modified", Metadata.VERSION));
+                        });
+                    }
+                });
+            }
+        }
+
+        return launcherTitle;
     }
 
     public static String getWikiLink(GameRemoteVersion remoteVersion) {
