@@ -429,7 +429,8 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     /// Pins or unpins the given mods, writing [#PINNED_FILE_NAME] at most once.
     ///
     /// A name is stored without the `.disabled` or `.old` suffix, so pinning survives enabling,
-    /// disabling and rolling back the mod.
+    /// disabling and rolling back the mod. The in-memory pins are updated only after the file was
+    /// written, so a failed write leaves both the file and the memory unchanged.
     ///
     /// @param files  the mod files to change
     /// @param pinned whether they should stay at their current versions
@@ -446,8 +447,9 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             }
 
             if (changed) {
-                pinnedFiles = Set.copyOf(names);
-                savePinnedFiles(pinnedFiles);
+                Set<String> newPins = Set.copyOf(names);
+                savePinnedFiles(newPins);
+                pinnedFiles = newPins;
             }
         } finally {
             lock.unlock();
@@ -492,10 +494,25 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     /// Writes the pinned mod names to [#PINNED_FILE_NAME], sorted to keep the file stable.
     ///
+    /// The names go to a temporary file that then replaces the pin file, so an interrupted write
+    /// cannot leave a truncated file and lose every pin.
+    ///
     /// @param names the pinned mod file names
     /// @throws IOException if the file cannot be written
     private void savePinnedFiles(Collection<String> names) throws IOException {
-        Files.write(getDirectory().resolve(PINNED_FILE_NAME), names.stream().sorted().toList(), StandardCharsets.UTF_8);
+        Path file = getDirectory().resolve(PINNED_FILE_NAME);
+        Path temp = Files.createTempFile(getDirectory(), PINNED_FILE_NAME, ".tmp");
+        try {
+            Files.write(temp, names.stream().sorted().toList(), StandardCharsets.UTF_8);
+            try {
+                Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                // Some file systems cannot replace atomically, but the content is identical either way.
+                Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temp);
+        }
     }
 
     public static boolean isFileNameMod(Path file) {

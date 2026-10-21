@@ -284,7 +284,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     /// @param pinned whether the mods should stay at their current versions
     private void setPinned(Collection<ModInfoObject> items, boolean pinned) {
         ModManager manager = modManager;
-        if (manager == null) {
+        // While the list reloads, the items still belong to the previous mod directory.
+        if (manager == null || isLoading()) {
             return;
         }
 
