@@ -108,6 +108,10 @@ public final class IntegrityChecker {
 
     private static volatile @Nullable Boolean selfVerified = null;
 
+    public static @Nullable Boolean getSelfVerified() {
+        return selfVerified;
+    }
+
     /**
      * Checks whether the current application is verified.
      * This method is blocking.

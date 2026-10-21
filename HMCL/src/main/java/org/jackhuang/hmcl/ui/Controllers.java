@@ -127,18 +127,25 @@ public final class Controllers {
 
     public static ReadOnlyStringProperty launcherTitleProperty() {
         if (launcherTitle == null) {
-            launcherTitle = new SimpleStringProperty(Metadata.OFFICIAL_BUILD
+            launcherTitle = new SimpleStringProperty(Controllers.class, "launcherTitle", Metadata.OFFICIAL_BUILD
                     ? i18n("launcher.title", Metadata.VERSION)
                     : i18n("launcher.title.unofficial", Metadata.VERSION));
             if (Metadata.OFFICIAL_BUILD) {
-                Schedulers.io().execute(() -> {
-                    if (!IntegrityChecker.isSelfVerified()) {
-                        FXUtils.runInFX(() -> {
-                            //noinspection DataFlowIssue
-                            launcherTitle.set(i18n("launcher.title.modified", Metadata.VERSION));
-                        });
+                @Nullable Boolean selfVerified = IntegrityChecker.getSelfVerified();
+                if (selfVerified != null) {
+                    if (!selfVerified) {
+                        launcherTitle.set(i18n("launcher.title.modified", Metadata.VERSION));
                     }
-                });
+                } else {
+                    Schedulers.io().execute(() -> {
+                        if (!IntegrityChecker.isSelfVerified()) {
+                            FXUtils.runInFX(() -> {
+                                //noinspection DataFlowIssue
+                                launcherTitle.set(i18n("launcher.title.modified", Metadata.VERSION));
+                            });
+                        }
+                    });
+                }
             }
         }
 
