@@ -50,13 +50,11 @@ import java.util.concurrent.TimeoutException;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// The main launcher process role of the monitor feature: launching the game process through a
-/// freshly spawned monitor process and consuming its protocol stream.
 @NotNullByDefault
-public final class MonitorClient {
+public final class MonitorLauncher {
     private static final boolean MONITOR_ENABLED = System.getenv("HMCL_USE_HMCLMONITOR") != null;
 
-    private MonitorClient() {
+    private MonitorLauncher() {
     }
 
     public static boolean isEnabled() {
@@ -118,7 +116,6 @@ public final class MonitorClient {
         BufferedReader reader = new BufferedReader(new InputStreamReader(monitor.getErrorStream(), MonitorProtocol.CHARSET));
 
         MonitorProtocol.Pid handshake = readHandshake(monitor, reader);
-
         ProcessHandle gameHandle = ProcessHandle.of(handshake.pid()).orElse(null);
         MonitorGameProcess process = new MonitorGameProcess(gameHandle, context.builder().command(), handshake.processStartTime(), specFile);
 
@@ -126,9 +123,6 @@ public final class MonitorClient {
         if (listener != null)
             listener.setProcess(process);
 
-        // The reader thread must drain the protocol stream until the monitor exits even without a
-        // listener: the exit message of a canceled launch is dispatched here, and an undrained
-        // pipe would eventually block the monitor.
         Lang.thread(() -> {
             try {
                 String line;
@@ -158,10 +152,10 @@ public final class MonitorClient {
             listener.onLog(log.line(), log.isErrorStream());
         } else if (msg instanceof MonitorProtocol.Exit exit) {
             if (exit.exitType() == ProcessListener.ExitType.JVM_ERROR)
-                EventBus.EVENT_BUS.fireEvent(new JVMLaunchFailedEvent(MonitorClient.class, process));
+                EventBus.EVENT_BUS.fireEvent(new JVMLaunchFailedEvent(MonitorLauncher.class, process));
             else if (exit.exitType() != ProcessListener.ExitType.NORMAL)
-                EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(MonitorClient.class, process));
-            EventBus.EVENT_BUS.fireEvent(new ProcessStoppedEvent(MonitorClient.class, process));
+                EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(MonitorLauncher.class, process));
+            EventBus.EVENT_BUS.fireEvent(new ProcessStoppedEvent(MonitorLauncher.class, process));
 
             listener.onExit(exit.exitCode(), exit.exitType());
         }

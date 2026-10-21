@@ -21,7 +21,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
-import org.jackhuang.hmcl.monitor.MonitorClient;
+import org.jackhuang.hmcl.monitor.MonitorLauncher;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.util.NativePatcher;
@@ -166,11 +166,11 @@ public final class HMCLGameLauncher extends DefaultLauncher {
 
     @Override
     protected ProcessInfo startProcess(ProcessBuilder builder, Charset encoding, Path nativeFolder) throws IOException {
-        if (!MonitorClient.isEnabled())
+        if (!MonitorLauncher.isEnabled())
             return super.startProcess(builder, encoding, nativeFolder);
 
         String gameDirectoryId = null;
-        MonitorClient.RelaunchPolicy relaunchPolicy = MonitorClient.RelaunchPolicy.NEVER;
+        MonitorLauncher.RelaunchPolicy relaunchPolicy = MonitorLauncher.RelaunchPolicy.NEVER;
         if (instance instanceof HMCLGameInstance hmclGameInstance) {
             gameDirectoryId = hmclGameInstance.getRepository().getGameDirectory().getId().toString();
 
@@ -178,11 +178,11 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             LauncherVisibility x = setting.getInheritable(GameSettings::launcherVisibilityProperty);
             boolean showLogs = setting.getInheritable(GameSettings::showLogsProperty);
             relaunchPolicy = showLogs
-                    ? MonitorClient.RelaunchPolicy.NEVER
+                    ? MonitorLauncher.RelaunchPolicy.NEVER
                     : switch (x) {
-                case HIDE_AND_REOPEN -> MonitorClient.RelaunchPolicy.ALWAYS;
-                case HIDE -> MonitorClient.RelaunchPolicy.ON_CRASH;
-                default -> MonitorClient.RelaunchPolicy.NEVER;
+                case HIDE_AND_REOPEN -> MonitorLauncher.RelaunchPolicy.ALWAYS;
+                case HIDE -> MonitorLauncher.RelaunchPolicy.ON_CRASH;
+                default -> MonitorLauncher.RelaunchPolicy.NEVER;
             };
         }
 
@@ -190,7 +190,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         if (StringUtils.isNotBlank(options.getPostExitCommand()))
             postExitCommand = StringUtils.tokenize(options.getPostExitCommand(), getEnvVars(nativeFolder));
 
-        return MonitorClient.launchNewMonitor(new MonitorClient.MonitorLaunchContext(builder, listener,
+        return MonitorLauncher.launchNewMonitor(new MonitorLauncher.MonitorLaunchContext(builder, listener,
                 encoding, options, gameDirectoryId, postExitCommand, relaunchPolicy));
     }
 

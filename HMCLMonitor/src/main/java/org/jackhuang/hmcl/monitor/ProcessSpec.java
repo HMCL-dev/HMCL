@@ -43,7 +43,7 @@ public final class ProcessSpec {
     public final @Nullable List<String> postExitCommand;
 
     /// The policy for opening the launcher UI in the monitor JVM after the protocol stream fails.
-    public final MonitorClient.RelaunchPolicy relaunchPolicy;
+    public final MonitorLauncher.RelaunchPolicy relaunchPolicy;
     /// The persistent id of the registered game directory owning the launched instance, or `null`
     /// when unknown.
     public final @Nullable String gameDirectoryId;
@@ -52,7 +52,7 @@ public final class ProcessSpec {
     public final LaunchOptions launchOptions;
 
     /// Creates a process specification from a launch context whose builder has a working directory.
-    public ProcessSpec(MonitorClient.MonitorLaunchContext context) {
+    public ProcessSpec(MonitorLauncher.MonitorLaunchContext context) {
         ProcessBuilder builder = context.builder();
 
         command = new ArrayList<>(builder.command());

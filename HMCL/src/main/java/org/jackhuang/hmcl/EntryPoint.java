@@ -20,7 +20,7 @@ package org.jackhuang.hmcl;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
-import org.jackhuang.hmcl.monitor.MonitorSupervisor;
+import org.jackhuang.hmcl.monitor.Monitor;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -52,7 +52,7 @@ public final class EntryPoint {
         LOG.start(Metadata.HMCL_LOCAL_HOME.resolve("logs"));
 
         // start HMCL monitor before JavaFX initialized
-        if (MonitorSupervisor.processArguments(args)) {
+        if (Monitor.processArguments(args)) {
             exit(0);
         }
 

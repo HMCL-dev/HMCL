@@ -38,12 +38,12 @@ import java.util.function.BiConsumer;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
-public final class MonitorSupervisor {
+public final class Monitor {
     private static boolean shouldRestart = false;
     private static boolean crashed = false;
     private static @Nullable ResultSpec resultSpec;
 
-    private MonitorSupervisor() {
+    private Monitor() {
     }
 
     public static @Nullable ResultSpec getResultSpec() {

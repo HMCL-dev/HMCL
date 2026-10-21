@@ -45,7 +45,7 @@ public final class MonitorCrashReporter {
     }
 
     public static void show() {
-        ResultSpec result = MonitorSupervisor.getResultSpec();
+        ResultSpec result = Monitor.getResultSpec();
         if (result == null || result.gameDirectoryId() == null)
             return;
 
