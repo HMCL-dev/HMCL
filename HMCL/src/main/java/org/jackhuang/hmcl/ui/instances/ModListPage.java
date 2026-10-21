@@ -113,6 +113,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     /// enabling and disabling the mod. The set is replaced, never mutated, to stay safe across threads.
     private volatile Set<String> pinnedFiles = Set.of();
 
+    /// Notified after the pin state of any mod changed, so the skin refreshes its toolbar button.
+    private @Nullable Runnable pinnedStateChanged;
+
     private ModManager modManager;
     private @Nullable HMCLGameInstance gameInstance;
 
@@ -337,6 +340,36 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             pinnedFiles = Set.copyOf(files);
             item.setPinned(pinned);
             savePinnedFiles();
+            firePinnedStateChanged();
+        }
+    }
+
+    /// Pins or unpins several mods at once, writing [#pinnedFiles] only once.
+    ///
+    /// @param selectedItems the mods to change
+    /// @param pinned        whether the mods should stay at their current versions
+    void setSelectedPinned(ObservableList<ModInfoObject> selectedItems, boolean pinned) {
+        var files = new HashSet<>(pinnedFiles);
+        boolean changed = false;
+        for (ModInfoObject item : selectedItems) {
+            if (pinned ? files.add(item.pinnedFileName) : files.remove(item.pinnedFileName)) {
+                item.setPinned(pinned);
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            pinnedFiles = Set.copyOf(files);
+            savePinnedFiles();
+            firePinnedStateChanged();
+        }
+    }
+
+    /// Notifies [#pinnedStateChanged] that the pin state of some mod changed.
+    private void firePinnedStateChanged() {
+        Runnable listener = pinnedStateChanged;
+        if (listener != null) {
+            listener.run();
         }
     }
 
@@ -348,18 +381,17 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         return pinnedFiles.contains(getPinnedFileName(file.getFile()));
     }
 
-    /// Checks for updates of the given mods.
+    /// Checks for updates of the given mods, skipping the ones pinned to their current version.
     ///
-    /// @param mods     the mods to check
-    /// @param explicit whether the caller explicitly selected `mods`, in which case pinned mods are checked too
-    public void checkUpdates(Collection<LocalModFile> mods, boolean explicit) {
+    /// @param mods the mods to check
+    public void checkUpdates(Collection<LocalModFile> mods) {
         Objects.requireNonNull(mods);
         if (isLoading() || gameInstance == null) {
             return;
         }
 
         List<LocalModFile> targets = mods.stream()
-                .filter(mod -> explicit || !isPinned(mod))
+                .filter(mod -> !isPinned(mod))
                 .toList();
         if (targets.isEmpty()) {
             Controllers.dialog(i18n("mods.pin.nothing"));
@@ -438,6 +470,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final HBox toolbarNormal;
         private final HBox toolbarSelecting;
 
+        /// Toolbar button of [#toolbarSelecting] that pins or unpins the selected mods.
+        private final JFXButton pinSelected;
+
         private final JFXListView<ModListPage.ModInfoObject> listView;
 
         /// Whether the search mechanism is currently active.
@@ -506,8 +541,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                                 skinnable.checkUpdates(
                                         listView.getItems().stream()
                                                 .map(ModListPage.ModInfoObject::getModInfo)
-                                                .toList(),
-                                        false
+                                                .toList()
                                 )
                         ),
                         createToolbarButton2(i18n("mods.download"), SVG.DOWNLOAD, skinnable::download),
@@ -519,9 +553,17 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 // reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
                 var selectAll = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
 
+                // Pins or unpins every selected mod at once, the batch equivalent of the pin icon of a row.
+                pinSelected = createToolbarButton2(i18n("mods.pin"), SVG.KEEP, () -> {
+                    skinnable.setSelectedPinned(listView.getSelectionModel().getSelectedItems(), !allPinned());
+                    updatePinSelectedButton();
+                });
+                skinnable.pinnedStateChanged = this::updatePinSelectedButton;
+
                 ListChangeListener<Object> listener = change -> {
                     selectAll.setDisable(!listView.getItems().isEmpty()
                             && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
+                    updatePinSelectedButton();
                 };
 
                 listView.getSelectionModel().getSelectedItems().addListener(listener);
@@ -537,12 +579,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                                 skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
                         createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
                                 skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
+                        pinSelected,
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                                 skinnable.checkUpdates(
                                         listView.getSelectionModel().getSelectedItems().stream()
                                                 .map(ModListPage.ModInfoObject::getModInfo)
-                                                .toList(),
-                                        true
+                                                .toList()
                                 )
                         ),
                         selectAll,
@@ -633,6 +675,21 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             }
         }
 
+        /// Returns whether every selected mod is already pinned, so [#pinSelected] unpins instead of pins.
+        ///
+        /// @return true if the selection is not empty and all of its mods are pinned
+        private boolean allPinned() {
+            ObservableList<ModListPage.ModInfoObject> selected = listView.getSelectionModel().getSelectedItems();
+            return !selected.isEmpty() && selected.stream().allMatch(ModListPage.ModInfoObject::isPinned);
+        }
+
+        /// Makes the text and glyph of [#pinSelected] describe what the next click will do.
+        private void updatePinSelectedButton() {
+            boolean allPinned = allPinned();
+            pinSelected.setText(i18n(allPinned ? "mods.unpin" : "mods.pin"));
+            pinSelected.setGraphic((allPinned ? SVG.KEEP_FILL : SVG.KEEP).createIcon(20));
+        }
+
         private void search() {
             isSearching.set(true);
 
@@ -679,7 +736,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final String pinnedFileName;
 
         /// Whether this mod stays at its current version during update checks.
-        private boolean pinned;
+        private final SimpleBooleanProperty pinned;
 
         private final ItemPropertyAsyncCache<Image, ModInfoObject> iconCache;
 
@@ -687,7 +744,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             this.localModFile = localModFile;
             this.projectInfo = AddonProjectInfoRegistry.MOD.getInfo(localModFile.getId(), localModFile.getName());
             this.pinnedFileName = getPinnedFileName(localModFile.getFile());
-            this.pinned = pinned;
+            this.pinned = new SimpleBooleanProperty(this, "pinned", pinned);
 
             this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
@@ -700,6 +757,13 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         ///
         /// @return true if the mod is pinned
         public boolean isPinned() {
+            return pinned.get();
+        }
+
+        /// Returns the observable pin state, so list cells follow the changes made elsewhere.
+        ///
+        /// @return the read-only pin state
+        public ReadOnlyBooleanProperty pinnedProperty() {
             return pinned;
         }
 
@@ -707,7 +771,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         ///
         /// @param pinned the new pin state
         private void setPinned(boolean pinned) {
-            this.pinned = pinned;
+            this.pinned.set(pinned);
         }
 
         /// Returns matching project metadata, or null if no project was found.
@@ -882,6 +946,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
+        private final InvalidationListener pinnedListener = obs -> applyPinState(getItem());
+        private final WeakInvalidationListener weakPinnedListener = new WeakInvalidationListener(pinnedListener);
+        private @Nullable ReadOnlyBooleanProperty observedPinnedProperty;
+
         private Tooltip warningTooltip;
 
         ModInfoListCell(JFXListView<ModInfoObject> listView, ModListPage page) {
@@ -902,7 +970,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             FXUtils.installFastTooltip(pinButton, pinTooltip);
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
-            container.getChildren().setAll(checkBox, imageContainer, content, pinButton, restoreButton, revealButton, infoButton);
+            container.getChildren().setAll(checkBox, imageContainer, content, restoreButton, pinButton, revealButton, infoButton);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -912,6 +980,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             if (observedActiveProperty != null)
                 observedActiveProperty.removeListener(weakActiveListener);
+            if (observedPinnedProperty != null)
+                observedPinnedProperty.removeListener(weakPinnedListener);
 
             pseudoClassStateChanged(WARNING, false);
             if (warningTooltip != null) {
@@ -986,7 +1056,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     checkBox.setSelected(modInfo.isActive());
                 }
             });
-            restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
+            // Managed as well, so the pin icon keeps the same place whether or not the mod has an old file to restore.
+            boolean hasOldFiles = !modInfo.getMod().getOldFiles().isEmpty();
+            restoreButton.setVisible(hasOldFiles);
+            restoreButton.setManaged(hasOldFiles);
             restoreButton.setOnAction(e -> {
                 menu.get().getContent().setAll(modInfo.getMod().getOldFiles().stream()
                         .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(),
@@ -1001,11 +1074,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             infoButton.setOnAction(e -> Controllers.dialog(new ModInfoDialog(dataItem)));
 
             pinButton.setDisable(modInfo.isOld());
+            (observedPinnedProperty = dataItem.pinnedProperty()).addListener(weakPinnedListener);
             applyPinState(dataItem);
-            pinButton.setOnAction(e -> {
-                page.setPinned(dataItem, !dataItem.isPinned());
-                applyPinState(dataItem);
-            });
+            pinButton.setOnAction(e -> page.setPinned(dataItem, !dataItem.isPinned()));
 
             if (!warning.isEmpty()) {
                 pseudoClassStateChanged(WARNING, true);
@@ -1020,8 +1091,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         /// Rebuilds the pin icon, tag and tooltip of the displayed mod.
         ///
-        /// @param item the mod shown by this cell
-        private void applyPinState(ModInfoObject item) {
+        /// @param item the mod shown by this cell, or null when the cell is empty
+        private void applyPinState(@Nullable ModInfoObject item) {
+            if (item == null) {
+                return;
+            }
+
             String text = i18n("mods.pinned");
             content.getTags().removeIf(label -> text.equals(label.getText()));
             if (item.isPinned()) {
