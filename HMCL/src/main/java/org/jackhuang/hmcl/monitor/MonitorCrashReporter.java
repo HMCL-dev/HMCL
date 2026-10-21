@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.monitor;
 
+import javafx.application.Platform;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -25,17 +26,13 @@ import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryID;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.GameCrashWindow;
-import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.nio.file.Files;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -80,33 +77,20 @@ public final class MonitorCrashReporter {
                         + repository.getSnapshot().getInstanceCount() + " instances, loaded="
                         + repository.isLoaded() + ", base directory "
                         + repository.getLayout().getBaseDirectory()
-                        + "), skip showing the crash window."
-                        + " The session log is at " + result.logFile());
+                        + "), skip showing the crash window.");
         }).start();
     }
 
+    /// Schedules the crash window on the JavaFX thread using the configured tail of captured console output.
     private static void presentCrashWindow(ResultSpec result, HMCLGameInstance instance) {
-        Task.supplyAsync(() -> {
-            // limit the lines of log
-            int limit = Log.getLogLines();
-            CircularArrayList<String> tail = new CircularArrayList<>(limit);
-            try (Stream<String> lines = Files.lines(result.logFile(), MonitorProtocol.CHARSET)) {
-                lines.forEach(line -> {
-                    if (tail.size() == limit)
-                        tail.removeFirst();
-                    tail.addLast(line);
-                });
-            }
-
-            Files.deleteIfExists(result.logFile());
-            return tail.stream()
-                    .map(line -> new Log(line, Log4jLevel.guessLevel(line)))
-                    .toList();
-        }).whenComplete(Schedulers.javafx(), (logs, exception) -> {
-            if (exception != null)
-                LOG.warning("Failed to read the session log file " + result.logFile(), exception);
-            new GameCrashWindow(result.process(), result.exitType(), instance, Objects.requireNonNull(result.launchOptions()),
-                    exception == null ? logs : List.of()).show();
-        }).start();
+        @Unmodifiable List<String> logs = result.process().getLines(null);
+        Platform.runLater(() -> new GameCrashWindow(
+                result.process(),
+                result.exitType(),
+                instance,
+                result.launchOptions(),
+                logs.subList(Math.max(0, logs.size() - Log.getLogLines()), logs.size()).stream()
+                        .map(line -> new Log(line, Log4jLevel.guessLevel(line)))
+                        .toList()).show());
     }
 }

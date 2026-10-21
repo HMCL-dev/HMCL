@@ -106,29 +106,12 @@ public final class MonitorSupervisor {
         LOG.info("Game process created, pid " + gameProcess.getPid() + ", spec " + specPath);
         MonitorProtocol.pidMessage(gameProcess.getPid(), gameProcess.getProcessStartTime());
 
-        Path logFile = Files.createTempFile("hmcl-monitor-game-", ".log");
-
-
-        // Forward one game output line to the log file, the managed process (feeding the exit
-        // classification) and the protocol stream. A broken protocol stream (the launcher exited
-        // early) only stops forwarding; the log file keeps collecting the remaining output.
-        try (BufferedWriter logWriter = Files.newBufferedWriter(logFile, MonitorProtocol.CHARSET)) {
-            startMonitors(gameProcess, logWriter, spec, logFile, specPath);
-        }
+        startMonitors(gameProcess, spec, specPath);
     }
 
-    private static void startMonitors(ManagedProcess gameProcess, BufferedWriter logWriter,
-                                      ProcessSpec spec, Path logFile, Path specPath) throws InterruptedException {
+    private static void startMonitors(ManagedProcess gameProcess, ProcessSpec spec, Path specPath)
+            throws InterruptedException {
         BiConsumer<String, Boolean> sink = (line, isErrorStream) -> {
-            try {
-                synchronized (logWriter) {
-                    logWriter.write(line);
-                    logWriter.newLine();
-                    logWriter.flush();
-                }
-            } catch (IOException e) {
-                LOG.warning("Failed to write the session log", e);
-            }
             gameProcess.addLine(line);
             MonitorProtocol.logMessage(isErrorStream, line);
         };
@@ -144,19 +127,18 @@ public final class MonitorSupervisor {
         Lang.thread(new ExitWaiter(gameProcess, List.of(stdoutPump, stderrPump), (exitCode, exitType) -> {
             LOG.info("Game exited with code " + exitCode + "(" + Integer.toHexString(exitCode) + "), type " + exitType);
             ProcessListener.ExitType reportedType = readCanceled(specPath) ? ProcessListener.ExitType.INTERRUPTED : exitType;
-            crashed = reportedType != ProcessListener.ExitType.NORMAL;
+            MonitorProtocol.exitMessage(exitCode, reportedType);
 
+            crashed = reportedType != ProcessListener.ExitType.NORMAL;
             shouldRestart = MonitorProtocol.parentGone() && switch (spec.relaunchPolicy) {
                 case ALWAYS -> true;
                 case ON_CRASH -> crashed;
                 case NEVER -> false;
             };
 
-            MonitorProtocol.exitMessage(exitCode, reportedType);
-
             if (spec.postExitCommand != null && !spec.postExitCommand.isEmpty()) {
                 try {
-                    ProcessBuilder builder = new ProcessBuilder(spec.postExitCommand).directory(new File(spec.directory));
+                    ProcessBuilder builder = new ProcessBuilder(spec.postExitCommand).directory(spec.launchOptions.getGameDir().toFile());
                     builder.environment().putAll(spec.environment);
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {
@@ -164,7 +146,7 @@ public final class MonitorSupervisor {
                 }
             }
 
-            resultSpec = new ResultSpec(spec, gameProcess, reportedType, logFile);
+            resultSpec = new ResultSpec(spec, gameProcess, reportedType);
         }), "exit-waiter", true).join();
     }
 
