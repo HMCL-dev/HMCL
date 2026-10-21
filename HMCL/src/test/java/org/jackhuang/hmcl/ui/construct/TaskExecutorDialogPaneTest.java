@@ -62,13 +62,16 @@ final class TaskExecutorDialogPaneTest {
     /// Settings replaced temporarily to initialize dialog animation preferences.
     private static @Nullable Object previousSettings;
 
-    /// Installs in-memory settings without loading or saving user files.
+    /// Installs in-memory settings with synchronous dialog transitions for lifecycle assertions.
     @BeforeAll
     static void prepareSettings() throws Exception {
         Field field = SettingsManager.class.getDeclaredField("launcherSettings");
         field.setAccessible(true);
         previousSettings = field.get(null);
-        field.set(null, new LauncherSettings());
+        LauncherSettings settings = new LauncherSettings();
+        // The default depends on runtime graphics capabilities and can defer onDialogShown to an animation pulse.
+        settings.animationDisabledProperty().set(true);
+        field.set(null, settings);
     }
 
     /// Restores the settings that were present before these tests.
