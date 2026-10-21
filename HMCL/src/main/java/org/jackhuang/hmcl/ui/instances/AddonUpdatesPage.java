@@ -74,6 +74,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -172,7 +173,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         }
     }
 
-    /// Starts downloading the target version selected for every enabled addon.
     private void updateFiles() {
         AddonUpdateTask task = new AddonUpdateTask(
                 downloadProvider,
@@ -240,10 +240,9 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
         /// The remote version selected by the user as the update target, always one of [AddonUpdate#availableVersions()].
         final ObjectProperty<RemoteAddon.Version> selectedVersion = new SimpleObjectProperty<>();
+        final String source;
 
         final BooleanProperty enabled = new SimpleBooleanProperty();
-
-        final String source;
 
         final ItemPropertyAsyncCache<Image, AddonUpdateObject> iconCache;
 
@@ -284,12 +283,10 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             return data.currentVersion().version();
         }
 
-        /// Returns the version string of the target version currently selected by the user.
         public String getTargetVersion() {
             return selectedVersion.get().version();
         }
 
-        /// Returns the localized channel name of the target version currently selected by the user.
         public String getTargetVersionType() {
             return switch (selectedVersion.get().versionType()) {
                 case Release -> i18n("addon.channel.release");
@@ -421,10 +418,13 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             content.getTags().clear();
 
             LocalAddonFile<?> addonFile = item.getLocalAddonFile();
-            if (addonFile instanceof LocalModFile modFile)
+            if (addonFile instanceof LocalModFile modFile) {
                 content.addTag(modFile.getId());
+            }
             content.addTag(item.getSource());
             content.addTag(item.getTargetVersionType());
+
+            content.setSubtitle(item.getCurrentVersion() + " → " + item.getTargetVersion());
         }
 
         @Override
@@ -465,9 +465,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 content.setTitle(resourcePackFile.getFileName());
             }
 
-            FXUtils.onChangeAndOperate(item.selectedVersion, (value) -> {
-                content.setSubtitle(item.getCurrentVersion() + " → " + value.version());
-            });
             item.selectedVersion.addListener(selectedVersionListener);
 
             setGraphic(pane);
@@ -475,12 +472,13 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
     }
 
     private static final class AddonChangelog extends JFXDialogLayout {
-        /// Changelogs already loaded by this dialog, keyed by version id. Accessed from the IO threads too.
+        /// Maintained in this page instead of [AddonUpdateObject] to allow freeing cached changelogs after closing
+        /// this page.
         private final Map<String, String> changelogCache = new ConcurrentHashMap<>();
-        /// ID of the most recently started changelog request. Only the result of that request may update the UI.
+        /// ID of the most recent request. Only the result of that request may update the UI.
         @FXThread
         private int changelogRequestId = 0;
-        /// ID of the most recently started version page request. Only the result of that request may update the UI.
+        /// ID of the most recent request. Only the result of that request may update the UI.
         @FXThread
         private int versionPageRequestId = 0;
 
@@ -516,22 +514,15 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
             versionPageBtn.setDisable(true);
 
-            loadChangelog(versionComboBox.getSelectionModel().getSelectedItem(), spinnerPane, scrollPane);
-            loadVersionPageUrl(versionComboBox.getSelectionModel().getSelectedItem(), versionPageBtn);
-
-            spinnerPane.setOnFailedAction(e -> {
-                RemoteAddon.Version version = versionComboBox.getSelectionModel().getSelectedItem();
+            Consumer<RemoteAddon.Version> onSelectedVersionChange = (version) -> {
                 loadChangelog(version, spinnerPane, scrollPane);
                 loadVersionPageUrl(version, versionPageBtn);
-            });
+            };
 
-            versionComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldVersion, newVersion) -> {
-                if (newVersion == null) return;
+            spinnerPane.setOnFailedAction(e -> onSelectedVersionChange.accept(versionComboBox.getSelectionModel().getSelectedItem()));
 
-                object.selectedVersion.set(newVersion);
-                loadChangelog(newVersion, spinnerPane, scrollPane);
-                loadVersionPageUrl(newVersion, versionPageBtn);
-            });
+            object.selectedVersion.bind(versionComboBox.getSelectionModel().selectedItemProperty());
+            FXUtils.onChangeAndOperate(versionComboBox.getSelectionModel().selectedItemProperty(), onSelectedVersionChange);
 
             JFXButton closeButton = new JFXButton(i18n("button.ok"));
             closeButton.getStyleClass().add("dialog-accept");
@@ -587,21 +578,22 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         private void loadVersionPageUrl(RemoteAddon.Version version, JFXHyperlink button) {
             button.setDisable(true);
             int requestId = ++versionPageRequestId;
-            Task.supplyAsync(() -> version.source().getRepository().getVersionPageUrl(version))
-                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                        if (requestId != versionPageRequestId) {
-                            return;
-                        }
+            Task.supplyAsync(() ->
+                    version.source().getRepository().getVersionPageUrl(version)
+            ).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                if (requestId != versionPageRequestId) {
+                    return;
+                }
 
-                        if (exception == null && StringUtils.isNotBlank(result)) {
-                            button.setExternalLink(result);
-                            button.setDisable(false);
-                        } else {
-                            // Keep the button disabled so that a stale link can never be opened.
-                            button.setDisable(true);
-                            LOG.warning("Failed to load addon version page url", exception);
-                        }
-                    }).start();
+                if (exception == null && StringUtils.isNotBlank(result)) {
+                    button.setExternalLink(result);
+                    button.setDisable(false);
+                } else {
+                    // Keep the button disabled so that a stale link can never be opened.
+                    button.setDisable(true);
+                    LOG.warning("Failed to load addon version page url", exception);
+                }
+            }).start();
         }
     }
 }
