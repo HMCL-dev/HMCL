@@ -93,8 +93,7 @@ public final class MonitorClient {
                     return ProxyOption.class.isAssignableFrom(clazz)
                             || Renderer.class.isAssignableFrom(clazz); // ignoring these
                 }
-            })
-            .create();
+            }).create();
 
     public static MonitorGameProcess launchNewMonitor(MonitorLaunchContext context) throws IOException {
         Path thisJar = JarUtils.thisJarPath();

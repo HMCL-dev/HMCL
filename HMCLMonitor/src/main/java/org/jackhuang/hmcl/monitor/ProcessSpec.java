@@ -29,7 +29,7 @@ import java.util.Map;
 @NotNullByDefault
 public final class ProcessSpec {
     /// The command line to execute, passed to [ProcessBuilder] verbatim.
-    public final @Nullable List<String> command;
+    public final List<String> command;
     /// The absolute working directory used for the game process and the post-exit command.
     public final String directory;
     /// Environment variables overlaid on the monitor's environment for both commands.

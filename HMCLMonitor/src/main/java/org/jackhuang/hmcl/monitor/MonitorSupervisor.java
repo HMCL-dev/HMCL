@@ -33,19 +33,10 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.BiConsumer;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// The monitor process role of the monitor feature: creating the game process, supervising it until
-/// it exits, and reporting the result.
-///
-/// The monitor owns the game process and collects its output in a session log while forwarding it
-/// to the main launcher over [the protocol][MonitorProtocol]. After the game exits, it runs the
-/// post-exit command and stores the result in memory. When the protocol stream has failed and the
-/// relaunch policy requests it, the entry point continues into the launcher UI in this same JVM.
-/// No crash result file is written; the crash window reads the stored result and session log.
 @NotNullByDefault
 public final class MonitorSupervisor {
     private static boolean shouldRestart = false;
@@ -65,9 +56,7 @@ public final class MonitorSupervisor {
 
     /// Handles the `--monitor` entry point.
     ///
-    /// @param args the process arguments
-    /// @return `true` when monitor mode has finished and the caller should exit; `false` for
-    ///         non-monitor arguments or when this JVM should continue into the launcher UI
+    /// @return `true`: should exit, `false`: should continue and launch HMCL
     public static boolean processArguments(String[] args) {
         if (args.length != 2 || !args[0].equals("--monitor"))
             return false;
@@ -79,24 +68,19 @@ public final class MonitorSupervisor {
         return !shouldRestart;
     }
 
-    /// Reads the [ProcessSpec] from `specPath`, creates the process it describes, supervises it
-    /// until it exits, and reports the result.
-    ///
-    /// @param specPath the file containing the [ProcessSpec]
-    /// @throws IOException          if the spec file is malformed or the game process cannot be created
-    /// @throws InterruptedException if interrupted while waiting for the game process
     public static void start(Path specPath) throws IOException, InterruptedException {
         LOG.info("*** HMCL MONITOR ***");
+
+        // read spec
         ProcessSpec spec;
         try {
-            spec = JsonUtils.fromJsonFile(specPath, ProcessSpec.class);
+            spec = JsonUtils.fromNonNullJson(Files.readString(specPath), ProcessSpec.class);
         } catch (JsonParseException e) {
             throw new IOException("Malformed process spec file " + specPath, e);
         }
-        if (spec == null || spec.command == null || spec.command.isEmpty())
-            throw new IOException("Malformed process spec file " + specPath);
         Files.deleteIfExists(specPath);
 
+        // start game process
         ProcessBuilder pb = new ProcessBuilder(spec.command).directory(new File(spec.directory));
         pb.environment().putAll(spec.environment);
         if (spec.inheritStdin)
@@ -106,17 +90,11 @@ public final class MonitorSupervisor {
         LOG.info("Game process created, pid " + gameProcess.getPid() + ", spec " + specPath);
         MonitorProtocol.pidMessage(gameProcess.getPid(), gameProcess.getProcessStartTime());
 
-        startMonitors(gameProcess, spec, specPath);
-    }
-
-    private static void startMonitors(ManagedProcess gameProcess, ProcessSpec spec, Path specPath)
-            throws InterruptedException {
         BiConsumer<String, Boolean> sink = (line, isErrorStream) -> {
             gameProcess.addLine(line);
             MonitorProtocol.logMessage(isErrorStream, line);
         };
-
-        Charset encoding = Charset.forName(Objects.requireNonNull(spec.encoding));
+        Charset encoding = Charset.forName(spec.encoding);
         Thread stdoutPump = Lang.thread(new StreamPump(gameProcess.getProcess().getInputStream(),
                 line -> sink.accept(line, false), encoding), "monitor-stdout-pump", true);
         Thread stderrPump = Lang.thread(new StreamPump(gameProcess.getProcess().getErrorStream(),
@@ -124,9 +102,19 @@ public final class MonitorSupervisor {
         gameProcess.addRelatedThread(stdoutPump);
         gameProcess.addRelatedThread(stderrPump);
 
+        // wait for stop
         Lang.thread(new ExitWaiter(gameProcess, List.of(stdoutPump, stderrPump), (exitCode, exitType) -> {
             LOG.info("Game exited with code " + exitCode + "(" + Integer.toHexString(exitCode) + "), type " + exitType);
-            ProcessListener.ExitType reportedType = readCanceled(specPath) ? ProcessListener.ExitType.INTERRUPTED : exitType;
+
+            // reread spec to check canceled
+            ProcessListener.ExitType reportedType = exitType;
+            try {
+                if (Files.exists(specPath) && Files.readString(specPath).startsWith("CANCELED"))
+                    reportedType = ProcessListener.ExitType.INTERRUPTED;
+                Files.deleteIfExists(specPath);
+            } catch (IOException e1) {
+                LOG.warning("Failed to check whether to cancel " + specPath, e1);
+            }
             MonitorProtocol.exitMessage(exitCode, reportedType);
 
             crashed = reportedType != ProcessListener.ExitType.NORMAL;
@@ -136,6 +124,7 @@ public final class MonitorSupervisor {
                 case NEVER -> false;
             };
 
+            // run post exit command
             if (spec.postExitCommand != null && !spec.postExitCommand.isEmpty()) {
                 try {
                     ProcessBuilder builder = new ProcessBuilder(spec.postExitCommand).directory(spec.launchOptions.getGameDir().toFile());
@@ -148,23 +137,5 @@ public final class MonitorSupervisor {
 
             resultSpec = new ResultSpec(spec, gameProcess, reportedType);
         }), "exit-waiter", true).join();
-    }
-
-    /// Returns whether the main launcher rewrote the spec file to mark the game process as manually
-    /// canceled. A successfully read file is deleted before checking for the `CANCELED` prefix.
-    ///
-    /// [MonitorGameProcess#stop] writes the marker before requesting process termination. The
-    /// caller reports a recognized cancellation as [ProcessListener.ExitType#INTERRUPTED].
-    private static boolean readCanceled(Path specPath) {
-        if (!Files.exists(specPath))
-            return false;
-        try {
-            String canceled = Files.readString(specPath);
-            Files.deleteIfExists(specPath);
-            return canceled.startsWith("CANCELED");
-        } catch (IOException e) {
-            LOG.warning("Failed to check whether to cancel " + specPath, e);
-            return false;
-        }
     }
 }
