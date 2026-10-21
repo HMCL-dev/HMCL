@@ -43,7 +43,7 @@ import java.util.UUID;
 /// - [GSON] — pretty-printing instance with all standard HMCL type adapters registered.
 /// - [UGLY_GSON] — compact (non-pretty) instance with the same adapter set minus
 ///   complex-map-key serialization and the built-in type adapters for [java.time.Instant],
-///   [java.util.UUID] and [java.nio.file.Path].
+///   [java.util.UUID] and the [java.nio.file.Path] hierarchy.
 ///
 /// All `fromJson` / `fromJsonFile` / `fromJsonFully` overloads return `null` when the
 /// JSON literal `null` is encountered.  The `fromNonNull*` variants throw
@@ -61,13 +61,14 @@ public final class JsonUtils {
     /// Configured with:
     /// - Pretty printing enabled.
     /// - Complex map key serialization enabled.
-    /// - Type adapters for [java.time.Instant], [java.util.UUID], and [java.nio.file.Path].
+    /// - Type adapters for [java.time.Instant] and [java.util.UUID].
+    /// - A type-hierarchy adapter for [java.nio.file.Path] and its subtypes.
     /// - [ValidationTypeAdapterFactory], [LowerCaseEnumTypeAdapter#FACTORY], and
     ///   [JsonTypeAdapterFactory].
     public static final Gson GSON = defaultGsonBuilder().create();
 
     /// A compact [Gson] instance without pretty printing and without the extra
-    /// type adapters for [java.time.Instant], [java.util.UUID], and [java.nio.file.Path].
+    /// type adapters for [java.time.Instant], [java.util.UUID], and the [java.nio.file.Path] hierarchy.
     ///
     /// Configured with:
     /// - [JsonTypeAdapterFactory]
@@ -650,7 +651,7 @@ public final class JsonUtils {
     /// - Pretty printing enabled.
     /// - [InstantTypeAdapter] registered for [java.time.Instant].
     /// - [UUIDTypeAdapter] registered for [java.util.UUID].
-    /// - [PathTypeAdapter] registered for [java.nio.file.Path].
+    /// - [PathTypeAdapter] registered as a type-hierarchy adapter for [java.nio.file.Path] and its subtypes.
     /// - [ValidationTypeAdapterFactory], [LowerCaseEnumTypeAdapter#FACTORY], and
     ///   [JsonTypeAdapterFactory] registered as type adapter factories.
     ///
@@ -664,7 +665,7 @@ public final class JsonUtils {
                 .setPrettyPrinting()
                 .registerTypeAdapter(Instant.class, InstantTypeAdapter.INSTANCE)
                 .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
-                .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
+                .registerTypeHierarchyAdapter(Path.class, PathTypeAdapter.INSTANCE)
                 .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
                 .registerTypeAdapterFactory(LowerCaseEnumTypeAdapter.FACTORY)
                 .registerTypeAdapterFactory(JsonTypeAdapterFactory.INSTANCE);

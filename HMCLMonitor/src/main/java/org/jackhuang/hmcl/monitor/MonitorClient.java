@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.monitor;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.JVMLaunchFailedEvent;
 import org.jackhuang.hmcl.event.ProcessExitedAbnormallyEvent;
@@ -43,9 +42,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +54,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// freshly spawned monitor process and consuming its protocol stream.
 @NotNullByDefault
 public final class MonitorClient {
-
     private static final boolean MONITOR_ENABLED = System.getenv("HMCL_USE_HMCLMONITOR") != null;
 
     private MonitorClient() {
@@ -85,15 +81,7 @@ public final class MonitorClient {
         ALWAYS
     }
 
-    private static final Gson gsonForGameOptions = new GsonBuilder()
-            .enableComplexMapKeySerialization()
-            .setPrettyPrinting()
-            .registerTypeAdapter(Instant.class, InstantTypeAdapter.INSTANCE)
-            .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
-            .registerTypeHierarchyAdapter(Path.class, PathTypeAdapter.INSTANCE) // fix Path
-            .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
-            .registerTypeAdapterFactory(LowerCaseEnumTypeAdapter.FACTORY)
-            .registerTypeAdapterFactory(JsonTypeAdapterFactory.INSTANCE)
+    private static final Gson gsonForGameOptions = JsonUtils.defaultGsonBuilder()
             .addSerializationExclusionStrategy(new ExclusionStrategy() {
                 @Override
                 public boolean shouldSkipField(FieldAttributes f) {
