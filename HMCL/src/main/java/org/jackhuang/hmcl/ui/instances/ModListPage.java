@@ -45,7 +45,6 @@ import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
-import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.mod.ModProjectInfo;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
@@ -74,12 +73,10 @@ import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.ref.WeakReference;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -101,17 +98,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> implements PageAware {
     private final ReentrantLock lock = new ReentrantLock();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
-
-    /// Name of the file in the instance mods directory holding pinned mod file names, one per line.
-    ///
-    /// The file has no mod extension, so [ModManager#refresh()] ignores it.
-    private static final String PINNED_FILE_NAME = ".hmcl-pinned";
-
-    /// File names of the mods pinned to their current version.
-    ///
-    /// A file name includes the extension but not the `.disabled` or `.old` suffix, so pinning survives
-    /// enabling and disabling the mod. The set is replaced, never mutated, to stay safe across threads.
-    private volatile Set<String> pinnedFiles = Set.of();
 
     /// Notified after the pin state of any mod changed, so the skin refreshes its toolbar button.
     private @Nullable Runnable pinnedStateChanged;
@@ -173,10 +159,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             lock.lock();
             try {
                 modManager.refresh();
-                Set<String> pins = readPinnedFiles(modManager.getDirectory());
-                pinnedFiles = pins;
                 return modManager.getLocalFiles().stream()
-                        .map(file -> new ModInfoObject(file, pins.contains(getPinnedFileName(file.getFile()))))
+                        .map(file -> new ModInfoObject(file, modManager.isPinned(file.getFile())))
                         .toList();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
@@ -278,91 +262,48 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
     }
 
-    /// Returns the pin key of a mod file: its name with the extension but without state suffixes.
+    /// Pins or unpins a mod, so that the update check skips it.
     ///
-    /// @param file the mod file
-    /// @return the name used to match the mod against [#pinnedFiles]
-    private static String getPinnedFileName(Path file) {
-        return LocalAddonManager.getLocalAddonName(file);
+    /// @param item   the mod to change
+    /// @param pinned whether the mod should stay at its current version
+    void setPinned(ModInfoObject item, boolean pinned) {
+        setPinned(List.of(item), pinned);
     }
 
-    /// Reads the pinned mod names of an instance.
+    /// Pins or unpins several mods at once, saving them with a single write.
     ///
-    /// @param modsDirectory the instance mods directory
-    /// @return the pinned file names, empty when the file is missing or unreadable
-    private static @Unmodifiable Set<String> readPinnedFiles(Path modsDirectory) {
-        Path file = modsDirectory.resolve(PINNED_FILE_NAME);
-        if (!Files.isRegularFile(file)) {
-            return Set.of();
-        }
-
-        try {
-            Set<String> pins = new HashSet<>();
-            for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
-                String name = line.trim();
-                if (!name.isEmpty()) {
-                    pins.add(name);
-                }
-            }
-            return Set.copyOf(pins);
-        } catch (IOException e) {
-            LOG.warning("Unable to read pinned mods from " + file, e);
-            return Set.of();
-        }
+    /// @param items  the mods to change
+    /// @param pinned whether the mods should stay at their current versions
+    void setSelectedPinned(ObservableList<ModInfoObject> items, boolean pinned) {
+        setPinned(items, pinned);
     }
 
-    /// Writes [#pinnedFiles] to the instance mods directory.
-    private void savePinnedFiles() {
+    /// Applies a pin change to the list immediately, then saves it in the background.
+    ///
+    /// @param items  the mods to change
+    /// @param pinned whether the mods should stay at their current versions
+    private void setPinned(Collection<ModInfoObject> items, boolean pinned) {
         ModManager manager = modManager;
         if (manager == null) {
             return;
         }
 
-        Path file = manager.getDirectory().resolve(PINNED_FILE_NAME);
-        List<String> lines = pinnedFiles.stream().sorted().toList();
-        Task.runAsync(() -> Files.write(file, lines, StandardCharsets.UTF_8))
+        List<Path> files = items.stream()
+                .map(item -> item.getModInfo().getFile())
+                .toList();
+        for (ModInfoObject item : items) {
+            item.setPinned(pinned);
+        }
+        firePinnedStateChanged();
+
+        Task.runAsync(() -> manager.setPinned(files, pinned))
                 .whenComplete(Schedulers.javafx(), exception -> {
                     if (exception != null) {
-                        LOG.warning("Unable to save pinned mods to " + file, exception);
+                        LOG.warning("Unable to save pinned mods", exception);
                         Controllers.showToast(i18n("message.failed"));
                     }
                 })
                 .start();
-    }
-
-    /// Pins or unpins a mod, so that the update check skips it unless it is explicitly selected.
-    ///
-    /// @param item   the mod to change
-    /// @param pinned whether the mod should stay at its current version
-    void setPinned(ModInfoObject item, boolean pinned) {
-        var files = new HashSet<>(pinnedFiles);
-        if (pinned ? files.add(item.pinnedFileName) : files.remove(item.pinnedFileName)) {
-            pinnedFiles = Set.copyOf(files);
-            item.setPinned(pinned);
-            savePinnedFiles();
-            firePinnedStateChanged();
-        }
-    }
-
-    /// Pins or unpins several mods at once, writing [#pinnedFiles] only once.
-    ///
-    /// @param selectedItems the mods to change
-    /// @param pinned        whether the mods should stay at their current versions
-    void setSelectedPinned(ObservableList<ModInfoObject> selectedItems, boolean pinned) {
-        var files = new HashSet<>(pinnedFiles);
-        boolean changed = false;
-        for (ModInfoObject item : selectedItems) {
-            if (pinned ? files.add(item.pinnedFileName) : files.remove(item.pinnedFileName)) {
-                item.setPinned(pinned);
-                changed = true;
-            }
-        }
-
-        if (changed) {
-            pinnedFiles = Set.copyOf(files);
-            savePinnedFiles();
-            firePinnedStateChanged();
-        }
     }
 
     /// Notifies [#pinnedStateChanged] that the pin state of some mod changed.
@@ -373,12 +314,13 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
     }
 
-    /// Returns whether the mod is pinned to its current version.
+    /// Returns whether the mod stays at its current version during update checks.
     ///
     /// @param file the mod file
-    /// @return true if the update check should skip this mod by default
+    /// @return true if the update check skips the mod
     boolean isPinned(LocalModFile file) {
-        return pinnedFiles.contains(getPinnedFileName(file.getFile()));
+        ModManager manager = modManager;
+        return manager != null && manager.isPinned(file.getFile());
     }
 
     /// Checks for updates of the given mods, skipping the ones pinned to their current version.
@@ -732,9 +674,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         /// Matching project metadata, or null if the local mod cannot be identified.
         private final @Nullable ModProjectInfo projectInfo;
 
-        /// The name used to record this mod in [#pinnedFiles].
-        private final String pinnedFileName;
-
         /// Whether this mod stays at its current version during update checks.
         private final SimpleBooleanProperty pinned;
 
@@ -743,7 +682,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         ModInfoObject(LocalModFile localModFile, boolean pinned) {
             this.localModFile = localModFile;
             this.projectInfo = AddonProjectInfoRegistry.MOD.getInfo(localModFile.getId(), localModFile.getName());
-            this.pinnedFileName = getPinnedFileName(localModFile.getFile());
             this.pinned = new SimpleBooleanProperty(this, "pinned", pinned);
 
             this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);

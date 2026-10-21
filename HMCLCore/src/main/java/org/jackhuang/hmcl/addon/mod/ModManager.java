@@ -30,9 +30,11 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 
@@ -221,6 +223,9 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             localFiles.clear();
             localMods.clear();
 
+            // Re-read the pin file as well, so edits made outside this manager are picked up.
+            pinnedFiles = null;
+
             analyze();
 
             boolean supportSubfolders = analyzer.has(GameComponentType.FORGE)
@@ -398,6 +403,99 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
 
     public boolean isDisabled(Path file) {
         return FileUtils.getName(file).endsWith(DISABLED_EXTENSION);
+    }
+
+    /// Name of the file in the mods directory that lists the mods pinned to their current version, one per line.
+    ///
+    /// The file has no mod extension, so [#refresh()] skips it.
+    public static final String PINNED_FILE_NAME = ".hmcl-pinned";
+
+    /// Pinned mod file names, or null until they are read from [#PINNED_FILE_NAME].
+    private @Nullable Set<String> pinnedFiles;
+
+    /// Returns whether the mod at the given path stays at its current version during update checks.
+    ///
+    /// @param file the mod file
+    /// @return true if the mod should not be updated
+    public boolean isPinned(Path file) {
+        lock.lock();
+        try {
+            return getPinnedFiles().contains(getLocalAddonName(file));
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /// Pins or unpins the given mods, writing [#PINNED_FILE_NAME] at most once.
+    ///
+    /// A name is stored without the `.disabled` or `.old` suffix, so pinning survives enabling,
+    /// disabling and rolling back the mod.
+    ///
+    /// @param files  the mod files to change
+    /// @param pinned whether they should stay at their current versions
+    /// @throws IOException if the pin file cannot be written
+    public void setPinned(Collection<Path> files, boolean pinned) throws IOException {
+        lock.lock();
+        try {
+            var names = new HashSet<>(getPinnedFiles());
+            boolean changed = false;
+            for (Path file : files) {
+                if (pinned ? names.add(getLocalAddonName(file)) : names.remove(getLocalAddonName(file))) {
+                    changed = true;
+                }
+            }
+
+            if (changed) {
+                pinnedFiles = Set.copyOf(names);
+                savePinnedFiles(pinnedFiles);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /// Returns the pinned mod names, reading [#PINNED_FILE_NAME] on first access.
+    ///
+    /// @return the pinned mod file names, empty when nothing is pinned
+    private @Unmodifiable Set<String> getPinnedFiles() {
+        if (pinnedFiles == null) {
+            pinnedFiles = loadPinnedFiles();
+        }
+        return pinnedFiles;
+    }
+
+    /// Reads [#PINNED_FILE_NAME] from the mods directory.
+    ///
+    /// A missing or unreadable file yields an empty set, so it never hides the mod list.
+    ///
+    /// @return the pinned mod file names
+    private @Unmodifiable Set<String> loadPinnedFiles() {
+        Path file = getDirectory().resolve(PINNED_FILE_NAME);
+        if (!Files.isRegularFile(file)) {
+            return Set.of();
+        }
+
+        try {
+            Set<String> names = new HashSet<>();
+            for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
+                String name = line.trim();
+                if (!name.isEmpty()) {
+                    names.add(name);
+                }
+            }
+            return Set.copyOf(names);
+        } catch (IOException e) {
+            LOG.warning("Unable to read pinned mods from " + file, e);
+            return Set.of();
+        }
+    }
+
+    /// Writes the pinned mod names to [#PINNED_FILE_NAME], sorted to keep the file stable.
+    ///
+    /// @param names the pinned mod file names
+    /// @throws IOException if the file cannot be written
+    private void savePinnedFiles(Collection<String> names) throws IOException {
+        Files.write(getDirectory().resolve(PINNED_FILE_NAME), names.stream().sorted().toList(), StandardCharsets.UTF_8);
     }
 
     public static boolean isFileNameMod(Path file) {
