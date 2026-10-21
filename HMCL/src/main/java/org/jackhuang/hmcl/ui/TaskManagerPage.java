@@ -130,7 +130,7 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
             center.setMouseTransparent(true);
             row.setCenter(center);
 
-            JFXButton restore = FXUtils.newToggleButton4(SVG.OPEN_IN_NEW);
+            JFXButton restore = FXUtils.newToggleButton4(SVG.ARROW_FORWARD);
             restore.setAccessibleText(i18n("task.show"));
             FXUtils.installFastTooltip(restore, i18n("task.show"));
             restore.setOnAction(event -> restoreTask());
