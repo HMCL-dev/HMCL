@@ -628,23 +628,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                 });
             }
 
-            if (RegionUtils.isIsChinaMainlandNetwork()) {
-                BorderPane wrapper = new BorderPane();
-
-                HintPane hint = new HintPane(MessageDialogPane.MessageType.WARNING);
-                hint.setSegment(i18n("download.china"));
-
-                BorderPane.setMargin(hint, new Insets(10, 10, 0, 10));
-
-                wrapper.setTop(hint);
-
-                pane.setDisable(true);
-                wrapper.setCenter(pane);
-
-                this.getChildren().setAll(wrapper);
-            } else {
-                this.getChildren().setAll(pane);
-            }
+            this.getChildren().setAll(pane);
         }
 
         private record CategoryIndented(int indent, RemoteAddonRepository.Category category) {
