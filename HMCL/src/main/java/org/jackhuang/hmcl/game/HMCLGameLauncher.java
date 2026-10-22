@@ -22,10 +22,7 @@ import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.monitor.MonitorLauncher;
-import org.jackhuang.hmcl.setting.GameSettings;
-import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.util.NativePatcher;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -165,25 +162,10 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     @Override
-    protected ProcessInfo startProcess(ProcessBuilder builder, Charset encoding, Path nativeFolder) throws IOException {
-        if (!MonitorLauncher.isEnabled() || !(instance instanceof HMCLGameInstance hmclGameInstance))
-            return super.startProcess(builder, encoding, nativeFolder);
-
-        String gameDirectoryId = hmclGameInstance.getRepository().getGameDirectory().getId().toString();
-        GameSettings.Effective setting = hmclGameInstance.getEffectiveSettings();
-        LauncherVisibility x = setting.getInheritable(GameSettings::launcherVisibilityProperty);
-        boolean showLogs = setting.getInheritable(GameSettings::showLogsProperty);
-        MonitorLauncher.RelaunchPolicy relaunchPolicy = showLogs
-                ? MonitorLauncher.RelaunchPolicy.NEVER
-                : switch (x) {
-            case HIDE_AND_REOPEN -> MonitorLauncher.RelaunchPolicy.ALWAYS;
-            case HIDE -> MonitorLauncher.RelaunchPolicy.ON_CRASH;
-            default -> MonitorLauncher.RelaunchPolicy.NEVER;
-        };
-        List<String> postExitCommand = StringUtils.tokenize(options.getPostExitCommand(), getEnvVars(nativeFolder));
-
-        return MonitorLauncher.launchNewMonitor(new MonitorLauncher.MonitorLaunchContext(builder, listener,
-                encoding, options, gameDirectoryId, postExitCommand, relaunchPolicy));
+    protected ProcessInfo startProcess(List<String> commandLine, Map<String, String> envVars, Charset encoding) throws IOException {
+        if (!MonitorLauncher.MONITOR_ENABLED || !(instance instanceof HMCLGameInstance hmclGameInstance))
+            return super.startProcess(commandLine, envVars, encoding);
+        return MonitorLauncher.launchNewMonitor(commandLine, envVars, encoding, listener, hmclGameInstance, options);
     }
 
     @Override

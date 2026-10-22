@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.util.platform;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jetbrains.annotations.NotNullByDefault;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -97,20 +96,9 @@ public final class JavaProcessLauncher {
         }).collect(Collectors.joining(" "));
     }
 
-    /// Starts a new JVM process running the given jar with the given arguments.
-    ///
-    /// <p>Fire-and-forget: the process inherits this process's I/O and is never waited for. The
-    /// masked command line is written to the log before the process is started.
-    ///
-    /// @param jar     the jar file to run
-    /// @param appArgs the application arguments passed to the new process
-    /// @throws IOException if the process cannot be created
-    public static void startJava(Path jar, String... appArgs) throws IOException {
+    public static ProcessBuilder buildJava(Path jar, String... appArgs) {
         List<String> commandline = buildJavaCommandLine(jar, appArgs);
         LOG.info("Starting process: " + maskCommandLine(commandline));
-        new ProcessBuilder(commandline)
-                .directory(Paths.get("").toAbsolutePath().toFile())
-                .inheritIO()
-                .start();
+        return new ProcessBuilder(commandline).directory(Paths.get("").toAbsolutePath().toFile());
     }
 }

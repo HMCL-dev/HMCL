@@ -196,7 +196,7 @@ public final class UpdateHandler {
     }
 
     public static void startJava(Path jar, String... appArgs) throws IOException {
-        JavaProcessLauncher.startJava(jar, appArgs);
+        JavaProcessLauncher.buildJava(jar, appArgs).inheritIO().start();
     }
 
     private static Optional<Path> tryRename(Path path, String newVersion) {

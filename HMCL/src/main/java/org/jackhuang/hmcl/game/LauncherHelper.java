@@ -994,9 +994,7 @@ public final class LauncherHelper {
                     try {
                         if (!lwjgl) {
                             lwjgl = true;
-                            if (MonitorLauncher.isEnabled() && !showLogs
-                                    && (launcherVisibility == LauncherVisibility.HIDE
-                                    || launcherVisibility == LauncherVisibility.HIDE_AND_REOPEN)) {
+                            if (MonitorLauncher.MONITOR_ENABLED && !showLogs && launcherVisibility != LauncherVisibility.KEEP) {
                                 launchingLatch.countDown();
                                 runLater(Launcher::stopApplication);
                             } else {

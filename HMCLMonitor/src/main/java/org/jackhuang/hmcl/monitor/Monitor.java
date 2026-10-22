@@ -34,6 +34,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
@@ -73,29 +74,34 @@ public final class Monitor {
         LOG.info("*** HMCL MONITOR ***");
 
         // read spec
-        MonitorLauncher.MonitorLaunchSpec spec;
+        MonitorLaunchSpec spec;
         try {
-            spec = JsonUtils.fromNonNullJson(Files.readString(specPath), MonitorLauncher.MonitorLaunchSpec.class);
+            spec = JsonUtils.fromNonNullJson(Files.readString(specPath), MonitorLaunchSpec.class);
         } catch (JsonParseException e) {
             throw new IOException("Malformed process spec file " + specPath, e);
         }
         Files.deleteIfExists(specPath);
 
         // start game process
-        ProcessBuilder pb = new ProcessBuilder(spec.command()).directory(new File(spec.directory()));
-        pb.environment().putAll(spec.environment());
-        if (spec.inheritStdin())
+        ProcessBuilder pb = new ProcessBuilder(spec.command).directory(spec.directory.toFile());
+        pb.environment().putAll(spec.environment);
+        if (spec.inheritStdin)
             pb.redirectInput(ProcessBuilder.Redirect.INHERIT);
-        ManagedProcess gameProcess = new ManagedProcess(pb.start(), spec.command());
+        ManagedProcess gameProcess = new ManagedProcess(pb.start(), spec.command);
 
         LOG.info("Game process created, pid " + gameProcess.getPid() + ", spec " + specPath);
-        MonitorProtocol.pidMessage(gameProcess.getPid(), gameProcess.getProcessStartTime());
 
+        // shake hand
+        PrintStream protocol = new PrintStream(new FileOutputStream(FileDescriptor.err), true, MonitorProtocol.CHARSET);
+        MonitorProtocol.pidMessage(protocol, gameProcess.getPid(), gameProcess.getProcessStartTime());
+
+        // pump game io
         BiConsumer<String, Boolean> sink = (line, isErrorStream) -> {
             gameProcess.addLine(line);
-            MonitorProtocol.logMessage(isErrorStream, line);
+            MonitorProtocol.logMessage(protocol, isErrorStream, line);
         };
-        Charset encoding = Charset.forName(spec.encoding());
+
+        Charset encoding = Charset.forName(spec.encoding);
         Thread stdoutPump = Lang.thread(new StreamPump(gameProcess.getProcess().getInputStream(),
                 line -> sink.accept(line, false), encoding), "monitor-stdout-pump", true);
         Thread stderrPump = Lang.thread(new StreamPump(gameProcess.getProcess().getErrorStream(),
@@ -116,26 +122,35 @@ public final class Monitor {
             } catch (IOException e1) {
                 LOG.warning("Failed to check whether to cancel " + specPath, e1);
             }
-            MonitorProtocol.exitMessage(exitCode, reportedType);
+            MonitorProtocol.exitMessage(protocol, exitCode, reportedType);
 
             crashed = reportedType != ProcessListener.ExitType.NORMAL;
-            shouldRelaunch = MonitorProtocol.parentGone() && switch (spec.relaunchPolicy()) {
+            shouldRelaunch = protocol.checkError() && switch (spec.relaunchPolicy) {
                 case ALWAYS -> true;
                 case ON_CRASH -> crashed;
                 case NEVER -> false;
             };
-            result = new Result(gameProcess, reportedType, spec.gameDirectoryId(), spec.options());
+            result = new Result(gameProcess, reportedType, spec.gameDirectoryId, spec.options);
 
             // run post exit command
-            if (!spec.postExitCommand().isEmpty())
+            if (!spec.postExitCommand.isEmpty())
                 try {
-                    ProcessBuilder builder = new ProcessBuilder(spec.postExitCommand()).directory(spec.options().getGameDir().toFile());
+                    ProcessBuilder builder = new ProcessBuilder(spec.postExitCommand).directory(spec.options.getGameDir().toFile());
                     builder.environment().putAll(spec.environment());
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {
                     LOG.warning("An Exception happened while running exit command.", e);
                 }
         }), "exit-waiter", true).join();
+    }
+
+    public enum RelaunchPolicy {
+        /// Never continue into the launcher UI after the game exits.
+        NEVER,
+        /// Continue into the launcher UI after a non-normal exit if the protocol stream has failed.
+        ON_CRASH,
+        /// Continue into the launcher UI after any exit if the protocol stream has failed.
+        ALWAYS
     }
 
     /// launch result of the latest game process
@@ -146,5 +161,11 @@ public final class Monitor {
     /// @param launchOptions   The launch options used to identify the instance and present its crash window.
     @NotNullByDefault
     public record Result(ManagedProcess process, ProcessListener.ExitType exitType, String gameDirectoryId, LaunchOptions launchOptions) {
+    }
+
+    public record MonitorLaunchSpec(List<String> command, Path directory, Map<String, String> environment,
+                                    boolean inheritStdin, String encoding, LaunchOptions options,
+                                    String gameDirectoryId, List<String> postExitCommand,
+                                    RelaunchPolicy relaunchPolicy) {
     }
 }

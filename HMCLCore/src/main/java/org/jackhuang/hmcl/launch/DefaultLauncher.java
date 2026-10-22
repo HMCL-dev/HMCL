@@ -695,30 +695,29 @@ public class DefaultLauncher extends Launcher {
         }
 
         try {
-            ProcessBuilder builder = new ProcessBuilder(rawCommandLine).directory(runDirectory.toFile());
-            if (listener == null) {
-                builder.inheritIO();
-            }
-            Path appdata = options.getGameDir().toAbsolutePath().getParent();
-            if (appdata != null) builder.environment().put("APPDATA", appdata.toString());
-
-            builder.environment().putAll(getEnvVars(nativeFolder));
-
-            return startProcess(builder, command.encoding, nativeFolder);
+            return startProcess(rawCommandLine, getEnvVars(nativeFolder), command.encoding);
         } catch (IOException e) {
             throw new ProcessCreationException(e);
         }
     }
 
-    protected ProcessInfo startProcess(ProcessBuilder builder, Charset encoding, Path nativeFolder) throws IOException {
+    protected ProcessInfo startProcess(List<String> commandLine, Map<String, String> envVars, Charset encoding) throws IOException {
+        ProcessBuilder builder = new ProcessBuilder(commandLine).directory(instance.getRunDirectory().toFile());
+        if (listener == null) {
+            builder.inheritIO();
+        }
+        Path appdata = options.getGameDir().toAbsolutePath().getParent();
+        if (appdata != null) builder.environment().put("APPDATA", appdata.toString());
+        builder.environment().putAll(envVars);
+
         Process process = builder.start();
         ManagedProcess p = new ManagedProcess(process, builder.command());
         if (listener != null)
-            startMonitors(p, nativeFolder, listener, encoding, daemon);
+            startMonitors(p, getNativeFolder(), listener, encoding, daemon);
         return p;
     }
 
-    protected Map<String, String> getEnvVars(Path nativeFolder) {
+    private Map<String, String> getEnvVars(Path nativeFolder) {
         String versionName = Optional.ofNullable(options.getVersionName()).orElse(manifest.id().toString());
 
         Map<String, String> env = new LinkedHashMap<>();
