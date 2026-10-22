@@ -45,6 +45,15 @@ import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Exercises the incident fixtures with offline PKIX validation.
+///
+/// Public certificate fixtures come from the following pinned source files.
+/// SHA-256 digests refer to the original downloaded bytes.
+///
+/// | Source | Local fixtures | SHA-256 |
+/// | --- | --- | --- |
+/// | [impacted-intermediates.json](https://github.com/galadran/we-have-a-problem.com/blob/e2786ff8b707b4951f0db1f83ccaf8ac9af2f7e6/impacted-intermediates.json) | `compromised.pem` | `f67b3abe9b4879f4e91874ed041beccd71257f1db41c588c724ccf12aa90c59e` |
+/// | [roots.json](https://github.com/galadran/we-have-a-problem.com/blob/e2786ff8b707b4951f0db1f83ccaf8ac9af2f7e6/roots.json) | `roots.pem` | `119f32cd81a6b5a4e3c4c2df5fe07daa90dc43cafa123a62f0394f1895d92380` |
+/// | [chains.zip](https://github.com/galadran/we-have-a-problem.com/blob/e2786ff8b707b4951f0db1f83ccaf8ac9af2f7e6/chains.zip) | The 12 TLS chain PEM files | `8a2edc81b6c51e3ad27d45ca1e441ec84c961e2dee0fc547f2a02c0f74315f95` |
 @NotNullByDefault
 class TlsSecurityTest {
     /// Reads an independent array of public certificates from a bundled PEM fixture.

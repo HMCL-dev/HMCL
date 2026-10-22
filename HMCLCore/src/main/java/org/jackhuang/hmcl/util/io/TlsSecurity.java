@@ -46,7 +46,8 @@ import java.util.Set;
 public final class TlsSecurity {
     /// SHA-256 hashes of DER SubjectPublicKeyInfo, including both TLS and code-signing CAs.
     /// Cross-signed certificates are covered because they share the same public keys.
-    /// Source: [impacted-intermediates.json](https://emudhra.we-have-a-problem.com/impacted-intermediates.json)
+    /// Sources: [Mozilla incident announcement](https://groups.google.com/a/mozilla.org/g/dev-security-policy/c/0R3XLJL6FuE/m/Kp1v6CPuAAAJ) and
+    /// [pinned certificate list](https://github.com/galadran/we-have-a-problem.com/blob/e2786ff8b707b4951f0db1f83ccaf8ac9af2f7e6/impacted-intermediates.json).
     private static final @Unmodifiable Set<String> BLOCKED_KEYS = Set.of(
             // EM DV TLS CA - G3B
             "EBED6475C2C2D80FCB199F3FE8DD6E6B3CE60B77EB15D4E42C3DEC0C6F5B5105",
