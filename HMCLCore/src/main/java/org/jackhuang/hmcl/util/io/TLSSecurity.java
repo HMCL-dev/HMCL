@@ -24,9 +24,14 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.cert.CertPathValidatorException;
@@ -37,6 +42,7 @@ import java.security.cert.TrustAnchor;
 import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -49,8 +55,9 @@ public final class TLSSecurity {
 
     /// Replaces the process-wide default TLS context and HTTPS socket factory.
     /// Uses the JSSE default trust store, including `javax.net.ssl.trustStore` overrides,
-    /// and the `com.sun.net.ssl.checkRevocation` setting. Normal PKIX validation and
-    /// HTTPS hostname verification remain enabled. Existing connections and explicitly
+    /// and the `com.sun.net.ssl.checkRevocation` setting. Client credentials use the JSSE
+    /// `javax.net.ssl.keyStore` properties. Normal PKIX validation and HTTPS hostname
+    /// verification remain enabled. Existing connections and explicitly
     /// configured TLS contexts are not changed.
     ///
     /// This method must be called before starting network activity. Initialization failure
@@ -62,11 +69,45 @@ public final class TLSSecurity {
             SSLContext context = SSLContext.getInstance("TLS");
             TrustManagerFactory factory = TrustManagerFactory.getInstance("PKIX");
             factory.init(new CertPathTrustManagerParameters(createParameters(null)));
-            context.init(null, factory.getTrustManagers(), null);
+            context.init(createKeyManagers(), factory.getTrustManagers(), null);
             SSLContext.setDefault(context);
             HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
-        } catch (GeneralSecurityException e) {
+        } catch (GeneralSecurityException | IOException e) {
             throw new IllegalStateException("Failed to initialize TLS certificate protection", e);
+        }
+    }
+
+    /// Loads client credentials using the JSSE key store path, type, provider, and password properties.
+    /// An empty path or `NONE` loads the store without a file; PKCS11 requires `NONE`.
+    /// An empty type delegates store selection to the default key manager factory.
+    ///
+    /// @throws GeneralSecurityException if the store or key managers cannot be initialized
+    /// @throws IOException if the store cannot be read or its password is incorrect
+    static KeyManager[] createKeyManagers() throws GeneralSecurityException, IOException {
+        String path = System.getProperty("javax.net.ssl.keyStore", "");
+        String type = System.getProperty("javax.net.ssl.keyStoreType", KeyStore.getDefaultType());
+        String provider = System.getProperty("javax.net.ssl.keyStoreProvider", "");
+        String passwordProperty = System.getProperty("javax.net.ssl.keyStorePassword", "");
+        boolean pkcs11 = "PKCS11".equals(type);
+        if (pkcs11 && !"NONE".equals(path))
+            throw new GeneralSecurityException("PKCS11 key stores require javax.net.ssl.keyStore=NONE");
+
+        char @Nullable [] password = passwordProperty.isEmpty() ? null : passwordProperty.toCharArray();
+        try {
+            @Nullable KeyStore store = null;
+            try (@Nullable InputStream input = path.isEmpty() || "NONE".equals(path) ? null : new FileInputStream(path)) {
+                if (!type.isEmpty()) {
+                    store = provider.isEmpty() ? KeyStore.getInstance(type) : KeyStore.getInstance(type, provider);
+                    store.load(input, password);
+                }
+            }
+            KeyManagerFactory factory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            // Token providers obtain private keys without a separate key password.
+            factory.init(store, pkcs11 ? null : password);
+            return factory.getKeyManagers();
+        } finally {
+            if (password != null)
+                Arrays.fill(password, '\0');
         }
     }
 

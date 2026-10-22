@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import javax.net.ssl.CertPathTrustManagerParameters;
 import javax.net.ssl.TrustManagerFactory;
@@ -27,6 +29,11 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.X509ExtendedTrustManager;
+import javax.net.ssl.X509KeyManager;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.GeneralSecurityException;
 import java.net.Socket;
 import java.security.InvalidAlgorithmParameterException;
 import java.io.InputStream;
@@ -50,6 +57,9 @@ import java.util.Objects;
 import java.util.HexFormat;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -69,6 +79,76 @@ import static org.junit.jupiter.api.Assertions.*;
 /// | [chains.zip](https://github.com/galadran/we-have-a-problem.com/blob/e2786ff8b707b4951f0db1f83ccaf8ac9af2f7e6/chains.zip) | The 12 TLS chain PEM files | `8a2edc81b6c51e3ad27d45ca1e441ec84c961e2dee0fc547f2a02c0f74315f95` |
 @NotNullByDefault
 class TLSSecurityTest {
+    /// Loads an ephemeral client identity and fails closed for invalid key store settings.
+    @Test
+    void loadsConfiguredClientCredentials(@TempDir Path directory) throws Exception {
+        SSLContext previousContext = SSLContext.getDefault();
+        SSLSocketFactory previousFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
+        Path storePath = directory.resolve("client.p12");
+        Path output = directory.resolve("keytool.log");
+        String executable = System.getProperty("os.name").startsWith("Windows") ? "keytool.exe" : "keytool";
+        Process process = new ProcessBuilder(Path.of(System.getProperty("java.home"), "bin", executable).toString(),
+                "-genkeypair", "-alias", "client", "-keyalg", "EC", "-groupname", "secp256r1",
+                "-dname", "CN=TLS test client", "-validity", "1", "-storetype", "PKCS12",
+                "-keystore", storePath.toString(), "-storepass", "test-password", "-keypass", "test-password")
+                .redirectErrorStream(true).redirectOutput(output.toFile()).start();
+        try {
+            assertTrue(process.waitFor(30, TimeUnit.SECONDS), "Keytool timed out");
+            assertEquals(0, process.exitValue(), () -> {
+                try {
+                    return Files.readString(output);
+                } catch (IOException e) {
+                    return e.toString();
+                }
+            });
+        } finally {
+            process.destroyForcibly();
+        }
+
+        Map<String, @Nullable String> previous = new HashMap<>();
+        for (String suffix : List.of("", "Type", "Provider", "Password")) {
+            String property = "javax.net.ssl.keyStore" + suffix;
+            previous.put(property, System.getProperty(property));
+        }
+        try {
+            System.setProperty("javax.net.ssl.keyStore", storePath.toString());
+            System.setProperty("javax.net.ssl.keyStoreType", "PKCS12");
+            System.setProperty("javax.net.ssl.keyStoreProvider", "SUN");
+            System.setProperty("javax.net.ssl.keyStorePassword", "test-password");
+            X509KeyManager manager = (X509KeyManager) TLSSecurity.createKeyManagers()[0];
+            @Nullable String alias = manager.chooseClientAlias(new String[]{"EC"}, null, null);
+            assertNotNull(alias);
+            assertNotNull(manager.getPrivateKey(alias));
+            assertEquals("CN=TLS test client", manager.getCertificateChain(alias)[0].getSubjectX500Principal().getName());
+
+            System.setProperty("javax.net.ssl.keyStorePassword", "wrong-password");
+            assertThrows(IOException.class, TLSSecurity::createKeyManagers);
+            assertThrows(IllegalStateException.class, TLSSecurity::install);
+            assertSame(previousContext, SSLContext.getDefault());
+            assertSame(previousFactory, HttpsURLConnection.getDefaultSSLSocketFactory());
+
+            System.setProperty("javax.net.ssl.keyStore", directory.resolve("missing.p12").toString());
+            assertThrows(IOException.class, TLSSecurity::createKeyManagers);
+            System.setProperty("javax.net.ssl.keyStoreType", "PKCS11");
+            assertThrows(GeneralSecurityException.class, TLSSecurity::createKeyManagers);
+
+            System.setProperty("javax.net.ssl.keyStoreType", "PKCS12");
+            System.clearProperty("javax.net.ssl.keyStorePassword");
+            for (String path : List.of("", "NONE")) {
+                System.setProperty("javax.net.ssl.keyStore", path);
+                X509KeyManager empty = (X509KeyManager) TLSSecurity.createKeyManagers()[0];
+                assertNull(empty.chooseClientAlias(new String[]{"EC"}, null, null));
+            }
+        } finally {
+            previous.forEach((property, value) -> {
+                if (value == null)
+                    System.clearProperty(property);
+                else
+                    System.setProperty(property, value);
+            });
+        }
+    }
+
     /// Reads an independent array of public certificates from a bundled PEM fixture.
     private static X509Certificate[] readCertificates(String name) throws Exception {
         try (InputStream input = Objects.requireNonNull(TLSSecurityTest.class.getResourceAsStream("tls/" + name))) {
