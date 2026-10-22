@@ -23,42 +23,43 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import javax.net.ssl.CertPathTrustManagerParameters;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509KeyManager;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.Socket;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
-import java.net.Socket;
 import java.security.InvalidAlgorithmParameterException;
-import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.MessageDigest;
-import java.security.cert.CertificateException;
 import java.security.cert.CertPathValidatorException;
-import java.security.cert.PKIXCertPathChecker;
-import java.security.cert.CertificateFactory;
 import java.security.cert.CertStore;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.CollectionCertStoreParameters;
 import java.security.cert.PKIXBuilderParameters;
+import java.security.cert.PKIXCertPathChecker;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
-import java.util.Date;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.List;
-import java.util.Objects;
-import java.util.HexFormat;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -94,13 +95,8 @@ class TLSSecurityTest {
                 .redirectErrorStream(true).redirectOutput(output.toFile()).start();
         try {
             assertTrue(process.waitFor(30, TimeUnit.SECONDS), "Keytool timed out");
-            assertEquals(0, process.exitValue(), () -> {
-                try {
-                    return Files.readString(output);
-                } catch (IOException e) {
-                    return e.toString();
-                }
-            });
+            assertEquals(0, process.exitValue(), new String(Files.readAllBytes(output),
+                    Charset.forName(System.getProperty("native.encoding", "UTF-8"))));
         } finally {
             process.destroyForcibly();
         }
