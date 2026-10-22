@@ -48,10 +48,10 @@ public final class EntryPoint {
         System.getProperties().putIfAbsent("java.net.useSystemProxies", "true");
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
-        TLSSecurity.install();
 
         createHMCLDirectories();
         LOG.start(Metadata.HMCL_LOCAL_HOME.resolve("logs"));
+        TLSSecurity.install();
 
         checkWine();
 

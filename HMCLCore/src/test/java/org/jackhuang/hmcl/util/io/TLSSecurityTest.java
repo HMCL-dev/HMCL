@@ -27,6 +27,9 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509KeyManager;
@@ -40,6 +43,7 @@ import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyStore;
 import java.security.MessageDigest;
+import java.security.Security;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertStore;
 import java.security.cert.CertificateException;
@@ -101,17 +105,23 @@ class TLSSecurityTest {
             process.destroyForcibly();
         }
 
+        String previousAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
         Map<String, @Nullable String> previous = new HashMap<>();
-        for (String suffix : List.of("", "Type", "Provider", "Password")) {
-            String property = "javax.net.ssl.keyStore" + suffix;
-            previous.put(property, System.getProperty(property));
+        for (String store : List.of("keyStore", "trustStore")) {
+            for (String suffix : List.of("", "Type", "Provider", "Password")) {
+                String property = "javax.net.ssl." + store + suffix;
+                previous.put(property, System.getProperty(property));
+            }
         }
         try {
             System.setProperty("javax.net.ssl.keyStore", storePath.toString());
             System.setProperty("javax.net.ssl.keyStoreType", "PKCS12");
             System.setProperty("javax.net.ssl.keyStoreProvider", "SUN");
             System.setProperty("javax.net.ssl.keyStorePassword", "test-password");
-            X509KeyManager manager = (X509KeyManager) TLSSecurity.createKeyManagers()[0];
+            var keyManagers = TLSSecurity.createKeyManagers();
+            SSLContext serverContext = SSLContext.getInstance("TLS");
+            serverContext.init(keyManagers, null, null);
+            X509KeyManager manager = (X509KeyManager) keyManagers[0];
             @Nullable String alias = manager.chooseClientAlias(new String[]{"EC"}, null, null);
             assertNotNull(alias);
             assertNotNull(manager.getPrivateKey(alias));
@@ -119,12 +129,15 @@ class TLSSecurityTest {
 
             System.setProperty("javax.net.ssl.keyStorePassword", "wrong-password");
             assertThrows(IOException.class, TLSSecurity::createKeyManagers);
-            assertThrows(IllegalStateException.class, TLSSecurity::install);
-            assertSame(previousContext, SSLContext.getDefault());
-            assertSame(previousFactory, HttpsURLConnection.getDefaultSSLSocketFactory());
+            assertDoesNotThrow(TLSSecurity::install);
+            assertNotSame(previousContext, SSLContext.getDefault());
+            assertNotSame(previousFactory, HttpsURLConnection.getDefaultSSLSocketFactory());
+            assertRejectsHandshake(serverContext);
 
             System.setProperty("javax.net.ssl.keyStore", directory.resolve("missing.p12").toString());
             assertThrows(IOException.class, TLSSecurity::createKeyManagers);
+            assertDoesNotThrow(TLSSecurity::install);
+            assertRejectsHandshake(serverContext);
             System.setProperty("javax.net.ssl.keyStoreType", "PKCS11");
             assertThrows(GeneralSecurityException.class, TLSSecurity::createKeyManagers);
 
@@ -135,13 +148,56 @@ class TLSSecurityTest {
                 X509KeyManager empty = (X509KeyManager) TLSSecurity.createKeyManagers()[0];
                 assertNull(empty.chooseClientAlias(new String[]{"EC"}, null, null));
             }
+            Security.setProperty("ssl.TrustManagerFactory.algorithm", "SunX509");
+            assertDoesNotThrow(TLSSecurity::install);
+            assertRejectsHandshake(serverContext);
+            Security.setProperty("ssl.TrustManagerFactory.algorithm", previousAlgorithm);
+
+            Path emptyStore = directory.resolve("empty.p12");
+            try (var outputStream = Files.newOutputStream(emptyStore)) {
+                trustStore().store(outputStream, "test-password".toCharArray());
+            }
+            System.setProperty("javax.net.ssl.trustStore", emptyStore.toString());
+            System.setProperty("javax.net.ssl.trustStoreType", KeyStore.getDefaultType());
+            System.setProperty("javax.net.ssl.trustStoreProvider", "");
+            System.setProperty("javax.net.ssl.trustStorePassword", "test-password");
+            assertDoesNotThrow(TLSSecurity::install);
+            assertRejectsHandshake(serverContext);
         } finally {
+            Security.setProperty("ssl.TrustManagerFactory.algorithm", previousAlgorithm);
+            SSLContext.setDefault(previousContext);
+            HttpsURLConnection.setDefaultSSLSocketFactory(previousFactory);
             previous.forEach((property, value) -> {
                 if (value == null)
                     System.clearProperty(property);
                 else
                     System.setProperty(property, value);
             });
+        }
+    }
+
+    /// Confirms that the installed default context refuses a real local TLS handshake.
+    private static void assertRejectsHandshake(SSLContext serverContext) throws Exception {
+        var executor = Executors.newSingleThreadExecutor();
+        try (SSLServerSocket server = (SSLServerSocket) serverContext.getServerSocketFactory().createServerSocket(0)) {
+            server.setSoTimeout(5000);
+            Future<?> handshake = executor.submit(() -> {
+                try (SSLSocket socket = (SSLSocket) server.accept()) {
+                    socket.setSoTimeout(5000);
+                    socket.startHandshake();
+                } catch (IOException expected) {
+                    // The client aborts when the rejecting trust manager is invoked.
+                }
+            });
+            try (SSLSocket client = (SSLSocket) SSLContext.getDefault().getSocketFactory()
+                    .createSocket("localhost", server.getLocalPort())) {
+                client.setSoTimeout(5000);
+                SSLException failure = assertThrows(SSLException.class, client::startHandshake);
+                assertTrue(failure.getMessage().contains("TLS configuration failed"), failure.toString());
+            }
+            handshake.get(10, TimeUnit.SECONDS);
+        } finally {
+            executor.shutdownNow();
         }
     }
 
@@ -163,6 +219,7 @@ class TLSSecurityTest {
 
     /// Creates an extended trust manager at a fixed date within the fixtures' validity periods.
     private static X509ExtendedTrustManager trustManager(PKIXBuilderParameters parameters) throws Exception {
+        assertEquals(5, parameters.getMaxPathLength());
         parameters.setDate(Date.from(Instant.parse("2026-10-22T00:00:00Z")));
         parameters.setRevocationEnabled(false);
         TrustManagerFactory factory = TrustManagerFactory.getInstance("PKIX");

@@ -36,6 +36,7 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.PKIXCertPathChecker;
 import java.security.cert.TrustAnchor;
@@ -45,6 +46,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Installs TLS certificate validation that rejects known compromised CA public keys.
 @NotNullByDefault
@@ -60,20 +63,61 @@ public final class TLSSecurity {
     /// verification remain enabled. Existing connections and explicitly
     /// configured TLS contexts are not changed.
     ///
-    /// This method must be called before starting network activity. Initialization failure
-    /// throws an exception so that startup cannot continue without the blocklist.
+    /// Uses the configured default trust manager algorithm, which must support PKIX parameters.
+    /// Preinstalled default contexts and socket factories are replaced, not wrapped.
+    /// This method must be called after logging is initialized and before network activity.
+    /// If configuration fails, logs the cause and installs a context that rejects all certificate
+    /// authentication so that offline startup can continue without unprotected TLS requests.
     ///
-    /// @throws IllegalStateException if the protected TLS context cannot be initialized
+    /// @throws IllegalStateException if even the rejecting TLS context cannot be installed
     public static void install() {
+        SSLContext context;
         try {
-            SSLContext context = SSLContext.getInstance("TLS");
-            TrustManagerFactory factory = TrustManagerFactory.getInstance("PKIX");
+            context = SSLContext.getInstance("TLS");
+            TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             factory.init(new CertPathTrustManagerParameters(createParameters(null)));
             context.init(createKeyManagers(), factory.getTrustManagers(), null);
-            SSLContext.setDefault(context);
-            HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
-        } catch (GeneralSecurityException | IOException e) {
-            throw new IllegalStateException("Failed to initialize TLS certificate protection", e);
+        } catch (GeneralSecurityException | IOException | RuntimeException failure) {
+            LOG.warning("TLS configuration failed; default TLS connections will be rejected", failure);
+            try {
+                context = SSLContext.getInstance("TLS");
+                context.init(new KeyManager[0], new X509TrustManager[]{new RejectingTrustManager(failure)}, null);
+            } catch (GeneralSecurityException e) {
+                e.addSuppressed(failure);
+                throw new IllegalStateException("Failed to disable unprotected TLS connections", e);
+            }
+        }
+        SSLContext.setDefault(context);
+        HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
+    }
+
+    /// Rejects certificate authentication after TLS configuration fails.
+    @NotNullByDefault
+    private static final class RejectingTrustManager implements X509TrustManager {
+        /// The configuration failure retained as the cause of handshake errors.
+        private final Exception failure;
+
+        /// Retains the configuration failure for subsequent handshake diagnostics.
+        private RejectingTrustManager(Exception failure) {
+            this.failure = failure;
+        }
+
+        /// Always rejects client certificate authentication with the configuration failure.
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            throw new CertificateException("TLS configuration failed", failure);
+        }
+
+        /// Always rejects server certificate authentication with the configuration failure.
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            throw new CertificateException("TLS configuration failed", failure);
+        }
+
+        /// Returns an empty array because no certificate authorities are trusted.
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
         }
     }
 
@@ -116,7 +160,7 @@ public final class TLSSecurity {
     ///
     /// @throws GeneralSecurityException if initialization fails or no usable trust anchors remain
     static PKIXBuilderParameters createParameters(@Nullable KeyStore store) throws GeneralSecurityException {
-        TrustManagerFactory defaults = TrustManagerFactory.getInstance("PKIX");
+        TrustManagerFactory defaults = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         defaults.init(store);
         Set<TrustAnchor> anchors = new HashSet<>();
         BlockedKeyChecker checker = new BlockedKeyChecker();
@@ -130,7 +174,6 @@ public final class TLSSecurity {
             }
         }
         PKIXBuilderParameters parameters = new PKIXBuilderParameters(anchors, new X509CertSelector());
-        parameters.setMaxPathLength(-1);
         parameters.setRevocationEnabled(Boolean.getBoolean("com.sun.net.ssl.checkRevocation"));
         parameters.addCertPathChecker(checker);
         return parameters;
