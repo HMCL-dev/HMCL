@@ -28,8 +28,6 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.Certificate;
 import java.security.cert.PKIXBuilderParameters;
@@ -41,7 +39,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.HexFormat;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -79,7 +76,6 @@ public final class TLSSecurity {
     /// A null store selects the JSSE default store. Revocation follows the JSSE system property.
     ///
     /// @throws GeneralSecurityException if initialization fails or no usable trust anchors remain
-    /// @throws IllegalStateException if the runtime does not provide SHA-256
     static PKIXBuilderParameters createParameters(@Nullable KeyStore store) throws GeneralSecurityException {
         TrustManagerFactory defaults = TrustManagerFactory.getInstance("PKIX");
         defaults.init(store);
@@ -102,52 +98,69 @@ public final class TLSSecurity {
     }
 
     /// Rejects compromised public keys in trust anchors and constructed certificate paths.
-    /// Each instance owns its digest and must be used by only one thread at a time.
+    /// Instances are stateless and may be used concurrently.
     @NotNullByDefault
     private static final class BlockedKeyChecker extends PKIXCertPathChecker {
-        /// SHA-256 hashes of DER SubjectPublicKeyInfo, including both TLS and code-signing CAs.
+        /// DER SubjectPublicKeyInfo encodings of compromised TLS and code-signing CA public keys.
         /// Cross-signed certificates are covered because they share the same public keys.
         /// Sources: [Mozilla incident announcement](https://groups.google.com/a/mozilla.org/g/dev-security-policy/c/0R3XLJL6FuE/m/Kp1v6CPuAAAJ) and
         /// [pinned certificate list](https://github.com/galadran/we-have-a-problem.com/blob/e2786ff8b707b4951f0db1f83ccaf8ac9af2f7e6/impacted-intermediates.json).
         private static final byte @Unmodifiable [] @Unmodifiable [] BLOCKED_KEYS = Stream.of(
                 // EM DV TLS CA - G3B
-                "EBED6475C2C2D80FCB199F3FE8DD6E6B3CE60B77EB15D4E42C3DEC0C6F5B5105",
+                // SHA-256: EBED6475C2C2D80FCB199F3FE8DD6E6B3CE60B77EB15D4E42C3DEC0C6F5B5105
+                "3076301006072A8648CE3D020106052B8104002203620004E79ED9C04A9773C4735E51111DA85AC2"
+                        + "BD5E64AB374B80E12CBC2038EC1E4F0E3B812FC9859E1E67AFB04E2F8BC97F7485BA65AA911EE8A4"
+                        + "E45B62D5CC03D56BE678B3C38CB4DC937CA2460E238453C892935D29D44F91E15606B63CCEDAB468",
                 // EM OV TLS CA - G3B
-                "43BFFA19D6EF651451F6841E019931E96F6F2EAEFF28AB4B6F1CE4576DE2717B",
+                // SHA-256: 43BFFA19D6EF651451F6841E019931E96F6F2EAEFF28AB4B6F1CE4576DE2717B
+                "3076301006072A8648CE3D020106052B810400220362000473897AA0EB3CFDCA8B12402FFAF0ABC4"
+                        + "E1212BAF8DEE778AC9EE2D6DB83FAC280C5E05638AE7A2ACD71C322A8E361CDEB9F69C4302B9DD8D"
+                        + "73D1CC6CAAB2CC0AEE4E216CE979DD518A4AF4B626E5684CDD658037ED0C854E4CC12F4CF8646D0D",
                 // EM EV TLS CA - G3B
-                "E0254C7FCDC265E2F0F8A428DABB75AB4AE039B4872D62F5EE57F0877D5A8A41",
+                // SHA-256: E0254C7FCDC265E2F0F8A428DABB75AB4AE039B4872D62F5EE57F0877D5A8A41
+                "3076301006072A8648CE3D020106052B810400220362000425DBA85A64D397DA0B1052E9EA546E48"
+                        + "7BEFEA9C9D9D68A0C5EADCFEEF75A69BB5D6FC01F42BFBCA6EB40BCD64C0767E36FFD05D97A813C5"
+                        + "AA0C6C9530E79CF5F0866468F13806420AA5C851840B1E252540E790E4B654C3852ED64AF1E8657D",
                 // EM DV TLS CA - G3C
-                "49DD353DC2B919A3770645117D0E60C16115E7D1BC259EEFE734B00EA434FE5F",
+                // SHA-256: 49DD353DC2B919A3770645117D0E60C16115E7D1BC259EEFE734B00EA434FE5F
+                "3076301006072A8648CE3D020106052B81040022036200043A7A7862C8C44D324DDD69033A6782C0"
+                        + "EFEEFE4055E68A123FA0371BA3BD9194514EE172A433E3630F02BD188037D9E5149F9B77DB94A281"
+                        + "DF987B2FEA888B74BDFE8FDA4C1099EE6CA19566FE3EF0E5F6B09A556CCC8BA50561DF1B2A441D01",
                 // EM OV TLS CA - G3C
-                "63ECEFEE431D49523BC1136C4E72D0206A477086CAF606CD5CF025686C109CF8",
+                // SHA-256: 63ECEFEE431D49523BC1136C4E72D0206A477086CAF606CD5CF025686C109CF8
+                "3076301006072A8648CE3D020106052B8104002203620004138251CD52AC9298C1C8AAD977321DEB"
+                        + "97E709BD0B4CA0ACA55DC8AD51DCFC9D1589A1597E3A5120E1EFD631C63E1835CACAE29869A62E16"
+                        + "31E8A28181AB56616DC45D918ABC09F3AB0E63CF792AA4DCED7387BE37BBA569549F1C02B270ED67",
                 // EM EV TLS CA - G3C
-                "5C0660A2B164910D8FF589C18E14552E9E0EC237DCEFE2CB736D41A4811F81A0",
+                // SHA-256: 5C0660A2B164910D8FF589C18E14552E9E0EC237DCEFE2CB736D41A4811F81A0
+                "3076301006072A8648CE3D020106052B81040022036200042D56E829A6FB82C64A4697D960AF951E"
+                        + "9067AE91F926D34306DA48A8AAEB7869B6A67E6D27426E0442AA03B36E1988DFF636514EE1CF07F5"
+                        + "BA4B3FF2A06645AE7D31D5866AD31AA3D246EB0B3177EE99CB7566C516CE74808A668F91F0C47FCA",
                 // EM OV CS CA - G3B
-                "EC4FFA1AD0AC88081314B7AAFFEF6A91F97CD57291BB5BA686C5415F5EB4F6B6",
+                // SHA-256: EC4FFA1AD0AC88081314B7AAFFEF6A91F97CD57291BB5BA686C5415F5EB4F6B6
+                "3076301006072A8648CE3D020106052B8104002203620004AABB0FB0666ACFCF01FAD52BFCFD4C2B"
+                        + "F2CB3C3497DE73950E5819B61FE695098741C8C491439B34A0431CAFFE5BF9B4C1C8E8AE0001F9F4"
+                        + "DC8AD82C59F3639E96CD6C3D4DB0CEFEC26C3D62517B37761372743F8E8ADD77B10064F2ABE5E050",
                 // EM OV CS CA - G3C
-                "92C063D67E8F14DB71D288E11266FFDAF69CBF115F7BAB14F3BC2F68D25E0E30"
+                // SHA-256: 92C063D67E8F14DB71D288E11266FFDAF69CBF115F7BAB14F3BC2F68D25E0E30
+                "3076301006072A8648CE3D020106052B8104002203620004B9F0E0634702A69CA6AADD443CFD62C4"
+                        + "1B9BA4B20924697D7974E7691A126FB96AFB3E34C2FD3BC5F483061F265DC2A58436347323510436"
+                        + "B28F04F3862363067980E2503E02532D6546235A7165A259A1EF496F741B5FDEE7787208E4B8FAEF"
         ).map(HexFormat.of()::parseHex).toArray(byte[][]::new);
 
-        /// SHA-256 digest reused for successive certificates and never shared with clones.
-        private final MessageDigest digest;
-
-        /// Creates a checker ready to inspect certificates in either direction.
-        ///
-        /// @throws IllegalStateException if the runtime does not provide SHA-256
+        /// Creates a stateless checker supporting either validation direction.
         private BlockedKeyChecker() {
-            try {
-                digest = MessageDigest.getInstance("SHA-256");
-            } catch (NoSuchAlgorithmException e) {
-                throw new IllegalStateException("SHA-256 is required for TLS certificate protection", e);
-            }
         }
 
-        /// Returns whether the certificate's SubjectPublicKeyInfo matches a blocked fingerprint.
-        /// Completing the digest operation resets the digest for the next certificate.
-        private boolean isBlocked(Certificate certificate) {
-            byte[] hash = digest.digest(certificate.getPublicKey().getEncoded());
+        /// Returns whether the certificate contains an exact blocked SubjectPublicKeyInfo encoding.
+        ///
+        /// @throws CertPathValidatorException if the public key cannot be encoded
+        private boolean isBlocked(Certificate certificate) throws CertPathValidatorException {
+            byte @Nullable [] encoded = certificate.getPublicKey().getEncoded();
+            if (encoded == null)
+                throw new CertPathValidatorException("Certificate public key cannot be encoded");
             for (byte[] blockedKey : BLOCKED_KEYS) {
-                if (Arrays.equals(hash, blockedKey))
+                if (Arrays.equals(encoded, blockedKey))
                     return true;
             }
             return false;
@@ -155,15 +168,6 @@ public final class TLSSecurity {
 
         @Override
         public void init(boolean forward) {
-            digest.reset();
-        }
-
-        /// Returns a checker with its own digest. No certificate data is retained between checks.
-        ///
-        /// @throws IllegalStateException if the runtime no longer provides SHA-256
-        @Override
-        public BlockedKeyChecker clone() {
-            return new BlockedKeyChecker();
         }
 
         @Override
@@ -178,7 +182,7 @@ public final class TLSSecurity {
 
         /// Rejects a blocked public key without consuming any critical extensions.
         ///
-        /// @throws CertPathValidatorException if the public key is blocked
+        /// @throws CertPathValidatorException if the public key is blocked or cannot be encoded
         @Override
         public void check(Certificate certificate, @Nullable Collection<String> unresolvedCritExts)
                 throws CertPathValidatorException {

@@ -31,6 +31,7 @@ import java.net.Socket;
 import java.security.InvalidAlgorithmParameterException;
 import java.io.InputStream;
 import java.security.KeyStore;
+import java.security.MessageDigest;
 import java.security.cert.CertificateException;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.PKIXCertPathChecker;
@@ -46,6 +47,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.List;
 import java.util.Objects;
+import java.util.HexFormat;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -100,9 +104,23 @@ class TLSSecurityTest {
         X509Certificate[] certificates = readCertificates("compromised.pem");
         assertEquals(16, certificates.length);
         PKIXCertPathChecker checker = newChecker();
-        for (X509Certificate certificate : certificates)
+        Set<String> fingerprints = new HashSet<>();
+        for (X509Certificate certificate : certificates) {
+            fingerprints.add(HexFormat.of().withUpperCase().formatHex(
+                    MessageDigest.getInstance("SHA-256").digest(certificate.getPublicKey().getEncoded())));
             assertThrows(CertPathValidatorException.class, () -> checker.check(certificate),
                     certificate.getSubjectX500Principal().toString());
+        }
+        assertEquals(Set.of(
+                "EBED6475C2C2D80FCB199F3FE8DD6E6B3CE60B77EB15D4E42C3DEC0C6F5B5105",
+                "43BFFA19D6EF651451F6841E019931E96F6F2EAEFF28AB4B6F1CE4576DE2717B",
+                "E0254C7FCDC265E2F0F8A428DABB75AB4AE039B4872D62F5EE57F0877D5A8A41",
+                "49DD353DC2B919A3770645117D0E60C16115E7D1BC259EEFE734B00EA434FE5F",
+                "63ECEFEE431D49523BC1136C4E72D0206A477086CAF606CD5CF025686C109CF8",
+                "5C0660A2B164910D8FF589C18E14552E9E0EC237DCEFE2CB736D41A4811F81A0",
+                "EC4FFA1AD0AC88081314B7AAFFEF6A91F97CD57291BB5BA686C5415F5EB4F6B6",
+                "92C063D67E8F14DB71D288E11266FFDAF69CBF115F7BAB14F3BC2F68D25E0E30"
+        ), fingerprints);
     }
 
     /// Proves otherwise-valid TLS paths fail because of the blocklist, for both signing roots.
@@ -154,9 +172,9 @@ class TLSSecurityTest {
         assertDoesNotThrow(() -> trustManager(parameters).checkServerTrusted(leaf, "ECDHE_ECDSA"));
     }
 
-    /// Exercises reused digests after rejection and reset, with cloned checkers on separate threads.
+    /// Exercises concurrent checks on a shared instance and its shallow clones.
     @Test
-    void reusesDigestWithoutSharingItBetweenClones() throws Exception {
+    void supportsConcurrentChecksAndClones() throws Exception {
         X509Certificate[] blocked = readCertificates("compromised.pem");
         X509Certificate[] roots = readCertificates("roots.pem");
         PKIXCertPathChecker original = newChecker();
@@ -165,7 +183,7 @@ class TLSSecurityTest {
         try {
             List<Future<?>> tasks = new ArrayList<>();
             for (int i = 0; i < 4; i++) {
-                PKIXCertPathChecker checker = (PKIXCertPathChecker) original.clone();
+                PKIXCertPathChecker checker = i % 2 == 0 ? original : (PKIXCertPathChecker) original.clone();
                 tasks.add(executor.submit(() -> {
                     for (int iteration = 0; iteration < 100; iteration++) {
                         X509Certificate root = roots[iteration % roots.length];
