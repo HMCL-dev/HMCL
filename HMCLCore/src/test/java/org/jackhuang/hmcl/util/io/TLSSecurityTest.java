@@ -55,10 +55,10 @@ import static org.junit.jupiter.api.Assertions.*;
 /// | [roots.json](https://github.com/galadran/we-have-a-problem.com/blob/e2786ff8b707b4951f0db1f83ccaf8ac9af2f7e6/roots.json) | `roots.pem` | `119f32cd81a6b5a4e3c4c2df5fe07daa90dc43cafa123a62f0394f1895d92380` |
 /// | [chains.zip](https://github.com/galadran/we-have-a-problem.com/blob/e2786ff8b707b4951f0db1f83ccaf8ac9af2f7e6/chains.zip) | The 12 TLS chain PEM files | `8a2edc81b6c51e3ad27d45ca1e441ec84c961e2dee0fc547f2a02c0f74315f95` |
 @NotNullByDefault
-class TlsSecurityTest {
+class TLSSecurityTest {
     /// Reads an independent array of public certificates from a bundled PEM fixture.
     private static X509Certificate[] readCertificates(String name) throws Exception {
-        try (InputStream input = Objects.requireNonNull(TlsSecurityTest.class.getResourceAsStream("tls/" + name))) {
+        try (InputStream input = Objects.requireNonNull(TLSSecurityTest.class.getResourceAsStream("tls/" + name))) {
             return CertificateFactory.getInstance("X.509").generateCertificates(input).toArray(X509Certificate[]::new);
         }
     }
@@ -87,7 +87,7 @@ class TlsSecurityTest {
         X509Certificate[] certificates = readCertificates("compromised.pem");
         assertEquals(16, certificates.length);
         for (X509Certificate certificate : certificates)
-            assertTrue(TlsSecurity.isBlocked(certificate), certificate.getSubjectX500Principal().toString());
+            assertTrue(TLSSecurity.isBlocked(certificate), certificate.getSubjectX500Principal().toString());
     }
 
     /// Proves otherwise-valid TLS paths fail because of the blocklist, for both signing roots.
@@ -98,7 +98,7 @@ class TlsSecurityTest {
                 for (String crossSign : List.of("", "-aaa")) {
                     String name = type + "-" + generation + crossSign + "-emudhra.we-have-a-problem.com.pem";
                     X509Certificate[] chain = readCertificates(name);
-                    PKIXBuilderParameters parameters = TlsSecurity.createParameters(trustStore(readCertificates("roots.pem")));
+                    PKIXBuilderParameters parameters = TLSSecurity.createParameters(trustStore(readCertificates("roots.pem")));
                     X509ExtendedTrustManager protectedManager = trustManager(parameters);
                     assertThrows(CertificateException.class, () -> protectedManager.checkServerTrusted(chain, "ECDHE_ECDSA"), name);
                     assertThrows(CertificateException.class, () -> protectedManager.checkServerTrusted(chain, "ECDHE_ECDSA", (Socket) null), name);
@@ -120,18 +120,18 @@ class TlsSecurityTest {
         X509Certificate root = readCertificates("roots.pem")[2];
         KeyStore store = trustStore(compromised);
         store.setCertificateEntry("unaffected-root", root);
-        PKIXBuilderParameters parameters = TlsSecurity.createParameters(store);
+        PKIXBuilderParameters parameters = TLSSecurity.createParameters(store);
         assertEquals(1, parameters.getTrustAnchors().size());
         assertEquals(root, parameters.getTrustAnchors().iterator().next().getTrustedCert());
         assertDoesNotThrow(() -> trustManager(parameters).checkServerTrusted(new X509Certificate[]{root}, "RSA"));
-        assertThrows(InvalidAlgorithmParameterException.class, () -> TlsSecurity.createParameters(trustStore(compromised)));
+        assertThrows(InvalidAlgorithmParameterException.class, () -> TLSSecurity.createParameters(trustStore(compromised)));
     }
 
     /// Checks intermediates supplied by the path builder rather than by the peer.
     @Test
     void rejectsIntermediateFromCertStore() throws Exception {
         X509Certificate[] chain = readCertificates("dv-g3b-aaa-emudhra.we-have-a-problem.com.pem");
-        PKIXBuilderParameters parameters = TlsSecurity.createParameters(trustStore(readCertificates("roots.pem")));
+        PKIXBuilderParameters parameters = TLSSecurity.createParameters(trustStore(readCertificates("roots.pem")));
         parameters.addCertStore(CertStore.getInstance("Collection", new CollectionCertStoreParameters(List.of(chain))));
         X509Certificate[] leaf = {chain[0]};
         assertThrows(CertificateException.class, () -> trustManager(parameters).checkServerTrusted(leaf, "ECDHE_ECDSA"));
@@ -145,7 +145,7 @@ class TlsSecurityTest {
         SSLContext previousContext = SSLContext.getDefault();
         SSLSocketFactory previousFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
         try {
-            TlsSecurity.install();
+            TLSSecurity.install();
             assertNotSame(previousContext, SSLContext.getDefault());
             assertNotSame(previousFactory, HttpsURLConnection.getDefaultSSLSocketFactory());
         } finally {
@@ -158,8 +158,8 @@ class TlsSecurityTest {
     @Test
     void rejectsUntrustedLeafWithoutIntermediate() throws Exception {
         X509Certificate[] chain = readCertificates("dv-g3b-aaa-emudhra.we-have-a-problem.com.pem");
-        assertFalse(TlsSecurity.isBlocked(chain[0]));
-        X509ExtendedTrustManager manager = trustManager(TlsSecurity.createParameters(trustStore(readCertificates("roots.pem"))));
+        assertFalse(TLSSecurity.isBlocked(chain[0]));
+        X509ExtendedTrustManager manager = trustManager(TLSSecurity.createParameters(trustStore(readCertificates("roots.pem"))));
         assertThrows(CertificateException.class, () -> manager.checkServerTrusted(new X509Certificate[]{chain[0]}, "ECDHE_ECDSA"));
     }
 }

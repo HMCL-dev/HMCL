@@ -43,7 +43,7 @@ import java.util.Set;
 
 /// Installs TLS certificate validation that rejects known compromised CA public keys.
 @NotNullByDefault
-public final class TlsSecurity {
+public final class TLSSecurity {
     /// SHA-256 hashes of DER SubjectPublicKeyInfo, including both TLS and code-signing CAs.
     /// Cross-signed certificates are covered because they share the same public keys.
     /// Sources: [Mozilla incident announcement](https://groups.google.com/a/mozilla.org/g/dev-security-policy/c/0R3XLJL6FuE/m/Kp1v6CPuAAAJ) and
@@ -68,7 +68,7 @@ public final class TlsSecurity {
     );
 
     /// Prevents instantiation.
-    private TlsSecurity() {
+    private TLSSecurity() {
     }
 
     /// Replaces the process-wide default TLS context and HTTPS socket factory.

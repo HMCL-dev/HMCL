@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.io.TlsSecurity;
+import org.jackhuang.hmcl.util.io.TLSSecurity;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import javax.swing.JOptionPane;
@@ -48,7 +48,7 @@ public final class EntryPoint {
         System.getProperties().putIfAbsent("java.net.useSystemProxies", "true");
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
-        TlsSecurity.install();
+        TLSSecurity.install();
 
         createHMCLDirectories();
         LOG.start(Metadata.HMCL_LOCAL_HOME.resolve("logs"));
