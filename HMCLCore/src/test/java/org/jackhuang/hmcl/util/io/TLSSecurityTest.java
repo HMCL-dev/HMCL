@@ -86,13 +86,23 @@ class TLSSecurityTest {
         return (X509ExtendedTrustManager) factory.getTrustManagers()[0];
     }
 
+    /// Returns an initialized checker from the application's PKIX configuration.
+    private static PKIXCertPathChecker newChecker() throws Exception {
+        PKIXCertPathChecker checker = TLSSecurity.createParameters(trustStore(readCertificates("roots.pem")))
+                .getCertPathCheckers().get(0);
+        checker.init(false);
+        return checker;
+    }
+
     /// Covers all eight keys and their cross-signed certificates, including code-signing CAs.
     @Test
     void blocksAllPublishedCertificates() throws Exception {
         X509Certificate[] certificates = readCertificates("compromised.pem");
         assertEquals(16, certificates.length);
+        PKIXCertPathChecker checker = newChecker();
         for (X509Certificate certificate : certificates)
-            assertTrue(TLSSecurity.isBlocked(certificate), certificate.getSubjectX500Principal().toString());
+            assertThrows(CertPathValidatorException.class, () -> checker.check(certificate),
+                    certificate.getSubjectX500Principal().toString());
     }
 
     /// Proves otherwise-valid TLS paths fail because of the blocklist, for both signing roots.
@@ -149,8 +159,7 @@ class TLSSecurityTest {
     void reusesDigestWithoutSharingItBetweenClones() throws Exception {
         X509Certificate[] blocked = readCertificates("compromised.pem");
         X509Certificate[] roots = readCertificates("roots.pem");
-        PKIXCertPathChecker original = TLSSecurity.createParameters(trustStore(roots)).getCertPathCheckers().get(0);
-        original.init(false);
+        PKIXCertPathChecker original = newChecker();
         original.check(roots[0]);
         var executor = Executors.newFixedThreadPool(4);
         try {
@@ -196,7 +205,7 @@ class TLSSecurityTest {
     @Test
     void rejectsUntrustedLeafWithoutIntermediate() throws Exception {
         X509Certificate[] chain = readCertificates("dv-g3b-aaa-emudhra.we-have-a-problem.com.pem");
-        assertFalse(TLSSecurity.isBlocked(chain[0]));
+        assertDoesNotThrow(() -> newChecker().check(chain[0]));
         X509ExtendedTrustManager manager = trustManager(TLSSecurity.createParameters(trustStore(readCertificates("roots.pem"))));
         assertThrows(CertificateException.class, () -> manager.checkServerTrusted(new X509Certificate[]{chain[0]}, "ECDHE_ECDSA"));
     }

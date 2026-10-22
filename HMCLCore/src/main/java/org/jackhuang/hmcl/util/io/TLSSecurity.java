@@ -29,6 +29,7 @@ import javax.net.ssl.X509TrustManager;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.Certificate;
 import java.security.cert.PKIXBuilderParameters;
@@ -47,29 +48,6 @@ import java.util.stream.Stream;
 /// Installs TLS certificate validation that rejects known compromised CA public keys.
 @NotNullByDefault
 public final class TLSSecurity {
-    /// SHA-256 hashes of DER SubjectPublicKeyInfo, including both TLS and code-signing CAs.
-    /// Cross-signed certificates are covered because they share the same public keys.
-    /// Sources: [Mozilla incident announcement](https://groups.google.com/a/mozilla.org/g/dev-security-policy/c/0R3XLJL6FuE/m/Kp1v6CPuAAAJ) and
-    /// [pinned certificate list](https://github.com/galadran/we-have-a-problem.com/blob/e2786ff8b707b4951f0db1f83ccaf8ac9af2f7e6/impacted-intermediates.json).
-    private static final @Unmodifiable List<byte @Unmodifiable []> BLOCKED_KEYS = Stream.of(
-            // EM DV TLS CA - G3B
-            "EBED6475C2C2D80FCB199F3FE8DD6E6B3CE60B77EB15D4E42C3DEC0C6F5B5105",
-            // EM OV TLS CA - G3B
-            "43BFFA19D6EF651451F6841E019931E96F6F2EAEFF28AB4B6F1CE4576DE2717B",
-            // EM EV TLS CA - G3B
-            "E0254C7FCDC265E2F0F8A428DABB75AB4AE039B4872D62F5EE57F0877D5A8A41",
-            // EM DV TLS CA - G3C
-            "49DD353DC2B919A3770645117D0E60C16115E7D1BC259EEFE734B00EA434FE5F",
-            // EM OV TLS CA - G3C
-            "63ECEFEE431D49523BC1136C4E72D0206A477086CAF606CD5CF025686C109CF8",
-            // EM EV TLS CA - G3C
-            "5C0660A2B164910D8FF589C18E14552E9E0EC237DCEFE2CB736D41A4811F81A0",
-            // EM OV CS CA - G3B
-            "EC4FFA1AD0AC88081314B7AAFFEF6A91F97CD57291BB5BA686C5415F5EB4F6B6",
-            // EM OV CS CA - G3C
-            "92C063D67E8F14DB71D288E11266FFDAF69CBF115F7BAB14F3BC2F68D25E0E30"
-    ).map(HexFormat.of()::parseHex).toList();
-
     /// Prevents instantiation.
     private TLSSecurity() {
     }
@@ -101,16 +79,17 @@ public final class TLSSecurity {
     /// A null store selects the JSSE default store. Revocation follows the JSSE system property.
     ///
     /// @throws GeneralSecurityException if initialization fails or no usable trust anchors remain
+    /// @throws IllegalStateException if the runtime does not provide SHA-256
     static PKIXBuilderParameters createParameters(@Nullable KeyStore store) throws GeneralSecurityException {
         TrustManagerFactory defaults = TrustManagerFactory.getInstance("PKIX");
         defaults.init(store);
         Set<TrustAnchor> anchors = new HashSet<>();
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        BlockedKeyChecker checker = new BlockedKeyChecker();
         for (var manager : defaults.getTrustManagers()) {
             if (manager instanceof X509TrustManager x509) {
                 for (X509Certificate certificate : x509.getAcceptedIssuers()) {
                     // PKIX path checkers do not inspect trust anchors.
-                    if (!isBlocked(certificate, digest))
+                    if (!checker.isBlocked(certificate))
                         anchors.add(new TrustAnchor(certificate, null));
                 }
             }
@@ -118,46 +97,70 @@ public final class TLSSecurity {
         PKIXBuilderParameters parameters = new PKIXBuilderParameters(anchors, new X509CertSelector());
         parameters.setMaxPathLength(-1);
         parameters.setRevocationEnabled(Boolean.getBoolean("com.sun.net.ssl.checkRevocation"));
-        parameters.addCertPathChecker(new BlockedKeyChecker());
+        parameters.addCertPathChecker(checker);
         return parameters;
     }
 
-    /// Returns whether the certificate contains a blocked SubjectPublicKeyInfo.
-    ///
-    /// @throws GeneralSecurityException if SHA-256 is unavailable
-    static boolean isBlocked(Certificate certificate) throws GeneralSecurityException {
-        return isBlocked(certificate, MessageDigest.getInstance("SHA-256"));
-    }
-
-    /// Checks the public key using an exclusively owned, reset SHA-256 digest.
-    /// The digest is reset by completion of the digest operation.
-    private static boolean isBlocked(Certificate certificate, MessageDigest digest) {
-        byte[] hash = digest.digest(certificate.getPublicKey().getEncoded());
-        for (int i = 0; i < BLOCKED_KEYS.size(); i++) {
-            if (Arrays.equals(hash, BLOCKED_KEYS.get(i)))
-                return true;
-        }
-        return false;
-    }
-
-    /// Rejects compromised keys in the constructed path, including fetched intermediates.
+    /// Rejects compromised public keys in trust anchors and constructed certificate paths.
+    /// Each instance owns its digest and must be used by only one thread at a time.
     @NotNullByDefault
     private static final class BlockedKeyChecker extends PKIXCertPathChecker {
-        /// Lazily initialized digest owned exclusively by this checker.
-        private @Nullable MessageDigest digest;
+        /// SHA-256 hashes of DER SubjectPublicKeyInfo, including both TLS and code-signing CAs.
+        /// Cross-signed certificates are covered because they share the same public keys.
+        /// Sources: [Mozilla incident announcement](https://groups.google.com/a/mozilla.org/g/dev-security-policy/c/0R3XLJL6FuE/m/Kp1v6CPuAAAJ) and
+        /// [pinned certificate list](https://github.com/galadran/we-have-a-problem.com/blob/e2786ff8b707b4951f0db1f83ccaf8ac9af2f7e6/impacted-intermediates.json).
+        private static final @Unmodifiable List<byte @Unmodifiable []> BLOCKED_KEYS = Stream.of(
+                // EM DV TLS CA - G3B
+                "EBED6475C2C2D80FCB199F3FE8DD6E6B3CE60B77EB15D4E42C3DEC0C6F5B5105",
+                // EM OV TLS CA - G3B
+                "43BFFA19D6EF651451F6841E019931E96F6F2EAEFF28AB4B6F1CE4576DE2717B",
+                // EM EV TLS CA - G3B
+                "E0254C7FCDC265E2F0F8A428DABB75AB4AE039B4872D62F5EE57F0877D5A8A41",
+                // EM DV TLS CA - G3C
+                "49DD353DC2B919A3770645117D0E60C16115E7D1BC259EEFE734B00EA434FE5F",
+                // EM OV TLS CA - G3C
+                "63ECEFEE431D49523BC1136C4E72D0206A477086CAF606CD5CF025686C109CF8",
+                // EM EV TLS CA - G3C
+                "5C0660A2B164910D8FF589C18E14552E9E0EC237DCEFE2CB736D41A4811F81A0",
+                // EM OV CS CA - G3B
+                "EC4FFA1AD0AC88081314B7AAFFEF6A91F97CD57291BB5BA686C5415F5EB4F6B6",
+                // EM OV CS CA - G3C
+                "92C063D67E8F14DB71D288E11266FFDAF69CBF115F7BAB14F3BC2F68D25E0E30"
+        ).map(HexFormat.of()::parseHex).toList();
 
-        /// Creates a checker supporting either validation direction.
+        /// SHA-256 digest reused for successive certificates and never shared with clones.
+        private final MessageDigest digest;
+
+        /// Creates a checker ready to inspect certificates in either direction.
+        ///
+        /// @throws IllegalStateException if the runtime does not provide SHA-256
         private BlockedKeyChecker() {
+            try {
+                digest = MessageDigest.getInstance("SHA-256");
+            } catch (NoSuchAlgorithmException e) {
+                throw new IllegalStateException("SHA-256 is required for TLS certificate protection", e);
+            }
+        }
+
+        /// Returns whether the certificate's SubjectPublicKeyInfo matches a blocked fingerprint.
+        /// Completing the digest operation resets the digest for the next certificate.
+        private boolean isBlocked(Certificate certificate) {
+            byte[] hash = digest.digest(certificate.getPublicKey().getEncoded());
+            for (int i = 0; i < BLOCKED_KEYS.size(); i++) {
+                if (Arrays.equals(hash, BLOCKED_KEYS.get(i)))
+                    return true;
+            }
+            return false;
         }
 
         @Override
         public void init(boolean forward) {
-            if (digest != null)
-                digest.reset();
+            digest.reset();
         }
 
-        /// Returns a checker with an independent, lazily initialized digest.
-        /// No certificate data is retained between checks, so no digest state needs copying.
+        /// Returns a checker with its own digest. No certificate data is retained between checks.
+        ///
+        /// @throws IllegalStateException if the runtime no longer provides SHA-256
         @Override
         public BlockedKeyChecker clone() {
             return new BlockedKeyChecker();
@@ -175,18 +178,11 @@ public final class TLSSecurity {
 
         /// Rejects a blocked public key without consuming any critical extensions.
         ///
-        /// @throws CertPathValidatorException if the key is blocked or cannot be checked
+        /// @throws CertPathValidatorException if the public key is blocked
         @Override
         public void check(Certificate certificate, @Nullable Collection<String> unresolvedCritExts)
                 throws CertPathValidatorException {
-            if (digest == null) {
-                try {
-                    digest = MessageDigest.getInstance("SHA-256");
-                } catch (GeneralSecurityException e) {
-                    throw new CertPathValidatorException("Cannot initialize certificate public key check", e);
-                }
-            }
-            if (isBlocked(certificate, digest))
+            if (isBlocked(certificate))
                 throw new CertPathValidatorException("Certificate uses a blocked CA public key");
         }
     }
