@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
+import org.jackhuang.hmcl.ui.TaskManagerPage;
 import org.jackhuang.hmcl.ui.decorator.Decorator;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.TaskManager;
@@ -278,6 +279,121 @@ final class TaskExecutorDialogPaneTest {
             return dialog;
         });
         onFxThread(() -> {
+            assertFalse(TaskManager.getInstance().getTasks().contains(pane));
+            assertFalse(TaskManager.getInstance().hasBackgroundTasksProperty().get());
+            return true;
+        });
+    }
+
+    /// Verifies a visible task list switches from progress to a retained, single-use install action.
+    @Test
+    void backgroundCompletionWaitsForInstallAction() throws Exception {
+        AtomicInteger installations = new AtomicInteger();
+        TaskManagerPage page = onFxThread(() -> {
+            TaskManagerPage result = new TaskManagerPage();
+            new Scene(result, 600, 400);
+            return result;
+        });
+        TaskExecutorDialogPane pane = onFxThread(() -> {
+            TaskExecutorDialogPane dialog = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+            dialog.setTitle("Example modpack");
+            ControlledExecutor executor = new ControlledExecutor();
+            dialog.setExecutor(executor);
+            StackPane container = new StackPane();
+            new Scene(container);
+            DialogUtils.show(container, dialog);
+            executor.start();
+            dialog.background();
+            page.applyCss();
+            page.layout();
+            assertFalse(page.lookupAll(".jfx-spinner").isEmpty());
+            assertFalse(dialog.runOrDeferCompletionAction(i18n("button.install"), i18n("modpack.install.ready"),
+                    installations::incrementAndGet));
+            executor.stop(true);
+            return dialog;
+        });
+        onFxThread(() -> {
+            try {
+                assertEquals(0, installations.get());
+                assertFalse(DialogUtils.isShowing(pane));
+                assertTrue(TaskManager.getInstance().getTasks().contains(pane));
+                assertFalse(TaskManager.getInstance().hasBackgroundTasksProperty().get());
+                page.applyCss();
+                page.layout();
+                ButtonBase install = page.lookupAll(".jfx-button").stream()
+                        .filter(ButtonBase.class::isInstance)
+                        .map(ButtonBase.class::cast)
+                        .filter(button -> i18n("button.install").equals(button.getText()))
+                        .findFirst().orElseThrow();
+                assertTrue(page.lookupAll(".label").stream().anyMatch(node -> node instanceof Label label
+                        && i18n("modpack.install.ready").equals(label.getText())));
+                assertTrue(page.lookupAll(".jfx-spinner").isEmpty());
+                install.fire();
+                pane.runPendingAction();
+                assertEquals(1, installations.get());
+                assertNull(pane.pendingActionProperty().get());
+                assertFalse(TaskManager.getInstance().getTasks().contains(pane));
+            } finally {
+                pane.setExecutor(null);
+            }
+            return true;
+        });
+    }
+
+    /// Verifies foreground completion, including a restored dialog, continues immediately.
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void foregroundCompletionRunsImmediately(boolean restore) throws Exception {
+        TaskExecutorDialogPane pane = onFxThread(() -> {
+            TaskExecutorDialogPane dialog = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+            ControlledExecutor executor = new ControlledExecutor();
+            dialog.setExecutor(executor);
+            StackPane container = new StackPane();
+            new Scene(container);
+            DialogUtils.show(container, dialog);
+            executor.start();
+            if (restore) {
+                dialog.background();
+                DialogUtils.show(container, dialog);
+            }
+            AtomicInteger installations = new AtomicInteger();
+            assertTrue(dialog.runOrDeferCompletionAction("Install", "Ready to install", installations::incrementAndGet));
+            assertEquals(1, installations.get());
+            assertNull(dialog.pendingActionProperty().get());
+            executor.stop(true);
+            return dialog;
+        });
+        onFxThread(() -> {
+            assertFalse(TaskManager.getInstance().getTasks().contains(pane));
+            assertFalse(DialogUtils.isShowing(pane));
+            return true;
+        });
+    }
+
+    /// Verifies failed completion and detachment discard a deferred action without invoking it.
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void unsuccessfulCompletionDiscardsPendingAction(boolean detach) throws Exception {
+        AtomicInteger installations = new AtomicInteger();
+        TaskExecutorDialogPane pane = onFxThread(() -> {
+            TaskExecutorDialogPane dialog = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+            ControlledExecutor executor = new ControlledExecutor();
+            dialog.setExecutor(executor);
+            StackPane container = new StackPane();
+            new Scene(container);
+            DialogUtils.show(container, dialog);
+            executor.start();
+            dialog.background();
+            assertFalse(dialog.runOrDeferCompletionAction("Install", "Ready to install", installations::incrementAndGet));
+            if (detach)
+                dialog.setExecutor(null);
+            executor.stop(false);
+            return dialog;
+        });
+        onFxThread(() -> {
+            assertNull(pane.pendingActionProperty().get());
+            pane.runPendingAction();
+            assertEquals(0, installations.get());
             assertFalse(TaskManager.getInstance().getTasks().contains(pane));
             assertFalse(TaskManager.getInstance().hasBackgroundTasksProperty().get());
             return true;

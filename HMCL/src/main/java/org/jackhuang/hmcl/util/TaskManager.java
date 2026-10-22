@@ -28,31 +28,33 @@ import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.UnmodifiableView;
 
-/// Tracks active task dialogs in registration order without changing their scheduling.
+/// Tracks active task dialogs and pending completion actions in registration order.
 ///
 /// All operations and access to the observable list must occur on the JavaFX application thread.
-/// Entries remain registered while hidden and are removed when their executors stop.
+/// Entries remain registered while hidden. Completed entries remain until their pending action
+/// is activated; entries without a pending action are removed when their executors stop.
 @NotNullByDefault
 public final class TaskManager {
 
     /// The application-wide task manager.
     private static final TaskManager INSTANCE = new TaskManager();
 
-    /// Active dialogs, including dialogs currently displayed in the foreground.
+    /// Active dialogs and completed dialogs awaiting user action.
     private final ObservableList<TaskExecutorDialogPane> tasks =
-            FXCollections.observableArrayList(pane -> new Observable[]{pane.runningInBackgroundProperty()});
+            FXCollections.observableArrayList(pane -> new Observable[]{pane.runningInBackgroundProperty(), pane.pendingActionProperty()});
 
     /// A live view that prevents callers from modifying the task list.
     private final @UnmodifiableView ObservableList<TaskExecutorDialogPane> tasksView =
             FXCollections.unmodifiableObservableList(tasks);
 
-    /// Whether at least one registered task is currently in the background.
+    /// Whether at least one registered task is running in the background without a pending action.
     private final ReadOnlyBooleanWrapper hasBackgroundTasks = new ReadOnlyBooleanWrapper(this, "hasBackgroundTasks");
 
     /// Creates the application-wide manager.
     private TaskManager() {
         hasBackgroundTasks.bind(Bindings.createBooleanBinding(
-                () -> tasks.stream().anyMatch(pane -> pane.runningInBackgroundProperty().get()), tasks));
+                () -> tasks.stream().anyMatch(pane -> pane.runningInBackgroundProperty().get()
+                        && pane.pendingActionProperty().get() == null), tasks));
     }
 
     /// Returns the application-wide task manager.
@@ -60,15 +62,16 @@ public final class TaskManager {
         return INSTANCE;
     }
 
-    /// Returns an unmodifiable, observable view of the active dialogs.
+    /// Returns an unmodifiable, observable view of active dialogs and pending completion actions.
     public @UnmodifiableView ObservableList<TaskExecutorDialogPane> getTasks() {
         FXUtils.checkFxUserThread();
         return tasksView;
     }
 
-    /// Returns a read-only property indicating whether a registered task is in the background.
+    /// Returns a read-only property indicating whether a task is running in the background.
     ///
-    /// Updates when tasks are hidden, shown again, registered, or removed.
+    /// Tasks awaiting a completion action do not count as running. Updates when tasks are hidden,
+    /// shown again, registered, removed, or acquire a pending action.
     public ReadOnlyBooleanProperty hasBackgroundTasksProperty() {
         FXUtils.checkFxUserThread();
         return hasBackgroundTasks.getReadOnlyProperty();

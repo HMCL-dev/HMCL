@@ -29,6 +29,7 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.SkinBase;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -47,7 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-/// Displays active tasks and restores their existing progress dialogs.
+/// Displays active tasks and pending completion actions.
 @NotNullByDefault
 public final class TaskManagerPage extends Control implements DecoratorPage {
 
@@ -70,7 +71,7 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
         return new Skin(this);
     }
 
-    /// Binds a list view to the active dialogs.
+    /// Binds a list view to active dialogs and pending completion actions.
     @NotNullByDefault
     private static final class Skin extends SkinBase<TaskManagerPage> {
 
@@ -102,7 +103,7 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
         }
     }
 
-    /// Displays a live task title and an action to restore its dialog.
+    /// Displays a live task title and an action to restore progress or continue a completed task.
     @NotNullByDefault
     private static final class TaskCell extends ListCell<@Nullable TaskExecutorDialogPane> {
 
@@ -112,56 +113,91 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
         /// The row's shared hover and ripple feedback.
         private final RipplerContainer graphic;
 
-        /// Creates a row that restores the current task through its body or trailing action.
+        /// Displays progress while running and a completion icon while awaiting user input.
+        private final StackPane statusIcon = new StackPane();
+
+        /// Restores progress or invokes the pending completion action.
+        private final JFXButton actionButton = FXUtils.newToggleButton4(SVG.ARROW_FORWARD);
+
+        /// Describes the current row action.
+        private final Tooltip actionTooltip = new Tooltip();
+
+        /// Creates a row that activates the current task through its body or trailing action.
         private TaskCell() {
             BorderPane row = new BorderPane();
             row.getStyleClass().add("md-list-cell");
             row.setPadding(new Insets(8));
             row.setCursor(Cursor.HAND);
 
-            JFXSpinner spinner = new JFXSpinner();
-            spinner.setRadius(12);
-
             content.setMinWidth(0);
             content.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(content, Priority.ALWAYS);
-            HBox center = new HBox(8, spinner, content);
+            HBox center = new HBox(8, statusIcon, content);
             center.setAlignment(Pos.CENTER_LEFT);
             center.setMouseTransparent(true);
             row.setCenter(center);
 
-            JFXButton restore = FXUtils.newToggleButton4(SVG.ARROW_FORWARD);
-            restore.setAccessibleText(i18n("task.show"));
-            FXUtils.installFastTooltip(restore, i18n("task.show"));
-            restore.setOnAction(event -> restoreTask());
-            BorderPane.setAlignment(restore, Pos.CENTER);
-            BorderPane.setMargin(restore, new Insets(0, 0, 0, 8));
-            row.setRight(restore);
+            FXUtils.installFastTooltip(actionButton, actionTooltip);
+            actionButton.setOnAction(event -> activateTask());
+            // A completed action can remove this row and reuse its cell before the click bubbles.
+            actionButton.setOnMouseClicked(event -> event.consume());
+            BorderPane.setAlignment(actionButton, Pos.CENTER);
+            BorderPane.setMargin(actionButton, new Insets(0, 0, 0, 8));
+            row.setRight(actionButton);
 
             graphic = new RipplerContainer(row);
             graphic.setOnMouseClicked(event -> {
                 if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1)
-                    restoreTask();
+                    activateTask();
             });
         }
 
-        /// Restores the current task's dialog if this cell contains an item.
-        private void restoreTask() {
+        /// Invokes a pending action or restores the current task's progress dialog.
+        private void activateTask() {
             @Nullable TaskExecutorDialogPane pane = getItem();
-            if (pane != null)
-                pane.restore();
+            if (pane != null) {
+                if (pane.pendingActionProperty().get() != null)
+                    pane.runPendingAction();
+                else
+                    pane.restore();
+            }
         }
 
+        /// Rebinds a reused cell and updates its progress or pending-action presentation.
         @Override
         protected void updateItem(@Nullable TaskExecutorDialogPane pane, boolean empty) {
             super.updateItem(pane, empty);
             graphic.releaseRippleImmediately();
             content.titleProperty().unbind();
+            content.setSubtitle(null);
             if (empty || pane == null) {
                 content.setTitle("");
+                statusIcon.getChildren().clear();
                 setGraphic(null);
             } else {
                 content.titleProperty().bind(pane.titleProperty());
+                @Nullable TaskExecutorDialogPane.PendingAction action = pane.pendingActionProperty().get();
+                actionButton.getStyleClass().removeAll("toggle-icon4", "jfx-button-border");
+                if (action != null) {
+                    actionButton.getStyleClass().add("jfx-button-border");
+                    statusIcon.getChildren().setAll(SVG.CHECK_CIRCLE.createIcon(24));
+                    content.setSubtitle(action.description());
+                    actionButton.setGraphic(null);
+                    actionButton.setText(action.text());
+                    actionButton.setAccessibleText(action.text());
+                    actionTooltip.setText(action.text());
+                } else {
+                    actionButton.getStyleClass().add("toggle-icon4");
+                    if (statusIcon.getChildren().isEmpty() || !(statusIcon.getChildren().get(0) instanceof JFXSpinner)) {
+                        JFXSpinner spinner = new JFXSpinner();
+                        spinner.setRadius(12);
+                        statusIcon.getChildren().setAll(spinner);
+                    }
+                    actionButton.setGraphic(SVG.ARROW_FORWARD.createIcon());
+                    actionButton.setText(null);
+                    actionButton.setAccessibleText(i18n("task.show"));
+                    actionTooltip.setText(i18n("task.show"));
+                }
                 setGraphic(graphic);
             }
         }

@@ -21,6 +21,8 @@ import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -49,6 +51,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 ///
 /// Construction and lifecycle operations must occur on the JavaFX application thread.
 /// Restoring a hidden dialog preserves its task list and does not restart its executor.
+/// Background tasks may retain a completion action in the task list for explicit activation.
 @NotNullByDefault
 public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
 
@@ -62,6 +65,8 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
     private boolean running;
     /// Whether the active task has been explicitly sent to the background.
     private final ReadOnlyBooleanWrapper runningInBackground = new ReadOnlyBooleanWrapper(this, "runningInBackground");
+    /// The next step retained for explicit activation after a background task completes.
+    private final ReadOnlyObjectWrapper<@Nullable PendingAction> pendingAction = new ReadOnlyObjectWrapper<>(this, "pendingAction");
     /// Keeps the weakly registered speed listener alive while this pane is retained.
     @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private final Consumer<FetchTask.SpeedEvent> speedEventHandler;
@@ -157,7 +162,8 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
     ///
     /// Reattaching the same executor has no effect. Replacing an executor removes the
     /// previous dialog entry without cancelling that executor. Detaching does not close
-    /// the dialog. Listener callbacks from a replaced executor do not close this dialog.
+    /// the dialog. Replacing or detaching an executor discards any pending completion action.
+    /// Listener callbacks from a replaced executor do not close this dialog.
     ///
     /// @param executor the executor to display, or `null` to detach
     /// @param autoClose whether to close the dialog when this executor stops
@@ -167,6 +173,7 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
             return;
         TaskManager.getInstance().unregister(this);
         this.executor = executor;
+        pendingAction.set(null);
         running = false;
         runningInBackground.set(false);
         updateButtons();
@@ -187,7 +194,7 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
                     });
                 }
 
-                /// Removes the completed task and optionally closes its dialog.
+                /// Retains a successful task's pending action, otherwise removes the completed task.
                 @Override
                 public void onStop(boolean success, TaskExecutor stoppedExecutor) {
                     Platform.runLater(() -> {
@@ -195,7 +202,10 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
                             return;
                         running = false;
                         runningInBackground.set(false);
-                        TaskManager.getInstance().unregister(TaskExecutorDialogPane.this);
+                        if (!success)
+                            pendingAction.set(null);
+                        if (pendingAction.get() == null)
+                            TaskManager.getInstance().unregister(TaskExecutorDialogPane.this);
                         updateButtons();
                         if (autoClose) {
                             fireEvent(new DialogCloseEvent());
@@ -233,6 +243,51 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
         FXUtils.checkFxUserThread();
         if (running && !DialogUtils.isShowing(this))
             Controllers.dialog(this);
+    }
+
+    /// Runs a successful task's next step immediately in the foreground, or retains it in the
+    /// task list when this dialog is in the background. Must be called from the executor's
+    /// completion callback on the JavaFX thread, before the executor reports that it has stopped.
+    /// A failed executor or a replacement executor discards the retained action.
+    ///
+    /// @param text the action button label
+    /// @param description the pending task's status text
+    /// @param action the next step, invoked on the JavaFX thread
+    /// @return `true` if the action ran immediately, or `false` if it was deferred
+    public boolean runOrDeferCompletionAction(String text, String description, Runnable action) {
+        FXUtils.checkFxUserThread();
+        if (runningInBackground.get()) {
+            pendingAction.set(new PendingAction(text, description, action));
+            return false;
+        }
+        action.run();
+        return true;
+    }
+
+    /// Returns the pending-action property, whose value is `null` when no action awaits user input.
+    public ReadOnlyObjectProperty<@Nullable PendingAction> pendingActionProperty() {
+        return pendingAction.getReadOnlyProperty();
+    }
+
+    /// Removes and runs the pending action on the JavaFX thread, at most once.
+    /// Does nothing if no action is pending. Removal occurs before invoking the action.
+    public void runPendingAction() {
+        FXUtils.checkFxUserThread();
+        @Nullable PendingAction action = pendingAction.get();
+        if (action == null)
+            return;
+        pendingAction.set(null);
+        TaskManager.getInstance().unregister(this);
+        action.action().run();
+    }
+
+    /// Describes a next step awaiting explicit user activation.
+    ///
+    /// @param text the action button label
+    /// @param description the status displayed in the task list
+    /// @param action the operation performed by [TaskExecutorDialogPane#runPendingAction()]
+    @NotNullByDefault
+    public record PendingAction(String text, String description, Runnable action) {
     }
 
     /// Returns a read-only property indicating whether the active task was sent to the background
