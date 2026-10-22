@@ -113,7 +113,7 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
         /// The row's shared hover and ripple feedback.
         private final RipplerContainer graphic;
 
-        /// Displays progress while running and a completion icon while awaiting user input.
+        /// Displays progress while running and a pending icon while awaiting user input.
         private final StackPane statusIcon = new StackPane();
 
         /// Restores progress or invokes the pending completion action.
@@ -180,7 +180,7 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
                 actionButton.getStyleClass().removeAll("toggle-icon4", "jfx-button-border");
                 if (action != null) {
                     actionButton.getStyleClass().add("jfx-button-border");
-                    statusIcon.getChildren().setAll(SVG.CHECK_CIRCLE.createIcon(24));
+                    statusIcon.getChildren().setAll(SVG.PENDING.createIcon(24));
                     content.setSubtitle(action.description());
                     actionButton.setGraphic(null);
                     actionButton.setText(action.text());

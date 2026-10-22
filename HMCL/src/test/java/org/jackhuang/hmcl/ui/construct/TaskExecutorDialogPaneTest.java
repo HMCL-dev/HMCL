@@ -24,6 +24,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.SVGPath;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Task;
@@ -31,6 +32,7 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.TaskManagerPage;
 import org.jackhuang.hmcl.ui.decorator.Decorator;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -83,7 +85,7 @@ final class TaskExecutorDialogPaneTest {
         field.set(null, previousSettings);
     }
 
-    /// Verifies the public restore action reuses the dialog in the main window exactly once.
+    /// Verifies dialog reuse and the task button's idle, running, and pending presentations.
     @Test
     void restoresThroughMainWindow() throws Exception {
         onFxThread(() -> {
@@ -104,16 +106,16 @@ final class TaskExecutorDialogPaneTest {
                 pane.setExecutor(executor, false);
                 executor.start();
                 Controllers.dialog(pane);
-                assertFalse(TaskManager.getInstance().hasBackgroundTasksProperty().get());
+                assertEquals(TaskManager.Status.IDLE, TaskManager.getInstance().statusProperty().get());
                 assertSame(icon, tasksButton.getGraphic());
                 Node progress = pane.getCenter();
                 pane.background();
-                assertTrue(TaskManager.getInstance().hasBackgroundTasksProperty().get());
+                assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
                 Node spinner = Objects.requireNonNull(tasksButton.getGraphic());
                 assertInstanceOf(JFXSpinner.class, spinner);
                 pane.restore();
                 pane.restore();
-                assertFalse(TaskManager.getInstance().hasBackgroundTasksProperty().get());
+                assertEquals(TaskManager.Status.IDLE, TaskManager.getInstance().statusProperty().get());
                 assertSame(icon, tasksButton.getGraphic());
                 assertTrue(DialogUtils.isShowing(pane));
                 assertSame(progress, pane.getCenter());
@@ -134,10 +136,30 @@ final class TaskExecutorDialogPaneTest {
                 assertNotSame(spinner, nextSpinner);
                 pane.background();
                 pane.restore();
-                assertTrue(TaskManager.getInstance().hasBackgroundTasksProperty().get());
+                assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
                 assertSame(nextSpinner, tasksButton.getGraphic());
+
+                AtomicInteger actions = new AtomicInteger();
+                pane.background();
+                assertFalse(pane.runOrDeferCompletionAction("Install", "Ready to install", actions::incrementAndGet));
+                assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
+                SVGPath pendingIcon = assertInstanceOf(SVGPath.class, tasksButton.getGraphic());
+                assertEquals(SVG.PENDING.getPath(), pendingIcon.getContent());
+                second.restore();
+                second.background();
+                assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
+                assertSame(pendingIcon, tasksButton.getGraphic());
+                pane.runPendingAction();
+                assertEquals(1, actions.get());
+                assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
+                assertInstanceOf(JFXSpinner.class, tasksButton.getGraphic());
+                assertNotSame(nextSpinner, tasksButton.getGraphic());
+
+                assertFalse(second.runOrDeferCompletionAction("Install", "Ready to install", actions::incrementAndGet));
+                assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
+                assertEquals(SVG.PENDING.getPath(), assertInstanceOf(SVGPath.class, tasksButton.getGraphic()).getContent());
                 second.setExecutor(null);
-                assertFalse(TaskManager.getInstance().hasBackgroundTasksProperty().get());
+                assertEquals(TaskManager.Status.IDLE, TaskManager.getInstance().statusProperty().get());
                 assertSame(icon, tasksButton.getGraphic());
             } finally {
                 DialogUtils.close(pane);
@@ -221,14 +243,14 @@ final class TaskExecutorDialogPaneTest {
                 for (int i = 0; i < 3; i++) {
                     pane.background();
                     pane.background();
-                    assertTrue(TaskManager.getInstance().hasBackgroundTasksProperty().get());
+                    assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
                     assertFalse(DialogUtils.isShowing(pane));
                     assertFalse(executor.isCancelled());
                     assertTrue(TaskManager.getInstance().getTasks().contains(pane));
                     // Reuse the same pane through the dialog stack used by Controllers.dialog.
                     DialogUtils.show(container, pane);
                     DialogUtils.show(container, pane);
-                    assertFalse(TaskManager.getInstance().hasBackgroundTasksProperty().get());
+                    assertEquals(TaskManager.Status.IDLE, TaskManager.getInstance().statusProperty().get());
                     pane.restore();
                     assertSame(progress, pane.getCenter());
                     @Nullable JFXDialogPane stack = (JFXDialogPane) pane.getProperties()
@@ -249,7 +271,7 @@ final class TaskExecutorDialogPaneTest {
         onFxThread(() -> {
             assertFalse(TaskManager.getInstance().getTasks().contains(pane));
             assertFalse(DialogUtils.isShowing(pane));
-            assertFalse(TaskManager.getInstance().hasBackgroundTasksProperty().get());
+            assertEquals(TaskManager.Status.IDLE, TaskManager.getInstance().statusProperty().get());
             pane.restore();
             assertFalse(DialogUtils.isShowing(pane));
             return true;
@@ -272,7 +294,7 @@ final class TaskExecutorDialogPaneTest {
             new Scene(container);
             DialogUtils.show(container, dialog);
             dialog.background();
-            assertTrue(TaskManager.getInstance().hasBackgroundTasksProperty().get());
+            assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
             assertThrows(UnsupportedOperationException.class,
                     () -> TaskManager.getInstance().getTasks().clear());
             executor.stop(success);
@@ -280,7 +302,7 @@ final class TaskExecutorDialogPaneTest {
         });
         onFxThread(() -> {
             assertFalse(TaskManager.getInstance().getTasks().contains(pane));
-            assertFalse(TaskManager.getInstance().hasBackgroundTasksProperty().get());
+            assertEquals(TaskManager.Status.IDLE, TaskManager.getInstance().statusProperty().get());
             return true;
         });
     }
@@ -317,7 +339,7 @@ final class TaskExecutorDialogPaneTest {
                 assertEquals(0, installations.get());
                 assertFalse(DialogUtils.isShowing(pane));
                 assertTrue(TaskManager.getInstance().getTasks().contains(pane));
-                assertFalse(TaskManager.getInstance().hasBackgroundTasksProperty().get());
+                assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
                 page.applyCss();
                 page.layout();
                 ButtonBase install = page.lookupAll(".jfx-button").stream()
@@ -395,7 +417,7 @@ final class TaskExecutorDialogPaneTest {
             pane.runPendingAction();
             assertEquals(0, installations.get());
             assertFalse(TaskManager.getInstance().getTasks().contains(pane));
-            assertFalse(TaskManager.getInstance().hasBackgroundTasksProperty().get());
+            assertEquals(TaskManager.Status.IDLE, TaskManager.getInstance().statusProperty().get());
             return true;
         });
     }

@@ -205,17 +205,19 @@ final class MainWindowPane extends StackPane {
 
         SVGPath tasksEmptyIcon = SVG.LISTS.createIcon(Themes.titleFillProperty());
 
-        holder.onWeakChangeAndOperate(TaskManager.getInstance().hasBackgroundTasksProperty(), hasBackgroundTasks -> {
-            if (hasBackgroundTasks) {
-                JFXSpinner tasksSpinner = new JFXSpinner();
-                tasksSpinner.getStyleClass().add("small-spinner");
-                tasksSpinner.setRadius(9);
-                tasksSpinner.setMouseTransparent(true);
-                FXUtils.setLimitWidth(tasksSpinner, 20);
-                FXUtils.setLimitHeight(tasksSpinner, 20);
-                tasksButton.setGraphic(tasksSpinner);
-            } else {
-                tasksButton.setGraphic(tasksEmptyIcon);
+        holder.onWeakChangeAndOperate(TaskManager.getInstance().statusProperty(), status -> {
+            switch (status) {
+                case IDLE -> tasksButton.setGraphic(tasksEmptyIcon);
+                case PENDING -> tasksButton.setGraphic(SVG.PENDING.createIcon(Themes.titleFillProperty()));
+                case RUNNING -> {
+                    JFXSpinner tasksSpinner = new JFXSpinner();
+                    tasksSpinner.getStyleClass().add("small-spinner");
+                    tasksSpinner.setRadius(9);
+                    tasksSpinner.setMouseTransparent(true);
+                    FXUtils.setLimitWidth(tasksSpinner, 20);
+                    FXUtils.setLimitHeight(tasksSpinner, 20);
+                    tasksButton.setGraphic(tasksSpinner);
+                }
             }
         });
 

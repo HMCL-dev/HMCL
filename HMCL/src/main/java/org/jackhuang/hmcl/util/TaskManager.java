@@ -19,8 +19,8 @@ package org.jackhuang.hmcl.util;
 
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ReadOnlyBooleanProperty;
-import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -36,6 +36,16 @@ import org.jetbrains.annotations.UnmodifiableView;
 @NotNullByDefault
 public final class TaskManager {
 
+    /// Summarizes tasks that need attention outside their progress dialogs.
+    public enum Status {
+        /// No task is running in the background or awaiting user action; foreground tasks may exist.
+        IDLE,
+        /// At least one task is running in the background and none awaits user action.
+        RUNNING,
+        /// At least one task awaits user action, regardless of other tasks' execution state.
+        PENDING
+    }
+
     /// The application-wide task manager.
     private static final TaskManager INSTANCE = new TaskManager();
 
@@ -47,14 +57,20 @@ public final class TaskManager {
     private final @UnmodifiableView ObservableList<TaskExecutorDialogPane> tasksView =
             FXCollections.unmodifiableObservableList(tasks);
 
-    /// Whether at least one registered task is running in the background without a pending action.
-    private final ReadOnlyBooleanWrapper hasBackgroundTasks = new ReadOnlyBooleanWrapper(this, "hasBackgroundTasks");
+    /// The aggregate status, with pending user actions taking priority over background execution.
+    private final ReadOnlyObjectWrapper<Status> status = new ReadOnlyObjectWrapper<>(this, "status", Status.IDLE);
 
     /// Creates the application-wide manager.
     private TaskManager() {
-        hasBackgroundTasks.bind(Bindings.createBooleanBinding(
-                () -> tasks.stream().anyMatch(pane -> pane.runningInBackgroundProperty().get()
-                        && pane.pendingActionProperty().get() == null), tasks));
+        status.bind(Bindings.createObjectBinding(() -> {
+            boolean running = false;
+            for (TaskExecutorDialogPane pane : tasks) {
+                if (pane.pendingActionProperty().get() != null)
+                    return Status.PENDING;
+                running |= pane.runningInBackgroundProperty().get();
+            }
+            return running ? Status.RUNNING : Status.IDLE;
+        }, tasks));
     }
 
     /// Returns the application-wide task manager.
@@ -68,13 +84,13 @@ public final class TaskManager {
         return tasksView;
     }
 
-    /// Returns a read-only property indicating whether a task is running in the background.
+    /// Returns the non-null aggregate task status as a read-only property.
     ///
-    /// Tasks awaiting a completion action do not count as running. Updates when tasks are hidden,
-    /// shown again, registered, removed, or acquire a pending action.
-    public ReadOnlyBooleanProperty hasBackgroundTasksProperty() {
+    /// Pending user actions take priority over background execution. Foreground tasks alone
+    /// leave the status at [Status#IDLE]. Updates as tasks enter or leave these states.
+    public ReadOnlyObjectProperty<Status> statusProperty() {
         FXUtils.checkFxUserThread();
-        return hasBackgroundTasks.getReadOnlyProperty();
+        return status.getReadOnlyProperty();
     }
 
     /// Registers a dialog; registering an existing entry has no effect.
