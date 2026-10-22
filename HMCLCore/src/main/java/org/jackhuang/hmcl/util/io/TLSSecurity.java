@@ -109,7 +109,7 @@ public final class TLSSecurity {
         /// Cross-signed certificates are covered because they share the same public keys.
         /// Sources: [Mozilla incident announcement](https://groups.google.com/a/mozilla.org/g/dev-security-policy/c/0R3XLJL6FuE/m/Kp1v6CPuAAAJ) and
         /// [pinned certificate list](https://github.com/galadran/we-have-a-problem.com/blob/e2786ff8b707b4951f0db1f83ccaf8ac9af2f7e6/impacted-intermediates.json).
-        private static final @Unmodifiable List<byte @Unmodifiable []> BLOCKED_KEYS = Stream.of(
+        private static final byte @Unmodifiable [] @Unmodifiable [] BLOCKED_KEYS = Stream.of(
                 // EM DV TLS CA - G3B
                 "EBED6475C2C2D80FCB199F3FE8DD6E6B3CE60B77EB15D4E42C3DEC0C6F5B5105",
                 // EM OV TLS CA - G3B
@@ -126,7 +126,7 @@ public final class TLSSecurity {
                 "EC4FFA1AD0AC88081314B7AAFFEF6A91F97CD57291BB5BA686C5415F5EB4F6B6",
                 // EM OV CS CA - G3C
                 "92C063D67E8F14DB71D288E11266FFDAF69CBF115F7BAB14F3BC2F68D25E0E30"
-        ).map(HexFormat.of()::parseHex).toList();
+        ).map(HexFormat.of()::parseHex).toArray(byte[][]::new);
 
         /// SHA-256 digest reused for successive certificates and never shared with clones.
         private final MessageDigest digest;
@@ -146,8 +146,8 @@ public final class TLSSecurity {
         /// Completing the digest operation resets the digest for the next certificate.
         private boolean isBlocked(Certificate certificate) {
             byte[] hash = digest.digest(certificate.getPublicKey().getEncoded());
-            for (int i = 0; i < BLOCKED_KEYS.size(); i++) {
-                if (Arrays.equals(hash, BLOCKED_KEYS.get(i)))
+            for (byte[] blockedKey : BLOCKED_KEYS) {
+                if (Arrays.equals(hash, blockedKey))
                     return true;
             }
             return false;
