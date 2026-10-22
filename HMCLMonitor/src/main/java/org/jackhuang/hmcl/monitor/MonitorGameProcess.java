@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.monitor;
 
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.ProcessInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -30,57 +31,26 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// A view of the game process supervised by the HMCL monitor.
 ///
-/// Unlike [org.jackhuang.hmcl.util.platform.ManagedProcess], the game process is not spawned nor
+/// Unlike [ManagedProcess], the game process is not spawned nor
 /// owned by this JVM. Its handle is resolved from the monitor's handshake and may be unavailable
 /// if the game has already exited. The original command line is supplied by the launch context.
+///
+/// @param handle           the handle of the game process, or `null` if it cannot be resolved anymore
+/// @param commands         the command line of the game process
+/// @param processStartTime the epoch millisecond at which the game process started
+/// @param specFile The file the spec was exchanged with the monitor through
 @NotNullByDefault
-public final class MonitorGameProcess implements ProcessInfo {
-
-    private final @Nullable ProcessHandle handle;
-    private final long pid;
-    private final List<String> commands;
-    private final long processStartTime;
-    /// The file the spec was exchanged with the monitor through
-    private final Path specFile;
+public record MonitorGameProcess(@Nullable ProcessHandle handle, long pid, List<String> commands, long processStartTime,
+                                 Path specFile) implements ProcessInfo {
 
     /// Creates a view of the monitor-supervised game process.
-    ///
-    /// @param handle           the handle of the game process, or `null` if it cannot be resolved anymore
-    /// @param commands         the command line of the game process
-    /// @param processStartTime the epoch millisecond at which the game process started
-    /// @param specFile         the file the spec was exchanged with the monitor through, or `null` if unknown
-    MonitorGameProcess(@Nullable ProcessHandle handle, List<String> commands, long processStartTime,
-                       Path specFile) {
-        this.handle = handle;
-        this.pid = handle != null ? handle.pid() : -1;
-        this.commands = List.copyOf(commands);
-        this.processStartTime = processStartTime;
-        this.specFile = specFile;
+    public MonitorGameProcess(@Nullable ProcessHandle handle, List<String> commands, long processStartTime, Path specFile) {
+        this(handle, handle != null ? handle.pid() : -1, List.copyOf(commands), processStartTime, specFile);
     }
 
     @Override
-    public long getPid() {
-        return pid;
-    }
-
-    @Override
-    public @Nullable ProcessHandle getHandle() {
-        return handle;
-    }
-
-    @Override
-    public List<String> getCommands() {
-        return commands;
-    }
-
-    @Override
-    public @Nullable String getClasspath() {
+    public @Nullable String classpath() {
         return null;
-    }
-
-    @Override
-    public long getProcessStartTime() {
-        return processStartTime;
     }
 
     @Override

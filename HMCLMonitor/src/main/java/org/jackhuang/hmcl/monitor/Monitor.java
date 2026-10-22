@@ -87,13 +87,13 @@ public final class Monitor {
         pb.environment().putAll(spec.environment);
         if (spec.inheritStdin)
             pb.redirectInput(ProcessBuilder.Redirect.INHERIT);
-        ManagedProcess gameProcess = new ManagedProcess(pb.start(), spec.command);
+        ManagedProcess gameProcess = new ManagedProcess(pb);
 
-        LOG.info("Game process created, pid " + gameProcess.getPid() + ", spec " + specPath);
+        LOG.info("Game process created, pid " + gameProcess.pid() + ", spec " + specPath);
 
         // shake hand
         PrintStream protocol = new PrintStream(new FileOutputStream(FileDescriptor.err), true, MonitorProtocol.CHARSET);
-        MonitorProtocol.pidMessage(protocol, gameProcess.getPid(), gameProcess.getProcessStartTime());
+        MonitorProtocol.pidMessage(protocol, gameProcess.pid(), gameProcess.processStartTime());
 
         // pump game io
         BiConsumer<String, Boolean> sink = (line, isErrorStream) -> {

@@ -710,8 +710,7 @@ public class DefaultLauncher extends Launcher {
         if (appdata != null) builder.environment().put("APPDATA", appdata.toString());
         builder.environment().putAll(envVars);
 
-        Process process = builder.start();
-        ManagedProcess p = new ManagedProcess(process, builder.command());
+        ManagedProcess p = new ManagedProcess(builder);
         if (listener != null)
             startMonitors(p, getNativeFolder(), listener, encoding, daemon);
         return p;

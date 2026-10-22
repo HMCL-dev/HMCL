@@ -262,9 +262,9 @@ public class GameCrashWindow extends Stage {
     private void showLogWindow() {
         LogWindow logWindow = new LogWindow(managedProcess);
 
-        logWindow.logLine(new Log(Logger.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.getCommands())), Log4jLevel.INFO));
-        if (managedProcess.getClasspath() != null)
-            logWindow.logLine(new Log("ClassPath: " + managedProcess.getClasspath(), Log4jLevel.INFO));
+        logWindow.logLine(new Log(Logger.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.commands())), Log4jLevel.INFO));
+        if (managedProcess.classpath() != null)
+            logWindow.logLine(new Log("ClassPath: " + managedProcess.classpath(), Log4jLevel.INFO));
         logWindow.logLines(logs);
         logWindow.show();
     }
@@ -275,10 +275,10 @@ public class GameCrashWindow extends Stage {
         return CompletableFuture.supplyAsync(() ->
                         logs.stream().map(Log::getLog).collect(Collectors.joining("\n")))
                 .thenComposeAsync(logs -> {
-                    long processStartTime = managedProcess.getProcessStartTime();
+                    long processStartTime = managedProcess.processStartTime();
 
                     return LogExporter.exportLogs(logFile, gameInstance, launchOptions, logs,
-                            new CommandBuilder().addAll(managedProcess.getCommands()).toString(),
+                            new CommandBuilder().addAll(managedProcess.commands()).toString(),
                             path -> {
                                 try {
                                     FileTime lastModifiedTime = Files.getLastModifiedTime(path);

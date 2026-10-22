@@ -235,7 +235,7 @@ public final class LogWindow extends Stage {
 
                 try {
                     if (gameProcess.isRunning()) {
-                        GameDumpGenerator.writeDumpTo(gameProcess.getPid(), dumpFile);
+                        GameDumpGenerator.writeDumpTo(gameProcess.pid(), dumpFile);
                         FXUtils.showFileInExplorer(dumpFile);
                     }
                 } catch (Throwable e) {
@@ -433,7 +433,7 @@ public final class LogWindow extends Stage {
                 clearButton.setOnAction(e -> getSkinnable().onClear());
                 hBox.getChildren().setAll(autoScrollCheckBox, wrapTextCheckBox, exportLogsButton, terminateButton, exportDumpPane, clearButton);
 
-                var handle = control.getGameProcess().getHandle();
+                var handle = control.getGameProcess().handle();
                 if (handle != null) {
                     handle.onExit().thenRunAsync(() -> {
                         terminateButton.setDisable(true);

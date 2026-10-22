@@ -859,11 +859,11 @@ public final class LauncherHelper {
         public void setProcess(ProcessInfo process) {
             this.process = process;
 
-            String command = new CommandBuilder().addAll(process.getCommands()).toString();
+            String command = new CommandBuilder().addAll(process.commands()).toString();
 
             LOG.info("Launched process: " + command);
 
-            String classpath = process.getClasspath();
+            String classpath = process.classpath();
             if (classpath != null) {
                 LOG.info("Process ClassPath: " + classpath);
             }

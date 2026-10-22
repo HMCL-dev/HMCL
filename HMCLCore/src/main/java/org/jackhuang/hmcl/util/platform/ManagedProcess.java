@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.launch.StreamPump;
 import org.jackhuang.hmcl.util.Lang;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -33,11 +34,12 @@ import java.util.function.Predicate;
 /// @author huangyuhui
 /// <!-- @see org.jackhuang.hmcl.launch.ExitWaiter -->
 /// @see org.jackhuang.hmcl.launch.StreamPump
+@NotNullByDefault
 public final class ManagedProcess implements ProcessInfo {
     private final ReentrantLock lock = new ReentrantLock();
     private final Process process;
     private final List<String> commands;
-    private final String classpath;
+    private final @Nullable String classpath;
     private final long processStartTime;
     private final Map<String, Object> properties = new HashMap<>();
     private final List<String> lines = new ArrayList<>();
@@ -87,17 +89,17 @@ public final class ManagedProcess implements ProcessInfo {
     }
 
     @Override
-    public long getPid() {
+    public long pid() {
         return process.pid();
     }
 
     @Override
-    public ProcessHandle getHandle() {
+    public ProcessHandle handle() {
         return process.toHandle();
     }
 
     @Override
-    public long getProcessStartTime() {
+    public long processStartTime() {
         return processStartTime;
     }
 
@@ -107,7 +109,7 @@ public final class ManagedProcess implements ProcessInfo {
      * @return the list of each part of command line separated by spaces.
      */
     @Override
-    public List<String> getCommands() {
+    public List<String> commands() {
         return commands;
     }
 
@@ -117,7 +119,7 @@ public final class ManagedProcess implements ProcessInfo {
      * @return classpath
      */
     @Override
-    public @Nullable String getClasspath() {
+    public @Nullable String classpath() {
         return classpath;
     }
 
@@ -134,7 +136,7 @@ public final class ManagedProcess implements ProcessInfo {
      *
      * @see #addLine
      */
-    public List<String> getLines(Predicate<String> lineFilter) {
+    public List<String> getLines(@Nullable Predicate<String> lineFilter) {
         lock.lock();
         try {
             if (lineFilter == null)
