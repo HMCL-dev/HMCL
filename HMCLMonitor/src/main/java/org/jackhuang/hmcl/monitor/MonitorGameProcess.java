@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.monitor;
 
-import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.ProcessInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +30,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// A view of the game process supervised by the HMCL monitor.
 ///
-/// Unlike [ManagedProcess], the game process is not spawned nor
+/// Unlike [org.jackhuang.hmcl.util.platform.ManagedProcess], the game process is not spawned nor
 /// owned by this JVM. Its handle is resolved from the monitor's handshake and may be unavailable
 /// if the game has already exited. The original command line is supplied by the launch context.
 ///
