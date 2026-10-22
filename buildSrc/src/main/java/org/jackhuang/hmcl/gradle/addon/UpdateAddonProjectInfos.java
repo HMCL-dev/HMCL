@@ -287,19 +287,6 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
         // Remove zero-width space (U+200B) characters.
         name = name.replace("\u200b", "");
 
-        // Remove zero-width non-joiner (U+200C) characters.
-        name = name.replace("\u200c", "");
-
-        // Remove soft hyphen (U+00AD) characters.
-        // TODO: Temporary workaround for https://www.mcmod.cn/class/3084.html
-        name = name.replace("\u00ad", "");
-
-        // Remove left-to-right mark (U+200E) and right-to-left mark (U+200F) characters.
-        // TODO: Temporary workaround for https://www.mcmod.cn/class/7550.html
-        name = name
-                .replace("\u200e", "")
-                .replace("\u200f", "");
-
         if (name.indexOf('&') >= 0) {
             // Most string values in the original JSON data contain HTML-escaped characters, such as `&amp;`, `&lt;`, and `&gt;`.
             name = name
@@ -343,6 +330,10 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
 
     /// Recognizes accepted mod ID syntax.
     private static final Pattern MODID_PATTERN = Pattern.compile("^[a-zA-Z0-9._|+' -]+$");
+
+    /// Recognizes numeric mod IDs that are not accepted by [#MODID_PATTERN] but are explicitly whitelisted.
+    private static final Pattern NUMERIC_PATTERN = Pattern.compile("^[0-9]+$");
+
     /// Explicitly accepted IDs that do not match [#MODID_PATTERN].
     private static final Set<String> MODID_WHITELIST = Set.of(
             // https://www.mcmod.cn/class/866.html
@@ -369,40 +360,16 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 // replace non-breaking hyphen (U+2011) with normal hyphen
                 // https://www.mcmod.cn/class/31211.html
                 case "godfall‑trinkets" -> "godfall-trinkets";
-                // https://www.mcmod.cn/class/30575.html
-                case "enchantment-table\"" -> "enchantment-table";
-                // https://www.mcmod.cn/class/28657.html
-                case "斗蛐蛐" -> "mob_battle_plus";
-                // https://www.mcmod.cn/class/4158.html
-                case "morecuriostotemsofundying:" -> "mtca";
-                // https://www.mcmod.cn/class/12820.html
-                case "caves_&_canyons" -> "caves_canyons";
-                // https://www.mcmod.cn/class/30957.html
-                case "minecraft:" -> "moderncontentbackport";
                 default -> cleanedModid;
             };
-
-            // https://www.mcmod.cn/class/31322.html
-            if (cleanedModid.equals("minecraft")) {
-                continue;
-            }
 
             // https://www.mcmod.cn/class/4.html
             if (mcmodId == 4 && cleanedModid.equals("kamenridercraft4th")) {
                 continue;
             }
 
-            // https://www.mcmod.cn/class/15744.html
-            if (mcmodId == 15744 && cleanedModid.equals("Fabric API")) {
-                cleanedModid = "impropers3dminimap";
-            }
-
-            // https://www.mcmod.cn/class/26546.html
-            if (mcmodId == 26546 && cleanedModid.equals("swem")) {
-                cleanedModid = "sweconm";
-            }
-
-            if (!MODID_PATTERN.matcher(cleanedModid).matches() && !MODID_WHITELIST.contains(cleanedModid)) {
+            if ((!MODID_PATTERN.matcher(cleanedModid).matches() || NUMERIC_PATTERN.matcher(cleanedModid).matches())
+                    && !MODID_WHITELIST.contains(cleanedModid)) {
                 throw new GradleException("Invalid modid: " + modid);
             }
 

@@ -749,6 +749,7 @@ public final class Decorator {
     /// Replaces the attached stage when transparency or theme brightness requires a different decoration style.
     ///
     /// Preserves the scene, navigation, dialogs, normal bounds, supported window states, and focus owner.
+    /// Copies the previous title before the replacement-stage initializer may override or bind it.
     /// Hidden windows remain hidden. Does nothing while detached or when the current style is still suitable.
     /// Must run on the JavaFX application thread after theme bindings have updated.
     private void updateWindowStyle() {
@@ -765,8 +766,8 @@ public final class Decorator {
         @Nullable Node focusOwner = previousStage.getScene().getFocusOwner();
 
         Stage replacement = new Stage();
-        stageInitializer.accept(replacement);
         replacement.setTitle(previousStage.getTitle());
+        stageInitializer.accept(replacement);
         replacement.getIcons().setAll(previousStage.getIcons());
         replacement.setOnCloseRequest(previousStage.getOnCloseRequest());
         replacement.setResizable(previousStage.isResizable());
