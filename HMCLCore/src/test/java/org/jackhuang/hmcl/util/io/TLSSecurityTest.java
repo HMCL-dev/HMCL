@@ -32,6 +32,8 @@ import java.security.InvalidAlgorithmParameterException;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.cert.CertificateException;
+import java.security.cert.CertPathValidatorException;
+import java.security.cert.PKIXCertPathChecker;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertStore;
 import java.security.cert.CollectionCertStoreParameters;
@@ -39,6 +41,9 @@ import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.util.Date;
+import java.util.ArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.List;
 import java.util.Objects;
 
@@ -137,6 +142,39 @@ class TLSSecurityTest {
         assertThrows(CertificateException.class, () -> trustManager(parameters).checkServerTrusted(leaf, "ECDHE_ECDSA"));
         parameters.setCertPathCheckers(List.of());
         assertDoesNotThrow(() -> trustManager(parameters).checkServerTrusted(leaf, "ECDHE_ECDSA"));
+    }
+
+    /// Exercises reused digests after rejection and reset, with cloned checkers on separate threads.
+    @Test
+    void reusesDigestWithoutSharingItBetweenClones() throws Exception {
+        X509Certificate[] blocked = readCertificates("compromised.pem");
+        X509Certificate[] roots = readCertificates("roots.pem");
+        PKIXCertPathChecker original = TLSSecurity.createParameters(trustStore(roots)).getCertPathCheckers().get(0);
+        original.init(false);
+        original.check(roots[0]);
+        var executor = Executors.newFixedThreadPool(4);
+        try {
+            List<Future<?>> tasks = new ArrayList<>();
+            for (int i = 0; i < 4; i++) {
+                PKIXCertPathChecker checker = (PKIXCertPathChecker) original.clone();
+                tasks.add(executor.submit(() -> {
+                    for (int iteration = 0; iteration < 100; iteration++) {
+                        X509Certificate root = roots[iteration % roots.length];
+                        for (X509Certificate certificate : blocked) {
+                            assertThrows(CertPathValidatorException.class, () -> checker.check(certificate));
+                            assertDoesNotThrow(() -> checker.check(root));
+                        }
+                        assertDoesNotThrow(() -> checker.init(true));
+                    }
+                }));
+            }
+            for (Future<?> task : tasks)
+                task.get();
+            assertDoesNotThrow(() -> original.check(roots[0]));
+            assertThrows(CertPathValidatorException.class, () -> original.check(blocked[0]));
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     /// Installs both process defaults and restores them after the assertion.
