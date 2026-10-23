@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.monitor;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.util.Lang;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -28,71 +29,58 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-/// The line-based protocol spoken on the monitor process's stderr.
-///
-/// <p>Messages are UTF-8 encoded, one per line, with tab-separated fields:
-/// <ul>
-///     <li>{@code P\t<pid>\t<startTime>} &mdash; handshake, sent once the game process has been created;</li>
-///     <li>{@code L\t<isError>\t<line>} &mdash; one line of game output;</li>
-///     <li>{@code E\t<exitCode>\t<exitType>} &mdash; the game process has exited.</li>
-/// </ul>
 @NotNullByDefault
 final class MonitorProtocol {
     /// The charset of the protocol stream.
     static final Charset CHARSET = StandardCharsets.UTF_8;
     /// How long to wait for the monitor's handshake before giving up, in milliseconds.
-    static final long HANDSHAKE_TIMEOUT = 20_000;
+    static final long TIMEOUT = 20_000;
 
     private MonitorProtocol() {
     }
 
-    /// Writes and flushes the handshake message carrying the game process id and its start time.
-    static void pidMessage(PrintStream protocol, long pid, long processStartTime) {
-        protocol.println("P\t" + pid + "\t" + processStartTime);
-    }
-
-    /// Writes and flushes a game output line message.
-    static void logMessage(PrintStream protocol, boolean isErrorStream, String line) {
-        protocol.println("L\t" + (isErrorStream ? 1 : 0) + "\t" + line);
-    }
-
-    /// Writes and flushes the game exit message carrying the exit code and its classified type.
-    static void exitMessage(PrintStream protocol, int exitCode, ProcessListener.ExitType exitType) {
-        protocol.println("E\t" + exitCode + "\t" + exitType.name());
-    }
-
-    static void readAll(BufferedReader reader, Consumer<Message> messageConsumer, BiConsumer<String, IllegalArgumentException> err) throws IOException {
-        String line;
-        while ((line = reader.readLine()) != null) {
+    static void readLauncherControl(BufferedReader control, Consumer<ControlCommand> commandConsumer) throws IOException {
+        @Nullable String line;
+        while ((line = control.readLine()) != null) {
             try {
-                messageConsumer.accept(decode(line));
+                commandConsumer.accept(ControlCommand.valueOf(line));
             } catch (IllegalArgumentException e) {
-                err.accept(line, e);
+                throw new IOException("Unexpected launcher control message: " + line, e);
             }
         }
     }
 
-    /// @throws IOException if launcher cannot shake hand with monitor within [MonitorProtocol#HANDSHAKE_TIMEOUT]
-    static Pid readHandshake(BufferedReader reader, Runnable failClean) throws IOException {
-        CompletableFuture<Pid> future = new CompletableFuture<>();
+    static void readMonitorMessage(BufferedReader reader, Consumer<MonitorMessage> messageConsumer) throws IOException {
+        @Nullable String line;
+        while ((line = reader.readLine()) != null) {
+            try {
+                messageConsumer.accept(MonitorMessage.valueOf(line));
+            } catch (IllegalArgumentException e) {
+                // ignore regular err messages
+            }
+        }
+    }
+
+    /// @throws IOException if launcher cannot shake hand with monitor within [MonitorProtocol#TIMEOUT]
+    static MonitorMessage.Pid readHandshake(BufferedReader reader, Runnable failClean) throws IOException {
+        CompletableFuture<MonitorMessage.Pid> future = new CompletableFuture<>();
         Thread waiter = Lang.thread(() -> {
             try {
-                String line;
+                @Nullable String line;
                 while ((line = reader.readLine()) != null) {
                     try {
-                        if (decode(line) instanceof Pid pid) {
+                        if (MonitorMessage.valueOf(line) instanceof MonitorMessage.Pid pid) {
                             future.complete(pid);
                             return;
                         }
-                        throw new IOException("Unexpected handshake message from HMCL monitor: " + line);
+                        throw new IOException("HMCL monitor sent message before handshake: " + line);
                     } catch (IllegalArgumentException e) {
                         // ignore regular err messages
                     }
                 }
-                throw new IOException("The HMCL monitor exited before the handshake");
+                throw new IOException("The HMCL monitor exited before handshake");
             } catch (Exception e) {
                 future.completeExceptionally(e);
             }
@@ -100,7 +88,7 @@ final class MonitorProtocol {
 
         boolean handshakeCompleted = false;
         try {
-            Pid handshake = future.get(HANDSHAKE_TIMEOUT, TimeUnit.MILLISECONDS);
+            MonitorMessage.Pid handshake = future.get(TIMEOUT, TimeUnit.MILLISECONDS);
             handshakeCompleted = true;
             return handshake;
         } catch (TimeoutException e) {
@@ -118,32 +106,56 @@ final class MonitorProtocol {
         }
     }
 
-    public static Message decode(String message) throws IllegalArgumentException {
-        String[] parts = message.split("\t", 3);
-        try {
-            return switch (parts[0]) {
-                case "P" -> new Pid(Long.parseLong(parts[1]), Long.parseLong(parts[2]));
-                case "L" -> new Log("1".equals(parts[1]), parts[2]);
-                case "E" -> new Exit(Integer.parseInt(parts[1]), ProcessListener.ExitType.valueOf(parts[2]));
-                default -> throw new IllegalStateException("Unexpected value: " + message.charAt(0));
-            };
-        } catch (Exception e) {
-            throw new IllegalArgumentException(e);
+    /// Commands sent from the launcher to monitor stdin, serialized using their enum names.
+    enum ControlCommand {
+        /// Request cancellation before the monitor terminates the game.
+        CANCEL,
+        /// Transfer exit handling to the monitor while keeping cancellation available.
+        DETACH,
+        /// Confirm that the launcher has finished handling game exit.
+        HANDLED
+    }
+
+    /// Messages sent from the monitor stderr to launcher, serialized using [encode()].
+    sealed interface MonitorMessage permits MonitorMessage.Pid, MonitorMessage.Log, MonitorMessage.Exit {
+        static MonitorMessage valueOf(String message) throws IllegalArgumentException {
+            String[] parts = message.split("\t", 3);
+            try {
+                return switch (parts[0]) {
+                    case "P" -> new Pid(Long.parseLong(parts[1]), Long.parseLong(parts[2]));
+                    case "L" -> new Log("1".equals(parts[1]), parts[2]);
+                    case "E" -> new Exit(Integer.parseInt(parts[1]), ProcessListener.ExitType.valueOf(parts[2]));
+                    default -> throw new IllegalStateException("Unexpected value: " + message.charAt(0));
+                };
+            } catch (Exception e) {
+                throw new IllegalArgumentException(e);
+            }
         }
-    }
 
-    sealed interface Message permits Pid, Log, Exit {
-    }
+        String encode();
 
-    /// handshake message
-    record Pid(long pid, long processStartTime) implements Message {
-    }
+        /// handshake message
+        record Pid(long pid, long processStartTime) implements MonitorMessage {
+            @Override
+            public String encode() {
+                return "P\t" + pid + "\t" + processStartTime;
+            }
+        }
 
-    /// game output line
-    record Log(boolean isErrorStream, String line) implements Message {
-    }
+        /// game output line
+        record Log(boolean isErrorStream, String line) implements MonitorMessage {
+            @Override
+            public String encode() {
+                return "L\t" + (isErrorStream ? 1 : 0) + "\t" + line;
+            }
+        }
 
-    /// game exit message
-    record Exit(int exitCode, ProcessListener.ExitType exitType) implements Message {
+        /// game exit message
+        record Exit(int exitCode, ProcessListener.ExitType exitType) implements MonitorMessage {
+            @Override
+            public String encode() {
+                return "E\t" + exitCode + "\t" + exitType.name();
+            }
+        }
     }
 }

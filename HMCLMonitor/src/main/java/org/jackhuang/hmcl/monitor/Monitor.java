@@ -36,13 +36,14 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
 public final class Monitor {
-    public static final String canceled = "CANCELED";
     private static boolean shouldRelaunch = false;
     private static boolean crashed = false;
     private static @Nullable Monitor.Result result;
@@ -70,6 +71,7 @@ public final class Monitor {
         return !shouldRelaunch;
     }
 
+    /// Supervises the game and waits for the launcher's exit decision before restoring its UI.
     public static void start(Path specPath) throws IOException, InterruptedException {
         LOG.info("*** HMCL MONITOR ***");
 
@@ -85,20 +87,41 @@ public final class Monitor {
         // start game process
         ProcessBuilder pb = new ProcessBuilder(spec.command).directory(spec.directory.toFile());
         pb.environment().putAll(spec.environment);
-        if (spec.inheritStdin)
-            pb.redirectInput(ProcessBuilder.Redirect.INHERIT);
         ManagedProcess gameProcess = new ManagedProcess(pb);
+        LOG.info("Game process created, pid " + gameProcess.pid());
 
-        LOG.info("Game process created, pid " + gameProcess.pid() + ", spec " + specPath);
+        // Read commands while the game is running. The monitor must record CANCEL
+        // before destroying the game so its exit cannot race ahead of cancellation.
+        AtomicBoolean canceled = new AtomicBoolean();
+        CompletableFuture<Boolean> launcherDetached = new CompletableFuture<>();
+        Lang.thread(() -> {
+            try {
+                MonitorProtocol.readLauncherControl(
+                        new BufferedReader(new InputStreamReader(System.in, MonitorProtocol.CHARSET)), (command) -> {
+                            switch (command) {
+                                case CANCEL -> {
+                                    canceled.set(true);
+                                    gameProcess.getProcess().destroy();
+                                }
+                                case DETACH -> launcherDetached.complete(true);
+                                case HANDLED -> launcherDetached.complete(false);
+                            }
+                        });
+            } catch (IOException e) {
+                LOG.warning("Lost launcher control channel; taking over exit handling", e);
+            }
+            launcherDetached.complete(true);
+        }, "monitor-control-reader", true);
+
 
         // shake hand
         PrintStream protocol = new PrintStream(new FileOutputStream(FileDescriptor.err), true, MonitorProtocol.CHARSET);
-        MonitorProtocol.pidMessage(protocol, gameProcess.pid(), gameProcess.processStartTime());
+        protocol.println(new MonitorProtocol.MonitorMessage.Pid(gameProcess.pid(), gameProcess.processStartTime()).encode());
 
         // pump game io
         BiConsumer<String, Boolean> sink = (line, isErrorStream) -> {
             gameProcess.addLine(line);
-            MonitorProtocol.logMessage(protocol, isErrorStream, line);
+            protocol.println(new MonitorProtocol.MonitorMessage.Log(isErrorStream, line).encode());
         };
 
         Charset encoding = Charset.forName(spec.encoding);
@@ -113,19 +136,13 @@ public final class Monitor {
         Lang.thread(new ExitWaiter(gameProcess, List.of(stdoutPump, stderrPump), (exitCode, exitType) -> {
             LOG.info("Game exited with code " + exitCode + "(" + Integer.toHexString(exitCode) + "), type " + exitType);
 
-            // reread spec to check canceled
-            ProcessListener.ExitType reportedType = exitType;
-            try {
-                if (Files.exists(specPath) && Files.readString(specPath).startsWith(canceled))
-                    reportedType = ProcessListener.ExitType.INTERRUPTED;
-                Files.deleteIfExists(specPath);
-            } catch (IOException e1) {
-                LOG.warning("Failed to check whether to cancel " + specPath, e1);
-            }
-            MonitorProtocol.exitMessage(protocol, exitCode, reportedType);
+            ProcessListener.ExitType reportedType = canceled.get() ? ProcessListener.ExitType.INTERRUPTED : exitType;
+            protocol.println(new MonitorProtocol.MonitorMessage.Exit(exitCode, reportedType).encode());
 
-            crashed = reportedType != ProcessListener.ExitType.NORMAL;
-            shouldRelaunch = protocol.checkError() && switch (spec.relaunchPolicy) {
+            crashed = reportedType != ProcessListener.ExitType.NORMAL && reportedType != ProcessListener.ExitType.INTERRUPTED;
+            // E may overtake the launcher's handling of the last LWJGL log. Wait for
+            // an explicit decision instead of sampling whether its stderr pipe broke.
+            shouldRelaunch = launcherDetached.join() && switch (spec.relaunchPolicy) {
                 case ALWAYS -> true;
                 case ON_CRASH -> crashed;
                 case NEVER -> false;
@@ -147,9 +164,9 @@ public final class Monitor {
     public enum RelaunchPolicy {
         /// Never continue into the launcher UI after the game exits.
         NEVER,
-        /// Continue into the launcher UI after a non-normal exit if the protocol stream has failed.
+        /// Continue into the launcher UI after a non-normal exit if the launcher relinquishes exit handling.
         ON_CRASH,
-        /// Continue into the launcher UI after any exit if the protocol stream has failed.
+        /// Continue into the launcher UI after any exit if the launcher relinquishes exit handling.
         ALWAYS
     }
 
@@ -163,8 +180,9 @@ public final class Monitor {
     public record Result(ManagedProcess process, ProcessListener.ExitType exitType, String gameDirectoryId, LaunchOptions launchOptions) {
     }
 
+    /// One-time game configuration, consumed and deleted before the game starts.
     public record MonitorLaunchSpec(List<String> command, Path directory, Map<String, String> environment,
-                                    boolean inheritStdin, String encoding, LaunchOptions options,
+                                    String encoding, LaunchOptions options,
                                     String gameDirectoryId, List<String> postExitCommand,
                                     RelaunchPolicy relaunchPolicy) {
     }

@@ -76,21 +76,21 @@ public final class MonitorLauncher {
                                                       @Nullable ProcessListener listener,
                                                       HMCLGameInstance hmclGameInstance,
                                                       LaunchOptions options) throws IOException {
-        Path specFile = writeSpecFile(commandLine, envVars, encoding, listener, hmclGameInstance, options);
+        Path specFile = writeSpecFile(commandLine, envVars, encoding, hmclGameInstance, options);
         return startProcess(commandLine, listener, specFile);
     }
 
+    /// Writes the one-time launch specification; subsequent commands use the control pipe.
     private static Path writeSpecFile(List<String> commandLine,
                                       Map<String, String> envVars,
                                       Charset encoding,
-                                      @Nullable ProcessListener listener,
                                       HMCLGameInstance hmclGameInstance,
                                       LaunchOptions options) throws IOException {
         Path runDirectory = hmclGameInstance.getRunDirectory().toAbsolutePath();
         String gameDirectoryId = hmclGameInstance.getRepository().getGameDirectory().getId().toString();
 
         Map<String, String> gameEnv = new HashMap<>();
-        Path appdata = options.getGameDir().toAbsolutePath().getParent();
+        @Nullable Path appdata = options.getGameDir().toAbsolutePath().getParent();
         if (appdata != null) gameEnv.put("APPDATA", appdata.toString());
         gameEnv.putAll(envVars);
 
@@ -113,7 +113,6 @@ public final class MonitorLauncher {
                     commandLine,
                     runDirectory,
                     gameEnv,
-                    listener == null,
                     encoding.name(),
                     options,
                     gameDirectoryId,
@@ -124,18 +123,20 @@ public final class MonitorLauncher {
         return specFile;
     }
 
+    /// Starts the monitor and acknowledges exit handling only after the listener completes.
     private static MonitorGameProcess startProcess(List<String> commandLine, @Nullable ProcessListener listener, Path specFile) throws IOException {
         @Nullable Path thisJar = JarUtils.thisJarPath();
         if (thisJar == null)
             throw new IOException("Failed to find current HMCL location");
 
         Process monitor = JavaProcessLauncher.buildJava(thisJar, "--monitor", specFile.toAbsolutePath().toString())
+                .redirectInput(ProcessBuilder.Redirect.PIPE)
                 .redirectOutput(ProcessBuilder.Redirect.INHERIT)
                 .redirectError(ProcessBuilder.Redirect.PIPE).start();
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(monitor.getErrorStream(), MonitorProtocol.CHARSET));
 
-        MonitorProtocol.Pid handshake = MonitorProtocol.readHandshake(reader, () -> {
+        MonitorProtocol.MonitorMessage.Pid handshake = MonitorProtocol.readHandshake(reader, () -> {
             monitor.destroy();
             try {
                 Files.deleteIfExists(specFile);
@@ -143,30 +144,34 @@ public final class MonitorLauncher {
                 LOG.warning("Failed to clean specFile" + e);
             }
         });
-        ProcessHandle gameHandle = ProcessHandle.of(handshake.pid()).orElse(null);
-        MonitorGameProcess process = new MonitorGameProcess(gameHandle, commandLine, handshake.processStartTime(), specFile);
+        @Nullable ProcessHandle gameHandle = ProcessHandle.of(handshake.pid()).orElse(null);
+        MonitorGameProcess process = new MonitorGameProcess(gameHandle, commandLine, handshake.processStartTime(), monitor);
 
         if (listener != null)
             listener.setProcess(process);
+        else
+            process.detach();
 
         Lang.thread(() -> {
-            try {
-                MonitorProtocol.readAll(reader, msg -> {
+            try (reader) {
+                MonitorProtocol.readMonitorMessage(reader, msg -> {
                     if (listener == null)
                         return;
 
-                    if (msg instanceof MonitorProtocol.Log log) {
+                    if (msg instanceof MonitorProtocol.MonitorMessage.Log log) {
                         listener.onLog(log.line(), log.isErrorStream());
-                    } else if (msg instanceof MonitorProtocol.Exit exit) {
-                        if (exit.exitType() == ProcessListener.ExitType.JVM_ERROR)
-                            EventBus.EVENT_BUS.fireEvent(new JVMLaunchFailedEvent(MonitorLauncher.class, process));
-                        else if (exit.exitType() != ProcessListener.ExitType.NORMAL)
-                            EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(MonitorLauncher.class, process));
-                        EventBus.EVENT_BUS.fireEvent(new ProcessStoppedEvent(MonitorLauncher.class, process));
+                    } else if (msg instanceof MonitorProtocol.MonitorMessage.Exit exit) {
+                        process.handleExit(() -> { // if we are still alive and can handle exit
+                            if (exit.exitType() == ProcessListener.ExitType.JVM_ERROR)
+                                EventBus.EVENT_BUS.fireEvent(new JVMLaunchFailedEvent(MonitorLauncher.class, process));
+                            else if (exit.exitType() != ProcessListener.ExitType.NORMAL)
+                                EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(MonitorLauncher.class, process));
+                            EventBus.EVENT_BUS.fireEvent(new ProcessStoppedEvent(MonitorLauncher.class, process));
 
-                        listener.onExit(exit.exitCode(), exit.exitType());
+                            listener.onExit(exit.exitCode(), exit.exitType());
+                        });
                     }
-                }, (line, e) -> LOG.warning("Unexpected message from HMCL monitor: " + line, e));
+                });
             } catch (IOException e) {
                 LOG.error("IOException occurred during communicating with HMCL monitor.", e);
             }

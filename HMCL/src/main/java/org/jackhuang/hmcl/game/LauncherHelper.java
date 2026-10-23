@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
-import org.jackhuang.hmcl.monitor.MonitorLauncher;
+import org.jackhuang.hmcl.monitor.MonitorGameProcess;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.game.*;
@@ -960,6 +960,7 @@ public final class LauncherHelper {
             }
         }
 
+        /// Records game output and transfers exit handling before scheduling monitor-mode shutdown.
         @Override
         public void onLog(String log, boolean isErrorStream) {
             if (isErrorStream)
@@ -971,7 +972,7 @@ public final class LauncherHelper {
             if (forbiddenAccessToken != null)
                 log = log.replace(forbiddenAccessToken, "<access token>");
 
-            Log4jLevel level = isErrorStream && !log.startsWith("[authlib-injector]") ? Log4jLevel.ERROR : null;
+            @Nullable Log4jLevel level = isErrorStream && !log.startsWith("[authlib-injector]") ? Log4jLevel.ERROR : null;
             if (showLogs) {
                 if (level == null)
                     level = Objects.requireNonNullElse(Log4jLevel.guessLevel(log), Log4jLevel.INFO);
@@ -994,7 +995,8 @@ public final class LauncherHelper {
                     try {
                         if (!lwjgl) {
                             lwjgl = true;
-                            if (MonitorLauncher.MONITOR_ENABLED && !showLogs && launcherVisibility != LauncherVisibility.KEEP) {
+                            if (process instanceof MonitorGameProcess monitorProcess && !showLogs && launcherVisibility != LauncherVisibility.KEEP) {
+                                monitorProcess.detach();
                                 launchingLatch.countDown();
                                 runLater(Launcher::stopApplication);
                             } else {
