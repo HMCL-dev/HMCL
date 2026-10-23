@@ -105,7 +105,7 @@ public final class AboutPage extends SpinnerPane {
                 for (GraphicsCard graphicsCard : graphicsCards) {
                     String name = index == 1 && graphicsCards.size() == 1
                             ? i18n("about.environment.gpu")
-                            : i18n("about.environment.gpu") + " " + index;
+                            : i18n("about.environment.gpu.n", index);
                     index++;
                     environment.getContent().add(createIconedTwoLineButton(
                             name,
