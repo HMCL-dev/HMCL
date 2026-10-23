@@ -26,10 +26,12 @@ import org.jackhuang.hmcl.setting.GameDirectory;
 import org.jackhuang.hmcl.setting.GameDirectoryID;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.GameCrashWindow;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
@@ -37,56 +39,52 @@ import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Presents a supervised game's crash window from the result retained in the monitor JVM after
-/// that JVM continues into the launcher UI.
+/// @see show
 @NotNullByDefault
 public final class MonitorCrashReporter {
 
     private MonitorCrashReporter() {
     }
 
-    public static void show() {
-        Monitor.Result result = Monitor.getResult();
+    /// find [HMCLGameInstance] from [Monitor.Result] and show [GameCrashWindow]
+    public static void show(Monitor.Result result) {
+        findInstanceAsync(result).thenAcceptAsync(Schedulers.javafx(), instance -> {
+            if (instance == null) {
+                LOG.warning("Cannot resolve the launched instance " + result.launchOptions().getInstanceId() + ", skip showing the crash window");
+                return;
+            }
+            instance.markLaunchedAbnormally();
+            @Unmodifiable List<String> logs = result.process().getLines(null);
+            Platform.runLater(() -> new GameCrashWindow(
+                    result.process(),
+                    result.exitType(),
+                    instance,
+                    result.launchOptions(),
+                    logs.subList(Math.max(0, logs.size() - Log.getLogLines()), logs.size()).stream()
+                            .map(line -> new Log(Logger.filterForbiddenToken(line), Log4jLevel.guessLevel(line)))
+                            .toList()).show());
+        }).start();
+    }
 
-        // find repository
+    /// find [HMCLGameInstance] from [Monitor.Result]
+    private static Task<@Nullable HMCLGameInstance> findInstanceAsync(Monitor.Result result) {
+        // find repository first
         GameDirectoryID id = GameDirectoryID.parse(result.gameDirectoryId());
         Optional<GameDirectory> match = GameDirectoryManager.getGameDirectories().stream()
                 .filter(directory -> directory.getId().equals(id))
                 .findFirst();
         if (match.isEmpty())
-            return;
+            return Task.completed(null);
         GameDirectoryManager.setSelectedGameDirectory(match.get());
         HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
 
         GameInstanceID instanceId = result.launchOptions().getInstanceId();
         HMCLGameInstance instance = repository.findInstance(instanceId);
 
-        if (instance != null) { // instance found
-            presentCrashWindow(result, instance);
-            return;
-        }
+        if (instance != null)  // instance found
+            return Task.completed(instance);
 
         LOG.info("Waiting for the game repository to load before showing the crash window");
-        repository.refreshAsync().thenRunAsync(Schedulers.javafx(), () -> {
-            HMCLGameInstance loaded = repository.findInstance(instanceId);
-            if (loaded != null)
-                presentCrashWindow(result, loaded);
-            else
-                LOG.warning("Cannot resolve the launched instance " + instanceId + ", skip showing the crash window");
-        }).start();
-    }
-
-    /// Schedules the crash window on the JavaFX thread using the configured tail of captured console output.
-    private static void presentCrashWindow(Monitor.Result result, HMCLGameInstance instance) {
-        instance.markLaunchedAbnormally();
-        @Unmodifiable List<String> logs = result.process().getLines(null);
-        Platform.runLater(() -> new GameCrashWindow(
-                result.process(),
-                result.exitType(),
-                instance,
-                result.launchOptions(),
-                logs.subList(Math.max(0, logs.size() - Log.getLogLines()), logs.size()).stream()
-                        .map(line -> new Log(Logger.filterForbiddenToken(line), Log4jLevel.guessLevel(line)))
-                        .toList()).show());
+        return repository.refreshAsync().thenSupplyAsync(() -> repository.findInstance(instanceId));
     }
 }

@@ -35,44 +35,48 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Lightweight monitor to watch game process
 @NotNullByDefault
 public final class Monitor {
-    private static boolean shouldRelaunch = false;
-    private static boolean crashed = false;
+    /// the result of the latest launched game process
     private static @Nullable Monitor.Result result;
 
     private Monitor() {
     }
 
-    public static Monitor.Result getResult() throws NullPointerException {
-        return Objects.requireNonNull(result);
+    /// @return the [result] of the latest launched game process, or `null` when no game was launched by monitor
+    public static @Nullable Monitor.Result getResult() {
+        return result;
     }
 
+    /// the latest launched game was crashed
     public static boolean wasCrashed() {
-        return crashed;
+        return result != null && result.crashed;
     }
 
-    /// @return `true` if should exit, or `false` if should continue and launch HMCL
+    /// @return `true` if we should exit, or `false` if we should continue and launch HMCL
     public static boolean processArguments(String[] args) {
         if (args.length != 2 || !args[0].equals("--monitor"))
             return false;
         try {
-            start(Path.of(args[1]));
+            return start(Path.of(args[1]));
         } catch (IOException | InterruptedException e) {
-            LOG.error("Failed to supervise the game process", e);
+            LOG.error("Failed to start the game process", e);
+            return true;
         }
-        return !shouldRelaunch;
     }
 
-    /// Supervises the game and waits for the launcher's exit decision before restoring its UI.
-    public static void start(Path specPath) throws IOException, InterruptedException {
+    /// Launch game process from spec file.
+    ///
+    /// @see MonitorProtocol for more detail sending message and reading control with launcher
+    /// @return `true` if we should exit, or `false` if we should continue and launch HMCL
+    public static boolean start(Path specPath) throws IOException, InterruptedException {
         LOG.info("*** HMCL MONITOR ***");
 
         // read spec
@@ -90,8 +94,7 @@ public final class Monitor {
         ManagedProcess gameProcess = new ManagedProcess(pb);
         LOG.info("Game process created, pid " + gameProcess.pid());
 
-        // Read commands while the game is running. The monitor must record CANCEL
-        // before destroying the game so its exit cannot race ahead of cancellation.
+        // Read commands from launcher while the game is running.
         AtomicBoolean canceled = new AtomicBoolean();
         CompletableFuture<Boolean> launcherDetached = new CompletableFuture<>();
         Lang.thread(() -> {
@@ -110,11 +113,11 @@ public final class Monitor {
             } catch (IOException e) {
                 LOG.warning("Lost launcher control channel; taking over exit handling", e);
             }
-            launcherDetached.complete(true);
+            launcherDetached.complete(true); // launcher died
         }, "monitor-control-reader", true);
 
 
-        // shake hand
+        // shake hand & send pid
         PrintStream protocol = new PrintStream(new FileOutputStream(FileDescriptor.err), true, MonitorProtocol.CHARSET);
         protocol.println(new MonitorProtocol.MonitorMessage.Pid(gameProcess.pid(), gameProcess.processStartTime()).encode());
 
@@ -123,7 +126,6 @@ public final class Monitor {
             gameProcess.addLine(line);
             protocol.println(new MonitorProtocol.MonitorMessage.Log(isErrorStream, line).encode());
         };
-
         Charset encoding = Charset.forName(spec.encoding);
         Thread stdoutPump = Lang.thread(new StreamPump(gameProcess.getProcess().getInputStream(),
                 line -> sink.accept(line, false), encoding), "monitor-stdout-pump", true);
@@ -133,21 +135,23 @@ public final class Monitor {
         gameProcess.addRelatedThread(stderrPump);
 
         // wait for stop
-        Lang.thread(new ExitWaiter(gameProcess, List.of(stdoutPump, stderrPump), (exitCode, exitType) -> {
+        AtomicBoolean shouldRelaunch = new AtomicBoolean();
+        new ExitWaiter(gameProcess, List.of(stdoutPump, stderrPump), (exitCode, exitType) -> {
             LOG.info("Game exited with code " + exitCode + "(" + Integer.toHexString(exitCode) + "), type " + exitType);
 
+            // send exit msg to launcher
             ProcessListener.ExitType reportedType = canceled.get() ? ProcessListener.ExitType.INTERRUPTED : exitType;
             protocol.println(new MonitorProtocol.MonitorMessage.Exit(exitCode, reportedType).encode());
 
-            crashed = reportedType != ProcessListener.ExitType.NORMAL && reportedType != ProcessListener.ExitType.INTERRUPTED;
-            // E may overtake the launcher's handling of the last LWJGL log. Wait for
-            // an explicit decision instead of sampling whether its stderr pipe broke.
-            shouldRelaunch = launcherDetached.join() && switch (spec.relaunchPolicy) {
+            boolean crashed = reportedType != ProcessListener.ExitType.NORMAL && reportedType != ProcessListener.ExitType.INTERRUPTED;
+            // Exit message may overtake the launcher's handling of the last LWJGL log.
+            // So an explicit decision from launcher is needed.
+            shouldRelaunch.set(launcherDetached.join() && switch (spec.relaunchPolicy) {
                 case ALWAYS -> true;
                 case ON_CRASH -> crashed;
                 case NEVER -> false;
-            };
-            result = new Result(gameProcess, reportedType, spec.gameDirectoryId, spec.options);
+            });
+            result = new Result(gameProcess, reportedType, spec.gameDirectoryId, crashed, spec.options);
 
             // run post exit command
             if (!spec.postExitCommand.isEmpty())
@@ -158,7 +162,8 @@ public final class Monitor {
                 } catch (Throwable e) {
                     LOG.warning("An Exception happened while running exit command.", e);
                 }
-        }), "exit-waiter", true).join();
+        }).run();
+        return !shouldRelaunch.get();
     }
 
     public enum RelaunchPolicy {
@@ -172,12 +177,14 @@ public final class Monitor {
 
     /// launch result of the latest game process
     ///
-    /// @param process         The supervised game process, which has already exited.
-    /// @param exitType        The reported exit type, including `INTERRUPTED` for a recognized cancellation.
+    /// @param process         The game process, which has already exited.
+    /// @param exitType        The reported exit type, including [ProcessListener.ExitType#INTERRUPTED] for a recognized cancellation.
     /// @param gameDirectoryId The persistent id of the registered game directory owning the launched instance.
+    /// @param crashed         Whether the game crashed.
     /// @param launchOptions   The launch options used to identify the instance and present its crash window.
     @NotNullByDefault
-    public record Result(ManagedProcess process, ProcessListener.ExitType exitType, String gameDirectoryId, LaunchOptions launchOptions) {
+    public record Result(ManagedProcess process, ProcessListener.ExitType exitType, String gameDirectoryId,
+                         boolean crashed, LaunchOptions launchOptions) {
     }
 
     /// One-time game configuration, consumed and deleted before the game starts.

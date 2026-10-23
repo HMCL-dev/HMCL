@@ -701,6 +701,9 @@ public class DefaultLauncher extends Launcher {
         }
     }
 
+    /// start game process from the final commandline and envVars and attach listeners
+    ///
+    /// @return the game process
     protected ProcessInfo startProcess(List<String> commandLine, Map<String, String> envVars, Charset encoding) throws IOException {
         ProcessBuilder builder = new ProcessBuilder(commandLine).directory(instance.getRunDirectory().toFile());
         if (listener == null) {

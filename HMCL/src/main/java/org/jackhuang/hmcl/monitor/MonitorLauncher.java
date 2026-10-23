@@ -48,9 +48,13 @@ import java.util.Map;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Launch HMCL Monitor Process
+///
+/// @see launchNewMonitor
 @NotNullByDefault
 public final class MonitorLauncher {
     public static final boolean MONITOR_ENABLED = System.getenv("HMCL_USE_HMCLMONITOR") != null;
+    /// fix problem serializing [LaunchOptions] (interfaces cannot be serialized easily, adapters needed)
     private static final Gson gsonForGameOptions = JsonUtils.defaultGsonBuilder()
             .addSerializationExclusionStrategy(new ExclusionStrategy() {
                 @Override
@@ -69,6 +73,10 @@ public final class MonitorLauncher {
     private MonitorLauncher() {
     }
 
+    /// start a new monitor and use it to launch game process
+    ///
+    /// @see Monitor
+    /// @return the game process monitor launched
     public static MonitorGameProcess launchNewMonitor(List<String> commandLine,
                                                       Map<String, String> envVars,
                                                       Charset encoding,
@@ -79,20 +87,20 @@ public final class MonitorLauncher {
         return startProcess(commandLine, listener, specFile);
     }
 
-    /// Writes the one-time launch specification; subsequent commands use the control pipe.
+    /// Writes the one-time launch specification
     private static Path writeSpecFile(List<String> commandLine,
                                       Map<String, String> envVars,
                                       Charset encoding,
                                       HMCLGameInstance hmclGameInstance,
                                       LaunchOptions options) throws IOException {
         Path runDirectory = hmclGameInstance.getRunDirectory().toAbsolutePath();
-        String gameDirectoryId = hmclGameInstance.getRepository().getGameDirectory().getId().toString();
 
         Map<String, String> gameEnv = new HashMap<>();
         @Nullable Path appdata = options.getGameDir().toAbsolutePath().getParent();
         if (appdata != null) gameEnv.put("APPDATA", appdata.toString());
         gameEnv.putAll(envVars);
 
+        String gameDirectoryId = hmclGameInstance.getRepository().getGameDirectory().getId().toString();
         List<String> postExitCommand = StringUtils.tokenize(options.getPostExitCommand(), envVars);
 
         GameSettings.Effective setting = hmclGameInstance.getEffectiveSettings();
@@ -122,7 +130,9 @@ public final class MonitorLauncher {
         return specFile;
     }
 
-    /// Starts the monitor and acknowledges exit handling only after the listener completes.
+    /// Starts the monitor and attach listener
+    ///
+    /// @see MonitorProtocol for more detail reading message from monitor
     private static MonitorGameProcess startProcess(List<String> commandLine, @Nullable ProcessListener listener, Path specFile) throws IOException {
         @Nullable Path thisJar = JarUtils.thisJarPath();
         if (thisJar == null)
@@ -133,9 +143,9 @@ public final class MonitorLauncher {
                 .redirectOutput(ProcessBuilder.Redirect.INHERIT)
                 .redirectError(ProcessBuilder.Redirect.PIPE).start();
 
+        // read handshake (pid message) from monitor
         BufferedReader reader = new BufferedReader(new InputStreamReader(monitor.getErrorStream(), MonitorProtocol.CHARSET));
-
-        MonitorProtocol.MonitorMessage.Pid handshake = MonitorProtocol.readHandshake(reader, () -> {
+        MonitorProtocol.MonitorMessage.Pid handshake = MonitorProtocol.readHandshake(reader, () -> { // clean up when handshake failed
             monitor.destroy();
             try {
                 Files.deleteIfExists(specFile);
@@ -143,13 +153,15 @@ public final class MonitorLauncher {
                 LOG.warning("Failed to clean specFile" + e);
             }
         });
+
+        // get the game process handle from pid message
         @Nullable ProcessHandle gameHandle = ProcessHandle.of(handshake.pid()).orElse(null);
         MonitorGameProcess process = new MonitorGameProcess(gameHandle, commandLine, handshake.processStartTime(), monitor);
 
         if (listener != null)
-            listener.setProcess(process);
+            listener.setProcess(process); // attach listener
         else
-            process.detach();
+            process.detach(); // we no longer need any message from monitor
 
         Lang.thread(() -> {
             try (reader) {

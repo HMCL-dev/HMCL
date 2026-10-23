@@ -44,7 +44,7 @@ public final class MonitorGameProcess implements ProcessInfo {
     private final long processStartTime;
     /// the monitor process
     private final Process monitor;
-    /// the channel to send command to monitor. e.g. transfer responsibility for handling game exit / cancel launching
+    /// the channel to send command to monitor, e.g. transfer responsibility for handling game exit / cancel launching
     private final MonitorController controller;
 
     /// Creates a view of the monitor-supervised game process.
@@ -66,7 +66,7 @@ public final class MonitorGameProcess implements ProcessInfo {
         if (controller.isDetached())
             return;
         handler.run();
-        controller.handled();
+        controller.handled(); // mark handled after handler run for the case that launcher was closed during handling
     }
 
     @Override
@@ -118,6 +118,8 @@ public final class MonitorGameProcess implements ProcessInfo {
     }
 
     /// Serializes cancellation and exit decisions onto monitor stdin.
+    ///
+    /// @see MonitorProtocol for more detail sending control to monitor
     @NotNullByDefault
     private static final class MonitorController {
         /// UTF-8 control writer, kept open after DETACH so cancellation remains available.
@@ -158,13 +160,12 @@ public final class MonitorGameProcess implements ProcessInfo {
         ///
         /// @return [CountDownLatch] when SUCCESSFULLY canceled
         synchronized CountDownLatch cancel() {
-            return switch (state) {
-                case ATTACHED, DETACHED -> {
-                    send(MonitorProtocol.ControlCommand.CANCEL);
-                    yield exited;
+            switch (state) {
+                case ATTACHED, DETACHED -> send(MonitorProtocol.ControlCommand.CANCEL);
+                case HANDLED -> { // The game exit has already been handled.
                 }
-                case HANDLED -> new CountDownLatch(0); // The game exit has already been handled.
-            };
+            }
+            return exited;
         }
 
         /// Writes and flushes one command while the caller holds the state lock.

@@ -149,8 +149,8 @@ public final class Launcher extends Application {
                 primaryStage.show();
 
                 // check whether to show log from HMCL monitor
-                if (Monitor.wasCrashed())
-                    MonitorCrashReporter.show();
+                if (Monitor.wasCrashed() && Monitor.getResult() != null)
+                    MonitorCrashReporter.show(Monitor.getResult());
             });
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);

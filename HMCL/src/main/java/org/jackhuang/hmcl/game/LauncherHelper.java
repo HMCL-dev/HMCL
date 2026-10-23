@@ -960,7 +960,6 @@ public final class LauncherHelper {
             }
         }
 
-        /// Records game output and transfers exit handling before scheduling monitor-mode shutdown.
         @Override
         public void onLog(String log, boolean isErrorStream) {
             if (isErrorStream)

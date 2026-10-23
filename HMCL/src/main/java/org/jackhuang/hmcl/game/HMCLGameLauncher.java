@@ -165,6 +165,8 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     protected ProcessInfo startProcess(List<String> commandLine, Map<String, String> envVars, Charset encoding) throws IOException {
         if (!MonitorLauncher.MONITOR_ENABLED || !(instance instanceof HMCLGameInstance hmclGameInstance))
             return super.startProcess(commandLine, envVars, encoding);
+
+        /// using monitor to launch game if enabled
         return MonitorLauncher.launchNewMonitor(commandLine, envVars, encoding, listener, hmclGameInstance, options);
     }
 

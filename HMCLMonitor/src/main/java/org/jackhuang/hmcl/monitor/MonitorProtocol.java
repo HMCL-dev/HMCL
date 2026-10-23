@@ -41,6 +41,7 @@ final class MonitorProtocol {
     private MonitorProtocol() {
     }
 
+    /// read and parse control from launcher forever
     static void readLauncherControl(BufferedReader control, Consumer<ControlCommand> commandConsumer) throws IOException {
         @Nullable String line;
         while ((line = control.readLine()) != null) {
@@ -52,6 +53,7 @@ final class MonitorProtocol {
         }
     }
 
+    /// read and parse message from monitor forever
     static void readMonitorMessage(BufferedReader reader, Consumer<MonitorMessage> messageConsumer) throws IOException {
         @Nullable String line;
         while ((line = reader.readLine()) != null) {
@@ -63,6 +65,8 @@ final class MonitorProtocol {
         }
     }
 
+    /// read handshake (pid message) from monitor
+    ///
     /// @throws IOException if launcher cannot shake hand with monitor within [MonitorProtocol#TIMEOUT]
     static MonitorMessage.Pid readHandshake(BufferedReader reader, Runnable failClean) throws IOException {
         CompletableFuture<MonitorMessage.Pid> future = new CompletableFuture<>();
@@ -100,9 +104,10 @@ final class MonitorProtocol {
             Throwable cause = e.getCause() != null ? e.getCause() : e;
             throw new IOException(cause.getMessage(), cause);
         } finally {
-            waiter.interrupt();
-            if (!handshakeCompleted)
+            if (!handshakeCompleted) {
                 failClean.run();
+                waiter.interrupt();
+            }
         }
     }
 
