@@ -24,10 +24,7 @@ import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.JVMLaunchFailedEvent;
 import org.jackhuang.hmcl.event.ProcessExitedAbnormallyEvent;
 import org.jackhuang.hmcl.event.ProcessStoppedEvent;
-import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.LaunchOptions;
-import org.jackhuang.hmcl.game.ProxyOption;
-import org.jackhuang.hmcl.game.Renderer;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
@@ -63,7 +60,9 @@ public final class MonitorLauncher {
 
                 @Override
                 public boolean shouldSkipClass(Class<?> clazz) {
-                    return ProxyOption.class.isAssignableFrom(clazz) || Renderer.class.isAssignableFrom(clazz);
+                    return ProxyOption.class.isAssignableFrom(clazz)
+                            || Renderer.class.isAssignableFrom(clazz)
+                            || QuickPlayOption.class.isAssignableFrom(clazz);
                 }
             }).create();
 
