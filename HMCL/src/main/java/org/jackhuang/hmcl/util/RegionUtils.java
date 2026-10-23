@@ -70,7 +70,7 @@ public final class RegionUtils {
         return IS_CHINA_MAINLAND_MACHINE;
     }
 
-    private static volatile @Nullable Boolean isChinaMainlandNetwork;
+    private static volatile @Nullable Boolean isChinaMainlandNetwork=false;
 
     private static boolean checkChinaMainlandNetwork() {
         if (!IS_CHINA_MAINLAND_MACHINE)
