@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.monitor;
 
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.ProcessInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// A view of the game process launched by the HMCL monitor.
 ///
-/// Unlike [ManagedProcess], this process may not be resolved when it exited before
+/// Unlike [org.jackhuang.hmcl.util.platform.ManagedProcess], this process may not be resolved when it exited before
 /// monitor's handshake.
 @NotNullByDefault
 public final class MonitorGameProcess implements ProcessInfo {
