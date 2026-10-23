@@ -42,7 +42,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
 public final class Monitor {
-    public static final String CANCELED = "CANCELED";
+    public static final String canceled = "CANCELED";
     private static boolean shouldRelaunch = false;
     private static boolean crashed = false;
     private static @Nullable Monitor.Result result;
@@ -116,7 +116,7 @@ public final class Monitor {
             // reread spec to check canceled
             ProcessListener.ExitType reportedType = exitType;
             try {
-                if (Files.exists(specPath) && Files.readString(specPath).startsWith(CANCELED))
+                if (Files.exists(specPath) && Files.readString(specPath).startsWith(canceled))
                     reportedType = ProcessListener.ExitType.INTERRUPTED;
                 Files.deleteIfExists(specPath);
             } catch (IOException e1) {

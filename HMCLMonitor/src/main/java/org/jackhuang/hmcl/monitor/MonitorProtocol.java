@@ -76,18 +76,23 @@ final class MonitorProtocol {
     }
 
     /// @throws IOException if launcher cannot shake hand with monitor within [MonitorProtocol#HANDSHAKE_TIMEOUT]
-    static Pid readHandshake(BufferedReader reader, Process monitor) throws IOException {
+    static Pid readHandshake(BufferedReader reader, Runnable failClean) throws IOException {
         CompletableFuture<Pid> future = new CompletableFuture<>();
         Thread waiter = Lang.thread(() -> {
             try {
-                String line = reader.readLine();
-                if (line == null)
-                    throw new IOException("The HMCL monitor exited before the handshake");
-                if (decode(line) instanceof Pid pid) {
-                    future.complete(pid);
-                    return;
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    try {
+                        if (decode(line) instanceof Pid pid) {
+                            future.complete(pid);
+                            return;
+                        }
+                        throw new IOException("Unexpected handshake message from HMCL monitor: " + line);
+                    } catch (IllegalArgumentException e) {
+                        // ignore regular err messages
+                    }
                 }
-                throw new IOException("Unexpected handshake message from HMCL monitor: " + line);
+                throw new IOException("The HMCL monitor exited before the handshake");
             } catch (Exception e) {
                 future.completeExceptionally(e);
             }
@@ -109,7 +114,7 @@ final class MonitorProtocol {
         } finally {
             waiter.interrupt();
             if (!handshakeCompleted)
-                monitor.destroy();
+                failClean.run();
         }
     }
 

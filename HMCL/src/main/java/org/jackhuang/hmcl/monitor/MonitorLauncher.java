@@ -125,7 +125,7 @@ public final class MonitorLauncher {
     }
 
     private static MonitorGameProcess startProcess(List<String> commandLine, @Nullable ProcessListener listener, Path specFile) throws IOException {
-        Path thisJar = JarUtils.thisJarPath();
+        @Nullable Path thisJar = JarUtils.thisJarPath();
         if (thisJar == null)
             throw new IOException("Failed to find current HMCL location");
 
@@ -135,7 +135,14 @@ public final class MonitorLauncher {
 
         BufferedReader reader = new BufferedReader(new InputStreamReader(monitor.getErrorStream(), MonitorProtocol.CHARSET));
 
-        MonitorProtocol.Pid handshake = MonitorProtocol.readHandshake(reader, monitor);
+        MonitorProtocol.Pid handshake = MonitorProtocol.readHandshake(reader, () -> {
+            monitor.destroy();
+            try {
+                Files.deleteIfExists(specFile);
+            } catch (IOException e) {
+                LOG.warning("Failed to clean specFile" + e);
+            }
+        });
         ProcessHandle gameHandle = ProcessHandle.of(handshake.pid()).orElse(null);
         MonitorGameProcess process = new MonitorGameProcess(gameHandle, commandLine, handshake.processStartTime(), specFile);
 
@@ -161,7 +168,7 @@ public final class MonitorLauncher {
                     }
                 }, (line, e) -> LOG.warning("Unexpected message from HMCL monitor: " + line, e));
             } catch (IOException e) {
-                LOG.error("Failed to read from the HMCL monitor", e);
+                LOG.error("IOException occurred during communicating with HMCL monitor.", e);
             }
         }, "hmcl-monitor-reader", true);
         return process;

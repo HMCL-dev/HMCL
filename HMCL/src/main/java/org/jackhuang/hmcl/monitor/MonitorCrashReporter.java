@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.setting.GameDirectoryManager;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.GameCrashWindow;
 import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -77,6 +78,7 @@ public final class MonitorCrashReporter {
 
     /// Schedules the crash window on the JavaFX thread using the configured tail of captured console output.
     private static void presentCrashWindow(Monitor.Result result, HMCLGameInstance instance) {
+        instance.markLaunchedAbnormally();
         @Unmodifiable List<String> logs = result.process().getLines(null);
         Platform.runLater(() -> new GameCrashWindow(
                 result.process(),
@@ -84,7 +86,7 @@ public final class MonitorCrashReporter {
                 instance,
                 result.launchOptions(),
                 logs.subList(Math.max(0, logs.size() - Log.getLogLines()), logs.size()).stream()
-                        .map(line -> new Log(line, Log4jLevel.guessLevel(line)))
+                        .map(line -> new Log(Logger.filterForbiddenToken(line), Log4jLevel.guessLevel(line)))
                         .toList()).show());
     }
 }

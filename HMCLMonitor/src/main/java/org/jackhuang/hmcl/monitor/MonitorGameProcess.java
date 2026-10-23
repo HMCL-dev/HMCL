@@ -40,16 +40,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @param specFile The file the spec was exchanged with the monitor through
 @NotNullByDefault
 public record MonitorGameProcess(@Nullable ProcessHandle handle, long pid, List<String> commands, long processStartTime,
-                                 Path specFile) implements ProcessInfo {
+                                 Path specFile, @Nullable String classpath) implements ProcessInfo {
 
     /// Creates a view of the monitor-supervised game process.
     public MonitorGameProcess(@Nullable ProcessHandle handle, List<String> commands, long processStartTime, Path specFile) {
-        this(handle, handle != null ? handle.pid() : -1, List.copyOf(commands), processStartTime, specFile);
-    }
-
-    @Override
-    public @Nullable String classpath() {
-        return null;
+        this(handle, handle != null ? handle.pid() : -1, List.copyOf(commands), processStartTime, specFile, null);
     }
 
     @Override
@@ -61,7 +56,7 @@ public record MonitorGameProcess(@Nullable ProcessHandle handle, long pid, List<
     @Override
     public void stop() {
         try { // notify the monitor
-            Files.writeString(specFile, Monitor.CANCELED);
+            Files.writeString(specFile, Monitor.canceled);
         } catch (IOException e) {
             LOG.warning("Failed to rewrite the monitor spec file " + specFile + " to mark the cancellation", e);
         }
