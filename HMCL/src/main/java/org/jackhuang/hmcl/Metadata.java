@@ -42,7 +42,9 @@ public final class Metadata {
     public static final String WINDOWS_APP_USER_MODEL_ID = "org.jackhuang.hmcl";
 
     public static final String TITLE = NAME + " " + VERSION;
-    public static final String FULL_TITLE = FULL_NAME + " v" + VERSION;
+
+    /// Whether the build metadata identifies this launcher as an official build.
+    public static final boolean OFFICIAL_BUILD = Boolean.parseBoolean(JarUtils.getAttribute("hmcl.official", "false"));
 
     public static final int MINIMUM_REQUIRED_JAVA_VERSION = 17;
     public static final int MINIMUM_SUPPORTED_JAVA_VERSION = 17;
