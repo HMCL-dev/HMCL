@@ -174,12 +174,8 @@ public final class GameListCell extends ListCell<GameListItem> {
                 }
             } else if (e.getButton() == MouseButton.SECONDARY) {
                 JFXPopup popup = getManagementPopup(item);
-                if (popup.isShowing()) {
-                    popup.hide();
-                    return;
-                }
-
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
+                // Repeated right-clicks reopen and reposition even during the closing animation
                 popup.show(root, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - root.getHeight());
             }
         });
