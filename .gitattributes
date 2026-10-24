@@ -4,6 +4,7 @@
 
 # ─── Explicitly text – source & build ────────────────────────────────────────
 *.java        text eol=lf
+*.js          text eol=lf
 *.kt          text eol=lf
 *.kts         text eol=lf
 *.groovy      text eol=lf
@@ -58,6 +59,9 @@ Jenkinsfile   text eol=lf
 
 # Minecraft schematic
 *.litematic   binary
+*.nbt         binary
+*.schem       binary
+*.schematic   binary
 
 # Compiled / intermediate build artefacts
 *.bin         binary

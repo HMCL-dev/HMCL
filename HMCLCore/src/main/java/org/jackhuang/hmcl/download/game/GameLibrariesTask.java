@@ -18,12 +18,9 @@
 package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
-import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.download.MaintainTask;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.Library;
-import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
@@ -35,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,7 +51,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class GameLibrariesTask extends Task<Void> {
 
     private final AbstractDependencyManager dependencyManager;
-    private final Version version;
+    private final GameInstanceManifest manifest;
     private final boolean integrityCheck;
     private final List<Library> libraries;
     private final List<Task<?>> dependencies = new ArrayList<>();
@@ -63,22 +59,22 @@ public final class GameLibrariesTask extends Task<Void> {
     /**
      * Constructor.
      *
-     * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
-     * @param version           the game version
+     * @param dependencyManager the dependency manager that can provides {@link GameRepository}
+     * @param manifest          the game version
      */
-    public GameLibrariesTask(AbstractDependencyManager dependencyManager, Version version, boolean integrityCheck) {
-        this(dependencyManager, version, integrityCheck, version.resolve(dependencyManager.getGameRepository()).getLibraries());
+    public GameLibrariesTask(AbstractDependencyManager dependencyManager, GameInstanceManifest manifest, boolean integrityCheck) {
+        this(dependencyManager, manifest, integrityCheck, manifest.getLibraries());
     }
 
     /**
      * Constructor.
      *
-     * @param dependencyManager the dependency manager that can provides {@link org.jackhuang.hmcl.game.GameRepository}
-     * @param version           the game version
+     * @param dependencyManager the dependency manager that can provides {@link GameRepository}
+     * @param manifest          the game version
      */
-    public GameLibrariesTask(AbstractDependencyManager dependencyManager, Version version, boolean integrityCheck, List<Library> libraries) {
+    public GameLibrariesTask(AbstractDependencyManager dependencyManager, GameInstanceManifest manifest, boolean integrityCheck, List<Library> libraries) {
         this.dependencyManager = dependencyManager;
-        this.version = version;
+        this.manifest = manifest;
         this.integrityCheck = integrityCheck;
         this.libraries = libraries;
 
@@ -91,8 +87,8 @@ public final class GameLibrariesTask extends Task<Void> {
         return dependencies;
     }
 
-    public static boolean shouldDownloadLibrary(GameRepository gameRepository, Version version, Library library, boolean integrityCheck) {
-        Path file = gameRepository.getLibraryFile(version, library);
+    public static boolean shouldDownloadLibrary(GameRepository gameRepository, GameInstanceManifest manifest, Library library, boolean integrityCheck) {
+        Path file = gameRepository.getLayout().getLibraryFile(manifest.id(), library);
         if (!Files.isRegularFile(file)) return true;
 
         if (!integrityCheck) {
@@ -102,8 +98,12 @@ public final class GameLibrariesTask extends Task<Void> {
             if (!library.getDownload().validateChecksum(file, true)) {
                 return true;
             }
-            if (library.getChecksums() != null && !library.getChecksums().isEmpty() && !LibraryDownloadTask.checksumValid(file, library.getChecksums())) {
-                return true;
+            if (library.checksums() != null) {
+                if (!library.checksums().isEmpty()) {
+                    if (!LibraryDownloadTask.checksumValid(file, library.checksums())) {
+                        return true;
+                    }
+                }
             }
             if (FileUtils.getExtension(file).equals("jar")) {
                 try {
@@ -132,6 +132,7 @@ public final class GameLibrariesTask extends Task<Void> {
         }
     }
 
+    /// {@inheritDoc}
     @Override
     public void execute() throws IOException {
         int progress = 0;
@@ -142,9 +143,9 @@ public final class GameLibrariesTask extends Task<Void> {
             }
 
             // https://github.com/HMCL-dev/HMCL/issues/3975
-            if ("net.minecraftforge".equals(library.getGroupId()) && "minecraftforge".equals(library.getArtifactId())
+            if (library.is("net.minecraftforge", "minecraftforge")
                     && gameRepository instanceof DefaultGameRepository defaultGameRepository) {
-                List<FMLLib> fmlLibs = getFMLLibs(library.getVersion());
+                List<FMLLib> fmlLibs = getFMLLibs(library.version());
                 if (fmlLibs != null) {
                     Path libDir = defaultGameRepository.getBaseDirectory().resolve("lib")
                             .toAbsolutePath().normalize();
@@ -152,37 +153,50 @@ public final class GameLibrariesTask extends Task<Void> {
                     for (FMLLib fmlLib : fmlLibs) {
                         Path file = libDir.resolve(fmlLib.name);
                         if (shouldDownloadFMLLib(fmlLib, file)) {
-                            List<URI> uris = dependencyManager.getDownloadProvider()
-                                    .injectURLWithCandidates(fmlLib.downloadUrl());
-                            dependencies.add(new FileDownloadTask(uris, file)
+                            DownloadProvider downloadProvider = dependencyManager.getDownloadProvider();
+                            DownloadCandidates urls = downloadProvider.getDownloadCandidates(fmlLib.downloadUrl());
+                            dependencies.add(new FileDownloadTask(urls, file)
                                     .withCounter("hmcl.install.libraries"));
                         }
                     }
                 }
             }
 
-            Path file = gameRepository.getLibraryFile(version, library);
-            if ("optifine".equals(library.getGroupId()) && Files.exists(file) && GameVersionNumber.asGameVersion(gameRepository.getGameVersion(version)).compareTo("1.20.4") == 0) {
-                String forgeVersion = LibraryAnalyzer.analyze(version, "1.20.4")
-                        .getVersion(LibraryAnalyzer.LibraryType.FORGE)
-                        .orElse(null);
-                if (forgeVersion != null && LibraryAnalyzer.FORGE_OPTIFINE_BROKEN_RANGE.contains(VersionNumber.asVersion(forgeVersion))) {
-                    try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(file)) {
-                        Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
-                    } catch (IOException e) {
-                        throw new IOException("Cannot fix optifine", e);
+            Path file = gameRepository.getLayout().getLibraryFile(manifest.id(), library);
+            if ("optifine".equals(library.groupId()) && Files.exists(file)) {
+                if (Files.exists(file) && libraries.stream().filter(it -> it.is("optifine", "OptiFine"))
+                        .anyMatch(it -> it.version().startsWith("1.20.4_"))) {
+                    @Nullable String forgeVersion = GameComponentAnalyzer.analyze(manifest, GameVersionNumber.asGameVersion("1.20.4"))
+                            .getVersion(GameComponentType.FORGE);
+                    if (forgeVersion != null && GameComponentAnalyzer.FORGE_OPTIFINE_BROKEN_RANGE.contains(VersionNumber.asVersion(forgeVersion))) {
+                        try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(file)) {
+                            Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
+                        } catch (IOException e) {
+                            throw new IOException("Cannot fix optifine", e);
+                        }
                     }
                 }
-            } else if ("org.jackhuang.hmcl".equals(library.getGroupId()) && "mmc-bootstrap".equals(library.getArtifactId())) {
+            } else if (library.is("org.jackhuang.hmcl", "mmc-bootstrap")) {
                 if (!Files.exists(file)) {
-                    try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLMultiMCBootstrap-1.0.jar")) {
+                    try (InputStream input = Objects.requireNonNull(
+                            GameLibrariesTask.class.getResourceAsStream(
+                                    "/assets/game/HMCLMultiMCBootstrap-1.0.jar"),
+                            "Bundled HMCLMultiMCBootstrap is missing.")) {
                         Files.createDirectories(file.getParent());
-                        Files.copy(Objects.requireNonNull(input, "Bundled HMCLMultiMCBootstrap is missing."), file, StandardCopyOption.REPLACE_EXISTING);
+                        Files.copy(input, file, StandardCopyOption.REPLACE_EXISTING);
                     }
+                }
+            } else if (library.is("org.jackhuang.hmcl", "transformer-discovery-service")) {
+                try (InputStream input = Objects.requireNonNull(
+                        GameLibrariesTask.class.getResourceAsStream(
+                                "/assets/game/HMCLTransformerDiscoveryService-1.0.jar"),
+                        "Bundled HMCLTransformerDiscoveryService is missing.")) {
+                    Files.createDirectories(file.getParent());
+                    Files.copy(input, file, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
 
-            if (shouldDownloadLibrary(gameRepository, version, library, integrityCheck) && (library.hasDownloadURL() || !"optifine".equals(library.getGroupId()))) {
+            if (shouldDownloadLibrary(gameRepository, manifest, library, integrityCheck) && (library.hasDownloadURL() || !"optifine".equals(library.groupId()))) {
                 dependencies.add(new LibraryDownloadTask(dependencyManager, file, library).withCounter("hmcl.install.libraries"));
             } else {
                 dependencyManager.getCacheRepository().tryCacheLibrary(library, file);

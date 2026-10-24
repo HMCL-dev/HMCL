@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Set up JDK 17
+      - name: Setup JDK 17
         uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
@@ -27,3 +27,29 @@ jobs:
           cache-cleanup: never
       - name: Check Codes
         run: ./gradlew checkstyle checkTranslations --no-daemon --parallel --stacktrace
+      - if: failure() && github.event_name == 'pull_request'
+        name: Setup reviewdog
+        uses: reviewdog/action-setup@d8edfce3dd5e1ec6978745e801f9c50b5ef80252 # v1.4.0
+        with:
+          reviewdog_version: v0.21.0
+      - if: failure() && github.event_name == 'pull_request'
+        name: Generate Artifact
+        run: |
+          echo "${{ github.event.number }}" > PULL_REQUEST_NUMBER
+          > ALL_REPORTS.jsonl
+          find . -path "*/build/reports/checkstyle/*.xml" | while read -r xml_file; do
+            if [ -s "$xml_file" ]; then
+              echo "Processing $xml_file..."
+              reviewdog -f=checkstyle -name="checkstyle" -reporter=rdjsonl < "$xml_file" >> ALL_REPORTS.jsonl
+            else
+              echo "Skipping empty or missing report: $xml_file"
+            fi
+          done
+      - if: failure() && github.event_name == 'pull_request'
+        name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: checkstyle-artifact
+          path: |
+            ALL_REPORTS.jsonl
+            PULL_REQUEST_NUMBER

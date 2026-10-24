@@ -22,6 +22,20 @@ package org.jackhuang.hmcl.util.platform.windows;
  */
 public interface WinConstants {
 
+    // https://learn.microsoft.com/windows/win32/seccrypto/common-hresult-values
+    int S_OK = 0;
+    int S_FALSE = 1;
+
+    // https://learn.microsoft.com/windows/win32/api/wtypes/ne-wtypes-varenum
+    int VT_EMPTY = 0;
+    int VT_NULL = 1;
+    int VT_I2 = 2;
+    int VT_I4 = 3;
+    int VT_BSTR = 8;
+    int VT_BOOL = 11;
+    int VT_LPSTR = 30;
+    int VT_LPWSTR = 31;
+
     // https://learn.microsoft.com/windows/win32/debug/system-error-codes--0-499-
     int ERROR_SUCCESS = 0;
     int ERROR_FILE_NOT_FOUND = 2;
@@ -53,6 +67,8 @@ public interface WinConstants {
     // https://learn.microsoft.com/windows/win32/sysinfo/registry-key-security-and-access-rights
     int KEY_QUERY_VALUE = 0x0001;
     int KEY_ENUMERATE_SUB_KEYS = 0x0008;
+    int KEY_WRITE = 0x20006;
+    int KEY_SET_VALUE = 0x0002;
     int KEY_READ = 0x20019;
 
     // https://learn.microsoft.com/windows/win32/sysinfo/registry-value-types
@@ -100,4 +116,6 @@ public interface WinConstants {
     // https://learn.microsoft.com/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute
     int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
 
+    // https://learn.microsoft.com/windows/win32/api/winreg/nf-winreg-regcreatekeyexw
+    int REG_OPTION_NON_VOLATILE = 0x0000;
 }

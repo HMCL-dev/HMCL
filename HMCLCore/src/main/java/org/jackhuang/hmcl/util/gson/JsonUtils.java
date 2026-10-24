@@ -62,7 +62,7 @@ public final class JsonUtils {
     /// - Pretty printing enabled.
     /// - Complex map key serialization enabled.
     /// - Type adapters for [java.time.Instant], [java.util.UUID], and [java.nio.file.Path].
-    /// - [ValidationTypeAdapterFactory], [LowerCaseEnumTypeAdapterFactory], and
+    /// - [ValidationTypeAdapterFactory], [LowerCaseEnumTypeAdapter#FACTORY], and
     ///   [JsonTypeAdapterFactory].
     public static final Gson GSON = defaultGsonBuilder().create();
 
@@ -72,11 +72,11 @@ public final class JsonUtils {
     /// Configured with:
     /// - [JsonTypeAdapterFactory]
     /// - [ValidationTypeAdapterFactory]
-    /// - [LowerCaseEnumTypeAdapterFactory]
+    /// - [LowerCaseEnumTypeAdapter#FACTORY]
     public static final Gson UGLY_GSON = new GsonBuilder()
             .registerTypeAdapterFactory(JsonTypeAdapterFactory.INSTANCE)
             .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
-            .registerTypeAdapterFactory(LowerCaseEnumTypeAdapterFactory.INSTANCE)
+            .registerTypeAdapterFactory(LowerCaseEnumTypeAdapter.FACTORY)
             .create();
 
     /// Not instantiable.
@@ -651,7 +651,7 @@ public final class JsonUtils {
     /// - [InstantTypeAdapter] registered for [java.time.Instant].
     /// - [UUIDTypeAdapter] registered for [java.util.UUID].
     /// - [PathTypeAdapter] registered for [java.nio.file.Path].
-    /// - [ValidationTypeAdapterFactory], [LowerCaseEnumTypeAdapterFactory], and
+    /// - [ValidationTypeAdapterFactory], [LowerCaseEnumTypeAdapter#FACTORY], and
     ///   [JsonTypeAdapterFactory] registered as type adapter factories.
     ///
     /// Callers may further customize the returned builder before calling
@@ -666,7 +666,7 @@ public final class JsonUtils {
                 .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
                 .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
                 .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
-                .registerTypeAdapterFactory(LowerCaseEnumTypeAdapterFactory.INSTANCE)
+                .registerTypeAdapterFactory(LowerCaseEnumTypeAdapter.FACTORY)
                 .registerTypeAdapterFactory(JsonTypeAdapterFactory.INSTANCE);
     }
 }

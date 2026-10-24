@@ -76,6 +76,10 @@ public abstract class CreateDeb extends DefaultTask {
     @Input
     public abstract Property<ReleaseType> getReleaseType();
 
+    /// Launcher class name for Linux StartupWMClass property in the .desktop file.
+    @Input
+    public abstract Property<String> getLauncherClassName();
+
     /// Executable `.sh` artifact produced by `makeExecutables`.
     @InputFile
     public abstract RegularFileProperty getAppShFile();
@@ -295,6 +299,7 @@ public abstract class CreateDeb extends DefaultTask {
                 StartupNotify=false
                 Categories=Game;
                 Keywords=mc;minecraft;
-                """.formatted(getCurrentType().getDisplayName(), getLauncherPath(), getIconTargetPath());
+                StartupWMClass=%s
+                """.formatted(getCurrentType().getDisplayName(), getLauncherPath(), getIconTargetPath(), getLauncherClassName().get());
     }
 }

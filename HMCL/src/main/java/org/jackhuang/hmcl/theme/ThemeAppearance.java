@@ -43,6 +43,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @param contrast the MonetFX contrast level, or `null` when inherited
 /// @param background the background settings, or `null` when inherited
 /// @param titleBar the title-bar settings, or `null` when inherited
+/// @param windowTransparent whether the launcher window should be transparent, or `null` when inherited
 @NotNullByDefault
 public record ThemeAppearance(
         @Nullable ThemeColorSource color,
@@ -50,7 +51,8 @@ public record ThemeAppearance(
         @Nullable ColorStyle colorStyle,
         @Nullable Contrast contrast,
         @Nullable ThemeBackgroundSettings background,
-        @Nullable ThemeTitleBar titleBar) {
+        @Nullable ThemeTitleBar titleBar,
+        @Nullable Boolean windowTransparent) {
 
     /// JSON member name for the color seed.
     static final String FIELD_COLOR = "color";
@@ -70,6 +72,9 @@ public record ThemeAppearance(
     /// JSON member name for title-bar settings.
     static final String FIELD_TITLE_BAR = "titleBar";
 
+    /// JSON member name for window transparency.
+    static final String FIELD_WINDOW_TRANSPARENT = "windowTransparent";
+
     /// Creates an appearance patch.
     ///
     /// @param color the color seed source, or `null` when inherited
@@ -78,6 +83,7 @@ public record ThemeAppearance(
     /// @param contrast the MonetFX contrast level, or `null` when inherited
     /// @param background the background settings, or `null` when inherited
     /// @param titleBar the title-bar settings, or `null` when inherited
+    /// @param windowTransparent whether the launcher window should be transparent, or `null` when inherited
     public ThemeAppearance {
         if (background != null && background.isEmpty()) {
             background = null;
@@ -100,7 +106,8 @@ public record ThemeAppearance(
                 readColorStyle(object),
                 readContrast(object),
                 readBackground(object),
-                readTitleBar(object));
+                readTitleBar(object),
+                readWindowTransparent(object));
     }
 
     /// Returns whether this appearance contains no concrete fields.
@@ -112,7 +119,8 @@ public record ThemeAppearance(
                 && colorStyle == null
                 && contrast == null
                 && background == null
-                && titleBar == null;
+                && titleBar == null
+                && windowTransparent == null;
     }
 
     /// Adds this appearance patch's concrete fields to a JSON object.
@@ -138,6 +146,9 @@ public record ThemeAppearance(
         }
         if (titleBar != null) {
             object.add(FIELD_TITLE_BAR, titleBar.toJsonObject());
+        }
+        if (windowTransparent != null) {
+            object.addProperty(FIELD_WINDOW_TRANSPARENT, windowTransparent);
         }
     }
 
@@ -167,7 +178,8 @@ public record ThemeAppearance(
                         : patch.background != null ? patch.background : background,
                 titleBar != null && patch.titleBar != null
                         ? titleBar.merge(patch.titleBar)
-                        : patch.titleBar != null ? patch.titleBar : titleBar);
+                        : patch.titleBar != null ? patch.titleBar : titleBar,
+                patch.windowTransparent != null ? patch.windowTransparent : windowTransparent);
     }
 
     /// Converts this appearance to concrete launcher theme values.
@@ -307,6 +319,19 @@ public record ThemeAppearance(
             LOG.warning("Ignored invalid theme titleBar: " + e.getMessage(), e);
             return null;
         }
+    }
+
+    /// Reads the optional window transparency field.
+    private static @Nullable Boolean readWindowTransparent(JsonObject object) {
+        JsonElement element = object.get(FIELD_WINDOW_TRANSPARENT);
+        if (element == null) {
+            return null;
+        }
+        if (!(element instanceof JsonPrimitive primitive) || !primitive.isBoolean()) {
+            LOG.warning("Ignored invalid theme windowTransparent: expected a boolean, got " + element);
+            return null;
+        }
+        return primitive.getAsBoolean();
     }
 
     /// Reads an optional string field.

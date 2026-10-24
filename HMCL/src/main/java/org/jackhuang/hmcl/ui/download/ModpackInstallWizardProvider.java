@@ -18,9 +18,7 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
-import org.jackhuang.hmcl.game.ModpackHelper;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.modpack.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.modpack.ModpackCompletionException;
@@ -37,7 +35,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -57,14 +54,14 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         this(repository, modpackFile, null);
     }
 
-    public ModpackInstallWizardProvider(HMCLGameRepository repository, String updateVersion) {
-        this(repository, null, updateVersion);
+    public ModpackInstallWizardProvider(HMCLGameRepository repository, GameInstanceID updateInstanceId) {
+        this(repository, null, updateInstanceId);
     }
 
-    public ModpackInstallWizardProvider(HMCLGameRepository repository, Path modpackFile, String updateVersion) {
+    public ModpackInstallWizardProvider(HMCLGameRepository repository, Path modpackFile, GameInstanceID updateInstanceId) {
         this.repository = repository;
         this.file = modpackFile;
-        this.updateVersion = updateVersion;
+        this.updateVersion = updateInstanceId != null ? updateInstanceId.toString() : null;
     }
 
     public void setIconUrl(String iconUrl) {
@@ -90,14 +87,16 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         Modpack modpack = settings.get(LocalModpackPage.MODPACK_MANIFEST);
         String name = settings.get(LocalModpackPage.MODPACK_NAME);
         String iconUrl = settings.get(LocalModpackPage.MODPACK_ICON_URL);
-        Charset charset = settings.get(LocalModpackPage.MODPACK_CHARSET);
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
+        var excludedFiles = settings.get(LocalModpackPage.MODPACK_EXCLUDED_FILES);
 
         if (isManuallyCreated) {
-            return ModpackHelper.getInstallManuallyCreatedModpackTask(selected, name, charset);
+            return ModpackHelper.getInstallManuallyCreatedModpackTask(selected, name);
         }
 
         if ((selected == null && serverModpackManifest == null) || modpack == null || name == null) return null;
+
+        GameInstanceID instanceId = new GameInstanceID(name);
 
         if (updateVersion != null) {
             if (selected == null) {
@@ -106,9 +105,9 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             }
             try {
                 if (serverModpackManifest != null) {
-                    return ModpackHelper.getUpdateTask(repository, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(name)));
+                    return ModpackHelper.getUpdateTask(repository, serverModpackManifest, instanceId, ModpackHelper.readModpackConfiguration(repository.getLayout().getModpackConfigurationFile(instanceId)));
                 } else {
-                    return ModpackHelper.getUpdateTask(repository, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(name)));
+                    return ModpackHelper.getUpdateTask(repository, selected, instanceId, ModpackHelper.readModpackConfiguration(repository.getLayout().getModpackConfigurationFile(instanceId)), excludedFiles);
                 }
             } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
@@ -120,11 +119,11 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             return null;
         } else {
             if (serverModpackManifest != null) {
-                return ModpackHelper.getInstallTask(repository, serverModpackManifest, name, modpack)
-                        .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(name));
+                return ModpackHelper.getInstallTask(repository, serverModpackManifest, instanceId, modpack)
+                        .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(repository.getInstance(instanceId)));
             } else {
-                return ModpackHelper.getInstallTask(repository, selected, name, modpack, iconUrl)
-                        .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(name));
+                return ModpackHelper.getInstallTask(repository, selected, instanceId, modpack, iconUrl, excludedFiles)
+                        .thenRunAsync(Schedulers.javafx(), () -> repository.setSelectedInstance(repository.getInstance(instanceId)));
             }
         }
     }

@@ -23,12 +23,42 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Tests for detached launcher state migration.
 @NotNullByDefault
 public final class LauncherStateTest {
+    /// Tests that settings listeners receive the observable field that changed.
+    @Test
+    public void reportsChangedFieldToListeners() {
+        LauncherState state = new LauncherState();
+        AtomicBoolean notified = new AtomicBoolean();
+        state.addListener(source -> {
+            assertSame(state.xProperty(), source);
+            notified.set(true);
+        });
+
+        state.setX(0.25);
+
+        assertTrue(notified.get());
+    }
+
+    /// Tests that only window geometry fields defer automatic persistence.
+    @Test
+    public void identifiesDeferredWindowGeometryFields() {
+        LauncherState state = new LauncherState();
+
+        assertFalse(state.shouldSaveImmediately(state.xProperty()));
+        assertFalse(state.shouldSaveImmediately(state.yProperty()));
+        assertFalse(state.shouldSaveImmediately(state.widthProperty()));
+        assertFalse(state.shouldSaveImmediately(state.heightProperty()));
+        assertTrue(state.shouldSaveImmediately(state.schemaProperty()));
+        assertTrue(state.shouldSaveImmediately(state.promptedVersionProperty()));
+        assertTrue(state.shouldSaveImmediately(state.getShownTips()));
+    }
+
     /// Tests extracting runtime state fields from a legacy config object.
     @Test
     public void extractsLauncherStateFromLegacyConfigJson() {

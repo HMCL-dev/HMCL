@@ -26,6 +26,7 @@ import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.monetfx.Contrast;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.BackgroundType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
@@ -36,8 +37,8 @@ import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.ContentEncoding;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -48,7 +49,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
@@ -660,7 +660,8 @@ public final class ThemePackManager {
                     currentColorStyle(),
                     null,
                     background,
-                    new ThemeTitleBar(currentTitleBarTransparent()));
+                    new ThemeTitleBar(currentTitleBarTransparent()),
+                    currentWindowTransparent());
             Theme theme = new Theme(
                     null,
                     null,
@@ -711,6 +712,9 @@ public final class ThemePackManager {
         if (themeColorType == ThemeColorType.DEFAULT) {
             return ThemeColorSource.DEFAULT;
         }
+        if (themeColorType == ThemeColorType.SYSTEM) {
+            return ThemeColorSource.custom(Themes.getSystemThemeColor());
+        }
         if (themeColorType == ThemeColorType.BACKGROUND) {
             if (backgroundType == BackgroundType.THEME_COLOR) {
                 return ThemeColorSource.DEFAULT;
@@ -755,6 +759,13 @@ public final class ThemePackManager {
                 : Objects.requireNonNullElse(resolveCurrentTitleBarTransparent(currentResolveContext()), false);
     }
 
+    /// Returns whether the current launcher window should be transparent.
+    private static boolean currentWindowTransparent() throws IOException {
+        return SettingsManager.settings().getThemeAppearanceOverrides().contains(LauncherSettings.THEME_APPEARANCE_WINDOW_TRANSPARENT)
+                ? settings().windowTransparentProperty().get()
+                : Objects.requireNonNullElse(resolveCurrentWindowTransparent(currentResolveContext()), false);
+    }
+
     /// Resolves the selected theme's controlled brightness.
     ///
     /// @param context the condition resolution context
@@ -793,6 +804,16 @@ public final class ThemePackManager {
     public static @Nullable Boolean resolveCurrentTitleBarTransparent(ThemeResolveContext context) throws IOException {
         @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
         return appearance != null && appearance.titleBar() != null ? appearance.titleBar().transparent() : null;
+    }
+
+    /// Resolves the selected theme window transparency directive.
+    ///
+    /// @param context the condition resolution context
+    /// @return the selected theme window transparency directive, or `null` when unavailable
+    /// @throws IOException if the selected theme pack cannot be read
+    public static @Nullable Boolean resolveCurrentWindowTransparent(ThemeResolveContext context) throws IOException {
+        @Nullable ThemeAppearance appearance = resolveCurrentThemeAppearance(context);
+        return appearance != null ? appearance.windowTransparent() : null;
     }
 
     /// Resolves the current selected theme color source without extracting any wallpaper pixels.
@@ -1476,28 +1497,28 @@ public final class ThemePackManager {
             List<Path> temporaryFiles,
             ResolvedBackground background) throws IOException {
         String url = requireNonBlank(background.networkImageUrl(), "background.url");
-        URI uri = NetworkUtils.toURI(url);
-        if (!NetworkUtils.isHttpUri(uri)) {
+        WebURL webUrl = WebURL.parse(url);
+        if (!NetworkUtils.isHttpUri(webUrl)) {
             throw new IOException("Theme background URL must be HTTP or HTTPS: " + url);
         }
 
-        String entryName = "assets/wallpapers/" + networkBackgroundAssetName(uri);
+        String entryName = "assets/wallpapers/" + networkBackgroundAssetName(webUrl);
         if (background.networkImageCachePolicy() == NetworkBackgroundImageCachePolicy.ENABLED) {
             try {
-                @Nullable Path cachedFile = new CacheFileTask(uri).run();
+                @Nullable Path cachedFile = new CacheFileTask(webUrl).run();
                 if (cachedFile != null && Files.isRegularFile(cachedFile)) {
                     assets.add(new ThemePackAsset(cachedFile, entryName));
                     return new ThemeBackground.Image(entryName);
                 }
             } catch (Exception e) {
-                LOG.warning("Failed to cache theme background, falling back to direct download: " + uri, e);
+                LOG.warning("Failed to cache theme background, falling back to direct download: " + webUrl, e);
             }
         }
 
         Path temporaryFile = Files.createTempFile("hmcl-theme-background-", ".tmp");
         boolean success = false;
         try {
-            downloadNetworkBackground(uri, temporaryFile);
+            downloadNetworkBackground(webUrl, temporaryFile);
             assets.add(new ThemePackAsset(temporaryFile, entryName));
             temporaryFiles.add(temporaryFile);
             success = true;
@@ -1514,12 +1535,12 @@ public final class ThemePackManager {
     }
 
     /// Downloads one network background into a temporary file without installing it into the persistent image cache.
-    private static void downloadNetworkBackground(URI uri, Path outputFile) throws IOException {
-        HttpURLConnection connection = NetworkUtils.resolveConnection(NetworkUtils.createHttpConnection(uri));
+    private static void downloadNetworkBackground(WebURL url, Path outputFile) throws IOException {
+        HttpURLConnection connection = NetworkUtils.resolveConnection(NetworkUtils.createHttpConnection(url));
         try {
             int responseCode = connection.getResponseCode();
             if (responseCode / 100 != 2) {
-                throw new IOException("Failed to download theme background: HTTP " + responseCode + " " + uri);
+                throw new IOException("Failed to download theme background: HTTP " + responseCode + " " + url);
             }
 
             ContentEncoding contentEncoding = ContentEncoding.fromConnection(connection);
@@ -1533,8 +1554,8 @@ public final class ThemePackManager {
     }
 
     /// Returns a safe theme-pack asset file name for a downloaded network background.
-    private static String networkBackgroundAssetName(URI uri) {
-        String path = Objects.toString(uri.getPath(), "");
+    private static String networkBackgroundAssetName(WebURL url) {
+        String path = Objects.toString(url.getPath(), "");
         @Nullable Path fileNamePath = path.isBlank() ? null : Path.of(path).getFileName();
         String fileName = fileNamePath != null ? fileNamePath.toString() : "";
         String sanitized = sanitizePathSegment(fileName);

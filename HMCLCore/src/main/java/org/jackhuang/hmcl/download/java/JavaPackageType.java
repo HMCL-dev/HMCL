@@ -21,15 +21,17 @@ package org.jackhuang.hmcl.download.java;
  * @author Glavo
  */
 public enum JavaPackageType {
-    JRE(false, false),
-    JDK(true, false),
-    JREFX(false, true),
-    JDKFX(true, true);
+    JRE("JRE", false, false),
+    JDK("JDK", true, false),
+    JREFX("JRE FX", false, true),
+    JDKFX("JDK FX", true, true);
 
+    private final String displayName;
     private final boolean jdk;
     private final boolean javafx;
 
-    JavaPackageType(boolean jdk, boolean javafx) {
+    JavaPackageType(String displayName, boolean jdk, boolean javafx) {
+        this.displayName = displayName;
         this.jdk = jdk;
         this.javafx = javafx;
     }
@@ -39,6 +41,10 @@ public enum JavaPackageType {
             return javafx ? JDKFX : JDK;
         else
             return javafx ? JREFX : JRE;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 
     public boolean isJDK() {

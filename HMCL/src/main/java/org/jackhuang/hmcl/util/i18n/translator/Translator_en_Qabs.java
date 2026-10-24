@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.util.i18n.translator;
 
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 
 import java.io.IOException;
@@ -73,7 +73,7 @@ public class Translator_en_Qabs extends Translator {
     }
 
     @Override
-    public String getDisplayVersion(RemoteVersion remoteVersion) {
+    public String getDisplayVersion(ComponentRemoteVersion remoteVersion) {
         return translate(remoteVersion.getSelfVersion());
     }
 

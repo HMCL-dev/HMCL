@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.util.i18n.translator;
 
-import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
@@ -44,7 +44,7 @@ public class Translator {
         return displayLocale;
     }
 
-    public String getDisplayVersion(RemoteVersion remoteVersion) {
+    public String getDisplayVersion(ComponentRemoteVersion remoteVersion) {
         return remoteVersion.getSelfVersion();
     }
 

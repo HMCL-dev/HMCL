@@ -1,0 +1,134 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.ui.instances;
+
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.game.LocalizedRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.util.i18n.I18n;
+
+import java.util.MissingResourceException;
+
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
+public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
+    public static DownloadListPage ofMod(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MOD, true, true);
+    }
+
+    public static DownloadListPage ofModrinthMod(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MOD, false, true);
+    }
+
+    public static DownloadListPage ofModPack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.MODPACK, true, true);
+    }
+
+    public static DownloadListPage ofResourcePack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.RESOURCE_PACK, true, true);
+    }
+
+    public static DownloadListPage ofShaderPack(DownloadPage.DownloadCallback callback, boolean instanceSelection) {
+        var page = new HMCLLocalizedDownloadListPage(callback, instanceSelection, RemoteAddon.Type.SHADER_PACK, true, true);
+        page.supportChinese.set(false);
+        return page;
+    }
+
+    private HMCLLocalizedDownloadListPage(DownloadPage.DownloadCallback callback, boolean instanceSelection, RemoteAddon.Type type, boolean curseForge, boolean modrinth) {
+        super(type, new Repository(), callback, instanceSelection);
+        ((Repository) repository).downloadSource.bind(downloadSource);
+
+        supportChinese.set(true);
+
+        boolean supportedCurseForge = curseForge && CurseForgeRemoteAddonRepository.isAvailable();
+
+        downloadSources.setAll("addon.modrinth");
+        if (supportedCurseForge) {
+            downloadSources.add("addon.curseforge");
+        }
+
+        if ("curseforge".equalsIgnoreCase(settings().defaultAddonSourceProperty().get())) {
+            if (supportedCurseForge) {
+                downloadSource.set("addon.curseforge");
+            } else if (modrinth) {
+                downloadSource.set("addon.modrinth");
+            } else {
+                throw new AssertionError("Should not be here.");
+            }
+        } else {
+            if (modrinth) {
+                downloadSource.set("addon.modrinth");
+            } else if (supportedCurseForge) {
+                downloadSource.set("addon.curseforge");
+            } else {
+                throw new AssertionError("Should not be here.");
+            }
+        }
+    }
+
+    private static class Repository extends LocalizedRemoteAddonRepository {
+
+        public Repository() {
+        }
+
+        public final StringProperty downloadSource = new SimpleStringProperty();
+
+        @Override
+        protected RemoteAddonRepository getBackedRemoteModRepository() {
+            if ("addon.modrinth".equals(downloadSource.get())) {
+                return ModrinthRemoteAddonRepository.getInstance();
+            } else {
+                return CurseForgeRemoteAddonRepository.getInstance();
+            }
+        }
+
+    }
+
+    @Override
+    protected String getLocalizedCategory(String category, Object self) {
+        if (category.isEmpty()) {
+            return "";
+        }
+
+        String key = ("addon.modrinth".equals(downloadSource.get()) ? "modrinth" : "curse") + ".category." + category;
+        try {
+            return I18n.getResourceBundle().getString(key);
+        } catch (MissingResourceException e) {
+            LOG.warning("Cannot find key " + key + " in resource bundle");
+            if (self instanceof CurseForgeRemoteAddonRepository.Category curseCategory) {
+                return curseCategory.getName();
+            }
+            return category;
+        }
+    }
+
+    @Override
+    protected String getLocalizedOfficialPage() {
+        if ("addon.modrinth".equals(downloadSource.get())) {
+            return i18n("addon.modrinth");
+        } else {
+            return i18n("addon.curseforge");
+        }
+    }
+}

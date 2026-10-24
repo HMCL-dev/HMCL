@@ -12,35 +12,25 @@ import com.jfoenix.controls.JFXRippler.RipplerPos;
 import com.jfoenix.transitions.CachedTransition;
 import com.jfoenix.transitions.JFXFillTransition;
 import com.jfoenix.utils.JFXNodeUtils;
-import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
-import javafx.animation.Transition;
+import javafx.animation.*;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.VPos;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.skin.CheckBoxSkin;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderStroke;
-import javafx.scene.layout.BorderStrokeStyle;
-import javafx.scene.layout.BorderWidths;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 
 public class JFXCheckBoxSkin extends CheckBoxSkin {
     private final StackPane box = new StackPane();
     private final StackPane mark = new StackPane();
+    private final SVGPath markShape = new SVGPath();
     private final double lineThick = 2.0;
     private final double padding = 10.0;
     private final JFXRippler rippler;
@@ -48,7 +38,11 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
     private final double labelOffset = -8.0;
     private final Transition transition;
     private boolean invalid = true;
-    private JFXFillTransition select;
+    private boolean selected;
+    private boolean indeterminate;
+
+    /// The checkbox fill animation, initialized with the configured checked color.
+    private JFXFillTransition fillTransition;
 
     public JFXCheckBoxSkin(JFXCheckBox control) {
         super(control);
@@ -61,22 +55,17 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         boxContainer.getChildren().add(this.box);
         boxContainer.setPadding(new Insets(this.padding));
         this.rippler = new JFXRippler(boxContainer, RipplerMask.CIRCLE, RipplerPos.BACK);
-        this.updateRippleColor();
-        SVGPath shape = new SVGPath();
-        shape.setContent("M384 690l452-452 60 60-512 512-238-238 60-60z");
-        this.mark.setShape(shape);
-        this.mark.setMaxSize(15.0, 12.0);
-        this.mark.setStyle("-fx-background-color:-monet-on-primary; -fx-border-color:-monet-on-primary; -fx-border-width:2px;");
+        this.updateRippleColor(control.isSelected(), control.isIndeterminate());
+        this.mark.setShape(this.markShape);
+        this.updateMarkShape(true, false);
         this.mark.setVisible(false);
         this.mark.setScaleX(0.0);
         this.mark.setScaleY(0.0);
         boxContainer.getChildren().add(this.mark);
         this.container.getChildren().add(this.rippler);
         AnchorPane.setRightAnchor(this.rippler, this.labelOffset);
-        control.selectedProperty().addListener((o, oldVal, newVal) -> {
-            this.updateRippleColor();
-            this.playSelectAnimation(newVal);
-        });
+        this.registerChangeListener(control.selectedProperty(), ignored -> requestSelectionUpdate());
+        this.registerChangeListener(control.indeterminateProperty(), ignored -> requestSelectionUpdate());
 
         ReadOnlyBooleanProperty focusVisibleProperty = FXUtils.focusVisibleProperty(control);
         if (focusVisibleProperty == null)
@@ -93,35 +82,61 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         control.pressedProperty().addListener((o, oldVal, newVal) -> this.rippler.hideOverlay());
         this.updateChildren();
         this.registerChangeListener(control.checkedColorProperty(), ignored -> {
-            if (select != null) {
-                select.stop();
+            if (fillTransition != null) {
+                fillTransition.stop();
             }
-            this.createFillTransition();
-            updateColors();
+            boolean selected = control.isSelected();
+            boolean indeterminate = control.isIndeterminate();
+            JFXFillTransition fillTransition = this.createFillTransition();
+            this.fillTransition = fillTransition;
+            fillTransition.jumpTo(selected || indeterminate ? fillTransition.getCycleDuration() : Duration.ZERO);
+            updateColors(selected, indeterminate);
         });
-        this.registerChangeListener(control.unCheckedColorProperty(), ignored -> updateColors());
+        this.registerChangeListener(control.unCheckedColorProperty(), ignored -> updateColors(control.isSelected(), control.isIndeterminate()));
         this.transition = new CheckBoxTransition();
-        this.createFillTransition();
+        this.fillTransition = this.createFillTransition();
     }
 
-    private void updateRippleColor() {
-        var control = (JFXCheckBox) this.getSkinnable();
-        this.rippler.setRipplerFill(control.isSelected()
+    private void requestSelectionUpdate() {
+        this.invalid = true;
+        this.getSkinnable().requestLayout();
+    }
+
+    private void updateRippleColor(boolean selected, boolean indeterminate) {
+        JFXCheckBox control = (JFXCheckBox) this.getSkinnable();
+        this.rippler.setRipplerFill(selected || indeterminate
                 ? control.getCheckedColor()
                 : control.getUnCheckedColor());
     }
 
-    private void updateColors() {
+    private void updateColors(boolean selected, boolean indeterminate) {
         var control = (JFXCheckBox) getSkinnable();
-        boolean isSelected = control.isSelected();
-        JFXNodeUtils.updateBackground(box.getBackground(), box, isSelected ? control.getCheckedColor() : Color.TRANSPARENT);
-        rippler.setRipplerFill(isSelected ? control.getCheckedColor() : control.getUnCheckedColor());
+        boolean marked = selected || indeterminate;
+        JFXNodeUtils.updateBackground(box.getBackground(), box, marked ? control.getCheckedColor() : Color.TRANSPARENT);
+        rippler.setRipplerFill(marked ? control.getCheckedColor() : control.getUnCheckedColor());
+        this.updateBorder(selected, indeterminate);
+    }
+
+    private void updateBorder(boolean selected, boolean indeterminate) {
+        JFXCheckBox control = (JFXCheckBox) this.getSkinnable();
         final BorderStroke borderStroke = box.getBorder().getStrokes().get(0);
         box.setBorder(new Border(new BorderStroke(
-                isSelected ? control.getCheckedColor() : Themes.getColorScheme().getOnSurfaceVariant(),
+                selected || indeterminate ? control.getCheckedColor() : Themes.getColorScheme().getOnSurfaceVariant(),
                 borderStroke.getTopStyle(),
                 borderStroke.getRadii(),
                 borderStroke.getWidths())));
+    }
+
+    private void updateMarkShape(boolean selected, boolean indeterminate) {
+        if (indeterminate) {
+            this.markShape.setContent("M1 0 H9 A1 1 0 0 1 10 1 A1 1 0 0 1 9 2 H1 A1 1 0 0 1 0 1 A1 1 0 0 1 1 0 Z");
+            this.mark.setMaxSize(10.0, 2.0);
+            this.mark.setStyle("-fx-background-color:-monet-on-primary;");
+        } else if (selected) {
+            this.markShape.setContent("M384 690l452-452 60 60-512 512-238-238 60-60z");
+            this.mark.setMaxSize(15.0, 12.0);
+            this.mark.setStyle("-fx-background-color:-monet-on-primary; -fx-border-color:-monet-on-primary; -fx-border-width:2px;");
+        }
     }
 
     protected void updateChildren() {
@@ -151,9 +166,10 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         double xOffset = computeXOffset(w, labelWidth + boxWidth, checkBox.getAlignment().getHpos()) + x;
         double yOffset = computeYOffset(h, maxHeight, checkBox.getAlignment().getVpos()) + x;
         if (this.invalid) {
-            if (this.getSkinnable().isSelected()) {
-                this.playSelectAnimation(true);
-            }
+            boolean selected = checkBox.isSelected();
+            boolean indeterminate = checkBox.isIndeterminate();
+            this.updateRippleColor(selected, indeterminate);
+            this.playSelectAnimation(selected, indeterminate);
 
             this.invalid = false;
         }
@@ -180,27 +196,85 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         };
     }
 
-    private void playSelectAnimation(Boolean selection) {
-        if (selection == null) {
-            selection = false;
+    private void playSelectAnimation(boolean selected, boolean indeterminate) {
+        boolean previousSelected = this.selected;
+        boolean previousIndeterminate = this.indeterminate;
+        this.selected = selected;
+        this.indeterminate = indeterminate;
+        boolean previousMarked = previousSelected || previousIndeterminate;
+        boolean marked = selected || indeterminate;
+        boolean sameVisualState = previousIndeterminate == indeterminate
+                && (indeterminate || previousSelected == selected);
+        this.updateBorder(selected, indeterminate);
+
+        if (sameVisualState) {
+            return;
+        }
+        this.invalid = false;
+
+        if (!AnimationUtils.isAnimationEnabled()) {
+            finishSelectionAnimation(selected, indeterminate);
+            return;
         }
 
-        JFXCheckBox control = (JFXCheckBox) this.getSkinnable();
-        this.transition.setRate(selection ? 1.0 : -1.0);
-        this.select.setRate(selection ? 1.0 : -1.0);
+        if (previousMarked && marked) {
+            this.transition.stop();
+            this.transition.setOnFinished(null);
+            this.transition.jumpTo(this.transition.getCycleDuration());
+            this.transition.setRate(-1.0);
+            this.transition.setOnFinished(event -> {
+                this.transition.setOnFinished(null);
+                this.updateMarkShape(selected, indeterminate);
+                this.transition.jumpTo(Duration.ZERO);
+                this.transition.setRate(1.0);
+                this.transition.play();
+            });
+            this.transition.play();
+            return;
+        }
+
+        this.transition.setOnFinished(null);
+        if (marked) {
+            this.updateMarkShape(selected, indeterminate);
+        }
+        this.transition.setRate(marked ? 1.0 : -1.0);
+        this.fillTransition.setRate(marked ? 1.0 : -1.0);
+        this.fillTransition.play();
         this.transition.play();
-        this.select.play();
-        this.box.setBorder(new Border(new BorderStroke(
-                selection ? control.getCheckedColor() : Themes.getColorScheme().getOnSurfaceVariant(),
-                BorderStrokeStyle.SOLID,
-                new CornerRadii(2.0),
-                new BorderWidths(this.lineThick))));
     }
 
-    private void createFillTransition() {
-        this.select = new JFXFillTransition(Duration.millis(120.0), this.box, Color.TRANSPARENT,
+    /// Stops selection animations and immediately displays the checkbox's current state.
+    ///
+    /// The state indicator, fill, and border are updated even if no animation is running.
+    /// This also suppresses pending selection updates and the initial selection animation.
+    /// The skin must not have been disposed.
+    public void finishSelectionAnimation() {
+        CheckBox checkBox = this.getSkinnable();
+        this.finishSelectionAnimation(checkBox.isSelected(), checkBox.isIndeterminate());
+    }
+
+    private void finishSelectionAnimation(boolean selected, boolean indeterminate) {
+        this.selected = selected;
+        this.indeterminate = indeterminate;
+        boolean marked = selected || indeterminate;
+        transition.stop();
+        transition.setOnFinished(null);
+        transition.jumpTo(marked ? transition.getCycleDuration() : Duration.ZERO);
+        fillTransition.stop();
+        fillTransition.jumpTo(marked ? fillTransition.getCycleDuration() : Duration.ZERO);
+        invalid = false;
+        updateMarkShape(selected, indeterminate);
+        mark.setVisible(marked);
+        mark.setScaleX(marked ? 1.0 : 0.0);
+        mark.setScaleY(marked ? 1.0 : 0.0);
+        updateColors(selected, indeterminate);
+    }
+
+    private JFXFillTransition createFillTransition() {
+        JFXFillTransition fillTransition = new JFXFillTransition(Duration.millis(120.0), this.box, Color.TRANSPARENT,
                 (Color) ((JFXCheckBox) this.getSkinnable()).getCheckedColor());
-        this.select.setInterpolator(Interpolator.EASE_OUT);
+        fillTransition.setInterpolator(Interpolator.EASE_OUT);
+        return fillTransition;
     }
 
     private final class CheckBoxTransition extends CachedTransition {

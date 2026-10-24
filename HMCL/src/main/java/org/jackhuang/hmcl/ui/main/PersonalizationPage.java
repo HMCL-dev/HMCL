@@ -23,49 +23,31 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.Property;
+import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.ColorPicker;
-import javafx.scene.control.ContentDisplay;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import javafx.css.PseudoClass;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import javafx.stage.FileChooser;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.uuid.UUIDs;
-import org.jackhuang.hmcl.setting.BackgroundType;
-import org.jackhuang.hmcl.setting.FontManager;
-import org.jackhuang.hmcl.setting.LauncherSettings;
-import org.jackhuang.hmcl.setting.SettingsManager;
-import org.jackhuang.hmcl.setting.ThemeColorType;
-import org.jackhuang.hmcl.setting.UserSettings;
-import org.jackhuang.hmcl.theme.BackgroundLoadPolicy;
-import org.jackhuang.hmcl.theme.BuiltinBackground;
-import org.jackhuang.hmcl.theme.NetworkBackgroundImageCachePolicy;
-import org.jackhuang.hmcl.theme.Theme;
-import org.jackhuang.hmcl.theme.ThemeColor;
-import org.jackhuang.hmcl.theme.ThemeColorSource;
-import org.jackhuang.hmcl.theme.ThemePackExporter;
-import org.jackhuang.hmcl.theme.ThemePackManifest;
-import org.jackhuang.hmcl.theme.ThemePackManager;
-import org.jackhuang.hmcl.theme.ThemeReference;
+import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.theme.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
@@ -214,6 +196,60 @@ public class PersonalizationPage extends StackPane {
         refresh.invalidated(null);
     }
 
+    /// Binds a line toggle button to an inheritable theme appearance setting.
+    private static void bindThemeAppearanceToggleButton(
+            LineToggleButton button,
+            String setting,
+            BooleanProperty directProperty,
+            Supplier<Boolean> effectiveValueSupplier) {
+        JFXButton inheritButton = createThemeAppearanceOverrideButton();
+        button.setTitleTrailing(inheritButton);
+
+        Holder<Boolean> updating = new Holder<>(false);
+        InvalidationListener refresh = ignored -> {
+            if (updating.value) {
+                return;
+            }
+            updating.value = true;
+            try {
+                boolean overridden = settings().getThemeAppearanceOverrides().contains(setting);
+                button.setSelected(overridden ? directProperty.get() : effectiveValueSupplier.get());
+                updateThemeAppearanceOverrideButton(inheritButton, !overridden);
+            } finally {
+                updating.value = false;
+            }
+        };
+
+        button.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            if (updating.value) {
+                return;
+            }
+            updating.value = true;
+            try {
+                directProperty.set(Boolean.TRUE.equals(newValue));
+                settings().getThemeAppearanceOverrides().add(setting);
+                updateThemeAppearanceOverrideButton(inheritButton, false);
+            } finally {
+                updating.value = false;
+            }
+            refresh.invalidated(null);
+        });
+        directProperty.addListener(refresh);
+        addThemeAppearanceRefreshListener(refresh);
+
+        inheritButton.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            if (!settings().getThemeAppearanceOverrides().contains(setting)) {
+                directProperty.set(button.isSelected());
+                settings().getThemeAppearanceOverrides().add(setting);
+            } else {
+                settings().getThemeAppearanceOverrides().remove(setting);
+            }
+            refresh.invalidated(null);
+            event.consume();
+        });
+        refresh.invalidated(null);
+    }
+
     /// Returns the display name for the currently selected launcher theme.
     private static String getSelectedThemeTitle() {
         ThemeReference reference = settings().getSelectedThemeOrDefault();
@@ -292,20 +328,25 @@ public class PersonalizationPage extends StackPane {
         String defaultPackId = "com.example.hmcl.theme-pack." + UUIDs.toCompactString(UUIDs.generateV7(exportTimestamp));
         String defaultPackName = LocalDateTime.ofInstant(exportTimestamp, ZoneId.systemDefault()).format(EXPORTED_THEME_NAME_FORMATTER);
 
-        String userName = System.getProperty("user.name").trim();
-        String defaultAuthorName = StringUtils.isBlank(userName) ? "Unknown" : userName;
+        String accountName = null;
+        {
+            var currentAccount = Accounts.getSelectedAccount();
+            if (currentAccount != null) accountName = currentAccount.getProfileName();
+        }
+        if (StringUtils.isBlank(accountName)) accountName = System.getProperty("user.name").trim();
+        String defaultAuthorName = StringUtils.isBlank(accountName) ? "Unknown" : accountName;
 
         PromptDialogPane.Builder.StringQuestion packNameQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.name"),
-                "")
+                defaultPackName)
                 .setPromptText(defaultPackName);
         PromptDialogPane.Builder.StringQuestion versionQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.version"),
-                "")
+                ThemePackManager.CURRENT_THEME_PACK_VERSION)
                 .setPromptText(ThemePackManager.CURRENT_THEME_PACK_VERSION);
         PromptDialogPane.Builder.StringQuestion authorNameQuestion = new PromptDialogPane.Builder.StringQuestion(
                 i18n("theme_pack.export.author"),
-                "")
+                defaultAuthorName)
                 .setPromptText(defaultAuthorName);
 
         Controllers.prompt(new PromptDialogPane.Builder(i18n("theme_pack.export.title"), (questions, handler) -> handler.resolve())
@@ -332,7 +373,7 @@ public class PersonalizationPage extends StackPane {
         chooser.getExtensionFilters().setAll(
                 new FileChooser.ExtensionFilter(i18n("theme_pack.file"), "*" + ThemePackExporter.FILE_EXTENSION));
 
-        @Nullable Path output = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
+        @Nullable Path output = Controllers.showSaveDialog(chooser);
         if (output == null) {
             return;
         }
@@ -394,7 +435,7 @@ public class PersonalizationPage extends StackPane {
             LineSelectButton<String> brightnessPane = new LineSelectButton<>();
             brightnessPane.setTitle(i18n("settings.launcher.brightness"));
             brightnessPane.setConverter(name -> i18n("settings.launcher.brightness."
-                    + Objects.requireNonNullElse(name, "auto")));
+                    + Objects.requireNonNullElse(name, "auto").trim().toLowerCase(Locale.ROOT)));
             brightnessPane.setItems(Arrays.asList("auto", "light", "dark"));
             bindThemeAppearanceLineSelectButton(
                     brightnessPane,
@@ -445,6 +486,10 @@ public class PersonalizationPage extends StackPane {
                     i18n("settings.launcher.theme_color_type.default"),
                     ThemeColorType.DEFAULT);
 
+            var systemColorChoice = new RadioChoiceList.Choice<ThemeColorType>(
+                    i18n("settings.launcher.theme_color_type.system"),
+                    ThemeColorType.SYSTEM);
+
             var customColorChoice = new RadioChoiceList.Choice<ThemeColorType>(
                     i18n("settings.launcher.theme_color_type.custom"),
                     ThemeColorType.CUSTOM) {
@@ -461,7 +506,11 @@ public class PersonalizationPage extends StackPane {
 
             RadioChoiceList<ThemeColorType> themeColorChoiceList = new RadioChoiceList<>();
             themeColorChoiceList.setFallbackValue(ThemeColorType.DEFAULT);
-            themeColorChoiceList.setChoices(Arrays.asList(defaultColorChoice, customColorChoice, backgroundColorChoice));
+            themeColorChoiceList.setChoices(Arrays.asList(
+                    defaultColorChoice,
+                    systemColorChoice,
+                    customColorChoice,
+                    backgroundColorChoice));
 
             JFXButton themeColorOverrideButton = createThemeAppearanceOverrideButton();
             themeColorSublist.setTitleRight(themeColorOverrideButton);
@@ -650,6 +699,17 @@ public class PersonalizationPage extends StackPane {
                 }
                 updatingBackground.value = true;
                 try {
+                    builtinBackgroundComboBox.setValue(Objects.requireNonNullElse(
+                            settings().builtinBackgroundIdProperty().get(),
+                            BuiltinBackground.FALLBACK.id()));
+                    customBackgroundOption.setPath(Objects.toString(
+                            settings().customBackgroundImagePathProperty().get(),
+                            ""));
+                    networkBackgroundOption.setText(Objects.toString(
+                            settings().networkBackgroundImageUrlProperty().get(),
+                            ""));
+                    paintBackgroundOption.setPaint(settings().customBackgroundPaintProperty().get());
+
                     boolean overridden = settings().getThemeAppearanceOverrides().contains(
                             LauncherSettings.THEME_APPEARANCE_BACKGROUND);
                     ThemePackManager.ResolvedBackground background;
@@ -944,6 +1004,7 @@ public class PersonalizationPage extends StackPane {
 
                 Label textOpacity = new Label();
                 FXUtils.setLimitWidth(textOpacity, 50);
+                textOpacity.setAlignment(Pos.CENTER);
 
                 StringBinding valueBinding = Bindings.createStringBinding(() -> ((int) slider.getValue()) + "%", slider.valueProperty());
                 textOpacity.textProperty().bind(valueBinding);
@@ -1078,6 +1139,25 @@ public class PersonalizationPage extends StackPane {
             refresh.invalidated(null);
             themeAppearanceList.getContent().add(titleBarTransparentButton);
         }
+
+        LineToggleButton windowTransparentButton = new LineToggleButton();
+        windowTransparentButton.setTitle(i18n("settings.launcher.window_transparent"));
+        bindThemeAppearanceToggleButton(
+                windowTransparentButton,
+                LauncherSettings.THEME_APPEARANCE_WINDOW_TRANSPARENT,
+                settings().windowTransparentProperty(),
+                () -> {
+                    try {
+                        return Objects.requireNonNullElse(
+                                ThemePackManager.resolveCurrentWindowTransparent(
+                                        ThemePackManager.currentResolveContext()),
+                                false);
+                    } catch (IOException | RuntimeException e) {
+                        return false;
+                    }
+                });
+        themeAppearanceList.getContent().add(windowTransparentButton);
+
         content.getChildren().addAll(
                 ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")),
                 themeAppearanceList,
@@ -1089,7 +1169,8 @@ public class PersonalizationPage extends StackPane {
 
             LineToggleButton animationButton = new LineToggleButton();
             appearanceList.getContent().add(animationButton);
-            animationButton.selectedProperty().bindBidirectional(settings().animationDisabledProperty());
+            animationButton.setSelected(settings().isAnimationDisabled());
+            FXUtils.onChange(animationButton.selectedProperty(), value -> settings().animationDisabledProperty().set(value));
             animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
             animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
 
@@ -1176,7 +1257,7 @@ public class PersonalizationPage extends StackPane {
 
                 Label lblLogFontDisplay = new Label("[23:33:33] [Client Thread/INFO] [WaterPower]: Loaded mod WaterPower.");
                 lblLogFontDisplay.fontProperty().bind(Bindings.createObjectBinding(
-                        () -> Font.font(Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT), settings().logFontSizeProperty().get()),
+                        () -> Font.font(Objects.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT), settings().logFontSizeProperty().get()),
                         settings().logFontFamilyProperty(), settings().logFontSizeProperty()));
 
                 logFontPane.getChildren().add(lblLogFontDisplay);

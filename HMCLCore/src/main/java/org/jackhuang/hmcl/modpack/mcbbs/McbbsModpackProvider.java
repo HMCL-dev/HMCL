@@ -21,6 +21,7 @@ import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.modpack.*;
 import org.jackhuang.hmcl.task.Task;
@@ -28,8 +29,10 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Set;
+
+import org.jetbrains.annotations.Nullable;
 
 public final class McbbsModpackProvider implements ModpackProvider {
     public static final McbbsModpackProvider INSTANCE = new McbbsModpackProvider();
@@ -40,16 +43,21 @@ public final class McbbsModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, String version) {
-        return new McbbsModpackCompletionTask(dependencyManager, version);
+    public Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance) {
+        return new McbbsModpackCompletionTask(dependencyManager, instance);
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException {
+    public Task<?> createUpdateTask(
+            DefaultDependencyManager dependencyManager,
+            DefaultGameInstance instance,
+            Path zipFile,
+            Modpack modpack,
+            @Nullable Set<String> excludedFiles) throws MismatchedModpackTypeException {
         if (!(modpack.getManifest() instanceof McbbsModpackManifest mcbbsModpackManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new McbbsModpackLocalInstallTask(dependencyManager, zipFile, modpack, mcbbsModpackManifest, name));
+        return new ModpackUpdateTask(instance, new McbbsModpackLocalInstallTask(dependencyManager, zipFile, modpack, mcbbsModpackManifest, instance));
     }
 
     @Override
@@ -63,20 +71,20 @@ public final class McbbsModpackProvider implements ModpackProvider {
         config.getManifest().injectLaunchOptions(builder);
     }
 
-    private static Modpack fromManifestFile(InputStream json, Charset encoding) throws IOException, JsonParseException {
+    private static Modpack fromManifestFile(InputStream json) throws IOException, JsonParseException {
         McbbsModpackManifest manifest = JsonUtils.fromNonNullJsonFully(json, McbbsModpackManifest.class);
-        return manifest.toModpack(encoding);
+        return manifest.toModpack();
     }
 
     @Override
-    public Modpack readManifest(ZipArchiveReader zip, Path file, Charset encoding) throws IOException, JsonParseException {
+    public Modpack readManifest(ZipArchiveReader zip, Path file) throws IOException, JsonParseException {
         ZipArchiveEntry mcbbsPackMeta = zip.getEntry("mcbbs.packmeta");
         if (mcbbsPackMeta != null) {
-            return fromManifestFile(zip.getInputStream(mcbbsPackMeta), encoding);
+            return fromManifestFile(zip.getInputStream(mcbbsPackMeta));
         }
         ZipArchiveEntry manifestJson = zip.getEntry("manifest.json");
         if (manifestJson != null) {
-            return fromManifestFile(zip.getInputStream(manifestJson), encoding);
+            return fromManifestFile(zip.getInputStream(manifestJson));
         }
         throw new IOException("`mcbbs.packmeta` or `manifest.json` cannot be found");
     }

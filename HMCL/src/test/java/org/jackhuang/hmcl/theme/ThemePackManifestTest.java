@@ -86,6 +86,7 @@ public final class ThemePackManifestTest {
 
         assertEquals(BackgroundType.DEFAULT, background.type());
         assertEquals(1.0, background.opacity(), 0.0);
+        assertNull(theme.appearance().windowTransparent());
     }
 
 }

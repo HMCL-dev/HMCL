@@ -45,7 +45,7 @@ public final class RemoteModpackPage extends ModpackPage {
             throw new IllegalStateException("MODPACK_SERVER_MANIFEST should exist");
 
         try {
-            controller.getSettings().put(MODPACK_MANIFEST, manifest.toModpack(null));
+            controller.getSettings().put(MODPACK_MANIFEST, manifest.toModpack());
         } catch (IOException e) {
             Controllers.dialog(i18n("modpack.type.server.malformed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             Platform.runLater(controller::onEnd);
@@ -62,12 +62,11 @@ public final class RemoteModpackPage extends ModpackPage {
             txtModpackName.setText(name);
             txtModpackName.setDisable(true);
         } else {
-            // trim: https://github.com/HMCL-dev/HMCL/issues/962
-            txtModpackName.setText(manifest.getName().trim());
+            txtModpackName.setText(LocalModpackPage.processModpackName(manifest.getName()));
             txtModpackName.getValidators().addAll(
                     new RequiredValidator(),
-                    new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
-                    new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
+                    new Validator(i18n("install.new_game.already_exists"), str -> !repository.instanceIdConflicts(str)),
+                    new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId));
         }
 
         btnDescription.setVisible(StringUtils.isNotBlank(manifest.getDescription()));

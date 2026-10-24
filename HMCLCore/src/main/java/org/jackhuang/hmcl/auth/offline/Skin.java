@@ -20,11 +20,12 @@ package org.jackhuang.hmcl.auth.offline;
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import javafx.scene.image.Image;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
+import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -38,8 +39,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 
 public record Skin(Type type, String cslApi, TextureModel textureModel, String localSkinPath, String localCapePath) {
@@ -120,8 +121,8 @@ public record Skin(Type type, String cslApi, TextureModel textureModel, String l
             case CUSTOM_SKIN_LOADER_API:
                 String realCslApi = type == Type.LITTLE_SKIN
                         ? "https://littleskin.cn/csl"
-                        : NetworkUtils.addHttpsIfMissing(StringUtils.removeSuffix(Lang.requireNonNullElse(cslApi, ""), "/"));
-                return Task.composeAsync(() -> new GetTask(String.format("%s/%s.json", realCslApi, username)))
+                        : NetworkUtils.addHttpsIfMissing(StringUtils.removeSuffix(Objects.requireNonNullElse(cslApi, ""), "/"));
+                return Task.composeAsync(() -> new GetTask(WebURL.parse("%s/%s.json".formatted(realCslApi, username))))
                         .thenComposeAsync(json -> {
                             SkinJson result = JsonUtils.GSON.fromJson(json, SkinJson.class);
 
@@ -185,8 +186,8 @@ public record Skin(Type type, String cslApi, TextureModel textureModel, String l
 
     private static class FetchBytesTask extends FetchTask<InputStream> {
 
-        public FetchBytesTask(String uri) {
-            super(List.of(NetworkUtils.toURI(uri)));
+        public FetchBytesTask(String url) {
+            super(DownloadCandidates.of(url));
         }
 
         @Override
