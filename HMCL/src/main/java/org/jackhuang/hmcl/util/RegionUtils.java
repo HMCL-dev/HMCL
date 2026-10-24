@@ -31,10 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -52,15 +49,14 @@ public final class RegionUtils {
     ///
     /// @return the detected region code, or `null` if no region can be determined unambiguously
     private static @Nullable String detectMachineRegion() {
-        @Unmodifiable Map<String, @Unmodifiable List<String>> timeZoneRegions;
+        @Unmodifiable List<String> candidates;
         try {
-            timeZoneRegions = loadTimeZoneRegions();
+            candidates = loadTimeZoneRegions(ZoneId.systemDefault().getId());
         } catch (Exception e) {
             LOG.warning("Failed to load time zone region mapping", e);
-            timeZoneRegions = Map.of();
+            candidates = List.of();
         }
 
-        @Unmodifiable List<String> candidates = timeZoneRegions.getOrDefault(ZoneId.systemDefault().getId(), List.of());
         if (candidates.size() == 1)
             return candidates.get(0);
 
@@ -346,24 +342,23 @@ public final class RegionUtils {
         };
     }
 
-    /// Loads an unmodifiable map from bundled time zone identifiers to unmodifiable candidate lists.
-    /// Each call reads the resource afresh and preserves the region order within each row.
+    /// Reads the bundled mapping and returns the requested time zone's candidate regions in source order.
     ///
+    /// @param zoneId the time zone identifier to match against the first CSV field
+    /// @return an unmodifiable candidate list, or an empty list if the time zone is not mapped
     /// @throws IOException if the resource is missing or cannot be read
-    static @Unmodifiable Map<String, @Unmodifiable List<String>> loadTimeZoneRegions() throws IOException {
+    @VisibleForTesting
+    static @Unmodifiable List<String> loadTimeZoneRegions(String zoneId) throws IOException {
         try (@Nullable InputStream input = RegionUtils.class.getResourceAsStream("/assets/timezone_regions.csv")) {
             if (input == null) {
                 throw new IOException("Missing time zone region mapping");
             }
-            var regions = new HashMap<String, @Unmodifiable List<String>>();
-            for (String line : Lang.toIterable(new String(input.readAllBytes(), StandardCharsets.UTF_8).lines())) {
-                if (line.isBlank() || line.startsWith("#")) {
-                    continue;
-                }
-                String[] fields = line.split(",", -1);
-                regions.put(fields[0], List.copyOf(Arrays.asList(fields).subList(1, fields.length)));
+            String prefix = zoneId + ",";
+            for (String line : Lang.toIterable(new String(input.readAllBytes(), StandardCharsets.ISO_8859_1).lines())) {
+                if (line.startsWith(prefix))
+                    return List.of(line.substring(prefix.length()).split(","));
             }
-            return Map.copyOf(regions);
+            return List.of();
         }
     }
 

@@ -23,28 +23,36 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/// Verifies candidate preservation and immutability of the bundled time zone mapping.
+/// Verifies exact time zone lookup and preservation of candidate regions.
 @NotNullByDefault
 final class RegionUtilsTest {
-    /// Reads all candidates in source order from the generated resource and exposes no mutable collections.
+    /// Reads candidates in source order and exposes an unmodifiable list.
     @Test
     void loadsUnmodifiableCandidateMapping() throws IOException {
-        @Unmodifiable Map<String, @Unmodifiable List<String>> regions = RegionUtils.loadTimeZoneRegions();
-        assertEquals(List.of("CN"), regions.get("Asia/Shanghai"));
-        assertEquals(List.of("CN"), regions.get("Asia/Urumqi"));
-        assertEquals(List.of("CH", "DE", "LI"), regions.get("Europe/Zurich"));
-        assertEquals(List.of("JP", "AU"), regions.get("Asia/Tokyo"));
-        assertFalse(regions.containsKey("Etc/UTC"));
-        assertThrows(UnsupportedOperationException.class, () -> regions.put("Etc/UTC", List.of("US")));
-        for (@Unmodifiable List<String> candidates : regions.values()) {
-            assertFalse(candidates.isEmpty());
-            assertTrue(candidates.stream().allMatch(region -> region.matches("[A-Z]{2}")));
-            assertEquals(candidates.size(), candidates.stream().distinct().count());
-            assertThrows(UnsupportedOperationException.class, () -> candidates.add("US"));
+        assertEquals(List.of("CN"), RegionUtils.loadTimeZoneRegions("Asia/Shanghai"));
+        assertEquals(List.of("CN"), RegionUtils.loadTimeZoneRegions("Asia/Urumqi"));
+        assertEquals(List.of("CH", "DE", "LI"), RegionUtils.loadTimeZoneRegions("Europe/Zurich"));
+        @Unmodifiable List<String> candidates = RegionUtils.loadTimeZoneRegions("Asia/Tokyo");
+        assertEquals(List.of("JP", "AU"), candidates);
+        assertThrows(UnsupportedOperationException.class, () -> candidates.add("US"));
+    }
+
+    /// Does not match missing identifiers, partial names, or region fields.
+    @Test
+    void matchesCompleteTimeZoneField() throws IOException {
+        for (String zoneId : List.of("Etc/UTC", "Asia/Shang", "Shanghai", "CN", "")) {
+            assertEquals(List.of(), RegionUtils.loadTimeZoneRegions(zoneId));
         }
+    }
+
+    /// Finds entries near both ends of the sorted resource.
+    @Test
+    void findsFirstAndLastTimeZones() throws IOException {
+        assertEquals(List.of("CI", "BF", "GH", "GM", "GN", "IS", "ML", "MR", "SH", "SL", "SN", "TG"),
+                RegionUtils.loadTimeZoneRegions("Africa/Abidjan"));
+        assertEquals(List.of("TO"), RegionUtils.loadTimeZoneRegions("Pacific/Tongatapu"));
     }
 }
