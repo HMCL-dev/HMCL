@@ -51,7 +51,7 @@ public final class RegionUtils {
     private static @Nullable String detectMachineRegion() {
         @Unmodifiable List<String> candidates;
         try {
-            candidates = loadTimeZoneRegions(ZoneId.systemDefault().getId());
+            candidates = findRegionsByTimeZone(ZoneId.systemDefault().getId());
         } catch (Exception e) {
             LOG.warning("Failed to load time zone region mapping", e);
             candidates = List.of();
@@ -91,7 +91,7 @@ public final class RegionUtils {
     /// @throws IOException if the resource is missing or cannot be read
     /// @see <a href="https://data.iana.org/time-zones/tzdb/zone1970.tab">tzdb timezone descriptions</a>
     @VisibleForTesting
-    static @Unmodifiable List<String> loadTimeZoneRegions(String zoneId) throws IOException {
+    static @Unmodifiable List<String> findRegionsByTimeZone(String zoneId) throws IOException {
         try (@Nullable InputStream input = RegionUtils.class.getResourceAsStream("/assets/timezone_regions.csv")) {
             if (input == null) {
                 throw new IOException("Missing time zone region mapping");

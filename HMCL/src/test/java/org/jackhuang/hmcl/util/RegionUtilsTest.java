@@ -32,10 +32,10 @@ final class RegionUtilsTest {
     /// Reads candidates in source order and exposes an unmodifiable list.
     @Test
     void loadsUnmodifiableCandidateMapping() throws IOException {
-        assertEquals(List.of("CN"), RegionUtils.loadTimeZoneRegions("Asia/Shanghai"));
-        assertEquals(List.of("CN"), RegionUtils.loadTimeZoneRegions("Asia/Urumqi"));
-        assertEquals(List.of("CH", "DE", "LI"), RegionUtils.loadTimeZoneRegions("Europe/Zurich"));
-        @Unmodifiable List<String> candidates = RegionUtils.loadTimeZoneRegions("Asia/Tokyo");
+        assertEquals(List.of("CN"), RegionUtils.findRegionsByTimeZone("Asia/Shanghai"));
+        assertEquals(List.of("CN"), RegionUtils.findRegionsByTimeZone("Asia/Urumqi"));
+        assertEquals(List.of("CH", "DE", "LI"), RegionUtils.findRegionsByTimeZone("Europe/Zurich"));
+        @Unmodifiable List<String> candidates = RegionUtils.findRegionsByTimeZone("Asia/Tokyo");
         assertEquals(List.of("JP", "AU"), candidates);
         assertThrows(UnsupportedOperationException.class, () -> candidates.add("US"));
     }
@@ -44,25 +44,25 @@ final class RegionUtilsTest {
     @Test
     void matchesCompleteTimeZoneField() throws IOException {
         for (String zoneId : List.of("Etc/UTC", "UTC", "Universal", "Asia/Shang", "Shanghai", "CN", "")) {
-            assertEquals(List.of(), RegionUtils.loadTimeZoneRegions(zoneId));
+            assertEquals(List.of(), RegionUtils.findRegionsByTimeZone(zoneId));
         }
     }
 
     /// Finds system time zone aliases without dropping the target's candidate countries.
     @Test
     void loadsCompatibilityAliases() throws IOException {
-        assertEquals(List.of("BE", "LU", "NL"), RegionUtils.loadTimeZoneRegions("Europe/Amsterdam"));
-        assertEquals(List.of("DE", "DK", "NO", "SE", "SJ"), RegionUtils.loadTimeZoneRegions("Europe/Stockholm"));
-        assertEquals(List.of("DE", "DK", "NO", "SE", "SJ"), RegionUtils.loadTimeZoneRegions("Europe/Oslo"));
-        assertEquals(List.of("CN"), RegionUtils.loadTimeZoneRegions("PRC"));
-        assertEquals(List.of("US"), RegionUtils.loadTimeZoneRegions("US/Eastern"));
+        assertEquals(List.of("BE", "LU", "NL"), RegionUtils.findRegionsByTimeZone("Europe/Amsterdam"));
+        assertEquals(List.of("DE", "DK", "NO", "SE", "SJ"), RegionUtils.findRegionsByTimeZone("Europe/Stockholm"));
+        assertEquals(List.of("DE", "DK", "NO", "SE", "SJ"), RegionUtils.findRegionsByTimeZone("Europe/Oslo"));
+        assertEquals(List.of("CN"), RegionUtils.findRegionsByTimeZone("PRC"));
+        assertEquals(List.of("US"), RegionUtils.findRegionsByTimeZone("US/Eastern"));
     }
 
     /// Finds entries near both ends of the sorted resource.
     @Test
     void findsFirstAndLastTimeZones() throws IOException {
         assertEquals(List.of("CI", "BF", "GH", "GM", "GN", "IS", "ML", "MR", "SH", "SL", "SN", "TG"),
-                RegionUtils.loadTimeZoneRegions("Africa/Abidjan"));
-        assertEquals(List.of("TO"), RegionUtils.loadTimeZoneRegions("Pacific/Tongatapu"));
+                RegionUtils.findRegionsByTimeZone("Africa/Abidjan"));
+        assertEquals(List.of("TO"), RegionUtils.findRegionsByTimeZone("Pacific/Tongatapu"));
     }
 }
