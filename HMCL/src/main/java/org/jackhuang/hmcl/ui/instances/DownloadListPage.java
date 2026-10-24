@@ -36,6 +36,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.AddonProjectInfo;
+import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadCandidates;
@@ -642,8 +644,9 @@ public class DownloadListPage extends Control implements DecoratorPage, PageAwar
                                             : PADDING
                             );
 
-                            ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(getSkinnable().type).getModByCurseForgeId(item.slug());
-                            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : item.title());
+                            @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(getSkinnable().type);
+                            @Nullable AddonProjectInfo mod = registry != null ? registry.getInfoByCurseForgeId(item.slug()) : null;
+                            content.setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : item.title());
                             String description = item.description();
                             if (description != null) {
                                 description = description.replaceAll("\\R", " ");
@@ -676,7 +679,7 @@ public class DownloadListPage extends Control implements DecoratorPage, PageAwar
                 });
             }
 
-            getChildren().setAll(pane);
+            this.getChildren().setAll(pane);
         }
 
         private record CategoryIndented(int indent, RemoteAddonRepository.Category category) {

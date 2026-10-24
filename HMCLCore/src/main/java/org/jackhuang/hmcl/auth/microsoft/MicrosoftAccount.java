@@ -20,9 +20,11 @@ package org.jackhuang.hmcl.auth.microsoft;
 import com.google.gson.JsonObject;
 import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.*;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.nio.file.Path;
@@ -37,7 +39,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class MicrosoftAccount extends OAuthAccount {
 
     protected final MicrosoftService service;
-    protected UUID profileID;
+    protected final UUID profileID;
 
     private boolean authenticated = false;
     private MicrosoftSession session;
@@ -47,6 +49,8 @@ public final class MicrosoftAccount extends OAuthAccount {
         this.service = requireNonNull(service);
         this.session = requireNonNull(session);
         this.profileID = requireNonNull(session.profile().id());
+
+        addProfilePropertiesListener();
     }
 
     protected MicrosoftAccount(MicrosoftService service, OAuth.GrantFlow flow) throws AuthenticationException {
@@ -62,6 +66,18 @@ public final class MicrosoftAccount extends OAuthAccount {
 
         profileID = session.profile().id();
         authenticated = true;
+
+        addProfilePropertiesListener();
+    }
+
+    @SuppressWarnings("FieldCanBeLocal")
+    private ObjectBinding<Optional<CompleteGameProfile>> profilePropertiesBinding;
+    private void addProfilePropertiesListener() {
+        // binding() is thread-safe
+        // hold the binding so that it won't be garbage-collected
+        profilePropertiesBinding = service.getProfileRepository().binding(profileID, true);
+        // and it's safe to add a listener to an ObjectBinding which does not have any listener attached before (maybe tricky)
+        profilePropertiesBinding.addListener((a, b, c) -> this.invalidate());
     }
 
     @Override
@@ -146,6 +162,8 @@ public final class MicrosoftAccount extends OAuthAccount {
     public void writePrivateData(JsonObject privateData) {
         super.writePrivateData(privateData);
         session.writePrivateData(privateData);
+        service.getProfileRepository().getImmediately(profileID).ifPresent(profile ->
+                privateData.add("profileProperties", JsonUtils.GSON.toJsonTree(profile.getProperties())));
     }
 
     public MicrosoftService getService() {

@@ -181,8 +181,8 @@ public final class CurseInstallTask extends Task<Void> {
             }
         });
 
-        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(manifest.overrides()), any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(manifest.overrides()), manifest, CurseModpackProvider.INSTANCE, manifest.name(), manifest.version(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList(manifest.overrides()), any -> true, config).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList(manifest.overrides()), manifest, CurseModpackProvider.INSTANCE, manifest.name(), manifest.version(), repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
 
         @Nullable WebURL iconUri = NetworkUtils.toWebURLOrNull(iconUrl);
         if (iconUri != null) {
@@ -230,7 +230,7 @@ public final class CurseInstallTask extends Task<Void> {
         }
 
         String pathPrefix = StringUtils.addSuffix(FileUtils.normalizePath(overridesDir), "/");
-        try (var reader = CompressingUtils.openZipFileWithPossibleEncoding(zipFile, modpack.getEncoding())) {
+        try (var reader = CompressingUtils.openZipFile(zipFile)) {
             for (var entry : reader.getEntries()) {
                 String normalizedPath = FileUtils.normalizePath(entry.getName());
                 if (!normalizedPath.startsWith(pathPrefix)) {

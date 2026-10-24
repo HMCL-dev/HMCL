@@ -39,7 +39,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /// copies. Callers obtain a manager from the current instance after a refresh or COW publish.
 ///
 /// @param <T> the local addon file type managed by this manager
-public abstract class LocalAddonManager<T extends LocalAddonFile> {
+public abstract class LocalAddonManager<T extends LocalAddonFile<T>> {
 
     /// File-name suffix used for disabled addon files.
     public static final String DISABLED_EXTENSION = ".disabled";

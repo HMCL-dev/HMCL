@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -31,7 +30,6 @@ public class ModpackInstallTask<T> extends Task<Void> {
 
     private final Path modpackFile;
     private final Path dest;
-    private final Charset charset;
     private final List<String> subDirectories;
     private final List<ModpackConfiguration.FileInformation> overrides;
     private final Predicate<String> callback;
@@ -40,14 +38,12 @@ public class ModpackInstallTask<T> extends Task<Void> {
     ///
     /// @param modpackFile      a zip file
     /// @param dest             destination to store unpacked files
-    /// @param charset          charset of the zip file
     /// @param subDirectories   the subdirectory of zip file to unpack
     /// @param callback         test whether the file (given full path) in zip file should be unpacked or not
     /// @param oldConfiguration old modpack information if upgrade
-    public ModpackInstallTask(Path modpackFile, Path dest, Charset charset, List<String> subDirectories, Predicate<String> callback, ModpackConfiguration<T> oldConfiguration) {
+    public ModpackInstallTask(Path modpackFile, Path dest, List<String> subDirectories, Predicate<String> callback, ModpackConfiguration<T> oldConfiguration) {
         this.modpackFile = modpackFile;
         this.dest = dest;
-        this.charset = charset;
         this.subDirectories = subDirectories;
         this.callback = callback;
 
@@ -72,7 +68,6 @@ public class ModpackInstallTask<T> extends Task<Void> {
                     .setSubDirectory(subDirectory)
                     .setTerminateIfSubDirectoryNotExists()
                     .setReplaceExistentFile(true)
-                    .setEncoding(charset)
                     .setFilter((zipEntry, destFile, relativePath) -> {
                         if (zipEntry.isDirectory()) return true;
                         if (!callback.test(relativePath)) return false;

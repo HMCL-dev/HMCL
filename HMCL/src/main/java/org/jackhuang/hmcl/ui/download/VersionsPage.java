@@ -52,10 +52,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
@@ -69,7 +66,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.*;
@@ -406,6 +402,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         VBox.setVgrow(list, Priority.ALWAYS);
 
                         control.versions.addListener((InvalidationListener) o -> updateList());
+                        if (!control.versions.isEmpty())
+                            updateList();
 
                         list.setCellFactory(listView -> new RemoteVersionListCell(control));
 
@@ -493,7 +491,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             }
 
             //noinspection DataFlowIssue
-            list.getItems().setAll(versions.collect(Collectors.toList()));
+            list.getItems().setAll(versions.toList());
             list.scrollTo(0);
         }
     }

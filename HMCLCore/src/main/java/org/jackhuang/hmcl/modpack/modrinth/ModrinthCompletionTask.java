@@ -119,6 +119,7 @@ public class ModrinthCompletionTask extends Task<Void> {
             }
 
         setStage("hmcl.modpack.download");
+        setSignificance(TaskSignificance.MODERATE);
     }
 
     @Override

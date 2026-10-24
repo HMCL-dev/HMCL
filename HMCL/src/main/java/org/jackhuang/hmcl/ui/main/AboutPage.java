@@ -26,18 +26,25 @@ import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.ImageContainer;
-import org.jackhuang.hmcl.ui.construct.LineButton;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.DataSizeUnit;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
+import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+@NotNullByDefault
 public final class AboutPage extends SpinnerPane {
 
     private final WeakListenerHolder holder = new WeakListenerHolder();
@@ -52,22 +59,83 @@ public final class AboutPage extends SpinnerPane {
 
         ComponentList about = new ComponentList();
         {
-            var launcher = LineButton.createExternalLinkButton(Metadata.PUBLISH_URL);
+            var launcher = LineButton.createExternalLinkButton(Metadata.REPOSITORY_URL);
             launcher.setLargeTitle(true);
             launcher.setLeading(FXUtils.newBuiltinImage("/assets/img/icon.png"));
             launcher.setTitle("Hello Minecraft! Launcher");
             launcher.setSubtitle(Metadata.VERSION);
 
-            var author = LineButton.createExternalLinkButton("https://space.bilibili.com/1445341");
-            author.setLargeTitle(true);
-            author.setLeading(FXUtils.newBuiltinImage("/assets/img/yellow_fish.png"));
-            author.setTitle("huanghongxun");
-            author.setSubtitle(i18n("about.author.statement"));
-
-            about.getContent().setAll(launcher, author);
+            about.getContent().setAll(launcher);
         }
 
-        ComponentList thanks = loadIconedTwoLineList("/assets/about/thanks.json");
+        ComponentList environment = new ComponentList();
+        {
+            var system = new LinePane();
+            system.setLargeTitle(true);
+            system.setLeading(SVG.LUCIDE_APP_WINDOW.createIcon(32));
+            system.setTitle(i18n("about.environment.system"));
+            system.setSubtitle((OperatingSystem.OS_RELEASE_PRETTY_NAME == null
+                    ? "%s %s (%s)".formatted(OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion(), Architecture.SYSTEM_ARCH.getDisplayName())
+                    : "%s (%s %s, %s)".formatted(OperatingSystem.OS_RELEASE_PRETTY_NAME, OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion(), Architecture.SYSTEM_ARCH.getDisplayName())));
+            environment.getContent().add(system);
+
+            if (SystemInfo.getTotalMemorySize() > 0) {
+                var memory = new LinePane();
+                memory.setLargeTitle(true);
+                memory.setLeading(SVG.LUCIDE_MEMORY_STICK.createIcon(32));
+                memory.setTitle(i18n("about.environment.memory"));
+                memory.setSubtitle("%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
+                environment.getContent().add(memory);
+            }
+
+            @Nullable CentralProcessor cpu = SystemInfo.getCentralProcessor();
+            if (cpu != null) {
+                String title = i18n("about.environment.cpu");
+                var button = new LinePane();
+                button.setLargeTitle(true);
+                button.setTitle(title);
+                button.setSubtitle(cpu.toString());
+                button.setLeading(SVG.LUCIDE_CPU.createIcon(32));
+
+                environment.getContent().add(button);
+            }
+
+            @Nullable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
+            if (graphicsCards != null) {
+                int index = 1;
+                for (GraphicsCard graphicsCard : graphicsCards) {
+                    String name = index == 1 && graphicsCards.size() == 1
+                            ? i18n("about.environment.gpu")
+                            : i18n("about.environment.gpu.n", index);
+                    index++;
+                    var button = new LinePane();
+                    button.setLargeTitle(true);
+                    button.setTitle(name);
+                    button.setSubtitle(graphicsCard.getName());
+
+                    button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
+
+                    environment.getContent().add(button);
+                }
+            }
+
+            var java = new LinePane();
+            java.setLargeTitle(true);
+            java.setLeading(SVG.LOCAL_CAFE.createIcon(32));
+            java.setTitle("Java");
+            java.setSubtitle("%s, %s by %s".formatted(
+                    Runtime.version().toString(),
+                    System.getProperty("java.vm.name"),
+                    System.getProperty("java.vendor")));
+            environment.getContent().add(java);
+
+            var javaFX = new LinePane();
+            javaFX.setLargeTitle(true);
+            javaFX.setLeading(SVG.LOCAL_CAFE.createIcon(32));
+            javaFX.setTitle("JavaFX");
+            javaFX.setSubtitle(System.getProperty("javafx.runtime.version"));
+            environment.getContent().add(javaFX);
+        }
 
         ComponentList deps = loadIconedTwoLineList("/assets/about/deps.json");
 
@@ -94,8 +162,8 @@ public final class AboutPage extends SpinnerPane {
         content.getChildren().setAll(
                 ComponentList.createComponentListTitle(i18n("about")),
                 about,
-                ComponentList.createComponentListTitle(i18n("about.thanks_to")),
-                thanks,
+                ComponentList.createComponentListTitle(i18n("about.environment")),
+                environment,
                 ComponentList.createComponentListTitle(i18n("about.dependency")),
                 deps,
                 ComponentList.createComponentListTitle(i18n("about.legal")),
@@ -141,7 +209,6 @@ public final class AboutPage extends SpinnerPane {
                         imageView.setImage(loadImage(image.getAsString()));
                         imageView.setMouseTransparent(true);
 
-
                         button.setLeading(imageView);
                     } else if (image.isJsonObject()) {
                         holder.add(FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> button.setLeading(darkMode
@@ -169,4 +236,5 @@ public final class AboutPage extends SpinnerPane {
 
         return componentList;
     }
+
 }

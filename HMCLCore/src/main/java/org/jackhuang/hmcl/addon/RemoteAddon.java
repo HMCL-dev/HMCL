@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -56,8 +57,6 @@ public record RemoteAddon(String projectId, String slug, String author, String t
     public enum DependencyType {
         REQUIRED,
         OPTIONAL,
-        TOOL,
-        INCLUDE,
         EMBEDDED,
         INCOMPATIBLE,
         BROKEN
@@ -150,6 +149,7 @@ public record RemoteAddon(String projectId, String slug, String author, String t
 
         private final RemoteAddonRepository repo;
 
+        @NotNull
         public RemoteAddonRepository getRepository() {
             return repo;
         }
@@ -174,11 +174,7 @@ public record RemoteAddon(String projectId, String slug, String author, String t
         Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException;
     }
 
-    public interface IVersion {
-        Source getSource();
-    }
-
-    public record Version(IVersion self, String versionId, String projectId, String name, String version,
+    public record Version(RemoteAddon.Source source, String versionId, String projectId, String name, String version,
                           Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
                           List<String> gameVersions, List<AddonLoader> loaders) {
     }
