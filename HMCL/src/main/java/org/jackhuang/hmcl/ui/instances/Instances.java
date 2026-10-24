@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXSpinner;
 import javafx.application.Platform;
+import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.auth.Account;
@@ -30,7 +32,10 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.setting.AuthlibInjectorServers;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -55,11 +60,14 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -141,26 +149,26 @@ public final class Instances {
         HMCLGameRepository repository = gameInstance.getRepository();
         GameInstanceID instanceId = gameInstance.getId();
         return Controllers.prompt(i18n("instance.manage.rename.message"), (newName, handler) -> {
-            if (newName.equals(instanceId.toString())) {
-                handler.resolve();
-                return;
-            }
-            GameInstanceID oldInstanceId = instanceId;
-            GameInstanceID newInstanceId = new GameInstanceID(newName);
-            if (repository.renameInstance(oldInstanceId, newInstanceId)) {
-                handler.resolve();
-                repository.refreshAsync()
-                        .thenRunAsync(Schedulers.javafx(), () -> {
-                            if (repository.hasInstance(newInstanceId)) {
-                                repository.setSelectedInstance(repository.getInstance(newInstanceId));
-                            }
-                        }).start();
-            } else {
-                handler.reject(i18n("instance.manage.rename.fail"));
-            }
-        }, instanceId.toString(),
-            new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId),
-            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName) || newVersionName.equals(instanceId.toString())));
+                    if (newName.equals(instanceId.toString())) {
+                        handler.resolve();
+                        return;
+                    }
+                    GameInstanceID oldInstanceId = instanceId;
+                    GameInstanceID newInstanceId = new GameInstanceID(newName);
+                    if (repository.renameInstance(oldInstanceId, newInstanceId)) {
+                        handler.resolve();
+                        repository.refreshAsync()
+                                .thenRunAsync(Schedulers.javafx(), () -> {
+                                    if (repository.hasInstance(newInstanceId)) {
+                                        repository.setSelectedInstance(repository.getInstance(newInstanceId));
+                                    }
+                                }).start();
+                    } else {
+                        handler.reject(i18n("instance.manage.rename.fail"));
+                    }
+                }, instanceId.toString(),
+                new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId),
+                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName) || newVersionName.equals(instanceId.toString())));
     }
 
     public static void exportInstance(HMCLGameInstance gameInstance) {
@@ -206,12 +214,12 @@ public final class Instances {
                             .thenComposeAsync(draft -> Task.allOf(
                                     gameDownloadTask,
                                     Task.allOf(
-                                            new GameAssetDownloadTask(
-                                                    dependencyManager,
-                                                    newManifest,
-                                                    GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY,
-                                                    true),
-                                            new GameLibrariesTask(dependencyManager, newManifest, true))
+                                                    new GameAssetDownloadTask(
+                                                            dependencyManager,
+                                                            newManifest,
+                                                            GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY,
+                                                            true),
+                                                    new GameLibrariesTask(dependencyManager, newManifest, true))
                                             .withRunAsync(() -> {
                                                 // ignore failure
                                             })))
@@ -283,6 +291,130 @@ public final class Instances {
         executor.start();
     }
 
+    public static void cleanGameFiles(HMCLGameRepository repository) {
+        var dialogBuilder = new MessageDialogPane.Builder(i18n("game.clean.content", i18n("game.clean.loading")), i18n("message.question"), MessageDialogPane.MessageType.QUESTION);
+        var spinner = new JFXSpinner();
+        spinner.getStyleClass().add("small-spinner");
+
+        StackPane buttonPane = new StackPane();
+
+        JFXButton okButton = new JFXButton(i18n("button.yes"));
+        okButton.getStyleClass().add("dialog-accept");
+
+        dialogBuilder.addActionNoClose(buttonPane);
+        dialogBuilder.addCancel(null);
+
+        var dialog = dialogBuilder.build();
+
+        Task.supplyAsync(() -> {
+            var versions = repository.getDisplayInstances().toList();
+
+            Set<String> activeAssets = versions
+                    .stream()
+                    .map(it -> {
+                        try {
+                            return it.getAssetIndex(it.getManifest().assetIndex().getId());
+                        } catch (IOException e) {
+                            LOG.warning("Failed to get asset index", e);
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .flatMap(idx -> idx.getObjects().values().stream().map(AssetObject::getLocation))
+                    .collect(Collectors.toSet());
+
+            List<Path> unusedFiles = new ArrayList<>();
+
+            unusedFiles.addAll(findUnlistedFiles(repository.getBaseDirectory().resolve("assets").resolve("objects"), activeAssets));
+
+            Set<Path> unusedFolders = new HashSet<>();
+
+            var uselessFolderNames = Set.of("logs", "crash-reports", "modernfix", "mods/.connector", "CustomSkinLoader/caches", ".fabric");
+            for (String path : uselessFolderNames) {
+                unusedFolders.add(repository.getBaseDirectory().resolve(path));
+            }
+
+            versions.stream().map(HMCLGameInstance::getRunDirectory).distinct().forEach(runDir -> {
+                for (String folderName : uselessFolderNames) {
+                    Path target = runDir.resolve(folderName);
+                    if (Files.isDirectory(target)) {
+                        unusedFolders.add(target);
+                    }
+                }
+                try (var walker = Files.walk(runDir, 1)) {
+                    unusedFolders.addAll(walker
+                            .filter(it -> {
+                                var name = it.getFileName().toString();
+                                return (name.startsWith("natives-") || name.endsWith("-natives")) && Files.isDirectory(it);
+                            }).toList());
+                } catch (IOException ignored) {
+                }
+            });
+
+            for (Path dir : unusedFolders) {
+                if (Files.exists(dir)) {
+                    try (var s = Files.walk(dir)) {
+                        s.filter(Files::isRegularFile).forEach(unusedFiles::add);
+                    } catch (IOException ignored) {
+                    }
+                }
+            }
+
+            return unusedFiles;
+        }).thenApplyAsync((list) -> {
+            long totalSize = list.stream()
+                    .mapToLong(path -> {
+                        try {
+                            return Files.size(path);
+                        } catch (IOException e) {
+                            return 0L;
+                        }
+                    })
+                    .sum();
+
+            FXUtils.runInFX(() -> {
+                dialog.setText(i18n("game.clean.content", I18n.formatSize(totalSize)));
+                buttonPane.getChildren().setAll(okButton);
+                okButton.setDisable(totalSize == 0);
+
+                okButton.setOnAction(event -> {
+                    onEscPressed(dialog, () -> {
+                    });
+                    dialog.getCancelButton().setDisable(true);
+                    buttonPane.getChildren().setAll(spinner);
+                    Task.runAsync(() -> list.forEach(path -> {
+                        try {
+                            Files.deleteIfExists(path);
+                        } catch (IOException e) {
+                            LOG.warning("Failed to delete file " + path, e);
+                        }
+                    })).thenRunAsync(Schedulers.javafx(), () -> dialog.fireEvent(new DialogCloseEvent())).start();
+                });
+            });
+            return null;
+        }).start();
+
+        buttonPane.getChildren().setAll(spinner);
+
+        Controllers.dialog(dialog);
+    }
+
+    private static List<Path> findUnlistedFiles(Path root, Set<String> activePaths) {
+        if (!Files.exists(root)) return List.of();
+        try (var stream = Files.walk(root)) {
+            return stream
+                    .filter(Files::isRegularFile)
+                    .filter(path -> {
+                        String relative = root.relativize(path).toString().replace("\\", "/");
+                        return !activePaths.contains(relative);
+                    })
+                    .toList();
+        } catch (IOException e) {
+            return List.of();
+        }
+    }
+
     public static void cleanInstance(HMCLGameInstance gameInstance) {
         try {
             gameInstance.getRepository().clean(gameInstance.getId());
@@ -345,7 +477,7 @@ public final class Instances {
     /// attempted.
     ///
     /// @param gameInstance the instance to launch, or `null` when no instance is available
-    /// @param injecters callbacks that configure the launcher before launch
+    /// @param injecters    callbacks that configure the launcher before launch
     @SafeVarargs
     public static void launch(@Nullable HMCLGameInstance gameInstance, Consumer<LauncherHelper>... injecters) {
         if (gameInstance == null) {
