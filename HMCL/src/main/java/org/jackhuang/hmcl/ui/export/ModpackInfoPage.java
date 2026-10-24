@@ -117,7 +117,6 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         }
         Path file = Controllers.showSaveDialog(fileChooser);
         if (file == null) {
-            controller.onEnd();
             return;
         }
 
