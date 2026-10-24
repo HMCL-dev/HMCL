@@ -625,7 +625,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                 });
             }
 
-            getChildren().setAll(pane);
+            this.getChildren().setAll(pane);
         }
 
         private record CategoryIndented(int indent, RemoteAddonRepository.Category category) {
