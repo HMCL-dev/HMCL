@@ -33,7 +33,6 @@ import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -55,10 +54,8 @@ public final class RegionUtils {
         if (region != null)
             return region;
 
-        Pattern regionPattern = Pattern.compile("^[a-zA-Z]{2}$");
-
         region = LocaleUtils.SYSTEM_DEFAULT.getCountry();
-        if (regionPattern.matcher(region).matches())
+        if (region.matches("^[A-Z]{2}$"))
             return region.toUpperCase(Locale.ROOT);
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
