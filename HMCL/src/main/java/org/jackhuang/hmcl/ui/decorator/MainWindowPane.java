@@ -157,7 +157,6 @@ final class MainWindowPane extends StackPane {
             frame.setTop(titleBar);
         } else {
             decoration.setContent(titleBar);
-            decoration.headerBar.backgroundProperty().bind(titleBar.backgroundProperty());
             frame.setTop(decoration.headerBar);
         }
     }
