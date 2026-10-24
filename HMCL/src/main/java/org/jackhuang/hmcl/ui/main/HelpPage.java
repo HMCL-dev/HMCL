@@ -68,6 +68,7 @@ public class HelpPage extends SpinnerPane {
         Task.supplyAsync(() -> HttpRequest.GET(Metadata.DOCS_URL + "/index.json").getJson(listTypeOf(HelpCategory.class)))
             .whenComplete(Schedulers.javafx(), (helpCategories, exception) -> {
                 if (exception != null) {
+                    LOG.warning("Failed to load help page: ", exception);
                     showLoadFailure();
                     return;
                 }
