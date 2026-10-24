@@ -23,6 +23,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.stream.Collectors;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Verifies deterministic conversion of the IANA table and rejection of invalid input.
@@ -36,15 +38,29 @@ final class UpdateTimeZoneRegionsTest {
                 + "CN\t+4348+08735\tAsia/Urumqi\r\n"
                 + "CN\t+3114+12128\tAsia/Shanghai\tBeijing Time\r\n");
         assertTrue(csv.endsWith("CN,Asia/Shanghai,Asia/Urumqi\nUS,America/Los_Angeles\n"));
+        assertTrue(csv.startsWith("# Generated from https://data.iana.org/time-zones/tzdb/zone1970.tab (public domain).\n"));
         assertFalse(csv.contains("\r"));
     }
 
-    /// Rejects missing columns, ambiguous regions, malformed identifiers, and duplicate time zones.
+    /// Uses the first listed country for shared time zones, preserving IANA's country order.
+    @Test
+    void convertsSharedTimeZones() {
+        String csv = UpdateTimeZoneRegions.toCsv("JP,AU\t+353916+1394441\tAsia/Tokyo\tEyre Bird Observatory\n"
+                + "CH,DE,LI\t+4723+00832\tEurope/Zurich\tBusingen\n"
+                + "AU\t-3352+15113\tAustralia/Sydney\n");
+        String records = csv.lines().filter(line -> !line.startsWith("#")).collect(Collectors.joining("\n"));
+        assertEquals("AU,Australia/Sydney\nCH,Europe/Zurich\nJP,Asia/Tokyo", records);
+    }
+
+    /// Rejects missing columns, malformed country lists or identifiers, and duplicate time zones.
     @ParameterizedTest
     @ValueSource(strings = {
-            "# No records\n", "CN\t+3114+12128", "CN,US\t+3114+12128\tAsia/Shanghai",
+            "# No records\n", "CN\t+3114+12128", "CN,\t+3114+12128\tAsia/Shanghai",
+            ",CN\t+3114+12128\tAsia/Shanghai", "CN,,US\t+3114+12128\tAsia/Shanghai",
+            "CN,USA\t+3114+12128\tAsia/Shanghai", "CN,us\t+3114+12128\tAsia/Shanghai",
             "CN\t+3114+12128\t", "CN\t+3114+12128\tAsia/Shanghai,Asia/Urumqi",
-            "CN\t+3114+12128\tAsia/Shanghai\nUS\t+3114+12128\tAsia/Shanghai"
+            "CN\t+3114+12128\tAsia/Shanghai\nUS\t+3114+12128\tAsia/Shanghai",
+            "CH,DE,LI\t+4723+00832\tEurope/Zurich\nDE\t+4723+00832\tEurope/Zurich"
     })
     void rejectsInvalidTables(String table) {
         assertThrows(GradleException.class, () -> UpdateTimeZoneRegions.toCsv(table));

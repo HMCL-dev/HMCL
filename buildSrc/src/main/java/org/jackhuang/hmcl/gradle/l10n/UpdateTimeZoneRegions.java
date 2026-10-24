@@ -33,12 +33,12 @@ import java.util.HashSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-/// Updates the checked-in time zone mapping from IANA's public-domain `zone.tab`.
+/// Updates the checked-in time zone mapping from IANA's public-domain `zone1970.tab`.
 @NotNullByDefault
 @UntrackedTask(because = "The current IANA time zone table is a remote input")
 public abstract class UpdateTimeZoneRegions extends DefaultTask {
-    /// The IANA table containing one country code per time zone identifier.
-    private static final String SOURCE_URL = "https://data.iana.org/time-zones/tzdb/zone.tab";
+    /// The IANA table listing countries that share each time zone's civil timestamps since 1970.
+    private static final String SOURCE_URL = "https://data.iana.org/time-zones/tzdb/zone1970.tab";
 
     /// Returns the CSV destination, with each row containing a region followed by its time zone identifiers.
     @OutputFile
@@ -61,6 +61,8 @@ public abstract class UpdateTimeZoneRegions extends DefaultTask {
     }
 
     /// Converts tab-separated records to CSV sorted by region and time zone, ignoring comments and blank lines.
+    /// For time zones shared by multiple countries, uses the first country code listed by IANA,
+    /// which identifies the country containing the time zone's representative city.
     ///
     /// @throws GradleException if a record is malformed, a time zone is duplicated, or no records are present
     static String toCsv(String table) {
@@ -71,17 +73,18 @@ public abstract class UpdateTimeZoneRegions extends DefaultTask {
                 return;
             }
             String[] fields = line.split("\t", 4);
-            if (fields.length < 3 || !fields[0].matches("[A-Z]{2}")
+            if (fields.length < 3 || !fields[0].matches("[A-Z]{2}(,[A-Z]{2})*")
                     || !fields[2].matches("[A-Za-z0-9_+/-]+")) {
-                throw new GradleException("Invalid zone.tab record: " + line);
+                throw new GradleException("Invalid zone1970.tab record: " + line);
             }
             if (!timeZones.add(fields[2])) {
                 throw new GradleException("Duplicate time zone: " + fields[2]);
             }
-            regions.computeIfAbsent(fields[0], ignored -> new TreeSet<>()).add(fields[2]);
+            String region = fields[0].substring(0, 2);
+            regions.computeIfAbsent(region, ignored -> new TreeSet<>()).add(fields[2]);
         });
         if (regions.isEmpty()) {
-            throw new GradleException("No time zones found in zone.tab");
+            throw new GradleException("No time zones found in zone1970.tab");
         }
 
         var csv = new StringBuilder("# Generated from " + SOURCE_URL + " (public domain).\n"
