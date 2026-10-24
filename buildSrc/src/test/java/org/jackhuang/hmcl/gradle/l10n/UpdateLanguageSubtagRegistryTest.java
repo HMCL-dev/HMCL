@@ -86,7 +86,7 @@ final class UpdateLanguageSubtagRegistryTest {
                 Type: grandfathered
                 Tag: i-example
                 """);
-        String header = "# IANA Language Subtag Registry File-Date: 2026-10-01\n"
+        String header = "# IANA registry version: 2026-10-01\n"
                 + "# Generated from https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry.\n";
         assertEquals(header + "aa,abc\n", Files.readString(directory.resolve("sublanguages.csv")));
         assertEquals(header + "Hant,lzh\nLatn,abc,example\n", Files.readString(directory.resolve("default_script.csv")));

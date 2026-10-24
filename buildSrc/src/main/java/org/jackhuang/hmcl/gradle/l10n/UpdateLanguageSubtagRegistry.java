@@ -97,7 +97,7 @@ public abstract class UpdateLanguageSubtagRegistry extends DefaultTask {
         if (builder.items.isEmpty() || builder.fileDate == null) {
             throw new GradleException("Registry must contain a File-Date and at least one record");
         }
-        String header = "# IANA Language Subtag Registry File-Date: " + builder.fileDate + "\n"
+        String header = "# IANA registry version: " + builder.fileDate + "\n"
                 + "# Generated from " + SOURCE + ".\n";
         List<Item> items = builder.items;
 
