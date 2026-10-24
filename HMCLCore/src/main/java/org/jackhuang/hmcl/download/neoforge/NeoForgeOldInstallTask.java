@@ -21,8 +21,9 @@ import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile;
+import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
+import org.jackhuang.hmcl.download.forge.ProcessorReuse;
 import org.jackhuang.hmcl.download.game.GameInstanceJsonDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
@@ -414,12 +415,21 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
         vars.put("INSTALLER", installer.toAbsolutePath().toString());
         vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLayout().getLibrariesDirectory()));
 
-        updateProgress(0, processors.size());
-
-        Task<?> processorsTask = Task.runSequentially(
-                processors.stream()
-                        .map(processor -> createProcessorTask(processor, vars))
-                        .toArray(Task<?>[]::new));
+        Task<?> processorsTask;
+        if (ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer)) {
+            LOG.info("Skipping " + processors.size() + " NeoForge processors for " + selfVersion
+                    + ": the artifacts recorded by the last install are still current");
+            updateProgress(processors.size(), processors.size());
+            processorsTask = Task.runAsync(() -> {
+            });
+        } else {
+            updateProgress(0, processors.size());
+            processorsTask = Task.runSequentially(
+                            processors.stream()
+                                    .map(processor -> createProcessorTask(processor, vars))
+                                    .toArray(Task<?>[]::new))
+                    .thenRunAsync(() -> ProcessorReuse.writeSidecar(processors, vars, installer));
+        }
 
         dependencies.add(
                 processorsTask.thenComposeAsync(
