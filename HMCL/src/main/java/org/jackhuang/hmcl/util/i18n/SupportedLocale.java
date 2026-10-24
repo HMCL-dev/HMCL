@@ -24,6 +24,7 @@ import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.translator.Translator;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.io.IOException;
@@ -294,9 +295,63 @@ public final class SupportedLocale {
         return this.translator = new Translator(this);
     }
 
+    @Nullable
+    private static final MethodHandle METHOOD_LOOKUP_HANDLE_KEY_SET;
+
+    static {
+        MethodHandle methoodLookupHandleKeySet;
+        try {
+            methoodLookupHandleKeySet = MethodHandles.privateLookupIn(ResourceBundle.class, MethodHandles.lookup())
+                    .findVirtual(ResourceBundle.class, "handleKeySet", MethodType.methodType(Set.class));
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            LOG.warning("Failed to get private lookup for ResourceBundle", e);
+            methoodLookupHandleKeySet = null;
+        }
+        METHOOD_LOOKUP_HANDLE_KEY_SET = methoodLookupHandleKeySet;
+    }
+
+    public double getTranslationCompleteness() {
+        if (METHOOD_LOOKUP_HANDLE_KEY_SET == null) return 0.0;
+
+        ResourceBundle enBundle = SupportedLocale.getLocale(Locale.SIMPLIFIED_CHINESE).getResourceBundle();
+        Set<String> baseKeys = enBundle.keySet();
+        int totalKeys = baseKeys.size();
+        if (totalKeys == 0) return 0.0;
+
+        ResourceBundle currentBundle = getResourceBundle();
+        Set<String> handleKeys;
+
+        try {
+            @SuppressWarnings("unchecked")
+            Set<String> keys = (Set<String>) METHOOD_LOOKUP_HANDLE_KEY_SET.invoke(currentBundle);
+            handleKeys = keys;
+        } catch (Throwable e) {
+            LOG.warning("Failed to get handle keys", e);
+            return 0.0;
+        }
+
+        long actualTranslatedCount = handleKeys.stream()
+                .filter(baseKeys::contains)
+                .count();
+
+        double v = (double) actualTranslatedCount / totalKeys;
+        return Math.min(1.0, v);
+    }
+
     public boolean isSameLanguage(SupportedLocale other) {
         return LocaleUtils.getRootLanguage(this.getLocale())
                 .equals(LocaleUtils.getRootLanguage(other.getLocale()));
+    }
+
+    @Override
+    public String toString() {
+        return "SupportedLocale{" +
+                "isDefault=" + isDefault +
+                ", name='" + name + '\'' +
+                ", locale=" + locale +
+                ", displayLocale=" + displayLocale +
+                ", textDirection=" + textDirection +
+               '}';
     }
 
     public static final class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {
