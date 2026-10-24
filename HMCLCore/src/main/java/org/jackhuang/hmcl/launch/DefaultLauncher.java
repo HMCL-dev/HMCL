@@ -42,6 +42,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -715,7 +716,19 @@ public class DefaultLauncher extends Launcher {
 
         ManagedProcess p = new ManagedProcess(builder);
         if (listener != null)
-            startMonitors(p, envVars, listener, encoding, daemon);
+            startMonitors(p, listener, encoding, (exitCode, exitType) -> {
+                listener.onExit(exitCode, exitType);
+
+                if (StringUtils.isNotBlank(options.getPostExitCommand())) {
+                    try {
+                        ProcessBuilder postExitProcessBuilder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), envVars)).directory(options.getGameDir().toFile());
+                        postExitProcessBuilder.environment().putAll(envVars);
+                        SystemUtils.callExternalProcess(postExitProcessBuilder);
+                    } catch (Throwable e) {
+                        LOG.warning("An Exception happened while running exit command.", e);
+                    }
+                }
+            }, daemon);
         return p;
     }
 
@@ -1023,7 +1036,12 @@ public class DefaultLauncher extends Launcher {
             throw new ExecutionPolicyLimitException();
     }
 
-    private void startMonitors(ManagedProcess managedProcess, Map<String, String> envVars, ProcessListener processListener, Charset encoding, boolean isDaemon) {
+    /// attach listener to managed process
+    ///
+    /// @param processListener the listener attached to managed process
+    /// @param exitWatcher     the managed process exit callback
+    public static void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, Charset encoding,
+                                      BiConsumer<Integer, ProcessListener.ExitType> exitWatcher, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
             processListener.onLog(it, false);
@@ -1035,19 +1053,7 @@ public class DefaultLauncher extends Launcher {
             managedProcess.addLine(it);
         }, encoding), "stderr-pump", isDaemon);
         managedProcess.addRelatedThread(stderr);
-        managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), (exitCode, exitType) -> {
-            processListener.onExit(exitCode, exitType);
-
-            if (StringUtils.isNotBlank(options.getPostExitCommand())) {
-                try {
-                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), envVars)).directory(options.getGameDir().toFile());
-                    builder.environment().putAll(envVars);
-                    SystemUtils.callExternalProcess(builder);
-                } catch (Throwable e) {
-                    LOG.warning("An Exception happened while running exit command.", e);
-                }
-            }
-        }), "exit-waiter", isDaemon));
+        managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), exitWatcher), "exit-waiter", isDaemon));
     }
 
     private record Command(

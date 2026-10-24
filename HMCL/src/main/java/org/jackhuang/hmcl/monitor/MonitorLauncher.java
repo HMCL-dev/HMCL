@@ -192,6 +192,8 @@ public final class MonitorLauncher {
             } catch (IOException e) {
                 LOG.error("IOException occurred during communicating with HMCL monitor.", e);
             }
+            if (!process.isAttached())  // monitor died while we still owned exit handling
+                LOG.error("Monitor exited without sending game exit message");
         }, "hmcl-monitor-reader", true);
         return process;
     }

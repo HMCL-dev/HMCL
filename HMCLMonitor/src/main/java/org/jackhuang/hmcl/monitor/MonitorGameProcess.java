@@ -69,6 +69,11 @@ public final class MonitorGameProcess implements ProcessInfo {
         controller.handled(); // mark handled after handler run for the case that launcher was closed during handling
     }
 
+    /// Returns whether the launcher still owns exit handling.
+    public boolean isAttached() {
+        return controller.isAttached();
+    }
+
     @Override
     public boolean isRunning() {
         return handle != null && handle.isAlive();
@@ -144,6 +149,11 @@ public final class MonitorGameProcess implements ProcessInfo {
         /// Returns whether the monitor owns exit handling.
         synchronized boolean isDetached() {
             return state == State.DETACHED;
+        }
+
+        /// Returns whether the launcher still owns exit handling.
+        synchronized boolean isAttached() {
+            return state == State.ATTACHED;
         }
 
         /// Sends HANDLED only if the launcher still owns exit handling.
