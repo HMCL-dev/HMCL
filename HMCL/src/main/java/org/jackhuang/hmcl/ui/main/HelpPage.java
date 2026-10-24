@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.google.gson.annotations.SerializedName;
 
+import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
@@ -31,6 +32,7 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
@@ -71,6 +73,8 @@ public class HelpPage extends SpinnerPane {
                 }
 
                 try {
+                    List<Node> nodes = new ArrayList<>();
+
                     for (HelpCategory category : helpCategories) {
                         ComponentList categoryPane = new ComponentList();
 
@@ -83,9 +87,11 @@ public class HelpPage extends SpinnerPane {
                             categoryPane.getContent().add(item);
                         }
 
-                        content.getChildren().add(ComponentList.createComponentListTitle(category.title()));
-                        content.getChildren().add(categoryPane);
+                        nodes.add(ComponentList.createComponentListTitle(category.title()));
+                        nodes.add(categoryPane);
                     }
+
+                    content.getChildren().addAll(nodes);
 
                     hideSpinner();
                 } catch (Exception e) {
