@@ -1,6 +1,7 @@
-# Generated from https://data.iana.org/time-zones/tzdb/zone1970.tab (public domain).
-# Compatibility links from https://data.iana.org/time-zones/tzdb/backward (public domain).
-# Update with ./gradlew updateTimeZoneRegions.
+# IANA tzdb version: 2026e
+# Generated from https://data.iana.org/time-zones/tzdb-2026e/zone1970.tab (public domain).
+# Compatibility links from https://data.iana.org/time-zones/tzdb-2026e/backward (public domain).
+# Update with ./gradlew updateTimeZoneRegions --tzdb-version 2026e.
 Africa/Abidjan,CI,BF,GH,GM,GN,IS,ML,MR,SH,SL,SN,TG
 Africa/Accra,CI,BF,GH,GM,GN,IS,ML,MR,SH,SL,SN,TG
 Africa/Addis_Ababa,KE,DJ,ER,ET,KM,MG,SO,TZ,UG,YT

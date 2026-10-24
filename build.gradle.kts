@@ -90,6 +90,7 @@ tasks.register<ParseLanguageSubtagRegistry>("parseLanguageSubtagRegistry") {
 
 tasks.register<UpdateTimeZoneRegions>("updateTimeZoneRegions") {
     description = "Update the checked-in IANA time zone to region mapping"
+    tzdbVersion.set("2026e")
     outputFile.set(layout.projectDirectory.file("HMCL/src/main/resources/assets/timezone_regions.csv"))
 }
 

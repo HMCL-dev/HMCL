@@ -20,9 +20,12 @@ package org.jackhuang.hmcl.gradle.l10n;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.UntrackedTask;
+import org.gradle.api.tasks.options.Option;
+import org.gradle.work.DisableCachingByDefault;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,13 +39,17 @@ import java.util.TreeMap;
 
 /// Updates the checked-in time zone mapping from IANA's public-domain `zone1970.tab` and `backward` links.
 @NotNullByDefault
-@UntrackedTask(because = "The current IANA time zone table is a remote input")
+@DisableCachingByDefault(because = "Downloads versioned IANA data to update a checked-in resource")
 public abstract class UpdateTimeZoneRegions extends DefaultTask {
-    /// The IANA table listing countries that share each time zone's civil timestamps since 1970.
-    private static final String SOURCE_URL = "https://data.iana.org/time-zones/tzdb/zone1970.tab";
+    /// Returns the required IANA release identifier, such as `2026e`.
+    @Input
+    public abstract Property<String> getTzdbVersion();
 
-    /// The IANA compatibility links from alternate time zone names to their targets.
-    private static final String BACKWARD_URL = "https://data.iana.org/time-zones/tzdb/backward";
+    /// Overrides the configured IANA release identifier from the command line.
+    @Option(option = "tzdb-version", description = "IANA time zone database release, for example 2026e")
+    public void configureTzdbVersion(String version) {
+        getTzdbVersion().set(version);
+    }
 
     /// Returns the CSV destination, with each row containing a time zone followed by its candidate region codes.
     @OutputFile
@@ -51,18 +58,32 @@ public abstract class UpdateTimeZoneRegions extends DefaultTask {
     /// Downloads the table and compatibility links before replacing the CSV file.
     ///
     /// @throws IOException if downloading or writing fails
-    /// @throws GradleException if the table is empty, an input record is malformed or duplicated, or links contain a cycle
+    /// @throws GradleException if the version is malformed, the table is empty, an input record is malformed or duplicated,
+    ///                      or links contain a cycle
     @TaskAction
     public void run() throws IOException {
-        String csv = toCsv(readSource(SOURCE_URL), readSource(BACKWARD_URL));
+        String csv = toCsv(readSource(sourceUrl("zone1970.tab")), readSource(sourceUrl("backward")));
         Files.writeString(getOutputFile().get().getAsFile().toPath(), csv);
+    }
+
+    /// Returns the source URI for a file in the configured IANA release.
+    ///
+    /// @param filename the source filename within the release directory
+    /// @throws GradleException if the version is not four digits followed by lowercase ASCII letters
+    private URI sourceUrl(String filename) {
+        String version = getTzdbVersion().get();
+        if (!version.matches("[0-9]{4}[a-z]+")) {
+            throw new GradleException("Invalid IANA time zone database version: " + version);
+        }
+        return URI.create("https://data.iana.org/time-zones/tzdb-" + version + "/" + filename);
     }
 
     /// Downloads a UTF-8 source using bounded connection and read timeouts.
     ///
+    /// @param source the absolute URI to read
     /// @throws IOException if the source cannot be read
-    private static String readSource(String url) throws IOException {
-        var connection = URI.create(url).toURL().openConnection();
+    private static String readSource(URI source) throws IOException {
+        var connection = source.toURL().openConnection();
         connection.setConnectTimeout(15_000);
         connection.setReadTimeout(30_000);
         try (var input = connection.getInputStream()) {
@@ -76,8 +97,12 @@ public abstract class UpdateTimeZoneRegions extends DefaultTask {
     /// Omits links whose final targets have no country mapping, such as `Etc/UTC`.
     /// Non-link directives and comments in the compatibility file are ignored.
     ///
-    /// @throws GradleException if a record is malformed or duplicated, links contain a cycle, or the table has no records
-    static String toCsv(String table, String backward) {
+    /// @throws GradleException if the version or a record is malformed, a record is duplicated,
+    ///                      links contain a cycle, or the table has no records
+    String toCsv(String table, String backward) {
+        String version = getTzdbVersion().get();
+        URI tableUrl = sourceUrl("zone1970.tab");
+        URI backwardUrl = sourceUrl("backward");
         var regions = new TreeMap<String, String>();
         table.lines().forEach(line -> {
             if (line.isBlank() || line.startsWith("#")) {
@@ -132,9 +157,10 @@ public abstract class UpdateTimeZoneRegions extends DefaultTask {
             }
         }
 
-        var csv = new StringBuilder("# Generated from " + SOURCE_URL + " (public domain).\n"
-                + "# Compatibility links from " + BACKWARD_URL + " (public domain).\n"
-                + "# Update with ./gradlew updateTimeZoneRegions.\n");
+        var csv = new StringBuilder("# IANA tzdb version: " + version + "\n"
+                + "# Generated from " + tableUrl + " (public domain).\n"
+                + "# Compatibility links from " + backwardUrl + " (public domain).\n"
+                + "# Update with ./gradlew updateTimeZoneRegions --tzdb-version " + version + ".\n");
         regions.forEach((zone, candidates) -> csv.append(zone).append(',').append(candidates).append('\n'));
         return csv.toString();
     }
