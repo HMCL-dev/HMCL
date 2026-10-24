@@ -31,10 +31,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
+/// The wire protocol between the launcher JVM and the monitor JVM.
 @NotNullByDefault
-final class MonitorProtocol {
+public final class MonitorProtocol {
     /// The charset of the protocol stream.
-    static final Charset CHARSET = StandardCharsets.UTF_8;
+    public static final Charset CHARSET = StandardCharsets.UTF_8;
     /// How long to wait for the monitor's handshake before giving up, in milliseconds.
     static final long TIMEOUT = 20_000;
 
@@ -54,7 +55,7 @@ final class MonitorProtocol {
     }
 
     /// read and parse message from monitor forever
-    static void readMonitorMessage(BufferedReader reader, Consumer<MonitorMessage> messageConsumer) throws IOException {
+    public static void readMonitorMessage(BufferedReader reader, Consumer<MonitorMessage> messageConsumer) throws IOException {
         @Nullable String line;
         while ((line = reader.readLine()) != null) {
             try {
@@ -68,7 +69,7 @@ final class MonitorProtocol {
     /// read handshake (pid message) from monitor
     ///
     /// @throws IOException if launcher cannot shake hand with monitor within [MonitorProtocol#TIMEOUT]
-    static MonitorMessage.Pid readHandshake(BufferedReader reader, Runnable failClean) throws IOException {
+    public static MonitorMessage.Pid readHandshake(BufferedReader reader, Runnable failClean) throws IOException {
         CompletableFuture<MonitorMessage.Pid> future = new CompletableFuture<>();
         Thread waiter = Lang.thread(() -> {
             try {
@@ -122,7 +123,7 @@ final class MonitorProtocol {
     }
 
     /// Messages sent from the monitor stderr to launcher, serialized using [encode()].
-    sealed interface MonitorMessage permits MonitorMessage.Pid, MonitorMessage.Log, MonitorMessage.Exit {
+    public sealed interface MonitorMessage permits MonitorMessage.Pid, MonitorMessage.Log, MonitorMessage.Exit {
         static MonitorMessage valueOf(String message) throws IllegalArgumentException {
             String[] parts = message.split("\t", 3);
             try {

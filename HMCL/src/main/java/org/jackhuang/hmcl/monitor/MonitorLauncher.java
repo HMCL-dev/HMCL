@@ -53,6 +53,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @see launchNewMonitor
 @NotNullByDefault
 public final class MonitorLauncher {
+    /// Whether the monitor-based game launch is enabled via the `HMCL_USE_HMCLMONITOR` environment variable.
     public static final boolean MONITOR_ENABLED = System.getenv("HMCL_USE_HMCLMONITOR") != null;
     /// fix problem serializing [LaunchOptions] (interfaces cannot be serialized easily, adapters needed)
     private static final Gson gsonForGameOptions = JsonUtils.defaultGsonBuilder()
@@ -71,6 +72,17 @@ public final class MonitorLauncher {
             }).create();
 
     private MonitorLauncher() {
+    }
+
+    /// Maps launcher visibility and log-window preference to the monitor relaunch policy.
+    public static Monitor.RelaunchPolicy relaunchPolicy(LauncherVisibility visibility, boolean showLogs) {
+        if (showLogs)
+            return Monitor.RelaunchPolicy.NEVER;
+        return switch (visibility) {
+            case HIDE_AND_REOPEN -> Monitor.RelaunchPolicy.ALWAYS;
+            case HIDE -> Monitor.RelaunchPolicy.ON_CRASH;
+            default -> Monitor.RelaunchPolicy.NEVER;
+        };
     }
 
     /// start a new monitor and use it to launch game process
@@ -104,15 +116,9 @@ public final class MonitorLauncher {
         List<String> postExitCommand = StringUtils.tokenize(options.getPostExitCommand(), envVars);
 
         GameSettings.Effective setting = hmclGameInstance.getEffectiveSettings();
-        LauncherVisibility x = setting.getInheritable(GameSettings::launcherVisibilityProperty);
-        boolean showLogs = setting.getInheritable(GameSettings::showLogsProperty);
-        Monitor.RelaunchPolicy relaunchPolicy = showLogs
-                ? Monitor.RelaunchPolicy.NEVER
-                : switch (x) {
-            case HIDE_AND_REOPEN -> Monitor.RelaunchPolicy.ALWAYS;
-            case HIDE -> Monitor.RelaunchPolicy.ON_CRASH;
-            default -> Monitor.RelaunchPolicy.NEVER;
-        };
+        Monitor.RelaunchPolicy relaunchPolicy = relaunchPolicy(
+                setting.getInheritable(GameSettings::launcherVisibilityProperty),
+                setting.getInheritable(GameSettings::showLogsProperty));
 
         Path specFile = Files.createTempFile("hmcl-monitor-spec-", ".json");
         try (var writer = Files.newBufferedWriter(specFile)) {

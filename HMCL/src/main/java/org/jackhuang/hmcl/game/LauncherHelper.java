@@ -23,7 +23,9 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
+import org.jackhuang.hmcl.monitor.Monitor;
 import org.jackhuang.hmcl.monitor.MonitorGameProcess;
+import org.jackhuang.hmcl.monitor.MonitorLauncher;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.game.*;
@@ -994,7 +996,8 @@ public final class LauncherHelper {
                     try {
                         if (!lwjgl) {
                             lwjgl = true;
-                            if (process instanceof MonitorGameProcess monitorProcess && !showLogs && launcherVisibility != LauncherVisibility.KEEP) {
+                            if (process instanceof MonitorGameProcess monitorProcess
+                                    && MonitorLauncher.relaunchPolicy(launcherVisibility, showLogs) != Monitor.RelaunchPolicy.NEVER) {
                                 monitorProcess.detach();
                                 launchingLatch.countDown();
                                 runLater(Launcher::stopApplication);
