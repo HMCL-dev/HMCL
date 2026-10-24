@@ -77,6 +77,27 @@ public final class RegionUtils {
         return null;
     }
 
+    /// Reads the bundled mapping and returns the requested time zone's candidate regions in source order.
+    ///
+    /// @param zoneId the time zone identifier to match against the first CSV field
+    /// @return an unmodifiable candidate list, or an empty list if the time zone is not mapped
+    /// @throws IOException if the resource is missing or cannot be read
+    /// @see <a href="https://data.iana.org/time-zones/tzdb/zone1970.tab">tzdb timezone descriptions</a>
+    @VisibleForTesting
+    static @Unmodifiable List<String> loadTimeZoneRegions(String zoneId) throws IOException {
+        try (@Nullable InputStream input = RegionUtils.class.getResourceAsStream("/assets/timezone_regions.csv")) {
+            if (input == null) {
+                throw new IOException("Missing time zone region mapping");
+            }
+            String prefix = zoneId + ",";
+            for (String line : Lang.toIterable(new String(input.readAllBytes(), StandardCharsets.ISO_8859_1).lines())) {
+                if (line.startsWith(prefix))
+                    return List.of(line.substring(prefix.length()).split(","));
+            }
+            return List.of();
+        }
+    }
+
     /// Returns the Windows two-letter region code for a known geographical location identifier.
     /// Historical codes and the Windows code for Kosovo are retained. Locations for which
     /// Windows reports the placeholder `XX`, including geographical groupings, are not mapped.
@@ -340,26 +361,6 @@ public final class RegionUtils {
             case 161832258 -> "BQ";
             default -> null;
         };
-    }
-
-    /// Reads the bundled mapping and returns the requested time zone's candidate regions in source order.
-    ///
-    /// @param zoneId the time zone identifier to match against the first CSV field
-    /// @return an unmodifiable candidate list, or an empty list if the time zone is not mapped
-    /// @throws IOException if the resource is missing or cannot be read
-    @VisibleForTesting
-    static @Unmodifiable List<String> loadTimeZoneRegions(String zoneId) throws IOException {
-        try (@Nullable InputStream input = RegionUtils.class.getResourceAsStream("/assets/timezone_regions.csv")) {
-            if (input == null) {
-                throw new IOException("Missing time zone region mapping");
-            }
-            String prefix = zoneId + ",";
-            for (String line : Lang.toIterable(new String(input.readAllBytes(), StandardCharsets.ISO_8859_1).lines())) {
-                if (line.startsWith(prefix))
-                    return List.of(line.substring(prefix.length()).split(","));
-            }
-            return List.of();
-        }
     }
 
     /// Prevents instantiation of this utility class.
