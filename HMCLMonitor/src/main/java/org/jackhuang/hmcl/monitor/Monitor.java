@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.monitor;
 
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.game.LaunchOptions;
-import org.jackhuang.hmcl.launch.DefaultLauncher;
+import org.jackhuang.hmcl.launch.ManagedProcessAttacher;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -165,7 +165,7 @@ public final class Monitor {
                 });
             }
         };
-        DefaultLauncher.startMonitors(gameProcess, listener, Charset.forName(spec.encoding), listener::onExit, true);
+        ManagedProcessAttacher.attachListener(gameProcess, listener, Charset.forName(spec.encoding), null, true);
 
         return !shouldRelaunch.join();
     }

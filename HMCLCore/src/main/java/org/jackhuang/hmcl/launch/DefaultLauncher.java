@@ -21,7 +21,6 @@ import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -42,7 +41,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -716,9 +714,7 @@ public class DefaultLauncher extends Launcher {
 
         ManagedProcess p = new ManagedProcess(builder);
         if (listener != null)
-            startMonitors(p, listener, encoding, (exitCode, exitType) -> {
-                listener.onExit(exitCode, exitType);
-
+            ManagedProcessAttacher.attachListener(p, listener, encoding, (exitCode, exitType) -> {
                 if (StringUtils.isNotBlank(options.getPostExitCommand())) {
                     try {
                         ProcessBuilder postExitProcessBuilder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), envVars)).directory(options.getGameDir().toFile());
@@ -1034,26 +1030,6 @@ public class DefaultLauncher extends Launcher {
 
         if (usePowerShell && !CommandBuilder.hasExecutionPolicy())
             throw new ExecutionPolicyLimitException();
-    }
-
-    /// attach listener to managed process
-    ///
-    /// @param processListener the listener attached to managed process
-    /// @param exitWatcher     the managed process exit callback
-    public static void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, Charset encoding,
-                                      BiConsumer<Integer, ProcessListener.ExitType> exitWatcher, boolean isDaemon) {
-        processListener.setProcess(managedProcess);
-        Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
-            processListener.onLog(it, false);
-            managedProcess.addLine(it);
-        }, encoding), "stdout-pump", isDaemon);
-        managedProcess.addRelatedThread(stdout);
-        Thread stderr = Lang.thread(new StreamPump(managedProcess.getProcess().getErrorStream(), it -> {
-            processListener.onLog(it, true);
-            managedProcess.addLine(it);
-        }, encoding), "stderr-pump", isDaemon);
-        managedProcess.addRelatedThread(stderr);
-        managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), exitWatcher), "exit-waiter", isDaemon));
     }
 
     private record Command(
