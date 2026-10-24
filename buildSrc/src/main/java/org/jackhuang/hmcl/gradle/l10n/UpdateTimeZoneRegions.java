@@ -45,7 +45,7 @@ import java.util.TreeMap;
 public abstract class UpdateTimeZoneRegions extends DefaultTask {
     /// Names excluded by OpenJDK's TZDB compiler for compatibility with its time zone APIs.
     ///
-    /// @see <a href="https://github.com/openjdk/jdk/blob/master/make/jdk/src/classes/build/tools/tzdb/TzdbZoneRulesProvider.java">OpenJDK TZDB exclusions</a>
+    /// @see <a href="https://github.com/openjdk/jdk/blob/35a94b769761bd923fe6db03be672f05c1a74c38/make/jdk/src/classes/build/tools/tzdb/TzdbZoneRulesProvider.java#L125-L141">OpenJDK TZDB exclusions</a>
     private static final @Unmodifiable Set<String> EXCLUDED_ZONES = Set.of("EST", "HST", "MST", "GMT+0", "GMT-0", "ROC");
 
     /// Returns the required IANA release identifier, such as `2026e`.
