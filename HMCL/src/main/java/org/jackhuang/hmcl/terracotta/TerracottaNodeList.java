@@ -84,7 +84,7 @@ public final class TerracottaNodeList {
                                     return false;
                                 }
 
-                                return StringUtils.isBlank(node.region) || RegionUtils.isIsChinaMainlandMachine() == "CN".equalsIgnoreCase(node.region);
+                                return StringUtils.isBlank(node.region) || "CN".equals(RegionUtils.MACHINE_REGION) == "CN".equalsIgnoreCase(node.region);
                             })
                             .map(it -> WebURL.parse(it.url()))
                             .toList();

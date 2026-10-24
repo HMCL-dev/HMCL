@@ -1,6 +1,7 @@
 import org.jackhuang.hmcl.gradle.ci.CheckUpdate
 import org.jackhuang.hmcl.gradle.docs.UpdateDocuments
 import org.jackhuang.hmcl.gradle.l10n.ParseLanguageSubtagRegistry
+import org.jackhuang.hmcl.gradle.l10n.UpdateTimeZoneRegions
 
 plugins {
     id("checkstyle")
@@ -85,6 +86,11 @@ tasks.register<ParseLanguageSubtagRegistry>("parseLanguageSubtagRegistry") {
 
     sublanguagesFile.set(layout.projectDirectory.file("HMCLCore/src/main/resources/assets/lang/sublanguages.csv"))
     defaultScriptFile.set(layout.projectDirectory.file("HMCLCore/src/main/resources/assets/lang/default_script.csv"))
+}
+
+tasks.register<UpdateTimeZoneRegions>("updateTimeZoneRegions") {
+    description = "Update the checked-in IANA time zone to region mapping"
+    outputFile.set(layout.projectDirectory.file("HMCL/src/main/resources/assets/timezone_regions.csv"))
 }
 
 tasks.register<UpdateDocuments>("updateDocuments") {

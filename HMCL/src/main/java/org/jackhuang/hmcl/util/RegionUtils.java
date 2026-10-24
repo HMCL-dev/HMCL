@@ -23,40 +23,349 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.time.Duration;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Pattern;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
 public final class RegionUtils {
 
-    private static final boolean IS_CHINA_MAINLAND_MACHINE = checkMachineIsChinaMainland();
+    public static final @Nullable String MACHINE_REGION = detectMachineRegion();
 
-    private static boolean checkMachineIsChinaMainland() {
-        if ("Asia/Shanghai".equals(ZoneId.systemDefault().getId()))
-            return true;
+    private static @Nullable String detectMachineRegion() {
+        Map<String, String> timeZoneRegions;
+        try {
+            timeZoneRegions = loadTimeZoneRegions();
+        } catch (Exception e) {
+            LOG.warning("Failed to load time zone region mapping", e);
+            timeZoneRegions = Map.of();
+        }
 
-        // Check if the time zone is UTC+8
-        if (ZonedDateTime.now().getOffset().getTotalSeconds() == Duration.ofHours(8).toSeconds()) {
-            if ("CN".equals(LocaleUtils.SYSTEM_DEFAULT.getCountry()))
-                return true;
+        String region = timeZoneRegions.get(ZoneId.systemDefault().getId());
+        if (region != null)
+            return region;
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
-                Kernel32 kernel32 = Kernel32.INSTANCE;
+        Pattern regionPattern = Pattern.compile("^[a-zA-Z]{2}$");
 
-                // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
-                if (kernel32 != null && kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION) == 45) // China
-                    return true;
+        region = LocaleUtils.SYSTEM_DEFAULT.getCountry();
+        if (regionPattern.matcher(region).matches())
+            return region.toUpperCase(Locale.ROOT);
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
+            Kernel32 kernel32 = Kernel32.INSTANCE;
+
+            // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
+            if (kernel32 != null) {
+                region = mapGeoIdToRegion(kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION));
+                if (region != null)
+                    return region;
             }
         }
 
-        return false;
+        return null;
     }
 
-    public static boolean isIsChinaMainlandMachine() {
-        return IS_CHINA_MAINLAND_MACHINE;
+    /// Returns the Windows two-letter region code for a known geographical location identifier.
+    /// Historical codes and the Windows code for Kosovo are retained. Locations for which
+    /// Windows reports the placeholder `XX`, including geographical groupings, are not mapped.
+    ///
+    /// @param geoId the Windows geographical location identifier
+    /// @return the uppercase region code, or `null` if the identifier has no mapping
+    /// @see <a href="https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations">Table of Geographical Locations</a>
+    private static @Nullable String mapGeoIdToRegion(int geoId) {
+        return switch (geoId) {
+            case 2 -> "AG";
+            case 3 -> "AF";
+            case 4 -> "DZ";
+            case 5 -> "AZ";
+            case 6 -> "AL";
+            case 7 -> "AM";
+            case 8 -> "AD";
+            case 9 -> "AO";
+            case 10 -> "AS";
+            case 11 -> "AR";
+            case 12 -> "AU";
+            case 14 -> "AT";
+            case 17 -> "BH";
+            case 18 -> "BB";
+            case 19 -> "BW";
+            case 20 -> "BM";
+            case 21 -> "BE";
+            case 22 -> "BS";
+            case 23 -> "BD";
+            case 24 -> "BZ";
+            case 25 -> "BA";
+            case 26 -> "BO";
+            case 27 -> "MM";
+            case 28 -> "BJ";
+            case 29 -> "BY";
+            case 30 -> "SB";
+            case 32 -> "BR";
+            case 34 -> "BT";
+            case 35 -> "BG";
+            case 37 -> "BN";
+            case 38 -> "BI";
+            case 39 -> "CA";
+            case 40 -> "KH";
+            case 41 -> "TD";
+            case 42 -> "LK";
+            case 43 -> "CG";
+            case 44 -> "CD";
+            case 45 -> "CN";
+            case 46 -> "CL";
+            case 49 -> "CM";
+            case 50 -> "KM";
+            case 51 -> "CO";
+            case 54 -> "CR";
+            case 55 -> "CF";
+            case 56 -> "CU";
+            case 57 -> "CV";
+            case 59 -> "CY";
+            case 61 -> "DK";
+            case 62 -> "DJ";
+            case 63 -> "DM";
+            case 65 -> "DO";
+            case 66 -> "EC";
+            case 67 -> "EG";
+            case 68 -> "IE";
+            case 69 -> "GQ";
+            case 70 -> "EE";
+            case 71 -> "ER";
+            case 72 -> "SV";
+            case 73 -> "ET";
+            case 75 -> "CZ";
+            case 77 -> "FI";
+            case 78 -> "FJ";
+            case 80 -> "FM";
+            case 81 -> "FO";
+            case 84 -> "FR";
+            case 86 -> "GM";
+            case 87 -> "GA";
+            case 88 -> "GE";
+            case 89 -> "GH";
+            case 90 -> "GI";
+            case 91 -> "GD";
+            case 93 -> "GL";
+            case 94 -> "DE";
+            case 98 -> "GR";
+            case 99 -> "GT";
+            case 100 -> "GN";
+            case 101 -> "GY";
+            case 103 -> "HT";
+            case 104 -> "HK";
+            case 106 -> "HN";
+            case 108 -> "HR";
+            case 109 -> "HU";
+            case 110 -> "IS";
+            case 111 -> "ID";
+            case 113 -> "IN";
+            case 114 -> "IO";
+            case 116 -> "IR";
+            case 117 -> "IL";
+            case 118 -> "IT";
+            case 119 -> "CI";
+            case 121 -> "IQ";
+            case 122 -> "JP";
+            case 124 -> "JM";
+            case 125 -> "SJ";
+            case 126 -> "JO";
+            case 129 -> "KE";
+            case 130 -> "KG";
+            case 131 -> "KP";
+            case 133 -> "KI";
+            case 134 -> "KR";
+            case 136 -> "KW";
+            case 137 -> "KZ";
+            case 138 -> "LA";
+            case 139 -> "LB";
+            case 140 -> "LV";
+            case 141 -> "LT";
+            case 142 -> "LR";
+            case 143 -> "SK";
+            case 145 -> "LI";
+            case 146 -> "LS";
+            case 147 -> "LU";
+            case 148 -> "LY";
+            case 149 -> "MG";
+            case 151 -> "MO";
+            case 152 -> "MD";
+            case 154 -> "MN";
+            case 156 -> "MW";
+            case 157 -> "ML";
+            case 158 -> "MC";
+            case 159 -> "MA";
+            case 160 -> "MU";
+            case 162 -> "MR";
+            case 163 -> "MT";
+            case 164 -> "OM";
+            case 165 -> "MV";
+            case 166 -> "MX";
+            case 167 -> "MY";
+            case 168 -> "MZ";
+            case 173 -> "NE";
+            case 174 -> "VU";
+            case 175 -> "NG";
+            case 176 -> "NL";
+            case 177 -> "NO";
+            case 178 -> "NP";
+            case 180 -> "NR";
+            case 181 -> "SR";
+            case 182 -> "NI";
+            case 183 -> "NZ";
+            case 184 -> "PS";
+            case 185 -> "PY";
+            case 187 -> "PE";
+            case 190 -> "PK";
+            case 191 -> "PL";
+            case 192 -> "PA";
+            case 193 -> "PT";
+            case 194 -> "PG";
+            case 195 -> "PW";
+            case 196 -> "GW";
+            case 197 -> "QA";
+            case 198 -> "RE";
+            case 199 -> "MH";
+            case 200 -> "RO";
+            case 201 -> "PH";
+            case 202 -> "PR";
+            case 203 -> "RU";
+            case 204 -> "RW";
+            case 205 -> "SA";
+            case 206 -> "PM";
+            case 207 -> "KN";
+            case 208 -> "SC";
+            case 209 -> "ZA";
+            case 210 -> "SN";
+            case 212 -> "SI";
+            case 213 -> "SL";
+            case 214 -> "SM";
+            case 215 -> "SG";
+            case 216 -> "SO";
+            case 217 -> "ES";
+            case 218 -> "LC";
+            case 219 -> "SD";
+            case 220 -> "SJ";
+            case 221 -> "SE";
+            case 222 -> "SY";
+            case 223 -> "CH";
+            case 224 -> "AE";
+            case 225 -> "TT";
+            case 227 -> "TH";
+            case 228 -> "TJ";
+            case 231 -> "TO";
+            case 232 -> "TG";
+            case 233 -> "ST";
+            case 234 -> "TN";
+            case 235 -> "TR";
+            case 236 -> "TV";
+            case 237 -> "TW";
+            case 238 -> "TM";
+            case 239 -> "TZ";
+            case 240 -> "UG";
+            case 241 -> "UA";
+            case 242 -> "GB";
+            case 244 -> "US";
+            case 245 -> "BF";
+            case 246 -> "UY";
+            case 247 -> "UZ";
+            case 248 -> "VC";
+            case 249 -> "VE";
+            case 251 -> "VN";
+            case 252 -> "VI";
+            case 253 -> "VA";
+            case 254 -> "NA";
+            case 259 -> "WS";
+            case 260 -> "SZ";
+            case 261 -> "YE";
+            case 263 -> "ZM";
+            case 264 -> "ZW";
+            case 269 -> "CS";
+            case 270 -> "ME";
+            case 271 -> "RS";
+            case 273 -> "CW";
+            case 276 -> "SS";
+            case 300 -> "AI";
+            case 301 -> "AQ";
+            case 302 -> "AW";
+            case 306 -> "BV";
+            case 307 -> "KY";
+            case 309 -> "CX";
+            case 311 -> "CC";
+            case 312 -> "CK";
+            case 315 -> "FK";
+            case 317 -> "GF";
+            case 318 -> "PF";
+            case 319 -> "TF";
+            case 321 -> "GP";
+            case 322 -> "GU";
+            case 324 -> "GG";
+            case 325 -> "HM";
+            case 328 -> "JE";
+            case 330 -> "MQ";
+            case 331 -> "YT";
+            case 332 -> "MS";
+            case 333 -> "AN";
+            case 334 -> "NC";
+            case 335 -> "NU";
+            case 336 -> "NF";
+            case 337 -> "MP";
+            case 339 -> "PN";
+            case 342 -> "GS";
+            case 343 -> "SH";
+            case 347 -> "TK";
+            case 349 -> "TC";
+            case 351 -> "VG";
+            case 352 -> "WF";
+            case 15126 -> "IM";
+            case 19618 -> "MK";
+            case 30967 -> "SX";
+            case 31706 -> "MF";
+            case 7299303 -> "TL";
+            case 9914689 -> "XK";
+            case 10028789 -> "AX";
+            case 161832015 -> "BL";
+            case 161832256 -> "UM";
+            case 161832258 -> "BQ";
+            default -> null;
+        };
     }
+
+    /// Loads an unmodifiable map from bundled time zone identifiers to region codes.
+    /// Each call reads the resource without retaining the result.
+    ///
+    /// @throws IOException if the resource is missing, cannot be read, or contains a data row with fewer than two fields
+    private static @Unmodifiable Map<String, String> loadTimeZoneRegions() throws IOException {
+        try (@Nullable InputStream input = RegionUtils.class.getResourceAsStream("/assets/timezone_regions.csv")) {
+            if (input == null) {
+                throw new IOException("Missing time zone region mapping");
+            }
+            var regions = new HashMap<String, String>();
+            for (String line : Lang.toIterable(new String(input.readAllBytes(), StandardCharsets.UTF_8).lines())) {
+                if (line.isBlank() || line.startsWith("#")) {
+                    continue;
+                }
+                String[] fields = line.split(",");
+                if (fields.length < 2) {
+                    throw new IOException("Invalid time zone region mapping: " + line);
+                }
+                for (int i = 1; i < fields.length; i++) {
+                    regions.put(fields[i], fields[0]);
+                }
+            }
+            return regions;
+        }
+    }
+
 
     private RegionUtils() {
     }
