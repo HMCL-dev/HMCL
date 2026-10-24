@@ -22,6 +22,8 @@ import org.glavo.nbt.tag.ListTag;
 import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.util.NBTUtils;
 import org.jackhuang.hmcl.util.Point3I;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -33,7 +35,10 @@ import static org.jackhuang.hmcl.util.NBTUtils.tryGetInt;
 public final class NBTStructureFile extends Schematic {
 
     public static NBTStructureFile load(Path file) throws IOException {
+        return load(file, null);
+    }
 
+    public static NBTStructureFile load(Path file, @Nullable Path relPath) throws IOException {
         CompoundTag root = NBTUtils.readCompressed(file);
 
         if (!(root.get("blocks") instanceof ListTag<?>))
@@ -60,19 +65,27 @@ public final class NBTStructureFile extends Schematic {
             enclosingSize = new Point3I(width, height, length);
         }
 
-        return new NBTStructureFile(file, tryGetInt(root.get("DataVersion")).orElse(500), NBTUtils.tryGetString(root.get("author")), enclosingSize);
+        return new NBTStructureFile(file, relPath, tryGetInt(root.get("DataVersion")).orElse(500), NBTUtils.tryGetString(root.get("author")), enclosingSize);
     }
 
+    private final Path relPath;
     private final String author;
 
-    private NBTStructureFile(Path file, int dataVersion, String author, Point3I enclosingSize) {
+    private NBTStructureFile(Path file, @Nullable Path relPath, int dataVersion, String author, Point3I enclosingSize) {
         super(file, dataVersion, enclosingSize);
+        this.relPath = relPath;
         this.author = author;
     }
 
     @Override
     public SchematicType getType() {
         return SchematicType.NBT_STRUCTURE;
+    }
+
+    @Override
+    public @NotNull String getName() {
+        if (relPath == null) return super.getName();
+        return relPath.resolveSibling(super.getName()).toString();
     }
 
     @Override
