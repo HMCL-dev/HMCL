@@ -3,23 +3,24 @@ const fs = require("fs");
 module.exports = async ({ github, context, core }) => {
     const prNumberPath = process.env.PULL_REQUEST_NUMBER_PATH;
     if (!prNumberPath || !fs.existsSync(prNumberPath) || !fs.statSync(prNumberPath).isFile()) {
-        core.setFailed("Pull request number file not found.");
+        core.info("Pull request number file not found or invalid path.");
         return;
     }
 
     const reportsPath = process.env.REPORTS_PATH;
     if (!reportsPath || !fs.existsSync(reportsPath) || !fs.statSync(reportsPath).isFile()) {
-        core.setFailed("Reports file not found.");
+        core.info("Static analysis reports file not found or invalid path.");
         return;
     }
 
     const PULL_REQUEST_NUMBER = parseInt(fs.readFileSync(prNumberPath, "utf8").trim(), 10);
     if (isNaN(PULL_REQUEST_NUMBER)) {
-        core.setFailed("Failed to parse the pull request number.");
+        core.error("Failed to parse the pull request number into a valid integer.");
         return;
     }
 
     const { owner, repo } = context.repo;
+    core.info(`Processing pull request #${PULL_REQUEST_NUMBER} for repository ${owner}/${repo}`);
 
     let pr;
     try {
@@ -30,42 +31,108 @@ module.exports = async ({ github, context, core }) => {
         });
         pr = response.data;
     } catch (error) {
-        core.setFailed(`Failed to fetch PR #${PULL_REQUEST_NUMBER}: ${error.message}`);
+        core.error(`Failed to fetch details for PR #${PULL_REQUEST_NUMBER}: ${error.message}`);
         return;
     }
 
-    core.info(`Current PR state: ${pr.state}`);
+    core.info(`Current pull request state: ${pr.state}`);
     if (pr.state !== "open") {
-        core.setFailed("The pull request is not open. Skipping comment creation.");
+        core.info("The pull request is not open.");
         return;
     }
 
     const run = context.payload.workflow_run;
     if (!run) {
-        core.setFailed("context.payload.workflow_run is undefined. Ensure this script runs on the 'workflow_run' event.");
+        core.error("context.payload.workflow_run is undefined.");
         return;
     }
 
     if (pr.head.sha !== run.head_sha) {
-        core.setFailed("PR head SHA does not match the workflow run head SHA. Skipping.");
+        core.warning(`PR head SHA (${pr.head.sha}) does not match workflow run head SHA (${run.head_sha}).`);
         return;
     }
 
     if (pr.head.ref !== run.head_branch) {
-        core.setFailed("PR head branch does not match the workflow run head branch. Skipping.");
+        core.warning(`PR head branch (${pr.head.ref}) does not match workflow run head branch (${run.head_branch}).`);
         return;
     }
 
     if (pr.head.repo.full_name !== run.head_repository.full_name) {
-        core.setFailed("PR head repository fullname does not match the workflow run head repository fullname. Skipping.");
+        core.warning(`PR head repository (${pr.head.repo.full_name}) does not match workflow run repository (${run.head_repository.full_name}).`);
         return;
     }
 
-    const comments = [];
+    const changedFiles = new Set();
+    try {
+        core.info("Fetching the list of changed files in the pull request...");
+        const files = await github.paginate(github.rest.pulls.listFiles, {
+            owner,
+            repo,
+            pull_number: PULL_REQUEST_NUMBER,
+        });
+
+        for (const file of files) {
+            changedFiles.add(file.filename);
+        }
+        core.info(`Successfully fetched ${changedFiles.size} changed file(s).`);
+    } catch (error) {
+        core.error(`Failed to fetch changed files for the pull request: ${error.message}`);
+        return;
+    }
+
     const maxCommentCount = 10;
+    const commentFlag = `<!-- check codes comment flag (#${PULL_REQUEST_NUMBER}) -->`;
+
     const reports = fs.readFileSync(reportsPath, "utf8").trim().split("\n").filter(Boolean);
+    core.info(`Parsing ${reports.length} report line(s) from the static analysis output...`);
+
+    try {
+        core.info("Delete history review comments...");
+        for await (const item of github.paginate.iterator(github.rest.pulls.listReviewComments, {
+            owner,
+            repo,
+            pull_number: PULL_REQUEST_NUMBER,
+            per_page: 100
+        })) {
+            const comments = item.data.filter(comment => comment.body && comment.body.startsWith(commentFlag) && comment.user && comment.user.id === 41898282);
+            for (const comment of comments) {
+                await github.rest.pulls.deleteReviewComment({
+                    owner,
+                    repo,
+                    comment_id: comment.id,
+                });
+                core.info(`Delete history review comment (${comment.id}).`);
+            }
+        }
+
+        core.info("Delete history comments...");
+        for await (const item of github.paginate.iterator(github.rest.issues.listComments, {
+            owner,
+            repo,
+            issue_number: PULL_REQUEST_NUMBER,
+            per_page: 100
+        })) {
+            const comments = item.data.filter(comment => comment.body && comment.body.startsWith(commentFlag) && comment.user && comment.user.id === 41898282);
+            for (const comment of comments) {
+                await github.rest.issues.deleteComment({
+                    owner,
+                    repo,
+                    comment_id: comment.id,
+                });
+                core.info(`Delete history comment (${comment.id}).`);
+            }
+        }
+    } catch (error) {
+        core.warning(`Failed to fetch existing comments: ${error.message}`);
+    }
+
+    let commentCount = 0;
     for (const report of reports) {
-        if (comments.length >= maxCommentCount) break;
+        if (commentCount >= maxCommentCount) {
+            core.info(`Reached the maximum comment limit (${maxCommentCount}).`);
+            break;
+        }
+
         try {
             const data = JSON.parse(report);
             if (typeof data !== "object" || Array.isArray(data)) continue;
@@ -79,42 +146,44 @@ module.exports = async ({ github, context, core }) => {
             if (typeof code !== "object" || Array.isArray(code)) continue;
 
             const path = location.path;
-            const line = location.range?.start?.line;
+            if (!changedFiles.has(path)) continue;
+
+            const startLine = location.range?.start?.line;
+            if (typeof startLine !== "number") continue;
+
+            const endLine = location.range?.end?.line ?? startLine;
+            if (typeof endLine !== "number") continue;
+
             const codeText = code.value ? `[${code.value}] ` : "";
 
-            if (path && line) {
-                comments.push({
+            try {
+                await github.rest.pulls.createReviewComment({
+                    owner,
+                    repo,
+                    pull_number: PULL_REQUEST_NUMBER,
+                    body: `${commentFlag}\n\n**[${severityText}]** ${codeText}\n\n${message}`,
+                    commit_id: run.head_sha,
                     path,
-                    line,
                     side: "RIGHT",
-                    body: `**[${severityText}]** ${codeText}\n\n${message}`
+                    line: endLine,
+                    start_side: "RIGHT",
+                    start_line: startLine
                 });
+                core.info("Successfully posted a new review comment to the pull request.");
+                commentCount += 1;
+            } catch (error) {
+                core.warning(`Failed to posted a new review comment to the pull request: ${error.message}`);
+                await github.rest.issues.createComment({
+                    owner,
+                    repo,
+                    issue_number: PULL_REQUEST_NUMBER,
+                    body: `${commentFlag}\n\nhttps://github.com/${owner}/${repo}/blob/${run.head_sha}/${path}#L${startLine}-L${endLine}\n\n**[${severityText}]** ${codeText}\n\n${message}`
+                });
+                core.info("Successfully posted a new review comment to the pull request.");
+                commentCount += 1;
             }
         } catch (error) {
-            core.warning(`Failed to parse report: ${error.message}`);
+            core.warning(`Skipping malformed report line: ${error.message}`);
         }
-    }
-
-    if (comments.length === 0) {
-        core.info("No diagnostics found to report as comments.");
-        return;
-    }
-
-    core.info(`Successfully prepared ${comments.length} comment${comments.length > 1 ? "s" : ""} to post.`);
-
-    try {
-        await github.rest.pulls.createReview({
-            owner,
-            repo,
-            pull_number: PULL_REQUEST_NUMBER,
-            commit_id: run.head_sha,
-            body: "🤖 Static analysis found the following issues (max count 10):",
-            event: "COMMENT",
-            comments: comments
-        });
-        core.info("Review comments successfully posted to the pull request.");
-    } catch (error) {
-        core.setFailed(`Failed to post review comments to GitHub: ${error.message}`);
-        return;
     }
 }
