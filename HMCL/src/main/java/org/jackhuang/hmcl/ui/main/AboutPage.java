@@ -70,7 +70,7 @@ public final class AboutPage extends SpinnerPane {
 
         ComponentList environment = new ComponentList();
         {
-            var system = new LinePane();
+            var system = new LineButton();
             system.setLargeTitle(true);
             system.setLeading(SVG.LUCIDE_APP_WINDOW.createIcon(32));
             system.setTitle(i18n("about.environment.system"));
@@ -80,7 +80,7 @@ public final class AboutPage extends SpinnerPane {
             environment.getContent().add(system);
 
             if (SystemInfo.getTotalMemorySize() > 0) {
-                var memory = new LinePane();
+                var memory = new LineButton();
                 memory.setLargeTitle(true);
                 memory.setLeading(SVG.LUCIDE_MEMORY_STICK.createIcon(32));
                 memory.setTitle(i18n("about.environment.memory"));
@@ -91,7 +91,7 @@ public final class AboutPage extends SpinnerPane {
             @Nullable CentralProcessor cpu = SystemInfo.getCentralProcessor();
             if (cpu != null) {
                 String title = i18n("about.environment.cpu");
-                var button = new LinePane();
+                var button = new LineButton();
                 button.setLargeTitle(true);
                 button.setTitle(title);
                 button.setSubtitle(cpu.toString());
@@ -108,7 +108,7 @@ public final class AboutPage extends SpinnerPane {
                             ? i18n("about.environment.gpu")
                             : i18n("about.environment.gpu.n", index);
                     index++;
-                    var button = new LinePane();
+                    var button = new LineButton();
                     button.setLargeTitle(true);
                     button.setTitle(name);
                     button.setSubtitle(graphicsCard.getName());
@@ -119,7 +119,7 @@ public final class AboutPage extends SpinnerPane {
                 }
             }
 
-            var java = new LinePane();
+            var java = new LineButton();
             java.setLargeTitle(true);
             java.setLeading(SVG.LOCAL_CAFE.createIcon(32));
             java.setTitle("Java");
@@ -129,7 +129,7 @@ public final class AboutPage extends SpinnerPane {
                     System.getProperty("java.vendor")));
             environment.getContent().add(java);
 
-            var javaFX = new LinePane();
+            var javaFX = new LineButton();
             javaFX.setLargeTitle(true);
             javaFX.setLeading(SVG.LOCAL_CAFE.createIcon(32));
             javaFX.setTitle("JavaFX");
