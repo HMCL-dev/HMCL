@@ -26,12 +26,10 @@ import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.ImageContainer;
-import org.jackhuang.hmcl.ui.construct.LineButton;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.DataSizeUnit;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
@@ -72,17 +70,17 @@ public final class AboutPage extends SpinnerPane {
 
         ComponentList environment = new ComponentList();
         {
-            var system = new LineButton();
+            var system = new LinePane();
             system.setLargeTitle(true);
             system.setLeading(SVG.LUCIDE_APP_WINDOW.createIcon(32));
             system.setTitle(i18n("about.environment.system"));
             system.setSubtitle((OperatingSystem.OS_RELEASE_PRETTY_NAME == null
-                    ? OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION.getVersion()
-                    : OperatingSystem.OS_RELEASE_PRETTY_NAME + " (" + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION.getVersion() + ')'));
+                    ? "%s %s (%s)".formatted(OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion(), Architecture.SYSTEM_ARCH.getDisplayName())
+                    : "%s (%s %s, %s)".formatted(OperatingSystem.OS_RELEASE_PRETTY_NAME, OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion(), Architecture.SYSTEM_ARCH.getDisplayName())));
             environment.getContent().add(system);
 
             if (SystemInfo.getTotalMemorySize() > 0) {
-                var memory = new LineButton();
+                var memory = new LinePane();
                 memory.setLargeTitle(true);
                 memory.setLeading(SVG.LUCIDE_MEMORY_STICK.createIcon(32));
                 memory.setTitle(i18n("about.environment.memory"));
@@ -92,11 +90,14 @@ public final class AboutPage extends SpinnerPane {
 
             @Nullable CentralProcessor cpu = SystemInfo.getCentralProcessor();
             if (cpu != null) {
-                environment.getContent().add(createIconedTwoLineButton(
-                        i18n("about.environment.cpu"),
-                        cpu.getName(),
-                        SVG.LUCIDE_CPU
-                ));
+                String title = i18n("about.environment.cpu");
+                var button = new LinePane();
+                button.setLargeTitle(true);
+                button.setTitle(title);
+                button.setSubtitle(cpu.toString());
+                button.setLeading(SVG.LUCIDE_CPU.createIcon(32));
+
+                environment.getContent().add(button);
             }
 
             @Nullable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
@@ -107,13 +108,33 @@ public final class AboutPage extends SpinnerPane {
                             ? i18n("about.environment.gpu")
                             : i18n("about.environment.gpu.n", index);
                     index++;
-                    environment.getContent().add(createIconedTwoLineButton(
-                            name,
-                            graphicsCard.getName(),
-                            SVG.LUCIDE_GPU
-                    ));
+                    var button = new LinePane();
+                    button.setLargeTitle(true);
+                    button.setTitle(name);
+                    button.setSubtitle(graphicsCard.getName());
+
+                    button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
+
+                    environment.getContent().add(button);
                 }
             }
+
+            var java = new LinePane();
+            java.setLargeTitle(true);
+            java.setLeading(SVG.LOCAL_CAFE.createIcon(32));
+            java.setTitle("Java");
+            java.setSubtitle("%s, %s by %s".formatted(
+                    Runtime.version().toString(),
+                    System.getProperty("java.vm.name"),
+                    System.getProperty("java.vendor")));
+            environment.getContent().add(java);
+
+            var javaFX = new LinePane();
+            javaFX.setLargeTitle(true);
+            javaFX.setLeading(SVG.LOCAL_CAFE.createIcon(32));
+            javaFX.setTitle("JavaFX");
+            javaFX.setSubtitle(System.getProperty("javafx.runtime.version"));
+            environment.getContent().add(javaFX);
         }
 
         ComponentList deps = loadIconedTwoLineList("/assets/about/deps.json");
@@ -214,17 +235,6 @@ public final class AboutPage extends SpinnerPane {
         }
 
         return componentList;
-    }
-
-    private static LineButton createIconedTwoLineButton(String title, String subtitle, SVG svg) {
-        var button = new LineButton();
-        button.setLargeTitle(true);
-        button.setTitle(title);
-        button.setSubtitle(subtitle);
-
-        button.setLeading(svg.createIcon(32));
-
-        return button;
     }
 
 }
