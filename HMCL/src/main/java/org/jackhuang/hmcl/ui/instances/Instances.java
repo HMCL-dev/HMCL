@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.ui.account.CreateAccountPane;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
+import org.jackhuang.hmcl.ui.construct.TaskExecutorDialogPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
@@ -79,7 +80,15 @@ public final class Instances {
         }
     }
 
-    public static void downloadModpackImpl(DownloadProvider downloadProvider, HMCLGameRepository repository, GameInstanceID instanceId, RemoteAddon mod, RemoteAddon.Version file) {
+    /// Downloads a modpack and opens its installation wizard for the supplied repository.
+    /// Downloads completed in the background retain an installation action in the task list.
+    ///
+    /// @param downloadProvider the provider used to download the archive
+    /// @param repository the installation target, retained if the selected directory changes
+    /// @param instanceId the instance to update, or `null` to install a new instance
+    /// @param mod the modpack metadata
+    /// @param file the archive version to download
+    public static void downloadModpackImpl(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon mod, RemoteAddon.Version file) {
         Path modpack;
         DownloadCandidates downloadURLs;
         try {
@@ -91,28 +100,32 @@ public final class Instances {
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
         }
-        Controllers.taskDialog(
-                new FileDownloadTask(downloadURLs, modpack)
-                        .setName(file.name())
-                        .whenComplete(Schedulers.javafx(), e -> {
-                            if (e == null) {
-                                ModpackInstallWizardProvider installWizardProvider;
-                                if (instanceId != null)
-                                    installWizardProvider = new ModpackInstallWizardProvider(repository, modpack, instanceId);
-                                else
-                                    installWizardProvider = new ModpackInstallWizardProvider(repository, modpack);
-                                if (StringUtils.isNotBlank(mod.iconUrl()))
-                                    installWizardProvider.setIconUrl(mod.iconUrl());
-                                Controllers.getDecorator().startWizard(installWizardProvider);
-                            } else if (!(e instanceof CancellationException)) {
-                                Controllers.dialog(
-                                        i18n("install.failed.downloading.detail", file.file().url()) + "\n" + StringUtils.getStackTrace(e),
-                                        i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
-                            }
-                        }),
-                i18n("message.downloading"),
-                TaskCancellationAction.NORMAL
-        );
+        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+        pane.setTitle(i18n("modpack.download.title", file.name()));
+        TaskExecutor executor = new FileDownloadTask(downloadURLs, modpack)
+                .setName(file.name())
+                .whenComplete(Schedulers.javafx(), (@Nullable Exception e) -> {
+                    if (e == null) {
+                        ModpackInstallWizardProvider installWizardProvider;
+                        if (instanceId != null)
+                            installWizardProvider = new ModpackInstallWizardProvider(repository, modpack, instanceId);
+                        else
+                            installWizardProvider = new ModpackInstallWizardProvider(repository, modpack);
+                        if (StringUtils.isNotBlank(mod.iconUrl()))
+                            installWizardProvider.setIconUrl(mod.iconUrl());
+                        if (!pane.runOrDeferCompletionAction(i18n("button.install"), i18n("modpack.install.ready"),
+                                () -> Controllers.getDecorator().startWizard(installWizardProvider))) {
+                            Controllers.showToast(i18n("modpack.download.completed"));
+                        }
+                    } else if (!(e instanceof CancellationException)) {
+                        Controllers.dialog(
+                                i18n("install.failed.downloading.detail", file.file().url()) + "\n" + StringUtils.getStackTrace(e),
+                                i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
+                    }
+                }).executor();
+        pane.setExecutor(executor);
+        Controllers.dialog(pane);
+        executor.start();
     }
 
     public static void deleteInstance(HMCLGameInstance gameInstance) {

@@ -357,10 +357,12 @@ public final class MainPage extends StackPane implements DecoratorPage {
         Instances.launch(repository.getSelectedInstance());
     }
 
+    /// Installs the latest supported release in the currently selected repository, then launches
+    /// that instance even if the selected repository or instance changes during installation.
     private void launchNoGame() {
+        HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
         DownloadProvider downloadProvider = DownloadProviders.getDownloadProvider();
 
-        Holder<GameInstanceID> instanceHolder = new Holder<>();
         Task<?> task = downloadProvider.getVersionsAsync(GameComponentType.GAME, null, false)
                 .thenApplyAsync(versions -> versions.stream()
                         .filter(it -> it.getVersionType() == RELEASE)
@@ -369,25 +371,22 @@ public final class MainPage extends StackPane implements DecoratorPage {
                         .findFirst()
                         .orElseThrow(() -> new IOException("No versions found")))
                 .thenComposeAsync(version -> {
-                    HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
                     HMCLDependencyManager dependency = repository.getDependency();
 
                     String gameVersion = version.getGameVersion().toString();
                     GameInstanceID instanceId = new GameInstanceID(gameVersion);
 
-                    instanceHolder.value = instanceId;
-
                     try (HMCLGameBuilder builder = dependency.newGameBuilder(instanceId)) {
                         return builder
                                 .component(GameComponentType.GAME, gameVersion)
-                                .buildAsync();
+                                .buildAsync()
+                                .thenApplyAsync(ignored -> repository.getInstance(instanceId));
                     }
                 })
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
-                        HMCLGameRepository repository = GameDirectoryManager.getSelectedRepository();
-                        repository.setSelectedInstance(repository.getInstance(instanceHolder.value));
-                        launch();
+                        repository.setSelectedInstance(result);
+                        Instances.launch(result);
                     } else if (!(exception instanceof CancellationException)) {
                         LOG.warning("Failed to install game", exception);
                         Controllers.dialog(StringUtils.getStackTrace(exception),

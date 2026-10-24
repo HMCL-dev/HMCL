@@ -257,13 +257,19 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
     }
 
+    /// Checks the supplied mods for updates and opens the results for the current instance.
+    /// The target directory is retained even if this page switches instances during the check.
+    /// Does nothing while the list is loading or no instance is selected.
+    ///
+    /// @param mods the mods to check
     public void checkUpdates(Collection<LocalModFile> mods) {
         Objects.requireNonNull(mods);
+        @Nullable HMCLGameInstance gameInstance = this.gameInstance;
         if (isLoading() || gameInstance == null) {
             return;
         }
 
-        HMCLGameInstance gameInstance = this.gameInstance;
+        Path modDirectory = gameInstance.getModManager().getDirectory();
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
@@ -282,7 +288,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), modManager.getDirectory(), result));
+                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), modDirectory, result));
                             }
                         })
                         .withStagesHints("update.checking"),
