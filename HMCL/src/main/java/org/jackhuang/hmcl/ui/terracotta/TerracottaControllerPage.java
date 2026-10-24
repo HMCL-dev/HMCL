@@ -540,7 +540,7 @@ public class TerracottaControllerPage extends StackPane {
 
         VBox content = new VBox(10);
         content.getChildren().add(ComponentList.createComponentListTitle(i18n("terracotta.status")));
-        if (!RegionUtils.isIsChinaMainlandMachine()) {
+        if (!"CN".equals(RegionUtils.MACHINE_REGION)) {
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
             hintPane.setText(i18n("terracotta.unsupported.region"));
             content.getChildren().add(hintPane);
