@@ -72,8 +72,8 @@ public final class LegacyGameSettingsMigrator {
         CUSTOM
     }
 
-    /// Legacy `VersionIconType` ordinal order used by old local settings.
-    private static final GameInstanceIconType @Unmodifiable [] LEGACY_VERSION_ICON_TYPES = {
+    /// Legacy `GameInstanceIconType` ordinal order used by old local settings.
+    private static final GameInstanceIconType @Unmodifiable [] LEGACY_INSTANCE_ICON_TYPES = {
             GameInstanceIconType.DEFAULT,
             GameInstanceIconType.GRASS,
             GameInstanceIconType.CHEST,
@@ -497,13 +497,13 @@ public final class LegacyGameSettingsMigrator {
         try {
             if (primitive.isNumber()) {
                 int index = primitive.getAsInt();
-                return index >= 0 && index < LEGACY_VERSION_ICON_TYPES.length
-                        ? LEGACY_VERSION_ICON_TYPES[index]
+                return index >= 0 && index < LEGACY_INSTANCE_ICON_TYPES.length
+                        ? LEGACY_INSTANCE_ICON_TYPES[index]
                         : GameInstanceIconType.DEFAULT;
             }
 
             String value = primitive.getAsString();
-            for (GameInstanceIconType iconType : LEGACY_VERSION_ICON_TYPES) {
+            for (GameInstanceIconType iconType : LEGACY_INSTANCE_ICON_TYPES) {
                 if (iconType.name().equalsIgnoreCase(value)) {
                     return iconType;
                 }
