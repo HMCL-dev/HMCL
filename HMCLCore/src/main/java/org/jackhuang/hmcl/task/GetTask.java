@@ -20,7 +20,9 @@ package org.jackhuang.hmcl.task;
 import com.google.gson.reflect.TypeToken;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +65,7 @@ public final class GetTask extends FetchTask<String> {
         setResult(Files.readString(cachedFile));
     }
 
+    /// Creates an in-memory sink, verifying the supplied content hash before decoding or caching text.
     @Override
     protected Context getContext(@Nullable UrlResponseInfo response, boolean checkETag, @Nullable String bmclapiHash) {
         long length = -1;
@@ -84,6 +87,12 @@ public final class GetTask extends FetchTask<String> {
             @Override
             public void close() throws IOException {
                 if (!isSuccess()) return;
+
+                if (bmclapiHash != null) {
+                    String actualHash = DigestUtils.digestToString("SHA-1", baos.toByteArray());
+                    if (!bmclapiHash.equalsIgnoreCase(actualHash))
+                        throw new ChecksumMismatchException("SHA-1", bmclapiHash, actualHash);
+                }
 
                 Charset charset = StandardCharsets.UTF_8;
                 if (response != null)

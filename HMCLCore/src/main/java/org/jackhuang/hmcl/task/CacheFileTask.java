@@ -146,6 +146,7 @@ public final class CacheFileTask extends FetchTask<Path> {
             throw new IOException("Remote response metadata is unavailable");
         }
 
+        @Nullable String checksum = expectedSha1 != null ? expectedSha1 : bmclapiHash;
         return new Context() {
             private final Path temp = Files.createTempFile("hmcl-download-", null);
             private final FileChannel fileOutput = FileChannel.open(temp,
@@ -183,9 +184,11 @@ public final class CacheFileTask extends FetchTask<Path> {
                 }
 
                 try {
-                    if (expectedSha1 != null) {
+                    if (checksum != null) {
                         ChecksumMismatchException.verifyChecksum(
-                                temp, CacheRepository.SHA1, expectedSha1);
+                                temp, CacheRepository.SHA1, checksum);
+                    }
+                    if (expectedSha1 != null) {
                         setResult(repository.cacheFile(
                                 temp, CacheRepository.SHA1, expectedSha1));
                     } else {
