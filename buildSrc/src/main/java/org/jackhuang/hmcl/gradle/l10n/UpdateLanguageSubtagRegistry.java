@@ -98,7 +98,7 @@ public abstract class UpdateLanguageSubtagRegistry extends DefaultTask {
             throw new GradleException("Registry must contain a File-Date and at least one record");
         }
         String header = "# IANA registry version: " + builder.fileDate + "\n"
-                + "# Generated from " + SOURCE + ".\n";
+                + "# Generated from " + SOURCE + "\n";
         List<Item> items = builder.items;
 
         MultiMap scriptToSubtag = new MultiMap();
