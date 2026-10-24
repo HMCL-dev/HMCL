@@ -430,12 +430,20 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
         vars.put("INSTALLER", installer.toAbsolutePath().toString());
         vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLayout().getLibrariesDirectory()));
 
-        updateProgress(0, processors.size());
-
-        Task<?> processorsTask = Task.runSequentially(
-                processors.stream()
-                        .map(processor -> createProcessorTask(processor, vars))
-                        .toArray(Task<?>[]::new));
+        Task<?> processorsTask;
+        if (ProcessorReuse.canReuseDeclaredArtifacts(processors, vars)) {
+            LOG.info("Skipping " + processors.size() + " Forge processors for " + selfVersion
+                    + ": every artifact they produce already exists with the expected checksum");
+            updateProgress(processors.size(), processors.size());
+            processorsTask = Task.runAsync(() -> {
+            });
+        } else {
+            updateProgress(0, processors.size());
+            processorsTask = Task.runSequentially(
+                    processors.stream()
+                            .map(processor -> createProcessorTask(processor, vars))
+                            .toArray(Task<?>[]::new));
+        }
 
         dependencies.add(
                 processorsTask.thenComposeAsync(
