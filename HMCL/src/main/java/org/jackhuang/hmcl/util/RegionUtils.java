@@ -25,13 +25,15 @@ import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Locale;
+import java.util.List;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -41,15 +43,16 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class RegionUtils {
 
     /// The two-letter region code detected at class initialization, or `null` if none can be determined.
+    /// Shared time zones require a matching locale region or Windows user GeoID.
     /// Later changes to system settings do not update this value.
     public static final @Nullable String MACHINE_REGION = detectMachineRegion();
 
-    /// Detects the region using the system time zone, then [LocaleUtils#SYSTEM_DEFAULT],
-    /// then the Windows user GeoID when native access is available.
+    /// Detects the region from the system time zone, using [LocaleUtils#SYSTEM_DEFAULT]
+    /// and the Windows user GeoID to resolve ambiguity or supply a missing mapping.
     ///
-    /// @return the first available region code, or `null` if none can be determined
+    /// @return the detected region code, or `null` if no region can be determined unambiguously
     private static @Nullable String detectMachineRegion() {
-        Map<String, String> timeZoneRegions;
+        @Unmodifiable Map<String, @Unmodifiable List<String>> timeZoneRegions;
         try {
             timeZoneRegions = loadTimeZoneRegions();
         } catch (Exception e) {
@@ -57,21 +60,20 @@ public final class RegionUtils {
             timeZoneRegions = Map.of();
         }
 
-        String region = timeZoneRegions.get(ZoneId.systemDefault().getId());
-        if (region != null)
-            return region;
+        @Unmodifiable List<String> candidates = timeZoneRegions.getOrDefault(ZoneId.systemDefault().getId(), List.of());
+        if (candidates.size() == 1)
+            return candidates.get(0);
 
-        region = LocaleUtils.SYSTEM_DEFAULT.getCountry();
-        if (region.matches("^[A-Z]{2}$"))
-            return region.toUpperCase(Locale.ROOT);
+        String localeRegion = LocaleUtils.SYSTEM_DEFAULT.getCountry();
+        if (localeRegion.matches("[A-Z]{2}") && (candidates.isEmpty() || candidates.contains(localeRegion)))
+            return localeRegion;
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
-            Kernel32 kernel32 = Kernel32.INSTANCE;
+            @Nullable Kernel32 kernel32 = Kernel32.INSTANCE;
 
-            // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
             if (kernel32 != null) {
-                region = mapGeoIdToRegion(kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION));
-                if (region != null)
+                @Nullable String region = mapGeoIdToRegion(kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION));
+                if (region != null && (candidates.isEmpty() || candidates.contains(region)))
                     return region;
             }
         }
@@ -344,29 +346,34 @@ public final class RegionUtils {
         };
     }
 
-    /// Loads a new map from bundled time zone identifiers to region codes.
-    /// Each call reads the resource without retaining the result.
+    /// Loads an unmodifiable map from bundled time zone identifiers to unmodifiable candidate lists.
+    /// Each call reads the resource afresh and preserves the region order within each row.
     ///
-    /// @throws IOException if the resource is missing, cannot be read, or contains a data row with fewer than two fields
-    private static @Unmodifiable Map<String, String> loadTimeZoneRegions() throws IOException {
+    /// @throws IOException if the resource is missing, cannot be read, or contains a malformed or duplicate time zone row
+    static @Unmodifiable Map<String, @Unmodifiable List<String>> loadTimeZoneRegions() throws IOException {
         try (@Nullable InputStream input = RegionUtils.class.getResourceAsStream("/assets/timezone_regions.csv")) {
             if (input == null) {
                 throw new IOException("Missing time zone region mapping");
             }
-            var regions = new HashMap<String, String>();
+            var regions = new HashMap<String, @Unmodifiable List<String>>();
             for (String line : Lang.toIterable(new String(input.readAllBytes(), StandardCharsets.UTF_8).lines())) {
                 if (line.isBlank() || line.startsWith("#")) {
                     continue;
                 }
-                String[] fields = line.split(",");
-                if (fields.length < 2) {
+                String[] fields = line.split(",", -1);
+                if (fields.length < 2 || !fields[0].matches("[A-Za-z0-9_+/-]+")) {
                     throw new IOException("Invalid time zone region mapping: " + line);
                 }
                 for (int i = 1; i < fields.length; i++) {
-                    regions.put(fields[i], fields[0]);
+                    if (!fields[i].matches("[A-Z]{2}")) {
+                        throw new IOException("Invalid time zone region mapping: " + line);
+                    }
+                }
+                if (regions.putIfAbsent(fields[0], List.copyOf(Arrays.asList(fields).subList(1, fields.length))) != null) {
+                    throw new IOException("Duplicate time zone: " + fields[0]);
                 }
             }
-            return regions;
+            return Map.copyOf(regions);
         }
     }
 

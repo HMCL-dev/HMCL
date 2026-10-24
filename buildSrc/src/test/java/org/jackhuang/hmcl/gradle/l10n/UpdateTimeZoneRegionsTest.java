@@ -30,26 +30,26 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Verifies deterministic conversion of the IANA table and rejection of invalid input.
 @NotNullByDefault
 final class UpdateTimeZoneRegionsTest {
-    /// Groups and sorts records while discarding coordinates and optional comments.
+    /// Sorts records by time zone while discarding coordinates and optional comments.
     @Test
     void convertsZoneTable() {
         String csv = UpdateTimeZoneRegions.toCsv("# Header\r\n\r\n"
                 + "US\t+340308-1181434\tAmerica/Los_Angeles\tPacific\r\n"
                 + "CN\t+4348+08735\tAsia/Urumqi\r\n"
                 + "CN\t+3114+12128\tAsia/Shanghai\tBeijing Time\r\n");
-        assertTrue(csv.endsWith("CN,Asia/Shanghai,Asia/Urumqi\nUS,America/Los_Angeles\n"));
+        assertTrue(csv.endsWith("America/Los_Angeles,US\nAsia/Shanghai,CN\nAsia/Urumqi,CN\n"));
         assertTrue(csv.startsWith("# Generated from https://data.iana.org/time-zones/tzdb/zone1970.tab (public domain).\n"));
         assertFalse(csv.contains("\r"));
     }
 
-    /// Uses the first listed country for shared time zones, preserving IANA's country order.
+    /// Retains every country for shared time zones in IANA's original order.
     @Test
     void convertsSharedTimeZones() {
         String csv = UpdateTimeZoneRegions.toCsv("JP,AU\t+353916+1394441\tAsia/Tokyo\tEyre Bird Observatory\n"
                 + "CH,DE,LI\t+4723+00832\tEurope/Zurich\tBusingen\n"
                 + "AU\t-3352+15113\tAustralia/Sydney\n");
         String records = csv.lines().filter(line -> !line.startsWith("#")).collect(Collectors.joining("\n"));
-        assertEquals("AU,Australia/Sydney\nCH,Europe/Zurich\nJP,Asia/Tokyo", records);
+        assertEquals("Asia/Tokyo,JP,AU\nAustralia/Sydney,AU\nEurope/Zurich,CH,DE,LI", records);
     }
 
     /// Rejects missing columns, malformed country lists or identifiers, and duplicate time zones.

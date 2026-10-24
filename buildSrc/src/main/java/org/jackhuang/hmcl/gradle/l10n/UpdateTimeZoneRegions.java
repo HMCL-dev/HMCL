@@ -29,9 +29,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.HashSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 /// Updates the checked-in time zone mapping from IANA's public-domain `zone1970.tab`.
 @NotNullByDefault
@@ -40,7 +38,7 @@ public abstract class UpdateTimeZoneRegions extends DefaultTask {
     /// The IANA table listing countries that share each time zone's civil timestamps since 1970.
     private static final String SOURCE_URL = "https://data.iana.org/time-zones/tzdb/zone1970.tab";
 
-    /// Returns the CSV destination, with each row containing a region followed by its time zone identifiers.
+    /// Returns the CSV destination, with each row containing a time zone followed by its candidate region codes.
     @OutputFile
     public abstract RegularFileProperty getOutputFile();
 
@@ -60,14 +58,12 @@ public abstract class UpdateTimeZoneRegions extends DefaultTask {
         Files.writeString(getOutputFile().get().getAsFile().toPath(), csv);
     }
 
-    /// Converts tab-separated records to CSV sorted by region and time zone, ignoring comments and blank lines.
-    /// For time zones shared by multiple countries, uses the first country code listed by IANA,
-    /// which identifies the country containing the time zone's representative city.
+    /// Converts tab-separated records to CSV sorted by time zone, ignoring comments and blank lines.
+    /// Preserves all country codes in IANA's original order for each time zone.
     ///
     /// @throws GradleException if a record is malformed, a time zone is duplicated, or no records are present
     static String toCsv(String table) {
-        var regions = new TreeMap<String, TreeSet<String>>();
-        var timeZones = new HashSet<String>();
+        var regions = new TreeMap<String, String>();
         table.lines().forEach(line -> {
             if (line.isBlank() || line.startsWith("#")) {
                 return;
@@ -77,11 +73,9 @@ public abstract class UpdateTimeZoneRegions extends DefaultTask {
                     || !fields[2].matches("[A-Za-z0-9_+/-]+")) {
                 throw new GradleException("Invalid zone1970.tab record: " + line);
             }
-            if (!timeZones.add(fields[2])) {
+            if (regions.putIfAbsent(fields[2], fields[0]) != null) {
                 throw new GradleException("Duplicate time zone: " + fields[2]);
             }
-            String region = fields[0].substring(0, 2);
-            regions.computeIfAbsent(region, ignored -> new TreeSet<>()).add(fields[2]);
         });
         if (regions.isEmpty()) {
             throw new GradleException("No time zones found in zone1970.tab");
@@ -89,8 +83,7 @@ public abstract class UpdateTimeZoneRegions extends DefaultTask {
 
         var csv = new StringBuilder("# Generated from " + SOURCE_URL + " (public domain).\n"
                 + "# Update with ./gradlew updateTimeZoneRegions.\n");
-        regions.forEach((region, zones) -> csv.append(region).append(',')
-                .append(String.join(",", zones)).append('\n'));
+        regions.forEach((zone, candidates) -> csv.append(zone).append(',').append(candidates).append('\n'));
         return csv.toString();
     }
 }
