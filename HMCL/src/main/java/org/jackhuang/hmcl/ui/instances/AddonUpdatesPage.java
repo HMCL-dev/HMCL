@@ -80,14 +80,12 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("addon.check_update")));
 
     private final DownloadProvider downloadProvider;
-    private final Path localAddonDirectory;
     private final ObservableList<AddonUpdateObject> objects;
 
     private final JFXListView<AddonUpdateObject> listView;
 
-    public AddonUpdatesPage(DownloadProvider downloadProvider, Path localAddonDirectory, AddonUpdates updates) {
+    public AddonUpdatesPage(DownloadProvider downloadProvider, AddonUpdates updates) {
         this.downloadProvider = downloadProvider;
-        this.localAddonDirectory = localAddonDirectory;
 
         getStyleClass().add("gray-background");
 
@@ -171,7 +169,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
     private void updateFiles() {
         AddonUpdateTask task = new AddonUpdateTask(
                 downloadProvider,
-                localAddonDirectory,
                 objects.stream()
                         .filter(AddonUpdateObject::isEnabled)
                         .map(AddonUpdateObject::getData)
@@ -339,7 +336,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                     LOG.warning("Failed to load addon icons", e);
                 }
             }
-            
+
             if (data.localAddonFile() instanceof ResourcePackFile resourcePackFile) {
                 Image image = resourcePackFile.loadIcon();
 
