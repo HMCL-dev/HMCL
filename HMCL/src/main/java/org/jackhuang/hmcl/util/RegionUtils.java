@@ -36,11 +36,18 @@ import java.util.Map;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Detects the machine's region.
 @NotNullByDefault
 public final class RegionUtils {
 
+    /// The two-letter region code detected at class initialization, or `null` if none can be determined.
+    /// Later changes to system settings do not update this value.
     public static final @Nullable String MACHINE_REGION = detectMachineRegion();
 
+    /// Detects the region using the system time zone, then [LocaleUtils#SYSTEM_DEFAULT],
+    /// then the Windows user GeoID when native access is available.
+    ///
+    /// @return the first available region code, or `null` if none can be determined
     private static @Nullable String detectMachineRegion() {
         Map<String, String> timeZoneRegions;
         try {
@@ -337,7 +344,7 @@ public final class RegionUtils {
         };
     }
 
-    /// Loads an unmodifiable map from bundled time zone identifiers to region codes.
+    /// Loads a new map from bundled time zone identifiers to region codes.
     /// Each call reads the resource without retaining the result.
     ///
     /// @throws IOException if the resource is missing, cannot be read, or contains a data row with fewer than two fields
@@ -363,6 +370,7 @@ public final class RegionUtils {
         }
     }
 
+    /// Prevents instantiation of this utility class.
     private RegionUtils() {
     }
 }
