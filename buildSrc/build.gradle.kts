@@ -8,11 +8,18 @@ repositories {
 }
 
 dependencies {
+    implementation(libs.jetbrains.annotations)
     implementation(libs.gson)
     implementation(libs.jna)
     implementation(libs.kala.compress.tar)
     implementation(libs.kala.compress.ar)
     implementation(libs.weburl)
+    implementation(libs.jsoup)
+    implementation(libs.icu4j)
+    implementation("org.apache.maven:maven-artifact:3.9.16")
+
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 java {
@@ -22,6 +29,12 @@ java {
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
+}
+
+tasks.test {
+    useJUnitPlatform()
+    // ProjectBuilder injects compatibility classes through java.lang on modular JDKs.
+    jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED")
 }
 
 tasks.processResources {

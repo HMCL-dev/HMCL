@@ -203,12 +203,9 @@ public record Library(
             return true;
         }
 
-        if (downloads != null && downloads.classifiers() != null
-                && downloads.classifiers().keySet().stream().anyMatch(s -> s.startsWith("native"))) {
-            return true;
-        }
-
-        return this.artifact().getClassifier() != null && this.artifact().getClassifier().startsWith("natives-");
+        return downloads != null
+                && downloads.classifiers() != null
+                && downloads.classifiers().keySet().stream().anyMatch(s -> s.startsWith("native"));
     }
 
     public @Nullable LibraryDownloadInfo getRawDownloadInfo() {

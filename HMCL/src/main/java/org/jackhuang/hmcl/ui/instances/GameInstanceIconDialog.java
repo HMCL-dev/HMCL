@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.instances;
 
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialogLayout;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
@@ -27,17 +30,18 @@ import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.DialogPane;
+import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class GameInstanceIconDialog extends DialogPane {
+public class GameInstanceIconDialog extends JFXDialogLayout {
     private final HMCLGameInstance gameInstance;
     private final Runnable onFinish;
     private final GameSettings.@Nullable Instance setting;
@@ -47,10 +51,9 @@ public class GameInstanceIconDialog extends DialogPane {
         this.onFinish = onFinish;
         this.setting = gameInstance.getSettingsOrCreate();
 
-        setTitle(i18n("settings.icon"));
-        FlowPane pane = new FlowPane();
-        setBody(pane);
+        setHeading(new Label(i18n("settings.icon")));
 
+        FlowPane pane = new FlowPane();
         pane.getChildren().setAll(
                 createCustomIcon(),
                 createIcon(GameInstanceIconType.GRASS),
@@ -68,6 +71,14 @@ public class GameInstanceIconDialog extends DialogPane {
                 createIcon(GameInstanceIconType.FURNACE),
                 createIcon(GameInstanceIconType.QUILT)
         );
+        setBody(pane);
+
+        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
+        cancelButton.getStyleClass().add("dialog-cancel");
+        cancelButton.setOnAction(event -> fireEvent(new DialogCloseEvent()));
+        onEscPressed(this, cancelButton::fire);
+
+        setActions(cancelButton);
     }
 
     private void exploreIcon() {
@@ -114,10 +125,9 @@ public class GameInstanceIconDialog extends DialogPane {
         return container;
     }
 
-    @Override
     protected void onAccept() {
         // Icon file / settings.iconProperty updates already invalidate iconImageProperty.
         onFinish.run();
-        super.onAccept();
+        fireEvent(new DialogCloseEvent());
     }
 }

@@ -28,12 +28,13 @@ import org.jackhuang.hmcl.modpack.ModpackProvider;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class ServerModpackManifest implements ModpackManifest, Validation {
     private final String name;
@@ -121,12 +122,17 @@ public class ServerModpackManifest implements ModpackManifest, Validation {
         }
     }
 
-    public Modpack toModpack(Charset encoding) throws IOException {
+    public Modpack toModpack() throws IOException {
         String gameVersion = addons.stream().filter(x -> GameComponentType.GAME.getPatchId().equals(x.id)).findAny()
                 .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
-        return new Modpack(name, author, version, gameVersion, description, encoding, this) {
+        return new Modpack(name, author, version, gameVersion, description, this) {
             @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, GameInstanceID instanceId, String iconUrl) {
+            public Task<?> getInstallTask(
+                    DefaultDependencyManager dependencyManager,
+                    Path zipFile,
+                    GameInstanceID instanceId,
+                    String iconUrl,
+                    @Nullable Set<String> excludedFiles) {
                 return new ServerModpackLocalInstallTask(dependencyManager, zipFile, this, ServerModpackManifest.this, instanceId);
             }
         };

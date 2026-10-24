@@ -17,17 +17,28 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.download.DefaultCacheRepository;
+import org.jackhuang.hmcl.download.DefaultDependencyManager;
+import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
+import java.net.http.HttpHeaders;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -37,6 +48,40 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// Tests exclusive repository drafts and their filesystem visibility boundary.
 @NotNullByDefault
 public final class DefaultGameRepositoryDraftTest {
+
+    /// Finds a manifest among unrelated and malformed JSON files and preserves its storage path.
+    @Test
+    public void testRefreshSelectsManifestAmongMultipleJsonFiles(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        Path root = Files.createDirectories(repository.getLayout().getInstanceRoot(id));
+        Files.writeString(root.resolve("a-broken.json"), "{");
+        Files.writeString(root.resolve("b-settings.json"), "{\"id\":\"settings\",\"mainClass\":42}");
+        Path selected = root.resolve("c-game.json");
+        Files.writeString(selected, "{\"id\":\"original\",\"mainClass\":\"example.Main\"}");
+        Files.writeString(root.resolve("d-game.json"), "{\"id\":\"other\",\"mainClass\":\"other.Main\"}");
+
+        repository.refresh();
+
+        assertEquals(selected, repository.getInstance(id).getManifestFile());
+        assertEquals(id, repository.getInstance(id).getManifest().id());
+        assertEquals("example.Main", repository.getInstance(id).getManifest().mainClass());
+        assertFalse(Files.exists(repository.getLayout().getInstanceJson(id)));
+    }
+
+    /// Ignores directories whose multiple JSON files do not contain an instance manifest.
+    @Test
+    public void testRefreshIgnoresUnrelatedJsonFiles(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        Path root = Files.createDirectories(repository.getLayout().getInstanceRoot(id));
+        Files.writeString(root.resolve("settings.json"), "{\"id\":\"settings\"}");
+        Files.writeString(root.resolve("empty.json"), "null");
+
+        repository.refresh();
+
+        assertFalse(repository.hasInstance(id));
+    }
 
     /// Rejects path-segment instance ids before they can reach repository deletion code.
     @Test
@@ -277,18 +322,211 @@ public final class DefaultGameRepositoryDraftTest {
         assertEquals(GameRepositoryDraft.State.FAILED, draft.getState());
     }
 
-    /// Runs an asynchronous update using the published instance as immutable context.
+    /// A manifest-only update preserves an existing client JAR.
     @Test
     public void testUpdateInstanceAsyncCommitsWorkingManifest(@TempDir Path tempDirectory) throws Exception {
         TestRepository repository = new TestRepository(tempDirectory);
         GameInstanceID id = new GameInstanceID("instance");
         repository.save(new GameInstanceManifest(id).withMainClass("original.Main"));
+        Path target = repository.getLayout().getInstanceJarFile(id);
+        Files.writeString(target, "custom client");
 
-        Task<?> update = repository.updateInstanceAsync(id, workingInstance -> Task.supplyAsync(() ->
+        Task<?> update = createDependencyManager(repository).updateInstanceAsync(id, workingInstance -> Task.supplyAsync(() ->
                 workingInstance.getManifest().withMainClass("updated.Main")));
         assertTrue(update.executor().test());
 
         assertEquals("updated.Main", repository.getInstance(id).getManifest().mainClass());
+        assertEquals("custom client", Files.readString(target));
+    }
+
+    /// A version change replaces an existing client JAR with the file selected by the new manifest.
+    @Test
+    public void testUpdateInstanceAsyncReplacesClientJar(@TempDir Path tempDirectory) throws Exception {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        GameInstanceID id = new GameInstanceID("instance");
+        GameInstanceManifest original = new GameInstanceManifest(id).withMainClass("original.Main");
+        repository.save(original);
+        Path target = repository.getLayout().getInstanceJarFile(id);
+        Files.writeString(target, "old client");
+        Path source = tempDirectory.resolve("new-client.jar");
+        Files.writeString(source, "new client");
+        String sha1 = DigestUtils.digestToString("SHA-1", source);
+        DefaultCacheRepository cache = new DefaultCacheRepository(tempDirectory.resolve("cache"));
+        Path cached = cache.cacheFile(source, "SHA-1", sha1);
+        DefaultDependencyManager manager = new DefaultDependencyManager(
+                repository, new TestDownloadProvider(cache), cache);
+        GameInstanceManifest replacement = original.withDownloads(Map.of(DownloadType.CLIENT,
+                new DownloadInfo("https://example.invalid/client.jar", sha1)));
+
+        Task<?> update = manager.updateInstanceAsync(id, instance ->
+                new GameDownloadTask(manager, replacement).thenApplyAsync(jar -> {
+                    assertEquals("old client", Files.readString(target));
+                    assertEquals(original, repository.getInstance(id).getManifest());
+                    return replacement;
+                }));
+        assertTrue(update.executor().test());
+
+        assertEquals(replacement, repository.getInstance(id).getManifest());
+        assertTrue(replacement.getDownloadInfo().validateChecksum(target, false));
+        assertEquals("new client", Files.readString(cached));
+    }
+
+    /// Equivalent checksums preserve a customized client even when the download URL changes.
+    @Test
+    public void testUpdateInstanceAsyncPreservesClientWithSameChecksum(@TempDir Path tempDirectory) throws Exception {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        GameInstanceManifest original = new GameInstanceManifest(id).withDownloads(Map.of(DownloadType.CLIENT,
+                new DownloadInfo("https://example.invalid/old.jar", "a".repeat(40))));
+        repository.save(original);
+        Path target = repository.getLayout().getInstanceJarFile(id);
+        Files.writeString(target, "custom client");
+        GameInstanceManifest replacement = original.withDownloads(Map.of(DownloadType.CLIENT,
+                new DownloadInfo("https://example.invalid/new.jar", "A".repeat(40))));
+
+        assertTrue(createDependencyManager(repository).updateInstanceAsync(id,
+                instance -> Task.completed(replacement)).executor().test());
+
+        assertEquals(replacement, repository.getInstance(id).getManifest());
+        assertEquals("custom client", Files.readString(target));
+    }
+
+    /// A changed URL selects a replacement when neither client download declares a checksum.
+    @Test
+    public void testUpdateInstanceAsyncReplacesClientWithoutChecksum(@TempDir Path tempDirectory) throws Exception {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        GameInstanceManifest original = new GameInstanceManifest(id).withDownloads(Map.of(DownloadType.CLIENT,
+                new DownloadInfo("https://example.invalid/old.jar")));
+        repository.save(original);
+        Path target = repository.getLayout().getInstanceJarFile(id);
+        Files.writeString(target, "old client");
+        String newUrl = "https://example.invalid/new.jar";
+        DefaultDependencyManager manager = createDependencyManager(repository);
+        manager.getCacheRepository().cacheText(new UrlResponseInfo(200, WebURL.parse(newUrl),
+                HttpHeaders.of(Map.of("etag", List.of("new-client"),
+                        "cache-control", List.of("max-age=3600")), (name, value) -> true)), "new client");
+        GameInstanceManifest replacement = original.withDownloads(Map.of(DownloadType.CLIENT, new DownloadInfo(newUrl)));
+
+        assertTrue(manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).executor().test());
+
+        assertEquals(replacement, repository.getInstance(id).getManifest());
+        assertEquals("new client", Files.readString(target));
+    }
+
+    /// Client changes supplied only by patches are resolved before choosing the replacement JAR.
+    @Test
+    public void testUpdateInstanceAsyncResolvesClientPatch(@TempDir Path tempDirectory) throws Exception {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        GameInstanceManifest original = new GameInstanceManifest(id);
+        repository.save(original);
+        Path target = repository.getLayout().getInstanceJarFile(id);
+        Files.writeString(target, "old client");
+        Path source = tempDirectory.resolve("new-client.jar");
+        Files.writeString(source, "new client");
+        String sha1 = DigestUtils.digestToString("SHA-1", source);
+        DefaultDependencyManager manager = createDependencyManager(repository);
+        manager.getCacheRepository().cacheFile(source, "SHA-1", sha1);
+        GameInstanceManifest replacement = original.withPatches(List.of(GameInstancePatch.fromManifest(
+                original.withDownloads(Map.of(DownloadType.CLIENT,
+                        new DownloadInfo("https://example.invalid/client.jar", sha1))),
+                GameComponentType.GAME.getPatchId(), "new-version", GameInstancePatch.PRIORITY_MC)));
+
+        assertTrue(manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).executor().test());
+
+        assertEquals(replacement, repository.getInstance(id).getManifest());
+        assertEquals("new client", Files.readString(target));
+    }
+
+    /// Switching JAR ownership materializes an owned client but never replaces a referenced client.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    public void testUpdateInstanceAsyncSwitchesJarOwnership(boolean useOwnJar, @TempDir Path tempDirectory) throws Exception {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        GameInstanceID sharedId = new GameInstanceID("shared");
+        repository.save(new GameInstanceManifest(sharedId));
+        Path sharedJar = repository.getLayout().getInstanceJarFile(sharedId);
+        Files.writeString(sharedJar, "shared client");
+        String sha1 = DigestUtils.digestToString("SHA-1", sharedJar);
+        DownloadInfo download = new DownloadInfo("https://example.invalid/client.jar", sha1);
+        GameInstanceManifest original = new GameInstanceManifest(id)
+                .withJar(useOwnJar ? sharedId : id)
+                .withDownloads(useOwnJar ? Map.of(DownloadType.CLIENT, download) : null);
+        repository.save(original);
+        Path target = repository.getLayout().getInstanceJarFile(id);
+        Files.writeString(target, "custom client");
+        DefaultDependencyManager manager = createDependencyManager(repository);
+        manager.getCacheRepository().cacheFile(sharedJar, "SHA-1", sha1);
+        GameInstanceManifest replacement = original.withJar(useOwnJar ? id : sharedId)
+                .withDownloads(Map.of(DownloadType.CLIENT, download));
+
+        assertTrue(manager.updateInstanceAsync(id, instance -> Task.completed(replacement)).executor().test());
+
+        assertEquals(useOwnJar ? "shared client" : "custom client", Files.readString(target));
+        assertEquals("shared client", Files.readString(sharedJar));
+        assertEquals(useOwnJar ? target : sharedJar, repository.getInstance(id).getInstanceJarFile());
+    }
+
+    /// A failed JAR lookup leaves both the old manifest and its client JAR intact.
+    @Test
+    public void testUpdateInstanceAsyncPreservesFilesWhenJarTaskFails(@TempDir Path tempDirectory) throws Exception {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        GameInstanceManifest original = new GameInstanceManifest(id).withMainClass("original.Main");
+        repository.save(original);
+        Path manifestFile = repository.getLayout().getInstanceJson(id);
+        String originalJson = Files.readString(manifestFile);
+        Path target = repository.getLayout().getInstanceJarFile(id);
+        Files.writeString(target, "original");
+
+        GameInstanceManifest replacement = original.withDownloads(Map.of(DownloadType.CLIENT,
+                new DownloadInfo("file:///missing-client.jar", "0".repeat(40))));
+        Task<?> update = createDependencyManager(repository).updateInstanceAsync(id,
+                instance -> Task.completed(replacement));
+        assertFalse(update.executor().test());
+
+        assertEquals(original, repository.getInstance(id).getManifest());
+        assertEquals(originalJson, Files.readString(manifestFile));
+        assertEquals("original", Files.readString(target));
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            assertTrue(draft.isOpen());
+        }
+    }
+
+    /// Publication failure rolls back both files after an asynchronous update stages a new JAR.
+    @Test
+    public void testUpdateInstanceAsyncRollsBackManifestAndJar(@TempDir Path tempDirectory) throws Exception {
+        FailingRepository repository = new FailingRepository(tempDirectory.resolve("game"));
+        GameInstanceID id = new GameInstanceID("instance");
+        GameInstanceManifest original = new GameInstanceManifest(id).withMainClass("original.Main");
+        repository.save(original);
+        Path manifestFile = repository.getLayout().getInstanceJson(id);
+        String originalJson = Files.readString(manifestFile);
+        Path target = repository.getLayout().getInstanceJarFile(id);
+        Files.writeString(target, "original");
+        Path source = tempDirectory.resolve("replacement.jar");
+        Files.writeString(source, "replacement");
+        repository.failDraftPublish = true;
+
+        DefaultDependencyManager manager = createDependencyManager(repository);
+        String sha1 = DigestUtils.digestToString("SHA-1", source);
+        Path cached = manager.getCacheRepository().cacheFile(source, "SHA-1", sha1);
+        GameInstanceManifest replacement = original.withMainClass("updated.Main")
+                .withDownloads(Map.of(DownloadType.CLIENT,
+                        new DownloadInfo("https://example.invalid/client.jar", sha1)));
+        Task<?> update = manager.updateInstanceAsync(id, instance -> Task.completed(replacement));
+        assertFalse(update.executor().test());
+
+        assertEquals(original, repository.getInstance(id).getManifest());
+        assertEquals(originalJson, Files.readString(manifestFile));
+        assertEquals("original", Files.readString(target));
+        assertEquals("replacement", Files.readString(source));
+        assertEquals("replacement", Files.readString(cached));
+        try (DefaultGameRepositoryDraft draft = repository.openDraft()) {
+            assertTrue(draft.isOpen());
+        }
     }
 
     /// Rejects an asynchronous update that attempts to create a different instance id.
@@ -299,7 +537,7 @@ public final class DefaultGameRepositoryDraftTest {
         GameInstanceID otherId = new GameInstanceID("other");
         repository.save(new GameInstanceManifest(id).withMainClass("original.Main"));
 
-        Task<?> update = repository.updateInstanceAsync(id, workingInstance ->
+        Task<?> update = createDependencyManager(repository).updateInstanceAsync(id, workingInstance ->
                 Task.supplyAsync(() -> workingInstance.getManifest().withId(otherId)));
         assertFalse(update.executor().test());
 
@@ -316,7 +554,7 @@ public final class DefaultGameRepositoryDraftTest {
         TestRepository repository = new TestRepository(tempDirectory);
         GameInstanceID id = new GameInstanceID("missing");
 
-        Task<?> update = repository.updateInstanceAsync(id, workingInstance ->
+        Task<?> update = createDependencyManager(repository).updateInstanceAsync(id, workingInstance ->
                 Task.completed(workingInstance.getManifest()));
         assertFalse(update.executor().test());
 
@@ -332,7 +570,7 @@ public final class DefaultGameRepositoryDraftTest {
         GameInstanceID id = new GameInstanceID("instance");
         repository.save(new GameInstanceManifest(id));
 
-        Task<?> update = repository.updateInstanceAsync(id, workingInstance -> {
+        Task<?> update = createDependencyManager(repository).updateInstanceAsync(id, workingInstance -> {
             throw new IOException("Simulated updater failure");
         });
         assertFalse(update.executor().test());
@@ -340,6 +578,13 @@ public final class DefaultGameRepositoryDraftTest {
         try (DefaultGameRepositoryDraft ignored = repository.openDraft()) {
             assertTrue(ignored.isOpen());
         }
+    }
+
+    /// Creates a dependency manager with a cache isolated inside the test repository.
+    private static DefaultDependencyManager createDependencyManager(TestRepository repository) {
+        DefaultCacheRepository cacheRepository =
+                new DefaultCacheRepository(repository.getBaseDirectory().resolve("cache"));
+        return new DefaultDependencyManager(repository, new TestDownloadProvider(cacheRepository), cacheRepository);
     }
 
     /// Minimal repository implementation for draft tests.

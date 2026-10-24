@@ -1,7 +1,7 @@
 # Localization
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-**English** | 中文 ([简体](Localization_zh.md), [繁體](Localization_zh_Hant.md))
+**English** | 中文 ([简体](Localization_zh_Hans.md), [繁體](Localization_zh_Hant.md))
 <!-- #END LANGUAGE_SWITCHER -->
 
 HMCL provides localization support for multiple languages.
@@ -16,7 +16,7 @@ Currently, HMCL supports the following languages:
 |-----------------------|--------------|----------------------------|------------------------------------|----------------------------------------------------------|----------------|-------------------------------------------|
 | English               | `en`         | `default`                  | (empty)                            | `en_us`                                                  | **Primary**    | [Glavo](https://github.com/Glavo)         |
 | English (Upside Down) | `en-Qabs`    | `en-Qabs`                  | `en_Qabs`                          | `en_ud`                                                  | Automatic      |                                           |
-| Chinese (Simplified)  | `zh-Hans`    | `zh`                       | `_zh`                              | `zh_cn`                                                  | **Primary**    | [Glavo](https://github.com/Glavo)         |
+| Chinese (Simplified)  | `zh-Hans`    | `zh-Hans`                  | `_zh_Hans`                         | `zh_cn`                                                  | **Primary**    | [Glavo](https://github.com/Glavo)         |
 | Chinese (Traditional) | `zh-Hant`    | `zh-Hant`                  | `_zh_Hant`                         | `zh_tw` <br/> `zh_hk`                                    | **Primary**    | [Glavo](https://github.com/Glavo)         |
 | Chinese (Classical)   | `lzh`        | `lzh`                      | `_lzh`                             | `lzh`                                                    | Secondary      |                                           |
 | Japanese              | `ja`         | `ja`                       | `_ja`                              | `ja_jp`                                                  | Secondary      |                                           |
@@ -61,17 +61,6 @@ HMCL will derive a search list from the current language tag and search for reso
 
 We recommend always providing a default resource (with the `default` key and empty file suffix) when providing localization resources,
 to ensure all users can load resources properly.
-
-We also recommend using broader language tags for localization resources whenever possible,
-so users are less likely to fall back to the default resource.
-
-For example, if you provide a Simplified Chinese localization resource, 
-we recommend using `zh` as the localization key instead of the more specific `zh-Hans`,
-so it will apply to all Chinese users and avoid falling back to the default resource for them.
-
-If you want to provide both Simplified and Traditional Chinese resources, 
-it is recommended to use the broader `zh` as the key for the resource with more users (as the default Chinese resource),
-and use the more specific `zh-Hans`/`zh-Hant` as the key for the resource with fewer users.
 
 </details>
 
@@ -143,9 +132,9 @@ All documentation and localization resource files follow the naming rule `<resou
 For example, for `README.md`, the localized versions in different languages are named as follows:
 
 - English: `README.md`
-- Chinese (Simplified): `README_zh.md`
+- Chinese (Simplified):  `README_zh_Hans.md`
 - Chinese (Traditional): `README_zh_Hant.md`
-- Chinese (Classical): `README_lzh.md`
+- Chinese (Classical):   `README_lzh.md`
 
 In addition to localized files, HMCL also supports localizing certain text fields in JSON. Localized text in JSON uses the following format:
 
@@ -172,7 +161,7 @@ It can be rewritten as localized text:
 {
     "meow": {
         "default": "Meow",
-        "zh": "喵呜",
+        "zh-Hans": "喵呜",
         "zh-Hant": "喵嗚"
     }
 }
@@ -331,7 +320,7 @@ add the following content under the document title:
 After running `./gradlew updateDocuments`, these two lines will be automatically replaced with language switcher links like the following:
 
 ```markdown
-**English** (**Standard**, [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
+**English** (**Standard**, [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh_Hans.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 ```
 
 For more about macros, see [MacroProcessor.java](../buildSrc/src/main/java/org/jackhuang/hmcl/gradle/docs/MacroProcessor.java).

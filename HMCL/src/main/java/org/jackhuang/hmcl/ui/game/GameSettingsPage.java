@@ -643,6 +643,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 jvmSettings
         );
         {
+            var notUseJavawPane = createInheritableBooleanButton(GameSettings::notUseJavawProperty);
+            jvmSettings.getContent().add(notUseJavawPane);
+            notUseJavawPane.setTitle(i18n("settings.advanced.not_use_javaw"));
+            notUseJavawPane.setSubtitle(i18n("settings.advanced.windows_only"));
+
             var noJVMArgsPane = createInheritableBooleanButton(GameSettings::noJVMOptionsProperty);
             jvmSettings.getContent().add(noJVMArgsPane);
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
@@ -829,10 +834,14 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             nativeLibrarySettings.getContent().add(nativesDirPane);
             nativesDirPane.setTitle(i18n("settings.advanced.natives_directory"));
             {
-                var txtNativesDir = new JFXTextField();
-                txtNativesDir.setPrefWidth(400);
-                nativesDirPane.setRight(txtNativesDir);
-                bindIndependentTextField(nativesDirPane, txtNativesDir, GameSettings::nativesDirectoryProperty);
+                var nativesDirSelector = new FileSelector()
+                        .setSelectionMode(FileSelector.SelectionMode.DIRECTORY);
+                nativesDirSelector.setPrefWidth(400);
+                nativesDirPane.setRight(nativesDirSelector);
+                bindInheritableStringProperty(
+                        nativesDirPane,
+                        nativesDirSelector.valueProperty(),
+                        GameSettings::nativesDirectoryProperty);
             }
 
             var noNativesPatchPane = createIndependentBooleanButton(GameSettings::notPatchNativesProperty);

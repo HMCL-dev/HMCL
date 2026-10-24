@@ -20,10 +20,12 @@ package org.jackhuang.hmcl.ui.instances;
 import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
@@ -41,10 +43,14 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.addon.AddonLoader;
+import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
+import org.jackhuang.hmcl.addon.mod.ModProjectInfo;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
@@ -63,13 +69,13 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -95,7 +101,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
     private ModManager modManager;
     private @Nullable HMCLGameInstance gameInstance;
-    private String gameVersion;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
@@ -137,8 +142,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return;
         }
 
-        this.gameVersion = gameInstance.getVersion().toString();
-
         loadMods(gameInstance.getModManager());
     }
 
@@ -164,7 +167,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 return;
             }
 
-            updateSupportedLoaders(modManager);
+            supportedLoaders.clear();
+            supportedLoaders.addAll(modManager.getSupportedLoaders());
 
             if (exception == null) {
                 getItems().setAll(list);
@@ -174,51 +178,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             }
             setLoading(false);
         }, Schedulers.javafx());
-    }
-
-    private void updateSupportedLoaders(ModManager modManager) {
-        supportedLoaders.clear();
-
-        GameComponentAnalyzer analyzer = modManager.getComponentAnalyzer();
-        if (analyzer == null) {
-            Collections.addAll(supportedLoaders, ModLoaderType.values());
-            return;
-        }
-
-        for (GameComponentType type : GameComponentType.MOD_LOADERS) {
-            if (type.isModLoader() && analyzer.has(type)) {
-                ModLoaderType modLoaderType = type.getModLoaderType();
-                if (modLoaderType != null) {
-                    supportedLoaders.add(modLoaderType);
-
-                    if (modLoaderType == ModLoaderType.CLEANROOM)
-                        supportedLoaders.add(ModLoaderType.FORGE);
-                }
-            }
-        }
-
-        if (analyzer.has(GameComponentType.NEO_FORGE) && "1.20.1".equals(gameVersion)) {
-            supportedLoaders.add(ModLoaderType.FORGE);
-        }
-
-        if (analyzer.has(GameComponentType.QUILT)) {
-            supportedLoaders.add(ModLoaderType.FABRIC);
-        }
-
-        if (analyzer.has(GameComponentType.LEGACY_FABRIC)) {
-            supportedLoaders.add(ModLoaderType.FABRIC);
-        }
-
-        if (analyzer.has(GameComponentType.FABRIC) && modManager.hasMod("kilt", ModLoaderType.FABRIC)) {
-            supportedLoaders.add(ModLoaderType.FORGE);
-            supportedLoaders.add(ModLoaderType.NEO_FORGE);
-        }
-
-        // Sinytra Connector
-        if (analyzer.has(GameComponentType.NEO_FORGE) && (modManager.hasMod("connector", ModLoaderType.NEO_FORGE) || modManager.hasMod("connectormod", ModLoaderType.NEO_FORGE))
-                || "1.20.1".equals(gameVersion) && analyzer.has(GameComponentType.FORGE) && modManager.hasMod("connectormod", ModLoaderType.FORGE)) {
-            supportedLoaders.add(ModLoaderType.FABRIC);
-        }
     }
 
     public void add() {
@@ -257,29 +216,39 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     void removeSelected(ObservableList<ModInfoObject> selectedItems) {
-        try {
-            modManager.removeMods(selectedItems.stream()
-                    .filter(Objects::nonNull)
-                    .map(ModInfoObject::getModInfo)
-                    .toArray(LocalModFile[]::new));
-            loadMods(modManager);
-        } catch (IOException ignore) {
-            // Fail to remove mods if the game is running or the mod is absent.
-        }
-    }
-
-    void enableSelected(ObservableList<ModInfoObject> selectedItems) {
+        List<String> failed = new ArrayList<>();
         selectedItems.stream()
                 .filter(Objects::nonNull)
                 .map(ModInfoObject::getModInfo)
-                .forEach(info -> info.setActive(true));
+                .forEach(info -> {
+                    try {
+                        info.delete();
+                    } catch (IOException e) {
+                        failed.add(info.getFile().toString());
+                        LOG.warning("Failed to delete mod \"" + info.getId() + "\"", e);
+                    }
+                });
+        loadMods(modManager);
+        if (!failed.isEmpty())
+            Controllers.dialog(i18n("mods.delete.failed") + "\n" + String.join(",\n", failed),
+                    i18n("message.error"), MessageDialogPane.MessageType.ERROR);
     }
 
-    void disableSelected(ObservableList<ModInfoObject> selectedItems) {
+    void setSelectedEnabled(ObservableList<ModInfoObject> selectedItems, boolean enabled) {
+        List<String> failed = new ArrayList<>();
         selectedItems.stream()
                 .filter(Objects::nonNull)
                 .map(ModInfoObject::getModInfo)
-                .forEach(info -> info.setActive(false));
+                .forEach(info -> {
+                    try {
+                        info.setActive(enabled);
+                    } catch (IOException e) {
+                        failed.add(info.getFile().toString());
+                    }
+                });
+        if (!failed.isEmpty())
+            Controllers.dialog(i18n("mods.toggle.failed") + "\n" + String.join(",\n", failed),
+                    i18n("message.error"), MessageDialogPane.MessageType.ERROR);
     }
 
     public void openModFolder() {
@@ -298,19 +267,22 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
-                            return version != GameVersionNumber.unknown()
-                                    ? new AddonCheckUpdatesTask<>(
-                                            DownloadProviders.getDownloadProvider(), version.toString(), mods)
-                                    : null;
+                            if (version != GameVersionNumber.unknown()) {
+                                return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), mods);
+                            } else {
+                                LOG.warning("Failed to check for updates, due to unable to get instance game version");
+                                return null;
+                            }
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception instanceof CancellationException) return;
                             if (exception != null || result == null) {
                                 Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
-                            } else if (result.isEmpty()) {
+                                if (exception != null) LOG.warning("Failed to check for updates", exception);
+                            } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage<>(modManager, result));
+                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), modManager.getDirectory(), result));
                             }
                         })
                         .withStagesHints("update.checking"),
@@ -458,9 +430,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             }, null);
                         }),
                         createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
-                                skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
+                                skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
                         createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
-                                skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
+                                skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                                 skinnable.checkUpdates(
                                         listView.getSelectionModel().getSelectedItems().stream()
@@ -584,7 +556,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             || predicate.test(modInfo.getGameVersion())
                             || predicate.test(modInfo.getId())
                             || predicate.test(Objects.toString(modInfo.getModLoaderType()))
-                            || predicate.test((item.getModTranslations() != null ? item.getModTranslations().getDisplayName() : null))) {
+                            || predicate.test((item.getProjectInfo() != null ? item.getProjectInfo().displayName() : null))) {
                         listView.getItems().add(item);
                     }
                 }
@@ -594,28 +566,32 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     public static final class ModInfoObject {
-        private final BooleanProperty active;
         private final LocalModFile localModFile;
-        private final @Nullable ModTranslations.Mod modTranslations;
+        /// Matching project metadata, or null if the local mod cannot be identified.
+        private final @Nullable ModProjectInfo projectInfo;
 
-        private SoftReference<CompletableFuture<Image>> iconCache;
+        private final ItemPropertyAsyncCache<Image, ModInfoObject> iconCache;
 
         ModInfoObject(LocalModFile localModFile) {
             this.localModFile = localModFile;
-            this.active = localModFile.activeProperty();
+            this.projectInfo = AddonProjectInfoRegistry.MOD.getInfo(localModFile.getId(), localModFile.getName());
 
-            this.modTranslations = ModTranslations.MOD.getMod(localModFile.getId(), localModFile.getName());
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
         public LocalModFile getModInfo() {
             return localModFile;
         }
 
-        public @Nullable ModTranslations.Mod getModTranslations() {
-            return modTranslations;
+        /// Returns matching project metadata, or null if no project was found.
+        public @Nullable ModProjectInfo getProjectInfo() {
+            return projectInfo;
         }
 
-        @FXThread
+        private Image getDefaultIcon() {
+            return GameInstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
+        }
+
         private Image loadIcon() {
             List<String> iconPaths = new ArrayList<>();
 
@@ -638,34 +614,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 LOG.warning("Failed to load mod icons", e);
             }
 
-            return GameInstanceIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
-        }
-
-        public void loadIcon(ImageContainer imageContainer, @Nullable WeakReference<ObjectProperty<ModInfoObject>> current) {
-            SoftReference<CompletableFuture<Image>> iconCache = this.iconCache;
-            CompletableFuture<Image> imageFuture;
-            if (iconCache != null && (imageFuture = iconCache.get()) != null) {
-                Image image = imageFuture.getNow(null);
-                if (image != null) {
-                    imageContainer.setImage(image);
-                    return;
-                }
-            } else {
-                imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
-                this.iconCache = new SoftReference<>(imageFuture);
-            }
-            imageContainer.setImage(GameInstanceIconType.getIconType(localModFile.getModLoaderType()).getIcon());
-            imageFuture.thenAcceptAsync(image -> {
-                if (current != null) {
-                    ObjectProperty<ModInfoObject> infoObjectProperty = current.get();
-                    if (infoObjectProperty == null || infoObjectProperty.get() != this) {
-                        // The current ListCell has already switched to another object
-                        return;
-                    }
-                }
-
-                imageContainer.setImage(image);
-            }, Schedulers.javafx());
+            return getDefaultIcon();
         }
     }
 
@@ -682,11 +631,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             var imageContainer = new ImageContainer(40);
             titleContainer.setAlignment(Pos.CENTER_LEFT);
-            modInfo.loadIcon(imageContainer, null);
+            modInfo.iconCache.attachValue(imageContainer.imageProperty(), null);
 
             TwoLineListItem title = new TwoLineListItem();
-            if (modInfo.getModTranslations() != null && I18n.isUseChinese())
-                title.setTitle(modInfo.getModTranslations().getDisplayName());
+            title.getTitleLabel().setWrapText(true);
+            if (modInfo.getProjectInfo() != null && I18n.isUseChinese())
+                title.setTitle(modInfo.getProjectInfo().displayName());
             else
                 title.setTitle(modInfo.getModInfo().getName());
 
@@ -725,8 +675,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
                 for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
-                        pair("addon.curseforge", CurseForgeRemoteAddonRepository.MODS),
-                        pair("addon.modrinth", ModrinthRemoteAddonRepository.MODS)
+                        pair("addon.curseforge", CurseForgeRemoteAddonRepository.getInstance()),
+                        pair("addon.modrinth", ModrinthRemoteAddonRepository.getInstance())
                 )) {
                     RemoteAddonRepository repository = item.getValue();
                     JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
@@ -735,25 +685,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         if (versionOptional.isPresent()) {
                             RemoteAddon remoteAddon = repository.getAddonById(DownloadProviders.getDownloadProvider(), versionOptional.get().projectId());
                             FXUtils.runInFX(() -> {
-                                for (ModLoaderType modLoaderType : versionOptional.get().loaders()) {
-                                    String loaderName = switch (modLoaderType) {
-                                        case FORGE -> i18n("install.installer.forge");
-                                        case CLEANROOM -> i18n("install.installer.cleanroom");
-                                        case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
-                                        case NEO_FORGE -> i18n("install.installer.neoforge");
-                                        case FABRIC -> i18n("install.installer.fabric");
-                                        case LITE_LOADER -> i18n("install.installer.liteloader");
-                                        case QUILT -> i18n("install.installer.quilt");
-                                        default -> null;
-                                    };
-                                    if (loaderName == null)
-                                        continue;
-                                    if (title.getTags()
-                                            .stream()
-                                            .noneMatch(it -> it.getText().equals(loaderName))) {
-                                        title.addTag(loaderName);
-                                    }
+                                Set<String> tags = new LinkedHashSet<>();
+                                for (AddonLoader loader : versionOptional.get().loaders()) {
+                                    String tag = I18n.translateLoaderName(loader);
+                                    if (tag != null) tags.add(tag);
                                 }
+                                title.addTagsIfNotExist(tags);
 
                                 button.setExternalLink(remoteAddon.pageUrl());
                                 button.setDisable(false);
@@ -771,7 +708,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 getActions().add(officialPageButton);
             }
 
-            if (modInfo.getModTranslations() == null || StringUtils.isBlank(modInfo.getModTranslations().getMcmod())) {
+            @Nullable String mcmodUrl = modInfo.getProjectInfo() != null ? modInfo.getProjectInfo().mcmodUrl() : null;
+            if (mcmodUrl == null) {
                 JFXHyperlink searchButton = new JFXHyperlink(i18n("mods.mcmod.search"));
                 searchButton.setExternalLink(NetworkUtils.withQuery("https://search.mcmod.cn/s", mapOf(
                         pair("key", modInfo.getModInfo().getName()),
@@ -781,7 +719,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 getActions().add(searchButton);
             } else {
                 JFXHyperlink mcmodButton = new JFXHyperlink(i18n("mods.mcmod.page"));
-                mcmodButton.setExternalLink(ModTranslations.MOD.getMcmodUrl(modInfo.getModTranslations()));
+                mcmodButton.setExternalLink(mcmodUrl);
                 getActions().add(mcmodButton);
             }
 
@@ -810,7 +748,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
 
-        private BooleanProperty booleanProperty;
+        private final InvalidationListener activeListener = obs -> checkBox.setSelected(getItem().getModInfo().isActive());
+        private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
+        private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
         private Tooltip warningTooltip;
 
@@ -839,6 +779,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         @Override
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
+            if (observedActiveProperty != null)
+                observedActiveProperty.removeListener(weakActiveListener);
+
             pseudoClassStateChanged(WARNING, false);
             if (warningTooltip != null) {
                 Tooltip.uninstall(this, warningTooltip);
@@ -852,15 +795,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             content.getTags().clear();
 
             LocalModFile modInfo = dataItem.getModInfo();
-            ModTranslations.Mod modTranslations = dataItem.getModTranslations();
+            @Nullable ModProjectInfo projectInfo = dataItem.getProjectInfo();
 
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
 
-            dataItem.loadIcon(imageContainer, new WeakReference<>(this.itemProperty()));
+            dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
 
             String displayName = modInfo.getName();
-            if (modTranslations != null && I18n.isUseChinese()) {
-                String chineseName = modTranslations.getName();
+            if (projectInfo != null && I18n.isUseChinese()) {
+                String chineseName = projectInfo.mainName();
                 if (StringUtils.containsChinese(chineseName)) {
                     if (StringUtils.containsEmoji(chineseName)) {
                         StringBuilder builder = new StringBuilder();
@@ -892,15 +835,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 content.addTagWarning(i18n("mods.unknown"));
             } else if (!page.supportedLoaders.contains(modLoaderType)) {
                 warning.add(i18n("mods.warning.loader_mismatch"));
-                switch (dataItem.getModInfo().getModLoaderType()) {
-                    case FORGE -> content.addTagWarning(i18n("install.installer.forge"));
-                    case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacyfabric"));
-                    case CLEANROOM -> content.addTagWarning(i18n("install.installer.cleanroom"));
-                    case NEO_FORGE -> content.addTagWarning(i18n("install.installer.neoforge"));
-                    case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));
-                    case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
-                    case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
-                }
+                content.addTagWarning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType()));
             }
 
             String modVersion = modInfo.getVersion();
@@ -908,10 +843,18 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 content.addTag(modVersion);
             }
 
-            if (booleanProperty != null) {
-                checkBox.selectedProperty().unbindBidirectional(booleanProperty);
-            }
-            checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
+            (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
+            checkBox.setSelected(modInfo.isActive());
+            checkBox.setOnAction(event -> {
+                try {
+                    modInfo.setActive(checkBox.isSelected());
+                } catch (IOException e) {
+                    LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
+                    Controllers.showToast(i18n("mods.toggle.failed"));
+                } finally {
+                    checkBox.setSelected(modInfo.isActive());
+                }
+            });
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
             restoreButton.setOnAction(e -> {
                 menu.get().getContent().setAll(modInfo.getMod().getOldFiles().stream()

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXSpinner;
+import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 
@@ -34,6 +35,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 
 import static org.jackhuang.hmcl.Metadata.CHANGELOG_URL;
@@ -47,7 +49,9 @@ public final class UpgradeDialog extends JFXDialogLayout {
         maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
         maxHeightProperty().bind(Controllers.getDecorator().contentHeightProperty().multiply(0.7));
 
-        setHeading(new Label(i18n("update.changelog")));
+        Label heading = new Label(i18n("update.changelog"));
+        heading.setPadding(new Insets(0, 0, 8, 0));
+        setHeading(heading);
         setBody(new JFXSpinner());
 
         String url = CHANGELOG_URL + remoteVersion.channel().channelName + ".html";
@@ -62,15 +66,17 @@ public final class UpgradeDialog extends JFXDialogLayout {
             Document document = Jsoup.parse(WebURL.toURL(url), 30 * 1000);
             Node node = document.selectFirst("h1[data-version=\"%s\"]".formatted(targetVersion));
 
-            if (node == null || !"h1".equals(node.nodeName())) {
-                LOG.warning("Changelog not found");
-                return null;
-            }
-
             HTMLRenderer renderer = new HTMLRenderer(uri -> {
                 LOG.info("Open link: " + uri);
                 FXUtils.openLink(uri.toString());
             });
+
+            if (node == null || !"h1".equals(node.nodeName())) {
+                LOG.warning("Changelog not found");
+                Element list = new Element("ul");
+                list.appendElement("li").text(i18n("update.changelog.empty"));
+                return renderer.appendNode(list).mergeLineBreaks().render();
+            }
 
             do {
                 if ("h1".equals(node.nodeName())) {

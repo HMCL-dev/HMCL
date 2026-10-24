@@ -25,9 +25,10 @@ import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.transformation.FilteredList;
@@ -46,7 +47,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.datapack.DataPack;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -55,15 +55,15 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.SoftReference;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -135,9 +135,9 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                 }, null);
             });
             JFXButton enableButton = createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
-                    skinnable.enableSelected(listView.getSelectionModel().getSelectedItems()));
+                    skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true));
             JFXButton disableButton = createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
-                    skinnable.disableSelected(listView.getSelectionModel().getSelectedItems()));
+                    skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false));
             removeButton.disableProperty().bind(getSkinnable().readOnly);
             enableButton.disableProperty().bind(getSkinnable().readOnly);
             disableButton.disableProperty().bind(getSkinnable().readOnly);
@@ -260,14 +260,12 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
     }
 
     static class DataPackInfoObject extends RecursiveTreeObject<DataPackInfoObject> {
-        private final BooleanProperty activeProperty;
         private final DataPack.Pack packInfo;
-
-        private SoftReference<CompletableFuture<Image>> iconCache;
+        private final ItemPropertyAsyncCache<Image, DataPackInfoObject> iconCache;
 
         DataPackInfoObject(DataPack.Pack packInfo) {
             this.packInfo = packInfo;
-            this.activeProperty = packInfo.activeProperty();
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
         String getTitle() {
@@ -282,7 +280,11 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             return packInfo;
         }
 
-        Image loadIcon() {
+        private Image getDefaultIcon() {
+            return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+        }
+
+        private Image loadIcon() {
             Image image = null;
             Path imagePath;
             if (this.getPackInfo().isDirectory()) {
@@ -291,7 +293,6 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                     image = FXUtils.loadImage(imagePath, 64, 64, true, true);
                 } catch (Exception e) {
                     LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
-                    return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
                 }
             } else {
                 try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(getPackInfo().getPath())) {
@@ -301,7 +302,6 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                     }
                 } catch (Exception e) {
                     LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
-                    return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
                 }
             }
 
@@ -309,35 +309,8 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                     Math.abs(image.getWidth() - image.getHeight()) < 1) {
                 return image;
             } else {
-                return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+                return getDefaultIcon();
             }
-        }
-
-        public void loadIcon(ImageContainer imageContainer, @Nullable WeakReference<ObjectProperty<DataPackInfoObject>> current) {
-            SoftReference<CompletableFuture<Image>> iconCache = this.iconCache;
-            CompletableFuture<Image> imageFuture;
-            if (iconCache != null && (imageFuture = iconCache.get()) != null) {
-                Image image = imageFuture.getNow(null);
-                if (image != null) {
-                    imageContainer.setImage(image);
-                    return;
-                }
-            } else {
-                imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
-                this.iconCache = new SoftReference<>(imageFuture);
-            }
-            imageContainer.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
-            imageFuture.thenAcceptAsync(image -> {
-                if (current != null) {
-                    ObjectProperty<DataPackInfoObject> infoObjectProperty = current.get();
-                    if (infoObjectProperty == null || infoObjectProperty.get() != this) {
-                        // The current ListCell has already switched to another object
-                        return;
-                    }
-                }
-                imageContainer.setImage(image);
-            }, Schedulers.javafx());
-
         }
     }
 
@@ -345,7 +318,10 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         final JFXCheckBox checkBox = new JFXCheckBox();
         ImageContainer imageContainer = new ImageContainer(32);
         final TwoLineListItem content = new TwoLineListItem();
-        BooleanProperty booleanProperty;
+
+        private final InvalidationListener activeListener = obs -> checkBox.setSelected(getItem().getPackInfo().isActive());
+        private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
+        private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
         DataPackInfoListCell(JFXListView<DataPackInfoObject> listView, BooleanProperty isReadOnlyProperty) {
             super(listView);
@@ -370,14 +346,26 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
         @Override
         protected void updateControl(DataPackInfoObject dataItem, boolean empty) {
+            if (observedActiveProperty != null)
+                observedActiveProperty.removeListener(weakActiveListener);
             if (empty) return;
             content.setTitle(dataItem.getTitle());
             content.setSubtitle(dataItem.getSubtitle());
-            if (booleanProperty != null) {
-                checkBox.selectedProperty().unbindBidirectional(booleanProperty);
-            }
-            checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.activeProperty);
-            dataItem.loadIcon(imageContainer, new WeakReference<>(this.itemProperty()));
+
+            DataPack.Pack packInfo = dataItem.getPackInfo();
+            (observedActiveProperty = packInfo.activeProperty()).addListener(weakActiveListener);
+            checkBox.setSelected(packInfo.isActive());
+            checkBox.setOnAction(event -> {
+                try {
+                    packInfo.setActive(checkBox.isSelected());
+                } catch (IOException e) {
+                    LOG.warning("Unable to change state of datapack " + packInfo.getPath(), e);
+                    Controllers.showToast(i18n("datapack.toggle.failed"));
+                } finally {
+                    checkBox.setSelected(packInfo.isActive());
+                }
+            });
+            dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
         }
     }
 

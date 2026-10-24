@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.Optional;
 
@@ -36,11 +37,11 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class AdditionalInstallersPage extends AbstractInstallersPage {
     protected final BooleanProperty compatible = new SimpleBooleanProperty();
-    protected final String gameVersion;
+    protected final GameVersionNumber gameVersion;
     protected final GameInstanceManifest manifest;
     protected final HMCLGameInstance instance;
 
-    public AdditionalInstallersPage(HMCLGameInstance instance, String gameVersion, WizardController controller, DownloadProvider downloadProvider) {
+    public AdditionalInstallersPage(HMCLGameInstance instance, GameVersionNumber gameVersion, WizardController controller, DownloadProvider downloadProvider) {
         super(controller, gameVersion, downloadProvider);
         this.instance = instance;
         this.gameVersion = gameVersion;
@@ -59,7 +60,7 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
             });
         }
 
-        installable.bind(Bindings.createBooleanBinding(() -> compatible.get() && txtName.validate(), txtName.textProperty(), compatible));
+        installable.bind(Bindings.createBooleanBinding(() -> txtName.validate(), txtName.textProperty()));
     }
 
     @Override
@@ -80,27 +81,14 @@ class AdditionalInstallersPage extends AbstractInstallersPage {
 
     @Override
     protected void reload() {
-        boolean gameVersionChanged = !instance.getVersion().toString().equals(getVersion(GameComponentType.GAME));
-        boolean compatible = true;
-
         for (InstallerItem component : group.getComponents()) {
             GameComponentType componentType = component.getComponentType();
-            String version = instance.getComponentVersion(component.getComponentType());
-            String libraryVersion = Lang.requireNonNullElse(getVersion(componentType), version);
-            boolean alreadyInstalled = version != null && !(controller.getSettings().get(componentType.getPatchId()) instanceof UpdateInstallerWizardProvider.RemoveComponentAction);
-            if (component.getComponentType() != GameComponentType.GAME && gameVersionChanged && getVersion(componentType) == null && alreadyInstalled) {
-                // For third-party libraries, if game version is being changed, and the library is not being reinstalled,
-                // warns the user that we should update the library.
-                component.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, true));
-                compatible = false;
-            } else if (alreadyInstalled || getVersion(componentType) != null) {
-                component.versionProperty().set(new InstallerItem.InstalledState(libraryVersion, false, false));
+            if (controller.getSettings().containsKey(componentType.getPatchId())) {
+                component.versionProperty().set(new InstallerItem.InstalledState(getVersion(componentType), false, false));
             } else {
                 component.versionProperty().set(null);
             }
         }
-
-        this.compatible.set(compatible);
     }
 
     @Override

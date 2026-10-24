@@ -1,7 +1,7 @@
 # 在地化
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-[English](Localization.md) | **中文** ([简体](Localization_zh.md), **繁體**)
+[English](Localization.md) | **中文** ([简体](Localization_zh_Hans.md), **繁體**)
 <!-- #END LANGUAGE_SWITCHER -->
 
 HMCL 為多種語言提供在地化支援。
@@ -12,18 +12,18 @@ HMCL 為多種語言提供在地化支援。
 
 目前，HMCL 為這些語言提供支援:
 
-| 語言      | 語言標籤      | 首選在地化機碼    | 首選在地化檔案後綴  | [遊戲語言檔案](https://minecraft.wiki/w/Language) | 支援狀態   | 志願者                                       | 
-|---------|-----------|-----------|------------|---------------------------------------------|--------|-------------------------------------------|
-| 英語      | `en`      | `default` | (空)        | `en_us`                                     | **主要** | [Glavo](https://github.com/Glavo)         |  
-| 英語 (顛倒) | `en-Qabs` | `en-Qabs` | `en_Qabs`  | `en_ud`                                     | 自動     |                                           |  
-| 中文 (簡體) | `zh-Hans` | `zh`      | `_zh`      | `zh_cn`                                     | **主要** | [Glavo](https://github.com/Glavo)         |
-| 中文 (繁體) | `zh-Hant` | `zh-Hant` | `_zh_Hant` | `zh_tw` <br/> `zh_hk`                       | **主要** | [Glavo](https://github.com/Glavo)         |
-| 中文 (文言) | `lzh`     | `lzh`     | `_lzh`     | `lzh`                                       | 次要     |                                           |
-| 日語      | `ja`      | `ja`      | `_ja`      | `ja_jp`                                     | 次要     |                                           |
-| 西班牙語    | `es`      | `es`      | `_es`      | `es_es`                                     | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
-| 俄語      | `ru`      | `ru`      | `_ru`      | `ru_ru`                                     | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
-| 烏克蘭語    | `uk`      | `uk`      | `_uk`      | `uk_ua`                                     | 次要     |                                           |
-| 德語      | `de`      | `de`      | `_de`      | `de_de`                                     | 次要     | [BANSAFAn](https://github.com/BANSAFAn)   |
+| 語言        | 語言標籤  | 首選在地化機碼 | 首選在地化檔案後綴 | [遊戲語言檔案](https://minecraft.wiki/w/Language) | 支援狀態 | 志願者                                    | 
+|-------------|-----------|----------------|--------------------|---------------------------------------------------|----------|-------------------------------------------|
+| 英語        | `en`      | `default`      | (空)               | `en_us`                                           | **主要** | [Glavo](https://github.com/Glavo)         |  
+| 英語 (顛倒) | `en-Qabs` | `en-Qabs`      | `en_Qabs`          | `en_ud`                                           | 自動     |                                           |  
+| 中文 (簡體) | `zh-Hans` | `zh-Hans`      | `_zh_Hans`         | `zh_cn`                                           | **主要** | [Glavo](https://github.com/Glavo)         |
+| 中文 (繁體) | `zh-Hant` | `zh-Hant`      | `_zh_Hant`         | `zh_tw` <br/> `zh_hk`                             | **主要** | [Glavo](https://github.com/Glavo)         |
+| 中文 (文言) | `lzh`     | `lzh`          | `_lzh`             | `lzh`                                             | 次要     |                                           |
+| 日語        | `ja`      | `ja`           | `_ja`              | `ja_jp`                                           | 次要     |                                           |
+| 西班牙語    | `es`      | `es`           | `_es`              | `es_es`                                           | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
+| 俄語        | `ru`      | `ru`           | `_ru`              | `ru_ru`                                           | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
+| 烏克蘭語    | `uk`      | `uk`           | `_uk`              | `uk_ua`                                           | 次要     |                                           |
+| 德語        | `de`      | `de`           | `_de`              | `de_de`                                           | 次要     | [BANSAFAn](https://github.com/BANSAFAn)   |
 
 <details>
 <summary>關於語言標籤</summary>
@@ -58,14 +58,6 @@ HMCL 使用符合 IETF BCP 47 規範的語言標籤。
 
 我們建議在提供在地化資源時，總是提供預設資源 (對應 `default` 在地化機碼和空的在地化檔案後綴)，
 以確保所有使用者都能正常載入資源。
-
-並且我們建議盡可能為在地化資源使用更寬泛的語言標籤，使使用者更不容易回退到預設資源上。
-
-例如，如果你提供了一份簡體中文的在地化資源，那麼我們推薦使用 `zh` 作為在地化機碼，而不是更具體的 `zh-Hans`，
-這樣它會對於所有使用中文的使用者生效，避免對於這些使用者回退到預設資源上。
-
-如果你想同時提供簡體中文和繁體中文的資源，那麼推薦對使用者占比更高的資源使用更寬泛的 `zh` 作為在地化機碼，使其作為預設的中文資源，
-而對使用者占比更低的資源使用更具體的 `zh-Hans`/`zh-Hant` 作為在地化機碼。
 
 </details>
 
@@ -130,7 +122,7 @@ HMCL 的維護者會替你完成其他步驟。
 例如，對於 `README.md` 來說，不同語言的在地化版本命名如下:
 
 - 英語: `README.md`
-- 中文 (簡體): `README_zh.md`
+- 中文 (簡體): `README_zh_Hans.md`
 - 中文 (繁體): `README_zh_Hant.md`
 - 中文 (文言): `README_lzh.md`
 
@@ -159,7 +151,7 @@ HMCL 的維護者會替你完成其他步驟。
 {
     "meow": {
         "default": "Meow",
-        "zh": "喵呜",
+        "zh-Hans": "喵呜",
         "zh-Hant": "喵嗚"
     }
 }
@@ -310,7 +302,7 @@ HMCL 總是會將 `zh-CN` 加入所有中文環境的搜尋列表中，將 `zh-T
 隨後執行 `./gradlew updateDocuments`，這兩行內容會被自動取代為類似這樣的跳轉連結:
 
 ```markdown
-**English** (**Standard**, [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
+**English** (**Standard**, [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh_Hans.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 ```
 
 關於巨集的更多內容，請見 [MacroProcessor.java](../buildSrc/src/main/java/org/jackhuang/hmcl/gradle/docs/MacroProcessor.java)。

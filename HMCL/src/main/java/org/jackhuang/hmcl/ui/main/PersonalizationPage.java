@@ -435,7 +435,7 @@ public class PersonalizationPage extends StackPane {
             LineSelectButton<String> brightnessPane = new LineSelectButton<>();
             brightnessPane.setTitle(i18n("settings.launcher.brightness"));
             brightnessPane.setConverter(name -> i18n("settings.launcher.brightness."
-                    + Objects.requireNonNullElse(name, "auto")));
+                    + Objects.requireNonNullElse(name, "auto").trim().toLowerCase(Locale.ROOT)));
             brightnessPane.setItems(Arrays.asList("auto", "light", "dark"));
             bindThemeAppearanceLineSelectButton(
                     brightnessPane,

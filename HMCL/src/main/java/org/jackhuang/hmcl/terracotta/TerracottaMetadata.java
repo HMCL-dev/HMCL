@@ -18,14 +18,15 @@
 package org.jackhuang.hmcl.terracotta;
 
 import com.google.gson.annotations.SerializedName;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.terracotta.provider.AbstractTerracottaProvider;
 import org.jackhuang.hmcl.terracotta.provider.GeneralProvider;
 import org.jackhuang.hmcl.terracotta.provider.MacOSProvider;
+import org.jackhuang.hmcl.util.RegionUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -35,10 +36,10 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -90,8 +91,8 @@ public final class TerracottaMetadata {
             }
 
             Stream<String> stream = downloads.stream(), streamCN = downloadsCN.stream();
-            List<URI> links = (LocaleUtils.IS_CHINA_MAINLAND ? Stream.concat(streamCN, stream) : Stream.concat(stream, streamCN))
-                    .map(link -> URI.create(options.replace(link)))
+            @Unmodifiable List<WebURL> links = ("CN".equals(RegionUtils.MACHINE_REGION) ? Stream.concat(streamCN, stream) : Stream.concat(stream, streamCN))
+                    .map(link -> WebURL.parse(options.replace(link)))
                     .toList();
 
             Map<String, FileDownloadTask.IntegrityCheck> files = pkg.files.entrySet().stream().collect(Collectors.toUnmodifiableMap(

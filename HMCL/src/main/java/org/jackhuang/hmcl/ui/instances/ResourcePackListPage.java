@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.addon.update.AddonCheckUpdatesTask;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -57,14 +58,14 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.Objects;
@@ -261,18 +262,20 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
-                            return version != GameVersionNumber.unknown()
-                                    ? new AddonCheckUpdatesTask<>(DownloadProviders.getDownloadProvider(),
-                                            version.toString(), resourcePacks)
-                                    : null;
+                            if (version != GameVersionNumber.unknown()) {
+                                return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), resourcePacks);
+                            } else {
+                                LOG.warning("Failed to check for updates, due to unable to get instance game version");
+                                return null;
+                            }
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception != null || result == null) {
                                 Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
-                            } else if (result.isEmpty()) {
+                            } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage<>(resourcePackManager, result));
+                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), resourcePackManager.getDirectory(), result));
                             }
                         })
                         .withStagesHints("update.checking"),
@@ -483,7 +486,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     LocalAddonFile.Description description = resourcePack.getDescription();
                     Stream<String> descriptionParts = description == null
                             ? Stream.empty()
-                            : description.getParts().stream().map(LocalAddonFile.Description.Part::getText);
+                            : description.parts().stream().map(LocalAddonFile.Description.Part::text);
                     if (predicate.test(resourcePack.getFileNameWithExtension())
                             || predicate.test(resourcePack.getFileName())
                             || descriptionParts.anyMatch(predicate)) {
@@ -494,13 +497,18 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
     }
 
-    public static class ResourcePackInfoObject {
+    public static final class ResourcePackInfoObject {
+
         private final ResourcePackFile file;
         private final BooleanProperty enabled;
+
+        private final ItemPropertyAsyncCache<Image, ResourcePackInfoObject> iconCache;
 
         public ResourcePackInfoObject(Pair<ResourcePackFile, Boolean> pair) {
             this.file = pair.key();
             this.enabled = new SimpleBooleanProperty(this, "enabled", pair.value());
+
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
         public ResourcePackFile getFile() {
@@ -511,13 +519,16 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             return enabled;
         }
 
-        Image getIcon() {
-            Image image = file.getIcon();
-            if (image == null || image.isError() || image.getWidth() <= 0 || image.getHeight() <= 0 ||
-                    (Math.abs(image.getWidth() - image.getHeight()) >= 1)) {
-                image = FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+        private Image getDefaultIcon() {
+            return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+        }
+
+        private Image loadIcon() {
+            Image icon = file.loadIcon();
+            if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1) {
+                return icon;
             }
-            return image;
+            return getDefaultIcon();
         }
     }
 
@@ -583,7 +594,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             if (empty || item == null) return;
 
             ResourcePackFile file = item.getFile();
-            imageContainer.setImage(item.getIcon());
+            item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(itemProperty()));
 
             content.getTags().clear();
             content.setTitle(file.getFileName());
@@ -623,7 +634,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
 
             ImageContainer imageContainer = new ImageContainer(40);
-            imageContainer.setImage(packInfoObject.getIcon());
+            packInfoObject.iconCache.attachValue(imageContainer.imageProperty(), null);
 
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(pack.getFileName());
@@ -654,8 +665,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             setBody(descriptionPane);
 
             for (Pair<String, ? extends RemoteAddonRepository> item : Arrays.asList(
-                    pair("addon.curseforge", CurseForgeRemoteAddonRepository.RESOURCE_PACKS),
-                    pair("addon.modrinth", ModrinthRemoteAddonRepository.RESOURCE_PACKS)
+                    pair("addon.curseforge", CurseForgeRemoteAddonRepository.getInstance()),
+                    pair("addon.modrinth", ModrinthRemoteAddonRepository.getInstance())
             )) {
                 RemoteAddonRepository repository = item.getValue();
                 JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));

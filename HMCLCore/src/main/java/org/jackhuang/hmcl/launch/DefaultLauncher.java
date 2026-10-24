@@ -98,7 +98,7 @@ public class DefaultLauncher extends Launcher {
         if (StringUtils.isNotBlank(options.getWrapper()))
             res.addAllWithoutParsing(StringUtils.tokenize(options.getWrapper(), getEnvVars(nativeFolder)));
 
-        res.add(options.getJava().getBinary().toString());
+        res.add(options.getJavaExecutable().toString());
 
         res.addAllWithoutParsingAndReadExternal(options.getOverrideJavaArguments());
 
@@ -280,6 +280,7 @@ public class DefaultLauncher extends Launcher {
         if (instance.hasComponent(GameComponentType.CLEANROOM)) {
             libraryClasspath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
             libraryClasspath.removeIf(c -> c.contains("platform-3.4.0"));
+            libraryClasspath.removeIf(c -> c.contains("icu4j-core-mojang"));
         }
 
         Path jar = instance.getInstanceJarFile();

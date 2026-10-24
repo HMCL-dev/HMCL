@@ -31,8 +31,8 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Set;
 
 public final class HMCLModpackProvider implements ModpackProvider {
     public static final HMCLModpackProvider INSTANCE = new HMCLModpackProvider();
@@ -48,7 +48,12 @@ public final class HMCLModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, DefaultGameInstance instance, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException {
+    public Task<?> createUpdateTask(
+            DefaultDependencyManager dependencyManager,
+            DefaultGameInstance instance,
+            Path zipFile,
+            Modpack modpack,
+            @Nullable Set<String> excludedFiles) throws MismatchedModpackTypeException {
         if (!(modpack.getManifest() instanceof HMCLModpackManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
@@ -60,9 +65,9 @@ public final class HMCLModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipArchiveReader file, Path path, Charset encoding) throws IOException, JsonParseException {
+    public Modpack readManifest(ZipArchiveReader file, Path path) throws IOException, JsonParseException {
         String manifestJson = CompressingUtils.readTextZipEntry(file, "modpack.json");
-        Modpack manifest = JsonUtils.fromNonNullJson(manifestJson, HMCLModpack.class).setEncoding(encoding);
+        Modpack manifest = JsonUtils.fromNonNullJson(manifestJson, HMCLModpack.class);
         String gameJson = CompressingUtils.readTextZipEntry(file, "minecraft/pack.json");
         GameInstanceManifest game = JsonUtils.fromNonNullJson(gameJson, GameInstanceManifest.class);
         if (game.jar() == null)
@@ -77,7 +82,12 @@ public final class HMCLModpackProvider implements ModpackProvider {
 
     private final static class HMCLModpack extends Modpack {
         @Override
-        public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, GameInstanceID instanceId, String iconUrl) {
+        public Task<?> getInstallTask(
+                DefaultDependencyManager dependencyManager,
+                Path zipFile,
+                GameInstanceID instanceId,
+                String iconUrl,
+                @Nullable Set<String> excludedFiles) {
             return new HMCLModpackInstallTask((HMCLGameRepository) dependencyManager.getGameRepository(), zipFile, this, instanceId);
         }
     }

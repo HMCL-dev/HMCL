@@ -20,137 +20,158 @@ package org.jackhuang.hmcl.ui.instances;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.JFXListView;
+
 import javafx.beans.property.*;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.addon.update.AddonUpdate;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
-import org.jackhuang.hmcl.addon.LocalAddonManager;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
+import org.jackhuang.hmcl.addon.mod.LocalModFile;
+import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.setting.GameInstanceIconType;
+import org.jackhuang.hmcl.addon.update.AddonUpdateTask;
+import org.jackhuang.hmcl.addon.update.AddonUpdates;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 
-import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import org.jackhuang.hmcl.util.javafx.Subscription;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Function;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane implements DecoratorPage {
+public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("addon.check_update")));
 
-    private final LocalAddonManager<F> localAddonManager;
+    private final DownloadProvider downloadProvider;
+    private final Path localAddonDirectory;
     private final ObservableList<AddonUpdateObject> objects;
 
-    @SuppressWarnings("unchecked")
-    public AddonUpdatesPage(LocalAddonManager<F> localAddonManager, List<LocalAddonFile.AddonUpdate> updates) {
-        this.localAddonManager = localAddonManager;
+    private final JFXListView<AddonUpdateObject> listView;
+
+    public AddonUpdatesPage(DownloadProvider downloadProvider, Path localAddonDirectory, AddonUpdates updates) {
+        this.downloadProvider = downloadProvider;
+        this.localAddonDirectory = localAddonDirectory;
 
         getStyleClass().add("gray-background");
 
-        TableColumn<AddonUpdateObject, Boolean> enabledColumn = new TableColumn<>();
-        var allEnabledBox = new JFXCheckBox();
-        enabledColumn.setStyle("-fx-alignment: CENTER;");
-        enabledColumn.setGraphic(allEnabledBox);
-        enabledColumn.setCellFactory(JFXCheckBoxTableCell.forTableColumn(enabledColumn));
-        setupCellValueFactory(enabledColumn, AddonUpdateObject::enabledProperty);
-        enabledColumn.setEditable(true);
-        enabledColumn.setMaxWidth(40);
-        enabledColumn.setMinWidth(40);
+        var common = new Lazy<>(() -> updates.commonUpdates().stream().map(AddonUpdateObject::new).toList());
+        var release = new Lazy<>(() -> updates.releaseUpdates().stream().map(AddonUpdateObject::new).toList());
 
-        TableColumn<AddonUpdateObject, String> fileNameColumn = new TableColumn<>(i18n("addon.check_update.file"));
-        fileNameColumn.setPrefWidth(180);
-        setupCellValueFactory(fileNameColumn, AddonUpdateObject::fileNameProperty);
+        objects = FXCollections.observableArrayList();
 
-        TableColumn<AddonUpdateObject, String> currentVersionColumn = new TableColumn<>(i18n("addon.check_update.current_version"));
-        currentVersionColumn.setPrefWidth(180);
-        setupCellValueFactory(currentVersionColumn, AddonUpdateObject::currentVersionProperty);
-
-        TableColumn<AddonUpdateObject, String> targetVersionColumn = new TableColumn<>(i18n("addon.check_update.target_version"));
-        targetVersionColumn.setPrefWidth(180);
-        setupCellValueFactory(targetVersionColumn, AddonUpdateObject::targetVersionProperty);
-
-        TableColumn<AddonUpdateObject, String> sourceColumn = new TableColumn<>(i18n("addon.check_update.source"));
-        setupCellValueFactory(sourceColumn, AddonUpdateObject::sourceProperty);
-
-        TableColumn<AddonUpdateObject, String> changelogColumn = new TableColumn<>(i18n("addon.changelog"));
         {
-            var oldCellFactory = changelogColumn.getCellFactory();
-            changelogColumn.setCellFactory(param -> {
-                TableCell<AddonUpdateObject, String> cell = oldCellFactory.call(param);
-                cell.getStyleClass().add("addon-changelog-table-cell");
-                cell.setOnMouseClicked(event -> {
-                    AddonUpdateObject object;
-                    if (cell.isEmpty() || cell.getTableRow() == null || (object = cell.getTableRow().getItem()) == null) return;
-                    Controllers.dialog(new AddonChangelog(object));
-                });
-                return cell;
-            });
-            changelogColumn.setCellValueFactory(__ -> new SimpleStringProperty(i18n("button.view")));
+            StackPane centerWrapper = new StackPane();
+            centerWrapper.setStyle("-fx-padding: 10;");
+
+            ComponentList centrePane = new ComponentList();
+            centrePane.getStyleClass().add("no-padding");
+
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("addon.check_update.only_preview"));
+            placeholderContainer.getChildren().add(placeholderLabel);
+
+            listView = new JFXListView<>();
+            listView.setItems(objects);
+            listView.getStyleClass().add("jfx-list-view-float");
+            listView.setPlaceholder(placeholderContainer);
+
+            setMargin(listView, new Insets(0, 10, 0, 10));
+            VBox.setVgrow(listView, Priority.ALWAYS);
+
+            listView.setCellFactory(listView -> new AddonUpdateListCell());
+
+            ComponentList.setVgrow(listView, Priority.ALWAYS);
+
+            centrePane.getContent().setAll(listView);
+
+            centerWrapper.getChildren().setAll(centrePane);
+
+            setCenter(centerWrapper);
         }
 
-        objects = FXCollections.observableList(updates.stream().map(AddonUpdateObject::new).collect(Collectors.toList()));
-        FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).toArray(BooleanProperty[]::new));
+        {
+            HBox actions = new HBox(8);
+            actions.setPadding(new Insets(8));
+            actions.setAlignment(Pos.CENTER_RIGHT);
 
-        TableView<AddonUpdateObject> table = new TableView<>(objects);
-        table.setEditable(true);
-        table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn, changelogColumn);
-        setMargin(table, new Insets(10, 10, 5, 10));
+            JFXCheckBox allEnabledBox = new JFXCheckBox();
+            allEnabledBox.setText(i18n("button.select_all"));
+            FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).toArray(BooleanProperty[]::new));
 
-        setCenter(table);
+            JFXCheckBox showPreviewCheck = new JFXCheckBox(i18n("addon.check_update.preview"));
+            {
+                List<Subscription> subscriptions = new ArrayList<>();
+                FXUtils.onChangeAndOperate(showPreviewCheck.selectedProperty(), preview -> {
+                    if (preview) objects.setAll(common.get());
+                    else objects.setAll(release.get());
+                    subscriptions.forEach(Subscription::unsubscribe);
+                    subscriptions.clear();
+                    subscriptions.addAll(FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(AddonUpdateObject::enabledProperty).toArray(BooleanProperty[]::new)));
+                });
+            }
 
-        HBox actions = new HBox(8);
-        actions.setPadding(new Insets(8));
-        actions.setAlignment(Pos.CENTER_RIGHT);
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        JFXButton exportListButton = FXUtils.newRaisedButton(i18n("button.export"));
-        exportListButton.setOnAction(e -> exportList());
+            JFXButton exportListButton = FXUtils.newRaisedButton(i18n("button.export"));
+            exportListButton.setOnAction(e -> exportList());
 
-        JFXButton nextButton = FXUtils.newRaisedButton(i18n("addon.check_update.confirm"));
-        nextButton.setOnAction(e -> updateFiles());
+            JFXButton nextButton = FXUtils.newRaisedButton(i18n("addon.check_update.confirm"));
+            nextButton.setOnAction(e -> updateFiles());
 
-        JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
-        cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
-        onEscPressed(this, cancelButton::fire);
-        onEscPressed(table, cancelButton::fire);
+            JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
+            cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
+            onEscPressed(this, cancelButton::fire);
+            onEscPressed(listView, cancelButton::fire);
 
-        actions.getChildren().setAll(exportListButton, nextButton, cancelButton);
-        setBottom(actions);
-    }
+            actions.getChildren().setAll(allEnabledBox, showPreviewCheck, spacer, exportListButton, nextButton, cancelButton);
 
-    private <T> void setupCellValueFactory(TableColumn<AddonUpdateObject, T> column, Function<AddonUpdateObject, ObservableValue<T>> mapper) {
-        column.setCellValueFactory(param -> mapper.apply(param.getValue()));
+            setBottom(actions);
+        }
     }
 
     private void updateFiles() {
         AddonUpdateTask task = new AddonUpdateTask(
-                localAddonManager.getDirectory(),
+                downloadProvider,
+                localAddonDirectory,
                 objects.stream()
                         .filter(AddonUpdateObject::isEnabled)
                         .map(AddonUpdateObject::getData)
@@ -186,10 +207,10 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             csvTable.set(3, 0, "Update Source");
 
             for (int i = 0; i < objects.size(); i++) {
-                csvTable.set(0, i + 1, objects.get(i).fileName.get());
-                csvTable.set(1, i + 1, objects.get(i).currentVersion.get());
-                csvTable.set(2, i + 1, objects.get(i).targetVersion.get());
-                csvTable.set(3, i + 1, objects.get(i).source.get());
+                csvTable.set(0, i + 1, objects.get(i).getFileName());
+                csvTable.set(1, i + 1, objects.get(i).getCurrentVersion());
+                csvTable.set(2, i + 1, objects.get(i).getTargetVersion());
+                csvTable.set(3, i + 1, objects.get(i).getSource());
             }
 
             csvTable.write(path);
@@ -210,31 +231,34 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
     }
 
     private static final class AddonUpdateObject {
-        final LocalAddonFile.AddonUpdate data;
-        final BooleanProperty enabled = new SimpleBooleanProperty();
-        final StringProperty fileName = new SimpleStringProperty();
-        final StringProperty currentVersion = new SimpleStringProperty();
-        final StringProperty targetVersion = new SimpleStringProperty();
-        final StringProperty source = new SimpleStringProperty();
+        final AddonUpdate data;
+        final String targetVersionType;
+        final String source;
         String changelog = null;
 
-        public AddonUpdateObject(LocalAddonFile.AddonUpdate data) {
+        final BooleanProperty enabled = new SimpleBooleanProperty();
+
+        final ItemPropertyAsyncCache<Image, AddonUpdateObject> iconCache;
+
+        public AddonUpdateObject(AddonUpdate data) {
             this.data = data;
 
-            enabled.set(!data.localAddonFile().isDisabled());
-            fileName.set(data.localAddonFile().getFileName());
-            currentVersion.set(data.currentVersion().version());
-            targetVersion.set(data.targetVersion().version());
-            switch (data.currentVersion().self().getSource()) {
-                case CURSEFORGE:
-                    source.set(i18n("addon.curseforge"));
-                    break;
-                case MODRINTH:
-                    source.set(i18n("addon.modrinth"));
-            }
+            this.targetVersionType = switch (data.targetVersion().versionType()) {
+                case Release -> i18n("addon.channel.release");
+                case Beta -> i18n("addon.channel.beta");
+                case Alpha -> i18n("addon.channel.alpha");
+            };
+            this.source = switch (data.currentVersion().source()) {
+                case CURSEFORGE -> i18n("addon.curseforge");
+                case MODRINTH -> i18n("addon.modrinth");
+            };
+
+            this.enabled.set(!data.localAddonFile().isDisabled());
+
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
-        public LocalAddonFile.AddonUpdate getData() {
+        public AddonUpdate getData() {
             return data;
         }
 
@@ -246,56 +270,178 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             return enabled;
         }
 
-        public void setEnabled(boolean enabled) {
-            this.enabled.set(enabled);
+        public LocalAddonFile<?> getLocalAddonFile() {
+            return data.localAddonFile();
         }
 
         public String getFileName() {
-            return fileName.get();
-        }
-
-        public StringProperty fileNameProperty() {
-            return fileName;
-        }
-
-        public void setFileName(String fileName) {
-            this.fileName.set(fileName);
+            return data.localAddonFile().getFileName();
         }
 
         public String getCurrentVersion() {
-            return currentVersion.get();
-        }
-
-        public StringProperty currentVersionProperty() {
-            return currentVersion;
-        }
-
-        public void setCurrentVersion(String currentVersion) {
-            this.currentVersion.set(currentVersion);
+            return data.currentVersion().version();
         }
 
         public String getTargetVersion() {
-            return targetVersion.get();
+            return data.targetVersion().version();
         }
 
-        public StringProperty targetVersionProperty() {
-            return targetVersion;
-        }
-
-        public void setTargetVersion(String targetVersion) {
-            this.targetVersion.set(targetVersion);
+        public String getTargetVersionType() {
+            return targetVersionType;
         }
 
         public String getSource() {
-            return source.get();
-        }
-
-        public StringProperty sourceProperty() {
             return source;
         }
 
-        public void setSource(String source) {
-            this.source.set(source);
+        private Image getDefaultIcon() {
+            if (data.localAddonFile() instanceof LocalModFile localModFile) {
+                return GameInstanceIconType
+                    .getIconType(localModFile.getModLoaderType())
+                    .getIcon();
+            }
+
+            return null;
+        }
+
+        private Image loadIcon() {
+            if (data.localAddonFile() instanceof LocalModFile localModFile) {
+                List<String> iconPaths = new ArrayList<>();
+
+                if (StringUtils.isNotBlank(localModFile.getLogoPath())) {
+                    iconPaths.add(localModFile.getLogoPath());
+                }
+
+                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(localModFile.getFile())) {
+
+                    for (String path : iconPaths) {
+                        Path iconPath = fs.getPath(path);
+
+                        if (Files.exists(iconPath)) {
+                            Image image = FXUtils.loadImage(
+                                iconPath,
+                                80,
+                                80,
+                                true,
+                                true
+                            );
+
+                            if (!image.isError()
+                                && image.getWidth() > 0
+                                && image.getHeight() > 0
+                                && Math.abs(image.getWidth() - image.getHeight()) < 1
+                            ) {
+                                return image;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    LOG.warning("Failed to load addon icons", e);
+                }
+            }
+            
+            if (data.localAddonFile() instanceof ResourcePackFile resourcePackFile) {
+                Image image = resourcePackFile.loadIcon();
+
+                if (image != null
+                    && !image.isError()
+                    && image.getWidth() > 0
+                    && image.getHeight() > 0
+                    && Math.abs(image.getWidth() - image.getHeight()) < 1
+                ) {
+                    return image;
+                }
+            }
+
+            return getDefaultIcon();
+        }
+    }
+
+    private static class AddonUpdateListCell extends ListCell<AddonUpdateObject> {
+        private final StackPane pane = new StackPane();
+        private final RipplerContainer ripplerContainer;
+
+        private final JFXCheckBox enabledBox = new JFXCheckBox();
+        private final ImageContainer imageContainer = new ImageContainer(40);
+        private final TwoLineListItem content = new TwoLineListItem();
+        private final JFXButton changelogButton = FXUtils.newToggleButton4(SVG.INFO);
+
+        AddonUpdateListCell() {
+            HBox hbox = new HBox(16);
+            HBox.setHgrow(content, Priority.ALWAYS);
+            content.setAlignment(Pos.CENTER);
+            hbox.setAlignment(Pos.CENTER);
+
+            hbox.getChildren().setAll(enabledBox, imageContainer, content, changelogButton);
+
+            pane.getStyleClass().add("md-list-cell");
+            StackPane.setMargin(hbox, new Insets(10, 16, 10, 16));
+
+            ripplerContainer = new RipplerContainer(hbox);
+            pane.getChildren().setAll(ripplerContainer);
+
+            enabledBox.setMouseTransparent(false);
+            imageContainer.setMouseTransparent(true);
+
+            FXUtils.installFastTooltip(changelogButton, i18n("addon.changelog"));
+            changelogButton.setOnAction(event -> {
+                AddonUpdateObject item = getItem();
+                if (item != null) {
+                    Controllers.dialog(new AddonChangelog(item));
+                }
+            });
+
+            FXUtils.onClicked(this, () -> {
+                AddonUpdateObject item = getItem();
+                if (item != null) {
+                    item.enabled.set(!item.isEnabled());
+                }
+            });
+        }
+
+        @Override
+        public void updateItem(AddonUpdateObject item, boolean empty) {
+            AddonUpdateObject oldItem = getItem();
+            boolean oldEmpty = isEmpty();
+
+            super.updateItem(item, empty);
+
+            if (oldItem == item && oldEmpty == empty) {
+                return;
+            }
+
+            ripplerContainer.releaseRippleImmediately();
+
+            if (oldItem != null) {
+                enabledBox.selectedProperty().unbindBidirectional(oldItem.enabledProperty());
+            }
+
+            if (empty || item == null) {
+                setGraphic(null);
+                return;
+            }
+
+            enabledBox.selectedProperty().bindBidirectional(item.enabledProperty());
+
+            item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
+
+            LocalAddonFile<?> addonFile = item.getLocalAddonFile();
+
+            content.getTags().clear();
+            if (addonFile instanceof LocalModFile modFile)
+                content.addTag(modFile.getId());
+            content.addTag(item.getSource());
+            content.addTag(item.getTargetVersionType());
+
+            if (addonFile instanceof LocalModFile modFile) {
+                content.setTitle(modFile.getName());
+            } else if (addonFile instanceof ResourcePackFile resourcePackFile) {
+                content.setTitle(resourcePackFile.getFileName());
+            }
+
+            content.setSubtitle(item.getCurrentVersion() + " → " + item.getTargetVersion());
+
+            setGraphic(pane);
         }
     }
 
@@ -342,13 +488,10 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
 
         private void loadChangelog(AddonUpdateObject object, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             spinnerPane.setLoading(true);
-            RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
+            RemoteAddonRepository repo = object.data.targetVersion().source().getRepository();
             Task.supplyAsync(() -> {
-                if (object.changelog != null) {
-                    return object.changelog;
-                }
+                if (object.changelog != null) return object.changelog;
                 RemoteAddon.Version version = object.data.targetVersion();
-                if (repo == null) return null;
                 return StringUtils.convertToHtml(
                         repo.getAddonChangelog(DownloadProviders.getDownloadProvider(), version.projectId(), version.versionId()),
                         "238222".equals(object.data.targetVersion().projectId())
@@ -356,7 +499,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     object.changelog = StringUtils.isNotBlank(result) ? result : i18n("addon.changelog.empty");
-                    scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, repo == null ? "" : repo.getBaseUrl()));
+                    scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, repo.getBaseUrl()));
                     FXUtils.smoothScrolling(scrollPane);
                     spinnerPane.setFailedReason(null);
                 } else {
@@ -367,10 +510,9 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
         }
 
         private void loadVersionPageUrl(AddonUpdateObject object, JFXHyperlink button) {
-            Task.supplyAsync(() -> {
-                RemoteAddonRepository repo = object.data.source().getRepoForType(object.data.repoType());
-                return repo == null ? null : repo.getVersionPageUrl(object.data.targetVersion());
-            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            Task.supplyAsync(() ->
+                    object.data.targetVersion().source().getRepository().getVersionPageUrl(object.data.targetVersion())
+            ).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null && StringUtils.isNotBlank(result)) {
                     button.setExternalLink(result);
                     button.setDisable(false);
@@ -378,86 +520,6 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                     LOG.warning("Failed to load addon version page url", exception);
                 }
             }).start();
-        }
-    }
-
-    public static class AddonUpdateTask extends Task<Void> {
-        private final Collection<Task<?>> dependents;
-        private final List<LocalAddonFile> failedAddons = new ArrayList<>();
-
-        AddonUpdateTask(Path addonDirectory, List<LocalAddonFile.AddonUpdate> addons) {
-            setStage("addon.check_update.confirm");
-            getProperties().put("total", addons.size());
-
-            this.dependents = new ArrayList<>();
-            for (LocalAddonFile.AddonUpdate addon : addons) {
-                LocalAddonFile local = addon.localAddonFile();
-                RemoteAddon.Version remote = addon.targetVersion();
-                boolean isDisabled = local.isDisabled();
-                String originalFileName = local.getFile().getFileName().toString();
-
-                dependents.add(Task
-                        .runAsync(Schedulers.javafx(), () -> local.setOld(true))
-                        .thenComposeAsync(() -> {
-                            String fileName = addon.useRemoteFileName() ? remote.file().filename() : originalFileName;
-                            if (isDisabled)
-                                fileName = StringUtils.addSuffix(fileName, LocalAddonManager.DISABLED_EXTENSION);
-
-                            var task = new FileDownloadTask(
-                                    remote.file().url(),
-                                    addonDirectory.resolve(fileName)
-                            );
-
-                            task.setName(remote.name());
-                            return task;
-                        })
-                        .whenComplete(Schedulers.javafx(), exception -> {
-                            if (exception != null) {
-                                // restore state if failed
-                                local.setOld(false);
-                                if (isDisabled)
-                                    local.markDisabled();
-                                failedAddons.add(local);
-                            } else if (!local.keepOldFiles()) {
-                                try {
-                                    local.delete();
-                                } catch (IOException e) {
-                                    LOG.warning("Failed to delete outdated addon: " + local.getFile(), e);
-                                }
-                            }
-                        })
-                        .withCounter("addon.check_update.confirm"));
-            }
-        }
-
-        public List<LocalAddonFile> getFailedAddons() {
-            return failedAddons;
-        }
-
-        @Override
-        public Collection<Task<?>> getDependents() {
-            return dependents;
-        }
-
-        @Override
-        public boolean doPreExecute() {
-            return true;
-        }
-
-        @Override
-        public void preExecute() {
-            notifyPropertiesChanged();
-        }
-
-        @Override
-        public boolean isRelyingOnDependents() {
-            return false;
-        }
-
-        @Override
-        public void execute() throws Exception {
-            if (!isDependentsSucceeded())
-                throw getException();
         }
     }
 }
