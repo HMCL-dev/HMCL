@@ -389,7 +389,6 @@ Chile/Continental,CL
 Chile/EasterIsland,CL
 Cuba,CU
 EET,GR
-EST,PA,CA,KY
 Egypt,EG
 Eire,IE
 Europe/Amsterdam,BE,LU,NL
@@ -458,7 +457,6 @@ Europe/Zaporozhye,UA
 Europe/Zurich,CH,DE,LI
 GB,GB,GG,IM,JE
 GB-Eire,GB,GG,IM,JE
-HST,US
 Hongkong,HK
 Iceland,CI,BF,GH,GM,GN,IS,ML,MR,SH,SL,SN,TG
 Indian/Antananarivo,KE,DJ,ER,ET,KM,MG,SO,TZ,UG,YT
@@ -479,7 +477,6 @@ Japan,JP,AU
 Kwajalein,MH
 Libya,LY
 MET,BE,LU,NL
-MST,US,CA
 Mexico/BajaNorte,MX
 Mexico/BajaSur,MX
 Mexico/General,MX
@@ -533,7 +530,6 @@ Pacific/Wallis,KI,MH,TV,UM,WF
 Pacific/Yap,PG,AQ,FM
 Poland,PL
 Portugal,PT
-ROC,TW
 ROK,KR
 Singapore,SG,AQ,MY
 Turkey,TR

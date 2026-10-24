@@ -28,6 +28,7 @@ import org.gradle.api.tasks.options.Option;
 import org.gradle.work.DisableCachingByDefault;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -35,12 +36,18 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.TreeMap;
 
 /// Updates the checked-in time zone mapping from IANA's public-domain `zone1970.tab` and `backward` links.
 @NotNullByDefault
 @DisableCachingByDefault(because = "Downloads versioned IANA data to update a checked-in resource")
 public abstract class UpdateTimeZoneRegions extends DefaultTask {
+    /// Names excluded by OpenJDK's TZDB compiler for compatibility with its time zone APIs.
+    ///
+    /// @see <a href="https://github.com/openjdk/jdk/blob/master/make/jdk/src/classes/build/tools/tzdb/TzdbZoneRulesProvider.java">OpenJDK TZDB exclusions</a>
+    private static final @Unmodifiable Set<String> EXCLUDED_ZONES = Set.of("EST", "HST", "MST", "GMT+0", "GMT-0", "ROC");
+
     /// Returns the required IANA release identifier, such as `2026e`.
     @Input
     public abstract Property<String> getTzdbVersion();
@@ -96,6 +103,7 @@ public abstract class UpdateTimeZoneRegions extends DefaultTask {
     /// Resolves compatibility link chains to the same candidate lists, preserving explicit table entries.
     /// Omits links whose final targets have no country mapping, such as `Etc/UTC`.
     /// Non-link directives and comments in the compatibility file are ignored.
+    /// Omits names in [#EXCLUDED_ZONES], independently of the executing JDK's bundled data.
     ///
     /// @throws GradleException if the version or a record is malformed, a record is duplicated,
     ///                      links contain a cycle, or the table has no records
@@ -156,6 +164,9 @@ public abstract class UpdateTimeZoneRegions extends DefaultTask {
                 target = next;
             }
         }
+
+        // Filter after resolving links to preserve candidate lists for other names in the chain.
+        regions.keySet().removeAll(EXCLUDED_ZONES);
 
         var csv = new StringBuilder("# IANA tzdb version: " + version + "\n"
                 + "# Generated from " + tableUrl + " (public domain).\n"

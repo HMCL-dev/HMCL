@@ -80,11 +80,34 @@ final class UpdateTimeZoneRegionsTest {
     @Test
     void expandsCompatibilityLinks() {
         String csv = createTask("2026e").toCsv("BE,LU,NL\t+5050+00420\tEurope/Brussels\n",
-                "# Header\r\n\r\n  Link Europe/Amsterdam Alias/Chained # trailing comment\r\n"
+                "# Header\r\n\r\n  Link Europe/Amsterdam Europe/Luxembourg # trailing comment\r\n"
                         + "Link\tEurope/Brussels\tEurope/Amsterdam\r\n");
         String records = csv.lines().filter(line -> !line.startsWith("#")).collect(Collectors.joining("\n"));
-        assertEquals("Alias/Chained,BE,LU,NL\nEurope/Amsterdam,BE,LU,NL\nEurope/Brussels,BE,LU,NL", records);
+        assertEquals("Europe/Amsterdam,BE,LU,NL\nEurope/Brussels,BE,LU,NL\nEurope/Luxembourg,BE,LU,NL", records);
         assertTrue(csv.contains("# Compatibility links from https://data.iana.org/time-zones/tzdb-2026e/backward"));
+    }
+
+    /// Retains names absent from the executing JDK, including link chains.
+    @Test
+    void retainsNamesOutsideBundledTzdb() {
+        String csv = createTask("2026e").toCsv("CN\t+3114+12128\tUnsupported/Target\n",
+                "Link Unsupported/Target Unsupported/Intermediate\n"
+                        + "Link Unsupported/Intermediate Asia/Shanghai\n"
+                        + "Link Asia/Shanghai PRC\n"
+                        + "Link Asia/Shanghai Unsupported/Alias\n");
+        String records = csv.lines().filter(line -> !line.startsWith("#")).collect(Collectors.joining("\n"));
+        assertEquals("Asia/Shanghai,CN\nPRC,CN\nUnsupported/Alias,CN\nUnsupported/Intermediate,CN\nUnsupported/Target,CN", records);
+    }
+
+    /// Applies OpenJDK's exclusions to both table entries and compatibility links.
+    @ParameterizedTest
+    @ValueSource(strings = {"EST", "HST", "MST", "GMT+0", "GMT-0", "ROC"})
+    void excludesOpenJdkCompatibilityNames(String name) {
+        var task = createTask("2026e");
+        String table = "CN\t+3114+12128\tAsia/Shanghai\n";
+        String expected = task.toCsv(table, "");
+        assertEquals(expected, task.toCsv(table + "US\t+0000+00000\t" + name + "\n", ""));
+        assertEquals(expected, task.toCsv(table, "Link Asia/Shanghai " + name + "\n"));
     }
 
     /// Leaves UTC and other unmapped targets without a country, including through chains.
