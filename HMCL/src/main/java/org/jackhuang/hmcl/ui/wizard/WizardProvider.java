@@ -41,6 +41,18 @@ public interface WizardProvider {
         void onFail(SettingsMap settings, Exception exception, Runnable next);
     }
 
+    /// Replaces the default success dialog shown by [TaskExecutorDialogWizardDisplayer] when
+    /// its displayed task succeeds. Invoking [Runnable next] ends the wizard.
+    @NotNullByDefault
+    @FunctionalInterface
+    interface SuccessCallback {
+        /// Optional success callback consumed by the task dialog displayer.
+        SettingsMap.Key<SuccessCallback> KEY = new SettingsMap.Key<>("success_callback");
+
+        /// Presents the task's success outcome to the user.
+        void onSuccess(SettingsMap settings, Runnable next);
+    }
+
     /// Releases resources owned by a task displayed by [TaskExecutorDialogWizardDisplayer].
     ///
     /// Cleanup runs on the executor's completion thread after task execution stops, including
