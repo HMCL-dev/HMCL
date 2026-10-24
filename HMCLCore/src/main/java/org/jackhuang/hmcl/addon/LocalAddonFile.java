@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.addon;
 
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.addon.update.AddonUpdate;
 import org.jackhuang.hmcl.addon.update.AddonUpdateConditions;
 import org.jackhuang.hmcl.download.DownloadProvider;
@@ -43,6 +44,10 @@ public abstract class LocalAddonFile<T> implements Comparable<T> {
 
     public abstract Path getFile();
 
+    public String getName() {
+        return getFileName();
+    }
+
     /// Without extension
     public abstract String getFileName();
 
@@ -56,7 +61,18 @@ public abstract class LocalAddonFile<T> implements Comparable<T> {
 
     public abstract boolean keepOldFiles();
 
-    public abstract void delete() throws IOException;
+    public void delete() throws IOException {
+        FileUtils.forceDeleteIfExists(getFile());
+    }
+
+    public abstract @Nullable Image loadIcon(double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth);
+
+    public @Nullable Image loadIcon() {
+        Image icon = loadIcon(64D, 64D, true, true);
+        if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1)
+            return icon;
+        return null;
+    }
 
     /// @return the update target version restrictions for this addon file, or null if not upgradable.
     @Nullable
