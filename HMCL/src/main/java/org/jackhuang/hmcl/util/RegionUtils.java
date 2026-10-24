@@ -349,7 +349,7 @@ public final class RegionUtils {
     /// Loads an unmodifiable map from bundled time zone identifiers to unmodifiable candidate lists.
     /// Each call reads the resource afresh and preserves the region order within each row.
     ///
-    /// @throws IOException if the resource is missing, cannot be read, or contains a malformed or duplicate time zone row
+    /// @throws IOException if the resource is missing or cannot be read
     static @Unmodifiable Map<String, @Unmodifiable List<String>> loadTimeZoneRegions() throws IOException {
         try (@Nullable InputStream input = RegionUtils.class.getResourceAsStream("/assets/timezone_regions.csv")) {
             if (input == null) {
@@ -361,17 +361,7 @@ public final class RegionUtils {
                     continue;
                 }
                 String[] fields = line.split(",", -1);
-                if (fields.length < 2 || !fields[0].matches("[A-Za-z0-9_+/-]+")) {
-                    throw new IOException("Invalid time zone region mapping: " + line);
-                }
-                for (int i = 1; i < fields.length; i++) {
-                    if (!fields[i].matches("[A-Z]{2}")) {
-                        throw new IOException("Invalid time zone region mapping: " + line);
-                    }
-                }
-                if (regions.putIfAbsent(fields[0], List.copyOf(Arrays.asList(fields).subList(1, fields.length))) != null) {
-                    throw new IOException("Duplicate time zone: " + fields[0]);
-                }
+                regions.put(fields[0], List.copyOf(Arrays.asList(fields).subList(1, fields.length)));
             }
             return Map.copyOf(regions);
         }
