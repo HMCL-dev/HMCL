@@ -61,20 +61,24 @@ public final class RegionUtils {
             return candidates.get(0);
 
         String localeRegion = LocaleUtils.SYSTEM_DEFAULT.getCountry();
-        if (localeRegion.matches("[A-Z]{2}") && (candidates.isEmpty() || candidates.contains(localeRegion)))
-            return localeRegion;
+        if (localeRegion.matches("[A-Z]{2}")) {
+            if ((candidates.isEmpty() || candidates.contains(localeRegion)))
+                return localeRegion;
+        } else {
+            localeRegion = null;
+        }
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
             @Nullable Kernel32 kernel32 = Kernel32.INSTANCE;
 
             if (kernel32 != null) {
-                @Nullable String region = mapGeoIdToRegion(kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION));
-                if (region != null && (candidates.isEmpty() || candidates.contains(region)))
-                    return region;
+                @Nullable String geoidRegion = mapGeoIdToRegion(kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION));
+                if (geoidRegion != null && (candidates.isEmpty() || candidates.contains(geoidRegion)))
+                    return geoidRegion;
             }
         }
 
-        return null;
+        return localeRegion;
     }
 
     /// Reads the bundled mapping and returns the requested time zone's candidate regions in source order.
