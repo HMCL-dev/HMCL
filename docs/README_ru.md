@@ -60,7 +60,7 @@ HMCL — это открытый проект, развиваемый сообщ
 
 ## Участники
 
-С 2015 года в разработке HMCL участвовали более 130 человек. Спасибо за ваш труд!
+С 2015 года в разработке HMCL участвовали более 140 человек. Спасибо за ваш труд!
 
 [![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL&max=200)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 

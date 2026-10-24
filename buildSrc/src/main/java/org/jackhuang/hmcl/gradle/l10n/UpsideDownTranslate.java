@@ -43,6 +43,12 @@ public abstract class UpsideDownTranslate extends DefaultTask {
             "datetime.format", "MMM d, yyyy, h:mm:ss a"
     );
 
+    private static Set<String> NOT_TRANSLATABLE_KEYS = Set.of(
+            "launcher.title",
+            "launcher.title.unofficial",
+            "launcher.title.modified"
+    );
+
     @InputFile
     public abstract RegularFileProperty getInputFile();
 
@@ -61,6 +67,8 @@ public abstract class UpsideDownTranslate extends DefaultTask {
         english.forEach((k, v) -> {
             if (PROPERTIES.containsKey(k.toString())) {
                 output.setProperty(k.toString(), PROPERTIES.get(k.toString()));
+            } else if (NOT_TRANSLATABLE_KEYS.contains(k.toString())) {
+                output.put(k, v.toString());
             } else {
                 output.put(k, translator.translate(v.toString()));
             }

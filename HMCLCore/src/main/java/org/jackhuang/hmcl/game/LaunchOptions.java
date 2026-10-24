@@ -33,6 +33,7 @@ public class LaunchOptions implements Serializable {
     private GameInstanceID instanceId;
     private Path gameDir;
     private JavaRuntime java;
+    private Path javaExecutable;
     private String versionName;
     private String versionType;
     private String profileName;
@@ -83,6 +84,16 @@ public class LaunchOptions implements Serializable {
      */
     public JavaRuntime getJava() {
         return java;
+    }
+
+    /// Returns the executable selected for launch, falling back to [JavaRuntime#getBinary()] if none is specified.
+    /// The path is used without automatic executable substitution or file validation.
+    public Path getJavaExecutable() {
+        if (javaExecutable != null)
+            return javaExecutable;
+        if (java != null)
+            return java.getBinary();
+        return null;
     }
 
     /**
@@ -333,6 +344,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setJava(JavaRuntime java) {
             options.java = java;
+            return this;
+        }
+
+        public Builder setJavaExecutable(Path javaExecutable) {
+            options.javaExecutable = javaExecutable;
             return this;
         }
 

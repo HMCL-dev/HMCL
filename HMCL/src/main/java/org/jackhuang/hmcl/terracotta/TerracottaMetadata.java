@@ -24,9 +24,9 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.terracotta.provider.AbstractTerracottaProvider;
 import org.jackhuang.hmcl.terracotta.provider.GeneralProvider;
 import org.jackhuang.hmcl.terracotta.provider.MacOSProvider;
+import org.jackhuang.hmcl.util.RegionUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -91,7 +91,7 @@ public final class TerracottaMetadata {
             }
 
             Stream<String> stream = downloads.stream(), streamCN = downloadsCN.stream();
-            @Unmodifiable List<WebURL> links = (LocaleUtils.IS_CHINA_MAINLAND ? Stream.concat(streamCN, stream) : Stream.concat(stream, streamCN))
+            @Unmodifiable List<WebURL> links = ("CN".equals(RegionUtils.MACHINE_REGION) ? Stream.concat(streamCN, stream) : Stream.concat(stream, streamCN))
                     .map(link -> WebURL.parse(options.replace(link)))
                     .toList();
 
