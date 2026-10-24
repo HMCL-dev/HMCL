@@ -170,8 +170,7 @@ public abstract class UpdateTimeZoneRegions extends DefaultTask {
 
         var csv = new StringBuilder("# IANA tzdb version: " + version + "\n"
                 + "# Generated from " + tableUrl + " (public domain).\n"
-                + "# Compatibility links from " + backwardUrl + " (public domain).\n"
-                + "# Update with ./gradlew updateTimeZoneRegions --tzdb-version " + version + ".\n");
+                + "# Compatibility links from " + backwardUrl + " (public domain).\n");
         regions.forEach((zone, candidates) -> csv.append(zone).append(',').append(candidates).append('\n'));
         return csv.toString();
     }

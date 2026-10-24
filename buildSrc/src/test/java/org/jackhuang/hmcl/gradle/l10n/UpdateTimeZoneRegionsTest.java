@@ -149,7 +149,6 @@ final class UpdateTimeZoneRegionsTest {
         assertEquals("# IANA tzdb version: " + version + "\n"
                 + "# Generated from https://data.iana.org/time-zones/tzdb-" + version + "/zone1970.tab (public domain).\n"
                 + "# Compatibility links from https://data.iana.org/time-zones/tzdb-" + version + "/backward (public domain).\n"
-                + "# Update with ./gradlew updateTimeZoneRegions --tzdb-version " + version + ".\n"
                 + "Asia/Shanghai,CN\n", csv);
     }
 
