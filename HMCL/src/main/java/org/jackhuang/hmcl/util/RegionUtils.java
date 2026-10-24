@@ -78,6 +78,9 @@ public final class RegionUtils {
             }
         }
 
+        if (!candidates.isEmpty())
+            return candidates.get(0);
+
         return localeRegion;
     }
 
