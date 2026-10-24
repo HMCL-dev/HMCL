@@ -23,7 +23,6 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 
 import javafx.beans.property.*;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -71,7 +70,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -168,10 +166,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         }
     }
 
-    private <T> void setupCellValueFactory(TableColumn<AddonUpdateObject, T> column, Function<AddonUpdateObject, ObservableValue<T>> mapper) {
-        column.setCellValueFactory(param -> mapper.apply(param.getValue()));
-    }
-
     private void updateFiles() {
         AddonUpdateTask task = new AddonUpdateTask(
                 downloadProvider,
@@ -210,10 +204,10 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             csvTable.set(3, 0, "Update Source");
 
             for (int i = 0; i < objects.size(); i++) {
-                csvTable.set(0, i + 1, objects.get(i).fileName.get());
-                csvTable.set(1, i + 1, objects.get(i).currentVersion.get());
-                csvTable.set(2, i + 1, objects.get(i).targetVersion.get());
-                csvTable.set(3, i + 1, objects.get(i).source.get());
+                csvTable.set(0, i + 1, objects.get(i).getFileName());
+                csvTable.set(1, i + 1, objects.get(i).getCurrentVersion());
+                csvTable.set(2, i + 1, objects.get(i).getTargetVersion());
+                csvTable.set(3, i + 1, objects.get(i).getSource());
             }
 
             csvTable.write(path);
@@ -235,34 +229,30 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
     private static final class AddonUpdateObject {
         final AddonUpdate data;
-        final BooleanProperty enabled = new SimpleBooleanProperty();
-        final StringProperty fileName = new SimpleStringProperty();
-        final StringProperty currentVersion = new SimpleStringProperty();
-        final StringProperty targetVersion = new SimpleStringProperty();
-        final StringProperty targetVersionType = new SimpleStringProperty();
-        final StringProperty source = new SimpleStringProperty();
+        final String targetVersionType;
+        final String source;
         String changelog = null;
+
+        final BooleanProperty enabled = new SimpleBooleanProperty();
 
         final ItemPropertyAsyncCache<Image, AddonUpdateObject> iconCache;
 
         public AddonUpdateObject(AddonUpdate data) {
             this.data = data;
 
-            enabled.set(!data.localAddonFile().isDisabled());
-            fileName.set(data.localAddonFile().getFileName());
-            currentVersion.set(data.currentVersion().version());
-            targetVersion.set(data.targetVersion().version());
-            targetVersionType.set(data.targetVersion().versionType().name());
-            source.set(switch (data.currentVersion().source()) {
+            this.targetVersionType = switch (data.targetVersion().versionType()) {
+                case Release -> i18n("addon.channel.release");
+                case Beta -> i18n("addon.channel.beta");
+                case Alpha -> i18n("addon.channel.alpha");
+            };
+            this.source = switch (data.currentVersion().source()) {
                 case CURSEFORGE -> i18n("addon.curseforge");
                 case MODRINTH -> i18n("addon.modrinth");
-            });
+            };
 
-            iconCache = new ItemPropertyAsyncCache.Soft<>(
-                this,
-                this::loadIcon,
-                this::getDefaultIcon
-            );
+            this.enabled.set(!data.localAddonFile().isDisabled());
+
+            this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
         public AddonUpdate getData() {
@@ -277,40 +267,28 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             return enabled;
         }
 
-        public StringProperty fileNameProperty() {
-            return fileName;
-        }
-
-        public void setFileName(String fileName) {
-            this.fileName.set(fileName);
-        }
-
-        public LocalAddonFile getLocalAddonFile() {
+        public LocalAddonFile<?> getLocalAddonFile() {
             return data.localAddonFile();
         }
 
+        public String getFileName() {
+            return data.localAddonFile().getFileName();
+        }
+
         public String getCurrentVersion() {
-            return currentVersion.get();
+            return data.currentVersion().version();
         }
 
-        public StringProperty currentVersionProperty() {
-            return currentVersion;
+        public String getTargetVersion() {
+            return data.targetVersion().version();
         }
 
-        public StringProperty targetVersionProperty() {
-            return targetVersion;
-        }
-
-        public StringProperty targetVersionTypeProperty() {
+        public String getTargetVersionType() {
             return targetVersionType;
         }
 
-        public StringProperty sourceProperty() {
+        public String getSource() {
             return source;
-        }
-
-        public void setSource(String source) {
-            this.source.set(source);
         }
 
         private Image getDefaultIcon() {
@@ -421,12 +399,19 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         @Override
         public void updateItem(AddonUpdateObject item, boolean empty) {
             AddonUpdateObject oldItem = getItem();
+            boolean oldEmpty = isEmpty();
+
+            super.updateItem(item, empty);
+
+            if (oldItem == item && oldEmpty == empty) {
+                return;
+            }
+
+            ripplerContainer.releaseRippleImmediately();
 
             if (oldItem != null) {
                 enabledBox.selectedProperty().unbindBidirectional(oldItem.enabledProperty());
             }
-
-            super.updateItem(item, empty);
 
             if (empty || item == null) {
                 setGraphic(null);
@@ -437,18 +422,13 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
             item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
 
-            LocalAddonFile addonFile = item.getLocalAddonFile();
+            LocalAddonFile<?> addonFile = item.getLocalAddonFile();
 
-            if (oldItem != item) {
-                content.getTags().clear();
-
-                if (addonFile instanceof LocalModFile modFile) {
-                    content.addTag(modFile.getId());
-                    content.addTag(item.source.get());
-                } else if (addonFile instanceof ResourcePackFile) {
-                    content.addTag(item.source.get());
-                }
-            }
+            content.getTags().clear();
+            if (addonFile instanceof LocalModFile modFile)
+                content.addTag(modFile.getId());
+            content.addTag(item.getSource());
+            content.addTag(item.getTargetVersionType());
 
             if (addonFile instanceof LocalModFile modFile) {
                 content.setTitle(modFile.getName());
@@ -456,13 +436,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 content.setTitle(resourcePackFile.getFileName());
             }
 
-            content.setSubtitle(
-                item.getCurrentVersion()
-                + " → "
-                + item.targetVersion.get()
-                + " | "
-                + item.targetVersionType.get()
-            );
+            content.setSubtitle(item.getCurrentVersion() + " → " + item.getTargetVersion());
 
             setGraphic(pane);
         }

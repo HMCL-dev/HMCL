@@ -59,6 +59,9 @@ Jenkinsfile   text eol=lf
 
 # Minecraft schematic
 *.litematic   binary
+*.nbt         binary
+*.schem       binary
+*.schematic   binary
 
 # Compiled / intermediate build artefacts
 *.bin         binary
