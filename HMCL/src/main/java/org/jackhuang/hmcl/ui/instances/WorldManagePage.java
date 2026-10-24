@@ -165,6 +165,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         return world;
     }
 
+    public HMCLGameInstance getGameInstance() {
+        return gameInstance;
+    }
+
     public Path getBackupsDir() {
         return backupsDir;
     }
