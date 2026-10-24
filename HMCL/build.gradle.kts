@@ -12,6 +12,7 @@ import org.jackhuang.hmcl.gradle.utils.ArtifactUtils.Companion.resolveArtifactFi
 import org.jackhuang.hmcl.gradle.utils.ArtifactUtils.Companion.attachSignature
 import org.jackhuang.hmcl.gradle.utils.ArtifactUtils.Companion.createChecksum
 import org.jackhuang.hmcl.gradle.utils.PropertiesUtils
+import org.jackhuang.hmcl.gradle.utils.OfficialBuildValueSource
 import java.util.zip.ZipFile
 
 plugins {
@@ -108,34 +109,28 @@ tasks.compileJava {
     options.compilerArgs.addAll(addOpens.map { "--add-exports=$it=ALL-UNNAMED" })
 }
 
-val hmclProperties: Map<String, String> = mapOf(
-    "hmcl.version" to project.version.toString(),
-    "hmcl.add-opens" to addOpens.joinToString(" "),
-    "hmcl.version.hash" to System.getenv("GITHUB_SHA"),
-    "hmcl.version.type" to versionType,
-    "hmcl.microsoft.auth.id" to microsoftAuthId,
-    "hmcl.curseforge.apikey" to curseForgeApiKey,
-    "hmcl.authlib-injector.version" to libs.authlib.injector.get().version!!,
-    "hmcl.lwjgl-unsafe-agent.version" to libs.lwjgl.unsafe.agent.get().version!!
-).filterValues { it != null }
+val createPropertiesFile = tasks.register<WriteProperties>("createPropertiesFile") {
+    destinationFile.set(layout.buildDirectory.file("hmcl.properties"))
+    encoding = "UTF-8"
 
-val hmclPropertiesFile = layout.buildDirectory.file("hmcl.properties")
-val createPropertiesFile = tasks.register("createPropertiesFile") {
-    outputs.file(hmclPropertiesFile)
-    inputs.properties(hmclProperties)
-
-    val file = hmclPropertiesFile
-    val prop = hmclProperties
-
-    doLast {
-        val targetFile = file.get().asFile
-        targetFile.parentFile.mkdir()
-        targetFile.bufferedWriter().use {
-            for ((k, v) in prop) {
-                it.write("$k=$v\n")
-            }
-        }
-    }
+    property("hmcl.version", project.version.toString())
+    property("hmcl.add-opens", addOpens.joinToString(" "))
+    System.getenv("GITHUB_SHA")?.let { property("hmcl.version.hash", it) }
+    property("hmcl.version.type", versionType)
+    property("hmcl.microsoft.auth.id", microsoftAuthId)
+    property("hmcl.curseforge.apikey", curseForgeApiKey)
+    property("hmcl.authlib-injector.version", libs.authlib.injector.get().version!!)
+    property("hmcl.lwjgl-unsafe-agent.version", libs.lwjgl.unsafe.agent.get().version!!)
+    property("hmcl.official", providers.of(OfficialBuildValueSource::class) {
+        parameters.publicKeyFile.set(layout.projectDirectory.file("src/main/resources/assets/hmcl_signature_publickey.der"))
+        parameters.privateKeyLocation.set(providers.environmentVariable("HMCL_SIGNATURE_KEY"))
+        // Pin the official public key independently of the replaceable resource file.
+        // Under HMCL’s license agreement, you **MUST** change the software name or the version number in
+        // a reasonable way to distinguish it from the original version.
+        // You may modify this hash if and only if you have changed the software name or version number
+        // in accordance with the license requirements.
+        parameters.expectedSha256.set("36aadcfde8626b9d4c7a74facb3fdfda47e703c205a673fbe6a56b1d419f8b8e")
+    })
 }
 
 tasks.jar {
@@ -198,14 +193,13 @@ tasks.shadowJar {
 }
 
 tasks.processResources {
-    dependsOn(createPropertiesFile)
     dependsOn(upsideDownTranslate)
     dependsOn(createLocaleNamesResourceBundle)
     dependsOn(createLanguageList)
     dependsOn(validateTerracottaConfig)
 
     into("assets/") {
-        from(hmclPropertiesFile)
+        from(createPropertiesFile.flatMap { it.destinationFile })
         from(embedResources)
     }
 

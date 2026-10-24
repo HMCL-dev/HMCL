@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2026  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -140,23 +140,21 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         rootContainer.setAlignment(Pos.TOP_CENTER);
 
         StackPane warningPane = new StackPane();
+        rootContainer.getChildren().add(warningPane);
 
         if (!IntegrityChecker.isOfficial()) {
             var unofficialHintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
             unofficialHintPane.setSegment(i18n("unofficial.hint"));
-            warningPane.getChildren().add(unofficialHintPane);
-        } else if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
-            HintPane snapshotHint = new HintPane(MessageDialogPane.MessageType.WARNING);
-            snapshotHint.setSegment(i18n("account.methods.microsoft.snapshot"));
-            warningPane.getChildren().add(snapshotHint);
-            btnLogin.setDisable(true);
-            loginButtonSpinner.setLoading(false);
-            return;
+            warningPane.getChildren().setAll(unofficialHintPane);
         }
 
-        rootContainer.getChildren().add(warningPane);
-
-        if (currentStep instanceof Step.Init) {
+        if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
+            HintPane snapshotHint = new HintPane(MessageDialogPane.MessageType.ERROR);
+            snapshotHint.setSegment(i18n("account.methods.microsoft.snapshot"));
+            warningPane.getChildren().setAll(snapshotHint);
+            btnLogin.setDisable(true);
+            loginButtonSpinner.setLoading(false);
+        } else if (currentStep instanceof Step.Init) {
             btnLogin.setOnAction(e -> this.step.set(new Step.StartAuthorizationCodeLogin()));
             loginButtonSpinner.setLoading(false);
 
