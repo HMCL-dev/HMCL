@@ -96,6 +96,16 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> implements PageAware {
+    /// Creates the subtitle from the mod ID and its current file path.
+    static String createModSubtitle(LocalModFile modInfo) {
+        StringJoiner joiner = new StringJoiner(" | ");
+        if (modInfo.getModLoaderType() != ModLoaderType.UNKNOWN && StringUtils.isNotBlank(modInfo.getId()))
+            joiner.add(modInfo.getId());
+
+        joiner.add(FileUtils.getName(modInfo.getFile()));
+        return joiner.toString();
+    }
+
     private final ReentrantLock lock = new ReentrantLock();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
@@ -748,8 +758,19 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
 
-        private final InvalidationListener activeListener = obs -> checkBox.setSelected(getItem().getModInfo().isActive());
+        /// Strongly retains the delegate for this cell's lifetime while the model holds only a weak listener.
+        private final InvalidationListener activeListener = obs -> {
+            @Nullable ModInfoObject item = getItem();
+            if (item != null) {
+                LocalModFile modInfo = item.getModInfo();
+                checkBox.setSelected(modInfo.isActive());
+                // The read-only active property changes only after a successful file rename.
+                content.setSubtitle(createModSubtitle(modInfo));
+            }
+        };
+        /// Registers state updates without making the model retain the cell.
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
+        /// Property to detach when the cell is reused or becomes empty.
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
         private Tooltip warningTooltip;
@@ -779,8 +800,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         @Override
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
-            if (observedActiveProperty != null)
+            if (observedActiveProperty != null) {
                 observedActiveProperty.removeListener(weakActiveListener);
+                observedActiveProperty = null;
+            }
 
             pseudoClassStateChanged(WARNING, false);
             if (warningTooltip != null) {
@@ -823,13 +846,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             }
             content.setTitle(displayName);
 
-            StringJoiner joiner = new StringJoiner(" | ");
-            if (modLoaderType != ModLoaderType.UNKNOWN && StringUtils.isNotBlank(modInfo.getId()))
-                joiner.add(modInfo.getId());
-
-            joiner.add(FileUtils.getName(modInfo.getFile()));
-
-            content.setSubtitle(joiner.toString());
+            content.setSubtitle(createModSubtitle(modInfo));
 
             if (modLoaderType == ModLoaderType.UNKNOWN) {
                 content.addTagWarning(i18n("mods.unknown"));
