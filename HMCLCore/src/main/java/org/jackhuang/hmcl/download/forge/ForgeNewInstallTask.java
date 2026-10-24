@@ -204,6 +204,12 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
     private Path tempDir;
     private final AtomicInteger processorDoneCount = new AtomicInteger(0);
 
+    /// Installer-tools tasks that only produce files in the library directory, observed in
+    /// client-side install profiles. `EXTRACT_FILES` is absent on purpose: it writes launch scripts
+    /// into the instance directory, so skipping it would leave an instance without them.
+    private static final Set<String> ARTIFACT_ONLY_INSTALLER_TOOLS_TASKS = Set.of(
+            "MCP_DATA", "DOWNLOAD_MOJMAPS", "MERGE_MAPPING", "CREATE_PARENTS", "PROCESS_MINECRAFT_JAR");
+
     /// Creates a Forge processor installation task.
     ///
     /// @param dependencyManager repository-scoped download services
@@ -394,6 +400,88 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
         return task;
     }
 
+    /// Returns whether a processor only writes artifacts into the library directory.
+    ///
+    /// @param processor the processor to classify
+    /// @param vars      the resolved install-profile variables
+    /// @return `true` when skipping the processor cannot leave instance files behind
+    private boolean isArtifactOnlyProcessor(Processor processor, Map<String, String> vars) {
+        Artifact jar = processor.getJar();
+        String name = jar.getGroup() + ":" + jar.getName();
+        return switch (name) {
+            case "net.minecraftforge:jarsplitter",
+                 "net.minecraftforge:ForgeAutoRenamingTool",
+                 "net.minecraftforge:binarypatcher",
+                 "net.md-5:SpecialSource",
+                 "net.minecraftforge.lex:vignette",
+                 "net.neoforged.installertools:jarsplitter",
+                 "net.neoforged.installertools:binarypatcher",
+                 "net.neoforged:AutoRenamingTool" -> true;
+            case "net.minecraftforge:installertools",
+                 "net.neoforged.installertools:installertools" -> {
+                String task = parseOptions(processor.getArgs(), vars).get("task");
+                yield task != null && ARTIFACT_ONLY_INSTALLER_TOOLS_TASKS.contains(task.toUpperCase(Locale.ROOT));
+            }
+            default -> false;
+        };
+    }
+
+    /// Returns whether the processor chain can be skipped because every artifact it produces is
+    /// already present with the checksum the install profile declares for it.
+    ///
+    /// Only a chain made exclusively of artifact-only processors qualifies, and the chain is only
+    /// skipped when at least one declared artifact was actually verified.
+    ///
+    /// @param vars the resolved install-profile variables
+    /// @return `true` when running the processors would not change any file they are responsible for
+    /// @throws IOException if an artifact cannot be read
+    private boolean canReuseProcessorOutputs(Map<String, String> vars) throws IOException {
+        if (processors.isEmpty()) {
+            return false;
+        }
+
+        // Verify the artifacts the client processors declare as their outputs.
+        Set<String> artifacts = new LinkedHashSet<>();
+        for (Processor processor : processors) {
+            if (!isArtifactOnlyProcessor(processor, vars)) {
+                return false;
+            }
+            for (String output : processor.getOutputs().keySet()) {
+                if (!StringUtils.isSurrounded(output, "{", "}")) {
+                    return false;
+                }
+                artifacts.add(StringUtils.removeSurrounding(output, "{", "}"));
+            }
+        }
+
+        // The patched client jar is declared in `data` even for profiles whose binarypatcher
+        // processor declares no outputs.
+        if (vars.containsKey("PATCHED")) {
+            artifacts.add("PATCHED");
+        }
+
+        int verified = 0;
+        for (String artifact : artifacts) {
+            String path = vars.get(artifact);
+            String expected = vars.get(artifact + "_SHA");
+            if (path == null || expected == null) {
+                // Only the patched jar may lack a declared checksum: NeoForge omits `PATCHED_SHA`.
+                if ("PATCHED".equals(artifact)) {
+                    continue;
+                }
+                return false;
+            }
+
+            Path file = Paths.get(path);
+            if (!Files.isRegularFile(file) || !DigestUtils.digestToString("SHA-1", file).equalsIgnoreCase(expected)) {
+                LOG.info("Existing artifact " + file + " does not match the install profile");
+                return false;
+            }
+            verified++;
+        }
+        return verified > 0;
+    }
+
     @Override
     public void execute() throws Exception {
         if (!Files.isRegularFile(minecraftJar)) {
@@ -430,12 +518,20 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
         vars.put("INSTALLER", installer.toAbsolutePath().toString());
         vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLayout().getLibrariesDirectory()));
 
-        updateProgress(0, processors.size());
-
-        Task<?> processorsTask = Task.runSequentially(
-                processors.stream()
-                        .map(processor -> createProcessorTask(processor, vars))
-                        .toArray(Task<?>[]::new));
+        Task<?> processorsTask;
+        if (canReuseProcessorOutputs(vars)) {
+            LOG.info("Skipping " + processors.size() + " Forge processors for " + selfVersion
+                    + ": every artifact they produce already exists with the expected checksum");
+            updateProgress(processors.size(), processors.size());
+            processorsTask = Task.runAsync(() -> {
+            });
+        } else {
+            updateProgress(0, processors.size());
+            processorsTask = Task.runSequentially(
+                    processors.stream()
+                            .map(processor -> createProcessorTask(processor, vars))
+                            .toArray(Task<?>[]::new));
+        }
 
         dependencies.add(
                 processorsTask.thenComposeAsync(
