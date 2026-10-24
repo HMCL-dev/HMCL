@@ -53,8 +53,8 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.instances.Instances;
+import org.jackhuang.hmcl.util.RegionUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
@@ -221,7 +221,7 @@ public class TerracottaControllerPage extends StackPane {
                                 MessageDialogPane.MessageType.QUESTION
                         ).addAction(i18n("instance.launch"), () -> {
                             var repository = GameDirectoryManager.getSelectedRepository();
-                            Instances.launch(repository, repository.getSelectedInstance(), launcherHelper -> {
+                            Instances.launch(repository.getSelectedInstance(), launcherHelper -> {
                                 launcherHelper.setKeep();
                                 launcherHelper.setDisableOfflineSkin();
                             });
@@ -540,7 +540,7 @@ public class TerracottaControllerPage extends StackPane {
 
         VBox content = new VBox(10);
         content.getChildren().add(ComponentList.createComponentListTitle(i18n("terracotta.status")));
-        if (!LocaleUtils.IS_CHINA_MAINLAND) {
+        if (!"CN".equals(RegionUtils.MACHINE_REGION)) {
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
             hintPane.setText(i18n("terracotta.unsupported.region"));
             content.getChildren().add(hintPane);

@@ -24,6 +24,9 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
@@ -33,10 +36,15 @@ import javafx.stage.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.GameInstanceID;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.modpack.Modpack;
 import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
@@ -52,6 +60,7 @@ import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.instances.GameListPage;
 import org.jackhuang.hmcl.ui.instances.GameInstancePage;
 import org.jackhuang.hmcl.ui.instances.Instances;
+import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -64,6 +73,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
@@ -88,6 +98,7 @@ public final class Controllers {
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     /// The coordinator for the main window's scene graph and navigation stack.
     private static @Nullable Decorator decorator;
+
     private static DownloadPage downloadPage;
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
@@ -109,6 +120,36 @@ public final class Controllers {
         ///
         /// @throws Exception if the action fails
         void run() throws Exception;
+    }
+
+    /// The shared launcher title, populated during UI initialization.
+    private static @Nullable StringProperty launcherTitle;
+
+    public static ReadOnlyStringProperty launcherTitleProperty() {
+        if (launcherTitle == null) {
+            launcherTitle = new SimpleStringProperty(Controllers.class, "launcherTitle", Metadata.OFFICIAL_BUILD
+                    ? i18n("launcher.title", Metadata.VERSION)
+                    : i18n("launcher.title.unofficial", Metadata.VERSION));
+            if (Metadata.OFFICIAL_BUILD) {
+                @Nullable Boolean selfVerified = IntegrityChecker.getSelfVerified();
+                if (selfVerified != null) {
+                    if (!selfVerified) {
+                        launcherTitle.set(i18n("launcher.title.modified", Metadata.VERSION));
+                    }
+                } else {
+                    Schedulers.io().execute(() -> {
+                        if (!IntegrityChecker.isSelfVerified()) {
+                            FXUtils.runInFX(() -> {
+                                //noinspection DataFlowIssue
+                                launcherTitle.set(i18n("launcher.title.modified", Metadata.VERSION));
+                            });
+                        }
+                    });
+                }
+            }
+        }
+
+        return launcherTitle;
     }
 
     /// Returns the stage currently attached to the main-window decorator.
@@ -202,6 +243,16 @@ public final class Controllers {
         }
     }
 
+    /// Configures the main stage's application identity, shutdown action, and taskbar relaunch information.
+    ///
+    /// @param stage the unshown main stage
+    private static void configureMainStage(Stage stage) {
+        stage.setOnCloseRequest(event -> Launcher.stopApplication());
+        FXUtils.setIcon(stage);
+        stage.titleProperty().bind(launcherTitleProperty());
+        WindowsNativeUtils.installWindowsAppUserModelRelaunchProperties(stage);
+    }
+
     /// Initializes the main application stage, scene graph, and background services.
     ///
     /// @param stage the primary application stage, which must not have been shown
@@ -222,9 +273,9 @@ public final class Controllers {
             }
         }
 
-        stage.setOnCloseRequest(e -> Launcher.stopApplication());
+        configureMainStage(stage);
 
-        decorator = new Decorator(getRootPage());
+        decorator = new Decorator(getRootPage(), Controllers::configureMainStage);
         Scene mainScene = decorator.attachStage(stage);
         getRootPage().getMainPage().showUpdateProperty().bind(UpdateChecker.checkingUpdateProperty().not().and(UpdateChecker.outdatedProperty()));
         getRootPage().getMainPage().showUpdateDialogProperty().bind(
@@ -242,9 +293,6 @@ public final class Controllers {
         Lang.thread(JavaManager::initialize, "Search Java", true);
 
         StyleSheets.init(mainScene);
-
-        FXUtils.setIcon(stage);
-        stage.setTitle(Metadata.FULL_TITLE);
 
         if (!Architecture.SYSTEM_ARCH.isX86() && SettingsManager.userState().platformPromptVersionProperty().get() < 1) {
             Runnable continueAction = () -> {
@@ -371,6 +419,41 @@ public final class Controllers {
                         }, updateShowTips);
                     }, updateShowTips);
         }
+
+        tryInstallBundledModpack(GameDirectoryManager.getSelectedRepository());
+    }
+
+    /// Offers automatic install when a package exists under `.hmcl/modpack/`.
+    ///
+    /// Called from [Controllers#initialize] after the UI is ready. Install does not wait for repository
+    /// refresh: instance paths come from the selected repository layout. The package file itself is the
+    /// install signal; it is deleted after a successful install so later startups do not re-prompt.
+    private static void tryInstallBundledModpack(HMCLGameRepository repository) {
+        @Nullable Path modpackFile = Metadata.findBundledModpackFile();
+        if (modpackFile == null) {
+            return;
+        }
+
+        LOG.info("Found bundled modpack at " + modpackFile + "; starting automatic install");
+
+        Controllers.taskDialog(
+                Task.composeAsync(Schedulers.io(), () -> {
+                            Modpack modpack = ModpackHelper.readModpackManifest(modpackFile);
+                            return ModpackHelper.getInstallTask(
+                                    repository, modpackFile, new GameInstanceID(modpack.getName()), modpack, null);
+                        })
+                        .whenComplete(Schedulers.javafx(), (ignored, exception) -> {
+                            if (exception != null) {
+                                LOG.warning("Failed to install bundled modpack", exception);
+                                return;
+                            }
+                            try {
+                                Files.deleteIfExists(modpackFile);
+                            } catch (IOException e) {
+                                LOG.warning("Failed to delete bundled modpack: " + modpackFile, e);
+                            }
+                        }), i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL
+        );
     }
 
     public static void dialog(Region content) {
@@ -554,7 +637,7 @@ public final class Controllers {
                     break;
                 case "hmcl://game/launch":
                     var repository = GameDirectoryManager.getSelectedRepository();
-                    Instances.launch(repository, repository.getSelectedInstance(), LauncherHelper::setKeep);
+                    Instances.launch(repository.getSelectedInstance(), LauncherHelper::setKeep);
                     break;
             }
         } else {
@@ -562,20 +645,20 @@ public final class Controllers {
         }
     }
 
-    public static void openUriOrCopy(@Nullable URI uri) {
-        if (uri == null) return;
-        openUriOrCopy(uri.toString());
+    public static void openUriOrCopy(@Nullable URI url) {
+        if (url == null) return;
+        openUriOrCopy(url.toString());
     }
 
-    public static void openUriOrCopy(@Nullable String uri) {
-        if (uri == null) return;
+    public static void openUriOrCopy(@Nullable String url) {
+        if (url == null) return;
         var dialog = new MessageDialogPane.Builder(
-                i18n("web.open_in_browser", uri),
+                i18n("web.open_in_browser", url),
                 i18n("message.confirm"),
                 MessageDialogPane.MessageType.QUESTION
         )
-                .addAction(i18n("button.copy"), () -> FXUtils.copyText(uri))
-                .yesOrNo(() -> FXUtils.openLink(uri), null)
+                .addAction(i18n("button.copy"), () -> FXUtils.copyText(url))
+                .yesOrNo(() -> FXUtils.openLink(url), null)
                 .build();
         dialog(dialog);
     }
@@ -597,5 +680,13 @@ public final class Controllers {
         decorator = null;
 
         FXUtils.shutdown();
+    }
+
+    public static final boolean AUTO_TRIM_HEAP = !"false".equalsIgnoreCase(System.getenv("HMCL_AUTO_TRIM_HEAP"));
+
+    public static void trimHeap() {
+        if (AUTO_TRIM_HEAP) {
+            System.gc();
+        }
     }
 }

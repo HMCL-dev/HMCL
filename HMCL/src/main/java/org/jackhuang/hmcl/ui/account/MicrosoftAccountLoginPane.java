@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2026  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,9 +29,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.control.Label;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.shape.SVGPath;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
@@ -49,10 +47,10 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.QrCodeUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
@@ -141,22 +139,22 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         setBody(rootContainer);
         rootContainer.setAlignment(Pos.TOP_CENTER);
 
-        if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
-            var snapshotHint = new HintPane(MessageDialogPane.MessageType.WARNING);
-            snapshotHint.setSegment(i18n("account.methods.microsoft.snapshot"));
-            rootContainer.getChildren().add(snapshotHint);
-            btnLogin.setDisable(true);
-            loginButtonSpinner.setLoading(false);
-            return;
-        }
+        StackPane warningPane = new StackPane();
+        rootContainer.getChildren().add(warningPane);
 
         if (!IntegrityChecker.isOfficial()) {
             var unofficialHintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
             unofficialHintPane.setSegment(i18n("unofficial.hint"));
-            rootContainer.getChildren().add(unofficialHintPane);
+            warningPane.getChildren().setAll(unofficialHintPane);
         }
 
-        if (currentStep instanceof Step.Init) {
+        if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
+            HintPane snapshotHint = new HintPane(MessageDialogPane.MessageType.ERROR);
+            snapshotHint.setSegment(i18n("account.methods.microsoft.snapshot"));
+            warningPane.getChildren().setAll(snapshotHint);
+            btnLogin.setDisable(true);
+            loginButtonSpinner.setLoading(false);
+        } else if (currentStep instanceof Step.Init) {
             btnLogin.setOnAction(e -> this.step.set(new Step.StartAuthorizationCodeLogin()));
             loginButtonSpinner.setLoading(false);
 
@@ -198,6 +196,20 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         } else if (currentStep instanceof Step.WaitForScanQrCode wait) {
             loginButtonSpinner.setLoading(true);
 
+            VBox leftVBox = new VBox(6);
+            leftVBox.setAlignment(Pos.CENTER);
+            VBox rightVBox = new VBox(6);
+
+            HBox hbox = new HBox(leftVBox, rightVBox);
+
+            leftVBox.prefWidthProperty().bind(hbox.widthProperty().divide(2));
+            rightVBox.prefWidthProperty().bind(hbox.widthProperty().divide(2));
+            leftVBox.setMaxWidth(Double.MAX_VALUE);
+            rightVBox.setMaxWidth(Double.MAX_VALUE);
+
+            HBox.setHgrow(leftVBox, Priority.ALWAYS);
+            HBox.setHgrow(rightVBox, Priority.ALWAYS);
+
             String scanUri = "https://www.microsoft.com/link".equals(wait.verificationUri())
                     ? "https://www.microsoft.com/link?otc=" + wait.userCode()
                     : wait.verificationUri();
@@ -217,7 +229,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
             var lblCode = new Label(wait.userCode());
             lblCode.getStyleClass().add("code-label");
-            lblCode.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\";");
+            lblCode.setStyle("-fx-font-family: \"" + Objects.requireNonNullElse(settings().logFontFamilyProperty().get(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\";");
 
             var codeBox = new StackPane(lblCode);
             codeBox.getStyleClass().add("code-box");
@@ -225,7 +237,10 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             FXUtils.onClicked(codeBox, () -> FXUtils.copyText(wait.userCode()));
             codeBox.setMaxWidth(USE_PREF_SIZE);
 
-            rootContainer.getChildren().addAll(deviceHint, new Group(qrCode), codeBox);
+            leftVBox.getChildren().setAll(new Group(qrCode), codeBox);
+            rightVBox.getChildren().setAll(warningPane, deviceHint);
+
+            rootContainer.getChildren().setAll(hbox);
         } else if (currentStep instanceof Step.DeviceLoginCompleted) {
             loginButtonSpinner.setLoading(true);
 

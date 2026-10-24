@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -84,38 +85,37 @@ public final class ImageUtils {
         LoaderParameters parameters = new LoaderParameters();
         parameters.autoStartAnimations = false;
 
-        @Nullable SVGImage image;
+        Supplier<Image> supplier = () -> {
+            SVGImage image = SVGLoader.load(content, parameters);
+            var snapshotParameters = new SnapshotParameters();
+            snapshotParameters.setFill(Color.TRANSPARENT);
+
+            if (requestedWidth <= 0. || requestedHeight <= 0.) {
+                return image.toImage(snapshotParameters);
+            }
+
+            double scaleX = requestedWidth / image.getScaledWidth();
+            double scaleY = requestedHeight / image.getScaledHeight();
+
+            if (preserveRatio || scaleX == scaleY) {
+                double scale = Math.min(scaleX, scaleY);
+                return image.scale(scale).toImage(snapshotParameters);
+            } else {
+                // FIXME: Use DEFAULT_SVG_SNAPSHOT_PARAMS
+                return image.toImageScaled(ScaleQuality.RENDER_QUALITY, scaleX, scaleY);
+            }
+        };
+
+        @Nullable Image image;
 
         if (Platform.isFxApplicationThread()) {
-            image = SVGLoader.load(content, parameters);
+            image = supplier.get();
         } else {
             // TODO: Currently, SVGLoader.load(...) requires the javafx.swing module if it operates on a non-JavaFX thread.
-            image = CompletableFuture.supplyAsync(
-                    () -> SVGLoader.load(content, parameters),
-                    Schedulers.javafx()
-            ).get();
+            image = CompletableFuture.supplyAsync(supplier, Schedulers.javafx()).get();
         }
 
-        if (image == null)
-            throw new IOException("Failed to load SVG image");
-
-        var snapshotParameters = new SnapshotParameters();
-        snapshotParameters.setFill(Color.TRANSPARENT);
-
-        if (requestedWidth <= 0. || requestedHeight <= 0.) {
-            return image.toImage(snapshotParameters);
-        }
-
-        double scaleX = requestedWidth / image.getScaledWidth();
-        double scaleY = requestedHeight / image.getScaledHeight();
-
-        if (preserveRatio || scaleX == scaleY) {
-            double scale = Math.min(scaleX, scaleY);
-            return image.scale(scale).toImage(snapshotParameters);
-        } else {
-            // FIXME: Use DEFAULT_SVG_SNAPSHOT_PARAMS
-            return image.toImageScaled(ScaleQuality.RENDER_QUALITY, scaleX, scaleY);
-        }
+        return image;
     };
 
     public static final ImageLoader APNG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {

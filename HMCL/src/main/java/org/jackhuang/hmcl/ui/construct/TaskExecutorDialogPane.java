@@ -27,6 +27,7 @@ import javafx.scene.layout.*;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -84,11 +85,11 @@ public class TaskExecutorDialogPane extends BorderPane {
 
         setCancel(cancel);
 
-        btnCancel.setDisable(onCancel.getCancellationAction() == null);
+        btnCancel.setDisable(!onCancel.isEnabled());
         btnCancel.setOnAction(e -> {
             if (executor != null)
                 executor.cancel();
-            onCancel.getCancellationAction().accept(this);
+            onCancel.accept(this);
         });
 
         speedEventHandler = FetchTask.SPEED_EVENT.registerWeak(speedEvent -> {
@@ -113,7 +114,15 @@ public class TaskExecutorDialogPane extends BorderPane {
                 executor.addTaskListener(new TaskListener() {
                     @Override
                     public void onStop(boolean success, TaskExecutor executor) {
-                        Platform.runLater(() -> fireEvent(new DialogCloseEvent()));
+                        Platform.runLater(() -> {
+                            fireEvent(new DialogCloseEvent());
+
+                            if (Controllers.AUTO_TRIM_HEAP) {
+                                // Trim heap memory when tasks finish, allowing GC to return memory to the OS faster,
+                                // prevent excessive peak memory from consuming system resources.
+                                Platform.runLater(Controllers::trimHeap);
+                            }
+                        });
                     }
                 });
         }

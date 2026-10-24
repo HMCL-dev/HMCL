@@ -26,43 +26,28 @@ import org.jackhuang.hmcl.util.Immutable;
  * https://addons-ecs.forgesvc.net/api/v2/addon/&lt;projectID&gt;/file/&lt;fileID&gt;
  */
 @Immutable
-public final class CurseMetaMod {
-    @SerializedName(value = "Id", alternate = "id")
-    private final int id;
+public record CurseMetaMod(@SerializedName(value = "Id", alternate = "id") int id,
+                           @SerializedName(value = "FileName", alternate = "fileName") String fileName,
+                           @SerializedName(value = "FileNameOnDisk") String fileNameOnDisk,
+                           @SerializedName(value = "DownloadURL", alternate = "downloadUrl") String downloadURL) {
 
-    @SerializedName(value = "FileName", alternate = "fileName")
-    private final String fileName;
-
-    @SerializedName(value = "FileNameOnDisk")
-    private final String fileNameOnDisk;
-
-    @SerializedName(value = "DownloadURL", alternate = "downloadUrl")
-    private final String downloadURL;
-
-    public CurseMetaMod() {
-        this(0, "", "", "");
-    }
-
-    public CurseMetaMod(int id, String fileName, String fileNameOnDisk, String downloadURL) {
-        this.id = id;
-        this.fileName = fileName;
-        this.fileNameOnDisk = fileNameOnDisk;
-        this.downloadURL = downloadURL;
-    }
-
-    public int getId() {
+    @Override
+    public int id() {
         return id;
     }
 
-    public String getFileName() {
+    @Override
+    public String fileName() {
         return fileName;
     }
 
-    public String getFileNameOnDisk() {
+    @Override
+    public String fileNameOnDisk() {
         return fileNameOnDisk;
     }
 
-    public String getDownloadURL() {
+    @Override
+    public String downloadURL() {
         return downloadURL;
     }
 }

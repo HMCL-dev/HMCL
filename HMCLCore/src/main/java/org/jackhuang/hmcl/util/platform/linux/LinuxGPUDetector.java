@@ -174,7 +174,11 @@ final class LinuxGPUDetector {
                 }
 
             } else if (builder.getVendor() == HardwareVendor.INTEL) {
-                builder.setType(pciDevice == 20 ? GraphicsCard.Type.Integrated : GraphicsCard.Type.Discrete);
+                // https://github.com/fastfetch-cli/fastfetch/blob/33205326683fd89ec63204f83549839e2374c286/src/detection/gpu/gpu_linux.c#L479-L484
+                // https://github.com/fastfetch-cli/fastfetch/blob/33205326683fd89ec63204f83549839e2374c286/src/detection/gpu/gpu_linux.c#L232-L237
+                builder.setType(pciDomain == 0 && pciBus == 0 && pciDevice == 2 && pciFunc == 0
+                        ? GraphicsCard.Type.Integrated
+                        : GraphicsCard.Type.Discrete);
             }
         } catch (Throwable ignored) {
         }

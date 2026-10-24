@@ -82,7 +82,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
     public static final class Instance extends GameSettings implements JsonSchemaSetting {
         /// The JSON schema supported by instance-specific game settings.
         public static final JsonSchema CURRENT_SCHEMA =
-                new JsonSchema("instance-game-settings", new JsonSchema.Version(1, 0, 0));
+                new JsonSchema("instance-game-settings", new JsonSchema.Version(1, 0, 1));
 
         /// Creates an empty instance setting.
         public Instance() {
@@ -386,6 +386,19 @@ public sealed abstract class GameSettings extends ObservableSetting {
     /// Returns the detected Java runtime reference property.
     public InheritableProperty<DetectedJava> detectedJavaProperty() {
         return detectedJava;
+    }
+
+    /// Property name for disabling automatic replacement with `javaw.exe` on Windows.
+    public static final String PROPERTY_NOT_USE_JAVAW = "notUseJavaw";
+
+    /// Whether to keep the selected Java executable instead of replacing it with `javaw.exe`; defaults to `false`.
+    @SerializedName(PROPERTY_NOT_USE_JAVAW)
+    private final InheritableProperty<Boolean> notUseJavaw = newInheritableProperty(PROPERTY_NOT_USE_JAVAW, false);
+
+    /// Returns the property disabling automatic replacement of a Windows Java executable with a sibling `javaw.exe` file.
+    /// If `true`, the selected executable is used unchanged. This property has no effect on other runtime platforms.
+    public InheritableProperty<Boolean> notUseJavawProperty() {
+        return notUseJavaw;
     }
 
     /// Property name for customized JVM options.
@@ -813,15 +826,15 @@ public sealed abstract class GameSettings extends ObservableSetting {
     }
 
     /// Property name for using native GLFW.
-    public static final String PROPERTY_USE_NATIVE_GLFW = "useNativeGLFW";
+    public static final String PROPERTY_USE_NATIVE_GLFW_OR_SDL = "useNativeGLFW";
 
     /// If `true`, HMCL will use native GLFW.
-    @SerializedName(PROPERTY_USE_NATIVE_GLFW)
-    private final InheritableProperty<Boolean> useNativeGLFW = newInheritableProperty(PROPERTY_USE_NATIVE_GLFW, false);
+    @SerializedName(PROPERTY_USE_NATIVE_GLFW_OR_SDL)
+    private final InheritableProperty<Boolean> useNativeGLFWorSDL = newInheritableProperty(PROPERTY_USE_NATIVE_GLFW_OR_SDL, false);
 
     /// Returns the native GLFW property.
-    public InheritableProperty<Boolean> useNativeGLFWProperty() {
-        return useNativeGLFW;
+    public InheritableProperty<Boolean> useNativeGLFWorSDLProperty() {
+        return useNativeGLFWorSDL;
     }
 
     /// Property name for using native OpenAL.

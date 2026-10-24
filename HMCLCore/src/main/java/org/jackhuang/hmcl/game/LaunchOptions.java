@@ -33,6 +33,7 @@ public class LaunchOptions implements Serializable {
     private GameInstanceID instanceId;
     private Path gameDir;
     private JavaRuntime java;
+    private Path javaExecutable;
     private String versionName;
     private String versionType;
     private String profileName;
@@ -61,6 +62,7 @@ public class LaunchOptions implements Serializable {
     private Renderer renderer = Renderer.DEFAULT;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
+    private boolean useHighPerformanceGPU;
     private boolean enableDebugLogOutput;
     private boolean allowAutoAgent;
     private boolean disableAutoGameOptions;
@@ -82,6 +84,16 @@ public class LaunchOptions implements Serializable {
      */
     public JavaRuntime getJava() {
         return java;
+    }
+
+    /// Returns the executable selected for launch, falling back to [JavaRuntime#getBinary()] if none is specified.
+    /// The path is used without automatic executable substitution or file validation.
+    public Path getJavaExecutable() {
+        if (javaExecutable != null)
+            return javaExecutable;
+        if (java != null)
+            return java.getBinary();
+        return null;
     }
 
     /**
@@ -255,12 +267,16 @@ public class LaunchOptions implements Serializable {
         return renderer;
     }
 
-    public boolean isUseNativeGLFW() {
+    public boolean isUseNativeGLFWorSDL() {
         return useNativeGLFW;
     }
 
     public boolean isUseNativeOpenAL() {
         return useNativeOpenAL;
+    }
+
+    public boolean isUseHighPerformanceGPU() {
+        return useHighPerformanceGPU;
     }
 
     public boolean isEnableDebugLogOutput() {
@@ -328,6 +344,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setJava(JavaRuntime java) {
             options.java = java;
+            return this;
+        }
+
+        public Builder setJavaExecutable(Path javaExecutable) {
+            options.javaExecutable = javaExecutable;
             return this;
         }
 
@@ -466,13 +487,18 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setUseNativeGLFW(boolean useNativeGLFW) {
+        public Builder setUseNativeGLFWorSDL(boolean useNativeGLFW) {
             options.useNativeGLFW = useNativeGLFW;
             return this;
         }
 
         public Builder setUseNativeOpenAL(boolean useNativeOpenAL) {
             options.useNativeOpenAL = useNativeOpenAL;
+            return this;
+        }
+
+        public Builder setUseHighPerformanceGPU(boolean useHighPerformanceGPU) {
+            options.useHighPerformanceGPU = useHighPerformanceGPU;
             return this;
         }
 

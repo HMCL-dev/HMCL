@@ -28,28 +28,56 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
+/// Identifies one game instance and forms the instance's directory name in repository layouts.
+///
+/// An id must be a non-blank path segment. Directory separators and the special `.` and `..`
+/// segments are rejected so layout operations cannot escape or alias the instances directory.
+///
+/// @param id the validated instance id
 @NotNullByDefault
 @JsonAdapter(GameInstanceID.Adapter.class)
 @JsonSerializable
 public record GameInstanceID(String id) implements Comparable<GameInstanceID> {
+
+    /// Returns whether `id` is a non-blank instance path segment.
+    ///
+    /// @param id the candidate id
+    /// @return whether the id satisfies the repository-independent safety requirements
+    public static boolean isValid(String id) {
+        return !id.isBlank()
+                && !id.equals(".")
+                && !id.equals("..")
+                && !id.contains("/")
+                && !id.contains("\\");
+    }
+
+    /// Creates a validated instance id.
+    ///
+    /// @throws IllegalArgumentException if `id` is not valid
     public GameInstanceID {
-        if (id.isBlank()) {
-            throw new IllegalArgumentException("Game instance id cannot be empty");
+        if (!isValid(id)) {
+            throw new IllegalArgumentException("Invalid game instance id: " + id);
         }
     }
 
+    /// {@inheritDoc}
     @Override
     public int compareTo(GameInstanceID that) {
         return this.id.compareTo(that.id);
     }
 
+    /// Returns the instance id string.
+    ///
+    /// @return the value supplied to the constructor
     @Override
     public String toString() {
         return id;
     }
 
+    /// Serializes nullable instance ids as JSON strings.
     static final class Adapter extends TypeAdapter<@Nullable GameInstanceID> {
 
+        /// {@inheritDoc}
         @Override
         public @Nullable GameInstanceID read(JsonReader in) throws IOException {
             if (in.peek() == JsonToken.NULL) {
@@ -60,6 +88,7 @@ public record GameInstanceID(String id) implements Comparable<GameInstanceID> {
             return new GameInstanceID(in.nextString());
         }
 
+        /// {@inheritDoc}
         @Override
         public void write(JsonWriter out, @Nullable GameInstanceID value) throws IOException {
             out.value(value != null ? value.id() : null);

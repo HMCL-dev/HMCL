@@ -31,8 +31,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.cleanroom.CleanroomRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricAPIRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
@@ -45,6 +44,7 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -52,10 +52,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
@@ -65,10 +62,10 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.*;
@@ -76,31 +73,29 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class VersionsPage extends Control implements WizardPage, Refreshable {
-    private final String gameVersion;
-    private final String libraryId;
+    private final @Nullable GameVersionNumber gameVersion;
+    private final GameComponentType componentType;
     private final String title;
     private final Navigation navigation;
     private final DownloadProvider downloadProvider;
-    private final VersionList<?> versionList;
     private final Runnable callback;
 
-    private final ObservableList<RemoteVersion> versions = FXCollections.observableArrayList();
+    private final ObservableList<ComponentRemoteVersion> versions = FXCollections.observableArrayList();
     private final ObjectProperty<Status> status = new SimpleObjectProperty<>(Status.LOADING);
 
     public VersionsPage(Navigation navigation,
-                        String title, String gameVersion,
+                        String title, GameVersionNumber gameVersion,
                         DownloadProvider downloadProvider,
-                        String libraryId,
+                        GameComponentType componentType,
                         Runnable callback) {
         this.title = title;
-        this.gameVersion = gameVersion;
-        this.libraryId = libraryId;
+        this.gameVersion = componentType == GameComponentType.GAME ? null : gameVersion;
+        this.componentType = componentType;
         this.navigation = navigation;
         this.downloadProvider = downloadProvider;
-        this.versionList = downloadProvider.getVersionListById(libraryId);
         this.callback = callback;
 
-        refresh();
+        load(false);
     }
 
     @Override
@@ -110,9 +105,12 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
     @Override
     public void refresh() {
+        load(true);
+    }
+
+    private void load(boolean refresh) {
         status.set(Status.LOADING);
-        Task<?> task = versionList.refreshAsync(gameVersion)
-                .thenSupplyAsync(() -> versionList.getVersions(gameVersion).stream().sorted().collect(Collectors.toList()))
+        Task<?> task = downloadProvider.getVersionsAsync(componentType, gameVersion, refresh)
                 .whenComplete(Schedulers.javafx(), (items, exception) -> {
                     if (exception == null) {
                         versions.setAll(items);
@@ -152,12 +150,13 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         OLD
     }
 
-    private static class RemoteVersionListCell extends ListCell<RemoteVersion> {
+    private static class RemoteVersionListCell extends ListCell<ComponentRemoteVersion> {
         private final VersionsPage control;
 
         private final TwoLineListItem twoLineListItem = new TwoLineListItem();
         private final ImageView imageView = new ImageView();
         private final StackPane pane = new StackPane();
+        private final RipplerContainer ripplerContainer;
 
         RemoteVersionListCell(VersionsPage control) {
             this.control = control;
@@ -172,7 +171,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             HBox actions = new HBox(8);
             actions.setAlignment(Pos.CENTER);
             {
-                if ("game".equals(control.libraryId)) {
+                if (control.componentType == GameComponentType.GAME) {
                     JFXButton wikiButton = newToggleButton4(SVG.GLOBE_BOOK);
                     wikiButton.setOnAction(event -> onOpenWiki());
                     FXUtils.installFastTooltip(wikiButton, i18n("wiki.tooltip"));
@@ -188,22 +187,22 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             pane.getStyleClass().add("md-list-cell");
             StackPane.setMargin(hbox, new Insets(10, 16, 10, 16));
-            pane.getChildren().setAll(new RipplerContainer(hbox));
+            pane.getChildren().setAll(ripplerContainer = new RipplerContainer(hbox));
 
             FXUtils.onClicked(this, this::onAction);
         }
 
         private void onAction() {
-            RemoteVersion item = getItem();
+            ComponentRemoteVersion item = getItem();
             if (item == null)
                 return;
 
-            control.navigation.getSettings().put(control.libraryId, item);
+            control.navigation.getSettings().put(control.componentType.getPatchId(), item);
             control.callback.run();
         }
 
         private void onOpenWiki() {
-            RemoteVersion item = getItem();
+            ComponentRemoteVersion item = getItem();
             if (!(item instanceof GameRemoteVersion))
                 return;
 
@@ -211,18 +210,21 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         }
 
         @Override
-        public void updateItem(RemoteVersion remoteVersion, boolean empty) {
-            RemoteVersion oldRemoteVersion = getItem();
+        public void updateItem(ComponentRemoteVersion remoteVersion, boolean empty) {
+            ComponentRemoteVersion oldRemoteVersion = getItem();
+            boolean oldEmpty = isEmpty();
 
             super.updateItem(remoteVersion, empty);
+
+            if (oldRemoteVersion == remoteVersion && oldEmpty == empty) return;
+
+            ripplerContainer.releaseRippleImmediately();
 
             if (empty) {
                 setGraphic(null);
                 return;
             }
             setGraphic(pane);
-
-            if (oldRemoteVersion == remoteVersion) return;
 
             twoLineListItem.setTitle(I18n.getDisplayVersion(remoteVersion));
             if (remoteVersion.getReleaseDate() != null) {
@@ -234,8 +236,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             twoLineListItem.getTags().clear();
 
             if (remoteVersion instanceof GameRemoteVersion) {
-                RemoteVersion.Type versionType = remoteVersion.getVersionType();
-                GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(remoteVersion.getGameVersion());
+                ComponentRemoteVersion.Type versionType = remoteVersion.getVersionType();
+                GameVersionNumber gameVersion = remoteVersion.getGameVersion();
 
                 switch (versionType) {
                     case RELEASE -> {
@@ -243,8 +245,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         imageView.setImage(GameInstanceIconType.GRASS.getIcon());
                     }
                     case SNAPSHOT, PENDING, UNOBFUSCATED -> {
-                        if (versionType == RemoteVersion.Type.SNAPSHOT
-                                && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isAprilFools()) {
+                        if (versionType == ComponentRemoteVersion.Type.SNAPSHOT && gameVersion.isAprilFools()) {
                             twoLineListItem.addTag(i18n("instance.game.april_fools"));
                             imageView.setImage(GameInstanceIconType.APRIL_FOOLS.getIcon());
                         } else {
@@ -284,7 +285,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     iconType = GameInstanceIconType.COMMAND;
 
                 imageView.setImage(iconType.getIcon());
-                String displayGameVersion = I18n.getDisplayVersion(GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()));
+                String displayGameVersion = I18n.getDisplayVersion(remoteVersion.getGameVersion());
 
                 if (twoLineListItem.getSubtitle() == null)
                     twoLineListItem.setSubtitle(displayGameVersion);
@@ -295,7 +296,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     }
 
     private static final class VersionsPageSkin extends SkinBase<VersionsPage> {
-        private final JFXListView<RemoteVersion> list;
+        private final JFXListView<ComponentRemoteVersion> list;
 
         private final TransitionPane transitionPane;
         private final JFXSpinner spinner;
@@ -321,7 +322,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             column2.setMaxWidth(150);
             ColumnConstraints column3 = new ColumnConstraints();
 
-            if (control.versionList.hasType())
+            if (control.downloadProvider.hasType(control.componentType))
                 searchPane.getColumnConstraints().setAll(nameColumn, column1, nameColumn, column2, column3);
             else
                 searchPane.getColumnConstraints().setAll(nameColumn, column1, column3);
@@ -337,7 +338,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     nameField.setPromptText(i18n("instance.search.prompt"));
                     nameField.textProperty().addListener(o -> updateList());
 
-                    if ("game".equals(control.libraryId)) {
+                    if (control.componentType == GameComponentType.GAME) {
                         categoryField.getItems().setAll(
                                 VersionTypeFilter.ALL,
                                 VersionTypeFilter.RELEASE,
@@ -360,7 +361,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     JFXButton refreshButton = FXUtils.newRaisedButton(i18n("button.refresh"));
                     refreshButton.setOnAction(event -> control.onRefresh());
 
-                    if (control.versionList.hasType()) {
+                    if (control.downloadProvider.hasType(control.componentType)) {
                         searchPane.addRow(rowIndex++,
                                 new Label(i18n("instance.search")), nameField,
                                 new Label(i18n("instance.game.type")), categoryField,
@@ -401,6 +402,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         VBox.setVgrow(list, Priority.ALWAYS);
 
                         control.versions.addListener((InvalidationListener) o -> updateList());
+                        if (!control.versions.isEmpty())
+                            updateList();
 
                         list.setCellFactory(listView -> new RemoteVersionListCell(control));
 
@@ -453,20 +456,20 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         }
 
         private void updateList() {
-            Stream<RemoteVersion> versions = getSkinnable().versions.stream();
+            Stream<ComponentRemoteVersion> versions = getSkinnable().versions.stream();
 
             VersionTypeFilter filter = categoryField.getSelectionModel().getSelectedItem();
             if (filter != null)
                 versions = versions.filter(it -> {
-                    RemoteVersion.Type versionType = it.getVersionType();
+                    ComponentRemoteVersion.Type versionType = it.getVersionType();
                     return switch (filter) {
-                        case RELEASE -> versionType == RemoteVersion.Type.RELEASE;
-                        case SNAPSHOTS -> versionType == RemoteVersion.Type.SNAPSHOT
-                                || versionType == RemoteVersion.Type.PENDING
-                                || versionType == RemoteVersion.Type.UNOBFUSCATED;
-                        case APRIL_FOOLS -> versionType == RemoteVersion.Type.SNAPSHOT
-                                && GameVersionNumber.asGameVersion(it.getGameVersion()).isAprilFools();
-                        case OLD -> versionType == RemoteVersion.Type.OLD;
+                        case RELEASE -> versionType == ComponentRemoteVersion.Type.RELEASE;
+                        case SNAPSHOTS -> versionType == ComponentRemoteVersion.Type.SNAPSHOT
+                                || versionType == ComponentRemoteVersion.Type.PENDING
+                                || versionType == ComponentRemoteVersion.Type.UNOBFUSCATED;
+                        case APRIL_FOOLS -> versionType == ComponentRemoteVersion.Type.SNAPSHOT
+                                && it.getGameVersion().isAprilFools();
+                        case OLD -> versionType == ComponentRemoteVersion.Type.OLD;
                         // case ALL,
                         default -> true;
                     };
@@ -488,7 +491,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             }
 
             //noinspection DataFlowIssue
-            list.getItems().setAll(versions.collect(Collectors.toList()));
+            list.getItems().setAll(versions.toList());
             list.scrollTo(0);
         }
     }

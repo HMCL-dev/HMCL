@@ -19,15 +19,21 @@ package org.jackhuang.hmcl.addon.repository;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
-import org.jackhuang.hmcl.addon.mod.ModLoaderType;
+import org.jackhuang.hmcl.download.DownloadCandidate;
+import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.PriorityComparator;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.NoCandidatesException;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +41,6 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -51,11 +56,12 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @see <a href="https://docs.modrinth.com/api">Modrinth API Doc</a>
 public final class ModrinthRemoteAddonRepository implements RemoteAddonRepository {
-    public static final ModrinthRemoteAddonRepository COMMON = new ModrinthRemoteAddonRepository();
-    public static final ModrinthRemoteAddonRepository MODS = new ModrinthRemoteAddonRepository("mod");
-    public static final ModrinthRemoteAddonRepository MODPACKS = new ModrinthRemoteAddonRepository("modpack");
-    public static final ModrinthRemoteAddonRepository RESOURCE_PACKS = new ModrinthRemoteAddonRepository("resourcepack");
-    public static final ModrinthRemoteAddonRepository SHADER_PACKS = new ModrinthRemoteAddonRepository("shader");
+
+    private static final ModrinthRemoteAddonRepository INSTANCE = new ModrinthRemoteAddonRepository();
+
+    public static ModrinthRemoteAddonRepository getInstance() {
+        return INSTANCE;
+    }
 
     private static final Comparator<String> TAG_COMPARATOR = PriorityComparator.of(
             List.of("babric",
@@ -103,31 +109,23 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         };
     }
 
+    private static @Nullable String toProjectType(RemoteAddon.Type type) {
+        return switch (type) {
+            case MOD -> "mod";
+            case MODPACK -> "modpack";
+            case RESOURCE_PACK -> "resourcepack";
+            case SHADER_PACK -> "shader";
+            default -> null;
+        };
+    }
+
     private static final Semaphore SEMAPHORE = new Semaphore(16);
 
     private static final String PREFIX = "https://api.modrinth.com";
 
     private static final String BASE = "https://modrinth.com";
 
-    private final @Nullable String projectType;
-
-    private final @Nullable RemoteAddon.Type type;
-
     private ModrinthRemoteAddonRepository() {
-        this.projectType = null;
-        this.type = null;
-    }
-
-    private ModrinthRemoteAddonRepository(@NotNull String projectType) {
-        this.projectType = projectType;
-        this.type = toAddonType(projectType);
-        if (type == null) throw new IllegalArgumentException("Unsupported Modrinth project type: " + projectType);
-    }
-
-    @Override
-    public RemoteAddon.Type getType() {
-        if (type == null) throw new UnsupportedOperationException();
-        return this.type;
     }
 
     @Override
@@ -142,11 +140,11 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
     private static String convertSortType(SortType sortType) {
         return switch (sortType) {
+            case RELEVANCY -> "relevance";
+            case POPULARITY -> "follows";
             case DATE_CREATED -> "newest";
-            case POPULARITY, NAME, AUTHOR -> "relevance";
             case LAST_UPDATED -> "updated";
             case TOTAL_DOWNLOADS -> "downloads";
-            default -> throw new IllegalArgumentException("Unsupported sort type " + sortType);
         };
     }
 
@@ -158,8 +156,9 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     }
 
     @Override
-    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
-        if (projectType == null) throw new UnsupportedOperationException();
+    public SearchResult search(DownloadProvider downloadProvider, RemoteAddon.Type type, String gameVersion, @Nullable RemoteAddonRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
+        String projectType = toProjectType(type);
+        if (projectType == null) return SearchResult.empty();
         SEMAPHORE.acquireUninterruptibly();
         try {
             List<List<String>> facets = new ArrayList<>();
@@ -178,19 +177,19 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                     pair("index", convertSortType(sort))
             );
 
-            List<URI> candidates = downloadProvider.injectURLWithCandidates(NetworkUtils.withQuery(PREFIX + "/v2/search", query));
+            DownloadCandidates candidates = downloadProvider.getVersionListCandidates(NetworkUtils.withQuery(PREFIX + "/v2/search", query));
             IOException exception = null;
-            for (URI candidate : candidates) {
+            for (DownloadCandidate candidate : candidates.getCandidates()) {
                 try {
-                    LOG.info("Fetching " + candidate);
-                    Response<ProjectSearchResult> response = HttpRequest.GET(candidate.toString())
+                    LOG.info("Fetching " + candidate.displayUrl());
+                    Response<ProjectSearchResult> response = HttpRequest.GET(candidate.displayUrl())
                             .getJson(Response.typeOf(ProjectSearchResult.class));
                     return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toAddon), (int) Math.ceil((double) response.totalHits / pageSize));
                 } catch (IOException e) {
                     LOG.warning("Failed to search addons: " + candidate, e);
 
                     IOException wrapper = new IOException("Failed to search addons: " + candidate, e);
-                    if (candidates.size() == 1) {
+                    if (candidates.getCandidates().size() == 1) {
                         exception = wrapper;
                     } else {
                         if (exception == null) {
@@ -201,7 +200,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                 }
             }
 
-            throw exception != null ? exception : new IOException("No candidates found");
+            throw exception != null ? exception : new NoCandidatesException();
         } finally {
             SEMAPHORE.release();
         }
@@ -209,8 +208,15 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
 
     @Override
     public Optional<RemoteAddon.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
-        String sha1 = DigestUtils.digestToString("SHA-1", file);
+        return getRemoteVersionBySHA1(DigestUtils.digestToString("SHA-1", file));
+    }
 
+    /// Looks up a Modrinth version by file SHA-1 hash.
+    ///
+    /// @param sha1 the SHA-1 digest of the file
+    /// @return the matching remote version, or empty when not found
+    /// @throws IOException if the Modrinth request fails for a reason other than 404 / missing file
+    public Optional<RemoteAddon.Version> getRemoteVersionBySHA1(String sha1) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             ProjectVersion projectVersion = HttpRequest.GET(PREFIX + "/v2/version_file/" + sha1,
@@ -235,16 +241,16 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         SEMAPHORE.acquireUninterruptibly();
         try {
             id = StringUtils.removePrefix(id, "local-");
-            List<URI> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/project/" + id);
+            DownloadCandidates candidates = downloadProvider.getVersionListCandidates(PREFIX + "/v2/project/" + id);
             IOException exception = null;
 
-            for (URI candidate : candidates) {
+            for (DownloadCandidate candidate : candidates.getCandidates()) {
                 try {
-                    Project project = HttpRequest.GET(candidate.toString()).getJson(Project.class);
+                    Project project = HttpRequest.GET(candidate.displayUrl()).getJson(Project.class);
                     return project.toAddon();
                 } catch (IOException e) {
                     IOException wrapper = new IOException("Failed to get addon: " + candidate, e);
-                    if (candidates.size() == 1) {
+                    if (candidates.getCandidates().size() == 1) {
                         exception = wrapper;
                     } else {
                         if (exception == null) {
@@ -255,7 +261,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                 }
             }
 
-            throw exception != null ? exception : new IOException("No candidates found");
+            throw exception != null ? exception : new NoCandidatesException();
         } finally {
             SEMAPHORE.release();
         }
@@ -265,13 +271,19 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     public RemoteAddon resolveDependency(DownloadProvider downloadProvider, String id) throws IOException {
         try {
             return getAddonById(downloadProvider, id);
-        } catch (ResponseCodeException e) {
-            if (e.getResponseCode() == 502 || e.getResponseCode() == 404) {
+        } catch (IOException e) {
+            if (e instanceof NoCandidatesException) throw e;
+            List<Throwable> l = new ArrayList<>(List.of(e));
+            l.addAll(List.of(e.getSuppressed()));
+            if (l.stream().allMatch(t -> {
+                var cause = t.getCause();
+                return cause == null
+                        || cause instanceof FileNotFoundException
+                        || cause instanceof ResponseCodeException rce && rce.getResponseCode() == 404;
+            })) { // Which means the file does not exist
                 return RemoteAddon.BROKEN;
             }
             throw e;
-        } catch (FileNotFoundException e) {
-            return RemoteAddon.BROKEN;
         }
     }
 
@@ -286,17 +298,17 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
         try {
             id = StringUtils.removePrefix(id, "local-");
 
-            List<URI> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/project/" + id + "/version?include_changelog=false");
+            DownloadCandidates candidates = downloadProvider.getVersionListCandidates(PREFIX + "/v2/project/" + id + "/version?include_changelog=false");
             IOException exception = null;
 
-            for (URI candidate : candidates) {
+            for (DownloadCandidate candidate : candidates.getCandidates()) {
                 try {
-                    List<ProjectVersion> versions = HttpRequest.GET(candidate.toString())
+                    List<ProjectVersion> versions = HttpRequest.GET(candidate.displayUrl())
                             .getJson(listTypeOf(ProjectVersion.class));
-                    return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
+                    return versions.stream().map(ProjectVersion::toVersion).flatMap(Optional::stream);
                 } catch (IOException e) {
                     IOException wrapper = new IOException("Failed to get remote versions: " + candidate, e);
-                    if (candidates.size() == 1) {
+                    if (candidates.getCandidates().size() == 1) {
                         exception = wrapper;
                     } else {
                         if (exception == null) {
@@ -307,7 +319,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                 }
             }
 
-            throw exception != null ? exception : new IOException("No candidates found");
+            throw exception != null ? exception : new NoCandidatesException();
         } finally {
             SEMAPHORE.release();
         }
@@ -317,16 +329,16 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     public String getAddonChangelog(DownloadProvider downloadProvider, String addonId, String versionId) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
-            List<URI> candidates = downloadProvider.injectURLWithCandidates(PREFIX + "/v2/version/" + versionId);
+            DownloadCandidates candidates = downloadProvider.getVersionListCandidates(PREFIX + "/v2/version/" + versionId);
             IOException exception = null;
 
-            for (URI uri : candidates) {
+            for (DownloadCandidate candidate : candidates.getCandidates()) {
                 try {
-                    ProjectVersion version = HttpRequest.GET(uri.toString()).getJson(ProjectVersion.class);
+                    ProjectVersion version = HttpRequest.GET(candidate.displayUrl()).getJson(ProjectVersion.class);
                     return version.changelog();
                 } catch (IOException e) {
-                    IOException wrapper = new IOException("Failed to get addon changelog: " + uri, e);
-                    if (candidates.size() == 1) {
+                    IOException wrapper = new IOException("Failed to get addon changelog: " + candidate.displayUrl(), e);
+                    if (candidates.getCandidates().size() == 1) {
                         exception = wrapper;
                     } else {
                         if (exception == null) {
@@ -349,8 +361,9 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
     }
 
     @Override
-    public Stream<RemoteAddonRepository.Category> getCategories() throws IOException {
-        if (projectType == null) throw new UnsupportedOperationException();
+    public Stream<RemoteAddonRepository.Category> getCategories(RemoteAddon.Type type) throws IOException {
+        String projectType = toProjectType(type);
+        if (projectType == null) return Stream.empty();
         SEMAPHORE.acquireUninterruptibly();
         try {
             List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(listTypeOf(Category.class));
@@ -430,7 +443,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                                  @SerializedName("author_id") String authorId,
                                  @SerializedName("date_published") Instant datePublished, int downloads,
                                  @SerializedName("changelog_url") String changelogUrl,
-                                 List<ProjectVersionFile> files) implements RemoteAddon.IVersion {
+                                 List<ProjectVersionFile> files) {
         private static final Map<String, RemoteAddon.@Nullable DependencyType> DEPENDENCY_TYPE = mapOf(
                 pair("required", RemoteAddon.DependencyType.REQUIRED),
                 pair("optional", RemoteAddon.DependencyType.OPTIONAL),
@@ -438,29 +451,20 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                 pair("incompatible", RemoteAddon.DependencyType.INCOMPATIBLE)
         );
 
-        @Override
-        public RemoteAddon.Source getSource() {
-            return RemoteAddon.Source.MODRINTH;
-        }
-
         public Optional<RemoteAddon.Version> toVersion() {
-            RemoteAddon.VersionType type;
-            if ("release".equals(versionType)) {
-                type = RemoteAddon.VersionType.Release;
-            } else if ("beta".equals(versionType)) {
-                type = RemoteAddon.VersionType.Beta;
-            } else if ("alpha".equals(versionType)) {
-                type = RemoteAddon.VersionType.Alpha;
-            } else {
-                type = RemoteAddon.VersionType.Release;
-            }
+            RemoteAddon.VersionType type = switch (versionType) {
+                case "release" -> RemoteAddon.VersionType.Release;
+                case "beta" -> RemoteAddon.VersionType.Beta;
+                case "alpha" -> RemoteAddon.VersionType.Alpha;
+                default -> RemoteAddon.VersionType.Release;
+            };
 
             if (files.isEmpty()) {
                 return Optional.empty();
             }
 
             return Optional.of(new RemoteAddon.Version(
-                    this,
+                    RemoteAddon.Source.MODRINTH,
                     id,
                     projectId,
                     name,
@@ -480,15 +484,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                         return RemoteAddon.Dependency.ofGeneral(DEPENDENCY_TYPE.get(dependency.dependencyType), RemoteAddon.Source.MODRINTH, dependency.projectId);
                     }).filter(Objects::nonNull).collect(Collectors.toList()),
                     gameVersions,
-                    loaders.stream().flatMap(loader -> {
-                        if ("fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FABRIC);
-                        else if ("forge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.FORGE);
-                        else if ("legacy-fabric".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LEGACY_FABRIC);
-                        else if ("neoforge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.NEO_FORGE);
-                        else if ("quilt".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.QUILT);
-                        else if ("liteloader".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LITE_LOADER);
-                        else return Stream.empty();
-                    }).collect(Collectors.toList())
+                    loaders.stream().map(AddonLoader::of).toList()
             ));
         }
     }

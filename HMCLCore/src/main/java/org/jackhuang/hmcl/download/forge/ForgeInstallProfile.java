@@ -17,44 +17,31 @@
  */
 package org.jackhuang.hmcl.download.forge;
 
-import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
-import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.gson.Validation;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jetbrains.annotations.NotNullByDefault;
 
-/**
- *
- * @author huangyuhui
- */
-@Immutable
-public final class ForgeInstallProfile implements Validation {
+import java.util.Objects;
 
-    @SerializedName("install")
-    private final ForgeInstall install;
+/// @author huangyuhui
+@NotNullByDefault
+@JsonSerializable
+public record ForgeInstallProfile(@SerializedName("install") ForgeInstall install,
+                                  @SerializedName("versionInfo") GameInstanceManifest versionInfo) {
 
-    @SerializedName("versionInfo")
-    private final GameInstanceManifest versionInfo;
-
-    public ForgeInstallProfile(ForgeInstall install, GameInstanceManifest versionInfo) {
-        this.install = install;
-        this.versionInfo = versionInfo;
-    }
-
-    public ForgeInstall getInstall() {
-        return install;
-    }
-
-    public GameInstanceManifest getVersionInfo() {
-        return versionInfo;
+    public ForgeInstallProfile {
+        Objects.requireNonNull(install, "install");
+        Objects.requireNonNull(versionInfo, "versionInfo");
     }
 
     @Override
-    public void validate() throws JsonParseException {
-        if (install == null)
-            throw new JsonParseException("InstallProfile install cannot be null");
+    public ForgeInstall install() {
+        return install;
+    }
 
-        if (versionInfo == null)
-            throw new JsonParseException("InstallProfile versionInfo cannot be null");
+    @Override
+    public GameInstanceManifest versionInfo() {
+        return versionInfo;
     }
 }

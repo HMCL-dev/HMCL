@@ -19,9 +19,8 @@ package org.jackhuang.hmcl.addon.resourcepack;
 
 import com.google.gson.annotations.SerializedName;
 import kala.encdet.EncodingDetector;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
+import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.addon.meta.PackMcMeta;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -222,10 +221,13 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
 
     private boolean loaded = false;
 
-    public ResourcePackManager(GameRepository repository, GameInstanceID instanceId) {
-        super(repository, instanceId);
-        this.resourcePackDirectory = this.repository.getResourcePackDirectory(this.instanceId);
-        this.optionsFile = repository.getRunDirectory(instanceId).resolve("options.txt");
+    /// Creates a resource-pack manager for the given instance.
+    ///
+    /// @param instance the snapshot member whose resource packs this manager operates on
+    public ResourcePackManager(DefaultGameInstance instance) {
+        super(instance);
+        this.resourcePackDirectory = instance.getResourcePackDirectory();
+        this.optionsFile = instance.getRunDirectory().resolve("options.txt");
     }
 
     private @Nullable Charset optionsFileEncoding;
@@ -279,7 +281,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             lock.lock();
             try {
                 if (minecraftVersion == null) {
-                    minecraftVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(instanceId));
+                    minecraftVersion = instance.getVersion();
                     supportsNewOptionsFormat = isMcVersionSupportsNewOptionsFormat(minecraftVersion);
                 }
             } finally {
@@ -295,7 +297,7 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
             lock.lock();
             try {
                 if (requiredVersion == null)
-                    requiredVersion = getPackVersion(getMinecraftVersion(), repository.getInstanceJar(instanceId));
+                    requiredVersion = getPackVersion(getMinecraftVersion(), instance.getInstanceJarFile());
             } finally {
                 lock.unlock();
             }
@@ -507,6 +509,39 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
         }
     }
 
+    public boolean rename(String oldName, String newName) {
+        if (newName.equals(oldName)) return false;
+
+        String oldNameNewFormat = "file/" + oldName;
+        String newNameNewFormat = "file/" + newName;
+        boolean modified = false;
+
+        lock.lock();
+        try {
+            Map<String, String> options = loadOptions();
+            List<String> optPacks = new ArrayList<>(deserializePackList(options.get("resourcePacks")));
+            List<String> optIncompatiblePacks = new ArrayList<>(deserializePackList(options.get("incompatibleResourcePacks")));
+            for (var l : List.of(optPacks, optIncompatiblePacks)) {
+                var it = l.listIterator();
+                while (it.hasNext()) {
+                    var next = it.next();
+                    if (oldName.equals(next) || oldNameNewFormat.equals(next)) {
+                        it.set(supportsNewOptionsFormat ? newNameNewFormat : newName);
+                        modified = true;
+                    }
+                }
+            }
+            if (modified) {
+                options.put("resourcePacks", serializePackList(optPacks));
+                options.put("incompatibleResourcePacks", serializePackList(optIncompatiblePacks));
+                saveOptions(options);
+            }
+            return modified;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public Stream<Pair<ResourcePackFile, Boolean>> arePacksEnabled(Stream<ResourcePackFile> resourcePacks) {
         lock.lock();
         try {
@@ -520,18 +555,18 @@ public final class ResourcePackManager extends LocalAddonManager<ResourcePackFil
     }
 
     public ResourcePackFile.Compatibility getCompatibility(@NotNull ResourcePackFile resourcePack) {
-        if (resourcePack.getMeta() == null || resourcePack.getMeta().pack() == null)
+        if (resourcePack.getPackInfo() == null)
             return ResourcePackFile.Compatibility.MISSING_PACK_META;
         if (this.getRequiredVersion().isUnspecified())
             return ResourcePackFile.Compatibility.MISSING_GAME_META;
         int requiredMajor = getRequiredVersion().majorVersion();
         VersionRange<PackMcMeta.PackVersion> versionRange;
         if (requiredMajor > 64)
-            versionRange = getResourcePackVersionRangeNew(resourcePack.getMeta().pack());
+            versionRange = getResourcePackVersionRangeNew(resourcePack.getPackInfo());
         else if (requiredMajor > 15)
-            versionRange = getResourcePackVersionRangeOld(resourcePack.getMeta().pack());
+            versionRange = getResourcePackVersionRangeOld(resourcePack.getPackInfo());
         else
-            versionRange = getResourcePackVersionRangeOldest(resourcePack.getMeta().pack());
+            versionRange = getResourcePackVersionRangeOldest(resourcePack.getPackInfo());
         if (versionRange.isEmpty())
             return ResourcePackFile.Compatibility.INVALID;
         if (versionRange.getMaximum().compareTo(this.getRequiredVersion()) < 0)

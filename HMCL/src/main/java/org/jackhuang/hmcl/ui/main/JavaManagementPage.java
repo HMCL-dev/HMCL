@@ -21,7 +21,6 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -183,12 +182,23 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
     @FXThread
     private void loadJava(Collection<JavaRuntime> javaRuntimes) {
-        if (javaRuntimes != null) {
-            this.setItems(FXCollections.observableArrayList(javaRuntimes));
-            this.setLoading(false);
-        } else {
+        if (javaRuntimes == null) {
             this.setLoading(true);
+            return;
         }
+
+        // JavaRuntime equality is path-based. setAll can therefore retain a stale item when the
+        // Java installation at an existing path has been upgraded.
+        this.getItems().clear();
+        this.getItems().addAll(javaRuntimes);
+
+        if (javaRuntimes.isEmpty()) {
+            this.setFailedReason(i18n("java.empty"));
+        } else {
+            this.setFailedReason(null);
+        }
+
+        this.setLoading(false);
     }
 
     private static final class JavaPageSkin extends ToolbarListPageSkin<JavaRuntime, JavaManagementPage> {
@@ -227,7 +237,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     }
 
     private static final class JavaItemCell extends ListCell<JavaRuntime> {
-        private final Node graphic;
+        private final RipplerContainer graphic;
         private final Label label = new Label();
         private final TwoLineListItem content;
 
@@ -298,7 +308,14 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         @Override
         protected void updateItem(JavaRuntime item, boolean empty) {
             JavaRuntime oldItem = getItem();
+            boolean oldEmpty = isEmpty();
+
             super.updateItem(item, empty);
+
+            if (oldItem == item && oldEmpty == empty) return;
+
+            this.graphic.releaseRippleImmediately();
+
             if (empty || item == null) {
                 setGraphic(null);
             } else {

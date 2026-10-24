@@ -24,6 +24,7 @@ import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -36,8 +37,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -56,7 +56,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
@@ -64,23 +64,33 @@ import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class WorldListPage extends ListPageBase<World> implements GameInstancePage.GameInstanceLoadable {
+public final class WorldListPage extends ListPageBase<World> {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
+    private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
     private Path savesDir;
     private List<World> worlds;
-    private HMCLGameRepository repository;
-    private GameInstanceID instanceId;
+    private @Nullable HMCLGameInstance gameInstance;
     private final BooleanProperty supportQuickPlay = new SimpleBooleanProperty(this, "supportQuickPlay", false);
 
     private int refreshCount = 0;
 
-    public WorldListPage() {
+    /// Creates a world list that reloads when `instanceContext` changes.
+    ///
+    /// @param instanceContext the parent page's instance property
+    public WorldListPage(ObservableValue<? extends HMCLGameInstance.Optional> instanceContext) {
+        Objects.requireNonNull(instanceContext, "instanceContext");
         FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
             installWorld(modpacks.get(0));
         });
 
         showAll.addListener(e -> updateWorldList());
+
+        listenerHolder.add(FXUtils.onWeakChangeAndOperate(instanceContext, current -> {
+            if (current != null) {
+                loadInstance(current);
+            }
+        }));
     }
 
     @Override
@@ -88,21 +98,19 @@ public final class WorldListPage extends ListPageBase<World> implements GameInst
         return new WorldListPageSkin();
     }
 
-    @Override
-    public void loadInstance(HMCLGameRepository repository, @Nullable GameInstanceID instanceId) {
-        this.repository = repository;
-        this.instanceId = instanceId;
-        this.savesDir = repository.getSavesDirectory(instanceId);
+    public void loadInstance(HMCLGameInstance.Optional instance) {
+        this.gameInstance = instance.instance();
+        this.savesDir = gameInstance != null ? gameInstance.getSavesDirectory() : null;
         refresh();
     }
 
     private void updateWorldList() {
-        if (worlds == null) {
+        if (worlds == null || gameInstance == null) {
             getItems().clear();
         } else if (showAll.get()) {
             getItems().setAll(worlds);
         } else {
-            GameVersionNumber gameVersion = repository.getGameVersion(instanceId).map(GameVersionNumber::asGameVersion).orElse(null);
+            GameVersionNumber gameVersion = gameInstance.getVersion();
             getItems().setAll(worlds.stream()
                     .filter(world -> world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
                     .toList());
@@ -110,15 +118,16 @@ public final class WorldListPage extends ListPageBase<World> implements GameInst
     }
 
     public void refresh() {
-        if (repository == null || instanceId == null)
+        if (gameInstance == null || savesDir == null)
             return;
 
         int currentRefresh = ++refreshCount;
+        HMCLGameInstance gameInstance = this.gameInstance;
 
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
             // Ensure the game version number is parsed
-            repository.getGameVersion(instanceId);
+            gameInstance.getVersion();
             return World.getWorlds(savesDir);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh) {
@@ -126,8 +135,7 @@ public final class WorldListPage extends ListPageBase<World> implements GameInst
                 return;
             }
 
-            Optional<String> gameVersion = repository.getGameVersion(instanceId);
-            supportQuickPlay.set(World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
+            supportQuickPlay.set(World.supportQuickPlay(gameInstance.getVersion()));
 
             worlds = result;
             updateWorldList();
@@ -180,7 +188,9 @@ public final class WorldListPage extends ListPageBase<World> implements GameInst
     }
 
     private void showManagePage(World world) {
-        Controllers.navigate(new WorldManagePage(world, repository, instanceId));
+        if (gameInstance != null) {
+            Controllers.navigate(new WorldManagePage(world, gameInstance));
+        }
     }
 
     public void export(World world) {
@@ -200,11 +210,15 @@ public final class WorldListPage extends ListPageBase<World> implements GameInst
     }
 
     public void launch(World world) {
-        Instances.launchAndEnterWorld(repository, instanceId, world.getFileName());
+        if (gameInstance != null) {
+            Instances.launchAndEnterWorld(gameInstance, world.getFileName());
+        }
     }
 
     public void generateLaunchScript(World world) {
-        Instances.generateLaunchScriptForQuickEnterWorld(repository, instanceId, world.getFileName());
+        if (gameInstance != null) {
+            Instances.generateLaunchScriptForQuickEnterWorld(gameInstance, world.getFileName());
+        }
     }
 
     public BooleanProperty showAllProperty() {
@@ -330,6 +344,7 @@ public final class WorldListPage extends ListPageBase<World> implements GameInst
 
             if (oldWorld == world && oldEmpty == empty) return;
 
+            this.graphic.releaseRippleImmediately();
             this.content.getTags().clear();
 
             if (empty || world == null) {
