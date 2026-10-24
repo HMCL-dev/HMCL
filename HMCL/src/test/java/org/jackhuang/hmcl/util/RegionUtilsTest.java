@@ -43,9 +43,19 @@ final class RegionUtilsTest {
     /// Does not match missing identifiers, partial names, or region fields.
     @Test
     void matchesCompleteTimeZoneField() throws IOException {
-        for (String zoneId : List.of("Etc/UTC", "Asia/Shang", "Shanghai", "CN", "")) {
+        for (String zoneId : List.of("Etc/UTC", "UTC", "Universal", "Asia/Shang", "Shanghai", "CN", "")) {
             assertEquals(List.of(), RegionUtils.loadTimeZoneRegions(zoneId));
         }
+    }
+
+    /// Finds system time zone aliases without dropping the target's candidate countries.
+    @Test
+    void loadsCompatibilityAliases() throws IOException {
+        assertEquals(List.of("BE", "LU", "NL"), RegionUtils.loadTimeZoneRegions("Europe/Amsterdam"));
+        assertEquals(List.of("DE", "DK", "NO", "SE", "SJ"), RegionUtils.loadTimeZoneRegions("Europe/Stockholm"));
+        assertEquals(List.of("DE", "DK", "NO", "SE", "SJ"), RegionUtils.loadTimeZoneRegions("Europe/Oslo"));
+        assertEquals(List.of("CN"), RegionUtils.loadTimeZoneRegions("PRC"));
+        assertEquals(List.of("US"), RegionUtils.loadTimeZoneRegions("US/Eastern"));
     }
 
     /// Finds entries near both ends of the sorted resource.
