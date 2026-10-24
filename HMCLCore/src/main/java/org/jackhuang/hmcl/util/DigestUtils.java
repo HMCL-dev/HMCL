@@ -33,7 +33,7 @@ public final class DigestUtils {
     private DigestUtils() {
     }
 
-    private static final int STREAM_BUFFER_LENGTH = 1024;
+    private static final int STREAM_BUFFER_LENGTH = 8192;
 
     public static boolean isSha1Digest(String digest) {
         if (digest == null || digest.length() != 40) return false;
