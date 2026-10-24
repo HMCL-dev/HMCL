@@ -1,6 +1,7 @@
 import org.jackhuang.hmcl.gradle.ci.CheckUpdate
 import org.jackhuang.hmcl.gradle.docs.UpdateDocuments
-import org.jackhuang.hmcl.gradle.l10n.ParseLanguageSubtagRegistry
+import org.jackhuang.hmcl.gradle.l10n.UpdateLanguageSubtagRegistry
+import org.jackhuang.hmcl.gradle.l10n.UpdateTimeZoneRegions
 
 plugins {
     id("checkstyle")
@@ -80,11 +81,17 @@ org.jackhuang.hmcl.gradle.javafx.JavaFXUtils.register(rootProject)
 
 defaultTasks("clean", "build")
 
-tasks.register<ParseLanguageSubtagRegistry>("parseLanguageSubtagRegistry") {
-    languageSubtagRegistryFile.set(layout.projectDirectory.file("language-subtag-registry"))
+tasks.register<UpdateLanguageSubtagRegistry>("updateLanguageSubtagRegistry") {
+    description = "Update the checked-in IANA sublanguage and default-script mappings"
 
     sublanguagesFile.set(layout.projectDirectory.file("HMCLCore/src/main/resources/assets/lang/sublanguages.csv"))
     defaultScriptFile.set(layout.projectDirectory.file("HMCLCore/src/main/resources/assets/lang/default_script.csv"))
+}
+
+tasks.register<UpdateTimeZoneRegions>("updateTimeZoneRegions") {
+    description = "Update the checked-in IANA time zone to region mapping"
+    tzdbVersion.set("2026e")
+    outputFile.set(layout.projectDirectory.file("HMCL/src/main/resources/assets/timezone_regions.csv"))
 }
 
 tasks.register<UpdateDocuments>("updateDocuments") {
