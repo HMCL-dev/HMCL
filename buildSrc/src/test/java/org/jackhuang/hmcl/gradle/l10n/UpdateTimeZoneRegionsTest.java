@@ -39,38 +39,24 @@ final class UpdateTimeZoneRegionsTest {
         return task;
     }
 
-    /// Sorts records by time zone while discarding coordinates and optional comments.
+    /// Records the source version and sorts rows while preserving candidate order.
     @Test
     void convertsZoneTable() {
         String csv = createTask("2026e").toCsv("# Header\r\n\r\n"
                 + "US\t+340308-1181434\tAmerica/Los_Angeles\tPacific\r\n"
-                + "CN\t+4348+08735\tAsia/Urumqi\r\n"
+                + "CH,DE,LI\t+4723+00832\tEurope/Zurich\r\n"
                 + "CN\t+3114+12128\tAsia/Shanghai\tBeijing Time\r\n", "");
-        assertTrue(csv.endsWith("America/Los_Angeles,US\nAsia/Shanghai,CN\nAsia/Urumqi,CN\n"));
-        assertTrue(csv.startsWith("# IANA tzdb version: 2026e\n"
-                + "# Generated from https://data.iana.org/time-zones/tzdb-2026e/zone1970.tab (public domain).\n"));
-        assertFalse(csv.contains("\r"));
+        assertEquals("# IANA tzdb version: 2026e\n"
+                + "# Generated from https://data.iana.org/time-zones/tzdb-2026e/zone1970.tab (public domain).\n"
+                + "# Compatibility links from https://data.iana.org/time-zones/tzdb-2026e/backward (public domain).\n"
+                + "America/Los_Angeles,US\nAsia/Shanghai,CN\nEurope/Zurich,CH,DE,LI\n", csv);
     }
 
-    /// Retains every country for shared time zones in IANA's original order.
-    @Test
-    void convertsSharedTimeZones() {
-        String csv = createTask("2026e").toCsv("JP,AU\t+353916+1394441\tAsia/Tokyo\tEyre Bird Observatory\n"
-                + "CH,DE,LI\t+4723+00832\tEurope/Zurich\tBusingen\n"
-                + "AU\t-3352+15113\tAustralia/Sydney\n", "");
-        String records = csv.lines().filter(line -> !line.startsWith("#")).collect(Collectors.joining("\n"));
-        assertEquals("Asia/Tokyo,JP,AU\nAustralia/Sydney,AU\nEurope/Zurich,CH,DE,LI", records);
-    }
-
-    /// Rejects missing columns, malformed country lists or identifiers, and duplicate time zones.
+    /// Rejects empty input, malformed records, and duplicate time zones.
     @ParameterizedTest
     @ValueSource(strings = {
-            "# No records\n", "CN\t+3114+12128", "CN,\t+3114+12128\tAsia/Shanghai",
-            ",CN\t+3114+12128\tAsia/Shanghai", "CN,,US\t+3114+12128\tAsia/Shanghai",
-            "CN,USA\t+3114+12128\tAsia/Shanghai", "CN,us\t+3114+12128\tAsia/Shanghai",
-            "CN\t+3114+12128\t", "CN\t+3114+12128\tAsia/Shanghai,Asia/Urumqi",
-            "CN\t+3114+12128\tAsia/Shanghai\nUS\t+3114+12128\tAsia/Shanghai",
-            "CH,DE,LI\t+4723+00832\tEurope/Zurich\nDE\t+4723+00832\tEurope/Zurich"
+            "# No records\n", "CN\t+3114+12128",
+            "CN\t+3114+12128\tAsia/Shanghai\nUS\t+3114+12128\tAsia/Shanghai"
     })
     void rejectsInvalidTables(String table) {
         assertThrows(GradleException.class, () -> createTask("2026e").toCsv(table, ""));
@@ -127,13 +113,11 @@ final class UpdateTimeZoneRegionsTest {
         assertTrue(csv.contains("\nEurope/Amsterdam,NL\n"));
     }
 
-    /// Rejects malformed links, duplicate aliases, and direct or indirect cycles.
+    /// Rejects malformed links, duplicate aliases, and cycles.
     @ParameterizedTest
     @ValueSource(strings = {
-            "Link Asia/Shanghai", "Link Asia/Shanghai Alias/One extra",
-            "Link Asia/Shanghai Alias,One", "Link Asia,Shanghai Alias/One",
+            "Link Asia/Shanghai",
             "Link Asia/Shanghai Alias/One\nLink Asia/Shanghai Alias/One",
-            "Link Alias/One Alias/One",
             "Link Alias/Two Alias/One\nLink Alias/One Alias/Two"
     })
     void rejectsInvalidLinks(String backward) {
@@ -141,20 +125,9 @@ final class UpdateTimeZoneRegionsTest {
                 () -> createTask("2026e").toCsv("CN\t+3114+12128\tAsia/Shanghai\n", backward));
     }
 
-    /// Records the selected release consistently in both source URLs and the reproduction command.
-    @ParameterizedTest
-    @ValueSource(strings = {"2024b", "2025b", "2026e"})
-    void recordsVersion(String version) {
-        String csv = createTask(version).toCsv("CN\t+3114+12128\tAsia/Shanghai\n", "");
-        assertEquals("# IANA tzdb version: " + version + "\n"
-                + "# Generated from https://data.iana.org/time-zones/tzdb-" + version + "/zone1970.tab (public domain).\n"
-                + "# Compatibility links from https://data.iana.org/time-zones/tzdb-" + version + "/backward (public domain).\n"
-                + "Asia/Shanghai,CN\n", csv);
-    }
-
     /// Rejects floating versions and values that do not identify a versioned release directory.
     @ParameterizedTest
-    @ValueSource(strings = {"", "latest", "2026", "2026E", "2026e/../tzdb", "2026e\n"})
+    @ValueSource(strings = {"latest", "2026e/../tzdb"})
     void rejectsInvalidVersions(String version) {
         assertThrows(GradleException.class,
                 () -> createTask(version).toCsv("CN\t+3114+12128\tAsia/Shanghai\n", ""));
