@@ -148,6 +148,13 @@ public interface GameInstance {
         return getRunDirectory().resolve("resourcepacks");
     }
 
+    /// Returns the server dat file held by this instance.
+    ///
+    /// @return the server dat file below the held
+    default Path getServersDatFilePath() {
+        return getRunDirectory().resolve("servers.dat");
+    }
+
     /// Returns the directory containing saved worlds used by this instance.
     ///
     /// @return the saves directory below the run directory

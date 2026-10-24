@@ -24,6 +24,7 @@ import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.event.Event;
 import javafx.event.EventType;
+import javafx.scene.Node;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.GameInstanceID;
@@ -61,6 +62,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private final TabHeader.Tab<SchematicsPage> schematicsTab = new TabHeader.Tab<>("schematicsTab");
     private final TabHeader.Tab<ResourcePackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TabHeader.Tab<ScreenshotsPage> screenshotsTab = new TabHeader.Tab<>("screenshotsTab");
+    private final TabHeader.Tab<ServerListPage> serverListTab = new TabHeader.Tab<>("serverListTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentInstanceUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<HMCLGameInstance.@Nullable Optional> instance =
@@ -76,6 +78,10 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
 
     /// Last concrete instance displayed by this page.
     private @Nullable GameInstanceID preferredInstanceId;
+
+    public TabHeader.Tab<ServerListPage> getServerListTab() {
+        return serverListTab;
+    }
 
     public static class WorkingDirChangedEvent extends Event {
         public static final EventType<WorkingDirChangedEvent> EVENT_TYPE = new EventType<>(Event.ANY, "WORKING_DIR_CHANGED");
@@ -93,9 +99,10 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         resourcePackTab.setNodeSupplier(() -> new ResourcePackListPage(instance));
         worldListTab.setNodeSupplier(() -> new WorldListPage(instance));
         schematicsTab.setNodeSupplier(() -> new SchematicsPage(instance));
+        serverListTab.setNodeSupplier(() -> new ServerListPage(instance));
         screenshotsTab.setNodeSupplier(() -> new ScreenshotsPage(instance));
 
-        tab = new TabHeader(transitionPane, gameSettingsTab, installerListTab, modListTab, resourcePackTab, worldListTab, schematicsTab, screenshotsTab);
+        tab = new TabHeader(transitionPane, gameSettingsTab, installerListTab, modListTab, resourcePackTab, worldListTab, schematicsTab, screenshotsTab, serverListTab);
         tab.select(gameSettingsTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
@@ -168,6 +175,14 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
 
     public void showInstanceSettings() {
         tab.select(gameSettingsTab, false);
+    }
+
+    public void showServerList() {
+        tab.select(serverListTab, false);
+    }
+
+    public Node getSelectedTab() {
+        return tab.getSelectionModel().getSelectedItem().getNode();
     }
 
     public void setInstance(GameInstanceID instanceId, HMCLGameRepository repository) {
@@ -392,6 +407,8 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         // Due to the sidebar height limit, we temporarily place the entries for these tabs
                         // in the management menu; they will be moved back to the sidebar after a future UI refactor.
                         new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("screenshots.manage"), () -> control.tab.select(control.screenshotsTab), managementPopup),
+                        new IconedMenuItem(SVG.DRESSER, i18n("server.manage"), () -> control.tab.select(control.serverListTab), managementPopup),
+
                         new MenuSeparator(),
                         new IconedMenuItem(null, i18n("instance.manage.redownload_assets_index"), control::redownloadAssetIndex, managementPopup),
                         new IconedMenuItem(null, i18n("instance.manage.remove_assets"), control::clearAssets, managementPopup),

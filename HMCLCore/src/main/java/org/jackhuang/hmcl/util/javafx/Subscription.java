@@ -19,9 +19,12 @@ package org.jackhuang.hmcl.util.javafx;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /// Alternate for JavaFX version below 21
 @FunctionalInterface
@@ -36,6 +39,16 @@ public interface Subscription {
         observable.addListener(listener);
 
         return () -> observable.removeListener(listener);
+    }
+
+    static <T> Subscription subscribe(ObservableValue<T> observableValue, Consumer<? super T> valueSubscriber) {
+        Objects.requireNonNull(valueSubscriber, "valueSubscriber cannot be null");
+        ChangeListener<T> listener = (obs, old, current) -> valueSubscriber.accept(current);
+
+        observableValue.addListener(listener);
+        valueSubscriber.accept(observableValue.getValue());
+
+        return () -> observableValue.removeListener(listener);
     }
 
     static Subscription combine(Subscription... subscriptions) {
