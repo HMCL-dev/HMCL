@@ -20,8 +20,12 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectPropertyBase;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
@@ -36,6 +40,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSchema;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Contract;
@@ -67,6 +72,12 @@ public class HMCLGameInstance extends DefaultGameInstance {
 
     /// Cached instance-local game settings, or `null` when none exist after loading.
     private GameSettings.@Nullable Instance gameSettings;
+
+    /// Observable category, defaulting to uncategorized when local settings or their category are absent.
+    private final ReadOnlyStringWrapper category = new ReadOnlyStringWrapper(this, "category", "");
+
+    /// Observable visibility, defaulting to visible when local settings or their visibility are absent.
+    private final ReadOnlyBooleanWrapper shownInLaunchMenu = new ReadOnlyBooleanWrapper(this, "shownInLaunchMenu", true);
 
     /// Creates a registered instance bound to the given repository snapshot.
     ///
@@ -104,6 +115,9 @@ public class HMCLGameInstance extends DefaultGameInstance {
         this.gameSettingsLoaded = shareState.gameSettingsLoaded;
         this.gameSettingsReadOnly = shareState.gameSettingsReadOnly;
         this.gameSettings = shareState.gameSettings;
+        if (gameSettings != null) {
+            bindListSettings(gameSettings);
+        }
     }
 
     @Override
@@ -168,6 +182,40 @@ public class HMCLGameInstance extends DefaultGameInstance {
     public @Nullable GameSettings.Instance getSettings() {
         ensureGameSettingsLoaded();
         return gameSettings;
+    }
+
+    /// Returns the custom instance category, or an empty string when no category is stored.
+    public String getCategory() {
+        return categoryProperty().get();
+    }
+
+    /// Returns a stable read-only category property without creating local settings.
+    /// The property follows created or replaced local settings and maps null categories to an empty string.
+    public ReadOnlyStringProperty categoryProperty() {
+        ensureGameSettingsLoaded();
+        return category.getReadOnlyProperty();
+    }
+
+    /// Returns whether this instance is included in the launcher's instance switchers.
+    /// Instances without local settings or an explicit visibility value are included by default.
+    public boolean isShownInLaunchMenu() {
+        return shownInLaunchMenuProperty().get();
+    }
+
+    /// Returns a stable read-only launch-list visibility property without creating local settings.
+    /// The property follows created or replaced local settings and maps null visibility to visible.
+    public ReadOnlyBooleanProperty shownInLaunchMenuProperty() {
+        ensureGameSettingsLoaded();
+        return shownInLaunchMenu.getReadOnlyProperty();
+    }
+
+    /// Rebinds list metadata with defaults for null values while preserving existing property observers.
+    private void bindListSettings(GameSettings.Instance settings) {
+        // Use the project's mapping binding to remain compatible with JavaFX 17.
+        category.bind(BindingMapping.of(settings.categoryProperty())
+                .map((@Nullable String value) -> Objects.requireNonNullElse(value, "")));
+        shownInLaunchMenu.bind(BindingMapping.of(settings.showInLaunchMenuProperty())
+                .map((@Nullable Boolean value) -> value == null || value));
     }
 
     /// Returns the instance-local game settings, creating an empty settings object when absent.
@@ -235,7 +283,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
             return;
         }
 
-        GameSettings.Instance setting = gameSettings;
+        GameSettings.@Nullable Instance setting = gameSettings;
         if (setting == null) {
             setting = new GameSettings.Instance();
             gameSettings = setting;
@@ -249,6 +297,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
         setting.setSavable(true);
         setting.setBackupOnNextSave(false);
         gameSettingsReadOnly = false;
+        bindListSettings(setting);
         saveSettings();
         if (installAutoSave) {
             setting.addListener(a -> saveSettings());
@@ -278,10 +327,11 @@ public class HMCLGameInstance extends DefaultGameInstance {
 
     /// Saves the settings synchronously when writable and still owned by the current instance.
     ///
+    /// @return whether the settings were written; `false` when absent, read-only, or no longer owned
     /// @throws IOException if saving the file fails
-    public void saveSettingsSync() throws IOException {
+    public boolean saveSettingsSync() throws IOException {
         if (gameSettings == null || gameSettingsReadOnly || !ownsGameSettings()) {
-            return;
+            return false;
         }
 
         GameSettings.Instance setting = gameSettings;
@@ -292,6 +342,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
             SettingFileUtils.backupInvalidConfig(file);
         }
         FileUtils.saveSafely(file, LauncherSettings.SETTINGS_GSON.toJson(setting));
+        return true;
     }
 
     /// Initializes this instance with the given settings object.
@@ -311,6 +362,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
         } else {
             gameSettingsReadOnly = true;
         }
+        bindListSettings(setting);
         return setting;
     }
 

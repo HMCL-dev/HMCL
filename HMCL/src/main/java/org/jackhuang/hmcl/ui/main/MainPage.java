@@ -24,6 +24,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -48,6 +49,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
+import org.jackhuang.hmcl.setting.InstanceSortType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.theme.Themes;
@@ -60,6 +62,7 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.instances.GameListNavigation;
 import org.jackhuang.hmcl.ui.instances.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
@@ -71,14 +74,18 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.UnmodifiableView;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.download.ComponentRemoteVersion.Type.RELEASE;
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 import static org.jackhuang.hmcl.setting.SettingsManager.state;
 import static org.jackhuang.hmcl.ui.FXUtils.SINE;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -96,6 +103,15 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>(this, "latestVersion");
     /// Mutable storage for visible instances from the selected repository's current snapshot.
     private final ObservableList<HMCLGameInstance> mutableInstances = FXCollections.observableArrayList();
+
+    /// Repository display instances in default order, including launch-menu exclusions.
+    private @Unmodifiable List<HMCLGameInstance> allInstances = List.of();
+
+    /// Complete current sort order used to locate visible and hidden navigation anchors.
+    private @Unmodifiable List<HMCLGameInstance> orderedInstances = List.of();
+
+    /// Removes instance metadata listeners when a new repository snapshot becomes current.
+    private final List<Runnable> instanceSubscriptions = new ArrayList<>();
 
     /// Read-only observable view of [#mutableInstances].
     private final @UnmodifiableView ObservableList<HMCLGameInstance> instances =
@@ -217,12 +233,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         HBox launchPane = new HBox();
         launchPane.getStyleClass().add("launch-pane");
-        FXUtils.onChangeAndOperate(selectedRepositorySnapshot, ignored -> mutableInstances.setAll(GameDirectoryManager.getSelectedRepository().getDisplayInstances().toList()));
-        FXUtils.onScroll(launchPane, instances, list -> {
-            @Nullable HMCLGameInstance currentGame = getCurrentGame();
-            @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
-            return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
-        }, instance -> instance.getRepository().setSelectedInstance(instance));
+        FXUtils.onChangeAndOperate(selectedRepositorySnapshot, ignored -> loadLaunchInstances());
+        settings().instanceSortTypeProperty().addListener(ignored -> updateLaunchInstances());
+        FXUtils.onScroll(launchPane, this::selectAdjacentInstance);
 
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
         {
@@ -316,6 +329,61 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         getChildren().addAll(updatePane, launchPane);
 
+    }
+
+    /// Subscribes to list metadata for the current snapshot and rebuilds the instance switchers.
+    private void loadLaunchInstances() {
+        instanceSubscriptions.forEach(Runnable::run);
+        instanceSubscriptions.clear();
+        allInstances = GameDirectoryManager.getSelectedRepository().getDisplayInstances().toList();
+        for (HMCLGameInstance instance : allInstances) {
+            ChangeListener<String> categoryListener = (observable, oldValue, newValue) -> {
+                if (settings().instanceSortTypeProperty().get() == InstanceSortType.CATEGORY) {
+                    updateLaunchInstances();
+                }
+            };
+            ChangeListener<Boolean> visibilityListener = (observable, oldValue, newValue) -> updateVisibleLaunchInstances();
+            instance.categoryProperty().addListener(categoryListener);
+            instance.shownInLaunchMenuProperty().addListener(visibilityListener);
+            instanceSubscriptions.add(() -> {
+                instance.categoryProperty().removeListener(categoryListener);
+                instance.shownInLaunchMenuProperty().removeListener(visibilityListener);
+            });
+        }
+        updateLaunchInstances();
+    }
+
+    /// Rebuilds the complete sort order and visible instance list without changing the launch target.
+    private void updateLaunchInstances() {
+        orderedInstances = allInstances.stream()
+                .sorted(settings().instanceSortTypeProperty().get().comparator())
+                .toList();
+        updateVisibleLaunchInstances();
+    }
+
+    /// Applies launch-list visibility to the cached complete sort order without sorting again.
+    private void updateVisibleLaunchInstances() {
+        mutableInstances.setAll(orderedInstances.stream()
+                .filter(HMCLGameInstance::isShownInLaunchMenu)
+                .toList());
+    }
+
+    /// Selects an adjacent launch-list instance using the current complete sort order.
+    /// Hidden current instances retain their position as navigation anchors.
+    ///
+    /// @param direction a negative value for the previous item, a positive value for the next,
+    ///                  or zero to leave the selection unchanged
+    /// @return whether a visible destination was available and selected
+    @FXThread
+    public boolean selectAdjacentInstance(int direction) {
+        @Nullable HMCLGameInstance current = getCurrentGame();
+        @Nullable GameInstanceID currentId = current != null ? current.getId() : null;
+        @Nullable HMCLGameInstance destination = GameListNavigation.findAdjacent(orderedInstances, currentId, direction);
+        if (destination == null) {
+            return false;
+        }
+        destination.getRepository().setSelectedInstance(destination);
+        return true;
     }
 
     private void showUpdateDialog(boolean show) {
@@ -439,8 +507,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     /// Returns the observable instances displayed by launch-selection controls.
     ///
-    /// The list is updated from the selected repository's published snapshot and contains no hidden
-    /// instances. The returned view cannot be mutated.
+    /// The list follows the selected repository's published snapshot, the persisted sort order and
+    /// each instance's launch-menu visibility. The returned view cannot be mutated.
     ///
     /// @return the observable launch-menu instances
     public @UnmodifiableView ObservableList<HMCLGameInstance> getInstances() {
