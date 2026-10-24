@@ -20,43 +20,86 @@ package org.jackhuang.hmcl.gradle.l10n;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
-import org.jetbrains.annotations.NotNull;
+import org.gradle.work.DisableCachingByDefault;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/// Updates the checked-in sublanguage and default-script mappings from the IANA Language Subtag Registry.
+///
 /// @author Glavo
 /// @see [language-subtag-registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)
-public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
+@NotNullByDefault
+@DisableCachingByDefault(because = "Downloads IANA data to update checked-in resources")
+public abstract class UpdateLanguageSubtagRegistry extends DefaultTask {
 
-    @InputFile
-    public abstract RegularFileProperty getLanguageSubtagRegistryFile();
+    /// Identifies the current registry published by IANA.
+    private static final URI SOURCE = URI.create("https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry");
 
+    /// Creates an updater that checks the remote registry on every invocation.
+    public UpdateLanguageSubtagRegistry() {
+        getOutputs().upToDateWhen(task -> false);
+    }
+
+    /// Returns the CSV destination mapping macrolanguages to their non-deprecated sublanguages.
     @OutputFile
     public abstract RegularFileProperty getSublanguagesFile();
 
-    /// CSV file storing the mapping from subtag to their default scripts.
+    /// Returns the CSV destination grouping subtags by their default scripts.
     @OutputFile
     public abstract RegularFileProperty getDefaultScriptFile();
 
+    /// Downloads and parses the registry before replacing the two UTF-8 CSV resources.
+    ///
+    /// @throws IOException if downloading or writing fails; an earlier output may already have been replaced
+    /// @throws GradleException if the registry is malformed, has no records, or has no valid file date
     @TaskAction
     public void run() throws IOException {
-        List<Item> items;
+        update(readSource());
+    }
 
-        try (var reader = Files.newBufferedReader(getLanguageSubtagRegistryFile().getAsFile().get().toPath())) {
-            var builder = new ItemsBuilder();
-            builder.parse(reader);
-            items = builder.items;
+    /// Downloads the UTF-8 registry using bounded connection and read timeouts.
+    ///
+    /// @throws IOException if downloading fails
+    private static String readSource() throws IOException {
+        var connection = SOURCE.toURL().openConnection();
+        connection.setConnectTimeout(15_000);
+        connection.setReadTimeout(30_000);
+        try (var input = connection.getInputStream()) {
+            return new String(input.readAllBytes(), StandardCharsets.UTF_8);
         }
+    }
+
+    /// Parses a registry snapshot and writes sorted mappings with its file date and source URI.
+    /// Retains the Traditional Chinese default for Classical Chinese and infers a variant script
+    /// only when all its prefixes explicitly specify the same script.
+    ///
+    /// @throws IOException if reading or writing fails
+    /// @throws GradleException if the registry is malformed, has no records, or has no valid file date
+    void update(String source) throws IOException {
+        var builder = new ItemsBuilder();
+        try (var reader = new BufferedReader(new StringReader(source))) {
+            builder.parse(reader);
+        }
+        if (builder.items.isEmpty() || builder.fileDate == null) {
+            throw new GradleException("Registry must contain a File-Date and at least one record");
+        }
+        String header = "# IANA Language Subtag Registry File-Date: " + builder.fileDate + "\n"
+                + "# Generated from " + SOURCE + ".\n";
+        List<Item> items = builder.items;
 
         MultiMap scriptToSubtag = new MultiMap();
         MultiMap languageToSub = new MultiMap();
@@ -83,7 +126,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
                 }
                 case "variant" -> {
                     List<String> prefixes = item.allValues("Prefix");
-                    String defaultScript = null;
+                    @Nullable String defaultScript = null;
                     for (String prefix : prefixes) {
                         String script = Locale.forLanguageTag(prefix).getScript();
                         if (script.isEmpty()) {
@@ -110,62 +153,62 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             }
         }
 
-        languageToSub.saveToCSV(getSublanguagesFile());
-        scriptToSubtag.saveToCSV(getDefaultScriptFile());
+        languageToSub.saveToCSV(getSublanguagesFile(), header);
+        scriptToSubtag.saveToCSV(getDefaultScriptFile(), header);
     }
 
+    /// Groups unique tags under keys in deterministic order.
+    @NotNullByDefault
     private static final class MultiMap {
+        /// Stores sorted keys and sorted, deduplicated values.
         private final TreeMap<String, Set<String>> allValues = new TreeMap<>(TAG_COMPARATOR);
 
+        /// Adds a value, ignoring duplicates for the same key.
         void add(String key, String value) {
             allValues.computeIfAbsent(key, k -> new TreeSet<>(TAG_COMPARATOR)).add(value);
         }
 
-        void saveToCSV(RegularFileProperty csvFile) throws IOException {
-            try (var writer = Files.newBufferedWriter(csvFile.getAsFile().get().toPath(),
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.TRUNCATE_EXISTING)) {
-
-                for (Map.Entry<String, Set<String>> entry : allValues.entrySet()) {
-                    String key = entry.getKey();
-                    Set<String> values = entry.getValue();
-
-                    writer.write(key);
-
-                    for (String value : values) {
-                        writer.write(',');
-                        writer.write(value);
-                    }
-
-                    writer.newLine();
-                }
-            }
+        /// Replaces the UTF-8 CSV with the source header and deterministically sorted rows.
+        ///
+        /// @throws IOException if writing fails
+        void saveToCSV(RegularFileProperty csvFile, String header) throws IOException {
+            var csv = new StringBuilder(header);
+            allValues.forEach((key, values) -> {
+                csv.append(key);
+                values.forEach(value -> csv.append(',').append(value));
+                csv.append('\n');
+            });
+            Files.writeString(csvFile.get().getAsFile().toPath(), csv);
         }
     }
 
+    /// Stores repeated registry fields in encounter order.
+    @NotNullByDefault
     private static final class Item {
+        /// Maps field names to their values in encounter order.
         final Map<String, List<String>> values = new LinkedHashMap<>();
 
-        public @NotNull List<String> allValues(String name) {
+        /// Returns the stored values, or an empty list when the field is absent.
+        public List<String> allValues(String name) {
             return values.getOrDefault(name, List.of());
         }
 
-        public @NotNull Optional<String> firstValue(String name) {
+        /// Returns the first field value, if present.
+        public Optional<String> firstValue(String name) {
             return Optional.ofNullable(values.get(name)).map(it -> it.get(0));
         }
 
-        public @Nullable String firstValueOrNull(String name) {
-            return firstValue(name).orElse(null);
-        }
-
-        public @NotNull String firstValueOrThrow(String name) {
+        /// Returns the first field value, throwing [GradleException] when absent.
+        public String firstValueOrThrow(String name) {
             return firstValue(name).orElseThrow(() -> new GradleException("No value found for " + name + " in " + this));
         }
 
+        /// Appends a field value.
         public void put(String name, String value) {
             values.computeIfAbsent(name, ignored -> new ArrayList<>(1)).add(value);
         }
 
+        /// Returns the fields in registry syntax for diagnostics.
         @Override
         public String toString() {
             StringJoiner joiner = new StringJoiner("\n");
@@ -180,21 +223,31 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
         }
     }
 
+    /// Parses registry records, unfolding continuation lines and retaining the header date.
+    @NotNullByDefault
     private static final class ItemsBuilder {
+        /// Contains completed records, excluding the registry header.
         private final List<Item> items = new ArrayList<>(1024);
+        /// Accumulates the current record.
         private Item current = new Item();
-        private String currentName = null;
-        private String currentValue = null;
+        /// Holds the pending field name, or null between fields.
+        private @Nullable String currentName = null;
+        /// Holds the pending unfolded value, or null between fields.
+        private @Nullable String currentValue = null;
+        /// Holds the validated registry date, or null before the header is parsed.
+        private @Nullable String fileDate;
 
+        /// Commits the pending field to the current record.
         private void updateCurrent() {
             if (currentName != null) {
-                current.put(currentName, currentValue);
+                current.put(currentName, Objects.requireNonNull(currentValue));
                 currentName = null;
                 currentValue = null;
             }
         }
 
-        private void updateItems() throws IOException {
+        /// Commits a record or validates and stores the registry header date.
+        private void updateItems() {
             updateCurrent();
 
             if (current.values.isEmpty())
@@ -202,6 +255,16 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
 
             if (current.firstValue("Type").isEmpty()) {
                 if (current.firstValue("File-Date").isPresent()) {
+                    String date = current.firstValueOrThrow("File-Date");
+                    try {
+                        LocalDate.parse(date);
+                    } catch (DateTimeParseException e) {
+                        throw new GradleException("Invalid registry File-Date: " + date, e);
+                    }
+                    if (fileDate != null || !items.isEmpty()) {
+                        throw new GradleException("Unexpected registry header");
+                    }
+                    fileDate = date;
                     current.values.clear();
                     return;
                 } else {
@@ -213,10 +276,14 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             current = new Item();
         }
 
+        /// Reads all records without closing the supplied reader.
+        ///
+        /// @throws IOException if reading fails
+        /// @throws GradleException if a line or record is malformed
         void parse(BufferedReader reader) throws IOException {
             Pattern linePattern = Pattern.compile("^(?<name>[A-Za-z\\-]+): (?<value>.*)$");
 
-            String line;
+            @Nullable String line;
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) {
                     continue;
@@ -245,6 +312,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
         }
     }
 
+    /// Orders tags by length, then by their case-sensitive lexical order.
     private static final Comparator<String> TAG_COMPARATOR = (lang1, lang2) -> {
         if (lang1.length() != lang2.length())
             return Integer.compare(lang1.length(), lang2.length());

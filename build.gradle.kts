@@ -1,6 +1,6 @@
 import org.jackhuang.hmcl.gradle.ci.CheckUpdate
 import org.jackhuang.hmcl.gradle.docs.UpdateDocuments
-import org.jackhuang.hmcl.gradle.l10n.ParseLanguageSubtagRegistry
+import org.jackhuang.hmcl.gradle.l10n.UpdateLanguageSubtagRegistry
 import org.jackhuang.hmcl.gradle.l10n.UpdateTimeZoneRegions
 
 plugins {
@@ -81,8 +81,8 @@ org.jackhuang.hmcl.gradle.javafx.JavaFXUtils.register(rootProject)
 
 defaultTasks("clean", "build")
 
-tasks.register<ParseLanguageSubtagRegistry>("parseLanguageSubtagRegistry") {
-    languageSubtagRegistryFile.set(layout.projectDirectory.file("language-subtag-registry"))
+tasks.register<UpdateLanguageSubtagRegistry>("updateLanguageSubtagRegistry") {
+    description = "Update the checked-in IANA sublanguage and default-script mappings"
 
     sublanguagesFile.set(layout.projectDirectory.file("HMCLCore/src/main/resources/assets/lang/sublanguages.csv"))
     defaultScriptFile.set(layout.projectDirectory.file("HMCLCore/src/main/resources/assets/lang/default_script.csv"))
