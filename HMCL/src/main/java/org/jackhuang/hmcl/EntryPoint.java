@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.monitor.Monitor;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.io.TLSSecurity;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import javax.swing.JOptionPane;
@@ -43,6 +44,7 @@ public final class EntryPoint {
     private EntryPoint() {
     }
 
+    /// Initializes TLS protection before downloading dependencies and starting the launcher.
     public static void main(String[] args) {
         System.getProperties().putIfAbsent("java.net.useSystemProxies", "true");
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
@@ -50,6 +52,7 @@ public final class EntryPoint {
 
         createHMCLDirectories();
         LOG.start(Metadata.HMCL_LOCAL_HOME.resolve("logs"));
+        TLSSecurity.install();
 
         // start HMCL monitor before JavaFX initialized
         if (Monitor.processArguments(args)) {

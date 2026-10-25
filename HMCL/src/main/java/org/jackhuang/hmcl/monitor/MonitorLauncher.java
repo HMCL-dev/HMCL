@@ -20,10 +20,6 @@ package org.jackhuang.hmcl.monitor;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
-import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.event.JVMLaunchFailedEvent;
-import org.jackhuang.hmcl.event.ProcessExitedAbnormallyEvent;
-import org.jackhuang.hmcl.event.ProcessStoppedEvent;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.setting.GameSettings;
@@ -179,12 +175,6 @@ public final class MonitorLauncher {
                         listener.onLog(log.line(), log.isErrorStream());
                     } else if (msg instanceof MonitorProtocol.MonitorMessage.Exit exit) {
                         process.handleExit(() -> { // if we are still alive and can handle exit
-                            if (exit.exitType() == ProcessListener.ExitType.JVM_ERROR)
-                                EventBus.EVENT_BUS.fireEvent(new JVMLaunchFailedEvent(MonitorLauncher.class, process));
-                            else if (exit.exitType() != ProcessListener.ExitType.NORMAL)
-                                EventBus.EVENT_BUS.fireEvent(new ProcessExitedAbnormallyEvent(MonitorLauncher.class, process));
-                            EventBus.EVENT_BUS.fireEvent(new ProcessStoppedEvent(MonitorLauncher.class, process));
-
                             listener.onExit(exit.exitCode(), exit.exitType());
                         });
                     }
@@ -197,7 +187,6 @@ public final class MonitorLauncher {
                 ProcessHandle h = process.handle();
                 if (h != null && h.isAlive() && listener != null) {
                     h.onExit().thenRun(() -> process.handleExit(() -> {
-                        EventBus.EVENT_BUS.fireEvent(new ProcessStoppedEvent(MonitorLauncher.class, process));
                         listener.onExit(-1, ProcessListener.ExitType.APPLICATION_ERROR);
                     }));
                 }

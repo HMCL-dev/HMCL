@@ -116,7 +116,7 @@
   },
   {
     "title": "CommonMark",
-    "subtitle": "Copyright (c) 2015 Robin Stocker.\nAll rights reserved.",
+    "subtitle": "Copyright © 2015 Robin Stocker.\nLicensed under the BSD 2-clause License.",
     "externalLink": "https://github.com/commonmark/commonmark-java"
   }
 ]

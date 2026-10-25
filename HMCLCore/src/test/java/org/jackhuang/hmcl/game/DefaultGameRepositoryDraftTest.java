@@ -49,6 +49,40 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @NotNullByDefault
 public final class DefaultGameRepositoryDraftTest {
 
+    /// Finds a manifest among unrelated and malformed JSON files and preserves its storage path.
+    @Test
+    public void testRefreshSelectsManifestAmongMultipleJsonFiles(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        Path root = Files.createDirectories(repository.getLayout().getInstanceRoot(id));
+        Files.writeString(root.resolve("a-broken.json"), "{");
+        Files.writeString(root.resolve("b-settings.json"), "{\"id\":\"settings\",\"mainClass\":42}");
+        Path selected = root.resolve("c-game.json");
+        Files.writeString(selected, "{\"id\":\"original\",\"mainClass\":\"example.Main\"}");
+        Files.writeString(root.resolve("d-game.json"), "{\"id\":\"other\",\"mainClass\":\"other.Main\"}");
+
+        repository.refresh();
+
+        assertEquals(selected, repository.getInstance(id).getManifestFile());
+        assertEquals(id, repository.getInstance(id).getManifest().id());
+        assertEquals("example.Main", repository.getInstance(id).getManifest().mainClass());
+        assertFalse(Files.exists(repository.getLayout().getInstanceJson(id)));
+    }
+
+    /// Ignores directories whose multiple JSON files do not contain an instance manifest.
+    @Test
+    public void testRefreshIgnoresUnrelatedJsonFiles(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        Path root = Files.createDirectories(repository.getLayout().getInstanceRoot(id));
+        Files.writeString(root.resolve("settings.json"), "{\"id\":\"settings\"}");
+        Files.writeString(root.resolve("empty.json"), "null");
+
+        repository.refresh();
+
+        assertFalse(repository.hasInstance(id));
+    }
+
     /// Rejects path-segment instance ids before they can reach repository deletion code.
     @Test
     public void testRejectsSpecialPathSegmentIds() {
