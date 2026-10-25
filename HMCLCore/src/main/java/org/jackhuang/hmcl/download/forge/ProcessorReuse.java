@@ -43,7 +43,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Decides whether a Forge-family processor chain can be skipped because its artifacts are current.
 ///
-/// A chain is only skipped when every file it writes is known and still current: the artifacts
+/// A chain is only skipped when every artifact it writes is known and still current: the files
 /// named by the processors themselves, plus the patched jar recorded in the install profile data.
 /// Profiles that declare a SHA-1 for each of those artifacts are verified by those declarations.
 /// NeoForge declares none, and some older Forge profiles declare only a few, so the artifacts of
@@ -285,24 +285,37 @@ public final class ProcessorReuse {
     /// Returns the path arguments a processor writes, judging by the option names of the tools seen
     /// in Forge and NeoForge install profiles.
     ///
+    /// Both `--option value` and `--option=value` forms are recognized.
+    ///
     /// @param processor the processor to inspect
     /// @return the path expressions the processor writes
     private static Set<String> writeTargets(Processor processor) {
         List<String> args = processor.getArgs();
         Set<String> targets = new LinkedHashSet<>();
+        boolean jarsplitter = processor.getJar().getName().contains("jarsplitter");
         for (int i = 0; i < args.size(); i++) {
             String arg = args.get(i);
-            if (!arg.startsWith("--") || i + 1 >= args.size()) {
+            int separator = arg.indexOf('=');
+            String name = separator >= 0 ? arg.substring(0, separator) : arg;
+            if (!name.startsWith("--")) {
                 continue;
             }
-            String name = arg.substring("--".length());
-            switch (name) {
-                case "output" -> targets.add(args.get(i + 1));
+
+            String value;
+            if (separator >= 0) {
+                value = arg.substring(separator + 1);
+            } else if (i + 1 < args.size()) {
+                value = args.get(i + 1);
+            } else {
+                continue;
+            }
+
+            switch (name.substring("--".length())) {
+                case "output" -> targets.add(value);
                 case "slim", "extra" -> {
                     // Only jarsplitter writes these; other tools may reuse the names for inputs.
-                    Artifact jar = processor.getJar();
-                    if (jar.getName().contains("jarsplitter")) {
-                        targets.add(args.get(i + 1));
+                    if (jarsplitter) {
+                        targets.add(value);
                     }
                 }
                 default -> {

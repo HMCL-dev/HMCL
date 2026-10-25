@@ -167,6 +167,41 @@ public class ProcessorReuseTest {
         assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, vars));
     }
 
+    /// Refuses to skip a chain that writes a path which is not an artifact variable.
+    @Test
+    public void testRejectedForUnnamedWriteTarget(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        Path installer = writeFile(tempDirectory.resolve("installer.jar"), "installer");
+        List<Processor> processors = List.of(new Processor(
+                List.of("client"),
+                Artifact.fromDescriptor("net.minecraftforge:binarypatcher:1.1.1"),
+                List.of(),
+                List.of("--clean", "{MC_SRG}", "--output", patched.toString()),
+                Map.of()));
+
+        ProcessorReuse.writeSidecar(processors, Map.of("PATCHED", patched.toString()), installer);
+
+        assertFalse(Files.exists(tempDirectory.resolve("patched.jar.hmcl-cache")));
+        assertFalse(ProcessorReuse.canReuseRecordedArtifacts(
+                processors, Map.of("PATCHED", patched.toString()), installer));
+    }
+
+    /// Recognizes the `--option=value` form used by newer processors.
+    @Test
+    public void testEqualsOptionForm(@TempDir Path tempDirectory) throws IOException {
+        Path srg = writeFile(tempDirectory.resolve("srg.jar"), "srg");
+        List<Processor> processors = List.of(new Processor(
+                List.of("client"),
+                Artifact.fromDescriptor("net.neoforged:AutoRenamingTool:2.0.3:all"),
+                List.of(),
+                List.of("--input", "{MC_SLIM}", "--output={MC_SRG}"),
+                Map.of()));
+
+        assertTrue(ProcessorReuse.canReuseDeclaredArtifacts(processors, Map.of(
+                "MC_SRG", srg.toString(),
+                "MC_SRG_SHA", DigestUtils.digestToString("SHA-1", srg))));
+    }
+
     /// Creates a jarsplitter processor, which writes the slim and extra jars through options.
     ///
     /// @return the processor
