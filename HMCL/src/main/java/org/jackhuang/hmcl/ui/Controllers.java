@@ -169,14 +169,6 @@ public final class Controllers {
     }
 
     @FXThread
-    public static void prepareGameInstancePage() {
-        if (gameInstancePage == null) {
-            LOG.info("Prepare the game instance page");
-            gameInstancePage = FXUtils.prepareNode(new GameInstancePage());
-        }
-    }
-
-    @FXThread
     public static GameListPage getGameListPage() {
         return gameListPage.get();
     }
@@ -195,14 +187,6 @@ public final class Controllers {
     }
 
     @FXThread
-    public static void prepareSettingsPage() {
-        if (settingsPage == null) {
-            LOG.info("Prepare the settings page");
-            settingsPage = FXUtils.prepareNode(new LauncherSettingsPage());
-        }
-    }
-
-    @FXThread
     public static AccountListPage getAccountListPage() {
         return accountListPage.get();
     }
@@ -213,14 +197,6 @@ public final class Controllers {
             downloadPage = new DownloadPage();
         }
         return downloadPage;
-    }
-
-    @FXThread
-    public static void prepareDownloadPage() {
-        if (downloadPage == null) {
-            LOG.info("Prepare the download page");
-            downloadPage = FXUtils.prepareNode(new DownloadPage());
-        }
     }
 
     @FXThread
