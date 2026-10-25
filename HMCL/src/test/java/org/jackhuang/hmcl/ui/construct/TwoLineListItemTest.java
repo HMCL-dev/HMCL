@@ -32,6 +32,7 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -93,7 +94,7 @@ public final class TwoLineListItemTest {
 
             assertEquals(252, item.getWidth(), 0.001);
             assertEquals(item.getWidth(), item.getTitleLabel().getWidth(), 0.001);
-            assertTrue(item.getBoundsInParent().getMaxX() <= parent.getWidth());
+            assertThat(item.getBoundsInParent().getMaxX()).isLessThanOrEqualTo(parent.getWidth());
             if (wrapText) {
                 assertTrue(item.getTitleLabel().getHeight() > item.getTitleLabel().prefHeight(-1));
             }
