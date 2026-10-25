@@ -90,14 +90,37 @@ public final class AboutPage extends SpinnerPane {
 
             @Nullable CentralProcessor cpu = SystemInfo.getCentralProcessor();
             if (cpu != null) {
-                String title = i18n("about.environment.cpu");
-                var button = new LinePane();
-                button.setLargeTitle(true);
-                button.setTitle(title);
-                button.setSubtitle(cpu.toString());
-                button.setLeading(SVG.LUCIDE_CPU.createIcon(32));
+                CentralProcessor.Cores cores = cpu.getCores();
+                if (cores == null || cores.packages() == 1) {
+                    var button = new LinePane();
+                    button.setLargeTitle(true);
+                    button.setTitle(i18n("about.environment.cpu"));
+                    button.setSubtitle(cpu.toString());
+                    button.setLeading(SVG.LUCIDE_CPU.createIcon(32));
+                    environment.getContent().add(button);
+                } else {
+                    int logicalPerPackage = cores.logical() / cores.packages();
+                    int physicalPerPackage = cores.physical() / cores.packages();
 
-                environment.getContent().add(button);
+                    StringBuilder builder = new StringBuilder(128);
+                    builder.append(cpu.getName());
+
+                    builder.append(" (");
+                    builder.append(physicalPerPackage).append(" Cores");
+                    if (logicalPerPackage > 0 && logicalPerPackage != physicalPerPackage)
+                        builder.append(" / ").append(logicalPerPackage).append(" Threads");
+                    builder.append(")");
+                    String cpuName = builder.toString();
+
+                    for (int i = 1; i <= cores.packages(); i++) {
+                        var button = new LinePane();
+                        button.setLargeTitle(true);
+                        button.setTitle(i18n("about.environment.cpu.n", i));
+                        button.setSubtitle(cpuName);
+                        button.setLeading(SVG.LUCIDE_CPU.createIcon(32));
+                        environment.getContent().add(button);
+                    }
+                }
             }
 
             @Nullable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
