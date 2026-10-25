@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -125,9 +126,12 @@ public final class AboutPage extends SpinnerPane {
 
             @Nullable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
             if (graphicsCards != null) {
+                @Unmodifiable List<GraphicsCard> visibleGraphicsCards = graphicsCards.stream()
+                        .filter(card -> !card.isVirtualDisplayAdapter())
+                        .toList();
                 int index = 1;
-                for (GraphicsCard graphicsCard : graphicsCards) {
-                    String name = index == 1 && graphicsCards.size() == 1
+                for (GraphicsCard graphicsCard : visibleGraphicsCards) {
+                    String name = index == 1 && visibleGraphicsCards.size() == 1
                             ? i18n("about.environment.gpu")
                             : i18n("about.environment.gpu.n", index);
                     index++;

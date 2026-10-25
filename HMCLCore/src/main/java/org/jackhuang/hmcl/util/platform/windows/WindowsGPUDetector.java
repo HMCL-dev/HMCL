@@ -144,8 +144,10 @@ final class WindowsGPUDetector {
             @Nullable String driverVersion = regValueToString(reg.queryValue(hkey, subkey, "DriverVersion"));
             @Nullable String dacType = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.DacType"));
             @Nullable Object vulkanDriverName = reg.queryValue(hkey, subkey, "VulkanDriverName");
+            @Nullable String matchingDeviceId = regValueToString(reg.queryValue(hkey, subkey, "MatchingDeviceId"));
 
             GraphicsCard.Builder builder = GraphicsCard.builder();
+            builder.setVirtualDisplayAdapter("Root\\GameViewerIddDriver".equalsIgnoreCase(matchingDeviceId));
             if (StringUtils.isNotBlank(name))
                 builder.setName(GraphicsCard.cleanName(name));
             if (vendor != null)
