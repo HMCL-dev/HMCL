@@ -18,6 +18,9 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import javafx.application.Platform;
+import javafx.geometry.HPos;
+import javafx.geometry.Orientation;
+import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -27,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 /// Displays navigation content and prepares one hidden page in the same scene.
 @NotNullByDefault
-final class NavigationContentPane extends StackPane {
+final class NavigationContentPane extends Region {
     /// The visible navigation viewport supplying preparation dimensions.
     private final Region navigator;
 
@@ -71,10 +74,48 @@ final class NavigationContentPane extends StackPane {
         return page;
     }
 
+    /// Returns the navigation viewport's sizing dependency.
+    @Override
+    public @Nullable Orientation getContentBias() {
+        return navigator.getContentBias();
+    }
+
+    /// Returns the viewport's minimum width plus horizontal insets.
+    @Override
+    protected double computeMinWidth(double height) {
+        return snappedLeftInset() + navigator.minWidth(height < 0 ? -1
+                : Math.max(0, height - snappedTopInset() - snappedBottomInset())) + snappedRightInset();
+    }
+
+    /// Returns the viewport's minimum height plus vertical insets.
+    @Override
+    protected double computeMinHeight(double width) {
+        return snappedTopInset() + navigator.minHeight(width < 0 ? -1
+                : Math.max(0, width - snappedLeftInset() - snappedRightInset())) + snappedBottomInset();
+    }
+
+    /// Returns the viewport's preferred width plus horizontal insets.
+    @Override
+    protected double computePrefWidth(double height) {
+        return snappedLeftInset() + navigator.prefWidth(height < 0 ? -1
+                : Math.max(0, height - snappedTopInset() - snappedBottomInset())) + snappedRightInset();
+    }
+
+    /// Returns the viewport's preferred height plus vertical insets.
+    @Override
+    protected double computePrefHeight(double width) {
+        return snappedTopInset() + navigator.prefHeight(width < 0 ? -1
+                : Math.max(0, width - snappedLeftInset() - snappedRightInset())) + snappedBottomInset();
+    }
+
     /// Lays out navigation content and queues candidate cleanup after descendant layout.
     @Override
     protected void layoutChildren() {
-        super.layoutChildren();
+        double left = snappedLeftInset();
+        double top = snappedTopInset();
+        layoutInArea(navigator, left, top,
+                getWidth() - left - snappedRightInset(), getHeight() - top - snappedBottomInset(),
+                0, HPos.CENTER, VPos.CENTER);
         @Nullable StackPane candidate = preloadPane;
         if (candidate != null && getScene() != null) {
             Platform.runLater(() -> disposePreloadPane(candidate));
