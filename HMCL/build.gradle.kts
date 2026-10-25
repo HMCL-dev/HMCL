@@ -1,3 +1,21 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import org.jackhuang.hmcl.gradle.addon.FormatJsonFile
 import org.jackhuang.hmcl.gradle.addon.UpdateAddonProjectInfos
 import org.jackhuang.hmcl.gradle.ci.GitHubActionUtils
@@ -23,15 +41,15 @@ val projectConfig = PropertiesUtils.load(providers.fileContents(rootProject.layo
 
 val isOfficial = JenkinsUtils.IS_ON_CI || GitHubActionUtils.IS_ON_OFFICIAL_REPO
 
-val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" else "unofficial"
-val versionRoot = System.getenv("VERSION_ROOT") ?: projectConfig.getProperty("versionRoot") ?: "3"
+val versionType = providers.environmentVariable("VERSION_TYPE").getOrElse(if (isOfficial) "nightly" else "unofficial")
+val versionRoot = providers.environmentVariable("VERSION_ROOT").getOrElse(projectConfig.getProperty("versionRoot") ?: "3")
 
-val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
-val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
+val microsoftAuthId = providers.environmentVariable("MICROSOFT_AUTH_ID").getOrElse("")
+val curseForgeApiKey = providers.environmentVariable("CURSEFORGE_API_KEY").getOrElse("")
 
-val launcherExe = System.getenv("HMCL_LAUNCHER_EXE") ?: ""
+val launcherExe = providers.environmentVariable("HMCL_LAUNCHER_EXE").getOrElse("")
 
-val buildNumber = System.getenv("BUILD_NUMBER")?.toInt()
+val buildNumber = providers.environmentVariable("BUILD_NUMBER").orNull?.toInt()
 if (buildNumber != null) {
     version = if (JenkinsUtils.IS_ON_CI && versionType == "dev") {
         "$versionRoot.0.$buildNumber"
@@ -39,7 +57,7 @@ if (buildNumber != null) {
         "$versionRoot.$buildNumber"
     }
 } else {
-    val shortCommit = System.getenv("GITHUB_SHA")?.lowercase()?.substring(0, 7)
+    val shortCommit = providers.environmentVariable("GITHUB_SHA").orNull?.lowercase()?.substring(0, 7)
     version = if (shortCommit.isNullOrBlank()) {
         "$versionRoot.SNAPSHOT"
     } else if (isOfficial) {
@@ -115,7 +133,7 @@ val createPropertiesFile = tasks.register<WriteProperties>("createPropertiesFile
 
     property("hmcl.version", project.version.toString())
     property("hmcl.add-opens", addOpens.joinToString(" "))
-    System.getenv("GITHUB_SHA")?.let { property("hmcl.version.hash", it) }
+    providers.environmentVariable("GITHUB_SHA").orNull?.let { property("hmcl.version.hash", it) }
     property("hmcl.version.type", versionType)
     property("hmcl.microsoft.auth.id", microsoftAuthId)
     property("hmcl.curseforge.apikey", curseForgeApiKey)
@@ -180,9 +198,9 @@ tasks.shadowJar {
     }
 
     val jarFile = jarPath
+    val keyLocation = providers.environmentVariable("HMCL_SIGNATURE_KEY").orNull
 
     doLast {
-        val keyLocation = System.getenv("HMCL_SIGNATURE_KEY")
         if (keyLocation != null) {
             attachSignature(jarFile, keyLocation)
         } else {
@@ -336,23 +354,23 @@ tasks.register<JavaExec>("run") {
     classpath = files(jarPath)
     workingDir = rootProject.rootDir
 
-    val vmOptions = parseToolOptions(System.getenv("HMCL_JAVA_OPTS") ?: "-Xmx1g")
+    val vmOptions = parseToolOptions(providers.environmentVariable("HMCL_JAVA_OPTS").getOrElse("-Xmx1g"))
     if (vmOptions.none { it.startsWith("-Dhmcl.offline.auth.restricted=") })
         vmOptions += "-Dhmcl.offline.auth.restricted=false"
 
     jvmArgs(vmOptions)
 
-    val hmclJavaHome = System.getenv("HMCL_JAVA_HOME")
+    val hmclJavaHome = providers.environmentVariable("HMCL_JAVA_HOME").orNull
     if (hmclJavaHome != null) {
         this.executable(
             file(hmclJavaHome).resolve("bin")
-                .resolve(if (System.getProperty("os.name").lowercase().startsWith("windows")) "java.exe" else "java")
+                .resolve(if (providers.systemProperty("os.name").orNull?.lowercase()?.startsWith("windows") ?: false) "java.exe" else "java")
         )
     }
 
     doFirst {
         logger.quiet("HMCL_JAVA_OPTS: {}", vmOptions)
-        logger.quiet("HMCL_JAVA_HOME: {}", hmclJavaHome ?: System.getProperty("java.home"))
+        logger.quiet("HMCL_JAVA_HOME: {}", hmclJavaHome ?: providers.systemProperty("java.home").orNull)
     }
 }
 
