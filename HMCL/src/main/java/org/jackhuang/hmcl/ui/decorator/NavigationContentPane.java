@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.decorator;
 
-import javafx.application.Platform;
 import javafx.geometry.HPos;
 import javafx.geometry.Orientation;
 import javafx.geometry.VPos;
@@ -37,6 +36,9 @@ final class NavigationContentPane extends Region {
     /// The temporary preparation container, or `null` while no candidate is pending.
     private @Nullable StackPane preloadPane;
 
+    /// Whether the current candidate still needs its first content layout pass.
+    private boolean preloadLayoutPending;
+
     /// Creates a clipped content area containing the navigator.
     ///
     /// @param navigator the navigation viewport to display
@@ -49,7 +51,8 @@ final class NavigationContentPane extends Region {
 
     /// Replaces the candidate with an unowned page, using a snapshot of the navigator size.
     /// Each request uses a temporary hidden container. CSS and layout are deferred
-    /// to scene pulses; after layout, a queued task removes and empties the container.
+    /// to scene pulses. The container survives the first content layout pass and
+    /// is removed and emptied on a later pass or when another candidate replaces it.
     ///
     /// Requires the JavaFX Application Thread and, for preparation to proceed,
     /// a scene that processes pulses. The caller must retain the page for reuse.
@@ -69,6 +72,7 @@ final class NavigationContentPane extends Region {
         preloadPane.setManaged(false);
         preloadPane.setMouseTransparent(true);
         preloadPane.resize(navigator.getWidth(), navigator.getHeight());
+        preloadLayoutPending = true;
         getChildren().add(0, preloadPane);
         requestLayout();
         return page;
@@ -108,7 +112,7 @@ final class NavigationContentPane extends Region {
                 : Math.max(0, width - snappedLeftInset() - snappedRightInset())) + snappedBottomInset();
     }
 
-    /// Lays out navigation content and queues candidate cleanup after descendant layout.
+    /// Lays out navigation content and removes a candidate retained from an earlier pass.
     @Override
     protected void layoutChildren() {
         double left = snappedLeftInset();
@@ -118,7 +122,11 @@ final class NavigationContentPane extends Region {
                 0, HPos.CENTER, VPos.CENTER);
         @Nullable StackPane candidate = preloadPane;
         if (candidate != null && getScene() != null) {
-            Platform.runLater(() -> disposePreloadPane(candidate));
+            if (preloadLayoutPending) {
+                preloadLayoutPending = false;
+            } else {
+                disposePreloadPane(candidate);
+            }
         }
     }
 
