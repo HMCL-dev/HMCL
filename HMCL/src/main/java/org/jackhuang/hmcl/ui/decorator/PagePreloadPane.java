@@ -1,0 +1,64 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.ui.decorator;
+
+import javafx.scene.Node;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import org.jetbrains.annotations.NotNullByDefault;
+
+/// Holds at most one hidden page in the window's scene for normal CSS and layout processing.
+/// This pane does not participate in its parent's size calculations or receive input.
+@NotNullByDefault
+final class PagePreloadPane extends StackPane {
+    /// Supplies the size captured when a page is prepared.
+    private final Region viewport;
+
+    /// Creates a hidden layout root that samples the navigation viewport on each preparation.
+    ///
+    /// @param viewport the region supplying the page's available width and height
+    PagePreloadPane(Region viewport) {
+        this.viewport = viewport;
+        setVisible(false);
+        setManaged(false);
+        setMouseTransparent(true);
+    }
+
+    /// Attaches an unowned page for preparation in a subsequent scene pulse.
+    /// The previous candidate, if any, is detached. Moving the page to the
+    /// navigation container removes it from this pane without changing its
+    /// visibility, input, or layout properties.
+    /// The viewport size is captured at this call. Later viewport resizing does
+    /// not resize the hidden page; navigation lays it out at the current size.
+    ///
+    /// This method must be called on the JavaFX Application Thread. It does not
+    /// synchronously apply CSS or layout, and preparation requires this pane
+    /// to belong to a scene that processes pulses.
+    ///
+    /// @param page the page to prepare
+    /// @return the supplied page
+    /// @throws IllegalArgumentException if the page already belongs to a parent or scene
+    <N extends Node> N prepare(N page) {
+        if (page.getParent() != null || page.getScene() != null) {
+            throw new IllegalArgumentException("Page already belongs to a parent or scene");
+        }
+        resize(viewport.getWidth(), viewport.getHeight());
+        getChildren().setAll(page);
+        return page;
+    }
+}
