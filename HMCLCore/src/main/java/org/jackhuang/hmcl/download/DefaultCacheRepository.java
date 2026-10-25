@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.download;
 
 import com.google.gson.JsonParseException;
-import org.jackhuang.hmcl.download.game.LibraryDownloadTask;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.LibraryDownloadInfo;
 import org.jackhuang.hmcl.util.CacheRepository;
@@ -29,6 +28,7 @@ import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -41,6 +41,7 @@ import java.util.concurrent.locks.Lock;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Caches verified library files and resolves cached or legacy library locations.
 public class DefaultCacheRepository extends CacheRepository {
     private Path librariesDir;
     private Path indexFile;
@@ -79,14 +80,11 @@ public class DefaultCacheRepository extends CacheRepository {
         }
     }
 
-    /**
-     * Try to cache the library given.
-     * This library will be cached only if it is verified.
-     * If cannot be verified, the library will not be cached.
-     *
-     * @param library the library being cached
-     * @param jar     the file of library
-     */
+    /// Caches a library only when its download SHA-1 or nonempty legacy checksum list verifies the file.
+    /// Already indexed libraries are skipped; I/O failures are logged without propagating.
+    ///
+    /// @param library the library metadata used for validation
+    /// @param jar the local file to verify and cache
     public void tryCacheLibrary(Library library, Path jar) {
         lock.readLock().lock();
         try {
@@ -98,35 +96,28 @@ public class DefaultCacheRepository extends CacheRepository {
 
         try {
             LibraryDownloadInfo info = library.getDownload();
-            String hash = info.getSha1();
+            @Nullable String hash = info.getSha1();
             if (hash != null) {
                 String checksum = DigestUtils.digestToString("SHA-1", jar);
                 if (hash.equalsIgnoreCase(checksum))
                     cacheLibrary(library, jar, false);
-            } else {
-                if (library.checksums() != null) {
-                    if (!library.checksums().isEmpty()) {
-                        if (LibraryDownloadTask.checksumValid(jar, library.checksums()))
-                            cacheLibrary(library, jar, true);
-                    }
-                } else {
-                    // or we will not cache the library
-                }
+            } else if (library.checksums() != null && !library.checksums().isEmpty()
+                    && library.validateChecksums(jar)) {
+                cacheLibrary(library, jar, true);
             }
         } catch (IOException e) {
             LOG.warning("Unable to calc hash value of file " + jar, e);
         }
     }
 
-    /**
-     * Get the path of cached library, empty if not cached
-     *
-     * @param library the library we check if cached.
-     * @return the cached path if exists, otherwise empty
-     */
+    /// Finds a verified cached library, falling back to the legacy common-directory layout.
+    /// Legacy files without checksum metadata remain usable without being added to the cache.
+    ///
+    /// @param library the library to locate
+    /// @return its cached or legacy path, or empty when no usable file is found
     public Optional<Path> getLibrary(Library library) {
         LibraryDownloadInfo info = library.getDownload();
-        String hash = info.getSha1();
+        @Nullable String hash = info.getSha1();
 
         if (fileExists(SHA1, hash))
             return Optional.of(getFile(SHA1, hash));
@@ -143,7 +134,7 @@ public class DefaultCacheRepository extends CacheRepository {
                 if (fileExists(SHA1, libIndex.hash())) {
                     Path file = getFile(SHA1, libIndex.hash());
                     if (libIndex.type().equalsIgnoreCase(LibraryIndex.TYPE_FORGE)) {
-                        if (LibraryDownloadTask.checksumValid(file, library.checksums()))
+                        if (library.validateChecksums(file))
                             return Optional.of(file);
                     }
                 }
@@ -162,7 +153,7 @@ public class DefaultCacheRepository extends CacheRepository {
                         return Optional.of(restore(jar, () -> cacheLibrary(library, jar, false)));
                 } else {
                     if (library.checksums() != null && !library.checksums().isEmpty()) {
-                        if (LibraryDownloadTask.checksumValid(jar, library.checksums()))
+                        if (library.validateChecksums(jar))
                             return Optional.of(restore(jar, () -> cacheLibrary(library, jar, true)));
                     } else {
                         return Optional.of(jar);

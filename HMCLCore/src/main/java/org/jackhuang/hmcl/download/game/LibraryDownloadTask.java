@@ -26,21 +26,16 @@ import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Downloads a library or restores it from the cache, then publishes successful downloads to the cache.
 public class LibraryDownloadTask extends Task<Void> {
     private FileDownloadTask task;
     protected final Path jar;
@@ -139,64 +134,5 @@ public class LibraryDownloadTask extends Task<Void> {
                 LOG.warning("Failed to cache downloaded library " + library, e);
             }
         }
-    }
-
-    public static boolean checksumValid(Path libPath, List<String> checksums) {
-        try {
-            if (checksums == null || checksums.isEmpty()) {
-                return true;
-            }
-            byte[] fileData = Files.readAllBytes(libPath);
-            boolean valid = checksums.contains(DigestUtils.digestToString("SHA-1", fileData));
-            if (!valid && FileUtils.getName(libPath).endsWith(".jar")) {
-                valid = validateJar(fileData, checksums);
-            }
-            return valid;
-        } catch (IOException e) {
-            LOG.warning("Failed to validate " + libPath, e);
-        }
-        return false;
-    }
-
-    private static boolean validateJar(byte[] data, List<String> checksums) throws IOException {
-        HashMap<String, String> files = new HashMap<>();
-        String[] hashes = null;
-        JarInputStream jar = new JarInputStream(new ByteArrayInputStream(data));
-        JarEntry entry = jar.getNextJarEntry();
-        while (entry != null) {
-            byte[] eData = jar.readAllBytes();
-            if (entry.getName().equals("checksums.sha1")) {
-                hashes = new String(eData, StandardCharsets.UTF_8).split("\n");
-            }
-            if (!entry.isDirectory()) {
-                files.put(entry.getName(), DigestUtils.digestToString("SHA-1", eData));
-            }
-            entry = jar.getNextJarEntry();
-        }
-        jar.close();
-        if (hashes != null) {
-            boolean failed = !checksums.contains(files.get("checksums.sha1"));
-            if (!failed) {
-                for (String hash : hashes) {
-                    if (!hash.trim().isEmpty() && hash.contains(" ")) {
-                        String[] e = hash.split(" ");
-                        String validChecksum = e[0];
-                        String target = hash.substring(validChecksum.length() + 1);
-                        String checksum = files.get(target);
-                        if ((!files.containsKey(target)) || (checksum == null)) {
-                            LOG.warning("    " + target + " : missing");
-                            failed = true;
-                            break;
-                        } else if (!checksum.equals(validChecksum)) {
-                            LOG.warning("    " + target + " : failed (" + checksum + ", " + validChecksum + ")");
-                            failed = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            return !failed;
-        }
-        return false;
     }
 }
