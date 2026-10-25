@@ -23,6 +23,7 @@ import com.google.gson.reflect.TypeToken;
 import com.ibm.icu.lang.UCharacter;
 import com.ibm.icu.lang.UCharacterCategory;
 import com.ibm.icu.lang.UProperty;
+import com.ibm.icu.text.BreakIterator;
 import com.ibm.icu.util.ULocale;
 import org.glavo.url.WebURL;
 import org.gradle.api.DefaultTask;
@@ -301,6 +302,8 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
         return name;
     }
 
+    private static final Pattern MULTI_SPACE = Pattern.compile("  +");
+
     /// Cleans a primary name and normalizes fullwidth parentheses and their spacing.
     private static String cleanChineseName(String chineseName) {
         chineseName = cleanName(chineseName);
@@ -310,28 +313,40 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
         }
 
         StringBuilder builder = new StringBuilder(chineseName.length());
-        int[] codePoints = chineseName.codePoints().toArray();
-        for (int i = 0; i < codePoints.length; i++) {
-            int ch = codePoints[i];
-            int prev = i > 0 ? codePoints[i - 1] : 0;
+
+
+        BreakIterator iterator = BreakIterator.getCharacterInstance();
+        iterator.setText(chineseName);
+        int start = iterator.first();
+
+        @Nullable String prev = null;
+        for (int end = iterator.next();
+             end != BreakIterator.DONE;
+             start = end, end = iterator.next()) {
+
+            String ch = chineseName.substring(start, end);
 
             switch (ch) {
-                case '（' -> {
-                    if (Character.isWhitespace(prev) || prev == '！' || prev == '。')
+                case "（" -> {
+                    if (prev != null && prev.isBlank() || "！".equals(prev) || "。".equals(prev))
                         builder.append('(');
                     else
                         builder.append(" (");
                 }
-                case '）' -> builder.append(')');
-                case '\t' -> builder.append(' ');
+                case "）" -> builder.append(')');
+                case "\t" -> builder.append(' ');
                 default -> {
-                    if (ch != '\u200d' && !UCharacter.hasBinaryProperty(ch, UProperty.RGI_EMOJI)) {
-                        builder.appendCodePoint(ch);
+                    if (!UCharacter.hasBinaryProperty(ch, UProperty.RGI_EMOJI)) {
+                        builder.append(ch);
                     }
                 }
             }
+
+            prev = ch;
         }
-        return builder.toString().trim();
+
+        String result = builder.toString().trim();
+        return MULTI_SPACE.matcher(result).replaceAll(" ");
     }
 
     /// Recognizes accepted mod ID syntax.
