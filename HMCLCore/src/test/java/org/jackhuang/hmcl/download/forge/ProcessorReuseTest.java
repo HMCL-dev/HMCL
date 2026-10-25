@@ -114,6 +114,97 @@ public class ProcessorReuseTest {
         assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, mismatching));
     }
 
+    /// Records the slim, srg and patched jars even though the profile declares no outputs.
+    @Test
+    public void testSidecarRecordsUndeclaredArtifacts(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        Path slim = writeFile(tempDirectory.resolve("slim.jar"), "slim");
+        Path extra = writeFile(tempDirectory.resolve("extra.jar"), "extra");
+        Path srg = writeFile(tempDirectory.resolve("srg.jar"), "srg");
+        Path installer = writeFile(tempDirectory.resolve("installer.jar"), "installer");
+        List<Processor> processors = List.of(jarsplitter(), autoRenamingTool(), binaryPatcher());
+        Map<String, String> vars = Map.of(
+                "PATCHED", patched.toString(),
+                "MC_SLIM", slim.toString(),
+                "MC_EXTRA", extra.toString(),
+                "MC_SRG", srg.toString());
+
+        ProcessorReuse.writeSidecar(processors, vars, installer);
+        assertTrue(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
+
+        Files.delete(srg);
+        assertFalse(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
+    }
+
+    /// Rejects a chain whose artifacts are not all covered by a declared checksum.
+    @Test
+    public void testDeclaredChecksumRequiresEveryArtifact(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        Path mappings = writeFile(tempDirectory.resolve("mappings.txt"), "mappings");
+        List<Processor> processors = List.of(mcpData(), binaryPatcher());
+
+        assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, Map.of(
+                "PATCHED", patched.toString(),
+                "PATCHED_SHA", DigestUtils.digestToString("SHA-1", patched),
+                "MAPPINGS", mappings.toString())));
+    }
+
+    /// Verifies an artifact reached through an `--output` argument against its declared checksum.
+    @Test
+    public void testDeclaredChecksumOfDerivedArtifact(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        Path srg = writeFile(tempDirectory.resolve("srg.jar"), "srg");
+        List<Processor> processors = List.of(autoRenamingTool(), binaryPatcher());
+        Map<String, String> vars = Map.of(
+                "PATCHED", patched.toString(),
+                "PATCHED_SHA", DigestUtils.digestToString("SHA-1", patched),
+                "MC_SRG", srg.toString(),
+                "MC_SRG_SHA", DigestUtils.digestToString("SHA-1", srg));
+
+        assertTrue(ProcessorReuse.canReuseDeclaredArtifacts(processors, vars));
+
+        Files.delete(srg);
+        assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, vars));
+    }
+
+    /// Creates a jarsplitter processor, which writes the slim and extra jars through options.
+    ///
+    /// @return the processor
+    private static Processor jarsplitter() {
+        return new Processor(
+                List.of("client"),
+                Artifact.fromDescriptor("net.neoforged.installertools:jarsplitter:2.1.2"),
+                List.of(),
+                List.of("--input", "{MINECRAFT_JAR}", "--slim", "{MC_SLIM}", "--extra", "{MC_EXTRA}",
+                        "--srg", "{MERGED_MAPPINGS}"),
+                Map.of());
+    }
+
+    /// Creates a renamer processor, which writes the srg jar through an option.
+    ///
+    /// @return the processor
+    private static Processor autoRenamingTool() {
+        return new Processor(
+                List.of(),
+                Artifact.fromDescriptor("net.neoforged:AutoRenamingTool:2.0.3:all"),
+                List.of(),
+                List.of("--input", "{MC_SLIM}", "--output", "{MC_SRG}", "--names", "{MERGED_MAPPINGS}"),
+                Map.of());
+    }
+
+    /// Creates an installer-tools processor, which writes its artifact through an option.
+    ///
+    /// @return the processor
+    private static Processor mcpData() {
+        return new Processor(
+                List.of(),
+                Artifact.fromDescriptor("net.neoforged.installertools:installertools:2.1.2"),
+                List.of(),
+                List.of("--task", "MCP_DATA", "--input", "{INSTALLER}", "--output", "{MAPPINGS}",
+                        "--key", "mappings"),
+                Map.of());
+    }
+
     /// Creates a client processor whose only output is the patched jar.
     ///
     /// @return the processor

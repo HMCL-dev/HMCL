@@ -43,9 +43,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Decides whether a Forge-family processor chain can be skipped because its artifacts are current.
 ///
-/// Forge install profiles declare a SHA-1 for every artifact a processor produces, so those
-/// declarations verify a previous run by themselves. NeoForge profiles declare none, so the
-/// artifacts of the last successful run are recorded in a sidecar file next to the patched jar.
+/// A chain is only skipped when every file it writes is known and still current: the artifacts
+/// named by the processors themselves, plus the patched jar recorded in the install profile data.
+/// Profiles that declare a SHA-1 for each of those artifacts are verified by those declarations.
+/// NeoForge declares none, and some older Forge profiles declare only a few, so the artifacts of
+/// the last successful run are additionally recorded in a sidecar file next to the patched jar.
 @NotNullByDefault
 public final class ProcessorReuse {
 
@@ -247,8 +249,12 @@ public final class ProcessorReuse {
         return null;
     }
 
-    /// Returns the artifact variables the chain produces, or `null` when the profile uses an output
-    /// expression this class cannot verify.
+    /// Returns the artifact variables the chain produces, or `null` when a processor writes a file
+    /// this class cannot name.
+    ///
+    /// A processor contributes the keys of its declared outputs, the value of an `--output`
+    /// argument, and, for jarsplitter, the values of `--slim` and `--extra`. NeoForge declares
+    /// neither outputs nor checksums, so its artifacts can only be found this way.
     ///
     /// @param processors the client-side processors
     /// @param vars       the resolved install-profile variables
@@ -256,11 +262,16 @@ public final class ProcessorReuse {
     private static @Nullable Set<String> outputArtifacts(List<Processor> processors, Map<String, String> vars) {
         Set<String> artifacts = new LinkedHashSet<>();
         for (Processor processor : processors) {
+            Set<String> written = new LinkedHashSet<>();
             for (String output : processor.getOutputs().keySet()) {
-                if (!StringUtils.isSurrounded(output, "{", "}")) {
+                written.add(output);
+            }
+            written.addAll(writeTargets(processor));
+            for (String expression : written) {
+                if (!StringUtils.isSurrounded(expression, "{", "}")) {
                     return null;
                 }
-                artifacts.add(StringUtils.removeSurrounding(output, "{", "}"));
+                artifacts.add(StringUtils.removeSurrounding(expression, "{", "}"));
             }
         }
         // The patched client jar is declared in `data` even for profiles whose binarypatcher
@@ -269,6 +280,36 @@ public final class ProcessorReuse {
             artifacts.add("PATCHED");
         }
         return artifacts;
+    }
+
+    /// Returns the path arguments a processor writes, judging by the option names of the tools seen
+    /// in Forge and NeoForge install profiles.
+    ///
+    /// @param processor the processor to inspect
+    /// @return the path expressions the processor writes
+    private static Set<String> writeTargets(Processor processor) {
+        List<String> args = processor.getArgs();
+        Set<String> targets = new LinkedHashSet<>();
+        for (int i = 0; i < args.size(); i++) {
+            String arg = args.get(i);
+            if (!arg.startsWith("--") || i + 1 >= args.size()) {
+                continue;
+            }
+            String name = arg.substring("--".length());
+            switch (name) {
+                case "output" -> targets.add(args.get(i + 1));
+                case "slim", "extra" -> {
+                    // Only jarsplitter writes these; other tools may reuse the names for inputs.
+                    Artifact jar = processor.getJar();
+                    if (jar.getName().contains("jarsplitter")) {
+                        targets.add(args.get(i + 1));
+                    }
+                }
+                default -> {
+                }
+            }
+        }
+        return targets;
     }
 
     /// Returns whether `file` exists and has the expected SHA-1.
