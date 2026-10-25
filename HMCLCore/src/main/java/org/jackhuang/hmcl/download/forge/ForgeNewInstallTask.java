@@ -94,6 +94,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
                     try (InputStream stream = Files.newInputStream(artifact)) {
                         code = (DigestUtils.digestToString("SHA-1", stream));
                     }
+                    processorOutputHashes.put(artifact, code);
 
                     if (!Objects.equals(code, value)) {
                         Files.delete(artifact);
@@ -162,6 +163,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
                 try (InputStream stream = Files.newInputStream(artifact)) {
                     code = DigestUtils.digestToString("SHA-1", stream);
                 }
+                processorOutputHashes.put(artifact, code);
 
                 if (!Objects.equals(code, entry.getValue())) {
                     if (!ZlibUtils.IS_ZLIB_COMPATIBLE && FileUtils.getExtension(artifact).equals("jar")) {
@@ -195,6 +197,8 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
     private final Path installer;
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
+    /// SHA-1 values the processor tasks computed while verifying their declared outputs.
+    private final Map<Path, String> processorOutputHashes = new HashMap<>();
 
     private ForgeNewInstallProfile profile;
     private List<Processor> processors;
@@ -430,21 +434,20 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
         vars.put("INSTALLER", installer.toAbsolutePath().toString());
         vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLayout().getLibrariesDirectory()));
 
-        Task<?> processorsTask;
-        if (ProcessorReuse.canReuseDeclaredArtifacts(processors, vars)
-                || ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer)) {
-            LOG.info("Skipping " + processors.size() + " Forge processors for " + selfVersion
-                    + ": every artifact they produce is already current");
-            updateProgress(processors.size(), processors.size());
-            processorsTask = Task.completed(null);
-        } else {
-            updateProgress(0, processors.size());
-            processorsTask = Task.runSequentially(
-                            processors.stream()
-                                    .map(processor -> createProcessorTask(processor, vars))
-                                    .toArray(Task<?>[]::new))
-                    .thenRunAsync(() -> ProcessorReuse.writeSidecar(processors, vars, installer));
-        }
+        boolean canSkip = ProcessorReuse.canReuseDeclaredArtifacts(processors, vars)
+                || ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer);
+        updateProgress(canSkip ? processors.size() : 0, processors.size());
+        Task<?> processorsTask = ProcessorReuse.createProcessorsTask(
+                processors,
+                vars,
+                installer,
+                canSkip,
+                "Skipping " + processors.size() + " Forge processors for " + selfVersion
+                        + ": every artifact they produce is already current",
+                processors.stream()
+                        .map(processor -> createProcessorTask(processor, vars))
+                        .toList(),
+                processorOutputHashes);
 
         dependencies.add(
                 processorsTask.thenComposeAsync(

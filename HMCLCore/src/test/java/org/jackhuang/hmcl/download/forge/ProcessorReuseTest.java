@@ -27,6 +27,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -239,6 +240,55 @@ public class ProcessorReuseTest {
         assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, vars));
     }
 
+    /// Accepts the raw mappings HMCL downloads in place of the sanitized file the profile
+    /// describes.
+    @Test
+    public void testDeclaredChecksumAcceptsRawMojmaps(@TempDir Path tempDirectory) throws IOException {
+        Path mojmaps = writeFile(tempDirectory.resolve("mojmaps.tsrg"), "raw mappings");
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        List<Processor> processors = List.of(downloadMojmaps(true), binaryPatcher());
+        Map<String, String> vars = Map.of(
+                "MOJMAPS", mojmaps.toString(),
+                "MOJMAPS_SHA", "0000000000000000000000000000000000000000",
+                "PATCHED", patched.toString(),
+                "PATCHED_SHA", DigestUtils.digestToString("SHA-1", patched));
+
+        assertTrue(ProcessorReuse.canReuseDeclaredArtifacts(processors, vars));
+    }
+
+    /// Requires the mappings file to exist even when its declared checksum cannot be used.
+    @Test
+    public void testDeclaredChecksumRequiresSanitizedMojmapsFile(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        List<Processor> processors = List.of(downloadMojmaps(true), binaryPatcher());
+        Map<String, String> vars = Map.of(
+                "MOJMAPS", tempDirectory.resolve("missing.tsrg").toString(),
+                "MOJMAPS_SHA", "0000000000000000000000000000000000000000",
+                "PATCHED", patched.toString(),
+                "PATCHED_SHA", DigestUtils.digestToString("SHA-1", patched));
+
+        assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, vars));
+    }
+
+    /// Verifies the mappings file against its declared checksum when the processor does not
+    /// sanitize it.
+    @Test
+    public void testDeclaredChecksumVerifiesMojmapsWithoutSanitize(@TempDir Path tempDirectory) throws IOException {
+        Path mojmaps = writeFile(tempDirectory.resolve("mojmaps.tsrg"), "raw mappings");
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        List<Processor> processors = List.of(downloadMojmaps(false), binaryPatcher());
+        Map<String, String> vars = Map.of(
+                "MOJMAPS", mojmaps.toString(),
+                "MOJMAPS_SHA", DigestUtils.digestToString("SHA-1", mojmaps),
+                "PATCHED", patched.toString(),
+                "PATCHED_SHA", DigestUtils.digestToString("SHA-1", patched));
+
+        assertTrue(ProcessorReuse.canReuseDeclaredArtifacts(processors, vars));
+
+        writeFile(mojmaps, "changed");
+        assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, vars));
+    }
+
     /// Rejects a chain whose artifacts are not all covered by a declared checksum.
     @Test
     public void testDeclaredChecksumRequiresEveryArtifact(@TempDir Path tempDirectory) throws IOException {
@@ -287,6 +337,60 @@ public class ProcessorReuseTest {
         ProcessorReuse.writeSidecar(processors, vars, installer);
 
         assertFalse(Files.exists(tempDirectory.resolve("patched.jar.hmcl-cache")));
+        assertFalse(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
+    }
+
+    /// Never skips a chain that extracts libraries from a bundler client jar.
+    @Test
+    public void testBundlerExtractionPreventsReuse(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        Path clientJar = ProcessorTestSupport.writeZip(tempDirectory.resolve("client.jar"),
+                Map.of("META-INF/versions.list", ""));
+        Path installer = writeFile(tempDirectory.resolve("installer.jar"), "installer");
+        List<Processor> processors = List.of(processMinecraftJar());
+        Map<String, String> vars = Map.of(
+                "MINECRAFT_JAR", clientJar.toString(),
+                "PATCHED", patched.toString(),
+                "PATCHED_SHA", DigestUtils.digestToString("SHA-1", patched));
+
+        assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, vars));
+
+        ProcessorReuse.writeSidecar(processors, vars, installer);
+        assertFalse(Files.exists(Path.of(patched + ".hmcl-cache")));
+        assertFalse(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
+    }
+
+    /// Allows reuse when the extraction option is a no-op for a plain client jar.
+    @Test
+    public void testPlainClientJarWithExtractionOptionCanBeReused(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        Path clientJar = ProcessorTestSupport.writeZip(tempDirectory.resolve("client.jar"),
+                Map.of("version.json", "{}"));
+        Path installer = writeFile(tempDirectory.resolve("installer.jar"), "installer");
+        List<Processor> processors = List.of(processMinecraftJar());
+        Map<String, String> vars = Map.of(
+                "MINECRAFT_JAR", clientJar.toString(),
+                "PATCHED", patched.toString(),
+                "PATCHED_SHA", DigestUtils.digestToString("SHA-1", patched));
+
+        assertTrue(ProcessorReuse.canReuseDeclaredArtifacts(processors, vars));
+
+        ProcessorReuse.writeSidecar(processors, vars, installer);
+        assertTrue(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
+    }
+
+    /// Records hashes the processor tasks already verified instead of reading the files again.
+    @Test
+    public void testSidecarUsesKnownHashes(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        Path installer = writeFile(tempDirectory.resolve("installer.jar"), "installer");
+        List<Processor> processors = List.of(binaryPatcher());
+        Map<String, String> vars = sidecarVars(patched, minecraftJar(tempDirectory));
+
+        // A hash that does not match the file proves the recorded value was used.
+        ProcessorReuse.writeSidecar(processors, vars, installer,
+                Map.of(patched, "0000000000000000000000000000000000000000"));
+
         assertFalse(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
     }
 
@@ -341,6 +445,44 @@ public class ProcessorReuseTest {
                 List.of(),
                 List.of("--jar-in", "{MC_SLIM}", "--jar-out={MC_SRG}", "--mapping-format", "tsrg2",
                         "--mappings", "{MERGED_MAPPINGS}"),
+                Map.of());
+    }
+
+    /// Creates a DOWNLOAD_MOJMAPS processor, optionally with the `--sanitize` flag.
+    ///
+    /// @param sanitize whether the processor sanitizes Mojang's mappings
+    /// @return the processor
+    private static Processor downloadMojmaps(boolean sanitize) {
+        List<String> args = new ArrayList<>(List.of(
+                "--task", "DOWNLOAD_MOJMAPS",
+                "--version", "1.16.5",
+                "--side", "{SIDE}",
+                "--output", "{MOJMAPS}"));
+        if (sanitize) {
+            args.add("--sanitize");
+        }
+        return new Processor(
+                List.of("client"),
+                Artifact.fromDescriptor("net.minecraftforge:installertools:1.4.6"),
+                List.of(),
+                args,
+                Map.of());
+    }
+
+    /// Creates a PROCESS_MINECRAFT_JAR processor that extracts libraries when the input is a
+    /// bundler.
+    ///
+    /// @return the processor
+    private static Processor processMinecraftJar() {
+        return new Processor(
+                List.of("client"),
+                Artifact.fromDescriptor("net.neoforged.installertools:installertools:4.0.12:fatjar"),
+                List.of(),
+                List.of(
+                        "--task", "PROCESS_MINECRAFT_JAR",
+                        "--input", "{MINECRAFT_JAR}",
+                        "--output", "{PATCHED}",
+                        "--extract-libraries-to", "{ROOT}/libraries/"),
                 Map.of());
     }
 

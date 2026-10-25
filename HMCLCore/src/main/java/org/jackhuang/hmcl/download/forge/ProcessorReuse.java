@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.download.forge;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.game.Artifact;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.ZipFile;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -50,6 +52,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// NeoForge declares none, and some older Forge profiles declare only a few, so the artifacts of
 /// the last successful run are additionally recorded in a sidecar file next to the patched jar,
 /// together with the installer and client jar they were produced from.
+///
+/// A chain that extracts libraries from a bundler client jar is never skipped: the extracted tree
+/// cannot be named or recorded, so its presence cannot be proven.
 @NotNullByDefault
 public final class ProcessorReuse {
 
@@ -80,11 +85,16 @@ public final class ProcessorReuse {
     private ProcessorReuse() {
     }
 
-    /// Returns whether the chain can be skipped because every artifact it declares is present with
-    /// the checksum the install profile declares for it.
+    /// Returns whether the chain can be skipped because every artifact it declares is present and
+    /// still current.
+    ///
+    /// The checksums from the install profile verify the artifacts, except for the two files HMCL
+    /// cannot reproduce faithfully: the patched jar of profiles that declare no checksum for it,
+    /// and the sanitized mappings file, which HMCL replaces with Mojang's raw download. Those two
+    /// only need to exist.
     ///
     /// Only a chain made exclusively of artifact-only processors qualifies, and the chain is only
-    /// skipped when at least one declared artifact was actually verified.
+    /// skipped when at least one other artifact was actually verified.
     ///
     /// @param processors the client-side processors
     /// @param vars       the resolved install-profile variables
@@ -95,27 +105,31 @@ public final class ProcessorReuse {
             return false;
         }
         @Nullable Set<String> artifacts = outputArtifacts(processors, vars);
-        if (artifacts == null) {
+        if (artifacts == null || writesExtractedLibraries(processors, vars)) {
             return false;
         }
 
+        boolean sanitizedMojmaps = sanitizesMojmaps(processors);
         int verified = 0;
         for (String artifact : artifacts) {
             @Nullable String path = vars.get(artifact);
             if (path == null) {
                 return false;
             }
+            Path file = Paths.get(path);
             @Nullable String expected = vars.get(artifact + "_SHA");
-            if (expected == null) {
-                // Only the patched jar may lack a declared checksum in a profile that declares some:
-                // NeoForge omits every checksum. It must still exist, or skipping would leave the
-                // instance without its client jar.
-                if ("PATCHED".equals(artifact) && Files.isRegularFile(Paths.get(path))) {
+            if (expected == null || sanitizedMojmaps && "MOJMAPS".equals(artifact)) {
+                // Only the patched jar may lack a declared checksum in a profile that declares some,
+                // and the sanitized mappings can never match the raw file HMCL downloads. Both must
+                // still exist, or skipping would leave the chain without an input or the instance
+                // without its client jar.
+                if (("PATCHED".equals(artifact) || "MOJMAPS".equals(artifact))
+                        && Files.isRegularFile(file)) {
                     continue;
                 }
                 return false;
             }
-            if (!matches(Paths.get(path), expected)) {
+            if (!matches(file, expected)) {
                 return false;
             }
             verified++;
@@ -136,7 +150,8 @@ public final class ProcessorReuse {
         }
         @Nullable Set<String> artifacts = outputArtifacts(processors, vars);
         @Nullable String patched = vars.get("PATCHED");
-        if (artifacts == null || artifacts.isEmpty() || patched == null) {
+        if (artifacts == null || artifacts.isEmpty() || patched == null
+                || writesExtractedLibraries(processors, vars)) {
             return false;
         }
 
@@ -170,32 +185,62 @@ public final class ProcessorReuse {
     /// @param vars       the resolved install-profile variables
     /// @param installer  the installer JAR the artifacts were produced from
     public static void writeSidecar(List<Processor> processors, Map<String, String> vars, Path installer) {
+        writeSidecar(processors, vars, installer, Map.of());
+    }
+
+    /// Records the artifacts of a successful chain run, reusing hashes the processor tasks have
+    /// already verified.
+    ///
+    /// Failures are logged and ignored: the installation itself has already succeeded.
+    ///
+    /// @param processors  the client-side processors that were run
+    /// @param vars        the resolved install-profile variables
+    /// @param installer   the installer JAR the artifacts were produced from
+    /// @param knownHashes SHA-1 values the processor tasks computed, keyed by artifact path
+    public static void writeSidecar(List<Processor> processors, Map<String, String> vars, Path installer,
+                                    Map<Path, String> knownHashes) {
         try {
             @Nullable Set<String> artifacts = outputArtifacts(processors, vars);
             @Nullable String patched = vars.get("PATCHED");
+            if (artifacts == null || artifacts.isEmpty()) {
+                LOG.info("Not caching the processor chain from " + installer
+                        + ": a processor writes a path the cache cannot verify");
+                return;
+            }
+            if (writesExtractedLibraries(processors, vars)) {
+                LOG.info("Not caching the processor chain from " + installer
+                        + ": the client jar is a bundler");
+                return;
+            }
             @Nullable String minecraftJar = vars.get("MINECRAFT_JAR");
-            if (artifacts == null || artifacts.isEmpty() || patched == null
-                    || minecraftJar == null || !Files.isRegularFile(Paths.get(minecraftJar))) {
+            @Nullable Path minecraftJarFile = minecraftJar != null ? Paths.get(minecraftJar) : null;
+            if (patched == null || minecraftJarFile == null || !Files.isRegularFile(minecraftJarFile)) {
                 // Without the input the sidecar is keyed by, the next install cannot validate it.
+                LOG.info("Not caching the processor chain from " + installer
+                        + ": the client jar is unavailable");
                 return;
             }
 
             Sidecar sidecar = new Sidecar();
             sidecar.version = SIDECAR_VERSION;
             sidecar.installer = DigestUtils.digestToString("SHA-1", installer);
-            sidecar.minecraftJar = DigestUtils.digestToString("SHA-1", Paths.get(minecraftJar));
+            sidecar.minecraftJar = DigestUtils.digestToString("SHA-1", minecraftJarFile);
             sidecar.artifacts = new LinkedHashMap<>();
             for (String artifact : artifacts) {
                 @Nullable String path = vars.get(artifact);
                 if (path == null) {
+                    LOG.info("Not caching the processor chain for " + patched
+                            + ": " + artifact + " has no path");
                     return;
                 }
                 Path file = Paths.get(path);
                 if (!Files.isRegularFile(file)) {
                     // Never record a partial result: the next install must run the chain again.
+                    LOG.info("Not caching the processor chain for " + patched + ": " + file + " is missing");
                     return;
                 }
-                sidecar.artifacts.put(artifact, DigestUtils.digestToString("SHA-1", file));
+                @Nullable String known = knownHashes.get(file);
+                sidecar.artifacts.put(artifact, known != null ? known : DigestUtils.digestToString("SHA-1", file));
             }
 
             Path file = sidecarPath(patched);
@@ -212,6 +257,36 @@ public final class ProcessorReuse {
         } catch (IOException e) {
             LOG.warning("Failed to write processor cache for " + installer, e);
         }
+    }
+
+    /// Returns the task that runs the processor tasks, or an already-completed task when the chain
+    /// can be skipped.
+    ///
+    /// The sidecar is written only after a real run; a skipped chain leaves the recorded cache as
+    /// it is.
+    ///
+    /// @param processors     the client-side processors
+    /// @param vars           the resolved install-profile variables
+    /// @param installer      the installer JAR the artifacts are produced from
+    /// @param canSkip        whether the reuse checks proved every artifact is current
+    /// @param skipMessage    the message logged when the chain is skipped
+    /// @param processorTasks the tasks that run the processors, in order
+    /// @param knownHashes    SHA-1 values the processor tasks already verified, keyed by path
+    /// @return the task that completes after the processors, or immediately when skipped
+    public static Task<?> createProcessorsTask(
+            List<Processor> processors,
+            Map<String, String> vars,
+            Path installer,
+            boolean canSkip,
+            String skipMessage,
+            List<? extends Task<?>> processorTasks,
+            Map<Path, String> knownHashes) {
+        if (canSkip) {
+            LOG.info(skipMessage);
+            return Task.completed(null);
+        }
+        return Task.runSequentially(processorTasks.toArray(Task<?>[]::new))
+                .thenRunAsync(() -> writeSidecar(processors, vars, installer, knownHashes));
     }
 
     /// Returns whether every processor in the chain only writes artifacts into the library directory.
@@ -248,21 +323,45 @@ public final class ProcessorReuse {
         return task != null && ARTIFACT_ONLY_INSTALLER_TOOLS_TASKS.contains(task.toUpperCase(Locale.ROOT));
     }
 
-    /// Returns the value of the `--task` option, or `null` when it is absent or has no value.
+    /// Returns the value of the `--task` option, or `null` when it is absent.
     ///
     /// @param args the processor arguments
-    /// @return the task name
+    /// @return the task name, or the empty string when the option has no value
     private static @Nullable String findTask(List<String> args) {
-        for (int i = 0; i < args.size(); i++) {
-            String arg = args.get(i);
-            if ("--task".equals(arg)) {
-                return i + 1 < args.size() ? args.get(i + 1) : null;
-            }
-            if (arg.startsWith("--task=")) {
-                return arg.substring("--task=".length());
+        return parseOptions(args).get("task");
+    }
+
+    /// Returns the `--option value` and `--option=value` pairs of a processor.
+    ///
+    /// Options without a value are mapped to the empty string, matching how the install tasks
+    /// parse their arguments.
+    ///
+    /// @param args the processor arguments
+    /// @return the option values by name
+    private static Map<String, String> parseOptions(List<String> args) {
+        Map<String, String> options = new LinkedHashMap<>();
+        @Nullable String optionName = null;
+        for (String arg : args) {
+            if (arg.startsWith("--")) {
+                if (optionName != null) {
+                    options.put(optionName, "");
+                }
+                int separator = arg.indexOf('=');
+                if (separator >= 0) {
+                    options.put(arg.substring("--".length(), separator), arg.substring(separator + 1));
+                    optionName = null;
+                } else {
+                    optionName = arg.substring("--".length());
+                }
+            } else if (optionName != null) {
+                options.put(optionName, arg);
+                optionName = null;
             }
         }
-        return null;
+        if (optionName != null) {
+            options.put(optionName, "");
+        }
+        return options;
     }
 
     /// Returns the artifact variables the chain produces, or `null` when a processor writes a file
@@ -303,58 +402,85 @@ public final class ProcessorReuse {
     /// Returns the path arguments a processor writes, judging by the option names of the tools seen
     /// in Forge and NeoForge install profiles.
     ///
-    /// Both `--option value` and `--option=value` forms are recognized.
-    ///
     /// @param processor the processor to inspect
     /// @return the path expressions the processor writes
     private static Set<String> writeTargets(Processor processor) {
-        List<String> args = processor.getArgs();
+        Map<String, String> options = parseOptions(processor.getArgs());
         Set<String> targets = new LinkedHashSet<>();
-        boolean jarsplitter = processor.getJar().getName().contains("jarsplitter");
-        boolean specialSource = "SpecialSource".equals(processor.getJar().getName());
-        boolean vignette = "vignette".equals(processor.getJar().getName());
-        for (int i = 0; i < args.size(); i++) {
-            String arg = args.get(i);
-            int separator = arg.indexOf('=');
-            String name = separator >= 0 ? arg.substring(0, separator) : arg;
-            if (!name.startsWith("--")) {
-                continue;
-            }
-
-            String value;
-            if (separator >= 0) {
-                value = arg.substring(separator + 1);
-            } else if (i + 1 < args.size()) {
-                value = args.get(i + 1);
-            } else {
-                continue;
-            }
-
-            switch (name.substring("--".length())) {
-                case "output" -> targets.add(value);
-                case "slim", "extra" -> {
-                    // Only jarsplitter writes these; other tools may reuse the names for inputs.
-                    if (jarsplitter) {
-                        targets.add(value);
-                    }
-                }
-                case "out-jar" -> {
-                    // SpecialSource writes its remapped jar here; `--in-jar` is the input.
-                    if (specialSource) {
-                        targets.add(value);
-                    }
-                }
-                case "jar-out" -> {
-                    // vignette writes its remapped jar here; `--jar-in` is the input.
-                    if (vignette) {
-                        targets.add(value);
-                    }
-                }
-                default -> {
-                }
-            }
+        addWriteTarget(targets, options.get("output"));
+        if (processor.getJar().getName().contains("jarsplitter")) {
+            // Only jarsplitter writes these; other tools may reuse the names for inputs.
+            addWriteTarget(targets, options.get("slim"));
+            addWriteTarget(targets, options.get("extra"));
+        }
+        if ("SpecialSource".equals(processor.getJar().getName())) {
+            // SpecialSource writes its remapped jar here; `--in-jar` is the input.
+            addWriteTarget(targets, options.get("out-jar"));
+        }
+        if ("vignette".equals(processor.getJar().getName())) {
+            // vignette writes its remapped jar here; `--jar-in` is the input.
+            addWriteTarget(targets, options.get("jar-out"));
         }
         return targets;
+    }
+
+    /// Adds a write target when the option has a value.
+    ///
+    /// @param targets the collected path expressions
+    /// @param value   the option value, or `null` when it is absent
+    private static void addWriteTarget(Set<String> targets, @Nullable String value) {
+        if (value != null && !value.isEmpty()) {
+            targets.add(value);
+        }
+    }
+
+    /// Returns whether the chain downloads Mojang mappings through the sanitizing installertools
+    /// task.
+    ///
+    /// HMCL replaces that processor with a plain download of Mojang's raw file, so the checksum the
+    /// profile declares for the sanitized file cannot verify it.
+    ///
+    /// @param processors the client-side processors
+    /// @return `true` when the mappings HMCL writes are not the file the profile describes
+    private static boolean sanitizesMojmaps(List<Processor> processors) {
+        for (Processor processor : processors) {
+            Map<String, String> options = parseOptions(processor.getArgs());
+            if ("DOWNLOAD_MOJMAPS".equalsIgnoreCase(options.get("task")) && options.containsKey("sanitize")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// Returns whether the chain extracts files from the client jar into the libraries directory.
+    ///
+    /// `PROCESS_MINECRAFT_JAR` performs that extraction when it is given `--extract-libraries-to`
+    /// and the input is a bundler. The extracted tree cannot be named or recorded, so such an input
+    /// must never be skipped; a plain client jar makes the option a no-op.
+    ///
+    /// @param processors the client-side processors
+    /// @param vars       the resolved install-profile variables
+    /// @return `true` when a skipped chain could leave extracted files stale or missing
+    private static boolean writesExtractedLibraries(List<Processor> processors, Map<String, String> vars) {
+        for (Processor processor : processors) {
+            if (parseOptions(processor.getArgs()).containsKey("extract-libraries-to")) {
+                @Nullable String minecraftJar = vars.get("MINECRAFT_JAR");
+                return minecraftJar == null || isBundler(Paths.get(minecraftJar));
+            }
+        }
+        return false;
+    }
+
+    /// Returns whether the client jar is a Mojang bundler.
+    ///
+    /// @param jar the client jar
+    /// @return `true` when the jar stores a version file list, or cannot be inspected
+    private static boolean isBundler(Path jar) {
+        try (ZipFile zip = new ZipFile(jar.toFile())) {
+            return zip.getEntry("META-INF/versions.list") != null;
+        } catch (IOException e) {
+            return true;
+        }
     }
 
     /// Returns whether `file` exists and has the expected SHA-1.

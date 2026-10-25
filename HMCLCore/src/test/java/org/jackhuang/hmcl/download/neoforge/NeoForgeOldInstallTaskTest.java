@@ -22,27 +22,20 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.download.forge.ProcessorReuse;
+import org.jackhuang.hmcl.download.forge.ProcessorTestSupport;
 import org.jackhuang.hmcl.game.Artifact;
-import org.jackhuang.hmcl.game.DefaultGameInstance;
-import org.jackhuang.hmcl.game.DefaultGameRepository;
-import org.jackhuang.hmcl.game.DefaultGameRepositoryLayout;
-import org.jackhuang.hmcl.game.DefaultGameRepositorySnapshot;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -54,16 +47,16 @@ public class NeoForgeOldInstallTaskTest {
     /// Skips the whole processor chain when the sidecar records the current artifacts.
     @Test
     public void testSkipsWhenSidecarMatches(@TempDir Path tempDirectory) throws IOException {
-        Path patched = writeFile(tempDirectory.resolve("libraries/patched.jar"), "patched");
+        Path patched = ProcessorTestSupport.writeFile(tempDirectory.resolve("libraries/patched.jar"), "patched");
         Path installer = writeInstaller(tempDirectory.resolve("neoforge-installer.jar"), patched);
+        Path clientJar = writeClientJar(tempDirectory);
 
         // The processor jar is absent from the repository, so only a skipped chain can succeed.
-        Path clientJar = writeFile(tempDirectory.resolve("work/client.jar"), "client");
         ProcessorReuse.writeSidecar(processors(), Map.of(
                 "PATCHED", patched.toString(),
                 "MINECRAFT_JAR", clientJar.toString()), installer);
 
-        var executor = createTask(tempDirectory, installer).executor();
+        var executor = createTask(tempDirectory, clientJar, installer).executor();
         assertTrue(executor.test(), () -> String.valueOf(executor.getException()));
         assertTrue(Files.isRegularFile(Path.of(patched + ".hmcl-cache")));
     }
@@ -71,11 +64,12 @@ public class NeoForgeOldInstallTaskTest {
     /// Runs the processor chain when no sidecar has been recorded yet.
     @Test
     public void testRunsWithoutSidecar(@TempDir Path tempDirectory) throws IOException {
-        Path patched = writeFile(tempDirectory.resolve("libraries/patched.jar"), "patched");
+        Path patched = ProcessorTestSupport.writeFile(tempDirectory.resolve("libraries/patched.jar"), "patched");
         Path installer = writeInstaller(tempDirectory.resolve("neoforge-installer.jar"), patched);
+        Path clientJar = writeClientJar(tempDirectory);
 
         // The chain runs, so the missing processor jar makes the task fail.
-        var executor = createTask(tempDirectory, installer).executor();
+        var executor = createTask(tempDirectory, clientJar, installer).executor();
         assertFalse(executor.test());
     }
 
@@ -93,6 +87,15 @@ public class NeoForgeOldInstallTaskTest {
                         "--output", "{PATCHED}",
                         "--extract-libraries-to", "{ROOT}/libraries/"),
                 Map.of()));
+    }
+
+    /// Writes the client jar the processor chain reads.
+    ///
+    /// @param tempDirectory the test directory
+    /// @return the client jar path
+    private static Path writeClientJar(Path tempDirectory) throws IOException {
+        return ProcessorTestSupport.writeZip(
+                tempDirectory.resolve("work/client.jar"), Map.of("version.json", "{}"));
     }
 
     /// Writes a NeoForge installer fixture whose only client processor writes the patched jar.
@@ -118,40 +121,25 @@ public class NeoForgeOldInstallTaskTest {
                                 "--output", "{PATCHED}",
                                 "--extract-libraries-to", "{ROOT}/libraries/"))));
 
-        Files.createDirectories(installer.getParent());
-        try (ZipOutputStream output = new ZipOutputStream(Files.newOutputStream(installer))) {
-            writeZipEntry(output, "install_profile.json", JsonUtils.GSON.toJson(profile));
-            writeZipEntry(output, "version.json", "{\"id\":\"neoforge-test\",\"libraries\":[]}");
-        }
-        return installer;
-    }
-
-    /// Writes one UTF-8 text entry to a ZIP stream.
-    ///
-    /// @param output  the destination ZIP stream
-    /// @param name    the entry name
-    /// @param content the entry content
-    private static void writeZipEntry(ZipOutputStream output, String name, String content)
-            throws IOException {
-        output.putNextEntry(new ZipEntry(name));
-        output.write(content.getBytes(StandardCharsets.UTF_8));
-        output.closeEntry();
+        return ProcessorTestSupport.writeZip(installer, Map.of(
+                "install_profile.json", JsonUtils.GSON.toJson(profile),
+                "version.json", "{\"id\":\"neoforge-test\",\"libraries\":[]}"));
     }
 
     /// Creates a NeoForge install task whose progress updates do not require the JavaFX toolkit.
     ///
     /// @param tempDirectory the test directory holding the repository and download cache
+    /// @param clientJar     the client JAR to install from
     /// @param installer     the NeoForge installer JAR
     /// @return the install task
-    private static NeoForgeOldInstallTask createTask(Path tempDirectory, Path installer)
+    private static NeoForgeOldInstallTask createTask(Path tempDirectory, Path clientJar, Path installer)
             throws IOException {
         Path work = tempDirectory.resolve("work");
         Files.createDirectories(work);
-        Path minecraftJar = writeFile(work.resolve("client.jar"), "client");
 
         DefaultCacheRepository cacheRepository = new DefaultCacheRepository(work.resolve("download-cache"));
         DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
-                new TestRepository(work.resolve("game")),
+                new ProcessorTestSupport.Repository(work.resolve("game")),
                 new DownloadProvider() {
                     @Override
                     public DefaultCacheRepository getCacheRepository() {
@@ -162,7 +150,7 @@ public class NeoForgeOldInstallTaskTest {
         return new NeoForgeOldInstallTask(
                 dependencyManager,
                 new GameInstanceManifest(new GameInstanceID("instance")),
-                minecraftJar,
+                clientJar,
                 "neoforge-test",
                 installer) {
             @Override
@@ -170,42 +158,5 @@ public class NeoForgeOldInstallTaskTest {
                 // Avoid JavaFX toolkit initialization in this isolated processor test.
             }
         };
-    }
-
-    /// Writes the file, creating its parent directories.
-    ///
-    /// @param file    the destination file
-    /// @param content the file content
-    /// @return the destination file
-    private static Path writeFile(Path file, String content) throws IOException {
-        Files.createDirectories(file.getParent());
-        Files.writeString(file, content);
-        return file;
-    }
-
-    /// Minimal repository backed by the default layout.
-    private static final class TestRepository extends DefaultGameRepository {
-        /// Creates a repository rooted at the given directory.
-        ///
-        /// @param baseDirectory the repository base directory
-        private TestRepository(Path baseDirectory) {
-            super(baseDirectory);
-        }
-
-        /// {@inheritDoc}
-        @Override
-        protected DefaultGameRepositoryLayout createLayout(Path baseDirectory) {
-            return new DefaultGameRepositoryLayout(baseDirectory);
-        }
-
-        /// {@inheritDoc}
-        @Override
-        protected DefaultGameInstance createInstance(
-                DefaultGameRepositorySnapshot snapshot,
-                GameInstanceID id,
-                GameInstanceManifest manifest,
-                @Nullable Path manifestFile) {
-            throw new UnsupportedOperationException();
-        }
     }
 }

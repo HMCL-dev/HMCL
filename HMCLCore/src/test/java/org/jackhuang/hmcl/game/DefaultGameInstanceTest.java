@@ -305,23 +305,7 @@ public final class DefaultGameInstanceTest {
                 "{MINECRAFT_VERSION}",
                 markerSha1);
 
-        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
-        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("download-cache"));
-        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
-                repository,
-                new TestDownloadProvider(cacheRepository),
-                cacheRepository);
-        ForgeNewInstallTask task = new ForgeNewInstallTask(
-                dependencyManager,
-                new GameInstanceManifest(new GameInstanceID("instance")),
-                minecraftJar,
-                "forge-test",
-                installer) {
-            @Override
-            protected void updateProgressImmediately(double progress) {
-                // Avoid JavaFX toolkit initialization in this isolated processor test.
-            }
-        };
+        ForgeNewInstallTask task = createForgeInstallTask(tempDirectory, minecraftJar, installer);
 
         var executor = task.executor();
         assertTrue(executor.test(), () -> String.valueOf(executor.getException()));
@@ -343,23 +327,7 @@ public final class DefaultGameInstanceTest {
                 "{MINECRAFT_JAR}",
                 "0000000000000000000000000000000000000000");
 
-        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
-        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("download-cache"));
-        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
-                repository,
-                new TestDownloadProvider(cacheRepository),
-                cacheRepository);
-        ForgeNewInstallTask task = new ForgeNewInstallTask(
-                dependencyManager,
-                new GameInstanceManifest(new GameInstanceID("instance")),
-                minecraftJar,
-                "forge-test",
-                installer) {
-            @Override
-            protected void updateProgressImmediately(double progress) {
-                // Avoid JavaFX toolkit initialization in this isolated processor test.
-            }
-        };
+        ForgeNewInstallTask task = createForgeInstallTask(tempDirectory, minecraftJar, installer);
 
         assertFalse(task.executor().test());
         assertEquals("client", Files.readString(minecraftJar));
@@ -721,6 +689,14 @@ public final class DefaultGameInstanceTest {
                                 "--extract-libraries-to", "{ROOT}/libraries/"),
                         "outputs", Map.of("{PATCHED}", "{PATCHED_SHA}"))));
 
+        writeForgeInstaller(installer, profile);
+    }
+
+    /// Writes a Forge installer JAR with the given install profile.
+    ///
+    /// @param installer the installer JAR path
+    /// @param profile   the install profile content
+    private static void writeForgeInstaller(Path installer, Map<String, Object> profile) throws IOException {
         try (ZipOutputStream output = new ZipOutputStream(Files.newOutputStream(installer))) {
             writeZipEntry(output, "install_profile.json", JsonUtils.GSON.toJson(profile));
             writeZipEntry(output, "version.json", "{\"id\":\"forge-test\",\"libraries\":[]}");
@@ -748,10 +724,7 @@ public final class DefaultGameInstanceTest {
                         "jar", "example:processor:1.0",
                         "outputs", Map.of(outputKey, outputSha1))));
 
-        try (ZipOutputStream output = new ZipOutputStream(Files.newOutputStream(installer))) {
-            writeZipEntry(output, "install_profile.json", JsonUtils.GSON.toJson(profile));
-            writeZipEntry(output, "version.json", "{\"id\":\"forge-test\",\"libraries\":[]}");
-        }
+        writeForgeInstaller(installer, profile);
     }
 
     /// Writes one UTF-8 text entry to a ZIP stream.

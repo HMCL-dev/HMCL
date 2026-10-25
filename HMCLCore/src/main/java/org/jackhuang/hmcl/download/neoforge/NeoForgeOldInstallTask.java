@@ -95,6 +95,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
                     try (InputStream stream = Files.newInputStream(artifact)) {
                         code = (DigestUtils.digestToString("SHA-1", stream));
                     }
+                    processorOutputHashes.put(artifact, code);
 
                     if (!Objects.equals(code, value)) {
                         Files.delete(artifact);
@@ -163,6 +164,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
                 try (InputStream stream = Files.newInputStream(artifact)) {
                     code = DigestUtils.digestToString("SHA-1", stream);
                 }
+                processorOutputHashes.put(artifact, code);
 
                 if (!Objects.equals(code, entry.getValue())) {
                     Files.delete(artifact);
@@ -180,6 +182,8 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
     private final Path installer;
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
+    /// SHA-1 values the processor tasks computed while verifying their declared outputs.
+    private final Map<Path, String> processorOutputHashes = new HashMap<>();
 
     private ForgeNewInstallProfile profile;
     private List<Processor> processors;
@@ -415,20 +419,19 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
         vars.put("INSTALLER", installer.toAbsolutePath().toString());
         vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLayout().getLibrariesDirectory()));
 
-        Task<?> processorsTask;
-        if (ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer)) {
-            LOG.info("Skipping " + processors.size() + " NeoForge processors for " + selfVersion
-                    + ": the artifacts recorded by the last install are still current");
-            updateProgress(processors.size(), processors.size());
-            processorsTask = Task.completed(null);
-        } else {
-            updateProgress(0, processors.size());
-            processorsTask = Task.runSequentially(
-                            processors.stream()
-                                    .map(processor -> createProcessorTask(processor, vars))
-                                    .toArray(Task<?>[]::new))
-                    .thenRunAsync(() -> ProcessorReuse.writeSidecar(processors, vars, installer));
-        }
+        boolean canSkip = ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer);
+        updateProgress(canSkip ? processors.size() : 0, processors.size());
+        Task<?> processorsTask = ProcessorReuse.createProcessorsTask(
+                processors,
+                vars,
+                installer,
+                canSkip,
+                "Skipping " + processors.size() + " NeoForge processors for " + selfVersion
+                        + ": the artifacts recorded by the last install are still current",
+                processors.stream()
+                        .map(processor -> createProcessorTask(processor, vars))
+                        .toList(),
+                processorOutputHashes);
 
         dependencies.add(
                 processorsTask.thenComposeAsync(
