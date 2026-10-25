@@ -1,20 +1,19 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package com.jfoenix.controls;
@@ -176,7 +175,6 @@ public class JFXDialog extends StackPane {
         FXUtils.onChange(transitionType, t -> animation = getShowAnimation(transitionType.get()));
 
         contentHolder = new StackPane();
-        contentHolder.setVisible(false);
         JFXDepthManager.setDepth(contentHolder, 4);
         contentHolder.setPickOnBounds(false);
         // ensure stackpane is never resized beyond it's preferred size
@@ -326,7 +324,6 @@ public class JFXDialog extends StackPane {
             animation.play();
         } else {
             this.setVisible(true);
-            contentHolder.setVisible(true);
             contentHolder.setOpacity(1);
             getOverlayPane().setVisible(true);
             getOverlayPane().setOpacity(1);
@@ -347,7 +344,6 @@ public class JFXDialog extends StackPane {
         } else {
             this.setVisible(false);
             contentHolder.setOpacity(0);
-            contentHolder.setVisible(false);
             getOverlayPane().setOpacity(0);
             getOverlayPane().setVisible(false);
             closeDialog();
@@ -397,7 +393,6 @@ public class JFXDialog extends StackPane {
 
     private void resetProperties() {
         this.setVisible(false);
-        contentHolder.setVisible(false);
         getOverlayPane().setVisible(false);
         contentHolder.setTranslateX(0);
         contentHolder.setTranslateY(0);
@@ -414,12 +409,10 @@ public class JFXDialog extends StackPane {
                             new KeyValue(contentHolder.scaleXProperty(), INITIAL_SCALE, INTERPOLATOR),
                             new KeyValue(contentHolder.scaleYProperty(), INITIAL_SCALE, INTERPOLATOR),
                             new KeyValue(JFXDialog.this.visibleProperty(), false, Motion.LINEAR),
-                            new KeyValue(contentHolder.visibleProperty(), false, Motion.LINEAR),
                             new KeyValue(getOverlayPane().visibleProperty(), false, Motion.LINEAR)
                     ),
                     new KeyFrame(Duration.millis(10),
                             new KeyValue(JFXDialog.this.visibleProperty(), true, Motion.LINEAR),
-                            new KeyValue(contentHolder.visibleProperty(), true, Motion.LINEAR),
                             new KeyValue(contentHolder.opacityProperty(), 0, INTERPOLATOR),
                             new KeyValue(getOverlayPane().visibleProperty(), true, Motion.LINEAR),
                             new KeyValue(getOverlayPane().opacityProperty(), 0, INTERPOLATOR)
@@ -428,7 +421,6 @@ public class JFXDialog extends StackPane {
                             new KeyValue(contentHolder.scaleXProperty(), 1, INTERPOLATOR),
                             new KeyValue(contentHolder.scaleYProperty(), 1, INTERPOLATOR),
                             new KeyValue(JFXDialog.this.visibleProperty(), true, Motion.LINEAR),
-                            new KeyValue(contentHolder.visibleProperty(), true, Motion.LINEAR),
                             new KeyValue(contentHolder.opacityProperty(), 1, INTERPOLATOR),
                             new KeyValue(getOverlayPane().visibleProperty(), true, Motion.LINEAR),
                             new KeyValue(getOverlayPane().opacityProperty(), 1, INTERPOLATOR)
