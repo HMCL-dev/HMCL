@@ -44,10 +44,10 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.lang.ref.SoftReference;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -55,11 +55,12 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
+/// Supplies download candidates and component version lists, caching successful version lookups.
 @NotNullByDefault
 public class DownloadProvider {
 
-    private static final VarHandle VERSION_LIST_STATES_HANDLE = MethodHandles.arrayElementVarHandle(VersionListState[].class);
-    private final @Nullable VersionListState[] versionListStates = new VersionListState[GameComponentType.ALL.size()];
+    /// Lazily initialized caches, shared by concurrent lookups for the same component type.
+    private final ConcurrentMap<GameComponentType, VersionListCache> versionListCaches = new ConcurrentHashMap<>();
 
     public boolean hasType(GameComponentType type) {
         return switch (type) {
@@ -68,53 +69,29 @@ public class DownloadProvider {
         };
     }
 
+    /// Reuses a cached version list unless refreshing, and caches each successful fetch on completion.
+    /// Pending fetches remain independent; a failed refresh leaves the previous cached value available.
     public @Unmodifiable Task<ComponentRemoteVersionList<?>> getVersionsAsync(
             GameComponentType type,
             @Nullable GameVersionNumber gameVersion,
             boolean refresh) {
         assert (type == GameComponentType.GAME) == (gameVersion == null);
 
-        final VersionListState state = getState(type);
+        final VersionListCache cache = versionListCaches.computeIfAbsent(type, VersionListCache::new);
 
         if (!refresh) {
-            state.lock.readLock().lock();
-            try {
-                @Unmodifiable ComponentRemoteVersionList<?> result = state.tryGet(gameVersion);
-                if (result != null) {
-                    return Task.completed(result);
-                }
-            } finally {
-                state.lock.readLock().unlock();
+            @Nullable @Unmodifiable ComponentRemoteVersionList<?> result = cache.tryGet(gameVersion);
+            if (result != null) {
+                return Task.completed(result);
             }
         }
 
         var task = fetchVersionsAsync(type, gameVersion);
 
         return task.thenApplyAsync(result -> {
-            state.lock.writeLock().lockInterruptibly();
-            try {
-                state.put(gameVersion, result);
-            } finally {
-                state.lock.writeLock().unlock();
-            }
+            cache.put(gameVersion, result);
             return result;
         });
-    }
-
-    private VersionListState getState(GameComponentType type) {
-        @Nullable VersionListState currentState = versionListStates[type.ordinal()];
-        if (currentState != null) {
-            return currentState;
-        }
-
-        VersionListState state = new VersionListState(type);
-        if (VERSION_LIST_STATES_HANDLE.compareAndSet(versionListStates, type.ordinal(), null, state)) {
-            return state;
-        } else {
-            state = (VersionListState) VERSION_LIST_STATES_HANDLE.getVolatile(versionListStates, type.ordinal());
-            Objects.requireNonNull(state, "VersionListState should not be null after compareAndSet failure");
-            return state;
-        }
     }
 
     private <V extends ComponentRemoteVersion> Task<ComponentRemoteVersionList<V>> fetchFabricVersionsAsync(
@@ -324,26 +301,45 @@ public class DownloadProvider {
 
     }
 
-    private static final class VersionListState {
+    /// Owns soft references and synchronization for one component's version lists.
+    private static final class VersionListCache {
+        /// Component whose game-version keys this cache accepts.
         private final GameComponentType type;
+        /// Guards all reads and writes of the version map.
         private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+        /// Successful results by game version; the game component uses a null key.
         private final Map<@Nullable GameVersionNumber, SoftReference<ComponentRemoteVersionList<?>>> versions = new HashMap<>();
 
-        private VersionListState(GameComponentType type) {
+        /// Creates an empty cache for one component type.
+        private VersionListCache(GameComponentType type) {
             this.type = type;
         }
 
+        /// Returns the cached list, or null if absent or reclaimed by the garbage collector.
         @Unmodifiable
-        @Nullable ComponentRemoteVersionList<?> tryGet(@Nullable GameVersionNumber gameVersion) {
+        private @Nullable ComponentRemoteVersionList<?> tryGet(@Nullable GameVersionNumber gameVersion) {
             assert (type == GameComponentType.GAME) == (gameVersion == null);
 
-            @Nullable SoftReference<ComponentRemoteVersionList<?>> resultRef = versions.get(gameVersion);
-            return resultRef != null ? resultRef.get() : null;
+            lock.readLock().lock();
+            try {
+                @Nullable SoftReference<ComponentRemoteVersionList<?>> resultRef = versions.get(gameVersion);
+                return resultRef != null ? resultRef.get() : null;
+            } finally {
+                lock.readLock().unlock();
+            }
         }
 
-        void put(@Nullable GameVersionNumber gameVersion, ComponentRemoteVersionList<?> componentRemoteVersions) {
+        /// Stores a successful result, allowing interruption while acquiring the write lock.
+        private void put(@Nullable GameVersionNumber gameVersion, ComponentRemoteVersionList<?> componentRemoteVersions)
+                throws InterruptedException {
             assert (type == GameComponentType.GAME) == (gameVersion == null);
-            versions.put(gameVersion, new SoftReference<>(componentRemoteVersions));
+
+            lock.writeLock().lockInterruptibly();
+            try {
+                versions.put(gameVersion, new SoftReference<>(componentRemoteVersions));
+            } finally {
+                lock.writeLock().unlock();
+            }
         }
     }
 }
