@@ -35,6 +35,7 @@ import javafx.beans.value.WeakChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.event.EventDispatcher;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
@@ -1213,6 +1214,18 @@ public final class FXUtils {
                     && (restriction == null || restriction.get())) {
                 window.fireEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSE_REQUEST));
                 event.consume();
+            }
+        });
+    }
+
+    /// Runs an action synchronously on the first mouse entry, removing the listener before execution.
+    public static void prepareOnMouseEnter(Node node, Runnable action) {
+        node.addEventFilter(MouseEvent.MOUSE_ENTERED, new EventHandler<MouseEvent>() {
+            /// Removes this listener and invokes the preparation action.
+            @Override
+            public void handle(MouseEvent event) {
+                node.removeEventFilter(MouseEvent.MOUSE_ENTERED, this);
+                action.run();
             }
         });
     }

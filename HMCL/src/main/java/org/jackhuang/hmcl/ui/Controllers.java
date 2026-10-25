@@ -160,6 +160,14 @@ public final class Controllers {
         return currentDecorator == null ? null : currentDecorator.getStage();
     }
 
+    /// Creates and styles the cached page on the JavaFX thread if it has not been created.
+    @FXThread
+    public static void prepareGameInstancePage() {
+        if (gameInstancePage == null) {
+            gameInstancePage = FXUtils.prepareNode(new GameInstancePage());
+        }
+    }
+
     @FXThread
     public static GameInstancePage getGameInstancePage() {
         if (gameInstancePage == null) {
@@ -178,6 +186,14 @@ public final class Controllers {
         return rootPage.get();
     }
 
+    /// Creates and styles the cached page on the JavaFX thread if it has not been created.
+    @FXThread
+    public static void prepareSettingsPage() {
+        if (settingsPage == null) {
+            settingsPage = FXUtils.prepareNode(new LauncherSettingsPage());
+        }
+    }
+
     @FXThread
     public static LauncherSettingsPage getSettingsPage() {
         if (settingsPage == null) {
@@ -189,6 +205,14 @@ public final class Controllers {
     @FXThread
     public static AccountListPage getAccountListPage() {
         return accountListPage.get();
+    }
+
+    /// Creates and styles the cached page on the JavaFX thread if it has not been created.
+    @FXThread
+    public static void prepareDownloadPage() {
+        if (downloadPage == null) {
+            downloadPage = FXUtils.prepareNode(new DownloadPage());
+        }
     }
 
     @FXThread

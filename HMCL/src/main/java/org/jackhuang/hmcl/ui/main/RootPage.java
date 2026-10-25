@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.account.AccountListPopupMenu;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
@@ -132,6 +133,10 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             }, instance -> instance.getRepository().setSelectedInstance(instance));
             FXUtils.onSecondaryButtonClicked(gameListItem, () -> showGameListPopupMenu(gameListItem));
 
+            if (AnimationUtils.isAnimationEnabled()) {
+                FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareGameInstancePage);
+            }
+
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
             gameItem.setLeftIcon(SVG.FORMAT_LIST_BULLETED);
@@ -145,6 +150,10 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             downloadItem.setTitle(i18n("download"));
             downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
 
+            if (AnimationUtils.isAnimationEnabled()) {
+                FXUtils.prepareOnMouseEnter(downloadItem, Controllers::prepareDownloadPage);
+            }
+
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
             launcherSettingsItem.setLeftIcon(SVG.SETTINGS);
@@ -153,6 +162,10 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 Controllers.getSettingsPage().showGameSettings(GameDirectoryManager.getSelectedRepository());
                 Controllers.navigate(Controllers.getSettingsPage());
             });
+
+            if (AnimationUtils.isAnimationEnabled()) {
+                FXUtils.prepareOnMouseEnter(launcherSettingsItem, Controllers::prepareSettingsPage);
+            }
 
             // sixth item in left sidebar
             AdvancedListItem terracottaItem = new AdvancedListItem();
