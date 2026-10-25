@@ -116,8 +116,10 @@ final class WindowsGPUDetector {
             return null;
         } else if (object instanceof String[]) {
             return String.join(" ", (String[]) object);
-        } else if (object instanceof byte[]) {
-            return new String((byte[]) object, StandardCharsets.UTF_16LE)
+        } else if (object instanceof byte[] data) {
+            // Ensure an even byte length for UTF_16LE
+            int length = data.length & ~1;
+            return new String(data, 0, length, StandardCharsets.UTF_16LE)
                     .replace("\0", "");
         } else {
             return object.toString();
