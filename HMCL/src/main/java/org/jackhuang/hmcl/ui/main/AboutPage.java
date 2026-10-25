@@ -91,36 +91,41 @@ public final class AboutPage extends SpinnerPane {
 
             @Nullable CentralProcessor cpu = SystemInfo.getCentralProcessor();
             if (cpu != null) {
+                int cpuCount;
+                int logicalPerPackage;
+                int physicalPerPackage;
+
                 CentralProcessor.Cores cores = cpu.getCores();
-                if (cores == null || cores.packages() == 1) {
+                if (cores != null && cores.packages() > 1) {
+                    cpuCount = cores.packages();
+                    logicalPerPackage = cores.logical() / cores.packages();
+                    physicalPerPackage = cores.physical() / cores.packages();
+                } else {
+                    cpuCount = 1;
+                    if (cores != null) {
+                        logicalPerPackage = cores.logical();
+                        physicalPerPackage = cores.physical();
+                    } else {
+                        logicalPerPackage = Runtime.getRuntime().availableProcessors();
+                        physicalPerPackage = logicalPerPackage;
+                    }
+                }
+
+                String cpuName;
+                if (logicalPerPackage > 0 && logicalPerPackage != physicalPerPackage)
+                    cpuName = i18n("about.environment.cpu.name.cores.hyper_threading", cpu.getName(), physicalPerPackage, logicalPerPackage);
+                else
+                    cpuName = i18n("about.environment.cpu.name.cores", cpu.getName(), physicalPerPackage);
+
+                for (int i = 1; i <= cpuCount; i++) {
                     var button = new LinePane();
                     button.setLargeTitle(true);
-                    button.setTitle(i18n("about.environment.cpu"));
-                    button.setSubtitle(cpu.toString());
+                    button.setTitle(i == 1 && cpuCount == 1
+                            ? i18n("about.environment.cpu")
+                            : i18n("about.environment.cpu.n", i));
+                    button.setSubtitle(cpuName);
                     button.setLeading(SVG.LUCIDE_CPU.createIcon(32));
                     environment.getContent().add(button);
-                } else {
-                    int logicalPerPackage = cores.logical() / cores.packages();
-                    int physicalPerPackage = cores.physical() / cores.packages();
-
-                    StringBuilder builder = new StringBuilder(128);
-                    builder.append(cpu.getName());
-
-                    builder.append(" (");
-                    builder.append(physicalPerPackage).append(" Cores");
-                    if (logicalPerPackage > 0 && logicalPerPackage != physicalPerPackage)
-                        builder.append(" / ").append(logicalPerPackage).append(" Threads");
-                    builder.append(")");
-                    String cpuName = builder.toString();
-
-                    for (int i = 1; i <= cores.packages(); i++) {
-                        var button = new LinePane();
-                        button.setLargeTitle(true);
-                        button.setTitle(i18n("about.environment.cpu.n", i));
-                        button.setSubtitle(cpuName);
-                        button.setLeading(SVG.LUCIDE_CPU.createIcon(32));
-                        environment.getContent().add(button);
-                    }
                 }
             }
 
