@@ -43,11 +43,11 @@ public class ProcessorReuseTest {
         Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
         Path installer = writeFile(tempDirectory.resolve("installer.jar"), "installer");
         List<Processor> processors = List.of(binaryPatcher());
+        Map<String, String> vars = sidecarVars(patched, minecraftJar(tempDirectory));
 
-        ProcessorReuse.writeSidecar(processors, Map.of("PATCHED", patched.toString()), installer);
+        ProcessorReuse.writeSidecar(processors, vars, installer);
 
-        assertTrue(ProcessorReuse.canReuseRecordedArtifacts(
-                processors, Map.of("PATCHED", patched.toString()), installer));
+        assertTrue(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
     }
 
     /// Rejects the sidecar once an artifact it recorded has changed.
@@ -56,12 +56,27 @@ public class ProcessorReuseTest {
         Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
         Path installer = writeFile(tempDirectory.resolve("installer.jar"), "installer");
         List<Processor> processors = List.of(binaryPatcher());
-        ProcessorReuse.writeSidecar(processors, Map.of("PATCHED", patched.toString()), installer);
+        Map<String, String> vars = sidecarVars(patched, minecraftJar(tempDirectory));
+        ProcessorReuse.writeSidecar(processors, vars, installer);
 
         writeFile(patched, "changed");
 
-        assertFalse(ProcessorReuse.canReuseRecordedArtifacts(
-                processors, Map.of("PATCHED", patched.toString()), installer));
+        assertFalse(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
+    }
+
+    /// Rejects the sidecar when the client jar it was produced from has changed.
+    @Test
+    public void testSidecarInvalidatedWhenMinecraftJarChanges(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        Path installer = writeFile(tempDirectory.resolve("installer.jar"), "installer");
+        Path clientJar = minecraftJar(tempDirectory);
+        List<Processor> processors = List.of(binaryPatcher());
+        Map<String, String> vars = sidecarVars(patched, clientJar);
+        ProcessorReuse.writeSidecar(processors, vars, installer);
+
+        writeFile(clientJar, "another minecraft");
+
+        assertFalse(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
     }
 
     /// Rejects the sidecar when the artifacts were produced by another installer.
@@ -70,12 +85,12 @@ public class ProcessorReuseTest {
         Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
         Path installer = writeFile(tempDirectory.resolve("installer.jar"), "installer");
         List<Processor> processors = List.of(binaryPatcher());
-        ProcessorReuse.writeSidecar(processors, Map.of("PATCHED", patched.toString()), installer);
+        Map<String, String> vars = sidecarVars(patched, minecraftJar(tempDirectory));
+        ProcessorReuse.writeSidecar(processors, vars, installer);
 
         writeFile(installer, "another installer");
 
-        assertFalse(ProcessorReuse.canReuseRecordedArtifacts(
-                processors, Map.of("PATCHED", patched.toString()), installer));
+        assertFalse(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
     }
 
     /// Refuses to skip a chain containing a processor with unknown side effects.
@@ -84,7 +99,8 @@ public class ProcessorReuseTest {
         Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
         Path installer = writeFile(tempDirectory.resolve("installer.jar"), "installer");
         List<Processor> processors = List.of(binaryPatcher());
-        ProcessorReuse.writeSidecar(processors, Map.of("PATCHED", patched.toString()), installer);
+        Map<String, String> vars = sidecarVars(patched, minecraftJar(tempDirectory));
+        ProcessorReuse.writeSidecar(processors, vars, installer);
 
         List<Processor> unknown = List.of(new Processor(
                 List.of("client"),
@@ -93,8 +109,7 @@ public class ProcessorReuseTest {
                 List.of(),
                 Map.of()));
 
-        assertFalse(ProcessorReuse.canReuseRecordedArtifacts(
-                unknown, Map.of("PATCHED", patched.toString()), installer));
+        assertFalse(ProcessorReuse.canReuseRecordedArtifacts(unknown, vars, installer));
     }
 
     /// Accepts a patched jar matching the checksum declared by the install profile.
@@ -125,6 +140,7 @@ public class ProcessorReuseTest {
         List<Processor> processors = List.of(jarsplitter(), autoRenamingTool(), binaryPatcher());
         Map<String, String> vars = Map.of(
                 "PATCHED", patched.toString(),
+                "MINECRAFT_JAR", minecraftJar(tempDirectory).toString(),
                 "MC_SLIM", slim.toString(),
                 "MC_EXTRA", extra.toString(),
                 "MC_SRG", srg.toString());
@@ -148,6 +164,7 @@ public class ProcessorReuseTest {
         List<Processor> processors = List.of(jarsplitter(), specialSource(), binaryPatcher());
         Map<String, String> vars = Map.of(
                 "PATCHED", patched.toString(),
+                "MINECRAFT_JAR", minecraftJar(tempDirectory).toString(),
                 "MC_SLIM", slim.toString(),
                 "MC_EXTRA", extra.toString(),
                 "MC_SRG", srg.toString());
@@ -171,6 +188,7 @@ public class ProcessorReuseTest {
         List<Processor> processors = List.of(jarsplitter(), vignette(), binaryPatcher());
         Map<String, String> vars = Map.of(
                 "PATCHED", patched.toString(),
+                "MINECRAFT_JAR", minecraftJar(tempDirectory).toString(),
                 "MC_SLIM", slim.toString(),
                 "MC_EXTRA", extra.toString(),
                 "MC_SRG", srg.toString());
@@ -199,6 +217,24 @@ public class ProcessorReuseTest {
                 "MC_EXTRA", extra.toString(),
                 "MC_EXTRA_SHA", DigestUtils.digestToString("SHA-1", extra),
                 "MC_SRG", srg.toString());
+
+        assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, vars));
+    }
+
+    /// Refuses to skip the chain when the patched jar is missing, even though the profile declares
+    /// no checksum for it.
+    @Test
+    public void testDeclaredChecksumRequiresPatchedJar(@TempDir Path tempDirectory) throws IOException {
+        Path patched = tempDirectory.resolve("patched.jar");
+        Path slim = writeFile(tempDirectory.resolve("slim.jar"), "slim");
+        Path extra = writeFile(tempDirectory.resolve("extra.jar"), "extra");
+        List<Processor> processors = List.of(jarsplitter(), binaryPatcher());
+        Map<String, String> vars = Map.of(
+                "PATCHED", patched.toString(),
+                "MC_SLIM", slim.toString(),
+                "MC_SLIM_SHA", DigestUtils.digestToString("SHA-1", slim),
+                "MC_EXTRA", extra.toString(),
+                "MC_EXTRA_SHA", DigestUtils.digestToString("SHA-1", extra));
 
         assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, vars));
     }
@@ -246,11 +282,12 @@ public class ProcessorReuseTest {
                 List.of("--clean", "{MC_SRG}", "--output", patched.toString()),
                 Map.of()));
 
-        ProcessorReuse.writeSidecar(processors, Map.of("PATCHED", patched.toString()), installer);
+        Map<String, String> vars = sidecarVars(patched, minecraftJar(tempDirectory));
+
+        ProcessorReuse.writeSidecar(processors, vars, installer);
 
         assertFalse(Files.exists(tempDirectory.resolve("patched.jar.hmcl-cache")));
-        assertFalse(ProcessorReuse.canReuseRecordedArtifacts(
-                processors, Map.of("PATCHED", patched.toString()), installer));
+        assertFalse(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
     }
 
     /// Recognizes the `--option=value` form used by newer processors.
@@ -342,6 +379,25 @@ public class ProcessorReuseTest {
                 List.of(),
                 List.of("--clean", "{MC_SRG}", "--output", "{PATCHED}"),
                 Map.of());
+    }
+
+    /// Writes the client jar a sidecar records as the chain input.
+    ///
+    /// @param directory the test directory
+    /// @return the client jar path
+    private static Path minecraftJar(Path directory) throws IOException {
+        return writeFile(directory.resolve("minecraft.jar"), "minecraft");
+    }
+
+    /// Returns the variables a sidecar records for a chain that only writes the patched jar.
+    ///
+    /// @param patched   the patched client jar
+    /// @param clientJar the client jar the chain reads
+    /// @return the install-profile variables
+    private static Map<String, String> sidecarVars(Path patched, Path clientJar) {
+        return Map.of(
+                "PATCHED", patched.toString(),
+                "MINECRAFT_JAR", clientJar.toString());
     }
 
     /// Writes the file, replacing its previous content.

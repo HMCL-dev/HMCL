@@ -58,7 +58,10 @@ public class NeoForgeOldInstallTaskTest {
         Path installer = writeInstaller(tempDirectory.resolve("neoforge-installer.jar"), patched);
 
         // The processor jar is absent from the repository, so only a skipped chain can succeed.
-        ProcessorReuse.writeSidecar(processors(), Map.of("PATCHED", patched.toString()), installer);
+        Path clientJar = writeFile(tempDirectory.resolve("work/client.jar"), "client");
+        ProcessorReuse.writeSidecar(processors(), Map.of(
+                "PATCHED", patched.toString(),
+                "MINECRAFT_JAR", clientJar.toString()), installer);
 
         var executor = createTask(tempDirectory, installer).executor();
         assertTrue(executor.test(), () -> String.valueOf(executor.getException()));

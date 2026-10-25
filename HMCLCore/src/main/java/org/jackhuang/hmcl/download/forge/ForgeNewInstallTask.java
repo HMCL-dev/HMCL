@@ -436,8 +436,7 @@ public class ForgeNewInstallTask extends Task<GameInstancePatch> {
             LOG.info("Skipping " + processors.size() + " Forge processors for " + selfVersion
                     + ": every artifact they produce is already current");
             updateProgress(processors.size(), processors.size());
-            processorsTask = Task.runAsync(() -> {
-            });
+            processorsTask = Task.completed(null);
         } else {
             updateProgress(0, processors.size());
             processorsTask = Task.runSequentially(

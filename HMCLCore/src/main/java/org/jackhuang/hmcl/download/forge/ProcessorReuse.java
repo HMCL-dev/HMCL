@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -47,12 +48,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// named by the processors themselves, plus the patched jar recorded in the install profile data.
 /// Profiles that declare a SHA-1 for each of those artifacts are verified by those declarations.
 /// NeoForge declares none, and some older Forge profiles declare only a few, so the artifacts of
-/// the last successful run are additionally recorded in a sidecar file next to the patched jar.
+/// the last successful run are additionally recorded in a sidecar file next to the patched jar,
+/// together with the installer and client jar they were produced from.
 @NotNullByDefault
 public final class ProcessorReuse {
 
     /// Processor jars whose only side effect is writing the artifact named by their arguments.
-    private static final Set<String> ARTIFACT_ONLY_JARS = Set.of(
+    private static final @Unmodifiable Set<String> ARTIFACT_ONLY_JARS = Set.of(
             "net.minecraftforge:jarsplitter",
             "net.minecraftforge:ForgeAutoRenamingTool",
             "net.minecraftforge:binarypatcher",
@@ -65,11 +67,11 @@ public final class ProcessorReuse {
     /// Installer-tools tasks that only produce files in the library directory, observed in
     /// client-side install profiles. `EXTRACT_FILES` is absent on purpose: it writes launch scripts
     /// into the instance directory, so skipping it would leave an instance without them.
-    private static final Set<String> ARTIFACT_ONLY_INSTALLER_TOOLS_TASKS = Set.of(
+    private static final @Unmodifiable Set<String> ARTIFACT_ONLY_INSTALLER_TOOLS_TASKS = Set.of(
             "MCP_DATA", "DOWNLOAD_MOJMAPS", "MERGE_MAPPING", "CREATE_PARENTS", "PROCESS_MINECRAFT_JAR");
 
     /// Format version of the sidecar file. Bump it whenever the recorded data or its meaning changes.
-    private static final int SIDECAR_VERSION = 1;
+    private static final int SIDECAR_VERSION = 2;
 
     /// Suffix appended to the patched jar path to locate the sidecar file.
     private static final String SIDECAR_SUFFIX = ".hmcl-cache";
@@ -100,10 +102,15 @@ public final class ProcessorReuse {
         int verified = 0;
         for (String artifact : artifacts) {
             @Nullable String path = vars.get(artifact);
+            if (path == null) {
+                return false;
+            }
             @Nullable String expected = vars.get(artifact + "_SHA");
-            if (path == null || expected == null) {
-                // Only the patched jar may lack a declared checksum: NeoForge omits `PATCHED_SHA`.
-                if ("PATCHED".equals(artifact)) {
+            if (expected == null) {
+                // Only the patched jar may lack a declared checksum in a profile that declares some:
+                // NeoForge omits every checksum. It must still exist, or skipping would leave the
+                // instance without its client jar.
+                if ("PATCHED".equals(artifact) && Files.isRegularFile(Paths.get(path))) {
                     continue;
                 }
                 return false;
@@ -117,7 +124,7 @@ public final class ProcessorReuse {
     }
 
     /// Returns whether the chain can be skipped because the sidecar records the artifacts of a
-    /// successful run of the same installer and those artifacts are unchanged.
+    /// successful run of the same installer and client jar, and those artifacts are unchanged.
     ///
     /// @param processors the client-side processors
     /// @param vars       the resolved install-profile variables
@@ -135,7 +142,9 @@ public final class ProcessorReuse {
 
         try {
             @Nullable Sidecar sidecar = readSidecar(sidecarPath(patched));
-            if (sidecar == null || !DigestUtils.digestToString("SHA-1", installer).equalsIgnoreCase(sidecar.installer)) {
+            if (sidecar == null
+                    || !DigestUtils.digestToString("SHA-1", installer).equalsIgnoreCase(sidecar.installer)
+                    || !matchesInput(vars.get("MINECRAFT_JAR"), sidecar.minecraftJar)) {
                 return false;
             }
             for (String artifact : artifacts) {
@@ -152,7 +161,8 @@ public final class ProcessorReuse {
         }
     }
 
-    /// Records the artifacts of a successful chain run in the sidecar file.
+    /// Records the artifacts of a successful chain run in the sidecar file, together with the
+    /// installer and client jar they were produced from.
     ///
     /// Failures are logged and ignored: the installation itself has already succeeded.
     ///
@@ -163,13 +173,17 @@ public final class ProcessorReuse {
         try {
             @Nullable Set<String> artifacts = outputArtifacts(processors, vars);
             @Nullable String patched = vars.get("PATCHED");
-            if (artifacts == null || artifacts.isEmpty() || patched == null) {
+            @Nullable String minecraftJar = vars.get("MINECRAFT_JAR");
+            if (artifacts == null || artifacts.isEmpty() || patched == null
+                    || minecraftJar == null || !Files.isRegularFile(Paths.get(minecraftJar))) {
+                // Without the input the sidecar is keyed by, the next install cannot validate it.
                 return;
             }
 
             Sidecar sidecar = new Sidecar();
             sidecar.version = SIDECAR_VERSION;
             sidecar.installer = DigestUtils.digestToString("SHA-1", installer);
+            sidecar.minecraftJar = DigestUtils.digestToString("SHA-1", Paths.get(minecraftJar));
             sidecar.artifacts = new LinkedHashMap<>();
             for (String artifact : artifacts) {
                 @Nullable String path = vars.get(artifact);
@@ -185,8 +199,10 @@ public final class ProcessorReuse {
             }
 
             Path file = sidecarPath(patched);
-            Files.createDirectories(file.getParent());
-            Path tmp = Files.createTempFile(file.getParent(), "hmcl-cache", ".tmp");
+            // A relative `PATCHED` literal yields no parent; writing next to it is still correct.
+            Path directory = file.getParent() != null ? file.getParent() : Paths.get(".");
+            Files.createDirectories(directory);
+            Path tmp = Files.createTempFile(directory, "hmcl-cache", ".tmp");
             try {
                 Files.writeString(tmp, JsonUtils.GSON.toJson(sidecar), StandardCharsets.UTF_8);
                 Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
@@ -358,6 +374,20 @@ public final class ProcessorReuse {
         return true;
     }
 
+    /// Returns whether the client jar the current install reads is the one the sidecar was
+    /// produced from.
+    ///
+    /// The installer hash alone cannot tell apart installs whose client jar differs, such as a
+    /// modpack manifest that overrides the client download with another file.
+    ///
+    /// @param path     the resolved `MINECRAFT_JAR` path, or `null` when the variables have none
+    /// @param expected the recorded SHA-1, or `null` when the sidecar did not record one
+    /// @return `true` when the file exists and matches
+    /// @throws IOException if the file cannot be read
+    private static boolean matchesInput(@Nullable String path, @Nullable String expected) throws IOException {
+        return path != null && expected != null && matches(Paths.get(path), expected);
+    }
+
     /// Returns the sidecar path for the patched client jar.
     ///
     /// @param patched the patched client jar path
@@ -386,6 +416,9 @@ public final class ProcessorReuse {
 
         /// SHA-1 of the installer JAR that produced the recorded artifacts.
         private @Nullable String installer;
+
+        /// SHA-1 of the client jar the recorded artifacts were produced from.
+        private @Nullable String minecraftJar;
 
         /// Artifact variable name to SHA-1 of the file the last successful run produced.
         private @Nullable Map<String, String> artifacts;

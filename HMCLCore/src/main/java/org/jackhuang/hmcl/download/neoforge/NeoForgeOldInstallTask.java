@@ -420,8 +420,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
             LOG.info("Skipping " + processors.size() + " NeoForge processors for " + selfVersion
                     + ": the artifacts recorded by the last install are still current");
             updateProgress(processors.size(), processors.size());
-            processorsTask = Task.runAsync(() -> {
-            });
+            processorsTask = Task.completed(null);
         } else {
             updateProgress(0, processors.size());
             processorsTask = Task.runSequentially(
