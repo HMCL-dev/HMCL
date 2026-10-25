@@ -28,7 +28,7 @@ import java.util.function.BiConsumer;
 
 /// @see attachListener
 @NotNullByDefault
-public class ManagedProcessAttacher {
+public final class ManagedProcessAttacher {
     private ManagedProcessAttacher() {
     }
 
