@@ -63,6 +63,7 @@ import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -104,15 +105,6 @@ public final class Controllers {
 
     /// Prevents instantiation of this utility class.
     private Controllers() {
-    }
-
-    /// Action used by confirmation dialogs that may fail before the confirmed operation is complete.
-    @FunctionalInterface
-    public interface ThrowingRunnable {
-        /// Runs the confirmed action.
-        ///
-        /// @throws Exception if the action fails
-        void run() throws Exception;
     }
 
     /// The shared launcher title, created on the first call to [#launcherTitleProperty()].
@@ -575,7 +567,7 @@ public final class Controllers {
     ///
     /// @param text      the file-specific read-only warning
     /// @param overwrite the action that backs up and overwrites the file
-    public static void confirmBackupAndOverwrite(String text, ThrowingRunnable overwrite) {
+    public static void confirmBackupAndOverwrite(String text, ExceptionalRunnable<?> overwrite) {
         dialog(new MessageDialogPane.Builder(
                 text + "\n\n" + i18n("settings.file.force_write.confirm"),
                 i18n("message.warning"),
