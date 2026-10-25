@@ -22,6 +22,7 @@ import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
 import com.ibm.icu.lang.UCharacter;
 import com.ibm.icu.lang.UCharacterCategory;
+import com.ibm.icu.lang.UProperty;
 import com.ibm.icu.util.ULocale;
 import org.glavo.url.WebURL;
 import org.gradle.api.DefaultTask;
@@ -322,7 +323,12 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                         builder.append(" (");
                 }
                 case '）' -> builder.append(')');
-                default -> builder.appendCodePoint(ch);
+                case '\t' -> builder.append(' ');
+                default -> {
+                    if (ch != '\u200d' && !UCharacter.hasBinaryProperty(ch, UProperty.RGI_EMOJI)) {
+                        builder.appendCodePoint(ch);
+                    }
+                }
             }
         }
         return builder.toString().trim();
