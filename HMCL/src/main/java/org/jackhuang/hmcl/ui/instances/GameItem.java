@@ -44,7 +44,8 @@ public class GameItem {
 
     private boolean initialized = false;
     private StringProperty title;
-    private StringProperty tag;
+    /// Modpack version loaded from this instance's modpack configuration.
+    private @Nullable StringProperty modpackVersion;
     private StringProperty subtitle;
     private ObjectProperty<Image> image;
 
@@ -72,35 +73,37 @@ public class GameItem {
         return gameInstance.getId().toString();
     }
 
+    /// Lazily loads display properties, including the optional modpack version.
     private void init() {
         if (initialized)
             return;
 
         initialized = true;
         title = new SimpleStringProperty();
-        tag = new SimpleStringProperty();
+        StringProperty modpackVersionProperty = new SimpleStringProperty();
+        modpackVersion = modpackVersionProperty;
         subtitle = new SimpleStringProperty();
         image = new SimpleObjectProperty<>();
 
-        record Result(@Nullable String gameVersion, @Nullable String tag) {
+        record Result(@Nullable String gameVersion, @Nullable String modpackVersion) {
         }
 
         CompletableFuture.supplyAsync(() -> {
             // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
             GameVersionNumber version = gameInstance.getVersion();
             @Nullable String gameVersion = version == GameVersionNumber.unknown() ? null : version.toString();
-            @Nullable String modPackVersion = null;
+            @Nullable String modpackVersion = null;
             try {
                 @Nullable ModpackConfiguration<?> config = gameInstance.readModpackConfiguration();
-                modPackVersion = config != null ? config.getVersion() : null;
+                modpackVersion = config != null ? config.getVersion() : null;
             } catch (IOException e) {
                 LOG.warning("Failed to read modpack configuration from " + getId(), e);
             }
-            return new Result(gameVersion, modPackVersion);
+            return new Result(gameVersion, modpackVersion);
         }, POOL_VERSION_RESOLVE).whenCompleteAsync((result, exception) -> {
             if (exception == null) {
-                if (result.tag != null) {
-                    tag.set(result.tag);
+                if (result.modpackVersion != null) {
+                    modpackVersionProperty.set(result.modpackVersion);
                 }
 
                 StringBuilder libraries = new StringBuilder(Objects.requireNonNullElse(result.gameVersion, i18n("message.unknown")));
@@ -130,9 +133,10 @@ public class GameItem {
         return title;
     }
 
-    public ReadOnlyStringProperty tagProperty() {
+    /// Returns this instance's modpack version as a read-only observable property.
+    public ReadOnlyStringProperty modpackVersionProperty() {
         init();
-        return tag;
+        return Objects.requireNonNull(modpackVersion);
     }
 
     public ReadOnlyStringProperty subtitleProperty() {

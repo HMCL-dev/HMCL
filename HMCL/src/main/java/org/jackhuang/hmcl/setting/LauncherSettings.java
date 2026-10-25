@@ -219,6 +219,22 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return disableAprilFools;
     }
 
+    /// Display order used by instance management and the launcher's instance switchers.
+    @SerializedName("instanceSortType")
+    private final ObjectProperty<InstanceSortType> instanceSortType = new RawPreservingObjectProperty<>(InstanceSortType.DEFAULT) {
+        /// Rejects unsupported deserialization results so the adapter preserves their raw JSON
+        /// while keeping the default display order available to the UI.
+        @Override
+        public void set(@Nullable InstanceSortType value) {
+            super.set(Objects.requireNonNull(value, "instanceSortType"));
+        }
+    };
+
+    /// Returns the persisted display order; null and unsupported JSON values retain the default.
+    public ObjectProperty<InstanceSortType> instanceSortTypeProperty() {
+        return instanceSortType;
+    }
+
     /// The common Minecraft directory selection mode.
     @SerializedName("commonDirectoryType")
     private final ObjectProperty<EnumCommonDirectory> commonDirectoryType = new RawPreservingObjectProperty<>(EnumCommonDirectory.DEFAULT);
