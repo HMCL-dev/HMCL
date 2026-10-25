@@ -155,7 +155,7 @@ public final class AboutPage extends SpinnerPane {
             java.setLargeTitle(true);
             java.setLeading(SVG.LOCAL_CAFE.createIcon(32));
             java.setTitle("Java");
-            java.setSubtitle("%s, %s by %s".formatted(
+            java.setSubtitle("%s, %s, %s".formatted(
                     Runtime.version().toString(),
                     System.getProperty("java.vm.name"),
                     System.getProperty("java.vendor")));
