@@ -60,7 +60,7 @@ jobs:
       name: Upload test report
       uses: actions/upload-artifact@v7
       with:
-        name: HMCL-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}-test-report-html
+        name: HMCL-test-report-html-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}
         path: "**/build/reports/tests/test/"
     - name: Upload JAR
       uses: actions/upload-artifact@v7

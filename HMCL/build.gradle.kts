@@ -48,9 +48,9 @@ if (buildNumber != null) {
     val shortCommit = System.getenv("GITHUB_SHA")?.lowercase()?.substring(0, 7)
     val additionalClassifier = System.getenv("ADDITIONAL_CLASSIFIER") ?: ""
     val suffix = if (additionalClassifier.isBlank()) {
-        "-$shortCommit"
+        "$shortCommit"
     } else {
-        "-$shortCommit-$additionalClassifier"
+        "$shortCommit-$additionalClassifier"
     }
     version = if (shortCommit.isNullOrBlank()) {
         "$versionRoot.SNAPSHOT"
