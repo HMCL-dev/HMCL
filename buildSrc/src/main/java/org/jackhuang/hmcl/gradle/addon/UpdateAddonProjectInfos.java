@@ -134,6 +134,11 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 String subName = cleanName(info.name.sub);
                 String abbr = cleanName(info.name.abbr);
 
+                // https://www.mcmod.cn/class/4112.html
+                if (projectType == AddonProjectType.MOD && mcmodId == 4112) {
+                    mainName = "20W14✨";
+                }
+
                 // https://www.mcmod.cn/class/4242.html
                 if (projectType == AddonProjectType.MOD && mcmodId == 4242) {
                     mainName = "钓\uD83D\uDC1F\uD83D\uDC20";
