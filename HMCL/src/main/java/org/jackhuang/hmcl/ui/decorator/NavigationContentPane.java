@@ -50,9 +50,9 @@ final class NavigationContentPane extends Region {
     }
 
     /// Replaces the candidate with an unowned page, using a snapshot of the navigator size.
-    /// Each request uses a temporary hidden container. CSS and layout are deferred
-    /// to scene pulses. The container survives the first content layout pass and
-    /// is removed and emptied on a later pass or when another candidate replaces it.
+    /// Reuses the pending hidden container when present. CSS and layout are deferred
+    /// to scene pulses. The container survives the first content layout pass for
+    /// each candidate and is removed and emptied on a later pass.
     ///
     /// Requires the JavaFX Application Thread and, for preparation to proceed,
     /// a scene that processes pulses. The caller must retain the page for reuse.
@@ -64,16 +64,16 @@ final class NavigationContentPane extends Region {
         if (page.getParent() != null || page.getScene() != null) {
             throw new IllegalArgumentException("Page already belongs to a parent or scene");
         }
-        if (preloadPane != null) {
-            disposePreloadPane(preloadPane);
+        if (preloadPane == null) {
+            preloadPane = new StackPane();
+            preloadPane.setVisible(false);
+            preloadPane.setManaged(false);
+            preloadPane.setMouseTransparent(true);
+            getChildren().add(0, preloadPane);
         }
-        preloadPane = new StackPane(page);
-        preloadPane.setVisible(false);
-        preloadPane.setManaged(false);
-        preloadPane.setMouseTransparent(true);
+        preloadPane.getChildren().setAll(page);
         preloadPane.resize(navigator.getWidth(), navigator.getHeight());
         preloadLayoutPending = true;
-        getChildren().add(0, preloadPane);
         requestLayout();
         return page;
     }
