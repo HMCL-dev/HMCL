@@ -111,13 +111,15 @@ public final class AboutPage extends SpinnerPane {
                         logicalPerPackage = cores.logical();
                         physicalPerPackage = cores.physical();
                     } else {
-                        logicalPerPackage = Runtime.getRuntime().availableProcessors();
-                        physicalPerPackage = logicalPerPackage;
+                        logicalPerPackage = 0;
+                        physicalPerPackage = 0;
                     }
                 }
 
                 String cpuName;
-                if (logicalPerPackage > 0 && logicalPerPackage != physicalPerPackage)
+                if (logicalPerPackage == 0) {
+                    cpuName = i18n("about.environment.cpu.name", cpu.getName());
+                } else if (logicalPerPackage > 0 && logicalPerPackage != physicalPerPackage)
                     cpuName = i18n("about.environment.cpu.name.cores.hyper_threading", cpu.getName(), physicalPerPackage, logicalPerPackage);
                 else
                     cpuName = i18n("about.environment.cpu.name.cores", cpu.getName(), physicalPerPackage);
