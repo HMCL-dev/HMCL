@@ -567,7 +567,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
         }
     }
 
-    private static class DownloadListCell extends ListCell<RemoteAddon> {
+    private static final class DownloadListCell extends ListCell<RemoteAddon> {
         private final DownloadListPage page;
         private final RemoteImageLoader iconLoader;
 
