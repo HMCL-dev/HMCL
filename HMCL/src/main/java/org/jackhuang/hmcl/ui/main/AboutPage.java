@@ -98,6 +98,11 @@ public final class AboutPage extends SpinnerPane {
                 CentralProcessor.Cores cores = cpu.getCores();
                 if (cores != null && cores.packages() > 1) {
                     cpuCount = cores.packages();
+
+                    // TODO: Usually, all CPUs on a multi-socket platform have the same core count, but environments
+                    // like Linux allow some cores to be offline, in which case cores and threads cannot be evenly
+                    // distributed. In the future, we may consider detecting the CPU topology in more detail to
+                    // handle this case correctly.
                     logicalPerPackage = cores.logical() / cores.packages();
                     physicalPerPackage = cores.physical() / cores.packages();
                 } else {
