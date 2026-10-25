@@ -328,13 +328,26 @@ public final class StringUtils {
         for (int i = 0; i < str.length(); ) {
             int ch = str.codePointAt(i);
 
-            if (ch >= 0x1F300 && ch <= 0x1FAFF)
+            if (isEmojiCodePoint(ch))
                 return true;
 
             i += Character.charCount(ch);
         }
 
         return false;
+    }
+
+    public static boolean isEmojiCodePoint(int codePoint) {
+        return codePoint >= 0x1F300 && codePoint <= 0x1FAFF;
+    }
+
+    public static String removeEmoji(String str) {
+        StringBuilder builder = new StringBuilder(str.length());
+        str.codePoints().forEach(codePoint -> {
+            if (!isEmojiCodePoint(codePoint))
+                builder.appendCodePoint(codePoint);
+        });
+        return builder.toString();
     }
 
     /// Check if the code point is a full-width character.
