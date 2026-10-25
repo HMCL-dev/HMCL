@@ -49,6 +49,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -70,6 +71,7 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Displays crash diagnostics and support information for a terminated game process.
 public class GameCrashWindow extends Stage {
     private final HMCLGameInstance gameInstance;
     private final String memory;
@@ -119,6 +121,7 @@ public class GameCrashWindow extends Stage {
         analyzeCrashReport();
     }
 
+    /// Analyzes console and file logs in the background, then displays the extracted diagnoses.
     @SuppressWarnings("unchecked")
     private void analyzeCrashReport() {
         loading.set(true);
@@ -126,7 +129,7 @@ public class GameCrashWindow extends Stage {
             String rawLog = logs.stream().map(Log::getLog).collect(Collectors.joining("\n"));
 
             // Get the crash-report from the crash-reports/xxx, or the output of console.
-            String crashReport = null;
+            @Nullable String crashReport = null;
             try {
                 crashReport = CrashReportAnalyzer.findCrashReport(rawLog);
             } catch (IOException e) {
@@ -183,20 +186,20 @@ public class GameCrashWindow extends Stage {
                     String message;
                     switch (result.rule()) {
                         case TOO_OLD_JAVA:
-                            message = i18n("game.crash.reason.too_old_java", CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.matcher().group("expected"))));
+                            message = i18n("game.crash.reason.too_old_java", CrashReportAnalyzer.getJavaVersionFromMajorVersion(Integer.parseInt(result.parameters().get("expected"))));
                             break;
                         case MOD_RESOLUTION_CONFLICT:
                         case MOD_RESOLUTION_MISSING:
                         case MOD_RESOLUTION_COLLECTION:
                             message = i18n("game.crash.reason." + result.rule().name().toLowerCase(Locale.ROOT),
-                                    translateFabricModId(result.matcher().group("sourcemod")),
-                                    parseFabricModId(result.matcher().group("destmod")),
-                                    parseFabricModId(result.matcher().group("destmod")));
+                                    translateFabricModId(result.parameters().get("sourcemod")),
+                                    parseFabricModId(result.parameters().get("destmod")),
+                                    parseFabricModId(result.parameters().get("destmod")));
                             break;
                         case MOD_RESOLUTION_MISSING_MINECRAFT:
                             message = i18n("game.crash.reason." + result.rule().name().toLowerCase(Locale.ROOT),
-                                    translateFabricModId(result.matcher().group("mod")),
-                                    result.matcher().group("version"));
+                                    translateFabricModId(result.parameters().get("mod")),
+                                    result.parameters().get("version"));
                             break;
                         case MOD_FOREST_OPTIFINE:
                         case TWILIGHT_FOREST_OPTIFINE:
@@ -208,8 +211,7 @@ public class GameCrashWindow extends Stage {
                             break;
                         default:
                             message = i18n("game.crash.reason." + result.rule().name().toLowerCase(Locale.ROOT),
-                                    Arrays.stream(result.rule().getGroupNames()).map(groupName -> result.matcher().group(groupName))
-                                            .toArray());
+                                    result.parameters().values().toArray());
                             break;
                     }
                     LOG.info("Crash cause: " + result.rule() + ": " + message);

@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.game;
 
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,11 +30,13 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/// Identifies known crash causes and extracts diagnostic information from game logs.
 public final class CrashReportAnalyzer {
 
     private CrashReportAnalyzer() {
     }
 
+    /// Known crash causes, with internal matching patterns and ordered diagnostic parameter names.
     public enum Rule {
         OPENJ9("(Open J9 is not supported|OpenJ9 is incompatible|\\.J9VMInternals\\.)"),
         NEED_JDK11("(no such method: sun\\.misc\\.Unsafe\\.defineAnonymousClass\\(Class,byte\\[\\],Object\\[\\]\\)Class/invokeVirtual|java\\.lang\\.UnsupportedClassVersionError: icyllis/modernui/forge/MixinConnector has been compiled by a more recent version of the Java Runtime \\(class file version 55\\.0\\), this version of the Java Runtime only recognizes class file versions up to 52\\.0|java\\.lang\\.IllegalArgumentException: The requested compatibility level JAVA_11 could not be set\\. Level is not supported by the active JRE or ASM version)"),
@@ -148,32 +152,42 @@ public final class CrashReportAnalyzer {
         RTSS_FOREST_SODIUM("RivaTuner Statistics Server \\(RTSS\\) is not compatible with Sodium");
 
 
+        /// Pattern used to locate the first occurrence of this crash cause.
         private final Pattern pattern;
-        private final String[] groupNames;
+        /// Named captures in the order expected by the translated crash message.
+        private final @Unmodifiable List<String> parameterNames;
 
-        Rule(@Language("RegExp") String pattern, String... groupNames) {
+        /// Compiles the rule and stores its diagnostic parameter order.
+        Rule(@Language("RegExp") String pattern, String... parameterNames) {
             this.pattern = Pattern.compile(pattern);
-            this.groupNames = groupNames;
-        }
-
-        public Pattern getPattern() {
-            return pattern;
-        }
-
-        public String[] getGroupNames() {
-            return groupNames;
+            this.parameterNames = List.of(parameterNames);
         }
     }
 
-    public record Result(Rule rule, String log, Matcher matcher) {
+    /// An immutable diagnosis that retains only the extracted information, not the source log or matching state.
+    ///
+    /// @param rule the identified crash cause
+    /// @param parameters named values in message argument order; an unmatched capture has a `null` value
+    @NotNullByDefault
+    public record Result(Rule rule, @Unmodifiable Map<String, @Nullable String> parameters) {
+        /// Copies the parameters while preserving their order and any unmatched captures.
+        public Result {
+            // Map.copyOf rejects null values and does not preserve message argument order.
+            parameters = Collections.unmodifiableMap(new LinkedHashMap<>(parameters));
+        }
     }
 
+    /// Returns one diagnosis per matching rule, using its first match and declared parameter order.
     public static Set<Result> analyze(String log) {
         Set<Result> results = new HashSet<>();
         for (Rule rule : Rule.values()) {
             Matcher matcher = rule.pattern.matcher(log);
             if (matcher.find()) {
-                results.add(new Result(rule, log, matcher));
+                Map<String, @Nullable String> parameters = new LinkedHashMap<>();
+                for (String name : rule.parameterNames) {
+                    parameters.put(name, matcher.group(name));
+                }
+                results.add(new Result(rule, parameters));
             }
         }
         return results;
