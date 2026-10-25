@@ -86,44 +86,68 @@ module.exports = async ({ github, context, core }) => {
     const reports = fs.readFileSync(reportsPath, "utf8").trim().split("\n").filter(Boolean);
     core.info(`Parsing ${reports.length} report line(s) from the static analysis output...`);
 
+    const reviewCommentIds = [];
+    core.info("Fetching history review comments...");
     try {
-        core.info("Delete history review comments...");
         for await (const item of github.paginate.iterator(github.rest.pulls.listReviewComments, {
             owner,
             repo,
             pull_number: PULL_REQUEST_NUMBER,
             per_page: 100
         })) {
-            const comments = item.data.filter(comment => comment.body && comment.body.startsWith(commentFlag) && comment.user && comment.user.id === 41898282);
-            for (const comment of comments) {
-                await github.rest.pulls.deleteReviewComment({
-                    owner,
-                    repo,
-                    comment_id: comment.id,
-                });
-                core.info(`Delete history review comment (${comment.id}).`);
-            }
+            reviewCommentIds.push(...item.data
+                .filter(comment => comment.body && comment.body.startsWith(commentFlag) && comment.user && comment.user.id === 41898282)
+                .map(comment => comment.id)
+            );
         }
+        core.info(`Found ${reviewCommentIds.length} history review comment(s) to delete.`);
+    } catch (error) {
+        core.warning(`Failed to fetch history review comments: ${error.message}`);
+    }
 
-        core.info("Delete history comments...");
+    for (const commentId of reviewCommentIds) {
+        try {
+            await github.rest.pulls.deleteReviewComment({
+                owner,
+                repo,
+                comment_id: commentId,
+            });
+            core.info(`Successfully deleted history review comment [${commentId}].`);
+        } catch (error) {
+            core.warning(`Failed to delete history review comment [${commentId}]: ${error.message}`);
+        }
+    }
+
+    const commentIds = [];
+    core.info("Fetching history comments...");
+    try {
         for await (const item of github.paginate.iterator(github.rest.issues.listComments, {
             owner,
             repo,
             issue_number: PULL_REQUEST_NUMBER,
             per_page: 100
         })) {
-            const comments = item.data.filter(comment => comment.body && comment.body.startsWith(commentFlag) && comment.user && comment.user.id === 41898282);
-            for (const comment of comments) {
-                await github.rest.issues.deleteComment({
-                    owner,
-                    repo,
-                    comment_id: comment.id,
-                });
-                core.info(`Delete history comment (${comment.id}).`);
-            }
+            commentIds.push(...item.data
+                .filter(comment => comment.body && comment.body.startsWith(commentFlag) && comment.user && comment.user.id === 41898282)
+                .map(comment => comment.id)
+            );
         }
+        core.info(`Found ${commentIds.length} history comment(s) to delete.`);
     } catch (error) {
-        core.warning(`Failed to fetch existing comments: ${error.message}`);
+        core.warning(`Failed to fetch history comments: ${error.message}`);
+    }
+
+    for (const commentId of commentIds) {
+        try {
+            await github.rest.issues.deleteComment({
+                owner,
+                repo,
+                comment_id: commentId,
+            });
+            core.info(`Successfully deleted history comment [${commentId}].`);
+        } catch (error) {
+            core.warning(`Failed to delete history comment [${commentId}]: ${error.message}`);
+        }
     }
 
     let commentCount = 0;
@@ -157,7 +181,7 @@ module.exports = async ({ github, context, core }) => {
             const codeText = code.value ? `[${code.value}] ` : "";
 
             try {
-                await github.rest.pulls.createReviewComment({
+                const createReviewCommentParam = {
                     owner,
                     repo,
                     pull_number: PULL_REQUEST_NUMBER,
@@ -165,10 +189,15 @@ module.exports = async ({ github, context, core }) => {
                     commit_id: run.head_sha,
                     path,
                     side: "RIGHT",
-                    line: endLine,
-                    start_side: "RIGHT",
-                    start_line: startLine
-                });
+                    line: endLine
+                };
+
+                if (startLine < endLine) {
+                    createReviewCommentParam.start_side = "RIGHT";
+                    createReviewCommentParam.start_line = startLine;
+                }
+
+                await github.rest.pulls.createReviewComment(createReviewCommentParam);
                 core.info("Successfully posted a new review comment to the pull request.");
                 commentCount += 1;
             } catch (error) {
