@@ -154,8 +154,6 @@ public final class Controllers {
     private static @Nullable GameInstancePage gameInstancePage;
 
     /// Creates and attaches the game-instance page for a layout pulse unless already cached.
-    ///
-    /// @throws NullPointerException if the page is absent and the main-window decorator is unavailable
     @FXThread
     public static void prepareGameInstancePage() {
         if (gameInstancePage == null) {
@@ -201,8 +199,6 @@ public final class Controllers {
     private static @Nullable LauncherSettingsPage settingsPage;
 
     /// Creates and attaches the settings page for a layout pulse unless already cached.
-    ///
-    /// @throws NullPointerException if the page is absent and the main-window decorator is unavailable
     @FXThread
     public static void prepareSettingsPage() {
         if (settingsPage == null) {
@@ -239,8 +235,6 @@ public final class Controllers {
     private static @Nullable DownloadPage downloadPage;
 
     /// Creates and attaches the download page for a layout pulse unless already cached.
-    ///
-    /// @throws NullPointerException if the page is absent and the main-window decorator is unavailable
     @FXThread
     public static void prepareDownloadPage() {
         if (downloadPage == null) {
