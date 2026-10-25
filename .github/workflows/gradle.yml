@@ -52,9 +52,16 @@ jobs:
       env:
         MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
         CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
-    - name: Get short SHA
+    - if: always()
+      name: Get short SHA
       shell: bash
       run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+    - if: failure()
+      name: Upload test report
+      uses: actions/upload-artifact@v7
+      with:
+        name: HMCL-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}-test-report-html
+        path: "**/build/reports/tests/test/"
     - name: Upload JAR
       uses: actions/upload-artifact@v7
       with:
