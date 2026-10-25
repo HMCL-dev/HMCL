@@ -37,15 +37,6 @@ public class TransitionPane extends StackPane {
     /// The requested page, or `null` before content is assigned.
     private @Nullable Node currentNode;
 
-    /// The running transition, or `null` while idle or preparing content.
-    private @Nullable Animation animation;
-
-    /// Restores temporary cache settings when a transition ends or is replaced.
-    private @Nullable Runnable restoreCache;
-
-    /// Identifies the latest request, including requests that do not animate.
-    private long transitionId;
-
     /// Creates an empty container that clips content to its bounds.
     public TransitionPane() {
         FXUtils.setOverflowHidden(this);
@@ -66,7 +57,7 @@ public class TransitionPane extends StackPane {
         setContent(newView, transition, duration, Motion.EASE);
     }
 
-    /// Replaces the content, cancelling any pending or running transition.
+    /// Replaces the content using the given animation and timing.
     /// The first page, repeated assignments of the current page, and replacements
     /// without animations are displayed immediately. Otherwise, CSS and layout
     /// are processed in this container before the animation starts in a later
@@ -74,8 +65,6 @@ public class TransitionPane extends StackPane {
     /// or running.
     public void setContent(Node newView, AnimationProducer transition,
                            Duration duration, Interpolator interpolator) {
-        long requestId = ++transitionId;
-        finishTransition();
         @Nullable Node previousNode = currentNode != newView && getWidth() > 0 && getHeight() > 0 ? currentNode : null;
         currentNode = newView;
 
@@ -90,62 +79,39 @@ public class TransitionPane extends StackPane {
         setMouseTransparent(true);
         transition.init(this, previousNode, newView);
 
+        @Nullable CacheHint cacheHint = newView instanceof Cacheable cacheable
+                ? cacheable.getCacheHint(transition)
+                : null;
+
+        if (cacheHint != null) {
+            newView.setCache(true);
+            newView.setCacheHint(cacheHint);
+        }
+
         // Let navigation handlers finish updating the page before preparing it.
         Platform.runLater(() -> {
-            if (requestId != transitionId) {
-                return;
-            }
-
             // runLater alone does not guarantee a CSS or layout pass. Keep that
             // first-use work outside the animation's elapsed time.
             applyCss();
             layout();
-            if (requestId != transitionId) {
-                return;
-            }
-
-            @Nullable CacheHint cacheHint = newView instanceof Cacheable cacheable
-                    ? cacheable.getCacheHint(transition)
-                    : null;
-            if (cacheHint != null) {
-                boolean wasCached = newView.isCache();
-                CacheHint previousHint = newView.getCacheHint();
-                restoreCache = () -> {
-                    newView.setCache(wasCached);
-                    newView.setCacheHint(previousHint);
-                };
-                newView.setCache(true);
-                newView.setCacheHint(cacheHint);
-            }
-
             Animation newAnimation = transition.animate(
                     this,
                     previousNode,
                     newView,
                     duration, interpolator);
             newAnimation.setOnFinished(e -> {
-                if (requestId == transitionId) {
-                    finishTransition();
+                setMouseTransparent(false);
+                if (previousNode != currentNode) {
                     getChildren().remove(previousNode);
                 }
+
+                if (cacheHint != null) {
+                    newView.setCache(false);
+                }
             });
-            animation = newAnimation;
-            newAnimation.play();
+            FXUtils.playAnimation(this, "transition_pane", newAnimation);
         });
 
-    }
-
-    /// Stops the active animation and restores input and temporary cache state.
-    private void finishTransition() {
-        if (animation != null) {
-            animation.stop();
-            animation = null;
-        }
-        if (restoreCache != null) {
-            restoreCache.run();
-            restoreCache = null;
-        }
-        setMouseTransparent(false);
     }
 
     /// Prepares page properties and creates animations for content replacements.
