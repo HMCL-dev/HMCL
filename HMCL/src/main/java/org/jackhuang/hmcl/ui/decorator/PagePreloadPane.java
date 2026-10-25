@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.decorator;
 
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -28,6 +29,9 @@ import org.jetbrains.annotations.NotNullByDefault;
 final class PagePreloadPane extends StackPane {
     /// Supplies the size captured when a page is prepared.
     private final Region viewport;
+
+    /// Identifies the latest preparation, including reuse of the same page.
+    private long preparationId;
 
     /// Creates a hidden layout root that samples the navigation viewport on each preparation.
     ///
@@ -45,6 +49,9 @@ final class PagePreloadPane extends StackPane {
     /// visibility, input, or layout properties.
     /// The viewport size is captured at this call. Later viewport resizing does
     /// not resize the hidden page; navigation lays it out at the current size.
+    /// After a layout pass, removal is queued on the JavaFX Application Thread.
+    /// The page is detached only if it is still this preparation's candidate.
+    /// Callers must retain the page if they want to reuse it after preparation.
     ///
     /// This method must be called on the JavaFX Application Thread. It does not
     /// synchronously apply CSS or layout, and preparation requires this pane
@@ -57,8 +64,24 @@ final class PagePreloadPane extends StackPane {
         if (page.getParent() != null || page.getScene() != null) {
             throw new IllegalArgumentException("Page already belongs to a parent or scene");
         }
+        preparationId++;
         resize(viewport.getWidth(), viewport.getHeight());
         getChildren().setAll(page);
         return page;
+    }
+
+    /// Lays out the candidate and defers its removal until descendant layout has finished.
+    @Override
+    protected void layoutChildren() {
+        super.layoutChildren();
+        if (getScene() != null && !getChildren().isEmpty()) {
+            Node page = getChildren().get(0);
+            long requestId = preparationId;
+            Platform.runLater(() -> {
+                if (requestId == preparationId && page.getParent() == this) {
+                    getChildren().remove(page);
+                }
+            });
+        }
     }
 }

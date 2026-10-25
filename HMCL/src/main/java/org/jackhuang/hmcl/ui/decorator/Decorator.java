@@ -331,7 +331,9 @@ public final class Decorator {
     /// The container retains at most one candidate and captures the navigation
     /// viewport's current size without following later resizes. CSS and layout
     /// preparation occur during normal scene pulses; this method does not wait
-    /// for preparation to finish.
+    /// for preparation to finish. After a layout pass the candidate is detached
+    /// in a queued task unless it has already moved elsewhere. The caller must
+    /// retain the page for subsequent navigation.
     ///
     /// This method must be called on the JavaFX Application Thread.
     ///
