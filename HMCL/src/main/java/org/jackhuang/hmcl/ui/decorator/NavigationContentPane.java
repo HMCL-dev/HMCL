@@ -32,7 +32,7 @@ final class NavigationContentPane extends StackPane {
     private final Region navigator;
 
     /// The temporary preparation container, or `null` while no candidate is pending.
-    private @Nullable PreloadPane preloadPane;
+    private @Nullable StackPane preloadPane;
 
     /// Creates a clipped content area containing the navigator.
     ///
@@ -59,43 +59,34 @@ final class NavigationContentPane extends StackPane {
             throw new IllegalArgumentException("Page already belongs to a parent or scene");
         }
         if (preloadPane != null) {
-            preloadPane.dispose();
+            disposePreloadPane(preloadPane);
         }
-        preloadPane = new PreloadPane(page);
+        preloadPane = new StackPane(page);
+        preloadPane.setVisible(false);
+        preloadPane.setManaged(false);
+        preloadPane.setMouseTransparent(true);
+        preloadPane.resize(navigator.getWidth(), navigator.getHeight());
         getChildren().add(0, preloadPane);
+        requestLayout();
         return page;
     }
 
-    /// Holds the candidate without affecting the content area's size or input handling.
-    @NotNullByDefault
-    private final class PreloadPane extends StackPane {
-        /// Creates an invisible layout root for the page at the navigator's current size.
-        ///
-        /// @param page the unowned candidate
-        private PreloadPane(Node page) {
-            setVisible(false);
-            setManaged(false);
-            setMouseTransparent(true);
-            resize(navigator.getWidth(), navigator.getHeight());
-            getChildren().setAll(page);
+    /// Lays out navigation content and queues candidate cleanup after descendant layout.
+    @Override
+    protected void layoutChildren() {
+        super.layoutChildren();
+        @Nullable StackPane candidate = preloadPane;
+        if (candidate != null && getScene() != null) {
+            Platform.runLater(() -> disposePreloadPane(candidate));
         }
+    }
 
-        /// Lays out the candidate and defers removal until descendant layout has finished.
-        @Override
-        protected void layoutChildren() {
-            super.layoutChildren();
-            if (getScene() != null) {
-                Platform.runLater(this::dispose);
-            }
-        }
-
-        /// Removes this container and releases its child and owner-held reference; repeated calls have no effect.
-        private void dispose() {
-            NavigationContentPane.this.getChildren().remove(this);
-            getChildren().clear();
-            if (preloadPane == this) {
-                preloadPane = null;
-            }
+    /// Removes and empties the specified container without affecting a newer candidate.
+    private void disposePreloadPane(StackPane candidate) {
+        getChildren().remove(candidate);
+        candidate.getChildren().clear();
+        if (preloadPane == candidate) {
+            preloadPane = null;
         }
     }
 }
