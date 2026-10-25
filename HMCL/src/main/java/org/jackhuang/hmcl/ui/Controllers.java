@@ -68,7 +68,7 @@ import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -87,29 +87,43 @@ import static org.jackhuang.hmcl.setting.SettingsManager.userState;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Provides shared launcher pages, main-window lifecycle operations, and dialogs.
+@NotNullByDefault
 public final class Controllers {
+    /// The shown-tip key for the minimum supported Java version.
     public static final String JAVA_VERSION_TIP = "javaVersion";
+    /// The shown-tip key for the disabled-JIT warning.
     public static final String JAVA_INTERPRETED_MODE_TIP = "javaInterpretedMode";
+    /// The shown-tip key for the software-rendering warning.
     public static final String SOFTWARE_RENDERING = "softwareRendering";
+    /// The shown-tip key storing the year of the April Fools prompt.
     public static final String APRIL_FOOLS = "aprilFools";
 
-    private static GameInstancePage gameInstancePage;
-    private static Lazy<GameListPage> gameListPage = new Lazy<>(GameListPage::new);
-    private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
+    /// The cached game-instance page, absent before creation and after shutdown.
+    private static @Nullable GameInstancePage gameInstancePage;
+    /// The lazy game-list page holder, cleared during shutdown.
+    private static @Nullable Lazy<GameListPage> gameListPage = new Lazy<>(GameListPage::new);
+    /// The lazy root-page holder, cleared during shutdown.
+    private static @Nullable Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     /// The coordinator for the main window's scene graph and navigation stack.
     private static @Nullable Decorator decorator;
 
-    private static DownloadPage downloadPage;
-    private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
+    /// The cached download page, absent before creation and after shutdown.
+    private static @Nullable DownloadPage downloadPage;
+    /// The lazy account page holder with shared account bindings, cleared during shutdown.
+    private static @Nullable Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
         accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
         accountListPage.accountsProperty().bindContent(Accounts.getAccounts());
         accountListPage.authServersProperty().bindContentBidirectional(getAuthlibInjectorServers());
         return accountListPage;
     });
-    private static LauncherSettingsPage settingsPage;
-    private static Lazy<TerracottaPage> terracottaPage = new Lazy<>(TerracottaPage::new);
+    /// The cached settings page, absent before creation and after shutdown.
+    private static @Nullable LauncherSettingsPage settingsPage;
+    /// The lazy Terracotta page holder, cleared during shutdown.
+    private static @Nullable Lazy<TerracottaPage> terracottaPage = new Lazy<>(TerracottaPage::new);
 
+    /// Prevents instantiation of this utility class.
     private Controllers() {
     }
 
@@ -125,6 +139,7 @@ public final class Controllers {
     /// The shared launcher title, populated during UI initialization.
     private static @Nullable StringProperty launcherTitle;
 
+    /// Returns the shared launcher title, creating it and scheduling integrity verification if needed.
     public static ReadOnlyStringProperty launcherTitleProperty() {
         if (launcherTitle == null) {
             launcherTitle = new SimpleStringProperty(Controllers.class, "launcherTitle", Metadata.OFFICIAL_BUILD
@@ -168,6 +183,7 @@ public final class Controllers {
         }
     }
 
+    /// Returns the cached game-instance page, creating it if necessary.
     @FXThread
     public static GameInstancePage getGameInstancePage() {
         if (gameInstancePage == null) {
@@ -176,11 +192,13 @@ public final class Controllers {
         return gameInstancePage;
     }
 
+    /// Returns the lazily created game-list page. Must be called before shutdown.
     @FXThread
     public static GameListPage getGameListPage() {
         return gameListPage.get();
     }
 
+    /// Returns the lazily created root page. Must be called before shutdown.
     @FXThread
     public static RootPage getRootPage() {
         return rootPage.get();
@@ -194,6 +212,7 @@ public final class Controllers {
         }
     }
 
+    /// Returns the cached settings page, creating it if necessary.
     @FXThread
     public static LauncherSettingsPage getSettingsPage() {
         if (settingsPage == null) {
@@ -202,6 +221,7 @@ public final class Controllers {
         return settingsPage;
     }
 
+    /// Returns the lazily created account page. Must be called before shutdown.
     @FXThread
     public static AccountListPage getAccountListPage() {
         return accountListPage.get();
@@ -215,6 +235,7 @@ public final class Controllers {
         }
     }
 
+    /// Returns the cached download page, creating it if necessary.
     @FXThread
     public static DownloadPage getDownloadPage() {
         if (downloadPage == null) {
@@ -223,6 +244,7 @@ public final class Controllers {
         return downloadPage;
     }
 
+    /// Returns the lazily created Terracotta page. Must be called before shutdown.
     @FXThread
     public static Node getTerracottaPage() {
         return terracottaPage.get();
@@ -315,7 +337,7 @@ public final class Controllers {
         }
 
         if (JavaRuntime.CURRENT_VERSION < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
-            Number shownTipVersion = null;
+            @Nullable Number shownTipVersion = null;
             try {
                 shownTipVersion = (Number) state().getShownTips().get(JAVA_VERSION_TIP);
             } catch (ClassCastException e) {
@@ -323,7 +345,7 @@ public final class Controllers {
             }
             if (shownTipVersion == null || shownTipVersion.intValue() < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
                 MessageDialogPane.Builder builder = new MessageDialogPane.Builder(i18n("fatal.deprecated_java_version"), null, MessageType.WARNING);
-                String downloadLink = Metadata.getSuggestedJavaDownloadLink();
+                @Nullable String downloadLink = Metadata.getSuggestedJavaDownloadLink();
                 if (downloadLink != null)
                     builder.addHyperLink(
                             i18n("fatal.deprecated_java_version.download_link", Metadata.RECOMMENDED_JAVA_VERSION),
@@ -382,7 +404,7 @@ public final class Controllers {
             if (!I18n.getLocale().getLocale().getLanguage().equals("zh"))
                 break aprilFools;
 
-            SupportedLocale lzh = SupportedLocale.getSupportedLocales().stream()
+            @Nullable SupportedLocale lzh = SupportedLocale.getSupportedLocales().stream()
                     .filter(locale -> "lzh".equals(locale.getName()))
                     .findFirst().orElse(null);
 
@@ -456,32 +478,44 @@ public final class Controllers {
         );
     }
 
+    /// Shows the content if a main-window decorator is available; otherwise does nothing.
     public static void dialog(Region content) {
         if (decorator != null)
             decorator.showDialog(content);
     }
 
+    /// Shows an informational message with the default title. See [#dialog(Region)].
     public static void dialog(String text) {
         dialog(text, null);
     }
 
-    public static void dialog(String text, String title) {
+    /// Shows a message with an optional title. A null title uses the message type's default title.
+    /// Callbacks, when supplied, may be null. See [#dialog(Region)].
+    public static void dialog(String text, @Nullable String title) {
         dialog(text, title, MessageType.INFO);
     }
 
-    public static void dialog(String text, String title, MessageType type) {
+    /// Shows a message with an optional title. A null title uses the message type's default title.
+    /// Callbacks, when supplied, may be null. See [#dialog(Region)].
+    public static void dialog(String text, @Nullable String title, MessageType type) {
         dialog(text, title, type, null);
     }
 
-    public static void dialog(String text, String title, MessageType type, Runnable ok) {
+    /// Shows a message with an optional title. A null title uses the message type's default title.
+    /// Callbacks, when supplied, may be null. See [#dialog(Region)].
+    public static void dialog(String text, @Nullable String title, MessageType type, @Nullable Runnable ok) {
         dialog(new MessageDialogPane.Builder(text, title, type).ok(ok).build());
     }
 
-    public static void confirm(String text, String title, Runnable yes, Runnable no) {
+    /// Shows a confirmation message with optional yes and no actions.
+    /// A null title uses the message type's default title. See [#dialog(Region)].
+    public static void confirm(String text, @Nullable String title, @Nullable Runnable yes, @Nullable Runnable no) {
         confirm(text, title, MessageType.QUESTION, yes, no);
     }
 
-    public static void confirm(String text, String title, MessageType type, Runnable yes, Runnable no) {
+    /// Shows a confirmation message with optional yes and no actions.
+    /// A null title uses the message type's default title. See [#dialog(Region)].
+    public static void confirm(String text, @Nullable String title, MessageType type, @Nullable Runnable yes, @Nullable Runnable no) {
         dialog(new MessageDialogPane.Builder(text, title, type).yesOrNo(yes, no).build());
     }
 
@@ -508,15 +542,23 @@ public final class Controllers {
                 .build());
     }
 
-    public static void confirmAction(String text, String title, MessageType type, ButtonBase actionButton) {
+    /// Shows a confirmation message with the supplied action button and a cancel button.
+    /// A null title uses the message type's default title; the cancel callback may be null. See [#dialog(Region)].
+    public static void confirmAction(String text, @Nullable String title, MessageType type, ButtonBase actionButton) {
         dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, null).build());
     }
 
-    public static void confirmAction(String text, String title, MessageType type, ButtonBase actionButton, Runnable cancel) {
+    /// Shows a confirmation message with the supplied action button and a cancel button.
+    /// A null title uses the message type's default title; the cancel callback may be null. See [#dialog(Region)].
+    public static void confirmAction(String text, @Nullable String title, MessageType type, ButtonBase actionButton, @Nullable Runnable cancel) {
         dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, cancel).build());
     }
 
-    public static void confirmWithCountdown(String text, String title, int seconds, MessageType messageType,
+    /// Shows a confirmation dialog whose OK button is disabled for the specified number of seconds.
+    /// A null title uses the message type's default title; callbacks may be null. See [#dialog(Region)].
+    ///
+    /// @throws IllegalArgumentException if the number of seconds is not positive
+    public static void confirmWithCountdown(String text, @Nullable String title, int seconds, MessageType messageType,
                                             @Nullable Runnable ok, @Nullable Runnable cancel) {
         if (seconds <= 0)
             throw new IllegalArgumentException("Seconds must be greater than 0");
@@ -548,28 +590,38 @@ public final class Controllers {
         timeline.play();
     }
 
+    /// Queues the content for display if a main-window decorator is available; otherwise does nothing.
     public static void dialogLater(Region content) {
         if (decorator != null)
             decorator.showDialogLater(content);
     }
 
-    public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {
+    /// Shows a text prompt and returns its future, completed when the result callback resolves.
+    /// Closing the prompt without resolving leaves the future incomplete. The title may be null.
+    /// The initial value and validator array, when supplied, may be null. See [#dialog(Region)].
+    public static CompletableFuture<String> prompt(@Nullable String title, FutureCallback<String> onResult) {
         return prompt(title, onResult, "");
     }
 
-    public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult, String initialValue, ValidatorBase... validators) {
+    /// Shows a text prompt and returns its future, completed when the result callback resolves.
+    /// Closing the prompt without resolving leaves the future incomplete. The title may be null.
+    /// The initial value and validator array, when supplied, may be null. See [#dialog(Region)].
+    public static CompletableFuture<String> prompt(@Nullable String title, FutureCallback<String> onResult, @Nullable String initialValue, ValidatorBase @Nullable ... validators) {
         InputDialogPane pane = new InputDialogPane(title, initialValue, onResult, validators);
         dialog(pane);
         return pane.getCompletableFuture();
     }
 
+    /// Shows the supplied questions and returns the dialog's completion future. See [#dialog(Region)].
     public static CompletableFuture<List<PromptDialogPane.Builder.Question<?>>> prompt(PromptDialogPane.Builder builder) {
         PromptDialogPane pane = new PromptDialogPane(builder);
         dialog(pane);
         return pane.getCompletableFuture();
     }
 
-    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, String title, @NotNull TaskCancellationAction onCancel) {
+    /// Creates and shows a dialog for the executor without starting it.
+    /// The title may be null. See [#dialog(Region)].
+    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, @Nullable String title, TaskCancellationAction onCancel) {
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
         pane.setTitle(title);
         pane.setExecutor(executor);
@@ -577,21 +629,26 @@ public final class Controllers {
         return pane;
     }
 
-    public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, @NotNull TaskCancellationAction onCancel) {
+    /// Creates and shows a dialog for the task, then starts its executor.
+    /// The title may be null. See [#dialog(Region)].
+    public static TaskExecutorDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel) {
         TaskExecutor executor = task.executor();
         TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
         executor.start();
         return pane;
     }
 
+    /// Navigates to the node using the standard navigation animation. Requires an initialized decorator.
     public static void navigate(Node node) {
         decorator.navigate(node, ContainerAnimations.NAVIGATION, Motion.SHORT4, Motion.EASE);
     }
 
+    /// Navigates to the node using the forward animation. Requires an initialized decorator.
     public static void navigateForward(Node node) {
         decorator.navigate(node, ContainerAnimations.FORWARD, Motion.SHORT4, Motion.EASE);
     }
 
+    /// Shows a toast in the main window. Requires an initialized decorator.
     public static void showToast(String content) {
         decorator.showToast(content);
     }
@@ -628,6 +685,7 @@ public final class Controllers {
         return FileUtils.toPaths(fileChooser.showOpenMultipleDialog(getStage()));
     }
 
+    /// Dispatches supported hmcl links or opens other links externally; ignores unknown internal links.
     public static void onHyperlinkAction(String href) {
         if (href.startsWith("hmcl://")) {
             switch (href) {
@@ -645,11 +703,13 @@ public final class Controllers {
         }
     }
 
+    /// Offers to open the URI externally or copy it to the clipboard; does nothing for null.
     public static void openUriOrCopy(@Nullable URI url) {
         if (url == null) return;
         openUriOrCopy(url.toString());
     }
 
+    /// Offers to open the URI externally or copy it to the clipboard; does nothing for null.
     public static void openUriOrCopy(@Nullable String url) {
         if (url == null) return;
         var dialog = new MessageDialogPane.Builder(
@@ -663,6 +723,7 @@ public final class Controllers {
         dialog(dialog);
     }
 
+    /// Returns whether no main-window decorator is retained, including before initialization and after shutdown.
     public static boolean isStopped() {
         return decorator == null;
     }
@@ -682,8 +743,10 @@ public final class Controllers {
         FXUtils.shutdown();
     }
 
+    /// Whether heap trimming is enabled; disabled by an HMCL_AUTO_TRIM_HEAP value equal to false, ignoring case.
     public static final boolean AUTO_TRIM_HEAP = !"false".equalsIgnoreCase(System.getenv("HMCL_AUTO_TRIM_HEAP"));
 
+    /// Requests garbage collection if [#AUTO_TRIM_HEAP] is enabled.
     public static void trimHeap() {
         if (AUTO_TRIM_HEAP) {
             System.gc();
