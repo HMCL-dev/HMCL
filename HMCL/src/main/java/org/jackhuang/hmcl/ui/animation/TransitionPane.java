@@ -18,12 +18,16 @@
 package org.jackhuang.hmcl.ui.animation;
 
 import javafx.animation.Animation;
+import javafx.animation.AnimationTimer;
 import javafx.animation.Interpolator;
 import javafx.application.Platform;
 import javafx.scene.CacheHint;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Window;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -36,6 +40,9 @@ public class TransitionPane extends StackPane {
 
     /// The requested page, or `null` before content is assigned.
     private @Nullable Node currentNode;
+
+    /// The pending or running transition, or `null` when content is settled.
+    private @Nullable AnimationTimer activeTransition;
 
     /// Creates an empty container that clips content to its bounds.
     public TransitionPane() {
@@ -59,16 +66,28 @@ public class TransitionPane extends StackPane {
 
     /// Replaces the content using the given animation and timing.
     /// The first page, repeated assignments of the current page, and replacements
-    /// without animations are displayed immediately. Otherwise, CSS and layout
-    /// are processed in this container before the animation starts in a later
-    /// event-loop task. Mouse input is disabled while the transition is pending
-    /// or running.
+    /// without animations are displayed immediately, as are replacements outside
+    /// a showing window. Otherwise, playback waits for a scene post-layout
+    /// notification and for layout requests on the new page root and its
+    /// ancestors to be processed. This does not imply that all descendants or
+    /// asynchronous content updates have finished requesting layout.
+    /// Mouse input is disabled while
+    /// the transition is pending or running. A subsequent replacement cancels
+    /// the preceding transition. Detaching the container or hiding its window
+    /// settles the requested page on the next animation pulse.
     public void setContent(Node newView, AnimationProducer transition,
                            Duration duration, Interpolator interpolator) {
+        if (activeTransition != null) {
+            activeTransition.stop();
+        }
         @Nullable Node previousNode = currentNode != newView && getWidth() > 0 && getHeight() > 0 ? currentNode : null;
         currentNode = newView;
 
-        if (!AnimationUtils.isAnimationEnabled() || previousNode == null || transition == ContainerAnimations.NONE) {
+        @Nullable Scene scene = getScene();
+        @Nullable Window window = scene == null ? null : scene.getWindow();
+
+        if (!AnimationUtils.isAnimationEnabled() || previousNode == null || transition == ContainerAnimations.NONE
+                || window == null || !window.isShowing()) {
             AnimationUtils.reset(newView, true);
             getChildren().setAll(newView);
             return;
@@ -76,42 +95,115 @@ public class TransitionPane extends StackPane {
 
         getChildren().setAll(previousNode, newView);
 
-        setMouseTransparent(true);
-        transition.init(this, previousNode, newView);
-
+        boolean originalCache = newView.isCache();
+        CacheHint originalCacheHint = newView.getCacheHint();
+        boolean originalMouseTransparent = isMouseTransparent();
         @Nullable CacheHint cacheHint = newView instanceof Cacheable cacheable
-                ? cacheable.getCacheHint(transition)
-                : null;
+                ? cacheable.getCacheHint(transition) : null;
 
-        if (cacheHint != null) {
-            newView.setCache(true);
-            newView.setCacheHint(cacheHint);
-        }
+        AnimationTimer timer = new AnimationTimer() {
+            /// Whether the scene has reported a CSS and layout pass since registration.
+            private boolean prepared;
+            /// Whether the one-shot post-layout listener is registered.
+            private boolean waitingForLayout;
+            /// Records completion without modifying the scene graph during post-layout.
+            private final Runnable layoutListener = this::layoutCompleted;
+            /// The animation created after preparation, or `null` before playback.
+            private @Nullable Animation animation;
 
-        // Let navigation handlers finish updating the page before preparing it.
-        Platform.runLater(() -> {
-            // runLater alone does not guarantee a CSS or layout pass. Keep that
-            // first-use work outside the animation's elapsed time.
-            applyCss();
-            layout();
-            Animation newAnimation = transition.animate(
-                    this,
-                    previousNode,
-                    newView,
-                    duration, interpolator);
-            newAnimation.setOnFinished(e -> {
-                setMouseTransparent(false);
-                if (previousNode != currentNode) {
-                    getChildren().remove(previousNode);
+            /// Records a completed scene pass and removes the one-shot listener.
+            private void layoutCompleted() {
+                scene.removePostLayoutPulseListener(layoutListener);
+                waitingForLayout = false;
+                prepared = true;
+            }
+
+            /// Waits for observed layout completion and settles detached or hidden content.
+            @Override
+            public void handle(long now) {
+                if (activeTransition != this) {
+                    return;
                 }
+                if (getScene() != scene || scene.getWindow() != window || !window.isShowing()) {
+                    stop();
+                    return;
+                }
+                if (animation == null) {
+                    if (!prepared || needsLayout(newView)) {
+                        prepared = false;
+                        if (!waitingForLayout) {
+                            waitingForLayout = true;
+                            scene.addPostLayoutPulseListener(layoutListener);
+                            Platform.requestNextPulse();
+                        }
+                        return;
+                    }
+                    try {
+                        animation = transition.animate(TransitionPane.this, previousNode, newView, duration, interpolator);
+                        if (activeTransition != this) {
+                            return;
+                        }
+                        animation.setOnFinished(e -> stop());
+                        animation.play();
+                    } catch (RuntimeException | Error e) {
+                        stop();
+                        throw e;
+                    }
+                }
+            }
 
+            /// Releases this transition and restores its page and temporary settings.
+            @Override
+            public void stop() {
+                super.stop();
+                if (activeTransition != this) {
+                    return;
+                }
+                activeTransition = null;
+                scene.removePostLayoutPulseListener(layoutListener);
+                if (animation != null && animation.getStatus() != Animation.Status.STOPPED) {
+                    animation.stop();
+                }
                 if (cacheHint != null) {
-                    newView.setCache(false);
+                    newView.setCache(originalCache);
+                    newView.setCacheHint(originalCacheHint);
                 }
-            });
-            FXUtils.playAnimation(this, "transition_pane", newAnimation);
-        });
+                AnimationUtils.reset(newView, true);
+                getChildren().removeIf(node -> node != newView);
+                setMouseTransparent(originalMouseTransparent);
+            }
+        };
+        activeTransition = timer;
+        try {
+            setMouseTransparent(true);
+            transition.init(this, previousNode, newView);
+            if (activeTransition != timer) {
+                return;
+            }
+            if (cacheHint != null) {
+                newView.setCache(true);
+                newView.setCacheHint(cacheHint);
+            }
+            timer.start();
+        } catch (RuntimeException | Error e) {
+            timer.stop();
+            throw e;
+        }
+    }
 
+    /// Tests pending layout on the page root and its ancestors.
+    private static boolean needsLayout(Node page) {
+        // Virtualized controls may retain dirty internal nodes even after layout.
+        // Only the page root and ancestors determine whether to await another pass.
+        if (page instanceof Parent parent && parent.isNeedsLayout()) {
+            return true;
+        }
+        for (@Nullable Parent parent = page.getParent(); parent != null; parent = parent.getParent()) {
+            if (parent.isNeedsLayout()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// Prepares page properties and creates animations for content replacements.
