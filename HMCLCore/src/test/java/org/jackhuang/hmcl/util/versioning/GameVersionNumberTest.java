@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Supplier;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.jackhuang.hmcl.util.versioning.GameVersionNumber.asGameVersion;
 import static org.jackhuang.hmcl.util.versioning.GameVersionNumber.getReleaseOfSnapshot;
 import static org.junit.jupiter.api.Assertions.*;
@@ -82,8 +83,8 @@ public final class GameVersionNumberTest {
             for (int j = 0; j < i; j++) {
                 GameVersionNumber version2 = gameVersionNumbers[j];
 
-                assertTrue(version1.compareTo(version2) > 0, errorMessage(version1, version2));
-                assertTrue(version2.compareTo(version1) < 0, errorMessage(version1, version2));
+                assertThat(version1).overridingErrorMessage(errorMessage(version1, version2)).isGreaterThan(version2);
+                assertThat(version2).overridingErrorMessage(errorMessage(version1, version2)).isLessThan(version1);
                 assertNotEquals(version1, version2, errorMessage(version1, version2));
                 assertNotEquals(version2, version1, errorMessage(version1, version2));
             }
@@ -93,8 +94,8 @@ public final class GameVersionNumberTest {
             for (int j = i + 1; j < versions.length; j++) {
                 GameVersionNumber version2 = gameVersionNumbers[j];
 
-                assertTrue(version1.compareTo(version2) < 0, errorMessage(version1, version2));
-                assertTrue(version2.compareTo(version1) > 0, errorMessage(version1, version2));
+                assertThat(version1).overridingErrorMessage(errorMessage(version1, version2)).isLessThan(version2);
+                assertThat(version2).overridingErrorMessage(errorMessage(version1, version2)).isGreaterThan(version1);
                 assertNotEquals(version1, version2, errorMessage(version1, version2));
                 assertNotEquals(version2, version1, errorMessage(version1, version2));
             }

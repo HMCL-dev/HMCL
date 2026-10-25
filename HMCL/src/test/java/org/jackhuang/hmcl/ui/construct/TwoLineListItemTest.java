@@ -55,7 +55,7 @@ public final class TwoLineListItemTest {
             item.addTag("Fabric");
             layout(parent, 800);
             assertTagsVisible(item);
-            assertTrue(item.getWidth() > originalWidth);
+            assertThat(item.getWidth()).isGreaterThan(originalWidth);
 
             item.addTag("NeoForge");
             item.addTag("Quilt");
@@ -66,7 +66,7 @@ public final class TwoLineListItemTest {
             item.getTags().get(0).setText("A longer loader tag");
             layout(parent, 800);
             assertTagsVisible(item);
-            assertTrue(item.getWidth() > taggedWidth);
+            assertThat(item.getWidth()).isGreaterThan(taggedWidth);
 
             item.getTags().clear();
             layout(parent, 800);
@@ -76,7 +76,7 @@ public final class TwoLineListItemTest {
             item.setSubtitle("A subtitle that is wider than the title and its loader tag");
             layout(parent, 800);
             assertTagsVisible(item);
-            assertTrue(item.getSubtitleLabel().getWidth() >= item.getSubtitleLabel().prefWidth(-1));
+            assertThat(item.getSubtitleLabel().getWidth()).isGreaterThanOrEqualTo(item.getSubtitleLabel().prefWidth(-1));
         });
     }
 

@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.util.*;
 import java.util.function.Supplier;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.jackhuang.hmcl.util.versioning.VersionNumber.isIntVersionNumber;
 import static org.jackhuang.hmcl.util.versioning.VersionNumber.normalize;
 import static org.junit.jupiter.api.Assertions.*;
@@ -69,13 +70,11 @@ public class VersionNumberTest {
     }
 
     private static void assertLessThan(String s1, String s2) {
-        Supplier<String> messageSupplier = () -> String.format("%s should be less than %s", s1, s2);
-
         VersionNumber v1 = VersionNumber.asVersion(s1);
         VersionNumber v2 = VersionNumber.asVersion(s2);
 
-        assertTrue(v1.compareTo(v2) < 0, messageSupplier);
-        assertTrue(v2.compareTo(v1) > 0, messageSupplier);
+        assertThat(v1).isLessThan(v2);
+        assertThat(v2).isGreaterThan(v1);
     }
 
     @Test
