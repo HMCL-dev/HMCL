@@ -171,13 +171,10 @@ public final class MonitorLauncher {
                     if (listener == null)
                         return;
 
-                    if (msg instanceof MonitorProtocol.MonitorMessage.Log log) {
+                    if (msg instanceof MonitorProtocol.MonitorMessage.Log log)
                         listener.onLog(log.line(), log.isErrorStream());
-                    } else if (msg instanceof MonitorProtocol.MonitorMessage.Exit exit) {
-                        process.handleExit(() -> { // if we are still alive and can handle exit
-                            listener.onExit(exit.exitCode(), exit.exitType());
-                        });
-                    }
+                    else if (msg instanceof MonitorProtocol.MonitorMessage.Exit exit)
+                        process.handleExit(() -> listener.onExit(exit.exitCode(), exit.exitType()));
                 });
             } catch (IOException e) {
                 LOG.error("IOException occurred during communicating with HMCL monitor.", e);
@@ -186,9 +183,7 @@ public final class MonitorLauncher {
                 LOG.error("Monitor exited without sending game process exiting message, handling exit ourselves. Game exit info will be unavailable.");
                 ProcessHandle h = process.handle();
                 if (h != null && h.isAlive() && listener != null) {
-                    h.onExit().thenRun(() -> process.handleExit(() -> {
-                        listener.onExit(-1, ProcessListener.ExitType.APPLICATION_ERROR);
-                    }));
+                    h.onExit().thenRun(() -> process.handleExit(() -> listener.onExit(-1, ProcessListener.ExitType.APPLICATION_ERROR)));
                 }
             }
         }, "hmcl-monitor-reader", true);
