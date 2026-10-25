@@ -93,7 +93,7 @@ public final class TwoLineListItemTest {
 
             assertEquals(252, item.getWidth(), 0.001);
             assertEquals(item.getWidth(), item.getTitleLabel().getWidth(), 0.001);
-            assertTrue(item.getBoundsInParent().getMaxX() - parent.getWidth() <= 1);
+            assertTrue(item.getBoundsInParent().getMaxX() <= parent.getWidth());
             if (wrapText) {
                 assertTrue(item.getTitleLabel().getHeight() > item.getTitleLabel().prefHeight(-1));
             }
