@@ -136,6 +136,73 @@ public class ProcessorReuseTest {
         assertFalse(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
     }
 
+    /// Records the srg jar written by SpecialSource through `--out-jar`, which Forge 1.13–1.16.5
+    /// profiles declare no outputs for.
+    @Test
+    public void testSidecarRecordsSpecialSourceOutput(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        Path slim = writeFile(tempDirectory.resolve("slim.jar"), "slim");
+        Path extra = writeFile(tempDirectory.resolve("extra.jar"), "extra");
+        Path srg = writeFile(tempDirectory.resolve("srg.jar"), "srg");
+        Path installer = writeFile(tempDirectory.resolve("installer.jar"), "installer");
+        List<Processor> processors = List.of(jarsplitter(), specialSource(), binaryPatcher());
+        Map<String, String> vars = Map.of(
+                "PATCHED", patched.toString(),
+                "MC_SLIM", slim.toString(),
+                "MC_EXTRA", extra.toString(),
+                "MC_SRG", srg.toString());
+
+        ProcessorReuse.writeSidecar(processors, vars, installer);
+        assertTrue(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
+
+        Files.delete(srg);
+        assertFalse(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
+    }
+
+    /// Records the srg jar written by vignette through `--jar-out`, which Forge 1.17.1 profiles
+    /// declare no outputs for. Uses the `--option=value` form.
+    @Test
+    public void testSidecarRecordsVignetteOutput(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        Path slim = writeFile(tempDirectory.resolve("slim.jar"), "slim");
+        Path extra = writeFile(tempDirectory.resolve("extra.jar"), "extra");
+        Path srg = writeFile(tempDirectory.resolve("srg.jar"), "srg");
+        Path installer = writeFile(tempDirectory.resolve("installer.jar"), "installer");
+        List<Processor> processors = List.of(jarsplitter(), vignette(), binaryPatcher());
+        Map<String, String> vars = Map.of(
+                "PATCHED", patched.toString(),
+                "MC_SLIM", slim.toString(),
+                "MC_EXTRA", extra.toString(),
+                "MC_SRG", srg.toString());
+
+        ProcessorReuse.writeSidecar(processors, vars, installer);
+        assertTrue(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
+
+        Files.delete(srg);
+        assertFalse(ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer));
+    }
+
+    /// Refuses to skip a chain whose remapping output has no declared checksum, even when every
+    /// other declared artifact still matches.
+    @Test
+    public void testDeclaredChecksumRejectsUnverifiableSpecialSourceOutput(@TempDir Path tempDirectory) throws IOException {
+        Path patched = writeFile(tempDirectory.resolve("patched.jar"), "patched");
+        Path slim = writeFile(tempDirectory.resolve("slim.jar"), "slim");
+        Path extra = writeFile(tempDirectory.resolve("extra.jar"), "extra");
+        Path srg = writeFile(tempDirectory.resolve("srg.jar"), "srg");
+        List<Processor> processors = List.of(jarsplitter(), specialSource(), binaryPatcher());
+        Map<String, String> vars = Map.of(
+                "PATCHED", patched.toString(),
+                "PATCHED_SHA", DigestUtils.digestToString("SHA-1", patched),
+                "MC_SLIM", slim.toString(),
+                "MC_SLIM_SHA", DigestUtils.digestToString("SHA-1", slim),
+                "MC_EXTRA", extra.toString(),
+                "MC_EXTRA_SHA", DigestUtils.digestToString("SHA-1", extra),
+                "MC_SRG", srg.toString());
+
+        assertFalse(ProcessorReuse.canReuseDeclaredArtifacts(processors, vars));
+    }
+
     /// Rejects a chain whose artifacts are not all covered by a declared checksum.
     @Test
     public void testDeclaredChecksumRequiresEveryArtifact(@TempDir Path tempDirectory) throws IOException {
@@ -212,6 +279,31 @@ public class ProcessorReuseTest {
                 List.of(),
                 List.of("--input", "{MINECRAFT_JAR}", "--slim", "{MC_SLIM}", "--extra", "{MC_EXTRA}",
                         "--srg", "{MERGED_MAPPINGS}"),
+                Map.of());
+    }
+
+    /// Creates a SpecialSource processor, which writes the srg jar through `--out-jar`.
+    ///
+    /// @return the processor
+    private static Processor specialSource() {
+        return new Processor(
+                List.of("client"),
+                Artifact.fromDescriptor("net.md-5:SpecialSource:1.8.5"),
+                List.of(),
+                List.of("--in-jar", "{MC_SLIM}", "--out-jar", "{MC_SRG}", "--srg-in", "{MAPPINGS}"),
+                Map.of());
+    }
+
+    /// Creates a vignette processor, which writes the srg jar through `--jar-out`.
+    ///
+    /// @return the processor
+    private static Processor vignette() {
+        return new Processor(
+                List.of("client"),
+                Artifact.fromDescriptor("net.minecraftforge.lex:vignette:0.2.0.16"),
+                List.of(),
+                List.of("--jar-in", "{MC_SLIM}", "--jar-out={MC_SRG}", "--mapping-format", "tsrg2",
+                        "--mappings", "{MERGED_MAPPINGS}"),
                 Map.of());
     }
 

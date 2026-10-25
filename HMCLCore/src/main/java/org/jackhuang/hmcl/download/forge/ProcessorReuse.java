@@ -253,8 +253,10 @@ public final class ProcessorReuse {
     /// this class cannot name.
     ///
     /// A processor contributes the keys of its declared outputs, the value of an `--output`
-    /// argument, and, for jarsplitter, the values of `--slim` and `--extra`. NeoForge declares
-    /// neither outputs nor checksums, so its artifacts can only be found this way.
+    /// argument, and the path arguments of the tools that name their output differently:
+    /// jarsplitter's `--slim` and `--extra`, SpecialSource's `--out-jar`, and vignette's
+    /// `--jar-out`. NeoForge declares neither outputs nor checksums, so its artifacts can only
+    /// be found this way; Forge 1.13–1.16.5 and 1.17.1 declare none for their remapping step.
     ///
     /// @param processors the client-side processors
     /// @param vars       the resolved install-profile variables
@@ -293,6 +295,8 @@ public final class ProcessorReuse {
         List<String> args = processor.getArgs();
         Set<String> targets = new LinkedHashSet<>();
         boolean jarsplitter = processor.getJar().getName().contains("jarsplitter");
+        boolean specialSource = "SpecialSource".equals(processor.getJar().getName());
+        boolean vignette = "vignette".equals(processor.getJar().getName());
         for (int i = 0; i < args.size(); i++) {
             String arg = args.get(i);
             int separator = arg.indexOf('=');
@@ -315,6 +319,18 @@ public final class ProcessorReuse {
                 case "slim", "extra" -> {
                     // Only jarsplitter writes these; other tools may reuse the names for inputs.
                     if (jarsplitter) {
+                        targets.add(value);
+                    }
+                }
+                case "out-jar" -> {
+                    // SpecialSource writes its remapped jar here; `--in-jar` is the input.
+                    if (specialSource) {
+                        targets.add(value);
+                    }
+                }
+                case "jar-out" -> {
+                    // vignette writes its remapped jar here; `--jar-in` is the input.
+                    if (vignette) {
                         targets.add(value);
                     }
                 }
