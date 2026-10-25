@@ -64,17 +64,15 @@ public class TransitionPane extends StackPane {
         setContent(newView, transition, duration, Motion.EASE);
     }
 
-    /// Replaces the content using the given animation and timing.
-    /// The first page, repeated assignments of the current page, and replacements
-    /// without animations are displayed immediately, as are replacements outside
-    /// a showing window. Otherwise, playback waits for a scene post-layout
-    /// notification and for layout requests on the new page root and its
-    /// ancestors to be processed. This does not imply that all descendants or
-    /// asynchronous content updates have finished requesting layout.
-    /// Mouse input is disabled while
-    /// the transition is pending or running. A subsequent replacement cancels
-    /// the preceding transition. Detaching the container or hiding its window
-    /// settles the requested page on the next animation pulse.
+    /// Replaces the current page, optionally animating the change.
+    /// Playback is deferred until a scene CSS and layout pass has completed.
+    /// Mouse input is suppressed while the transition is pending or running.
+    ///
+    /// The page is shown immediately if animations are disabled, no transition
+    /// is requested, there is no previous page, the page is unchanged, the
+    /// container has no positive width or height, or its window is not showing.
+    /// A new replacement cancels the preceding transition. Detaching the
+    /// container or hiding its window ends the transition on the next pulse.
     public void setContent(Node newView, AnimationProducer transition,
                            Duration duration, Interpolator interpolator) {
         if (activeTransition != null) {
