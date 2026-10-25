@@ -29,7 +29,7 @@ import static org.jackhuang.hmcl.util.io.NetworkUtils.decodeURL;
 
 /**
  * @author yushijinhun
- * @see <a href="https://github.com/yushijinhun/authlib-injector/wiki/%E5%90%AF%E5%8A%A8%E5%99%A8%E6%8A%80%E6%9C%AF%E8%A7%84%E8%8C%83#dnd-%E6%96%B9%E5%BC%8F%E6%B7%BB%E5%8A%A0-yggdrasil-%E6%9C%8D%E5%8A%A1%E7%AB%AF">Launcher Technical Specification for Authlib-Injector</a>
+ * @see <a href="https://yushijinhun.github.io/authlib-injector/en/launcher-technical-specification.html#configuration-via-drag-and-drop">Launcher Technical Specification for Authlib-Injector</a>
  */
 public final class AuthlibInjectorDnD {
 
