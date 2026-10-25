@@ -182,9 +182,8 @@ public final class MonitorLauncher {
             if (!process.isAttached()) { // monitor died while we still owned exit handling
                 LOG.error("Monitor exited without sending game process exiting message, handling exit ourselves. Game exit info will be unavailable.");
                 ProcessHandle h = process.handle();
-                if (h != null && h.isAlive() && listener != null) {
-                    h.onExit().thenRun(() -> process.handleExit(() -> listener.onExit(-1, ProcessListener.ExitType.APPLICATION_ERROR)));
-                }
+                if (h != null && listener != null)
+                    h.onExit().thenRun(() -> listener.onExit(-1, ProcessListener.ExitType.APPLICATION_ERROR));
             }
         }, "hmcl-monitor-reader", true);
         return process;
