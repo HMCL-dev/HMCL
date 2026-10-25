@@ -569,6 +569,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
     private static final class DownloadListCell extends ListCell<RemoteAddon> {
         private final DownloadListPage page;
+        private final JFXListView<RemoteAddon> listView;
         private final RemoteImageLoader iconLoader;
 
         private final Insets PADDING = new Insets(9, 9, 0, 9);
@@ -582,6 +583,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
         private DownloadListCell(DownloadListPage page, JFXListView<RemoteAddon> listView, RemoteImageLoader iconLoader) {
             this.page = page;
+            this.listView = listView;
             this.iconLoader = iconLoader;
 
             setPadding(PADDING);
@@ -627,7 +629,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
                 setGraphic(null);
             } else {
                 setPadding(
-                    getIndex() == getListView().getItems().size() - 1
+                    getIndex() == listView.getItems().size() - 1
                         ? LAST_PADDING
                         : PADDING
                 );
