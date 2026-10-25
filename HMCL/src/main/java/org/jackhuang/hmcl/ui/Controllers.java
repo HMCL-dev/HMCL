@@ -24,6 +24,9 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBase;
@@ -57,6 +60,7 @@ import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.instances.GameListPage;
 import org.jackhuang.hmcl.ui.instances.GameInstancePage;
 import org.jackhuang.hmcl.ui.instances.Instances;
+import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -118,6 +122,36 @@ public final class Controllers {
         void run() throws Exception;
     }
 
+    /// The shared launcher title, populated during UI initialization.
+    private static @Nullable StringProperty launcherTitle;
+
+    public static ReadOnlyStringProperty launcherTitleProperty() {
+        if (launcherTitle == null) {
+            launcherTitle = new SimpleStringProperty(Controllers.class, "launcherTitle", Metadata.OFFICIAL_BUILD
+                    ? i18n("launcher.title", Metadata.VERSION)
+                    : i18n("launcher.title.unofficial", Metadata.VERSION));
+            if (Metadata.OFFICIAL_BUILD) {
+                @Nullable Boolean selfVerified = IntegrityChecker.getSelfVerified();
+                if (selfVerified != null) {
+                    if (!selfVerified) {
+                        launcherTitle.set(i18n("launcher.title.modified", Metadata.VERSION));
+                    }
+                } else {
+                    Schedulers.io().execute(() -> {
+                        if (!IntegrityChecker.isSelfVerified()) {
+                            FXUtils.runInFX(() -> {
+                                //noinspection DataFlowIssue
+                                launcherTitle.set(i18n("launcher.title.modified", Metadata.VERSION));
+                            });
+                        }
+                    });
+                }
+            }
+        }
+
+        return launcherTitle;
+    }
+
     /// Returns the stage currently attached to the main-window decorator.
     ///
     /// @return the current stage, or `null` before initialization or after detachment
@@ -132,14 +166,6 @@ public final class Controllers {
             gameInstancePage = new GameInstancePage();
         }
         return gameInstancePage;
-    }
-
-    @FXThread
-    public static void prepareGameInstancePage() {
-        if (gameInstancePage == null) {
-            LOG.info("Prepare the game instance page");
-            gameInstancePage = FXUtils.prepareNode(new GameInstancePage());
-        }
     }
 
     @FXThread
@@ -161,14 +187,6 @@ public final class Controllers {
     }
 
     @FXThread
-    public static void prepareSettingsPage() {
-        if (settingsPage == null) {
-            LOG.info("Prepare the settings page");
-            settingsPage = FXUtils.prepareNode(new LauncherSettingsPage());
-        }
-    }
-
-    @FXThread
     public static AccountListPage getAccountListPage() {
         return accountListPage.get();
     }
@@ -179,14 +197,6 @@ public final class Controllers {
             downloadPage = new DownloadPage();
         }
         return downloadPage;
-    }
-
-    @FXThread
-    public static void prepareDownloadPage() {
-        if (downloadPage == null) {
-            LOG.info("Prepare the download page");
-            downloadPage = FXUtils.prepareNode(new DownloadPage());
-        }
     }
 
     @FXThread
@@ -215,7 +225,7 @@ public final class Controllers {
     private static void configureMainStage(Stage stage) {
         stage.setOnCloseRequest(event -> Launcher.stopApplication());
         FXUtils.setIcon(stage);
-        stage.setTitle(Metadata.FULL_TITLE);
+        stage.titleProperty().bind(launcherTitleProperty());
         WindowsNativeUtils.installWindowsAppUserModelRelaunchProperties(stage);
     }
 

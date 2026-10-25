@@ -124,6 +124,9 @@ final class WindowsGPUDetector {
         }
     }
 
+    /// Reads graphics card information from the display adapter registry keys.
+    /// Uses the driver description when the adapter name is missing or blank;
+    /// if both are missing or blank, leaves the name to the builder's fallback.
     private static List<GraphicsCard> detectByRegistry(WinReg reg) {
         final WinReg.HKEY hkey = WinReg.HKEY.HKEY_LOCAL_MACHINE;
         final String displayDevices = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\";
@@ -134,14 +137,18 @@ final class WindowsGPUDetector {
             if (!graphicsCardPattern.matcher(subkey).find())
                 continue;
 
-            String name = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.AdapterString"));
-            String vendor = regValueToString(reg.queryValue(hkey, subkey, "ProviderName"));
-            String driverVersion = regValueToString(reg.queryValue(hkey, subkey, "DriverVersion"));
-            String dacType = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.DacType"));
-            Object vulkanDriverName = reg.queryValue(hkey, subkey, "VulkanDriverName");
+            @Nullable String name = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.AdapterString"));
+            if (StringUtils.isBlank(name))
+                name = regValueToString(reg.queryValue(hkey, subkey, "DriverDesc"));
+            @Nullable String vendor = regValueToString(reg.queryValue(hkey, subkey, "ProviderName"));
+            @Nullable String driverVersion = regValueToString(reg.queryValue(hkey, subkey, "DriverVersion"));
+            @Nullable String dacType = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.DacType"));
+            @Nullable Object vulkanDriverName = reg.queryValue(hkey, subkey, "VulkanDriverName");
+            @Nullable String matchingDeviceId = regValueToString(reg.queryValue(hkey, subkey, "MatchingDeviceId"));
 
             GraphicsCard.Builder builder = GraphicsCard.builder();
-            if (name != null)
+            builder.setVirtualDisplayAdapter("Root\\GameViewerIddDriver".equalsIgnoreCase(matchingDeviceId));
+            if (StringUtils.isNotBlank(name))
                 builder.setName(GraphicsCard.cleanName(name));
             if (vendor != null)
                 builder.setVendor(HardwareVendor.of(vendor));
