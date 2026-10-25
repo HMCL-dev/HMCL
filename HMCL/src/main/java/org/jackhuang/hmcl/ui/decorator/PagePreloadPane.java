@@ -43,19 +43,12 @@ final class PagePreloadPane extends StackPane {
         setMouseTransparent(true);
     }
 
-    /// Attaches an unowned page for preparation in a subsequent scene pulse.
-    /// The previous candidate, if any, is detached. Moving the page to the
-    /// navigation container removes it from this pane without changing its
-    /// visibility, input, or layout properties.
-    /// The viewport size is captured at this call. Later viewport resizing does
-    /// not resize the hidden page; navigation lays it out at the current size.
-    /// After a layout pass, removal is queued on the JavaFX Application Thread.
-    /// The page is detached only if it is still this preparation's candidate.
-    /// Callers must retain the page if they want to reuse it after preparation.
+    /// Replaces the candidate with an unowned page, using a snapshot of the viewport size.
+    /// CSS and layout are deferred to scene pulses. After layout, a queued task
+    /// detaches the page if it is still this preparation's candidate.
     ///
-    /// This method must be called on the JavaFX Application Thread. It does not
-    /// synchronously apply CSS or layout, and preparation requires this pane
-    /// to belong to a scene that processes pulses.
+    /// Requires the JavaFX Application Thread and, for preparation to proceed,
+    /// a scene that processes pulses. The caller must retain the page for reuse.
     ///
     /// @param page the page to prepare
     /// @return the supplied page
