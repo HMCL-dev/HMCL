@@ -572,8 +572,8 @@ public class DownloadListPage extends Control implements DecoratorPage {
         private final JFXListView<RemoteAddon> listView;
         private final RemoteImageLoader iconLoader;
 
-        private final Insets PADDING = new Insets(9, 9, 0, 9);
-        private final Insets LAST_PADDING = new Insets(9, 9, 9, 9);
+        private static final Insets PADDING = new Insets(9, 9, 0, 9);
+        private static final Insets LAST_PADDING = new Insets(9, 9, 9, 9);
 
         private final RipplerContainer graphic;
         private final StackPane wrapper = new StackPane();
