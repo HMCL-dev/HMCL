@@ -23,7 +23,6 @@ import javafx.animation.Interpolator;
 import javafx.application.Platform;
 import javafx.scene.CacheHint;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -100,40 +99,28 @@ public class TransitionPane extends StackPane {
                 ? cacheable.getCacheHint(transition) : null;
 
         AnimationTimer timer = new AnimationTimer() {
-            /// Whether the scene has reported a CSS and layout pass since registration.
-            private boolean prepared;
-            /// Whether the one-shot post-layout listener is registered.
-            private boolean waitingForLayout;
-            /// Records completion without modifying the scene graph during post-layout.
+            /// Queues playback after the scene has completed CSS and layout.
             private final Runnable layoutListener = this::layoutCompleted;
             /// The animation created after preparation, or `null` before playback.
             private @Nullable Animation animation;
 
-            /// Records a completed scene pass and removes the one-shot listener.
-            private void layoutCompleted() {
-                scene.removePostLayoutPulseListener(layoutListener);
-                waitingForLayout = false;
-                prepared = true;
+            /// Arms a one-shot layout notification after navigation handlers return.
+            @Override
+            public void start() {
+                super.start();
+                Platform.runLater(() -> {
+                    if (canContinue()) {
+                        scene.addPostLayoutPulseListener(layoutListener);
+                        Platform.requestNextPulse();
+                    }
+                });
             }
 
-            /// Waits for observed layout completion and settles detached or hidden content.
-            @Override
-            public void handle(long now) {
-                if (activeTransition != this) {
-                    return;
-                }
-                if (getScene() != scene || scene.getWindow() != window || !window.isShowing()) {
-                    stop();
-                    return;
-                }
-                if (animation == null) {
-                    if (!prepared || needsLayout(newView)) {
-                        prepared = false;
-                        if (!waitingForLayout) {
-                            waitingForLayout = true;
-                            scene.addPostLayoutPulseListener(layoutListener);
-                            Platform.requestNextPulse();
-                        }
+            /// Leaves the layout callback before creating and playing the animation.
+            private void layoutCompleted() {
+                scene.removePostLayoutPulseListener(layoutListener);
+                Platform.runLater(() -> {
+                    if (!canContinue()) {
                         return;
                     }
                     try {
@@ -147,7 +134,25 @@ public class TransitionPane extends StackPane {
                         stop();
                         throw e;
                     }
+                });
+            }
+
+            /// Returns whether this transition is current, settling it if detached or hidden.
+            private boolean canContinue() {
+                if (activeTransition != this) {
+                    return false;
                 }
+                if (getScene() != scene || scene.getWindow() != window || !window.isShowing()) {
+                    stop();
+                    return false;
+                }
+                return true;
+            }
+
+            /// Monitors attachment and visibility without scheduling playback by frame count.
+            @Override
+            public void handle(long now) {
+                canContinue();
             }
 
             /// Releases this transition and restores its page and temporary settings.
@@ -187,21 +192,6 @@ public class TransitionPane extends StackPane {
             timer.stop();
             throw e;
         }
-    }
-
-    /// Tests pending layout on the page root and its ancestors.
-    private static boolean needsLayout(Node page) {
-        // Virtualized controls may retain dirty internal nodes even after layout.
-        // Only the page root and ancestors determine whether to await another pass.
-        if (page instanceof Parent parent && parent.isNeedsLayout()) {
-            return true;
-        }
-        for (@Nullable Parent parent = page.getParent(); parent != null; parent = parent.getParent()) {
-            if (parent.isNeedsLayout()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /// Prepares page properties and creates animations for content replacements.
