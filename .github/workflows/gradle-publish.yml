@@ -1,0 +1,44 @@
+# 此工作流使用了未通过 GitHub 认证的动作。
+# 它们由第三方提供，并受……管辖
+# 分开的服务条款、隐私政策和支持
+# 文档。
+# 此工作流将使用 Gradle 构建一个包，并在创建发布时将其发布到 GitHub Packages
+# 更多信息请参阅：https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#Publishing-using-gradle
+
+名称：Gradle 包: Gradle Package
+
+在：:
+  发布：:
+    类型：[已创建]: [created]
+
+职位：:
+  构建：:
+
+    运行环境: ubuntu-latest: ubuntu-latest
+    权限：:
+      内容：阅读: read
+      包：写入: write
+
+    步骤：:
+    - 用法：actions/checkout@v4uses: actions/checkout@v4
+    - 名称：设置 JDK 17name: Set up JDK 17
+      使用：actions/setup-java@v4: actions/setup-java@v4
+      使用：:
+        java-version: '17': '17'
+        发行版：'temurin': 'temurin'
+        server-id: github # pom.xml 中 distributionManagement/repository/id 字段的值: github # Value of the distributionManagement/repository/id field of the pom.xml
+        settings-path: ${{ github.workspace }} # settings.xml 文件的位置: ${{ github.workspace }} # location for the settings.xml file
+
+    - 名称：设置 Gradlename: Setup Gradle
+      使用：gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+
+    - 名称：使用 Gradle 构建name: Build with Gradle
+      运行：./gradlew build: ./gradlew build
+
+    # The USERNAME and TOKEN need to correspond to the credentials environment variables used in
+    # the publishing section of your build.gradle
+    - name: Publish to GitHub Packages
+      run: ./gradlew publish
+      env:
+        USERNAME: ${{ github.actor }}
+        TOKEN: ${{ secrets.GITHUB_TOKEN }}
