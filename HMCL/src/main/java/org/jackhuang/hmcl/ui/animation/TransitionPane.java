@@ -116,8 +116,8 @@ public class TransitionPane extends StackPane {
         }
     }
 
-    /// Replaces displayed pages and releases any preparation candidate.
-    private void showPages(@Nullable Node previousNode, Node newView) {
+    /// Replaces content nodes and releases any prewarming candidate.
+    private void replaceContentNodes(@Nullable Node previousNode, Node newView) {
         disposePreloadPane();
         if (previousNode == null) {
             getChildren().setAll(newView);
@@ -159,11 +159,11 @@ public class TransitionPane extends StackPane {
         if (!AnimationUtils.isAnimationEnabled() || previousNode == null || transition == ContainerAnimations.NONE
                 || window == null || !window.isShowing()) {
             AnimationUtils.reset(newView, true);
-            showPages(null, newView);
+            replaceContentNodes(null, newView);
             return;
         }
 
-        showPages(previousNode, newView);
+        replaceContentNodes(previousNode, newView);
 
         boolean originalCache = newView.isCache();
         CacheHint originalCacheHint = newView.getCacheHint();
