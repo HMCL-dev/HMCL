@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.animation.AnimationTimer;
+import javafx.animation.Interpolator;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
@@ -249,8 +250,11 @@ public final class InteractionLayer extends Canvas {
     void advance(long now) {
         if (transitioning) {
             double progress = fraction(now - stateStart, STATE_DURATION);
+            // Hover-only fades use a uniform opacity change in both directions.
+            Interpolator interpolator = startOpacity <= HOVER_OPACITY && targetOpacity <= HOVER_OPACITY
+                    ? Interpolator.LINEAR : Motion.STANDARD;
             stateOpacity = progress == 0 ? startOpacity : progress == 1 ? targetOpacity
-                    : Motion.STANDARD.interpolate(startOpacity, targetOpacity, progress);
+                    : interpolator.interpolate(startOpacity, targetOpacity, progress);
             transitioning = progress < 1;
         }
         boolean moving = transitioning;
