@@ -136,15 +136,11 @@ public class TransitionPane extends StackPane {
         setContent(newView, transition, duration, Motion.EASE);
     }
 
-    /// Replaces the current page, optionally animating the change.
-    /// Playback is deferred until a scene CSS and layout pass has completed.
-    /// Mouse input is suppressed while the transition is pending or running.
-    ///
-    /// The page is shown immediately if animations are disabled, no transition
-    /// is requested, there is no previous page, the page is unchanged, the
-    /// container has no positive width or height, or its window is not showing.
-    /// A new replacement cancels the preceding transition. Detaching the
-    /// container or hiding its window ends the transition on the next pulse.
+    /// Replaces the current page, cancelling any preceding transition.
+    /// Animated changes wait for a scene CSS and layout pass; mouse input is
+    /// suppressed while pending or running. Detaching the container or hiding
+    /// its window cancels the transition. Cancellation applies the end state
+    /// of a started animation with a finite duration.
     public void setContent(Node newView, AnimationProducer transition,
                            Duration duration, Interpolator interpolator) {
         if (activeTransition != null) {
@@ -238,6 +234,11 @@ public class TransitionPane extends StackPane {
                 activeTransition = null;
                 scene.removePostLayoutPulseListener(layoutListener);
                 if (animation != null && animation.getStatus() != Animation.Status.STOPPED) {
+                    // Apply child-node key values before stop resets the play head.
+                    Duration end = animation.getTotalDuration();
+                    if (!end.isIndefinite() && !end.isUnknown()) {
+                        animation.jumpTo(end);
+                    }
                     animation.stop();
                 }
                 if (cacheHint != null) {
