@@ -2,25 +2,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXRippler;
-import javafx.animation.FadeTransition;
-import javafx.beans.binding.Bindings;
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.*;
 import javafx.css.converter.PaintConverter;
-import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import javafx.scene.shape.Rectangle;
-import org.jackhuang.hmcl.theme.Themes;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
-import org.jackhuang.hmcl.ui.animation.Motion;
+import javafx.stage.Window;
+import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -29,153 +27,66 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/// Wraps content with a rectangular hover highlight and a ripple layer that can appear in front of or behind it.
-/// The hover highlight follows the launcher theme without replacing this pane's background.
+import static org.jackhuang.hmcl.setting.SettingsManager.settings;
+
+/// Wraps content with a single canvas for hover, focus, press, and ripple feedback.
+/// Feedback covers the entire pane, including padding, without replacing its background.
+/// Construction and all subsequent changes must occur on the JavaFX application thread.
+/// Only background presses trigger feedback in [FeedbackPosition#BACK] mode; content events
+/// continue to bubble normally, but do not initiate outer press feedback.
 @NotNullByDefault
 public class RipplerContainer extends StackPane {
     /// The CSS class assigned to this pane.
     private static final String DEFAULT_STYLE_CLASS = "rippler-container";
-
-    /// The corner radii used by the ripple clipping masks.
-    private static final CornerRadii DEFAULT_RADII = new CornerRadii(3);
-
-    /// The ripple paint used before CSS or a caller supplies a value.
-    private static final Color DEFAULT_RIPPLER_FILL = Color.rgb(0, 200, 255);
-
+    /// The fallback paint before a stylesheet supplies a theme color.
+    private static final Color DEFAULT_FEEDBACK_FILL = Color.BLACK;
     /// The content supplied by the caller.
     private final Node container;
-
-    /// An unmanaged, mouse-transparent highlight underneath the content and ripple layer.
-    private final Region hoverBackground = new Region();
-
-    /// The ripple layer, including an empty control that receives background mouse presses.
-    private final JFXRippler buttonRippler = new JFXRippler(new Region()) {
-        /// An opaque background defining the default rounded clipping area.
-        private static final Background DEFAULT_MASK_BACKGROUND = new Background(new BackgroundFill(Color.WHITE, DEFAULT_RADII, Insets.EMPTY));
-
-        /// Creates an independent clip sized to this ripple layer.
+    /// The sole feedback node, excluded from preferred-size calculations.
+    private final InteractionLayer interactionLayer = new InteractionLayer();
+    /// The settings instance observed by this wrapper.
+    private final LauncherSettings launcherSettings = settings();
+    /// Retains the delegate of the weak global settings listener.
+    private final InvalidationListener animationListener = observable -> updateAnimationSetting();
+    /// Updates visual availability after window state changes.
+    private final InvalidationListener availabilityListener = observable -> updateAvailability();
+    /// Reattaches window listeners when the scene moves between windows.
+    private final InvalidationListener windowListener = observable -> observeWindow();
+    /// The scene whose window property is currently observed.
+    private @Nullable Scene observedScene;
+    /// The window whose showing and focus properties are currently observed.
+    private @Nullable Window observedWindow;
+    /// Whether visual interaction is currently permitted.
+    private boolean feedbackAvailable;
+    /// Tracks pointer presence for direct entered/exited events as well as normal picking.
+    private boolean pointerInside;
+    /// Selects whether feedback is above or below the wrapped content.
+    private final ObjectProperty<FeedbackPosition> position = new SimpleObjectProperty<>(this, "position", FeedbackPosition.BACK) {
+        /// Rejects null assignments before changing the stacking policy.
         @Override
-        protected Node getMask() {
-            // The ripple generator and its overlay require separate clip nodes.
-            Region mask = new Region();
-            mask.setBackground(DEFAULT_MASK_BACKGROUND);
-            mask.resize(getWidth(), getHeight());
-            return mask;
+        public void set(FeedbackPosition value) {
+            super.set(Objects.requireNonNull(value));
+        }
+
+        /// Reorders existing children when the stacking policy changes.
+        @Override
+        protected void invalidated() {
+            Objects.requireNonNull(get(), "Position must not be null");
+            updateChildren();
         }
     };
-
-    /// The hover transition, allocated on the first animated hover change and reused thereafter.
-    private @Nullable FadeTransition coverAnimation;
-
-    /// Creates a wrapper with its ripple layer behind the supplied content.
-    /// The content's `pickOnBounds` property is set to `false` so uncovered areas can
-    /// receive ripple input.
-    ///
-    /// @param container the content to wrap
-    /// @throws NullPointerException if `container` is `null`
-    public RipplerContainer(Node container) {
-        this.container = Objects.requireNonNull(container);
-
-        getStyleClass().add(DEFAULT_STYLE_CLASS);
-        buttonRippler.setPosition(JFXRippler.RipplerPos.BACK);
-        buttonRippler.positionProperty().addListener(observable -> updateChildren());
-        focusedProperty().addListener((a, b, newValue) -> {
-            if (newValue) {
-                if (!isPressed())
-                    buttonRippler.showOverlay();
-            } else {
-                buttonRippler.hideOverlay();
-            }
-        });
-        pressedProperty().addListener(o -> buttonRippler.hideOverlay());
-        setPickOnBounds(false);
-
-        hoverBackground.setManaged(false);
-        hoverBackground.setMouseTransparent(true);
-        hoverBackground.setOpacity(0);
-        hoverBackground.backgroundProperty().bind(Bindings.createObjectBinding(() -> {
-            Color onSurface = Themes.getColorScheme().getOnSurface();
-            return new Background(new BackgroundFill(
-                    Color.color(onSurface.getRed(), onSurface.getGreen(), onSurface.getBlue(), 0.04),
-                    CornerRadii.EMPTY, Insets.EMPTY));
-        }, Themes.colorSchemeProperty()));
-
-        updateChildren();
-
-        var shape = new Rectangle();
-        shape.widthProperty().bind(widthProperty());
-        shape.heightProperty().bind(heightProperty());
-        setShape(shape);
-
-        addEventHandler(MouseEvent.MOUSE_ENTERED, event -> updateHover(true));
-        addEventHandler(MouseEvent.MOUSE_EXITED, event -> updateHover(false));
-    }
-
-    /// Moves the highlight toward its hover or idle opacity from its currently displayed opacity.
-    private void updateHover(boolean hovered) {
-        double target = hovered ? 1 : 0;
-        if (!AnimationUtils.isAnimationEnabled()) {
-            hoverBackground.setOpacity(target);
-            return;
+    /// Enables press feedback without disabling hover, focus, or event delivery.
+    private final BooleanProperty pressFeedbackEnabled = new SimpleBooleanProperty(this, "pressFeedbackEnabled", true) {
+        /// Cancels any existing press feedback when it becomes disabled.
+        @Override
+        protected void invalidated() {
+            if (!get())
+                interactionLayer.reset();
         }
-
-        // Capture the displayed value before stopping so interrupted fades remain continuous.
-        double current = hoverBackground.getOpacity();
-        if (coverAnimation == null) {
-            FadeTransition animation = new FadeTransition(Motion.SHORT4, hoverBackground);
-            // The motion curves approximate their endpoints; leave no residual idle highlight.
-            animation.setOnFinished(event -> hoverBackground.setOpacity(animation.getToValue()));
-            coverAnimation = animation;
-        } else {
-            coverAnimation.stop();
-        }
-        coverAnimation.setFromValue(current);
-        coverAnimation.setToValue(target);
-        coverAnimation.setInterpolator(hovered ? Motion.EASE_IN : Motion.EASE_OUT);
-        coverAnimation.playFromStart();
-    }
-
-    /// Lays out the managed children and stretches the highlight across the entire pane.
-    @Override
-    protected void layoutChildren() {
-        super.layoutChildren();
-        hoverBackground.resizeRelocate(0, 0, getWidth(), getHeight());
-    }
-
-    /// Arranges the content and ripple layer in the selected order, above the hover highlight.
-    /// When the ripple layer is behind the content, disables bounds-based picking on the content.
-    protected void updateChildren() {
-        Node container = getContainer();
-        if (buttonRippler.getPosition() == JFXRippler.RipplerPos.BACK) {
-            getChildren().setAll(hoverBackground, buttonRippler, container);
-            container.setPickOnBounds(false);
-        } else {
-            getChildren().setAll(hoverBackground, container, buttonRippler);
-        }
-    }
-
-    /// Places the ripple layer in front of or behind the content.
-    /// Setting the current position again leaves the child list unchanged.
-    ///
-    /// @param pos the position of the ripple layer relative to the content
-    /// @throws NullPointerException if `pos` is `null`
-    public void setPosition(JFXRippler.RipplerPos pos) {
-        buttonRippler.setPosition(Objects.requireNonNull(pos));
-    }
-
-    /// Returns the ripple layer. Changes to its position also update this pane's child order.
-    public JFXRippler getRippler() {
-        return buttonRippler;
-    }
-
-    /// Returns the content supplied to the constructor.
-    public Node getContainer() {
-        return container;
-    }
-
-    /// The CSS-configurable ripple paint, forwarded to the ripple layer when invalidated.
-    private final StyleableObjectProperty<@Nullable Paint> ripplerFill = new StyleableObjectProperty<>(DEFAULT_RIPPLER_FILL) {
-        /// Returns the owning wrapper.
+    };
+    /// The CSS-configurable paint shared by all visual feedback states.
+    private final StyleableObjectProperty<@Nullable Paint> feedbackFill = new StyleableObjectProperty<>(DEFAULT_FEEDBACK_FILL) {
+        /// Returns the wrapper owning this property.
         @Override
         public Object getBean() {
             return RipplerContainer.this;
@@ -184,81 +95,222 @@ public class RipplerContainer extends StackPane {
         /// Returns the JavaFX property name.
         @Override
         public String getName() {
-            return "ripplerFill";
+            return "feedbackFill";
         }
 
-        /// Returns the CSS metadata for the ripple paint.
+        /// Returns the stylesheet metadata for the feedback paint.
         @Override
         public CssMetaData<? extends Styleable, @Nullable Paint> getCssMetaData() {
-            return StyleableProperties.RIPPLER_FILL;
+            return StyleableProperties.FEEDBACK_FILL;
         }
 
-        /// Applies the current paint to the ripple layer.
+        /// Repaints existing states and waveforms with the new paint.
         @Override
         protected void invalidated() {
-            buttonRippler.setRipplerFill(get());
+            interactionLayer.setFill(get());
         }
     };
 
-    /// Returns the property controlling the ripple paint; `null` specifies no paint.
-    public StyleableObjectProperty<@Nullable Paint> ripplerFillProperty() {
-        return ripplerFill;
-    }
-
-    /// Returns the configured ripple paint, or `null` if no paint is configured.
-    public @Nullable Paint getRipplerFill() {
-        return ripplerFillProperty().get();
-    }
-
-    /// Sets the paint used for subsequently created ripples.
-    /// A [Color] supplies its RGB components at the ripple layer's fixed opacities and
-    /// also updates the overlay. Other paints are used unchanged for ripples and hide the overlay.
+    /// Creates a wrapper with feedback behind its content.
+    /// Sets the content's `pickOnBounds` to false so uncovered regions can receive input.
+    /// The animation setting is observed immediately and remains live thereafter.
     ///
-    /// @param ripplerFill the ripple paint, or `null` for no paint
-    public void setRipplerFill(@Nullable Paint ripplerFill) {
-        ripplerFillProperty().set(ripplerFill);
+    /// @param container the content to wrap
+    /// @throws NullPointerException if the content is null
+    public RipplerContainer(Node container) {
+        this.container = Objects.requireNonNull(container);
+        getStyleClass().add(DEFAULT_STYLE_CLASS);
+        setPickOnBounds(false);
+        interactionLayer.setManaged(false);
+        interactionLayer.setFill(getFeedbackFill());
+        updateChildren();
+        launcherSettings.animationDisabledProperty().addListener(new WeakInvalidationListener(animationListener));
+        updateAnimationSetting();
+
+        interactionLayer.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
+            if (event.getButton() == MouseButton.PRIMARY && feedbackAvailable && isPressFeedbackEnabled())
+                interactionLayer.press(event.getX(), event.getY());
+        });
+        interactionLayer.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
+            if (event.getButton() == MouseButton.PRIMARY)
+                interactionLayer.release();
+        });
+        addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
+            pointerInside = true;
+            updateVisualState();
+        });
+        addEventHandler(MouseEvent.MOUSE_EXITED, event -> {
+            pointerInside = false;
+            updateVisualState();
+            interactionLayer.release();
+        });
+        focusedProperty().addListener(observable -> updateVisualState());
+        disabledProperty().addListener(availabilityListener);
+        visibleProperty().addListener(availabilityListener);
+        sceneProperty().addListener(observable -> observeScene());
+        observeScene();
     }
 
-    /// Removes the pending ripple immediately, if present.
-    /// Ripples already fading out are unaffected; the hover highlight is unchanged.
-    public void releaseRippleImmediately() {
-        buttonRippler.releaseRippleImmediately();
+    /// Applies the effective animation setting, including the system default for a null setting.
+    private void updateAnimationSetting() {
+        interactionLayer.setAnimationEnabled(!launcherSettings.isAnimationDisabled());
     }
 
-    /// Returns this wrapper's CSS metadata, including inherited region properties.
+    /// Removes listeners from the previous scene before observing the current one.
+    private void observeScene() {
+        interactionLayer.reset();
+        if (observedScene != null)
+            observedScene.windowProperty().removeListener(windowListener);
+        observedScene = getScene();
+        if (observedScene != null)
+            observedScene.windowProperty().addListener(windowListener);
+        observeWindow();
+    }
+
+    /// Transfers showing and focus listeners to the current scene's window.
+    private void observeWindow() {
+        interactionLayer.reset();
+        if (observedWindow != null) {
+            observedWindow.showingProperty().removeListener(availabilityListener);
+            observedWindow.focusedProperty().removeListener(availabilityListener);
+        }
+        observedWindow = observedScene == null ? null : observedScene.getWindow();
+        if (observedWindow != null) {
+            observedWindow.showingProperty().addListener(availabilityListener);
+            observedWindow.focusedProperty().addListener(availabilityListener);
+        }
+        updateAvailability();
+    }
+
+    /// Cancels transient feedback whenever the wrapper cannot receive visual interaction.
+    private void updateAvailability() {
+        feedbackAvailable = !isDisabled() && isVisible() && observedWindow != null
+                && observedWindow.isShowing() && observedWindow.isFocused();
+        updateVisualState();
+        if (!feedbackAvailable)
+            interactionLayer.reset();
+    }
+
+    /// Supplies hover and focus states independently of whether press feedback is enabled.
+    private void updateVisualState() {
+        interactionLayer.setHovered(feedbackAvailable && pointerInside);
+        interactionLayer.setFocusActive(feedbackAvailable && isFocused());
+        if (!feedbackAvailable)
+            interactionLayer.reset();
+    }
+
+    /// Lays out content using normal StackPane constraints and fills the entire pane with feedback.
+    @Override
+    protected void layoutChildren() {
+        super.layoutChildren();
+        interactionLayer.setWidth(getWidth());
+        interactionLayer.setHeight(getHeight());
+        interactionLayer.relocate(0, 0);
+    }
+
+    /// Arranges the two existing children without introducing layout or clipping nodes.
+    protected void updateChildren() {
+        if (getPosition() == FeedbackPosition.BACK) {
+            container.setPickOnBounds(false);
+            getChildren().setAll(interactionLayer, container);
+        } else {
+            getChildren().setAll(container, interactionLayer);
+        }
+    }
+
+    /// Returns the stacking policy property. Values, including bound values, must not be null.
+    public ObjectProperty<FeedbackPosition> positionProperty() {
+        return position;
+    }
+
+    /// Returns the stacking policy, initially [FeedbackPosition#BACK].
+    public FeedbackPosition getPosition() {
+        return position.get();
+    }
+
+    /// Places all feedback in front of or behind content. Assigning the existing value is a no-op.
+    ///
+    /// @throws NullPointerException if the position is null
+    public void setPosition(FeedbackPosition value) {
+        position.set(Objects.requireNonNull(value));
+    }
+
+    /// Returns the original content, which remains a direct child of this wrapper.
+    public Node getContainer() {
+        return container;
+    }
+
+    /// Returns the paint property shared by hover, focus, press, and existing waveforms.
+    /// Null hides feedback without changing event delivery.
+    public StyleableObjectProperty<@Nullable Paint> feedbackFillProperty() {
+        return feedbackFill;
+    }
+
+    /// Returns the shared paint, or null if feedback drawing is suppressed.
+    public @Nullable Paint getFeedbackFill() {
+        return feedbackFill.get();
+    }
+
+    /// Sets the shared paint. Its own transparency multiplies each state's opacity.
+    public void setFeedbackFill(@Nullable Paint value) {
+        feedbackFill.set(value);
+    }
+
+    /// Returns the press feedback switch, initially true. Disabling it clears all waveforms
+    /// and the held press, preserving hover and focus feedback and normal event delivery.
+    public BooleanProperty pressFeedbackEnabledProperty() {
+        return pressFeedbackEnabled;
+    }
+
+    /// Returns whether background presses may initiate visual feedback.
+    public boolean isPressFeedbackEnabled() {
+        return pressFeedbackEnabled.get();
+    }
+
+    /// Enables press feedback or immediately cancels it; enabling does not replay an existing press.
+    public void setPressFeedbackEnabled(boolean value) {
+        pressFeedbackEnabled.set(value);
+    }
+
+    /// Clears all held and fading waveforms and immediately restores the current hover/focus state.
+    /// Suitable for clearing transient feedback when a virtualized cell is reused.
+    public void resetFeedback() {
+        interactionLayer.reset();
+    }
+
+    /// Returns this wrapper's stylesheet metadata, including inherited region properties.
     @Override
     public @Unmodifiable List<CssMetaData<? extends Styleable, ?>> getCssMetaData() {
         return getClassCssMetaData();
     }
 
-    /// Returns the immutable CSS metadata shared by wrapper instances.
+    /// Returns the immutable stylesheet metadata shared by all wrappers.
     public static @Unmodifiable List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
         return StyleableProperties.STYLEABLES;
     }
 
-    /// Holds the shared CSS metadata without allocating a list for each wrapper.
+    /// Stores shared stylesheet metadata without allocating it for each wrapper.
     private static final class StyleableProperties {
-        /// Maps the ripple paint to the JFoenix-compatible CSS property.
-        private static final CssMetaData<RipplerContainer, @Nullable Paint> RIPPLER_FILL = new CssMetaData<>("-jfx-rippler-fill", PaintConverter.getInstance(), DEFAULT_RIPPLER_FILL) {
-            /// Reports whether CSS may assign the unbound ripple paint property.
+        /// Maps the feedback paint to its HMCL stylesheet property.
+        private static final CssMetaData<RipplerContainer, @Nullable Paint> FEEDBACK_FILL = new CssMetaData<>("-hmcl-feedback-fill", PaintConverter.getInstance(), DEFAULT_FEEDBACK_FILL) {
+            /// Reports whether CSS can assign this paint property.
             @Override
             public boolean isSettable(RipplerContainer styleable) {
-                return styleable.ripplerFill == null || !styleable.ripplerFill.isBound();
+                return styleable.feedbackFill == null || !styleable.feedbackFill.isBound();
             }
 
-            /// Returns the ripple paint property of the supplied wrapper.
+            /// Returns the paint property receiving stylesheet values.
             @Override
             public StyleableProperty<@Nullable Paint> getStyleableProperty(RipplerContainer styleable) {
-                return styleable.ripplerFillProperty();
+                return styleable.feedbackFillProperty();
             }
         };
-
-        /// The inherited metadata followed by the ripple paint metadata.
+        /// The inherited region metadata followed by the feedback paint metadata.
         private static final @Unmodifiable List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
 
         static {
             var styleables = new ArrayList<>(StackPane.getClassCssMetaData());
-            styleables.add(RIPPLER_FILL);
+            styleables.add(FEEDBACK_FILL);
             STYLEABLES = List.copyOf(styleables);
         }
     }

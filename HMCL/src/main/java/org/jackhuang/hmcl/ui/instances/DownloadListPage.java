@@ -608,7 +608,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
             if (oldItem == item && oldEmpty == empty) return;
 
-            this.graphic.releaseRippleImmediately();
+            this.graphic.resetFeedback();
 
             if (empty || item == null) {
                 setGraphic(null);

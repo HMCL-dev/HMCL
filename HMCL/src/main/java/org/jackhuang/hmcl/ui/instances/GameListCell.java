@@ -153,7 +153,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
         if (oldItem == item && oldEmpty == empty) return;
 
-        this.graphic.releaseRippleImmediately();
+        this.graphic.resetFeedback();
 
         this.imageView.imageProperty().unbind();
         this.content.titleProperty().unbind();

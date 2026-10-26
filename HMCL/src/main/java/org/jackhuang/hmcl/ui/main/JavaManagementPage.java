@@ -299,7 +299,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
             if (oldItem == item && oldEmpty == empty) return;
 
-            this.graphic.releaseRippleImmediately();
+            this.graphic.resetFeedback();
 
             if (empty || item == null) {
                 setGraphic(null);

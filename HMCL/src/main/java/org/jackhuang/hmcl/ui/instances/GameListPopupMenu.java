@@ -171,7 +171,7 @@ public final class GameListPopupMenu extends StackPane {
 
             if (oldItem == item && oldEmpty == empty) return;
 
-            this.ripplerContainer.releaseRippleImmediately();
+            this.ripplerContainer.resetFeedback();
             this.imageView.imageProperty().unbind();
             this.content.titleProperty().unbind();
             this.content.subtitleProperty().unbind();
