@@ -127,6 +127,9 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 new MirrorRule("https://hmcl.glavo.site/metadata/fmllibs", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/fmllibs"),
                 new MirrorRule("https://zkitefly.github.io/unlisted-versions-of-minecraft", "https://alist.8mi.tech/d/mirror/unlisted-versions-of-minecraft/Auto"),
 
+                // https://neoforged.forgecdn.net
+                new MirrorRule("https://maven.neoforged.net", "https://neoforged.forgecdn.net", true),
+
                 // https://github.com/mcmod-info-mirror/mcim-rust-api
                 new MirrorRule("https://api.modrinth.com", "https://mod.mcimirror.top/modrinth", true),
                 new MirrorRule("https://cdn.modrinth.com", "https://mod.mcimirror.top", true),
