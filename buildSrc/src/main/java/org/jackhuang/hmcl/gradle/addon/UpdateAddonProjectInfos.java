@@ -76,7 +76,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             writer.writeComment("""
                     
                     Hello Minecraft! Launcher
-                    Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+                    Copyright (C) 2026 The HMCL Authors
                     
                     mcmod.cn
                     Copyright (C) 2026. All Rights Reserved.
