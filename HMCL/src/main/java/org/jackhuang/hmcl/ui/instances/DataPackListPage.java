@@ -22,6 +22,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.addon.datapack.DataPackFile;
+import org.jackhuang.hmcl.addon.datapack.DataPackManager;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -47,29 +48,40 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.DataPackInfoObject> implements WorldManagePage.WorldRefreshable {
-    private final World world;
+    private final DataPackManager dataPackManager;
     final BooleanProperty readOnly;
     private final ReentrantLock lock = new ReentrantLock();
 
     public DataPackListPage(WorldManagePage worldManagePage) {
-        world = worldManagePage.getWorld();
+        dataPackManager = worldManagePage.getWorld().getDataPackManager();
         readOnly = worldManagePage.readOnlyProperty();
-        FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
-                this::installMultiDataPack);
+        FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)), this::addFiles);
         refresh();
     }
 
-    private void installMultiDataPack(List<Path> dataPackPath) {
-        dataPackPath.forEach(pack -> {
-            try {
-                world.getDataPackManager().installPack(pack);
-            } catch (IOException e) {
-                LOG.warning("Unable to parse datapack file " + pack, e);
+    private void addFiles(List<Path> files) {
+        List<Path> failures = new ArrayList<>();
+        Task.runAsync(() -> {
+            for (Path file : files) {
+                try {
+                    dataPackManager.importDataPack(file);
+                } catch (Exception e) {
+                    LOG.warning("Failed to add data pack", e);
+                    failures.add(file);
+                }
             }
-        });
-        if (readOnly.get())
-            Controllers.showToast(i18n("datapack.reload.toast"));
-        refresh();
+        }).thenRunAsync(Schedulers.javafx(), () -> {
+            if (!failures.isEmpty()) {
+                StringBuilder failure = new StringBuilder(i18n("datapack.add.failed"));
+                for (Path file: failures) {
+                    failure.append("\n").append(file.toString());
+                }
+                Controllers.dialog(failure.toString(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            }
+            if (readOnly.get())
+                Controllers.showToast(i18n("datapack.reload.toast"));
+            refresh();
+        }).start();
     }
 
     @Override
@@ -82,8 +94,8 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
         Task.supplyAsync(Schedulers.io(), () -> {
             lock.lock();
             try {
-                world.getDataPackManager().refresh();
-                return world.getDataPackManager().getLocalFiles().stream().map(DataPackListPageSkin.DataPackInfoObject::new).toList();
+                dataPackManager.refresh();
+                return dataPackManager.getLocalFiles().stream().map(DataPackListPageSkin.DataPackInfoObject::new).toList();
             } finally {
                 lock.unlock();
             }
@@ -104,7 +116,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.datapack"), "*.zip"));
         List<Path> res = Controllers.showOpenMultipleDialog(chooser);
         if (res != null) {
-            installMultiDataPack(res);
+            addFiles(res);
         }
     }
 
@@ -113,7 +125,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
         for (DataPackListPageSkin.DataPackInfoObject item : selectedItems) {
             DataPackFile dataPack = item.getFile();
             try {
-                world.getDataPackManager().removePack(dataPack);
+                dataPackManager.removePack(dataPack);
             } catch (IOException e) {
                 failed.add(dataPack.getFile().toString());
                 LOG.warning("Failed to delete datapack \"" + dataPack.getFileName() + "\"", e);
@@ -143,7 +155,7 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
     }
 
     void openDataPackFolder() {
-        FXUtils.openFolder(world.getDataPackManager().getDirectory());
+        FXUtils.openFolder(dataPackManager.getDirectory());
     }
 
     @NotNull Predicate<DataPackListPageSkin.DataPackInfoObject> updateSearchPredicate(String queryString) {

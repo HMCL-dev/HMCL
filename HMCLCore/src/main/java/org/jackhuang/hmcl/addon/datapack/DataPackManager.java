@@ -48,7 +48,7 @@ public class DataPackManager {
         directory = world.getFile().resolve("datapacks");
     }
 
-    public void installPack(Path sourcePackPath) throws IOException {
+    public void importDataPack(Path sourcePackPath) throws IOException {
         lock.lock();
         try {
             boolean containsMultiplePacks;
