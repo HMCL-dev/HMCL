@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
@@ -307,8 +292,10 @@ public abstract class DefaultGameRepository implements GameRepository {
     /// Loads one instance directory without renaming on-disk JSON or jar files.
     ///
     /// When the conventional `versions/<id>/<id>.json` is missing but the directory contains exactly
-    /// one JSON file, that manifest path is recorded on the instance. The primary jar is derived as
-    /// the sibling path with the same base name.
+    /// one JSON file, that manifest path is recorded on the instance. If there are multiple JSON
+    /// files, selects the first parseable manifest in file-name order with a non-blank main class,
+    /// a parent instance, or non-empty patches. The primary jar is derived as the sibling path
+    /// with the same base name.
     ///
     /// @param snapshot the unsealed snapshot that will own the instance
     /// @param dir      the instance directory under `versions/`
@@ -332,12 +319,13 @@ public abstract class DefaultGameRepository implements GameRepository {
             json = conventionalJson;
         } else {
             List<Path> jsons = FileUtils.listFilesByExtension(dir, "json");
-            if (jsons.size() != 1) {
+            @Nullable Path candidate = jsons.size() == 1 ? jsons.get(0) : findInstanceManifest(jsons);
+            if (candidate == null) {
                 LOG.info("No available json file found, ignoring instance " + id);
                 return null;
             }
 
-            json = jsons.get(0);
+            json = candidate;
             if (!json.equals(conventionalJson)) {
                 manifestFileOverride = json;
             }
@@ -361,8 +349,35 @@ public abstract class DefaultGameRepository implements GameRepository {
         return createInstance(snapshot, id, manifest, manifestFileOverride);
     }
 
+    /// Finds the first parseable manifest in file-name order with a non-blank main class,
+    /// a parent instance, or non-empty patches, skipping unreadable and malformed candidates.
+    ///
+    /// @param jsons the candidate JSON files; the list is not modified
+    /// @return the selected path, or `null` if no candidate matches
+    private static @Nullable Path findInstanceManifest(List<Path> jsons) {
+        for (Path json : jsons.stream().sorted(Comparator.comparing(FileUtils::getName)).toList()) {
+            try {
+                GameInstanceManifest manifest = readInstanceManifest(json);
+                @Nullable String mainClass = manifest.mainClass();
+                if ((mainClass != null && !mainClass.isBlank())
+                        || manifest.inheritsFrom() != null
+                        || !manifest.getPatches().isEmpty()) {
+                    return json;
+                }
+            } catch (IOException | RuntimeException ignored) {
+            }
+        }
+        return null;
+    }
+
+    /// Reads a non-null instance manifest from a JSON file.
+    ///
+    /// @param json the manifest file
+    /// @return the parsed manifest
+    /// @throws IOException if the file cannot be read
+    /// @throws JsonParseException if the JSON is malformed or does not describe a manifest
     private static GameInstanceManifest readInstanceManifest(Path json) throws IOException, JsonParseException {
-        GameInstanceManifest manifest = JsonUtils.fromJsonFile(json, GameInstanceManifest.class);
+        @Nullable GameInstanceManifest manifest = JsonUtils.fromJsonFile(json, GameInstanceManifest.class);
         if (manifest == null) {
             throw new JsonParseException("Manifest is null");
         }
