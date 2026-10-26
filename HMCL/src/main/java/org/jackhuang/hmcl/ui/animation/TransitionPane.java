@@ -125,7 +125,8 @@ public class TransitionPane extends StackPane {
     /// Animated changes wait for a scene CSS and layout pass; mouse input is
     /// suppressed while pending or running. Detaching the container or hiding
     /// its window cancels the transition. Cancellation applies the end state
-    /// of a started animation with a finite duration.
+    /// of a started animation with a finite duration and restores the target page
+    /// through [AnimationProducer#finish(Node)], even if playback has not started.
     public void setContent(Node newView, AnimationProducer transition,
                            Duration duration, Interpolator interpolator) {
         if (activeTransition != null) {
@@ -139,7 +140,7 @@ public class TransitionPane extends StackPane {
 
         if (!AnimationUtils.isAnimationEnabled() || previousNode == null || transition == ContainerAnimations.NONE
                 || window == null || !window.isShowing()) {
-            AnimationUtils.reset(newView, true);
+            transition.finish(newView);
             replaceContentNodes(null, newView);
             return;
         }
@@ -230,7 +231,7 @@ public class TransitionPane extends StackPane {
                     newView.setCache(originalCache);
                     newView.setCacheHint(originalCacheHint);
                 }
-                AnimationUtils.reset(newView, true);
+                transition.finish(newView);
                 getChildren().removeIf(node -> node != newView && node != preloadPane);
                 setMouseTransparent(originalMouseTransparent);
             }
@@ -264,6 +265,19 @@ public class TransitionPane extends StackPane {
         /// Creates the transition between the prepared pages using the given timing.
         Animation animate(Pane container, Node previousNode, Node nextNode,
                           Duration duration, Interpolator interpolator);
+
+        /// Restores the target page to its settled state after completion or cancellation,
+        /// or when animation is skipped. May be called without [#init] or [#animate]
+        /// having been called, and before CSS or layout has completed.
+        ///
+        /// @implSpec The default implementation sets the target page's X/Y translations
+        /// to zero, X/Y scales to one, and opacity to one. Implementations that animate child nodes
+        /// must also restore those nodes to their target state, including state retained
+        /// from an earlier transition. Repeated calls must leave the page settled.
+        /// @param nextNode the page being shown
+        default void finish(Node nextNode) {
+            AnimationUtils.reset(nextNode, true);
+        }
 
         /// Returns the reverse transition, or `null` if none is specified.
         default @Nullable TransitionPane.AnimationProducer opposite() {
