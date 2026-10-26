@@ -1,6 +1,6 @@
 <component name="CopyrightManager">
     <copyright>
-        <option name="notice" value="SPDX-FileCopyrightText: Copyright (C) &amp;#36;today.year The HMCL Authors.&#10;SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL" />
+        <option name="notice" value="SPDX-FileCopyrightText: Copyright (C) &amp;#36;today.year The HMCL Authors&#10;SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL" />
         <option name="myName" value="HMCL" />
     </copyright>
 </component>

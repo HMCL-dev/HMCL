@@ -1,2 +1,2 @@
-^// SPDX-FileCopyrightText: Copyright \(C\) \d{4}(-\d{4})? The HMCL Authors\.$
+^// SPDX-FileCopyrightText: Copyright \(C\) \d{4}(-\d{4})? The HMCL Authors$
 ^// SPDX-License-Identifier: GPL-3\.0-or-later WITH AdditionRef-HMCL$
