@@ -642,7 +642,7 @@ public abstract class Task<T> {
 
     /**
      * Returns a new Task that executes the given action when this task completes,
-     * regardless of whether this task succeeds or fails, using the supplied Executor.
+     * regardless of whether this task succeeds or fails, using the default Executor.
      *
      * @param action the action to perform before completing the
      *               returned Task
