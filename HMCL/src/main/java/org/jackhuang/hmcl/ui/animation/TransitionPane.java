@@ -43,6 +43,12 @@ public class TransitionPane extends StackPane {
     /// The pending or running transition, or `null` when content is settled.
     private @Nullable AnimationTimer activeTransition;
 
+    /// The hidden preparation container, or `null` when no candidate is retained.
+    private @Nullable StackPane preloadPane;
+
+    /// Whether the candidate must survive the next content layout pass.
+    private boolean preloadLayoutPending;
+
     /// Creates an empty container that clips content to its bounds.
     public TransitionPane() {
         FXUtils.setOverflowHidden(this);
@@ -51,6 +57,73 @@ public class TransitionPane extends StackPane {
     /// Returns the requested page, or `null` if none has been assigned.
     public @Nullable Node getCurrentNode() {
         return currentNode;
+    }
+
+    /// Attaches unowned content for hidden CSS and layout prewarming during scene pulses.
+    /// Replaces any previous candidate without changing the current content. The hidden
+    /// container uses a snapshot of this pane's content-area size and does not affect
+    /// its size requirements. It is retained through the next content layout pass
+    /// and released on a later pass. Any call to [#setContent(Node, AnimationProducer)]
+    /// cancels pending prewarming and releases the hidden container.
+    /// The caller must retain the content for subsequent use. This method does not wait
+    /// for prewarming to finish and must be called on the JavaFX Application Thread.
+    ///
+    /// @param content the content to prewarm
+    /// @return the supplied content
+    /// @throws IllegalArgumentException if the content already belongs to a parent or scene
+    public final <N extends Node> N prewarm(N content) {
+        if (content.getParent() != null || content.getScene() != null) {
+            throw new IllegalArgumentException("Content already belongs to a parent or scene");
+        }
+        if (preloadPane == null) {
+            preloadPane = new StackPane();
+            preloadPane.setVisible(false);
+            preloadPane.setManaged(false);
+            preloadPane.setMouseTransparent(true);
+            getChildren().add(0, preloadPane);
+        }
+        preloadPane.getChildren().setAll(content);
+        preloadPane.resizeRelocate(snappedLeftInset(), snappedTopInset(),
+                Math.max(0, getWidth() - snappedLeftInset() - snappedRightInset()),
+                Math.max(0, getHeight() - snappedTopInset() - snappedBottomInset()));
+        preloadLayoutPending = true;
+        requestLayout();
+        return content;
+    }
+
+    /// Lays out displayed pages and releases a candidate retained from an earlier pass.
+    @Override
+    protected void layoutChildren() {
+        super.layoutChildren();
+        if (preloadPane != null && getScene() != null) {
+            // Descendant layout follows this method; keep a new candidate attached
+            // through that traversal instead of treating this callback as completion.
+            if (preloadLayoutPending) {
+                preloadLayoutPending = false;
+            } else {
+                disposePreloadPane();
+            }
+        }
+    }
+
+    /// Releases the preparation container and its candidate without changing displayed pages.
+    private void disposePreloadPane() {
+        if (preloadPane != null) {
+            StackPane candidate = preloadPane;
+            preloadPane = null;
+            getChildren().remove(candidate);
+            candidate.getChildren().clear();
+        }
+    }
+
+    /// Replaces displayed pages and releases any preparation candidate.
+    private void showPages(@Nullable Node previousNode, Node newView) {
+        disposePreloadPane();
+        if (previousNode == null) {
+            getChildren().setAll(newView);
+        } else {
+            getChildren().setAll(previousNode, newView);
+        }
     }
 
     /// Replaces the content using [Motion#SHORT4] and [Motion#EASE].
@@ -86,11 +159,11 @@ public class TransitionPane extends StackPane {
         if (!AnimationUtils.isAnimationEnabled() || previousNode == null || transition == ContainerAnimations.NONE
                 || window == null || !window.isShowing()) {
             AnimationUtils.reset(newView, true);
-            getChildren().setAll(newView);
+            showPages(null, newView);
             return;
         }
 
-        getChildren().setAll(previousNode, newView);
+        showPages(previousNode, newView);
 
         boolean originalCache = newView.isCache();
         CacheHint originalCacheHint = newView.getCacheHint();
@@ -172,7 +245,7 @@ public class TransitionPane extends StackPane {
                     newView.setCacheHint(originalCacheHint);
                 }
                 AnimationUtils.reset(newView, true);
-                getChildren().removeIf(node -> node != newView);
+                getChildren().removeIf(node -> node != newView && node != preloadPane);
                 setMouseTransparent(originalMouseTransparent);
             }
         };

@@ -164,7 +164,7 @@ public final class Controllers {
     @FXThread
     public static void prepareGameInstancePage() {
         if (gameInstancePage == null) {
-            gameInstancePage = getDecorator().preparePage(new GameInstancePage());
+            gameInstancePage = getDecorator().prewarmPage(new GameInstancePage());
         }
     }
 
@@ -190,7 +190,7 @@ public final class Controllers {
     @FXThread
     public static void prepareSettingsPage() {
         if (settingsPage == null) {
-            settingsPage = getDecorator().preparePage(new LauncherSettingsPage());
+            settingsPage = getDecorator().prewarmPage(new LauncherSettingsPage());
         }
     }
 
@@ -211,7 +211,7 @@ public final class Controllers {
     @FXThread
     public static void prepareDownloadPage() {
         if (downloadPage == null) {
-            downloadPage = getDecorator().preparePage(new DownloadPage());
+            downloadPage = getDecorator().prewarmPage(new DownloadPage());
         }
     }
 
