@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.google.gson.annotations.SerializedName;
+
+import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
@@ -30,10 +32,12 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class HelpPage extends SpinnerPane {
 
@@ -62,7 +66,16 @@ public class HelpPage extends SpinnerPane {
     private void loadHelp() {
         showSpinner();
         Task.supplyAsync(() -> HttpRequest.GET(Metadata.DOCS_URL + "/index.json").getJson(listTypeOf(HelpCategory.class)))
-                .thenAcceptAsync(Schedulers.javafx(), helpCategories -> {
+            .whenComplete(Schedulers.javafx(), (helpCategories, exception) -> {
+                if (exception != null) {
+                    LOG.warning("Failed to load help page: ", exception);
+                    showLoadFailure();
+                    return;
+                }
+
+                try {
+                    List<Node> nodes = new ArrayList<>();
+
                     for (HelpCategory category : helpCategories) {
                         ComponentList categoryPane = new ComponentList();
 
@@ -75,11 +88,24 @@ public class HelpPage extends SpinnerPane {
                             categoryPane.getContent().add(item);
                         }
 
-                        content.getChildren().add(ComponentList.createComponentListTitle(category.title()));
-                        content.getChildren().add(categoryPane);
+                        nodes.add(ComponentList.createComponentListTitle(category.title()));
+                        nodes.add(categoryPane);
                     }
+
+                    content.getChildren().addAll(nodes);
+
                     hideSpinner();
-                }).start();
+                } catch (Exception e) {
+                    LOG.warning("Failed to display help page: ", e);
+                    showLoadFailure();
+                }
+            }).start();
+    }
+
+    private void showLoadFailure() {
+        setFailedReason(i18n("download.failed.refresh"));
+        setOnFailedAction(e -> loadHelp());
+        setLoading(false);
     }
 
     @JsonSerializable

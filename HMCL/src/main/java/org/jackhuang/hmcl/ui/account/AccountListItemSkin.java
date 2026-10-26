@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
+import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -153,7 +154,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
                         .start();
             }
         });
-        FXUtils.installFastTooltip(btnUpload, i18n("account.skin.upload"));
+        FXUtils.installFastTooltip(btnUpload, i18n("account.skin." + (skinnable.getAccount() instanceof OfflineAccount ? "edit" : "upload")));
         btnUpload.disableProperty().bind(Bindings.not(skinnable.canUploadSkin()));
         spinnerUpload.setContent(btnUpload);
         spinnerUpload.getStyleClass().add("small-spinner-pane");

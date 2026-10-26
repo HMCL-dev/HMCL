@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -90,21 +91,59 @@ public final class AboutPage extends SpinnerPane {
 
             @Nullable CentralProcessor cpu = SystemInfo.getCentralProcessor();
             if (cpu != null) {
-                String title = i18n("about.environment.cpu");
-                var button = new LinePane();
-                button.setLargeTitle(true);
-                button.setTitle(title);
-                button.setSubtitle(cpu.toString());
-                button.setLeading(SVG.LUCIDE_CPU.createIcon(32));
+                int cpuCount;
+                int logicalPerPackage;
+                int physicalPerPackage;
 
-                environment.getContent().add(button);
+                CentralProcessor.Cores cores = cpu.getCores();
+                if (cores != null && cores.packages() > 1) {
+                    cpuCount = cores.packages();
+
+                    // TODO: Usually, all CPUs on a multi-socket platform have the same core count, but environments
+                    // like Linux allow some cores to be offline, in which case cores and threads cannot be evenly
+                    // distributed. In the future, we may consider detecting the CPU topology in more detail to
+                    // handle this case correctly.
+                    logicalPerPackage = cores.logical() / cores.packages();
+                    physicalPerPackage = cores.physical() / cores.packages();
+                } else {
+                    cpuCount = 1;
+                    if (cores != null) {
+                        logicalPerPackage = cores.logical();
+                        physicalPerPackage = cores.physical();
+                    } else {
+                        logicalPerPackage = 0;
+                        physicalPerPackage = 0;
+                    }
+                }
+
+                String cpuName;
+                if (logicalPerPackage == 0) {
+                    cpuName = i18n("about.environment.cpu.name", cpu.getName());
+                } else if (logicalPerPackage > 0 && logicalPerPackage != physicalPerPackage)
+                    cpuName = i18n("about.environment.cpu.name.cores.hyper_threading", cpu.getName(), physicalPerPackage, logicalPerPackage);
+                else
+                    cpuName = i18n("about.environment.cpu.name.cores", cpu.getName(), physicalPerPackage);
+
+                for (int i = 1; i <= cpuCount; i++) {
+                    var button = new LinePane();
+                    button.setLargeTitle(true);
+                    button.setTitle(i == 1 && cpuCount == 1
+                            ? i18n("about.environment.cpu")
+                            : i18n("about.environment.cpu.n", i));
+                    button.setSubtitle(cpuName);
+                    button.setLeading(SVG.LUCIDE_CPU.createIcon(32));
+                    environment.getContent().add(button);
+                }
             }
 
             @Nullable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
             if (graphicsCards != null) {
+                @Unmodifiable List<GraphicsCard> visibleGraphicsCards = graphicsCards.stream()
+                        .filter(card -> !card.isVirtualDisplayAdapter())
+                        .toList();
                 int index = 1;
-                for (GraphicsCard graphicsCard : graphicsCards) {
-                    String name = index == 1 && graphicsCards.size() == 1
+                for (GraphicsCard graphicsCard : visibleGraphicsCards) {
+                    String name = index == 1 && visibleGraphicsCards.size() == 1
                             ? i18n("about.environment.gpu")
                             : i18n("about.environment.gpu.n", index);
                     index++;
@@ -123,7 +162,7 @@ public final class AboutPage extends SpinnerPane {
             java.setLargeTitle(true);
             java.setLeading(SVG.LOCAL_CAFE.createIcon(32));
             java.setTitle("Java");
-            java.setSubtitle("%s, %s by %s".formatted(
+            java.setSubtitle("%s, %s, %s".formatted(
                     Runtime.version().toString(),
                     System.getProperty("java.vm.name"),
                     System.getProperty("java.vendor")));

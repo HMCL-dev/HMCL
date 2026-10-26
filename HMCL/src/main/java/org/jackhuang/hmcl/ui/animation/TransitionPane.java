@@ -26,31 +26,46 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+/// Displays one page, retaining the preceding page while a transition runs.
+/// Content changes must be made on the JavaFX Application Thread.
+@NotNullByDefault
 public class TransitionPane extends StackPane {
 
-    private Node currentNode;
+    /// The requested page, or `null` before content is assigned.
+    private @Nullable Node currentNode;
 
+    /// Creates an empty container that clips content to its bounds.
     public TransitionPane() {
         FXUtils.setOverflowHidden(this);
     }
 
-    public Node getCurrentNode() {
+    /// Returns the requested page, or `null` if none has been assigned.
+    public @Nullable Node getCurrentNode() {
         return currentNode;
     }
 
+    /// Replaces the content using [Motion#SHORT4] and [Motion#EASE].
     public final void setContent(Node newView, AnimationProducer transition) {
         setContent(newView, transition, Motion.SHORT4);
     }
 
+    /// Replaces the content using the given duration and [Motion#EASE].
     public final void setContent(Node newView, AnimationProducer transition, Duration duration) {
         setContent(newView, transition, duration, Motion.EASE);
     }
 
+    /// Replaces the content using the given animation and timing.
+    /// The first page, repeated assignments of the current page, and replacements
+    /// without animations are displayed immediately. Otherwise, CSS and layout
+    /// are processed in this container before the animation starts in a later
+    /// event-loop task. Mouse input is disabled while the transition is pending
+    /// or running.
     public void setContent(Node newView, AnimationProducer transition,
                            Duration duration, Interpolator interpolator) {
-        Node previousNode = currentNode != newView && getWidth() > 0 && getHeight() > 0 ? currentNode : null;
+        @Nullable Node previousNode = currentNode != newView && getWidth() > 0 && getHeight() > 0 ? currentNode : null;
         currentNode = newView;
 
         if (!AnimationUtils.isAnimationEnabled() || previousNode == null || transition == ContainerAnimations.NONE) {
@@ -64,7 +79,7 @@ public class TransitionPane extends StackPane {
         setMouseTransparent(true);
         transition.init(this, previousNode, newView);
 
-        CacheHint cacheHint = newView instanceof Cacheable cacheable
+        @Nullable CacheHint cacheHint = newView instanceof Cacheable cacheable
                 ? cacheable.getCacheHint(transition)
                 : null;
 
@@ -73,8 +88,12 @@ public class TransitionPane extends StackPane {
             newView.setCacheHint(cacheHint);
         }
 
-        // runLater or "init" will not work
+        // Let navigation handlers finish updating the page before preparing it.
         Platform.runLater(() -> {
+            // runLater alone does not guarantee a CSS or layout pass. Keep that
+            // first-use work outside the animation's elapsed time.
+            applyCss();
+            layout();
             Animation newAnimation = transition.animate(
                     this,
                     previousNode,
@@ -95,15 +114,19 @@ public class TransitionPane extends StackPane {
 
     }
 
+    /// Prepares page properties and creates animations for content replacements.
     public interface AnimationProducer {
+        /// Resets page transforms, making the old page opaque and the new page transparent.
         default void init(TransitionPane container, Node previousNode, Node nextNode) {
             AnimationUtils.reset(previousNode, true);
             AnimationUtils.reset(nextNode, false);
         }
 
+        /// Creates the transition between the prepared pages using the given timing.
         Animation animate(Pane container, Node previousNode, Node nextNode,
                           Duration duration, Interpolator interpolator);
 
+        /// Returns the reverse transition, or `null` if none is specified.
         default @Nullable TransitionPane.AnimationProducer opposite() {
             return null;
         }

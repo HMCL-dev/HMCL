@@ -160,20 +160,20 @@ public final class Controllers {
         return currentDecorator == null ? null : currentDecorator.getStage();
     }
 
+    /// Creates the cached page and attaches it for preparation during a normal window layout pulse.
+    @FXThread
+    public static void prepareGameInstancePage() {
+        if (gameInstancePage == null) {
+            gameInstancePage = getDecorator().preparePage(new GameInstancePage());
+        }
+    }
+
     @FXThread
     public static GameInstancePage getGameInstancePage() {
         if (gameInstancePage == null) {
             gameInstancePage = new GameInstancePage();
         }
         return gameInstancePage;
-    }
-
-    @FXThread
-    public static void prepareGameInstancePage() {
-        if (gameInstancePage == null) {
-            LOG.info("Prepare the game instance page");
-            gameInstancePage = FXUtils.prepareNode(new GameInstancePage());
-        }
     }
 
     @FXThread
@@ -186,6 +186,14 @@ public final class Controllers {
         return rootPage.get();
     }
 
+    /// Creates the cached page and attaches it for preparation during a normal window layout pulse.
+    @FXThread
+    public static void prepareSettingsPage() {
+        if (settingsPage == null) {
+            settingsPage = getDecorator().preparePage(new LauncherSettingsPage());
+        }
+    }
+
     @FXThread
     public static LauncherSettingsPage getSettingsPage() {
         if (settingsPage == null) {
@@ -195,16 +203,16 @@ public final class Controllers {
     }
 
     @FXThread
-    public static void prepareSettingsPage() {
-        if (settingsPage == null) {
-            LOG.info("Prepare the settings page");
-            settingsPage = FXUtils.prepareNode(new LauncherSettingsPage());
-        }
-    }
-
-    @FXThread
     public static AccountListPage getAccountListPage() {
         return accountListPage.get();
+    }
+
+    /// Creates the cached page and attaches it for preparation during a normal window layout pulse.
+    @FXThread
+    public static void prepareDownloadPage() {
+        if (downloadPage == null) {
+            downloadPage = getDecorator().preparePage(new DownloadPage());
+        }
     }
 
     @FXThread
@@ -213,14 +221,6 @@ public final class Controllers {
             downloadPage = new DownloadPage();
         }
         return downloadPage;
-    }
-
-    @FXThread
-    public static void prepareDownloadPage() {
-        if (downloadPage == null) {
-            LOG.info("Prepare the download page");
-            downloadPage = FXUtils.prepareNode(new DownloadPage());
-        }
     }
 
     @FXThread

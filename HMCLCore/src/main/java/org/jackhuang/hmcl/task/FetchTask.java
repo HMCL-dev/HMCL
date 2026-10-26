@@ -21,7 +21,6 @@ import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DownloadCandidate;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.event.Event;
-import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.*;
@@ -587,7 +586,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
 
     private static final Timer timer = new Timer("DownloadSpeedRecorder", true);
     private static final AtomicLong downloadSpeed = new AtomicLong(0L);
-    public static final EventManager<SpeedEvent> SPEED_EVENT = EventBus.EVENT_BUS.channel(SpeedEvent.class);
+    public static final EventManager<SpeedEvent> SPEED_EVENT = new EventManager<>();
 
     static {
         timer.schedule(new TimerTask() {
