@@ -8,7 +8,6 @@ import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.addon.datapack.DataPackFile;
 import org.jackhuang.hmcl.addon.datapack.DataPackManager;
-import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
