@@ -641,8 +641,8 @@ public abstract class Task<T> {
     }
 
     /**
-     * Returns a new Task that, when this task completes
-     * normally, executes the given action using the default Executor.
+     * Returns a new Task that executes the given action when this task completes,
+     * regardless of whether this task succeeds or fails, using the supplied Executor.
      *
      * @param action the action to perform before completing the
      *               returned Task
@@ -653,8 +653,8 @@ public abstract class Task<T> {
     }
 
     /**
-     * Returns a new Task that, when this task completes
-     * normally, executes the given action using the supplied Executor.
+     * Returns a new Task that executes the given action when this task completes,
+     * regardless of whether this task succeeds or fails, using the supplied Executor.
      *
      * @param action   the action to perform before completing the
      *                 returned Task
@@ -666,8 +666,8 @@ public abstract class Task<T> {
     }
 
     /**
-     * Returns a new Task that, when this task completes
-     * normally, executes the given action using the supplied Executor.
+     * Returns a new Task that executes the given action when this task completes,
+     * regardless of whether this task succeeds or fails, using the supplied Executor.
      *
      * @param name     the name of this new Task for displaying
      * @param action   the action to perform before completing the
