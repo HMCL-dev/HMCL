@@ -672,3 +672,16 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
+
+
+Additional Terms for Hello Minecraft! Launcher
+
+  1. Identification of modified versions (Under GPLv3 Section 7(c))
+
+  When you distribute a modified version of the software, you must change
+the software name or the version number in a reasonable way in order to
+distinguish it from the original version.
+
+  2. Preservation of copyright notices (Under GPLv3 Section 7(b))
+
+  You must not remove the copyright declaration displayed in the software.
