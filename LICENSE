@@ -676,12 +676,9 @@ Public License instead of this License.  But first, please read
 
 Additional Terms for Hello Minecraft! Launcher
 
-  1. Identification of modified versions (Under GPLv3 Section 7(c))
-
-  When you distribute a modified version of the software, you must change
+  1. When you distribute a modified version of the software, you must change
 the software name or the version number in a reasonable way in order to
-distinguish it from the original version.
+distinguish it from the original version. Under GPLv3, 7(c).
 
-  2. Preservation of copyright notices (Under GPLv3 Section 7(b))
-
-  You must not remove the copyright declaration displayed in the software.
+  2. You must not remove the copyright declaration displayed in the software.
+Under GPLv3, 7(b).
