@@ -208,7 +208,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             localFiles.clear();
             localMods.clear();
 
-            // Re-read the pin file as well, so edits made outside this manager are picked up.
+            // Re-read the pin file, so edits made outside this manager are picked up.
             pinnedFiles = null;
 
             analyze();
@@ -390,18 +390,15 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         return FileUtils.getName(file).endsWith(DISABLED_EXTENSION);
     }
 
-    /// Name of the file in the mods directory that lists the mods pinned to their current version, one per line.
+    /// Name of the file that lists the pinned mods, one per line.
     ///
-    /// The file has no mod extension, so [#refresh()] skips it.
+    /// It has no mod extension, so the directory scan skips it.
     public static final String PINNED_FILE_NAME = ".hmcl-pinned";
 
     /// Pinned mod file names, or null until they are read from [#PINNED_FILE_NAME].
     private @Nullable Set<String> pinnedFiles;
 
-    /// Returns whether the mod at the given path stays at its current version during update checks.
-    ///
-    /// @param file the mod file
-    /// @return true if the mod should not be updated
+    /// Returns whether the update check skips the given mod.
     public boolean isPinned(Path file) {
         lock.lock();
         try {
@@ -411,18 +408,13 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
     }
 
-    /// Pins or unpins the given mods, writing [#PINNED_FILE_NAME] at most once.
+    /// Pins or unpins the given mods, writing [#PINNED_FILE_NAME] once.
     ///
-    /// A name is stored without the `.disabled` or `.old` suffix, so pinning survives enabling,
-    /// disabling and rolling back the mod. The in-memory pins are updated only after the file was
-    /// written, so a failed write leaves both the file and the memory unchanged.
-    ///
-    /// @param files  the mod files to change
-    /// @param pinned whether they should stay at their current versions
     /// @throws IOException if the pin file cannot be written
     public void setPinned(Collection<Path> files, boolean pinned) throws IOException {
         lock.lock();
         try {
+            // The name has no .disabled or .old suffix, so a pin survives these renames.
             var names = new HashSet<>(getPinnedFiles());
             boolean changed = false;
             for (Path file : files) {
@@ -432,6 +424,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
             }
 
             if (changed) {
+                // Save first, so a failed write leaves the memory unchanged.
                 Set<String> newPins = Set.copyOf(names);
                 savePinnedFiles(newPins);
                 pinnedFiles = newPins;
@@ -442,8 +435,6 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
     }
 
     /// Returns the pinned mod names, reading [#PINNED_FILE_NAME] on first access.
-    ///
-    /// @return the pinned mod file names, empty when nothing is pinned
     private @Unmodifiable Set<String> getPinnedFiles() {
         if (pinnedFiles == null) {
             pinnedFiles = loadPinnedFiles();
@@ -451,11 +442,7 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         return pinnedFiles;
     }
 
-    /// Reads [#PINNED_FILE_NAME] from the mods directory.
-    ///
-    /// A missing or unreadable file yields an empty set, so it never hides the mod list.
-    ///
-    /// @return the pinned mod file names
+    /// Reads [#PINNED_FILE_NAME]. A missing or unreadable file yields no pins.
     private @Unmodifiable Set<String> loadPinnedFiles() {
         Path file = getDirectory().resolve(PINNED_FILE_NAME);
         if (!Files.isRegularFile(file)) {
@@ -477,22 +464,19 @@ public final class ModManager extends LocalAddonManager<LocalModFile> {
         }
     }
 
-    /// Writes the pinned mod names to [#PINNED_FILE_NAME], sorted to keep the file stable.
+    /// Writes the pinned mod names to [#PINNED_FILE_NAME], sorted.
     ///
-    /// The names go to a temporary file that then replaces the pin file, so an interrupted write
-    /// cannot leave a truncated file and lose every pin.
-    ///
-    /// @param names the pinned mod file names
     /// @throws IOException if the file cannot be written
     private void savePinnedFiles(Collection<String> names) throws IOException {
         Path file = getDirectory().resolve(PINNED_FILE_NAME);
+        // Write to a temporary file, so an interrupted write cannot truncate the pin file.
         Path temp = Files.createTempFile(getDirectory(), PINNED_FILE_NAME, ".tmp");
         try {
             Files.write(temp, names.stream().sorted().toList(), StandardCharsets.UTF_8);
             try {
                 Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
             } catch (AtomicMoveNotSupportedException e) {
-                // Some file systems cannot replace atomically, but the content is identical either way.
+                // Some file systems cannot replace atomically.
                 Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
             }
         } finally {
