@@ -76,25 +76,18 @@ public final class HMCLDownloadProvider extends DownloadProvider {
                 continue;
             }
 
-            @Nullable DownloadCandidate mirrorCandidate = null;
-            boolean fallback = false;
+            boolean added = false;
             for (MirrorRule rule : rules) {
-                if (url.startsWith(rule.source)) {
-                    mirrorCandidate = DownloadCandidate.of(rule.target + url.substring(rule.source.length()));
-                    fallback = rule.fallback;
+                @Nullable List<DownloadCandidate> list = rule.getCandidates(candidate, mirrorFirst);
+                if (list != null) {
+                    candidates.addAll(list);
+                    added = true;
                     break;
                 }
             }
 
-            if (mirrorCandidate == null) {
+            if (!added)
                 candidates.add(candidate);
-            } else if (mirrorFirst && !fallback) {
-                candidates.add(mirrorCandidate);
-                candidates.add(candidate);
-            } else {
-                candidates.add(candidate);
-                candidates.add(mirrorCandidate);
-            }
         }
 
         return DownloadCandidates.of(List.copyOf(candidates));
@@ -106,35 +99,59 @@ public final class HMCLDownloadProvider extends DownloadProvider {
     public HMCLDownloadProvider(String bmclRoot) {
         this.bmclRoot = bmclRoot;
         this.rules = List.of(
-                new MirrorRule("https://bmclapi2.bangbang93.com", bmclRoot),
-                new MirrorRule("https://launchermeta.mojang.com", bmclRoot),
-                new MirrorRule("https://piston-meta.mojang.com", bmclRoot),
-                new MirrorRule("https://piston-data.mojang.com", bmclRoot),
-                new MirrorRule("https://launcher.mojang.com", bmclRoot),
-                new MirrorRule("https://libraries.minecraft.net", bmclRoot + "/libraries"),
-                new MirrorRule("http://files.minecraftforge.net/maven", bmclRoot + "/maven"),
-                new MirrorRule("https://files.minecraftforge.net/maven", bmclRoot + "/maven"),
-                new MirrorRule("https://maven.minecraftforge.net", bmclRoot + "/maven"),
-                new MirrorRule("https://maven.neoforged.net/releases/", bmclRoot + "/maven/"),
-                new MirrorRule("http://dl.liteloader.com/versions", bmclRoot + "/maven"),
-                new MirrorRule("https://dl.liteloader.com/versions", bmclRoot + "/maven"),
-                new MirrorRule("https://meta.fabricmc.net", bmclRoot + "/fabric-meta"),
-                new MirrorRule("https://maven.fabricmc.net", bmclRoot + "/maven"),
-                new MirrorRule("https://authlib-injector.yushi.moe", bmclRoot + "/mirrors/authlib-injector"),
-                new MirrorRule("https://repo1.maven.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
-                new MirrorRule("https://repo.maven.apache.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
-                new MirrorRule("https://hmcl.glavo.site/metadata/cleanroom", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom"),
-                new MirrorRule("https://hmcl.glavo.site/metadata/fmllibs", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/fmllibs"),
-                new MirrorRule("https://zkitefly.github.io/unlisted-versions-of-minecraft", "https://alist.8mi.tech/d/mirror/unlisted-versions-of-minecraft/Auto"),
+                new SimpleRule("https://bmclapi2.bangbang93.com", bmclRoot),
+                new SimpleRule("https://launchermeta.mojang.com", bmclRoot),
+                new SimpleRule("https://piston-meta.mojang.com", bmclRoot),
+                new SimpleRule("https://piston-data.mojang.com", bmclRoot),
+                new SimpleRule("https://launcher.mojang.com", bmclRoot),
+                new SimpleRule("https://libraries.minecraft.net", bmclRoot + "/libraries"),
+                new SimpleRule("http://files.minecraftforge.net/maven", bmclRoot + "/maven"),
+                new SimpleRule("https://files.minecraftforge.net/maven", bmclRoot + "/maven"),
+                new SimpleRule("https://maven.minecraftforge.net", bmclRoot + "/maven"),
+                (source, mirrorFirst) -> {
+                    String neoforgedMaven = "https://maven.neoforged.net/";
+                    String neoforgedMavenRelease = "https://maven.neoforged.net/releases/";
 
-                // https://neoforged.forgecdn.net
-                new MirrorRule("https://maven.neoforged.net", "https://neoforged.forgecdn.net", true),
+                    if (source.url() == null || !source.url().href().startsWith(neoforgedMaven))
+                        return null;
+
+                    var candidates = new ArrayList<DownloadCandidate>();
+
+                    if (source.url().href().startsWith(neoforgedMavenRelease)) {
+                        DownloadCandidate bmclapiMirror = DownloadCandidate.of(bmclRoot + "/maven/"
+                                + source.url().href().substring(neoforgedMavenRelease.length()));
+
+                        if (mirrorFirst) {
+                            candidates.add(bmclapiMirror);
+                            candidates.add(source);
+                        } else {
+                            candidates.add(source);
+                            candidates.add(bmclapiMirror);
+                        }
+                    } else {
+                        candidates.add(source);
+                    }
+
+                    // https://neoforged.forgecdn.net
+                    candidates.add(DownloadCandidate.of("https://neoforged.forgecdn.net/" + source.url().href().substring(neoforgedMaven.length())));
+                    return candidates;
+                },
+                new SimpleRule("http://dl.liteloader.com/versions", bmclRoot + "/maven"),
+                new SimpleRule("https://dl.liteloader.com/versions", bmclRoot + "/maven"),
+                new SimpleRule("https://meta.fabricmc.net", bmclRoot + "/fabric-meta"),
+                new SimpleRule("https://maven.fabricmc.net", bmclRoot + "/maven"),
+                new SimpleRule("https://authlib-injector.yushi.moe", bmclRoot + "/mirrors/authlib-injector"),
+                new SimpleRule("https://repo1.maven.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
+                new SimpleRule("https://repo.maven.apache.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
+                new SimpleRule("https://hmcl.glavo.site/metadata/cleanroom", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom"),
+                new SimpleRule("https://hmcl.glavo.site/metadata/fmllibs", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/fmllibs"),
+                new SimpleRule("https://zkitefly.github.io/unlisted-versions-of-minecraft", "https://alist.8mi.tech/d/mirror/unlisted-versions-of-minecraft/Auto"),
 
                 // https://github.com/mcmod-info-mirror/mcim-rust-api
-                new MirrorRule("https://api.modrinth.com", "https://mod.mcimirror.top/modrinth", true),
-                new MirrorRule("https://cdn.modrinth.com", "https://mod.mcimirror.top", true),
-                new MirrorRule("https://api.curseforge.com", "https://mod.mcimirror.top/curseforge", true),
-                new MirrorRule("https://edge.forgecdn.net", "https://mod.mcimirror.top", true)
+                new SimpleRule("https://api.modrinth.com", null, "https://mod.mcimirror.top/modrinth"),
+                new SimpleRule("https://cdn.modrinth.com", null, "https://mod.mcimirror.top"),
+                new SimpleRule("https://api.curseforge.com", null, "https://mod.mcimirror.top/curseforge"),
+                new SimpleRule("https://edge.forgecdn.net", null, "https://mod.mcimirror.top")
         );
     }
 
@@ -275,9 +292,41 @@ public final class HMCLDownloadProvider extends DownloadProvider {
         }
     }
 
-    private record MirrorRule(String source, String target, boolean fallback) {
-        public MirrorRule(String source, String target) {
-            this(source, target, false);
+    @NotNullByDefault
+    @FunctionalInterface
+    private interface MirrorRule {
+        @Nullable List<DownloadCandidate> getCandidates(DownloadCandidate source, boolean mirrorFirst);
+    }
+
+    @NotNullByDefault
+    private record SimpleRule(String source, @Nullable String first, @Nullable String fallback) implements MirrorRule {
+        public SimpleRule(String source, String target) {
+            this(source, target, null);
+        }
+
+        @Override
+        public @Nullable List<DownloadCandidate> getCandidates(DownloadCandidate source, boolean mirrorFirst) {
+            if (source.url() == null || !source.url().href().startsWith(this.source))
+                return null;
+
+            boolean addSourceFirst = !mirrorFirst || first == null;
+            String urlWithoutPrefix = source.url().href().substring(this.source.length());
+
+            var candidates = new ArrayList<DownloadCandidate>();
+
+            if (addSourceFirst)
+                candidates.add(source);
+
+            if (first != null)
+                candidates.add(DownloadCandidate.of(first + urlWithoutPrefix));
+
+            if (!addSourceFirst)
+                candidates.add(source);
+
+            if (fallback != null)
+                candidates.add(DownloadCandidate.of(fallback + urlWithoutPrefix));
+
+            return candidates;
         }
     }
 }
