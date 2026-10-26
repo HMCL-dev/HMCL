@@ -78,6 +78,9 @@ final class MainWindowPane extends StackPane {
     /// The transition container used when the title-bar state changes.
     private final TransitionPane navBarPane;
 
+    /// The navigation content area and its page preparation support.
+    private final NavigationContentPane center;
+
     /// Retains listener delegates that are registered through weak listener wrappers.
     @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder holder = new WeakListenerHolder();
@@ -109,10 +112,7 @@ final class MainWindowPane extends StackPane {
         frame = new BorderPane();
         frame.getStyleClass().add("jfx-decorator");
 
-        StackPane center = new StackPane();
-        center.getStyleClass().add("jfx-decorator-content-container");
-        FXUtils.setOverflowHidden(center);
-        center.getChildren().setAll(decorator.getNavigator());
+        center = new NavigationContentPane(decorator.getNavigator());
         frame.setCenter(center);
 
         windowButtons = createWindowButtons();
@@ -138,6 +138,15 @@ final class MainWindowPane extends StackPane {
         decorator.capableDraggingWindow(titleBar);
 
         getChildren().setAll(backgroundNode, frame);
+    }
+
+    /// Attaches a page to the hidden preparation container, replacing any prior candidate.
+    ///
+    /// @param page an unowned page
+    /// @return the supplied page
+    /// @throws IllegalArgumentException if the page already belongs to a parent or scene
+    <N extends Node> N preparePage(N page) {
+        return center.preparePage(page);
     }
 
     /// Moves the custom title bar into or out of the native dragging header.
