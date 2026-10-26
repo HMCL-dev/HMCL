@@ -143,7 +143,7 @@ public final class Controllers {
     public static void prepareGameInstancePage() {
         if (gameInstancePage == null) {
             LOG.info("Preparing game instance page");
-            gameInstancePage = getDecorator().preparePage(new GameInstancePage());
+            gameInstancePage = getDecorator().prewarmPage(new GameInstancePage());
         }
     }
 
@@ -188,7 +188,7 @@ public final class Controllers {
     public static void prepareSettingsPage() {
         if (settingsPage == null) {
             LOG.info("Preparing settings page");
-            settingsPage = getDecorator().preparePage(new LauncherSettingsPage());
+            settingsPage = getDecorator().prewarmPage(new LauncherSettingsPage());
         }
     }
 
@@ -224,7 +224,7 @@ public final class Controllers {
     public static void prepareDownloadPage() {
         if (downloadPage == null) {
             LOG.info("Preparing download page");
-            downloadPage = getDecorator().preparePage(new DownloadPage());
+            downloadPage = getDecorator().prewarmPage(new DownloadPage());
         }
     }
 

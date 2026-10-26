@@ -193,6 +193,16 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     },
 
     NAVIGATION {
+        /// Also clears the horizontal offsets of the target page's navigation panels.
+        @Override
+        public void finish(Node nextNode) {
+            super.finish(nextNode);
+            if (nextNode instanceof DecoratorAnimatedPage nextPage) {
+                nextPage.getLeft().setTranslateX(0);
+                nextPage.getCenter().setTranslateX(0);
+            }
+        }
+
         @Override
         public Animation animate(Pane container, Node previousNode, Node nextNode, Duration duration, Interpolator interpolator) {
             Timeline timeline = new Timeline();
