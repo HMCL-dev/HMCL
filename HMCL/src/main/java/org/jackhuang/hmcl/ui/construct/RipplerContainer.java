@@ -364,8 +364,8 @@ public class RipplerContainer extends StackPane {
 
     /// Stores shared stylesheet metadata without allocating it for each wrapper.
     private static final class StyleableProperties {
-        /// Maps the feedback paint to its HMCL stylesheet property.
-        private static final CssMetaData<RipplerContainer, @Nullable Paint> FEEDBACK_FILL = new CssMetaData<>("-hmcl-feedback-fill", PaintConverter.getInstance(), DEFAULT_FEEDBACK_FILL) {
+        /// Maps the feedback paint to the `-jfx-feedback-fill` stylesheet property.
+        private static final CssMetaData<RipplerContainer, @Nullable Paint> FEEDBACK_FILL = new CssMetaData<>("-jfx-feedback-fill", PaintConverter.getInstance(), DEFAULT_FEEDBACK_FILL) {
             /// Reports whether CSS can assign this paint property.
             @Override
             public boolean isSettable(RipplerContainer styleable) {

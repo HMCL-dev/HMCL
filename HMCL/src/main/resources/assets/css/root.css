@@ -145,11 +145,11 @@
 
 .rippler-container {
     -fx-cursor: hand;
-    -hmcl-feedback-fill: -monet-on-surface;
+    -jfx-feedback-fill: -monet-on-surface;
 }
 
 .advanced-list-item:selected .rippler-container {
-    -hmcl-feedback-fill: -monet-on-secondary-container;
+    -jfx-feedback-fill: -monet-on-secondary-container;
 }
 
 .advanced-list-item > .rippler-container > .container {
