@@ -985,13 +985,11 @@ public final class Decorator {
                 new KeyFrame(Duration.ZERO,
                         new KeyValue(root.opacityProperty(), 0, Motion.EASE),
                         new KeyValue(root.scaleXProperty(), 0.8, Motion.EASE),
-                        new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE),
-                        new KeyValue(root.scaleZProperty(), 0.8, Motion.EASE)),
+                        new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE)),
                 new KeyFrame(Duration.millis(600),
                         new KeyValue(root.opacityProperty(), 1, Motion.EASE),
                         new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
-                        new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
-                        new KeyValue(root.scaleZProperty(), 1, Motion.EASE)));
+                        new KeyValue(root.scaleYProperty(), 1, Motion.EASE)));
         playWindowAnimation(timeline, () -> {
             resetRootTransform();
 
@@ -1016,14 +1014,12 @@ public final class Decorator {
                             new KeyValue(root.opacityProperty(), 1, Motion.EASE),
                             new KeyValue(root.translateYProperty(), 0, Motion.EASE),
                             new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
-                            new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
-                            new KeyValue(root.scaleZProperty(), 1, Motion.EASE)),
+                            new KeyValue(root.scaleYProperty(), 1, Motion.EASE)),
                     new KeyFrame(Motion.SHORT4,
                             new KeyValue(root.opacityProperty(), 0, Motion.EASE),
                             new KeyValue(root.translateYProperty(), 200, Motion.EASE),
                             new KeyValue(root.scaleXProperty(), 0.4, Motion.EASE),
-                            new KeyValue(root.scaleYProperty(), 0.4, Motion.EASE),
-                            new KeyValue(root.scaleZProperty(), 0.4, Motion.EASE)));
+                            new KeyValue(root.scaleYProperty(), 0.4, Motion.EASE)));
             playWindowAnimation(timeline, () -> {
                 if (getStage() == currentStage) {
                     currentStage.setIconified(true);
@@ -1046,13 +1042,11 @@ public final class Decorator {
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(root.opacityProperty(), 1, Motion.EASE),
                             new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
-                            new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
-                            new KeyValue(root.scaleZProperty(), 0.3, Motion.EASE)),
+                            new KeyValue(root.scaleYProperty(), 1, Motion.EASE)),
                     new KeyFrame(Duration.millis(200),
                             new KeyValue(root.opacityProperty(), 0, Motion.EASE),
                             new KeyValue(root.scaleXProperty(), 0.8, Motion.EASE),
-                            new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE),
-                            new KeyValue(root.scaleZProperty(), 0.8, Motion.EASE)));
+                            new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE)));
             playWindowAnimation(timeline, Launcher::stopApplication);
         } else {
             stopWindowAnimation();
@@ -1189,14 +1183,12 @@ public final class Decorator {
                         new KeyValue(root.opacityProperty(), 0, Motion.EASE),
                         new KeyValue(root.translateYProperty(), 200, Motion.EASE),
                         new KeyValue(root.scaleXProperty(), 0.4, Motion.EASE),
-                        new KeyValue(root.scaleYProperty(), 0.4, Motion.EASE),
-                        new KeyValue(root.scaleZProperty(), 0.4, Motion.EASE)),
+                        new KeyValue(root.scaleYProperty(), 0.4, Motion.EASE)),
                 new KeyFrame(Motion.SHORT4,
                         new KeyValue(root.opacityProperty(), 1, Motion.EASE),
                         new KeyValue(root.translateYProperty(), 0, Motion.EASE),
                         new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
-                        new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
-                        new KeyValue(root.scaleZProperty(), 1, Motion.EASE)));
+                        new KeyValue(root.scaleYProperty(), 1, Motion.EASE)));
         playWindowAnimation(timeline, this::resetRootTransform);
     }
 
@@ -1233,7 +1225,6 @@ public final class Decorator {
         root.setTranslateY(0);
         root.setScaleX(1);
         root.setScaleY(1);
-        root.setScaleZ(1);
     }
 
 }
