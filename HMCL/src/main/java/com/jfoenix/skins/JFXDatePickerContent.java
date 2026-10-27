@@ -133,7 +133,7 @@ public class JFXDatePickerContent extends VBox {
                     setText(null);
 
                     if (Objects.equals(oldItem, item) && oldEmpty == empty) return;
-                    ripplerContainer.releaseRippleImmediately();
+                    ripplerContainer.resetFeedback();
 
                     if (!empty && item != null) {
                         setGraphic(root);

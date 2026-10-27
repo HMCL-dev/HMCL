@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXSnackbar;
@@ -327,23 +312,13 @@ public final class Decorator {
         return mainWindowPane;
     }
 
-    /// Attaches an unowned page to a hidden container in the main-window scene.
-    /// The container retains at most one candidate and captures the navigation
-    /// viewport's current size without following later resizes. CSS and layout
-    /// preparation occur during normal scene pulses; this method does not wait
-    /// for preparation to finish. A pending container is reused for a new candidate.
-    /// It survives the first content layout pass for each candidate and is cleaned
-    /// up on a later pass.
-    /// Until then, it may retain the page unless the page moves elsewhere.
-    /// The caller must retain the page for subsequent navigation.
+    /// Prewarms a page for navigation using [TransitionPane#prewarm(Node)].
     ///
-    /// This method must be called on the JavaFX Application Thread.
-    ///
-    /// @param page the page to prepare
+    /// @param page the page to prewarm
     /// @return the supplied page
     /// @throws IllegalArgumentException if the page already belongs to a parent or scene
-    public <N extends Node> N preparePage(N page) {
-        return mainWindowPane.preparePage(page);
+    public <N extends Node> N prewarmPage(N page) {
+        return navigator.prewarm(page);
     }
 
     /// Returns the navigation stack rendered by the main window.
@@ -1154,7 +1129,7 @@ public final class Decorator {
 
             Node newTarget;
             {
-                //noinspection unchecked
+                @SuppressWarnings("unchecked")
                 @Nullable Stack<JFXDatePickerContent> stack =
                         (Stack<JFXDatePickerContent>) getDialogContainer().getProperties()
                         .get(JFXDatePickerSkin.PROPERTY_DATE_PICKER_CONTENTS);
