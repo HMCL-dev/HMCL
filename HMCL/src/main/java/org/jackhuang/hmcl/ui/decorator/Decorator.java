@@ -1129,7 +1129,7 @@ public final class Decorator {
 
             Node newTarget;
             {
-                //noinspection unchecked
+                @SuppressWarnings("unchecked")
                 @Nullable Stack<JFXDatePickerContent> stack =
                         (Stack<JFXDatePickerContent>) getDialogContainer().getProperties()
                         .get(JFXDatePickerSkin.PROPERTY_DATE_PICKER_CONTENTS);
