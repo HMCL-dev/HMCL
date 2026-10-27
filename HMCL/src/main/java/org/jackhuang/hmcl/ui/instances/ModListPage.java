@@ -628,8 +628,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             if (modInfo.getProjectInfo() != null && I18n.isUseChinese()) {
                 String chineseName = modInfo.getProjectInfo().mainName();
                 if (StringUtils.containsChinese(chineseName)) {
-                    chineseName = StringUtils.removeEmoji(chineseName).trim();
-
                     if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName))
                         displayName = chineseName + " (" + displayName + ")";
                 }
@@ -801,8 +799,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             if (projectInfo != null && I18n.isUseChinese()) {
                 String chineseName = projectInfo.mainName();
                 if (StringUtils.containsChinese(chineseName)) {
-                    chineseName = StringUtils.removeEmoji(chineseName).trim();
-
                     if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName))
                         displayName = chineseName + " (" + displayName + ")";
                 }

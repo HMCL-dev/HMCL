@@ -360,7 +360,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
                 || ".+\\".indexOf(ch) >= 0;
     }
 
-    /// Removes supported separators and pictographs from a secondary name.
+    /// Removes supported separators from a secondary name.
     /// Returns an empty string for null, blank or unsupported names; matching is case-sensitive.
     private static String cleanSubname(@Nullable String subname) {
         if (StringUtils.isBlank(subname))
@@ -385,8 +385,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
             if (isSupportedSubnameChar(ch)) {
                 builder.appendCodePoint(ch);
             } else if (!(Character.isWhitespace(ch)
-                    || "':_-/&()[]{}|,!?~•".indexOf(ch) >= 0
-                    || StringUtils.isEmojiCodePoint(ch))) {
+                    || "':_-/&()[]{}|,!?~•".indexOf(ch) >= 0)) {
                 return "";
             }
             offset += Character.charCount(ch);
