@@ -175,8 +175,8 @@
     -fx-text-alignment: justify;
 }
 
-.advanced-list-item:selected > .rippler-container {
-    -fx-background-color: -monet-secondary-container-transparent-50;
+.advanced-list-item {
+    -jfx-selected-background-fill: -monet-secondary-container;
 }
 
 .advanced-list-item:selected > .rippler-container > .container > .two-line-list-item > .first-line > .title {
