@@ -47,7 +47,9 @@ public final class TabItem<T extends Node> {
             textProperty().set(text);
     }
 
-    /// Returns the content node, or null if none is assigned; does not invoke the factory.
+    /// Returns the content node, invoking the factory if content has not been initialized.
+    /// Returns null if no factory is set or the factory returns null; later calls may retry.
+    /// Factory exceptions propagate without assigning content.
     public @Nullable T getNode() {
         initializeIfNeeded();
         return node;

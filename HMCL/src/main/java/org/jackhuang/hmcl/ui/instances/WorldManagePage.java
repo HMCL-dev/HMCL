@@ -86,6 +86,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         return new Skin(this);
     }
 
+    /// Reloads world metadata and refreshes only tab pages whose content is already initialized.
     @Override
     public void refresh() {
         updateSessionLockChannel();
@@ -98,7 +99,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         }
 
         for (var tab : tabController.getTabs()) {
-            if (tab.getNode() instanceof WorldRefreshable r) {
+            if (tab.isInitialized() && tab.getNode() instanceof WorldRefreshable r) {
                 r.refresh();
             }
         }
