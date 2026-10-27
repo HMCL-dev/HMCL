@@ -38,13 +38,6 @@ public class TabHeader extends Control {
         return controller;
     }
 
-    /// Returns the controller's mutable tab list in display order.
-    ///
-    /// @see TabController#getTabs()
-    public final ObservableList<TabItem<?>> getTabs() {
-        return controller.getTabs();
-    }
-
     /// The lazily allocated tab placement property.
     private @Nullable ObjectProperty<Side> side;
 
@@ -115,7 +108,7 @@ public class TabHeader extends Control {
             lineOffset.addListener(observable -> control.requestLayout());
             lineLength.addListener(observable -> control.requestLayout());
 
-            headers = MappedObservableList.create(getSkinnable().getTabs(), TabHeaderView::new);
+            headers = MappedObservableList.create(getSkinnable().controller.getTabs(), TabHeaderView::new);
             headers.addListener(headersListener);
             updateChildren();
 
