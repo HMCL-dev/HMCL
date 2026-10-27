@@ -13,16 +13,16 @@ import java.util.function.Supplier;
 ///
 /// @param <T> the type of content node
 @NotNullByDefault
-public final class TabItem<T extends Node> {
+public final class TabItem<T extends @Nullable Node> {
     private @Nullable T node;
-    private @Nullable Supplier<? extends @Nullable T> nodeSupplier;
+    private @Nullable Supplier<? extends T> nodeSupplier;
 
     /// Creates a tab with no text, content, or content factory.
     public TabItem() {
     }
 
-    /// Creates a tab whose content is supplied lazily by [#initializeIfNeeded()].
-    public TabItem(Supplier<? extends @Nullable T> nodeSupplier) {
+    /// Creates a tab whose content is supplied lazily by `nodeSupplier`.
+    public TabItem(Supplier<? extends T> nodeSupplier) {
         this.nodeSupplier = nodeSupplier;
     }
 
@@ -50,30 +50,22 @@ public final class TabItem<T extends Node> {
     /// Returns the content node, invoking the factory if content has not been initialized.
     /// Returns null if no factory is set or the factory returns null; later calls may retry.
     /// Factory exceptions propagate without assigning content.
-    public @Nullable T getNode() {
-        initializeIfNeeded();
-        return node;
+    public T getNode() {
+        if (node != null)
+            return node;
+
+        if (nodeSupplier != null) {
+            node = nodeSupplier.get();
+            nodeSupplier = null;
+            return node;
+        }
+
+        return null;
     }
 
     /// Returns whether a non-null content node is currently assigned.
     public boolean isInitialized() {
-        return node != null;
+        return nodeSupplier == null;
     }
 
-    /// Invokes the content factory and assigns its result if the content is null
-    /// and a factory is present. A null result permits another attempt on the next call.
-    /// Factory exceptions propagate without assigning a result.
-    ///
-    /// @return true if the factory returned and its result was assigned, even if null;
-    /// false if content was already assigned or no factory was present
-    public boolean initializeIfNeeded() {
-        if (node == null) {
-            if (nodeSupplier == null) {
-                return false;
-            }
-            node = nodeSupplier.get();
-            return true;
-        }
-        return false;
-    }
 }
