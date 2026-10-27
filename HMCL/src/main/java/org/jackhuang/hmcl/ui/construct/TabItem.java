@@ -14,11 +14,7 @@ import java.util.function.Supplier;
 /// @param <T> the type of content node
 @NotNullByDefault
 public final class TabItem<T extends Node> {
-    /// The nullable text displayed in the header.
-    private final StringProperty text = new SimpleStringProperty(this, "text");
-    /// The content node, or null when no content is assigned.
-    private final ObjectProperty<@Nullable T> node = new SimpleObjectProperty<>(this, "node");
-    /// The optional factory used when content has not been assigned.
+    private @Nullable T node;
     private @Nullable Supplier<? extends @Nullable T> nodeSupplier;
 
     /// Creates a tab with no text, content, or content factory.
@@ -30,44 +26,36 @@ public final class TabItem<T extends Node> {
         this.nodeSupplier = nodeSupplier;
     }
 
-    /// Returns the content factory, or null if none has been set.
-    public @Nullable Supplier<? extends @Nullable T> getNodeSupplier() {
-        return nodeSupplier;
+    /// The  text displayed in the header.
+    private @Nullable StringProperty text;
+
+    /// Returns the writable header text property, whose value may be null.
+    public StringProperty textProperty() {
+        if (text == null)
+            text = new SimpleStringProperty(this, "text");
+        return text;
     }
 
     /// Returns the header text, which may be null.
     public @Nullable String getText() {
-        return text.get();
-    }
-
-    /// Returns the writable header text property, whose value may be null.
-    public StringProperty textProperty() {
-        return text;
+        return text != null ? text.get() : null;
     }
 
     /// Sets the header text, which may be null.
     public void setText(@Nullable String text) {
-        this.text.set(text);
+        if (this.text != null || text != null)
+            textProperty().set(text);
     }
 
     /// Returns the content node, or null if none is assigned; does not invoke the factory.
     public @Nullable T getNode() {
-        return node.get();
-    }
-
-    /// Returns the writable content property. A null value permits lazy initialization.
-    public ObjectProperty<@Nullable T> nodeProperty() {
+        initializeIfNeeded();
         return node;
-    }
-
-    /// Sets the content node, or clears it if null. Does not change the content factory.
-    public void setNode(@Nullable T node) {
-        this.node.set(node);
     }
 
     /// Returns whether a non-null content node is currently assigned.
     public boolean isInitialized() {
-        return getNode() != null;
+        return node != null;
     }
 
     /// Invokes the content factory and assigns its result if the content is null
@@ -77,11 +65,11 @@ public final class TabItem<T extends Node> {
     /// @return true if the factory returned and its result was assigned, even if null;
     /// false if content was already assigned or no factory was present
     public boolean initializeIfNeeded() {
-        if (getNode() == null) {
-            if (getNodeSupplier() == null) {
+        if (node == null) {
+            if (nodeSupplier == null) {
                 return false;
             }
-            setNode(getNodeSupplier().get());
+            node = nodeSupplier.get();
             return true;
         }
         return false;
