@@ -84,6 +84,7 @@ public final class TabController implements PageAware {
     /// destination, updates selection, and shows the requested page, in that order.
     /// Callbacks apply to nodes implementing [PageAware] and run even when the
     /// requested tab is already selected. Without a destination, content may be null.
+    /// The previous tab is not initialized to deliver its hidden callback.
     ///
     /// Argument validation and initialization precede changes to the previous page.
     /// Initialization failure leaves the previous selection and content unchanged.
@@ -102,8 +103,7 @@ public final class TabController implements PageAware {
             throw new IllegalArgumentException("Tab does not belong to this controller");
 
         @Nullable TabItem<?> previous = getSelectedTab();
-        @Nullable Node previousContent = previous == null ? null : previous.getNode();
-        tab.initializeIfNeeded();
+        @Nullable Node previousContent = previous != null && previous.isInitialized() ? previous.getNode() : null;
         @Nullable Node content = tab.getNode();
         if (contentPane != null && content == null)
             throw new IllegalStateException("Tab has no content");
@@ -157,19 +157,21 @@ public final class TabController implements PageAware {
         }
     }
 
-    /// Forwards the shown callback to the selected content when it implements [PageAware].
+    /// Forwards the shown callback to initialized selected content implementing [PageAware].
+    /// Does not initialize content.
     @Override
     public void onPageShown() {
         @Nullable TabItem<?> tab = getSelectedTab();
-        if (tab != null && tab.getNode() instanceof PageAware pageAware)
+        if (tab != null && tab.isInitialized() && tab.getNode() instanceof PageAware pageAware)
             pageAware.onPageShown();
     }
 
-    /// Forwards the hidden callback to the selected content when it implements [PageAware].
+    /// Forwards the hidden callback to initialized selected content implementing [PageAware].
+    /// Does not initialize content.
     @Override
     public void onPageHidden() {
         @Nullable TabItem<?> tab = getSelectedTab();
-        if (tab != null && tab.getNode() instanceof PageAware pageAware)
+        if (tab != null && tab.isInitialized() && tab.getNode() instanceof PageAware pageAware)
             pageAware.onPageHidden();
     }
 }
