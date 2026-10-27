@@ -42,6 +42,9 @@ public class RipplerContainer extends StackPane {
     /// The CSS class assigned to this pane.
     private static final String DEFAULT_STYLE_CLASS = "rippler-container";
 
+    /// Marks containers whose background presses produce visual feedback.
+    private static final PseudoClass PRESS_FEEDBACK_ENABLED = PseudoClass.getPseudoClass("press-feedback-enabled");
+
     /// The fallback paint before a stylesheet supplies a theme color.
     private static final Color DEFAULT_FEEDBACK_FILL = Color.BLACK;
 
@@ -76,6 +79,7 @@ public class RipplerContainer extends StackPane {
     public RipplerContainer(Node container) {
         this.container = Objects.requireNonNull(container);
         getStyleClass().add(DEFAULT_STYLE_CLASS);
+        pseudoClassStateChanged(PRESS_FEEDBACK_ENABLED, isPressFeedbackEnabled());
         setPickOnBounds(false);
         interactionLayer.setManaged(false);
         interactionLayer.setFill(getFeedbackFill());
@@ -310,9 +314,10 @@ public class RipplerContainer extends StackPane {
 
     /// Whether background presses produce visual feedback.
     private final BooleanProperty pressFeedbackEnabled = new SimpleBooleanProperty(this, "pressFeedbackEnabled", true) {
-        /// Cancels any existing press feedback when it becomes disabled.
+        /// Updates the CSS state and cancels existing feedback when disabled.
         @Override
         protected void invalidated() {
+            pseudoClassStateChanged(PRESS_FEEDBACK_ENABLED, get());
             if (!get()) {
                 interactionLayer.reset();
             }
@@ -321,6 +326,7 @@ public class RipplerContainer extends StackPane {
 
     /// Returns the press feedback switch, initially true. Disabling it clears all waveforms
     /// and the held press, preserving hover and focus feedback and normal event delivery.
+    /// The default stylesheet applies a hand cursor only while this property is true.
     /// Enabling it does not replay an existing press.
     public BooleanProperty pressFeedbackEnabledProperty() {
         return pressFeedbackEnabled;

@@ -144,8 +144,11 @@
 }
 
 .rippler-container {
-    -fx-cursor: hand;
     -jfx-feedback-fill: -monet-on-surface;
+}
+
+.rippler-container:press-feedback-enabled {
+    -fx-cursor: hand;
 }
 
 .advanced-list-item:selected .rippler-container {
