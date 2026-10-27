@@ -3,6 +3,12 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.*;
+import javafx.css.CssMetaData;
+import javafx.css.SimpleStyleableObjectProperty;
+import javafx.css.Styleable;
+import javafx.css.StyleableObjectProperty;
+import javafx.css.StyleableProperty;
+import javafx.css.converter.PaintConverter;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -11,10 +17,15 @@ import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Paint;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /// Displays a two-line item with optional graphics and an action supplied by its skin.
 @NotNullByDefault
@@ -182,6 +193,33 @@ public class AdvancedListItem extends Control {
         this.active.set(active);
     }
 
+    /// The CSS-configurable paint used by the default skin for the selected background.
+    private final StyleableObjectProperty<@Nullable Paint> selectedBackgroundFill =
+            new SimpleStyleableObjectProperty<>(StyleableProperties.SELECTED_BACKGROUND_FILL, this, "selectedBackgroundFill");
+
+    /// Returns the selected-background paint property, initially null and styled by
+    /// `-jfx-selected-background-fill`. Null hides the selected background without changing
+    /// the active state. The default skin animates the background node's opacity between zero
+    /// and 0.5; an opaque paint therefore appears at 50% opacity when fully selected.
+    /// Any transparency in the paint multiplies the node's opacity.
+    /// Changes repaint the background without restarting the selection transition.
+    ///
+    /// @apiNote Unbound values follow JavaFX CSS precedence. Binding this property prevents
+    /// CSS from changing its value.
+    public StyleableObjectProperty<@Nullable Paint> selectedBackgroundFillProperty() {
+        return selectedBackgroundFill;
+    }
+
+    /// Returns the paint in [#selectedBackgroundFillProperty()], or null.
+    public @Nullable Paint getSelectedBackgroundFill() {
+        return selectedBackgroundFill.get();
+    }
+
+    /// Sets [#selectedBackgroundFillProperty()]; null hides the selected background.
+    public void setSelectedBackgroundFill(@Nullable Paint value) {
+        selectedBackgroundFill.set(value);
+    }
+
     /// The handler for actions originating from this item, excluding descendant controls.
     private final ObjectProperty<@Nullable EventHandler<ActionEvent>> onAction = new SimpleObjectProperty<>(this, "onAction") {
         /// Routes only this item's actions to the registered handler.
@@ -216,4 +254,42 @@ public class AdvancedListItem extends Control {
         return new AdvancedListItemSkin(this);
     }
 
+    /// Returns this control's stylesheet metadata, including inherited properties.
+    @Override
+    public @Unmodifiable List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
+        return getClassCssMetaData();
+    }
+
+    /// Returns the immutable stylesheet metadata shared by all advanced list items.
+    public static @Unmodifiable List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
+        return StyleableProperties.STYLEABLES;
+    }
+
+    /// Shared stylesheet metadata for advanced list items.
+    private static final class StyleableProperties {
+        /// Maps the selected background paint to its stylesheet property.
+        private static final CssMetaData<AdvancedListItem, @Nullable Paint> SELECTED_BACKGROUND_FILL =
+                new CssMetaData<>("-jfx-selected-background-fill", PaintConverter.getInstance()) {
+                    /// Reports whether CSS can assign the selected background paint.
+                    @Override
+                    public boolean isSettable(AdvancedListItem styleable) {
+                        return styleable.selectedBackgroundFill == null || !styleable.selectedBackgroundFill.isBound();
+                    }
+
+                    /// Returns the property receiving stylesheet paint values.
+                    @Override
+                    public StyleableProperty<@Nullable Paint> getStyleableProperty(AdvancedListItem styleable) {
+                        return styleable.selectedBackgroundFillProperty();
+                    }
+                };
+
+        /// The inherited control metadata followed by the selected background paint metadata.
+        private static final @Unmodifiable List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
+
+        static {
+            var styleables = new ArrayList<>(Control.getClassCssMetaData());
+            styleables.add(SELECTED_BACKGROUND_FILL);
+            STYLEABLES = List.copyOf(styleables);
+        }
+    }
 }
