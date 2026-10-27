@@ -4,13 +4,18 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXSpinner;
+
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
@@ -28,6 +33,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.FXThread;
@@ -58,6 +64,8 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     private final ChangeListener<Collection<JavaRuntime>> listener;
 
     private final Runnable onInstallJava;
+
+    private static final BooleanProperty refreshing = new SimpleBooleanProperty(false);
 
     public JavaManagementPage() {
         this.listener = FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), this::loadJava);
@@ -196,7 +204,36 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         protected List<Node> initializeToolbar(JavaManagementPage skinnable) {
             ArrayList<Node> res = new ArrayList<>(4);
 
-            res.add(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, JavaManager::refresh));
+            {
+                JFXButton refreshButton = createToolbarButton2(
+                    i18n("button.refresh"),
+                    SVG.REFRESH,
+                    () -> {
+                        if (refreshing.get()) {
+                            return;
+                        }
+
+                        refreshing.set(true);
+                        JavaManager.refresh(() -> refreshing.set(false));
+                    }
+                );
+
+                Node refreshIcon = refreshButton.getGraphic();
+
+                JFXSpinner spinner = new JFXSpinner();
+                spinner.getStyleClass().add("small-spinner");
+                spinner.setPrefSize(20, 20);
+                spinner.setMinSize(20, 20);
+                spinner.setMaxSize(20, 20);
+
+                refreshing.addListener((observable, oldValue, newValue) -> {
+                    refreshButton.setGraphic(newValue ? spinner : refreshIcon);
+                });
+
+                refreshButton.disableProperty().bind(refreshing);
+                res.add(refreshButton);
+            }
+
             if (skinnable.onInstallJava != null) {
                 res.add(createToolbarButton2(i18n("java.download"), SVG.DOWNLOAD, skinnable.onInstallJava));
             }
