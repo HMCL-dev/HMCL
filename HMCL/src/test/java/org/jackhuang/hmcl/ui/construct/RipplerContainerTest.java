@@ -87,7 +87,7 @@ public final class RipplerContainerTest {
         return (InteractionLayer) wrapper.getChildren().stream().filter(InteractionLayer.class::isInstance).findFirst().orElseThrow();
     }
 
-    /// Padding sizes content but never shrinks the unified feedback canvas.
+    /// Padding sizes content but never shrinks the unified feedback layer.
     @Test
     void layoutAndStackingUseOnlyOneEffectNode() {
         runFx(() -> {
@@ -293,6 +293,42 @@ public final class RipplerContainerTest {
         }
     }
 
+    /// Waveform clipping never removes transparent corners from the background hit area.
+    @Test
+    void activeWaveformsPreserveNativeCornerPicking() {
+        Fixture fixture = openFixture();
+        try {
+            AtomicInteger backgroundHits = new AtomicInteger();
+            runFx(() -> {
+                SettingsManager.settings().animationDisabledProperty().set(false);
+                InteractionLayer layer = layer(fixture.wrapper);
+                layer.setCornerRadius(20);
+                fixture.wrapper.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
+                    if (event.getTarget() == layer)
+                        backgroundHits.incrementAndGet();
+                });
+                layer.press(100, 50);
+            });
+            move(fixture, 2, 2);
+            runFx(() -> fixture.robot.mousePress(MouseButton.PRIMARY));
+            awaitFx(() -> backgroundHits.get() == 1);
+            runFx(() -> fixture.robot.mouseRelease(MouseButton.PRIMARY));
+            awaitFx(() -> !layer(fixture.wrapper).isPressed());
+            runFx(() -> fixture.wrapper.setPosition(FeedbackPosition.FRONT));
+            awaitPulses();
+            move(fixture, 3, 3);
+            awaitPulses();
+            runFx(() -> {
+                layer(fixture.wrapper).press(100, 50);
+                fixture.robot.mousePress(MouseButton.PRIMARY);
+            });
+            awaitFx(() -> backgroundHits.get() == 2);
+            runFx(() -> fixture.robot.mouseRelease(MouseButton.PRIMARY));
+        } finally {
+            closeFixture(fixture);
+        }
+    }
+
     /// Disable, detach, window hiding, focus loss, and cell reset cancel every waveform phase.
     @Test
     void lifecycleChangesCancelTransientFeedback() {
@@ -380,7 +416,7 @@ public final class RipplerContainerTest {
         }
     }
 
-    /// A large set of wrappers retains the node budget during layout and repeated input.
+    /// A large set of wrappers returns to the idle node budget after layout and repeated input.
     @Test
     void bulkLayoutAndInputKeepTheNodeBudget() {
         runFx(() -> {
@@ -414,7 +450,7 @@ public final class RipplerContainerTest {
             long currentLayoutAndInput = System.nanoTime() - start;
             assertEquals(3501, nodeCount(legacy));
             assertEquals(1501, nodeCount(current));
-            System.out.printf("500 rows: legacy=%d nodes, canvas=%d nodes; layout=%d ms, canvas layout plus input=%d ms (smoke timings, not a benchmark)%n",
+            System.out.printf("500 rows: legacy=%d nodes, feedback=%d nodes; layout=%d ms, feedback layout plus input=%d ms (smoke timings, not a benchmark)%n",
                     nodeCount(legacy), nodeCount(current), legacyLayout / 1_000_000, currentLayoutAndInput / 1_000_000);
             SettingsManager.settings().animationDisabledProperty().set(true);
         });

@@ -3,11 +3,25 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.scene.SnapshotParameters;
+import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.image.WritableImage;
+import javafx.scene.layout.Background;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.ImagePattern;
+import javafx.scene.paint.LinearGradient;
+import javafx.scene.paint.Paint;
+import javafx.scene.paint.RadialGradient;
+import javafx.scene.paint.Stop;
+import javafx.scene.shape.Circle;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.jackhuang.hmcl.ui.construct.FeedbackTestSupport.runFx;
@@ -142,14 +156,13 @@ final class InteractionLayerTest {
         });
     }
 
-    /// Canvas snapshots verify clipping, resizing, live paints, and intrinsic paint transparency.
+    /// Snapshots verify clipping, resizing, live paints, and intrinsic paint transparency.
     @Test
     void renderingUsesOneClipAndPreservesPaintAlpha() {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
             InteractionLayer layer = new InteractionLayer(clock::get, false);
-            layer.setWidth(100);
-            layer.setHeight(50);
+            layer.resize(100, 50);
             layer.setCornerRadius(10);
             layer.setAnimationEnabled(false);
             layer.setHovered(true);
@@ -170,14 +183,12 @@ final class InteractionLayerTest {
             layer.setAnimationEnabled(true);
             layer.press(50, 25);
             advance(layer, clock, 450);
-            layer.setWidth(200);
-            layer.setHeight(100);
+            layer.resize(200, 100);
             assertNull(layer.getClip());
             assertEquals(1, layer.rippleCount());
             assertFalse(layer.isAnimating());
             assertEquals(0.172, snapshot(layer).getPixelReader().getColor(190, 90).getOpacity(), 0.005);
-            layer.setWidth(0);
-            layer.setHeight(0);
+            layer.resize(0, 0);
             layer.reset();
             assertFalse(layer.isAnimating());
         });
@@ -189,8 +200,7 @@ final class InteractionLayerTest {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
             InteractionLayer layer = new InteractionLayer(clock::get, false);
-            layer.setWidth(100);
-            layer.setHeight(50);
+            layer.resize(100, 50);
             layer.press(50, 25);
             advance(layer, clock, 450);
             assertEquals(0, layer.stateOpacity());
@@ -216,7 +226,129 @@ final class InteractionLayerTest {
         });
     }
 
-    /// Captures canvas pixels against transparent surroundings.
+    /// Idle state feedback has no children and repeated resets preserve the same background.
+    @Test
+    void settledBackgroundAvoidsRedundantUpdates() {
+        runFx(() -> {
+            InteractionLayer layer = new InteractionLayer();
+            layer.resize(100, 50);
+            layer.setAnimationEnabled(false);
+            layer.setHovered(true);
+            Background background = Objects.requireNonNull(layer.getBackground());
+            for (int i = 0; i < 20; i++) {
+                layer.reset();
+                layer.resize(100 + i, 50);
+                assertSame(background, layer.getBackground());
+                assertTrue(layer.getChildrenUnmodifiable().isEmpty());
+                assertNull(layer.getClip());
+            }
+            layer.setHovered(false);
+            assertNull(layer.getBackground());
+        });
+    }
+
+    /// Overlapping waves share one clip and only two completed circles are retained for reuse.
+    @Test
+    void waveformPoolIsBoundedAndClipDoesNotAffectPicking() {
+        runFx(() -> {
+            AtomicLong clock = new AtomicLong();
+            InteractionLayer layer = new InteractionLayer(clock::get, false);
+            layer.resize(100, 50);
+            layer.setCornerRadius(12);
+            for (int i = 0; i < 8; i++) {
+                layer.press(i, 25);
+                layer.release();
+            }
+            Group group = (Group) layer.getChildrenUnmodifiable().getFirst();
+            assertEquals(8, group.getChildren().size());
+            assertNotNull(group.getClip());
+            assertNull(layer.getClip());
+            assertTrue(layer.contains(0, 0));
+            ArrayList<Node> previous = new ArrayList<>(group.getChildren());
+            layer.reset();
+            assertTrue(layer.getChildrenUnmodifiable().isEmpty());
+            assertTrue(group.getChildren().isEmpty());
+            assertNull(group.getClip());
+            for (int i = 0; i < 3; i++) {
+                layer.press(20, 25);
+                layer.release();
+            }
+            assertSame(group, layer.getChildrenUnmodifiable().getFirst());
+            assertEquals(2, group.getChildren().stream().filter(previous::contains).count());
+            advance(layer, clock, 200);
+            assertTrue(layer.getChildrenUnmodifiable().isEmpty());
+            assertNull(group.getClip());
+            assertFalse(layer.isAnimating());
+        });
+    }
+
+    /// Gradient and image paints multiply their intrinsic alpha without fading child waveforms.
+    @Test
+    void nonColorPaintsPreserveStateAndWaveformAlpha() {
+        runFx(() -> {
+            WritableImage image = new WritableImage(1, 1);
+            Color translucent = Color.color(1, 0, 0, 0.5);
+            image.getPixelWriter().setColor(0, 0, translucent);
+            @Unmodifiable List<Paint> paints = List.of(
+                    new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE,
+                            new Stop(0, translucent), new Stop(1, translucent)),
+                    new RadialGradient(0, 0, 0.5, 0.5, 0.5, true, CycleMethod.NO_CYCLE,
+                            new Stop(0, translucent), new Stop(1, translucent)),
+                    new ImagePattern(image));
+            AtomicLong clock = new AtomicLong();
+            InteractionLayer layer = new InteractionLayer(clock::get, false);
+            layer.resize(100, 50);
+            layer.setCornerRadius(10);
+            layer.setAnimationEnabled(false);
+            layer.setHovered(true);
+            for (Paint paint : paints) {
+                layer.setFill(paint);
+                assertEquals(0.04, snapshot(layer).getPixelReader().getColor(50, 25).getOpacity(), 0.005);
+                assertEquals(0, snapshot(layer).getPixelReader().getColor(0, 0).getOpacity());
+                layer.setAnimationEnabled(true);
+                layer.press(50, 25);
+                advance(layer, clock, 450);
+                assertEquals(0.088, snapshot(layer).getPixelReader().getColor(50, 25).getOpacity(), 0.005);
+                assertEquals(0, snapshot(layer).getPixelReader().getColor(0, 0).getOpacity());
+                layer.setAnimationEnabled(false);
+                assertEquals(0.05, snapshot(layer).getPixelReader().getColor(50, 25).getOpacity(), 0.005);
+                layer.reset();
+            }
+            layer.setFill(Color.BLUE);
+            assertTrue(layer.getChildrenUnmodifiable().isEmpty());
+            layer.setFill(null);
+            assertNull(layer.getBackground());
+        });
+    }
+
+    /// Resizing changes a waveform's covering radius without changing its expansion progress.
+    @Test
+    void resizingPreservesWaveformProgressAndClipsItsBounds() {
+        runFx(() -> {
+            AtomicLong clock = new AtomicLong();
+            InteractionLayer layer = new InteractionLayer(clock::get, false);
+            layer.resize(100, 50);
+            layer.setCornerRadius(10);
+            layer.press(20, 25);
+            advance(layer, clock, 100);
+            Group group = (Group) layer.getChildrenUnmodifiable().getFirst();
+            Circle circle = (Circle) group.getChildren().getFirst();
+            double progress = circle.getScaleX();
+            double radius = circle.getRadius();
+            layer.resize(200, 100);
+            assertEquals(progress, circle.getScaleX());
+            assertTrue(circle.getRadius() > radius);
+            advance(layer, clock, 350);
+            WritableImage pixels = snapshot(layer);
+            assertEquals(200, pixels.getWidth());
+            assertEquals(100, pixels.getHeight());
+            assertEquals(0.10, pixels.getPixelReader().getColor(190, 90).getOpacity(), 0.005);
+            assertEquals(0, pixels.getPixelReader().getColor(0, 0).getOpacity());
+            layer.reset();
+        });
+    }
+
+    /// Captures feedback pixels against transparent surroundings.
     private static WritableImage snapshot(InteractionLayer layer) {
         SnapshotParameters parameters = new SnapshotParameters();
         parameters.setFill(Color.TRANSPARENT);

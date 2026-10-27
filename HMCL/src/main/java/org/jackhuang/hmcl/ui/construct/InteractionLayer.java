@@ -10,28 +10,37 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
+import javafx.geometry.Insets;
+import javafx.scene.Group;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.function.LongSupplier;
 
-/// Draws hover, focus, press, and ripple feedback in a single canvas.
+/// Draws hover, focus, and static press backgrounds with transient circle waveforms.
 /// All construction, property changes, and operations must occur on the JavaFX application thread.
 /// The owner supplies dimensions, input states, and lifecycle notifications; this layer installs
-/// no input handlers and does not own content. Drawing is clipped to a rounded rectangle,
-/// but pointer picking still uses the rectangular canvas bounds.
+/// no input handlers and does not own content. Waveforms share a rounded rectangular clip;
+/// the layer itself retains rectangular pointer picking, including transparent corners.
+/// Solid state colors use the region background; other paints use a lazily created rectangle
+/// so their intrinsic transparency is multiplied by the state opacity.
 /// State opacities follow the
 /// [AndroidX Material 3 state tokens](https://github.com/androidx/androidx/blob/androidx-main/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/StateTokens.kt).
 /// Animated presses are represented by waveforms over the existing hover or focus state;
 /// presses without a waveform use a single static state layer instead.
 @NotNullByDefault
-public final class InteractionLayer extends Canvas {
+public final class InteractionLayer extends Region {
     /// The hover state opacity from Material 3 StateTokens v0_210.
     private static final double HOVER_OPACITY = 0.08;
     /// The focus state opacity from Material 3 StateTokens v0_210.
@@ -42,12 +51,30 @@ public final class InteractionLayer extends Canvas {
     private static final long STATE_DURATION = (long) (Motion.SHORT4.toMillis() * 1_000_000);
     /// The duration of ripple expansion while held, in nanoseconds.
     private static final long EXPANSION_DURATION = (long) (Motion.LONG1.toMillis() * 1_000_000);
+    /// The maximum number of detached circles retained for later presses.
+    private static final int MAX_POOLED_CIRCLES = 2;
     /// Supplies monotonic timestamps for both input changes and animation pulses.
     private final LongSupplier clock;
     /// Whether this instance schedules real pulses; deterministic tests advance it explicitly.
     private final boolean automaticPulses;
     /// The current waveforms, including released waves that have not finished fading.
     private final ArrayList<Ripple> ripples = new ArrayList<>();
+    /// Detached waveform nodes available for reuse, bounded independently of click history.
+    private final ArrayDeque<Circle> circlePool = new ArrayDeque<>();
+    /// The lazily created waveform group; it is attached only while waveforms exist.
+    private @Nullable Group waveformGroup;
+    /// The shared waveform clip, detached when no waveforms remain.
+    private @Nullable Rectangle waveformClip;
+    /// The lazily created state rectangle for paints that cannot encode an additional alpha.
+    private @Nullable Rectangle paintBackground;
+    /// The paint last applied to the persistent state background.
+    private @Nullable Paint backgroundPaint;
+    /// The opacity last applied to the persistent state background.
+    private double backgroundOpacity;
+    /// The radius last applied to the persistent state background.
+    private double backgroundRadius;
+    /// The immutable corner radii reused while only opacity changes.
+    private CornerRadii backgroundRadii = CornerRadii.EMPTY;
     /// The currently held waveform, or null for a static press or no press.
     private @Nullable Ripple activeRipple;
     /// The lazily allocated, reusable pulse source.
@@ -86,13 +113,12 @@ public final class InteractionLayer extends Canvas {
     InteractionLayer(LongSupplier clock, boolean automaticPulses) {
         this.clock = clock;
         this.automaticPulses = automaticPulses;
-        fill.addListener(observable -> draw());
-        cornerRadius.addListener(observable -> draw());
-        widthProperty().addListener(observable -> draw());
-        heightProperty().addListener(observable -> draw());
+        setPickOnBounds(true);
+        fill.addListener(observable -> updateVisuals());
+        cornerRadius.addListener(observable -> updateGeometry());
         animationEnabled.addListener(observable -> {
             if (!isAnimationEnabled()) {
-                ripples.clear();
+                clearRipples();
                 activeRipple = null;
                 settle();
             }
@@ -115,7 +141,7 @@ public final class InteractionLayer extends Canvas {
     }
 
     /// Returns the corner radius property, in local coordinates. Negative or non-finite values
-    /// render as zero; positive values are clamped to half the shorter canvas dimension.
+    /// render as zero; positive values are clamped to half the shorter layer dimension.
     public DoubleProperty cornerRadiusProperty() {
         return cornerRadius;
     }
@@ -156,7 +182,7 @@ public final class InteractionLayer extends Canvas {
         }
     }
 
-    /// Reports visual focus independently of the canvas's actual focus. Focus opacity is 10%,
+    /// Reports visual focus independently of the layer's actual focus. Focus opacity is 10%,
     /// above hover priority. An animated press may draw a waveform over the focus state.
     public void setFocusActive(boolean value) {
         if (focusActive != value) {
@@ -169,7 +195,7 @@ public final class InteractionLayer extends Canvas {
     /// up to 10% paint opacity overlays the hover or focus state, without a separate press layer.
     /// With animation disabled, a single 10% state layer replaces the hover or focus state.
     /// Repeated calls before release or reset have no effect. Coordinates may lie outside
-    /// the canvas; drawing remains clipped.
+    /// the layer; drawing remains clipped.
     ///
     /// @throws IllegalArgumentException if either coordinate is not finite
     public void press(double x, double y) {
@@ -179,8 +205,26 @@ public final class InteractionLayer extends Canvas {
             return;
         pressActive = true;
         if (isAnimationEnabled()) {
-            activeRipple = new Ripple(x, y, clock.getAsLong());
+            @Nullable Circle circle = circlePool.pollFirst();
+            if (circle == null) {
+                circle = new Circle();
+                circle.setManaged(false);
+                circle.setMouseTransparent(true);
+            }
+            activeRipple = new Ripple(x, y, clock.getAsLong(), circle);
             ripples.add(activeRipple);
+            if (waveformGroup == null) {
+                waveformGroup = new Group();
+                waveformGroup.setManaged(false);
+                waveformGroup.setMouseTransparent(true);
+                waveformClip = new Rectangle();
+            }
+            if (waveformGroup.getParent() == null) {
+                getChildren().add(waveformGroup);
+                waveformGroup.setClip(waveformClip);
+            }
+            waveformGroup.getChildren().add(circle);
+            updateGeometry();
         }
         changeState();
     }
@@ -191,7 +235,7 @@ public final class InteractionLayer extends Canvas {
         if (!pressActive)
             return;
         long now = clock.getAsLong();
-        advance(now);
+        updateAnimations(now);
         pressActive = false;
         if (activeRipple != null) {
             activeRipple.releaseProgress = activeRipple.progress;
@@ -207,7 +251,7 @@ public final class InteractionLayer extends Canvas {
     public void reset() {
         pressActive = false;
         activeRipple = null;
-        ripples.clear();
+        clearRipples();
         settle();
     }
 
@@ -222,7 +266,7 @@ public final class InteractionLayer extends Canvas {
     /// Starts a transition from the currently displayed state rather than its previous target.
     private void changeState() {
         long now = clock.getAsLong();
-        advance(now);
+        updateAnimations(now);
         if (!isAnimationEnabled()) {
             settle();
             return;
@@ -234,7 +278,9 @@ public final class InteractionLayer extends Canvas {
             stateStart = now;
             transitioning = startOpacity != targetOpacity;
         }
-        advance(now);
+        if (transitioning)
+            setRunning(true);
+        updateVisuals();
     }
 
     /// Applies the exact static state and releases the pulse source.
@@ -242,12 +288,18 @@ public final class InteractionLayer extends Canvas {
         transitioning = false;
         stateOpacity = targetOpacity = desiredOpacity();
         setRunning(false);
-        draw();
+        updateVisuals();
     }
 
-    /// Advances all animations to a timestamp from the supplied clock, then redraws.
+    /// Advances all animations to a timestamp from the supplied clock, then updates their nodes.
     /// Package access permits deterministic tests without exposing a public timing API.
     void advance(long now) {
+        updateAnimations(now);
+        updateVisuals();
+    }
+
+    /// Advances logical animation state without publishing intermediate visual changes.
+    private void updateAnimations(long now) {
         if (transitioning) {
             double progress = fraction(now - stateStart, STATE_DURATION);
             // Hover-only fades use a uniform opacity change in both directions.
@@ -263,6 +315,7 @@ public final class InteractionLayer extends Canvas {
             double progress = fraction(now - ripple.start, ripple.released ? STATE_DURATION : EXPANSION_DURATION);
             if (ripple.released && progress == 1) {
                 ripples.remove(i);
+                recycle(ripple.circle);
                 continue;
             }
             double eased = progress == 0 ? 0 : progress == 1 ? 1 : Motion.STANDARD.interpolate(0.0, 1.0, progress);
@@ -271,7 +324,6 @@ public final class InteractionLayer extends Canvas {
             moving |= progress < 1;
         }
         setRunning(moving);
-        draw();
     }
 
     /// Clamps elapsed time to a unit interval, including exact animation endpoints.
@@ -317,57 +369,129 @@ public final class InteractionLayer extends Canvas {
         return ripples.size();
     }
 
-    /// Redraws the complete canvas without allocating scene-graph or clip nodes.
-    private void draw() {
-        double width = getWidth();
-        double height = getHeight();
-        if (width <= 0 || height <= 0)
+    /// Updates both dimensions before adjusting backgrounds, clipping, and waveform radii.
+    @Override
+    public void resize(double width, double height) {
+        if (width == getWidth() && height == getHeight())
             return;
-        GraphicsContext graphics = getGraphicsContext2D();
-        graphics.clearRect(0, 0, width, height);
-        @Nullable Paint paint = getFill();
-        if (paint == null)
-            return;
-        double radius = getCornerRadius();
-        radius = Double.isFinite(radius) ? Math.max(0, Math.min(radius, Math.min(width, height) / 2)) : 0;
-        graphics.save();
-        graphics.beginPath();
-        graphics.moveTo(radius, 0);
-        graphics.lineTo(width - radius, 0);
-        graphics.quadraticCurveTo(width, 0, width, radius);
-        graphics.lineTo(width, height - radius);
-        graphics.quadraticCurveTo(width, height, width - radius, height);
-        graphics.lineTo(radius, height);
-        graphics.quadraticCurveTo(0, height, 0, height - radius);
-        graphics.lineTo(0, radius);
-        graphics.quadraticCurveTo(0, 0, radius, 0);
-        graphics.closePath();
-        graphics.clip();
-        graphics.setFill(paint);
-        graphics.setGlobalAlpha(stateOpacity);
-        graphics.fillRect(0, 0, width, height);
-        for (Ripple ripple : ripples) {
-            double dx = Math.max(Math.abs(ripple.x), Math.abs(width - ripple.x));
-            double dy = Math.max(Math.abs(ripple.y), Math.abs(height - ripple.y));
-            double rippleRadius = Math.hypot(dx, dy) * ripple.progress;
-            graphics.setGlobalAlpha(ripple.opacity);
-            graphics.fillOval(ripple.x - rippleRadius, ripple.y - rippleRadius, rippleRadius * 2, rippleRadius * 2);
-        }
-        // JavaFX reuses its clipping scratch surface, including the previous draw's extra alpha.
-        // Leave that surface at full alpha so the next clip is not multiplied by a state opacity.
-        graphics.setGlobalAlpha(1);
-        graphics.setFill(Color.TRANSPARENT);
-        graphics.fillRect(0, 0, width, height);
-        graphics.restore();
+        super.resize(width, height);
+        updateGeometry();
     }
 
-    /// Stores a waveform without adding a node to the scene graph.
+    /// Returns the effective uniform radius within the current dimensions.
+    private double effectiveRadius() {
+        double radius = getCornerRadius();
+        return Double.isFinite(radius) ? Math.max(0, Math.min(radius, Math.min(getWidth(), getHeight()) / 2)) : 0;
+    }
+
+    /// Updates size-dependent geometry without restarting an existing animation.
+    private void updateGeometry() {
+        double radius = effectiveRadius();
+        if (waveformClip != null && !ripples.isEmpty()) {
+            waveformClip.setWidth(getWidth());
+            waveformClip.setHeight(getHeight());
+            waveformClip.setArcWidth(radius * 2);
+            waveformClip.setArcHeight(radius * 2);
+        }
+        if (paintBackground != null) {
+            paintBackground.setWidth(getWidth());
+            paintBackground.setHeight(getHeight());
+            paintBackground.setArcWidth(radius * 2);
+            paintBackground.setArcHeight(radius * 2);
+        }
+        for (int i = 0; i < ripples.size(); i++) {
+            Ripple ripple = ripples.get(i);
+            double dx = Math.max(Math.abs(ripple.x), Math.abs(getWidth() - ripple.x));
+            double dy = Math.max(Math.abs(ripple.y), Math.abs(getHeight() - ripple.y));
+            ripple.circle.setRadius(Math.hypot(dx, dy));
+        }
+        updateVisuals();
+    }
+
+    /// Publishes changed state and waveform properties without replaying drawing commands.
+    private void updateVisuals() {
+        @Nullable Paint paint = getFill();
+        updateBackground(paint, effectiveRadius());
+        if (waveformGroup != null)
+            waveformGroup.setVisible(paint != null && getWidth() > 0 && getHeight() > 0);
+        for (int i = 0; i < ripples.size(); i++) {
+            Ripple ripple = ripples.get(i);
+            Circle circle = ripple.circle;
+            circle.setFill(paint);
+            circle.setCenterX(ripple.x);
+            circle.setCenterY(ripple.y);
+            circle.setScaleX(ripple.progress);
+            circle.setScaleY(ripple.progress);
+            circle.setOpacity(ripple.opacity);
+        }
+    }
+
+    /// Updates the persistent background only when its paint, opacity, or radius changes.
+    private void updateBackground(@Nullable Paint paint, double radius) {
+        if (paint == backgroundPaint && stateOpacity == backgroundOpacity && radius == backgroundRadius)
+            return;
+        backgroundPaint = paint;
+        backgroundOpacity = stateOpacity;
+        if (radius != backgroundRadius)
+            backgroundRadii = radius == 0 ? CornerRadii.EMPTY : new CornerRadii(radius);
+        backgroundRadius = radius;
+        if (paintBackground != null && (paint instanceof Color || paint == null || stateOpacity == 0)) {
+            getChildren().remove(paintBackground);
+            paintBackground.setFill(null);
+        }
+        if (paint == null || stateOpacity == 0) {
+            setBackground(null);
+        } else if (paint instanceof Color color) {
+            Color tinted = new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getOpacity() * stateOpacity);
+            setBackground(new Background(new BackgroundFill(tinted, backgroundRadii, Insets.EMPTY)));
+        } else {
+            // A node opacity also supports ImagePattern without rewriting its source pixels.
+            setBackground(null);
+            if (paintBackground == null) {
+                paintBackground = new Rectangle();
+                paintBackground.setManaged(false);
+                paintBackground.setMouseTransparent(true);
+            }
+            paintBackground.setWidth(getWidth());
+            paintBackground.setHeight(getHeight());
+            paintBackground.setArcWidth(radius * 2);
+            paintBackground.setArcHeight(radius * 2);
+            paintBackground.setFill(paint);
+            paintBackground.setOpacity(stateOpacity);
+            if (paintBackground.getParent() == null)
+                getChildren().add(0, paintBackground);
+        }
+    }
+
+    /// Detaches all waves and retains at most a small fixed number of reusable circles.
+    private void clearRipples() {
+        for (int i = ripples.size() - 1; i >= 0; i--)
+            recycle(ripples.remove(i).circle);
+    }
+
+    /// Removes one waveform node and detaches the shared clip when its group becomes empty.
+    private void recycle(Circle circle) {
+        if (waveformGroup != null) {
+            waveformGroup.getChildren().remove(circle);
+            if (waveformGroup.getChildren().isEmpty()) {
+                getChildren().remove(waveformGroup);
+                waveformGroup.setClip(null);
+            }
+        }
+        circle.setFill(null);
+        if (circlePool.size() < MAX_POOLED_CIRCLES)
+            circlePool.addLast(circle);
+    }
+
+    /// Stores animation progress alongside its reusable waveform node.
     @NotNullByDefault
     private static final class Ripple {
         /// The horizontal origin in local coordinates.
         private final double x;
         /// The vertical origin in local coordinates.
         private final double y;
+        /// The unmanaged circle displaying this waveform.
+        private final Circle circle;
         /// The start of the current expansion or release phase.
         private long start;
         /// Whether the release phase has begun.
@@ -380,10 +504,11 @@ public final class InteractionLayer extends Canvas {
         private double opacity = PRESSED_OPACITY;
 
         /// Creates an unexpanded held waveform at the supplied position and time.
-        private Ripple(double x, double y, long start) {
+        private Ripple(double x, double y, long start, Circle circle) {
             this.x = x;
             this.y = y;
             this.start = start;
+            this.circle = circle;
         }
     }
 }

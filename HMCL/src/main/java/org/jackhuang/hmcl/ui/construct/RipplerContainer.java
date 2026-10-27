@@ -29,7 +29,7 @@ import java.util.Objects;
 
 import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
-/// Wraps content with a single canvas for hover, focus, press, and ripple feedback.
+/// Wraps content with a region for hover, focus, press, and ripple feedback.
 /// Feedback covers the entire pane, including padding, without replacing its background.
 /// Construction and all subsequent changes must occur on the JavaFX application thread.
 /// Only background presses trigger feedback in [FeedbackPosition#BACK] mode; content events
@@ -203,8 +203,7 @@ public class RipplerContainer extends StackPane {
     @Override
     protected void layoutChildren() {
         super.layoutChildren();
-        interactionLayer.setWidth(getWidth());
-        interactionLayer.setHeight(getHeight());
+        interactionLayer.resize(getWidth(), getHeight());
         interactionLayer.relocate(0, 0);
     }
 
