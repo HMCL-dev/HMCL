@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.io;
 
 import org.jetbrains.annotations.NotNullByDefault;
@@ -68,7 +53,12 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/// Exercises the incident fixtures with offline PKIX validation.
+/// Exercises compromised and independent test certificates with offline PKIX validation.
+///
+/// `test-chain.pem` contains a locally generated leaf, intermediate, and self-signed root,
+/// in that order, without private keys. The certificates use EC `secp256r1` keys and were
+/// generated with `keytool`, a start date of `2026/01/01 00:00:00`, and a validity of 3650 days.
+/// The leaf permits server and client authentication; both CAs permit certificate signing.
 ///
 /// The compromised certificates also match the original Mozilla report attachments:
 /// [original issuances](https://bugzilla.mozilla.org/attachment.cgi?id=9664066) and
@@ -289,7 +279,7 @@ class TLSSecurityTest {
         ), fingerprints);
     }
 
-    /// Proves otherwise-valid TLS paths fail because of the blocklist, for both signing roots.
+    /// Rejects published TLS paths for both signing roots, including on JDKs that also block them.
     @Test
     void rejectsAllPublishedTlsChains() throws Exception {
         for (String type : List.of("dv", "ov", "ev")) {
@@ -304,9 +294,9 @@ class TLSSecurityTest {
                     assertThrows(CertificateException.class, () -> protectedManager.checkServerTrusted(chain, "ECDHE_ECDSA", (SSLEngine) null), name);
                     assertThrows(CertificateException.class, () -> protectedManager.checkClientTrusted(chain, "EC"), name);
 
-                    // Removing only the blocklist must make the same server path valid.
-                    parameters.setCertPathCheckers(List.of());
-                    assertDoesNotThrow(() -> trustManager(parameters).checkServerTrusted(chain, "ECDHE_ECDSA"), name);
+                    // JDK blocklists may independently reject these compromised certificates.
+                    // Check HMCL's checker directly so JDK rejection cannot mask a missing key.
+                    assertThrows(CertPathValidatorException.class, () -> newChecker().check(chain[1]), name);
                 }
             }
         }
@@ -334,7 +324,24 @@ class TLSSecurityTest {
         parameters.addCertStore(CertStore.getInstance("Collection", new CollectionCertStoreParameters(List.of(chain))));
         X509Certificate[] leaf = {chain[0]};
         assertThrows(CertificateException.class, () -> trustManager(parameters).checkServerTrusted(leaf, "ECDHE_ECDSA"));
-        parameters.setCertPathCheckers(List.of());
+    }
+
+    /// Accepts an independent test chain with peer-supplied or locally stored intermediates.
+    /// Also verifies that a missing intermediate still prevents path construction.
+    @Test
+    void acceptsUnblockedTlsChain() throws Exception {
+        X509Certificate[] chain = readCertificates("test-chain.pem");
+        assertEquals(3, chain.length);
+        PKIXBuilderParameters parameters = TLSSecurity.createParameters(trustStore(chain[2]));
+        X509ExtendedTrustManager manager = trustManager(parameters);
+        assertDoesNotThrow(() -> manager.checkServerTrusted(chain, "ECDHE_ECDSA"));
+        assertDoesNotThrow(() -> manager.checkServerTrusted(chain, "ECDHE_ECDSA", (Socket) null));
+        assertDoesNotThrow(() -> manager.checkServerTrusted(chain, "ECDHE_ECDSA", (SSLEngine) null));
+        assertDoesNotThrow(() -> manager.checkClientTrusted(chain, "EC"));
+
+        X509Certificate[] leaf = {chain[0]};
+        assertThrows(CertificateException.class, () -> manager.checkServerTrusted(leaf, "ECDHE_ECDSA"));
+        parameters.addCertStore(CertStore.getInstance("Collection", new CollectionCertStoreParameters(List.of(chain[1]))));
         assertDoesNotThrow(() -> trustManager(parameters).checkServerTrusted(leaf, "ECDHE_ECDSA"));
     }
 
