@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -140,16 +125,18 @@ public enum JavaVersionConstraint {
     },
     // Minecraft>=1.13 may crash when generating world on Java [1.8,1.8.0_51)
     VANILLA_JAVA_8_51(false, GameVersionNumber.atLeast("1.13"), VersionNumber.atLeast("1.8.0_51")),
-    // On Linux, JDK 9+ cannot launch Minecraft<=1.12.2, since JDK 9+ does not accept loading native library built in different arch.
-    // For example, JDK 9+ 64-bit cannot load 32-bit lwjgl native library.
+    /// Restricts legacy Linux x86-64 instances to Java 8 because newer JDKs reject mismatched native-library architectures.
+    /// An explicitly declared newer Java requirement takes precedence; Cleanroom remains exempt.
     VANILLA_LINUX_JAVA_8(true, GameVersionNumber.atMost("1.12.999"), VersionNumber.atMost("1.8.999")) {
+        /// Applies the native-library restriction only when the manifest does not require newer Java.
         @Override
         protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable GameInstanceManifest version,
                                                @Nullable JavaRuntime java, @Nullable GameComponentAnalyzer analyzer) {
             return OperatingSystem.CURRENT_OS == OperatingSystem.LINUX
                     && Architecture.SYSTEM_ARCH == Architecture.X86_64
                     && (java == null || java.getArchitecture() == Architecture.X86_64)
-                    && (analyzer == null || !analyzer.has(GameComponentType.CLEANROOM));
+                    && (analyzer == null || !analyzer.has(GameComponentType.CLEANROOM))
+                    && super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
         }
 
         @Override
