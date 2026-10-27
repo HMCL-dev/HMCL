@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.modpack.multimc;
 
 import com.google.gson.JsonParseException;
@@ -208,8 +193,8 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             }
 
             // TODO: Optimize unbearably slow ModpackInstallTask
-            dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(mcDirectory), any -> true, config).withStage("hmcl.modpack"));
-            dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
+            dependents.add(new ModpackInstallTask<>(zipFile, run, Collections.singletonList(mcDirectory), any -> true, config).withStage("hmcl.modpack"));
+            dependents.add(new MinecraftInstanceTask<>(zipFile, Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getLayout().getModpackConfigurationFile(instanceId)).withStage("hmcl.modpack"));
         }
 
         // Stage #1: Load all related Json-Patch from meta maven or local mod pack.
@@ -378,7 +363,8 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
             Path instanceJar = getPrimaryJarFile();
             dependencies.add(new GameDownloadTask(dependencyManager, instanceManifest)
-                    .thenAcceptAsync(cachedJar -> FileUtils.copyFile(cachedJar, instanceJar)));
+                    .thenAcceptAsync(cachedJar -> FileUtils.copyFile(cachedJar, instanceJar))
+                    .withStage("hmcl.modpack.download"));
         }
 
         setResult(artifact);
@@ -410,11 +396,9 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             try (FileSystem fs = openModpack()) {
                 Path root = getRootPath(fs).resolve("jarmods");
 
-                try (FileSystem mc = CompressingUtils.writable(
-                        getPrimaryJarFile()
-                ).setAutoDetectEncoding(true).build()) {
+                try (FileSystem mc = CompressingUtils.writable(getPrimaryJarFile()).build()) {
                     for (String fileName : files) {
-                        try (FileSystem jm = CompressingUtils.readonly(root.resolve(fileName)).setAutoDetectEncoding(true).build()) {
+                        try (FileSystem jm = CompressingUtils.readonly(root.resolve(fileName)).build()) {
                             FileUtils.copyDirectory(jm.getPath("/"), mc.getPath("/"));
                         }
                     }
@@ -466,7 +450,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     }
 
     private FileSystem openModpack() throws IOException {
-        return CompressingUtils.readonly(zipFile).setAutoDetectEncoding(true).setEncoding(modpack.getEncoding()).build();
+        return CompressingUtils.readonly(zipFile).build();
     }
 
     private static boolean testPath(Path root) {

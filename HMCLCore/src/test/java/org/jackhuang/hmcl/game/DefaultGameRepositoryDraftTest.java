@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
 import org.glavo.url.WebURL;
@@ -48,6 +33,40 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /// Tests exclusive repository drafts and their filesystem visibility boundary.
 @NotNullByDefault
 public final class DefaultGameRepositoryDraftTest {
+
+    /// Finds a manifest among unrelated and malformed JSON files and preserves its storage path.
+    @Test
+    public void testRefreshSelectsManifestAmongMultipleJsonFiles(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        Path root = Files.createDirectories(repository.getLayout().getInstanceRoot(id));
+        Files.writeString(root.resolve("a-broken.json"), "{");
+        Files.writeString(root.resolve("b-settings.json"), "{\"id\":\"settings\",\"mainClass\":42}");
+        Path selected = root.resolve("c-game.json");
+        Files.writeString(selected, "{\"id\":\"original\",\"mainClass\":\"example.Main\"}");
+        Files.writeString(root.resolve("d-game.json"), "{\"id\":\"other\",\"mainClass\":\"other.Main\"}");
+
+        repository.refresh();
+
+        assertEquals(selected, repository.getInstance(id).getManifestFile());
+        assertEquals(id, repository.getInstance(id).getManifest().id());
+        assertEquals("example.Main", repository.getInstance(id).getManifest().mainClass());
+        assertFalse(Files.exists(repository.getLayout().getInstanceJson(id)));
+    }
+
+    /// Ignores directories whose multiple JSON files do not contain an instance manifest.
+    @Test
+    public void testRefreshIgnoresUnrelatedJsonFiles(@TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        Path root = Files.createDirectories(repository.getLayout().getInstanceRoot(id));
+        Files.writeString(root.resolve("settings.json"), "{\"id\":\"settings\"}");
+        Files.writeString(root.resolve("empty.json"), "null");
+
+        repository.refresh();
+
+        assertFalse(repository.hasInstance(id));
+    }
 
     /// Rejects path-segment instance ids before they can reach repository deletion code.
     @Test

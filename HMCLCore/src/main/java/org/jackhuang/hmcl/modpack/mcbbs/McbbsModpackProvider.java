@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.modpack.mcbbs;
 
 import com.google.gson.JsonParseException;
@@ -29,7 +14,6 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -72,20 +56,20 @@ public final class McbbsModpackProvider implements ModpackProvider {
         config.getManifest().injectLaunchOptions(builder);
     }
 
-    private static Modpack fromManifestFile(InputStream json, Charset encoding) throws IOException, JsonParseException {
+    private static Modpack fromManifestFile(InputStream json) throws IOException, JsonParseException {
         McbbsModpackManifest manifest = JsonUtils.fromNonNullJsonFully(json, McbbsModpackManifest.class);
-        return manifest.toModpack(encoding);
+        return manifest.toModpack();
     }
 
     @Override
-    public Modpack readManifest(ZipArchiveReader zip, Path file, Charset encoding) throws IOException, JsonParseException {
+    public Modpack readManifest(ZipArchiveReader zip, Path file) throws IOException, JsonParseException {
         ZipArchiveEntry mcbbsPackMeta = zip.getEntry("mcbbs.packmeta");
         if (mcbbsPackMeta != null) {
-            return fromManifestFile(zip.getInputStream(mcbbsPackMeta), encoding);
+            return fromManifestFile(zip.getInputStream(mcbbsPackMeta));
         }
         ZipArchiveEntry manifestJson = zip.getEntry("manifest.json");
         if (manifestJson != null) {
-            return fromManifestFile(zip.getInputStream(manifestJson), encoding);
+            return fromManifestFile(zip.getInputStream(manifestJson));
         }
         throw new IOException("`mcbbs.packmeta` or `manifest.json` cannot be found");
     }

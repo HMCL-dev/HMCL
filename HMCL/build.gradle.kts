@@ -1,4 +1,6 @@
 import org.jackhuang.hmcl.gradle.TerracottaConfigUpgradeTask
+import org.jackhuang.hmcl.gradle.addon.FormatJsonFile
+import org.jackhuang.hmcl.gradle.addon.UpdateAddonProjectInfos
 import org.jackhuang.hmcl.gradle.ci.GitHubActionUtils
 import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
 import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
@@ -6,10 +8,10 @@ import org.jackhuang.hmcl.gradle.l10n.CreateLanguageList
 import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
 import org.jackhuang.hmcl.gradle.l10n.SyncTranslations
 import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
-import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import org.jackhuang.hmcl.gradle.pack.CreateDeb
 import org.jackhuang.hmcl.gradle.pack.ReleaseType
 import org.jackhuang.hmcl.gradle.utils.PropertiesUtils
+import org.jackhuang.hmcl.gradle.utils.OfficialBuildValueSource
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -145,6 +147,7 @@ val addOpens = listOf(
     "javafx.controls/com.sun.javafx.scene.control",
     "javafx.controls/com.sun.javafx.scene.control.behavior",
     "javafx.graphics/com.sun.javafx.tk.quantum",
+    "javafx.controls/javafx.scene.control",
     "javafx.controls/javafx.scene.control.skin",
     "jdk.attach/sun.tools.attach",
 )
@@ -153,33 +156,28 @@ tasks.compileJava {
     options.compilerArgs.addAll(addOpens.map { "--add-exports=$it=ALL-UNNAMED" })
 }
 
-val hmclProperties = buildList {
-    add("hmcl.version" to project.version.toString())
-    add("hmcl.add-opens" to addOpens.joinToString(" "))
-    System.getenv("GITHUB_SHA")?.let {
-        add("hmcl.version.hash" to it)
-    }
-    add("hmcl.version.type" to versionType)
-    add("hmcl.microsoft.auth.id" to microsoftAuthId)
-    add("hmcl.curseforge.apikey" to curseForgeApiKey)
-    add("hmcl.authlib-injector.version" to libs.authlib.injector.get().version!!)
-    add("hmcl.lwjgl-unsafe-agent.version" to libs.lwjgl.unsafe.agent.get().version!!)
-}
+val createPropertiesFile = tasks.register<WriteProperties>("createPropertiesFile") {
+    destinationFile.set(layout.buildDirectory.file("hmcl.properties"))
+    encoding = "UTF-8"
 
-val hmclPropertiesFile = layout.buildDirectory.file("hmcl.properties")
-val createPropertiesFile = tasks.register("createPropertiesFile") {
-    outputs.file(hmclPropertiesFile)
-    hmclProperties.forEach { (k, v) -> inputs.property(k, v) }
-
-    doLast {
-        val targetFile = hmclPropertiesFile.get().asFile
-        targetFile.parentFile.mkdir()
-        targetFile.bufferedWriter().use {
-            for ((k, v) in hmclProperties) {
-                it.write("$k=$v\n")
-            }
-        }
-    }
+    property("hmcl.version", project.version.toString())
+    property("hmcl.add-opens", addOpens.joinToString(" "))
+    System.getenv("GITHUB_SHA")?.let { property("hmcl.version.hash", it) }
+    property("hmcl.version.type", versionType)
+    property("hmcl.microsoft.auth.id", microsoftAuthId)
+    property("hmcl.curseforge.apikey", curseForgeApiKey)
+    property("hmcl.authlib-injector.version", libs.authlib.injector.get().version!!)
+    property("hmcl.lwjgl-unsafe-agent.version", libs.lwjgl.unsafe.agent.get().version!!)
+    property("hmcl.official", providers.of(OfficialBuildValueSource::class) {
+        parameters.publicKeyFile.set(layout.projectDirectory.file("src/main/resources/assets/hmcl_signature_publickey.der"))
+        parameters.privateKeyLocation.set(providers.environmentVariable("HMCL_SIGNATURE_KEY"))
+        // Pin the official public key independently of the replaceable resource file.
+        // Under HMCL’s license agreement, you **MUST** change the software name or the version number in
+        // a reasonable way to distinguish it from the original version.
+        // You may modify this hash if and only if you have changed the software name or version number
+        // in accordance with the license requirements.
+        parameters.expectedSha256.set("36aadcfde8626b9d4c7a74facb3fdfda47e703c205a673fbe6a56b1d419f8b8e")
+    })
 }
 
 tasks.jar {
@@ -213,7 +211,7 @@ tasks.shadowJar {
     }
 
     manifest.attributes(
-        "Created-By" to "Copyright(c) 2013-2025 huangyuhui.",
+        "Created-By" to "Copyright(c) 2013-2026 The HMCL Authors",
         "Implementation-Version" to project.version.toString(),
         "Main-Class" to "org.jackhuang.hmcl.Main",
         "Multi-Release" to "true",
@@ -235,13 +233,12 @@ tasks.shadowJar {
 }
 
 tasks.processResources {
-    dependsOn(createPropertiesFile)
     dependsOn(upsideDownTranslate)
     dependsOn(createLocaleNamesResourceBundle)
     dependsOn(createLanguageList)
 
     into("assets/") {
-        from(hmclPropertiesFile)
+        from(createPropertiesFile.flatMap { it.destinationFile })
         from(embedResources)
     }
 
@@ -461,21 +458,32 @@ val createLanguageList = tasks.register<CreateLanguageList>("createLanguageList"
     outputFile.set(generatedDir.map { it.file("languages.json") })
 }
 
-val createLocaleNamesResourceBundle = tasks.register<CreateLocaleNamesResourceBundle>("createLocaleNamesResourceBundle") {
-    dependsOn(createLanguageList)
+val createLocaleNamesResourceBundle =
+    tasks.register<CreateLocaleNamesResourceBundle>("createLocaleNamesResourceBundle") {
+        dependsOn(createLanguageList)
 
-    languagesFile.set(createLanguageList.flatMap { it.outputFile })
-    outputDirectory.set(generatedDir.map { it.dir("generated/LocaleNames") })
-}
+        languagesFile.set(createLanguageList.flatMap { it.outputFile })
+        outputDirectory.set(generatedDir.map { it.dir("generated/LocaleNames") })
+    }
 
 // mcmod data
 
-tasks.register<ParseModDataTask>("parseModData") {
-    inputFile.set(layout.projectDirectory.file("mod.json"))
-    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/mod_data.txt"))
+tasks.register<FormatJsonFile>("formatModJson") {
+    file.set(layout.projectDirectory.file("mod.json"))
 }
 
-tasks.register<ParseModDataTask>("parseModPackData") {
+tasks.register<FormatJsonFile>("formatModpackJson") {
+    file.set(layout.projectDirectory.file("modpack.json"))
+}
+
+tasks.register<UpdateAddonProjectInfos>("updateModProjectInfos") {
+    inputFile.set(layout.projectDirectory.file("mod.json"))
+    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/addon/mod.csv"))
+    projectType.set(UpdateAddonProjectInfos.AddonProjectType.MOD)
+}
+
+tasks.register<UpdateAddonProjectInfos>("updateModpackProjectInfos") {
     inputFile.set(layout.projectDirectory.file("modpack.json"))
-    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/modpack_data.txt"))
+    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/addon/modpack.csv"))
+    projectType.set(UpdateAddonProjectInfos.AddonProjectType.MODPACK)
 }

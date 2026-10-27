@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.game;
 
 import com.jfoenix.controls.JFXButton;
@@ -643,6 +628,11 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 jvmSettings
         );
         {
+            var notUseJavawPane = createInheritableBooleanButton(GameSettings::notUseJavawProperty);
+            jvmSettings.getContent().add(notUseJavawPane);
+            notUseJavawPane.setTitle(i18n("settings.advanced.not_use_javaw"));
+            notUseJavawPane.setSubtitle(i18n("settings.advanced.windows_only"));
+
             var noJVMArgsPane = createInheritableBooleanButton(GameSettings::noJVMOptionsProperty);
             jvmSettings.getContent().add(noJVMArgsPane);
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));

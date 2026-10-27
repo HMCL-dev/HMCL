@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
@@ -25,8 +10,10 @@ import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ListChangeListener;
 import javafx.collections.transformation.FilteredList;
@@ -55,7 +42,9 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -131,9 +120,9 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                 }, null);
             });
             JFXButton enableButton = createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
-                    skinnable.enableSelected(listView.getSelectionModel().getSelectedItems()));
+                    skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true));
             JFXButton disableButton = createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
-                    skinnable.disableSelected(listView.getSelectionModel().getSelectedItems()));
+                    skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false));
             removeButton.disableProperty().bind(getSkinnable().readOnly);
             enableButton.disableProperty().bind(getSkinnable().readOnly);
             disableButton.disableProperty().bind(getSkinnable().readOnly);
@@ -256,15 +245,11 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
     }
 
     static class DataPackInfoObject extends RecursiveTreeObject<DataPackInfoObject> {
-        private final BooleanProperty activeProperty;
         private final DataPack.Pack packInfo;
-
         private final ItemPropertyAsyncCache<Image, DataPackInfoObject> iconCache;
 
         DataPackInfoObject(DataPack.Pack packInfo) {
             this.packInfo = packInfo;
-            this.activeProperty = packInfo.activeProperty();
-
             this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
@@ -318,7 +303,10 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         final JFXCheckBox checkBox = new JFXCheckBox();
         ImageContainer imageContainer = new ImageContainer(32);
         final TwoLineListItem content = new TwoLineListItem();
-        BooleanProperty booleanProperty;
+
+        private final InvalidationListener activeListener = obs -> checkBox.setSelected(getItem().getPackInfo().isActive());
+        private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
+        private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
         DataPackInfoListCell(JFXListView<DataPackInfoObject> listView, BooleanProperty isReadOnlyProperty) {
             super(listView);
@@ -343,13 +331,25 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
         @Override
         protected void updateControl(DataPackInfoObject dataItem, boolean empty) {
+            if (observedActiveProperty != null)
+                observedActiveProperty.removeListener(weakActiveListener);
             if (empty) return;
             content.setTitle(dataItem.getTitle());
             content.setSubtitle(dataItem.getSubtitle());
-            if (booleanProperty != null) {
-                checkBox.selectedProperty().unbindBidirectional(booleanProperty);
-            }
-            checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.activeProperty);
+
+            DataPack.Pack packInfo = dataItem.getPackInfo();
+            (observedActiveProperty = packInfo.activeProperty()).addListener(weakActiveListener);
+            checkBox.setSelected(packInfo.isActive());
+            checkBox.setOnAction(event -> {
+                try {
+                    packInfo.setActive(checkBox.isSelected());
+                } catch (IOException e) {
+                    LOG.warning("Unable to change state of datapack " + packInfo.getPath(), e);
+                    Controllers.showToast(i18n("datapack.toggle.failed"));
+                } finally {
+                    checkBox.setSelected(packInfo.isActive());
+                }
+            });
             dataItem.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(this.itemProperty()));
         }
     }

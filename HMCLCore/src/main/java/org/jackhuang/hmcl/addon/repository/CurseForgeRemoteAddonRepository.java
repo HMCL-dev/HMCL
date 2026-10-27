@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.addon.repository;
 
 import com.google.gson.reflect.TypeToken;
@@ -468,9 +453,9 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                 pair(1, RemoteAddon.DependencyType.EMBEDDED),
                 pair(2, RemoteAddon.DependencyType.OPTIONAL),
                 pair(3, RemoteAddon.DependencyType.REQUIRED),
-                pair(4, RemoteAddon.DependencyType.TOOL),
+                pair(4, RemoteAddon.DependencyType.OPTIONAL), // CF name: TOOL
                 pair(5, RemoteAddon.DependencyType.INCOMPATIBLE),
-                pair(6, RemoteAddon.DependencyType.INCLUDE)
+                pair(6, RemoteAddon.DependencyType.EMBEDDED) // CF name: INCLUDE, should never appear because CF hides this
         );
 
         @Override
@@ -554,7 +539,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                                  int releaseType, int fileStatus, List<LatestFileHash> hashes, Instant fileDate,
                                  int fileLength, int downloadCount, String downloadUrl, List<String> gameVersions,
                                  List<Dependency> dependencies, int alternateFileId, boolean isServerPack,
-                                 long fileFingerprint) implements RemoteAddon.IVersion {
+                                 long fileFingerprint) {
 
             @Override
             public String downloadUrl() {
@@ -564,11 +549,6 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                     return String.format("https://edge.forgecdn.net/files/%d/%d/%s", id / 1000, id % 1000, fileName);
                 }
                 return downloadUrl;
-            }
-
-            @Override
-            public RemoteAddon.Source getSource() {
-                return RemoteAddon.Source.CURSEFORGE;
             }
 
             public RemoteAddon.Version toVersion() {
@@ -596,7 +576,7 @@ public final class CurseForgeRemoteAddonRepository implements RemoteAddonReposit
                 }
 
                 return new RemoteAddon.Version(
-                        this,
+                        RemoteAddon.Source.CURSEFORGE,
                         Integer.toString(id()),
                         Integer.toString(modId()),
                         displayName(),

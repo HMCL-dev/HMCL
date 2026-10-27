@@ -1,26 +1,12 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.addon;
 
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -54,8 +40,6 @@ public record RemoteAddon(String slug, String author, String title, String descr
     public enum DependencyType {
         REQUIRED,
         OPTIONAL,
-        TOOL,
-        INCLUDE,
         EMBEDDED,
         INCOMPATIBLE,
         BROKEN
@@ -145,6 +129,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
 
         private final RemoteAddonRepository repo;
 
+        @NotNull
         public RemoteAddonRepository getRepository() {
             return repo;
         }
@@ -169,11 +154,7 @@ public record RemoteAddon(String slug, String author, String title, String descr
         Stream<Version> loadVersions(RemoteAddonRepository repo, DownloadProvider downloadProvider) throws IOException;
     }
 
-    public interface IVersion {
-        Source getSource();
-    }
-
-    public record Version(IVersion self, String versionId, String projectId, String name, String version,
+    public record Version(RemoteAddon.Source source, String versionId, String projectId, String name, String version,
                           Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies,
                           List<String> gameVersions, List<AddonLoader> loaders) {
     }

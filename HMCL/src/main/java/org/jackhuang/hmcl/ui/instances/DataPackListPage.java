@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
 import javafx.beans.property.BooleanProperty;
@@ -28,6 +13,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -35,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -100,28 +87,37 @@ public final class DataPackListPage extends ListPageBase<DataPackListPageSkin.Da
     }
 
     void removeSelected(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems) {
+        List<String> failed = new ArrayList<>();
         selectedItems.stream()
                 .map(DataPackListPageSkin.DataPackInfoObject::getPackInfo)
                 .forEach(pack -> {
                     try {
                         dataPack.deletePack(pack);
                     } catch (IOException e) {
-                        // Fail to remove mods if the game is running or the datapack is absent.
+                        failed.add(pack.getPath().toString());
                         LOG.warning("Failed to delete datapack \"" + pack.getId() + "\"", e);
                     }
                 });
+        if (!failed.isEmpty())
+            Controllers.dialog(i18n("datapack.delete.failed") + "\n" + String.join(",\n", failed),
+                    i18n("message.error"), MessageDialogPane.MessageType.ERROR);
     }
 
-    void enableSelected(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems) {
+    void setSelectedEnabled(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems, boolean enabled) {
+        List<String> failed = new ArrayList<>();
         selectedItems.stream()
                 .map(DataPackListPageSkin.DataPackInfoObject::getPackInfo)
-                .forEach(pack -> pack.setActive(true));
-    }
-
-    void disableSelected(ObservableList<DataPackListPageSkin.DataPackInfoObject> selectedItems) {
-        selectedItems.stream()
-                .map(DataPackListPageSkin.DataPackInfoObject::getPackInfo)
-                .forEach(pack -> pack.setActive(false));
+                .forEach(pack -> {
+                    try {
+                        pack.setActive(enabled);
+                    } catch (IOException e) {
+                        failed.add(pack.getPath().toString());
+                        LOG.warning("Failed to enable or disable datapack \"" + pack.getId() + "\"", e);
+                    }
+                });
+        if (!failed.isEmpty())
+            Controllers.dialog(i18n("datapack.toggle.failed") + "\n" + String.join(",\n", failed),
+                    i18n("message.error"), MessageDialogPane.MessageType.ERROR);
     }
 
     void openDataPackFolder() {

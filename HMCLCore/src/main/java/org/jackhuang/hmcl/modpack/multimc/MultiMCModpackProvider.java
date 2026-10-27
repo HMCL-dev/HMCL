@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.modpack.multimc;
 
 import kala.compress.archivers.zip.ZipArchiveEntry;
@@ -32,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -81,7 +65,7 @@ public final class MultiMCModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Modpack readManifest(ZipArchiveReader modpackFile, Path modpackPath, Charset encoding) throws IOException {
+    public Modpack readManifest(ZipArchiveReader modpackFile, Path modpackPath) throws IOException {
         String rootEntryName = getRootEntryName(modpackFile);
         MultiMCManifest manifest = MultiMCManifest.readMultiMCModpackManifest(modpackFile, rootEntryName);
 
@@ -92,7 +76,7 @@ public final class MultiMCModpackProvider implements ModpackProvider {
             throw new IOException("`instance.cfg` not found, " + modpackFile + " is not a valid MultiMC modpack.");
         try (InputStream instanceStream = modpackFile.getInputStream(instanceEntry)) {
             MultiMCInstanceConfiguration cfg = new MultiMCInstanceConfiguration(name, instanceStream, manifest);
-            return new Modpack(cfg.getName(), "", "", cfg.getGameVersion(), cfg.getNotes(), encoding, cfg) {
+            return new Modpack(cfg.getName(), "", "", cfg.getGameVersion(), cfg.getNotes(), cfg) {
                 @Override
                 public Task<?> getInstallTask(
                         DefaultDependencyManager dependencyManager,

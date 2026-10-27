@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2024 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
@@ -182,15 +167,23 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
     @FXThread
     private void loadJava(Collection<JavaRuntime> javaRuntimes) {
-        if (javaRuntimes != null) {
-            // JavaRuntime equality is path-based. setAll can therefore retain a stale item when the
-            // Java installation at an existing path has been upgraded.
-            this.getItems().clear();
-            this.getItems().addAll(javaRuntimes);
-            this.setLoading(false);
-        } else {
+        if (javaRuntimes == null) {
             this.setLoading(true);
+            return;
         }
+
+        // JavaRuntime equality is path-based. setAll can therefore retain a stale item when the
+        // Java installation at an existing path has been upgraded.
+        this.getItems().clear();
+        this.getItems().addAll(javaRuntimes);
+
+        if (javaRuntimes.isEmpty()) {
+            this.setFailedReason(i18n("java.empty"));
+        } else {
+            this.setFailedReason(null);
+        }
+
+        this.setLoading(false);
     }
 
     private static final class JavaPageSkin extends ToolbarListPageSkin<JavaRuntime, JavaManagementPage> {
@@ -293,6 +286,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             root.setPadding(new Insets(8));
 
             this.graphic = new RipplerContainer(root);
+            graphic.setPressFeedbackEnabled(false);
 
             FXUtils.limitCellWidth(listView, this);
         }
@@ -306,7 +300,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
             if (oldItem == item && oldEmpty == empty) return;
 
-            this.graphic.releaseRippleImmediately();
+            this.graphic.resetFeedback();
 
             if (empty || item == null) {
                 setGraphic(null);

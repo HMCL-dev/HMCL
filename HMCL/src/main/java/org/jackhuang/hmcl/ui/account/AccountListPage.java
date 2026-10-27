@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
 import javafx.beans.binding.Bindings;
@@ -40,7 +25,7 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.ClassTitle;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.i18n.LocaleUtils;
+import org.jackhuang.hmcl.util.RegionUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
@@ -57,7 +42,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
         String property = System.getProperty("hmcl.offline.auth.restricted", "auto");
 
         if ("false".equals(property)
-                || "auto".equals(property) && LocaleUtils.IS_CHINA_MAINLAND
+                || "auto".equals(property) && "CN".equals(RegionUtils.MACHINE_REGION)
                 || SettingsManager.userSettings().enableOfflineAccountProperty().get())
             RESTRICTED.set(false);
         else

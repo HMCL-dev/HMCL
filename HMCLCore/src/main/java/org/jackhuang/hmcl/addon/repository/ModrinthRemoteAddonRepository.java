@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.addon.repository;
 
 import com.google.gson.annotations.SerializedName;
@@ -443,7 +428,7 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                                  @SerializedName("author_id") String authorId,
                                  @SerializedName("date_published") Instant datePublished, int downloads,
                                  @SerializedName("changelog_url") String changelogUrl,
-                                 List<ProjectVersionFile> files) implements RemoteAddon.IVersion {
+                                 List<ProjectVersionFile> files) {
         private static final Map<String, RemoteAddon.@Nullable DependencyType> DEPENDENCY_TYPE = mapOf(
                 pair("required", RemoteAddon.DependencyType.REQUIRED),
                 pair("optional", RemoteAddon.DependencyType.OPTIONAL),
@@ -451,29 +436,20 @@ public final class ModrinthRemoteAddonRepository implements RemoteAddonRepositor
                 pair("incompatible", RemoteAddon.DependencyType.INCOMPATIBLE)
         );
 
-        @Override
-        public RemoteAddon.Source getSource() {
-            return RemoteAddon.Source.MODRINTH;
-        }
-
         public Optional<RemoteAddon.Version> toVersion() {
-            RemoteAddon.VersionType type;
-            if ("release".equals(versionType)) {
-                type = RemoteAddon.VersionType.Release;
-            } else if ("beta".equals(versionType)) {
-                type = RemoteAddon.VersionType.Beta;
-            } else if ("alpha".equals(versionType)) {
-                type = RemoteAddon.VersionType.Alpha;
-            } else {
-                type = RemoteAddon.VersionType.Release;
-            }
+            RemoteAddon.VersionType type = switch (versionType) {
+                case "release" -> RemoteAddon.VersionType.Release;
+                case "beta" -> RemoteAddon.VersionType.Beta;
+                case "alpha" -> RemoteAddon.VersionType.Alpha;
+                default -> RemoteAddon.VersionType.Release;
+            };
 
             if (files.isEmpty()) {
                 return Optional.empty();
             }
 
             return Optional.of(new RemoteAddon.Version(
-                    this,
+                    RemoteAddon.Source.MODRINTH,
                     id,
                     projectId,
                     name,

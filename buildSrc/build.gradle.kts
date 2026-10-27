@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.kala.compress.ar)
     implementation(libs.weburl)
     implementation(libs.jsoup)
+    implementation(libs.icu4j)
     implementation("org.apache.maven:maven-artifact:3.9.16")
 
     testImplementation(libs.junit.jupiter)
@@ -32,6 +33,8 @@ tasks.withType<JavaCompile> {
 
 tasks.test {
     useJUnitPlatform()
+    // ProjectBuilder injects compatibility classes through java.lang on modular JDKs.
+    jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED")
 }
 
 tasks.processResources {

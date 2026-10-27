@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.gradle.l10n;
 
 import org.gradle.api.DefaultTask;
@@ -43,6 +28,12 @@ public abstract class UpsideDownTranslate extends DefaultTask {
             "datetime.format", "MMM d, yyyy, h:mm:ss a"
     );
 
+    private static Set<String> NOT_TRANSLATABLE_KEYS = Set.of(
+            "launcher.title",
+            "launcher.title.unofficial",
+            "launcher.title.modified"
+    );
+
     @InputFile
     public abstract RegularFileProperty getInputFile();
 
@@ -61,6 +52,8 @@ public abstract class UpsideDownTranslate extends DefaultTask {
         english.forEach((k, v) -> {
             if (PROPERTIES.containsKey(k.toString())) {
                 output.setProperty(k.toString(), PROPERTIES.get(k.toString()));
+            } else if (NOT_TRANSLATABLE_KEYS.contains(k.toString())) {
+                output.put(k, v.toString());
             } else {
                 output.put(k, translator.translate(v.toString()));
             }
