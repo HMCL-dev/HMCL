@@ -66,7 +66,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -88,6 +87,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     private @Nullable HMCLGameInstance gameInstance;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
+
+    private final BooleanProperty isRefreshing = new SimpleBooleanProperty(false);
 
     /// Creates a mod list that reloads when `instanceContext` changes.
     ///
@@ -118,7 +119,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     public void refresh() {
-        loadMods(modManager);
+        if (isRefreshing.get()) return;
+
+        isRefreshing.set(true);
+
+        loadMods(modManager).whenCompleteAsync(
+            (result, exception) -> isRefreshing.set(false),
+            Schedulers.javafx()
+        );
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
@@ -130,14 +138,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         loadMods(gameInstance.getModManager());
     }
 
-    private void loadMods(ModManager modManager) {
+    private CompletableFuture<List<ModInfoObject>> loadMods(ModManager modManager) {
         setLoading(true);
 
         if (this.modManager != modManager) {
             getItems().clear();
         }
         this.modManager = modManager;
-        CompletableFuture.supplyAsync(() -> {
+
+        return CompletableFuture.supplyAsync(() -> {
             lock.lock();
             try {
                 modManager.refresh();
@@ -379,9 +388,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
                 searchBar.getChildren().setAll(searchField, closeSearchBar);
 
+                JFXButton refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh);
+                refreshButton.disableProperty().bind(skinnable.isRefreshing);
+
                 // Toolbar Normal
                 toolbarNormal.getChildren().setAll(
-                        createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                        refreshButton,
                         createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
                         createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openModFolder),
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
