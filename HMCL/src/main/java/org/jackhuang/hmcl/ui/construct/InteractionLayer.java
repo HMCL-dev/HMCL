@@ -5,10 +5,8 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.animation.AnimationTimer;
 import javafx.animation.Interpolator;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
@@ -19,7 +17,6 @@ import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -32,7 +29,7 @@ import java.util.ArrayList;
 /// The owner supplies dimensions, input states, and lifecycle notifications; this layer installs
 /// no input handlers and does not own content. Waveforms share a rounded rectangular clip;
 /// the layer itself retains rectangular pointer picking, including transparent corners.
-/// Solid state colors use the region background; other paints use a lazily created rectangle
+/// Solid state colors use the region background; other paints use a lazily created region
 /// so their intrinsic transparency is multiplied by the state opacity.
 /// State opacities follow the
 /// [AndroidX Material 3 state tokens](https://github.com/androidx/androidx/blob/androidx-main/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/StateTokens.kt).
@@ -68,10 +65,10 @@ public final class InteractionLayer extends Region {
     private @Nullable Group waveformGroup;
 
     /// The shared waveform clip, detached when no waveforms remain.
-    private @Nullable Rectangle waveformClip;
+    private @Nullable Region waveformClip;
 
-    /// The lazily created state rectangle for paints that cannot encode an additional alpha.
-    private @Nullable Rectangle paintBackground;
+    /// The lazily created state region for paints that cannot encode an additional alpha.
+    private @Nullable Region paintBackground;
 
     /// The paint last applied to the persistent state background.
     private @Nullable Paint backgroundPaint;
@@ -79,10 +76,7 @@ public final class InteractionLayer extends Region {
     /// The opacity last applied to the persistent state background.
     private double backgroundOpacity;
 
-    /// The radius last applied to the persistent state background.
-    private double backgroundRadius;
-
-    /// The immutable corner radii reused while only opacity changes.
+    /// The corner radii last applied to the persistent state background.
     private CornerRadii backgroundRadii = CornerRadii.EMPTY;
 
     /// The currently held waveform, or null for a static press or no press.
@@ -138,7 +132,7 @@ public final class InteractionLayer extends Region {
             onStateSettled.run();
     }
 
-    /// Creates an empty layer with black feedback, radius 3, and the animation default from
+    /// Creates an empty layer with black feedback, square corners, and the animation default from
     /// [AnimationUtils#isAnimationEnabled()]. Settings must have been loaded before construction.
     public InteractionLayer() {
         this(true);
@@ -149,7 +143,6 @@ public final class InteractionLayer extends Region {
         this.automaticPulses = automaticPulses;
         setPickOnBounds(true);
         fill.addListener(observable -> updateVisuals());
-        cornerRadius.addListener(observable -> updateGeometry());
         animationEnabled.addListener(observable -> {
             if (!isAnimationEnabled()) {
                 clearRipples();
@@ -178,23 +171,31 @@ public final class InteractionLayer extends Region {
         fill.set(value);
     }
 
-    /// The corner radius in local coordinates; invalid values are rendered as zero.
-    private final DoubleProperty cornerRadius = new SimpleDoubleProperty(this, "cornerRadius", 3);
+    /// The corner radii shared by the state background and waveform clip.
+    private final ObjectProperty<@Nullable CornerRadii> cornerRadii =
+            new SimpleObjectProperty<>(this, "cornerRadii", CornerRadii.EMPTY) {
+                /// Applies changed radii to state feedback and the existing shared clip.
+                @Override
+                protected void invalidated() {
+                    updateWaveformClip();
+                    updateVisuals();
+                }
+            };
 
-    /// Returns the corner radius property, in local coordinates. Negative or non-finite values
-    /// render as zero; positive values are clamped to half the shorter layer dimension.
-    public DoubleProperty cornerRadiusProperty() {
-        return cornerRadius;
+    /// Returns the corner radii property. Null means square corners. Percentage radii are relative
+    /// to this layer's dimensions; JavaFX background rendering normalizes overlapping corners.
+    public ObjectProperty<@Nullable CornerRadii> cornerRadiiProperty() {
+        return cornerRadii;
     }
 
-    /// Returns the configured corner radius before rendering clamps it.
-    public double getCornerRadius() {
-        return cornerRadius.get();
+    /// Returns the configured corner radii, or null for square corners.
+    public @Nullable CornerRadii getCornerRadii() {
+        return cornerRadii.get();
     }
 
-    /// Sets the corner radius in local coordinates; see [#cornerRadiusProperty()] for clamping.
-    public void setCornerRadius(double value) {
-        cornerRadius.set(value);
+    /// Sets the radii used by state feedback and existing waveforms without restarting animation.
+    public void setCornerRadii(@Nullable CornerRadii value) {
+        cornerRadii.set(value);
     }
 
     /// Whether subsequent state changes and presses animate.
@@ -274,7 +275,8 @@ public final class InteractionLayer extends Region {
                 waveformGroup = new Group();
                 waveformGroup.setManaged(false);
                 waveformGroup.setMouseTransparent(true);
-                waveformClip = new Rectangle();
+                waveformClip = new Region();
+                updateWaveformClip();
             }
             if (waveformGroup.getParent() == null) {
                 getChildren().add(waveformGroup);
@@ -445,27 +447,18 @@ public final class InteractionLayer extends Region {
         updateGeometry();
     }
 
-    /// Returns the effective uniform radius within the current dimensions.
-    private double effectiveRadius() {
-        double radius = getCornerRadius();
-        return Double.isFinite(radius) ? Math.max(0, Math.min(radius, Math.min(getWidth(), getHeight()) / 2)) : 0;
+    /// Applies the same background geometry to the shared clip, including per-axis percentage radii.
+    private void updateWaveformClip() {
+        if (waveformClip != null)
+            waveformClip.setBackground(new Background(new BackgroundFill(Color.BLACK, getCornerRadii(), Insets.EMPTY)));
     }
 
     /// Updates size-dependent geometry without restarting an existing animation.
     private void updateGeometry() {
-        double radius = effectiveRadius();
-        if (waveformClip != null && !ripples.isEmpty()) {
-            waveformClip.setWidth(getWidth());
-            waveformClip.setHeight(getHeight());
-            waveformClip.setArcWidth(radius * 2);
-            waveformClip.setArcHeight(radius * 2);
-        }
-        if (paintBackground != null) {
-            paintBackground.setWidth(getWidth());
-            paintBackground.setHeight(getHeight());
-            paintBackground.setArcWidth(radius * 2);
-            paintBackground.setArcHeight(radius * 2);
-        }
+        if (waveformClip != null && !ripples.isEmpty())
+            waveformClip.resize(getWidth(), getHeight());
+        if (paintBackground != null)
+            paintBackground.resize(getWidth(), getHeight());
         for (int i = 0; i < ripples.size(); i++) {
             Ripple ripple = ripples.get(i);
             double dx = Math.max(Math.abs(ripple.x), Math.abs(getWidth() - ripple.x));
@@ -478,7 +471,8 @@ public final class InteractionLayer extends Region {
     /// Publishes changed state and waveform properties without replaying drawing commands.
     private void updateVisuals() {
         @Nullable Paint paint = getFill();
-        updateBackground(paint, effectiveRadius());
+        @Nullable CornerRadii radii = getCornerRadii();
+        updateBackground(paint, radii == null ? CornerRadii.EMPTY : radii);
         if (waveformGroup != null)
             waveformGroup.setVisible(paint != null && getWidth() > 0 && getHeight() > 0);
         for (int i = 0; i < ripples.size(); i++) {
@@ -493,18 +487,17 @@ public final class InteractionLayer extends Region {
         }
     }
 
-    /// Updates the persistent background only when its paint, opacity, or radius changes.
-    private void updateBackground(@Nullable Paint paint, double radius) {
-        if (paint == backgroundPaint && stateOpacity == backgroundOpacity && radius == backgroundRadius)
+    /// Updates the persistent background only when its paint, opacity, or corner radii change.
+    private void updateBackground(@Nullable Paint paint, CornerRadii radii) {
+        boolean geometryOrPaintChanged = paint != backgroundPaint || !radii.equals(backgroundRadii);
+        if (!geometryOrPaintChanged && stateOpacity == backgroundOpacity)
             return;
         backgroundPaint = paint;
         backgroundOpacity = stateOpacity;
-        if (radius != backgroundRadius)
-            backgroundRadii = radius == 0 ? CornerRadii.EMPTY : new CornerRadii(radius);
-        backgroundRadius = radius;
+        backgroundRadii = radii;
         if (paintBackground != null && (paint instanceof Color || paint == null || stateOpacity == 0)) {
             getChildren().remove(paintBackground);
-            paintBackground.setFill(null);
+            paintBackground.setBackground(null);
         }
         if (paint == null || stateOpacity == 0) {
             setBackground(null);
@@ -515,15 +508,13 @@ public final class InteractionLayer extends Region {
             // A node opacity also supports ImagePattern without rewriting its source pixels.
             setBackground(null);
             if (paintBackground == null) {
-                paintBackground = new Rectangle();
+                paintBackground = new Region();
                 paintBackground.setManaged(false);
                 paintBackground.setMouseTransparent(true);
             }
-            paintBackground.setWidth(getWidth());
-            paintBackground.setHeight(getHeight());
-            paintBackground.setArcWidth(radius * 2);
-            paintBackground.setArcHeight(radius * 2);
-            paintBackground.setFill(paint);
+            paintBackground.resize(getWidth(), getHeight());
+            if (geometryOrPaintChanged || paintBackground.getBackground() == null)
+                paintBackground.setBackground(new Background(new BackgroundFill(paint, radii, Insets.EMPTY)));
             paintBackground.setOpacity(stateOpacity);
             if (paintBackground.getParent() == null)
                 getChildren().add(0, paintBackground);

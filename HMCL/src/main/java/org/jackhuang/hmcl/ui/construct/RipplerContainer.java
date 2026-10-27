@@ -16,6 +16,9 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
@@ -30,6 +33,10 @@ import java.util.Objects;
 
 /// Wraps content with a region for hover, focus, press, and ripple feedback.
 /// Feedback covers the entire pane, including padding, without replacing its background.
+/// Its corner radii follow the first fill of this pane's background, falling back to the wrapped
+/// region's first background fill, then to square corners. Fill insets are not copied;
+/// percentage radii are resolved against this pane's dimensions. Borders, background images,
+/// custom shapes, and backgrounds inside the wrapped node's descendants are not inspected.
 /// Construction and all subsequent changes must occur on the JavaFX application thread.
 /// Only background presses trigger feedback in [FeedbackPosition#BACK] mode; content events
 /// continue to bubble normally, but do not initiate outer press feedback.
@@ -79,6 +86,11 @@ public class RipplerContainer extends StackPane {
         interactionLayer.setManaged(false);
         interactionLayer.setFill(getFeedbackFill());
         updateChildren();
+        InvalidationListener backgroundListener = observable -> updateCornerRadii();
+        backgroundProperty().addListener(backgroundListener);
+        if (container instanceof Region region)
+            region.backgroundProperty().addListener(backgroundListener);
+        updateCornerRadii();
 
         interactionLayer.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
             if (event.getButton() == MouseButton.PRIMARY && isFeedbackAvailable() && isPressFeedbackEnabled())
@@ -105,6 +117,15 @@ public class RipplerContainer extends StackPane {
         visibleProperty().addListener(availabilityListener);
         sceneProperty().addListener(observable -> observeScene());
         observeScene();
+    }
+
+    /// Synchronizes feedback corners from the first available background fill without copying insets.
+    private void updateCornerRadii() {
+        @Nullable Background background = getBackground();
+        if ((background == null || background.getFills().isEmpty()) && container instanceof Region region)
+            background = region.getBackground();
+        interactionLayer.setCornerRadii(background == null || background.getFills().isEmpty()
+                ? CornerRadii.EMPTY : background.getFills().get(0).getRadii());
     }
 
     /// Removes listeners from the previous scene before observing the current one.
