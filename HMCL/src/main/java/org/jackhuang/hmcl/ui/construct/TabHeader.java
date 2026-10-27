@@ -3,8 +3,7 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.animation.*;
-import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -16,8 +15,6 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.transform.Rotate;
-import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -26,11 +23,11 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.function.Supplier;
 
 /// Displays selectable tab headers and optionally switches content in a transition pane.
-@SuppressWarnings("deprecation")
 public class TabHeader extends Control implements PageAware {
 
     private final TransitionPane contentPane;
@@ -56,7 +53,7 @@ public class TabHeader extends Control implements PageAware {
     }
 
     /// The selection model that tracks changes to the tab list.
-    private final SingleSelectionModel<Tab<?>> selectionModel = new TabHeaderSelectionModel(this);
+    private final SingleSelectionModel<Tab<?>> selectionModel = new TabHeaderSelectionModel();
 
     public SingleSelectionModel<Tab<?>> getSelectionModel() {
         return selectionModel;
@@ -147,22 +144,14 @@ public class TabHeader extends Control implements PageAware {
     /// Changes to the tab list update the selection. Selecting through this model
     /// does not initialize content or invoke page lifecycle callbacks.
     @NotNullByDefault
-    private static class TabHeaderSelectionModel extends SingleSelectionModel<@Nullable Tab<?>> {
-        /// The header whose tab list supplies this model's items.
-        private final TabHeader tabHeader;
-
-        /// Creates a selection model and registers a listener on the header's tab list.
-        ///
-        /// @param t the header to observe
-        /// @throws NullPointerException if the header is null
-        public TabHeaderSelectionModel(final TabHeader t) {
-            this.tabHeader = t;
-
+    private final class TabHeaderSelectionModel extends SingleSelectionModel<@Nullable Tab<?>> {
+        /// Registers a listener that keeps the selection aligned with this header's tab list.
+        private TabHeaderSelectionModel() {
             // watching for changes to the items list content
             final ListChangeListener<Tab<?>> itemsContentObserver = c -> {
                 while (c.next()) {
                     for (@Nullable Tab<?> tab : c.getRemoved()) {
-                        if (tab != null && !tabHeader.getTabs().contains(tab)) {
+                        if (tab != null && !getTabs().contains(tab)) {
                             if (tab.isSelected()) {
                                 tab.setSelected(false);
                                 final int tabIndex = c.getFrom();
@@ -175,19 +164,19 @@ public class TabHeader extends Control implements PageAware {
                     if (c.wasAdded() || c.wasRemoved()) {
                         // The selected tab index can be out of sync with the list of tab if
                         // we add or remove tabs before the selected tab.
-                        if (getSelectedIndex() != tabHeader.getTabs().indexOf(getSelectedItem())) {
-                            clearAndSelect(tabHeader.getTabs().indexOf(getSelectedItem()));
+                        if (getSelectedIndex() != getTabs().indexOf(getSelectedItem())) {
+                            clearAndSelect(getTabs().indexOf(getSelectedItem()));
                         }
                     }
                 }
-                if (getSelectedIndex() == -1 && getSelectedItem() == null && !tabHeader.getTabs().isEmpty()) {
+                if (getSelectedIndex() == -1 && getSelectedItem() == null && !getTabs().isEmpty()) {
                     // Select the first available tab when the list gains its first items.
                     selectNearestAvailableTab(0);
-                } else if (tabHeader.getTabs().isEmpty()) {
+                } else if (getTabs().isEmpty()) {
                     clearSelection();
                 }
             };
-            this.tabHeader.getTabs().addListener(itemsContentObserver);
+            getTabs().addListener(itemsContentObserver);
         }
 
         /// Selects the tab at the given index and notifies accessibility listeners.
@@ -200,8 +189,8 @@ public class TabHeader extends Control implements PageAware {
             }
 
             // Unselect the old tab
-            if (getSelectedIndex() >= 0 && getSelectedIndex() < tabHeader.getTabs().size()) {
-                tabHeader.getTabs().get(getSelectedIndex()).setSelected(false);
+            if (getSelectedIndex() >= 0 && getSelectedIndex() < getTabs().size()) {
+                getTabs().get(getSelectedIndex()).setSelected(false);
             }
 
             setSelectedIndex(index);
@@ -212,11 +201,11 @@ public class TabHeader extends Control implements PageAware {
             }
 
             // Select the new tab
-            if (getSelectedIndex() >= 0 && getSelectedIndex() < tabHeader.getTabs().size()) {
-                tabHeader.getTabs().get(getSelectedIndex()).setSelected(true);
+            if (getSelectedIndex() >= 0 && getSelectedIndex() < getTabs().size()) {
+                getTabs().get(getSelectedIndex()).setSelected(true);
             }
 
-            tabHeader.notifyAccessibleAttributeChanged(AccessibleAttribute.FOCUS_ITEM);
+            notifyAccessibleAttributeChanged(AccessibleAttribute.FOCUS_ITEM);
         }
 
         /// Selects a matching tab in the list. If a non-null tab is absent, updates
@@ -240,7 +229,7 @@ public class TabHeader extends Control implements PageAware {
         /// Returns the tab at the given index, or null if the index is out of range.
         @Override
         protected @Nullable Tab<?> getModelItem(int index) {
-            final ObservableList<Tab<?>> items = tabHeader.getTabs();
+            final ObservableList<Tab<?>> items = getTabs();
             if (index < 0 || index >= items.size()) return null;
             return items.get(index);
         }
@@ -248,7 +237,7 @@ public class TabHeader extends Control implements PageAware {
         /// Returns the current number of tabs in the header.
         @Override
         protected int getItemCount() {
-            final ObservableList<Tab<?>> items = tabHeader.getTabs();
+            final ObservableList<Tab<?>> items = getTabs();
             return items.size();
         }
 
@@ -434,465 +423,240 @@ public class TabHeader extends Control implements PageAware {
         }
     }
 
+    /// Arranges tab headers and animates the selection indicator along the chosen side.
+    @NotNullByDefault
     public static class TabHeaderSkin extends SkinBase<TabHeader> {
-
+        /// Marks the content of the selected tab for CSS styling.
         private static final PseudoClass SELECTED_PSEUDOCLASS_STATE = PseudoClass.getPseudoClass("selected");
 
+        /// The single layout container for tab views and the selection indicator.
         private final HeaderContainer header;
-        private boolean isSelectingTab = false;
-        private Tab<?> selectedTab;
 
+        /// Creates tab views and observes the control's selection and side.
         protected TabHeaderSkin(TabHeader control) {
             super(control);
-
             header = new HeaderContainer();
             getChildren().setAll(header);
 
-            FXUtils.onChangeAndOperate(control.getSelectionModel().selectedItemProperty(), item -> {
-                isSelectingTab = true;
-                selectedTab = item;
-                Platform.runLater(() -> {
-                    header.setNeedsLayout2(true);
-                    header.layout();
-                });
+            registerChangeListener(control.getSelectionModel().selectedItemProperty(), observable -> {
+                header.animateSelection = true;
+                header.requestLayout();
             });
+            registerChangeListener(control.sideProperty(), observable -> header.requestLayout());
 
-            this.selectedTab = control.getSelectionModel().getSelectedItem();
-            if (this.selectedTab == null && control.getSelectionModel().getSelectedIndex() != -1) {
-                control.getSelectionModel().select(control.getSelectionModel().getSelectedIndex());
-                this.selectedTab = control.getSelectionModel().getSelectedItem();
+            if (control.getSelectionModel().getSelectedItem() == null) {
+                if (control.getSelectionModel().getSelectedIndex() != -1)
+                    control.getSelectionModel().select(control.getSelectionModel().getSelectedIndex());
+                if (control.getSelectionModel().getSelectedItem() == null)
+                    control.getSelectionModel().selectFirst();
             }
-
-            if (this.selectedTab == null) {
-                control.getSelectionModel().selectFirst();
-            }
-
-            this.selectedTab = control.getSelectionModel().getSelectedItem();
         }
 
-        protected final class HeaderContainer extends StackPane {
-            private Timeline timeline;
-            private final StackPane selectedTabLine;
-            private final HeadersRegion headersRegion;
-            private final Scale scale = new Scale(1, 1, 0, 0);
-            private final Rotate rotate = new Rotate(0, 0, 1);
-            @SuppressWarnings({"FieldCanBeLocal", "unused"})
-            private final ObservableList<Node> binding;
+        /// Stops the indicator animation and releases tab bindings and listeners.
+        @Override
+        public void dispose() {
+            header.stopAnimation();
+            header.headers.removeListener(header.headersListener);
+            header.headers.forEach(TabHeaderContainer::dispose);
+            getChildren().clear();
+            super.dispose();
+        }
 
-            public HeaderContainer() {
+        /// Lays out tab views and their selection indicator along one edge.
+        @NotNullByDefault
+        private final class HeaderContainer extends StackPane {
+            /// The indicator, excluded from preferred-size calculations and mouse picking.
+            private final StackPane selectedTabLine = new StackPane();
+            /// The tab views in the same order as the control's tabs.
+            private final @UnmodifiableView ObservableList<TabHeaderContainer> headers;
+            /// Releases removed views and updates the layout children after list changes.
+            private final ListChangeListener<TabHeaderContainer> headersListener = change -> {
+                while (change.next())
+                    change.getRemoved().forEach(TabHeaderContainer::dispose);
+                updateChildren();
+            };
+            /// The animated distance from the leading inset along the row or column.
+            private final DoubleProperty lineOffset = new SimpleDoubleProperty();
+            /// The animated width or height of the indicator.
+            private final DoubleProperty lineLength = new SimpleDoubleProperty();
+            /// The animation currently moving the indicator, or null when stationary.
+            private @Nullable Timeline timeline;
+            /// Whether the next layout should animate a selection change.
+            private boolean animateSelection;
+            /// The side used for the preceding layout, or null before the first layout.
+            private @Nullable Side previousSide;
+            /// The destination offset of the current indicator animation.
+            private double targetOffset;
+            /// The destination length of the current indicator animation.
+            private double targetLength;
+
+            /// Creates tab views and an unmanaged selection indicator.
+            private HeaderContainer() {
                 getStyleClass().add("tab-header-area");
                 setPickOnBounds(false);
-
-                headersRegion = new HeadersRegion();
-                headersRegion.sideProperty().bind(getSkinnable().sideProperty());
-
-                selectedTabLine = new StackPane();
+                selectedTabLine.getStyleClass().add("tab-selected-line");
                 selectedTabLine.setManaged(false);
-                selectedTabLine.getTransforms().addAll(scale, rotate);
-                selectedTabLine.setCache(true);
-                selectedTabLine.getStyleClass().addAll("tab-selected-line");
-                selectedTabLine.setPrefHeight(2);
-                selectedTabLine.setPrefWidth(2);
-                getChildren().setAll(headersRegion, selectedTabLine);
-                headersRegion.setPickOnBounds(false);
-                headersRegion.prefHeightProperty().bind(heightProperty());
-                rotate.pivotXProperty().bind(Bindings.createDoubleBinding(() -> getSkinnable().getSide().isHorizontal() ? 0.0 : 1, getSkinnable().sideProperty()));
-                rotate.pivotYProperty().bind(Bindings.createDoubleBinding(() -> getSkinnable().getSide().isHorizontal() ? 1.0 : 0, getSkinnable().sideProperty()));
+                selectedTabLine.setMouseTransparent(true);
+                selectedTabLine.setVisible(false);
+                selectedTabLine.setPrefSize(2, 2);
+                lineOffset.addListener(observable -> requestLayout());
+                lineLength.addListener(observable -> requestLayout());
 
-                Bindings.bindContent(headersRegion.getChildren(), binding = MappedObservableList.create(getSkinnable().getTabs(), tab -> {
-                    TabHeaderContainer container = new TabHeaderContainer(tab);
-                    container.setVisible(true);
-                    return container;
-                }));
+                headers = MappedObservableList.create(getSkinnable().getTabs(), TabHeaderContainer::new);
+                headers.addListener(headersListener);
+                updateChildren();
             }
 
-            public void setNeedsLayout2(boolean value) {
-                setNeedsLayout(value);
+            /// Keeps the indicator above all tab views in paint order.
+            private void updateChildren() {
+                getChildren().setAll(headers);
+                getChildren().add(selectedTabLine);
+                requestLayout();
             }
 
-            private boolean isAnimating() {
-                return this.timeline != null && this.timeline.getStatus() == Animation.Status.RUNNING;
+            /// Returns the sum of tab widths for a row, or the widest tab for a column.
+            @Override
+            protected double computePrefWidth(double height) {
+                boolean horizontal = getSkinnable().getSide().isHorizontal();
+                double width = 0;
+                for (TabHeaderContainer child : headers) {
+                    if (!child.isVisible()) continue;
+                    double childWidth = snapSizeX(child.prefWidth(height));
+                    width = horizontal ? width + childWidth : Math.max(width, childWidth);
+                }
+                return width + snappedLeftInset() + snappedRightInset();
             }
 
+            /// Returns the tallest tab for a row, or the sum of tab heights for a column.
+            @Override
+            protected double computePrefHeight(double width) {
+                boolean horizontal = getSkinnable().getSide().isHorizontal();
+                double height = 0;
+                for (TabHeaderContainer child : headers) {
+                    if (!child.isVisible()) continue;
+                    double childHeight = snapSizeY(child.prefHeight(width));
+                    height = horizontal ? Math.max(height, childHeight) : height + childHeight;
+                }
+                return height + snappedTopInset() + snappedBottomInset();
+            }
+
+            /// Places tab views along the content-facing edge and updates the indicator bounds.
             @Override
             protected void layoutChildren() {
-                super.layoutChildren();
-
-                if (isSelectingTab) {
-                    headersRegion.animateSelectionLine();
-                    isSelectingTab = false;
+                Side side = getSkinnable().getSide();
+                boolean horizontal = side.isHorizontal();
+                double offset = 0;
+                double selectedOffset = 0;
+                double selectedLength = 0;
+                @Nullable Tab<?> selected = getSkinnable().getSelectionModel().getSelectedItem();
+                for (TabHeaderContainer child : headers) {
+                    if (!child.isVisible()) continue;
+                    double width = snapSizeX(child.prefWidth(-1));
+                    double height = snapSizeY(child.prefHeight(-1));
+                    double x = horizontal ? snappedLeftInset() + offset
+                            : side == Side.LEFT ? getWidth() - snappedRightInset() - width : snappedLeftInset();
+                    double y = !horizontal ? snappedTopInset() + offset
+                            : side == Side.TOP ? getHeight() - snappedBottomInset() - height : snappedTopInset();
+                    child.resizeRelocate(x, y, width, height);
+                    double length = horizontal ? width : height;
+                    if (child.tab == selected) {
+                        selectedOffset = offset;
+                        selectedLength = length;
+                    }
+                    offset += length;
                 }
+
+                updateSelectionLine(side, selectedOffset, selectedLength);
+                double thickness = horizontal ? snapSizeY(selectedTabLine.prefHeight(-1))
+                        : snapSizeX(selectedTabLine.prefWidth(-1));
+                double x = horizontal ? snappedLeftInset() + lineOffset.get()
+                        : side == Side.LEFT ? getWidth() - snappedRightInset() - thickness : snappedLeftInset();
+                double y = !horizontal ? snappedTopInset() + lineOffset.get()
+                        : side == Side.TOP ? getHeight() - snappedBottomInset() - thickness : snappedTopInset();
+                selectedTabLine.resizeRelocate(x, y,
+                        horizontal ? lineLength.get() : thickness,
+                        horizontal ? thickness : lineLength.get());
             }
 
-            private final class HeadersRegion extends StackPane {
-                private SideAction action;
-                private final ObjectProperty<Side> side = new SimpleObjectProperty<Side>() {
-                    @Override
-                    protected void invalidated() {
-                        super.invalidated();
-
-                        action = switch (get()) {
-                            case TOP -> new Top();
-                            case BOTTOM -> new Bottom();
-                            case LEFT -> new Left();
-                            case RIGHT -> new Right();
-                        };
-                    }
-                };
-
-                public Side getSide() {
-                    return side.get();
-                }
-
-                public ObjectProperty<Side> sideProperty() {
-                    return side;
-                }
-
-                public void setSide(Side side) {
-                    this.side.set(side);
-                }
-
-                @Override
-                protected double computePrefWidth(double height) {
-                    return action.computePrefWidth(height);
-                }
-
-                @Override
-                protected double computePrefHeight(double width) {
-                    return action.computePrefHeight(width);
-                }
-
-                @Override
-                protected void layoutChildren() {
-                    action.layoutChildren();
-                }
-
-                private void animateSelectionLine() {
-                    action.animateSelectionLine();
-                }
-
-                private abstract class SideAction {
-                    abstract double computePrefWidth(double height);
-
-                    abstract double computePrefHeight(double width);
-
-                    void layoutChildren() {
-                        if (isSelectingTab) {
-                            animateSelectionLine();
-                            isSelectingTab = false;
-                        }
-                    }
-
-                    abstract void animateSelectionLine();
-                }
-
-                private abstract class Horizontal extends SideAction {
-                    @Override
-                    public double computePrefWidth(double height) {
-                        double width = 0;
-                        for (Node child : getChildren()) {
-                            if (!(child instanceof TabHeaderContainer) || !child.isVisible()) continue;
-                            width += child.prefWidth(height);
-                        }
-                        return snapSize(width) + snappedLeftInset() + snappedRightInset();
-                    }
-
-                    @Override
-                    public double computePrefHeight(double width) {
-                        double height = 0;
-                        for (Node child : getChildren()) {
-                            if (!(child instanceof TabHeaderContainer) || !child.isVisible()) continue;
-                            height = Math.max(height, child.prefHeight(width));
-                        }
-                        return snapSize(height) + snappedTopInset() + snappedBottomInset();
-                    }
-
-                    private void runTimeline(double newTransX, double newWidth) {
-                        double lineWidth = selectedTabLine.prefWidth(-1.0D);
-                        if (isAnimating()) {
-                            timeline.stop();
-                            double tempScaleX = scale.getX();
-                            if (rotate.getAngle() != 0.0D) {
-                                rotate.setAngle(0.0D);
-                                double tempWidth = tempScaleX * lineWidth;
-                                selectedTabLine.setTranslateX(selectedTabLine.getTranslateX() - tempWidth);
-                            }
-                        }
-
-                        double oldScaleX = scale.getX();
-                        double oldWidth = lineWidth * oldScaleX;
-                        double oldTransX = selectedTabLine.getTranslateX();
-                        double newScaleX = newWidth * oldScaleX / oldWidth;
-                        // newTransX += offsetStart * (double)this.direction;
-                        double transDiff = newTransX - oldTransX;
-                        if (transDiff < 0.0D) {
-                            selectedTabLine.setTranslateX(selectedTabLine.getTranslateX() + oldWidth);
-                            newTransX += newWidth;
-                            rotate.setAngle(180.0D);
-                        }
-
+            /// Animates selection changes; applies initial, resized, and reoriented bounds immediately.
+            private void updateSelectionLine(Side side, double offset, double length) {
+                if (animateSelection || previousSide != side || targetOffset != offset || targetLength != length) {
+                    boolean animate = animateSelection && previousSide == side
+                            && selectedTabLine.isVisible() && length > 0;
+                    // Capture the displayed bounds before stopping an interrupted animation.
+                    double currentOffset = lineOffset.get();
+                    double currentLength = lineLength.get();
+                    stopAnimation();
+                    targetOffset = offset;
+                    targetLength = length;
+                    if (animate) {
+                        lineOffset.set(currentOffset);
+                        lineLength.set(currentLength);
                         timeline = new Timeline(
-                                new KeyFrame(
-                                        Duration.ZERO,
-                                        new KeyValue(selectedTabLine.translateXProperty(), selectedTabLine.getTranslateX(), Interpolator.EASE_BOTH)
-                                ),
-                                new KeyFrame(
-                                        Duration.seconds(0.24D),
-                                        new KeyValue(scale.xProperty(), newScaleX, Interpolator.EASE_BOTH),
-                                        new KeyValue(selectedTabLine.translateXProperty(), newTransX, Interpolator.EASE_BOTH)
-                                )
+                                new KeyFrame(Duration.ZERO,
+                                        new KeyValue(lineOffset, currentOffset),
+                                        new KeyValue(lineLength, currentLength)),
+                                new KeyFrame(Duration.seconds(side.isHorizontal() ? 0.24 : 1.24),
+                                        new KeyValue(lineOffset, offset, Interpolator.EASE_BOTH),
+                                        new KeyValue(lineLength, length, Interpolator.EASE_BOTH))
                         );
-                        timeline.setOnFinished((finish) -> {
-                            if (rotate.getAngle() != 0.0D) {
-                                rotate.setAngle(0.0D);
-                                selectedTabLine.setTranslateX(selectedTabLine.getTranslateX() - newWidth);
-                            }
-
-                        });
+                        timeline.setOnFinished(event -> timeline = null);
                         timeline.play();
-                    }
-
-                    @Override
-                    public void animateSelectionLine() {
-                        double offset = 0.0D;
-                        double selectedTabOffset = 0.0D;
-                        double selectedTabWidth = 0.0D;
-
-                        for (Node node : headersRegion.getChildren()) {
-                            if (node instanceof TabHeaderContainer) {
-                                TabHeaderContainer tabHeader = (TabHeaderContainer) node;
-                                double tabHeaderPrefWidth = snapSize(tabHeader.prefWidth(-1.0D));
-                                if (selectedTab != null && selectedTab.equals(tabHeader.tab)) {
-                                    selectedTabOffset = offset;
-                                    selectedTabWidth = tabHeaderPrefWidth;
-                                    break;
-                                }
-
-                                offset += tabHeaderPrefWidth;
-                            }
-                        }
-
-                        this.runTimeline(selectedTabOffset, selectedTabWidth);
+                    } else {
+                        lineOffset.set(offset);
+                        lineLength.set(length);
                     }
                 }
+                selectedTabLine.setVisible(length > 0);
+                previousSide = side;
+                animateSelection = false;
+            }
 
-                private final class Top extends Horizontal {
-                    @Override
-                    public void layoutChildren() {
-                        super.layoutChildren();
-
-                        double headerHeight = snapSize(prefHeight(-1));
-                        double tabStartX = 0;
-                        for (Node node : getChildren()) {
-                            if (!(node instanceof TabHeaderContainer)) continue;
-                            TabHeaderContainer child = (TabHeaderContainer) node;
-                            double w = snapSize(child.prefWidth(-1));
-                            double h = snapSize(child.prefHeight(-1));
-                            child.resize(w, h);
-
-                            child.relocate(tabStartX, headerHeight - h - snappedBottomInset());
-                            tabStartX += w;
-                        }
-
-                        selectedTabLine.resizeRelocate(0,
-                                headerHeight - selectedTabLine.prefHeight(-1),
-                                snapSize(selectedTabLine.prefWidth(-1)),
-                                snapSize(selectedTabLine.prefHeight(-1)));
-                    }
+            /// Stops and releases the active indicator animation, if any.
+            private void stopAnimation() {
+                if (timeline != null) {
+                    timeline.stop();
+                    timeline = null;
                 }
-
-                private final class Bottom extends Horizontal {
-                    @Override
-                    public void layoutChildren() {
-                        super.layoutChildren();
-
-                        double headerHeight = snapSize(prefHeight(-1));
-                        double tabStartX = 0;
-                        for (Node node : getChildren()) {
-                            if (!(node instanceof TabHeaderContainer)) continue;
-                            TabHeaderContainer child = (TabHeaderContainer) node;
-                            double w = snapSize(child.prefWidth(-1));
-                            double h = snapSize(child.prefHeight(-1));
-                            child.resize(w, h);
-
-                            child.relocate(tabStartX, snappedTopInset());
-                            tabStartX += w;
-                        }
-
-                        selectedTabLine.resizeRelocate(0, 0,
-                                snapSize(selectedTabLine.prefWidth(-1)),
-                                snapSize(selectedTabLine.prefHeight(-1)));
-                    }
-                }
-
-                private abstract class Vertical extends SideAction {
-                    @Override
-                    public double computePrefWidth(double height) {
-                        double width = 0;
-                        for (Node child : getChildren()) {
-                            if (!(child instanceof TabHeaderContainer) || !child.isVisible()) continue;
-                            width = Math.max(width, child.prefWidth(height));
-                        }
-                        return snapSize(width) + snappedLeftInset() + snappedRightInset();
-                    }
-
-                    @Override
-                    public double computePrefHeight(double width) {
-                        double height = 0;
-                        for (Node child : getChildren()) {
-                            if (!(child instanceof TabHeaderContainer) || !child.isVisible()) continue;
-                            height += child.prefHeight(width);
-                        }
-                        return snapSize(height) + snappedTopInset() + snappedBottomInset();
-                    }
-
-                    private void runTimeline(double newTransY, double newHeight) {
-                        double lineHeight = selectedTabLine.prefHeight(-1.0D);
-                        if (isAnimating()) {
-                            timeline.stop();
-                            double tempScaleY = scale.getY();
-                            if (rotate.getAngle() != 0.0D) {
-                                rotate.setAngle(0.0D);
-                                double tempHeight = tempScaleY * lineHeight;
-                                selectedTabLine.setTranslateY(selectedTabLine.getTranslateY() - tempHeight);
-                            }
-                        }
-
-                        double oldScaleY = scale.getY();
-                        double oldHeight = lineHeight * oldScaleY;
-                        double oldTransY = selectedTabLine.getTranslateY();
-                        double newScaleY = newHeight * oldScaleY / oldHeight;
-                        // newTransY += offsetStart * (double)this.direction;
-                        double transDiff = newTransY - oldTransY;
-                        if (transDiff < 0.0D) {
-                            selectedTabLine.setTranslateY(selectedTabLine.getTranslateY() + oldHeight);
-                            newTransY += newHeight;
-                            rotate.setAngle(180.0D);
-                        }
-
-                        timeline = new Timeline(
-                                new KeyFrame(
-                                        Duration.ZERO,
-                                        new KeyValue(selectedTabLine.translateYProperty(), selectedTabLine.getTranslateY(), Interpolator.EASE_BOTH)
-                                ),
-                                new KeyFrame(
-                                        Duration.seconds(1.24D),
-                                        new KeyValue(scale.yProperty(), newScaleY, Interpolator.EASE_BOTH),
-                                        new KeyValue(selectedTabLine.translateYProperty(), newTransY, Interpolator.EASE_BOTH)
-                                )
-                        );
-                        timeline.setOnFinished((finish) -> {
-                            if (rotate.getAngle() != 0.0D) {
-                                rotate.setAngle(0.0D);
-                                selectedTabLine.setTranslateY(selectedTabLine.getTranslateY() - newHeight);
-                            }
-
-                        });
-                        timeline.play();
-                    }
-
-                    @Override
-                    public void animateSelectionLine() {
-                        double offset = 0.0D;
-                        double selectedTabOffset = 0.0D;
-                        double selectedTabHeight = 0.0D;
-
-                        for (Node node : headersRegion.getChildren()) {
-                            if (node instanceof TabHeaderContainer) {
-                                TabHeaderContainer tabHeader = (TabHeaderContainer) node;
-                                double tabHeaderPrefHeight = snapSize(tabHeader.prefHeight(-1.0D));
-                                if (selectedTab != null && selectedTab.equals(tabHeader.tab)) {
-                                    selectedTabOffset = offset;
-                                    selectedTabHeight = tabHeaderPrefHeight;
-                                    break;
-                                }
-
-                                offset += tabHeaderPrefHeight;
-                            }
-                        }
-
-                        this.runTimeline(selectedTabOffset, selectedTabHeight);
-                    }
-                }
-
-                private final class Left extends Vertical {
-                    @Override
-                    public void layoutChildren() {
-                        super.layoutChildren();
-
-                        double headerWidth = snapSize(prefWidth(-1));
-                        double tabStartY = 0;
-                        for (Node node : getChildren()) {
-                            if (!(node instanceof TabHeaderContainer)) continue;
-                            TabHeaderContainer child = (TabHeaderContainer) node;
-                            double w = snapSize(child.prefWidth(-1));
-                            double h = snapSize(child.prefHeight(-1));
-                            child.resize(w, h);
-
-                            child.relocate(headerWidth - w - snappedRightInset(), tabStartY);
-                            tabStartY += h;
-                        }
-
-                        selectedTabLine.resizeRelocate(headerWidth - selectedTabLine.prefWidth(-1), 0,
-                                snapSize(selectedTabLine.prefWidth(-1)),
-                                snapSize(selectedTabLine.prefHeight(-1)));
-                    }
-                }
-
-                private final class Right extends Vertical {
-                    @Override
-                    public void layoutChildren() {
-                        super.layoutChildren();
-
-                        double headerWidth = snapSize(prefWidth(-1));
-                        double tabStartY = 0;
-                        for (Node node : getChildren()) {
-                            if (!(node instanceof TabHeaderContainer)) continue;
-                            TabHeaderContainer child = (TabHeaderContainer) node;
-                            double w = snapSize(child.prefWidth(-1));
-                            double h = snapSize(child.prefHeight(-1));
-                            child.resize(w, h);
-
-                            child.relocate(snappedLeftInset(), tabStartY);
-                            tabStartY += h;
-                        }
-
-                        selectedTabLine.resizeRelocate(0, 0,
-                                snapSize(selectedTabLine.prefWidth(-1)),
-                                snapSize(selectedTabLine.prefHeight(-1)));
-                    }
-                }
-
             }
         }
 
-        protected class TabHeaderContainer extends StackPane {
-
+        /// Displays one tab's label, selection styling, and pointer feedback.
+        @NotNullByDefault
+        private final class TabHeaderContainer extends StackPane {
+            /// The tab represented by this view.
             private final Tab<?> tab;
-            private final Label tabText;
-            private final BorderPane inner;
+            /// The label bound to the tab's text.
+            private final Label tabText = new Label();
+            /// The content node receiving the selection pseudo-class.
+            private final BorderPane inner = new BorderPane();
+            /// Updates selection styling until this view is removed or the skin is disposed.
+            private final InvalidationListener selectionListener = observable -> updateSelection();
 
-            public TabHeaderContainer(Tab<?> tab) {
+            /// Binds the label and selection styling and installs pointer selection.
+            private TabHeaderContainer(Tab<?> tab) {
                 this.tab = tab;
-
-                tabText = new Label();
                 tabText.textProperty().bind(tab.textProperty());
                 tabText.getStyleClass().add("tab-label");
-                inner = new BorderPane();
                 inner.setCenter(tabText);
                 inner.getStyleClass().add("tab-container");
                 inner.setMouseTransparent(true);
-                RipplerContainer rippler = new RipplerContainer(inner);
-                getChildren().setAll(rippler);
+                getChildren().setAll(new RipplerContainer(inner));
+                tab.selectedProperty().addListener(selectionListener);
+                updateSelection();
+                FXUtils.onClicked(this, () -> getSkinnable().getSelectionModel().select(tab));
+            }
 
-                FXUtils.onChangeAndOperate(tab.selectedProperty(), selected -> inner.pseudoClassStateChanged(SELECTED_PSEUDOCLASS_STATE, selected));
+            /// Reflects the tab's selection flag in the content pseudo-class.
+            private void updateSelection() {
+                inner.pseudoClassStateChanged(SELECTED_PSEUDOCLASS_STATE, tab.isSelected());
+            }
 
-                FXUtils.onClicked(this, () -> {
-                    this.setOpacity(1);
-                    getSkinnable().getSelectionModel().select(tab);
-                });
+            /// Releases the tab's text binding and selection listener.
+            private void dispose() {
+                tabText.textProperty().unbind();
+                tab.selectedProperty().removeListener(selectionListener);
             }
         }
     }
-
 }
