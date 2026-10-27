@@ -133,11 +133,11 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
 
         if (showMethodSwitcher) {
-            TabHeader.Tab<?>[] tabs = new TabHeader.Tab<?>[Accounts.FACTORIES.size()];
-            @Nullable TabHeader.Tab<?> selected = null;
+            TabItem<?>[] tabs = new TabItem<?>[Accounts.FACTORIES.size()];
+            @Nullable TabItem<?> selected = null;
             for (int i = 0; i < tabs.length; i++) {
                 AccountFactory<?> f = Accounts.FACTORIES.get(i);
-                tabs[i] = new TabHeader.Tab<>(Accounts.getLoginType(f), Accounts.getLocalizedLoginTypeName(f));
+                tabs[i] = new TabItem<>(Accounts.getLoginType(f), Accounts.getLocalizedLoginTypeName(f));
                 tabs[i].setUserData(f);
                 if (factory == f) {
                     selected = tabs[i];

@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
+import org.jackhuang.hmcl.ui.construct.TabItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -65,12 +66,18 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
     private final TabHeader tab;
-    private final TabHeader.Tab<VersionsPage> newGameTab = new TabHeader.Tab<>("newGameTab");
-    private final TabHeader.Tab<DownloadListPage> modTab = new TabHeader.Tab<>("modTab");
-    private final TabHeader.Tab<DownloadListPage> modpackTab = new TabHeader.Tab<>("modpackTab");
-    private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
-    private final TabHeader.Tab<DownloadListPage> shaderTab = new TabHeader.Tab<>("shaderTab");
-    private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
+    /// The tab for choosing a game version to install.
+    private final TabItem<VersionsPage> newGameTab = new TabItem<>("newGameTab");
+    /// The tab for browsing downloadable mods.
+    private final TabItem<DownloadListPage> modTab = new TabItem<>("modTab");
+    /// The tab for browsing and importing modpacks.
+    private final TabItem<DownloadListPage> modpackTab = new TabItem<>("modpackTab");
+    /// The tab for browsing downloadable resource packs.
+    private final TabItem<DownloadListPage> resourcePackTab = new TabItem<>("resourcePackTab");
+    /// The tab for browsing downloadable shader packs.
+    private final TabItem<DownloadListPage> shaderTab = new TabItem<>("shaderTab");
+    /// The tab for browsing downloadable worlds.
+    private final TabItem<DownloadListPage> worldTab = new TabItem<>("worldTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
 

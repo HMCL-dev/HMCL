@@ -39,13 +39,20 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class GameInstancePage extends DecoratorAnimatedPage implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final TabHeader tab;
-    private final TabHeader.Tab<GameSettingsPage<GameSettings.Instance>> gameSettingsTab = new TabHeader.Tab<>("versionSettingsTab");
-    private final TabHeader.Tab<InstallerListPage> installerListTab = new TabHeader.Tab<>("installerListTab");
-    private final TabHeader.Tab<ModListPage> modListTab = new TabHeader.Tab<>("modListTab");
-    private final TabHeader.Tab<WorldListPage> worldListTab = new TabHeader.Tab<>("worldList");
-    private final TabHeader.Tab<SchematicsPage> schematicsTab = new TabHeader.Tab<>("schematicsTab");
-    private final TabHeader.Tab<ResourcePackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
-    private final TabHeader.Tab<ScreenshotsPage> screenshotsTab = new TabHeader.Tab<>("screenshotsTab");
+    /// The settings tab bound to the current game instance.
+    private final TabItem<GameSettingsPage<GameSettings.Instance>> gameSettingsTab = new TabItem<>("versionSettingsTab");
+    /// The component management tab bound to the current game instance.
+    private final TabItem<InstallerListPage> installerListTab = new TabItem<>("installerListTab");
+    /// The installed mods tab bound to the current game instance.
+    private final TabItem<ModListPage> modListTab = new TabItem<>("modListTab");
+    /// The saved worlds tab bound to the current game instance.
+    private final TabItem<WorldListPage> worldListTab = new TabItem<>("worldList");
+    /// The schematics tab bound to the current game instance.
+    private final TabItem<SchematicsPage> schematicsTab = new TabItem<>("schematicsTab");
+    /// The installed resource packs tab bound to the current game instance.
+    private final TabItem<ResourcePackListPage> resourcePackTab = new TabItem<>("resourcePackTab");
+    /// The screenshots tab bound to the current game instance.
+    private final TabItem<ScreenshotsPage> screenshotsTab = new TabItem<>("screenshotsTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentInstanceUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<HMCLGameInstance.@Nullable Optional> instance =

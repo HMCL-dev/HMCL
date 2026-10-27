@@ -37,7 +37,8 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
 
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("terracotta.terracotta")));
     private final TabHeader tab;
-    private final TabHeader.Tab<TerracottaControllerPage> statusPage = new TabHeader.Tab<>("statusPage");
+    /// The tab displaying the Terracotta controller page.
+    private final TabItem<TerracottaControllerPage> statusPage = new TabItem<>("statusPage");
     private final TransitionPane transitionPane = new TransitionPane();
 
     @SuppressWarnings("unused")

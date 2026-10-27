@@ -11,7 +11,6 @@ import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Side;
 import javafx.scene.AccessibleAttribute;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
@@ -25,18 +24,24 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
-import java.util.function.Supplier;
-
 /// Displays selectable tab headers and optionally switches content in a transition pane.
 public class TabHeader extends Control implements PageAware {
 
-    private final TransitionPane contentPane;
+    /// The optional destination for selected tab content.
+    private final @Nullable TransitionPane contentPane;
 
-    public TabHeader(Tab<?>... tabs) {
+    /// Creates a header with the supplied tabs and no content destination.
+    ///
+    /// @param tabs the initial tabs in display order, or null for an empty header
+    public TabHeader(TabItem<?> @Nullable ... tabs) {
         this(null, tabs);
     }
 
-    public TabHeader(@Nullable TransitionPane contentPane, Tab<?>... tabs) {
+    /// Creates a header with an optional destination for selected content.
+    ///
+    /// @param contentPane the destination updated by [#select(TabItem)], or null
+    /// @param tabs the initial tabs in display order, or null for an empty header
+    public TabHeader(@Nullable TransitionPane contentPane, TabItem<?> @Nullable ... tabs) {
         this.contentPane = contentPane;
 
         getStyleClass().setAll("tab-header");
@@ -45,26 +50,37 @@ public class TabHeader extends Control implements PageAware {
         }
     }
 
-    private final ObservableList<Tab<?>> tabs = FXCollections.observableArrayList();
+    /// The mutable tabs in display order.
+    private final ObservableList<TabItem<?>> tabs = FXCollections.observableArrayList();
 
     /// Returns the mutable, observable list of tabs in display order.
-    public ObservableList<Tab<?>> getTabs() {
+    public ObservableList<TabItem<?>> getTabs() {
         return tabs;
     }
 
     /// The selection model that tracks changes to the tab list.
-    private final SingleSelectionModel<Tab<?>> selectionModel = new TabHeaderSelectionModel();
+    private final SingleSelectionModel<@Nullable TabItem<?>> selectionModel = new TabHeaderSelectionModel();
 
-    public SingleSelectionModel<Tab<?>> getSelectionModel() {
+    /// Returns the selection model; selecting through it does not switch content.
+    public SingleSelectionModel<@Nullable TabItem<?>> getSelectionModel() {
         return selectionModel;
     }
 
-    public void select(Tab<?> tab) {
+    /// Selects the tab and switches its content with animation when content is already displayed.
+    ///
+    /// @see #select(TabItem, boolean)
+    public void select(TabItem<?> tab) {
         select(tab, true);
     }
 
-    public void select(Tab<?> tab, boolean playAnimation) {
-        Tab<?> oldTab = getSelectionModel().getSelectedItem();
+    /// Hides the previous page, initializes and shows the requested page, updates the
+    /// selection, and replaces the content of the configured transition pane.
+    /// Page callbacks are invoked even when the requested tab is already selected.
+    ///
+    /// @param tab the tab to select
+    /// @param playAnimation whether to animate replacement of existing content
+    public void select(TabItem<?> tab, boolean playAnimation) {
+        @Nullable TabItem<?> oldTab = getSelectionModel().getSelectedItem();
         if (oldTab != null) {
             if (oldTab.getNode() instanceof PageAware pageAware) {
                 pageAware.onPageHidden();
@@ -91,9 +107,10 @@ public class TabHeader extends Control implements PageAware {
         }
     }
 
+    /// Forwards the shown callback to the selected content when it implements [PageAware].
     @Override
     public void onPageShown() {
-        Tab<?> tab = getSelectionModel().getSelectedItem();
+        @Nullable TabItem<?> tab = getSelectionModel().getSelectedItem();
         if (tab != null) {
             if (tab.getNode() instanceof PageAware) {
                 ((PageAware) tab.getNode()).onPageShown();
@@ -101,9 +118,10 @@ public class TabHeader extends Control implements PageAware {
         }
     }
 
+    /// Forwards the hidden callback to the selected content when it implements [PageAware].
     @Override
     public void onPageHidden() {
-        Tab<?> tab = getSelectionModel().getSelectedItem();
+        @Nullable TabItem<?> tab = getSelectionModel().getSelectedItem();
         if (tab != null) {
             if (tab.getNode() instanceof PageAware) {
                 ((PageAware) tab.getNode()).onPageHidden();
@@ -144,13 +162,13 @@ public class TabHeader extends Control implements PageAware {
     /// Changes to the tab list update the selection. Selecting through this model
     /// does not initialize content or invoke page lifecycle callbacks.
     @NotNullByDefault
-    private final class TabHeaderSelectionModel extends SingleSelectionModel<@Nullable Tab<?>> {
+    private final class TabHeaderSelectionModel extends SingleSelectionModel<@Nullable TabItem<?>> {
         /// Registers a listener that keeps the selection aligned with this header's tab list.
         private TabHeaderSelectionModel() {
             // watching for changes to the items list content
-            final ListChangeListener<Tab<?>> itemsContentObserver = c -> {
+            final ListChangeListener<TabItem<?>> itemsContentObserver = c -> {
                 while (c.next()) {
-                    for (@Nullable Tab<?> tab : c.getRemoved()) {
+                    for (@Nullable TabItem<?> tab : c.getRemoved()) {
                         if (tab != null && !getTabs().contains(tab)) {
                             if (tab.isSelected()) {
                                 tab.setSelected(false);
@@ -195,7 +213,7 @@ public class TabHeader extends Control implements PageAware {
 
             setSelectedIndex(index);
 
-            @Nullable Tab<?> tab = getModelItem(index);
+            @Nullable TabItem<?> tab = getModelItem(index);
             if (tab != null) {
                 setSelectedItem(tab);
             }
@@ -211,11 +229,11 @@ public class TabHeader extends Control implements PageAware {
         /// Selects a matching tab in the list. If a non-null tab is absent, updates
         /// only the selected item; a null argument leaves the selection unchanged.
         @Override
-        public void select(@Nullable Tab<?> tab) {
+        public void select(@Nullable TabItem<?> tab) {
             final int itemCount = getItemCount();
 
             for (int i = 0; i < itemCount; i++) {
-                final @Nullable Tab<?> value = getModelItem(i);
+                final @Nullable TabItem<?> value = getModelItem(i);
                 if (value != null && value.equals(tab)) {
                     select(i);
                     return;
@@ -228,8 +246,8 @@ public class TabHeader extends Control implements PageAware {
 
         /// Returns the tab at the given index, or null if the index is out of range.
         @Override
-        protected @Nullable Tab<?> getModelItem(int index) {
-            final ObservableList<Tab<?>> items = getTabs();
+        protected @Nullable TabItem<?> getModelItem(int index) {
+            final ObservableList<TabItem<?>> items = getTabs();
             if (index < 0 || index >= items.size()) return null;
             return items.get(index);
         }
@@ -237,7 +255,7 @@ public class TabHeader extends Control implements PageAware {
         /// Returns the current number of tabs in the header.
         @Override
         protected int getItemCount() {
-            final ObservableList<Tab<?>> items = getTabs();
+            final ObservableList<TabItem<?>> items = getTabs();
             return items.size();
         }
 
@@ -248,12 +266,12 @@ public class TabHeader extends Control implements PageAware {
             // Search outwards from the removed position, preferring the left side.
             final int tabCount = getItemCount();
             int i = 1;
-            @Nullable Tab<?> bestTab = null;
+            @Nullable TabItem<?> bestTab = null;
             while (true) {
                 // look leftwards
                 int downPos = tabIndex - i;
                 if (downPos >= 0) {
-                    @Nullable Tab<?> candidate = getModelItem(downPos);
+                    @Nullable TabItem<?> candidate = getModelItem(downPos);
                     if (candidate != null) {
                         bestTab = candidate;
                         break;
@@ -267,7 +285,7 @@ public class TabHeader extends Control implements PageAware {
                 // the removed tabs position).
                 int upPos = tabIndex + i - 1;
                 if (upPos < tabCount) {
-                    @Nullable Tab<?> candidate = getModelItem(upPos);
+                    @Nullable TabItem<?> candidate = getModelItem(upPos);
                     if (candidate != null) {
                         bestTab = candidate;
                         break;
@@ -283,143 +301,6 @@ public class TabHeader extends Control implements PageAware {
             if (bestTab != null) {
                 select(bestTab);
             }
-        }
-    }
-
-    /// Stores a tab's label, selection state, and optionally lazily created content.
-    ///
-    /// @param <T> the type of content node
-    @NotNullByDefault
-    public static final class Tab<T extends Node> {
-        /// The nullable identifier of this tab.
-        private final StringProperty id = new SimpleStringProperty(this, "id");
-        /// The nullable text displayed in the header.
-        private final StringProperty text = new SimpleStringProperty(this, "text");
-        /// Whether a selection model has marked this tab as selected.
-        private final ReadOnlyBooleanWrapper selected = new ReadOnlyBooleanWrapper(this, "selected");
-        /// The content node, or null when no content is assigned.
-        private final ObjectProperty<@Nullable T> node = new SimpleObjectProperty<>(this, "node");
-        /// Optional application data associated with this tab.
-        private final ObjectProperty<@Nullable Object> userData = new SimpleObjectProperty<>(this, "userData");
-        /// The optional factory used when content has not been assigned.
-        private @Nullable Supplier<? extends @Nullable T> nodeSupplier;
-
-        /// Creates an unselected tab with the given nullable identifier and no text or content.
-        public Tab(@Nullable String id) {
-            setId(id);
-        }
-
-        /// Creates an unselected tab with the given nullable identifier and text, and no content.
-        public Tab(@Nullable String id, @Nullable String text) {
-            setId(id);
-            setText(text);
-        }
-
-        /// Returns the content factory, or null if none has been set.
-        public @Nullable Supplier<? extends @Nullable T> getNodeSupplier() {
-            return nodeSupplier;
-        }
-
-        /// Sets the content factory, or clears it if null. Existing content is unchanged.
-        public void setNodeSupplier(@Nullable Supplier<? extends @Nullable T> nodeSupplier) {
-            this.nodeSupplier = nodeSupplier;
-        }
-
-        /// Returns the tab identifier, which may be null.
-        public @Nullable String getId() {
-            return id.get();
-        }
-
-        /// Returns the writable identifier property, whose value may be null.
-        public StringProperty idProperty() {
-            return id;
-        }
-
-        /// Sets the tab identifier, which may be null.
-        public void setId(@Nullable String id) {
-            this.id.set(id);
-        }
-
-        /// Returns the header text, which may be null.
-        public @Nullable String getText() {
-            return text.get();
-        }
-
-        /// Returns the writable header text property, whose value may be null.
-        public StringProperty textProperty() {
-            return text;
-        }
-
-        /// Sets the header text, which may be null.
-        public void setText(@Nullable String text) {
-            this.text.set(text);
-        }
-
-        /// Returns whether this tab is marked as selected.
-        public boolean isSelected() {
-            return selected.get();
-        }
-
-        /// Returns a read-only view of the tab's selection state.
-        public ReadOnlyBooleanProperty selectedProperty() {
-            return selected.getReadOnlyProperty();
-        }
-
-        /// Updates the tab's selection flag.
-        private void setSelected(boolean selected) {
-            this.selected.set(selected);
-        }
-
-        /// Returns the content node, or null if none is assigned; does not invoke the factory.
-        public @Nullable T getNode() {
-            return node.get();
-        }
-
-        /// Returns the writable content property. A null value permits lazy initialization.
-        public ObjectProperty<@Nullable T> nodeProperty() {
-            return node;
-        }
-
-        /// Sets the content node, or clears it if null. Does not change the content factory.
-        public void setNode(@Nullable T node) {
-            this.node.set(node);
-        }
-
-        /// Returns the application data, or null if none is assigned.
-        public @Nullable Object getUserData() {
-            return userData.get();
-        }
-
-        /// Returns the property holding nullable application data.
-        public ObjectProperty<@Nullable ?> userDataProperty() {
-            return userData;
-        }
-
-        /// Sets the application data, which may be null.
-        public void setUserData(@Nullable Object userData) {
-            this.userData.set(userData);
-        }
-
-        /// Returns whether a non-null content node is currently assigned.
-        public boolean isInitialized() {
-            return getNode() != null;
-        }
-
-        /// Invokes the content factory and assigns its result if the content is null
-        /// and a factory is present. A null result permits another attempt on the next call.
-        /// Factory exceptions propagate without assigning a result.
-        ///
-        /// @return true if the factory returned and its result was assigned, even if null;
-        /// false if content was already assigned or no factory was present
-        public boolean initializeIfNeeded() {
-            if (getNode() == null) {
-                if (getNodeSupplier() == null) {
-                    return false;
-                }
-                setNode(getNodeSupplier().get());
-                return true;
-            }
-            return false;
         }
     }
 
@@ -548,7 +429,7 @@ public class TabHeader extends Control implements PageAware {
                 double offset = 0;
                 double selectedOffset = 0;
                 double selectedLength = 0;
-                @Nullable Tab<?> selected = getSkinnable().getSelectionModel().getSelectedItem();
+                @Nullable TabItem<?> selected = getSkinnable().getSelectionModel().getSelectedItem();
                 for (TabHeaderContainer child : headers) {
                     if (!child.isVisible()) continue;
                     double width = snapSizeX(child.prefWidth(-1));
@@ -625,7 +506,7 @@ public class TabHeader extends Control implements PageAware {
         @NotNullByDefault
         private final class TabHeaderContainer extends StackPane {
             /// The tab represented by this view.
-            private final Tab<?> tab;
+            private final TabItem<?> tab;
             /// The label bound to the tab's text.
             private final Label tabText = new Label();
             /// The content node receiving the selection pseudo-class.
@@ -634,7 +515,7 @@ public class TabHeader extends Control implements PageAware {
             private final InvalidationListener selectionListener = observable -> updateSelection();
 
             /// Binds the label and selection styling and installs pointer selection.
-            private TabHeaderContainer(Tab<?> tab) {
+            private TabHeaderContainer(TabItem<?> tab) {
                 this.tab = tab;
                 tabText.textProperty().bind(tab.textProperty());
                 tabText.getStyleClass().add("tab-label");

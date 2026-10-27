@@ -23,15 +23,22 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class LauncherSettingsPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("settings")));
     private final TabHeader tab;
-    private final TabHeader.Tab<GameSettingsPage<GameSettings.Preset>> gameTab = new TabHeader.Tab<>("versionSettingsPage");
+    /// The tab for editing game settings presets.
+    private final TabItem<GameSettingsPage<GameSettings.Preset>> gameTab = new TabItem<>("versionSettingsPage");
     /// The tab whose content manages installed Java runtimes.
-    private final TabHeader.Tab<JavaManagementPage> javaManagementTab = new TabHeader.Tab<>("javaManagementPage");
-    private final TabHeader.Tab<SettingsPage> settingsTab = new TabHeader.Tab<>("settingsPage");
-    private final TabHeader.Tab<PersonalizationPage> personalizationTab = new TabHeader.Tab<>("personalizationPage");
-    private final TabHeader.Tab<DownloadSettingsPage> downloadTab = new TabHeader.Tab<>("downloadSettingsPage");
-    private final TabHeader.Tab<HelpPage> helpTab = new TabHeader.Tab<>("helpPage");
-    private final TabHeader.Tab<AboutPage> aboutTab = new TabHeader.Tab<>("aboutPage");
-    private final TabHeader.Tab<FeedbackPage> feedbackTab = new TabHeader.Tab<>("feedbackPage");
+    private final TabItem<JavaManagementPage> javaManagementTab = new TabItem<>("javaManagementPage");
+    /// The tab for general launcher settings.
+    private final TabItem<SettingsPage> settingsTab = new TabItem<>("settingsPage");
+    /// The tab for launcher appearance settings.
+    private final TabItem<PersonalizationPage> personalizationTab = new TabItem<>("personalizationPage");
+    /// The tab for download settings.
+    private final TabItem<DownloadSettingsPage> downloadTab = new TabItem<>("downloadSettingsPage");
+    /// The tab displaying launcher help.
+    private final TabItem<HelpPage> helpTab = new TabItem<>("helpPage");
+    /// The tab displaying launcher information.
+    private final TabItem<AboutPage> aboutTab = new TabItem<>("aboutPage");
+    /// The tab displaying feedback and contact information.
+    private final TabItem<FeedbackPage> feedbackTab = new TabItem<>("feedbackPage");
     private final TransitionPane transitionPane = new TransitionPane();
 
     public LauncherSettingsPage() {

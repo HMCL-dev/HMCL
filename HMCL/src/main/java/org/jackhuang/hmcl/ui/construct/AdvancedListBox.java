@@ -82,7 +82,7 @@ public class AdvancedListBox extends ScrollPane {
     ///
     /// @param leftGraphic the item icon, or null for no icon
     /// @return this list box
-    public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabHeader.Tab<?> tab, String title, @Nullable SVG leftGraphic) {
+    public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabItem<?> tab, String title, @Nullable SVG leftGraphic) {
         AdvancedListItem item = createNavigationDrawerItem(title, leftGraphic);
         item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
         item.setOnAction(e -> tabHeader.select(tab));
@@ -92,7 +92,7 @@ public class AdvancedListBox extends ScrollPane {
     /// Adds an item that selects the tab and switches icons with its selection state.
     ///
     /// @return this list box
-    public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabHeader.Tab<?> tab, String title,
+    public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabItem<?> tab, String title,
                                                   SVG unselectedGraphic, SVG selectedGraphic) {
         AdvancedListItem item = createNavigationDrawerItem(title, null);
         item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
