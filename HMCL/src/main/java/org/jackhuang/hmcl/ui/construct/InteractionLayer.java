@@ -56,7 +56,7 @@ public final class InteractionLayer extends Region {
     /// Whether this instance schedules real pulses; deterministic tests advance it explicitly.
     private final boolean automaticPulses;
     /// The current waveforms, including released waves that have not finished fading.
-    private final ArrayList<Ripple> ripples = new ArrayList<>();
+    private final ArrayList<Ripple> ripples = new ArrayList<>(0);
     /// The lazily created waveform group; it is attached only while waveforms exist.
     private @Nullable Group waveformGroup;
     /// The shared waveform clip, detached when no waveforms remain.
