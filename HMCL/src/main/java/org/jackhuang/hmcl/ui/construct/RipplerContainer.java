@@ -6,10 +6,13 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ObjectPropertyBase;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.*;
 import javafx.css.converter.PaintConverter;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.input.MouseButton;
@@ -206,6 +209,78 @@ public class RipplerContainer extends StackPane {
     /// Returns the original content, which remains a direct child of this wrapper.
     public Node getContainer() {
         return container;
+    }
+
+    /// The optional action property, allocated only when requested or assigned a non-null handler.
+    private @Nullable ObjectProperty<@Nullable EventHandler<ActionEvent>> onAction;
+
+    /// Returns the handler property for actions originating from this wrapper, initially null.
+    /// A non-null handler enables primary-click actions on the feedback background. Content
+    /// nodes retain their own input handling; mouse-transparent content is picked through.
+    /// Handled mouse clicks are consumed, including repeated clicks, while the resulting
+    /// [ActionEvent] bubbles normally unless consumed. Actions from descendants do not invoke
+    /// this handler. Clearing the handler removes the background click listener.
+    ///
+    /// Clicks invoke [#fire()] without waiting for animations or preparation. Disabling press
+    /// feedback does not disable actions. Keyboard activation is left to the enclosing control.
+    public ObjectProperty<@Nullable EventHandler<ActionEvent>> onActionProperty() {
+        if (onAction == null) {
+            onAction = new ObjectPropertyBase<>() {
+                /// Returns the wrapper owning this property.
+                @Override
+                public Object getBean() {
+                    return RipplerContainer.this;
+                }
+
+                /// Returns the action property name.
+                @Override
+                public String getName() {
+                    return "onAction";
+                }
+
+                /// Installs or removes action dispatch only when a handler is present.
+                @Override
+                protected void invalidated() {
+                    boolean enabled = get() != null;
+                    interactionLayer.setOnMouseClicked(enabled ? RipplerContainer.this::handleBackgroundClick : null);
+                    setEventHandler(ActionEvent.ACTION, enabled ? RipplerContainer.this::handleAction : null);
+                }
+            };
+        }
+        return onAction;
+    }
+
+    /// Returns the action handler, or null without allocating the property when unused.
+    public @Nullable EventHandler<ActionEvent> getOnAction() {
+        return onAction == null ? null : onAction.get();
+    }
+
+    /// Sets the action handler; null removes it without allocating an unused property.
+    public void setOnAction(@Nullable EventHandler<ActionEvent> handler) {
+        if (onAction != null || handler != null)
+            onActionProperty().set(handler);
+    }
+
+    /// Fires an action with this wrapper as its source and target unless disabled.
+    /// Does not change visual feedback or run pending preparation.
+    public void fire() {
+        if (!isDisabled())
+            fireEvent(new ActionEvent(this, this));
+    }
+
+    /// Consumes primary background clicks before dispatching an immediate action.
+    private void handleBackgroundClick(MouseEvent event) {
+        if (event.getTarget() == interactionLayer && event.getButton() == MouseButton.PRIMARY && !isDisabled()) {
+            event.consume();
+            fire();
+        }
+    }
+
+    /// Delivers this wrapper's actions without treating descendant actions as background activation.
+    private void handleAction(ActionEvent event) {
+        @Nullable EventHandler<ActionEvent> handler = getOnAction();
+        if (event.getTarget() == this && handler != null)
+            handler.handle(event);
     }
 
     /// The optional one-shot preparation state; absent on wrappers that do not use prewarming.

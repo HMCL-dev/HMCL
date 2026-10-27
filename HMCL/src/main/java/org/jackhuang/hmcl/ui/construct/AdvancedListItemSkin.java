@@ -8,7 +8,7 @@ import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jetbrains.annotations.Nullable;
 
-/// Lays out a two-line item and forwards optional preparation to its feedback wrapper.
+/// Lays out a two-line item, forwards background actions, and registers optional preparation.
 public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
     /// The pseudo-class reflecting the item's active state.
     private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
@@ -29,6 +29,10 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         root.setPickOnBounds(false);
 
         container = new RipplerContainer(root);
+        container.setOnAction(event -> {
+            event.consume();
+            skinnable.fire();
+        });
 
         TwoLineListItem item = new TwoLineListItem();
         root.setCenter(item);
@@ -54,10 +58,16 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
         });
     }
 
-    /// Cancels the old wrapper's work while leaving an unconsumed action available to a new skin.
+    /// Removes background activation, releases graphics, and retains unconsumed preparation on the control.
     @Override
     public void dispose() {
+        container.setOnAction(null);
         container.setPrepareAction(null);
+        BorderPane root = (BorderPane) container.getContainer();
+        root.leftProperty().unbind();
+        root.rightProperty().unbind();
+        root.setLeft(null);
+        root.setRight(null);
         super.dispose();
     }
 }

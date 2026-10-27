@@ -172,7 +172,7 @@
     -fx-text-alignment: justify;
 }
 
-.advanced-list-item:selected > .rippler-container > .container {
+.advanced-list-item:selected > .rippler-container {
     -fx-background-color: -monet-secondary-container-transparent-50;
 }
 

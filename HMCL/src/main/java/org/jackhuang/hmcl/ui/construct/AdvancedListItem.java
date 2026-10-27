@@ -15,6 +15,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.Nullable;
 
+/// Displays a two-line item with optional graphics and an action supplied by its skin.
 public class AdvancedListItem extends Control {
     public static final double LEFT_GRAPHIC_SIZE = 32;
     public static final double LEFT_ICON_SIZE = 20;
@@ -28,9 +29,15 @@ public class AdvancedListItem extends Control {
         BorderPane.setAlignment(graphic, alignment);
     }
 
+    /// Creates an item whose default skin routes background clicks to [#fire()].
     public AdvancedListItem() {
         getStyleClass().add("advanced-list-item");
-        FXUtils.onClicked(this, () -> fireEvent(new ActionEvent()));
+    }
+
+    /// Fires this item's action unless disabled, without waiting for feedback or preparation.
+    public void fire() {
+        if (!isDisabled())
+            fireEvent(new ActionEvent(this, this));
     }
 
     private final ObjectProperty<Node> leftGraphic = new SimpleObjectProperty<>(this, "leftGraphic");
@@ -143,22 +150,31 @@ public class AdvancedListItem extends Control {
         this.active.set(active);
     }
 
-    private final ObjectProperty<EventHandler<ActionEvent>> onAction = new SimpleObjectProperty<>(this, "onAction") {
+    /// The handler for actions originating from this item, excluding descendant controls.
+    private final ObjectProperty<@Nullable EventHandler<ActionEvent>> onAction = new SimpleObjectProperty<>(this, "onAction") {
+        /// Routes only this item's actions to the registered handler.
         @Override
         protected void invalidated() {
-            setEventHandler(ActionEvent.ACTION, get());
+            @Nullable EventHandler<ActionEvent> handler = get();
+            setEventHandler(ActionEvent.ACTION, handler == null ? null : event -> {
+                if (event.getTarget() == AdvancedListItem.this)
+                    handler.handle(event);
+            });
         }
     };
 
-    public final ObjectProperty<EventHandler<ActionEvent>> onActionProperty() {
+    /// Returns the handler property for this item's actions, initially null.
+    public final ObjectProperty<@Nullable EventHandler<ActionEvent>> onActionProperty() {
         return onAction;
     }
 
-    public final void setOnAction(EventHandler<ActionEvent> value) {
+    /// Sets the item action handler; null removes it.
+    public final void setOnAction(@Nullable EventHandler<ActionEvent> value) {
         onActionProperty().set(value);
     }
 
-    public final EventHandler<ActionEvent> getOnAction() {
+    /// Returns the item action handler, or null if none is registered.
+    public final @Nullable EventHandler<ActionEvent> getOnAction() {
         return onActionProperty().get();
     }
 

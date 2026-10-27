@@ -11,7 +11,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -57,6 +56,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     /// The optional subtitle label.
     private @Nullable Label subtitleLabel;
 
+    /// Creates a row with mouse-transparent title text and independently interactive optional nodes.
     public LineComponent() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
@@ -69,13 +69,11 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
 
         this.titleLabel = new Label();
         titleLabel.getStyleClass().add("title-label");
-        titleLabel.setContentDisplay(ContentDisplay.RIGHT);
-        titleLabel.setGraphicTextGap(4);
         titleLabel.setMinWidth(Region.USE_PREF_SIZE);
         titleLabel.setMouseTransparent(true);
         titleLabel.setPickOnBounds(false);
 
-        this.titleLine = new HBox(titleLabel);
+        this.titleLine = new HBox(4, titleLabel);
         titleLine.setAlignment(Pos.CENTER_LEFT);
         titleLine.setPickOnBounds(false);
 
@@ -164,15 +162,18 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         }
     }
 
-    /// Sets the node displayed immediately after the title label.
+    /// Sets the node displayed immediately after the mouse-transparent title label.
+    /// Null removes the node; non-null nodes retain their own mouse input handling.
     public final void setTitleTrailing(@Nullable Node node) {
         if (titleTrailing == node) {
             return;
         }
 
+        if (titleTrailing != null)
+            titleLine.getChildren().remove(titleTrailing);
         titleTrailing = node;
-        titleLabel.setGraphic(node);
-        titleLabel.setMouseTransparent(node == null);
+        if (node != null)
+            titleLine.getChildren().add(node);
         titleContainer.setMouseTransparent(node == null);
     }
 
