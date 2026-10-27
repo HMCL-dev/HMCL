@@ -5,7 +5,6 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.animation.*;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
-import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
@@ -14,289 +13,83 @@ import javafx.scene.AccessibleAttribute;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.Motion;
-import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
-/// Displays selectable tab headers and optionally switches content in a transition pane.
-public class TabHeader extends Control implements PageAware {
+import java.util.Objects;
 
-    /// The optional destination for selected tab content.
-    private final @Nullable TransitionPane contentPane;
+/// Displays selectable tab headers backed by a [TabController].
+/// Activating a header delegates selection and content switching to its controller.
+@NotNullByDefault
+public class TabHeader extends Control {
 
-    /// Creates a header with the supplied tabs and no content destination.
+    /// The controller supplying the tab list and selection state.
+    private final TabController controller;
+
+    /// Creates a header with its own controller and no content destination.
     ///
     /// @param tabs the initial tabs in display order, or null for an empty header
     public TabHeader(TabItem<?> @Nullable ... tabs) {
-        this(null, tabs);
+        this(new TabController(tabs));
     }
 
-    /// Creates a header with an optional destination for selected content.
+    /// Creates a view of the supplied controller's tabs and selection state.
+    /// Creating or disposing a skin does not initialize or activate tab content.
     ///
-    /// @param contentPane the destination updated by [#select(TabItem)], or null
-    /// @param tabs the initial tabs in display order, or null for an empty header
-    public TabHeader(@Nullable TransitionPane contentPane, TabItem<?> @Nullable ... tabs) {
-        this.contentPane = contentPane;
-
+    /// @param controller the controller shared with other navigation views
+    /// @throws NullPointerException if the controller is null
+    public TabHeader(TabController controller) {
+        this.controller = Objects.requireNonNull(controller);
         getStyleClass().setAll("tab-header");
-        if (tabs != null) {
-            getTabs().addAll(tabs);
-        }
     }
 
-    /// The mutable tabs in display order.
-    private final ObservableList<TabItem<?>> tabs = FXCollections.observableArrayList();
-
-    /// Returns the mutable, observable list of tabs in display order.
-    public ObservableList<TabItem<?>> getTabs() {
-        return tabs;
+    /// Returns the controller used to activate tabs and manage content lifecycle.
+    public final TabController getController() {
+        return controller;
     }
 
-    /// The selection model that tracks changes to the tab list.
-    private final SingleSelectionModel<@Nullable TabItem<?>> selectionModel = new TabHeaderSelectionModel();
-
-    /// Returns the selection model; selecting through it does not switch content.
-    public SingleSelectionModel<@Nullable TabItem<?>> getSelectionModel() {
-        return selectionModel;
-    }
-
-    /// Selects the tab and switches its content with animation when content is already displayed.
+    /// Returns the controller's mutable tab list in display order.
     ///
-    /// @see #select(TabItem, boolean)
-    public void select(TabItem<?> tab) {
-        select(tab, true);
+    /// @see TabController#getTabs()
+    public final ObservableList<TabItem<?>> getTabs() {
+        return controller.getTabs();
     }
 
-    /// Hides the previous page, initializes and shows the requested page, updates the
-    /// selection, and replaces the content of the configured transition pane.
-    /// Page callbacks are invoked even when the requested tab is already selected.
+    /// Returns the controller's selection model; direct changes do not activate content.
     ///
-    /// @param tab the tab to select
-    /// @param playAnimation whether to animate replacement of existing content
-    public void select(TabItem<?> tab, boolean playAnimation) {
-        @Nullable TabItem<?> oldTab = getSelectionModel().getSelectedItem();
-        if (oldTab != null) {
-            if (oldTab.getNode() instanceof PageAware pageAware) {
-                pageAware.onPageHidden();
-            }
-        }
-
-        tab.initializeIfNeeded();
-        if (tab.getNode() instanceof PageAware pageAware) {
-            pageAware.onPageShown();
-        }
-
-        getSelectionModel().select(tab);
-
-        if (contentPane != null) {
-            if (playAnimation && contentPane.getCurrentNode() != null) {
-                contentPane.setContent(tab.getNode(),
-                        ContainerAnimations.SLIDE_UP_FADE_IN,
-                        Motion.MEDIUM4,
-                        Motion.EASE_IN_OUT_CUBIC_EMPHASIZED
-                );
-            } else {
-                contentPane.setContent(tab.getNode(), ContainerAnimations.NONE);
-            }
-        }
+    /// @see TabController#getSelectionModel()
+    public final SingleSelectionModel<@Nullable TabItem<?>> getSelectionModel() {
+        return controller.getSelectionModel();
     }
 
-    /// Forwards the shown callback to the selected content when it implements [PageAware].
-    @Override
-    public void onPageShown() {
-        @Nullable TabItem<?> tab = getSelectionModel().getSelectedItem();
-        if (tab != null && tab.getNode() instanceof PageAware pageAware) {
-            pageAware.onPageShown();
-        }
-    }
-
-    /// Forwards the hidden callback to the selected content when it implements [PageAware].
-    @Override
-    public void onPageHidden() {
-        @Nullable TabItem<?> tab = getSelectionModel().getSelectedItem();
-        if (tab != null && tab.getNode() instanceof PageAware pageAware) {
-            pageAware.onPageHidden();
-        }
-    }
-
+    /// The lazily allocated tab placement property.
     private @Nullable ObjectProperty<Side> side;
 
-    /**
-     * The position of the tabs.
-     */
+    /// Returns the tab placement property, initially [Side#TOP]. Values must be non-null.
     public ObjectProperty<Side> sideProperty() {
         if (side == null)
             side = new SimpleObjectProperty<>(this, "side", Side.TOP);
         return side;
     }
 
-    /**
-     * The position to place the tabs.
-     */
+    /// Returns the side along which the tab headers are arranged.
     public Side getSide() {
         return sideProperty().get();
     }
 
-    /**
-     * The position the place the tabs in this TabHeader.
-     */
+    /// Sets the side along which the tab headers are arranged.
+    ///
+    /// @param side the non-null tab placement
     public void setSide(Side side) {
-        this.sideProperty().set(side);
+        sideProperty().set(side);
     }
 
+    /// Creates the skin that lays out headers and animates the selection indicator.
     @Override
     protected Skin<?> createDefaultSkin() {
         return new TabHeaderSkin(this);
-    }
-
-    /// Synchronizes a header's selected index, selected item, and tab selection flags.
-    ///
-    /// Changes to the tab list update the selection. Selecting through this model
-    /// does not initialize content or invoke page lifecycle callbacks.
-    @NotNullByDefault
-    private final class TabHeaderSelectionModel extends SingleSelectionModel<@Nullable TabItem<?>> {
-        /// Registers a listener that keeps the selection aligned with this header's tab list.
-        private TabHeaderSelectionModel() {
-            // watching for changes to the items list content
-            final ListChangeListener<TabItem<?>> itemsContentObserver = c -> {
-                while (c.next()) {
-                    for (@Nullable TabItem<?> tab : c.getRemoved()) {
-                        if (tab != null && !getTabs().contains(tab)) {
-                            if (tab.isSelected()) {
-                                tab.setSelected(false);
-                                final int tabIndex = c.getFrom();
-
-                                // Select a nearby tab after removing the selected tab.
-                                selectNearestAvailableTab(tabIndex);
-                            }
-                        }
-                    }
-                    if (c.wasAdded() || c.wasRemoved()) {
-                        // The selected tab index can be out of sync with the list of tab if
-                        // we add or remove tabs before the selected tab.
-                        if (getSelectedIndex() != getTabs().indexOf(getSelectedItem())) {
-                            clearAndSelect(getTabs().indexOf(getSelectedItem()));
-                        }
-                    }
-                }
-                if (getSelectedIndex() == -1 && getSelectedItem() == null && !getTabs().isEmpty()) {
-                    // Select the first available tab when the list gains its first items.
-                    selectNearestAvailableTab(0);
-                } else if (getTabs().isEmpty()) {
-                    clearSelection();
-                }
-            };
-            getTabs().addListener(itemsContentObserver);
-        }
-
-        /// Selects the tab at the given index and notifies accessibility listeners.
-        /// Updates the selection flags of the old and new tabs.
-        @Override
-        public void select(int index) {
-            if (index < 0 || (getItemCount() > 0 && index >= getItemCount()) ||
-                    (index == getSelectedIndex() && getModelItem(index).isSelected())) {
-                return;
-            }
-
-            // Unselect the old tab
-            if (getSelectedIndex() >= 0 && getSelectedIndex() < getTabs().size()) {
-                getTabs().get(getSelectedIndex()).setSelected(false);
-            }
-
-            setSelectedIndex(index);
-
-            @Nullable TabItem<?> tab = getModelItem(index);
-            if (tab != null) {
-                setSelectedItem(tab);
-            }
-
-            // Select the new tab
-            if (getSelectedIndex() >= 0 && getSelectedIndex() < getTabs().size()) {
-                getTabs().get(getSelectedIndex()).setSelected(true);
-            }
-
-            notifyAccessibleAttributeChanged(AccessibleAttribute.FOCUS_ITEM);
-        }
-
-        /// Selects a matching tab in the list. If a non-null tab is absent, updates
-        /// only the selected item; a null argument leaves the selection unchanged.
-        @Override
-        public void select(@Nullable TabItem<?> tab) {
-            final int itemCount = getItemCount();
-
-            for (int i = 0; i < itemCount; i++) {
-                final @Nullable TabItem<?> value = getModelItem(i);
-                if (value != null && value.equals(tab)) {
-                    select(i);
-                    return;
-                }
-            }
-            if (tab != null) {
-                setSelectedItem(tab);
-            }
-        }
-
-        /// Returns the tab at the given index, or null if the index is out of range.
-        @Override
-        protected @Nullable TabItem<?> getModelItem(int index) {
-            final ObservableList<TabItem<?>> items = getTabs();
-            if (index < 0 || index >= items.size()) return null;
-            return items.get(index);
-        }
-
-        /// Returns the current number of tabs in the header.
-        @Override
-        protected int getItemCount() {
-            return getTabs().size();
-        }
-
-        /// Select the tab near a removed position, searching left before right at each distance.
-        ///
-        /// @param tabIndex the position from which a tab was removed
-        private void selectNearestAvailableTab(int tabIndex) {
-            // Search outwards from the removed position, preferring the left side.
-            final int tabCount = getItemCount();
-            int i = 1;
-            @Nullable TabItem<?> bestTab = null;
-            while (true) {
-                // look leftwards
-                int downPos = tabIndex - i;
-                if (downPos >= 0) {
-                    @Nullable TabItem<?> candidate = getModelItem(downPos);
-                    if (candidate != null) {
-                        bestTab = candidate;
-                        break;
-                    }
-                }
-
-                // look rightwards. We subtract one as we need
-                // to take into account that a tab has been removed
-                // and if we don't do this we'll miss the tab
-                // to the right of the tab (as it has moved into
-                // the removed tabs position).
-                int upPos = tabIndex + i - 1;
-                if (upPos < tabCount) {
-                    @Nullable TabItem<?> candidate = getModelItem(upPos);
-                    if (candidate != null) {
-                        bestTab = candidate;
-                        break;
-                    }
-                }
-
-                if (downPos < 0 && upPos >= tabCount) {
-                    break;
-                }
-                i++;
-            }
-
-            if (bestTab != null) {
-                select(bestTab);
-            }
-        }
     }
 
     /// Arranges tab headers and animates the selection indicator along the chosen side.
@@ -346,17 +139,12 @@ public class TabHeader extends Control implements PageAware {
             updateChildren();
 
             registerChangeListener(control.getSelectionModel().selectedItemProperty(), observable -> {
+                control.notifyAccessibleAttributeChanged(AccessibleAttribute.FOCUS_ITEM);
                 animateSelection = true;
                 control.requestLayout();
             });
             registerChangeListener(control.sideProperty(), observable -> control.requestLayout());
 
-            if (control.getSelectionModel().getSelectedItem() == null) {
-                if (control.getSelectionModel().getSelectedIndex() != -1)
-                    control.getSelectionModel().select(control.getSelectionModel().getSelectedIndex());
-                if (control.getSelectionModel().getSelectedItem() == null)
-                    control.getSelectionModel().selectFirst();
-            }
         }
 
         /// Stops the indicator animation and releases tab bindings and listeners.
@@ -524,7 +312,7 @@ public class TabHeader extends Control implements PageAware {
                 tabText.setMouseTransparent(true);
                 tab.selectedProperty().addListener(selectionListener);
                 updateSelection();
-                setOnAction(event -> getSkinnable().getSelectionModel().select(tab));
+                setOnAction(event -> getSkinnable().getController().select(tab));
             }
 
             /// Reflects the tab's selection flag in the label's pseudo-class.

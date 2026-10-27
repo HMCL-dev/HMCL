@@ -78,25 +78,25 @@ public class AdvancedListBox extends ScrollPane {
         return add(item);
     }
 
-    /// Adds an item that selects the tab and tracks its selection state.
+    /// Adds an item that activates the tab through the controller and tracks its selection state.
     ///
     /// @param leftGraphic the item icon, or null for no icon
     /// @return this list box
-    public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabItem<?> tab, String title, @Nullable SVG leftGraphic) {
+    public AdvancedListBox addNavigationDrawerTab(TabController controller, TabItem<?> tab, String title, @Nullable SVG leftGraphic) {
         AdvancedListItem item = createNavigationDrawerItem(title, leftGraphic);
-        item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
-        item.setOnAction(e -> tabHeader.select(tab));
+        item.activeProperty().bind(controller.getSelectionModel().selectedItemProperty().isEqualTo(tab));
+        item.setOnAction(e -> controller.select(tab));
         return add(item);
     }
 
-    /// Adds an item that selects the tab and switches icons with its selection state.
+    /// Adds an item that activates the tab through the controller and switches icons with its selection state.
     ///
     /// @return this list box
-    public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabItem<?> tab, String title,
+    public AdvancedListBox addNavigationDrawerTab(TabController controller, TabItem<?> tab, String title,
                                                   SVG unselectedGraphic, SVG selectedGraphic) {
         AdvancedListItem item = createNavigationDrawerItem(title, null);
-        item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
-        item.setOnAction(e -> tabHeader.select(tab));
+        item.activeProperty().bind(controller.getSelectionModel().selectedItemProperty().isEqualTo(tab));
+        item.setOnAction(e -> controller.select(tab));
 
         var leftGraphic = new SVGContainer(item.isActive() ? selectedGraphic : unselectedGraphic, AdvancedListItem.LEFT_ICON_SIZE);
         leftGraphic.setMouseTransparent(true);

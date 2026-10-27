@@ -38,7 +38,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameInstancePage extends DecoratorAnimatedPage implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
-    private final TabHeader tab;
+    /// Manages tab selection and content transitions independently of the sidebar.
+    private final TabController tabController;
     /// The settings tab bound to the current game instance.
     private final TabItem<GameSettingsPage<GameSettings.Instance>> gameSettingsTab;
     /// The component management tab bound to the current game instance.
@@ -87,7 +88,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         this.schematicsTab = new TabItem<>(() -> new SchematicsPage(instance));
         this.screenshotsTab = new TabItem<>(() -> new ScreenshotsPage(instance));
 
-        tab = new TabHeader(transitionPane,
+        tabController = new TabController(transitionPane,
                 gameSettingsTab,
                 installerListTab,
                 modListTab,
@@ -95,7 +96,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                 worldListTab,
                 schematicsTab,
                 screenshotsTab);
-        tab.select(gameSettingsTab);
+        tabController.select(gameSettingsTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
@@ -166,7 +167,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     public void showInstanceSettings() {
-        tab.select(gameSettingsTab, false);
+        tabController.select(gameSettingsTab, false);
     }
 
     public void setInstance(GameInstanceID instanceId, HMCLGameRepository repository) {
@@ -352,12 +353,12 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
 
             {
                 AdvancedListBox sideBar = new AdvancedListBox()
-                        .addNavigationDrawerTab(control.tab, control.gameSettingsTab, i18n("settings.game"), SVG.SETTINGS, SVG.SETTINGS_FILL)
-                        .addNavigationDrawerTab(control.tab, control.installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL)
-                        .addNavigationDrawerTab(control.tab, control.modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL)
-                        .addNavigationDrawerTab(control.tab, control.resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
-                        .addNavigationDrawerTab(control.tab, control.worldListTab, i18n("world.manage"), SVG.PUBLIC)
-                        .addNavigationDrawerTab(control.tab, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
+                        .addNavigationDrawerTab(control.tabController, control.gameSettingsTab, i18n("settings.game"), SVG.SETTINGS, SVG.SETTINGS_FILL)
+                        .addNavigationDrawerTab(control.tabController, control.installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL)
+                        .addNavigationDrawerTab(control.tabController, control.modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL)
+                        .addNavigationDrawerTab(control.tabController, control.resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
+                        .addNavigationDrawerTab(control.tabController, control.worldListTab, i18n("world.manage"), SVG.PUBLIC)
+                        .addNavigationDrawerTab(control.tabController, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);
 
                 PopupMenu browseList = new PopupMenu();
@@ -390,7 +391,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         new MenuSeparator(),
                         // Due to the sidebar height limit, we temporarily place the entries for these tabs
                         // in the management menu; they will be moved back to the sidebar after a future UI refactor.
-                        new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("screenshots.manage"), () -> control.tab.select(control.screenshotsTab), managementPopup),
+                        new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("screenshots.manage"), () -> control.tabController.select(control.screenshotsTab), managementPopup),
                         new MenuSeparator(),
                         new IconedMenuItem(null, i18n("instance.manage.redownload_assets_index"), control::redownloadAssetIndex, managementPopup),
                         new IconedMenuItem(null, i18n("instance.manage.remove_assets"), control::clearAssets, managementPopup),

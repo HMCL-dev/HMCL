@@ -46,7 +46,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final BooleanProperty readOnly = new SimpleBooleanProperty(false);
 
     private final TransitionPane transitionPane = new TransitionPane();
-    private final TabHeader header = new TabHeader(transitionPane);
+    /// Manages tab selection and content transitions independently of the sidebar.
+    private final TabController tabController = new TabController(transitionPane);
     /// The tab displaying information about this world.
     private final TabItem<WorldInfoPage> worldInfoTab;
     /// The tab for managing backups of this world.
@@ -96,7 +97,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             return;
         }
 
-        for (var tab : header.getTabs()) {
+        for (var tab : tabController.getTabs()) {
             if (tab.getNode() instanceof WorldRefreshable r) {
                 r.refresh();
             }
@@ -195,15 +196,15 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         private AdvancedListBox getTabBar() {
             AdvancedListBox tabBar = new AdvancedListBox();
             {
-                getSkinnable().header.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab);
-                getSkinnable().header.select(getSkinnable().worldInfoTab);
+                getSkinnable().tabController.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab);
+                getSkinnable().tabController.select(getSkinnable().worldInfoTab);
 
-                tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
-                        .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
+                tabBar.addNavigationDrawerTab(getSkinnable().tabController, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
+                        .addNavigationDrawerTab(getSkinnable().tabController, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
                 if (getSkinnable().world.supportDataPacks()) {
-                    getSkinnable().header.getTabs().add(getSkinnable().dataPackTab);
-                    tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
+                    getSkinnable().tabController.getTabs().add(getSkinnable().dataPackTab);
+                    tabBar.addNavigationDrawerTab(getSkinnable().tabController, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
                 }
             }
 
