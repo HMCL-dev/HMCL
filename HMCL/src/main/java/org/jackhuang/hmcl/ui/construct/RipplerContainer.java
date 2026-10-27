@@ -2,7 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
+import com.jfoenix.utils.TreeShowingProperty;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -87,10 +90,15 @@ public class RipplerContainer extends StackPane {
         });
         addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
             pointerInside = true;
+            if (preparation != null)
+                preparation.armed = true;
             updateVisualState();
+            if (preparation != null)
+                preparation.run();
         });
         addEventHandler(MouseEvent.MOUSE_EXITED, event -> {
             pointerInside = false;
+            cancelPreparation();
             updateVisualState();
             interactionLayer.release();
         });
@@ -143,6 +151,8 @@ public class RipplerContainer extends StackPane {
     /// Updates persistent states and cancels presses when requested or feedback is unavailable.
     private void updateVisualState(boolean cancelPress) {
         boolean available = isFeedbackAvailable();
+        if (cancelPress || !available)
+            cancelPreparation();
         interactionLayer.setHovered(available && pointerInside);
         interactionLayer.setFocusActive(available && isWindowFocused() && isFocused());
         if (cancelPress || !available)
@@ -205,6 +215,47 @@ public class RipplerContainer extends StackPane {
         return container;
     }
 
+    /// The optional one-shot preparation state; absent on wrappers that do not use prewarming.
+    private @Nullable HoverPreparation preparation;
+
+    /// Returns the pending preparation action, or null if none is registered or it was consumed.
+    public @Nullable Runnable getPrepareAction() {
+        return preparation == null ? null : preparation.action;
+    }
+
+    /// Registers an action to run once on the FX thread after a hovered state has settled.
+    /// Replaces any pending action; null cancels it. The registration is cleared before invocation,
+    /// including when the action throws. Assigning the same action reference is a no-op.
+    ///
+    /// Execution is deferred through a post-layout pulse and then the FX event queue; it does not
+    /// wait for waveforms. With animations disabled or an already settled state, the same deferral
+    /// applies. This does not guarantee that a frame has been presented by the display.
+    ///
+    /// Leaving, hiding, disabling, window focus loss, scene changes, and [#resetFeedback()] cancel
+    /// the current attempt without consuming the action. A subsequent mouse entry can retry.
+    /// Registering while already hovered starts an attempt immediately. Scene-graph construction
+    /// in the action still occupies the FX thread.
+    public void setPrepareAction(@Nullable Runnable action) {
+        if (action == getPrepareAction())
+            return;
+        if (preparation != null) {
+            preparation.dispose();
+            preparation = null;
+        }
+        if (action != null) {
+            preparation = new HoverPreparation(action);
+            interactionLayer.setOnStateSettled(preparation);
+            preparation.armed = pointerInside;
+            preparation.run();
+        }
+    }
+
+    /// Cancels only the current hover attempt, retaining any registered preparation action.
+    private void cancelPreparation() {
+        if (preparation != null)
+            preparation.cancel();
+    }
+
     /// The CSS-configurable paint shared by all visual feedback states.
     private final StyleableObjectProperty<@Nullable Paint> feedbackFill = new StyleableObjectProperty<>(DEFAULT_FEEDBACK_FILL) {
         /// Returns the wrapper owning this property.
@@ -253,13 +304,16 @@ public class RipplerContainer extends StackPane {
         /// Cancels any existing press feedback when it becomes disabled.
         @Override
         protected void invalidated() {
-            if (!get())
+            if (!get()) {
+                cancelPreparation();
                 interactionLayer.reset();
+            }
         }
     };
 
     /// Returns the press feedback switch, initially true. Disabling it clears all waveforms
     /// and the held press, preserving hover and focus feedback and normal event delivery.
+    /// It also cancels the current preparation attempt without consuming its registration.
     public BooleanProperty pressFeedbackEnabledProperty() {
         return pressFeedbackEnabled;
     }
@@ -276,8 +330,105 @@ public class RipplerContainer extends StackPane {
 
     /// Clears all held and fading waveforms and immediately restores the current hover/focus state.
     /// Suitable for clearing transient feedback when a virtualized cell is reused.
+    /// Cancels the current preparation attempt; its action remains available for a later mouse entry.
     public void resetFeedback() {
+        cancelPreparation();
         interactionLayer.reset();
+    }
+
+    /// Owns optional preparation listeners and cancels attempts when any ancestor becomes hidden.
+    @NotNullByDefault
+    private final class HoverPreparation implements Runnable, InvalidationListener {
+        /// The action retained until it is consumed or replaced.
+        private final Runnable action;
+
+        /// Observes visibility and attachment only for wrappers with a preparation action.
+        private final TreeShowingProperty showing = new TreeShowingProperty(RipplerContainer.this);
+
+        /// Whether the current pointer entry is still eligible to prepare.
+        private boolean armed;
+
+        /// The current pulse/event-queue attempt, or null while waiting for the state transition.
+        private @Nullable PreparationTask pending;
+
+        /// Registers the visibility listener without allocating any additional animation timer.
+        private HoverPreparation(Runnable action) {
+            this.action = action;
+            showing.addListener(this);
+            showing.get();
+        }
+
+        /// Returns whether the current hover can still prepare the component.
+        private boolean isEligible() {
+            return armed && pointerInside && isFeedbackAvailable() && showing.get();
+        }
+
+        /// Schedules one attempt after state completion, including when there was no transition.
+        @Override
+        public void run() {
+            if (pending == null && isEligible() && !interactionLayer.isStateTransitioning()) {
+                pending = new PreparationTask(Objects.requireNonNull(getScene()));
+                pending.scene.addPostLayoutPulseListener(pending);
+                Platform.requestNextPulse();
+            }
+        }
+
+        /// Cancels the current attempt when this node or its ancestors stop showing.
+        @Override
+        public void invalidated(Observable observable) {
+            if (!showing.get())
+                cancel();
+        }
+
+        /// Invalidates queued work and removes any outstanding pulse listener.
+        private void cancel() {
+            armed = false;
+            if (pending != null) {
+                pending.scene.removePostLayoutPulseListener(pending);
+                pending = null;
+            }
+        }
+
+        /// Releases all listeners when the action is consumed, replaced, or cancelled explicitly.
+        private void dispose() {
+            cancel();
+            interactionLayer.setOnStateSettled(null);
+            showing.removeListener(this);
+            showing.dispose();
+        }
+
+        /// Carries one attempt across the pulse boundary; cancelled attempts cannot be reused.
+        @NotNullByDefault
+        private final class PreparationTask implements Runnable {
+            /// The scene owning this attempt's post-layout listener.
+            private final Scene scene;
+
+            /// Whether the post-layout callback has already queued the action for a later FX turn.
+            private boolean queued;
+
+            /// Creates an attempt for the current scene.
+            private PreparationTask(Scene scene) {
+                this.scene = scene;
+            }
+
+            /// Queues after layout, then rechecks eligibility and consumes the action before invoking it.
+            @Override
+            public void run() {
+                if (preparation != HoverPreparation.this || pending != this)
+                    return;
+                if (!queued) {
+                    scene.removePostLayoutPulseListener(this);
+                    queued = true;
+                    Platform.runLater(this);
+                    return;
+                }
+                pending = null;
+                if (getScene() == scene && isEligible() && !interactionLayer.isStateTransitioning()) {
+                    setPrepareAction(null);
+                    action.run();
+                }
+            }
+        }
     }
 
     /// Returns this wrapper's stylesheet metadata, including inherited region properties.

@@ -28,6 +28,7 @@ import java.util.List;
 import java.lang.reflect.Field;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.jackhuang.hmcl.ui.construct.FeedbackTestSupport.runFx;
 import static org.jackhuang.hmcl.ui.construct.FeedbackTestSupport.fx;
@@ -58,6 +59,40 @@ final class InteractionLayerTest {
     /// Advances a deterministic layer by the specified number of milliseconds.
     private static void advance(InteractionLayer layer, AtomicLong clock, long millis) {
         layer.advance(clock.addAndGet(millis * 1_000_000));
+    }
+
+    /// State completion notifies after visual publication without waiting for held waves or notifying on reset.
+    @Test
+    void stateCompletionIsIndependentOfWaveformsAndReset() {
+        runFx(() -> {
+            AtomicLong clock = new AtomicLong();
+            AtomicInteger completions = new AtomicInteger();
+            InteractionLayer layer = new InteractionLayer(false);
+            layer.setAnimationEnabled(true);
+            layer.setOnStateSettled(() -> {
+                assertFalse(layer.isStateTransitioning());
+                completions.incrementAndGet();
+            });
+            layer.setHovered(true, clock.get());
+            layer.press(20, 20, clock.get());
+            advance(layer, clock, 99);
+            assertEquals(0, completions.get());
+            advance(layer, clock, 1);
+            assertEquals(1, completions.get());
+            assertEquals(0.08, layer.stateOpacity());
+            assertEquals(1, layer.rippleCount());
+            assertTrue(layer.isAnimating());
+            layer.reset();
+            assertEquals(1, completions.get());
+            layer.setFocusActive(true, clock.get());
+            advance(layer, clock, 20);
+            layer.setAnimationEnabled(false);
+            assertEquals(2, completions.get());
+            assertEquals(0.10, layer.stateOpacity());
+            layer.setOnStateSettled(null);
+            layer.setFocusActive(false, clock.get());
+            assertEquals(2, completions.get());
+        });
     }
 
     /// Disabled animation changes states synchronously without waveforms or pulse work.

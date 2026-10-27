@@ -118,6 +118,26 @@ public final class InteractionLayer extends Region {
     /// Whether the state opacity has not yet reached its target.
     private boolean transitioning;
 
+    /// The optional owner notification for a completed or unnecessary state transition.
+    private @Nullable Runnable onStateSettled;
+
+    /// Sets an owner notification delivered after publishing a settled state, independently of waves.
+    /// Reset does not notify; disabling animation does. Assigning a listener does not invoke it.
+    void setOnStateSettled(@Nullable Runnable listener) {
+        onStateSettled = listener;
+    }
+
+    /// Returns whether the persistent state is still transitioning, independently of waves.
+    boolean isStateTransitioning() {
+        return transitioning;
+    }
+
+    /// Notifies the owner after state visuals have reached their current target.
+    private void notifyStateSettled() {
+        if (onStateSettled != null)
+            onStateSettled.run();
+    }
+
     /// Creates an empty layer with black feedback, radius 3, and the animation default from
     /// [AnimationUtils#isAnimationEnabled()]. Settings must have been loaded before construction.
     public InteractionLayer() {
@@ -135,6 +155,7 @@ public final class InteractionLayer extends Region {
                 clearRipples();
                 activeRipple = null;
                 settle();
+                notifyStateSettled();
             }
         });
     }
@@ -308,6 +329,7 @@ public final class InteractionLayer extends Region {
         updateAnimations(now);
         if (!isAnimationEnabled()) {
             settle();
+            notifyStateSettled();
             return;
         }
         double target = desiredOpacity();
@@ -320,6 +342,8 @@ public final class InteractionLayer extends Region {
         if (transitioning)
             setRunning(true);
         updateVisuals();
+        if (!transitioning)
+            notifyStateSettled();
     }
 
     /// Applies the exact static state and releases the pulse source.
@@ -334,8 +358,11 @@ public final class InteractionLayer extends Region {
     /// The timestamp must use the same time origin as input operations.
     /// Package access permits deterministic tests without exposing a public timing API.
     void advance(long now) {
+        boolean wasTransitioning = transitioning;
         updateAnimations(now);
         updateVisuals();
+        if (wasTransitioning && !transitioning)
+            notifyStateSettled();
     }
 
     /// Advances logical animation state without publishing intermediate visual changes.

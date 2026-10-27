@@ -13,6 +13,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jetbrains.annotations.Nullable;
 
 public class AdvancedListItem extends Control {
     public static final double LEFT_GRAPHIC_SIZE = 32;
@@ -76,6 +77,28 @@ public class AdvancedListItem extends Control {
         });
         setAlignment(button, Pos.CENTER);
         setRightGraphic(button);
+    }
+
+    /// The optional preparation action, retained independently of the default skin's lifetime.
+    private @Nullable Runnable prepareAction;
+
+    /// Returns the pending hover preparation action, or null if absent or already consumed.
+    public @Nullable Runnable getPrepareAction() {
+        return prepareAction;
+    }
+
+    /// Registers one-shot preparation with the default skin's [RipplerContainer].
+    /// See [RipplerContainer#setPrepareAction(Runnable)] for timing and cancellation semantics.
+    /// The action is retained before skin creation and across skin replacement, and cleared before
+    /// execution. Null cancels it. Custom skins must explicitly support this action to execute it.
+    /// This method must be called on the FX application thread.
+    public void setPrepareAction(@Nullable Runnable action) {
+        if (prepareAction == action)
+            return;
+        prepareAction = action;
+        @Nullable Skin<?> skin = getSkin();
+        if (skin instanceof AdvancedListItemSkin itemSkin)
+            itemSkin.setPrepareAction(action);
     }
 
     private final StringProperty title = new SimpleStringProperty(this, "title");

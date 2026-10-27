@@ -156,6 +156,11 @@ tasks.compileJava {
     options.compilerArgs.addAll(addOpens.map { "--add-exports=$it=ALL-UNNAMED" })
 }
 
+tasks.withType<Test> {
+    // Match launcher access so JavaFX tree visibility observers do not use their fallback.
+    jvmArgs(addOpens.map { "--add-opens=$it=ALL-UNNAMED" })
+}
+
 val createPropertiesFile = tasks.register<WriteProperties>("createPropertiesFile") {
     destinationFile.set(layout.buildDirectory.file("hmcl.properties"))
     encoding = "UTF-8"
