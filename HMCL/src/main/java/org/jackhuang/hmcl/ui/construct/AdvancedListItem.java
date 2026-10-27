@@ -75,21 +75,24 @@ public class AdvancedListItem extends Control {
     }
 
     /// The optional graphic displayed to the right of the text, initially null.
-    private final ObjectProperty<@Nullable Node> rightGraphic = new SimpleObjectProperty<>(this, "rightGraphic");
+    private @Nullable ObjectProperty<@Nullable Node> rightGraphic;
 
     /// Returns the right graphic property, whose value may be null.
     public ObjectProperty<@Nullable Node> rightGraphicProperty() {
+        if (rightGraphic == null)
+            rightGraphic = new SimpleObjectProperty<>(this, "rightGraphic");
         return rightGraphic;
     }
 
     /// Returns the right graphic, or null if absent.
     public @Nullable Node getRightGraphic() {
-        return rightGraphic.get();
+        return rightGraphic != null ? rightGraphic.get() : null;
     }
 
     /// Sets the right graphic; null removes it.
     public void setRightGraphic(@Nullable Node rightGraphic) {
-        this.rightGraphic.set(rightGraphic);
+        if (this.rightGraphic != null || rightGraphic != null)
+            rightGraphicProperty().set(rightGraphic);
     }
 
     /// Replaces the right graphic with a centered icon button that runs the action when activated.
