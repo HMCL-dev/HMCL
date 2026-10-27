@@ -329,7 +329,7 @@ public final class WorldListPage extends ListPageBase<World> {
 
             if (oldWorld == world && oldEmpty == empty) return;
 
-            this.graphic.releaseRippleImmediately();
+            this.graphic.resetFeedback();
             this.content.getTags().clear();
 
             if (empty || world == null) {

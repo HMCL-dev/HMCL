@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
 import javafx.beans.property.StringProperty;
@@ -11,7 +12,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -54,9 +54,13 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     /// The optional node displayed immediately after the title.
     private @Nullable Node titleTrailing;
 
+    /// Tracks visibility and layout participation only when a trailing node has been assigned.
+    private @Nullable InvalidationListener titleTrailingListener;
+
     /// The optional subtitle label.
     private @Nullable Label subtitleLabel;
 
+    /// Creates a row with mouse-transparent title text and independently interactive optional nodes.
     public LineComponent() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
@@ -69,13 +73,11 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
 
         this.titleLabel = new Label();
         titleLabel.getStyleClass().add("title-label");
-        titleLabel.setContentDisplay(ContentDisplay.RIGHT);
-        titleLabel.setGraphicTextGap(4);
         titleLabel.setMinWidth(Region.USE_PREF_SIZE);
         titleLabel.setMouseTransparent(true);
         titleLabel.setPickOnBounds(false);
 
-        this.titleLine = new HBox(titleLabel);
+        this.titleLine = new HBox(4, titleLabel);
         titleLine.setAlignment(Pos.CENTER_LEFT);
         titleLine.setPickOnBounds(false);
 
@@ -164,16 +166,41 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         }
     }
 
-    /// Sets the node displayed immediately after the title label.
+    /// Sets the node displayed immediately after the mouse-transparent title label.
+    /// Null removes the node; non-null nodes retain their own mouse input handling.
+    /// Nodes that are both invisible and unmanaged remain detached until either property becomes true.
     public final void setTitleTrailing(@Nullable Node node) {
         if (titleTrailing == node) {
             return;
         }
 
+        if (titleTrailing != null) {
+            titleTrailing.visibleProperty().removeListener(titleTrailingListener);
+            titleTrailing.managedProperty().removeListener(titleTrailingListener);
+            titleLine.getChildren().remove(titleTrailing);
+        }
         titleTrailing = node;
-        titleLabel.setGraphic(node);
-        titleLabel.setMouseTransparent(node == null);
-        titleContainer.setMouseTransparent(node == null);
+        if (node != null) {
+            if (titleTrailingListener == null)
+                titleTrailingListener = observable -> updateTitleTrailing();
+            node.visibleProperty().addListener(titleTrailingListener);
+            node.managedProperty().addListener(titleTrailingListener);
+        }
+        updateTitleTrailing();
+    }
+
+    /// Attaches the trailing node only when it needs rendering or layout space.
+    private void updateTitleTrailing() {
+        if (titleTrailing != null) {
+            boolean attached = titleTrailing.getParent() == titleLine;
+            if (titleTrailing.isVisible() || titleTrailing.isManaged()) {
+                if (!attached)
+                    titleLine.getChildren().add(titleTrailing);
+            } else if (attached) {
+                titleLine.getChildren().remove(titleTrailing);
+            }
+        }
+        titleContainer.setMouseTransparent(titleTrailing == null || !titleTrailing.isVisible());
     }
 
     public void setLargeTitle(boolean largeTitle) {

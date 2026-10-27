@@ -395,7 +395,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                 return;
             }
 
-            ripplerContainer.releaseRippleImmediately();
+            ripplerContainer.resetFeedback();
 
             if (oldItem != null) {
                 enabledBox.selectedProperty().unbindBidirectional(oldItem.enabledProperty());
