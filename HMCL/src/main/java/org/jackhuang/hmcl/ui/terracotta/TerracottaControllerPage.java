@@ -541,10 +541,13 @@ public class TerracottaControllerPage extends StackPane {
         getChildren().setAll(scrollPane);
     }
 
+    /// Creates an expandable group of third-party download links with a mouse-transparent decorative icon.
     private ComponentSublist getThirdPartyDownloadNodes() {
         ComponentSublist locals = new ComponentSublist();
         locals.setLargeTitle(true);
-        locals.setLeading(new ImageView(FXUtils.newBuiltinImage("/assets/img/terracotta.png")));
+        ImageView icon = new ImageView(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
+        icon.setMouseTransparent(true);
+        locals.setLeading(icon);
         locals.setTitle(i18n("terracotta.from_local.title"));
         locals.setSubtitle(i18n("terracotta.from_local.desc"));
 

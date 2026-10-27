@@ -247,7 +247,7 @@
 }
 
 .iconed-item {
-    -jfx-rippler-fill: -monet-secondary-container;
+    -jfx-feedback-fill: -monet-secondary-container;
 }
 
 .iconed-item .iconed-item-container {
@@ -258,7 +258,7 @@
 }
 
 .iconed-menu-item {
-    -jfx-rippler-fill: -monet-secondary-container;
+    -jfx-feedback-fill: -monet-secondary-container;
 }
 
 .iconed-menu-item .iconed-item-container {
