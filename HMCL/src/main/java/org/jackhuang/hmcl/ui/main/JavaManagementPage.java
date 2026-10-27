@@ -63,7 +63,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
     private final Runnable onInstallJava;
 
-    private static final BooleanProperty refreshing = new SimpleBooleanProperty(false);
+    private final BooleanProperty refreshing = new SimpleBooleanProperty(false);
 
     public JavaManagementPage() {
         this.listener = FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), this::loadJava);
@@ -207,12 +207,12 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                     i18n("button.refresh"),
                     SVG.REFRESH,
                     () -> {
-                        if (refreshing.get()) {
+                        if (skinnable.refreshing.get()) {
                             return;
                         }
 
-                        refreshing.set(true);
-                        JavaManager.refresh(() -> refreshing.set(false));
+                        skinnable.refreshing.set(true);
+                        JavaManager.refresh(() -> skinnable.refreshing.set(false));
                     }
                 );
 
@@ -224,11 +224,11 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 spinner.setMinSize(20, 20);
                 spinner.setMaxSize(20, 20);
 
-                refreshing.addListener((observable, oldValue, newValue) -> {
+                skinnable.refreshing.addListener((observable, oldValue, newValue) -> {
                     refreshButton.setGraphic(newValue ? spinner : refreshIcon);
                 });
 
-                refreshButton.disableProperty().bind(refreshing);
+                refreshButton.disableProperty().bind(skinnable.refreshing);
                 res.add(refreshButton);
             }
 
