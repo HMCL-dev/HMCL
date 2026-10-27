@@ -61,7 +61,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
                 feedbackTab,
                 aboutTab);
 
-        tabController.select(gameTab);
+        tabController.selectTab(gameTab);
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> gameTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository())));
 
         AdvancedListBox sideBar = new AdvancedListBox()
@@ -93,11 +93,11 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
 
     public void showGameSettings(HMCLGameRepository repository) {
         gameTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(repository));
-        tabController.select(gameTab, false);
+        tabController.selectTab(gameTab, false);
     }
 
     public void showFeedback() {
-        tabController.select(feedbackTab, false);
+        tabController.selectTab(feedbackTab, false);
     }
 
     @Override

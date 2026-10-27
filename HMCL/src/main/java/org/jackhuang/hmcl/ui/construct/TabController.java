@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 /// Manages tab selection, lazy content initialization, and page lifecycle callbacks.
-/// An optional transition pane displays content activated by [#select(TabItem)].
+/// An optional transition pane displays content activated by [#selectTab(TabItem)].
 /// The first tab is selected when an unselected list gains tabs, without initializing
 /// content. No control or skin is required. Changes must occur on the FX thread.
 @NotNullByDefault
@@ -38,7 +38,7 @@ public final class TabController implements PageAware {
 
     /// Creates a controller with an optional destination for selected content.
     ///
-    /// @param contentPane the destination updated by [#select(TabItem)], or null
+    /// @param contentPane the destination updated by [#selectTab(TabItem)], or null
     /// @param tabs the initial tabs in display order, or null for an empty controller
     public TabController(@Nullable TransitionPane contentPane, TabItem<?> ... tabs) {
         this.contentPane = contentPane;
@@ -62,7 +62,7 @@ public final class TabController implements PageAware {
     /// The selected tab, or null when no tab is selected.
     private final ObjectProperty<@Nullable TabItem<?>> selectedTab = new SimpleObjectProperty<>(this, "selectedTab");
 
-    /// Returns the read-only selected tab property; use [#select(TabItem)] to activate a tab.
+    /// Returns the read-only selected tab property; use [#selectTab(TabItem)] to activate a tab.
     public ReadOnlyObjectProperty<@Nullable TabItem<?>> selectedTabProperty() {
         return selectedTab;
     }
@@ -75,9 +75,9 @@ public final class TabController implements PageAware {
 
     /// Selects the tab and animates content replacement when content is already displayed.
     ///
-    /// @see #select(TabItem, boolean)
-    public void select(TabItem<?> tab) {
-        select(tab, true);
+    /// @see #selectTab(TabItem, boolean)
+    public void selectTab(TabItem<?> tab) {
+        selectTab(tab, true);
     }
 
     /// Initializes the tab's content, hides the previous page, replaces the configured
@@ -96,7 +96,7 @@ public final class TabController implements PageAware {
     /// @throws IllegalArgumentException if the tab does not belong to this controller
     /// @throws IllegalStateException if a content destination is configured but the
     /// tab has no content after initialization
-    public void select(TabItem<?> tab, boolean playAnimation) {
+    public void selectTab(TabItem<?> tab, boolean playAnimation) {
         Objects.requireNonNull(tab, "tab");
         if (!tabs.contains(tab))
             throw new IllegalArgumentException("Tab does not belong to this controller");
@@ -139,7 +139,7 @@ public final class TabController implements PageAware {
             // Clear the removed page first so a failing replacement cannot leave it selected.
             clearSelection();
             if (!tabs.isEmpty())
-                select(tabs.get(Math.max(0, Math.min(removedIndex - 1, tabs.size() - 1))), false);
+                selectTab(tabs.get(Math.max(0, Math.min(removedIndex - 1, tabs.size() - 1))), false);
         }
     }
 

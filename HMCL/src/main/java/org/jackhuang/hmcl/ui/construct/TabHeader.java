@@ -291,7 +291,7 @@ public class TabHeader extends Control {
                 tabText.getStyleClass().add("tab-label");
                 tabText.setMouseTransparent(true);
                 updateSelection();
-                setOnAction(event -> getSkinnable().getController().select(tab));
+                setOnAction(event -> getSkinnable().getController().selectTab(tab));
             }
 
             /// Reflects the controller's selected tab in the label's pseudo-class.

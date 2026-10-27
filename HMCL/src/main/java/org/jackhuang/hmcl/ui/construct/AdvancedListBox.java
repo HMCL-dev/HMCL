@@ -85,7 +85,7 @@ public class AdvancedListBox extends ScrollPane {
     public AdvancedListBox addNavigationDrawerTab(TabController controller, TabItem<?> tab, String title, @Nullable SVG leftGraphic) {
         AdvancedListItem item = createNavigationDrawerItem(title, leftGraphic);
         item.activeProperty().bind(controller.selectedTabProperty().isEqualTo(tab));
-        item.setOnAction(e -> controller.select(tab));
+        item.setOnAction(e -> controller.selectTab(tab));
         return add(item);
     }
 
@@ -96,7 +96,7 @@ public class AdvancedListBox extends ScrollPane {
                                                   SVG unselectedGraphic, SVG selectedGraphic) {
         AdvancedListItem item = createNavigationDrawerItem(title, null);
         item.activeProperty().bind(controller.selectedTabProperty().isEqualTo(tab));
-        item.setOnAction(e -> controller.select(tab));
+        item.setOnAction(e -> controller.selectTab(tab));
 
         var leftGraphic = new SVGContainer(item.isActive() ? selectedGraphic : unselectedGraphic, AdvancedListItem.LEFT_ICON_SIZE);
         leftGraphic.setMouseTransparent(true);

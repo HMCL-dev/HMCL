@@ -197,7 +197,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             AdvancedListBox tabBar = new AdvancedListBox();
             {
                 getSkinnable().tabController.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab);
-                getSkinnable().tabController.select(getSkinnable().worldInfoTab);
+                getSkinnable().tabController.selectTab(getSkinnable().worldInfoTab);
 
                 tabBar.addNavigationDrawerTab(getSkinnable().tabController, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
                         .addNavigationDrawerTab(getSkinnable().tabController, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);

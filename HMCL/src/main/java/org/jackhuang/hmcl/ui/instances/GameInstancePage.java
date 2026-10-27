@@ -96,7 +96,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                 worldListTab,
                 schematicsTab,
                 screenshotsTab);
-        tabController.select(gameSettingsTab);
+        tabController.selectTab(gameSettingsTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
@@ -167,7 +167,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     public void showInstanceSettings() {
-        tabController.select(gameSettingsTab, false);
+        tabController.selectTab(gameSettingsTab, false);
     }
 
     public void setInstance(GameInstanceID instanceId, HMCLGameRepository repository) {
@@ -391,7 +391,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         new MenuSeparator(),
                         // Due to the sidebar height limit, we temporarily place the entries for these tabs
                         // in the management menu; they will be moved back to the sidebar after a future UI refactor.
-                        new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("screenshots.manage"), () -> control.tabController.select(control.screenshotsTab), managementPopup),
+                        new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("screenshots.manage"), () -> control.tabController.selectTab(control.screenshotsTab), managementPopup),
                         new MenuSeparator(),
                         new IconedMenuItem(null, i18n("instance.manage.redownload_assets_index"), control::redownloadAssetIndex, managementPopup),
                         new IconedMenuItem(null, i18n("instance.manage.remove_assets"), control::clearAssets, managementPopup),

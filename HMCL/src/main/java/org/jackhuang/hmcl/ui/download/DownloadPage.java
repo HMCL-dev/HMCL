@@ -122,7 +122,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         GameDirectoryManager.registerVersionsListener(this::loadVersions);
 
-        tabController.select(newGameTab);
+        tabController.selectTab(newGameTab);
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
@@ -215,25 +215,25 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public void showGameDownloads() {
-        tabController.select(newGameTab, false);
+        tabController.selectTab(newGameTab, false);
     }
 
     public void showModpackDownloads() {
-        tabController.select(modpackTab, false);
+        tabController.selectTab(modpackTab, false);
     }
 
     public DownloadListPage showResourcePackDownloads() {
-        tabController.select(resourcePackTab, false);
+        tabController.selectTab(resourcePackTab, false);
         return resourcePackTab.getNode();
     }
 
     public DownloadListPage showModDownloads() {
-        tabController.select(modTab, false);
+        tabController.selectTab(modTab, false);
         return modTab.getNode();
     }
 
     public void showWorldDownloads() {
-        tabController.select(worldTab, false);
+        tabController.selectTab(worldTab, false);
     }
 
     private static final class DownloadNavigator implements Navigation {
