@@ -42,16 +42,6 @@ public interface Shell32 extends StdCallLibrary {
     /// @see <a href="https://learn.microsoft.com/windows/win32/api/shobjidl_core/nf-shobjidl_core-setcurrentprocessexplicitappusermodelid">SetCurrentProcessExplicitAppUserModelID function</a>
     int SetCurrentProcessExplicitAppUserModelID(WString appID);
 
-    /// Retrieves the application-defined AppUserModelID for the current process.
-    ///
-    /// The caller must free the returned string with [`Ole32#CoTaskMemFree(com.sun.jna.Pointer)`]
-    /// when it is no longer needed.
-    ///
-    /// @param ppszAppID receives a pointer to the process AppUserModelID string
-    /// @return `S_OK` if the operation succeeds; otherwise a failure `HRESULT`
-    /// @see <a href="https://learn.microsoft.com/windows/win32/api/shobjidl_core/nf-shobjidl_core-getcurrentprocessexplicitappusermodelid">GetCurrentProcessExplicitAppUserModelID function</a>
-    int GetCurrentProcessExplicitAppUserModelID(PointerByReference ppszAppID);
-
     /// Retrieves an [`IPropertyStore`] interface for the given window.
     ///
     /// @param hwnd the window whose property store is requested

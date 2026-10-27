@@ -327,6 +327,25 @@ public final class Decorator {
         return mainWindowPane;
     }
 
+    /// Attaches an unowned page to a hidden container in the main-window scene.
+    /// The container retains at most one candidate and captures the navigation
+    /// viewport's current size without following later resizes. CSS and layout
+    /// preparation occur during normal scene pulses; this method does not wait
+    /// for preparation to finish. A pending container is reused for a new candidate.
+    /// It survives the first content layout pass for each candidate and is cleaned
+    /// up on a later pass.
+    /// Until then, it may retain the page unless the page moves elsewhere.
+    /// The caller must retain the page for subsequent navigation.
+    ///
+    /// This method must be called on the JavaFX Application Thread.
+    ///
+    /// @param page the page to prepare
+    /// @return the supplied page
+    /// @throws IllegalArgumentException if the page already belongs to a parent or scene
+    public <N extends Node> N preparePage(N page) {
+        return mainWindowPane.preparePage(page);
+    }
+
     /// Returns the navigation stack rendered by the main window.
     ///
     /// @return this decorator's navigator

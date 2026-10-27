@@ -29,9 +29,9 @@ import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.account.AccountListPopupMenu;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -131,10 +131,11 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 @Nullable GameInstanceID currentId = currentGame != null ? currentGame.getId() : null;
                 return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
             }, instance -> instance.getRepository().setSelectedInstance(instance));
+            FXUtils.onSecondaryButtonClicked(gameListItem, () -> showGameListPopupMenu(gameListItem));
+
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareGameInstancePage);
             }
-            FXUtils.onSecondaryButtonClicked(gameListItem, () -> showGameListPopupMenu(gameListItem));
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
@@ -148,6 +149,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             downloadItem.setLeftIcon(SVG.DOWNLOAD);
             downloadItem.setTitle(i18n("download"));
             downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
+
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(downloadItem, Controllers::prepareDownloadPage);
             }
@@ -160,6 +162,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 Controllers.getSettingsPage().showGameSettings(GameDirectoryManager.getSelectedRepository());
                 Controllers.navigate(Controllers.getSettingsPage());
             });
+
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(launcherSettingsItem, Controllers::prepareSettingsPage);
             }
