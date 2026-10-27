@@ -96,16 +96,13 @@ public final class RipplerContainerTest {
                 false, false, false, false, false, false, null));
     }
 
-    /// Native hover prepares once after the state settles and a post-layout pulse, even with a held wave.
+    /// Native hover prepares once after the state settles, even with a held wave.
     @Test
     void hoverPreparationWaitsForStateButNotWaveforms() {
         Fixture fixture = openFixture();
         AtomicInteger calls = new AtomicInteger();
-        AtomicInteger pulses = new AtomicInteger();
-        Runnable pulse = pulses::incrementAndGet;
         try {
             runFx(() -> {
-                fixture.stage.getScene().addPostLayoutPulseListener(pulse);
                 InteractionLayer layer = layer(fixture.wrapper);
                 layer.setAnimationEnabled(true);
                 fixture.wrapper.setPrepareAction(() -> {
@@ -113,7 +110,6 @@ public final class RipplerContainerTest {
                     assertEquals(0.08, layer.stateOpacity());
                     assertFalse(layer.isStateTransitioning());
                     assertEquals(1, layer.rippleCount());
-                    assertTrue(pulses.get() > 0);
                     calls.incrementAndGet();
                 });
                 layer.press(20, 20);
@@ -127,28 +123,59 @@ public final class RipplerContainerTest {
             awaitPulses();
             assertEquals(1, calls.get());
         } finally {
-            runFx(() -> fixture.stage.getScene().removePostLayoutPulseListener(pulse));
             closeFixture(fixture);
         }
     }
 
-    /// Reset, availability changes, and ancestry changes cancel attempts without consuming registrations.
+    /// Leaving during the hover transition retains the action for a later completed hover.
     @Test
-    void cancelledPreparationCanRetryOnAnotherEntry() {
+    void leavingBeforeStateCompletionDefersPreparation() {
+        Fixture fixture = openFixture();
+        AtomicInteger calls = new AtomicInteger();
+        try {
+            runFx(() -> {
+                fixture.root.setMouseTransparent(true);
+                InteractionLayer layer = layer(fixture.wrapper);
+                layer.setAnimationEnabled(true);
+                hover(fixture.wrapper, false);
+                fixture.wrapper.setPrepareAction(calls::incrementAndGet);
+                hover(fixture.wrapper, true);
+                assertTrue(layer.isStateTransitioning());
+                hover(fixture.wrapper, false);
+                layer.advance(System.nanoTime() + 1_000_000_000L);
+            });
+            awaitPulses();
+            assertEquals(0, calls.get());
+            runFx(() -> {
+                assertNotNull(fixture.wrapper.getPrepareAction());
+                hover(fixture.wrapper, true);
+                layer(fixture.wrapper).advance(System.nanoTime() + 1_000_000_000L);
+                assertEquals(0, calls.get());
+            });
+            awaitFx(() -> calls.get() == 1);
+        } finally {
+            closeFixture(fixture);
+        }
+    }
+
+    /// Queued preparation survives pointer exit, feedback resets, and loss of visibility or attachment.
+    @Test
+    void queuedPreparationSurvivesFeedbackAndLifecycleChanges() {
         Fixture fixture = openFixture();
         // Native repicking after reattachment must not synthesize a new entry in this deterministic test.
         runFx(() -> fixture.root.setMouseTransparent(true));
         awaitPulses();
-        @Unmodifiable List<Consumer<Fixture>> cancellations = List.of(
+        @Unmodifiable List<Consumer<Fixture>> changes = List.of(
                 f -> hover(f.wrapper, false),
                 f -> f.wrapper.resetFeedback(),
-                f -> { f.wrapper.setDisable(true); f.wrapper.setDisable(false); },
-                f -> { f.wrapper.setVisible(false); f.wrapper.setVisible(true); },
-                f -> { f.root.setVisible(false); f.root.setVisible(true); },
-                f -> { f.root.getChildren().clear(); f.root.getChildren().add(f.wrapper); },
-                f -> { f.stage.hide(); f.stage.show(); f.stage.requestFocus(); });
+                f -> f.wrapper.setPressFeedbackEnabled(false),
+                f -> f.wrapper.setDisable(true),
+                f -> f.wrapper.setVisible(false),
+                f -> f.root.setVisible(false),
+                f -> f.root.getChildren().clear(),
+                f -> f.stage.hide());
         try {
-            for (Consumer<Fixture> cancel : cancellations) {
+            for (Consumer<Fixture> change : changes) {
                 AtomicInteger calls = new AtomicInteger();
                 Runnable action = calls::incrementAndGet;
                 runFx(() -> {
@@ -156,47 +183,50 @@ public final class RipplerContainerTest {
                     fixture.wrapper.setPrepareAction(action);
                     hover(fixture.wrapper, true);
                     assertEquals(0, calls.get());
-                    cancel.accept(fixture);
+                    change.accept(fixture);
                     assertSame(action, fixture.wrapper.getPrepareAction());
                 });
-                awaitPulses();
-                assertEquals(0, calls.get(), "Cancellation index " + cancellations.indexOf(cancel));
-                runFx(() -> {
-                    hover(fixture.wrapper, false);
-                    hover(fixture.wrapper, true);
-                });
                 awaitFx(() -> calls.get() == 1);
-                runFx(() -> assertNull(fixture.wrapper.getPrepareAction()));
+                runFx(() -> {
+                    assertNull(fixture.wrapper.getPrepareAction());
+                    hover(fixture.wrapper, false);
+                    fixture.wrapper.setPressFeedbackEnabled(true);
+                    fixture.wrapper.setDisable(false);
+                    fixture.wrapper.setVisible(true);
+                    fixture.root.setVisible(true);
+                    fixture.root.getChildren().setAll(fixture.wrapper);
+                    fixture.stage.show();
+                    fixture.stage.requestFocus();
+                });
             }
         } finally {
             closeFixture(fixture);
         }
     }
 
-    /// Replacing an action after its pulse callback invalidates the already queued FX task.
+    /// Replacing or clearing a registration invalidates its already queued FX task.
     @Test
     void queuedPreparationCannotRunAnObsoleteAction() {
         Fixture fixture = openFixture();
         AtomicInteger obsolete = new AtomicInteger();
         AtomicInteger replacement = new AtomicInteger();
-        Runnable replace = new Runnable() {
-            /// Replaces the registration after its old post-layout listener has queued work.
-            @Override
-            public void run() {
-                fixture.stage.getScene().removePostLayoutPulseListener(this);
-                fixture.wrapper.setPrepareAction(replacement::incrementAndGet);
-            }
-        };
         try {
             runFx(() -> {
                 fixture.wrapper.setPrepareAction(obsolete::incrementAndGet);
                 hover(fixture.wrapper, true);
-                fixture.stage.getScene().addPostLayoutPulseListener(replace);
+                fixture.wrapper.setPrepareAction(replacement::incrementAndGet);
+                assertEquals(0, obsolete.get());
+                assertEquals(0, replacement.get());
             });
             awaitFx(() -> replacement.get() == 1);
             assertEquals(0, obsolete.get());
+            runFx(() -> {
+                fixture.wrapper.setPrepareAction(obsolete::incrementAndGet);
+                fixture.wrapper.setPrepareAction(null);
+            });
+            awaitPulses();
+            assertEquals(0, obsolete.get());
         } finally {
-            runFx(() -> fixture.stage.getScene().removePostLayoutPulseListener(replace));
             closeFixture(fixture);
         }
     }
