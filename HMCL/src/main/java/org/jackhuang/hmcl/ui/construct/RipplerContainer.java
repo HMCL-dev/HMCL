@@ -34,6 +34,8 @@ import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 /// Construction and all subsequent changes must occur on the JavaFX application thread.
 /// Only background presses trigger feedback in [FeedbackPosition#BACK] mode; content events
 /// continue to bubble normally, but do not initiate outer press feedback.
+/// Hover feedback remains available in an unfocused window. Losing window focus cancels
+/// transient press feedback and suppresses keyboard focus feedback.
 @NotNullByDefault
 public class RipplerContainer extends StackPane {
     /// The CSS class assigned to this pane.
@@ -48,16 +50,16 @@ public class RipplerContainer extends StackPane {
     private final LauncherSettings launcherSettings = settings();
     /// Retains the delegate of the weak global settings listener.
     private final InvalidationListener animationListener = observable -> updateAnimationSetting();
-    /// Updates visual availability after window state changes.
-    private final InvalidationListener availabilityListener = observable -> updateAvailability();
+    /// Updates feedback when control availability or window visibility changes.
+    private final InvalidationListener availabilityListener = observable -> updateVisualState();
+    /// Cancels transient presses on window focus loss without disabling subsequent hover feedback.
+    private final InvalidationListener windowFocusListener = observable -> updateVisualState(!isWindowFocused());
     /// Reattaches window listeners when the scene moves between windows.
     private final InvalidationListener windowListener = observable -> observeWindow();
     /// The scene whose window property is currently observed.
     private @Nullable Scene observedScene;
     /// The window whose showing and focus properties are currently observed.
     private @Nullable Window observedWindow;
-    /// Whether visual interaction is currently permitted.
-    private boolean feedbackAvailable;
     /// Tracks pointer presence for direct entered/exited events as well as normal picking.
     private boolean pointerInside;
     /// Selects whether feedback is above or below the wrapped content.
@@ -128,7 +130,7 @@ public class RipplerContainer extends StackPane {
         updateAnimationSetting();
 
         interactionLayer.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
-            if (event.getButton() == MouseButton.PRIMARY && feedbackAvailable && isPressFeedbackEnabled())
+            if (event.getButton() == MouseButton.PRIMARY && isFeedbackAvailable() && isPressFeedbackEnabled())
                 interactionLayer.press(event.getX(), event.getY());
         });
         interactionLayer.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
@@ -158,7 +160,6 @@ public class RipplerContainer extends StackPane {
 
     /// Removes listeners from the previous scene before observing the current one.
     private void observeScene() {
-        interactionLayer.reset();
         if (observedScene != null)
             observedScene.windowProperty().removeListener(windowListener);
         observedScene = getScene();
@@ -169,33 +170,39 @@ public class RipplerContainer extends StackPane {
 
     /// Transfers showing and focus listeners to the current scene's window.
     private void observeWindow() {
-        interactionLayer.reset();
         if (observedWindow != null) {
             observedWindow.showingProperty().removeListener(availabilityListener);
-            observedWindow.focusedProperty().removeListener(availabilityListener);
+            observedWindow.focusedProperty().removeListener(windowFocusListener);
         }
         observedWindow = observedScene == null ? null : observedScene.getWindow();
         if (observedWindow != null) {
             observedWindow.showingProperty().addListener(availabilityListener);
-            observedWindow.focusedProperty().addListener(availabilityListener);
+            observedWindow.focusedProperty().addListener(windowFocusListener);
         }
-        updateAvailability();
+        updateVisualState(true);
     }
 
-    /// Cancels transient feedback whenever the wrapper cannot receive visual interaction.
-    private void updateAvailability() {
-        feedbackAvailable = !isDisabled() && isVisible() && observedWindow != null
-                && observedWindow.isShowing() && observedWindow.isFocused();
-        updateVisualState();
-        if (!feedbackAvailable)
-            interactionLayer.reset();
+    /// Returns whether a visible, enabled wrapper belongs to a showing window, regardless of focus.
+    private boolean isFeedbackAvailable() {
+        return !isDisabled() && isVisible() && observedWindow != null && observedWindow.isShowing();
+    }
+
+    /// Returns whether the observed window currently owns keyboard focus.
+    private boolean isWindowFocused() {
+        return observedWindow != null && observedWindow.isFocused();
     }
 
     /// Supplies hover and focus states independently of whether press feedback is enabled.
     private void updateVisualState() {
-        interactionLayer.setHovered(feedbackAvailable && pointerInside);
-        interactionLayer.setFocusActive(feedbackAvailable && isFocused());
-        if (!feedbackAvailable)
+        updateVisualState(false);
+    }
+
+    /// Updates persistent states and cancels presses when requested or feedback is unavailable.
+    private void updateVisualState(boolean cancelPress) {
+        boolean available = isFeedbackAvailable();
+        interactionLayer.setHovered(available && pointerInside);
+        interactionLayer.setFocusActive(available && isWindowFocused() && isFocused());
+        if (cancelPress || !available)
             interactionLayer.reset();
     }
 

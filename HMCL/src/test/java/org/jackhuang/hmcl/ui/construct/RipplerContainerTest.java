@@ -381,6 +381,63 @@ public final class RipplerContainerTest {
         }
     }
 
+    /// Unfocused windows retain hover feedback while focus loss cancels every waveform.
+    @Test
+    void unfocusedWindowsStillRespondToNativeHover() {
+        Fixture fixture = openFixture();
+        try {
+            move(fixture, 250, 100);
+            awaitFx(() -> layer(fixture.wrapper).stateOpacity() == 0.08);
+            runFx(() -> {
+                fixture.wrapper.setFocusTraversable(true);
+                fixture.wrapper.requestFocus();
+            });
+            awaitFx(() -> layer(fixture.wrapper).stateOpacity() == 0.10);
+            Stage other = fx(() -> {
+                SettingsManager.settings().animationDisabledProperty().set(false);
+                InteractionLayer layer = layer(fixture.wrapper);
+                layer.press(20, 20);
+                layer.release();
+                layer.press(30, 30);
+                Stage stage = new Stage();
+                stage.setScene(new Scene(new Pane(), 100, 100));
+                stage.setX(fixture.stage.getX() + 450);
+                stage.setY(fixture.stage.getY());
+                stage.setAlwaysOnTop(true);
+                stage.show();
+                stage.requestFocus();
+                return stage;
+            });
+            try {
+                awaitFx(() -> !fixture.stage.isFocused());
+                runFx(() -> {
+                    assertSettled(layer(fixture.wrapper));
+                    assertEquals(0.08, layer(fixture.wrapper).stateOpacity());
+                });
+                boolean @Unmodifiable [] animationModes = {false, true};
+                for (boolean disabled : animationModes) {
+                    runFx(() -> SettingsManager.settings().animationDisabledProperty().set(disabled));
+                    move(fixture, -20, -20);
+                    awaitFx(() -> layer(fixture.wrapper).stateOpacity() == 0);
+                    move(fixture, 250, 100);
+                    awaitFx(() -> layer(fixture.wrapper).stateOpacity() == 0.08);
+                    runFx(() -> {
+                        assertFalse(fixture.stage.isFocused());
+                        assertSettled(layer(fixture.wrapper));
+                    });
+                }
+            } finally {
+                runFx(other::close);
+            }
+            runFx(fixture.stage::requestFocus);
+            awaitFx(fixture.stage::isFocused);
+            awaitFx(() -> layer(fixture.wrapper).stateOpacity() == 0.10);
+            runFx(() -> assertSettled(layer(fixture.wrapper)));
+        } finally {
+            closeFixture(fixture);
+        }
+    }
+
     /// Popup menu items remain interactive while their owner window supplies popup focus.
     @Test
     void popupItemsReceiveNativeBackgroundPresses() {
