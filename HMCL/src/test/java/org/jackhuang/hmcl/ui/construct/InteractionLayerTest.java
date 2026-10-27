@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
@@ -247,9 +246,9 @@ final class InteractionLayerTest {
         });
     }
 
-    /// Overlapping waves share one clip and only two completed circles are retained for reuse.
+    /// Overlapping waves share one clip and leave no attached circles after reset or completion.
     @Test
-    void waveformPoolIsBoundedAndClipDoesNotAffectPicking() {
+    void completedWaveformsDetachWithoutAffectingPicking() {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
             InteractionLayer layer = new InteractionLayer(clock::get, false);
@@ -264,20 +263,24 @@ final class InteractionLayerTest {
             assertNotNull(group.getClip());
             assertNull(layer.getClip());
             assertTrue(layer.contains(0, 0));
-            ArrayList<Node> previous = new ArrayList<>(group.getChildren());
+            @Unmodifiable List<Node> previous = List.copyOf(group.getChildren());
             layer.reset();
             assertTrue(layer.getChildrenUnmodifiable().isEmpty());
             assertTrue(group.getChildren().isEmpty());
             assertNull(group.getClip());
+            assertTrue(previous.stream().allMatch(node -> node.getParent() == null));
             for (int i = 0; i < 3; i++) {
                 layer.press(20, 25);
                 layer.release();
             }
             assertSame(group, layer.getChildrenUnmodifiable().getFirst());
-            assertEquals(2, group.getChildren().stream().filter(previous::contains).count());
+            assertTrue(group.getChildren().stream().noneMatch(previous::contains));
+            @Unmodifiable List<Node> released = List.copyOf(group.getChildren());
             advance(layer, clock, 200);
             assertTrue(layer.getChildrenUnmodifiable().isEmpty());
+            assertTrue(group.getChildren().isEmpty());
             assertNull(group.getClip());
+            assertTrue(released.stream().allMatch(node -> node.getParent() == null));
             assertFalse(layer.isAnimating());
         });
     }

@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.function.LongSupplier;
 
@@ -51,16 +50,12 @@ public final class InteractionLayer extends Region {
     private static final long STATE_DURATION = (long) (Motion.SHORT4.toMillis() * 1_000_000);
     /// The duration of ripple expansion while held, in nanoseconds.
     private static final long EXPANSION_DURATION = (long) (Motion.LONG1.toMillis() * 1_000_000);
-    /// The maximum number of detached circles retained for later presses.
-    private static final int MAX_POOLED_CIRCLES = 2;
     /// Supplies monotonic timestamps for both input changes and animation pulses.
     private final LongSupplier clock;
     /// Whether this instance schedules real pulses; deterministic tests advance it explicitly.
     private final boolean automaticPulses;
     /// The current waveforms, including released waves that have not finished fading.
     private final ArrayList<Ripple> ripples = new ArrayList<>();
-    /// Detached waveform nodes available for reuse, bounded independently of click history.
-    private final ArrayDeque<Circle> circlePool = new ArrayDeque<>();
     /// The lazily created waveform group; it is attached only while waveforms exist.
     private @Nullable Group waveformGroup;
     /// The shared waveform clip, detached when no waveforms remain.
@@ -205,12 +200,9 @@ public final class InteractionLayer extends Region {
             return;
         pressActive = true;
         if (isAnimationEnabled()) {
-            @Nullable Circle circle = circlePool.pollFirst();
-            if (circle == null) {
-                circle = new Circle();
-                circle.setManaged(false);
-                circle.setMouseTransparent(true);
-            }
+            Circle circle = new Circle();
+            circle.setManaged(false);
+            circle.setMouseTransparent(true);
             activeRipple = new Ripple(x, y, clock.getAsLong(), circle);
             ripples.add(activeRipple);
             if (waveformGroup == null) {
@@ -315,7 +307,7 @@ public final class InteractionLayer extends Region {
             double progress = fraction(now - ripple.start, ripple.released ? STATE_DURATION : EXPANSION_DURATION);
             if (ripple.released && progress == 1) {
                 ripples.remove(i);
-                recycle(ripple.circle);
+                removeWaveform(ripple.circle);
                 continue;
             }
             double eased = progress == 0 ? 0 : progress == 1 ? 1 : Motion.STANDARD.interpolate(0.0, 1.0, progress);
@@ -463,14 +455,14 @@ public final class InteractionLayer extends Region {
         }
     }
 
-    /// Detaches all waves and retains at most a small fixed number of reusable circles.
+    /// Detaches all waves and releases their animation state.
     private void clearRipples() {
         for (int i = ripples.size() - 1; i >= 0; i--)
-            recycle(ripples.remove(i).circle);
+            removeWaveform(ripples.remove(i).circle);
     }
 
     /// Removes one waveform node and detaches the shared clip when its group becomes empty.
-    private void recycle(Circle circle) {
+    private void removeWaveform(Circle circle) {
         if (waveformGroup != null) {
             waveformGroup.getChildren().remove(circle);
             if (waveformGroup.getChildren().isEmpty()) {
@@ -479,11 +471,9 @@ public final class InteractionLayer extends Region {
             }
         }
         circle.setFill(null);
-        if (circlePool.size() < MAX_POOLED_CIRCLES)
-            circlePool.addLast(circle);
     }
 
-    /// Stores animation progress alongside its reusable waveform node.
+    /// Stores animation progress alongside its waveform node until completion or cancellation.
     @NotNullByDefault
     private static final class Ripple {
         /// The horizontal origin in local coordinates.
