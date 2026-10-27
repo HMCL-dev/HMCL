@@ -147,7 +147,7 @@ public class TabHeader extends Control implements PageAware {
     /// Changes to the tab list update the selection. Selecting through this model
     /// does not initialize content or invoke page lifecycle callbacks.
     @NotNullByDefault
-    public static class TabHeaderSelectionModel extends SingleSelectionModel<Tab<?>> {
+    private static class TabHeaderSelectionModel extends SingleSelectionModel<@Nullable Tab<?>> {
         /// The header whose tab list supplies this model's items.
         private final TabHeader tabHeader;
 
@@ -156,9 +156,6 @@ public class TabHeader extends Control implements PageAware {
         /// @param t the header to observe
         /// @throws NullPointerException if the header is null
         public TabHeaderSelectionModel(final TabHeader t) {
-            if (t == null) {
-                throw new NullPointerException("TabHeader cannot be null");
-            }
             this.tabHeader = t;
 
             // watching for changes to the items list content
@@ -171,7 +168,7 @@ public class TabHeader extends Control implements PageAware {
                                 final int tabIndex = c.getFrom();
 
                                 // Select a nearby tab after removing the selected tab.
-                                findNearestAvailableTab(tabIndex, true);
+                                selectNearestAvailableTab(tabIndex);
                             }
                         }
                     }
@@ -183,9 +180,9 @@ public class TabHeader extends Control implements PageAware {
                         }
                     }
                 }
-                if (getSelectedIndex() == -1 && getSelectedItem() == null && tabHeader.getTabs().size() > 0) {
+                if (getSelectedIndex() == -1 && getSelectedItem() == null && !tabHeader.getTabs().isEmpty()) {
                     // Select the first available tab when the list gains its first items.
-                    findNearestAvailableTab(0, true);
+                    selectNearestAvailableTab(0);
                 } else if (tabHeader.getTabs().isEmpty()) {
                     clearSelection();
                 }
@@ -255,12 +252,10 @@ public class TabHeader extends Control implements PageAware {
             return items.size();
         }
 
-        /// Finds a tab near a removed position, searching left before right at each distance.
+        /// Select the tab near a removed position, searching left before right at each distance.
         ///
         /// @param tabIndex the position from which a tab was removed
-        /// @param doSelect whether to select the tab found
-        /// @return the nearest non-null tab, or null if none is available
-        private @Nullable Tab<?> findNearestAvailableTab(int tabIndex, boolean doSelect) {
+        private void selectNearestAvailableTab(int tabIndex) {
             // Search outwards from the removed position, preferring the left side.
             final int tabCount = getItemCount();
             int i = 1;
@@ -296,11 +291,9 @@ public class TabHeader extends Control implements PageAware {
                 i++;
             }
 
-            if (doSelect && bestTab != null) {
+            if (bestTab != null) {
                 select(bestTab);
             }
-
-            return bestTab;
         }
     }
 
