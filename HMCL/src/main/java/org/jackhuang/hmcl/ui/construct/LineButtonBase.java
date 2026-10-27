@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.collections.ListChangeListener;
@@ -30,6 +15,7 @@ public abstract class LineButtonBase extends LineComponent {
 
     protected final RipplerContainer ripplerContainer;
 
+    /// Creates a row whose feedback background routes primary clicks to [#fire()].
     public LineButtonBase() {
         this.getStyleClass().addAll(LineButtonBase.DEFAULT_STYLE_CLASS);
 
@@ -37,7 +23,10 @@ public abstract class LineButtonBase extends LineComponent {
         container.getChildren().addListener((ListChangeListener<Node>) change -> updateCursor());
         disabledProperty().addListener(observable -> updateCursor());
         FXUtils.setOverflowHidden(this);
-        FXUtils.onClicked(this, this::fire);
+        ripplerContainer.setOnAction(event -> {
+            event.consume();
+            fire();
+        });
 
         this.getChildren().setAll(ripplerContainer);
         updateCursor();
