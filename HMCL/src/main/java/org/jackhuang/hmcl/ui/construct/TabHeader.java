@@ -309,11 +309,11 @@ public class TabHeader extends Control implements PageAware {
         /// The indicator, excluded from preferred-size calculations and mouse picking.
         private final StackPane selectedTabLine = new StackPane();
         /// The tab views in the same order as the control's tabs.
-        private final @UnmodifiableView ObservableList<TabHeaderContainer> headers;
+        private final @UnmodifiableView ObservableList<TabHeaderView> headers;
         /// Releases removed views and updates the layout children after list changes.
-        private final ListChangeListener<TabHeaderContainer> headersListener = change -> {
+        private final ListChangeListener<TabHeaderView> headersListener = change -> {
             while (change.next())
-                change.getRemoved().forEach(TabHeaderContainer::dispose);
+                change.getRemoved().forEach(TabHeaderView::dispose);
             updateChildren();
         };
         /// The animated distance from the leading inset along the row or column.
@@ -342,7 +342,7 @@ public class TabHeader extends Control implements PageAware {
             lineOffset.addListener(observable -> control.requestLayout());
             lineLength.addListener(observable -> control.requestLayout());
 
-            headers = MappedObservableList.create(getSkinnable().getTabs(), TabHeaderContainer::new);
+            headers = MappedObservableList.create(getSkinnable().getTabs(), TabHeaderView::new);
             headers.addListener(headersListener);
             updateChildren();
 
@@ -365,7 +365,7 @@ public class TabHeader extends Control implements PageAware {
         public void dispose() {
             stopAnimation();
             headers.removeListener(headersListener);
-            headers.forEach(TabHeaderContainer::dispose);
+            headers.forEach(TabHeaderView::dispose);
             getChildren().clear();
             super.dispose();
         }
@@ -381,7 +381,7 @@ public class TabHeader extends Control implements PageAware {
         @Override
         protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
             double width = 0;
-            for (TabHeaderContainer child : headers) {
+            for (TabHeaderView child : headers) {
                 if (!child.isManaged()) continue;
                 width = Math.max(width, snapSizeX(child.minWidth(-1)));
             }
@@ -392,7 +392,7 @@ public class TabHeader extends Control implements PageAware {
         @Override
         protected double computeMinHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
             double height = 0;
-            for (TabHeaderContainer child : headers) {
+            for (TabHeaderView child : headers) {
                 if (!child.isManaged()) continue;
                 height = Math.max(height, snapSizeY(child.minHeight(-1)));
             }
@@ -404,7 +404,7 @@ public class TabHeader extends Control implements PageAware {
         protected double computePrefWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
             boolean horizontal = getSkinnable().getSide().isHorizontal();
             double width = 0;
-            for (TabHeaderContainer child : headers) {
+            for (TabHeaderView child : headers) {
                 if (!child.isVisible()) continue;
                 double childWidth = snapSizeX(child.prefWidth(height));
                 width = horizontal ? width + childWidth : Math.max(width, childWidth);
@@ -417,7 +417,7 @@ public class TabHeader extends Control implements PageAware {
         protected double computePrefHeight(double width, double topInset, double rightInset, double bottomInset, double leftInset) {
             boolean horizontal = getSkinnable().getSide().isHorizontal();
             double height = 0;
-            for (TabHeaderContainer child : headers) {
+            for (TabHeaderView child : headers) {
                 if (!child.isVisible()) continue;
                 double childHeight = snapSizeY(child.prefHeight(width));
                 height = horizontal ? Math.max(height, childHeight) : height + childHeight;
@@ -434,7 +434,7 @@ public class TabHeader extends Control implements PageAware {
             double selectedOffset = 0;
             double selectedLength = 0;
             @Nullable TabItem<?> selected = getSkinnable().getSelectionModel().getSelectedItem();
-            for (TabHeaderContainer child : headers) {
+            for (TabHeaderView child : headers) {
                 if (!child.isVisible()) continue;
                 double width = snapSizeX(child.prefWidth(-1));
                 double height = snapSizeY(child.prefHeight(-1));
@@ -507,7 +507,7 @@ public class TabHeader extends Control implements PageAware {
 
         /// Displays one tab's label, selection styling, and pointer feedback.
         @NotNullByDefault
-        private final class TabHeaderContainer extends StackPane {
+        private final class TabHeaderView extends StackPane {
             /// The tab represented by this view.
             private final TabItem<?> tab;
             /// The label bound to the tab's text.
@@ -518,7 +518,7 @@ public class TabHeader extends Control implements PageAware {
             private final InvalidationListener selectionListener = observable -> updateSelection();
 
             /// Binds the label and selection styling and installs pointer selection.
-            private TabHeaderContainer(TabItem<?> tab) {
+            private TabHeaderView(TabItem<?> tab) {
                 this.tab = tab;
                 tabText.textProperty().bind(tab.textProperty());
                 tabText.getStyleClass().add("tab-label");
