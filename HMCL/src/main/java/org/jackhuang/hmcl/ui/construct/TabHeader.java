@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.animation.*;
-import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -55,13 +54,6 @@ public class TabHeader extends Control {
     /// @see TabController#getTabs()
     public final ObservableList<TabItem<?>> getTabs() {
         return controller.getTabs();
-    }
-
-    /// Returns the controller's selection model; direct changes do not activate content.
-    ///
-    /// @see TabController#getSelectionModel()
-    public final SingleSelectionModel<@Nullable TabItem<?>> getSelectionModel() {
-        return controller.getSelectionModel();
     }
 
     /// The lazily allocated tab placement property.
@@ -138,7 +130,8 @@ public class TabHeader extends Control {
             headers.addListener(headersListener);
             updateChildren();
 
-            registerChangeListener(control.getSelectionModel().selectedItemProperty(), observable -> {
+            registerChangeListener(control.getController().selectedTabProperty(), observable -> {
+                headers.forEach(TabHeaderView::updateSelection);
                 control.notifyAccessibleAttributeChanged(AccessibleAttribute.FOCUS_ITEM);
                 animateSelection = true;
                 control.requestLayout();
@@ -220,7 +213,7 @@ public class TabHeader extends Control {
             double offset = 0;
             double selectedOffset = 0;
             double selectedLength = 0;
-            @Nullable TabItem<?> selected = getSkinnable().getSelectionModel().getSelectedItem();
+            @Nullable TabItem<?> selected = getSkinnable().getController().getSelectedTab();
             for (TabHeaderView child : headers) {
                 if (!child.isVisible()) continue;
                 double width = snapSizeX(child.prefWidth(-1));
@@ -299,8 +292,6 @@ public class TabHeader extends Control {
             private final TabItem<?> tab;
             /// The label bound to the tab's text.
             private final Label tabText;
-            /// Updates selection styling until this view is removed or the skin is disposed.
-            private final InvalidationListener selectionListener = observable -> updateSelection();
 
             /// Binds the label and selection styling and selects the tab when this view fires an action.
             private TabHeaderView(TabItem<?> tab) {
@@ -310,20 +301,19 @@ public class TabHeader extends Control {
                 tabText.textProperty().bind(tab.textProperty());
                 tabText.getStyleClass().add("tab-label");
                 tabText.setMouseTransparent(true);
-                tab.selectedProperty().addListener(selectionListener);
                 updateSelection();
                 setOnAction(event -> getSkinnable().getController().select(tab));
             }
 
-            /// Reflects the tab's selection flag in the label's pseudo-class.
+            /// Reflects the controller's selected tab in the label's pseudo-class.
             private void updateSelection() {
-                tabText.pseudoClassStateChanged(SELECTED_PSEUDOCLASS_STATE, tab.isSelected());
+                tabText.pseudoClassStateChanged(SELECTED_PSEUDOCLASS_STATE,
+                        getSkinnable().getController().getSelectedTab() == tab);
             }
 
-            /// Releases the tab's text binding and selection listener.
+            /// Releases the tab's text binding.
             private void dispose() {
                 tabText.textProperty().unbind();
-                tab.selectedProperty().removeListener(selectionListener);
             }
         }
     }

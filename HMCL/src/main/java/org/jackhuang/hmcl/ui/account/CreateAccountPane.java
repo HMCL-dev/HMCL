@@ -153,8 +153,9 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             tabHeader.getStyleClass().add("add-account-tab-header");
             tabHeader.setMinWidth(USE_PREF_SIZE);
             tabHeader.setMaxWidth(USE_PREF_SIZE);
-            tabHeader.getSelectionModel().select(selected);
-            onChange(tabHeader.getSelectionModel().selectedItemProperty(),
+            if (selected != null)
+                tabHeader.getController().select(selected);
+            onChange(tabHeader.getController().selectedTabProperty(),
                     newItem -> {
                         if (newItem == null)
                             return;

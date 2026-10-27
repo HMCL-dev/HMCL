@@ -9,24 +9,23 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
-/// Stores a tab's label, selection state, and optionally lazily created content.
+/// Stores a tab's label and optionally lazily created content.
 ///
 /// @param <T> the type of content node
 @NotNullByDefault
 public final class TabItem<T extends Node> {
     /// The nullable text displayed in the header.
     private final StringProperty text = new SimpleStringProperty(this, "text");
-    /// Whether a selection model has marked this tab as selected.
-    private final ReadOnlyBooleanWrapper selected = new ReadOnlyBooleanWrapper(this, "selected");
     /// The content node, or null when no content is assigned.
     private final ObjectProperty<@Nullable T> node = new SimpleObjectProperty<>(this, "node");
     /// The optional factory used when content has not been assigned.
     private @Nullable Supplier<? extends @Nullable T> nodeSupplier;
 
-    /// Creates an unselected tab with the given nullable identifier and no text or content.
+    /// Creates a tab with no text, content, or content factory.
     public TabItem() {
     }
 
+    /// Creates a tab whose content is supplied lazily by [#initializeIfNeeded()].
     public TabItem(Supplier<? extends @Nullable T> nodeSupplier) {
         this.nodeSupplier = nodeSupplier;
     }
@@ -54,21 +53,6 @@ public final class TabItem<T extends Node> {
     /// Sets the header text, which may be null.
     public void setText(@Nullable String text) {
         this.text.set(text);
-    }
-
-    /// Returns whether this tab is marked as selected.
-    public boolean isSelected() {
-        return selected.get();
-    }
-
-    /// Returns a read-only view of the tab's selection state.
-    public ReadOnlyBooleanProperty selectedProperty() {
-        return selected.getReadOnlyProperty();
-    }
-
-    /// Updates the tab's selection flag.
-    void setSelected(boolean selected) {
-        this.selected.set(selected);
     }
 
     /// Returns the content node, or null if none is assigned; does not invoke the factory.
