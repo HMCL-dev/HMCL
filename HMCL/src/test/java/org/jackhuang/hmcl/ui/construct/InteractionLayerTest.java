@@ -91,23 +91,23 @@ final class InteractionLayerTest {
     void stateTransitionsRemainContinuousAndStop() {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
-            InteractionLayer layer = new InteractionLayer(clock::get, false);
+            InteractionLayer layer = new InteractionLayer(false);
             layer.setAnimationEnabled(true);
-            layer.setHovered(true);
+            layer.setHovered(true, clock.get());
             advance(layer, clock, 80);
             double entered = layer.stateOpacity();
             assertTrue(entered > 0 && entered < 0.08);
-            layer.setHovered(false);
+            layer.setHovered(false, clock.get());
             assertEquals(entered, layer.stateOpacity());
             advance(layer, clock, 80);
             double exited = layer.stateOpacity();
             assertTrue(exited > 0 && exited < entered);
-            layer.setHovered(true);
+            layer.setHovered(true, clock.get());
             assertEquals(exited, layer.stateOpacity());
             advance(layer, clock, 200);
             assertEquals(0.08, layer.stateOpacity());
             assertFalse(layer.isAnimating());
-            layer.setHovered(false);
+            layer.setHovered(false, clock.get());
             advance(layer, clock, 200);
             assertEquals(0, layer.stateOpacity());
             assertFalse(layer.isAnimating());
@@ -119,30 +119,30 @@ final class InteractionLayerTest {
     void overlappingWavesFinishAndHeldWavesStopPulsing() {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
-            InteractionLayer layer = new InteractionLayer(clock::get, false);
+            InteractionLayer layer = new InteractionLayer(false);
             layer.setAnimationEnabled(true);
-            layer.press(10, 10);
-            layer.press(20, 20);
+            layer.press(10, 10, clock.get());
+            layer.press(20, 20, clock.get());
             assertEquals(1, layer.rippleCount());
             advance(layer, clock, 450);
             assertFalse(layer.isAnimating());
             assertEquals(0, layer.stateOpacity());
-            layer.release();
+            layer.release(clock.get());
             assertTrue(layer.isAnimating());
             advance(layer, clock, 50);
-            layer.press(30, 30);
+            layer.press(30, 30, clock.get());
             assertEquals(2, layer.rippleCount());
             advance(layer, clock, 150);
             assertEquals(1, layer.rippleCount());
-            layer.release();
+            layer.release(clock.get());
             advance(layer, clock, 200);
             assertEquals(0, layer.rippleCount());
             assertEquals(0, layer.stateOpacity());
             assertFalse(layer.isAnimating());
-            layer.press(1, 1);
-            layer.release();
-            layer.press(2, 2);
-            layer.setHovered(true);
+            layer.press(1, 1, clock.get());
+            layer.release(clock.get());
+            layer.press(2, 2, clock.get());
+            layer.setHovered(true, clock.get());
             layer.reset();
             layer.reset();
             assertEquals(0, layer.rippleCount());
@@ -156,10 +156,10 @@ final class InteractionLayerTest {
     void disablingAnimationSettlesAnActivePress() {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
-            InteractionLayer layer = new InteractionLayer(clock::get, false);
+            InteractionLayer layer = new InteractionLayer(false);
             layer.setAnimationEnabled(true);
-            layer.setHovered(true);
-            layer.press(10, 10);
+            layer.setHovered(true, clock.get());
+            layer.press(10, 10, clock.get());
             advance(layer, clock, 60);
             layer.setAnimationEnabled(false);
             assertEquals(0.10, layer.stateOpacity());
@@ -168,17 +168,17 @@ final class InteractionLayerTest {
             layer.setAnimationEnabled(true);
             assertFalse(layer.isAnimating());
             assertEquals(0.10, layer.stateOpacity());
-            layer.press(10, 10);
+            layer.press(10, 10, clock.get());
             assertEquals(0, layer.rippleCount());
-            layer.setHovered(false);
+            layer.setHovered(false, clock.get());
             assertEquals(0.10, layer.stateOpacity());
             assertFalse(layer.isAnimating());
-            layer.setHovered(true);
+            layer.setHovered(true, clock.get());
             layer.setAnimationEnabled(false);
-            layer.release();
+            layer.release(clock.get());
             assertEquals(0.08, layer.stateOpacity());
             layer.setAnimationEnabled(true);
-            layer.press(10, 10);
+            layer.press(10, 10, clock.get());
             assertEquals(1, layer.rippleCount());
             layer.reset();
         });
@@ -189,16 +189,16 @@ final class InteractionLayerTest {
     void renderingUsesOneClipAndPreservesPaintAlpha() {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
-            InteractionLayer layer = new InteractionLayer(clock::get, false);
+            InteractionLayer layer = new InteractionLayer(false);
             layer.resize(100, 50);
             layer.setCornerRadius(10);
             layer.setAnimationEnabled(false);
-            layer.setHovered(true);
+            layer.setHovered(true, clock.get());
             layer.setFill(Color.color(1, 0, 0, 0.5));
             WritableImage hover = snapshot(layer);
             assertEquals(0.04, hover.getPixelReader().getColor(50, 25).getOpacity(), 0.005);
             assertEquals(0, hover.getPixelReader().getColor(0, 0).getOpacity());
-            layer.press(50, 25);
+            layer.press(50, 25, clock.get());
             assertEquals(0.05, snapshot(layer).getPixelReader().getColor(50, 25).getOpacity(), 0.005);
             layer.setFill(Color.BLUE);
             assertEquals(1, snapshot(layer).getPixelReader().getColor(50, 25).getBlue());
@@ -209,7 +209,7 @@ final class InteractionLayerTest {
             layer.reset();
             layer.setFill(Color.BLACK);
             layer.setAnimationEnabled(true);
-            layer.press(50, 25);
+            layer.press(50, 25, clock.get());
             advance(layer, clock, 450);
             layer.resize(200, 100);
             assertNull(layer.getClip());
@@ -227,19 +227,19 @@ final class InteractionLayerTest {
     void animatedPressDoesNotDuplicateItsStateLayer() {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
-            InteractionLayer layer = new InteractionLayer(clock::get, false);
+            InteractionLayer layer = new InteractionLayer(false);
             layer.setAnimationEnabled(true);
             layer.resize(100, 50);
-            layer.press(50, 25);
+            layer.press(50, 25, clock.get());
             advance(layer, clock, 450);
             assertEquals(0, layer.stateOpacity());
             assertEquals(0.10, snapshot(layer).getPixelReader().getColor(50, 25).getOpacity(), 0.005);
 
-            layer.setHovered(true);
+            layer.setHovered(true, clock.get());
             advance(layer, clock, 200);
             assertEquals(0.08, layer.stateOpacity());
             assertEquals(0.172, snapshot(layer).getPixelReader().getColor(50, 25).getOpacity(), 0.005);
-            layer.setFocusActive(true);
+            layer.setFocusActive(true, clock.get());
             advance(layer, clock, 200);
             assertEquals(0.10, layer.stateOpacity());
             assertEquals(0.19, snapshot(layer).getPixelReader().getColor(50, 25).getOpacity(), 0.005);
@@ -247,9 +247,9 @@ final class InteractionLayerTest {
             layer.setAnimationEnabled(false);
             assertEquals(0, layer.rippleCount());
             assertEquals(0.10, snapshot(layer).getPixelReader().getColor(50, 25).getOpacity(), 0.005);
-            layer.release();
+            layer.release(clock.get());
             assertEquals(0.10, layer.stateOpacity());
-            layer.setFocusActive(false);
+            layer.setFocusActive(false, clock.get());
             assertEquals(0.08, layer.stateOpacity());
             layer.reset();
         });
@@ -281,13 +281,13 @@ final class InteractionLayerTest {
     void completedWaveformsDetachWithoutAffectingPicking() {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
-            InteractionLayer layer = new InteractionLayer(clock::get, false);
+            InteractionLayer layer = new InteractionLayer(false);
             layer.setAnimationEnabled(true);
             layer.resize(100, 50);
             layer.setCornerRadius(12);
             for (int i = 0; i < 8; i++) {
-                layer.press(i, 25);
-                layer.release();
+                layer.press(i, 25, clock.get());
+                layer.release(clock.get());
             }
             Group group = (Group) layer.getChildrenUnmodifiable().getFirst();
             assertEquals(8, group.getChildren().size());
@@ -301,8 +301,8 @@ final class InteractionLayerTest {
             assertNull(group.getClip());
             assertTrue(previous.stream().allMatch(node -> node.getParent() == null));
             for (int i = 0; i < 3; i++) {
-                layer.press(20, 25);
-                layer.release();
+                layer.press(20, 25, clock.get());
+                layer.release(clock.get());
             }
             assertSame(group, layer.getChildrenUnmodifiable().getFirst());
             assertTrue(group.getChildren().stream().noneMatch(previous::contains));
@@ -330,17 +330,17 @@ final class InteractionLayerTest {
                             new Stop(0, translucent), new Stop(1, translucent)),
                     new ImagePattern(image));
             AtomicLong clock = new AtomicLong();
-            InteractionLayer layer = new InteractionLayer(clock::get, false);
+            InteractionLayer layer = new InteractionLayer(false);
             layer.resize(100, 50);
             layer.setCornerRadius(10);
             layer.setAnimationEnabled(false);
-            layer.setHovered(true);
+            layer.setHovered(true, clock.get());
             for (Paint paint : paints) {
                 layer.setFill(paint);
                 assertEquals(0.04, snapshot(layer).getPixelReader().getColor(50, 25).getOpacity(), 0.005);
                 assertEquals(0, snapshot(layer).getPixelReader().getColor(0, 0).getOpacity());
                 layer.setAnimationEnabled(true);
-                layer.press(50, 25);
+                layer.press(50, 25, clock.get());
                 advance(layer, clock, 450);
                 assertEquals(0.088, snapshot(layer).getPixelReader().getColor(50, 25).getOpacity(), 0.005);
                 assertEquals(0, snapshot(layer).getPixelReader().getColor(0, 0).getOpacity());
@@ -360,11 +360,11 @@ final class InteractionLayerTest {
     void resizingPreservesWaveformProgressAndClipsItsBounds() {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
-            InteractionLayer layer = new InteractionLayer(clock::get, false);
+            InteractionLayer layer = new InteractionLayer(false);
             layer.setAnimationEnabled(true);
             layer.resize(100, 50);
             layer.setCornerRadius(10);
-            layer.press(20, 25);
+            layer.press(20, 25, clock.get());
             advance(layer, clock, 100);
             Group group = (Group) layer.getChildrenUnmodifiable().getFirst();
             Circle circle = (Circle) group.getChildren().getFirst();

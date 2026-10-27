@@ -36,74 +36,33 @@ import java.util.Objects;
 public class RipplerContainer extends StackPane {
     /// The CSS class assigned to this pane.
     private static final String DEFAULT_STYLE_CLASS = "rippler-container";
+
     /// The fallback paint before a stylesheet supplies a theme color.
     private static final Color DEFAULT_FEEDBACK_FILL = Color.BLACK;
+
     /// The content supplied by the caller.
     private final Node container;
+
     /// The sole feedback node, excluded from preferred-size calculations.
     private final InteractionLayer interactionLayer = new InteractionLayer();
+
     /// Updates feedback when control availability or window visibility changes.
     private final InvalidationListener availabilityListener = observable -> updateVisualState();
+
     /// Cancels transient presses on window focus loss without disabling subsequent hover feedback.
     private final InvalidationListener windowFocusListener = observable -> updateVisualState(!isWindowFocused());
+
     /// Reattaches window listeners when the scene moves between windows.
     private final InvalidationListener windowListener = observable -> observeWindow();
+
     /// The scene whose window property is currently observed.
     private @Nullable Scene observedScene;
+
     /// The window whose showing and focus properties are currently observed.
     private @Nullable Window observedWindow;
+
     /// Tracks pointer presence for direct entered/exited events as well as normal picking.
     private boolean pointerInside;
-    /// Selects whether feedback is above or below the wrapped content.
-    private final ObjectProperty<FeedbackPosition> position = new SimpleObjectProperty<>(this, "position", FeedbackPosition.BACK) {
-        /// Rejects null assignments before changing the stacking policy.
-        @Override
-        public void set(FeedbackPosition value) {
-            super.set(Objects.requireNonNull(value));
-        }
-
-        /// Reorders existing children when the stacking policy changes.
-        @Override
-        protected void invalidated() {
-            Objects.requireNonNull(get(), "Position must not be null");
-            updateChildren();
-        }
-    };
-    /// Enables press feedback without disabling hover, focus, or event delivery.
-    private final BooleanProperty pressFeedbackEnabled = new SimpleBooleanProperty(this, "pressFeedbackEnabled", true) {
-        /// Cancels any existing press feedback when it becomes disabled.
-        @Override
-        protected void invalidated() {
-            if (!get())
-                interactionLayer.reset();
-        }
-    };
-    /// The CSS-configurable paint shared by all visual feedback states.
-    private final StyleableObjectProperty<@Nullable Paint> feedbackFill = new StyleableObjectProperty<>(DEFAULT_FEEDBACK_FILL) {
-        /// Returns the wrapper owning this property.
-        @Override
-        public Object getBean() {
-            return RipplerContainer.this;
-        }
-
-        /// Returns the JavaFX property name.
-        @Override
-        public String getName() {
-            return "feedbackFill";
-        }
-
-        /// Returns the stylesheet metadata for the feedback paint.
-        @Override
-        public CssMetaData<? extends Styleable, @Nullable Paint> getCssMetaData() {
-            return StyleableProperties.FEEDBACK_FILL;
-        }
-
-        /// Repaints existing states and waveforms with the new paint.
-        @Override
-        protected void invalidated() {
-            interactionLayer.setFill(get());
-        }
-    };
 
     /// Creates a wrapper with feedback behind its content.
     /// Sets the content's `pickOnBounds` to false so uncovered regions can receive input.
@@ -208,6 +167,22 @@ public class RipplerContainer extends StackPane {
         }
     }
 
+    /// Selects whether feedback is above or below the wrapped content.
+    private final ObjectProperty<FeedbackPosition> position = new SimpleObjectProperty<>(this, "position", FeedbackPosition.BACK) {
+        /// Rejects null assignments before changing the stacking policy.
+        @Override
+        public void set(FeedbackPosition value) {
+            super.set(Objects.requireNonNull(value));
+        }
+
+        /// Reorders existing children when the stacking policy changes.
+        @Override
+        protected void invalidated() {
+            Objects.requireNonNull(get(), "Position must not be null");
+            updateChildren();
+        }
+    };
+
     /// Returns the stacking policy property. Values, including bound values, must not be null.
     public ObjectProperty<FeedbackPosition> positionProperty() {
         return position;
@@ -230,6 +205,33 @@ public class RipplerContainer extends StackPane {
         return container;
     }
 
+    /// The CSS-configurable paint shared by all visual feedback states.
+    private final StyleableObjectProperty<@Nullable Paint> feedbackFill = new StyleableObjectProperty<>(DEFAULT_FEEDBACK_FILL) {
+        /// Returns the wrapper owning this property.
+        @Override
+        public Object getBean() {
+            return RipplerContainer.this;
+        }
+
+        /// Returns the JavaFX property name.
+        @Override
+        public String getName() {
+            return "feedbackFill";
+        }
+
+        /// Returns the stylesheet metadata for the feedback paint.
+        @Override
+        public CssMetaData<? extends Styleable, @Nullable Paint> getCssMetaData() {
+            return StyleableProperties.FEEDBACK_FILL;
+        }
+
+        /// Repaints existing states and waveforms with the new paint.
+        @Override
+        protected void invalidated() {
+            interactionLayer.setFill(get());
+        }
+    };
+
     /// Returns the paint property shared by hover, focus, press, and existing waveforms.
     /// Null hides feedback without changing event delivery.
     public StyleableObjectProperty<@Nullable Paint> feedbackFillProperty() {
@@ -245,6 +247,16 @@ public class RipplerContainer extends StackPane {
     public void setFeedbackFill(@Nullable Paint value) {
         feedbackFill.set(value);
     }
+
+    /// Enables press feedback without disabling hover, focus, or event delivery.
+    private final BooleanProperty pressFeedbackEnabled = new SimpleBooleanProperty(this, "pressFeedbackEnabled", true) {
+        /// Cancels any existing press feedback when it becomes disabled.
+        @Override
+        protected void invalidated() {
+            if (!get())
+                interactionLayer.reset();
+        }
+    };
 
     /// Returns the press feedback switch, initially true. Disabling it clears all waveforms
     /// and the held press, preserving hover and focus feedback and normal event delivery.
@@ -295,6 +307,7 @@ public class RipplerContainer extends StackPane {
                 return styleable.feedbackFillProperty();
             }
         };
+
         /// The inherited region metadata followed by the feedback paint metadata.
         private static final @Unmodifiable List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
 
