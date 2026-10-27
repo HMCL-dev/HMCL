@@ -48,11 +48,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TransitionPane transitionPane = new TransitionPane();
     private final TabHeader header = new TabHeader(transitionPane);
     /// The tab displaying information about this world.
-    private final TabItem<WorldInfoPage> worldInfoTab = new TabItem<>();
+    private final TabItem<WorldInfoPage> worldInfoTab;
     /// The tab for managing backups of this world.
-    private final TabItem<WorldBackupsPage> worldBackupsTab = new TabItem<>();
+    private final TabItem<WorldBackupsPage> worldBackupsTab;
     /// The tab for managing data packs in this world.
-    private final TabItem<DataPackListPage> dataPackTab = new TabItem<>();
+    private final TabItem<DataPackListPage> dataPackTab;
 
     public WorldManagePage(World world, HMCLGameInstance gameInstance) {
         this.world = world;
@@ -68,9 +68,9 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
         }
 
-        worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
-        worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
-        dataPackTab.setNodeSupplier(() -> new DataPackListPage(this));
+        this.worldInfoTab = new TabItem<>(() -> new WorldInfoPage(this));
+        this.worldBackupsTab = new TabItem<>(() -> new WorldBackupsPage(this));
+        this.dataPackTab = new TabItem<>(() -> new DataPackListPage(this));
 
         this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
 

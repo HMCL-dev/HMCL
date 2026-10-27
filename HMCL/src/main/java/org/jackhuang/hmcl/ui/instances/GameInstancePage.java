@@ -40,19 +40,19 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final TabHeader tab;
     /// The settings tab bound to the current game instance.
-    private final TabItem<GameSettingsPage<GameSettings.Instance>> gameSettingsTab = new TabItem<>();
+    private final TabItem<GameSettingsPage<GameSettings.Instance>> gameSettingsTab;
     /// The component management tab bound to the current game instance.
-    private final TabItem<InstallerListPage> installerListTab = new TabItem<>();
+    private final TabItem<InstallerListPage> installerListTab;
     /// The installed mods tab bound to the current game instance.
-    private final TabItem<ModListPage> modListTab = new TabItem<>();
+    private final TabItem<ModListPage> modListTab;
     /// The saved worlds tab bound to the current game instance.
-    private final TabItem<WorldListPage> worldListTab = new TabItem<>();
+    private final TabItem<WorldListPage> worldListTab;
     /// The schematics tab bound to the current game instance.
-    private final TabItem<SchematicsPage> schematicsTab = new TabItem<>();
+    private final TabItem<SchematicsPage> schematicsTab;
     /// The installed resource packs tab bound to the current game instance.
-    private final TabItem<ResourcePackListPage> resourcePackTab = new TabItem<>();
+    private final TabItem<ResourcePackListPage> resourcePackTab;
     /// The screenshots tab bound to the current game instance.
-    private final TabItem<ScreenshotsPage> screenshotsTab = new TabItem<>();
+    private final TabItem<ScreenshotsPage> screenshotsTab;
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentInstanceUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<HMCLGameInstance.@Nullable Optional> instance =
@@ -79,15 +79,22 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
 
     public GameInstancePage() {
         // Child tabs subscribe to instanceProperty() themselves and reload on change.
-        gameSettingsTab.setNodeSupplier(() -> new GameSettingsPage<>(GameSettings.Instance.class, instance));
-        installerListTab.setNodeSupplier(() -> new InstallerListPage(instance));
-        modListTab.setNodeSupplier(() -> new ModListPage(instance));
-        resourcePackTab.setNodeSupplier(() -> new ResourcePackListPage(instance));
-        worldListTab.setNodeSupplier(() -> new WorldListPage(instance));
-        schematicsTab.setNodeSupplier(() -> new SchematicsPage(instance));
-        screenshotsTab.setNodeSupplier(() -> new ScreenshotsPage(instance));
+        this.gameSettingsTab = new TabItem<>(() -> new GameSettingsPage<>(GameSettings.Instance.class, instance));
+        this.installerListTab = new TabItem<>(() -> new InstallerListPage(instance));
+        this.modListTab = new TabItem<>(() -> new ModListPage(instance));
+        this.resourcePackTab = new TabItem<>(() -> new ResourcePackListPage(instance));
+        this.worldListTab = new TabItem<>(() -> new WorldListPage(instance));
+        this.schematicsTab = new TabItem<>(() -> new SchematicsPage(instance));
+        this.screenshotsTab = new TabItem<>(() -> new ScreenshotsPage(instance));
 
-        tab = new TabHeader(transitionPane, gameSettingsTab, installerListTab, modListTab, resourcePackTab, worldListTab, schematicsTab, screenshotsTab);
+        tab = new TabHeader(transitionPane,
+                gameSettingsTab,
+                installerListTab,
+                modListTab,
+                resourcePackTab,
+                worldListTab,
+                schematicsTab,
+                screenshotsTab);
         tab.select(gameSettingsTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
