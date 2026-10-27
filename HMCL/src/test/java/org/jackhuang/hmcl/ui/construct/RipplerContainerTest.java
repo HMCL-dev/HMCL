@@ -31,6 +31,7 @@ import javafx.stage.Popup;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.theme.Themes;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -51,7 +52,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.jackhuang.hmcl.ui.construct.FeedbackTestSupport.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-/// Verifies layout, theme updates, live settings, lifecycle cleanup, and native pointer picking.
+/// Verifies layout, theme updates, animation configuration, lifecycle cleanup, and native pointer picking.
 @NotNullByDefault
 public final class RipplerContainerTest {
     /// The settings replaced temporarily while these tests run.
@@ -203,28 +204,36 @@ public final class RipplerContainerTest {
         });
     }
 
-    /// Global settings change immediately, including clearing active waves and preserving a held press.
+    /// Layers use the cached animation default and retain manual control independently of settings.
     @Test
-    void animationSettingIsLiveAndNullUsesEffectiveDefault() {
+    void animationUsesCachedDefaultWithoutObservingSettings() {
         runFx(() -> {
             LauncherSettings settings = SettingsManager.settings();
-            settings.animationDisabledProperty().set(false);
             RipplerContainer wrapper = new RipplerContainer(new Region());
             InteractionLayer layer = layer(wrapper);
-            layer.press(20, 20);
-            assertEquals(1, layer.rippleCount());
-            settings.animationDisabledProperty().set(true);
-            assertFalse(layer.isAnimationEnabled());
-            assertFalse(layer.isAnimating());
-            assertEquals(0, layer.rippleCount());
-            assertEquals(0.10, layer.stateOpacity());
-            settings.animationDisabledProperty().set(false);
-            assertTrue(layer.isAnimationEnabled());
-            assertEquals(0, layer.rippleCount());
-            wrapper.resetFeedback();
-            settings.animationDisabledProperty().set(null);
-            assertEquals(!settings.isAnimationDisabled(), layer.isAnimationEnabled());
-            settings.animationDisabledProperty().set(true);
+            boolean defaultEnabled = AnimationUtils.isAnimationEnabled();
+            assertEquals(defaultEnabled, layer.isAnimationEnabled());
+            @Nullable Boolean previous = settings.animationDisabledProperty().get();
+            try {
+                settings.animationDisabledProperty().set(defaultEnabled);
+                assertEquals(defaultEnabled, layer.isAnimationEnabled());
+                assertEquals(defaultEnabled, layer(new RipplerContainer(new Region())).isAnimationEnabled());
+                layer.setAnimationEnabled(true);
+                layer.press(20, 20);
+                settings.animationDisabledProperty().set(null);
+                assertTrue(layer.isAnimationEnabled());
+                assertEquals(1, layer.rippleCount());
+                layer.setAnimationEnabled(false);
+                assertSettled(layer);
+                assertEquals(0.10, layer.stateOpacity());
+                settings.animationDisabledProperty().set(false);
+                assertFalse(layer.isAnimationEnabled());
+                layer.setAnimationEnabled(true);
+                assertEquals(0, layer.rippleCount());
+            } finally {
+                wrapper.resetFeedback();
+                settings.animationDisabledProperty().set(previous);
+            }
         });
     }
 
@@ -300,8 +309,8 @@ public final class RipplerContainerTest {
         try {
             AtomicInteger backgroundHits = new AtomicInteger();
             runFx(() -> {
-                SettingsManager.settings().animationDisabledProperty().set(false);
                 InteractionLayer layer = layer(fixture.wrapper);
+                layer.setAnimationEnabled(true);
                 layer.setCornerRadius(20);
                 fixture.wrapper.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
                     if (event.getTarget() == layer)
@@ -335,8 +344,8 @@ public final class RipplerContainerTest {
         Fixture fixture = openFixture();
         try {
             runFx(() -> {
-                SettingsManager.settings().animationDisabledProperty().set(false);
                 InteractionLayer layer = layer(fixture.wrapper);
+                layer.setAnimationEnabled(true);
                 layer.press(20, 20);
                 layer.release();
                 layer.press(30, 30);
@@ -394,8 +403,8 @@ public final class RipplerContainerTest {
             });
             awaitFx(() -> layer(fixture.wrapper).stateOpacity() == 0.10);
             Stage other = fx(() -> {
-                SettingsManager.settings().animationDisabledProperty().set(false);
                 InteractionLayer layer = layer(fixture.wrapper);
+                layer.setAnimationEnabled(true);
                 layer.press(20, 20);
                 layer.release();
                 layer.press(30, 30);
@@ -416,7 +425,7 @@ public final class RipplerContainerTest {
                 });
                 boolean @Unmodifiable [] animationModes = {false, true};
                 for (boolean disabled : animationModes) {
-                    runFx(() -> SettingsManager.settings().animationDisabledProperty().set(disabled));
+                    runFx(() -> layer(fixture.wrapper).setAnimationEnabled(!disabled));
                     move(fixture, -20, -20);
                     awaitFx(() -> layer(fixture.wrapper).stateOpacity() == 0);
                     move(fixture, 250, 100);
@@ -445,6 +454,7 @@ public final class RipplerContainerTest {
         Popup popup = fx(() -> {
             Label label = new Label("Popup menu item");
             RipplerContainer item = (RipplerContainer) PopupMenu.wrapPopupMenuItem(label);
+            layer(item).setAnimationEnabled(false);
             item.setPrefSize(220, 60);
             item.setStyle("-fx-background-color: white;");
             Popup window = new Popup();
@@ -462,7 +472,7 @@ public final class RipplerContainerTest {
             runFx(() -> fixture.robot.mouseRelease(MouseButton.PRIMARY));
             awaitFx(() -> layer(item).stateOpacity() == 0.08);
             runFx(() -> {
-                SettingsManager.settings().animationDisabledProperty().set(false);
+                layer(item).setAnimationEnabled(true);
                 layer(item).press(100, 30);
                 popup.hide();
                 assertSettled(layer(item));
@@ -477,7 +487,6 @@ public final class RipplerContainerTest {
     @Test
     void bulkLayoutAndInputKeepTheNodeBudget() {
         runFx(() -> {
-            SettingsManager.settings().animationDisabledProperty().set(false);
             VBox legacy = new VBox();
             VBox current = new VBox();
             for (int i = 0; i < 500; i++) {
@@ -498,6 +507,7 @@ public final class RipplerContainerTest {
                 wrapper.resize(400, 48);
                 wrapper.layout();
                 InteractionLayer layer = layer(wrapper);
+                layer.setAnimationEnabled(true);
                 layer.press(20, 20);
                 layer.release();
                 layer.press(100, 20);
@@ -509,7 +519,6 @@ public final class RipplerContainerTest {
             assertEquals(1501, nodeCount(current));
             System.out.printf("500 rows: legacy=%d nodes, feedback=%d nodes; layout=%d ms, feedback layout plus input=%d ms (smoke timings, not a benchmark)%n",
                     nodeCount(legacy), nodeCount(current), legacyLayout / 1_000_000, currentLayoutAndInput / 1_000_000);
-            SettingsManager.settings().animationDisabledProperty().set(true);
         });
     }
 
@@ -527,7 +536,6 @@ public final class RipplerContainerTest {
     @Test
     void exportFeedbackGallery() {
         fx(() -> {
-            SettingsManager.settings().animationDisabledProperty().set(true);
             HBox gallery = new HBox(16);
             gallery.setPadding(new Insets(16));
             gallery.setStyle("-fx-background-color: #8c9199;");
@@ -555,6 +563,7 @@ public final class RipplerContainerTest {
             gallery.layout();
             for (int i = 0; i < wrappers.size(); i++) {
                 InteractionLayer layer = layer(wrappers.get(i));
+                layer.setAnimationEnabled(false);
                 switch (i % 6) {
                     case 1 -> layer.setHovered(true);
                     case 2 -> layer.setFocusActive(true);
@@ -599,11 +608,11 @@ public final class RipplerContainerTest {
     /// Opens a small dedicated window for real pointer input and saves the original pointer position.
     private static Fixture openFixture() {
         Fixture fixture = fx(() -> {
-            SettingsManager.settings().animationDisabledProperty().set(true);
             Button button = new Button("Nested action");
             button.resizeRelocate(20, 20, 130, 30);
             Pane content = new Pane(button);
             RipplerContainer wrapper = new RipplerContainer(content);
+            layer(wrapper).setAnimationEnabled(false);
             StackPane root = new StackPane(wrapper);
             root.setPadding(new Insets(10));
             Stage stage = new Stage();
@@ -639,7 +648,6 @@ public final class RipplerContainerTest {
             fixture.wrapper.resetFeedback();
             fixture.stage.close();
             fixture.robot.mouseMove(fixture.pointer);
-            SettingsManager.settings().animationDisabledProperty().set(true);
         });
     }
 

@@ -20,6 +20,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -97,9 +98,10 @@ public final class InteractionLayer extends Region {
     /// The corner radius in local coordinates; invalid values are rendered as zero.
     private final DoubleProperty cornerRadius = new SimpleDoubleProperty(this, "cornerRadius", 3);
     /// Whether subsequent state changes and presses animate.
-    private final BooleanProperty animationEnabled = new SimpleBooleanProperty(this, "animationEnabled", true);
+    private final BooleanProperty animationEnabled = new SimpleBooleanProperty(this, "animationEnabled", AnimationUtils.isAnimationEnabled());
 
-    /// Creates an empty layer with black feedback, radius 3, and animation enabled.
+    /// Creates an empty layer with black feedback, radius 3, and the animation default from
+    /// [AnimationUtils#isAnimationEnabled()]. Settings must have been loaded before construction.
     public InteractionLayer() {
         this(System::nanoTime, true);
     }
@@ -154,6 +156,7 @@ public final class InteractionLayer extends Region {
     /// Returns the animation switch. Disabling it clears waveforms and immediately displays
     /// the current state, including a held press. Enabling it does not replay a held press;
     /// its static press feedback remains until release or reset.
+    /// Initially uses [AnimationUtils#isAnimationEnabled()]; global settings are not observed.
     public BooleanProperty animationEnabledProperty() {
         return animationEnabled;
     }

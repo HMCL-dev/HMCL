@@ -15,20 +15,46 @@ import javafx.scene.paint.Paint;
 import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.shape.Circle;
+import org.jackhuang.hmcl.setting.LauncherSettings;
+import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.lang.reflect.Field;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.jackhuang.hmcl.ui.construct.FeedbackTestSupport.runFx;
+import static org.jackhuang.hmcl.ui.construct.FeedbackTestSupport.fx;
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Verifies deterministic waveform timing, compositing, interruption, and static feedback.
 @NotNullByDefault
 final class InteractionLayerTest {
+    /// Initializes the cached animation default with detached settings, without accessing user files.
+    @BeforeAll
+    static void initializeAnimationDefaults() {
+        fx(() -> {
+            Field field = SettingsManager.class.getDeclaredField("launcherSettings");
+            field.setAccessible(true);
+            @Nullable Object previousSettings = field.get(null);
+            try {
+                LauncherSettings settings = new LauncherSettings();
+                settings.animationDisabledProperty().set(true);
+                field.set(null, settings);
+                AnimationUtils.init();
+            } finally {
+                field.set(null, previousSettings);
+            }
+            return true;
+        });
+    }
+
     /// Advances a deterministic layer by the specified number of milliseconds.
     private static void advance(InteractionLayer layer, AtomicLong clock, long millis) {
         layer.advance(clock.addAndGet(millis * 1_000_000));
@@ -66,6 +92,7 @@ final class InteractionLayerTest {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
             InteractionLayer layer = new InteractionLayer(clock::get, false);
+            layer.setAnimationEnabled(true);
             layer.setHovered(true);
             advance(layer, clock, 80);
             double entered = layer.stateOpacity();
@@ -93,6 +120,7 @@ final class InteractionLayerTest {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
             InteractionLayer layer = new InteractionLayer(clock::get, false);
+            layer.setAnimationEnabled(true);
             layer.press(10, 10);
             layer.press(20, 20);
             assertEquals(1, layer.rippleCount());
@@ -129,6 +157,7 @@ final class InteractionLayerTest {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
             InteractionLayer layer = new InteractionLayer(clock::get, false);
+            layer.setAnimationEnabled(true);
             layer.setHovered(true);
             layer.press(10, 10);
             advance(layer, clock, 60);
@@ -199,6 +228,7 @@ final class InteractionLayerTest {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
             InteractionLayer layer = new InteractionLayer(clock::get, false);
+            layer.setAnimationEnabled(true);
             layer.resize(100, 50);
             layer.press(50, 25);
             advance(layer, clock, 450);
@@ -252,6 +282,7 @@ final class InteractionLayerTest {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
             InteractionLayer layer = new InteractionLayer(clock::get, false);
+            layer.setAnimationEnabled(true);
             layer.resize(100, 50);
             layer.setCornerRadius(12);
             for (int i = 0; i < 8; i++) {
@@ -330,6 +361,7 @@ final class InteractionLayerTest {
         runFx(() -> {
             AtomicLong clock = new AtomicLong();
             InteractionLayer layer = new InteractionLayer(clock::get, false);
+            layer.setAnimationEnabled(true);
             layer.resize(100, 50);
             layer.setCornerRadius(10);
             layer.press(20, 25);

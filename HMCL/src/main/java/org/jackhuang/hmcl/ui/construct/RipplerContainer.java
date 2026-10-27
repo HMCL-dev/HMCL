@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.InvalidationListener;
-import javafx.beans.WeakInvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -18,7 +17,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.Window;
-import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -26,8 +24,6 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
-import static org.jackhuang.hmcl.setting.SettingsManager.settings;
 
 /// Wraps content with a region for hover, focus, press, and ripple feedback.
 /// Feedback covers the entire pane, including padding, without replacing its background.
@@ -46,10 +42,6 @@ public class RipplerContainer extends StackPane {
     private final Node container;
     /// The sole feedback node, excluded from preferred-size calculations.
     private final InteractionLayer interactionLayer = new InteractionLayer();
-    /// The settings instance observed by this wrapper.
-    private final LauncherSettings launcherSettings = settings();
-    /// Retains the delegate of the weak global settings listener.
-    private final InvalidationListener animationListener = observable -> updateAnimationSetting();
     /// Updates feedback when control availability or window visibility changes.
     private final InvalidationListener availabilityListener = observable -> updateVisualState();
     /// Cancels transient presses on window focus loss without disabling subsequent hover feedback.
@@ -115,7 +107,6 @@ public class RipplerContainer extends StackPane {
 
     /// Creates a wrapper with feedback behind its content.
     /// Sets the content's `pickOnBounds` to false so uncovered regions can receive input.
-    /// The animation setting is observed immediately and remains live thereafter.
     ///
     /// @param container the content to wrap
     /// @throws NullPointerException if the content is null
@@ -126,8 +117,6 @@ public class RipplerContainer extends StackPane {
         interactionLayer.setManaged(false);
         interactionLayer.setFill(getFeedbackFill());
         updateChildren();
-        launcherSettings.animationDisabledProperty().addListener(new WeakInvalidationListener(animationListener));
-        updateAnimationSetting();
 
         interactionLayer.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
             if (event.getButton() == MouseButton.PRIMARY && isFeedbackAvailable() && isPressFeedbackEnabled())
@@ -151,11 +140,6 @@ public class RipplerContainer extends StackPane {
         visibleProperty().addListener(availabilityListener);
         sceneProperty().addListener(observable -> observeScene());
         observeScene();
-    }
-
-    /// Applies the effective animation setting, including the system default for a null setting.
-    private void updateAnimationSetting() {
-        interactionLayer.setAnimationEnabled(!launcherSettings.isAnimationDisabled());
     }
 
     /// Removes listeners from the previous scene before observing the current one.
