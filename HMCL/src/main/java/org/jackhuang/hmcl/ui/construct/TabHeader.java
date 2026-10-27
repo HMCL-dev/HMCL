@@ -12,10 +12,8 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Side;
 import javafx.scene.AccessibleAttribute;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -507,33 +505,30 @@ public class TabHeader extends Control implements PageAware {
 
         /// Displays one tab's label, selection styling, and pointer feedback.
         @NotNullByDefault
-        private final class TabHeaderView extends StackPane {
+        private final class TabHeaderView extends RipplerContainer {
             /// The tab represented by this view.
             private final TabItem<?> tab;
             /// The label bound to the tab's text.
-            private final Label tabText = new Label();
-            /// The content node receiving the selection pseudo-class.
-            private final BorderPane inner = new BorderPane();
+            private final Label tabText;
             /// Updates selection styling until this view is removed or the skin is disposed.
             private final InvalidationListener selectionListener = observable -> updateSelection();
 
-            /// Binds the label and selection styling and installs pointer selection.
+            /// Binds the label and selection styling and selects the tab when this view fires an action.
             private TabHeaderView(TabItem<?> tab) {
+                super(new Label());
                 this.tab = tab;
+                this.tabText = (Label) getContainer();
                 tabText.textProperty().bind(tab.textProperty());
                 tabText.getStyleClass().add("tab-label");
-                inner.setCenter(tabText);
-                inner.getStyleClass().add("tab-container");
-                inner.setMouseTransparent(true);
-                getChildren().setAll(new RipplerContainer(inner));
+                tabText.setMouseTransparent(true);
                 tab.selectedProperty().addListener(selectionListener);
                 updateSelection();
-                FXUtils.onClicked(this, () -> getSkinnable().getSelectionModel().select(tab));
+                setOnAction(event -> getSkinnable().getSelectionModel().select(tab));
             }
 
-            /// Reflects the tab's selection flag in the content pseudo-class.
+            /// Reflects the tab's selection flag in the label's pseudo-class.
             private void updateSelection() {
-                inner.pseudoClassStateChanged(SELECTED_PSEUDOCLASS_STATE, tab.isSelected());
+                tabText.pseudoClassStateChanged(SELECTED_PSEUDOCLASS_STATE, tab.isSelected());
             }
 
             /// Releases the tab's text binding and selection listener.
