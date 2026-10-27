@@ -20,8 +20,6 @@ public final class TabItem<T extends Node> {
     private final ReadOnlyBooleanWrapper selected = new ReadOnlyBooleanWrapper(this, "selected");
     /// The content node, or null when no content is assigned.
     private final ObjectProperty<@Nullable T> node = new SimpleObjectProperty<>(this, "node");
-    /// Optional application data associated with this tab.
-    private final ObjectProperty<@Nullable Object> userData = new SimpleObjectProperty<>(this, "userData");
     /// The optional factory used when content has not been assigned.
     private @Nullable Supplier<? extends @Nullable T> nodeSupplier;
 
@@ -86,21 +84,6 @@ public final class TabItem<T extends Node> {
     /// Sets the content node, or clears it if null. Does not change the content factory.
     public void setNode(@Nullable T node) {
         this.node.set(node);
-    }
-
-    /// Returns the application data, or null if none is assigned.
-    public @Nullable Object getUserData() {
-        return userData.get();
-    }
-
-    /// Returns the property holding nullable application data.
-    public ObjectProperty<@Nullable ?> userDataProperty() {
-        return userData;
-    }
-
-    /// Sets the application data, which may be null.
-    public void setUserData(@Nullable Object userData) {
-        this.userData.set(userData);
     }
 
     /// Returns whether a non-null content node is currently assigned.

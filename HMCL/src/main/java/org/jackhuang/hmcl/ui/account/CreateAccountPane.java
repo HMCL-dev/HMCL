@@ -134,14 +134,18 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
         if (showMethodSwitcher) {
             TabItem<?>[] tabs = new TabItem<?>[Accounts.FACTORIES.size()];
+            var tabToFactory = new IdentityHashMap<TabItem<?>, AccountFactory<?>>();
+
             @Nullable TabItem<?> selected = null;
             for (int i = 0; i < tabs.length; i++) {
                 AccountFactory<?> f = Accounts.FACTORIES.get(i);
-                tabs[i] = new TabItem<>();
-                tabs[i].setText(Accounts.getLocalizedLoginTypeName(f));
-                tabs[i].setUserData(f);
+                TabItem<Node> tab = new TabItem<>();
+                tabs[i] = tab;
+
+                tab.setText(Accounts.getLocalizedLoginTypeName(f));
+                tabToFactory.put(tab, f);
                 if (factory == f) {
-                    selected = tabs[i];
+                    selected = tab;
                 }
             }
 
@@ -154,7 +158,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     newItem -> {
                         if (newItem == null)
                             return;
-                        AccountFactory<?> newMethod = (AccountFactory<?>) newItem.getUserData();
+                        AccountFactory<?> newMethod = tabToFactory.get(newItem);
                         settings().preferredLoginTypeProperty().set(Accounts.getLoginType(newMethod));
                         this.factory = newMethod;
                         initDetailsPane();
