@@ -4,10 +4,10 @@ package org.jackhuang.hmcl.ui.main;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.setting.GameSettings;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
+import org.jackhuang.hmcl.setting.GameSettings;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -26,6 +26,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
     private final TabHeader.Tab<GameSettingsPage<GameSettings.Preset>> gameTab = new TabHeader.Tab<>("versionSettingsPage");
     private final TabControl.Tab<JavaManagementPage> javaManagementTab = new TabControl.Tab<>("javaManagementPage");
     private final TabHeader.Tab<SettingsPage> settingsTab = new TabHeader.Tab<>("settingsPage");
+    private final TabHeader.Tab<LanguageSettingsPage> languageTab = new TabHeader.Tab<>("languagePage");
     private final TabHeader.Tab<PersonalizationPage> personalizationTab = new TabHeader.Tab<>("personalizationPage");
     private final TabHeader.Tab<DownloadSettingsPage> downloadTab = new TabHeader.Tab<>("downloadSettingsPage");
     private final TabHeader.Tab<HelpPage> helpTab = new TabHeader.Tab<>("helpPage");
@@ -37,12 +38,13 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         gameTab.setNodeSupplier(() -> new GameSettingsPage<>(GameSettings.Preset.class, null));
         javaManagementTab.setNodeSupplier(JavaManagementPage::new);
         settingsTab.setNodeSupplier(SettingsPage::new);
+        languageTab.setNodeSupplier(LanguageSettingsPage::new);
         personalizationTab.setNodeSupplier(PersonalizationPage::new);
         downloadTab.setNodeSupplier(DownloadSettingsPage::new);
         helpTab.setNodeSupplier(HelpPage::new);
         feedbackTab.setNodeSupplier(FeedbackPage::new);
         aboutTab.setNodeSupplier(AboutPage::new);
-        tab = new TabHeader(transitionPane, gameTab, javaManagementTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, aboutTab);
+        tab = new TabHeader(transitionPane, gameTab, javaManagementTab, settingsTab, languageTab, personalizationTab, downloadTab, helpTab, feedbackTab, aboutTab);
 
         tab.select(gameTab);
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> gameTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository())));
@@ -52,6 +54,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
                 .addNavigationDrawerTab(tab, javaManagementTab, i18n("java.management"), SVG.LOCAL_CAFE, SVG.LOCAL_CAFE_FILL)
                 .startCategory(i18n("launcher").toUpperCase(Locale.ROOT))
                 .addNavigationDrawerTab(tab, settingsTab, i18n("settings.launcher.general"), SVG.TUNE)
+                .addNavigationDrawerTab(tab, languageTab, i18n("settings.launcher.language"), SVG.TRANSLATE)
                 .addNavigationDrawerTab(tab, personalizationTab, i18n("settings.launcher.appearance"), SVG.STYLE, SVG.STYLE_FILL)
                 .addNavigationDrawerTab(tab, downloadTab, i18n("download"), SVG.DOWNLOAD)
                 .startCategory(i18n("help").toUpperCase(Locale.ROOT))
