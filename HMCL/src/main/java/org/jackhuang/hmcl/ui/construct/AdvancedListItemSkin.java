@@ -13,6 +13,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Paint;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +93,7 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
 
         if (selectionTransition == null) {
             selectionTransition = new FadeTransition(Motion.SHORT4, selectionBackground);
-            selectionTransition.setInterpolator(Motion.STANDARD);
+            selectionTransition.setInterpolator(Motion.LINEAR);
         }
         // Preserve the displayed opacity when reversing an unfinished fade.
         selectionBackground.setOpacity(current);
