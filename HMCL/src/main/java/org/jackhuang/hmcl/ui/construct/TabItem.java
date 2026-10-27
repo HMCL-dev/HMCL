@@ -29,6 +29,10 @@ public final class TabItem<T extends Node> {
     public TabItem() {
     }
 
+    public TabItem(Supplier<? extends @Nullable T> nodeSupplier) {
+        this.nodeSupplier = nodeSupplier;
+    }
+
     /// Returns the content factory, or null if none has been set.
     public @Nullable Supplier<? extends @Nullable T> getNodeSupplier() {
         return nodeSupplier;
