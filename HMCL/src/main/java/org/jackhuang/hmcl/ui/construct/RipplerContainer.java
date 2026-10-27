@@ -6,7 +6,6 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ObjectPropertyBase;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.*;
@@ -89,6 +88,7 @@ public class RipplerContainer extends StackPane {
             if (event.getButton() == MouseButton.PRIMARY)
                 interactionLayer.release();
         });
+        interactionLayer.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleBackgroundClick);
         addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
             pointerInside = true;
             updateVisualState();
@@ -215,35 +215,22 @@ public class RipplerContainer extends StackPane {
     private @Nullable ObjectProperty<@Nullable EventHandler<ActionEvent>> onAction;
 
     /// Returns the handler property for actions originating from this wrapper, initially null.
-    /// A non-null handler enables primary-click actions on the feedback background. Content
-    /// nodes retain their own input handling; mouse-transparent content is picked through.
-    /// Handled mouse clicks are consumed, including repeated clicks, while the resulting
-    /// [ActionEvent] bubbles normally unless consumed. Actions from descendants do not invoke
-    /// this handler. Clearing the handler removes the background click listener.
+    /// Primary clicks on the feedback background invoke [#fire()] independently of this property,
+    /// including repeated clicks. Content nodes retain their own input handling;
+    /// mouse-transparent content is picked through. The original mouse event is not consumed,
+    /// and the resulting [ActionEvent] follows normal event dispatch.
+    /// Actions from descendants do not invoke this handler, but remain available to handlers
+    /// registered with [#addEventHandler(javafx.event.EventType, EventHandler)].
     ///
     /// Clicks invoke [#fire()] without waiting for animations or preparation. Disabling press
     /// feedback does not disable actions. Keyboard activation is left to the enclosing control.
     public ObjectProperty<@Nullable EventHandler<ActionEvent>> onActionProperty() {
         if (onAction == null) {
-            onAction = new ObjectPropertyBase<>() {
-                /// Returns the wrapper owning this property.
-                @Override
-                public Object getBean() {
-                    return RipplerContainer.this;
-                }
-
-                /// Returns the action property name.
-                @Override
-                public String getName() {
-                    return "onAction";
-                }
-
-                /// Installs or removes action dispatch only when a handler is present.
+            onAction = new SimpleObjectProperty<>(this, "onAction") {
+                /// Updates only the property-backed action handler.
                 @Override
                 protected void invalidated() {
-                    boolean enabled = get() != null;
-                    interactionLayer.setOnMouseClicked(enabled ? RipplerContainer.this::handleBackgroundClick : null);
-                    setEventHandler(ActionEvent.ACTION, enabled ? RipplerContainer.this::handleAction : null);
+                    setEventHandler(ActionEvent.ACTION, get() == null ? null : RipplerContainer.this::handleAction);
                 }
             };
         }
@@ -268,10 +255,9 @@ public class RipplerContainer extends StackPane {
             fireEvent(new ActionEvent(this, this));
     }
 
-    /// Consumes primary background clicks before dispatching an immediate action.
+    /// Dispatches primary background actions without consuming the original mouse event.
     private void handleBackgroundClick(MouseEvent event) {
         if (event.getTarget() == interactionLayer && event.getButton() == MouseButton.PRIMARY && !isDisabled()) {
-            event.consume();
             fire();
         }
     }
