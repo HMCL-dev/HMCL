@@ -5,12 +5,13 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Side;
+import javafx.scene.AccessibleAttribute;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
@@ -23,10 +24,14 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
+/// Displays selectable tab headers and optionally switches content in a transition pane.
 @SuppressWarnings("deprecation")
-public class TabHeader extends Control implements TabControl, PageAware {
+public class TabHeader extends Control implements PageAware {
 
     private final TransitionPane contentPane;
 
@@ -45,12 +50,13 @@ public class TabHeader extends Control implements TabControl, PageAware {
 
     private final ObservableList<Tab<?>> tabs = FXCollections.observableArrayList();
 
-    @Override
+    /// Returns the mutable, observable list of tabs in display order.
     public ObservableList<Tab<?>> getTabs() {
         return tabs;
     }
 
-    private final SingleSelectionModel<Tab<?>> selectionModel = new TabControlSelectionModel(this);
+    /// The selection model that tracks changes to the tab list.
+    private final SingleSelectionModel<Tab<?>> selectionModel = new TabHeaderSelectionModel(this);
 
     public SingleSelectionModel<Tab<?>> getSelectionModel() {
         return selectionModel;
@@ -134,6 +140,305 @@ public class TabHeader extends Control implements TabControl, PageAware {
     @Override
     protected Skin<?> createDefaultSkin() {
         return new TabHeaderSkin(this);
+    }
+
+    /// Synchronizes a header's selected index, selected item, and tab selection flags.
+    ///
+    /// Changes to the tab list update the selection. Selecting through this model
+    /// does not initialize content or invoke page lifecycle callbacks.
+    @NotNullByDefault
+    public static class TabHeaderSelectionModel extends SingleSelectionModel<Tab<?>> {
+        /// The header whose tab list supplies this model's items.
+        private final TabHeader tabHeader;
+
+        /// Creates a selection model and registers a listener on the header's tab list.
+        ///
+        /// @param t the header to observe
+        /// @throws NullPointerException if the header is null
+        public TabHeaderSelectionModel(final TabHeader t) {
+            if (t == null) {
+                throw new NullPointerException("TabHeader cannot be null");
+            }
+            this.tabHeader = t;
+
+            // watching for changes to the items list content
+            final ListChangeListener<Tab<?>> itemsContentObserver = c -> {
+                while (c.next()) {
+                    for (@Nullable Tab<?> tab : c.getRemoved()) {
+                        if (tab != null && !tabHeader.getTabs().contains(tab)) {
+                            if (tab.isSelected()) {
+                                tab.setSelected(false);
+                                final int tabIndex = c.getFrom();
+
+                                // Select a nearby tab after removing the selected tab.
+                                findNearestAvailableTab(tabIndex, true);
+                            }
+                        }
+                    }
+                    if (c.wasAdded() || c.wasRemoved()) {
+                        // The selected tab index can be out of sync with the list of tab if
+                        // we add or remove tabs before the selected tab.
+                        if (getSelectedIndex() != tabHeader.getTabs().indexOf(getSelectedItem())) {
+                            clearAndSelect(tabHeader.getTabs().indexOf(getSelectedItem()));
+                        }
+                    }
+                }
+                if (getSelectedIndex() == -1 && getSelectedItem() == null && tabHeader.getTabs().size() > 0) {
+                    // Select the first available tab when the list gains its first items.
+                    findNearestAvailableTab(0, true);
+                } else if (tabHeader.getTabs().isEmpty()) {
+                    clearSelection();
+                }
+            };
+            this.tabHeader.getTabs().addListener(itemsContentObserver);
+        }
+
+        /// Selects the tab at the given index and notifies accessibility listeners.
+        /// Updates the selection flags of the old and new tabs.
+        @Override
+        public void select(int index) {
+            if (index < 0 || (getItemCount() > 0 && index >= getItemCount()) ||
+                    (index == getSelectedIndex() && getModelItem(index).isSelected())) {
+                return;
+            }
+
+            // Unselect the old tab
+            if (getSelectedIndex() >= 0 && getSelectedIndex() < tabHeader.getTabs().size()) {
+                tabHeader.getTabs().get(getSelectedIndex()).setSelected(false);
+            }
+
+            setSelectedIndex(index);
+
+            @Nullable Tab<?> tab = getModelItem(index);
+            if (tab != null) {
+                setSelectedItem(tab);
+            }
+
+            // Select the new tab
+            if (getSelectedIndex() >= 0 && getSelectedIndex() < tabHeader.getTabs().size()) {
+                tabHeader.getTabs().get(getSelectedIndex()).setSelected(true);
+            }
+
+            tabHeader.notifyAccessibleAttributeChanged(AccessibleAttribute.FOCUS_ITEM);
+        }
+
+        /// Selects a matching tab in the list. If a non-null tab is absent, updates
+        /// only the selected item; a null argument leaves the selection unchanged.
+        @Override
+        public void select(@Nullable Tab<?> tab) {
+            final int itemCount = getItemCount();
+
+            for (int i = 0; i < itemCount; i++) {
+                final @Nullable Tab<?> value = getModelItem(i);
+                if (value != null && value.equals(tab)) {
+                    select(i);
+                    return;
+                }
+            }
+            if (tab != null) {
+                setSelectedItem(tab);
+            }
+        }
+
+        /// Returns the tab at the given index, or null if the index is out of range.
+        @Override
+        protected @Nullable Tab<?> getModelItem(int index) {
+            final ObservableList<Tab<?>> items = tabHeader.getTabs();
+            if (index < 0 || index >= items.size()) return null;
+            return items.get(index);
+        }
+
+        /// Returns the current number of tabs in the header.
+        @Override
+        protected int getItemCount() {
+            final ObservableList<Tab<?>> items = tabHeader.getTabs();
+            return items.size();
+        }
+
+        /// Finds a tab near a removed position, searching left before right at each distance.
+        ///
+        /// @param tabIndex the position from which a tab was removed
+        /// @param doSelect whether to select the tab found
+        /// @return the nearest non-null tab, or null if none is available
+        private @Nullable Tab<?> findNearestAvailableTab(int tabIndex, boolean doSelect) {
+            // Search outwards from the removed position, preferring the left side.
+            final int tabCount = getItemCount();
+            int i = 1;
+            @Nullable Tab<?> bestTab = null;
+            while (true) {
+                // look leftwards
+                int downPos = tabIndex - i;
+                if (downPos >= 0) {
+                    @Nullable Tab<?> candidate = getModelItem(downPos);
+                    if (candidate != null) {
+                        bestTab = candidate;
+                        break;
+                    }
+                }
+
+                // look rightwards. We subtract one as we need
+                // to take into account that a tab has been removed
+                // and if we don't do this we'll miss the tab
+                // to the right of the tab (as it has moved into
+                // the removed tabs position).
+                int upPos = tabIndex + i - 1;
+                if (upPos < tabCount) {
+                    @Nullable Tab<?> candidate = getModelItem(upPos);
+                    if (candidate != null) {
+                        bestTab = candidate;
+                        break;
+                    }
+                }
+
+                if (downPos < 0 && upPos >= tabCount) {
+                    break;
+                }
+                i++;
+            }
+
+            if (doSelect && bestTab != null) {
+                select(bestTab);
+            }
+
+            return bestTab;
+        }
+    }
+
+    /// Stores a tab's label, selection state, and optionally lazily created content.
+    ///
+    /// @param <T> the type of content node
+    @NotNullByDefault
+    public static final class Tab<T extends Node> {
+        /// The nullable identifier of this tab.
+        private final StringProperty id = new SimpleStringProperty(this, "id");
+        /// The nullable text displayed in the header.
+        private final StringProperty text = new SimpleStringProperty(this, "text");
+        /// Whether a selection model has marked this tab as selected.
+        private final ReadOnlyBooleanWrapper selected = new ReadOnlyBooleanWrapper(this, "selected");
+        /// The content node, or null when no content is assigned.
+        private final ObjectProperty<@Nullable T> node = new SimpleObjectProperty<>(this, "node");
+        /// Optional application data associated with this tab.
+        private final ObjectProperty<@Nullable Object> userData = new SimpleObjectProperty<>(this, "userData");
+        /// The optional factory used when content has not been assigned.
+        private @Nullable Supplier<? extends @Nullable T> nodeSupplier;
+
+        /// Creates an unselected tab with the given nullable identifier and no text or content.
+        public Tab(@Nullable String id) {
+            setId(id);
+        }
+
+        /// Creates an unselected tab with the given nullable identifier and text, and no content.
+        public Tab(@Nullable String id, @Nullable String text) {
+            setId(id);
+            setText(text);
+        }
+
+        /// Returns the content factory, or null if none has been set.
+        public @Nullable Supplier<? extends @Nullable T> getNodeSupplier() {
+            return nodeSupplier;
+        }
+
+        /// Sets the content factory, or clears it if null. Existing content is unchanged.
+        public void setNodeSupplier(@Nullable Supplier<? extends @Nullable T> nodeSupplier) {
+            this.nodeSupplier = nodeSupplier;
+        }
+
+        /// Returns the tab identifier, which may be null.
+        public @Nullable String getId() {
+            return id.get();
+        }
+
+        /// Returns the writable identifier property, whose value may be null.
+        public StringProperty idProperty() {
+            return id;
+        }
+
+        /// Sets the tab identifier, which may be null.
+        public void setId(@Nullable String id) {
+            this.id.set(id);
+        }
+
+        /// Returns the header text, which may be null.
+        public @Nullable String getText() {
+            return text.get();
+        }
+
+        /// Returns the writable header text property, whose value may be null.
+        public StringProperty textProperty() {
+            return text;
+        }
+
+        /// Sets the header text, which may be null.
+        public void setText(@Nullable String text) {
+            this.text.set(text);
+        }
+
+        /// Returns whether this tab is marked as selected.
+        public boolean isSelected() {
+            return selected.get();
+        }
+
+        /// Returns a read-only view of the tab's selection state.
+        public ReadOnlyBooleanProperty selectedProperty() {
+            return selected.getReadOnlyProperty();
+        }
+
+        /// Updates the tab's selection flag.
+        private void setSelected(boolean selected) {
+            this.selected.set(selected);
+        }
+
+        /// Returns the content node, or null if none is assigned; does not invoke the factory.
+        public @Nullable T getNode() {
+            return node.get();
+        }
+
+        /// Returns the writable content property. A null value permits lazy initialization.
+        public ObjectProperty<@Nullable T> nodeProperty() {
+            return node;
+        }
+
+        /// Sets the content node, or clears it if null. Does not change the content factory.
+        public void setNode(@Nullable T node) {
+            this.node.set(node);
+        }
+
+        /// Returns the application data, or null if none is assigned.
+        public @Nullable Object getUserData() {
+            return userData.get();
+        }
+
+        /// Returns the property holding nullable application data.
+        public ObjectProperty<@Nullable ?> userDataProperty() {
+            return userData;
+        }
+
+        /// Sets the application data, which may be null.
+        public void setUserData(@Nullable Object userData) {
+            this.userData.set(userData);
+        }
+
+        /// Returns whether a non-null content node is currently assigned.
+        public boolean isInitialized() {
+            return getNode() != null;
+        }
+
+        /// Invokes the content factory and assigns its result if the content is null
+        /// and a factory is present. A null result permits another attempt on the next call.
+        /// Factory exceptions propagate without assigning a result.
+        ///
+        /// @return true if the factory returned and its result was assigned, even if null;
+        /// false if content was already assigned or no factory was present
+        public boolean initializeIfNeeded() {
+            if (getNode() == null) {
+                if (getNodeSupplier() == null) {
+                    return false;
+                }
+                setNode(getNodeSupplier().get());
+                return true;
+            }
+            return false;
+        }
     }
 
     public static class TabHeaderSkin extends SkinBase<TabHeader> {

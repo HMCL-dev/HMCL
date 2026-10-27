@@ -14,6 +14,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.SVGContainer;
 import org.jackhuang.hmcl.ui.animation.Motion;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -77,14 +78,21 @@ public class AdvancedListBox extends ScrollPane {
         return add(item);
     }
 
-    public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabControl.Tab<?> tab, String title, SVG leftGraphic) {
+    /// Adds an item that selects the tab and tracks its selection state.
+    ///
+    /// @param leftGraphic the item icon, or null for no icon
+    /// @return this list box
+    public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabHeader.Tab<?> tab, String title, @Nullable SVG leftGraphic) {
         AdvancedListItem item = createNavigationDrawerItem(title, leftGraphic);
         item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
         item.setOnAction(e -> tabHeader.select(tab));
         return add(item);
     }
 
-    public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabControl.Tab<?> tab, String title,
+    /// Adds an item that selects the tab and switches icons with its selection state.
+    ///
+    /// @return this list box
+    public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabHeader.Tab<?> tab, String title,
                                                   SVG unselectedGraphic, SVG selectedGraphic) {
         AdvancedListItem item = createNavigationDrawerItem(title, null);
         item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
