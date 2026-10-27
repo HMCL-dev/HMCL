@@ -32,7 +32,7 @@ public final class TabController implements PageAware {
     /// Creates a controller with the supplied tabs and no content destination.
     ///
     /// @param tabs the initial tabs in display order, or null for an empty controller
-    public TabController(TabItem<?> @Nullable ... tabs) {
+    public TabController(TabItem<?> ... tabs) {
         this(null, tabs);
     }
 
@@ -40,11 +40,10 @@ public final class TabController implements PageAware {
     ///
     /// @param contentPane the destination updated by [#select(TabItem)], or null
     /// @param tabs the initial tabs in display order, or null for an empty controller
-    public TabController(@Nullable TransitionPane contentPane, TabItem<?> @Nullable ... tabs) {
+    public TabController(@Nullable TransitionPane contentPane, TabItem<?> ... tabs) {
         this.contentPane = contentPane;
         this.tabs.addListener(this::tabsChanged);
-        if (tabs != null)
-            this.tabs.addAll(tabs);
+        this.tabs.setAll(tabs);
     }
 
     /// Returns the mutable, observable list of tabs in display order.

@@ -17,8 +17,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
-import java.util.Objects;
-
 /// Displays selectable tab headers backed by a [TabController].
 /// Activating a header delegates selection and content switching to its controller.
 @NotNullByDefault
@@ -30,17 +28,8 @@ public class TabHeader extends Control {
     /// Creates a header with its own controller and no content destination.
     ///
     /// @param tabs the initial tabs in display order, or null for an empty header
-    public TabHeader(TabItem<?> @Nullable ... tabs) {
-        this(new TabController(tabs));
-    }
-
-    /// Creates a view of the supplied controller's tabs and selection state.
-    /// Creating or disposing a skin does not initialize or activate tab content.
-    ///
-    /// @param controller the controller shared with other navigation views
-    /// @throws NullPointerException if the controller is null
-    public TabHeader(TabController controller) {
-        this.controller = Objects.requireNonNull(controller);
+    public TabHeader(TabItem<?>... tabs) {
+        this.controller = new TabController(tabs);
         getStyleClass().setAll("tab-header");
     }
 
