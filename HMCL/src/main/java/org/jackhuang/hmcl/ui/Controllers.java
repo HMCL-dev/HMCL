@@ -397,7 +397,7 @@ public final class Controllers {
             Controllers.dialog(agreementPane);
         }
 
-        var aprilFoolsType = AprilFools.getRandomTypeToPrompt();
+        @Nullable AprilFools.Type aprilFoolsType = AprilFools.getRandomTypeToPrompt();
         if (aprilFoolsType == AprilFools.Type.LZH) {
             Controllers.confirmWithCountdown(i18n("launcher.april_fools.switch_lzh"), null, 10,
                     MessageType.QUESTION, () -> {
