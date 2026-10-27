@@ -338,7 +338,7 @@ final class InteractionLayerTest {
                 layer.press(i, 25, clock.get());
                 layer.release(clock.get());
             }
-            Group group = (Group) layer.getChildrenUnmodifiable().getFirst();
+            Group group = (Group) layer.getChildrenUnmodifiable().get(0);
             assertEquals(8, group.getChildren().size());
             assertNotNull(group.getClip());
             assertNull(layer.getClip());
@@ -353,7 +353,7 @@ final class InteractionLayerTest {
                 layer.press(20, 25, clock.get());
                 layer.release(clock.get());
             }
-            assertSame(group, layer.getChildrenUnmodifiable().getFirst());
+            assertSame(group, layer.getChildrenUnmodifiable().get(0));
             assertTrue(group.getChildren().stream().noneMatch(previous::contains));
             @Unmodifiable List<Node> released = List.copyOf(group.getChildren());
             advance(layer, clock, 200);
@@ -415,8 +415,8 @@ final class InteractionLayerTest {
             layer.setCornerRadius(10);
             layer.press(20, 25, clock.get());
             advance(layer, clock, 100);
-            Group group = (Group) layer.getChildrenUnmodifiable().getFirst();
-            Circle circle = (Circle) group.getChildren().getFirst();
+            Group group = (Group) layer.getChildrenUnmodifiable().get(0);
+            Circle circle = (Circle) group.getChildren().get(0);
             double progress = circle.getScaleX();
             double radius = circle.getRadius();
             layer.resize(200, 100);
