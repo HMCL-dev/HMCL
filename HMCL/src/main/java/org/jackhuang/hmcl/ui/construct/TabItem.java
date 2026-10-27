@@ -14,8 +14,6 @@ import java.util.function.Supplier;
 /// @param <T> the type of content node
 @NotNullByDefault
 public final class TabItem<T extends Node> {
-    /// The nullable identifier of this tab.
-    private final StringProperty id = new SimpleStringProperty(this, "id");
     /// The nullable text displayed in the header.
     private final StringProperty text = new SimpleStringProperty(this, "text");
     /// Whether a selection model has marked this tab as selected.
@@ -28,14 +26,7 @@ public final class TabItem<T extends Node> {
     private @Nullable Supplier<? extends @Nullable T> nodeSupplier;
 
     /// Creates an unselected tab with the given nullable identifier and no text or content.
-    public TabItem(@Nullable String id) {
-        setId(id);
-    }
-
-    /// Creates an unselected tab with the given nullable identifier and text, and no content.
-    public TabItem(@Nullable String id, @Nullable String text) {
-        setId(id);
-        setText(text);
+    public TabItem() {
     }
 
     /// Returns the content factory, or null if none has been set.
@@ -46,21 +37,6 @@ public final class TabItem<T extends Node> {
     /// Sets the content factory, or clears it if null. Existing content is unchanged.
     public void setNodeSupplier(@Nullable Supplier<? extends @Nullable T> nodeSupplier) {
         this.nodeSupplier = nodeSupplier;
-    }
-
-    /// Returns the tab identifier, which may be null.
-    public @Nullable String getId() {
-        return id.get();
-    }
-
-    /// Returns the writable identifier property, whose value may be null.
-    public StringProperty idProperty() {
-        return id;
-    }
-
-    /// Sets the tab identifier, which may be null.
-    public void setId(@Nullable String id) {
-        this.id.set(id);
     }
 
     /// Returns the header text, which may be null.

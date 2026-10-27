@@ -48,11 +48,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TransitionPane transitionPane = new TransitionPane();
     private final TabHeader header = new TabHeader(transitionPane);
     /// The tab displaying information about this world.
-    private final TabItem<WorldInfoPage> worldInfoTab = new TabItem<>("worldInfoPage");
+    private final TabItem<WorldInfoPage> worldInfoTab = new TabItem<>();
     /// The tab for managing backups of this world.
-    private final TabItem<WorldBackupsPage> worldBackupsTab = new TabItem<>("worldBackupsPage");
+    private final TabItem<WorldBackupsPage> worldBackupsTab = new TabItem<>();
     /// The tab for managing data packs in this world.
-    private final TabItem<DataPackListPage> dataPackTab = new TabItem<>("dataPackListPage");
+    private final TabItem<DataPackListPage> dataPackTab = new TabItem<>();
 
     public WorldManagePage(World world, HMCLGameInstance gameInstance) {
         this.world = world;

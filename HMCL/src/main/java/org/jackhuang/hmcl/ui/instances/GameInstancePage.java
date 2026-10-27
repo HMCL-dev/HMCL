@@ -40,19 +40,19 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final TabHeader tab;
     /// The settings tab bound to the current game instance.
-    private final TabItem<GameSettingsPage<GameSettings.Instance>> gameSettingsTab = new TabItem<>("versionSettingsTab");
+    private final TabItem<GameSettingsPage<GameSettings.Instance>> gameSettingsTab = new TabItem<>();
     /// The component management tab bound to the current game instance.
-    private final TabItem<InstallerListPage> installerListTab = new TabItem<>("installerListTab");
+    private final TabItem<InstallerListPage> installerListTab = new TabItem<>();
     /// The installed mods tab bound to the current game instance.
-    private final TabItem<ModListPage> modListTab = new TabItem<>("modListTab");
+    private final TabItem<ModListPage> modListTab = new TabItem<>();
     /// The saved worlds tab bound to the current game instance.
-    private final TabItem<WorldListPage> worldListTab = new TabItem<>("worldList");
+    private final TabItem<WorldListPage> worldListTab = new TabItem<>();
     /// The schematics tab bound to the current game instance.
-    private final TabItem<SchematicsPage> schematicsTab = new TabItem<>("schematicsTab");
+    private final TabItem<SchematicsPage> schematicsTab = new TabItem<>();
     /// The installed resource packs tab bound to the current game instance.
-    private final TabItem<ResourcePackListPage> resourcePackTab = new TabItem<>("resourcePackTab");
+    private final TabItem<ResourcePackListPage> resourcePackTab = new TabItem<>();
     /// The screenshots tab bound to the current game instance.
-    private final TabItem<ScreenshotsPage> screenshotsTab = new TabItem<>("screenshotsTab");
+    private final TabItem<ScreenshotsPage> screenshotsTab = new TabItem<>();
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentInstanceUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<HMCLGameInstance.@Nullable Optional> instance =

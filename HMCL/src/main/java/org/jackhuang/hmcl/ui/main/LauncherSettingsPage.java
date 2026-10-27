@@ -24,21 +24,21 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("settings")));
     private final TabHeader tab;
     /// The tab for editing game settings presets.
-    private final TabItem<GameSettingsPage<GameSettings.Preset>> gameTab = new TabItem<>("versionSettingsPage");
+    private final TabItem<GameSettingsPage<GameSettings.Preset>> gameTab = new TabItem<>();
     /// The tab whose content manages installed Java runtimes.
-    private final TabItem<JavaManagementPage> javaManagementTab = new TabItem<>("javaManagementPage");
+    private final TabItem<JavaManagementPage> javaManagementTab = new TabItem<>();
     /// The tab for general launcher settings.
-    private final TabItem<SettingsPage> settingsTab = new TabItem<>("settingsPage");
+    private final TabItem<SettingsPage> settingsTab = new TabItem<>();
     /// The tab for launcher appearance settings.
-    private final TabItem<PersonalizationPage> personalizationTab = new TabItem<>("personalizationPage");
+    private final TabItem<PersonalizationPage> personalizationTab = new TabItem<>();
     /// The tab for download settings.
-    private final TabItem<DownloadSettingsPage> downloadTab = new TabItem<>("downloadSettingsPage");
+    private final TabItem<DownloadSettingsPage> downloadTab = new TabItem<>();
     /// The tab displaying launcher help.
-    private final TabItem<HelpPage> helpTab = new TabItem<>("helpPage");
+    private final TabItem<HelpPage> helpTab = new TabItem<>();
     /// The tab displaying launcher information.
-    private final TabItem<AboutPage> aboutTab = new TabItem<>("aboutPage");
+    private final TabItem<AboutPage> aboutTab = new TabItem<>();
     /// The tab displaying feedback and contact information.
-    private final TabItem<FeedbackPage> feedbackTab = new TabItem<>("feedbackPage");
+    private final TabItem<FeedbackPage> feedbackTab = new TabItem<>();
     private final TransitionPane transitionPane = new TransitionPane();
 
     public LauncherSettingsPage() {

@@ -67,17 +67,17 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
     private final TabHeader tab;
     /// The tab for choosing a game version to install.
-    private final TabItem<VersionsPage> newGameTab = new TabItem<>("newGameTab");
+    private final TabItem<VersionsPage> newGameTab = new TabItem<>();
     /// The tab for browsing downloadable mods.
-    private final TabItem<DownloadListPage> modTab = new TabItem<>("modTab");
+    private final TabItem<DownloadListPage> modTab = new TabItem<>();
     /// The tab for browsing and importing modpacks.
-    private final TabItem<DownloadListPage> modpackTab = new TabItem<>("modpackTab");
+    private final TabItem<DownloadListPage> modpackTab = new TabItem<>();
     /// The tab for browsing downloadable resource packs.
-    private final TabItem<DownloadListPage> resourcePackTab = new TabItem<>("resourcePackTab");
+    private final TabItem<DownloadListPage> resourcePackTab = new TabItem<>();
     /// The tab for browsing downloadable shader packs.
-    private final TabItem<DownloadListPage> shaderTab = new TabItem<>("shaderTab");
+    private final TabItem<DownloadListPage> shaderTab = new TabItem<>();
     /// The tab for browsing downloadable worlds.
-    private final TabItem<DownloadListPage> worldTab = new TabItem<>("worldTab");
+    private final TabItem<DownloadListPage> worldTab = new TabItem<>();
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
 
