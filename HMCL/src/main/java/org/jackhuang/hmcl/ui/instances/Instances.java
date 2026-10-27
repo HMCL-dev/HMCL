@@ -110,7 +110,7 @@ public final class Instances {
                 }).executor();
         pane.setExecutor(executor);
         Controllers.dialog(pane);
-        executor.start();
+        pane.startExecutor();
     }
 
     public static void deleteInstance(HMCLGameInstance gameInstance) {
@@ -271,14 +271,15 @@ public final class Instances {
         Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(gameInstance.getRepository(), gameInstance.getId()));
     }
 
+    /// Queues an asset check with a fresh asset index for the supplied instance.
+    /// The progress dialog does not permit cancellation.
     public static void updateGameAssets(HMCLGameInstance gameInstance) {
         TaskExecutor executor = new GameAssetDownloadTask(
                 gameInstance.getRepository().getDependency(),
                 gameInstance.getResolvedManifest(),
                 GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY,
                 true).executor();
-        Controllers.taskDialog(executor, i18n("instance.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL);
-        executor.start();
+        Controllers.taskDialog(executor, i18n("instance.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL).startExecutor();
     }
 
     public static void cleanInstance(HMCLGameInstance gameInstance) {

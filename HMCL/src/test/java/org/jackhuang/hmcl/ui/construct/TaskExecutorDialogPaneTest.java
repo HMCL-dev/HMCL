@@ -32,8 +32,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -263,6 +266,55 @@ final class TaskExecutorDialogPaneTest {
         });
         assertEquals(1, executions.get());
         assertNull(executor.getException());
+    }
+
+    /// Verifies hiding or restoring a queued dialog cannot start it ahead of background work.
+    @Test
+    void queuedDialogCanBeHiddenAndRestored() throws Exception {
+        CountDownLatch release = new CountDownLatch(1);
+        AtomicInteger executions = new AtomicInteger();
+        List<CompletableFuture<Boolean>> completions = new ArrayList<>();
+        try {
+            onFxThread(() -> {
+                Field field = Controllers.class.getDeclaredField("decorator");
+                field.setAccessible(true);
+                @Nullable Object previous = field.get(null);
+                Decorator decorator = new Decorator(new StackPane(), stage -> { });
+                new Scene(decorator.getRoot());
+                field.set(null, decorator);
+                TaskExecutorDialogPane first = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+                TaskExecutorDialogPane second = new TaskExecutorDialogPane(TaskCancellationAction.NORMAL);
+                try {
+                    first.setExecutor(Task.runAsync(() -> assertTrue(release.await(10, TimeUnit.SECONDS))).executor());
+                    Controllers.dialog(first);
+                    completions.add(first.startExecutor());
+                    first.background();
+                    second.setExecutor(Task.runAsync(executions::incrementAndGet).executor());
+                    Controllers.dialog(second);
+                    completions.add(second.startExecutor());
+                    assertTrue(second.queuedProperty().get());
+                    second.background();
+                    assertFalse(DialogUtils.isShowing(second));
+                    second.restore();
+                    second.restore();
+                    assertTrue(DialogUtils.isShowing(second));
+                    assertTrue(second.queuedProperty().get());
+                    assertEquals(0, executions.get());
+                } finally {
+                    DialogUtils.close(first);
+                    DialogUtils.close(second);
+                    first.setExecutor(null);
+                    second.setExecutor(null);
+                    field.set(null, previous);
+                }
+                return true;
+            });
+        } finally {
+            release.countDown();
+        }
+        for (CompletableFuture<Boolean> completion : completions)
+            assertTrue(completion.get(10, TimeUnit.SECONDS));
+        assertEquals(1, executions.get());
     }
 
     /// Verifies both successful and failed completion remove hidden tasks from the list.

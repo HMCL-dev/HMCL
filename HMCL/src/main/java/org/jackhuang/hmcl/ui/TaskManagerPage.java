@@ -173,7 +173,10 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
                     actionTooltip.setText(action.text());
                 } else {
                     actionButton.getStyleClass().add("toggle-icon4");
-                    if (statusIcon.getChildren().isEmpty() || !(statusIcon.getChildren().get(0) instanceof JFXSpinner)) {
+                    if (pane.queuedProperty().get()) {
+                        statusIcon.getChildren().setAll(SVG.PENDING.createIcon(24));
+                        content.setSubtitle(i18n("task.queued"));
+                    } else if (statusIcon.getChildren().isEmpty() || !(statusIcon.getChildren().get(0) instanceof JFXSpinner)) {
                         JFXSpinner spinner = new JFXSpinner();
                         spinner.setRadius(12);
                         statusIcon.getChildren().setAll(spinner);

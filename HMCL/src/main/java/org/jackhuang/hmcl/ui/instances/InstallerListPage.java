@@ -160,8 +160,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
                 });
             }
         });
-        Controllers.taskDialog(executor, i18n("install.installer.install_offline"), TaskCancellationAction.NO_CANCEL);
-        executor.start();
+        Controllers.taskDialog(executor, i18n("install.installer.install_offline"), TaskCancellationAction.NO_CANCEL).startExecutor();
     }
 
     private class InstallerListPageSkin extends ToolbarListPageSkin<InstallerItem, InstallerListPage> {

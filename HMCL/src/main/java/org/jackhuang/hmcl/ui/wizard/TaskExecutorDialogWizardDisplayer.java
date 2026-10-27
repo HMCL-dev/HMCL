@@ -107,7 +107,7 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
             });
             pane.setExecutor(executor);
             Controllers.dialog(pane);
-            executor.start();
+            pane.startExecutor();
         });
     }
 }

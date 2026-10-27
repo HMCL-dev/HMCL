@@ -658,13 +658,25 @@ public final class Controllers {
         return pane;
     }
 
-    /// Creates a pane using [#taskDialog(TaskExecutor, String, TaskCancellationAction)], then starts the task's executor.
+    /// Creates a task dialog and submits its executor to the serial business-task queue.
     ///
-    /// Starts the executor even if the pane cannot be shown, and returns the pane.
+    /// Submits the executor even if the pane cannot be shown, and returns the pane.
     public static TaskExecutorDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel) {
+        return taskDialog(task, title, onCancel, null);
+    }
+
+    /// Creates and submits a task dialog, optionally as a required child of an executing task.
+    ///
+    /// @param task the task to execute
+    /// @param title the dialog title, or `null`
+    /// @param onCancel the cancellation action
+    /// @param parent the executing parent dialog, or `null` to queue an independent operation
+    /// @return the submitted task dialog
+    public static TaskExecutorDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel,
+                                                  @Nullable TaskExecutorDialogPane parent) {
         TaskExecutor executor = task.executor();
         TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
-        executor.start();
+        pane.startExecutor(parent);
         return pane;
     }
 

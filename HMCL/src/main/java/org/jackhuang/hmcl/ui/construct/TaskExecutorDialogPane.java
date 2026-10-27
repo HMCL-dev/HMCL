@@ -26,6 +26,8 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -48,7 +50,11 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
     private @Nullable Runnable onBackground;
     /// Whether the current executor has started and has not yet reported completion.
     private boolean running;
-    /// Whether the active task has been explicitly sent to the background.
+    /// Whether this executor has been submitted and is waiting for an execution slot.
+    private final ReadOnlyBooleanWrapper queued = new ReadOnlyBooleanWrapper(this, "queued");
+    /// The current submission's completion future, retained to prevent duplicate starts.
+    private @Nullable CompletableFuture<Boolean> submission;
+    /// Whether the active or queued task has been explicitly sent to the background.
     private final ReadOnlyBooleanWrapper runningInBackground = new ReadOnlyBooleanWrapper(this, "runningInBackground");
     /// The next step retained for explicit activation after a background task completes.
     private final ReadOnlyObjectWrapper<@Nullable PendingAction> pendingAction = new ReadOnlyObjectWrapper<>(this, "pendingAction");
@@ -120,7 +126,7 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
 
         btnCancel.setOnAction(e -> {
             @Nullable TaskCancellationAction action = onCancel;
-            if (!running || action == null || !action.isEnabled())
+            if ((!running && !queued.get()) || action == null || !action.isEnabled())
                 return;
             if (executor != null && !executor.isCancelled())
                 executor.cancel();
@@ -130,20 +136,23 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
 
         speedEventHandler = FetchTask.SPEED_EVENT.registerWeak(speedEvent -> {
             String message = I18n.formatSpeed(speedEvent.getSpeed());
-            Platform.runLater(() -> lblProgress.setText(message));
+            Platform.runLater(() -> {
+                if (!queued.get())
+                    lblProgress.setText(message);
+            });
         });
 
         onEscPressed(this, btnCancel::fire);
     }
 
-    /// Attaches an executor before it starts and closes the dialog when it stops.
+    /// Attaches an executor before submitting it with [#startExecutor()] and closes the dialog when it stops.
     ///
     /// @param executor the executor to display, or `null` to detach the current executor
     public void setExecutor(@Nullable TaskExecutor executor) {
         setExecutor(executor, true);
     }
 
-    /// Attaches an executor before it starts and tracks it until it stops.
+    /// Attaches an executor before submitting it with [#startExecutor()] and tracks it until it stops.
     ///
     /// Reattaching the same executor has no effect. Replacing an executor removes the
     /// previous dialog entry without cancelling that executor. Detaching does not close
@@ -158,6 +167,8 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
             return;
         TaskManager.getInstance().unregister(this);
         this.executor = executor;
+        submission = null;
+        queued.set(false);
         pendingAction.set(null);
         running = false;
         runningInBackground.set(false);
@@ -174,6 +185,8 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
                         if (TaskExecutorDialogPane.this.executor != executor)
                             return;
                         running = true;
+                        queued.set(false);
+                        lblProgress.setText("");
                         TaskManager.getInstance().register(TaskExecutorDialogPane.this);
                         updateButtons();
                     });
@@ -206,12 +219,53 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
         }
     }
 
-    /// Hides an active dialog without invoking cancellation or changing execution.
+    /// Submits this dialog's executor to the serial task queue, once per attached executor.
+    ///
+    /// @return completion after execution and stop-listener cleanup
+    public CompletableFuture<Boolean> startExecutor() {
+        return startExecutor(null);
+    }
+
+    /// Submits this executor, optionally sharing an executing parent's exclusive slot.
+    /// Only a required child of the parent's business operation may share its slot.
+    /// Must be called on the JavaFX thread after all executor listeners are installed.
+    ///
+    /// @param parent the executing parent dialog, or `null` to queue an independent task
+    /// @return completion after execution and stop-listener cleanup
+    /// @throws IllegalStateException if this dialog has no executor
+    public CompletableFuture<Boolean> startExecutor(@Nullable TaskExecutorDialogPane parent) {
+        FXUtils.checkFxUserThread();
+        if (submission != null)
+            return submission;
+        if (executor == null)
+            throw new IllegalStateException("No executor is attached");
+        @Nullable TaskExecutor parentExecutor = parent == null ? null : Objects.requireNonNull(parent.executor, "parent executor");
+        queued.set(true);
+        lblProgress.setText(i18n("task.queued"));
+        TaskManager.getInstance().register(this);
+        updateButtons();
+        submission = TaskManager.getInstance().submit(executor, parentExecutor);
+        return submission;
+    }
+
+    /// Returns whether this dialog's submitted executor is waiting for its execution slot.
+    public ReadOnlyBooleanProperty queuedProperty() {
+        return queued.getReadOnlyProperty();
+    }
+
+    /// Returns whether this dialog has a running executor that has not requested cancellation.
+    /// Required child workflows should check this on the JavaFX thread before opening their dialogs.
+    public boolean canStartChild() {
+        FXUtils.checkFxUserThread();
+        return running && executor != null && !executor.isCancelled();
+    }
+
+    /// Hides an active or queued dialog without invoking cancellation or changing execution.
     ///
     /// Has no effect if execution has stopped or the dialog is already hidden.
     public void background() {
         FXUtils.checkFxUserThread();
-        if (!running || !DialogUtils.isShowing(this))
+        if ((!running && !queued.get()) || !DialogUtils.isShowing(this))
             return;
         runningInBackground.set(true);
         DialogUtils.close(this);
@@ -221,12 +275,12 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
             action.run();
     }
 
-    /// Restores an active dialog through the main window without restarting execution.
+    /// Restores an active or queued dialog through the main window without restarting execution.
     ///
     /// Has no effect if execution has stopped or the dialog is already in the dialog stack.
     public void restore() {
         FXUtils.checkFxUserThread();
-        if (running && !DialogUtils.isShowing(this))
+        if ((running || queued.get()) && !DialogUtils.isShowing(this))
             Controllers.dialog(this);
     }
 
@@ -275,7 +329,7 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
     public record PendingAction(String text, String description, Runnable action) {
     }
 
-    /// Returns a read-only property indicating whether the active task was sent to the background
+    /// Returns a read-only property indicating whether the active or queued task was sent to the background
     /// and has not been shown again.
     ///
     /// The value becomes false when execution stops or the executor is detached or replaced.
@@ -299,8 +353,8 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
 
     /// Updates action availability from the current execution and cancellation state.
     private void updateButtons() {
-        btnBackground.setDisable(!running);
-        btnCancel.setDisable(!running || onCancel == null || !onCancel.isEnabled()
+        btnBackground.setDisable(!running && !queued.get());
+        btnCancel.setDisable((!running && !queued.get()) || onCancel == null || !onCancel.isEnabled()
                 || executor == null || executor.isCancelled());
     }
 
