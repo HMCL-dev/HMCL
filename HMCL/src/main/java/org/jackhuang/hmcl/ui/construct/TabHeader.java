@@ -111,10 +111,8 @@ public class TabHeader extends Control implements PageAware {
     @Override
     public void onPageShown() {
         @Nullable TabItem<?> tab = getSelectionModel().getSelectedItem();
-        if (tab != null) {
-            if (tab.getNode() instanceof PageAware) {
-                ((PageAware) tab.getNode()).onPageShown();
-            }
+        if (tab != null && tab.getNode() instanceof PageAware pageAware) {
+            pageAware.onPageShown();
         }
     }
 
@@ -122,10 +120,8 @@ public class TabHeader extends Control implements PageAware {
     @Override
     public void onPageHidden() {
         @Nullable TabItem<?> tab = getSelectionModel().getSelectedItem();
-        if (tab != null) {
-            if (tab.getNode() instanceof PageAware) {
-                ((PageAware) tab.getNode()).onPageHidden();
-            }
+        if (tab != null && tab.getNode() instanceof PageAware pageAware) {
+            pageAware.onPageHidden();
         }
     }
 
