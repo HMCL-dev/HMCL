@@ -251,8 +251,7 @@ public class TabHeader extends Control implements PageAware {
         /// Returns the current number of tabs in the header.
         @Override
         protected int getItemCount() {
-            final ObservableList<TabItem<?>> items = getTabs();
-            return items.size();
+            return getTabs().size();
         }
 
         /// Select the tab near a removed position, searching left before right at each distance.
