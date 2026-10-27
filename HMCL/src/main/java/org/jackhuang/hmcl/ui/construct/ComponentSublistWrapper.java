@@ -11,6 +11,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Rectangle;
@@ -34,8 +35,10 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
     private boolean expanded = false;
     private boolean heightTransitionPending = false;
 
+    /// Creates an expandable row whose background corners also clip its header and expanded content.
     ComponentSublistWrapper(ComponentSublist sublist) {
         this.getStyleClass().add("options-sublist-wrapper");
+        backgroundProperty().addListener(observable -> ComponentList.updateRowClip(this));
 
         Node expandIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(20);
         expandIcon.getStyleClass().add("expand-icon");
@@ -169,6 +172,14 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
         updateObservedContentNodes(sublist);
 
         this.getChildren().add(header);
+    }
+
+    /// Keeps the outer clip aligned with the row during layout and expand/collapse transitions.
+    @Override
+    public void resize(double width, double height) {
+        super.resize(width, height);
+        if (getClip() instanceof Region clip)
+            clip.resize(width, height);
     }
 
     /// Keeps dynamic child layout changes reflected in the expanded container height.
