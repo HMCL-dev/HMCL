@@ -35,11 +35,6 @@ public final class TabItem<T extends Node> {
         return nodeSupplier;
     }
 
-    /// Sets the content factory, or clears it if null. Existing content is unchanged.
-    public void setNodeSupplier(@Nullable Supplier<? extends @Nullable T> nodeSupplier) {
-        this.nodeSupplier = nodeSupplier;
-    }
-
     /// Returns the header text, which may be null.
     public @Nullable String getText() {
         return text.get();

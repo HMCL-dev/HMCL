@@ -25,33 +25,41 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
     /// Manages tab selection and content transitions independently of the sidebar.
     private final TabController tabController;
     /// The tab for editing game settings presets.
-    private final TabItem<GameSettingsPage<GameSettings.Preset>> gameTab = new TabItem<>();
+    private final TabItem<GameSettingsPage<GameSettings.Preset>> gameTab;
     /// The tab whose content manages installed Java runtimes.
-    private final TabItem<JavaManagementPage> javaManagementTab = new TabItem<>();
+    private final TabItem<JavaManagementPage> javaManagementTab;
     /// The tab for general launcher settings.
-    private final TabItem<SettingsPage> settingsTab = new TabItem<>();
+    private final TabItem<SettingsPage> settingsTab;
     /// The tab for launcher appearance settings.
-    private final TabItem<PersonalizationPage> personalizationTab = new TabItem<>();
+    private final TabItem<PersonalizationPage> personalizationTab;
     /// The tab for download settings.
-    private final TabItem<DownloadSettingsPage> downloadTab = new TabItem<>();
+    private final TabItem<DownloadSettingsPage> downloadTab;
     /// The tab displaying launcher help.
-    private final TabItem<HelpPage> helpTab = new TabItem<>();
+    private final TabItem<HelpPage> helpTab;
     /// The tab displaying launcher information.
-    private final TabItem<AboutPage> aboutTab = new TabItem<>();
+    private final TabItem<AboutPage> aboutTab;
     /// The tab displaying feedback and contact information.
-    private final TabItem<FeedbackPage> feedbackTab = new TabItem<>();
+    private final TabItem<FeedbackPage> feedbackTab;
     private final TransitionPane transitionPane = new TransitionPane();
 
     public LauncherSettingsPage() {
-        gameTab.setNodeSupplier(() -> new GameSettingsPage<>(GameSettings.Preset.class, null));
-        javaManagementTab.setNodeSupplier(JavaManagementPage::new);
-        settingsTab.setNodeSupplier(SettingsPage::new);
-        personalizationTab.setNodeSupplier(PersonalizationPage::new);
-        downloadTab.setNodeSupplier(DownloadSettingsPage::new);
-        helpTab.setNodeSupplier(HelpPage::new);
-        feedbackTab.setNodeSupplier(FeedbackPage::new);
-        aboutTab.setNodeSupplier(AboutPage::new);
-        tabController = new TabController(transitionPane, gameTab, javaManagementTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, aboutTab);
+        gameTab = new TabItem<>(() -> new GameSettingsPage<>(GameSettings.Preset.class, null));
+        javaManagementTab = new TabItem<>(JavaManagementPage::new);
+        settingsTab = new TabItem<>(SettingsPage::new);
+        personalizationTab = new TabItem<>(PersonalizationPage::new);
+        downloadTab = new TabItem<>(DownloadSettingsPage::new);
+        helpTab = new TabItem<>(HelpPage::new);
+        feedbackTab = new TabItem<>(FeedbackPage::new);
+        aboutTab = new TabItem<>(AboutPage::new);
+        tabController = new TabController(transitionPane,
+                gameTab,
+                javaManagementTab,
+                settingsTab,
+                personalizationTab,
+                downloadTab,
+                helpTab,
+                feedbackTab,
+                aboutTab);
 
         tabController.select(gameTab);
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> gameTab.getNode().loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository())));

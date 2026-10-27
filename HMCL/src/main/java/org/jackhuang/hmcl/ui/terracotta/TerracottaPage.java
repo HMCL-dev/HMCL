@@ -39,14 +39,14 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
     /// Manages tab selection and content transitions independently of the sidebar.
     private final TabController tabController;
     /// The tab displaying the Terracotta controller page.
-    private final TabItem<TerracottaControllerPage> statusPage = new TabItem<>();
+    private final TabItem<TerracottaControllerPage> statusPage;
     private final TransitionPane transitionPane = new TransitionPane();
 
     @SuppressWarnings("unused")
     private @Nullable ChangeListener<@Nullable HMCLGameInstance> instanceChangeListenerHolder;
 
     public TerracottaPage() {
-        statusPage.setNodeSupplier(TerracottaControllerPage::new);
+        statusPage = new TabItem<>(TerracottaControllerPage::new);
         tabController = new TabController(transitionPane, statusPage);
         tabController.select(statusPage);
 
