@@ -86,7 +86,7 @@ final class InteractionLayerTest {
         });
     }
 
-    /// Reversing a partial fade preserves its value and reaches exact endpoints.
+    /// Hover fades are linear over 100 ms, remain continuous when reversed, and stop at exact endpoints.
     @Test
     void stateTransitionsRemainContinuousAndStop() {
         runFx(() -> {
@@ -96,20 +96,34 @@ final class InteractionLayerTest {
             layer.setHovered(true, clock.get());
             advance(layer, clock, 80);
             double entered = layer.stateOpacity();
-            assertTrue(entered > 0 && entered < 0.08);
+            assertEquals(0.064, entered, 1e-12);
             layer.setHovered(false, clock.get());
             assertEquals(entered, layer.stateOpacity());
             advance(layer, clock, 80);
             double exited = layer.stateOpacity();
-            assertTrue(exited > 0 && exited < entered);
+            assertEquals(0.0128, exited, 1e-12);
             layer.setHovered(true, clock.get());
             assertEquals(exited, layer.stateOpacity());
-            advance(layer, clock, 200);
+            advance(layer, clock, 50);
+            assertEquals((exited + 0.08) / 2, layer.stateOpacity(), 1e-12);
+            assertTrue(layer.isAnimating());
+            advance(layer, clock, 50);
             assertEquals(0.08, layer.stateOpacity());
             assertFalse(layer.isAnimating());
             layer.setHovered(false, clock.get());
-            advance(layer, clock, 200);
+            advance(layer, clock, 50);
+            assertEquals(0.04, layer.stateOpacity(), 1e-12);
+            assertTrue(layer.isAnimating());
+            advance(layer, clock, 50);
             assertEquals(0, layer.stateOpacity());
+            assertFalse(layer.isAnimating());
+
+            layer.setFocusActive(true, clock.get());
+            advance(layer, clock, 100);
+            assertTrue(layer.stateOpacity() > 0 && layer.stateOpacity() < 0.10);
+            assertTrue(layer.isAnimating());
+            advance(layer, clock, 100);
+            assertEquals(0.10, layer.stateOpacity());
             assertFalse(layer.isAnimating());
         });
     }

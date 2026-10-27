@@ -49,7 +49,10 @@ public final class InteractionLayer extends Region {
     /// The pressed waveform or static press opacity from Material 3 StateTokens v0_210.
     private static final double PRESSED_OPACITY = 0.10;
 
-    /// The duration of state changes and ripple release, in nanoseconds.
+    /// The duration of transitions within the hover opacity range, in nanoseconds.
+    private static final long HOVER_DURATION = (long) (Motion.SHORT2.toMillis() * 1_000_000);
+
+    /// The duration of other state changes and ripple release, in nanoseconds.
     private static final long STATE_DURATION = (long) (Motion.SHORT4.toMillis() * 1_000_000);
 
     /// The duration of ripple expansion while held, in nanoseconds.
@@ -338,10 +341,10 @@ public final class InteractionLayer extends Region {
     /// Advances logical animation state without publishing intermediate visual changes.
     private void updateAnimations(long now) {
         if (transitioning) {
-            double progress = fraction(now - stateStart, STATE_DURATION);
             // Hover-only fades use a uniform opacity change in both directions.
-            Interpolator interpolator = startOpacity <= HOVER_OPACITY && targetOpacity <= HOVER_OPACITY
-                    ? Interpolator.LINEAR : Motion.STANDARD;
+            boolean hoverOnly = startOpacity <= HOVER_OPACITY && targetOpacity <= HOVER_OPACITY;
+            double progress = fraction(now - stateStart, hoverOnly ? HOVER_DURATION : STATE_DURATION);
+            Interpolator interpolator = hoverOnly ? Interpolator.LINEAR : Motion.STANDARD;
             stateOpacity = progress == 0 ? startOpacity : progress == 1 ? targetOpacity
                     : interpolator.interpolate(startOpacity, targetOpacity, progress);
             transitioning = progress < 1;
