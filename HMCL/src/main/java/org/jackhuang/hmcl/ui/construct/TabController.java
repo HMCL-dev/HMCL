@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -24,10 +25,9 @@ import java.util.Objects;
 public final class TabController implements PageAware {
     /// The optional destination for selected tab content.
     private final @Nullable TransitionPane contentPane;
+
     /// The mutable tabs in display order.
     private final ObservableList<TabItem<?>> tabs = FXCollections.observableArrayList();
-    /// The selected tab, or null when no tab is selected.
-    private final ReadOnlyObjectWrapper<@Nullable TabItem<?>> selectedTab = new ReadOnlyObjectWrapper<>(this, "selectedTab");
 
     /// Creates a controller with the supplied tabs and no content destination.
     ///
@@ -59,15 +59,18 @@ public final class TabController implements PageAware {
         return tabs;
     }
 
+    /// The selected tab, or null when no tab is selected.
+    private final ObjectProperty<@Nullable TabItem<?>> selectedTab = new SimpleObjectProperty<>(this, "selectedTab");
+
+    /// Returns the read-only selected tab property; use [#select(TabItem)] to activate a tab.
+    public ReadOnlyObjectProperty<@Nullable TabItem<?>> selectedTabProperty() {
+        return selectedTab;
+    }
+
     /// Returns the selected tab, or null when no tab is selected.
     /// A default selection does not imply that its content has been initialized.
     public @Nullable TabItem<?> getSelectedTab() {
         return selectedTab.get();
-    }
-
-    /// Returns the read-only selected tab property; use [#select(TabItem)] to activate a tab.
-    public ReadOnlyObjectProperty<@Nullable TabItem<?>> selectedTabProperty() {
-        return selectedTab.getReadOnlyProperty();
     }
 
     /// Selects the tab and animates content replacement when content is already displayed.
