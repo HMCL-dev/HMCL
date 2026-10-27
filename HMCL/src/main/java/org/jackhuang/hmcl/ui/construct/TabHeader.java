@@ -123,12 +123,14 @@ public class TabHeader extends Control implements PageAware {
         }
     }
 
-    private final ObjectProperty<Side> side = new SimpleObjectProperty<>(Side.TOP);
+    private @Nullable ObjectProperty<Side> side;
 
     /**
      * The position of the tabs.
      */
     public ObjectProperty<Side> sideProperty() {
+        if (side == null)
+            side = new SimpleObjectProperty<>(this, "side", Side.TOP);
         return side;
     }
 
@@ -136,14 +138,14 @@ public class TabHeader extends Control implements PageAware {
      * The position to place the tabs.
      */
     public Side getSide() {
-        return side.get();
+        return sideProperty().get();
     }
 
     /**
      * The position the place the tabs in this TabHeader.
      */
     public void setSide(Side side) {
-        this.side.set(side);
+        this.sideProperty().set(side);
     }
 
     @Override
