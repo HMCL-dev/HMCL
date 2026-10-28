@@ -79,7 +79,7 @@ final class LinuxCPUDetector {
         }
     }
 
-    /// Reads the package name, falling back to the machine device tree.
+    /// Reads the processor name, falling back to the machine device tree.
     private static void detectName(CentralProcessor.Builder builder, TreeMap<Integer, Map<String, String>> cpuInfo) {
         // assert !cpuInfo.isEmpty();
         Map<String, String> firstCore = cpuInfo.firstEntry().getValue();
@@ -287,7 +287,7 @@ final class LinuxCPUDetector {
         return List.copyOf(result);
     }
 
-    /// Detects online processor packages, or returns an empty list if procfs is unavailable.
+    /// Detects online processors, or returns an empty list if procfs is unavailable.
     static @Unmodifiable List<CentralProcessor> detect() {
         @Nullable TreeMap<Integer, Map<String, String>> cpuInfo = loadCPUInfo();
         if (cpuInfo == null)

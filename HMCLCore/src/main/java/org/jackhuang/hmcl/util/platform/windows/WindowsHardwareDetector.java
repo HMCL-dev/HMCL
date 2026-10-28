@@ -18,7 +18,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class WindowsHardwareDetector extends HardwareDetector {
 
-    /// Returns detected processor packages, or an empty list if unavailable.
+    /// Returns detected processors, or an empty list if unavailable.
     @Override
     public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
         return OperatingSystem.isWindows7OrLater() ? WindowsCPUDetector.detect() : List.of();

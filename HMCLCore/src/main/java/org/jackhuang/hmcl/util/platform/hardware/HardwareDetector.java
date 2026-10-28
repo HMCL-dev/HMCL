@@ -18,7 +18,7 @@ public class HardwareDetector {
     /// Controls external-process detection without disabling native platform queries.
     private static final boolean USE_FAST_FETCH = "true".equalsIgnoreCase(System.getProperty("hmcl.hardware.fastfetch", "true"));
 
-    /// Returns detected processor packages, or an empty list if unavailable.
+    /// Returns detected processors, or an empty list if unavailable.
     ///
     /// The default implementation runs Fastfetch when enabled.
     public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {

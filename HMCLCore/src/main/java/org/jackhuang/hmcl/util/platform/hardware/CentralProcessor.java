@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// Describes one processor package, or synthetic display information when detection is unavailable.
+/// Describes a processor, or synthetic display information when detection is unavailable.
 ///
 /// @author Glavo
 @NotNullByDefault
@@ -66,10 +66,10 @@ public final class CentralProcessor {
     /// The hardware vendor, or `null` if unknown.
     private final @Nullable HardwareVendor vendor;
 
-    /// The package's core counts, or `null` if unavailable.
+    /// The processor's core counts, or `null` if unavailable.
     private final @Nullable Cores cores;
 
-    /// Creates a snapshot of one processor package.
+    /// Creates a processor snapshot.
     private CentralProcessor(String name, @Nullable HardwareVendor vendor, @Nullable Cores cores) {
         this.name = name;
         this.vendor = vendor;
@@ -108,7 +108,7 @@ public final class CentralProcessor {
         return builder.toString();
     }
 
-    /// Positive physical and logical core totals for a processor package or synthetic display fallback.
+    /// Positive physical and logical core totals for a processor or synthetic display fallback.
     ///
     /// Performance and efficiency counts deliberately merge performance tiers to simplify display;
     /// they do not represent physical clusters. Unclassified physical cores are counted as performance cores.
@@ -132,7 +132,7 @@ public final class CentralProcessor {
         }
     }
 
-    /// Builds information for one processor package.
+    /// Builds processor information.
     public static final class Builder {
         /// The display name, or `null` if unset.
         private @Nullable String name;
@@ -140,7 +140,7 @@ public final class CentralProcessor {
         /// The hardware vendor, or `null` if unset.
         private @Nullable HardwareVendor vendor;
 
-        /// The package's core counts, or `null` if unset.
+        /// The processor's core counts, or `null` if unset.
         private @Nullable Cores cores;
 
         /// Creates a snapshot, using a vendor-based name or `Unknown` if no name was set.
@@ -173,12 +173,12 @@ public final class CentralProcessor {
             return this;
         }
 
-        /// Returns the package's core counts, or `null` if unset.
+        /// Returns the processor's core counts, or `null` if unset.
         public @Nullable Cores getCores() {
             return cores;
         }
 
-        /// Sets the package's core counts; `null` clears them. Returns this builder.
+        /// Sets the processor's core counts; `null` clears them. Returns this builder.
         public Builder setCores(@Nullable Cores cores) {
             this.cores = cores;
             return this;

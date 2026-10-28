@@ -42,7 +42,7 @@ public final class SystemInfo {
         /// The detected total physical memory size, in bytes.
         public static final long TOTAL_MEMORY = DETECTOR.getTotalMemorySize();
 
-        /// A nonempty immutable processor snapshot, with a synthetic fallback if detection returns no packages.
+        /// A nonempty immutable processor snapshot, with a synthetic fallback if detection returns no processors.
         public static final @Unmodifiable List<CentralProcessor> CENTRAL_PROCESSORS = withProcessorFallback(DETECTOR.detectCentralProcessors());
 
         /// The detected graphics cards, or `null` if unavailable.
@@ -127,7 +127,7 @@ public final class SystemInfo {
         return Long.max(0, totalMemorySize - getFreeMemorySize());
     }
 
-    /// Copies detected packages, or synthesizes an unknown processor using the JVM's available processor count.
+    /// Copies detected processors, or synthesizes an unknown processor using the JVM's available processor count.
     static @Unmodifiable List<CentralProcessor> withProcessorFallback(List<CentralProcessor> processors) {
         if (!processors.isEmpty())
             return List.copyOf(processors);
@@ -142,14 +142,14 @@ public final class SystemInfo {
     /// Returns a nonempty immutable list of processor snapshots in stable order.
     ///
     /// Sources without package topology may provide only the first processor identity.
-    /// If detection returns no packages, a synthetic `Unknown` processor with no vendor is supplied.
+    /// If detection returns no processors, a synthetic `Unknown` processor with no vendor is supplied.
     /// Its logical and performance counts both use [Runtime#availableProcessors()] for display;
     /// they do not establish the hardware's physical core count or package topology.
     public static @Unmodifiable List<CentralProcessor> getCentralProcessors() {
         return Holder.CENTRAL_PROCESSORS;
     }
 
-    /// Returns the first processor for CPU summaries, including the synthetic fallback if detection returns no packages.
+    /// Returns the first processor for CPU summaries, including the synthetic fallback if detection returns no processors.
     public static CentralProcessor getCentralProcessor() {
         return getCentralProcessors().get(0);
     }

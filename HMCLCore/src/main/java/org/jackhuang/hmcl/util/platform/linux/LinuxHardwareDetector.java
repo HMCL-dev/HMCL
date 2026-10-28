@@ -24,7 +24,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class LinuxHardwareDetector extends HardwareDetector {
 
-    /// Returns detected processor packages, or an empty list if unavailable.
+    /// Returns detected processors, or an empty list if unavailable.
     @Override
     public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)

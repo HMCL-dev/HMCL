@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import static org.jackhuang.hmcl.util.platform.hardware.CentralProcessor.cleanName;
 import static org.junit.jupiter.api.Assertions.*;
 
-/// Tests processor names and per-package core counts.
+/// Tests processor names and core counts.
 @NotNullByDefault
 public final class CentralProcessorTest {
 
@@ -57,9 +57,9 @@ public final class CentralProcessorTest {
         assertEquals("Loongson-3A6000", cleanName("Loongson-3A6000"));
     }
 
-    /// A builder produces independent package snapshots with their own identities and counts.
+    /// A builder produces independent processor snapshots with their own identities and counts.
     @Test
-    void testPackageSnapshots() {
+    void testProcessorSnapshots() {
         var builder = new CentralProcessor.Builder().setName("First CPU").setVendor(HardwareVendor.INTEL)
                 .setCores(new CentralProcessor.Cores(8, 2, 4));
         var first = builder.build();
