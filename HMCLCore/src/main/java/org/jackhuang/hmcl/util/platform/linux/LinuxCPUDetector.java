@@ -116,7 +116,7 @@ final class LinuxCPUDetector {
         return null;
     }
 
-    /// Reads the processor name and vendor, falling back to the machine device tree.
+    /// Reads the processor name and vendor, preferring the device tree on ARM and procfs elsewhere.
     private static void detectNameAndVendor(CentralProcessor.Builder builder, TreeMap<Integer, Map<String, String>> cpuInfo) {
         // assert !cpuInfo.isEmpty();
         Map<String, String> firstCore = cpuInfo.firstEntry().getValue();
@@ -129,57 +129,64 @@ final class LinuxCPUDetector {
         if (modelName == null)
             modelName = firstCore.get("cpu model");
 
+        // ARM's procfs model name may describe only the architecture, not the actual SoC.
+        if (modelName == null || Architecture.SYSTEM_ARCH.isArm()) {
+            for (Path compatiblePath : List.of(
+                    Path.of("/sys/firmware/devicetree/base/compatible"),
+                    Path.of("/proc/device-tree/compatible"))) {
+                try {
+                    if (!Files.isRegularFile(compatiblePath))
+                        continue;
+
+                    // device-vendor,device-model\0soc-vendor,soc-model\0
+                    String[] data = Files.readString(compatiblePath).split("\0");
+
+                    for (int i = data.length - 1; i >= 0; i--) {
+                        String device = data[i];
+                        int idx = device.indexOf(',');
+                        if (idx <= 0 || idx >= device.length() - 1)
+                            continue;
+
+                        String vendor = device.substring(0, idx);
+                        String model = device.substring(idx + 1);
+
+                        // Skip generic compatibles, following Fastfetch's detectSocName filtering:
+                        // https://github.com/fastfetch-cli/fastfetch/blob/2f68ce7f7467ddbaaf31519c1d41455781d48492/src/detection/cpu/cpu_linux.c#L981-L984
+                        if (model.startsWith("generic-") || model.endsWith("-platform") || model.endsWith("-soc"))
+                            continue;
+
+                        builder.setVendor(HardwareVendor.getKnown(vendor));
+                        if (builder.getVendor() == null)
+                            builder.setVendor(HardwareVendor.of(StringUtils.capitalizeFirst(vendor)));
+
+                        if (builder.getVendor() == HardwareVendor.APPLE) {
+                            builder.setName(appleCodeToName(model));
+
+                            if (builder.getName() == null)
+                                builder.setName("Apple Silicon " + model);
+                        } else if (builder.getVendor() == HardwareVendor.QUALCOMM) {
+                            builder.setName(detectQualcommName(model, data));
+                        } else if (builder.getVendor() == HardwareVendor.BROADCOM)
+                            // Raspberry Pi
+                            builder.setName("Broadcom " + model.toUpperCase(Locale.ROOT));
+
+                        if (builder.getName() == null)
+                            builder.setName(builder.getVendor() + " " + model.toUpperCase(Locale.ROOT));
+
+                        return;
+                    }
+                } catch (Throwable e) {
+                    LOG.warning("Failed to detect CPU name from " + compatiblePath, e);
+                }
+            }
+        }
+
         if (modelName != null) {
             builder.setName(CentralProcessor.cleanName(modelName));
             builder.setVendor(HardwareVendor.of(firstCore.get("vendor_id")));
 
             if (builder.getVendor() == null && modelName.startsWith("Loongson"))
                 builder.setVendor(HardwareVendor.LOONGSON);
-
-            return;
-        }
-
-        try {
-            Path compatiblePath = Path.of("/proc/device-tree/compatible");
-            if (Files.isRegularFile(compatiblePath)) {
-                // device-vendor,device-model\0soc-vendor,soc-model\0
-                String[] data = Files.readString(compatiblePath).split("\0");
-
-                for (int i = data.length - 1; i >= 0; i--) {
-                    String device = data[i];
-                    int idx = device.indexOf(',');
-                    if (idx <= 0 || idx >= device.length() - 1)
-                        continue;
-
-                    String vendor = device.substring(0, idx);
-                    String model = device.substring(idx + 1);
-
-                    if (model.startsWith("generic-"))
-                        continue;
-
-                    builder.setVendor(HardwareVendor.getKnown(vendor));
-                    if (builder.getVendor() == null)
-                        builder.setVendor(HardwareVendor.of(StringUtils.capitalizeFirst(vendor)));
-
-                    if (builder.getVendor() == HardwareVendor.APPLE) {
-                        builder.setName(appleCodeToName(model));
-
-                        if (builder.getName() == null)
-                            builder.setName("Apple Silicon " + model);
-                    } else if (builder.getVendor() == HardwareVendor.QUALCOMM) {
-                        builder.setName(detectQualcommName(model, data));
-                    } else if (builder.getVendor() == HardwareVendor.BROADCOM)
-                        // Raspberry Pi
-                        builder.setName("Broadcom " + model.toUpperCase(Locale.ROOT));
-
-                    if (builder.getName() == null)
-                        builder.setName(builder.getVendor() + " " + model.toUpperCase(Locale.ROOT));
-
-                    return;
-                }
-            }
-        } catch (Throwable e) {
-            LOG.warning("Failed to detect CPU name from /proc/device-tree/compatible", e);
         }
     }
 
