@@ -46,11 +46,16 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final BooleanProperty readOnly = new SimpleBooleanProperty(false);
 
     private final TransitionPane transitionPane = new TransitionPane();
-    private final TabHeader header = new TabHeader(transitionPane);
-    private final TabHeader.Tab<WorldInfoPage> worldInfoTab = new TabHeader.Tab<>("worldInfoPage");
-    private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
-    private final TabHeader.Tab<DataPackListPage> dataPackTab = new TabHeader.Tab<>("dataPackListPage");
-    private final TabControl.Tab<StructureListPage> structureTab = new TabControl.Tab<>("structureListPage");
+    /// Manages tab selection and content transitions independently of the sidebar.
+    private final TabController tabController = new TabController(transitionPane);
+    /// The tab displaying information about this world.
+    private final TabItem<WorldInfoPage> worldInfoTab;
+    /// The tab for managing backups of this world.
+    private final TabItem<WorldBackupsPage> worldBackupsTab;
+    /// The tab for managing data packs in this world.
+    private final TabItem<DataPackListPage> dataPackTab;
+    /// The tab for managing exported structure files in this world.
+    private final TabItem<StructureListPage> structureTab;
 
     public WorldManagePage(World world, HMCLGameInstance gameInstance) {
         this.world = world;
@@ -66,10 +71,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
         }
 
-        worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
-        worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
-        dataPackTab.setNodeSupplier(() -> new DataPackListPage(this));
-        structureTab.setNodeSupplier(() -> new StructureListPage(this));
+        this.worldInfoTab = new TabItem<>(() -> new WorldInfoPage(this));
+        this.worldBackupsTab = new TabItem<>(() -> new WorldBackupsPage(this));
+        this.dataPackTab = new TabItem<>(() -> new DataPackListPage(this));
+        this.structureTab = new TabItem<>(() -> new StructureListPage(this));
 
         this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
 
@@ -84,6 +89,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         return new Skin(this);
     }
 
+    /// Reloads world metadata and refreshes only tab pages whose content is already initialized.
     @Override
     public void refresh() {
         updateSessionLockChannel();
@@ -95,8 +101,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             return;
         }
 
-        for (var tab : header.getTabs()) {
-            if (tab.getNode() instanceof WorldRefreshable r) {
+        for (var tab : tabController.getTabs()) {
+            if (tab.isInitialized() && tab.getNode() instanceof WorldRefreshable r) {
                 r.refresh();
             }
         }
@@ -194,15 +200,15 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         private AdvancedListBox getTabBar() {
             AdvancedListBox tabBar = new AdvancedListBox();
             {
-                getSkinnable().header.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab);
-                getSkinnable().header.select(getSkinnable().worldInfoTab);
+                getSkinnable().tabController.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab);
+                getSkinnable().tabController.selectTab(getSkinnable().worldInfoTab);
 
-                tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
-                        .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
+                tabBar.addNavigationDrawerTab(getSkinnable().tabController, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
+                        .addNavigationDrawerTab(getSkinnable().tabController, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
                 if (getSkinnable().world.supportDataPacks()) {
-                    getSkinnable().header.getTabs().add(getSkinnable().dataPackTab);
-                    tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
+                    getSkinnable().tabController.getTabs().add(getSkinnable().dataPackTab);
+                    tabBar.addNavigationDrawerTab(getSkinnable().tabController, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
                 }
 
                 if (getSkinnable().world.supportStructures()) {
