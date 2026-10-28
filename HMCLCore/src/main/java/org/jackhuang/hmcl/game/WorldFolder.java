@@ -39,7 +39,6 @@ public final class WorldFolder extends World {
         reloadWorldData();
     }
 
-
     @Override
     public String getFileName() {
         return fileName;

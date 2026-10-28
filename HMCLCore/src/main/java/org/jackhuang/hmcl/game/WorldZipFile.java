@@ -79,7 +79,6 @@ public final class WorldZipFile extends World {
         return levelData;
     }
 
-
     @Override
     public @Nullable Image getIcon() {
         return icon;
