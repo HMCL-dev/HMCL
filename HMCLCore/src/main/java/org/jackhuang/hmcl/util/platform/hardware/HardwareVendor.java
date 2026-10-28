@@ -13,56 +13,81 @@ import java.util.Locale;
 /// @param name the vendor display name
 @NotNullByDefault
 public record HardwareVendor(String name) {
+
     /// The Intel vendor.
     public static final HardwareVendor INTEL = new HardwareVendor("Intel");
+
     /// The NVIDIA vendor.
     public static final HardwareVendor NVIDIA = new HardwareVendor("NVIDIA");
+
     /// The AMD vendor.
     public static final HardwareVendor AMD = new HardwareVendor("AMD");
+
     /// The Apple vendor.
     public static final HardwareVendor APPLE = new HardwareVendor("Apple");
+
     /// The ARM vendor.
     public static final HardwareVendor ARM = new HardwareVendor("ARM");
+
     /// The Qualcomm vendor.
     public static final HardwareVendor QUALCOMM = new HardwareVendor("Qualcomm");
+
     /// The MTK vendor.
     public static final HardwareVendor MTK = new HardwareVendor("MTK");
+
     /// The VMware vendor.
     public static final HardwareVendor VMWARE = new HardwareVendor("VMware");
+
     /// The Parallel vendor.
     public static final HardwareVendor PARALLEL = new HardwareVendor("Parallel");
+
     /// The Microsoft vendor.
     public static final HardwareVendor MICROSOFT = new HardwareVendor("Microsoft");
+
     /// The Moore Threads vendor.
     public static final HardwareVendor MOORE_THREADS = new HardwareVendor("Moore Threads");
+
     /// The Broadcom vendor.
     public static final HardwareVendor BROADCOM = new HardwareVendor("Broadcom");
+
     /// The Imagination vendor.
     public static final HardwareVendor IMG = new HardwareVendor("Imagination");
+
     /// The Loongson vendor.
     public static final HardwareVendor LOONGSON = new HardwareVendor("Loongson");
+
     /// The Jingjia Micro vendor.
     public static final HardwareVendor JINGJIA_MICRO = new HardwareVendor("Jingjia Micro");
+
     /// The Huawei vendor.
     public static final HardwareVendor HUAWEI = new HardwareVendor("Huawei");
+
     /// The Zhaoxin vendor.
     public static final HardwareVendor ZHAOXIN = new HardwareVendor("Zhaoxin");
+
     /// The Samsung vendor.
     public static final HardwareVendor SAMSUNG = new HardwareVendor("Samsung");
+
     /// The Marvell vendor.
     public static final HardwareVendor MARVELL = new HardwareVendor("Marvell");
+
     /// The Ampere vendor.
     public static final HardwareVendor AMPERE = new HardwareVendor("Ampere");
+
     /// The Rockchip vendor.
     public static final HardwareVendor ROCKCHIP = new HardwareVendor("Rockchip");
 
     // RISC-V
+
     /// The T-Head vendor.
     public static final HardwareVendor THEAD = new HardwareVendor("T-Head");
+
     /// The StarFive vendor.
     public static final HardwareVendor STARFIVE = new HardwareVendor("StarFive");
+
     /// The ESWIN vendor.
     public static final HardwareVendor ESWIN = new HardwareVendor("ESWIN");
+
     /// The SpacemiT vendor.
     public static final HardwareVendor SPACEMIT = new HardwareVendor("SpacemiT");
 

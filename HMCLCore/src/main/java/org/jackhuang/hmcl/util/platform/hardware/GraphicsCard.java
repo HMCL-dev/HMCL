@@ -48,14 +48,19 @@ public final class GraphicsCard {
 
     /// The display name.
     private final String name;
+
     /// The hardware vendor, or `null` if unset.
     private final @Nullable HardwareVendor vendor;
+
     /// The adapter type, or `null` if unset.
     private final @Nullable Type type;
+
     /// The driver name, or `null` if unset.
     private final @Nullable String driver;
+
     /// The driver version, or `null` if unset.
     private final @Nullable String driverVersion;
+
     /// The Vulkan driver file paths.
     private final @Unmodifiable List<Path> vulkanDriverFiles;
 
@@ -74,6 +79,7 @@ public final class GraphicsCard {
     }
 
     /// Returns whether this adapter was identified as a known virtual display adapter.
+    ///
     /// A false result also includes adapters whose classification is unknown;
     /// it does not establish that the adapter is physical.
     public boolean isVirtualDisplayAdapter() {
@@ -138,24 +144,32 @@ public final class GraphicsCard {
 
     /// Classifies an adapter as integrated or discrete.
     public enum Type {
+
         /// An integrated graphics adapter.
         Integrated,
+
         /// A discrete graphics adapter.
         Discrete
     }
 
     /// Builds graphics adapter information from optional detected metadata.
     public static final class Builder {
+
         /// The display name, or `null` if unset.
         private @Nullable String name;
+
         /// The hardware vendor, or `null` if unset.
         private @Nullable HardwareVendor vendor;
+
         /// The adapter type, or `null` if unset.
         private @Nullable Type type;
+
         /// The driver name, or `null` if unset.
         private @Nullable String driver;
+
         /// The driver version, or `null` if unset.
         private @Nullable String driverVersion;
+
         /// The Vulkan driver file paths, or `null` if unset.
         private @Nullable List<Path> vulkanDriverFiles;
 
@@ -163,6 +177,7 @@ public final class GraphicsCard {
         private boolean virtualDisplayAdapter;
 
         /// Creates an adapter, supplying a vendor-based or unknown name if no name was set.
+        ///
         /// Copies the Vulkan driver file list; its elements must be non-null.
         public GraphicsCard build() {
             @Nullable String name = this.name;
@@ -249,6 +264,7 @@ public final class GraphicsCard {
         }
 
         /// Sets the Vulkan driver file paths; `null` clears it. Returns this builder.
+        ///
         /// Retains the list without copying; [#build()] copies its current contents.
         public Builder setVulkanDriverFiles(@Nullable List<Path> files) {
             this.vulkanDriverFiles = files;

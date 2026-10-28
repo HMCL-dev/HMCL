@@ -13,16 +13,19 @@ import java.util.List;
 /// @author Glavo
 @NotNullByDefault
 public class HardwareDetector {
-    /// Whether the `hmcl.hardware.fastfetch` property enables Fastfetch detection; defaults to true.
+
+    /// Controls external-process detection without disabling native platform queries.
     private static final boolean USE_FAST_FETCH = "true".equalsIgnoreCase(System.getProperty("hmcl.hardware.fastfetch", "true"));
 
     /// Detects processor information, or returns `null` if unavailable.
+    ///
     /// The default implementation runs Fastfetch when enabled.
     public @Nullable CentralProcessor detectCentralProcessor() {
         return USE_FAST_FETCH ? FastFetchUtils.detectCentralProcessor() : null;
     }
 
     /// Detects graphics cards, or returns `null` if unavailable; an empty list reports no cards.
+    ///
     /// The default implementation runs Fastfetch when enabled.
     public @Nullable List<GraphicsCard> detectGraphicsCards() {
         return USE_FAST_FETCH ? FastFetchUtils.detectGraphicsCards() : null;

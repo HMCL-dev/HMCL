@@ -24,6 +24,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @author Glavo
 @NotNullByDefault
 final class FastFetchUtils {
+
     /// Prevents instantiation of this utility class.
     private FastFetchUtils() {
     }
@@ -130,6 +131,7 @@ final class FastFetchUtils {
     /// @param type the module name, or `null` if absent
     /// @param result the module payload, or `null` if absent
     private record Result<T>(@Nullable String type, @Nullable T result) {
+
         /// Returns the Gson type token for a response with the supplied payload type.
         @SuppressWarnings("unchecked")
         static <T> TypeToken<Result<T>> typeOf(TypeToken<T> type) {

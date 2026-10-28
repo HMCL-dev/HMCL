@@ -23,6 +23,7 @@ public final class SystemInfo {
 
     /// Lazily initializes the platform detector and cached hardware information.
     private static final class Holder {
+
         /// The hardware detector for the current operating system.
         public static final HardwareDetector DETECTOR;
 
@@ -39,8 +40,10 @@ public final class SystemInfo {
 
         /// The detected total physical memory size, in bytes.
         public static final long TOTAL_MEMORY = DETECTOR.getTotalMemorySize();
+
         /// The detected processor, or `null` if unavailable.
         public static final @Nullable CentralProcessor CENTRAL_PROCESSOR = DETECTOR.detectCentralProcessor();
+
         /// The detected graphics cards, or `null` if unavailable.
         public static final @Nullable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
     }
@@ -85,6 +88,7 @@ public final class SystemInfo {
     }
 
     /// Returns a snapshot using the cached total and currently available physical memory.
+    ///
     /// Returns [PhysicalMemoryStatus#INVALID] if the total is non-positive or available memory is negative.
     public static PhysicalMemoryStatus getPhysicalMemoryStatus() {
         long totalMemorySize = getTotalMemorySize();
@@ -101,12 +105,14 @@ public final class SystemInfo {
     }
 
     /// Queries the available physical memory in bytes, including reclaimable memory where supported.
+    ///
     /// Returns zero if detection is unsupported.
     public static long getFreeMemorySize() {
         return Holder.DETECTOR.getFreeMemorySize();
     }
 
     /// Returns the cached total minus the currently available physical memory, in bytes, clamped to zero.
+    ///
     /// Returns zero without querying available memory if the cached total is non-positive.
     public static long getUsedMemorySize() {
         long totalMemorySize = getTotalMemorySize();
@@ -122,6 +128,7 @@ public final class SystemInfo {
     }
 
     /// Returns the cached graphics card list, or `null` if detection produced no result.
+    ///
     /// An empty list means no cards were reported. The list is not copied; its mutability depends on the detector.
     public static @Nullable List<GraphicsCard> getGraphicsCards() {
         return Holder.GRAPHICS_CARDS;

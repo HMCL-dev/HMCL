@@ -62,8 +62,10 @@ public final class CentralProcessor {
 
     /// The display name.
     private final String name;
+
     /// The hardware vendor, or `null` if unset.
     private final @Nullable HardwareVendor vendor;
+
     /// The processor core counts, or `null` if unset.
     private final @Nullable Cores cores;
 
@@ -115,6 +117,7 @@ public final class CentralProcessor {
     /// @param logical the logical processor count
     /// @param packages the processor package count
     public record Cores(int physical, int logical, int packages) {
+
         /// Creates counts for one package, using the logical count as the physical count.
         public Cores(int logical) {
             this(logical, logical, 1);
@@ -129,10 +132,13 @@ public final class CentralProcessor {
 
     /// Builds processor information with optional vendor and core counts.
     public static final class Builder {
+
         /// The display name, or `null` if unset.
         private @Nullable String name;
+
         /// The hardware vendor, or `null` if unset.
         private @Nullable HardwareVendor vendor;
+
         /// The processor core counts, or `null` if unset.
         private @Nullable Cores cores;
 
