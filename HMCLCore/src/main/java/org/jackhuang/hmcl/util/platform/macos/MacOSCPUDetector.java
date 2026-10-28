@@ -78,31 +78,31 @@ final class MacOSCPUDetector {
         builder.setId(0);
         if (physical == 0)
             return List.of(builder.build());
-        int efficiency = 0;
-        long observedCores = 0;
-        int observedLevels = 0;
-        long observedThreads = 0;
-        int levels = count(values, "hw.nperflevels");
-        // Bound untrusted output and discard incomplete level data without losing the aggregate counts.
-        if (levels <= 64) {
-            for (int i = 0; i < levels; i++) {
-                String prefix = "hw.perflevel" + i + ".";
-                int cores = count(values, prefix + "physicalcpu");
-                int threads = count(values, prefix + "logicalcpu");
-                if (cores <= 0 || threads <= 0)
-                    continue;
-                String levelName = values.getOrDefault(prefix + "name", "");
-                if ("Efficiency".equalsIgnoreCase(levelName))
-                    efficiency += cores;
-                observedCores += cores;
-                observedLevels++;
-                observedThreads += threads;
-            }
-        }
-        if (observedLevels != levels || observedCores != physical || observedThreads != logical) {
-            efficiency = 0;
-        }
+        int efficiency = efficiencyCount(values, physical, logical);
         return List.of(builder.setCores(new CentralProcessor.Cores(logical, physical - efficiency, efficiency)).build());
+    }
+
+    /// Counts named efficiency cores only when all performance levels match the package totals.
+    private static int efficiencyCount(Map<String, String> values, int physical, int logical) {
+        int levels = count(values, "hw.nperflevels");
+        if (levels == 0 || levels > 64)
+            return 0;
+
+        long efficiency = 0;
+        long observedCores = 0;
+        long observedThreads = 0;
+        for (int i = 0; i < levels; i++) {
+            String prefix = "hw.perflevel" + i + ".";
+            int cores = count(values, prefix + "physicalcpu");
+            int threads = count(values, prefix + "logicalcpu");
+            if (cores == 0 || threads == 0)
+                return 0;
+            if ("Efficiency".equalsIgnoreCase(values.get(prefix + "name")))
+                efficiency += cores;
+            observedCores += cores;
+            observedThreads += threads;
+        }
+        return observedCores == physical && observedThreads == logical ? (int) efficiency : 0;
     }
 
     /// Prevents instantiation.

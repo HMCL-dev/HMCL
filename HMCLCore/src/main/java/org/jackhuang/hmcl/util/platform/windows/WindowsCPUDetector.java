@@ -63,7 +63,7 @@ final class WindowsCPUDetector {
                 int affinitySize = pointerSize + 8;
                 if (count == 0 || 32L + (long) count * affinitySize > size)
                     throw new IllegalArgumentException("Invalid processor affinity count");
-                Set<Integer> processors = new TreeSet<>();
+                Set<Integer> processors = new HashSet<>();
                 for (int i = 0; i < count; i++) {
                     long affinity = offset + 32L + (long) i * affinitySize;
                     long mask = pointerSize == 8 ? buffer.getLong(affinity) : Integer.toUnsignedLong(buffer.getInt(affinity));
@@ -102,13 +102,10 @@ final class WindowsCPUDetector {
                 throw new IllegalArgumentException("Incomplete package topology");
             int efficiency = 0;
             if (classes.size() > 1) {
-                for (var entry : classes.entrySet()) {
-                    int value = entry.getKey();
-                    // Merge upper ARM tiers and lower x86 tiers for a coarse P/E display.
-                    boolean isEfficiency = architecture.isX86() ? value < classes.lastKey() : value == classes.firstKey();
-                    if (isEfficiency)
-                        efficiency += entry.getValue();
-                }
+                // Merge upper ARM tiers and lower x86 tiers for a coarse P/E display.
+                efficiency = architecture.isX86()
+                        ? packageCores.size() - classes.lastEntry().getValue()
+                        : classes.firstEntry().getValue();
             }
             int first = Collections.min(pkg.processors);
             result.add(identities.apply(Collections.binarySearch(logicalIds, first)).setId(result.size())

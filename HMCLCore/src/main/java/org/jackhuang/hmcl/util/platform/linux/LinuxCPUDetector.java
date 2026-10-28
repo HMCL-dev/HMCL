@@ -197,12 +197,70 @@ final class LinuxCPUDetector {
     private record CoreData(boolean performance, boolean efficiency, @Nullable Integer capacity) {
     }
 
+    /// Counts one nonempty package, falling back to reported totals if per-core identities are incomplete.
+    private static CentralProcessor.@Nullable Cores detectCores(TreeMap<Integer, Map<String, String>> packageInfo,
+                                                              Set<Integer> onlineProcessors, Path cpuRoot,
+                                                              Set<Integer> performance, Set<Integer> efficiency, Architecture architecture) {
+        Map<Integer, @Unmodifiable Set<Integer>> siblingSets = new HashMap<>();
+        for (int id : packageInfo.keySet()) {
+            Path topology = cpuRoot.resolve("cpu" + id + "/topology");
+            @Unmodifiable Set<Integer> siblings = cpuList(read(topology.resolve("core_cpus_list")));
+            if (siblings.isEmpty())
+                siblings = cpuList(read(topology.resolve("thread_siblings_list")));
+            siblingSets.put(id, siblings);
+        }
+        // Use one identity scheme per package so a missing sibling file cannot double-count a core.
+        boolean useSiblings = siblingSets.entrySet().stream().allMatch(entry -> entry.getValue().contains(entry.getKey())
+                && entry.getValue().stream().filter(onlineProcessors::contains)
+                .allMatch(id -> entry.getValue().equals(siblingSets.get(id))));
+        Map<String, CoreData> cores = new LinkedHashMap<>();
+        for (var entry : packageInfo.entrySet()) {
+            int id = entry.getKey();
+            Path cpu = cpuRoot.resolve("cpu" + id);
+            String key;
+            if (useSiblings) {
+                key = "siblings:" + siblingSets.get(id);
+            } else {
+                @Nullable Integer coreId = number(read(cpu.resolve("topology/core_id")));
+                if (coreId == null)
+                    coreId = number(entry.getValue().get("core id"));
+                if (coreId == null) {
+                    // A package-wide count remains useful even when per-core identifiers are absent.
+                    @Nullable Integer physical = number(packageInfo.firstEntry().getValue().get("cpu cores"));
+                    return physical != null && physical > 0
+                            ? new CentralProcessor.Cores(packageInfo.size(), physical, 0) : null;
+                }
+                @Nullable Integer dieId = number(read(cpu.resolve("topology/die_id")));
+                key = "core:" + (dieId != null ? dieId : 0) + ":" + coreId;
+            }
+            boolean isPerformance = performance.contains(id) && !efficiency.contains(id);
+            boolean isEfficiency = efficiency.contains(id) && !performance.contains(id);
+            @Nullable Integer capacity = number(read(cpu.resolve("cpu_capacity")));
+            if (capacity != null && capacity == 0)
+                capacity = null;
+            // Conflicting sibling observations cannot establish a core's classification.
+            cores.merge(key, new CoreData(isPerformance, isEfficiency, capacity),
+                    (first, next) -> first.equals(next) ? first : new CoreData(false, false, null));
+        }
+        IntSummaryStatistics capacities = cores.values().stream().mapToInt(c -> c.capacity != null ? c.capacity : 0).summaryStatistics();
+        boolean classifyByCapacity = capacities.getMin() > 0 && capacities.getMin() < capacities.getMax();
+        int efficiencyCount = 0;
+        for (CoreData core : cores.values()) {
+            boolean isEfficiency = core.efficiency;
+            if (!core.performance && !isEfficiency && classifyByCapacity) {
+                // Merge upper ARM tiers and lower x86 tiers for a coarse P/E display.
+                isEfficiency = architecture.isX86() ? core.capacity < capacities.getMax() : core.capacity == capacities.getMin();
+            }
+            if (isEfficiency)
+                efficiencyCount++;
+        }
+        return new CentralProcessor.Cores(packageInfo.size(), cores.size() - efficiencyCount, efficiencyCount);
+    }
+
     /// Groups online logical processors by package, then by SMT sibling set or die/core identifiers.
     static @Unmodifiable List<CentralProcessor> detect(TreeMap<Integer, Map<String, String>> cpuInfo, Path cpuRoot, Path pmuRoot, Architecture architecture) {
-        CentralProcessor.Builder builder = new CentralProcessor.Builder();
         if (cpuInfo.isEmpty())
             return List.of();
-        detectName(builder, cpuInfo);
         Map<Integer, TreeMap<Integer, Map<String, String>>> packages = new TreeMap<>();
         for (var entry : cpuInfo.entrySet()) {
             @Nullable Integer packageId = number(read(cpuRoot.resolve("cpu" + entry.getKey() + "/topology/physical_package_id")));
@@ -210,6 +268,8 @@ final class LinuxCPUDetector {
                 packageId = number(entry.getValue().get("physical id"));
             if (packageId == null) {
                 // Without package boundaries, retain only the first reported identity.
+                CentralProcessor.Builder builder = new CentralProcessor.Builder();
+                detectName(builder, cpuInfo);
                 return List.of(builder.build());
             }
             packages.computeIfAbsent(packageId, ignored -> new TreeMap<>()).put(entry.getKey(), entry.getValue());
@@ -221,75 +281,7 @@ final class LinuxCPUDetector {
         for (var pkg : packages.entrySet()) {
             CentralProcessor.Builder identity = new CentralProcessor.Builder();
             detectName(identity, pkg.getValue());
-            Map<Integer, @Unmodifiable Set<Integer>> siblingSets = new HashMap<>();
-            for (int id : pkg.getValue().keySet()) {
-                Path topology = cpuRoot.resolve("cpu" + id + "/topology");
-                @Unmodifiable Set<Integer> siblings = cpuList(read(topology.resolve("core_cpus_list")));
-                if (siblings.isEmpty())
-                    siblings = cpuList(read(topology.resolve("thread_siblings_list")));
-                siblingSets.put(id, siblings);
-            }
-            // Use one identity scheme per package so a missing sibling file cannot double-count a core.
-            boolean useSiblings = siblingSets.entrySet().stream().allMatch(entry -> entry.getValue().contains(entry.getKey())
-                    && entry.getValue().stream().filter(cpuInfo::containsKey)
-                    .allMatch(id -> entry.getValue().equals(siblingSets.get(id))));
-            Map<String, CoreData> cores = new LinkedHashMap<>();
-            boolean complete = true;
-            for (var entry : pkg.getValue().entrySet()) {
-                int id = entry.getKey();
-                Path cpu = cpuRoot.resolve("cpu" + id);
-                String key;
-                if (useSiblings) {
-                    key = "siblings:" + siblingSets.get(id);
-                } else {
-                    @Nullable Integer coreId = number(read(cpu.resolve("topology/core_id")));
-                    if (coreId == null)
-                        coreId = number(entry.getValue().get("core id"));
-                    if (coreId == null) {
-                        complete = false;
-                        break;
-                    }
-                    @Nullable Integer dieId = number(read(cpu.resolve("topology/die_id")));
-                    key = "core:" + (dieId != null ? dieId : 0) + ":" + coreId;
-                }
-                boolean isPerformance = performance.contains(id) && !efficiency.contains(id);
-                boolean isEfficiency = efficiency.contains(id) && !performance.contains(id);
-                @Nullable Integer capacity = number(read(cpu.resolve("cpu_capacity")));
-                if (capacity != null && capacity == 0)
-                    capacity = null;
-                @Nullable CoreData core = cores.get(key);
-                if (core == null) {
-                    core = new CoreData(isPerformance, isEfficiency, capacity);
-                    cores.put(key, core);
-                } else if (core.performance != isPerformance || core.efficiency != isEfficiency || !Objects.equals(core.capacity, capacity)) {
-                    core = new CoreData(false, false, null);
-                    cores.put(key, core);
-                }
-            }
-            int efficiencyCount = 0;
-            int physical;
-            if (complete) {
-                boolean capacitiesKnown = cores.values().stream().allMatch(c -> c.capacity != null);
-                int min = capacitiesKnown ? cores.values().stream().mapToInt(c -> c.capacity).min().orElse(0) : 0;
-                int max = capacitiesKnown ? cores.values().stream().mapToInt(c -> c.capacity).max().orElse(0) : 0;
-                for (CoreData core : cores.values()) {
-                    boolean isEfficiency = core.efficiency;
-                    if (!core.performance && !isEfficiency && capacitiesKnown && min < max) {
-                        // Merge upper ARM tiers and lower x86 tiers for a coarse P/E display.
-                        isEfficiency = architecture.isX86() ? core.capacity < max : core.capacity == min;
-                    }
-                    if (isEfficiency)
-                        efficiencyCount++;
-                }
-                physical = cores.size();
-            } else {
-                // A package-wide count remains useful even when per-core identifiers are absent.
-                @Nullable Integer reported = number(pkg.getValue().firstEntry().getValue().get("cpu cores"));
-                physical = reported != null ? reported : 0;
-            }
-            identity.setId(pkg.getKey());
-            if (physical > 0)
-                identity.setCores(new CentralProcessor.Cores(pkg.getValue().size(), physical - efficiencyCount, efficiencyCount));
+            identity.setId(pkg.getKey()).setCores(detectCores(pkg.getValue(), cpuInfo.keySet(), cpuRoot, performance, efficiency, architecture));
             result.add(identity.build());
         }
         return List.copyOf(result);
@@ -298,7 +290,7 @@ final class LinuxCPUDetector {
     /// Detects online processor packages, or returns an empty list if procfs is unavailable.
     static @Unmodifiable List<CentralProcessor> detect() {
         @Nullable TreeMap<Integer, Map<String, String>> cpuInfo = loadCPUInfo();
-        if (cpuInfo == null || cpuInfo.isEmpty())
+        if (cpuInfo == null)
             return List.of();
         return detect(cpuInfo, Paths.get("/sys/devices/system/cpu"), Paths.get("/sys/bus/event_source/devices"), Architecture.SYSTEM_ARCH);
     }
