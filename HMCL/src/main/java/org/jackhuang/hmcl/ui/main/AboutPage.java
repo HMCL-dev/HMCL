@@ -79,8 +79,31 @@ public final class AboutPage extends SpinnerPane {
 
             @Unmodifiable List<CentralProcessor> processors = SystemInfo.getCentralProcessors();
             for (int i = 0; i < processors.size(); i++) {
-                String title = processors.size() == 1 ? i18n("about.environment.cpu") : i18n("about.environment.cpu.n", i + 1);
-                addProcessor(environment, title, processors.get(i));
+                String title = processors.size() == 1
+                        ? i18n("about.environment.cpu")
+                        : i18n("about.environment.cpu.n", i + 1);
+                CentralProcessor processor = processors.get(i);
+                String name = processor.getName();
+                @Nullable CentralProcessor.Cores cores = processor.getCores();
+                String subtitle;
+                if (cores == null)
+                    subtitle = i18n("about.environment.cpu.name", name);
+                else if (cores.efficiency() > 0) {
+                    subtitle = cores.logical() != cores.physical()
+                            ? i18n("about.environment.cpu.name.cores.hybrid.threads", name, cores.performance(), cores.efficiency(), cores.logical())
+                            : i18n("about.environment.cpu.name.cores.hybrid", name, cores.performance(), cores.efficiency());
+                } else {
+                    subtitle = cores.logical() != cores.physical()
+                            ? i18n("about.environment.cpu.name.cores.threads", name, cores.physical(), cores.logical())
+                            : i18n("about.environment.cpu.name.cores", name, cores.physical());
+                }
+
+                var pane = new LinePane();
+                pane.setLargeTitle(true);
+                pane.setTitle(title);
+                pane.setSubtitle(subtitle);
+                pane.setLeading(SVG.LUCIDE_CPU.createIcon(32));
+                environment.getContent().add(pane);
             }
 
             @Nullable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
@@ -156,32 +179,6 @@ public final class AboutPage extends SpinnerPane {
                 ComponentList.createComponentListTitle(i18n("about.legal")),
                 legal
         );
-    }
-
-    /// Adds one CPU entry, showing thread counts whenever they differ from physical core totals.
-    private static void addProcessor(ComponentList environment, String title, CentralProcessor processor) {
-        String name = processor.getName();
-        @Nullable CentralProcessor.Cores cores = processor.getCores();
-        String subtitle;
-        if (cores == null)
-            subtitle = i18n("about.environment.cpu.name", name);
-        else if (cores.efficiency() > 0) {
-            if (cores.logical() != cores.physical())
-                subtitle = i18n("about.environment.cpu.name.cores.hybrid.threads", name,
-                        cores.performance(), cores.efficiency(), cores.logical());
-            else
-                subtitle = i18n("about.environment.cpu.name.cores.hybrid", name, cores.performance(), cores.efficiency());
-        } else if (cores.logical() != cores.physical())
-            subtitle = i18n("about.environment.cpu.name.cores.threads", name, cores.physical(), cores.logical());
-        else
-            subtitle = i18n("about.environment.cpu.name.cores", name, cores.physical());
-
-        var pane = new LinePane();
-        pane.setLargeTitle(true);
-        pane.setTitle(title);
-        pane.setSubtitle(subtitle);
-        pane.setLeading(SVG.LUCIDE_CPU.createIcon(32));
-        environment.getContent().add(pane);
     }
 
     private static Image loadImage(String url) {
