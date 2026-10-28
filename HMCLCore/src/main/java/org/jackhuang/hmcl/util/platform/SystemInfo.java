@@ -12,6 +12,7 @@ import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
 import org.jackhuang.hmcl.util.platform.windows.*;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -41,8 +42,8 @@ public final class SystemInfo {
         /// The detected total physical memory size, in bytes.
         public static final long TOTAL_MEMORY = DETECTOR.getTotalMemorySize();
 
-        /// The detected processor, or `null` if unavailable.
-        public static final @Nullable CentralProcessor CENTRAL_PROCESSOR = DETECTOR.detectCentralProcessor();
+        /// Immutable snapshots of detected processor packages, empty if unavailable.
+        public static final @Unmodifiable List<CentralProcessor> CENTRAL_PROCESSORS = List.copyOf(DETECTOR.detectCentralProcessors());
 
         /// The detected graphics cards, or `null` if unavailable.
         public static final @Nullable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
@@ -53,9 +54,13 @@ public final class SystemInfo {
         StringBuilder builder = new StringBuilder("System Info:");
 
         // CPU
-        @Nullable CentralProcessor cpu = getCentralProcessor();
-        if (cpu != null)
-            builder.append("\n - CPU: ").append(cpu);
+        @Unmodifiable List<CentralProcessor> processors = getCentralProcessors();
+        for (int i = 0; i < processors.size(); i++) {
+            builder.append("\n - CPU");
+            if (processors.size() > 1)
+                builder.append(' ').append(i + 1);
+            builder.append(": ").append(processors.get(i));
+        }
 
         // Graphics Card
         @Nullable List<GraphicsCard> graphicsCards = getGraphicsCards();
@@ -122,9 +127,16 @@ public final class SystemInfo {
         return Long.max(0, totalMemorySize - getFreeMemorySize());
     }
 
-    /// Returns the cached processor information, or `null` if detection produced no result.
+    /// Returns detected packages in stable snapshot order; an empty list means detection produced no result.
+    /// Sources without package topology may provide only the first processor identity.
+    public static @Unmodifiable List<CentralProcessor> getCentralProcessors() {
+        return Holder.CENTRAL_PROCESSORS;
+    }
+
+    /// Returns the first detected package for CPU summaries, or `null` if unavailable.
     public static @Nullable CentralProcessor getCentralProcessor() {
-        return Holder.CENTRAL_PROCESSOR;
+        @Unmodifiable List<CentralProcessor> processors = getCentralProcessors();
+        return processors.isEmpty() ? null : processors.get(0);
     }
 
     /// Returns the cached graphics card list, or `null` if detection produced no result.

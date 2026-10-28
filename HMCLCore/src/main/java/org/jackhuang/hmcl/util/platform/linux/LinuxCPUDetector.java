@@ -4,31 +4,33 @@ package org.jackhuang.hmcl.util.platform.linux;
 
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.nio.file.DirectoryStream;
+import java.io.IOException;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * @author Glavo
- * @see <a href="https://github.com/fastfetch-cli/fastfetch/blob/e13eb05073297aa6f1dc244ab3414e98170a43e1/src/detection/cpu/cpu_linux.c">cpu_linux.c</a>
- */
+/// Reads online processor identities and topology from procfs and sysfs.
+@NotNullByDefault
 final class LinuxCPUDetector {
 
-    private static TreeMap<Integer, Map<String, String>> loadCPUInfo() {
+    /// Reads logical processors, ignoring non-processor sections.
+    private static @Nullable TreeMap<Integer, Map<String, String>> loadCPUInfo() {
         try {
             List<Map<String, String>> list = KeyValuePairUtils.loadList(Paths.get("/proc/cpuinfo"));
             TreeMap<Integer, Map<String, String>> result = new TreeMap<>();
             for (Map<String, String> map : list) {
-                String id = map.get("processor");
+                @Nullable String id = map.get("processor");
                 if (id != null) {
                     result.put(Integer.parseInt(id), map);
                 }
@@ -40,8 +42,8 @@ final class LinuxCPUDetector {
         }
     }
 
-    // https://asahilinux.org/docs/hw/soc/soc-codenames/
-    private static String appleCodeToName(int code) {
+    /// Resolves known Apple SoC codes, or returns `null` for an unknown code.
+    private static @Nullable String appleCodeToName(int code) {
         switch (code) {
             case 8103:
                 return "Apple M1";
@@ -77,11 +79,12 @@ final class LinuxCPUDetector {
         }
     }
 
+    /// Reads the package name, falling back to the machine device tree.
     private static void detectName(CentralProcessor.Builder builder, TreeMap<Integer, Map<String, String>> cpuInfo) {
         // assert !cpuInfo.isEmpty();
         Map<String, String> firstCore = cpuInfo.firstEntry().getValue();
 
-        String modelName = firstCore.get("model name");
+        @Nullable String modelName = firstCore.get("model name");
         if (modelName == null)
             modelName = firstCore.get("Model Name");
         if (modelName == null)
@@ -147,94 +150,160 @@ final class LinuxCPUDetector {
         }
     }
 
-    private static void detectCores(CentralProcessor.Builder builder, TreeMap<Integer, Map<String, String>> cpuInfo) {
-        // assert !cpuInfo.isEmpty();
-
-        int logical = cpuInfo.size();
-
+    /// Reads an optional sysfs attribute without making missing attributes fatal.
+    private static @Nullable String read(Path path) {
         try {
-            Map<String, String> firstCore = cpuInfo.firstEntry().getValue();
-            if (firstCore.containsKey("cpu cores") && firstCore.containsKey("physical id")) {
-                TreeMap<Integer, Integer> cpuCores = new TreeMap<>();
-                TreeSet<Integer> physicalIds = new TreeSet<>();
-
-                for (Map<String, String> core : cpuInfo.values()) {
-                    int cores = Integer.parseInt(core.get("cpu cores"));
-                    int physicalId = Integer.parseInt(core.get("physical id"));
-
-                    cpuCores.put(physicalId, cores);
-                    physicalIds.add(physicalId);
-                }
-
-                int physical = 0;
-                for (Integer value : cpuCores.values()) {
-                    physical += value;
-                }
-
-                builder.setCores(new CentralProcessor.Cores(physical, logical, physicalIds.size()));
-                return;
-            }
-        } catch (Throwable e) {
-            LOG.warning("Failed to detect cores in /proc/cpuinfo", e);
-        }
-
-        Path cpuDevicesDir = Paths.get("/sys/devices/system/cpu");
-        if (Files.isRegularFile(cpuDevicesDir.resolve("cpu0/topology/physical_package_id"))
-                && Files.isRegularFile(cpuDevicesDir.resolve("cpu0/topology/core_cpus_list"))) {
-            Pattern dirNamePattern = Pattern.compile("cpu[0-9]+");
-            TreeSet<Integer> physicalPackageIds = new TreeSet<>();
-            TreeSet<Integer> physicalCores = new TreeSet<>();
-
-            int physical = 0;
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(cpuDevicesDir)) {
-                for (Path cpuDir : stream) {
-                    if (!dirNamePattern.matcher(cpuDir.getFileName().toString()).matches() || !Files.isDirectory(cpuDir))
-                        continue;
-
-                    physicalPackageIds.add(Integer.parseInt(Files.readString(cpuDir.resolve("topology/physical_package_id")).trim()));
-
-                    boolean shouldCount = false;
-                    for (String item : Files.readString(cpuDir.resolve("topology/core_cpus_list")).trim().split(",")) {
-                        String range = item.trim();
-                        int idx = range.indexOf('-');
-                        if (idx < 0)
-                            shouldCount |= physicalCores.add(Integer.parseInt(range));
-                        else {
-                            int first = Integer.parseInt(range.substring(0, idx));
-                            int last = Integer.parseInt(range.substring(idx + 1));
-
-                            for (int i = first; i <= last; i++) {
-                                shouldCount |= physicalCores.add(i);
-                            }
-                        }
-                    }
-                    if (shouldCount)
-                        physical++;
-                }
-
-                builder.setCores(new CentralProcessor.Cores(physical, logical, physicalPackageIds.size()));
-                return;
-            } catch (Throwable e) {
-                LOG.warning("Failed to detect cores in /sys/devices/system/cpu", e);
-            }
-        }
-
-        builder.setCores(new CentralProcessor.Cores(logical));
-    }
-
-    static @Nullable CentralProcessor detect() {
-        TreeMap<Integer, Map<String, String>> cpuInfo = loadCPUInfo();
-        if (cpuInfo == null || cpuInfo.isEmpty()) return null;
-
-        CentralProcessor.Builder builder = new CentralProcessor.Builder();
-        detectName(builder, cpuInfo);
-        if (builder.getName() == null)
+            return Files.readString(path).trim();
+        } catch (IOException | SecurityException e) {
             return null;
-
-        detectCores(builder, cpuInfo);
-        return builder.build();
+        }
     }
 
+    /// Parses a nonnegative integer, returning `null` for missing or malformed values.
+    private static @Nullable Integer number(@Nullable String value) {
+        if (value == null)
+            return null;
+        try {
+            int result = Integer.parseInt(value);
+            return result >= 0 ? result : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /// Parses a kernel CPU list, returning an empty set if unavailable or malformed.
+    private static @Unmodifiable Set<Integer> cpuList(@Nullable String value) {
+        if (value == null || value.isBlank())
+            return Set.of();
+        Set<Integer> result = new TreeSet<>();
+        try {
+            for (String item : value.split(",")) {
+                String[] range = item.trim().split("-", -1);
+                int first = Integer.parseInt(range[0]);
+                int last = range.length == 1 ? first : Integer.parseInt(range[1]);
+                if (range.length > 2 || first < 0 || last < first || last > 1048575)
+                    return Set.of();
+                for (int id = first; id <= last; id++)
+                    result.add(id);
+            }
+            return Collections.unmodifiableSet(result);
+        } catch (NumberFormatException e) {
+            return Set.of();
+        }
+    }
+
+    /// Classification evidence for one physical core.
+    @NotNullByDefault
+    private record CoreData(boolean performance, boolean efficiency, @Nullable Integer capacity) {
+    }
+
+    /// Groups online logical processors by package, then by SMT sibling set or die/core identifiers.
+    static @Unmodifiable List<CentralProcessor> detect(TreeMap<Integer, Map<String, String>> cpuInfo, Path cpuRoot, Path pmuRoot, Architecture architecture) {
+        CentralProcessor.Builder builder = new CentralProcessor.Builder();
+        if (cpuInfo.isEmpty())
+            return List.of();
+        detectName(builder, cpuInfo);
+        Map<Integer, TreeMap<Integer, Map<String, String>>> packages = new TreeMap<>();
+        for (var entry : cpuInfo.entrySet()) {
+            @Nullable Integer packageId = number(read(cpuRoot.resolve("cpu" + entry.getKey() + "/topology/physical_package_id")));
+            if (packageId == null)
+                packageId = number(entry.getValue().get("physical id"));
+            if (packageId == null) {
+                // Without package boundaries, retain only the first reported identity.
+                return List.of(builder.build());
+            }
+            packages.computeIfAbsent(packageId, ignored -> new TreeMap<>()).put(entry.getKey(), entry.getValue());
+        }
+        @Unmodifiable Set<Integer> performance = cpuList(read(pmuRoot.resolve("cpu_core/cpus")));
+        Set<Integer> efficiency = new HashSet<>(cpuList(read(pmuRoot.resolve("cpu_atom/cpus"))));
+        efficiency.addAll(cpuList(read(pmuRoot.resolve("cpu_lowpower/cpus"))));
+        List<CentralProcessor> result = new ArrayList<>();
+        for (var pkg : packages.entrySet()) {
+            CentralProcessor.Builder identity = new CentralProcessor.Builder();
+            detectName(identity, pkg.getValue());
+            Map<Integer, @Unmodifiable Set<Integer>> siblingSets = new HashMap<>();
+            for (int id : pkg.getValue().keySet()) {
+                Path topology = cpuRoot.resolve("cpu" + id + "/topology");
+                @Unmodifiable Set<Integer> siblings = cpuList(read(topology.resolve("core_cpus_list")));
+                if (siblings.isEmpty())
+                    siblings = cpuList(read(topology.resolve("thread_siblings_list")));
+                siblingSets.put(id, siblings);
+            }
+            // Use one identity scheme per package so a missing sibling file cannot double-count a core.
+            boolean useSiblings = siblingSets.entrySet().stream().allMatch(entry -> entry.getValue().contains(entry.getKey())
+                    && entry.getValue().stream().filter(cpuInfo::containsKey)
+                    .allMatch(id -> entry.getValue().equals(siblingSets.get(id))));
+            Map<String, CoreData> cores = new LinkedHashMap<>();
+            boolean complete = true;
+            for (var entry : pkg.getValue().entrySet()) {
+                int id = entry.getKey();
+                Path cpu = cpuRoot.resolve("cpu" + id);
+                String key;
+                if (useSiblings) {
+                    key = "siblings:" + siblingSets.get(id);
+                } else {
+                    @Nullable Integer coreId = number(read(cpu.resolve("topology/core_id")));
+                    if (coreId == null)
+                        coreId = number(entry.getValue().get("core id"));
+                    if (coreId == null) {
+                        complete = false;
+                        break;
+                    }
+                    @Nullable Integer dieId = number(read(cpu.resolve("topology/die_id")));
+                    key = "core:" + (dieId != null ? dieId : 0) + ":" + coreId;
+                }
+                boolean isPerformance = performance.contains(id) && !efficiency.contains(id);
+                boolean isEfficiency = efficiency.contains(id) && !performance.contains(id);
+                @Nullable Integer capacity = number(read(cpu.resolve("cpu_capacity")));
+                if (capacity != null && capacity == 0)
+                    capacity = null;
+                @Nullable CoreData core = cores.get(key);
+                if (core == null) {
+                    core = new CoreData(isPerformance, isEfficiency, capacity);
+                    cores.put(key, core);
+                } else if (core.performance != isPerformance || core.efficiency != isEfficiency || !Objects.equals(core.capacity, capacity)) {
+                    core = new CoreData(false, false, null);
+                    cores.put(key, core);
+                }
+            }
+            int efficiencyCount = 0;
+            int physical;
+            if (complete) {
+                boolean capacitiesKnown = cores.values().stream().allMatch(c -> c.capacity != null);
+                int min = capacitiesKnown ? cores.values().stream().mapToInt(c -> c.capacity).min().orElse(0) : 0;
+                int max = capacitiesKnown ? cores.values().stream().mapToInt(c -> c.capacity).max().orElse(0) : 0;
+                for (CoreData core : cores.values()) {
+                    boolean isEfficiency = core.efficiency;
+                    if (!core.performance && !isEfficiency && capacitiesKnown && min < max) {
+                        // Merge upper ARM tiers and lower x86 tiers for a coarse P/E display.
+                        isEfficiency = architecture.isX86() ? core.capacity < max : core.capacity == min;
+                    }
+                    if (isEfficiency)
+                        efficiencyCount++;
+                }
+                physical = cores.size();
+            } else {
+                // A package-wide count remains useful even when per-core identifiers are absent.
+                @Nullable Integer reported = number(pkg.getValue().firstEntry().getValue().get("cpu cores"));
+                physical = reported != null ? reported : 0;
+            }
+            identity.setId(pkg.getKey());
+            if (physical > 0)
+                identity.setCores(new CentralProcessor.Cores(pkg.getValue().size(), physical - efficiencyCount, efficiencyCount));
+            result.add(identity.build());
+        }
+        return List.copyOf(result);
+    }
+
+    /// Detects online processor packages, or returns an empty list if procfs is unavailable.
+    static @Unmodifiable List<CentralProcessor> detect() {
+        @Nullable TreeMap<Integer, Map<String, String>> cpuInfo = loadCPUInfo();
+        if (cpuInfo == null || cpuInfo.isEmpty())
+            return List.of();
+        return detect(cpuInfo, Paths.get("/sys/devices/system/cpu"), Paths.get("/sys/bus/event_source/devices"), Architecture.SYSTEM_ARCH);
+    }
+
+    /// Prevents instantiation.
     private LinuxCPUDetector() {
     }
 }

@@ -2,16 +2,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform.hardware;
 
+import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 
-import static org.jackhuang.hmcl.util.platform.hardware.CentralProcessor.cleanName;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * @author Glavo
- */
+import static org.jackhuang.hmcl.util.platform.hardware.CentralProcessor.cleanName;
+import static org.junit.jupiter.api.Assertions.*;
+
+/// Tests processor names and per-package core counts.
+@NotNullByDefault
 public final class CentralProcessorTest {
 
+    /// Normalizes names across supported vendors.
     @Test
     public void testCleanName() {
         assertEquals("Intel Core i7-12700K", cleanName("12th Gen Intel(R) Core(TM) i7-12700K"));
@@ -53,5 +55,60 @@ public final class CentralProcessorTest {
         assertEquals("Loongson-3A3000", cleanName("Loongson-3A R3 (Loongson-3A3000) @ 1400MHz"));
         assertEquals("Loongson-3B4000", cleanName("Loongson-3A R4 (Loongson-3B4000) @ 1800MHz"));
         assertEquals("Loongson-3A6000", cleanName("Loongson-3A6000"));
+    }
+
+    /// A builder produces independent package snapshots with their own identities and counts.
+    @Test
+    void testPackageSnapshots() {
+        var builder = new CentralProcessor.Builder().setId(0).setName("First CPU").setVendor(HardwareVendor.INTEL)
+                .setCores(new CentralProcessor.Cores(8, 2, 4));
+        var first = builder.build();
+        var second = builder.setId(2).setName("Second CPU").setVendor(HardwareVendor.AMD)
+                .setCores(new CentralProcessor.Cores(8, 4, 0)).build();
+        assertEquals(0, first.getId());
+        assertEquals("First CPU", first.getName());
+        assertEquals(HardwareVendor.INTEL, first.getVendor());
+        assertEquals(new CentralProcessor.Cores(8, 2, 4), first.getCores());
+        assertEquals(2, second.getId());
+        assertEquals("Second CPU", second.getName());
+        assertEquals(HardwareVendor.AMD, second.getVendor());
+        assertEquals("First CPU (6 Cores / 8 Threads, 2P, 4E)", first.toString());
+        assertEquals("Second CPU (4 Cores / 8 Threads)", second.toString());
+    }
+
+    /// Rejects negative counts, unknown totals, and physical count overflow.
+    @Test
+    void testInvalidCores() {
+        assertThrows(IllegalArgumentException.class, () -> new CentralProcessor.Cores(-1, 4, 0));
+        assertThrows(IllegalArgumentException.class, () -> new CentralProcessor.Cores(0, 4, 0));
+        assertThrows(IllegalArgumentException.class, () -> new CentralProcessor.Cores(8, -1, 0));
+        assertThrows(IllegalArgumentException.class, () -> new CentralProcessor.Cores(8, 4, -1));
+        assertThrows(IllegalArgumentException.class, () -> new CentralProcessor.Cores(8, 0, 0));
+        assertThrows(IllegalArgumentException.class, () -> new CentralProcessor.Cores(Integer.MAX_VALUE, Integer.MAX_VALUE, 1));
+    }
+
+    /// Physical counts are derived, and unclassified cores in performance do not force a P/E display.
+    @Test
+    void testDerivedCounts() {
+        assertEquals(6, new CentralProcessor.Cores(8, 2, 4).physical());
+        assertEquals(1, new CentralProcessor.Cores(1, 1, 0).physical());
+        assertEquals(1, new CentralProcessor.Cores(1, 0, 1).physical());
+        var cpu = new CentralProcessor.Builder().setName("CPU").build();
+        assertEquals(-1, cpu.getId());
+        assertNull(cpu.getCores());
+        assertEquals("CPU", cpu.toString());
+        assertEquals("CPU (4 Cores / 8 Threads)", new CentralProcessor.Builder().setName("CPU")
+                .setCores(new CentralProcessor.Cores(8, 4, 0)).build().toString());
+        assertEquals("CPU (4 Cores, 0P, 4E)", new CentralProcessor.Builder().setName("CPU")
+                .setCores(new CentralProcessor.Cores(4, 0, 4)).build().toString());
+    }
+
+    /// Fewer logical threads do not discard physical counts or hide the thread count.
+    @Test
+    void testFewerLogicalThreads() {
+        assertEquals("CPU (8 Cores / 4 Threads)", new CentralProcessor.Builder().setName("CPU")
+                .setCores(new CentralProcessor.Cores(4, 8, 0)).build().toString());
+        assertEquals("CPU (8 Cores / 4 Threads, 4P, 4E)", new CentralProcessor.Builder().setName("CPU")
+                .setCores(new CentralProcessor.Cores(4, 4, 4)).build().toString());
     }
 }

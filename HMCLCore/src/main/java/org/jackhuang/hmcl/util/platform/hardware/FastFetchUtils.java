@@ -10,6 +10,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -68,37 +69,32 @@ final class FastFetchUtils {
         }
     }
 
-    /// Detects a processor, returning `null` if Fastfetch provides no usable CPU response.
-    static @Nullable CentralProcessor detectCentralProcessor() {
+    /// Returns the first reported processor identity; counts are used only for an explicitly single-package response.
+    static @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
         @Nullable CPUInfo cpuInfo = get("CPU", TypeToken.get(CPUInfo.class));
-
         if (cpuInfo == null)
-            return null;
+            return List.of();
+        return parseCentralProcessors(cpuInfo.cpu, cpuInfo.vendor, cpuInfo.packages, cpuInfo.cores);
+    }
 
+    /// Converts Fastfetch totals without assigning multi-package counts to an individual processor.
+    static @Unmodifiable List<CentralProcessor> parseCentralProcessors(@Nullable String name, @Nullable String vendor,
+                                                                      @Nullable Integer packages, @Nullable Map<String, String> counts) {
         CentralProcessor.Builder builder = new CentralProcessor.Builder()
-                .setName(cpuInfo.cpu)
-                .setVendor(HardwareVendor.of(cpuInfo.vendor));
-
-        if (cpuInfo.cores != null) {
+                .setName(name).setVendor(HardwareVendor.of(vendor));
+        if (packages != null && packages == 1 && counts != null) {
             try {
-                @Nullable String physical = cpuInfo.cores.get("physical");
-                @Nullable String logical = cpuInfo.cores.get("logical");
-
+                @Nullable String physical = counts.get("physical");
+                @Nullable String logical = counts.get("logical");
                 int cores = physical != null ? Integer.parseInt(physical) : 0;
                 int threads = logical != null ? Integer.parseInt(logical) : 0;
-                int packages = cpuInfo.packages != null ? Integer.max(cpuInfo.packages, 1) : 1;
-
-                if (cores > 0 && threads == 0)
-                    threads = cores;
-                else if (threads > 0 && cores == 0)
-                    cores = threads;
-
-                builder.setCores(new CentralProcessor.Cores(cores, threads, packages));
-            } catch (Throwable ignored) {
+                builder.setId(0);
+                if (cores > 0 && threads > 0)
+                    builder.setCores(new CentralProcessor.Cores(threads, cores, 0));
+            } catch (IllegalArgumentException ignored) {
             }
         }
-
-        return builder.build();
+        return List.of(builder.build());
     }
 
     /// Returns a mutable list of detected adapters, or `null` if no usable GPU response is available.
