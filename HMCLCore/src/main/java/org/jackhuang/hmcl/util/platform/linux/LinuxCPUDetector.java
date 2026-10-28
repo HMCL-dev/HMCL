@@ -278,10 +278,10 @@ final class LinuxCPUDetector {
         Set<Integer> efficiency = new HashSet<>(cpuList(read(pmuRoot.resolve("cpu_atom/cpus"))));
         efficiency.addAll(cpuList(read(pmuRoot.resolve("cpu_lowpower/cpus"))));
         List<CentralProcessor> result = new ArrayList<>();
-        for (var pkg : packages.entrySet()) {
+        for (var packageInfo : packages.values()) {
             CentralProcessor.Builder identity = new CentralProcessor.Builder();
-            detectName(identity, pkg.getValue());
-            identity.setId(pkg.getKey()).setCores(detectCores(pkg.getValue(), cpuInfo.keySet(), cpuRoot, performance, efficiency, architecture));
+            detectName(identity, packageInfo);
+            identity.setCores(detectCores(packageInfo, cpuInfo.keySet(), cpuRoot, performance, efficiency, architecture));
             result.add(identity.build());
         }
         return List.copyOf(result);

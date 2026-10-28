@@ -73,10 +73,7 @@ final class MacOSCPUDetector {
             else if (builder.getVendor() == HardwareVendor.APPLE)
                 packages = 1;
         }
-        if (logical == 0 || packages != 1)
-            return List.of(builder.build());
-        builder.setId(0);
-        if (physical == 0)
+        if (logical == 0 || physical == 0 || packages != 1)
             return List.of(builder.build());
         int efficiency = efficiencyCount(values, physical, logical);
         return List.of(builder.setCores(new CentralProcessor.Cores(logical, physical - efficiency, efficiency)).build());

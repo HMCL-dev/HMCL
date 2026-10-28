@@ -108,7 +108,7 @@ final class WindowsCPUDetector {
                         : classes.firstEntry().getValue();
             }
             int first = Collections.min(pkg.processors);
-            result.add(identities.apply(Collections.binarySearch(logicalIds, first)).setId(result.size())
+            result.add(identities.apply(Collections.binarySearch(logicalIds, first))
                     .setCores(new CentralProcessor.Cores(pkg.processors.size(), packageCores.size() - efficiency, efficiency)).build());
         }
         if (assigned.size() != cores.stream().mapToInt(c -> c.processors.size()).sum())

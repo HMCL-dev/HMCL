@@ -60,16 +60,14 @@ public final class CentralProcessorTest {
     /// A builder produces independent package snapshots with their own identities and counts.
     @Test
     void testPackageSnapshots() {
-        var builder = new CentralProcessor.Builder().setId(0).setName("First CPU").setVendor(HardwareVendor.INTEL)
+        var builder = new CentralProcessor.Builder().setName("First CPU").setVendor(HardwareVendor.INTEL)
                 .setCores(new CentralProcessor.Cores(8, 2, 4));
         var first = builder.build();
-        var second = builder.setId(2).setName("Second CPU").setVendor(HardwareVendor.AMD)
+        var second = builder.setName("Second CPU").setVendor(HardwareVendor.AMD)
                 .setCores(new CentralProcessor.Cores(8, 4, 0)).build();
-        assertEquals(0, first.getId());
         assertEquals("First CPU", first.getName());
         assertEquals(HardwareVendor.INTEL, first.getVendor());
         assertEquals(new CentralProcessor.Cores(8, 2, 4), first.getCores());
-        assertEquals(2, second.getId());
         assertEquals("Second CPU", second.getName());
         assertEquals(HardwareVendor.AMD, second.getVendor());
         assertEquals("First CPU (6 Cores / 8 Threads, 2P, 4E)", first.toString());
@@ -94,7 +92,6 @@ public final class CentralProcessorTest {
         assertEquals(1, new CentralProcessor.Cores(1, 1, 0).physical());
         assertEquals(1, new CentralProcessor.Cores(1, 0, 1).physical());
         var cpu = new CentralProcessor.Builder().setName("CPU").build();
-        assertEquals(-1, cpu.getId());
         assertNull(cpu.getCores());
         assertEquals("CPU", cpu.toString());
         assertEquals("CPU (4 Cores / 8 Threads)", new CentralProcessor.Builder().setName("CPU")

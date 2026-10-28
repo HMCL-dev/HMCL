@@ -88,7 +88,6 @@ final class FastFetchUtils {
                 @Nullable String logical = counts.get("logical");
                 int cores = physical != null ? Integer.parseInt(physical) : 0;
                 int threads = logical != null ? Integer.parseInt(logical) : 0;
-                builder.setId(0);
                 if (cores > 0 && threads > 0)
                     builder.setCores(new CentralProcessor.Cores(threads, cores, 0));
             } catch (IllegalArgumentException ignored) {

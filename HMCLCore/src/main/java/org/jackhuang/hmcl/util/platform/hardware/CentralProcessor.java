@@ -60,9 +60,6 @@ public final class CentralProcessor {
         return StringUtils.normalizeWhitespaces(name);
     }
 
-    /// The OS package identifier or enumeration index, or -1 if unavailable.
-    private final int id;
-
     /// The display name.
     private final String name;
 
@@ -73,16 +70,10 @@ public final class CentralProcessor {
     private final @Nullable Cores cores;
 
     /// Creates a snapshot of one processor package.
-    private CentralProcessor(int id, String name, @Nullable HardwareVendor vendor, @Nullable Cores cores) {
-        this.id = id;
+    private CentralProcessor(String name, @Nullable HardwareVendor vendor, @Nullable Cores cores) {
         this.name = name;
         this.vendor = vendor;
         this.cores = cores;
-    }
-
-    /// Returns the package identifier within this snapshot, or -1 if unavailable.
-    public int getId() {
-        return id;
     }
 
     /// Returns the display name.
@@ -141,9 +132,6 @@ public final class CentralProcessor {
 
     /// Builds information for one processor package.
     public static final class Builder {
-        /// The package identifier, or -1 if unavailable.
-        private int id = -1;
-
         /// The display name, or `null` if unset.
         private @Nullable String name;
 
@@ -158,15 +146,7 @@ public final class CentralProcessor {
             @Nullable String name = this.name;
             if (name == null)
                 name = vendor != null ? vendor + " Processor" : "Unknown";
-            return new CentralProcessor(id, name, vendor, cores);
-        }
-
-        /// Sets the package identifier; -1 means unavailable. Returns this builder.
-        public Builder setId(int id) {
-            if (id < -1)
-                throw new IllegalArgumentException("Invalid processor package identifier");
-            this.id = id;
-            return this;
+            return new CentralProcessor(name, vendor, cores);
         }
 
         /// Returns the display name, or `null` if unset.

@@ -142,7 +142,7 @@ public final class SystemInfo {
     /// Returns a nonempty immutable list of processor snapshots in stable order.
     ///
     /// Sources without package topology may provide only the first processor identity.
-    /// If detection returns no packages, a synthetic `Unknown` processor with ID -1 and no vendor is supplied.
+    /// If detection returns no packages, a synthetic `Unknown` processor with no vendor is supplied.
     /// Its logical and performance counts both use [Runtime#availableProcessors()] for display;
     /// they do not establish the hardware's physical core count or package topology.
     public static @Unmodifiable List<CentralProcessor> getCentralProcessors() {
