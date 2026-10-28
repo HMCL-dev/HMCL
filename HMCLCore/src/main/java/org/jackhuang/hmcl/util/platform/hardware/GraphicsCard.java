@@ -3,9 +3,9 @@
 package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.UnknownNullability;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
@@ -13,12 +13,15 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/// Describes a graphics adapter and its detected driver metadata.
+///
 /// @author Glavo
 @NotNullByDefault
 public final class GraphicsCard {
 
-    @UnknownNullability
-    public static String cleanName(@UnknownNullability String name) {
+    /// Normalizes a graphics adapter name for display, or returns `null` for a `null` name.
+    @Contract("null -> null; !null -> !null")
+    public static @Nullable String cleanName(@Nullable String name) {
         if (name == null)
             return null;
 
@@ -38,15 +41,22 @@ public final class GraphicsCard {
         return StringUtils.normalizeWhitespaces(name);
     }
 
+    /// Creates a builder with no adapter metadata.
     public static Builder builder() {
         return new Builder();
     }
 
+    /// The display name.
     private final String name;
+    /// The hardware vendor, or `null` if unset.
     private final @Nullable HardwareVendor vendor;
+    /// The adapter type, or `null` if unset.
     private final @Nullable Type type;
+    /// The driver name, or `null` if unset.
     private final @Nullable String driver;
+    /// The driver version, or `null` if unset.
     private final @Nullable String driverVersion;
+    /// The Vulkan driver file paths.
     private final @Unmodifiable List<Path> vulkanDriverFiles;
 
     /// Whether the detector identified this adapter as a known virtual display adapter.
@@ -70,30 +80,37 @@ public final class GraphicsCard {
         return virtualDisplayAdapter;
     }
 
+    /// Returns the display name.
     public String getName() {
         return name;
     }
 
+    /// Returns the hardware vendor, or `null` if unknown.
     public @Nullable HardwareVendor getVendor() {
         return vendor;
     }
 
+    /// Returns the driver name, or `null` if unknown.
     public @Nullable String getDriver() {
         return driver;
     }
 
+    /// Returns the driver version, or `null` if unknown.
     public @Nullable String getDriverVersion() {
         return driverVersion;
     }
 
+    /// Returns the adapter type, or `null` if unknown.
     public @Nullable Type getType() {
         return type;
     }
 
-    public List<Path> getVulkanDriverFiles() {
+    /// Returns the unmodifiable Vulkan driver file list, empty if none were supplied.
+    public @Unmodifiable List<Path> getVulkanDriverFiles() {
         return vulkanDriverFiles;
     }
 
+    /// Returns the adapter name with known driver metadata and type.
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder(name);
@@ -119,23 +136,34 @@ public final class GraphicsCard {
         return builder.toString();
     }
 
+    /// Classifies an adapter as integrated or discrete.
     public enum Type {
+        /// An integrated graphics adapter.
         Integrated,
+        /// A discrete graphics adapter.
         Discrete
     }
 
+    /// Builds graphics adapter information from optional detected metadata.
     public static final class Builder {
+        /// The display name, or `null` if unset.
         private @Nullable String name;
+        /// The hardware vendor, or `null` if unset.
         private @Nullable HardwareVendor vendor;
+        /// The adapter type, or `null` if unset.
         private @Nullable Type type;
+        /// The driver name, or `null` if unset.
         private @Nullable String driver;
+        /// The driver version, or `null` if unset.
         private @Nullable String driverVersion;
+        /// The Vulkan driver file paths, or `null` if unset.
         private @Nullable List<Path> vulkanDriverFiles;
 
         /// Whether the adapter was identified as a known virtual display adapter; initially false.
         private boolean virtualDisplayAdapter;
 
         /// Creates an adapter, supplying a vendor-based or unknown name if no name was set.
+        /// Copies the Vulkan driver file list; its elements must be non-null.
         public GraphicsCard build() {
             @Nullable String name = this.name;
             if (name == null) {
@@ -160,55 +188,68 @@ public final class GraphicsCard {
             return this;
         }
 
+        /// Returns the display name, or `null` if unset.
         public @Nullable String getName() {
             return name;
         }
 
-        public Builder setName(String name) {
+        /// Sets the display name; `null` clears it. Returns this builder.
+        public Builder setName(@Nullable String name) {
             this.name = name;
             return this;
         }
 
+        /// Returns the hardware vendor, or `null` if unset.
         public @Nullable HardwareVendor getVendor() {
             return vendor;
         }
 
-        public Builder setVendor(HardwareVendor vendor) {
+        /// Sets the hardware vendor; `null` clears it. Returns this builder.
+        public Builder setVendor(@Nullable HardwareVendor vendor) {
             this.vendor = vendor;
             return this;
         }
 
+        /// Returns the adapter type, or `null` if unset.
         public @Nullable Type getType() {
             return type;
         }
 
-        public Builder setType(Type type) {
+        /// Sets the adapter type; `null` clears it. Returns this builder.
+        public Builder setType(@Nullable Type type) {
             this.type = type;
             return this;
         }
 
+        /// Returns the driver name, or `null` if unset.
         public @Nullable String getDriver() {
             return driver;
         }
 
-        public Builder setDriver(String driver) {
+        /// Sets the driver name; `null` clears it. Returns this builder.
+        public Builder setDriver(@Nullable String driver) {
             this.driver = driver;
             return this;
         }
 
+        /// Returns the driver version, or `null` if unset.
         public @Nullable String getDriverVersion() {
             return driverVersion;
         }
 
-        public Builder setDriverVersion(String driverVersion) {
+        /// Sets the driver version; `null` clears it. Returns this builder.
+        public Builder setDriverVersion(@Nullable String driverVersion) {
             this.driverVersion = driverVersion;
             return this;
         }
 
+        /// Returns the supplied Vulkan driver file list without copying, or `null` if unset.
         public @Nullable List<Path> getVulkanDriverFiles() {
             return vulkanDriverFiles;
         }
 
+        /// Sets the Vulkan driver file paths; `null` clears it. Returns this builder.
+        /// Retains the list without copying; [#build()] copies its current contents.
         public Builder setVulkanDriverFiles(@Nullable List<Path> files) {
             this.vulkanDriverFiles = files;
             return this;

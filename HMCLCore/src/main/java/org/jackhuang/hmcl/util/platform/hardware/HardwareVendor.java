@@ -3,41 +3,71 @@
 package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 
+/// Identifies a hardware vendor by its display name.
+///
+/// @param name the vendor display name
+@NotNullByDefault
 public record HardwareVendor(String name) {
+    /// The Intel vendor.
     public static final HardwareVendor INTEL = new HardwareVendor("Intel");
+    /// The NVIDIA vendor.
     public static final HardwareVendor NVIDIA = new HardwareVendor("NVIDIA");
+    /// The AMD vendor.
     public static final HardwareVendor AMD = new HardwareVendor("AMD");
+    /// The Apple vendor.
     public static final HardwareVendor APPLE = new HardwareVendor("Apple");
+    /// The ARM vendor.
     public static final HardwareVendor ARM = new HardwareVendor("ARM");
+    /// The Qualcomm vendor.
     public static final HardwareVendor QUALCOMM = new HardwareVendor("Qualcomm");
+    /// The MTK vendor.
     public static final HardwareVendor MTK = new HardwareVendor("MTK");
+    /// The VMware vendor.
     public static final HardwareVendor VMWARE = new HardwareVendor("VMware");
+    /// The Parallel vendor.
     public static final HardwareVendor PARALLEL = new HardwareVendor("Parallel");
+    /// The Microsoft vendor.
     public static final HardwareVendor MICROSOFT = new HardwareVendor("Microsoft");
+    /// The Moore Threads vendor.
     public static final HardwareVendor MOORE_THREADS = new HardwareVendor("Moore Threads");
+    /// The Broadcom vendor.
     public static final HardwareVendor BROADCOM = new HardwareVendor("Broadcom");
+    /// The Imagination vendor.
     public static final HardwareVendor IMG = new HardwareVendor("Imagination");
+    /// The Loongson vendor.
     public static final HardwareVendor LOONGSON = new HardwareVendor("Loongson");
+    /// The Jingjia Micro vendor.
     public static final HardwareVendor JINGJIA_MICRO = new HardwareVendor("Jingjia Micro");
+    /// The Huawei vendor.
     public static final HardwareVendor HUAWEI = new HardwareVendor("Huawei");
+    /// The Zhaoxin vendor.
     public static final HardwareVendor ZHAOXIN = new HardwareVendor("Zhaoxin");
+    /// The Samsung vendor.
     public static final HardwareVendor SAMSUNG = new HardwareVendor("Samsung");
+    /// The Marvell vendor.
     public static final HardwareVendor MARVELL = new HardwareVendor("Marvell");
+    /// The Ampere vendor.
     public static final HardwareVendor AMPERE = new HardwareVendor("Ampere");
+    /// The Rockchip vendor.
     public static final HardwareVendor ROCKCHIP = new HardwareVendor("Rockchip");
 
     // RISC-V
+    /// The T-Head vendor.
     public static final HardwareVendor THEAD = new HardwareVendor("T-Head");
+    /// The StarFive vendor.
     public static final HardwareVendor STARFIVE = new HardwareVendor("StarFive");
+    /// The ESWIN vendor.
     public static final HardwareVendor ESWIN = new HardwareVendor("ESWIN");
+    /// The SpacemiT vendor.
     public static final HardwareVendor SPACEMIT = new HardwareVendor("SpacemiT");
 
-    public static @Nullable HardwareVendor getKnown(String name) {
+    /// Returns a recognized vendor using case-insensitive name matching, or `null` for an unknown or `null` name.
+    public static @Nullable HardwareVendor getKnown(@Nullable String name) {
         if (name == null)
             return null;
 
@@ -71,15 +101,17 @@ public record HardwareVendor(String name) {
         return null;
     }
 
+    /// Returns a recognized vendor or preserves the supplied name in a new vendor; returns `null` for `null`.
     @Contract("null -> null; !null -> !null")
-    public static HardwareVendor of(String name) {
+    public static @Nullable HardwareVendor of(@Nullable String name) {
         if (name == null)
             return null;
 
-        HardwareVendor known = getKnown(name);
+        @Nullable HardwareVendor known = getKnown(name);
         return known != null ? known : new HardwareVendor(name);
     }
 
+    /// Returns the vendor mapped to a PCI vendor ID, or `null` if unmapped.
     public static @Nullable HardwareVendor ofPciVendorId(int vendorId) {
         // https://devicehunt.com/all-pci-vendors
         return switch (vendorId) {
@@ -102,6 +134,7 @@ public record HardwareVendor(String name) {
         };
     }
 
+    /// Returns the vendor mapped to an ARM implementer ID, or `null` if unmapped.
     public static @Nullable HardwareVendor ofArmImplementerId(int implementerId) {
         // https://github.com/util-linux/util-linux/blob/0a21358af3e50fcb13a9bf3702779f11a4739667/sys-utils/lscpu-arm.c#L301
         return switch (implementerId) {
@@ -120,8 +153,9 @@ public record HardwareVendor(String name) {
         };
     }
 
+    /// Returns the vendor display name.
     @Override
-    public @NotNull String toString() {
+    public String toString() {
         return name;
     }
 }
