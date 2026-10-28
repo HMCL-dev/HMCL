@@ -3,9 +3,11 @@
 package org.jackhuang.hmcl.server.pinger;
 
 import com.google.gson.*;
-import org.jackhuang.hmcl.server.ServerStatus;
-import org.jackhuang.hmcl.server.ServerStatusResult;
 import org.jackhuang.hmcl.server.resolver.ServerAddressResolveResult;
+import org.jackhuang.hmcl.server.status.ServerPlayerInfo;
+import org.jackhuang.hmcl.server.status.ServerStatus;
+import org.jackhuang.hmcl.server.status.ServerStatusResult;
+import org.jackhuang.hmcl.server.status.ServerVersionInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -19,7 +21,7 @@ import java.util.UUID;
 // https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping
 // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Minecraft_Forge_Handshake
 // Minecraft 1.7+
-final class ModernServerStatusPinger implements ServerStatusPinger {
+public final class ModernServerStatusPinger implements ServerStatusPinger {
     static ModernServerStatusPinger instance = new ModernServerStatusPinger();
 
     private ModernServerStatusPinger() {
@@ -63,20 +65,26 @@ final class ModernServerStatusPinger implements ServerStatusPinger {
 
     private ServerStatus parseServerStatus(@NotNull JsonObject rootStatus) {
         JsonObject versionJsonObject = rootStatus.getAsJsonObject("version");
-        ServerStatus.Version version = new ServerStatus.Version(versionJsonObject.get("name").getAsString(), versionJsonObject.get("protocol").getAsInt());
+
+        ServerVersionInfo version = ServerVersionInfo.of(versionJsonObject.get("protocol").getAsInt(), versionJsonObject.get("name").getAsString());
 
         JsonObject playersJsonObject = rootStatus.getAsJsonObject("players");
-        ArrayList<ServerStatus.Players.Sample> samples = new ArrayList<>();
-        ServerStatus.Players players = new ServerStatus.Players(playersJsonObject.get("max").getAsInt(), playersJsonObject.get("online").getAsInt(), samples);
+
+        ServerPlayerInfo players;
         JsonElement playersSampleJsonElement = playersJsonObject.get("sample");
         if (playersSampleJsonElement instanceof JsonArray jArray) {
+            ArrayList<ServerPlayerInfo.FullServerPlayerInfo.Sample> samples = new ArrayList<>();
+            players = ServerPlayerInfo.of(playersJsonObject.get("max").getAsInt(), playersJsonObject.get("online").getAsInt(), samples);
+
             for (JsonElement element : jArray) {
                 JsonObject jsonObject = (JsonObject) element;
-                samples.add(new ServerStatus.Players.Sample(
+                samples.add(new ServerPlayerInfo.FullServerPlayerInfo.Sample(
                         jsonObject.get("name").getAsString(),
                         UUID.fromString(jsonObject.get("id").getAsString())
                 ));
             }
+        } else {
+            players = ServerPlayerInfo.of(playersJsonObject.get("max").getAsInt(), playersJsonObject.get("online").getAsInt());
         }
 
         String favicon;
@@ -98,18 +106,18 @@ final class ModernServerStatusPinger implements ServerStatusPinger {
             enforcesSecureChat = false;
         }
 
-        ServerStatus.ModInfo modInfo;
+        ServerStatus.ServerModInfo modInfo;
         if (rootStatus.get("modinfo") != null) {
             JsonObject modinfoJsonObject = rootStatus.get("modinfo").getAsJsonObject();
-            ArrayList<ServerStatus.ModInfo.Mod> modList = new ArrayList<>();
-            modInfo = new ServerStatus.ModInfo(
+            ArrayList<ServerStatus.ServerModInfo.Mod> modList = new ArrayList<>();
+            modInfo = new ServerStatus.ServerModInfo(
                     modinfoJsonObject.get("type").getAsString(),
                     modList
             );
             if (modinfoJsonObject.get("modList") instanceof JsonArray jArray) {
                 for (JsonElement element : jArray) {
                     JsonObject jsonObject = (JsonObject) element;
-                    modList.add(new ServerStatus.ModInfo.Mod(
+                    modList.add(new ServerStatus.ServerModInfo.Mod(
                             jsonObject.get("modid").getAsString(),
                             jsonObject.get("version").getAsString()
                     ));

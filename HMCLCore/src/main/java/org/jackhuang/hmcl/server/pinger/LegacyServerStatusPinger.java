@@ -3,9 +3,11 @@
 package org.jackhuang.hmcl.server.pinger;
 
 import com.google.gson.JsonPrimitive;
-import org.jackhuang.hmcl.server.ServerStatus;
-import org.jackhuang.hmcl.server.ServerStatusResult;
 import org.jackhuang.hmcl.server.resolver.ServerAddressResolveResult;
+import org.jackhuang.hmcl.server.status.ServerPlayerInfo;
+import org.jackhuang.hmcl.server.status.ServerStatus;
+import org.jackhuang.hmcl.server.status.ServerStatusResult;
+import org.jackhuang.hmcl.server.status.ServerVersionInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
@@ -14,11 +16,10 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.StandardSocketOptions;
-import java.util.List;
 
 // https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#1.6
 // Minecraft Beta 1.8 to Minecraft 1.6
-final class LegacyServerStatusPinger implements ServerStatusPinger {
+public final class LegacyServerStatusPinger implements ServerStatusPinger {
     static LegacyServerStatusPinger instance = new LegacyServerStatusPinger();
 
     private LegacyServerStatusPinger() {
@@ -72,24 +73,23 @@ final class LegacyServerStatusPinger implements ServerStatusPinger {
     }
 
     private @NotNull ServerStatus parseResult(@NotNull String input) throws IOException {
-        ServerStatus.Version version;
+        ServerVersionInfo version;
         String motd;
-        ServerStatus.Players players;
+        ServerPlayerInfo players;
         try {
             if (input.startsWith("§")) {
                 String[] strings = input.split("\0");
 
                 if (strings[0].equals("§1")) {
-                    version = new ServerStatus.Version(
-                            strings[2],
-                            parseIntOrDefault(strings[1], 0)
+                    version = ServerVersionInfo.of(
+                            parseIntOrDefault(strings[1], 0),
+                            strings[2]
                     );
                     motd = strings[3];
 
-                    players = new ServerStatus.Players(
+                    players = ServerPlayerInfo.of(
                             parseIntOrDefault(strings[5], -1),
-                            parseIntOrDefault(strings[4], -1),
-                            List.of()
+                            parseIntOrDefault(strings[4], -1)
                     );
                 } else {
                     throw new IOException("Invalid header: " + strings[0]);
@@ -98,11 +98,10 @@ final class LegacyServerStatusPinger implements ServerStatusPinger {
                 String[] strings = input.split("§");
                 motd = strings[0];
 
-                version = null;
-                players = new ServerStatus.Players(
+                version = ServerVersionInfo.of();
+                players = ServerPlayerInfo.of(
                         parseIntOrDefault(strings[2], -1),
-                        parseIntOrDefault(strings[1], -1),
-                        List.of()
+                        parseIntOrDefault(strings[1], -1)
                 );
             }
 

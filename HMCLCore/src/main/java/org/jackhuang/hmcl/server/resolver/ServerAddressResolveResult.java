@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.server.resolver;
 
-import org.jackhuang.hmcl.server.ServerStatusResult;
+import org.jackhuang.hmcl.server.status.ServerStatusResult;
 import org.jackhuang.hmcl.util.ServerAddress;
 import org.jetbrains.annotations.NotNull;
 

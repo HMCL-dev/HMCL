@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
-package org.jackhuang.hmcl.server;
+package org.jackhuang.hmcl.server.status;
 
 import org.jackhuang.hmcl.server.pinger.ServerStatusPinger;
 import org.jackhuang.hmcl.util.ServerAddress;
@@ -8,11 +8,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract sealed class ServerStatusResult {
-    public static ServerStatusResult success(@NotNull ServerAddress rawServerAddress, @NotNull ServerStatusPinger pinger, long networkLatency, @NotNull ServerStatus status) {
+    public static SuccessResult success(@NotNull ServerAddress rawServerAddress, @NotNull ServerStatusPinger pinger, long networkLatency, @NotNull ServerStatus status) {
         return new SuccessResult(rawServerAddress, pinger, networkLatency, status);
     }
 
-    public static ServerStatusResult failure(FailureResult.Reason reason, Exception exception) {
+    public static FailureResult failure(FailureResult.Reason reason, Exception exception) {
         return new FailureResult(reason, exception);
     }
 

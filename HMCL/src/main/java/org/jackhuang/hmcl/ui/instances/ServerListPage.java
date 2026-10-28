@@ -30,9 +30,14 @@ import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.server.Server;
-import org.jackhuang.hmcl.server.ServerStatus;
-import org.jackhuang.hmcl.server.ServerStatusResult;
+import org.jackhuang.hmcl.server.pinger.ClassicServerStatusPinger;
+import org.jackhuang.hmcl.server.pinger.LegacyServerStatusPinger;
+import org.jackhuang.hmcl.server.pinger.ModernServerStatusPinger;
 import org.jackhuang.hmcl.server.pinger.ServerStatusPinger;
+import org.jackhuang.hmcl.server.status.ServerPlayerInfo;
+import org.jackhuang.hmcl.server.status.ServerStatus;
+import org.jackhuang.hmcl.server.status.ServerStatusResult;
+import org.jackhuang.hmcl.server.status.ServerVersionInfo;
 import org.jackhuang.hmcl.server.storage.DatFileModifiedExternalException;
 import org.jackhuang.hmcl.server.storage.ServerStorage;
 import org.jackhuang.hmcl.setting.GameDirectoryManager;
@@ -1021,11 +1026,11 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 rootContent.getChildren().add(titleEndSeparator);
 
                 String playersTooltip = null;
-                if (!status.players().samples().isEmpty()) {
+                if (status.players() instanceof ServerPlayerInfo.FullServerPlayerInfo fullInfo) {
                     StringBuilder sb = new StringBuilder();
-                    sb.append(String.join("\n", status.players().samples().stream()
+                    sb.append(String.join("\n", fullInfo.samples().stream()
                             .map(sample -> {
-                                if (ServerStatus.Players.Sample.ANONYMOUS_PLAYER.equals(sample)) {
+                                if (sample.isAnonymous()) {
                                     return i18n("server.anonymous_player");
                                 }
                                 return MinecraftChatComponentUtils.toPlainStringFromChatComponent(new JsonPrimitive(sample.name()));
@@ -1033,9 +1038,9 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                             .toList())
                     );
 
-                    if (status.players().samples().size() < status.players().online()) {
+                    if (fullInfo.samples().size() < fullInfo.online()) {
                         sb.append("\n");
-                        sb.append(i18n("server.and_more_players", String.valueOf(status.players().online() - status.players().samples().size())));
+                        sb.append(i18n("server.and_more_players", String.valueOf(fullInfo.online() - fullInfo.samples().size())));
                     }
 
                     playersTooltip = sb.toString();
@@ -1059,15 +1064,38 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 }
 
                 rootContent.getChildren().add(createDescriptionRow(i18n("server.type"), status.modInfo() != null ? i18n("server.type.mod", status.modInfo().type(), status.modInfo().modList().size()) : i18n("server.type.vanilla"), modsTooltip, new Insets(0, 4, 0, 4)));
-                rootContent.getChildren().add(createDescriptionRow(i18n("server.onlineplayers"), String.format("%,d/%,d", status.players().online(), status.players().max()), playersTooltip, new Insets(0, 4, 0, 4)));
-                if (status.version() != null) {
-                    rootContent.getChildren().add(createDescriptionRow(i18n("server.playversion"), MinecraftChatComponentUtils.toPlainStringFromChatComponent(new JsonPrimitive(status.version().name())) + "(" + status.version().version() + ")", null, new Insets(0, 4, 0, 4)));
+
+                if (status.players() instanceof ServerPlayerInfo.FullServerPlayerInfo info) {
+                    rootContent.getChildren().add(createDescriptionRow(i18n("server.onlineplayers"), i18n("server.onlineplayers.full", info.online(), info.max()), playersTooltip, new Insets(0, 4, 0, 4)));
+                } else if (status.players() instanceof ServerPlayerInfo.OnlyPlayerNumberServerVersionInfo info) {
+                    rootContent.getChildren().add(createDescriptionRow(i18n("server.onlineplayers"), i18n("server.onlineplayers.full", info.online(), info.max()), playersTooltip, new Insets(0, 4, 0, 4)));
+                } else if (status.players() instanceof ServerPlayerInfo.UnknownServerPlayerInfo info) {
+                    rootContent.getChildren().add(createDescriptionRow(i18n("server.onlineplayers"), i18n("server.onlineplayers.unknown"), playersTooltip, new Insets(0, 4, 0, 4)));
+                }
+
+                if (status.version() instanceof ServerVersionInfo.FullServerVersionInfo info) {
+                    rootContent.getChildren().add(createDescriptionRow(i18n("server.playversion"), i18n("server.playversion.full", MinecraftChatComponentUtils.toPlainStringFromChatComponent(new JsonPrimitive(info.protocolName())), info.protocolVersion()), null, new Insets(0, 4, 0, 4)));
+                } else if (status.version() instanceof ServerVersionInfo.OnlyProtocolVersionServerVersionInfo info) {
+                    rootContent.getChildren().add(createDescriptionRow(i18n("server.playversion"), i18n("server.playversion.onlyversion", info.protocolVersion()), null, new Insets(0, 4, 0, 4)));
                 } else {
                     rootContent.getChildren().add(createDescriptionRow(i18n("server.playversion"), i18n("server.playversion.unknown"), null, new Insets(0, 4, 0, 4)));
                 }
-                rootContent.getChildren().add(createDescriptionRow(i18n("server.latency"), String.format("%,dms", ((ServerStatusResult.SuccessResult) statusResult).getNetworkLatency()), null, new Insets(0, 4, 0, 4)));
-            }
 
+                ServerStatusPinger pinger = ((ServerStatusResult.SuccessResult) statusResult).getPinger();
+                if (pinger instanceof ModernServerStatusPinger) {
+//                    rootContent.getChildren().add(createDescriptionRow(i18n("server.pinger"), i18n("server.pinger.modern"), null, new Insets(0, 4, 0, 4)));
+                    title.addTag(i18n("server.pinger.modern"));
+                } else if (pinger instanceof LegacyServerStatusPinger) {
+//                    rootContent.getChildren().add(createDescriptionRow(i18n("server.pinger"), i18n("server.pinger.legacy"), null, new Insets(0, 4, 0, 4)));
+                    title.addTag(i18n("server.pinger.legacy"));
+                } else if (pinger instanceof ClassicServerStatusPinger) {
+//                    rootContent.getChildren().add(createDescriptionRow(i18n("server.pinger"), i18n("server.pinger.classic"), null, new Insets(0, 4, 0, 4)));
+                    title.addTag(i18n("server.pinger.classic"));
+                }
+
+                rootContent.getChildren().add(createDescriptionRow(i18n("server.latency"), String.format("%,dms", ((ServerStatusResult.SuccessResult) statusResult).getNetworkLatency()), null, new Insets(0, 4, 0, 4)));
+
+            }
         }
 
         private void onClose() {

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.server.pinger;
 
-import org.jackhuang.hmcl.server.ServerStatusResult;
 import org.jackhuang.hmcl.server.resolver.ServerAddressResolveResult;
+import org.jackhuang.hmcl.server.status.ServerStatusResult;
 import org.jackhuang.hmcl.util.ServerAddress;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,10 +15,11 @@ import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public sealed interface ServerStatusPinger permits LegacyServerStatusPinger, ModernServerStatusPinger {
+public sealed interface ServerStatusPinger permits ClassicServerStatusPinger, LegacyServerStatusPinger, ModernServerStatusPinger {
     List<ServerStatusPinger> PINGERS = List.of(
             ModernServerStatusPinger.instance,
-            LegacyServerStatusPinger.instance
+            LegacyServerStatusPinger.instance,
+            ClassicServerStatusPinger.instance
     );
 
     static @NotNull ServerStatusResult getStatus(@NotNull String serverIp) throws IOException {
