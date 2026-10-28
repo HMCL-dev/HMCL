@@ -193,17 +193,13 @@ final class LinuxGPUDetector {
         if (builder.getName() == null) {
             String subclassStr;
             switch (subclassId) {
-                case 0: // PCI_CLASS_DISPLAY_VGA
-                    subclassStr = " (VGA compatible)";
-                    break;
-                case 1: // PCI_CLASS_DISPLAY_XGA
-                    subclassStr = " (XGA compatible)";
-                    break;
-                case 2: // PCI_CLASS_DISPLAY_3D
-                    subclassStr = " (3D)";
-                    break;
-                default:
-                    subclassStr = "";
+                // PCI_CLASS_DISPLAY_VGA
+                case 0 -> subclassStr = " (VGA compatible)";
+                // PCI_CLASS_DISPLAY_XGA
+                case 1 -> subclassStr = " (XGA compatible)";
+                // PCI_CLASS_DISPLAY_3D
+                case 2 -> subclassStr = " (3D)";
+                default -> subclassStr = "";
             }
 
             builder.setName(String.format("%s Device %04X%s",
@@ -213,13 +209,13 @@ final class LinuxGPUDetector {
 
         if (builder.getType() == null) {
             if (builder.getVendor() == HardwareVendor.NVIDIA) {
-                if (builder.getName().startsWith("GeForce")
-                        || builder.getName().startsWith("Quadro")
-                        || builder.getName().startsWith("Tesla"))
+                if (builder.getName().startsWith("NVIDIA GeForce")
+                        || builder.getName().startsWith("NVIDIA Quadro")
+                        || builder.getName().startsWith("NVIDIA Tesla"))
                     builder.setType(GraphicsCard.Type.Discrete);
 
             } else if (builder.getVendor() == HardwareVendor.MOORE_THREADS) {
-                if (builder.getName().startsWith("MTT "))
+                if (builder.getName().startsWith("Moore Threads MTT "))
                     builder.setType(GraphicsCard.Type.Discrete);
             }
         }

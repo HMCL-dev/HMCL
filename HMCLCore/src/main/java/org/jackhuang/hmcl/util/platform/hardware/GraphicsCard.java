@@ -78,6 +78,10 @@ public final class GraphicsCard {
         return vendor;
     }
 
+    public @Nullable String getDriver() {
+        return driver;
+    }
+
     public @Nullable String getDriverVersion() {
         return driverVersion;
     }
@@ -93,6 +97,20 @@ public final class GraphicsCard {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder(name);
+
+        if (driver != null || driverVersion != null) {
+            builder.append(" (");
+            if (driver != null) {
+                builder.append(driver);
+                if (driverVersion != null) {
+                    builder.append(' ');
+                }
+            }
+            if (driverVersion != null) {
+                builder.append(driverVersion);
+            }
+            builder.append(')');
+        }
 
         if (type != null) {
             builder.append(" [").append(type).append(']');

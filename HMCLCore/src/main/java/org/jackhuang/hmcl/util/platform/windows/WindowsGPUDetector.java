@@ -111,6 +111,29 @@ final class WindowsGPUDetector {
         }
     }
 
+    private static final List<String> VIRTUAL_DISPLAY_ADAPTER_MATCHING_DEVICE_IDS = List.of(
+            // Microsoft Remote Display Adapter
+            "RdpIdd_IndirectDisplay",
+
+            // NetEase UU Remote Display Adapter
+            "Root\\GameViewerIddDriver",
+
+            // MuMu Virtual Display Adapter
+            "Root\\MuMuIddDriver"
+    );
+
+    private static boolean isVirtual(@Nullable String matchingDeviceId) {
+        if (matchingDeviceId == null)
+            return false;
+
+        for (String id : VIRTUAL_DISPLAY_ADAPTER_MATCHING_DEVICE_IDS) {
+            if (matchingDeviceId.equalsIgnoreCase(id)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /// Reads graphics card information from the display adapter registry keys.
     /// Uses the driver description when the adapter name is missing or blank;
     /// if both are missing or blank, leaves the name to the builder's fallback.
@@ -134,7 +157,7 @@ final class WindowsGPUDetector {
             @Nullable String matchingDeviceId = regValueToString(reg.queryValue(hkey, subkey, "MatchingDeviceId"));
 
             GraphicsCard.Builder builder = GraphicsCard.builder();
-            builder.setVirtualDisplayAdapter("Root\\GameViewerIddDriver".equalsIgnoreCase(matchingDeviceId));
+            builder.setVirtualDisplayAdapter(isVirtual(matchingDeviceId));
             if (StringUtils.isNotBlank(name))
                 builder.setName(GraphicsCard.cleanName(name));
             if (vendor != null)
