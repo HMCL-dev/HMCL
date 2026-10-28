@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -23,7 +24,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 final class MacOSCPUDetector {
 
-    /// Reads processor information from sysctl; core counts are used only for a single package.
+    /// Reads processor information from sysctl, assuming one package when its count is unknown.
+    /// Multiple packages share the reported identity and receive equal counts when the totals divide evenly.
     static @Unmodifiable List<CentralProcessor> detect() {
         try {
             Map<String, String> values = SystemUtils.run(List.of("/usr/sbin/sysctl", "-i", "hw", "machdep.cpu"),
@@ -50,13 +52,15 @@ final class MacOSCPUDetector {
                 int perPackage = parseSysctlCount(values, "machdep.cpu.cores_per_package");
                 if (perPackage > 0 && physical > 0 && physical % perPackage == 0)
                     packages = physical / perPackage;
-                else if (builder.getVendor() == HardwareVendor.APPLE)
+                else
                     packages = 1;
             }
-            if (logical == 0 || physical == 0 || packages != 1)
-                return List.of(builder.build());
-            int efficiency = countEfficiencyCores(values, physical, logical);
-            return List.of(builder.setCores(new CentralProcessor.Cores(logical, physical - efficiency, efficiency)).build());
+            if (logical > 0 && physical > 0 && logical % packages == 0 && physical % packages == 0) {
+                // System-wide performance levels do not identify individual packages.
+                int efficiency = packages == 1 ? countEfficiencyCores(values, physical, logical) : 0;
+                builder.setCores(new CentralProcessor.Cores(logical / packages, physical / packages - efficiency, efficiency));
+            }
+            return List.copyOf(Collections.nCopies(packages, builder.build()));
         } catch (Exception e) {
             LOG.warning("Failed to get CPU info", e);
             return List.of();
