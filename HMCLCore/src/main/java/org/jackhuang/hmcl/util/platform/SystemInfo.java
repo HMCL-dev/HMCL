@@ -42,17 +42,20 @@ public final class SystemInfo {
         /// The detected total physical memory size, in bytes.
         public static final long TOTAL_MEMORY = DETECTOR.getTotalMemorySize();
 
-        /// A nonempty immutable processor snapshot, with a synthetic fallback if detection returns no processors.
+        /// A nonempty immutable processor snapshot, estimating missing counts only for a single entry.
         public static final @Unmodifiable List<CentralProcessor> CENTRAL_PROCESSORS;
 
         static {
             @Unmodifiable List<CentralProcessor> processors = DETECTOR.detectCentralProcessors();
-            if (processors.isEmpty()) {
+            if (processors.isEmpty() || (processors.size() == 1 && processors.get(0).getCores() == null)) {
+                CentralProcessor.Builder builder = new CentralProcessor.Builder().setName("Unknown");
+                if (!processors.isEmpty()) {
+                    CentralProcessor processor = processors.get(0);
+                    builder.setName(processor.getName()).setVendor(processor.getVendor());
+                }
+                // This display estimate reflects JVM availability, which may be limited by containers or affinity.
                 int count = Runtime.getRuntime().availableProcessors();
-                CENTRAL_PROCESSORS = List.of(new CentralProcessor.Builder()
-                        .setName("Unknown")
-                        .setCores(new CentralProcessor.Cores(count, count, 0))
-                        .build());
+                CENTRAL_PROCESSORS = List.of(builder.setCores(new CentralProcessor.Cores(count, count, 0)).build());
             } else {
                 CENTRAL_PROCESSORS = List.copyOf(processors);
             }
@@ -144,8 +147,8 @@ public final class SystemInfo {
     ///
     /// Sources without package topology may provide only the first processor identity.
     /// If detection returns no processors, a synthetic `Unknown` processor with no vendor is supplied.
-    /// Its logical and performance counts both use [Runtime#availableProcessors()] for display;
-    /// they do not establish the hardware's physical core count or package topology.
+    /// For a single entry with no core counts, logical and performance counts use [Runtime#availableProcessors()].
+    /// These display estimates do not establish the hardware's physical core count or package topology.
     public static @Unmodifiable List<CentralProcessor> getCentralProcessors() {
         return Holder.CENTRAL_PROCESSORS;
     }

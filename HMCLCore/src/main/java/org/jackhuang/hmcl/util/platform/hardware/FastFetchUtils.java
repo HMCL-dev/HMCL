@@ -71,6 +71,7 @@ final class FastFetchUtils {
 
     /// Returns the first reported processor identity, assuming one package when the package count is unknown.
     /// Counts are omitted when the response explicitly reports multiple packages.
+    /// A missing or invalid physical count is estimated from the logical count for display.
     static @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
         @Nullable CPUInfo cpuInfo = get("CPU", TypeToken.get(CPUInfo.class));
         if (cpuInfo == null)
@@ -79,15 +80,22 @@ final class FastFetchUtils {
         CentralProcessor.Builder builder = new CentralProcessor.Builder()
                 .setName(cpuInfo.cpu).setVendor(HardwareVendor.of(cpuInfo.vendor));
         if ((cpuInfo.packages == null || cpuInfo.packages == 1) && cpuInfo.cores != null) {
+            int cores = 0;
+            int threads = 0;
+            @Nullable String physical = cpuInfo.cores.get("physical");
+            @Nullable String logical = cpuInfo.cores.get("logical");
             try {
-                @Nullable String physical = cpuInfo.cores.get("physical");
-                @Nullable String logical = cpuInfo.cores.get("logical");
-                int cores = physical != null ? Integer.parseInt(physical) : 0;
-                int threads = logical != null ? Integer.parseInt(logical) : 0;
-                if (cores > 0 && threads > 0)
-                    builder.setCores(new CentralProcessor.Cores(threads, cores, 0));
-            } catch (IllegalArgumentException ignored) {
+                if (physical != null)
+                    cores = Integer.parseInt(physical);
+            } catch (NumberFormatException ignored) {
             }
+            try {
+                if (logical != null)
+                    threads = Integer.parseInt(logical);
+            } catch (NumberFormatException ignored) {
+            }
+            if (threads > 0)
+                builder.setCores(new CentralProcessor.Cores(threads, cores > 0 ? cores : threads, 0));
         }
         return List.of(builder.build());
     }

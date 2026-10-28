@@ -26,6 +26,7 @@ final class MacOSCPUDetector {
 
     /// Reads processor information from sysctl, assuming one package when its count is unknown.
     /// Multiple packages share the reported identity and receive equal counts when the totals divide evenly.
+    /// For a single package with no physical count, the logical count supplies a display estimate.
     static @Unmodifiable List<CentralProcessor> detect() {
         try {
             Map<String, String> values = SystemUtils.run(List.of("/usr/sbin/sysctl", "-i", "hw", "machdep.cpu"),
@@ -59,6 +60,8 @@ final class MacOSCPUDetector {
                 // System-wide performance levels do not identify individual packages.
                 int efficiency = packages == 1 ? countEfficiencyCores(values, physical, logical) : 0;
                 builder.setCores(new CentralProcessor.Cores(logical / packages, physical / packages - efficiency, efficiency));
+            } else if (packages == 1 && logical > 0) {
+                builder.setCores(new CentralProcessor.Cores(logical, logical, 0));
             }
             return List.copyOf(Collections.nCopies(packages, builder.build()));
         } catch (Exception e) {
