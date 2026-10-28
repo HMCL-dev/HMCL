@@ -89,6 +89,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
     private final BooleanProperty isLoadingMods = new SimpleBooleanProperty(false);
+    private long modLoadRequestId;
 
     /// Creates a mod list that reloads when `instanceContext` changes.
     ///
@@ -136,6 +137,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     private void loadMods(ModManager modManager) {
+        long requestId = ++modLoadRequestId;
+
         setLoading(true);
         isLoadingMods.set(true);
 
@@ -155,11 +158,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 lock.unlock();
             }
         }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
-            try {
-                if (this.modManager != modManager) {
-                    return;
-                }
+            if (this.modManager != modManager || requestId != modLoadRequestId) {
+                return;
+            }
 
+            try {
                 supportedLoaders.clear();
                 supportedLoaders.addAll(modManager.getSupportedLoaders());
 
