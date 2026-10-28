@@ -42,6 +42,8 @@ final class LinuxCPUDetector {
     }
 
     /// Resolves known Apple SoC codes, or returns `null` for an unknown code.
+    ///
+    /// @see <a href="https://asahilinux.org/docs/hw/soc/soc-codenames/">SoC Codenames - Asahi Linux Documentation</a>
     private static @Nullable String appleCodeToName(int code) {
         return switch (code) {
             case 8103 -> "Apple M1";
