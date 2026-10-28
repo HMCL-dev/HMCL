@@ -237,13 +237,15 @@ final class LinuxCPUDetector {
     private record CoreData(boolean performance, boolean efficiency, @Nullable Integer capacity) {
     }
 
-    /// Counts one nonempty package, falling back to reported totals if per-core identities are incomplete.
+    /// Counts a nonempty processor group, using package-local identities only when package boundaries are known.
+    /// Without package boundaries or consistent sibling sets, estimates physical cores from logical processors.
     ///
     /// Sysfs CPU directories and procfs entries identify logical processors; SMT siblings must be counted once.
     /// See the [Linux topology ABI](https://www.kernel.org/doc/html/latest/admin-guide/cputopology.html).
     private static CentralProcessor.@Nullable Cores detectCores(TreeMap<Integer, Map<String, String>> packageInfo,
                                                               Set<Integer> onlineProcessors, Path cpuRoot,
-                                                              Set<Integer> performance, Set<Integer> efficiency) {
+                                                              Set<Integer> performance, Set<Integer> efficiency,
+                                                              boolean packageBoundariesKnown) {
         Map<Integer, @Unmodifiable Set<Integer>> siblingSets = new HashMap<>();
         for (int id : packageInfo.keySet()) {
             Path topology = cpuRoot.resolve("cpu" + id + "/topology");
@@ -254,11 +256,16 @@ final class LinuxCPUDetector {
                 siblings = parseCpuList(readSysfsAttribute(topology.resolve("thread_siblings_list")));
             siblingSets.put(id, siblings);
         }
-        // Use one identity scheme per package so a missing sibling file cannot double-count a core.
+        // Use one identity scheme per group so a missing sibling file cannot double-count a core.
         // Each online sibling must report the same set; offline siblings need no readable entry of their own.
         boolean useSiblings = siblingSets.entrySet().stream().allMatch(entry -> entry.getValue().contains(entry.getKey())
                 && entry.getValue().stream().filter(onlineProcessors::contains)
                 .allMatch(id -> entry.getValue().equals(siblingSets.get(id))));
+        if (!useSiblings && !packageBoundariesKnown) {
+            // core_id and die_id can repeat across packages; "cpu cores" is also package-local.
+            // With no reliable physical identities, count each logical processor as a performance core for display.
+            return new CentralProcessor.Cores(packageInfo.size(), packageInfo.size(), 0);
+        }
         Map<String, CoreData> cores = new LinkedHashMap<>();
         for (var entry : packageInfo.entrySet()) {
             int id = entry.getKey();
@@ -315,7 +322,8 @@ final class LinuxCPUDetector {
         return new CentralProcessor.Cores(packageInfo.size(), cores.size() - efficiencyCount, efficiencyCount);
     }
 
-    /// Detects online processors using package and core topology, or returns an empty list if procfs is unavailable.
+    /// Detects online processors, returning one aggregate processor when package boundaries are unknown.
+    /// Returns an empty list if procfs is unavailable.
     static @Unmodifiable List<CentralProcessor> detect() {
         @Nullable TreeMap<Integer, Map<String, String>> cpuInfo = loadCPUInfo();
         if (cpuInfo == null || cpuInfo.isEmpty())
@@ -323,15 +331,17 @@ final class LinuxCPUDetector {
         Path cpuRoot = Path.of("/sys/devices/system/cpu");
         Path pmuRoot = Path.of("/sys/bus/event_source/devices");
         Map<Integer, TreeMap<Integer, Map<String, String>>> packages = new TreeMap<>();
+        boolean packageBoundariesKnown = true;
         for (var entry : cpuInfo.entrySet()) {
             @Nullable Integer packageId = parseNonNegativeInt(readSysfsAttribute(cpuRoot.resolve("cpu" + entry.getKey() + "/topology/physical_package_id")));
             if (packageId == null)
                 packageId = parseNonNegativeInt(entry.getValue().get("physical id"));
             if (packageId == null) {
-                // Without package boundaries, retain only the first reported identity.
-                CentralProcessor.Builder builder = new CentralProcessor.Builder();
-                detectNameAndVendor(builder, cpuInfo);
-                return List.of(builder.build());
+                // One missing boundary makes the package grouping incomplete; retain all CPUs in one display entry.
+                packageBoundariesKnown = false;
+                packages.clear();
+                packages.put(0, cpuInfo);
+                break;
             }
             packages.computeIfAbsent(packageId, ignored -> new TreeMap<>()).put(entry.getKey(), entry.getValue());
         }
@@ -342,7 +352,7 @@ final class LinuxCPUDetector {
         for (var packageInfo : packages.values()) {
             CentralProcessor.Builder identity = new CentralProcessor.Builder();
             detectNameAndVendor(identity, packageInfo);
-            identity.setCores(detectCores(packageInfo, cpuInfo.keySet(), cpuRoot, performance, efficiency));
+            identity.setCores(detectCores(packageInfo, cpuInfo.keySet(), cpuRoot, performance, efficiency, packageBoundariesKnown));
             result.add(identity.build());
         }
         return List.copyOf(result);
