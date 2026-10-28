@@ -135,10 +135,10 @@ val createPropertiesFile = tasks.register<WriteProperties>("createPropertiesFile
 
 tasks.jar {
     enabled = false
-    dependsOn(tasks["shadowJar"])
+    dependsOn(tasks.shadowJar)
 }
 
-val jarPath = tasks.jar.get().archiveFile.get().asFile
+val jarProvider : Provider<File> = tasks.jar.map { it.archiveFile.get().asFile }
 
 tasks.shadowJar {
     dependsOn(createPropertiesFile)
@@ -179,16 +179,17 @@ tasks.shadowJar {
         }
     }
 
-    val jarFile = jarPath
-    val keyLocation = providers.environmentVariable("HMCL_SIGNATURE_KEY").orNull
+    val jarFileProvider = jarProvider
+    val keyLocationProvider = providers.environmentVariable("HMCL_SIGNATURE_KEY")
 
     doLast {
+        val keyLocation = keyLocationProvider.orNull
         if (keyLocation != null) {
-            attachSignature(jarFile, keyLocation)
+            attachSignature(jarFileProvider.get(), keyLocation)
         } else {
             logger.warn("Missing signature key")
         }
-        createChecksum(jarFile)
+        createChecksum(jarFileProvider.get())
     }
 }
 
@@ -215,17 +216,18 @@ val makeExecutables = tasks.register("makeExecutables") {
 
     dependsOn(tasks.jar)
 
-    inputs.file(jarPath)
-    outputs.files(extensions.map { resolveArtifactFile(jarPath, it) })
+    inputs.file(jarProvider)
+    outputs.files(extensions.map { ext -> jarProvider.map { resolveArtifactFile(it, ext) }})
 
-    val jarFile = jarPath
+    val jarFileProvider = jarProvider
 
     doLast {
-        val jarContent = jarFile.readBytes()
+        val jar = jarFileProvider.get()
+        val jarContent = jar.readBytes()
 
-        ZipFile(jarFile).use { zipFile ->
+        ZipFile(jar).use { zipFile ->
             for (extension in extensions) {
-                val output = resolveArtifactFile(jarFile, extension)
+                val output = resolveArtifactFile(jar, extension)
                 val entry = zipFile.getEntry("assets/HMCLauncher.$extension")
                     ?: throw GradleException("HMCLauncher.$extension not found")
 
@@ -243,7 +245,7 @@ val makeExecutables = tasks.register("makeExecutables") {
 val makeDeb = tasks.register("makeDeb", CreateDeb::class) {
     dependsOn(makeExecutables)
 
-    val debFile = layout.file(provider { resolveArtifactFile(jarPath, "deb") })
+    val debProvider = jarProvider.map { resolveArtifactFile(it, "deb") }
 
     val debChannel = when (versionType) {
         "stable" -> ReleaseType.STABLE
@@ -254,12 +256,12 @@ val makeDeb = tasks.register("makeDeb", CreateDeb::class) {
     version.set(project.version.toString())
     releaseType.set(debChannel)
     launcherClassName.set("org.jackhuang.hmcl.Launcher")
-    appShFile.set(layout.file(provider { resolveArtifactFile(jarPath, "sh") }))
+    appShFile.set(layout.file(jarProvider.map { resolveArtifactFile(it, "sh") }))
     iconFile.set(layout.projectDirectory.file("image/hmcl.png"))
-    outputFile.set(debFile)
+    outputFile.set(layout.file(debProvider))
 
     doLast {
-        createChecksum(debFile.get().asFile)
+        createChecksum(debProvider.get())
     }
 }
 
@@ -333,7 +335,7 @@ tasks.register<JavaExec>("run") {
 
     group = "application"
 
-    classpath = files(jarPath)
+    classpath = files(jarProvider)
     workingDir = rootProject.rootDir
 
     val vmOptions = parseToolOptions(providers.environmentVariable("HMCL_JAVA_OPTS").getOrElse("-Xmx1g"))
@@ -344,15 +346,16 @@ tasks.register<JavaExec>("run") {
 
     val hmclJavaHome = providers.environmentVariable("HMCL_JAVA_HOME").orNull
     if (hmclJavaHome != null) {
-        this.executable(
+        executable(
             file(hmclJavaHome).resolve("bin")
                 .resolve(if (providers.systemProperty("os.name").orNull?.lowercase()?.startsWith("windows") ?: false) "java.exe" else "java")
         )
     }
+    val javaHomeProvider = providers.systemProperty("java.home")
 
     doFirst {
         logger.quiet("HMCL_JAVA_OPTS: {}", vmOptions)
-        logger.quiet("HMCL_JAVA_HOME: {}", hmclJavaHome ?: providers.systemProperty("java.home").orNull)
+        logger.quiet("HMCL_JAVA_HOME: {}", hmclJavaHome ?: javaHomeProvider.orNull)
     }
 }
 
@@ -377,7 +380,7 @@ val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgra
 
 val validateTerracottaConfig = tasks.register<TerracottaConfigValidateTask>("validateTerracottaConfig") {
     configFile = terracottaConfigFile
-    upgradeTaskPath = upgradeTerracottaConfig.get().path
+    upgradeTaskPath = upgradeTerracottaConfig.map { it.path }
 }
 
 tasks.withType<AbstractTerracottaTask> {
@@ -420,13 +423,12 @@ val createLanguageList = tasks.register<CreateLanguageList>("createLanguageList"
     outputFile.set(generatedDir.map { it.file("languages.json") })
 }
 
-val createLocaleNamesResourceBundle =
-    tasks.register<CreateLocaleNamesResourceBundle>("createLocaleNamesResourceBundle") {
-        dependsOn(createLanguageList)
+val createLocaleNamesResourceBundle = tasks.register<CreateLocaleNamesResourceBundle>("createLocaleNamesResourceBundle") {
+    dependsOn(createLanguageList)
 
-        languagesFile.set(createLanguageList.flatMap { it.outputFile })
-        outputDirectory.set(generatedDir.map { it.dir("generated/LocaleNames") })
-    }
+    languagesFile.set(createLanguageList.flatMap { it.outputFile })
+    outputDirectory.set(generatedDir.map { it.dir("generated/LocaleNames") })
+}
 
 // mcmod data
 

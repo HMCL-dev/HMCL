@@ -17,7 +17,7 @@ import java.util.*;
 
 public abstract class TerracottaConfigValidateTask extends AbstractTerracottaTask {
 
-    @Input
+    @Internal
     public abstract Property<@NotNull String> getUpgradeTaskPath();
 
     @InputFile
