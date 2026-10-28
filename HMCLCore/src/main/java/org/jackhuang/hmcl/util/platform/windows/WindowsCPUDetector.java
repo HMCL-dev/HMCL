@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
-import java.util.function.IntFunction;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -42,9 +41,9 @@ final class WindowsCPUDetector {
     private record Relationship(int efficiencyClass, @Unmodifiable Set<Integer> processors) {
     }
 
-    /// Decodes a bounded native buffer; the pointer width is explicit to allow both Windows ABIs.
-    static @Unmodifiable List<CentralProcessor> parseTopology(Pointer buffer, long length, int pointerSize, Architecture architecture,
-                                          IntFunction<CentralProcessor.Builder> identities) {
+    /// Decodes native topology records and reads the corresponding processor names from the registry.
+    private static @Unmodifiable List<CentralProcessor> parseTopology(Pointer buffer, long length, @Nullable WinReg reg) {
+        int pointerSize = Native.POINTER_SIZE;
         if (pointerSize != 4 && pointerSize != 8)
             throw new IllegalArgumentException("Invalid pointer size");
         List<Relationship> cores = new ArrayList<>();
@@ -103,12 +102,12 @@ final class WindowsCPUDetector {
             int efficiency = 0;
             if (classes.size() > 1) {
                 // Merge upper ARM tiers and lower x86 tiers for a coarse P/E display.
-                efficiency = architecture.isX86()
+                efficiency = Architecture.SYSTEM_ARCH.isX86()
                         ? packageCores.size() - classes.lastEntry().getValue()
                         : classes.firstEntry().getValue();
             }
             int first = Collections.min(pkg.processors);
-            result.add(identities.apply(Collections.binarySearch(logicalIds, first))
+            result.add(detectName(reg, Collections.binarySearch(logicalIds, first))
                     .setCores(new CentralProcessor.Cores(pkg.processors.size(), packageCores.size() - efficiency, efficiency)).build());
         }
         if (assigned.size() != cores.stream().mapToInt(c -> c.processors.size()).sum())
@@ -130,7 +129,7 @@ final class WindowsCPUDetector {
                             long used = Integer.toUnsignedLong(length.getValue());
                             if (used > buffer.size())
                                 throw new IllegalArgumentException("Processor information exceeds buffer");
-                            return parseTopology(buffer, used, Native.POINTER_SIZE, Architecture.SYSTEM_ARCH, index -> detectName(reg, index));
+                            return parseTopology(buffer, used, reg);
                         }
                     }
                 }

@@ -74,18 +74,13 @@ final class FastFetchUtils {
         @Nullable CPUInfo cpuInfo = get("CPU", TypeToken.get(CPUInfo.class));
         if (cpuInfo == null)
             return List.of();
-        return parseCentralProcessors(cpuInfo.cpu, cpuInfo.vendor, cpuInfo.packages, cpuInfo.cores);
-    }
 
-    /// Converts Fastfetch totals without assigning multi-package counts to an individual processor.
-    static @Unmodifiable List<CentralProcessor> parseCentralProcessors(@Nullable String name, @Nullable String vendor,
-                                                                      @Nullable Integer packages, @Nullable Map<String, String> counts) {
         CentralProcessor.Builder builder = new CentralProcessor.Builder()
-                .setName(name).setVendor(HardwareVendor.of(vendor));
-        if (packages != null && packages == 1 && counts != null) {
+                .setName(cpuInfo.cpu).setVendor(HardwareVendor.of(cpuInfo.vendor));
+        if (cpuInfo.packages != null && cpuInfo.packages == 1 && cpuInfo.cores != null) {
             try {
-                @Nullable String physical = counts.get("physical");
-                @Nullable String logical = counts.get("logical");
+                @Nullable String physical = cpuInfo.cores.get("physical");
+                @Nullable String logical = cpuInfo.cores.get("logical");
                 int cores = physical != null ? Integer.parseInt(physical) : 0;
                 int threads = logical != null ? Integer.parseInt(logical) : 0;
                 if (cores > 0 && threads > 0)

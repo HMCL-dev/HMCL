@@ -200,7 +200,7 @@ final class LinuxCPUDetector {
     /// Counts one nonempty package, falling back to reported totals if per-core identities are incomplete.
     private static CentralProcessor.@Nullable Cores detectCores(TreeMap<Integer, Map<String, String>> packageInfo,
                                                               Set<Integer> onlineProcessors, Path cpuRoot,
-                                                              Set<Integer> performance, Set<Integer> efficiency, Architecture architecture) {
+                                                              Set<Integer> performance, Set<Integer> efficiency) {
         Map<Integer, @Unmodifiable Set<Integer>> siblingSets = new HashMap<>();
         for (int id : packageInfo.keySet()) {
             Path topology = cpuRoot.resolve("cpu" + id + "/topology");
@@ -249,7 +249,7 @@ final class LinuxCPUDetector {
             boolean isEfficiency = core.efficiency;
             if (!core.performance && !isEfficiency && classifyByCapacity) {
                 // Merge upper ARM tiers and lower x86 tiers for a coarse P/E display.
-                isEfficiency = architecture.isX86() ? core.capacity < capacities.getMax() : core.capacity == capacities.getMin();
+                isEfficiency = Architecture.SYSTEM_ARCH.isX86() ? core.capacity < capacities.getMax() : core.capacity == capacities.getMin();
             }
             if (isEfficiency)
                 efficiencyCount++;
@@ -257,10 +257,13 @@ final class LinuxCPUDetector {
         return new CentralProcessor.Cores(packageInfo.size(), cores.size() - efficiencyCount, efficiencyCount);
     }
 
-    /// Groups online logical processors by package, then by SMT sibling set or die/core identifiers.
-    static @Unmodifiable List<CentralProcessor> detect(TreeMap<Integer, Map<String, String>> cpuInfo, Path cpuRoot, Path pmuRoot, Architecture architecture) {
-        if (cpuInfo.isEmpty())
+    /// Detects online processors using package and core topology, or returns an empty list if procfs is unavailable.
+    static @Unmodifiable List<CentralProcessor> detect() {
+        @Nullable TreeMap<Integer, Map<String, String>> cpuInfo = loadCPUInfo();
+        if (cpuInfo == null || cpuInfo.isEmpty())
             return List.of();
+        Path cpuRoot = Paths.get("/sys/devices/system/cpu");
+        Path pmuRoot = Paths.get("/sys/bus/event_source/devices");
         Map<Integer, TreeMap<Integer, Map<String, String>>> packages = new TreeMap<>();
         for (var entry : cpuInfo.entrySet()) {
             @Nullable Integer packageId = number(read(cpuRoot.resolve("cpu" + entry.getKey() + "/topology/physical_package_id")));
@@ -281,18 +284,10 @@ final class LinuxCPUDetector {
         for (var packageInfo : packages.values()) {
             CentralProcessor.Builder identity = new CentralProcessor.Builder();
             detectName(identity, packageInfo);
-            identity.setCores(detectCores(packageInfo, cpuInfo.keySet(), cpuRoot, performance, efficiency, architecture));
+            identity.setCores(detectCores(packageInfo, cpuInfo.keySet(), cpuRoot, performance, efficiency));
             result.add(identity.build());
         }
         return List.copyOf(result);
-    }
-
-    /// Detects online processors, or returns an empty list if procfs is unavailable.
-    static @Unmodifiable List<CentralProcessor> detect() {
-        @Nullable TreeMap<Integer, Map<String, String>> cpuInfo = loadCPUInfo();
-        if (cpuInfo == null)
-            return List.of();
-        return detect(cpuInfo, Paths.get("/sys/devices/system/cpu"), Paths.get("/sys/bus/event_source/devices"), Architecture.SYSTEM_ARCH);
     }
 
     /// Prevents instantiation.

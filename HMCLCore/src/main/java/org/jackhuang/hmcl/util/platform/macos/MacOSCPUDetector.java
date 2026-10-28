@@ -23,12 +23,40 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 final class MacOSCPUDetector {
 
-    /// Reads optional sysctl nodes; unsupported nodes are ignored by sysctl.
+    /// Reads processor information from sysctl; core counts are used only for a single package.
     static @Unmodifiable List<CentralProcessor> detect() {
         try {
             Map<String, String> values = SystemUtils.run(List.of("/usr/sbin/sysctl", "-i", "hw", "machdep.cpu"),
                     input -> KeyValuePairUtils.loadPairs(new BufferedReader(new InputStreamReader(input, OperatingSystem.NATIVE_CHARSET))));
-            return parse(values);
+
+            CentralProcessor.Builder builder = new CentralProcessor.Builder();
+            @Nullable String name = CentralProcessor.cleanName(values.get("machdep.cpu.brand_string"));
+            builder.setName(name);
+            if (name != null) {
+                String lower = name.toLowerCase(Locale.ROOT);
+                if (lower.startsWith("apple"))
+                    builder.setVendor(HardwareVendor.APPLE);
+                else if (lower.startsWith("intel"))
+                    builder.setVendor(HardwareVendor.INTEL);
+            }
+            int physical = count(values, "hw.physicalcpu");
+            int logical = count(values, "hw.logicalcpu");
+            if (physical == 0)
+                physical = count(values, "machdep.cpu.core_count");
+            if (logical == 0)
+                logical = count(values, "machdep.cpu.thread_count");
+            int packages = count(values, "hw.packages");
+            if (packages == 0) {
+                int perPackage = count(values, "machdep.cpu.cores_per_package");
+                if (perPackage > 0 && physical > 0 && physical % perPackage == 0)
+                    packages = physical / perPackage;
+                else if (builder.getVendor() == HardwareVendor.APPLE)
+                    packages = 1;
+            }
+            if (logical == 0 || physical == 0 || packages != 1)
+                return List.of(builder.build());
+            int efficiency = efficiencyCount(values, physical, logical);
+            return List.of(builder.setCores(new CentralProcessor.Cores(logical, physical - efficiency, efficiency)).build());
         } catch (Exception e) {
             LOG.warning("Failed to get CPU info", e);
             return List.of();
@@ -45,38 +73,6 @@ final class MacOSCPUDetector {
         } catch (NumberFormatException e) {
             return 0;
         }
-    }
-
-    /// Parses a single package; multi-package sysctl output supplies only the first identity without core counts.
-    static @Unmodifiable List<CentralProcessor> parse(Map<String, String> values) {
-        CentralProcessor.Builder builder = new CentralProcessor.Builder();
-        @Nullable String name = CentralProcessor.cleanName(values.get("machdep.cpu.brand_string"));
-        builder.setName(name);
-        if (name != null) {
-            String lower = name.toLowerCase(Locale.ROOT);
-            if (lower.startsWith("apple"))
-                builder.setVendor(HardwareVendor.APPLE);
-            else if (lower.startsWith("intel"))
-                builder.setVendor(HardwareVendor.INTEL);
-        }
-        int physical = count(values, "hw.physicalcpu");
-        int logical = count(values, "hw.logicalcpu");
-        if (physical == 0)
-            physical = count(values, "machdep.cpu.core_count");
-        if (logical == 0)
-            logical = count(values, "machdep.cpu.thread_count");
-        int packages = count(values, "hw.packages");
-        if (packages == 0) {
-            int perPackage = count(values, "machdep.cpu.cores_per_package");
-            if (perPackage > 0 && physical > 0 && physical % perPackage == 0)
-                packages = physical / perPackage;
-            else if (builder.getVendor() == HardwareVendor.APPLE)
-                packages = 1;
-        }
-        if (logical == 0 || physical == 0 || packages != 1)
-            return List.of(builder.build());
-        int efficiency = efficiencyCount(values, physical, logical);
-        return List.of(builder.setCores(new CentralProcessor.Cores(logical, physical - efficiency, efficiency)).build());
     }
 
     /// Counts named efficiency cores only when all performance levels match the package totals.

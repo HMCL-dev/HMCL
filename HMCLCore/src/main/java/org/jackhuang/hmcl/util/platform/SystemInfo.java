@@ -43,7 +43,20 @@ public final class SystemInfo {
         public static final long TOTAL_MEMORY = DETECTOR.getTotalMemorySize();
 
         /// A nonempty immutable processor snapshot, with a synthetic fallback if detection returns no processors.
-        public static final @Unmodifiable List<CentralProcessor> CENTRAL_PROCESSORS = withProcessorFallback(DETECTOR.detectCentralProcessors());
+        public static final @Unmodifiable List<CentralProcessor> CENTRAL_PROCESSORS;
+
+        static {
+            @Unmodifiable List<CentralProcessor> processors = DETECTOR.detectCentralProcessors();
+            if (processors.isEmpty()) {
+                int count = Runtime.getRuntime().availableProcessors();
+                CENTRAL_PROCESSORS = List.of(new CentralProcessor.Builder()
+                        .setName("Unknown")
+                        .setCores(new CentralProcessor.Cores(count, count, 0))
+                        .build());
+            } else {
+                CENTRAL_PROCESSORS = List.copyOf(processors);
+            }
+        }
 
         /// The detected graphics cards, or `null` if unavailable.
         public static final @Nullable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
@@ -125,18 +138,6 @@ public final class SystemInfo {
             return 0;
 
         return Long.max(0, totalMemorySize - getFreeMemorySize());
-    }
-
-    /// Copies detected processors, or synthesizes an unknown processor using the JVM's available processor count.
-    static @Unmodifiable List<CentralProcessor> withProcessorFallback(List<CentralProcessor> processors) {
-        if (!processors.isEmpty())
-            return List.copyOf(processors);
-
-        int count = Runtime.getRuntime().availableProcessors();
-        return List.of(new CentralProcessor.Builder()
-                .setName("Unknown")
-                .setCores(new CentralProcessor.Cores(count, count, 0))
-                .build());
     }
 
     /// Returns a nonempty immutable list of processor snapshots in stable order.
