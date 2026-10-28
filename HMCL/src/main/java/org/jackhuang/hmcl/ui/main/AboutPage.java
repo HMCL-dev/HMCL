@@ -89,13 +89,13 @@ public final class AboutPage extends SpinnerPane {
                 if (cores == null)
                     subtitle = i18n("about.environment.cpu.name", name);
                 else if (cores.efficiency() > 0) {
-                    subtitle = cores.logical() != cores.physical()
-                            ? i18n("about.environment.cpu.name.cores.hybrid.threads", name, cores.performance(), cores.efficiency(), cores.logical())
-                            : i18n("about.environment.cpu.name.cores.hybrid", name, cores.performance(), cores.efficiency());
+                    subtitle = cores.logical() == cores.physical()
+                            ? i18n("about.environment.cpu.name.cores.hybrid", name, cores.performance(), cores.efficiency())
+                            : i18n("about.environment.cpu.name.cores.hybrid.threads", name, cores.performance(), cores.efficiency(), cores.logical());
                 } else {
-                    subtitle = cores.logical() != cores.physical()
-                            ? i18n("about.environment.cpu.name.cores.threads", name, cores.physical(), cores.logical())
-                            : i18n("about.environment.cpu.name.cores", name, cores.physical());
+                    subtitle = cores.logical() == cores.physical()
+                            ? i18n("about.environment.cpu.name.cores", name, cores.physical())
+                            : i18n("about.environment.cpu.name.cores.threads", name, cores.physical(), cores.logical());
                 }
 
                 var pane = new LinePane();
