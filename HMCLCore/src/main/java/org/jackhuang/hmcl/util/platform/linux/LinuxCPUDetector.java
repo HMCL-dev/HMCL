@@ -310,7 +310,7 @@ final class LinuxCPUDetector {
         int efficiencyCount = 0;
         for (CoreData core : cores.values()) {
             boolean isEfficiency = core.efficiency;
-            if (!core.performance && !isEfficiency && classifyByCapacity) {
+            if (!core.performance && !isEfficiency && classifyByCapacity && core.capacity != null) {
                 // For display, x86 keeps only the highest tier as P; other architectures keep only the lowest as E.
                 // This deliberately merges multiple tiers rather than reconstructing physical clusters.
                 isEfficiency = Architecture.SYSTEM_ARCH.isX86() ? core.capacity < capacities.getMax() : core.capacity == capacities.getMin();
