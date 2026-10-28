@@ -197,18 +197,24 @@ final class LinuxCPUDetector {
     }
 
     /// Counts one nonempty package, falling back to reported totals if per-core identities are incomplete.
+    ///
+    /// Sysfs CPU directories and procfs entries identify logical processors; SMT siblings must be counted once.
+    /// See the [Linux topology ABI](https://www.kernel.org/doc/html/latest/admin-guide/cputopology.html).
     private static CentralProcessor.@Nullable Cores detectCores(TreeMap<Integer, Map<String, String>> packageInfo,
                                                               Set<Integer> onlineProcessors, Path cpuRoot,
                                                               Set<Integer> performance, Set<Integer> efficiency) {
         Map<Integer, @Unmodifiable Set<Integer>> siblingSets = new HashMap<>();
         for (int id : packageInfo.keySet()) {
             Path topology = cpuRoot.resolve("cpu" + id + "/topology");
+            // core_cpus_list lists logical CPU IDs sharing this physical core, e.g. "0,8" for two SMT threads.
+            // thread_siblings_list is the older name for the same information.
             @Unmodifiable Set<Integer> siblings = parseCpuList(readSysfsAttribute(topology.resolve("core_cpus_list")));
             if (siblings.isEmpty())
                 siblings = parseCpuList(readSysfsAttribute(topology.resolve("thread_siblings_list")));
             siblingSets.put(id, siblings);
         }
         // Use one identity scheme per package so a missing sibling file cannot double-count a core.
+        // Each online sibling must report the same set; offline siblings need no readable entry of their own.
         boolean useSiblings = siblingSets.entrySet().stream().allMatch(entry -> entry.getValue().contains(entry.getKey())
                 && entry.getValue().stream().filter(onlineProcessors::contains)
                 .allMatch(id -> entry.getValue().equals(siblingSets.get(id))));
@@ -220,20 +226,29 @@ final class LinuxCPUDetector {
             if (useSiblings) {
                 key = "siblings:" + siblingSets.get(id);
             } else {
+                // core_id identifies the physical core containing this logical CPU; it is not globally unique.
+                // Some architectures also expose it as "core id" in /proc/cpuinfo.
                 @Nullable Integer coreId = parseNonNegativeInt(readSysfsAttribute(cpu.resolve("topology/core_id")));
                 if (coreId == null)
                     coreId = parseNonNegativeInt(entry.getValue().get("core id"));
                 if (coreId == null) {
-                    // A package-wide count remains useful even when per-core identifiers are absent.
+                    // /proc/cpuinfo's "cpu cores" supplies a package-wide physical count without core identities.
+                    // Keep that total as unclassified performance cores; do not infer physical cores from threads.
                     @Nullable Integer physical = parseNonNegativeInt(packageInfo.firstEntry().getValue().get("cpu cores"));
                     return physical != null && physical > 0
                             ? new CentralProcessor.Cores(packageInfo.size(), physical, 0) : null;
                 }
+                // die_id identifies the containing die, separating repeated core IDs across dies in one package.
+                // Without it, the fallback has only one core-ID namespace for this package.
                 @Nullable Integer dieId = parseNonNegativeInt(readSysfsAttribute(cpu.resolve("topology/die_id")));
                 key = "core:" + (dieId != null ? dieId : 0) + ":" + coreId;
             }
+            // The caller obtains these logical CPU sets from the cpu_core, cpu_atom and cpu_lowpower PMUs.
+            // Membership in both categories is ambiguous, so it does not establish an explicit core type.
             boolean isPerformance = performance.contains(id) && !efficiency.contains(id);
             boolean isEfficiency = efficiency.contains(id) && !performance.contains(id);
+            // cpu_capacity describes relative maximum compute capacity for scheduling, not current utilization.
+            // It is optional; missing or zero values cannot support capacity-based classification.
             @Nullable Integer capacity = parseNonNegativeInt(readSysfsAttribute(cpu.resolve("cpu_capacity")));
             if (capacity != null && capacity == 0)
                 capacity = null;
@@ -241,18 +256,21 @@ final class LinuxCPUDetector {
             cores.merge(key, new CoreData(isPerformance, isEfficiency, capacity),
                     (first, next) -> first.equals(next) ? first : new CoreData(false, false, null));
         }
+        // Infer P/E tiers only from complete, differing capacities. Equal values do not prove identical core types.
         IntSummaryStatistics capacities = cores.values().stream().mapToInt(c -> c.capacity != null ? c.capacity : 0).summaryStatistics();
         boolean classifyByCapacity = capacities.getMin() > 0 && capacities.getMin() < capacities.getMax();
         int efficiencyCount = 0;
         for (CoreData core : cores.values()) {
             boolean isEfficiency = core.efficiency;
             if (!core.performance && !isEfficiency && classifyByCapacity) {
-                // Merge upper ARM tiers and lower x86 tiers for a coarse P/E display.
+                // For display, x86 keeps only the highest tier as P; other architectures keep only the lowest as E.
+                // This deliberately merges multiple tiers rather than reconstructing physical clusters.
                 isEfficiency = Architecture.SYSTEM_ARCH.isX86() ? core.capacity < capacities.getMax() : core.capacity == capacities.getMin();
             }
             if (isEfficiency)
                 efficiencyCount++;
         }
+        // Unclassified physical cores join the performance count as a display convention.
         return new CentralProcessor.Cores(packageInfo.size(), cores.size() - efficiencyCount, efficiencyCount);
     }
 
