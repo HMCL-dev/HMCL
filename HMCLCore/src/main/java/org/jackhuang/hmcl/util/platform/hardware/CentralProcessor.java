@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// Describes one processor package and its known core counts.
+/// Describes one processor package, or synthetic display information when detection is unavailable.
 ///
 /// @author Glavo
 @NotNullByDefault
@@ -95,7 +95,7 @@ public final class CentralProcessor {
         return vendor;
     }
 
-    /// Returns this package's core counts, or `null` if its physical or logical count is unknown.
+    /// Returns observed or synthetic core counts, or `null` if unavailable.
     public @Nullable Cores getCores() {
         return cores;
     }
@@ -115,11 +115,12 @@ public final class CentralProcessor {
         return builder.toString();
     }
 
-    /// Core counts for one processor package with known positive physical and logical counts.
+    /// Positive physical and logical core totals for a processor package or synthetic display fallback.
     ///
     /// Performance and efficiency counts deliberately merge performance tiers to simplify display;
     /// they do not represent physical clusters. Unclassified physical cores are counted as performance cores.
     /// Logical counts may be lower than physical totals when the source reports fewer available threads.
+    /// Synthetic fallbacks may use the JVM's available processor count for both logical and performance totals.
     ///
     /// @param logical the positive logical processor count
     /// @param performance the nonnegative physical core count excluding identified efficiency cores
