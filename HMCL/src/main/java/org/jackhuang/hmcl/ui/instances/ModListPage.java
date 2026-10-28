@@ -88,7 +88,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
-    private final BooleanProperty isRefreshing = new SimpleBooleanProperty(false);
+    private final BooleanProperty isLoadingMods = new SimpleBooleanProperty(false);
 
     /// Creates a mod list that reloads when `instanceContext` changes.
     ///
@@ -132,10 +132,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     private void loadMods(ModManager modManager) {
-        if (isRefreshing.get()) return;
+        if (isLoadingMods.get()) return;
 
         setLoading(true);
-        isRefreshing.set(true);
+        isLoadingMods.set(true);
 
         if (this.modManager != modManager) {
             getItems().clear();
@@ -167,7 +167,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 getItems().clear();
             }
 
-            isRefreshing.set(false);
+            isLoadingMods.set(false);
             setLoading(false);
         }, Schedulers.javafx());
     }
@@ -387,7 +387,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 searchBar.getChildren().setAll(searchField, closeSearchBar);
 
                 JFXButton refreshButton = createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh);
-                refreshButton.disableProperty().bind(skinnable.isRefreshing);
+                refreshButton.disableProperty().bind(skinnable.isLoadingMods);
 
                 // Toolbar Normal
                 toolbarNormal.getChildren().setAll(
