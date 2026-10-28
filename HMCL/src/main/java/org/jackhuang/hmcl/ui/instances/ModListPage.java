@@ -155,22 +155,24 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 lock.unlock();
             }
         }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
-            if (this.modManager != modManager) {
-                return;
+            try {
+                if (this.modManager != modManager) {
+                    return;
+                }
+
+                supportedLoaders.clear();
+                supportedLoaders.addAll(modManager.getSupportedLoaders());
+
+                if (exception == null) {
+                    getItems().setAll(list);
+                } else {
+                    LOG.warning("Failed to load mods", exception);
+                    getItems().clear();
+                }
+            } finally {
+                isLoadingMods.set(false);
+                setLoading(false);
             }
-
-            supportedLoaders.clear();
-            supportedLoaders.addAll(modManager.getSupportedLoaders());
-
-            if (exception == null) {
-                getItems().setAll(list);
-            } else {
-                LOG.warning("Failed to load mods", exception);
-                getItems().clear();
-            }
-
-            isLoadingMods.set(false);
-            setLoading(false);
         }, Schedulers.javafx());
     }
 
