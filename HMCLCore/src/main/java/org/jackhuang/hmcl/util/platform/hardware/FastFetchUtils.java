@@ -3,10 +3,12 @@
 package org.jackhuang.hmcl.util.platform.hardware;
 
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -18,15 +20,19 @@ import java.util.Map;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * @author Glavo
- */
+/// Reads processor and graphics adapter metadata from Fastfetch JSON output.
+///
+/// @author Glavo
+@NotNullByDefault
 final class FastFetchUtils {
+
+    /// Prevents instantiation of this utility class.
     private FastFetchUtils() {
     }
 
-    private static <T> T get(String type, TypeToken<T> resultType) {
-        Path fastfetch = SystemUtils.which(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "fastfetch.exe" : "fastfetch");
+    /// Runs Fastfetch for one module, returning `null` if execution or response parsing fails.
+    private static <T> @Nullable T get(String type, TypeToken<T> resultType) {
+        @Nullable Path fastfetch = SystemUtils.which(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "fastfetch.exe" : "fastfetch");
         if (fastfetch == null)
             return null;
 
@@ -44,9 +50,9 @@ final class FastFetchUtils {
             int idx = output.indexOf('[');
             String json = idx >= 0 ? output.substring(idx) : output;
 
-            List<Result<T>> list = JsonUtils.GSON.fromJson(json, JsonUtils.listTypeOf(Result.typeOf(resultType)));
+            @Nullable List<@Nullable Result<T>> list = JsonUtils.GSON.fromJson(json, JsonUtils.listTypeOf(Result.typeOf(resultType)));
 
-            Result<T> result;
+            @Nullable Result<T> result;
             if (list == null
                     || list.size() != 1
                     || (result = list.get(0)) == null
@@ -62,8 +68,9 @@ final class FastFetchUtils {
         }
     }
 
+    /// Detects a processor, returning `null` if Fastfetch provides no usable CPU response.
     static @Nullable CentralProcessor detectCentralProcessor() {
-        CPUInfo cpuInfo = get("CPU", TypeToken.get(CPUInfo.class));
+        @Nullable CPUInfo cpuInfo = get("CPU", TypeToken.get(CPUInfo.class));
 
         if (cpuInfo == null)
             return null;
@@ -74,12 +81,12 @@ final class FastFetchUtils {
 
         if (cpuInfo.cores != null) {
             try {
-                String physical = cpuInfo.cores.get("physical");
-                String logical = cpuInfo.cores.get("logical");
+                @Nullable String physical = cpuInfo.cores.get("physical");
+                @Nullable String logical = cpuInfo.cores.get("logical");
 
                 int cores = physical != null ? Integer.parseInt(physical) : 0;
                 int threads = logical != null ? Integer.parseInt(logical) : 0;
-                int packages = Integer.max(cpuInfo.packages, 1);
+                int packages = cpuInfo.packages != null ? Integer.max(cpuInfo.packages, 1) : 1;
 
                 if (cores > 0 && threads == 0)
                     threads = cores;
@@ -94,13 +101,14 @@ final class FastFetchUtils {
         return builder.build();
     }
 
+    /// Returns a mutable list of detected adapters, or `null` if no usable GPU response is available.
     static @Nullable List<GraphicsCard> detectGraphicsCards() {
-        List<GPUInfo> gpuInfos = get("GPU", JsonUtils.listTypeOf(GPUInfo.class));
+        @Nullable List<@Nullable GPUInfo> gpuInfos = get("GPU", JsonUtils.listTypeOf(GPUInfo.class));
         if (gpuInfos == null)
             return null;
 
         ArrayList<GraphicsCard> result = new ArrayList<>(gpuInfos.size());
-        for (GPUInfo gpuInfo : gpuInfos) {
+        for (@Nullable GPUInfo gpuInfo : gpuInfos) {
             if (gpuInfo == null)
                 continue;
 
@@ -119,27 +127,39 @@ final class FastFetchUtils {
         return result;
     }
 
-    @SuppressWarnings("unchecked")
-    private static final class Result<T> {
+    /// A Fastfetch module response.
+    ///
+    /// @param type the module name, or `null` if absent
+    /// @param result the module payload, or `null` if absent
+    @JsonSerializable
+    private record Result<T>(@Nullable String type, @Nullable T result) {
+
+        /// Returns the Gson type token for a response with the supplied payload type.
+        @SuppressWarnings("unchecked")
         static <T> TypeToken<Result<T>> typeOf(TypeToken<T> type) {
             return (TypeToken<Result<T>>) TypeToken.getParameterized(Result.class, type.getType());
         }
-
-        String type;
-        T result;
     }
 
-    private static final class CPUInfo {
-        String cpu;
-        String vendor;
-        int packages;
-        Map<String, String> cores;
+    /// Processor metadata decoded from a Fastfetch CPU response.
+    ///
+    /// @param cpu the processor name, or `null` if absent
+    /// @param vendor the vendor name, or `null` if absent
+    /// @param packages the package count, or `null` if absent
+    /// @param cores core counts keyed by kind, or `null` if absent
+    @JsonSerializable
+    private record CPUInfo(@Nullable String cpu, @Nullable String vendor, @Nullable Integer packages,
+                           @Nullable Map<String, @Nullable String> cores) {
     }
 
-    private static final class GPUInfo {
-        String name;
-        String vendor;
-        String type;
-        String driver;
+    /// Adapter metadata decoded from a Fastfetch GPU response.
+    ///
+    /// @param name the adapter name, or `null` if absent
+    /// @param vendor the vendor name, or `null` if absent
+    /// @param type the adapter classification, or `null` if absent
+    /// @param driver the driver name, or `null` if absent
+    @JsonSerializable
+    private record GPUInfo(@Nullable String name, @Nullable String vendor,
+                           @Nullable String type, @Nullable String driver) {
     }
 }

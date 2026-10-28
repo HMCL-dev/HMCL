@@ -3,18 +3,22 @@
 package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Glavo
- */
+/// Describes a processor and its reported core counts.
+///
+/// @author Glavo
+@NotNullByDefault
 public final class CentralProcessor {
 
-    public static String cleanName(String name) {
+    /// Normalizes a processor name for display, or returns `null` for a `null` name.
+    @Contract("null -> null; !null -> !null")
+    public static @Nullable String cleanName(@Nullable String name) {
         if (name == null)
             return null;
 
@@ -56,28 +60,38 @@ public final class CentralProcessor {
         return StringUtils.normalizeWhitespaces(name);
     }
 
+    /// The display name.
     private final String name;
+
+    /// The hardware vendor, or `null` if unset.
     private final @Nullable HardwareVendor vendor;
+
+    /// The processor core counts, or `null` if unset.
     private final @Nullable Cores cores;
 
+    /// Creates processor information from the supplied name, vendor, and core counts.
     private CentralProcessor(String name, @Nullable HardwareVendor vendor, @Nullable Cores cores) {
         this.name = name;
         this.vendor = vendor;
         this.cores = cores;
     }
 
+    /// Returns the display name.
     public String getName() {
         return name;
     }
 
+    /// Returns the hardware vendor, or `null` if unknown.
     public @Nullable HardwareVendor getVendor() {
         return vendor;
     }
 
+    /// Returns the processor core counts, or `null` if unknown.
     public @Nullable Cores getCores() {
         return cores;
     }
 
+    /// Returns the processor name and known core counts.
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder(128);
@@ -97,24 +111,40 @@ public final class CentralProcessor {
         return builder.toString();
     }
 
+    /// Reported processor topology.
+    ///
+    /// @param physical the physical core count
+    /// @param logical the logical processor count
+    /// @param packages the processor package count
     public record Cores(int physical, int logical, int packages) {
+
+        /// Creates counts for one package, using the logical count as the physical count.
         public Cores(int logical) {
             this(logical, logical, 1);
         }
 
+        /// Returns the physical, logical, and package counts.
         @Override
-        public @NotNull String toString() {
+        public String toString() {
             return String.format("Cores[physical=%d, logical=%d, packages=%d]", physical, logical, packages);
         }
     }
 
+    /// Builds processor information with optional vendor and core counts.
     public static final class Builder {
-        private String name;
+
+        /// The display name, or `null` if unset.
+        private @Nullable String name;
+
+        /// The hardware vendor, or `null` if unset.
         private @Nullable HardwareVendor vendor;
+
+        /// The processor core counts, or `null` if unset.
         private @Nullable Cores cores;
 
+        /// Creates processor information, using a vendor-based name or `Unknown` if no name was set.
         public CentralProcessor build() {
-            String name = this.name;
+            @Nullable String name = this.name;
             if (name == null) {
                 if (vendor != null)
                     name = vendor + " Processor";
@@ -125,29 +155,35 @@ public final class CentralProcessor {
             return new CentralProcessor(name, vendor, cores);
         }
 
-        public String getName() {
+        /// Returns the display name, or `null` if unset.
+        public @Nullable String getName() {
             return name;
         }
 
-        public Builder setName(String name) {
+        /// Sets the display name; `null` clears it. Returns this builder.
+        public Builder setName(@Nullable String name) {
             this.name = name;
             return this;
         }
 
+        /// Returns the hardware vendor, or `null` if unset.
         public @Nullable HardwareVendor getVendor() {
             return vendor;
         }
 
-        public Builder setVendor(HardwareVendor vendor) {
+        /// Sets the hardware vendor; `null` clears it. Returns this builder.
+        public Builder setVendor(@Nullable HardwareVendor vendor) {
             this.vendor = vendor;
             return this;
         }
 
+        /// Returns the processor core counts, or `null` if unset.
         public @Nullable Cores getCores() {
             return cores;
         }
 
-        public Builder setCores(Cores cores) {
+        /// Sets the processor core counts; `null` clears it. Returns this builder.
+        public Builder setCores(@Nullable Cores cores) {
             this.cores = cores;
             return this;
         }
