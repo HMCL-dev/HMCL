@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.game.WorldFolder;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
@@ -39,12 +39,12 @@ public final class ChunkBaseApp {
             "1.15", "1.14", "1.13"
     };
 
-    public static boolean isSupported(@NotNull World world) {
+    public static boolean isSupported(@NotNull WorldFolder world) {
         return world.getSeed() != null && world.getGameVersion() != null &&
                 world.getGameVersion().compareTo(MIN_GAME_VERSION) >= 0;
     }
 
-    public static boolean supportEndCity(@NotNull World world) {
+    public static boolean supportEndCity(@NotNull WorldFolder world) {
         return world.getSeed() != null && world.getGameVersion() != null &&
                 world.getGameVersion().compareTo(MIN_END_CITY_VERSION) >= 0;
     }
@@ -53,7 +53,7 @@ public final class ChunkBaseApp {
         return new ChunkBaseApp(new StringBuilder(CHUNK_BASE_URL).append("/apps/").append(app).append("#seed=").append(seed));
     }
 
-    public static void openSeedMap(World world) {
+    public static void openSeedMap(WorldFolder world) {
         assert isSupported(world);
 
         newBuilder("seed-map", Objects.requireNonNull(world.getSeed()))
@@ -61,7 +61,7 @@ public final class ChunkBaseApp {
                 .open();
     }
 
-    public static void openStrongholdFinder(World world) {
+    public static void openStrongholdFinder(WorldFolder world) {
         assert isSupported(world);
 
         newBuilder("stronghold-finder", Objects.requireNonNull(world.getSeed()))
@@ -69,7 +69,7 @@ public final class ChunkBaseApp {
                 .open();
     }
 
-    public static void openNetherFortressFinder(World world) {
+    public static void openNetherFortressFinder(WorldFolder world) {
         assert isSupported(world);
 
         newBuilder("nether-fortress-finder", Objects.requireNonNull(world.getSeed()))
@@ -77,7 +77,7 @@ public final class ChunkBaseApp {
                 .open();
     }
 
-    public static void openEndCityFinder(World world) {
+    public static void openEndCityFinder(WorldFolder world) {
         assert isSupported(world);
 
         newBuilder("endcity-finder", Objects.requireNonNull(world.getSeed()))

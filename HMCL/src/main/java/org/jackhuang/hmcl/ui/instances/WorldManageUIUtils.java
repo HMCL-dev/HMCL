@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.ui.instances;
 
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.game.WorldFolder;
 import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -27,11 +28,11 @@ public final class WorldManageUIUtils {
     private WorldManageUIUtils() {
     }
 
-    public static void delete(World world, Runnable runnable) {
+    public static void delete(WorldFolder world, Runnable runnable) {
         delete(world, runnable, null);
     }
 
-    public static void delete(World world, Runnable runnable, FileChannel sessionLockChannel) {
+    public static void delete(WorldFolder world, Runnable runnable, FileChannel sessionLockChannel) {
         Controllers.confirm(
                 i18n("button.remove.confirm"),
                 i18n("world.delete"),
@@ -50,11 +51,11 @@ public final class WorldManageUIUtils {
         );
     }
 
-    public static void export(World world) {
+    public static void export(WorldFolder world) {
         export(world, null);
     }
 
-    public static void export(World world, FileChannel sessionLockChannel) {
+    public static void export(WorldFolder world, FileChannel sessionLockChannel) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("world.export.title"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
@@ -73,7 +74,7 @@ public final class WorldManageUIUtils {
         Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller -> new WorldExportPage(world, file, controller::onFinish)));
     }
 
-    public static void copyWorld(World world, Runnable runnable) {
+    public static void copyWorld(WorldFolder world, Runnable runnable) {
         Path worldPath = world.getFile();
         Controllers.prompt(
                 i18n("world.duplicate.prompt"),
@@ -114,7 +115,7 @@ public final class WorldManageUIUtils {
         }
     }
 
-    public static FileChannel getSessionLockChannel(World world) {
+    public static FileChannel getSessionLockChannel(WorldFolder world) {
         try {
             FileChannel lock = world.lock();
             LOG.info("Acquired lock on world " + world.getFileName());

@@ -5,449 +5,103 @@ package org.jackhuang.hmcl.game;
 import javafx.scene.image.Image;
 import org.glavo.nbt.io.NBTCodec;
 import org.glavo.nbt.tag.*;
-import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.channels.OverlappingFileLockException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.util.List;
-import java.util.stream.Stream;
-import java.util.zip.GZIPOutputStream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class World {
-
-    private final Path file;
-    private String fileName;
-    private Image icon;
-
-    private CompoundTag levelData;
-    private CompoundTag dataTag;
-    private Path levelDataPath;
-
-    private CompoundTag worldGenSettingsDataBackingTag; // Use for writing back to the file
-    private CompoundTag normalizedWorldGenSettingsData; // Use for reading/modification
-    private Path worldGenSettingsDataPath;
-
-    private CompoundTag playerData; // Use for both reading/modification and writing back to the file
-    private Path playerDataPath;
+@NotNullByDefault
+public abstract sealed class World permits WorldFolder, WorldZipFile {
+    final Path file;
 
     public World(Path file) throws IOException {
         this.file = file;
+    }
 
-        if (Files.isDirectory(file)) {
-            fileName = FileUtils.getName(this.file);
-            Path levelDatPath = this.file.resolve("level.dat");
-            if (!Files.exists(levelDatPath)) { // version 20w14infinite
-                levelDatPath = this.file.resolve("special_level.dat");
+    public static World of(Path file) throws IOException {
+        return Files.isDirectory(file) ? new WorldFolder(file) : new WorldZipFile(file);
+    }
+
+    static LevelData resolveLevelData(Path root, String missingLevelDataMessage) throws IOException {
+        Path levelDataPath = root.resolve("level.dat");
+        if (!Files.exists(levelDataPath)) { // version 20w14infinite
+            levelDataPath = root.resolve("special_level.dat");
+        }
+        if (!Files.exists(levelDataPath)) {
+            throw new IOException(missingLevelDataMessage);
+        }
+
+        CompoundTag levelData = NBTCodec.of().readTag(levelDataPath, TagType.COMPOUND);
+        if (!(levelData.get("Data") instanceof CompoundTag data))
+            throw new IOException("level.dat missing Data");
+
+        if (!(data.get("LevelName") instanceof StringTag levelName))
+            throw new IOException("level.dat missing LevelName");
+
+        if (!(data.get("LastPlayed") instanceof LongTag lastPlayed))
+            throw new IOException("level.dat missing LastPlayed");
+        return new LevelData(data, levelName, lastPlayed, levelData, levelDataPath);
+    }
+
+    static @Nullable Image loadIcon(Path root) {
+        Path iconFile = root.resolve("icon.png");
+        @Nullable Image icon = null;
+        if (Files.isRegularFile(iconFile)) {
+            try (InputStream inputStream = Files.newInputStream(iconFile)) {
+                icon = new Image(inputStream, 64, 64, true, false);
+                if (icon.isError())
+                    throw icon.getException();
+            } catch (Exception e) {
+                LOG.warning("Failed to load world icon", e);
             }
-            if (!Files.exists(levelDatPath)) {
-                throw new IOException("Not a valid world directory since level.dat or special_level.dat cannot be found.");
-            }
-            this.levelDataPath = levelDatPath;
-            loadAndCheckWorldData();
+        }
+        return icon;
+    }
 
-            Path iconFile = this.file.resolve("icon.png");
-            if (Files.isRegularFile(iconFile)) {
-                try (InputStream inputStream = Files.newInputStream(iconFile)) {
-                    icon = new Image(inputStream, 64, 64, true, false);
-                    if (icon.isError())
-                        throw icon.getException();
-                } catch (Exception e) {
-                    LOG.warning("Failed to load world icon", e);
-                }
-            }
-        } else if (Files.isRegularFile(file))
-            try (FileSystem fs = CompressingUtils.readonly(this.file).build()) {
-                Path root;
-                if (Files.isRegularFile(fs.getPath("/level.dat"))) {
-                    root = fs.getPath("/");
-                    fileName = FileUtils.getName(this.file);
-                } else {
-                    try (Stream<Path> filesStream = Files.list(fs.getPath("/"))) {
-                        List<Path> files = filesStream.toList();
-                        if (files.size() != 1 || !Files.isDirectory(files.get(0))) {
-                            throw new IOException("Not a valid world zip file");
-                        }
-
-                        root = files.get(0);
-                        fileName = FileUtils.getName(root);
-                    }
-                }
-
-                Path levelDat = root.resolve("level.dat");
-                if (!Files.exists(levelDat)) { //version 20w14infinite
-                    levelDat = root.resolve("special_level.dat");
-                }
-                if (!Files.exists(levelDat)) {
-                    throw new IOException("Not a valid world zip file since level.dat or special_level.dat cannot be found.");
-                }
-                loadAndCheckLevelData(levelDat);
-
-                Path iconFile = root.resolve("icon.png");
-                if (Files.isRegularFile(iconFile)) {
-                    try (InputStream inputStream = Files.newInputStream(iconFile)) {
-                        icon = new Image(inputStream, 64, 64, true, false);
-                        if (icon.isError())
-                            throw icon.getException();
-                    } catch (Exception e) {
-                        LOG.warning("Failed to load world icon", e);
-                    }
-                }
-            }
-        else
-            throw new IOException("Path " + file + " cannot be recognized as a Minecraft world");
+    public static boolean supportQuickPlay(@Nullable GameVersionNumber gameVersionNumber) {
+        return gameVersionNumber != null && gameVersionNumber.isAtLeast("1.20", "23w14a");
     }
 
     public Path getFile() {
         return file;
     }
 
-    public String getFileName() {
-        return fileName;
+    public abstract String getFileName();
+
+    public abstract LevelData getLevelData();
+
+    public boolean supportDataPacks() {
+        return getGameVersion() != null && getGameVersion().isAtLeast("1.13", "17w43a");
     }
 
     public String getWorldName() {
-        if (levelData.get("Data") instanceof CompoundTag data
-                && data.get("LevelName") instanceof StringTag levelNameTag)
-            return levelNameTag.get();
-        else
-            return "";
-    }
-
-    public void setWorldName(String worldName) throws IOException {
-        if (levelData.get("Data") instanceof CompoundTag data && data.get("LevelName") instanceof StringTag levelNameTag) {
-            levelNameTag.setValue(worldName);
-            writeLevelData();
-        }
-    }
-
-    public Path getSessionLockFile() {
-        return file.resolve("session.lock");
-    }
-
-    public CompoundTag getLevelData() {
-        return levelData;
-    }
-
-    public @Nullable CompoundTag getNormalizedWorldGenSettingsData() {
-        return normalizedWorldGenSettingsData;
-    }
-
-    public @Nullable CompoundTag getPlayerData() {
-        return playerData;
+        return getLevelData().levelName.get();
     }
 
     public long getLastPlayed() {
-        if (dataTag.get("LastPlayed") instanceof LongTag lastPlayedTag) {
-            return lastPlayedTag.get();
-        } else {
-            return 0L;
-        }
+        return getLevelData().lastPlayed.get();
     }
 
     public @Nullable GameVersionNumber getGameVersion() {
-        if (levelData.get("Data") instanceof CompoundTag data &&
-                data.get("Version") instanceof CompoundTag versionTag &&
+        if (getLevelData().data.get("Version") instanceof CompoundTag versionTag &&
                 versionTag.get("Name") instanceof StringTag nameTag) {
             return GameVersionNumber.asGameVersion(nameTag.getValue());
         }
         return null;
     }
 
-    public @Nullable Long getSeed() {
-        // Valid after 1.16(20w20a)
-        if (normalizedWorldGenSettingsData != null
-                && normalizedWorldGenSettingsData.get("seed") instanceof LongTag seedTag) {
-            return seedTag.getValue();
-        }
-        // Valid before 1.16(20w20a)
-        if (dataTag.get("RandomSeed") instanceof LongTag seedTag) {
-            return seedTag.getValue();
-        }
-        return null;
-    }
+    public abstract @Nullable Image getIcon();
 
-    public boolean isLargeBiomes() {
-        // Valid before 1.16(20w20a)
-        if (dataTag.get("generatorName") instanceof StringTag generatorNameTag) {
-            return "largeBiomes".equals(generatorNameTag.getValue());
-        }
-        // Unified handling of logic after version 1.16
-        else if (normalizedWorldGenSettingsData != null
-                && normalizedWorldGenSettingsData.get("dimensions") instanceof CompoundTag dimensionsTag) {
-            if (dimensionsTag.get("minecraft:overworld") instanceof CompoundTag overworldTag
-                    && overworldTag.get("generator") instanceof CompoundTag generatorTag) {
-                // Valid between 1.16(20w20a) and 1.18(21w37a)
-                if (generatorTag.get("biome_source") instanceof CompoundTag biomeSourceTag
-                        && biomeSourceTag.get("large_biomes") instanceof ByteTag largeBiomesTag) {
-                    return largeBiomesTag.get() == (byte) 1;
-                }
-                // Valid after 1.18(21w37a)
-                else if (generatorTag.get("settings") instanceof StringTag settingsTag) {
-                    return "minecraft:large_biomes".equals(settingsTag.get());
-                }
-            }
-        }
-        return false;
-    }
-
-    public Image getIcon() {
-        return icon;
-    }
-
-    public boolean isLocked() {
-        return isLocked(getSessionLockFile());
-    }
-
-    public boolean supportDataPacks() {
-        return getGameVersion() != null && getGameVersion().isAtLeast("1.13", "17w43a");
-    }
-
+    @SuppressWarnings("unused")
     public boolean supportQuickPlay() {
-        return getGameVersion() != null && getGameVersion().isAtLeast("1.20", "23w14a");
+        return supportQuickPlay(getGameVersion());
     }
 
-    public static boolean supportQuickPlay(GameVersionNumber gameVersionNumber) {
-        return gameVersionNumber != null && gameVersionNumber.isAtLeast("1.20", "23w14a");
-    }
-
-    private void loadAndCheckWorldData() throws IOException {
-        loadAndCheckLevelData(levelDataPath);
-        loadOtherData();
-    }
-
-    private void loadAndCheckLevelData(Path levelDat) throws IOException {
-        this.levelData = NBTCodec.of().readTag(levelDat, TagType.COMPOUND);
-        if (!(levelData.get("Data") instanceof CompoundTag data))
-            throw new IOException("level.dat missing Data");
-
-        if (!(data.get("LevelName") instanceof StringTag))
-            throw new IOException("level.dat missing LevelName");
-
-        if (!(data.get("LastPlayed") instanceof LongTag))
-            throw new IOException("level.dat missing LastPlayed");
-        this.dataTag = data;
-    }
-
-    private void loadOtherData() throws IOException {
-        if (!(levelData.get("Data") instanceof CompoundTag data)) return;
-
-        Path worldGenSettingsDatPath = file.resolve("data/minecraft/world_gen_settings.dat");
-        if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag) {
-            setWorldGenSettingsData(null, worldGenSettingsTag, worldGenSettingsTag);
-        } else if (Files.isRegularFile(worldGenSettingsDatPath)) {
-            CompoundTag raw = NBTCodec.of().readTag(worldGenSettingsDatPath, TagType.COMPOUND);
-            if (raw.get("data") instanceof CompoundTag compoundTag) {
-                setWorldGenSettingsData(worldGenSettingsDatPath, raw, compoundTag);
-            } else {
-                setWorldGenSettingsData(null, null, null);
-            }
-        } else {
-            setWorldGenSettingsData(null, null, null);
-        }
-
-        if (data.get("Player") instanceof CompoundTag playerTag) {
-            setPlayerData(null, playerTag);
-        } else if (data.get("singleplayer_uuid") instanceof IntArrayTag uuidTag && uuidTag.isUUID()) {
-            String playerUUID = uuidTag.getUUID().toString();
-            Path playerDatPath = file.resolve("players/data/" + playerUUID + ".dat");
-            if (Files.exists(playerDatPath)) {
-                setPlayerData(playerDatPath, NBTCodec.of().readTag(playerDatPath, TagType.COMPOUND));
-            } else {
-                setPlayerData(null, null);
-            }
-        } else {
-            setPlayerData(null, null);
-        }
-    }
-
-    private void setWorldGenSettingsData(Path worldGenSettingsDataPath, CompoundTag worldGenSettingsDataBackingTag, CompoundTag unifiedWorldGenSettingsData) {
-        this.worldGenSettingsDataPath = worldGenSettingsDataPath;
-        this.worldGenSettingsDataBackingTag = worldGenSettingsDataBackingTag;
-        this.normalizedWorldGenSettingsData = unifiedWorldGenSettingsData;
-    }
-
-    private void setPlayerData(Path playerDataPath, CompoundTag playerData) {
-        this.playerDataPath = playerDataPath;
-        this.playerData = playerData;
-    }
-
-    public void reloadWorldData() throws IOException {
-        loadAndCheckWorldData();
-    }
-
-    // The rename method is used to rename temporary world object during installation and copying,
-    // so there is no need to modify the `file` field.
-    public void rename(String newName) throws IOException {
-        if (!Files.isDirectory(file))
-            throw new IOException("Not a valid world directory");
-
-        // Change the name recorded in level.dat
-        dataTag.setString("LevelName", newName);
-        writeLevelData();
-
-        // then change the folder's name
-        Files.move(file, file.resolveSibling(newName));
-    }
-
-    public void install(Path savesDir, String name) throws IOException {
-        Path worldDir;
-        try {
-            worldDir = savesDir.resolve(name);
-        } catch (InvalidPathException e) {
-            throw new IOException(e);
-        }
-
-        if (Files.isDirectory(worldDir)) {
-            throw new FileAlreadyExistsException("World already exists");
-        }
-
-        if (Files.isRegularFile(file)) {
-            try (FileSystem fs = CompressingUtils.readonly(file).build()) {
-                Path levelDatPath = fs.getPath("/level.dat");
-                if (Files.isRegularFile(levelDatPath)) {
-                    fileName = FileUtils.getName(file);
-
-                    new Unzipper(file, worldDir).unzip();
-                } else {
-                    try (Stream<Path> stream = Files.list(fs.getPath("/"))) {
-                        List<Path> subDirs = stream.toList();
-                        if (subDirs.size() != 1) {
-                            throw new IOException("World zip malformed");
-                        }
-                        String subDirectoryName = FileUtils.getName(subDirs.get(0));
-                        new Unzipper(file, worldDir)
-                                .setSubDirectory("/" + subDirectoryName + "/")
-                                .unzip();
-                    }
-                }
-
-            }
-            new World(worldDir).rename(name);
-        } else if (Files.isDirectory(file)) {
-            FileUtils.copyDirectory(file, worldDir);
-        }
-    }
-
-    public void export(Path zip, String worldName) throws IOException {
-        if (!Files.isDirectory(file))
-            throw new IOException();
-
-        try (Zipper zipper = new Zipper(zip)) {
-            zipper.putDirectory(file, worldName);
-        }
-    }
-
-    public void delete() throws IOException {
-        if (isLocked()) {
-            throw new WorldLockedException("The world " + getFile() + " has been locked");
-        }
-        FileUtils.forceDelete(file);
-    }
-
-    public void copy(String newName) throws IOException {
-        if (!Files.isDirectory(file)) {
-            throw new IOException("Not a valid world directory");
-        }
-
-        if (isLocked()) {
-            throw new WorldLockedException("The world " + getFile() + " has been locked");
-        }
-
-        Path newPath = file.resolveSibling(newName);
-        FileUtils.copyDirectory(file, newPath, path -> !path.contains("session.lock"));
-        World newWorld = new World(newPath);
-        newWorld.rename(newName);
-    }
-
-    public FileChannel lock() throws WorldLockedException {
-        Path lockFile = getSessionLockFile();
-        FileChannel channel = null;
-        try {
-            channel = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-            channel.write(ByteBuffer.wrap("\u2603".getBytes(StandardCharsets.UTF_8)));
-            channel.force(true);
-            FileLock fileLock = channel.tryLock();
-            if (fileLock != null) {
-                return channel;
-            } else {
-                IOUtils.closeQuietly(channel);
-                throw new WorldLockedException("The world " + getFile() + " has been locked");
-            }
-        } catch (IOException e) {
-            IOUtils.closeQuietly(channel);
-            throw new WorldLockedException(e);
-        }
-    }
-
-    public void writeWorldData() throws IOException {
-        if (!Files.isDirectory(file)) throw new IOException("Not a valid world directory");
-
-        writeLevelData();
-
-        if (worldGenSettingsDataPath != null && worldGenSettingsDataBackingTag != null) {
-            writeTag(worldGenSettingsDataBackingTag, worldGenSettingsDataPath);
-        }
-
-        if (playerDataPath != null && playerData != null) {
-            writeTag(playerData, playerDataPath);
-        }
-    }
-
-    public void writeLevelData() throws IOException {
-        writeTag(levelData, levelDataPath);
-    }
-
-    private void writeTag(CompoundTag nbt, Path path) throws IOException {
-        if (!Files.isDirectory(file)) throw new IOException("Not a valid world directory");
-        FileUtils.saveSafely(path, os -> {
-            try (OutputStream gos = new GZIPOutputStream(os)) {
-                NBTCodec.of().writeTag(gos, nbt);
-            }
-        });
-    }
-
-    private static boolean isLocked(Path sessionLockFile) {
-        try (FileChannel fileChannel = FileChannel.open(sessionLockFile, StandardOpenOption.WRITE)) {
-            return fileChannel.tryLock() == null;
-        } catch (AccessDeniedException | OverlappingFileLockException accessDeniedException) {
-            return true;
-        } catch (NoSuchFileException noSuchFileException) {
-            return false;
-        } catch (IOException e) {
-            LOG.warning("Failed to open the lock file " + sessionLockFile, e);
-            return false;
-        }
-    }
-
-    public static List<World> getWorlds(Path savesDir) {
-        if (Files.exists(savesDir)) {
-            try (Stream<Path> stream = Files.list(savesDir)) {
-                return stream
-                        .filter(Files::isDirectory)
-                        .flatMap(world -> {
-                            try {
-                                return Stream.of(new World(world.toAbsolutePath().normalize()));
-                            } catch (IOException e) {
-                                LOG.warning("Failed to read world " + world, e);
-                                return Stream.empty();
-                            }
-                        })
-                        .toList();
-            } catch (IOException e) {
-                LOG.warning("Failed to read saves", e);
-            }
-        }
-        return List.of();
+    public record LevelData(CompoundTag data, StringTag levelName, LongTag lastPlayed, CompoundTag rootTag, Path file) {
     }
 }

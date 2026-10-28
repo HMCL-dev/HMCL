@@ -16,6 +16,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.game.WorldFolder;
 import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -53,7 +54,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.BackupInfo> implements WorldManagePage.WorldRefreshable {
     static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
-    private final World world;
+    private final WorldFolder world;
     private final Path backupsDir;
     private final BooleanProperty readOnly;
     private final Pattern backupFileNamePattern;
@@ -86,7 +87,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                                         count = Integer.parseInt(matcher.group("count"));
                                     }
 
-                                    result.add(new BackupInfo(path, new World(path), time, count));
+                                    result.add(new BackupInfo(path, World.of(path), time, count));
                                 }
                             } catch (Throwable e) {
                                 LOG.warning("Failed to load backup file " + path, e);
@@ -129,7 +130,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 count = Integer.parseInt(matcher.group("count"));
             }
 
-            return Pair.pair(path, new BackupInfo(path, new World(path), time, count));
+            return Pair.pair(path, new BackupInfo(path, World.of(path), time, count));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 WorldBackupsPage.this.getItems().add(result.getValue());
@@ -235,8 +236,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 TwoLineListItem item = new TwoLineListItem();
                 root.setCenter(item);
 
-                if (skinnable.getBackupWorld().getWorldName() != null)
-                    item.setTitle(parseColorEscapes(skinnable.getBackupWorld().getWorldName()));
+                item.setTitle(parseColorEscapes(skinnable.getBackupWorld().getWorldName()));
                 item.setSubtitle(formatDateTime(skinnable.getBackupTime()) + (skinnable.count == 0 ? "" : " (" + skinnable.count + ")"));
 
                 if (world.getGameVersion() != null)

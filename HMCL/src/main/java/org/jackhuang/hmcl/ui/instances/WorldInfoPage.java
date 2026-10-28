@@ -17,7 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.glavo.nbt.tag.*;
-import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.game.WorldFolder;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -46,7 +46,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.WorldRefreshable {
     private final WorldManagePage worldManagePage;
     private boolean isReadOnly;
-    private final World world;
+    private final WorldFolder world;
     private CompoundTag levelData;
     private CompoundTag playerData;
 
@@ -59,7 +59,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     }
 
     private void updateControls() {
-        CompoundTag dataTag = (CompoundTag) levelData.get("Data");
+        CompoundTag dataTag = levelData;
         CompoundTag playerTag = playerData;
 
         ScrollPane scrollPane = new ScrollPane();
@@ -82,23 +82,19 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 JFXTextField worldNameField = new JFXTextField();
                 setRightTextField(worldNamePane, worldNameField, 200);
 
-                if (dataTag.get("LevelName") instanceof StringTag worldNameTag) {
-                    var worldName = new SimpleStringProperty(worldNameTag.get());
-                    FXUtils.bindString(worldNameField, worldName);
-                    worldNameField.getProperties().put(WorldInfoPage.class.getName() + ".worldNameProperty", worldName);
-                    worldName.addListener((observable, oldValue, newValue) -> {
-                        if (StringUtils.isNotBlank(newValue)) {
-                            try {
-                                world.setWorldName(newValue);
-                                worldManagePage.setTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())));
-                            } catch (Exception e) {
-                                LOG.warning("Failed to set world name", e);
-                            }
+                var worldName = new SimpleStringProperty(world.getWorldName());
+                FXUtils.bindString(worldNameField, worldName);
+                worldNameField.getProperties().put(WorldInfoPage.class.getName() + ".worldNameProperty", worldName);
+                worldName.addListener((observable, oldValue, newValue) -> {
+                    if (StringUtils.isNotBlank(newValue)) {
+                        try {
+                            world.setWorldName(newValue);
+                            worldManagePage.setTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())));
+                        } catch (Exception e) {
+                            LOG.warning("Failed to set world name", e);
                         }
-                    });
-                } else {
-                    worldNameField.setDisable(true);
-                }
+                    }
+                });
             }
 
             var gameVersionPane = new LineTextPane();
@@ -507,7 +503,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         setFailedReason(null);
         try {
             this.isReadOnly = worldManagePage.isReadOnly();
-            this.levelData = world.getLevelData();
+            this.levelData = world.getLevelData().data();
             this.playerData = world.getPlayerData();
             updateControls();
         } catch (Exception e) {
