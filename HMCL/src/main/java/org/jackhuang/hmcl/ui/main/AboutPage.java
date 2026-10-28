@@ -128,14 +128,15 @@ public final class AboutPage extends SpinnerPane {
                         .toList();
                 int index = 1;
                 for (GraphicsCard graphicsCard : visibleGraphicsCards) {
-                    String name = index == 1 && visibleGraphicsCards.size() == 1
+                    String title = index == 1 && visibleGraphicsCards.size() == 1
                             ? i18n("about.environment.gpu")
                             : i18n("about.environment.gpu.n", index);
                     index++;
+
                     var button = new LinePane();
                     button.setLargeTitle(true);
-                    button.setTitle(name);
-                    button.setSubtitle(graphicsCard.getName());
+                    button.setTitle(title);
+                    button.setSubtitle(graphicsCard.toString());
 
                     button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
 
