@@ -63,13 +63,11 @@ public abstract sealed class World permits WorldFolder, WorldZipFile {
         return icon;
     }
 
-    public static boolean supportQuickPlay(@Nullable GameVersionNumber gameVersionNumber) {
-        return gameVersionNumber != null && gameVersionNumber.isAtLeast("1.20", "23w14a");
-    }
-
     public Path getFile() {
         return file;
     }
+
+    public abstract @Nullable Image getIcon();
 
     public abstract String getFileName();
 
@@ -93,13 +91,6 @@ public abstract sealed class World permits WorldFolder, WorldZipFile {
             return GameVersionNumber.asGameVersion(nameTag.getValue());
         }
         return null;
-    }
-
-    public abstract @Nullable Image getIcon();
-
-    @SuppressWarnings("unused")
-    public boolean supportQuickPlay() {
-        return supportQuickPlay(getGameVersion());
     }
 
     public record LevelData(CompoundTag data, StringTag levelName, LongTag lastPlayed, CompoundTag rootTag, Path file) {

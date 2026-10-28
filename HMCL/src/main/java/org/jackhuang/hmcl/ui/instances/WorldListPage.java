@@ -22,10 +22,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.World;
-import org.jackhuang.hmcl.game.WorldFolder;
-import org.jackhuang.hmcl.game.WorldZipFile;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -140,7 +137,7 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
                 return;
             }
 
-            supportQuickPlay.set(World.supportQuickPlay(gameInstance.getVersion()));
+            supportQuickPlay.set(QuickPlayOption.isSupported(gameInstance.getVersion()));
 
             worlds = result;
             updateWorldList();

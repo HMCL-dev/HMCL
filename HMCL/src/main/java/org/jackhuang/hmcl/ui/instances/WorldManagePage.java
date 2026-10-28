@@ -10,7 +10,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.game.QuickPlayOption;
 import org.jackhuang.hmcl.game.WorldFolder;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -72,7 +72,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
 
-        supportQuickPlay = World.supportQuickPlay(gameInstance.getVersion());
+        supportQuickPlay = QuickPlayOption.isSupported(gameInstance.getVersion());
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
