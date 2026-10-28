@@ -70,7 +70,7 @@ public final class CentralProcessorTest {
         assertEquals(new CentralProcessor.Cores(8, 2, 4), first.getCores());
         assertEquals("Second CPU", second.getName());
         assertEquals(HardwareVendor.AMD, second.getVendor());
-        assertEquals("First CPU (6 Cores / 8 Threads, 2P, 4E)", first.toString());
+        assertEquals("First CPU (2P + 4E / 8 Threads)", first.toString());
         assertEquals("Second CPU (4 Cores / 8 Threads)", second.toString());
     }
 
@@ -96,7 +96,7 @@ public final class CentralProcessorTest {
         assertEquals("CPU", cpu.toString());
         assertEquals("CPU (4 Cores / 8 Threads)", new CentralProcessor.Builder().setName("CPU")
                 .setCores(new CentralProcessor.Cores(8, 4, 0)).build().toString());
-        assertEquals("CPU (4 Cores, 0P, 4E)", new CentralProcessor.Builder().setName("CPU")
+        assertEquals("CPU (0P + 4E)", new CentralProcessor.Builder().setName("CPU")
                 .setCores(new CentralProcessor.Cores(4, 0, 4)).build().toString());
     }
 
@@ -105,7 +105,7 @@ public final class CentralProcessorTest {
     void testFewerLogicalThreads() {
         assertEquals("CPU (8 Cores / 4 Threads)", new CentralProcessor.Builder().setName("CPU")
                 .setCores(new CentralProcessor.Cores(4, 8, 0)).build().toString());
-        assertEquals("CPU (8 Cores / 4 Threads, 4P, 4E)", new CentralProcessor.Builder().setName("CPU")
+        assertEquals("CPU (4P + 4E / 4 Threads)", new CentralProcessor.Builder().setName("CPU")
                 .setCores(new CentralProcessor.Cores(4, 4, 4)).build().toString());
     }
 }

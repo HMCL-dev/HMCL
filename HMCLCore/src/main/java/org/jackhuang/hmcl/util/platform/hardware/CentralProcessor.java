@@ -91,16 +91,18 @@ public final class CentralProcessor {
         return cores;
     }
 
-    /// Returns the package name and known core counts.
+    /// Returns the name with P/E counts or a core total, appending threads when their count differs.
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder(name);
         if (cores != null) {
-            builder.append(" (").append(cores.physical()).append(" Cores");
+            builder.append(" (");
+            if (cores.efficiency > 0)
+                builder.append(cores.performance).append("P + ").append(cores.efficiency).append('E');
+            else
+                builder.append(cores.physical()).append(" Cores");
             if (cores.logical != cores.physical())
                 builder.append(" / ").append(cores.logical).append(" Threads");
-            if (cores.efficiency > 0)
-                builder.append(", ").append(cores.performance).append("P, ").append(cores.efficiency).append("E");
             builder.append(')');
         }
         return builder.toString();
