@@ -131,6 +131,13 @@ public class StructureListPage extends ListPageBase<StructureListPage.NBTStructu
                 try (var namespaceStream = Files.list(directory)) {
                     return namespaceStream
                             .filter(Files::isDirectory)
+                            .sorted(Comparator.comparing(FileUtils::getName, (s1, s2) -> {
+                                boolean b1 = Identifier.DEFAULT_NAMESPACE.equals(s1);
+                                boolean b2 = Identifier.DEFAULT_NAMESPACE.equals(s2);
+                                if (b1) return b2 ? 0 : -1;
+                                if (b2) return 1;
+                                return s1.compareTo(s2);
+                            }))
                             .flatMap(namespaceDir -> {
                                 var structuresDir = namespaceDir.resolve(structureDirName);
                                 if (!Files.isDirectory(structuresDir)) return Stream.of();
