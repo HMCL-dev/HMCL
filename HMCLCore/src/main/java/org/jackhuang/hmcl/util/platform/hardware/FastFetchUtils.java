@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.util.platform.hardware;
 
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -130,6 +131,7 @@ final class FastFetchUtils {
     ///
     /// @param type the module name, or `null` if absent
     /// @param result the module payload, or `null` if absent
+    @JsonSerializable
     private record Result<T>(@Nullable String type, @Nullable T result) {
 
         /// Returns the Gson type token for a response with the supplied payload type.
@@ -145,6 +147,7 @@ final class FastFetchUtils {
     /// @param vendor the vendor name, or `null` if absent
     /// @param packages the package count, or `null` if absent
     /// @param cores core counts keyed by kind, or `null` if absent
+    @JsonSerializable
     private record CPUInfo(@Nullable String cpu, @Nullable String vendor, @Nullable Integer packages,
                            @Nullable Map<String, @Nullable String> cores) {
     }
@@ -155,6 +158,7 @@ final class FastFetchUtils {
     /// @param vendor the vendor name, or `null` if absent
     /// @param type the adapter classification, or `null` if absent
     /// @param driver the driver name, or `null` if absent
+    @JsonSerializable
     private record GPUInfo(@Nullable String name, @Nullable String vendor,
                            @Nullable String type, @Nullable String driver) {
     }
