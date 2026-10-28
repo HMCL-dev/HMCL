@@ -22,7 +22,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 final class WindowsCPUDetector {
 
     /// Reads the identity associated with a registry logical-processor index.
-    private static CentralProcessor.Builder detectName(@Nullable WinReg reg, int index) {
+    private static CentralProcessor.Builder detectNameAndVendor(@Nullable WinReg reg, int index) {
         CentralProcessor.Builder builder = new CentralProcessor.Builder();
         if (reg == null)
             return builder;
@@ -107,7 +107,7 @@ final class WindowsCPUDetector {
                         : classes.firstEntry().getValue();
             }
             int first = Collections.min(pkg.processors);
-            result.add(detectName(reg, Collections.binarySearch(logicalIds, first))
+            result.add(detectNameAndVendor(reg, Collections.binarySearch(logicalIds, first))
                     .setCores(new CentralProcessor.Cores(pkg.processors.size(), packageCores.size() - efficiency, efficiency)).build());
         }
         if (assigned.size() != cores.stream().mapToInt(c -> c.processors.size()).sum())
@@ -138,7 +138,7 @@ final class WindowsCPUDetector {
                 LOG.warning("Failed to detect processor topology", e);
             }
         }
-        return reg == null ? List.of() : List.of(detectName(reg, 0).build());
+        return reg == null ? List.of() : List.of(detectNameAndVendor(reg, 0).build());
     }
 
     /// Prevents instantiation.

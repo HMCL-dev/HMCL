@@ -78,8 +78,8 @@ final class LinuxCPUDetector {
         }
     }
 
-    /// Reads the processor name, falling back to the machine device tree.
-    private static void detectName(CentralProcessor.Builder builder, TreeMap<Integer, Map<String, String>> cpuInfo) {
+    /// Reads the processor name and vendor, falling back to the machine device tree.
+    private static void detectNameAndVendor(CentralProcessor.Builder builder, TreeMap<Integer, Map<String, String>> cpuInfo) {
         // assert !cpuInfo.isEmpty();
         Map<String, String> firstCore = cpuInfo.firstEntry().getValue();
 
@@ -150,7 +150,7 @@ final class LinuxCPUDetector {
     }
 
     /// Reads an optional sysfs attribute without making missing attributes fatal.
-    private static @Nullable String read(Path path) {
+    private static @Nullable String readSysfsAttribute(Path path) {
         try {
             return Files.readString(path).trim();
         } catch (IOException | SecurityException e) {
@@ -159,7 +159,7 @@ final class LinuxCPUDetector {
     }
 
     /// Parses a nonnegative integer, returning `null` for missing or malformed values.
-    private static @Nullable Integer number(@Nullable String value) {
+    private static @Nullable Integer parseNonNegativeInt(@Nullable String value) {
         if (value == null)
             return null;
         try {
@@ -171,7 +171,7 @@ final class LinuxCPUDetector {
     }
 
     /// Parses a kernel CPU list, returning an empty set if unavailable or malformed.
-    private static @Unmodifiable Set<Integer> cpuList(@Nullable String value) {
+    private static @Unmodifiable Set<Integer> parseCpuList(@Nullable String value) {
         if (value == null || value.isBlank())
             return Set.of();
         Set<Integer> result = new TreeSet<>();
@@ -203,9 +203,9 @@ final class LinuxCPUDetector {
         Map<Integer, @Unmodifiable Set<Integer>> siblingSets = new HashMap<>();
         for (int id : packageInfo.keySet()) {
             Path topology = cpuRoot.resolve("cpu" + id + "/topology");
-            @Unmodifiable Set<Integer> siblings = cpuList(read(topology.resolve("core_cpus_list")));
+            @Unmodifiable Set<Integer> siblings = parseCpuList(readSysfsAttribute(topology.resolve("core_cpus_list")));
             if (siblings.isEmpty())
-                siblings = cpuList(read(topology.resolve("thread_siblings_list")));
+                siblings = parseCpuList(readSysfsAttribute(topology.resolve("thread_siblings_list")));
             siblingSets.put(id, siblings);
         }
         // Use one identity scheme per package so a missing sibling file cannot double-count a core.
@@ -220,21 +220,21 @@ final class LinuxCPUDetector {
             if (useSiblings) {
                 key = "siblings:" + siblingSets.get(id);
             } else {
-                @Nullable Integer coreId = number(read(cpu.resolve("topology/core_id")));
+                @Nullable Integer coreId = parseNonNegativeInt(readSysfsAttribute(cpu.resolve("topology/core_id")));
                 if (coreId == null)
-                    coreId = number(entry.getValue().get("core id"));
+                    coreId = parseNonNegativeInt(entry.getValue().get("core id"));
                 if (coreId == null) {
                     // A package-wide count remains useful even when per-core identifiers are absent.
-                    @Nullable Integer physical = number(packageInfo.firstEntry().getValue().get("cpu cores"));
+                    @Nullable Integer physical = parseNonNegativeInt(packageInfo.firstEntry().getValue().get("cpu cores"));
                     return physical != null && physical > 0
                             ? new CentralProcessor.Cores(packageInfo.size(), physical, 0) : null;
                 }
-                @Nullable Integer dieId = number(read(cpu.resolve("topology/die_id")));
+                @Nullable Integer dieId = parseNonNegativeInt(readSysfsAttribute(cpu.resolve("topology/die_id")));
                 key = "core:" + (dieId != null ? dieId : 0) + ":" + coreId;
             }
             boolean isPerformance = performance.contains(id) && !efficiency.contains(id);
             boolean isEfficiency = efficiency.contains(id) && !performance.contains(id);
-            @Nullable Integer capacity = number(read(cpu.resolve("cpu_capacity")));
+            @Nullable Integer capacity = parseNonNegativeInt(readSysfsAttribute(cpu.resolve("cpu_capacity")));
             if (capacity != null && capacity == 0)
                 capacity = null;
             // Conflicting sibling observations cannot establish a core's classification.
@@ -265,24 +265,24 @@ final class LinuxCPUDetector {
         Path pmuRoot = Path.of("/sys/bus/event_source/devices");
         Map<Integer, TreeMap<Integer, Map<String, String>>> packages = new TreeMap<>();
         for (var entry : cpuInfo.entrySet()) {
-            @Nullable Integer packageId = number(read(cpuRoot.resolve("cpu" + entry.getKey() + "/topology/physical_package_id")));
+            @Nullable Integer packageId = parseNonNegativeInt(readSysfsAttribute(cpuRoot.resolve("cpu" + entry.getKey() + "/topology/physical_package_id")));
             if (packageId == null)
-                packageId = number(entry.getValue().get("physical id"));
+                packageId = parseNonNegativeInt(entry.getValue().get("physical id"));
             if (packageId == null) {
                 // Without package boundaries, retain only the first reported identity.
                 CentralProcessor.Builder builder = new CentralProcessor.Builder();
-                detectName(builder, cpuInfo);
+                detectNameAndVendor(builder, cpuInfo);
                 return List.of(builder.build());
             }
             packages.computeIfAbsent(packageId, ignored -> new TreeMap<>()).put(entry.getKey(), entry.getValue());
         }
-        @Unmodifiable Set<Integer> performance = cpuList(read(pmuRoot.resolve("cpu_core/cpus")));
-        Set<Integer> efficiency = new HashSet<>(cpuList(read(pmuRoot.resolve("cpu_atom/cpus"))));
-        efficiency.addAll(cpuList(read(pmuRoot.resolve("cpu_lowpower/cpus"))));
+        @Unmodifiable Set<Integer> performance = parseCpuList(readSysfsAttribute(pmuRoot.resolve("cpu_core/cpus")));
+        Set<Integer> efficiency = new HashSet<>(parseCpuList(readSysfsAttribute(pmuRoot.resolve("cpu_atom/cpus"))));
+        efficiency.addAll(parseCpuList(readSysfsAttribute(pmuRoot.resolve("cpu_lowpower/cpus"))));
         List<CentralProcessor> result = new ArrayList<>();
         for (var packageInfo : packages.values()) {
             CentralProcessor.Builder identity = new CentralProcessor.Builder();
-            detectName(identity, packageInfo);
+            detectNameAndVendor(identity, packageInfo);
             identity.setCores(detectCores(packageInfo, cpuInfo.keySet(), cpuRoot, performance, efficiency));
             result.add(identity.build());
         }
