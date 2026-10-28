@@ -69,7 +69,8 @@ final class FastFetchUtils {
         }
     }
 
-    /// Returns the first reported processor identity; counts are used only for an explicitly single-package response.
+    /// Returns the first reported processor identity, assuming one package when the package count is unknown.
+    /// Counts are omitted when the response explicitly reports multiple packages.
     static @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
         @Nullable CPUInfo cpuInfo = get("CPU", TypeToken.get(CPUInfo.class));
         if (cpuInfo == null)
@@ -77,7 +78,7 @@ final class FastFetchUtils {
 
         CentralProcessor.Builder builder = new CentralProcessor.Builder()
                 .setName(cpuInfo.cpu).setVendor(HardwareVendor.of(cpuInfo.vendor));
-        if (cpuInfo.packages != null && cpuInfo.packages == 1 && cpuInfo.cores != null) {
+        if ((cpuInfo.packages == null || cpuInfo.packages == 1) && cpuInfo.cores != null) {
             try {
                 @Nullable String physical = cpuInfo.cores.get("physical");
                 @Nullable String logical = cpuInfo.cores.get("logical");
