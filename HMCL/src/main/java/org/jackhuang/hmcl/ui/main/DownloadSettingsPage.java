@@ -184,6 +184,8 @@ public class DownloadSettingsPage extends StackPane {
 
             JFXCheckBox enabled = new JFXCheckBox(i18n("settings.launcher.aria2.enabled"));
             enabled.selectedProperty().bindBidirectional(settings().aria2EnabledProperty());
+            Label startHint = new Label(i18n("settings.launcher.aria2.start_hint"));
+            startHint.setWrapText(true);
 
             GridPane fields = new GridPane();
             fields.setHgap(20);
@@ -199,7 +201,7 @@ public class DownloadSettingsPage extends StackPane {
             JFXPasswordField token = new JFXPasswordField();
             token.textProperty().bindBidirectional(settings().aria2TokenProperty());
             fields.addRow(1, new Label(i18n("settings.launcher.aria2.token")), token);
-            aria2List.getChildren().addAll(enabled, fields);
+            aria2List.getChildren().addAll(enabled, startHint, fields);
             content.getChildren().addAll(ComponentList.createComponentListTitle("aria2"), aria2List);
         }
 
