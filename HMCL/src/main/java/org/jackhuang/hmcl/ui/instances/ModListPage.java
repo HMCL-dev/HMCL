@@ -119,14 +119,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     public void refresh() {
-        if (isRefreshing.get()) return;
-
-        isRefreshing.set(true);
-
-        loadMods(modManager).whenCompleteAsync(
-            (result, exception) -> isRefreshing.set(false),
-            Schedulers.javafx()
-        );
+        loadMods(modManager);
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
@@ -138,15 +131,18 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         loadMods(gameInstance.getModManager());
     }
 
-    private CompletableFuture<List<ModInfoObject>> loadMods(ModManager modManager) {
+    private void loadMods(ModManager modManager) {
+        if (isRefreshing.get()) return;
+
         setLoading(true);
+        isRefreshing.set(true);
 
         if (this.modManager != modManager) {
             getItems().clear();
         }
         this.modManager = modManager;
 
-        return CompletableFuture.supplyAsync(() -> {
+        CompletableFuture.supplyAsync(() -> {
             lock.lock();
             try {
                 modManager.refresh();
@@ -170,6 +166,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 LOG.warning("Failed to load mods", exception);
                 getItems().clear();
             }
+
+            isRefreshing.set(false);
             setLoading(false);
         }, Schedulers.javafx());
     }
