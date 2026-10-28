@@ -13,13 +13,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.security.MessageDigest;
 import java.util.*;
 
@@ -150,6 +147,57 @@ public class FileDownloadTask extends FetchTask<Void> {
     @Override
     protected void useCachedResult(Path cache) throws IOException {
         FileUtils.copyFile(cache, file);
+    }
+
+    /// Uses aria2 for enabled HTTP file downloads while preserving HMCL's cache and integrity checks.
+    @Override
+    protected boolean downloadExternally(@NotNull WebURL url, boolean checkETag) throws DownloadException, InterruptedException {
+        if (!Aria2Downloader.isEnabled()) return false;
+        if (checkETag) {
+            try {
+                useCachedResult(repository.getCachedRemoteFile(url, true));
+                return true;
+            } catch (IOException _e) {  // Java17 居然不支持下划线当变量名。
+                // 缓存未命中，不用报错。重新下载即可。
+            }
+        }
+
+        Path directory = null;
+        try {
+            beforeDownload(url);
+            directory = Files.createTempDirectory("hmcl-aria2-");
+            long[] lastCompleted = {0};
+            Path downloaded = Aria2Downloader.download(url, directory,
+                    (completed, total) -> {
+                        updateExternalDownloadProgress(completed, total, lastCompleted[0]);
+                        lastCompleted[0] = completed;
+                    }, this::isCancelled);
+            if (isCancelled()) throw new InterruptedException();
+            try (Context context = getContext(null, false, null);
+                 InputStream input = Files.newInputStream(downloaded)) {
+                byte[] buffer = new byte[8192];
+                int length;
+                while ((length = input.read(buffer)) >= 0) {
+                    if (isCancelled()) throw new InterruptedException();
+                    context.write(buffer, 0, length);
+                }
+                context.withResult(true);
+            }
+            updateProgress(1.0);
+            return true;
+        } catch (IOException e) {
+            throw new DownloadException(url, e);
+        } finally {
+            if (directory != null) {
+                try {
+                    Files.deleteIfExists(directory.resolve("payload.aria2"));
+                    Files.deleteIfExists(directory.resolve("payload"));
+                    Files.deleteIfExists(directory);
+                } catch (IOException e) {
+                    LOG.warning("Failed to clean aria2 temporary directory: " + directory, e);
+                }
+            }
+        }
     }
 
     @Override

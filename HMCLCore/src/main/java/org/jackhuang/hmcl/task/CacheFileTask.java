@@ -118,6 +118,40 @@ public final class CacheFileTask extends FetchTask<Path> {
         setResult(cache);
     }
 
+    /// Uses aria2 for content-addressed files, including the Minecraft client JAR.
+    @Override
+    protected boolean downloadExternally(@NotNull WebURL url, boolean checkETag) throws DownloadException, InterruptedException {
+        if (!Aria2Downloader.isEnabled() || expectedSha1 == null) return false;
+
+        Path directory = null;
+        try {
+            directory = Files.createTempDirectory("hmcl-aria2-");
+            long[] lastCompleted = {0};
+            Path downloaded = Aria2Downloader.download(url, directory,
+                    (completed, total) -> {
+                        updateExternalDownloadProgress(completed, total, lastCompleted[0]);
+                        lastCompleted[0] = completed;
+                    }, this::isCancelled);
+            if (isCancelled()) throw new InterruptedException();
+            ChecksumMismatchException.verifyChecksum(downloaded, CacheRepository.SHA1, expectedSha1);
+            setResult(repository.cacheFile(downloaded, CacheRepository.SHA1, expectedSha1));
+            updateProgress(1.0);
+            return true;
+        } catch (IOException e) {
+            throw new DownloadException(url, e);
+        } finally {
+            if (directory != null) {
+                try {
+                    Files.deleteIfExists(directory.resolve("payload.aria2"));
+                    Files.deleteIfExists(directory.resolve("payload"));
+                    Files.deleteIfExists(directory);
+                } catch (IOException e) {
+                    LOG.warning("Failed to clean aria2 temporary directory: " + directory, e);
+                }
+            }
+        }
+    }
+
     /// Creates a temporary sink that publishes a successful download to the cache repository.
     ///
     /// @param response     the HTTP response metadata

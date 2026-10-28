@@ -499,6 +499,33 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return downloadThreads;
     }
 
+    /// Whether HTTP file downloads use the local aria2 daemon.
+    @SerializedName("aria2Enabled")
+    private final BooleanProperty aria2Enabled = new SimpleBooleanProperty(false);
+
+    /// Returns the aria2 enabled property.
+    public BooleanProperty aria2EnabledProperty() {
+        return aria2Enabled;
+    }
+
+    /// The local aria2 RPC server address.
+    @SerializedName("aria2Url")
+    private final StringProperty aria2Url = new SimpleStringProperty("http://127.0.0.1:6800/jsonrpc");
+
+    /// Returns the aria2 RPC URL property.
+    public StringProperty aria2UrlProperty() {
+        return aria2Url;
+    }
+
+    /// The optional aria2 RPC secret.
+    @SerializedName("aria2Token")
+    private final StringProperty aria2Token = new SimpleStringProperty("");
+
+    /// Returns the aria2 RPC token property.
+    public StringProperty aria2TokenProperty() {
+        return aria2Token;
+    }
+
     /// The selected game version list download source.
     @SerializedName("versionListSource")
     private final ObjectProperty<DownloadSource> versionListSource = new RawPreservingObjectProperty<>(DownloadSource.DEFAULT);

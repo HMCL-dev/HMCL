@@ -177,6 +177,33 @@ public class DownloadSettingsPage extends StackPane {
         }
 
         {
+            // Aria2
+            VBox aria2List = new VBox(10);
+            aria2List.getStyleClass().add("card-non-transparent");
+            aria2List.setPadding(new Insets(10));
+
+            JFXCheckBox enabled = new JFXCheckBox(i18n("settings.launcher.aria2.enabled"));
+            enabled.selectedProperty().bindBidirectional(settings().aria2EnabledProperty());
+
+            GridPane fields = new GridPane();
+            fields.setHgap(20);
+            fields.setVgap(10);
+            fields.getColumnConstraints().addAll(new ColumnConstraints(), new ColumnConstraints());
+            fields.getColumnConstraints().get(1).setHgrow(Priority.ALWAYS);
+            fields.disableProperty().bind(settings().aria2EnabledProperty().not());
+
+            JFXTextField url = new JFXTextField();
+            FXUtils.bindString(url, settings().aria2UrlProperty());
+            fields.addRow(0, new Label(i18n("settings.launcher.aria2.url")), url);
+
+            JFXPasswordField token = new JFXPasswordField();
+            token.textProperty().bindBidirectional(settings().aria2TokenProperty());
+            fields.addRow(1, new Label(i18n("settings.launcher.aria2.token")), token);
+            aria2List.getChildren().addAll(enabled, fields);
+            content.getChildren().addAll(ComponentList.createComponentListTitle("aria2"), aria2List);
+        }
+
+        {
             VBox proxyList = new VBox(10);
             proxyList.getStyleClass().add("card-non-transparent");
 

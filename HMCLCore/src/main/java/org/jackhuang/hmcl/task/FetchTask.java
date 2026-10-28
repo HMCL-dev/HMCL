@@ -99,6 +99,8 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                 Duration readTimeout = Objects.requireNonNullElse(candidate.readTimeout(), NetworkUtils.TIMEOUT);
 
                 try {
+                    if (NetworkUtils.isHttpUri(url) && downloadExternally(url, checkETag))
+                        return;
                     if (NetworkUtils.isHttpUri(url))
                         downloadHttp(url, retry, connectTimeout, readTimeout, checkETag);
                     else
@@ -124,6 +126,23 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
             }
             throw last;
         }
+    }
+
+    /// Lets a file task handle an HTTP candidate with an optional external downloader.
+    protected boolean downloadExternally(WebURL url, boolean checkETag) throws DownloadException, InterruptedException {
+        return false;
+    }
+
+    /// Publishes aria2's cumulative byte count to the task bar and global speed display.
+    ///
+    /// @param completed bytes downloaded by this attempt so far
+    /// @param total expected file size, or zero while unknown
+    /// @param previous bytes reported at the preceding poll of this attempt
+    protected final void updateExternalDownloadProgress(long completed, long total, long previous) {
+        if (completed > previous)
+            updateDownloadSpeed(completed - previous);
+        if (total > 0)
+            updateProgressImmediately(Math.min(1.0, (double) completed / total));
     }
 
     private static final class HttpResumeContext {

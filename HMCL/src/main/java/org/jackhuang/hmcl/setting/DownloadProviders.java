@@ -6,6 +6,7 @@ import javafx.beans.InvalidationListener;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.task.FetchTask;
+import org.jackhuang.hmcl.task.Aria2Downloader;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +55,15 @@ public final class DownloadProviders {
         settings().autoDownloadThreadsProperty().addListener(onChangeDownloadThreads);
         settings().downloadThreadsProperty().addListener(onChangeDownloadThreads);
         onChangeDownloadThreads.invalidated(null);
+
+        InvalidationListener onChangeAria2 = observable -> Aria2Downloader.configure(
+                settings().aria2EnabledProperty().get(),
+                settings().aria2UrlProperty().get(),
+                settings().aria2TokenProperty().get());
+        settings().aria2EnabledProperty().addListener(onChangeAria2);
+        settings().aria2UrlProperty().addListener(onChangeAria2);
+        settings().aria2TokenProperty().addListener(onChangeAria2);
+        onChangeAria2.invalidated(null);
 
         FXUtils.onChangeAndOperate(settings().versionListSourceProperty(), PROVIDER::setVersionListSource);
         FXUtils.onChangeAndOperate(settings().fileDownloadSourceProperty(), PROVIDER::setFileSource);
