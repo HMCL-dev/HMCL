@@ -69,6 +69,53 @@ final class LinuxCPUDetector {
         };
     }
 
+    /// Resolves Qualcomm names from device-tree compatibles and sysfs, returning `null` for unknown models.
+    private static @Nullable String detectQualcommName(String model, String[] compatibles) {
+        // Adapted from Fastfetch's ffCPUQualcommSnapdragonToName:
+        // https://github.com/fastfetch-cli/fastfetch/blob/2f68ce7f7467ddbaaf31519c1d41455781d48492/src/detection/cpu/cpu_linux.c#L711-L776
+        // The devkit shares soc_id 555 with retail X Elite chips; its compatible entry distinguishes it.
+        if (Arrays.stream(compatibles).anyMatch(compatible -> compatible.contains("x1e001de")))
+            return "Qualcomm Snapdragon X Elite X1E-00-1DE";
+
+        // soc_id is a decimal hardware identifier. One ID can cover several retail SKUs.
+        @Nullable Integer socId = parseNonNegativeInt(readSysfsAttribute(Path.of("/sys/devices/soc0/soc_id")));
+        @Nullable String snapdragonName = switch (socId != null ? socId : -1) {
+            case 662 -> "X2 Elite Extreme X2E-94/96-100";
+            case 698 -> "X2 Elite X2E-88/90-100";
+            case 699 -> "X2 Elite X2E-80/84-100";
+            case 693 -> "X2 Elite X2E-78-100";
+            case 728 -> "X2 Plus X2P-64-100";
+            case 719 -> "X2 Plus X2P-42-100";
+            case 555 -> "X Elite X1E-78/80/84-100";
+            case 615 -> "X Plus X1P-64/66-100";
+            case 616 -> "X X1-26-101";
+            case 635 -> "X X1-26-100 / X Plus X1P-42/46-100";
+            default -> null;
+        };
+        if (snapdragonName != null)
+            return "Qualcomm Snapdragon " + snapdragonName;
+
+        // Adapted from Fastfetch's detectSocName Qualcomm fallback and ffCPUQualcommCodeToName:
+        // https://github.com/fastfetch-cli/fastfetch/blob/2f68ce7f7467ddbaaf31519c1d41455781d48492/src/detection/cpu/cpu_linux.c#L1014-L1030
+        // https://github.com/fastfetch-cli/fastfetch/blob/2f68ce7f7467ddbaaf31519c1d41455781d48492/src/detection/cpu/cpu.c#L76-L90
+        if (model.startsWith("sc")) {
+            // SC compatibles may have suffixes, e.g. sc8280xp; only the numeric prefix selects the family.
+            int codeEnd = 2;
+            while (codeEnd < model.length() && model.charAt(codeEnd) >= '0' && model.charAt(codeEnd) <= '9')
+                codeEnd++;
+            @Nullable Integer socCode = parseNonNegativeInt(model.substring(2, codeEnd));
+            return switch (socCode != null ? socCode : -1) {
+                case 7180 -> "Qualcomm Snapdragon 7c";
+                case 7280 -> "Qualcomm Snapdragon 7c+ Gen 3";
+                case 8180 -> "Qualcomm Snapdragon 8cx Gen 2 5G";
+                case 8280 -> "Qualcomm Snapdragon 8cx Gen 3";
+                default -> "Qualcomm Snapdragon " + model.toUpperCase(Locale.ROOT);
+            };
+        }
+        // Other unknown models retain HMCL's vendor/model fallback in the caller.
+        return null;
+    }
+
     /// Reads the processor name and vendor, falling back to the machine device tree.
     private static void detectNameAndVendor(CentralProcessor.Builder builder, TreeMap<Integer, Map<String, String>> cpuInfo) {
         // assert !cpuInfo.isEmpty();
@@ -120,49 +167,7 @@ final class LinuxCPUDetector {
                         if (builder.getName() == null)
                             builder.setName("Apple Silicon " + model);
                     } else if (builder.getVendor() == HardwareVendor.QUALCOMM) {
-                        // Adapted from Fastfetch's ffCPUQualcommSnapdragonToName:
-                        // https://github.com/fastfetch-cli/fastfetch/blob/2f68ce7f7467ddbaaf31519c1d41455781d48492/src/detection/cpu/cpu_linux.c#L711-L776
-                        // The devkit shares soc_id 555 with retail X Elite chips; its compatible entry distinguishes it.
-                        if (Arrays.stream(data).anyMatch(compatible -> compatible.contains("x1e001de"))) {
-                            builder.setName("Qualcomm Snapdragon X Elite X1E-00-1DE");
-                        } else {
-                            // soc_id is a decimal hardware identifier. One ID can cover several retail SKUs.
-                            @Nullable Integer socId = parseNonNegativeInt(readSysfsAttribute(Path.of("/sys/devices/soc0/soc_id")));
-                            @Nullable String snapdragonName = switch (socId != null ? socId : -1) {
-                                case 662 -> "X2 Elite Extreme X2E-94/96-100";
-                                case 698 -> "X2 Elite X2E-88/90-100";
-                                case 699 -> "X2 Elite X2E-80/84-100";
-                                case 693 -> "X2 Elite X2E-78-100";
-                                case 728 -> "X2 Plus X2P-64-100";
-                                case 719 -> "X2 Plus X2P-42-100";
-                                case 555 -> "X Elite X1E-78/80/84-100";
-                                case 615 -> "X Plus X1P-64/66-100";
-                                case 616 -> "X X1-26-101";
-                                case 635 -> "X X1-26-100 / X Plus X1P-42/46-100";
-                                default -> null;
-                            };
-                            if (snapdragonName != null)
-                                builder.setName("Qualcomm Snapdragon " + snapdragonName);
-                        }
-
-                        // Adapted from Fastfetch's detectSocName Qualcomm fallback and ffCPUQualcommCodeToName:
-                        // https://github.com/fastfetch-cli/fastfetch/blob/2f68ce7f7467ddbaaf31519c1d41455781d48492/src/detection/cpu/cpu_linux.c#L1014-L1030
-                        // https://github.com/fastfetch-cli/fastfetch/blob/2f68ce7f7467ddbaaf31519c1d41455781d48492/src/detection/cpu/cpu.c#L76-L90
-                        if (builder.getName() == null && model.startsWith("sc")) {
-                            // SC compatibles may have suffixes, e.g. sc8280xp; only the numeric prefix selects the family.
-                            int codeEnd = 2;
-                            while (codeEnd < model.length() && model.charAt(codeEnd) >= '0' && model.charAt(codeEnd) <= '9')
-                                codeEnd++;
-                            @Nullable Integer socCode = parseNonNegativeInt(model.substring(2, codeEnd));
-                            builder.setName(switch (socCode != null ? socCode : -1) {
-                                case 7180 -> "Qualcomm Snapdragon 7c";
-                                case 7280 -> "Qualcomm Snapdragon 7c+ Gen 3";
-                                case 8180 -> "Qualcomm Snapdragon 8cx Gen 2 5G";
-                                case 8280 -> "Qualcomm Snapdragon 8cx Gen 3";
-                                default -> "Qualcomm Snapdragon " + model.toUpperCase(Locale.ROOT);
-                            });
-                        }
-                        // Other unknown models retain HMCL's vendor/model fallback below.
+                        builder.setName(detectQualcommName(model, data));
                     } else if (builder.getVendor() == HardwareVendor.BROADCOM)
                         // Raspberry Pi
                         builder.setName("Broadcom " + model.toUpperCase(Locale.ROOT));
