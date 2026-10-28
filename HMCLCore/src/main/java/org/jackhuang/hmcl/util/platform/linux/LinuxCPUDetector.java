@@ -41,11 +41,9 @@ final class LinuxCPUDetector {
         }
     }
 
-    /// Resolves lowercase Apple M-series SoC codes to display names, preserving shared product names.
+    /// Resolves lowercase Apple M-series SoC codes to display names.
     /// Returns `null` for unrecognized codes.
     ///
-    /// @see <a href="https://asahilinux.org/docs/hw/soc/soc-codenames/">SoC Codenames - Asahi Linux Documentation</a>
-    /// @see <a href="https://asahilinux.org/docs/platform/feature-support/m5/">M5 Series Feature Support</a>
     /// @see <a href="https://github.com/AsahiLinux/kisd#base-addresses">Asahi Linux kisd chip identifiers</a>
     private static @Nullable String appleCodeToName(String code) {
         return switch (code) {
@@ -65,7 +63,7 @@ final class LinuxCPUDetector {
             case "t6040" -> "Apple M4 Pro";
             case "t6041" -> "Apple M4 Max";
             case "t8142" -> "Apple M5";
-            case "t6050" -> "Apple M5 Pro / Max / Ultra";
+            case "t6050" -> "Apple M5 Pro";
             case "t8152" -> "Apple M6";
             default -> null;
         };
