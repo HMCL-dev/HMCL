@@ -41,25 +41,32 @@ final class LinuxCPUDetector {
         }
     }
 
-    /// Resolves known Apple SoC codes, or returns `null` for an unknown code.
+    /// Resolves lowercase Apple M-series SoC codes to display names, preserving shared product names.
+    /// Returns `null` for unrecognized codes.
     ///
     /// @see <a href="https://asahilinux.org/docs/hw/soc/soc-codenames/">SoC Codenames - Asahi Linux Documentation</a>
-    private static @Nullable String appleCodeToName(int code) {
+    /// @see <a href="https://asahilinux.org/docs/platform/feature-support/m5/">M5 Series Feature Support</a>
+    /// @see <a href="https://github.com/AsahiLinux/kisd#base-addresses">Asahi Linux kisd chip identifiers</a>
+    private static @Nullable String appleCodeToName(String code) {
         return switch (code) {
-            case 8103 -> "Apple M1";
-            case 6000 -> "Apple M1 Pro";
-            case 6001 -> "Apple M1 Max";
-            case 6002 -> "Apple M1 Ultra";
-            case 8112 -> "Apple M2";
-            case 6020 -> "Apple M2 Pro";
-            case 6021 -> "Apple M2 Max";
-            case 6022 -> "Apple M2 Ultra";
-            case 8122 -> "Apple M3";
-            case 6030 -> "Apple M3 Pro";
-            case 6031, 6034 -> "Apple M3 Max";
-            case 8132 -> "Apple M4";
-            case 6040 -> "Apple M4 Pro";
-            case 6041 -> "Apple M4 Max";
+            case "t8103" -> "Apple M1";
+            case "t6000" -> "Apple M1 Pro";
+            case "t6001" -> "Apple M1 Max";
+            case "t6002" -> "Apple M1 Ultra";
+            case "t8112" -> "Apple M2";
+            case "t6020" -> "Apple M2 Pro";
+            case "t6021" -> "Apple M2 Max";
+            case "t6022" -> "Apple M2 Ultra";
+            case "t8122" -> "Apple M3";
+            case "t6030" -> "Apple M3 Pro";
+            case "t6031", "t6034" -> "Apple M3 Max";
+            case "t6032" -> "Apple M3 Ultra";
+            case "t8132" -> "Apple M4";
+            case "t6040" -> "Apple M4 Pro";
+            case "t6041" -> "Apple M4 Max";
+            case "t8142" -> "Apple M5";
+            case "t6050" -> "Apple M5 Pro / Max / Ultra";
+            case "t8152" -> "Apple M6";
             default -> null;
         };
     }
@@ -110,9 +117,7 @@ final class LinuxCPUDetector {
                         builder.setVendor(HardwareVendor.of(StringUtils.capitalizeFirst(vendor)));
 
                     if (builder.getVendor() == HardwareVendor.APPLE) {
-                        // https://elixir.bootlin.com/linux/v6.11/source/arch/arm64/boot/dts/apple
-                        if (model.matches("t[0-9]+"))
-                            builder.setName(appleCodeToName(Integer.parseInt(model.substring(1))));
+                        builder.setName(appleCodeToName(model));
 
                         if (builder.getName() == null)
                             builder.setName("Apple Silicon " + model);
