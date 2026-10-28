@@ -1,9 +1,13 @@
-# https://gitlab.freedesktop.org/mesa/libdrm/-/blob/15cdcfe9e1c4b00f2a819bc1f4b3efa1326ac6bc/data/amdgpu.ids
+# https://gitlab.freedesktop.org/mesa/libdrm/-/blob/3b5e41a44cd1842297e17447c3984c85c2a6d837/data/amdgpu.ids
 #
 # List of AMDGPU IDs
 #
 # Syntax:
 # device_id,	revision_id,	product_name        <-- single tab after comma
+#
+# An entry may be followed by child lines that override the product name
+# for a specific board:
+#	subsystem_vendor_id,	subsystem_device_id,	product_name
 
 1.0.0
 1114,	C2,	AMD Radeon 860M Graphics
@@ -132,9 +136,7 @@
 15C8,	D7,	AMD Radeon 740M Graphics
 15C8,	D8,	AMD Radeon 740M Graphics
 15D8,	00,	AMD Radeon RX Vega 8 Graphics WS
-15D8,	91,	AMD Radeon Vega 3 Graphics
 15D8,	91,	AMD Ryzen Embedded R1606G with Radeon Vega Gfx
-15D8,	92,	AMD Radeon Vega 3 Graphics
 15D8,	92,	AMD Ryzen Embedded R1505G with Radeon Vega Gfx
 15D8,	93,	AMD Radeon Vega 1 Graphics
 15D8,	A1,	AMD Radeon Vega 10 Graphics
@@ -165,7 +167,6 @@
 15D8,	D9,	AMD Radeon Vega 8 Graphics
 15D8,	DA,	AMD Radeon Vega 11 Graphics
 15D8,	DB,	AMD Radeon Vega 3 Graphics
-15D8,	DB,	AMD Radeon Vega 8 Graphics
 15D8,	DC,	AMD Radeon Vega 3 Graphics
 15D8,	DD,	AMD Radeon Vega 3 Graphics
 15D8,	DE,	AMD Radeon Vega 3 Graphics
@@ -323,7 +324,6 @@
 6640,	80,	AMD Radeon R9 M380
 6646,	00,	AMD Radeon R9 M280X
 6646,	80,	AMD Radeon R9 M385
-6646,	80,	AMD Radeon R9 M470X
 6647,	00,	AMD Radeon R9 M200X Series
 6647,	80,	AMD Radeon R9 M380
 6649,	00,	AMD FirePro W5100
@@ -346,6 +346,7 @@
 66A1,	02,	AMD Instinct MI60 / MI50
 66A1,	06,	AMD Radeon Pro VII
 66AF,	C1,	AMD Radeon VII
+66AF,	F6,	AMD Radeon VII
 6780,	00,	AMD FirePro W9000
 6784,	00,	ATI FirePro V (FireGL V) Graphics Adapter
 6788,	00,	ATI FirePro V (FireGL V) Graphics Adapter
@@ -364,12 +365,14 @@
 67B9,	00,	AMD Radeon R9 200 Series
 67C0,	00,	AMD Radeon Pro WX 7100 Graphics
 67C0,	80,	AMD Radeon E9550
+67C2,	00,	AMD Radeon Pro V7300X / V7350x2
 67C2,	01,	AMD Radeon Pro V7350x2
 67C2,	02,	AMD Radeon Pro V7300X
 67C4,	00,	AMD Radeon Pro WX 7100 Graphics
 67C4,	80,	AMD Radeon E9560 / E9565 Graphics
 67C7,	00,	AMD Radeon Pro WX 5100 Graphics
 67C7,	80,	AMD Radeon E9390 Graphics
+67D0,	00,	AMD Radeon Pro V7300X / V7350x2
 67D0,	01,	AMD Radeon Pro V7350x2
 67D0,	02,	AMD Radeon Pro V7300X
 67DF,	C0,	AMD Radeon Pro 580X
@@ -420,7 +423,6 @@
 6801,	00,	AMD Radeon HD 8970M
 6806,	00,	AMD Radeon R9 M290X
 6808,	00,	AMD FirePro W7000
-6808,	00,	ATI FirePro V (FireGL V) Graphics Adapter
 6809,	00,	ATI FirePro W5000
 6810,	00,	AMD Radeon R9 200 Series
 6810,	81,	AMD Radeon R9 370 Series
@@ -458,12 +460,15 @@
 6860,	03,	AMD Radeon Pro V340
 6860,	04,	AMD Radeon Instinct MI25x2
 6860,	07,	AMD Radeon Pro V320
+6860,	C0,	AMD Radeon Instinct MI25
 6861,	00,	AMD Radeon Pro WX 9100
 6862,	00,	AMD Radeon Pro SSG
 6863,	00,	AMD Radeon Vega Frontier Edition
+6864,	00,	AMD Radeon Pro V340
 6864,	03,	AMD Radeon Pro V340
 6864,	04,	AMD Radeon Instinct MI25x2
 6864,	05,	AMD Radeon Pro V340
+6867,	00,	AMD Radeon Pro Vega 56
 6868,	00,	AMD Radeon Pro WX 8200
 686C,	00,	AMD Radeon Instinct MI25 MxGPU
 686C,	01,	AMD Radeon Instinct MI25 MxGPU
@@ -472,10 +477,12 @@
 686C,	04,	AMD Radeon Instinct MI25x2 MxGPU
 686C,	05,	AMD Radeon Pro V340L MxGPU
 686C,	06,	AMD Radeon Instinct MI25 MxGPU
+686C,	C1,	AMD Radeon V340 / Instinct MI25 MxGPU
 687F,	01,	AMD Radeon RX Vega
 687F,	C0,	AMD Radeon RX Vega
 687F,	C1,	AMD Radeon RX Vega
 687F,	C3,	AMD Radeon RX Vega
+687F,	C4,	AMD Radeon RX Vega
 687F,	C7,	AMD Radeon RX Vega
 6900,	00,	AMD Radeon R7 M260
 6900,	81,	AMD Radeon R7 M360
@@ -485,7 +492,7 @@
 6900,	D1,	AMD Radeon 530 Series
 6900,	D3,	AMD Radeon 530 Series
 6901,	00,	AMD Radeon R5 M255
-6902,	00,	AMD Radeon Series
+6902,	00,	AMD Radeon R7 M265
 6907,	00,	AMD Radeon R5 M255
 6907,	87,	AMD Radeon R5 M315
 6920,	00,	AMD Radeon R9 M395X
@@ -506,6 +513,8 @@
 6981,	00,	AMD Radeon Pro WX 3200 Series
 6981,	01,	AMD Radeon Pro WX 3200 Series
 6981,	10,	AMD Radeon Pro WX 3200 Series
+6981,	C0,	AMD Radeon Pro WX 3200 Series
+6984,	80,	AMD Radeon Pro WX 2100 Series
 6985,	00,	AMD Radeon Pro WX 3100
 6986,	00,	AMD Radeon Pro WX 2100
 6987,	80,	AMD Embedded Radeon E9171
@@ -521,8 +530,19 @@
 699F,	C3,	AMD Radeon 500 Series
 699F,	C7,	AMD Radeon RX 550 / 550 Series
 699F,	C9,	AMD Radeon 540
+69A0,	00,	AMD Radeon Vega 12
+69A1,	00,	AMD Radeon Vega 12
+69A2,	00,	AMD Radeon Vega 12
+69A3,	00,	AMD Radeon Vega 12
+69AF,	C0,	AMD Radeon Pro Vega 20
+69AF,	C1,	AMD Radeon Pro Vega 20
+69AF,	C3,	AMD Radeon Pro Vega 20
+69AF,	C7,	AMD Radeon Pro Vega 16
+69AF,	CF,	AMD Radeon RX Vega (mobile / OEM)
+69AF,	FF,	AMD Radeon RX Vega (engineering / OEM final)
 6FDF,	E7,	AMD Radeon RX 590 GME
 6FDF,	EF,	AMD Radeon RX 580 2048SP
+6FDF,	FF,	AMD Radeon RX 580 2048SP
 7300,	C1,	AMD FirePro S9300 x2
 7300,	C8,	AMD Radeon R9 Fury Series
 7300,	C9,	AMD Radeon Pro Duo
@@ -548,6 +568,7 @@
 7341,	00,	AMD Radeon Pro W5500
 7347,	00,	AMD Radeon Pro W5500M
 7360,	41,	AMD Radeon Pro 5600M
+7360,	C1,	AMD Radeon Pro V520
 7360,	C3,	AMD Radeon Pro V520
 7362,	C1,	AMD Radeon Pro V540
 7362,	C3,	AMD Radeon Pro V520
@@ -588,13 +609,13 @@
 7408,	00,	AMD Instinct MI250X
 740C,	01,	AMD Instinct MI250X / MI250
 740F,	02,	AMD Instinct MI210
+7410,	02,	AMD Instinct MI210 VF
 7421,	00,	AMD Radeon Pro W6500M
 7422,	00,	AMD Radeon Pro W6400
 7423,	00,	AMD Radeon Pro W6300M
 7423,	01,	AMD Radeon Pro W6300
 7424,	00,	AMD Radeon RX 6300
 743F,	C1,	AMD Radeon RX 6500 XT
-743F,	C3,	AMD Radeon RX 6500
 743F,	C3,	AMD Radeon RX 6500M
 743F,	C7,	AMD Radeon RX 6400
 743F,	C8,	AMD Radeon RX 6500M
@@ -635,24 +656,32 @@
 74A0,	00,	AMD Instinct MI300A
 74A1,	00,	AMD Instinct MI300X
 74A2,	00,	AMD Instinct MI308X
+74A2,	A1,	AMD Instinct MI300X
 74A5,	00,	AMD Instinct MI325X
 74A8,	00,	AMD Instinct MI308X HF
 74A9,	00,	AMD Instinct MI300X HF
 74B5,	00,	AMD Instinct MI300X VF
 74B6,	00,	AMD Instinct MI308X
+74B6,	A1,	AMD Instinct MI300X
+74B9,	00,	AMD Instinct MI325X VF
 74BD,	00,	AMD Instinct MI300X HF
 7550,	C0,	AMD Radeon RX 9070 XT
 7550,	C2,	AMD Radeon RX 9070 GRE
 7550,	C3,	AMD Radeon RX 9070
-7551,	C0,	AMD Radeon AI PRO R9700
-7551,	C8,	AMD Radeon AI PRO R9600D
+7551,	C0,	AMD Radeon AI Pro R9700
+7551,	C1,	AMD Radeon AI Pro R9700S
+7551,	C8,	AMD Radeon AI Pro R9600D
 7590,	C0,	AMD Radeon RX 9060 XT
 7590,	C1,	AMD Radeon RX 9060 XT LP
 7590,	C7,	AMD Radeon RX 9060
+7590,	CF,	AMD Radeon RX 9050
+7590,	DF,	AMD Radeon RX 9050 4GB
 75A0,	00,	AMD Instinct MI350X
 75A3,	00,	AMD Instinct MI355X
+75A8,	00,	AMD Instinct MI350P
 75B0,	00,	AMD Instinct MI350X VF
 75B3,	00,	AMD Instinct MI355X VF
+75B8,	00,	AMD Instinct MI350P VF
 9830,	00,	AMD Radeon HD 8400 / R3 Series
 9831,	00,	AMD Radeon HD 8400E
 9832,	00,	AMD Radeon HD 8330
@@ -748,4 +777,3 @@
 98E4,	E9,	AMD Radeon R4 Graphics
 98E4,	EA,	AMD Radeon R4 Graphics
 98E4,	EB,	AMD Radeon R3 Graphics
-98E4,	EB,	AMD Radeon R4 Graphics
