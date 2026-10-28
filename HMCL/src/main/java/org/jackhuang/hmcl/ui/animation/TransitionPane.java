@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 @NotNullByDefault
 public class TransitionPane extends StackPane {
 
-    /// The requested page, or `null` before content is assigned.
+    /// The requested page, or `null` when content is absent.
     private @Nullable Node currentNode;
 
     /// The pending or running transition, or `null` when content is settled.
@@ -42,6 +42,20 @@ public class TransitionPane extends StackPane {
     /// Returns the requested page, or `null` if none has been assigned.
     public @Nullable Node getCurrentNode() {
         return currentNode;
+    }
+
+    /// Stops any transition and removes displayed and prewarmed content without animation.
+    /// Resets [#getCurrentNode()] to null. Repeated calls on an empty pane have no effect.
+    /// Nodes are detached even if settling the transition throws an exception.
+    public final void clearContent() {
+        try {
+            if (activeTransition != null)
+                activeTransition.stop();
+        } finally {
+            disposePreloadPane();
+            currentNode = null;
+            getChildren().clear();
+        }
     }
 
     /// Attaches unowned content for hidden CSS and layout prewarming during scene pulses.

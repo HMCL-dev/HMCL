@@ -39,15 +39,24 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameInstancePage extends DecoratorAnimatedPage implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
-    private final TabHeader tab;
-    private final TabHeader.Tab<GameSettingsPage<GameSettings.Instance>> gameSettingsTab = new TabHeader.Tab<>("versionSettingsTab");
-    private final TabHeader.Tab<InstallerListPage> installerListTab = new TabHeader.Tab<>("installerListTab");
-    private final TabHeader.Tab<ModListPage> modListTab = new TabHeader.Tab<>("modListTab");
-    private final TabHeader.Tab<WorldListPage> worldListTab = new TabHeader.Tab<>("worldList");
-    private final TabHeader.Tab<SchematicsPage> schematicsTab = new TabHeader.Tab<>("schematicsTab");
-    private final TabHeader.Tab<ResourcePackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
-    private final TabHeader.Tab<ScreenshotsPage> screenshotsTab = new TabHeader.Tab<>("screenshotsTab");
-    private final TabHeader.Tab<ServerListPage> serverListTab = new TabHeader.Tab<>("serverListTab");
+    /// Manages tab selection and content transitions independently of the sidebar.
+    private final TabController tabController;
+    /// The settings tab bound to the current game instance.
+    private final TabItem<GameSettingsPage<GameSettings.Instance>> gameSettingsTab;
+    /// The component management tab bound to the current game instance.
+    private final TabItem<InstallerListPage> installerListTab;
+    /// The installed mods tab bound to the current game instance.
+    private final TabItem<ModListPage> modListTab;
+    /// The saved worlds tab bound to the current game instance.
+    private final TabItem<WorldListPage> worldListTab;
+    /// The schematics tab bound to the current game instance.
+    private final TabItem<SchematicsPage> schematicsTab;
+    /// The installed resource packs tab bound to the current game instance.
+    private final TabItem<ResourcePackListPage> resourcePackTab;
+    /// The screenshots tab bound to the current game instance.
+    private final TabItem<ScreenshotsPage> screenshotsTab;
+    /// The servers tab bound to the current game instance.
+    private final TabItem<ServerListPage> serverListTab;
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentInstanceUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<HMCLGameInstance.@Nullable Optional> instance =
@@ -64,7 +73,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     /// Last concrete instance displayed by this page.
     private @Nullable GameInstanceID preferredInstanceId;
 
-    public TabHeader.Tab<ServerListPage> getServerListTab() {
+    public TabItem<ServerListPage> getServerListTab() {
         return serverListTab;
     }
 
@@ -78,17 +87,26 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
 
     public GameInstancePage() {
         // Child tabs subscribe to instanceProperty() themselves and reload on change.
-        gameSettingsTab.setNodeSupplier(() -> new GameSettingsPage<>(GameSettings.Instance.class, instance));
-        installerListTab.setNodeSupplier(() -> new InstallerListPage(instance));
-        modListTab.setNodeSupplier(() -> new ModListPage(instance));
-        resourcePackTab.setNodeSupplier(() -> new ResourcePackListPage(instance));
-        worldListTab.setNodeSupplier(() -> new WorldListPage(instance));
-        schematicsTab.setNodeSupplier(() -> new SchematicsPage(instance));
-        serverListTab.setNodeSupplier(() -> new ServerListPage(instance));
-        screenshotsTab.setNodeSupplier(() -> new ScreenshotsPage(instance));
+        this.gameSettingsTab = new TabItem<>(() -> new GameSettingsPage<>(GameSettings.Instance.class, instance));
+        this.installerListTab = new TabItem<>(() -> new InstallerListPage(instance));
+        this.modListTab = new TabItem<>(() -> new ModListPage(instance));
+        this.resourcePackTab = new TabItem<>(() -> new ResourcePackListPage(instance));
+        this.worldListTab = new TabItem<>(() -> new WorldListPage(instance));
+        this.schematicsTab = new TabItem<>(() -> new SchematicsPage(instance));
+        this.screenshotsTab = new TabItem<>(() -> new ScreenshotsPage(instance));
+        this.serverListTab = new TabItem<>(() -> new ServerListPage(instance));
 
-        tab = new TabHeader(transitionPane, gameSettingsTab, installerListTab, modListTab, resourcePackTab, worldListTab, schematicsTab, screenshotsTab, serverListTab);
-        tab.select(gameSettingsTab);
+        tabController = new TabController(transitionPane,
+                gameSettingsTab,
+                installerListTab,
+                modListTab,
+                resourcePackTab,
+                worldListTab,
+                schematicsTab,
+                screenshotsTab,
+                serverListTab
+        );
+        tabController.selectTab(gameSettingsTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
@@ -159,15 +177,20 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     public void showInstanceSettings() {
-        tab.select(gameSettingsTab, false);
+        tabController.selectTab(gameSettingsTab, false);
     }
 
     public void showServerList() {
-        tab.select(serverListTab, false);
+        tabController.selectTab(serverListTab, false);
     }
 
-    public Node getSelectedTab() {
-        return tab.getSelectionModel().getSelectedItem().getNode();
+    public @Nullable Node getSelectedTab() {
+        TabItem<?> selectedTab = tabController.getSelectedTab();
+        if (selectedTab == null) {
+            return null;
+        }
+
+        return selectedTab.getNode();
     }
 
     public void setInstance(GameInstanceID instanceId, HMCLGameRepository repository) {
@@ -353,12 +376,12 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
 
             {
                 AdvancedListBox sideBar = new AdvancedListBox()
-                        .addNavigationDrawerTab(control.tab, control.gameSettingsTab, i18n("settings.game"), SVG.SETTINGS, SVG.SETTINGS_FILL)
-                        .addNavigationDrawerTab(control.tab, control.installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL)
-                        .addNavigationDrawerTab(control.tab, control.modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL)
-                        .addNavigationDrawerTab(control.tab, control.resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
-                        .addNavigationDrawerTab(control.tab, control.worldListTab, i18n("world.manage"), SVG.PUBLIC)
-                        .addNavigationDrawerTab(control.tab, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
+                        .addNavigationDrawerTab(control.tabController, control.gameSettingsTab, i18n("settings.game"), SVG.SETTINGS, SVG.SETTINGS_FILL)
+                        .addNavigationDrawerTab(control.tabController, control.installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL)
+                        .addNavigationDrawerTab(control.tabController, control.modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL)
+                        .addNavigationDrawerTab(control.tabController, control.resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
+                        .addNavigationDrawerTab(control.tabController, control.worldListTab, i18n("world.manage"), SVG.PUBLIC)
+                        .addNavigationDrawerTab(control.tabController, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);
 
                 PopupMenu browseList = new PopupMenu();
@@ -391,9 +414,8 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         new MenuSeparator(),
                         // Due to the sidebar height limit, we temporarily place the entries for these tabs
                         // in the management menu; they will be moved back to the sidebar after a future UI refactor.
-                        new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("screenshots.manage"), () -> control.tab.select(control.screenshotsTab), managementPopup),
-                        new IconedMenuItem(SVG.DRESSER, i18n("server.manage"), () -> control.tab.select(control.serverListTab), managementPopup),
-
+                        new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("screenshots.manage"), () -> control.tabController.selectTab(control.screenshotsTab), managementPopup),
+                        new IconedMenuItem(SVG.DRESSER, i18n("server.manage"), () -> control.tabController.selectTab(control.serverListTab), managementPopup),
                         new MenuSeparator(),
                         new IconedMenuItem(null, i18n("instance.manage.redownload_assets_index"), control::redownloadAssetIndex, managementPopup),
                         new IconedMenuItem(null, i18n("instance.manage.remove_assets"), control::clearAssets, managementPopup),

@@ -90,8 +90,10 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         return mainPage;
     }
 
+    /// Builds sidebar navigation and registers optional page preparation on its entries.
     private static class Skin extends DecoratorAnimatedPageSkin<RootPage> {
 
+        /// Creates navigation entries, their actions, and one-shot hover preparation registrations.
         protected Skin(RootPage control) {
             super(control);
 
@@ -119,7 +121,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             FXUtils.onSecondaryButtonClicked(gameListItem, () -> showGameListPopupMenu(gameListItem));
 
             if (AnimationUtils.isAnimationEnabled()) {
-                FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareGameInstancePage);
+                gameListItem.setPrepareAction(Controllers::prepareGameInstancePage);
             }
 
             // third item in left sidebar
@@ -136,7 +138,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
 
             if (AnimationUtils.isAnimationEnabled()) {
-                FXUtils.prepareOnMouseEnter(downloadItem, Controllers::prepareDownloadPage);
+                downloadItem.setPrepareAction(Controllers::prepareDownloadPage);
             }
 
             // fifth item in left sidebar
@@ -149,7 +151,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             });
 
             if (AnimationUtils.isAnimationEnabled()) {
-                FXUtils.prepareOnMouseEnter(launcherSettingsItem, Controllers::prepareSettingsPage);
+                launcherSettingsItem.setPrepareAction(Controllers::prepareSettingsPage);
             }
 
             // sixth item in left sidebar

@@ -17,6 +17,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.CacheHint;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -200,6 +201,9 @@ public final class Decorator {
     /// Plays the opening animation immediately before the attached stage becomes visible.
     private final EventHandler<WindowEvent> windowShowingHandler = event -> playOpenAnimation();
 
+    /// Releases animation caching and resets transforms when the attached stage is hidden.
+    private final EventHandler<WindowEvent> windowHiddenHandler = event -> stopWindowAnimation();
+
     /// Updates the custom window decoration when the attached stage changes maximized or full-screen state.
     private final InvalidationListener stageDecorationListener = observable -> {
         @Nullable Stage currentStage = stage;
@@ -226,6 +230,7 @@ public final class Decorator {
 
         mainWindowPane = new MainWindowPane(this);
         shadowContainer.getChildren().setAll(mainWindowPane);
+        root.setCacheHint(CacheHint.SCALE);
         root.setPickOnBounds(true);
         root.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, null, null)));
         root.getChildren().setAll(shadowContainer);
@@ -858,6 +863,7 @@ public final class Decorator {
             updateWindowDecoration(false);
             stage = newStage;
             newStage.addEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
+            newStage.addEventHandler(WindowEvent.WINDOW_HIDDEN, windowHiddenHandler);
             newStage.iconifiedProperty().addListener(iconifiedListener);
             newStage.maximizedProperty().addListener(stageDecorationListener);
             newStage.fullScreenProperty().addListener(stageDecorationListener);
@@ -899,6 +905,7 @@ public final class Decorator {
                 Themes.darkModeProperty().removeListener(windowStyleListener);
             }
             stage.removeEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
+            stage.removeEventHandler(WindowEvent.WINDOW_HIDDEN, windowHiddenHandler);
             stage.iconifiedProperty().removeListener(iconifiedListener);
             stage.maximizedProperty().removeListener(stageDecorationListener);
             stage.fullScreenProperty().removeListener(stageDecorationListener);
@@ -977,13 +984,11 @@ public final class Decorator {
                 new KeyFrame(Duration.ZERO,
                         new KeyValue(root.opacityProperty(), 0, Motion.EASE),
                         new KeyValue(root.scaleXProperty(), 0.8, Motion.EASE),
-                        new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE),
-                        new KeyValue(root.scaleZProperty(), 0.8, Motion.EASE)),
+                        new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE)),
                 new KeyFrame(Duration.millis(600),
                         new KeyValue(root.opacityProperty(), 1, Motion.EASE),
                         new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
-                        new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
-                        new KeyValue(root.scaleZProperty(), 1, Motion.EASE)));
+                        new KeyValue(root.scaleYProperty(), 1, Motion.EASE)));
         playWindowAnimation(timeline, () -> {
             resetRootTransform();
 
@@ -1008,14 +1013,12 @@ public final class Decorator {
                             new KeyValue(root.opacityProperty(), 1, Motion.EASE),
                             new KeyValue(root.translateYProperty(), 0, Motion.EASE),
                             new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
-                            new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
-                            new KeyValue(root.scaleZProperty(), 1, Motion.EASE)),
+                            new KeyValue(root.scaleYProperty(), 1, Motion.EASE)),
                     new KeyFrame(Motion.SHORT4,
                             new KeyValue(root.opacityProperty(), 0, Motion.EASE),
                             new KeyValue(root.translateYProperty(), 200, Motion.EASE),
                             new KeyValue(root.scaleXProperty(), 0.4, Motion.EASE),
-                            new KeyValue(root.scaleYProperty(), 0.4, Motion.EASE),
-                            new KeyValue(root.scaleZProperty(), 0.4, Motion.EASE)));
+                            new KeyValue(root.scaleYProperty(), 0.4, Motion.EASE)));
             playWindowAnimation(timeline, () -> {
                 if (getStage() == currentStage) {
                     currentStage.setIconified(true);
@@ -1038,13 +1041,11 @@ public final class Decorator {
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(root.opacityProperty(), 1, Motion.EASE),
                             new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
-                            new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
-                            new KeyValue(root.scaleZProperty(), 0.3, Motion.EASE)),
+                            new KeyValue(root.scaleYProperty(), 1, Motion.EASE)),
                     new KeyFrame(Duration.millis(200),
                             new KeyValue(root.opacityProperty(), 0, Motion.EASE),
                             new KeyValue(root.scaleXProperty(), 0.8, Motion.EASE),
-                            new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE),
-                            new KeyValue(root.scaleZProperty(), 0.8, Motion.EASE)));
+                            new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE)));
             playWindowAnimation(timeline, Launcher::stopApplication);
         } else {
             stopWindowAnimation();
@@ -1121,7 +1122,7 @@ public final class Decorator {
 
             Node newTarget;
             {
-                //noinspection unchecked
+                @SuppressWarnings("unchecked")
                 @Nullable Stack<JFXDatePickerContent> stack =
                         (Stack<JFXDatePickerContent>) getDialogContainer().getProperties()
                         .get(JFXDatePickerSkin.PROPERTY_DATE_PICKER_CONTENTS);
@@ -1181,14 +1182,12 @@ public final class Decorator {
                         new KeyValue(root.opacityProperty(), 0, Motion.EASE),
                         new KeyValue(root.translateYProperty(), 200, Motion.EASE),
                         new KeyValue(root.scaleXProperty(), 0.4, Motion.EASE),
-                        new KeyValue(root.scaleYProperty(), 0.4, Motion.EASE),
-                        new KeyValue(root.scaleZProperty(), 0.4, Motion.EASE)),
+                        new KeyValue(root.scaleYProperty(), 0.4, Motion.EASE)),
                 new KeyFrame(Motion.SHORT4,
                         new KeyValue(root.opacityProperty(), 1, Motion.EASE),
                         new KeyValue(root.translateYProperty(), 0, Motion.EASE),
                         new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
-                        new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
-                        new KeyValue(root.scaleZProperty(), 1, Motion.EASE)));
+                        new KeyValue(root.scaleYProperty(), 1, Motion.EASE)));
         playWindowAnimation(timeline, this::resetRootTransform);
     }
 
@@ -1198,24 +1197,27 @@ public final class Decorator {
     /// @param onFinished the action to run only when this animation reaches its end
     private void playWindowAnimation(Timeline timeline, Runnable onFinished) {
         stopWindowAnimation();
+        root.setCache(true);
         windowAnimation = timeline;
         timeline.setOnFinished(event -> {
             if (windowAnimation != timeline) {
                 return;
             }
+            root.setCache(false);
             windowAnimation = null;
             onFinished.run();
         });
         timeline.play();
     }
 
-    /// Cancels any active window animation and restores the stable root transform.
+    /// Cancels any active window animation, disables root caching, and resets the root transform.
     private void stopWindowAnimation() {
         playRestoreMinimizeAnimation = false;
         if (windowAnimation != null) {
             windowAnimation.stop();
             windowAnimation = null;
         }
+        root.setCache(false);
         resetRootTransform();
     }
 
@@ -1225,7 +1227,6 @@ public final class Decorator {
         root.setTranslateY(0);
         root.setScaleX(1);
         root.setScaleY(1);
-        root.setScaleZ(1);
     }
 
 }

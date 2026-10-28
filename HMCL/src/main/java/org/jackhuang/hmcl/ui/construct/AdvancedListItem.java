@@ -3,6 +3,12 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.*;
+import javafx.css.CssMetaData;
+import javafx.css.SimpleStyleableObjectProperty;
+import javafx.css.Styleable;
+import javafx.css.StyleableObjectProperty;
+import javafx.css.StyleableProperty;
+import javafx.css.converter.PaintConverter;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -11,41 +17,66 @@ import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Paint;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
+import java.util.List;
+
+/// Displays a two-line item with optional graphics and an action supplied by its skin.
+@NotNullByDefault
 public class AdvancedListItem extends Control {
+    /// The conventional size of a left graphic, in pixels.
     public static final double LEFT_GRAPHIC_SIZE = 32;
+    /// The size of icons created by [#setLeftIcon(SVG)], in pixels.
     public static final double LEFT_ICON_SIZE = 20;
+    /// The margin applied by [#setLeftIcon(SVG)].
     public static final Insets LEFT_ICON_MARGIN = new Insets(0, 6, 0, 6);
 
-    public static void setMargin(Node graphic, Insets margin) {
+    /// Sets the graphic's [BorderPane] margin constraint; null removes the constraint.
+    public static void setMargin(Node graphic, @Nullable Insets margin) {
         BorderPane.setMargin(graphic, margin);
     }
 
-    public static void setAlignment(Node graphic, Pos alignment) {
+    /// Sets the graphic's [BorderPane] alignment constraint; null removes the constraint.
+    public static void setAlignment(Node graphic, @Nullable Pos alignment) {
         BorderPane.setAlignment(graphic, alignment);
     }
 
+    /// Creates an item whose default skin routes background clicks to [#fire()].
     public AdvancedListItem() {
         getStyleClass().add("advanced-list-item");
-        FXUtils.onClicked(this, () -> fireEvent(new ActionEvent()));
     }
 
-    private final ObjectProperty<Node> leftGraphic = new SimpleObjectProperty<>(this, "leftGraphic");
+    /// Fires this item's action unless disabled, without waiting for feedback or preparation.
+    public void fire() {
+        if (!isDisabled())
+            fireEvent(new ActionEvent(this, this));
+    }
 
-    public ObjectProperty<Node> leftGraphicProperty() {
+    /// The optional graphic displayed to the left of the text, initially null.
+    private final ObjectProperty<@Nullable Node> leftGraphic = new SimpleObjectProperty<>(this, "leftGraphic");
+
+    /// Returns the left graphic property, whose value may be null.
+    public ObjectProperty<@Nullable Node> leftGraphicProperty() {
         return leftGraphic;
     }
 
-    public Node getLeftGraphic() {
+    /// Returns the left graphic, or null if absent.
+    public @Nullable Node getLeftGraphic() {
         return leftGraphic.get();
     }
 
-    public void setLeftGraphic(Node leftGraphic) {
+    /// Sets the left graphic; null removes it.
+    public void setLeftGraphic(@Nullable Node leftGraphic) {
         this.leftGraphic.set(leftGraphic);
     }
 
+    /// Replaces the left graphic with a centered, mouse-transparent icon using the standard size and margin.
     public void setLeftIcon(SVG svg) {
         Node icon = svg.createIcon(LEFT_ICON_SIZE);
         icon.setMouseTransparent(true);
@@ -54,20 +85,28 @@ public class AdvancedListItem extends Control {
         leftGraphicProperty().set(icon);
     }
 
-    private final ObjectProperty<Node> rightGraphic = new SimpleObjectProperty<>(this, "rightGraphic");
+    /// The optional graphic displayed to the right of the text, initially null.
+    private @Nullable ObjectProperty<@Nullable Node> rightGraphic;
 
-    public ObjectProperty<Node> rightGraphicProperty() {
+    /// Returns the right graphic property, whose value may be null.
+    public ObjectProperty<@Nullable Node> rightGraphicProperty() {
+        if (rightGraphic == null)
+            rightGraphic = new SimpleObjectProperty<>(this, "rightGraphic");
         return rightGraphic;
     }
 
-    public Node getRightGraphic() {
-        return rightGraphic.get();
+    /// Returns the right graphic, or null if absent.
+    public @Nullable Node getRightGraphic() {
+        return rightGraphic != null ? rightGraphic.get() : null;
     }
 
-    public void setRightGraphic(Node rightGraphic) {
-        this.rightGraphic.set(rightGraphic);
+    /// Sets the right graphic; null removes it.
+    public void setRightGraphic(@Nullable Node rightGraphic) {
+        if (this.rightGraphic != null || rightGraphic != null)
+            rightGraphicProperty().set(rightGraphic);
     }
 
+    /// Replaces the right graphic with a centered icon button that runs the action when activated.
     public void setRightAction(SVG icon, Runnable action) {
         var button = FXUtils.newToggleButton4(icon, 14);
         button.setOnAction(e -> {
@@ -78,70 +117,179 @@ public class AdvancedListItem extends Control {
         setRightGraphic(button);
     }
 
+    /// The optional preparation action, retained independently of the default skin's lifetime.
+    private @Nullable Runnable prepareAction;
+
+    /// Returns the pending hover preparation action, or null if absent or already consumed.
+    public @Nullable Runnable getPrepareAction() {
+        return prepareAction;
+    }
+
+    /// Registers one-shot preparation with the default skin's [RipplerContainer].
+    /// See [RipplerContainer#setPrepareAction(Runnable)] for timing and cancellation semantics.
+    /// The action is retained before skin creation and across skin replacement, and cleared before
+    /// execution. Null cancels it. Custom skins must explicitly support this action to execute it.
+    /// This method must be called on the FX application thread.
+    public void setPrepareAction(@Nullable Runnable action) {
+        if (prepareAction == action)
+            return;
+        prepareAction = action;
+        @Nullable Skin<?> skin = getSkin();
+        if (skin instanceof AdvancedListItemSkin itemSkin)
+            itemSkin.setPrepareAction(action);
+    }
+
+    /// The title text, initially null.
     private final StringProperty title = new SimpleStringProperty(this, "title");
 
+    /// Returns the title property, whose value may be null.
     public StringProperty titleProperty() {
         return title;
     }
 
-    public String getTitle() {
+    /// Returns the title text, or null if unset.
+    public @Nullable String getTitle() {
         return title.get();
     }
 
-    public void setTitle(String title) {
+    /// Sets the title text; null clears it.
+    public void setTitle(@Nullable String title) {
         this.title.set(title);
     }
 
+    /// The subtitle text, initially null.
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
 
+    /// Returns the subtitle property, whose value may be null.
     public StringProperty subtitleProperty() {
         return subtitle;
     }
 
-    public String getSubtitle() {
+    /// Returns the subtitle text, or null if unset.
+    public @Nullable String getSubtitle() {
         return subtitle.get();
     }
 
-    public void setSubtitle(String subtitle) {
+    /// Sets the subtitle text; null removes the subtitle line in the default skin.
+    public void setSubtitle(@Nullable String subtitle) {
         this.subtitle.set(subtitle);
     }
 
+    /// The active state, initially false, reflected by the default skin's selected pseudo-class.
     private final BooleanProperty active = new SimpleBooleanProperty(this, "active");
 
+    /// Returns the active-state property.
     public BooleanProperty activeProperty() {
         return active;
     }
 
+    /// Returns whether the item is active.
     public boolean isActive() {
         return active.get();
     }
 
+    /// Sets whether the item is active.
     public void setActive(boolean active) {
         this.active.set(active);
     }
 
-    private final ObjectProperty<EventHandler<ActionEvent>> onAction = new SimpleObjectProperty<>(this, "onAction") {
+    /// The CSS-configurable paint used by the default skin for the selected background.
+    private final StyleableObjectProperty<@Nullable Paint> selectedBackgroundFill =
+            new SimpleStyleableObjectProperty<>(StyleableProperties.SELECTED_BACKGROUND_FILL, this, "selectedBackgroundFill");
+
+    /// Returns the selected-background paint property, initially null and styled by
+    /// `-jfx-selected-background-fill`. Null hides the selected background without changing
+    /// the active state. The default skin animates the background node's opacity between zero
+    /// and 0.5; an opaque paint therefore appears at 50% opacity when fully selected.
+    /// Any transparency in the paint multiplies the node's opacity.
+    /// Changes repaint the background without restarting the selection transition.
+    ///
+    /// @apiNote Unbound values follow JavaFX CSS precedence. Binding this property prevents
+    /// CSS from changing its value.
+    public StyleableObjectProperty<@Nullable Paint> selectedBackgroundFillProperty() {
+        return selectedBackgroundFill;
+    }
+
+    /// Returns the paint in [#selectedBackgroundFillProperty()], or null.
+    public @Nullable Paint getSelectedBackgroundFill() {
+        return selectedBackgroundFill.get();
+    }
+
+    /// Sets [#selectedBackgroundFillProperty()]; null hides the selected background.
+    public void setSelectedBackgroundFill(@Nullable Paint value) {
+        selectedBackgroundFill.set(value);
+    }
+
+    /// The handler for actions originating from this item, excluding descendant controls.
+    private final ObjectProperty<@Nullable EventHandler<ActionEvent>> onAction = new SimpleObjectProperty<>(this, "onAction") {
+        /// Routes only this item's actions to the registered handler.
         @Override
         protected void invalidated() {
-            setEventHandler(ActionEvent.ACTION, get());
+            @Nullable EventHandler<ActionEvent> handler = get();
+            setEventHandler(ActionEvent.ACTION, handler == null ? null : event -> {
+                if (event.getTarget() == AdvancedListItem.this)
+                    handler.handle(event);
+            });
         }
     };
 
-    public final ObjectProperty<EventHandler<ActionEvent>> onActionProperty() {
+    /// Returns the handler property for this item's actions, initially null.
+    public final ObjectProperty<@Nullable EventHandler<ActionEvent>> onActionProperty() {
         return onAction;
     }
 
-    public final void setOnAction(EventHandler<ActionEvent> value) {
+    /// Sets the item action handler; null removes it.
+    public final void setOnAction(@Nullable EventHandler<ActionEvent> value) {
         onActionProperty().set(value);
     }
 
-    public final EventHandler<ActionEvent> getOnAction() {
+    /// Returns the item action handler, or null if none is registered.
+    public final @Nullable EventHandler<ActionEvent> getOnAction() {
         return onActionProperty().get();
     }
 
+    /// Creates the skin that lays out the graphics and text and handles background actions.
     @Override
     protected Skin<?> createDefaultSkin() {
         return new AdvancedListItemSkin(this);
     }
 
+    /// Returns this control's stylesheet metadata, including inherited properties.
+    @Override
+    public @Unmodifiable List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
+        return getClassCssMetaData();
+    }
+
+    /// Returns the immutable stylesheet metadata shared by all advanced list items.
+    public static @Unmodifiable List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
+        return StyleableProperties.STYLEABLES;
+    }
+
+    /// Shared stylesheet metadata for advanced list items.
+    private static final class StyleableProperties {
+        /// Maps the selected background paint to its stylesheet property.
+        private static final CssMetaData<AdvancedListItem, @Nullable Paint> SELECTED_BACKGROUND_FILL =
+                new CssMetaData<>("-jfx-selected-background-fill", PaintConverter.getInstance()) {
+                    /// Reports whether CSS can assign the selected background paint.
+                    @Override
+                    public boolean isSettable(AdvancedListItem styleable) {
+                        return styleable.selectedBackgroundFill == null || !styleable.selectedBackgroundFill.isBound();
+                    }
+
+                    /// Returns the property receiving stylesheet paint values.
+                    @Override
+                    public StyleableProperty<@Nullable Paint> getStyleableProperty(AdvancedListItem styleable) {
+                        return styleable.selectedBackgroundFillProperty();
+                    }
+                };
+
+        /// The inherited control metadata followed by the selected background paint metadata.
+        private static final @Unmodifiable List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
+
+        static {
+            var styleables = new ArrayList<>(Control.getClassCssMetaData());
+            styleables.add(SELECTED_BACKGROUND_FILL);
+            STYLEABLES = List.copyOf(styleables);
+        }
+    }
 }
