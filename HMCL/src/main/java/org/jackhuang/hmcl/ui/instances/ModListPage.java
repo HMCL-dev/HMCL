@@ -119,6 +119,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     public void refresh() {
+        if (isLoadingMods.get()) {
+            return;
+        }
+
         loadMods(modManager);
     }
 
@@ -132,8 +136,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     }
 
     private void loadMods(ModManager modManager) {
-        if (isLoadingMods.get()) return;
-
         setLoading(true);
         isLoadingMods.set(true);
 
