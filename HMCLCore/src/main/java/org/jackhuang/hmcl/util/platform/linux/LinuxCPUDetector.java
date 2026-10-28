@@ -15,7 +15,6 @@ import java.io.IOException;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -27,7 +26,7 @@ final class LinuxCPUDetector {
     /// Reads logical processors, ignoring non-processor sections.
     private static @Nullable TreeMap<Integer, Map<String, String>> loadCPUInfo() {
         try {
-            List<Map<String, String>> list = KeyValuePairUtils.loadList(Paths.get("/proc/cpuinfo"));
+            List<Map<String, String>> list = KeyValuePairUtils.loadList(Path.of("/proc/cpuinfo"));
             TreeMap<Integer, Map<String, String>> result = new TreeMap<>();
             for (Map<String, String> map : list) {
                 @Nullable String id = map.get("processor");
@@ -103,7 +102,7 @@ final class LinuxCPUDetector {
         }
 
         try {
-            Path compatiblePath = Paths.get("/proc/device-tree/compatible");
+            Path compatiblePath = Path.of("/proc/device-tree/compatible");
             if (Files.isRegularFile(compatiblePath)) {
                 // device-vendor,device-model\0soc-vendor,soc-model\0
                 String[] data = Files.readString(compatiblePath).split("\0");
@@ -262,8 +261,8 @@ final class LinuxCPUDetector {
         @Nullable TreeMap<Integer, Map<String, String>> cpuInfo = loadCPUInfo();
         if (cpuInfo == null || cpuInfo.isEmpty())
             return List.of();
-        Path cpuRoot = Paths.get("/sys/devices/system/cpu");
-        Path pmuRoot = Paths.get("/sys/bus/event_source/devices");
+        Path cpuRoot = Path.of("/sys/devices/system/cpu");
+        Path pmuRoot = Path.of("/sys/bus/event_source/devices");
         Map<Integer, TreeMap<Integer, Map<String, String>>> packages = new TreeMap<>();
         for (var entry : cpuInfo.entrySet()) {
             @Nullable Integer packageId = number(read(cpuRoot.resolve("cpu" + entry.getKey() + "/topology/physical_package_id")));
