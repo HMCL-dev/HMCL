@@ -24,11 +24,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class LinuxHardwareDetector extends HardwareDetector {
 
-    /// Returns detected processors, or an empty list if unavailable.
+    /// Detects Linux processors, using the default detector when native information is unavailable.
     @Override
     public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
-            return List.of();
+            return super.detectCentralProcessors();
         @Unmodifiable List<CentralProcessor> processors = LinuxCPUDetector.detect();
         return processors.isEmpty() ? super.detectCentralProcessors() : processors;
     }

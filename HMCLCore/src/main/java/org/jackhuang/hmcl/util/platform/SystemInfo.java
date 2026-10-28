@@ -42,24 +42,8 @@ public final class SystemInfo {
         /// The detected total physical memory size, in bytes.
         public static final long TOTAL_MEMORY = DETECTOR.getTotalMemorySize();
 
-        /// A nonempty immutable processor snapshot, estimating missing counts only for a single entry.
-        public static final @Unmodifiable List<CentralProcessor> CENTRAL_PROCESSORS;
-
-        static {
-            @Unmodifiable List<CentralProcessor> processors = DETECTOR.detectCentralProcessors();
-            if (processors.isEmpty() || (processors.size() == 1 && processors.get(0).getCores() == null)) {
-                CentralProcessor.Builder builder = new CentralProcessor.Builder().setName("Unknown");
-                if (!processors.isEmpty()) {
-                    CentralProcessor processor = processors.get(0);
-                    builder.setName(processor.getName()).setVendor(processor.getVendor());
-                }
-                // This display estimate reflects JVM availability, which may be limited by containers or affinity.
-                int count = Runtime.getRuntime().availableProcessors();
-                CENTRAL_PROCESSORS = List.of(builder.setCores(new CentralProcessor.Cores(count, count, 0)).build());
-            } else {
-                CENTRAL_PROCESSORS = List.copyOf(processors);
-            }
-        }
+        /// A nonempty immutable processor snapshot supplied by the detector.
+        public static final @Unmodifiable List<CentralProcessor> CENTRAL_PROCESSORS = DETECTOR.detectCentralProcessors();
 
         /// The detected graphics cards, or `null` if unavailable.
         public static final @Nullable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();

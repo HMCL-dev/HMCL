@@ -70,7 +70,7 @@ final class FastFetchUtils {
     }
 
     /// Returns the first reported processor identity, assuming one package when the package count is unknown.
-    /// Counts are omitted when the response explicitly reports multiple packages.
+    /// Reported counts are used only when the package count is unknown or one; otherwise uses JVM availability.
     /// A missing or invalid physical count is estimated from the logical count for display.
     static @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
         @Nullable CPUInfo cpuInfo = get("CPU", TypeToken.get(CPUInfo.class));
@@ -96,6 +96,10 @@ final class FastFetchUtils {
             }
             if (threads > 0)
                 builder.setCores(new CentralProcessor.Cores(threads, cores > 0 ? cores : threads, 0));
+        }
+        if (builder.getCores() == null) {
+            int count = Runtime.getRuntime().availableProcessors();
+            builder.setCores(new CentralProcessor.Cores(count, count, 0));
         }
         return List.of(builder.build());
     }

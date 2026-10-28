@@ -115,7 +115,7 @@ final class WindowsCPUDetector {
         return List.copyOf(result);
     }
 
-    /// Detects package topology, retaining the registry identity if the native query fails.
+    /// Detects package topology, retaining the registry identity with estimated counts if the native query fails.
     static @Unmodifiable List<CentralProcessor> detect() {
         @Nullable WinReg reg = WinReg.INSTANCE;
         @Nullable Kernel32 kernel32 = Kernel32.INSTANCE;
@@ -138,7 +138,10 @@ final class WindowsCPUDetector {
                 LOG.warning("Failed to detect processor topology", e);
             }
         }
-        return reg == null ? List.of() : List.of(detectNameAndVendor(reg, 0).build());
+        if (reg == null)
+            return List.of();
+        int count = Runtime.getRuntime().availableProcessors();
+        return List.of(detectNameAndVendor(reg, 0).setCores(new CentralProcessor.Cores(count, count, 0)).build());
     }
 
     /// Prevents instantiation.

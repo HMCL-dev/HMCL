@@ -29,10 +29,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class MacOSHardwareDetector extends HardwareDetector {
 
-    /// Detects processor and performance-level information on macOS.
+    /// Detects macOS processors, using the default detector when native information is unavailable.
     @Override
     public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
-        return OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ? MacOSCPUDetector.detect() : List.of();
+        @Unmodifiable List<CentralProcessor> processors = OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ? MacOSCPUDetector.detect() : List.of();
+        return processors.isEmpty() ? super.detectCentralProcessors() : processors;
     }
 
     @Override
