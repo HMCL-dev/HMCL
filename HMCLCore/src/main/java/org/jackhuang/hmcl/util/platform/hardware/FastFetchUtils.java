@@ -84,7 +84,7 @@ final class FastFetchUtils {
 
                 int cores = physical != null ? Integer.parseInt(physical) : 0;
                 int threads = logical != null ? Integer.parseInt(logical) : 0;
-                int packages = Integer.max(cpuInfo.packages, 1);
+                int packages = cpuInfo.packages != null ? Integer.max(cpuInfo.packages, 1) : 1;
 
                 if (cores > 0 && threads == 0)
                     threads = cores;
@@ -125,41 +125,35 @@ final class FastFetchUtils {
         return result;
     }
 
-    /// A Fastfetch module response whose fields may be absent from JSON.
-    @SuppressWarnings("unchecked")
-    private static final class Result<T> {
+    /// A Fastfetch module response.
+    ///
+    /// @param type the module name, or `null` if absent
+    /// @param result the module payload, or `null` if absent
+    private record Result<T>(@Nullable String type, @Nullable T result) {
         /// Returns the Gson type token for a response with the supplied payload type.
+        @SuppressWarnings("unchecked")
         static <T> TypeToken<Result<T>> typeOf(TypeToken<T> type) {
             return (TypeToken<Result<T>>) TypeToken.getParameterized(Result.class, type.getType());
         }
-
-        /// The module name, or `null` if absent.
-        @Nullable String type;
-        /// The module payload, or `null` if absent.
-        @Nullable T result;
     }
 
     /// Processor metadata decoded from a Fastfetch CPU response.
-    private static final class CPUInfo {
-        /// The processor name, or `null` if absent.
-        @Nullable String cpu;
-        /// The vendor name, or `null` if absent.
-        @Nullable String vendor;
-        /// The package count; zero when absent.
-        int packages;
-        /// Core counts keyed by kind, or `null` if absent.
-        @Nullable Map<String, @Nullable String> cores;
+    ///
+    /// @param cpu the processor name, or `null` if absent
+    /// @param vendor the vendor name, or `null` if absent
+    /// @param packages the package count, or `null` if absent
+    /// @param cores core counts keyed by kind, or `null` if absent
+    private record CPUInfo(@Nullable String cpu, @Nullable String vendor, @Nullable Integer packages,
+                           @Nullable Map<String, @Nullable String> cores) {
     }
 
     /// Adapter metadata decoded from a Fastfetch GPU response.
-    private static final class GPUInfo {
-        /// The adapter name, or `null` if absent.
-        @Nullable String name;
-        /// The vendor name, or `null` if absent.
-        @Nullable String vendor;
-        /// The adapter classification, or `null` if absent.
-        @Nullable String type;
-        /// The driver name, or `null` if absent.
-        @Nullable String driver;
+    ///
+    /// @param name the adapter name, or `null` if absent
+    /// @param vendor the vendor name, or `null` if absent
+    /// @param type the adapter classification, or `null` if absent
+    /// @param driver the driver name, or `null` if absent
+    private record GPUInfo(@Nullable String name, @Nullable String vendor,
+                           @Nullable String type, @Nullable String driver) {
     }
 }
