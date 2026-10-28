@@ -59,3 +59,30 @@ tasks.register("updateLiteLoaderVersionList", org.jackhuang.hmcl.gradle.componen
 
     outputFile.set(projectDir.resolve("src/main/resources/assets/liteloader/versions.json"))
 }
+
+tasks.register("updateAmdGpuIDs") {
+    description = "Update AMD GPU IDs"
+
+    val commit = "3b5e41a44cd1842297e17447c3984c85c2a6d837"
+
+    val sourceUrl = uri("https://gitlab.freedesktop.org/mesa/libdrm/-/raw/$commit/data/amdgpu.ids")
+    val outputFile = projectDir.resolve("src/main/resources/assets/platform/amdgpu.ids")
+    outputs.file(outputFile)
+
+    doLast {
+        outputFile.parentFile.mkdirs()
+
+        val content = sourceUrl.toURL().readText()
+            // Replace non-breaking space with normal space
+            .replace('\u00A0', ' ')
+            // Replace narrow non-breaking space with normal space
+            .replace('\u202f', ' ')
+
+        outputFile.writeText(
+            """# https://gitlab.freedesktop.org/mesa/libdrm/-/blob/$commit/data/amdgpu.ids
+              |#
+              |$content""".trimMargin()
+
+        )
+    }
+}
