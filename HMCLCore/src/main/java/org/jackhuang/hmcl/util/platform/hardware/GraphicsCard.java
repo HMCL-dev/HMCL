@@ -78,6 +78,10 @@ public final class GraphicsCard {
         return vendor;
     }
 
+    public @Nullable String getDriver() {
+        return driver;
+    }
+
     public @Nullable String getDriverVersion() {
         return driverVersion;
     }
