@@ -9,6 +9,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.ref.SoftReference;
@@ -37,8 +38,9 @@ final class LinuxGPUDetector {
             Pattern.compile("pci:v(?<vendorId>\\p{XDigit}{8})d(?<deviceId>\\p{XDigit}{8})sv(?<subVendorId>\\p{XDigit}{8})sd(?<subDeviceId>\\p{XDigit}{8})bc(?<classId>\\p{XDigit}{2})sc(?<subclassId>\\p{XDigit}{2})i\\p{XDigit}{2}");
     private static final Pattern PCI_DEVICE_PATTERN =
             Pattern.compile("(?<pciDomain>\\p{XDigit}+):(?<pciBus>\\p{XDigit}+):(?<pciDevice>\\p{XDigit}+)\\.(?<pciFunc>\\p{XDigit}+)");
-    private static final Pattern OF_DEVICE_PATTERN =
-            Pattern.compile("of:N(img)?gpuT[^C]*C(?<compatible>.*)");
+    /// Matches supported GPU nodes and captures their first compatible identifier.
+    private static final Pattern OF_DEVICE_PATTERN = Pattern.compile(
+            "of:N(?:gpu|imggpu|gpu-panthor)T[^C]*C(?<compatible>[^C]+)(?:C.*)?");
 
     private static PCIIDsDatabase getPCIIDsDatabase() {
         SoftReference<PCIIDsDatabase> databaseWeakReference = LinuxGPUDetector.databaseCache;
@@ -223,7 +225,8 @@ final class LinuxGPUDetector {
         return builder.build();
     }
 
-    private static GraphicsCard detectOF(Path deviceDir, String modalias) throws IOException {
+    /// Returns metadata for a device-tree GPU, or `null` if the modalias does not identify one.
+    static @Nullable GraphicsCard detectOF(Path deviceDir, String modalias) {
         Matcher matcher = OF_DEVICE_PATTERN.matcher(modalias);
         if (!matcher.matches())
             return null;
@@ -240,7 +243,7 @@ final class LinuxGPUDetector {
                 builder.setName(name);
         } else {
             String vendorName = compatible.substring(0, idx).trim();
-            HardwareVendor vendor = HardwareVendor.getKnown(vendorName);
+            @Nullable HardwareVendor vendor = HardwareVendor.getKnown(vendorName);
             if (vendor == null)
                 vendor = new HardwareVendor(StringUtils.capitalizeFirst(vendorName));
 
