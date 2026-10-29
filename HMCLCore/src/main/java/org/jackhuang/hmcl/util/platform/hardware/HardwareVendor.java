@@ -140,7 +140,7 @@ public record HardwareVendor(String name) {
 
     /// Returns the vendor mapped to a PCI vendor ID, or `null` if unmapped.
     public static @Nullable HardwareVendor ofPciVendorId(int vendorId) {
-        // https://devicehunt.com/all-pci-vendors
+        // https://devicehunt.com/vendors/pci
         return switch (vendorId) {
             case 0x106b -> APPLE; // AMD Pensando Systems
             case 0x1002, 0x1022, 0x1dd8, 0x1924 -> AMD; // AMD Solarflare
