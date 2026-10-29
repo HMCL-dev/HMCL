@@ -324,7 +324,7 @@ final class LinuxCPUDetector {
 
     /// Detects online processors, returning one aggregate processor when package boundaries are unknown.
     /// A single entry with no physical count uses its observed logical count as a display estimate.
-    /// Returns an empty list if procfs is unavailable.
+    /// Returns an empty list if procfs or a processor name is unavailable, allowing the caller to try Fastfetch.
     static @Unmodifiable List<CentralProcessor> detect() {
         @Nullable TreeMap<Integer, Map<String, String>> cpuInfo = loadCPUInfo();
         if (cpuInfo == null || cpuInfo.isEmpty())
@@ -353,6 +353,8 @@ final class LinuxCPUDetector {
         for (var packageInfo : packages.values()) {
             CentralProcessor.Builder identity = new CentralProcessor.Builder();
             detectNameAndVendor(identity, packageInfo);
+            if (identity.getName() == null || identity.getName().isBlank())
+                return List.of();
             identity.setCores(detectCores(packageInfo, cpuInfo.keySet(), cpuRoot, performance, efficiency, packageBoundariesKnown));
             if (packages.size() == 1 && identity.getCores() == null)
                 identity.setCores(new CentralProcessor.Cores(packageInfo.size(), packageInfo.size(), 0));
