@@ -39,8 +39,8 @@ final class LinuxGPUDetector {
     private static final Pattern PCI_DEVICE_PATTERN =
             Pattern.compile("(?<pciDomain>\\p{XDigit}+):(?<pciBus>\\p{XDigit}+):(?<pciDevice>\\p{XDigit}+)\\.(?<pciFunc>\\p{XDigit}+)");
     /// Matches supported GPU nodes and captures their first compatible identifier.
-    private static final Pattern OF_DEVICE_PATTERN = Pattern.compile(
-            "of:N(?:gpu|imggpu|gpu-panthor)T[^C]*C(?<compatible>[^C]+)(?:C.*)?");
+    private static final Pattern OF_DEVICE_PATTERN =
+            Pattern.compile("of:N(?:gpu|imggpu|gpu-panthor)T[^C]*C(?<compatible>[^C]+)(?:C.*)?");
 
     private static PCIIDsDatabase getPCIIDsDatabase() {
         SoftReference<PCIIDsDatabase> databaseWeakReference = LinuxGPUDetector.databaseCache;
