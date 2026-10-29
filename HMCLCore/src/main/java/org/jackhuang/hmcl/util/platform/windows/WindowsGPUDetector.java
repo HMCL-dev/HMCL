@@ -37,7 +37,10 @@ final class WindowsGPUDetector {
             "Root\\MuMuIddDriver",
 
             // Honor Virtual Display Device
-            "IndirectDSP\\VirtualDisplayDriver"
+            "IndirectDSP\\VirtualDisplayDriver",
+
+            // Huawei Virtual Display Device
+            "ROOT\\VIRTUALDISPLAYDRIVER"
     );
 
     /// Estimates an adapter's type, applying AMD name rules before the existing DAC heuristic.

@@ -130,7 +130,7 @@ public final class GraphicsCard {
         return builder.toString();
     }
 
-    /// Classifies an adapter as integrated or discrete.
+    /// Classifies an adapter as integrated, discrete, or virtual.
     public enum Type {
 
         /// An integrated graphics adapter.
@@ -139,6 +139,7 @@ public final class GraphicsCard {
         /// A discrete graphics adapter.
         Discrete,
 
+        /// A virtual graphics adapter.
         Virtual
     }
 
