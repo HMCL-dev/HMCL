@@ -8,6 +8,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -26,45 +27,30 @@ public final class WorldZipFile extends World {
         super(file);
 
         try (FileSystem fs = CompressingUtils.readonly(file).build()) {
-            Path root;
-            if (Files.isRegularFile(fs.getPath("/level.dat"))) {
-                root = fs.getPath("/");
-                fileName = FileUtils.getName(file);
-            } else {
-                try (Stream<Path> filesStream = Files.list(fs.getPath("/"))) {
-                    List<Path> files = filesStream.toList();
-                    if (files.size() != 1 || !Files.isDirectory(files.get(0))) {
-                        throw new IOException("Not a valid world zip file");
-                    }
-
-                    root = files.get(0);
-                    fileName = FileUtils.getName(root);
-                }
-            }
-
+            Path root = resolveRoot(fs);
+            fileName = FileUtils.getName(root.equals(fs.getPath("/")) ? file : root);
             icon = loadIcon(root);
             levelData = resolveLevelData(root, "Not a valid world zip file since level.dat or special_level.dat cannot be found.");
         }
     }
 
+    private static Path resolveRoot(FileSystem fs) throws IOException {
+        Path root = fs.getPath("/");
+        if (Files.isRegularFile(root.resolve("level.dat")))
+            return root;
+
+        try (Stream<Path> stream = Files.list(root)) {
+            @Unmodifiable List<Path> files = stream.toList();
+            if (files.size() != 1 || !Files.isDirectory(files.get(0)))
+                throw new IOException("Not a valid world zip file");
+
+            return files.get(0);
+        }
+    }
+
     public void installTo(Path worldDir, String name) throws IOException {
         try (FileSystem fs = CompressingUtils.readonly(file).build()) {
-            Path levelDatPath = fs.getPath("/level.dat");
-            if (Files.isRegularFile(levelDatPath)) {
-                new Unzipper(file, worldDir).unzip();
-            } else {
-                try (Stream<Path> stream = Files.list(fs.getPath("/"))) {
-                    List<Path> subDirs = stream.toList();
-                    if (subDirs.size() != 1) {
-                        throw new IOException("World zip malformed");
-                    }
-                    String subDirectoryName = FileUtils.getName(subDirs.get(0));
-                    new Unzipper(file, worldDir)
-                            .setSubDirectory("/" + subDirectoryName + "/")
-                            .unzip();
-                }
-            }
-
+            new Unzipper(file, worldDir).setSubDirectory(resolveRoot(fs).toString()).unzip();
         }
         new WorldFolder(worldDir).setWorldName(name);
     }
