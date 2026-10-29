@@ -152,7 +152,7 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
         @Override
         protected void updateItem(@Nullable TaskExecutorDialogPane pane, boolean empty) {
             super.updateItem(pane, empty);
-            graphic.releaseRippleImmediately();
+            graphic.resetFeedback();
             content.titleProperty().unbind();
             content.setSubtitle(null);
             if (empty || pane == null) {
