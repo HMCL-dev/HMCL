@@ -68,7 +68,7 @@ final class WindowsGPUDetector {
             "usbmmidd"
     );
 
-    /// Identifies known display-only adapters before applying AMD name rules and the DAC heuristic.
+    /// Identifies display-only and virtual adapters before applying AMD name rules and the DAC heuristic.
     /// Recognized AMD names are heuristic evidence, not a hardware guarantee. Unmatched names and
     /// other vendors retain the DAC result, or `null` when the DAC value is absent.
     ///
@@ -88,6 +88,9 @@ final class WindowsGPUDetector {
                 }
             }
         }
+
+        if (HardwareVendor.VMWARE.equals(vendor) || HardwareVendor.PARALLEL.equals(vendor))
+            return GraphicsCard.Type.Virtual;
 
         if (HardwareVendor.AMD.equals(vendor) && name != null) {
             String model = name.replaceFirst("(?i)^(AMD |ATI )?Radeon ", "");

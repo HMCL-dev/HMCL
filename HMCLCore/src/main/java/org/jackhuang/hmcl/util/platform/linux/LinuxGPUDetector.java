@@ -126,6 +126,8 @@ final class LinuxGPUDetector {
         int pciFunc = Integer.parseInt(matcher.group("pciFunc"), 16);
 
         builder.setVendor(HardwareVendor.ofPciVendorId(vendorId));
+        if (builder.getVendor() == HardwareVendor.VMWARE || builder.getVendor() == HardwareVendor.PARALLEL)
+            builder.setType(GraphicsCard.Type.Virtual);
         detectDriver(builder, deviceDir);
 
         try {

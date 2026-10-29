@@ -75,7 +75,9 @@ public final class MacOSHardwareDetector extends HardwareDetector {
                         builder.setVendor(HardwareVendor.of(StringUtils.removePrefix(vendor.getAsString(), "sppci_vendor_")));
 
                     GraphicsCard.Type type = GraphicsCard.Type.Integrated;
-                    if (bus != null) {
+                    if (HardwareVendor.VMWARE.equals(builder.getVendor()) || HardwareVendor.PARALLEL.equals(builder.getVendor())) {
+                        type = GraphicsCard.Type.Virtual;
+                    } else if (bus != null) {
                         String lower = bus.getAsString().toLowerCase(Locale.ROOT);
                         if (!lower.contains("builtin") && !lower.contains("built_in") & !lower.contains("built-in"))
                             type = GraphicsCard.Type.Discrete;

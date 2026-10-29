@@ -107,6 +107,8 @@ public record HardwareVendor(String name) {
         if (lower.startsWith("mediatek")) return MTK;
         if (lower.equals("qcom") || lower.startsWith("qualcomm")) return QUALCOMM;
         if (lower.startsWith("apple")) return APPLE;
+        if (lower.startsWith("vmware")) return VMWARE;
+        if (lower.equals("parallel") || lower.equals("parallels") || lower.startsWith("parallels ")) return PARALLEL;
         if (lower.startsWith("microsoft")) return MICROSOFT;
         if (lower.startsWith("imagination") || lower.equals("img")) return IMG;
         if (lower.startsWith("loongson")) return LOONGSON;
