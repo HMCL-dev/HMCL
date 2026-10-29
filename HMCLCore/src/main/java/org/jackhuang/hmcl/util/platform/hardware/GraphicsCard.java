@@ -142,11 +142,12 @@ public final class GraphicsCard {
         /// A graphics adapter provided by a virtualization platform.
         VIRTUAL("Virtual"),
 
+        /// A display adapter that does not provide its own GPU rendering capability.
+        DISPLAY_ONLY("DisplayOnly"),
+
         /// An adapter whose type could not be determined.
         UNKNOWN("Unknown"),
-
-        /// A display adapter that does not provide its own GPU rendering capability.
-        DISPLAY_ONLY("DisplayOnly");
+        ;
 
         /// The human-readable adapter type name.
         private final String displayName;
