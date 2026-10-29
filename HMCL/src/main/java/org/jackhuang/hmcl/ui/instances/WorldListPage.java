@@ -54,6 +54,7 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
     @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
+
     private Path savesDir;
     private List<WorldFolder> worlds;
     private @Nullable HMCLGameInstance gameInstance;
