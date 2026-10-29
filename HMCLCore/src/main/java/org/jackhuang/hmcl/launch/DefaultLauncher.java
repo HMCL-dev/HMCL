@@ -768,7 +768,7 @@ public class DefaultLauncher extends Launcher {
 
         if (options.getRenderer() == Renderer.DEFAULT) {
             @Unmodifiable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards().stream()
-                    .filter(it -> it.getType() != GraphicsCard.Type.Virtual)
+                    .filter(it -> it.getType() != GraphicsCard.Type.DisplayOnly)
                     .toList();
             if (graphicsCards.size() == 2) {
                 GraphicsCard card0 = graphicsCards.get(0);

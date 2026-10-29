@@ -107,7 +107,7 @@ public final class AboutPage extends SpinnerPane {
             }
 
             @Unmodifiable List<GraphicsCard> visibleGraphicsCards = SystemInfo.getGraphicsCards().stream()
-                    .filter(card -> card.getType() != GraphicsCard.Type.Virtual && !"Unknown".equals(card.getName()))
+                    .filter(card -> card.getType() != GraphicsCard.Type.DisplayOnly && !"Unknown".equals(card.getName()))
                     .toList();
 
             for (int i = 0; i < visibleGraphicsCards.size(); i++) {

@@ -28,7 +28,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 final class WindowsGPUDetector {
 
-    private static final List<String> VIRTUAL_DISPLAY_ADAPTER_MATCHING_DEVICE_IDS = List.of(
+    /// Matching device IDs of known display-only adapters.
+    private static final @Unmodifiable List<String> DISPLAY_ONLY_ADAPTER_MATCHING_DEVICE_IDS = List.of(
             // Microsoft Remote Display Adapter
             "RdpIdd_IndirectDisplay",
 
@@ -45,22 +46,23 @@ final class WindowsGPUDetector {
             "ROOT\\VIRTUALDISPLAYDRIVER"
     );
 
-    /// Estimates an adapter's type, applying AMD name rules before the existing DAC heuristic.
+    /// Identifies known display-only adapters before applying AMD name rules and the DAC heuristic.
     /// Recognized AMD names are heuristic evidence, not a hardware guarantee. Unmatched names and
     /// other vendors retain the DAC result, or `null` when the DAC value is absent.
     ///
     /// @param name the adapter name or driver description normalized by [GraphicsCard#cleanName(String)], or `null`
     /// @param vendor the resolved hardware vendor, or `null`
     /// @param dacType the decoded DAC description, or `null` if absent
-    /// @return the estimated type, or `null` when neither a name rule nor a DAC value is available
+    /// @param matchingDeviceId the matched device ID, or `null` if absent
+    /// @return the detected or estimated type, or `null` if no rule applies
     static GraphicsCard.@Nullable Type inferType(@Nullable String name,
                                                  @Nullable HardwareVendor vendor,
                                                  @Nullable String dacType,
                                                  @Nullable String matchingDeviceId) {
         if (matchingDeviceId != null) {
-            for (String id : VIRTUAL_DISPLAY_ADAPTER_MATCHING_DEVICE_IDS) {
+            for (String id : DISPLAY_ONLY_ADAPTER_MATCHING_DEVICE_IDS) {
                 if (matchingDeviceId.equalsIgnoreCase(id)) {
-                    return GraphicsCard.Type.Virtual;
+                    return GraphicsCard.Type.DisplayOnly;
                 }
             }
         }
