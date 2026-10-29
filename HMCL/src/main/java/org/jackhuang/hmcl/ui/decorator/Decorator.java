@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXSnackbar;
@@ -39,6 +24,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.CacheHint;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -228,6 +214,9 @@ public final class Decorator {
     /// Plays the opening animation immediately before the attached stage becomes visible.
     private final EventHandler<WindowEvent> windowShowingHandler = event -> playOpenAnimation();
 
+    /// Releases animation caching and resets transforms when the attached stage is hidden.
+    private final EventHandler<WindowEvent> windowHiddenHandler = event -> stopWindowAnimation();
+
     /// Updates the custom window decoration when the attached stage changes maximized or full-screen state.
     private final InvalidationListener stageDecorationListener = observable -> {
         @Nullable Stage currentStage = stage;
@@ -254,6 +243,7 @@ public final class Decorator {
 
         mainWindowPane = new MainWindowPane(this);
         shadowContainer.getChildren().setAll(mainWindowPane);
+        root.setCacheHint(CacheHint.SCALE);
         root.setPickOnBounds(true);
         root.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, null, null)));
         root.getChildren().setAll(shadowContainer);
@@ -325,6 +315,15 @@ public final class Decorator {
     /// @return the stable main-window pane used as the dialog container
     public StackPane getDialogContainer() {
         return mainWindowPane;
+    }
+
+    /// Prewarms a page for navigation using [TransitionPane#prewarm(Node)].
+    ///
+    /// @param page the page to prewarm
+    /// @return the supplied page
+    /// @throws IllegalArgumentException if the page already belongs to a parent or scene
+    public <N extends Node> N prewarmPage(N page) {
+        return navigator.prewarm(page);
     }
 
     /// Returns the navigation stack rendered by the main window.
@@ -749,6 +748,7 @@ public final class Decorator {
     /// Replaces the attached stage when transparency or theme brightness requires a different decoration style.
     ///
     /// Preserves the scene, navigation, dialogs, normal bounds, supported window states, and focus owner.
+    /// Copies the previous title before the replacement-stage initializer may override or bind it.
     /// Hidden windows remain hidden. Does nothing while detached or when the current style is still suitable.
     /// Must run on the JavaFX application thread after theme bindings have updated.
     private void updateWindowStyle() {
@@ -765,8 +765,8 @@ public final class Decorator {
         @Nullable Node focusOwner = previousStage.getScene().getFocusOwner();
 
         Stage replacement = new Stage();
-        stageInitializer.accept(replacement);
         replacement.setTitle(previousStage.getTitle());
+        stageInitializer.accept(replacement);
         replacement.getIcons().setAll(previousStage.getIcons());
         replacement.setOnCloseRequest(previousStage.getOnCloseRequest());
         replacement.setResizable(previousStage.isResizable());
@@ -871,6 +871,7 @@ public final class Decorator {
             updateWindowDecoration(false);
             stage = newStage;
             newStage.addEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
+            newStage.addEventHandler(WindowEvent.WINDOW_HIDDEN, windowHiddenHandler);
             newStage.iconifiedProperty().addListener(iconifiedListener);
             newStage.maximizedProperty().addListener(stageDecorationListener);
             newStage.fullScreenProperty().addListener(stageDecorationListener);
@@ -912,6 +913,7 @@ public final class Decorator {
                 Themes.darkModeProperty().removeListener(windowStyleListener);
             }
             stage.removeEventHandler(WindowEvent.WINDOW_SHOWING, windowShowingHandler);
+            stage.removeEventHandler(WindowEvent.WINDOW_HIDDEN, windowHiddenHandler);
             stage.iconifiedProperty().removeListener(iconifiedListener);
             stage.maximizedProperty().removeListener(stageDecorationListener);
             stage.fullScreenProperty().removeListener(stageDecorationListener);
@@ -990,13 +992,11 @@ public final class Decorator {
                 new KeyFrame(Duration.ZERO,
                         new KeyValue(root.opacityProperty(), 0, Motion.EASE),
                         new KeyValue(root.scaleXProperty(), 0.8, Motion.EASE),
-                        new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE),
-                        new KeyValue(root.scaleZProperty(), 0.8, Motion.EASE)),
+                        new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE)),
                 new KeyFrame(Duration.millis(600),
                         new KeyValue(root.opacityProperty(), 1, Motion.EASE),
                         new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
-                        new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
-                        new KeyValue(root.scaleZProperty(), 1, Motion.EASE)));
+                        new KeyValue(root.scaleYProperty(), 1, Motion.EASE)));
         playWindowAnimation(timeline, () -> {
             resetRootTransform();
 
@@ -1021,14 +1021,12 @@ public final class Decorator {
                             new KeyValue(root.opacityProperty(), 1, Motion.EASE),
                             new KeyValue(root.translateYProperty(), 0, Motion.EASE),
                             new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
-                            new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
-                            new KeyValue(root.scaleZProperty(), 1, Motion.EASE)),
+                            new KeyValue(root.scaleYProperty(), 1, Motion.EASE)),
                     new KeyFrame(Motion.SHORT4,
                             new KeyValue(root.opacityProperty(), 0, Motion.EASE),
                             new KeyValue(root.translateYProperty(), 200, Motion.EASE),
                             new KeyValue(root.scaleXProperty(), 0.4, Motion.EASE),
-                            new KeyValue(root.scaleYProperty(), 0.4, Motion.EASE),
-                            new KeyValue(root.scaleZProperty(), 0.4, Motion.EASE)));
+                            new KeyValue(root.scaleYProperty(), 0.4, Motion.EASE)));
             playWindowAnimation(timeline, () -> {
                 if (getStage() == currentStage) {
                     currentStage.setIconified(true);
@@ -1051,13 +1049,11 @@ public final class Decorator {
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(root.opacityProperty(), 1, Motion.EASE),
                             new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
-                            new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
-                            new KeyValue(root.scaleZProperty(), 0.3, Motion.EASE)),
+                            new KeyValue(root.scaleYProperty(), 1, Motion.EASE)),
                     new KeyFrame(Duration.millis(200),
                             new KeyValue(root.opacityProperty(), 0, Motion.EASE),
                             new KeyValue(root.scaleXProperty(), 0.8, Motion.EASE),
-                            new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE),
-                            new KeyValue(root.scaleZProperty(), 0.8, Motion.EASE)));
+                            new KeyValue(root.scaleYProperty(), 0.8, Motion.EASE)));
             playWindowAnimation(timeline, Launcher::stopApplication);
         } else {
             stopWindowAnimation();
@@ -1134,7 +1130,7 @@ public final class Decorator {
 
             Node newTarget;
             {
-                //noinspection unchecked
+                @SuppressWarnings("unchecked")
                 @Nullable Stack<JFXDatePickerContent> stack =
                         (Stack<JFXDatePickerContent>) getDialogContainer().getProperties()
                         .get(JFXDatePickerSkin.PROPERTY_DATE_PICKER_CONTENTS);
@@ -1194,14 +1190,12 @@ public final class Decorator {
                         new KeyValue(root.opacityProperty(), 0, Motion.EASE),
                         new KeyValue(root.translateYProperty(), 200, Motion.EASE),
                         new KeyValue(root.scaleXProperty(), 0.4, Motion.EASE),
-                        new KeyValue(root.scaleYProperty(), 0.4, Motion.EASE),
-                        new KeyValue(root.scaleZProperty(), 0.4, Motion.EASE)),
+                        new KeyValue(root.scaleYProperty(), 0.4, Motion.EASE)),
                 new KeyFrame(Motion.SHORT4,
                         new KeyValue(root.opacityProperty(), 1, Motion.EASE),
                         new KeyValue(root.translateYProperty(), 0, Motion.EASE),
                         new KeyValue(root.scaleXProperty(), 1, Motion.EASE),
-                        new KeyValue(root.scaleYProperty(), 1, Motion.EASE),
-                        new KeyValue(root.scaleZProperty(), 1, Motion.EASE)));
+                        new KeyValue(root.scaleYProperty(), 1, Motion.EASE)));
         playWindowAnimation(timeline, this::resetRootTransform);
     }
 
@@ -1211,24 +1205,27 @@ public final class Decorator {
     /// @param onFinished the action to run only when this animation reaches its end
     private void playWindowAnimation(Timeline timeline, Runnable onFinished) {
         stopWindowAnimation();
+        root.setCache(true);
         windowAnimation = timeline;
         timeline.setOnFinished(event -> {
             if (windowAnimation != timeline) {
                 return;
             }
+            root.setCache(false);
             windowAnimation = null;
             onFinished.run();
         });
         timeline.play();
     }
 
-    /// Cancels any active window animation and restores the stable root transform.
+    /// Cancels any active window animation, disables root caching, and resets the root transform.
     private void stopWindowAnimation() {
         playRestoreMinimizeAnimation = false;
         if (windowAnimation != null) {
             windowAnimation.stop();
             windowAnimation = null;
         }
+        root.setCache(false);
         resetRootTransform();
     }
 
@@ -1238,7 +1235,6 @@ public final class Decorator {
         root.setTranslateY(0);
         root.setScaleX(1);
         root.setScaleY(1);
-        root.setScaleZ(1);
     }
 
 }

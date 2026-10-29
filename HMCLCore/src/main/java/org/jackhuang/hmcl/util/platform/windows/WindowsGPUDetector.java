@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform.windows;
 
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
@@ -116,14 +101,19 @@ final class WindowsGPUDetector {
             return null;
         } else if (object instanceof String[]) {
             return String.join(" ", (String[]) object);
-        } else if (object instanceof byte[]) {
-            return new String((byte[]) object, StandardCharsets.UTF_16LE)
+        } else if (object instanceof byte[] data) {
+            // Ensure an even byte length for UTF_16LE
+            int length = data.length & ~1;
+            return new String(data, 0, length, StandardCharsets.UTF_16LE)
                     .replace("\0", "");
         } else {
             return object.toString();
         }
     }
 
+    /// Reads graphics card information from the display adapter registry keys.
+    /// Uses the driver description when the adapter name is missing or blank;
+    /// if both are missing or blank, leaves the name to the builder's fallback.
     private static List<GraphicsCard> detectByRegistry(WinReg reg) {
         final WinReg.HKEY hkey = WinReg.HKEY.HKEY_LOCAL_MACHINE;
         final String displayDevices = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\";
@@ -134,14 +124,18 @@ final class WindowsGPUDetector {
             if (!graphicsCardPattern.matcher(subkey).find())
                 continue;
 
-            String name = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.AdapterString"));
-            String vendor = regValueToString(reg.queryValue(hkey, subkey, "ProviderName"));
-            String driverVersion = regValueToString(reg.queryValue(hkey, subkey, "DriverVersion"));
-            String dacType = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.DacType"));
-            Object vulkanDriverName = reg.queryValue(hkey, subkey, "VulkanDriverName");
+            @Nullable String name = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.AdapterString"));
+            if (StringUtils.isBlank(name))
+                name = regValueToString(reg.queryValue(hkey, subkey, "DriverDesc"));
+            @Nullable String vendor = regValueToString(reg.queryValue(hkey, subkey, "ProviderName"));
+            @Nullable String driverVersion = regValueToString(reg.queryValue(hkey, subkey, "DriverVersion"));
+            @Nullable String dacType = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.DacType"));
+            @Nullable Object vulkanDriverName = reg.queryValue(hkey, subkey, "VulkanDriverName");
+            @Nullable String matchingDeviceId = regValueToString(reg.queryValue(hkey, subkey, "MatchingDeviceId"));
 
             GraphicsCard.Builder builder = GraphicsCard.builder();
-            if (name != null)
+            builder.setVirtualDisplayAdapter("Root\\GameViewerIddDriver".equalsIgnoreCase(matchingDeviceId));
+            if (StringUtils.isNotBlank(name))
                 builder.setName(GraphicsCard.cleanName(name));
             if (vendor != null)
                 builder.setVendor(HardwareVendor.of(vendor));

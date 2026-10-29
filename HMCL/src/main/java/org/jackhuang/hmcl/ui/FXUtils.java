@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
@@ -36,7 +21,6 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
-import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
 import javafx.geometry.Rectangle2D;
@@ -1226,16 +1210,6 @@ public final class FXUtils {
         return node;
     }
 
-    public static void prepareOnMouseEnter(Node node, Runnable action) {
-        node.addEventFilter(MouseEvent.MOUSE_ENTERED, new EventHandler<>() {
-            @Override
-            public void handle(MouseEvent e) {
-                node.removeEventFilter(MouseEvent.MOUSE_ENTERED, this);
-                action.run();
-            }
-        });
-    }
-
     public static <T> void onScroll(Node node, List<T> list,
                                     ToIntFunction<List<T>> finder,
                                     Consumer<T> updater
@@ -1574,7 +1548,9 @@ public final class FXUtils {
 
             setHeading(new Label(i18n("button.select_date")));
 
-            GridPane body = new GridPane(4, 8);
+            GridPane body = new GridPane();
+            body.setHgap(4);
+            body.setVgap(8);
             {
                 Label fromLabel = new Label(i18n("button.select_date.from"));
                 this.fromPicker = new JFXDatePicker(LocalDate.now());

@@ -1,24 +1,9 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.addon.mod;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import org.jackhuang.hmcl.addon.AddonLoader;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.LocalAddonManager;
@@ -31,13 +16,11 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
 /**
  *
  * @author huangyuhui
  */
-public final class LocalModFile extends LocalAddonFile implements Comparable<LocalModFile> {
+public final class LocalModFile extends LocalAddonFile<LocalModFile> {
 
     private Path file;
     private final ModManager modManager;
@@ -50,7 +33,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     private final String url;
     private final String fileName;
     private final String logoPath;
-    private final BooleanProperty activeProperty;
+    private final ReadOnlyBooleanWrapper activeProperty;
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
         this(modManager, mod, file, name, description, "", "", "", "", "");
@@ -69,23 +52,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         this.url = url;
         this.logoPath = logoPath;
 
-        activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
-            @Override
-            protected void invalidated() {
-                if (isOld()) return;
-
-                Path path = LocalModFile.this.file.toAbsolutePath();
-
-                try {
-                    if (get())
-                        LocalModFile.this.file = modManager.enableMod(path);
-                    else
-                        LocalModFile.this.file = modManager.disableMod(path);
-                } catch (IOException e) {
-                    LOG.error("Unable to invert state of mod file " + path, e);
-                }
-            }
-        };
+        activeProperty = new ReadOnlyBooleanWrapper(this, "active", !modManager.isDisabled(file));
 
         fileName = FileUtils.getNameWithoutExtension(LocalAddonManager.getLocalAddonName(file));
 
@@ -145,15 +112,21 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         return logoPath;
     }
 
-    public BooleanProperty activeProperty() {
-        return activeProperty;
+    public ReadOnlyBooleanProperty activeProperty() {
+        return activeProperty.getReadOnlyProperty();
     }
 
     public boolean isActive() {
         return activeProperty.get();
     }
 
-    public void setActive(boolean active) {
+    public void setActive(boolean active) throws IOException {
+        if (isOld() || active == isActive()) {
+            return;
+        }
+
+        Path path = file.toAbsolutePath();
+        file = active ? modManager.enableMod(path) : modManager.disableMod(path);
         activeProperty.set(active);
     }
 
