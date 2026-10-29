@@ -98,6 +98,7 @@ final class WindowsGPUDetector {
                 // RX Vega 11 is integrated, whereas RX Vega 56 and 64 are discrete.
                 if (model.equalsIgnoreCase("Graphics")
                         || model.matches("(?i)[0-9]{3}M( Graphics)?")
+                        || model.matches("(?i)80[456]0S( Graphics)?") // Strix Halo
                         || model.matches("(?i)(RX )?Vega ([2-9]|10|11)( Graphics)?"))
                     return GraphicsCard.Type.INTEGRATED;
 
