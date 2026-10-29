@@ -130,18 +130,20 @@ final class TaskExecutorDialogPaneTest {
                 AtomicInteger actions = new AtomicInteger();
                 pane.background();
                 assertFalse(pane.runOrDeferCompletionAction("Install", "Ready to install", actions::incrementAndGet));
+                assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
+                assertSame(nextSpinner, tasksButton.getGraphic());
+                second.restore();
                 assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
                 SVGPath pendingIcon = assertInstanceOf(SVGPath.class, tasksButton.getGraphic());
                 assertEquals(SVG.PENDING.getPath(), pendingIcon.getContent());
-                second.restore();
                 second.background();
-                assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
-                assertSame(pendingIcon, tasksButton.getGraphic());
+                assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
+                Node resumedSpinner = assertInstanceOf(JFXSpinner.class, tasksButton.getGraphic());
+                assertNotSame(nextSpinner, resumedSpinner);
                 pane.runPendingAction();
                 assertEquals(1, actions.get());
                 assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
-                assertInstanceOf(JFXSpinner.class, tasksButton.getGraphic());
-                assertNotSame(nextSpinner, tasksButton.getGraphic());
+                assertSame(resumedSpinner, tasksButton.getGraphic());
 
                 assertFalse(second.runOrDeferCompletionAction("Install", "Ready to install", actions::incrementAndGet));
                 assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
@@ -293,13 +295,18 @@ final class TaskExecutorDialogPaneTest {
                     Controllers.dialog(second);
                     completions.add(second.startExecutor());
                     assertTrue(second.queuedProperty().get());
+                    assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
                     second.background();
+                    assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
                     assertFalse(DialogUtils.isShowing(second));
                     second.restore();
                     second.restore();
                     assertTrue(DialogUtils.isShowing(second));
                     assertTrue(second.queuedProperty().get());
                     assertEquals(0, executions.get());
+                    second.background();
+                    first.setExecutor(null);
+                    assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
                 } finally {
                     DialogUtils.close(first);
                     DialogUtils.close(second);

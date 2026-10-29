@@ -36,9 +36,9 @@ public final class TaskManager {
     public enum Status {
         /// No task is queued, running in the background, or awaiting user action; foreground tasks may exist.
         IDLE,
-        /// At least one task is running in the background, with no queued tasks or pending user actions.
+        /// At least one task is running in the background without awaiting user action or an execution slot.
         RUNNING,
-        /// At least one task awaits user action or an execution slot.
+        /// At least one task awaits user action or an execution slot, with no task running in the background.
         PENDING
     }
 
@@ -62,19 +62,20 @@ public final class TaskManager {
     private final @UnmodifiableView ObservableList<TaskExecutorDialogPane> tasksView =
             FXCollections.unmodifiableObservableList(tasks);
 
-    /// The aggregate status, with pending user actions taking priority over background execution.
+    /// The aggregate status, with background execution taking priority over waiting tasks.
     private final ReadOnlyObjectWrapper<Status> status = new ReadOnlyObjectWrapper<>(this, "status", Status.IDLE);
 
     /// Creates the application-wide manager.
     private TaskManager() {
         status.bind(Bindings.createObjectBinding(() -> {
-            boolean running = false;
+            boolean pending = false;
             for (TaskExecutorDialogPane pane : tasks) {
                 if (pane.pendingActionProperty().get() != null || pane.queuedProperty().get())
-                    return Status.PENDING;
-                running |= pane.runningInBackgroundProperty().get();
+                    pending = true;
+                else if (pane.runningInBackgroundProperty().get())
+                    return Status.RUNNING;
             }
-            return running ? Status.RUNNING : Status.IDLE;
+            return pending ? Status.PENDING : Status.IDLE;
         }, tasks));
     }
 
@@ -91,7 +92,7 @@ public final class TaskManager {
 
     /// Returns the non-null aggregate task status as a read-only property.
     ///
-    /// Queued tasks and pending user actions take priority over background execution. Foreground tasks alone
+    /// Background execution takes priority over queued tasks and pending user actions. Foreground tasks alone
     /// leave the status at [Status#IDLE]. Updates as tasks enter or leave these states.
     public ReadOnlyObjectProperty<Status> statusProperty() {
         FXUtils.checkFxUserThread();
