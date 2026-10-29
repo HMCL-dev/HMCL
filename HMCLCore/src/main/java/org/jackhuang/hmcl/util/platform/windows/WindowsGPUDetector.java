@@ -26,13 +26,45 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 final class WindowsGPUDetector {
 
-    private static GraphicsCard.Type fromDacType(String adapterDACType) {
-        if (StringUtils.isBlank(adapterDACType)
-                || "Internal".equalsIgnoreCase(adapterDACType)
-                || "InternalDAC".equalsIgnoreCase(adapterDACType)) {
-            return GraphicsCard.Type.Integrated;
+    /// Estimates an adapter's type, applying AMD name rules before the existing DAC heuristic.
+    /// Recognized AMD names are heuristic evidence, not a hardware guarantee. Unmatched names and
+    /// other vendors retain the DAC result, or `null` when the DAC value is absent.
+    ///
+    /// @param name the adapter name or driver description normalized by [GraphicsCard#cleanName(String)], or `null`
+    /// @param vendor the resolved hardware vendor, or `null`
+    /// @param dacType the decoded DAC description, or `null` if absent
+    /// @return the estimated type, or `null` when neither a name rule nor a DAC value is available
+    static GraphicsCard.@Nullable Type inferType(@Nullable String name, @Nullable HardwareVendor vendor,
+                                                 @Nullable String dacType) {
+        if (HardwareVendor.AMD.equals(vendor) && name != null) {
+            String model = name.replaceFirst("(?i)^(AMD |ATI )?Radeon ", "");
+            if (!model.equals(name)) {
+                if (model.equalsIgnoreCase("Graphics")
+                        || model.matches("(?i)[0-9]{3}M( Graphics)?"))
+                    return GraphicsCard.Type.Integrated;
+
+                // RX Vega 11 is integrated, whereas RX Vega 56 and 64 are discrete.
+                if (model.matches("(?i)(RX )?Vega ([2-9]|10|11)( Graphics)?"))
+                    return GraphicsCard.Type.Integrated;
+                if (model.matches("(?i)(RX )?Vega (56|64)( .*)?"))
+                    return GraphicsCard.Type.Discrete;
+
+                if (model.matches("(?i)RX [0-9]{3,4}([A-Z]*| .*)")
+                        || model.equalsIgnoreCase("VII") || model.regionMatches(true, 0, "VII ", 0, 4))
+                    return GraphicsCard.Type.Discrete;
+            }
+        }
+
+        if (dacType != null) {
+            if (StringUtils.isBlank(dacType)
+                    || "Internal".equalsIgnoreCase(dacType)
+                    || "InternalDAC".equalsIgnoreCase(dacType)) {
+                return GraphicsCard.Type.Integrated;
+            } else {
+                return GraphicsCard.Type.Discrete;
+            }
         } else {
-            return GraphicsCard.Type.Discrete;
+            return null;
         }
     }
 
@@ -55,6 +87,8 @@ final class WindowsGPUDetector {
             return null;
     }
 
+    /// Reads CIM video controllers and applies the shared name and DAC type heuristics.
+    /// Returns an empty list if the query or its processing fails.
     private static List<GraphicsCard> detectByCim() {
         try {
             String getCimInstance = OperatingSystem.SYSTEM_VERSION.getVersion().startsWith("6.1")
@@ -74,16 +108,16 @@ final class WindowsGPUDetector {
 
             ArrayList<GraphicsCard> cards = new ArrayList<>(videoControllers.size());
             for (Map<String, String> videoController : videoControllers) {
-                String name = videoController.get("Name");
-                String adapterCompatibility = videoController.get("AdapterCompatibility");
-                String driverVersion = videoController.get("DriverVersion");
-                String adapterDACType = videoController.get("AdapterDACType");
+                @Nullable String name = GraphicsCard.cleanName(videoController.get("Name"));
+                @Nullable HardwareVendor vendor = HardwareVendor.of(videoController.get("AdapterCompatibility"));
+                @Nullable String driverVersion = videoController.get("DriverVersion");
+                @Nullable String adapterDACType = videoController.get("AdapterDACType");
 
                 if (StringUtils.isNotBlank(name)) {
-                    cards.add(GraphicsCard.builder().setName(GraphicsCard.cleanName(name))
-                            .setVendor(HardwareVendor.of(adapterCompatibility))
+                    cards.add(GraphicsCard.builder().setName(name)
+                            .setVendor(vendor)
                             .setDriverVersion(driverVersion)
-                            .setType(fromDacType(adapterDACType))
+                            .setType(inferType(name, vendor, adapterDACType))
                             .build()
                     );
                 }
@@ -119,7 +153,10 @@ final class WindowsGPUDetector {
             "Root\\GameViewerIddDriver",
 
             // MuMu Virtual Display Adapter
-            "Root\\MuMuIddDriver"
+            "Root\\MuMuIddDriver",
+
+            // Honor Virtual Display Device
+            "IndirectDSP\\\\VirtualDisplayDriver"
     );
 
     private static boolean isVirtual(@Nullable String matchingDeviceId) {
@@ -150,7 +187,8 @@ final class WindowsGPUDetector {
             @Nullable String name = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.AdapterString"));
             if (StringUtils.isBlank(name))
                 name = regValueToString(reg.queryValue(hkey, subkey, "DriverDesc"));
-            @Nullable String vendor = regValueToString(reg.queryValue(hkey, subkey, "ProviderName"));
+            name = GraphicsCard.cleanName(name);
+            @Nullable HardwareVendor vendor = HardwareVendor.of(regValueToString(reg.queryValue(hkey, subkey, "ProviderName")));
             @Nullable String driverVersion = regValueToString(reg.queryValue(hkey, subkey, "DriverVersion"));
             @Nullable String dacType = regValueToString(reg.queryValue(hkey, subkey, "HardwareInformation.DacType"));
             @Nullable Object vulkanDriverName = reg.queryValue(hkey, subkey, "VulkanDriverName");
@@ -159,13 +197,12 @@ final class WindowsGPUDetector {
             GraphicsCard.Builder builder = GraphicsCard.builder();
             builder.setVirtualDisplayAdapter(isVirtual(matchingDeviceId));
             if (StringUtils.isNotBlank(name))
-                builder.setName(GraphicsCard.cleanName(name));
+                builder.setName(name);
             if (vendor != null)
-                builder.setVendor(HardwareVendor.of(vendor));
+                builder.setVendor(vendor);
             if (driverVersion != null)
                 builder.setDriverVersion(driverVersion);
-            if (dacType != null)
-                builder.setType(fromDacType(dacType));
+            builder.setType(inferType(name, vendor, dacType));
             if (vulkanDriverName != null)
                 builder.setVulkanDriverFiles(parseVulkanDriverFiles(vulkanDriverName));
             result.add(builder.build());
