@@ -39,18 +39,15 @@ final class WindowsGPUDetector {
         if (HardwareVendor.AMD.equals(vendor) && name != null) {
             String model = name.replaceFirst("(?i)^(AMD |ATI )?Radeon ", "");
             if (!model.equals(name)) {
-                if (model.equalsIgnoreCase("Graphics")
-                        || model.matches("(?i)[0-9]{3}M( Graphics)?"))
-                    return GraphicsCard.Type.Integrated;
-
                 // RX Vega 11 is integrated, whereas RX Vega 56 and 64 are discrete.
-                if (model.matches("(?i)(RX )?Vega ([2-9]|10|11)( Graphics)?"))
+                if (model.equalsIgnoreCase("Graphics")
+                        || model.matches("(?i)[0-9]{3}M( Graphics)?")
+                        || model.matches("(?i)(RX )?Vega ([2-9]|10|11)( Graphics)?"))
                     return GraphicsCard.Type.Integrated;
-                if (model.matches("(?i)(RX )?Vega (56|64)( .*)?"))
-                    return GraphicsCard.Type.Discrete;
 
                 if (model.matches("(?i)RX [0-9]{3,4}([A-Z]*| .*)")
-                        || model.equalsIgnoreCase("VII") || model.regionMatches(true, 0, "VII ", 0, 4))
+                        || model.matches("(?i)(RX )?Vega (56|64)( .*)?")
+                        || model.matches("(?i)VII( .*)?"))
                     return GraphicsCard.Type.Discrete;
             }
         }
