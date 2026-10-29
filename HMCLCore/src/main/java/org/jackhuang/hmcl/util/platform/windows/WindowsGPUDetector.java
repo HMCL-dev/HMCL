@@ -42,8 +42,30 @@ final class WindowsGPUDetector {
             // Honor Virtual Display Device
             "IndirectDSP\\VirtualDisplayDriver",
 
-            // Huawei Virtual Display Device
-            "ROOT\\VIRTUALDISPLAYDRIVER"
+            // Huawei Virtual Display Device and virtual-display-rs
+            "ROOT\\VIRTUALDISPLAYDRIVER",
+
+            // Parsec Virtual Display Adapter
+            "Root\\Parsec\\VDA",
+
+            // MikeTheTech / VirtualDrivers Virtual Display Driver
+            "Root\\MttVDD",
+            "MttVDD",
+
+            // Apollo / SudoMaker Virtual Display Adapter
+            "Root\\SudoMaker\\SudoVDA",
+            "SudoVDA",
+
+            // RustDesk Indirect Display Driver
+            "Root\\RustDeskIddDriver",
+            "RustDeskIddDriver",
+
+            // Microsoft Indirect Display Driver sample and derivatives
+            "Root\\IddSampleDriver",
+            "IddSampleDriver",
+
+            // Amyuni USB Mobile Monitor Virtual Display
+            "usbmmidd"
     );
 
     /// Identifies known display-only adapters before applying AMD name rules and the DAC heuristic.
