@@ -43,7 +43,7 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
 
             ServerStatus parseServerStatus = parseServerStatus(rootStatus);
             return ServerStatusResult.success(successResult.getRawAddress(), this, networkLatency, parseServerStatus);
-        } catch (IOException e) {
+        } catch (Exception e) {
             return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, e);
         }
     }

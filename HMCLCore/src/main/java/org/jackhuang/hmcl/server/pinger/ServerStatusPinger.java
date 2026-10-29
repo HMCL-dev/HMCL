@@ -100,19 +100,30 @@ public sealed interface ServerStatusPinger permits OldServerStatusPinger, Classi
     }
 
     final class Connection implements Closeable {
-        private final Socket socket;
+        private Socket socket = null;
         private final DataOutputStream out;
         private final DataInputStream in;
 
         private Connection(@NotNull InetSocketAddress address) throws IOException {
-            this.socket = new Socket();
+            try {
+                this.socket = new Socket();
 
-            this.socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
-            this.socket.connect(address, 7_000);
-            this.socket.setSoTimeout(7_000);
+                this.socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
+                this.socket.connect(address, 7_000);
+                this.socket.setSoTimeout(7_000);
 
-            this.out = new DataOutputStream(socket.getOutputStream());
-            this.in = new DataInputStream(socket.getInputStream());
+                this.out = new DataOutputStream(socket.getOutputStream());
+                this.in = new DataInputStream(socket.getInputStream());
+            } catch (Exception e) {
+                if (socket != null) {
+                    try {
+                        socket.close();
+                    } catch (IOException e1) {
+                        e.addSuppressed(e1);
+                    }
+                }
+                throw e;
+            }
         }
 
         public DataInputStream getIn() {
