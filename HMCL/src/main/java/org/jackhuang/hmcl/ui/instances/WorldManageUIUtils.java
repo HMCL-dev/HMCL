@@ -3,7 +3,7 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.WorldFolder;
+import org.jackhuang.hmcl.addon.world.WorldFolder;
 import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;

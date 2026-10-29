@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.game.WorldFolder;
+import org.jackhuang.hmcl.addon.world.WorldFolder;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;

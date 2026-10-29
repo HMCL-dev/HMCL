@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
-package org.jackhuang.hmcl.game;
+package org.jackhuang.hmcl.addon.world;
 
 import javafx.scene.image.Image;
 import org.glavo.nbt.io.NBTCodec;
 import org.glavo.nbt.tag.*;
+import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
@@ -195,6 +196,7 @@ public final class WorldFolder extends World {
         }
     }
 
+    @Override
     public void delete() throws IOException {
         checkLock();
         FileUtils.deleteDirectory(file);

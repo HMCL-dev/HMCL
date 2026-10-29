@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
-package org.jackhuang.hmcl.game;
+package org.jackhuang.hmcl.addon.world;
 
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -58,6 +58,11 @@ public final class WorldZipFile extends World {
     @Override
     public String getFileName() {
         return fileName;
+    }
+
+    @Override
+    public void delete() throws IOException {
+        Files.delete(file);
     }
 
     @Override

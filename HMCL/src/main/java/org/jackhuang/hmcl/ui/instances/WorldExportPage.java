@@ -5,7 +5,7 @@ package org.jackhuang.hmcl.ui.instances;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.Skin;
-import org.jackhuang.hmcl.game.WorldFolder;
+import org.jackhuang.hmcl.addon.world.WorldFolder;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardSinglePage;
 import org.jackhuang.hmcl.util.i18n.I18n;

@@ -22,6 +22,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.addon.world.WorldFolder;
+import org.jackhuang.hmcl.addon.world.WorldZipFile;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;

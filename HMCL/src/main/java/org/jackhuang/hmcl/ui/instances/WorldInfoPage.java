@@ -17,7 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.glavo.nbt.tag.*;
-import org.jackhuang.hmcl.game.WorldFolder;
+import org.jackhuang.hmcl.addon.world.WorldFolder;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;

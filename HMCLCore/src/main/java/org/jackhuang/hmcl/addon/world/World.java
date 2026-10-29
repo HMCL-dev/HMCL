@@ -1,10 +1,11 @@
-// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
-package org.jackhuang.hmcl.game;
+package org.jackhuang.hmcl.addon.world;
 
 import javafx.scene.image.Image;
 import org.glavo.nbt.io.NBTCodec;
 import org.glavo.nbt.tag.*;
+import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +17,7 @@ import java.nio.file.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
-public abstract sealed class World permits WorldFolder, WorldZipFile {
+public abstract sealed class World extends LocalAddonFile<World> permits WorldFolder, WorldZipFile {
     final Path file;
 
     public World(Path file) throws IOException {
@@ -63,13 +64,12 @@ public abstract sealed class World permits WorldFolder, WorldZipFile {
         return icon;
     }
 
+    @Override
     public Path getFile() {
         return file;
     }
 
     public abstract @Nullable Image getIcon();
-
-    public abstract String getFileName();
 
     public abstract LevelData getLevelData();
 
@@ -91,6 +91,24 @@ public abstract sealed class World permits WorldFolder, WorldZipFile {
             return GameVersionNumber.asGameVersion(nameTag.getValue());
         }
         return null;
+    }
+
+    @Override
+    public void markDisabled() {
+    }
+
+    @Override
+    public void setOld(boolean old) {
+    }
+
+    @Override
+    public boolean keepOldFiles() {
+        return false;
+    }
+
+    @Override
+    public int compareTo(World o) {
+        return getFile().compareTo(o.getFile());
     }
 
     public record LevelData(CompoundTag data, StringTag levelName, LongTag lastPlayed, CompoundTag rootTag, Path file) {
