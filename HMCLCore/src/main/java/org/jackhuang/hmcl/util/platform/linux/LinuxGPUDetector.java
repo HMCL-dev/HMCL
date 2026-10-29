@@ -96,7 +96,8 @@ final class LinuxGPUDetector {
         }
     }
 
-    private static GraphicsCard detectPCI(Path deviceDir, String modalias) throws IOException {
+    /// Returns metadata for a PCI display controller, or `null` if its identity is unsupported.
+    private static @Nullable GraphicsCard detectPCI(Path deviceDir, String modalias) throws IOException {
         Matcher matcher = PCI_MODALIAS_PATTERN.matcher(modalias);
         if (!matcher.matches())
             return null;
@@ -126,7 +127,9 @@ final class LinuxGPUDetector {
         int pciFunc = Integer.parseInt(matcher.group("pciFunc"), 16);
 
         builder.setVendor(HardwareVendor.ofPciVendorId(vendorId));
-        if (builder.getVendor() == HardwareVendor.VMWARE || builder.getVendor() == HardwareVendor.PARALLEL)
+        if (builder.getVendor() == HardwareVendor.VMWARE
+                || builder.getVendor() == HardwareVendor.PARALLEL
+                || builder.getVendor() == HardwareVendor.RED_HAT)
             builder.setType(GraphicsCard.Type.VIRTUAL);
         detectDriver(builder, deviceDir);
 
@@ -153,7 +156,7 @@ final class LinuxGPUDetector {
                     //noinspection DataFlowIssue
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                             LinuxHardwareDetector.class.getResourceAsStream("/assets/platform/amdgpu.ids"), StandardCharsets.UTF_8))) {
-                        String line;
+                        @Nullable String line;
                         while ((line = reader.readLine()) != null) {
                             if (line.startsWith(prefix)) {
                                 builder.setName(line.substring(prefix.length()));
@@ -174,15 +177,15 @@ final class LinuxGPUDetector {
         }
 
         if (builder.getName() == null || builder.getVendor() == null) {
-            PCIIDsDatabase database = getPCIIDsDatabase();
+            @Nullable PCIIDsDatabase database = getPCIIDsDatabase();
             if (database != null) {
-                Vendor vendor = database.findVendor(vendorId);
+                @Nullable Vendor vendor = database.findVendor(vendorId);
                 if (vendor != null) {
                     if (builder.getVendor() == null)
                         builder.setVendor(HardwareVendor.of(vendor.getName()));
 
                     if (builder.getName() == null) {
-                        Device device = vendor.getDevices().get(deviceId);
+                        @Nullable Device device = vendor.getDevices().get(deviceId);
                         if (device != null) {
                             matcher = Pattern.compile(".*\\[(?<name>.*)]").matcher(device.getName());
                             if (matcher.matches())
