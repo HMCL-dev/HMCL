@@ -84,13 +84,13 @@ final class WindowsGPUDetector {
         if (matchingDeviceId != null) {
             for (String id : DISPLAY_ONLY_ADAPTER_MATCHING_DEVICE_IDS) {
                 if (matchingDeviceId.equalsIgnoreCase(id)) {
-                    return GraphicsCard.Type.DisplayOnly;
+                    return GraphicsCard.Type.DISPLAY_ONLY;
                 }
             }
         }
 
         if (HardwareVendor.VMWARE.equals(vendor) || HardwareVendor.PARALLEL.equals(vendor))
-            return GraphicsCard.Type.Virtual;
+            return GraphicsCard.Type.VIRTUAL;
 
         if (HardwareVendor.AMD.equals(vendor) && name != null) {
             String model = name.replaceFirst("(?i)^(AMD |ATI )?Radeon ", "");
@@ -99,12 +99,12 @@ final class WindowsGPUDetector {
                 if (model.equalsIgnoreCase("Graphics")
                         || model.matches("(?i)[0-9]{3}M( Graphics)?")
                         || model.matches("(?i)(RX )?Vega ([2-9]|10|11)( Graphics)?"))
-                    return GraphicsCard.Type.Integrated;
+                    return GraphicsCard.Type.INTEGRATED;
 
                 if (model.matches("(?i)RX [0-9]{3,4}([A-Z]*| .*)")
                         || model.matches("(?i)(RX )?Vega (56|64)( .*)?")
                         || model.matches("(?i)VII( .*)?"))
-                    return GraphicsCard.Type.Discrete;
+                    return GraphicsCard.Type.DISCRETE;
             }
         }
 
@@ -112,9 +112,9 @@ final class WindowsGPUDetector {
             if (StringUtils.isBlank(dacType)
                     || "Internal".equalsIgnoreCase(dacType)
                     || "InternalDAC".equalsIgnoreCase(dacType)) {
-                return GraphicsCard.Type.Integrated;
+                return GraphicsCard.Type.INTEGRATED;
             } else {
-                return GraphicsCard.Type.Discrete;
+                return GraphicsCard.Type.DISCRETE;
             }
         } else {
             return null;

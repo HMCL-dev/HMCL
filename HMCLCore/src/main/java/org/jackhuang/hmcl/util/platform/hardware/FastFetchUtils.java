@@ -119,11 +119,11 @@ final class FastFetchUtils {
                         .setDriver(gpuInfo.driver);
 
                 if (HardwareVendor.VMWARE.equals(builder.getVendor()) || HardwareVendor.PARALLEL.equals(builder.getVendor()))
-                    builder.setType(GraphicsCard.Type.Virtual);
+                    builder.setType(GraphicsCard.Type.VIRTUAL);
                 else if ("Discrete".equalsIgnoreCase(gpuInfo.type))
-                    builder.setType(GraphicsCard.Type.Discrete);
+                    builder.setType(GraphicsCard.Type.DISCRETE);
                 else if ("Integrated".equalsIgnoreCase(gpuInfo.type))
-                    builder.setType(GraphicsCard.Type.Integrated);
+                    builder.setType(GraphicsCard.Type.INTEGRATED);
 
                 result.add(builder.build());
             }

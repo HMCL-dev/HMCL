@@ -768,17 +768,17 @@ public class DefaultLauncher extends Launcher {
 
         if (options.getRenderer() == Renderer.DEFAULT) {
             @Unmodifiable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards().stream()
-                    .filter(it -> it.getType() != GraphicsCard.Type.DisplayOnly)
+                    .filter(it -> it.getType() != GraphicsCard.Type.DISPLAY_ONLY)
                     .toList();
             if (graphicsCards.size() == 2) {
                 GraphicsCard card0 = graphicsCards.get(0);
                 GraphicsCard card1 = graphicsCards.get(1);
 
-                boolean hasIntegrated = card0.getType() == GraphicsCard.Type.Integrated || card1.getType() == GraphicsCard.Type.Integrated;
-                boolean hasDiscrete = card0.getType() == GraphicsCard.Type.Discrete || card1.getType() == GraphicsCard.Type.Discrete;
+                boolean hasIntegrated = card0.getType() == GraphicsCard.Type.INTEGRATED || card1.getType() == GraphicsCard.Type.INTEGRATED;
+                boolean hasDiscrete = card0.getType() == GraphicsCard.Type.DISCRETE || card1.getType() == GraphicsCard.Type.DISCRETE;
 
                 if (hasIntegrated && hasDiscrete) {
-                    GraphicsCard discreteGraphicsCard = card0.getType() == GraphicsCard.Type.Discrete ? card0 : card1;
+                    GraphicsCard discreteGraphicsCard = card0.getType() == GraphicsCard.Type.DISCRETE ? card0 : card1;
 
                     if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
                         if (HardwareVendor.NVIDIA.equals(discreteGraphicsCard.getVendor())

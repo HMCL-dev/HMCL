@@ -127,7 +127,7 @@ final class LinuxGPUDetector {
 
         builder.setVendor(HardwareVendor.ofPciVendorId(vendorId));
         if (builder.getVendor() == HardwareVendor.VMWARE || builder.getVendor() == HardwareVendor.PARALLEL)
-            builder.setType(GraphicsCard.Type.Virtual);
+            builder.setType(GraphicsCard.Type.VIRTUAL);
         detectDriver(builder, deviceDir);
 
         try {
@@ -137,8 +137,8 @@ final class LinuxGPUDetector {
                     for (Path subDir : Lang.toIterable(subDirs)) {
                         if (Files.isDirectory(subDir) && !subDir.getFileName().toString().startsWith(".")) {
                             builder.setType(Files.exists(subDir.resolve("in1_input"))
-                                    ? GraphicsCard.Type.Integrated
-                                    : GraphicsCard.Type.Discrete);
+                                    ? GraphicsCard.Type.INTEGRATED
+                                    : GraphicsCard.Type.DISCRETE);
                             break;
                         }
                     }
@@ -167,8 +167,8 @@ final class LinuxGPUDetector {
                 // https://github.com/fastfetch-cli/fastfetch/blob/33205326683fd89ec63204f83549839e2374c286/src/detection/gpu/gpu_linux.c#L479-L484
                 // https://github.com/fastfetch-cli/fastfetch/blob/33205326683fd89ec63204f83549839e2374c286/src/detection/gpu/gpu_linux.c#L232-L237
                 builder.setType(pciDomain == 0 && pciBus == 0 && pciDevice == 2 && pciFunc == 0
-                        ? GraphicsCard.Type.Integrated
-                        : GraphicsCard.Type.Discrete);
+                        ? GraphicsCard.Type.INTEGRATED
+                        : GraphicsCard.Type.DISCRETE);
             }
         } catch (Throwable ignored) {
         }
@@ -217,11 +217,11 @@ final class LinuxGPUDetector {
                 if (builder.getName().startsWith("NVIDIA GeForce")
                         || builder.getName().startsWith("NVIDIA Quadro")
                         || builder.getName().startsWith("NVIDIA Tesla"))
-                    builder.setType(GraphicsCard.Type.Discrete);
+                    builder.setType(GraphicsCard.Type.DISCRETE);
 
             } else if (builder.getVendor() == HardwareVendor.MOORE_THREADS) {
                 if (builder.getName().startsWith("Moore Threads MTT "))
-                    builder.setType(GraphicsCard.Type.Discrete);
+                    builder.setType(GraphicsCard.Type.DISCRETE);
             }
         }
 
@@ -260,7 +260,7 @@ final class LinuxGPUDetector {
                 builder.setName(vendor + " " + name);
         }
 
-        builder.setType(GraphicsCard.Type.Integrated);
+        builder.setType(GraphicsCard.Type.INTEGRATED);
 
         detectDriver(builder, deviceDir);
         return builder.build();

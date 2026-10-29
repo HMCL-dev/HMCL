@@ -124,7 +124,7 @@ public final class GraphicsCard {
         }
 
         if (type != null) {
-            builder.append(" [").append(type).append(']');
+            builder.append(" [").append(type.getDisplayName()).append(']');
         }
 
         return builder.toString();
@@ -134,16 +134,29 @@ public final class GraphicsCard {
     public enum Type {
 
         /// An integrated graphics adapter.
-        Integrated,
+        INTEGRATED("Integrated"),
 
         /// A discrete graphics adapter.
-        Discrete,
+        DISCRETE("Discrete"),
 
         /// A graphics adapter provided by a virtualization platform.
-        Virtual,
+        VIRTUAL("Virtual"),
 
         /// A display adapter that does not provide its own GPU rendering capability.
-        DisplayOnly
+        DISPLAY_ONLY("DisplayOnly");
+
+        /// The human-readable adapter type name.
+        private final String displayName;
+
+        /// Creates an adapter type with the supplied display name.
+        Type(String displayName) {
+            this.displayName = displayName;
+        }
+
+        /// Returns the human-readable adapter type name.
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     /// Builds graphics adapter information from optional detected metadata.
