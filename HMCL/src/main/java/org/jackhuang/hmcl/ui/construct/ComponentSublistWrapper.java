@@ -50,7 +50,6 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
         header.subtitleProperty().bind(sublist.subtitleProperty());
         header.leadingProperty().bind(sublist.leadingProperty());
         header.trailingTextProperty().bind(sublist.descriptionProperty());
-        header.setTrailingIcon(expandIcon);
         header.setOnAction(event -> {
             if (expandAnimation != null && expandAnimation.getStatus() == Animation.Status.RUNNING) {
                 expandAnimation.stop();
@@ -136,28 +135,36 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
         FXUtils.onChangeAndOperate(sublist.largeTitleProperty(), header::setLargeTitle);
 
         InvalidationListener updateTitleTrailing = observable -> {
+            boolean arrowOnRight = sublist.isExpandIconOnRight();
+
+            header.setMaxWidth(arrowOnRight ? Double.MAX_VALUE : Region.USE_PREF_SIZE);
+            header.setTrailingIcon(arrowOnRight ? expandIcon : null);
+
             Node titleTrailing = sublist.getTitleTrailing();
             String tip = sublist.getTip();
 
-            if (titleTrailing == null && StringUtils.isBlank(tip)) {
-                header.setTitleTrailing(null);
-                return;
-            }
-
             HBox box = new HBox(4);
             box.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> event.consume());
+
             if (titleTrailing != null) {
                 box.getChildren().add(titleTrailing);
             }
+
             if (!StringUtils.isBlank(tip)) {
                 var tipContainer = new StackPane(SVG.INFO.createIcon(16));
                 FXUtils.installFastTooltip(tipContainer, tip);
                 box.getChildren().add(tipContainer);
             }
-            header.setTitleTrailing(box);
+
+            if (!arrowOnRight) {
+                box.getChildren().add(expandIcon);
+            }
+
+            header.setTitleTrailing(box.getChildren().isEmpty() ? null : box);
         };
         sublist.tipProperty().addListener(updateTitleTrailing);
         sublist.titleTrailingProperty().addListener(updateTitleTrailing);
+        sublist.expandIconOnRightProperty().addListener(updateTitleTrailing);
         updateTitleTrailing.invalidated(null);
 
         InvalidationListener updateTrailing = observable -> header.setExtraTrailing(sublist.getTrailing());

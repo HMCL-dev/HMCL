@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class ComponentList extends Control implements NoPaddingComponent {
 
+    private static final String TRANSPARENT_BACKGROUND = "transparent-background";
+
     public ComponentList() {
         getStyleClass().add("options-list");
     }
@@ -153,6 +155,17 @@ public class ComponentList extends Control implements NoPaddingComponent {
 
     public static void setNoPadding(Node node) {
         node.getProperties().put("ComponentList.noPadding", true);
+    }
+
+    /// Sets whether the backgrounds of nested sublists should be transparent.
+    public void setTransparentSublistBackground(boolean transparent) {
+        if (transparent) {
+            if (!getStyleClass().contains(TRANSPARENT_BACKGROUND)) {
+                getStyleClass().add(TRANSPARENT_BACKGROUND);
+            }
+        } else {
+            getStyleClass().remove(TRANSPARENT_BACKGROUND);
+        }
     }
 
     /// Clips ordinary and expandable rows to their first background fill's radii and insets.

@@ -144,6 +144,20 @@ public class ComponentSublist extends Control implements NoPaddingComponent {
         setTrailing(headerRight);
     }
 
+    private final BooleanProperty expandIconOnRight = new SimpleBooleanProperty(this, "expandIconOnRight", true);
+
+    public boolean isExpandIconOnRight() {
+        return expandIconOnRight.get();
+    }
+
+    public void setExpandIconOnRight(boolean value) {
+        expandIconOnRight.set(value);
+    }
+
+    public BooleanProperty expandIconOnRightProperty() {
+        return expandIconOnRight;
+    }
+
     /// The node displayed immediately after the default title text.
     private final ObjectProperty<Node> titleTrailing = new SimpleObjectProperty<>(this, "titleTrailing");
 
