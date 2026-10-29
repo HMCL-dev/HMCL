@@ -124,17 +124,12 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
 
             FXUtils.installFastTooltip(actionButton, actionTooltip);
             actionButton.setOnAction(event -> activateTask());
-            // A completed action can remove this row and reuse its cell before the click bubbles.
-            actionButton.setOnMouseClicked(event -> event.consume());
             BorderPane.setAlignment(actionButton, Pos.CENTER);
             BorderPane.setMargin(actionButton, new Insets(0, 0, 0, 8));
             row.setRight(actionButton);
 
             graphic = new RipplerContainer(row);
-            graphic.setOnMouseClicked(event -> {
-                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1)
-                    activateTask();
-            });
+            graphic.setOnAction(event -> activateTask());
         }
 
         /// Invokes a pending action or restores the current task's progress dialog.
