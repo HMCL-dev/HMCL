@@ -64,26 +64,14 @@ public final class GraphicsCard {
     /// The Vulkan driver file paths.
     private final @Unmodifiable List<Path> vulkanDriverFiles;
 
-    /// Whether the detector identified this adapter as a known virtual display adapter.
-    private final boolean virtualDisplayAdapter;
-
     /// Creates an adapter with the supplied metadata and detection result.
-    private GraphicsCard(String name, @Nullable HardwareVendor vendor, @Nullable Type type, @Nullable String driver, @Nullable String driverVersion, @Unmodifiable List<Path> vulkanDriverFiles, boolean virtualDisplayAdapter) {
+    private GraphicsCard(String name, @Nullable HardwareVendor vendor, @Nullable Type type, @Nullable String driver, @Nullable String driverVersion, @Unmodifiable List<Path> vulkanDriverFiles) {
         this.name = Objects.requireNonNull(name);
         this.vendor = vendor;
         this.type = type;
         this.driver = driver;
         this.driverVersion = driverVersion;
         this.vulkanDriverFiles = vulkanDriverFiles;
-        this.virtualDisplayAdapter = virtualDisplayAdapter;
-    }
-
-    /// Returns whether this adapter was identified as a known virtual display adapter.
-    ///
-    /// A false result also includes adapters whose classification is unknown;
-    /// it does not establish that the adapter is physical.
-    public boolean isVirtualDisplayAdapter() {
-        return virtualDisplayAdapter;
     }
 
     /// Returns the display name.
@@ -149,7 +137,9 @@ public final class GraphicsCard {
         Integrated,
 
         /// A discrete graphics adapter.
-        Discrete
+        Discrete,
+
+        Virtual
     }
 
     /// Builds graphics adapter information from optional detected metadata.
@@ -173,9 +163,6 @@ public final class GraphicsCard {
         /// The Vulkan driver file paths, or `null` if unset.
         private @Nullable List<Path> vulkanDriverFiles;
 
-        /// Whether the adapter was identified as a known virtual display adapter; initially false.
-        private boolean virtualDisplayAdapter;
-
         /// Creates an adapter, supplying a vendor-based or unknown name if no name was set.
         ///
         /// Copies the Vulkan driver file list; its elements must be non-null.
@@ -190,17 +177,7 @@ public final class GraphicsCard {
 
             List<Path> vulkanDriverFiles = Objects.requireNonNullElse(this.vulkanDriverFiles, List.of());
 
-            return new GraphicsCard(name, vendor, type, driver, driverVersion, List.copyOf(vulkanDriverFiles), virtualDisplayAdapter);
-        }
-
-        /// Sets whether the detector identified the adapter as a known virtual display adapter.
-        ///
-        /// @param virtualDisplayAdapter true for an identified virtual display adapter;
-        ///                              false otherwise, including when classification is unknown
-        /// @return this builder
-        public Builder setVirtualDisplayAdapter(boolean virtualDisplayAdapter) {
-            this.virtualDisplayAdapter = virtualDisplayAdapter;
-            return this;
+            return new GraphicsCard(name, vendor, type, driver, driverVersion, List.copyOf(vulkanDriverFiles));
         }
 
         /// Returns the display name, or `null` if unset.
