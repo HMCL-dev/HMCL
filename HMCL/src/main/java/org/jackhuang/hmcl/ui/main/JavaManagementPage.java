@@ -286,6 +286,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             root.setPadding(new Insets(8));
 
             this.graphic = new RipplerContainer(root);
+            graphic.setPressFeedbackEnabled(false);
 
             FXUtils.limitCellWidth(listView, this);
         }
@@ -299,7 +300,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
             if (oldItem == item && oldEmpty == empty) return;
 
-            this.graphic.releaseRippleImmediately();
+            this.graphic.resetFeedback();
 
             if (empty || item == null) {
                 setGraphic(null);

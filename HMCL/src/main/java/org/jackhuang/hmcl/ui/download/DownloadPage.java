@@ -28,7 +28,8 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.TabHeader;
+import org.jackhuang.hmcl.ui.construct.TabController;
+import org.jackhuang.hmcl.ui.construct.TabItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -64,13 +65,20 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             (downloadProvider, repository, version, shader, file) -> download(downloadProvider, repository, version, file, "shaderpacks");
 
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
-    private final TabHeader tab;
-    private final TabHeader.Tab<VersionsPage> newGameTab = new TabHeader.Tab<>("newGameTab");
-    private final TabHeader.Tab<DownloadListPage> modTab = new TabHeader.Tab<>("modTab");
-    private final TabHeader.Tab<DownloadListPage> modpackTab = new TabHeader.Tab<>("modpackTab");
-    private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
-    private final TabHeader.Tab<DownloadListPage> shaderTab = new TabHeader.Tab<>("shaderTab");
-    private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
+    /// Manages tab selection and content transitions independently of the sidebar.
+    private final TabController tabController;
+    /// The tab for choosing a game version to install.
+    private final TabItem<VersionsPage> newGameTab;
+    /// The tab for browsing and importing modpacks.
+    private final TabItem<DownloadListPage> modpackTab;
+    /// The tab for browsing downloadable mods.
+    private final TabItem<DownloadListPage> modTab;
+    /// The tab for browsing downloadable resource packs.
+    private final TabItem<DownloadListPage> resourcePackTab;
+    /// The tab for browsing downloadable shader packs.
+    private final TabItem<DownloadListPage> shaderTab;
+    /// The tab for browsing downloadable worlds.
+    private final TabItem<DownloadListPage> worldTab;
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
 
@@ -81,9 +89,13 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public DownloadPage(GameInstanceID uploadInstance) {
-        newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), GameVersionNumber.unknown(), DownloadProviders.getDownloadProvider(),
-                GameComponentType.GAME, versionPageNavigator::onGameSelected)));
-        modpackTab.setNodeSupplier(loadVersionFor(() -> {
+        this.newGameTab = new TabItem<>(() -> new VersionsPage(
+                versionPageNavigator,
+                i18n("install.installer.choose", i18n("install.installer.game")),
+                GameVersionNumber.unknown(),
+                DownloadProviders.getDownloadProvider(),
+                GameComponentType.GAME, versionPageNavigator::onGameSelected));
+        this.modpackTab = newDownloadListTab(() -> {
             DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((downloadProvider, repository, __, modpack, file) -> {
                 Instances.downloadModpackImpl(downloadProvider, repository, uploadInstance, modpack, file);
             }, false);
@@ -93,40 +105,46 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
             page.getActions().add(installLocalModpackButton);
             return page;
-        }));
-        modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod(FOR_MOD, true)));
-        resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack(FOR_RESOURCE_PACK, true)));
-        shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack(FOR_SHADER, true)));
-        worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(RemoteAddon.Type.WORLD, CurseForgeRemoteAddonRepository.getInstance())));
-        tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
+        });
+        this.modTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofMod(FOR_MOD, true));
+        this.resourcePackTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofResourcePack(FOR_RESOURCE_PACK, true));
+        this.shaderTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofShaderPack(FOR_SHADER, true));
+        this.worldTab = newDownloadListTab(() -> new DownloadListPage(RemoteAddon.Type.WORLD, CurseForgeRemoteAddonRepository.getInstance()));
+
+        this.tabController = new TabController(transitionPane,
+                newGameTab,
+                modpackTab,
+                modTab,
+                resourcePackTab,
+                shaderTab,
+                worldTab
+        );
 
         GameDirectoryManager.registerVersionsListener(this::loadVersions);
 
-        tab.select(newGameTab);
+        tabController.selectTab(newGameTab);
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
-                .addNavigationDrawerTab(tab, newGameTab, i18n("game"), SVG.STADIA_CONTROLLER, SVG.STADIA_CONTROLLER_FILL)
-                .addNavigationDrawerTab(tab, modpackTab, i18n("modpack"), SVG.PACKAGE2, SVG.PACKAGE2_FILL)
+                .addNavigationDrawerTab(tabController, newGameTab, i18n("game"), SVG.STADIA_CONTROLLER, SVG.STADIA_CONTROLLER_FILL)
+                .addNavigationDrawerTab(tabController, modpackTab, i18n("modpack"), SVG.PACKAGE2, SVG.PACKAGE2_FILL)
                 .startCategory(i18n("download.content").toUpperCase(Locale.ROOT))
-                .addNavigationDrawerTab(tab, modTab, i18n("mods"), SVG.EXTENSION, SVG.EXTENSION_FILL)
-                .addNavigationDrawerTab(tab, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
-                .addNavigationDrawerTab(tab, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
-                .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC);
+                .addNavigationDrawerTab(tabController, modTab, i18n("mods"), SVG.EXTENSION, SVG.EXTENSION_FILL)
+                .addNavigationDrawerTab(tabController, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
+                .addNavigationDrawerTab(tabController, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
+                .addNavigationDrawerTab(tabController, worldTab, i18n("world"), SVG.PUBLIC);
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
 
         setCenter(transitionPane);
     }
 
-    private static <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
-        return () -> {
-            T node = nodeSupplier.get();
-            if (node instanceof DownloadListPage page) {
-                page.loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()));
-            }
-            return node;
-        };
+    private static TabItem<DownloadListPage> newDownloadListTab(Supplier<DownloadListPage> pageSupplier) {
+        return new TabItem<>(() -> {
+            DownloadListPage page = pageSupplier.get();
+            page.loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()));
+            return page;
+        });
     }
 
     public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file, String subdirectoryName) {
@@ -197,25 +215,25 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public void showGameDownloads() {
-        tab.select(newGameTab, false);
+        tabController.selectTab(newGameTab, false);
     }
 
     public void showModpackDownloads() {
-        tab.select(modpackTab, false);
+        tabController.selectTab(modpackTab, false);
     }
 
     public DownloadListPage showResourcePackDownloads() {
-        tab.select(resourcePackTab, false);
+        tabController.selectTab(resourcePackTab, false);
         return resourcePackTab.getNode();
     }
 
     public DownloadListPage showModDownloads() {
-        tab.select(modTab, false);
+        tabController.selectTab(modTab, false);
         return modTab.getNode();
     }
 
     public void showWorldDownloads() {
-        tab.select(worldTab, false);
+        tabController.selectTab(worldTab, false);
     }
 
     private static final class DownloadNavigator implements Navigation {

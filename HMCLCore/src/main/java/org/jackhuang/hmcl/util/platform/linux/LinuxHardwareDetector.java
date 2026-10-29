@@ -6,7 +6,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,12 +24,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class LinuxHardwareDetector extends HardwareDetector {
 
+    /// Detects Linux processors, using the default detector when native information is unavailable.
     @Override
-    public @Nullable CentralProcessor detectCentralProcessor() {
+    public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
-            return null;
-        CentralProcessor cpu = LinuxCPUDetector.detect();
-        return cpu != null ? cpu : super.detectCentralProcessor();
+            return super.detectCentralProcessors();
+        @Unmodifiable List<CentralProcessor> processors = LinuxCPUDetector.detect();
+        return processors.isEmpty() ? super.detectCentralProcessors() : processors;
     }
 
     @Override

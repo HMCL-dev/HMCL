@@ -705,7 +705,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
             if (Objects.equals(getItem(), currentItem) && oldEmpty == empty) return;
 
-            this.graphic.releaseRippleImmediately();
+            this.graphic.resetFeedback();
             content.getTags().clear();
             iconImage.setImage(null);
             iconFallback.setVisible(false);
