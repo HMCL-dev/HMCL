@@ -26,6 +26,20 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 final class WindowsGPUDetector {
 
+    private static final List<String> VIRTUAL_DISPLAY_ADAPTER_MATCHING_DEVICE_IDS = List.of(
+            // Microsoft Remote Display Adapter
+            "RdpIdd_IndirectDisplay",
+
+            // NetEase UU Remote Display Adapter
+            "Root\\GameViewerIddDriver",
+
+            // MuMu Virtual Display Adapter
+            "Root\\MuMuIddDriver",
+
+            // Honor Virtual Display Device
+            "IndirectDSP\\\\VirtualDisplayDriver"
+    );
+
     /// Estimates an adapter's type, applying AMD name rules before the existing DAC heuristic.
     /// Recognized AMD names are heuristic evidence, not a hardware guarantee. Unmatched names and
     /// other vendors retain the DAC result, or `null` when the DAC value is absent.
@@ -34,8 +48,18 @@ final class WindowsGPUDetector {
     /// @param vendor the resolved hardware vendor, or `null`
     /// @param dacType the decoded DAC description, or `null` if absent
     /// @return the estimated type, or `null` when neither a name rule nor a DAC value is available
-    static GraphicsCard.@Nullable Type inferType(@Nullable String name, @Nullable HardwareVendor vendor,
-                                                 @Nullable String dacType) {
+    static GraphicsCard.@Nullable Type inferType(@Nullable String name,
+                                                 @Nullable HardwareVendor vendor,
+                                                 @Nullable String dacType,
+                                                 @Nullable String matchingDeviceId) {
+        if (matchingDeviceId != null) {
+            for (String id : VIRTUAL_DISPLAY_ADAPTER_MATCHING_DEVICE_IDS) {
+                if (matchingDeviceId.equalsIgnoreCase(id)) {
+                    return GraphicsCard.Type.Virtual;
+                }
+            }
+        }
+
         if (HardwareVendor.AMD.equals(vendor) && name != null) {
             String model = name.replaceFirst("(?i)^(AMD |ATI )?Radeon ", "");
             if (!model.equals(name)) {
@@ -114,7 +138,7 @@ final class WindowsGPUDetector {
                     cards.add(GraphicsCard.builder().setName(name)
                             .setVendor(vendor)
                             .setDriverVersion(driverVersion)
-                            .setType(inferType(name, vendor, adapterDACType))
+                            .setType(inferType(name, vendor, adapterDACType, null))
                             .build()
                     );
                 }
@@ -140,32 +164,6 @@ final class WindowsGPUDetector {
         } else {
             return object.toString();
         }
-    }
-
-    private static final List<String> VIRTUAL_DISPLAY_ADAPTER_MATCHING_DEVICE_IDS = List.of(
-            // Microsoft Remote Display Adapter
-            "RdpIdd_IndirectDisplay",
-
-            // NetEase UU Remote Display Adapter
-            "Root\\GameViewerIddDriver",
-
-            // MuMu Virtual Display Adapter
-            "Root\\MuMuIddDriver",
-
-            // Honor Virtual Display Device
-            "IndirectDSP\\\\VirtualDisplayDriver"
-    );
-
-    private static boolean isVirtual(@Nullable String matchingDeviceId) {
-        if (matchingDeviceId == null)
-            return false;
-
-        for (String id : VIRTUAL_DISPLAY_ADAPTER_MATCHING_DEVICE_IDS) {
-            if (matchingDeviceId.equalsIgnoreCase(id)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /// Reads graphics card information from the display adapter registry keys.
@@ -198,9 +196,7 @@ final class WindowsGPUDetector {
                 builder.setVendor(vendor);
             if (driverVersion != null)
                 builder.setDriverVersion(driverVersion);
-            builder.setType(isVirtual(matchingDeviceId)
-                    ? GraphicsCard.Type.Virtual
-                    : inferType(name, vendor, dacType));
+            builder.setType(inferType(name, vendor, dacType, matchingDeviceId));
             if (vulkanDriverName != null)
                 builder.setVulkanDriverFiles(parseVulkanDriverFiles(vulkanDriverName));
             result.add(builder.build());
