@@ -69,9 +69,8 @@ final class FastFetchUtils {
         }
     }
 
-    /// Returns the first reported processor identity, assuming one package when the package count is unknown.
-    /// Reported counts are used only when the package count is unknown or one; otherwise uses JVM availability.
-    /// A missing or invalid physical count is estimated from the logical count for display.
+    /// Returns one aggregate processor with the reported system-wide physical and logical counts.
+    /// A missing or invalid count is estimated from the other; JVM availability is used only when both are unavailable.
     static @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
         @Nullable CPUInfo cpuInfo = get("CPU", TypeToken.get(CPUInfo.class));
         if (cpuInfo == null)
@@ -79,9 +78,9 @@ final class FastFetchUtils {
 
         CentralProcessor.Builder builder = new CentralProcessor.Builder()
                 .setName(cpuInfo.cpu).setVendor(HardwareVendor.of(cpuInfo.vendor));
-        if ((cpuInfo.packages == null || cpuInfo.packages == 1) && cpuInfo.cores != null) {
-            int cores = 0;
-            int threads = 0;
+        int cores = 0;
+        int threads = 0;
+        if (cpuInfo.cores != null) {
             @Nullable String physical = cpuInfo.cores.get("physical");
             @Nullable String logical = cpuInfo.cores.get("logical");
             try {
@@ -94,14 +93,12 @@ final class FastFetchUtils {
                     threads = Integer.parseInt(logical);
             } catch (NumberFormatException ignored) {
             }
-            if (threads > 0)
-                builder.setCores(new CentralProcessor.Cores(threads, cores > 0 ? cores : threads, 0));
         }
-        if (builder.getCores() == null) {
-            int count = Runtime.getRuntime().availableProcessors();
-            builder.setCores(new CentralProcessor.Cores(count, count, 0));
-        }
-        return List.of(builder.build());
+        if (threads <= 0)
+            threads = cores > 0 ? cores : Runtime.getRuntime().availableProcessors();
+        if (cores <= 0)
+            cores = threads;
+        return List.of(builder.setCores(new CentralProcessor.Cores(threads, cores, 0)).build());
     }
 
     /// Returns a mutable list of detected adapters, or `null` if no usable GPU response is available.
@@ -148,10 +145,9 @@ final class FastFetchUtils {
     ///
     /// @param cpu the processor name, or `null` if absent
     /// @param vendor the vendor name, or `null` if absent
-    /// @param packages the package count, or `null` if absent
     /// @param cores core counts keyed by kind, or `null` if absent
     @JsonSerializable
-    private record CPUInfo(@Nullable String cpu, @Nullable String vendor, @Nullable Integer packages,
+    private record CPUInfo(@Nullable String cpu, @Nullable String vendor,
                            @Nullable Map<String, @Nullable String> cores) {
     }
 
