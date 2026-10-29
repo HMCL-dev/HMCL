@@ -240,11 +240,6 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         tabController.selectTab(modpackTab, false);
     }
 
-    public DownloadListPage showResourcePackDownloads() {
-        tabController.selectTab(resourcePackTab, false);
-        return resourcePackTab.getNode();
-    }
-
     public DownloadListPage showModDownloads() {
         tabController.selectTab(modTab, false);
         return modTab.getNode();
