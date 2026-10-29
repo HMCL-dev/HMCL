@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.ui.instances;
 
 import org.jackhuang.hmcl.game.WorldFolder;
 import org.jackhuang.hmcl.task.Task;
+import org.jetbrains.annotations.NotNullByDefault;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -18,6 +19,7 @@ import java.util.zip.ZipOutputStream;
 /**
  * @author Glavo
  */
+@NotNullByDefault
 public final class WorldBackupTask extends Task<Path> {
 
     private final WorldFolder world;
@@ -32,7 +34,7 @@ public final class WorldBackupTask extends Task<Path> {
 
     @Override
     public void execute() throws Exception {
-        try (FileChannel lockChannel = needLock ? world.lock() : null) {
+        try (FileChannel ignoredLockChannel = needLock ? world.lock() : null) {
             Files.createDirectories(backupsDir);
             String time = LocalDateTime.now().format(WorldBackupsPage.TIME_FORMATTER);
             String baseName = time + "_" + world.getFileName();
@@ -55,7 +57,7 @@ public final class WorldBackupTask extends Task<Path> {
             try (ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(outputStream))) {
                 String rootName = world.getFileName();
                 Path rootDir = this.world.getFile();
-                Files.walkFileTree(this.world.getFile(), new SimpleFileVisitor<Path>() {
+                Files.walkFileTree(this.world.getFile(), new SimpleFileVisitor<>() {
                     @Override
                     public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
                         if (path.endsWith("session.lock")) {

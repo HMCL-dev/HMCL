@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.game.WorldFolder;
 import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -104,7 +103,7 @@ public final class WorldManageUIUtils {
                 }, "", new RequiredValidator(), new Validator(i18n("world.duplicate.failed.invalid_name"), FileUtils::isNameValid));
     }
 
-    public static void closeSessionLockChannel(World world, FileChannel sessionLockChannel) throws IOException {
+    public static void closeSessionLockChannel(WorldFolder world, FileChannel sessionLockChannel) throws IOException {
         if (sessionLockChannel != null) {
             try {
                 sessionLockChannel.close();
