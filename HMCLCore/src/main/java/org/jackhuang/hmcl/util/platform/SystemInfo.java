@@ -137,11 +137,6 @@ public final class SystemInfo {
         return Holder.CENTRAL_PROCESSORS;
     }
 
-    /// Returns the first processor for CPU summaries, including the synthetic fallback if detection returns no processors.
-    public static CentralProcessor getCentralProcessor() {
-        return getCentralProcessors().get(0);
-    }
-
     /// Returns the cached graphics card list, or `null` if detection produced no result.
     ///
     /// An empty list means no cards were reported. The list is not copied; its mutability depends on the detector.
