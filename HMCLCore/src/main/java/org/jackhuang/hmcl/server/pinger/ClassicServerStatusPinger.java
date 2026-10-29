@@ -14,25 +14,17 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
-import java.net.StandardSocketOptions;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Map;
 
-// Classic Multiplayer Test Version.
+// reference: https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Protocol_version_numbers#Classic
+// c0.0.2a to c0.30
 public final class ClassicServerStatusPinger implements ServerStatusPinger {
     static ClassicServerStatusPinger instance = new ClassicServerStatusPinger();
 
     private ClassicServerStatusPinger() {
 
-    }
-
-    private static String generateFakeName() {
-        return UUID.randomUUID().toString().replace("-", "").substring(
-                ThreadLocalRandom.current().nextInt(3, 17)
-        );
     }
 
     @SuppressWarnings("unchecked")
@@ -102,22 +94,25 @@ public final class ClassicServerStatusPinger implements ServerStatusPinger {
 
     @Override
     public @NotNull ServerStatusResult getStatus(@NotNull ServerAddressResolveResult.SuccessResult successResult) {
-        IOException statusError = new IOException("Failed to get server status");
-        for (ClassicVersion version : ClassicVersion.values()) {
-            try (Socket socket = new Socket()) {
-                socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
-                socket.connect(successResult.getConnectAddress(), 7_000);
-                socket.setSoTimeout(7_000);
+        IOException statusError = new IOException("Failed to get server status(classic).");
+        for (ClassicVersions version : ClassicVersions.values()) {
+            try (Connection connection = ServerStatusPinger.createConnection(successResult)) {
 
-                try (DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                     DataInputStream in = new DataInputStream(socket.getInputStream())) {
-                    long sendTime = System.currentTimeMillis();
+                long sendTime = System.currentTimeMillis();
 
-                    version.writePlayerIdentificationPacket(out);
-                    return version.processResponse(successResult, in, sendTime);
-                }
+                version.absentPlayerIdentificationCodec.write(connection.getOut(), version);
+                return version.processResponse(successResult, connection.getIn(), sendTime);
+
             } catch (Exception e) {
                 statusError.addSuppressed(e);
+                if (ServerStatusPinger.shouldBreakPing(e)) {
+                    break;
+                }
+                if (e instanceof KickResponseException kickResponseException) {
+                    if (kickResponseException.kickType.shouldBreak) {
+                        break;
+                    }
+                }
             }
         }
         return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, statusError);
@@ -128,99 +123,33 @@ public final class ClassicServerStatusPinger implements ServerStatusPinger {
         return "Classic Server Status Pinger";
     }
 
-    enum ClassicVersion {
-        // reference: https://minecraft.wiki/w/Classic_server_protocol#Client_%E2%86%92_server_packets
-        // Untested: Can't find a version to test.
-        PROTOCOL_0X07 {
-            @Override
-            byte getProtocolVersion() {
-                return 0x07;
-            }
-
-            @Override
-            void writePlayerIdentificationPacket(DataOutputStream out) throws IOException {
-                super.writePlayerIdentificationPacket(out);
-                writeClassicData(out, (byte) 0); // Not sure if it's int or byte
-            }
-        },
-
-        // Tested Versions:
-        //  * Minecraft Classic Server 1.8.2
-        PROTOCOL_0X06 {
-            @Override
-            byte getProtocolVersion() {
-                return 0x06;
-            }
-
-            @Override
-            void writePlayerIdentificationPacket(DataOutputStream out) throws IOException {
-                super.writePlayerIdentificationPacket(out);
-                writeClassicData(out, (byte) 0); // Not sure if it's int or byte
-            }
-        },
-
-        // Tested Versions:
-        //  * Minecraft Classic Server 1.6
-        PROTOCOL_0X05 {
-            @Override
-            byte getProtocolVersion() {
-                return 0x05;
-            }
-        },
-
-        // Tested Versions:
-        //  * Minecraft Classic Server 1.3
-        //  * Minecraft Classic Server 1.4
-        //  * Minecraft Classic Server 1.4.1
-        PROTOCOL_0X04 {
-            @Override
-            byte getProtocolVersion() {
-                return 0x04;
-            }
-        },
-
-        // Tested Versions:
-        //  * Minecraft Classic Server 1.2
-        PROTOCOL_0X03 {
-            @Override
-            byte getProtocolVersion() {
-                return 0x03;
-            }
-        },
-
-        // reference: https://github.com/Lenni0451/MCPing/blob/a7b4fb83822407166f1b66652733520d0137a677/src/main/java/net/lenni0451/mcping/pings/impl/ClassicPing.java#L80
-        // Untested: Can't find a version to test.
-        PROTOCOL_HEADLESS {
-            @Override
-            byte getProtocolVersion() {
-                // Never called.
-                return -0x01;
-            }
+    private enum ClassicVersions {
+        PROTOCOL_0X07((byte) 0x07, "c1.8.3-c1.10.1", AbsentPlayerIdentificationCodec.SALT),
+        PROTOCOL_0X06((byte) 0x06, "c1.8.2", AbsentPlayerIdentificationCodec.SALT),
+        PROTOCOL_0X05((byte) 0x05, "c1.6", AbsentPlayerIdentificationCodec.PASSWORD),
+        PROTOCOL_0X04((byte) 0x04, "c1.3-c1.4.1", AbsentPlayerIdentificationCodec.PASSWORD),
+        PROTOCOL_0X03((byte) 0x03, "c1.2", AbsentPlayerIdentificationCodec.PASSWORD),
+        PROTOCOL_HEADLESS((byte) -0x01, "", AbsentPlayerIdentificationCodec.OLD) {
 
             @Override
             ServerVersionInfo getVersionInfo() {
                 return ServerVersionInfo.of();
             }
 
-            @Override
-            void writePlayerIdentificationPacket(DataOutputStream out) throws IOException {
-                out.writeByte(0x00); // packet id
-                writeClassicData(out, generateFakeName());
-            }
         };
 
-        abstract byte getProtocolVersion();
+        final byte protocolVersion;
+        final String protocolName;
+        final AbsentPlayerIdentificationCodec absentPlayerIdentificationCodec;
 
-        ServerVersionInfo getVersionInfo() {
-            return ServerVersionInfo.of(getProtocolVersion());
+        ClassicVersions(byte protocolVersion, String protocolName, AbsentPlayerIdentificationCodec absentPlayerIdentificationCodec) {
+            this.protocolVersion = protocolVersion;
+            this.protocolName = protocolName;
+            this.absentPlayerIdentificationCodec = absentPlayerIdentificationCodec;
         }
 
-        void writePlayerIdentificationPacket(DataOutputStream out) throws IOException {
-            out.writeByte(0x00); // packet id
-
-            writeClassicData(out, getProtocolVersion());
-            writeClassicData(out, generateFakeName());
-            writeClassicData(out, "--");
+        ServerVersionInfo getVersionInfo() {
+            return ServerVersionInfo.of(protocolVersion, protocolName);
         }
 
         @NotNull ServerStatusResult.SuccessResult processResponse(
@@ -231,7 +160,7 @@ public final class ClassicServerStatusPinger implements ServerStatusPinger {
             byte packetID = in.readByte();
             if (packetID == 0x0E) {
                 String kickMessage = readClassicData(in, String.class);
-                throw new IllegalArgumentException("Invalid response: " + kickMessage);
+                throw new KickResponseException(kickMessage);
             }
 
             if (packetID != 0x00) {
@@ -253,5 +182,72 @@ public final class ClassicServerStatusPinger implements ServerStatusPinger {
             );
         }
 
+        enum AbsentPlayerIdentificationCodec {
+            SALT {
+                @Override
+                void write(DataOutputStream out, ClassicVersions version) throws IOException {
+                    out.writeByte(0x00); // packet id
+
+                    writeClassicData(out, version.protocolVersion);
+                    writeClassicData(out, ServerStatusPinger.generateFakeName());
+                    writeClassicData(out, "--");
+                    writeClassicData(out, (byte) 0);
+                }
+            },
+            PASSWORD {
+                @Override
+                void write(DataOutputStream out, ClassicVersions version) throws IOException {
+                    out.writeByte(0x00); // packet id
+
+                    writeClassicData(out, version.protocolVersion);
+                    writeClassicData(out, ServerStatusPinger.generateFakeName());
+                    writeClassicData(out, "--");
+                }
+            },
+            OLD {
+                @Override
+                void write(DataOutputStream out, ClassicVersions version) throws IOException {
+                    out.writeByte(0x00); // packet id
+                    writeClassicData(out, ServerStatusPinger.generateFakeName());
+                }
+            };
+
+            abstract void write(DataOutputStream out, ClassicVersions version) throws IOException;
+        }
+    }
+
+    private static class KickResponseException extends IllegalStateException {
+        private static final Map<String, KickResponseException.KickType> messageTypeMap = Map.of(
+                "Too many connection!", KickType.TOO_MANY_CONNECTION,
+                "You need to log in!", KickType.KEY_ERROR,
+                "The name wasn't verified by minecraft.net!", KickType.KEY_ERROR,
+                "The server is full!", KickResponseException.KickType.SERVER_FULL,
+                "You're banned!", KickResponseException.KickType.IP_BANNED
+        );
+        private final KickResponseException.KickType kickType;
+
+        public KickResponseException(String message) {
+            super(message);
+
+            this.kickType = messageTypeMap.getOrDefault(message, KickResponseException.KickType.OTHER);
+        }
+
+        public KickResponseException.KickType getKickType() {
+            return kickType;
+        }
+
+        enum KickType {
+            TOO_MANY_CONNECTION(true),
+            SERVER_FULL(true),
+            KEY_ERROR(true),
+            IP_BANNED(true),
+            OTHER(false);
+
+            public final boolean shouldBreak;
+
+            KickType(boolean shouldBreak) {
+                this.shouldBreak = shouldBreak;
+            }
+        }
     }
 }

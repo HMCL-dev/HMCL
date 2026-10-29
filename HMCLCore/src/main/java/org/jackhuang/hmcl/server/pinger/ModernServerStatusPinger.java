@@ -11,8 +11,6 @@ import org.jackhuang.hmcl.server.status.ServerVersionInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.net.Socket;
-import java.net.StandardSocketOptions;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -20,7 +18,7 @@ import java.util.UUID;
 
 // https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping
 // https://minecraft.wiki/w/Minecraft_Wiki:Projects/wiki.vg_merge/Minecraft_Forge_Handshake
-// Minecraft 1.7+
+// 1.7+
 public final class ModernServerStatusPinger implements ServerStatusPinger {
     static ModernServerStatusPinger instance = new ModernServerStatusPinger();
 
@@ -29,31 +27,23 @@ public final class ModernServerStatusPinger implements ServerStatusPinger {
     }
 
     public @NotNull ServerStatusResult getStatus(@NotNull ServerAddressResolveResult.SuccessResult successResult) {
-        try (Socket socket = new Socket()) {
-            socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
-            socket.connect(successResult.getConnectAddress(), 7_000);
-            socket.setSoTimeout(7_000);
+        try (Connection connection = ServerStatusPinger.createConnection(successResult)) {
+            sendHandshakeStatusPacket(connection.getOut(),
+                    successResult.getPackerHandshakeAddress(), successResult.getPackerHandshakePort()
+            );
+            sendStatusRequestPacket(connection.getOut());
+            var status = readStatusResponsePacket(connection.getIn());
 
-            try (DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                 DataInputStream in = new DataInputStream(socket.getInputStream())) {
+            long sendTime = System.currentTimeMillis();
+            sendPingRequestPacket(connection.getOut());
+            var pong = readPongResponsePacket(connection.getIn());
+            long networkLatency = System.currentTimeMillis() - sendTime;
 
-                sendHandshakeStatusPacket(out,
-                        successResult.getPackerHandshakeAddress(), successResult.getPackerHandshakePort()
-                );
-                sendStatusRequestPacket(out);
-                var status = readStatusResponsePacket(in);
+            JsonObject rootStatus = JsonParser.parseString(status).getAsJsonObject();
 
-                long sendTime = System.currentTimeMillis();
-                sendPingRequestPacket(out);
-                var pong = readPongResponsePacket(in);
-                long networkLatency = System.currentTimeMillis() - sendTime;
-
-                JsonObject rootStatus = JsonParser.parseString(status).getAsJsonObject();
-
-                ServerStatus parseServerStatus = parseServerStatus(rootStatus);
-                return ServerStatusResult.success(successResult.getRawAddress(), this, networkLatency, parseServerStatus);
-            }
-        } catch (Exception e) {
+            ServerStatus parseServerStatus = parseServerStatus(rootStatus);
+            return ServerStatusResult.success(successResult.getRawAddress(), this, networkLatency, parseServerStatus);
+        } catch (IOException e) {
             return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, e);
         }
     }

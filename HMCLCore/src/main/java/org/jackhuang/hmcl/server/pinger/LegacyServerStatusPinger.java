@@ -10,15 +10,11 @@ import org.jackhuang.hmcl.server.status.ServerStatusResult;
 import org.jackhuang.hmcl.server.status.ServerVersionInfo;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
-import java.net.StandardSocketOptions;
 
 // https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping#1.6
-// Minecraft Beta 1.8 to Minecraft 1.6
+// b1.8 to 1.6
 public final class LegacyServerStatusPinger implements ServerStatusPinger {
     static LegacyServerStatusPinger instance = new LegacyServerStatusPinger();
 
@@ -28,40 +24,22 @@ public final class LegacyServerStatusPinger implements ServerStatusPinger {
 
     @Override
     public @NotNull ServerStatusResult getStatus(@NotNull ServerAddressResolveResult.SuccessResult successResult) {
-        try (Socket socket = new Socket()) {
-            socket.setOption(StandardSocketOptions.TCP_NODELAY, true);
-            socket.connect(successResult.getConnectAddress(), 7_000);
-            socket.setSoTimeout(7_000);
+        try (Connection connection = ServerStatusPinger.createConnection(successResult)) {
+            long sendTime = System.currentTimeMillis();
 
-            try (DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-                 DataInputStream in = new DataInputStream(socket.getInputStream())) {
-                long sendTime = System.currentTimeMillis();
+            // only send these 3 bytes and all legacy servers(<=1.6) will respond correspondingly
+            connection.getOut().writeByte(0xfe); // packet id
+            connection.getOut().writeByte(0x01); // payload(always 1)
+            connection.getOut().writeByte(0xfa); // plugin message
 
-                // only send these 3 bytes and all legacy servers(<=1.6) will respond correspondingly
-                out.writeByte(0xfe); // packet id
-                out.writeByte(0x01); // payload(always 1)
-                out.writeByte(0xfa); // plugin message
-
-//                writeString(out, "MC|PingHost"); // magic
-//
-//                byte[] remainBytes = toByteArray(remainOut -> {
-//                    remainOut.writeByte(0x7f); // protocol version
-//                    writeString(remainOut, successResult.getRawAddress().getHostAndPort().host()); // raw host
-//                    remainOut.writeInt(successResult.getRawAddress().getHostAndPort().port()); // raw port
-//                });
-//
-//                out.writeShort(remainBytes.length); // remain data length
-//                out.write(remainBytes); // remain data
-
-                int receivePacketId = in.readUnsignedByte();
-                if (receivePacketId != 0xff) {
-                    throw new IOException("Invalid packet id " + receivePacketId + ", expected 0xff(Kick Packet).");
-                }
-
-                String response = readString(in);
-                long networkLatency = System.currentTimeMillis() - sendTime;
-                return ServerStatusResult.success(successResult.getRawAddress(), this, networkLatency, parseResult(response));
+            int receivePacketId = connection.getIn().readUnsignedByte();
+            if (receivePacketId != 0xff) {
+                throw new IOException("Invalid packet id " + receivePacketId + ", expected 0xff(Kick Packet).");
             }
+
+            String response = readString(connection.getIn());
+            long networkLatency = System.currentTimeMillis() - sendTime;
+            return ServerStatusResult.success(successResult.getRawAddress(), this, networkLatency, parseResult(response));
         } catch (Exception e) {
             return ServerStatusResult.failure(ServerStatusResult.FailureResult.Reason.EXCEPTION, e);
         }
@@ -122,11 +100,6 @@ public final class LegacyServerStatusPinger implements ServerStatusPinger {
         }
     }
 
-    private void writeString(final DataOutputStream out, final String str) throws IOException {
-        out.writeShort(str.length());
-        out.writeChars(str);
-    }
-
     private String readString(final DataInputStream in) throws IOException {
         int length = in.readShort();
 
@@ -136,13 +109,5 @@ public final class LegacyServerStatusPinger implements ServerStatusPinger {
         }
 
         return new String(chars);
-    }
-
-    private byte[] toByteArray(@NotNull DataWriter writer) throws IOException {
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
-             DataOutputStream dataOut = new DataOutputStream(out)) {
-            writer.write(dataOut);
-            return out.toByteArray();
-        }
     }
 }

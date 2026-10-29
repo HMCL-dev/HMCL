@@ -30,10 +30,7 @@ import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.server.Server;
-import org.jackhuang.hmcl.server.pinger.ClassicServerStatusPinger;
-import org.jackhuang.hmcl.server.pinger.LegacyServerStatusPinger;
-import org.jackhuang.hmcl.server.pinger.ModernServerStatusPinger;
-import org.jackhuang.hmcl.server.pinger.ServerStatusPinger;
+import org.jackhuang.hmcl.server.pinger.*;
 import org.jackhuang.hmcl.server.status.ServerPlayerInfo;
 import org.jackhuang.hmcl.server.status.ServerStatus;
 import org.jackhuang.hmcl.server.status.ServerStatusResult;
@@ -1003,12 +1000,11 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                 motdContentBox.setSpacing(5);
                 motdContentBox.setAlignment(Pos.CENTER_LEFT);
 
-                VBox.setMargin(motdContentBox, new Insets(4, 0, 0, 4));
-                rootContent.getChildren().add(motdContentBox);
 
                 String[] motdLines = MinecraftChatComponentUtils
                         .toPlainStringFromChatComponent(status.description())
                         .split("\\r?\\n");
+                boolean haveMOTDContent = false;
                 for (int i = 0; i < Math.min(motdLines.length, 2); i++) {
                     String line = motdLines[i].trim();
                     if (line.length() > 80) {
@@ -1018,6 +1014,14 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
                     lineLabel.setMaxWidth(560);
                     lineLabel.setWrapText(true);
                     motdContentBox.getChildren().add(lineLabel);
+                    if (!line.isEmpty()) {
+                        haveMOTDContent = true;
+                    }
+                }
+
+                if (haveMOTDContent) {
+                    VBox.setMargin(motdContentBox, new Insets(4, 0, 0, 4));
+                    rootContent.getChildren().add(motdContentBox);
                 }
 
                 Separator titleEndSeparator = new Separator();
@@ -1083,13 +1087,19 @@ public class ServerListPage extends ListPageBase<ServerListPage.ServerListItem> 
 
                 ServerStatusPinger pinger = ((ServerStatusResult.SuccessResult) statusResult).getPinger();
                 if (pinger instanceof ModernServerStatusPinger) {
-//                    rootContent.getChildren().add(createDescriptionRow(i18n("server.pinger"), i18n("server.pinger.modern"), null, new Insets(0, 4, 0, 4)));
+                    rootContent.getChildren().add(createDescriptionRow(i18n("server.pinger"), i18n("server.pinger.modern"), null, new Insets(0, 4, 0, 4)));
                     title.addTag(i18n("server.pinger.modern"));
                 } else if (pinger instanceof LegacyServerStatusPinger) {
-//                    rootContent.getChildren().add(createDescriptionRow(i18n("server.pinger"), i18n("server.pinger.legacy"), null, new Insets(0, 4, 0, 4)));
+                    rootContent.getChildren().add(createDescriptionRow(i18n("server.pinger"), i18n("server.pinger.legacy"), null, new Insets(0, 4, 0, 4)));
                     title.addTag(i18n("server.pinger.legacy"));
+                } else if (pinger instanceof OldServerStatusPinger.BetaServerStatusPinger) {
+                    rootContent.getChildren().add(createDescriptionRow(i18n("server.pinger"), i18n("server.pinger.beta"), null, new Insets(0, 4, 0, 4)));
+                    title.addTag(i18n("server.pinger.beta"));
+                } else if (pinger instanceof OldServerStatusPinger.AlphaServerStatusPinger) {
+                    rootContent.getChildren().add(createDescriptionRow(i18n("server.pinger"), i18n("server.pinger.alpha"), null, new Insets(0, 4, 0, 4)));
+                    title.addTag(i18n("server.pinger.alpha"));
                 } else if (pinger instanceof ClassicServerStatusPinger) {
-//                    rootContent.getChildren().add(createDescriptionRow(i18n("server.pinger"), i18n("server.pinger.classic"), null, new Insets(0, 4, 0, 4)));
+                    rootContent.getChildren().add(createDescriptionRow(i18n("server.pinger"), i18n("server.pinger.classic"), null, new Insets(0, 4, 0, 4)));
                     title.addTag(i18n("server.pinger.classic"));
                 }
 
