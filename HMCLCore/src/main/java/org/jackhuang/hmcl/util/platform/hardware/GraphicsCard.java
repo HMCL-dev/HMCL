@@ -133,9 +133,6 @@ public final class GraphicsCard {
     /// Classifies an adapter, using [#UNKNOWN] when its type is undetermined.
     public enum Type {
 
-        /// An adapter whose type could not be determined.
-        UNKNOWN("Unknown"),
-
         /// An integrated graphics adapter.
         INTEGRATED("Integrated"),
 
@@ -144,6 +141,9 @@ public final class GraphicsCard {
 
         /// A graphics adapter provided by a virtualization platform.
         VIRTUAL("Virtual"),
+
+        /// An adapter whose type could not be determined.
+        UNKNOWN("Unknown"),
 
         /// A display adapter that does not provide its own GPU rendering capability.
         DISPLAY_ONLY("DisplayOnly");

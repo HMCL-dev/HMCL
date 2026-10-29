@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -108,6 +109,7 @@ public final class AboutPage extends SpinnerPane {
 
             @Unmodifiable List<GraphicsCard> visibleGraphicsCards = SystemInfo.getGraphicsCards().stream()
                     .filter(card -> card.getType() != GraphicsCard.Type.DISPLAY_ONLY && !"Unknown".equals(card.getName()))
+                    .sorted(Comparator.comparing(GraphicsCard::getType))
                     .toList();
 
             for (int i = 0; i < visibleGraphicsCards.size(); i++) {
