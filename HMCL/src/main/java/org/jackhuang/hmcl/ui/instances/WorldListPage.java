@@ -113,35 +113,28 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
         Task.supplyAsync(Schedulers.io(), () -> {
             // Ensure the game version number is parsed
             gameInstance.getVersion();
-            if (Files.exists(savesDir)) {
-                try (Stream<Path> stream = Files.list(savesDir)) {
-                    return stream.filter(Files::isDirectory).flatMap(world -> {
-                        try {
-                            return Stream.of(new WorldFolder(world.toAbsolutePath().normalize()));
-                        } catch (IOException e) {
-                            LOG.warning("Failed to read world " + world, e);
-                            return Stream.empty();
-                        }
-                    }).toList();
-                } catch (IOException e) {
-                    LOG.warning("Failed to read saves", e);
-                }
+            try (Stream<Path> stream = Files.list(savesDir)) {
+                return stream.filter(Files::isDirectory).flatMap(world -> {
+                    try {
+                        return Stream.of(new WorldFolder(world.toAbsolutePath().normalize()));
+                    } catch (IOException e) {
+                        LOG.warning("Failed to read world " + world, e);
+                        return Stream.empty();
+                    }
+                }).toList();
             }
-            return List.<WorldFolder>of();
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-            if (refreshCount != currentRefresh) {
-                // A newer refresh task is running, discard this result
-                return;
-            }
+            if (refreshCount != currentRefresh)
+                return; // A newer refresh task is running, discard this result
 
             supportQuickPlay.set(QuickPlayOption.isSupportedVersion(gameInstance.getVersion()));
 
-            worlds = result;
-            updateWorldList();
-
-            if (exception != null)
+            if (exception != null) {
                 LOG.warning("Failed to load world list page", exception);
-
+                worlds = List.of();
+            } else
+                worlds = result;
+            updateWorldList();
             setLoading(false);
         }).start();
     }
