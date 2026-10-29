@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.management.ManagementFactory;
 import java.util.List;
@@ -17,11 +18,16 @@ public class HardwareDetector {
     /// Controls external-process detection without disabling native platform queries.
     private static final boolean USE_FAST_FETCH = "true".equalsIgnoreCase(System.getProperty("hmcl.hardware.fastfetch", "true"));
 
-    /// Detects processor information, or returns `null` if unavailable.
+    /// Returns a nonempty immutable processor list, estimating missing counts for a single entry.
     ///
-    /// The default implementation runs Fastfetch when enabled.
-    public @Nullable CentralProcessor detectCentralProcessor() {
-        return USE_FAST_FETCH ? FastFetchUtils.detectCentralProcessor() : null;
+    /// The default implementation runs Fastfetch when enabled, falling back to an `Unknown` processor.
+    /// Fallback counts use JVM availability for display, not the hardware's physical core count.
+    public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
+        @Unmodifiable List<CentralProcessor> processors = USE_FAST_FETCH ? FastFetchUtils.detectCentralProcessors() : List.of();
+        if (!processors.isEmpty())
+            return processors;
+        int count = Runtime.getRuntime().availableProcessors();
+        return List.of(new CentralProcessor.Builder().setCores(new CentralProcessor.Cores(count, count, 0)).build());
     }
 
     /// Detects graphics cards, or returns `null` if unavailable; an empty list reports no cards.

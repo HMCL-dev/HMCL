@@ -12,6 +12,7 @@ import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
 import org.jackhuang.hmcl.util.platform.windows.*;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -41,8 +42,8 @@ public final class SystemInfo {
         /// The detected total physical memory size, in bytes.
         public static final long TOTAL_MEMORY = DETECTOR.getTotalMemorySize();
 
-        /// The detected processor, or `null` if unavailable.
-        public static final @Nullable CentralProcessor CENTRAL_PROCESSOR = DETECTOR.detectCentralProcessor();
+        /// A nonempty immutable processor snapshot supplied by the detector.
+        public static final @Unmodifiable List<CentralProcessor> CENTRAL_PROCESSORS = DETECTOR.detectCentralProcessors();
 
         /// The detected graphics cards, or `null` if unavailable.
         public static final @Nullable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
@@ -53,9 +54,13 @@ public final class SystemInfo {
         StringBuilder builder = new StringBuilder("System Info:");
 
         // CPU
-        @Nullable CentralProcessor cpu = getCentralProcessor();
-        if (cpu != null)
-            builder.append("\n - CPU: ").append(cpu);
+        @Unmodifiable List<CentralProcessor> processors = getCentralProcessors();
+        for (int i = 0; i < processors.size(); i++) {
+            builder.append("\n - CPU");
+            if (processors.size() > 1)
+                builder.append(' ').append(i + 1);
+            builder.append(": ").append(processors.get(i));
+        }
 
         // Graphics Card
         @Nullable List<GraphicsCard> graphicsCards = getGraphicsCards();
@@ -122,9 +127,14 @@ public final class SystemInfo {
         return Long.max(0, totalMemorySize - getFreeMemorySize());
     }
 
-    /// Returns the cached processor information, or `null` if detection produced no result.
-    public static @Nullable CentralProcessor getCentralProcessor() {
-        return Holder.CENTRAL_PROCESSOR;
+    /// Returns a nonempty immutable list of processor snapshots in stable order.
+    ///
+    /// Sources without package topology may provide only the first processor identity.
+    /// If detection returns no processors, a synthetic `Unknown` processor with no vendor is supplied.
+    /// For a single entry with no core counts, logical and performance counts use [Runtime#availableProcessors()].
+    /// These display estimates do not establish the hardware's physical core count or package topology.
+    public static @Unmodifiable List<CentralProcessor> getCentralProcessors() {
+        return Holder.CENTRAL_PROCESSORS;
     }
 
     /// Returns the cached graphics card list, or `null` if detection produced no result.

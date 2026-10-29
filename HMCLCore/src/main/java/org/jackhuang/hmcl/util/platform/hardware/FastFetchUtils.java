@@ -10,6 +10,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -68,37 +69,36 @@ final class FastFetchUtils {
         }
     }
 
-    /// Detects a processor, returning `null` if Fastfetch provides no usable CPU response.
-    static @Nullable CentralProcessor detectCentralProcessor() {
+    /// Returns one aggregate processor with the reported system-wide physical and logical counts.
+    /// A missing or invalid count is estimated from the other; JVM availability is used only when both are unavailable.
+    static @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
         @Nullable CPUInfo cpuInfo = get("CPU", TypeToken.get(CPUInfo.class));
-
         if (cpuInfo == null)
-            return null;
+            return List.of();
 
         CentralProcessor.Builder builder = new CentralProcessor.Builder()
-                .setName(cpuInfo.cpu)
-                .setVendor(HardwareVendor.of(cpuInfo.vendor));
-
+                .setName(cpuInfo.cpu).setVendor(HardwareVendor.of(cpuInfo.vendor));
+        int cores = 0;
+        int threads = 0;
         if (cpuInfo.cores != null) {
+            @Nullable String physical = cpuInfo.cores.get("physical");
+            @Nullable String logical = cpuInfo.cores.get("logical");
             try {
-                @Nullable String physical = cpuInfo.cores.get("physical");
-                @Nullable String logical = cpuInfo.cores.get("logical");
-
-                int cores = physical != null ? Integer.parseInt(physical) : 0;
-                int threads = logical != null ? Integer.parseInt(logical) : 0;
-                int packages = cpuInfo.packages != null ? Integer.max(cpuInfo.packages, 1) : 1;
-
-                if (cores > 0 && threads == 0)
-                    threads = cores;
-                else if (threads > 0 && cores == 0)
-                    cores = threads;
-
-                builder.setCores(new CentralProcessor.Cores(cores, threads, packages));
-            } catch (Throwable ignored) {
+                if (physical != null)
+                    cores = Integer.parseInt(physical);
+            } catch (NumberFormatException ignored) {
+            }
+            try {
+                if (logical != null)
+                    threads = Integer.parseInt(logical);
+            } catch (NumberFormatException ignored) {
             }
         }
-
-        return builder.build();
+        if (threads <= 0)
+            threads = cores > 0 ? cores : Runtime.getRuntime().availableProcessors();
+        if (cores <= 0)
+            cores = threads;
+        return List.of(builder.setCores(new CentralProcessor.Cores(threads, cores, 0)).build());
     }
 
     /// Returns a mutable list of detected adapters, or `null` if no usable GPU response is available.
@@ -145,10 +145,9 @@ final class FastFetchUtils {
     ///
     /// @param cpu the processor name, or `null` if absent
     /// @param vendor the vendor name, or `null` if absent
-    /// @param packages the package count, or `null` if absent
     /// @param cores core counts keyed by kind, or `null` if absent
     @JsonSerializable
-    private record CPUInfo(@Nullable String cpu, @Nullable String vendor, @Nullable Integer packages,
+    private record CPUInfo(@Nullable String cpu, @Nullable String vendor,
                            @Nullable Map<String, @Nullable String> cores) {
     }
 

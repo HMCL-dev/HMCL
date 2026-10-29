@@ -3,77 +3,148 @@
 package org.jackhuang.hmcl.util.platform.windows;
 
 import com.sun.jna.Memory;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
+import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-/**
- * @author Glavo
- */
+import java.util.*;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
+/// Reads package affinities and per-core efficiency classes from Windows topology records.
+@NotNullByDefault
 final class WindowsCPUDetector {
 
-    private static void detectName(CentralProcessor.Builder builder, WinReg reg) {
-        Object name = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", "ProcessorNameString");
-        Object vendor = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", "VendorIdentifier");
-
-        if (name instanceof String)
-            builder.setName(CentralProcessor.cleanName((String) name));
-
-        if (vendor instanceof String)
-            builder.setVendor(HardwareVendor.of((String) vendor));
+    /// Reads the identity associated with a registry logical-processor index.
+    private static CentralProcessor.Builder detectNameAndVendor(@Nullable WinReg reg, int index) {
+        CentralProcessor.Builder builder = new CentralProcessor.Builder();
+        if (reg == null)
+            return builder;
+        String key = "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\" + index;
+        @Nullable Object name = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE, key, "ProcessorNameString");
+        @Nullable Object vendor = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE, key, "VendorIdentifier");
+        if (name instanceof String value)
+            builder.setName(CentralProcessor.cleanName(value));
+        if (vendor instanceof String value)
+            builder.setVendor(HardwareVendor.of(value));
+        return builder;
     }
 
-    private static void detectCores(CentralProcessor.Builder builder, Kernel32 kernel32) {
-        int coresLogical = 0;
-        int coresPhysical = 0;
-        int packages = 0;
+    /// A core or package affinity, using group * 64 + processor number as the logical identifier.
+    @NotNullByDefault
+    private record Relationship(int efficiencyClass, @Unmodifiable Set<Integer> processors) {
+    }
 
-        IntByReference length = new IntByReference();
-        if (!kernel32.GetLogicalProcessorInformationEx(WinConstants.RelationAll, null, length) && length.getValue() == 0)
-            throw new AssertionError("Failed to get logical processor information length: " + kernel32.GetLastError());
-
-        try (Memory pProcessorInfo = new Memory(Integer.toUnsignedLong(length.getValue()))) {
-            if (!kernel32.GetLogicalProcessorInformationEx(WinConstants.RelationAll, pProcessorInfo, length))
-                throw new AssertionError("Failed to get logical processor information length: " + kernel32.GetLastError());
-
-            for (long offset = 0L; offset < pProcessorInfo.size(); ) {
-                int relationship = pProcessorInfo.getInt(offset);
-                long size = Integer.toUnsignedLong(pProcessorInfo.getInt(offset + 4L));
-
-                if (relationship == WinConstants.RelationGroup) {
-                    WinTypes.GROUP_RELATIONSHIP groupRelationship = new WinTypes.GROUP_RELATIONSHIP(pProcessorInfo.share(offset + 8L, size - 8L));
-                    groupRelationship.read();
-
-                    int activeGroupCount = Short.toUnsignedInt(groupRelationship.activeGroupCount);
-                    for (int i = 0; i < activeGroupCount; i++) {
-                        coresLogical += Short.toUnsignedInt(groupRelationship.groupInfo[i].maximumProcessorCount);
+    /// Decodes native topology records and reads the corresponding processor names from the registry.
+    private static @Unmodifiable List<CentralProcessor> parseTopology(Pointer buffer, long length, @Nullable WinReg reg) {
+        int pointerSize = Native.POINTER_SIZE;
+        if (pointerSize != 4 && pointerSize != 8)
+            throw new IllegalArgumentException("Invalid pointer size");
+        List<Relationship> cores = new ArrayList<>();
+        List<Relationship> packages = new ArrayList<>();
+        for (long offset = 0; offset < length; ) {
+            if (length - offset < 8)
+                throw new IllegalArgumentException("Truncated processor information header");
+            int relationship = buffer.getInt(offset);
+            long size = Integer.toUnsignedLong(buffer.getInt(offset + 4));
+            if (size < 8 || size > length - offset)
+                throw new IllegalArgumentException("Invalid processor information size");
+            if (relationship == WinConstants.RelationProcessorCore || relationship == WinConstants.RelationProcessorPackage) {
+                if (size < 32)
+                    throw new IllegalArgumentException("Truncated processor relationship");
+                int count = Short.toUnsignedInt(buffer.getShort(offset + 30));
+                int affinitySize = pointerSize + 8;
+                if (count == 0 || 32L + (long) count * affinitySize > size)
+                    throw new IllegalArgumentException("Invalid processor affinity count");
+                Set<Integer> processors = new HashSet<>();
+                for (int i = 0; i < count; i++) {
+                    long affinity = offset + 32L + (long) i * affinitySize;
+                    long mask = pointerSize == 8 ? buffer.getLong(affinity) : Integer.toUnsignedLong(buffer.getInt(affinity));
+                    int group = Short.toUnsignedInt(buffer.getShort(affinity + pointerSize));
+                    for (int bit = 0; bit < pointerSize * 8; bit++) {
+                        if ((mask & (1L << bit)) != 0)
+                            processors.add(group * 64 + bit);
                     }
-                } else if (relationship == WinConstants.RelationProcessorCore)
-                    coresPhysical++;
-                else if (relationship == WinConstants.RelationProcessorPackage)
-                    packages++;
+                }
+                if (processors.isEmpty())
+                    throw new IllegalArgumentException("Empty processor affinity");
+                Relationship value = new Relationship(Byte.toUnsignedInt(buffer.getByte(offset + 9)), Set.copyOf(processors));
+                (relationship == WinConstants.RelationProcessorCore ? cores : packages).add(value);
+            }
+            offset += size;
+        }
+        if (packages.isEmpty() || cores.isEmpty())
+            throw new IllegalArgumentException("Missing processor topology");
 
-                offset += size;
+        // Registry processor keys enumerate active processors across groups in ascending order.
+        @Unmodifiable List<Integer> logicalIds = packages.stream().flatMap(p -> p.processors.stream()).distinct().sorted().toList();
+        Set<Integer> assigned = new HashSet<>();
+        List<CentralProcessor> result = new ArrayList<>();
+        for (Relationship pkg : packages) {
+            @Unmodifiable List<Relationship> packageCores = cores.stream().filter(c -> pkg.processors.containsAll(c.processors)).toList();
+            TreeMap<Integer, Integer> classes = new TreeMap<>();
+            Set<Integer> members = new HashSet<>();
+            for (Relationship core : packageCores) {
+                for (int processor : core.processors) {
+                    if (!members.add(processor) || !assigned.add(processor))
+                        throw new IllegalArgumentException("Overlapping processor topology");
+                }
+                classes.merge(core.efficiencyClass, 1, Integer::sum);
+            }
+            if (!members.equals(pkg.processors))
+                throw new IllegalArgumentException("Incomplete package topology");
+            int efficiency = 0;
+            if (classes.size() > 1) {
+                // Merge upper ARM tiers and lower x86 tiers for a coarse P/E display.
+                efficiency = Architecture.SYSTEM_ARCH.isX86()
+                        ? packageCores.size() - classes.lastEntry().getValue()
+                        : classes.firstEntry().getValue();
+            }
+            int first = Collections.min(pkg.processors);
+            result.add(detectNameAndVendor(reg, Collections.binarySearch(logicalIds, first))
+                    .setCores(new CentralProcessor.Cores(pkg.processors.size(), packageCores.size() - efficiency, efficiency)).build());
+        }
+        if (assigned.size() != cores.stream().mapToInt(c -> c.processors.size()).sum())
+            throw new IllegalArgumentException("Unassigned processor cores");
+        return List.copyOf(result);
+    }
+
+    /// Detects package topology, retaining the registry identity with estimated counts if the native query fails.
+    static @Unmodifiable List<CentralProcessor> detect() {
+        @Nullable WinReg reg = WinReg.INSTANCE;
+        @Nullable Kernel32 kernel32 = Kernel32.INSTANCE;
+        if (kernel32 != null) {
+            try {
+                IntByReference length = new IntByReference();
+                kernel32.GetLogicalProcessorInformationEx(WinConstants.RelationAll, null, length);
+                for (int attempt = 0; attempt < 3 && length.getValue() > 0; attempt++) {
+                    try (Memory buffer = new Memory(Integer.toUnsignedLong(length.getValue()))) {
+                        if (kernel32.GetLogicalProcessorInformationEx(WinConstants.RelationAll, buffer, length)) {
+                            long used = Integer.toUnsignedLong(length.getValue());
+                            if (used > buffer.size())
+                                throw new IllegalArgumentException("Processor information exceeds buffer");
+                            return parseTopology(buffer, used, reg);
+                        }
+                    }
+                }
+                LOG.warning("Failed to query processor topology: " + kernel32.GetLastError());
+            } catch (Exception | LinkageError e) {
+                LOG.warning("Failed to detect processor topology", e);
             }
         }
-
-        builder.setCores(new CentralProcessor.Cores(coresPhysical, coresLogical, packages));
-    }
-
-    static @Nullable CentralProcessor detect() {
-        WinReg reg = WinReg.INSTANCE;
-        Kernel32 kernel32 = Kernel32.INSTANCE;
         if (reg == null)
-            return null;
-
-        CentralProcessor.Builder builder = new CentralProcessor.Builder();
-        detectName(builder, reg);
-        if (kernel32 != null)
-            detectCores(builder, kernel32);
-        return builder.build();
+            return List.of();
+        int count = Runtime.getRuntime().availableProcessors();
+        return List.of(detectNameAndVendor(reg, 0).setCores(new CentralProcessor.Cores(count, count, 0)).build());
     }
 
+    /// Prevents instantiation.
     private WindowsCPUDetector() {
     }
 }

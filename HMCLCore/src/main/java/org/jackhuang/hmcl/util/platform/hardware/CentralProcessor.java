@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// Describes a processor and its reported core counts.
+/// Describes a processor, or synthetic display information when detection is unavailable.
 ///
 /// @author Glavo
 @NotNullByDefault
@@ -63,13 +63,13 @@ public final class CentralProcessor {
     /// The display name.
     private final String name;
 
-    /// The hardware vendor, or `null` if unset.
+    /// The hardware vendor, or `null` if unknown.
     private final @Nullable HardwareVendor vendor;
 
-    /// The processor core counts, or `null` if unset.
+    /// The processor's core counts, or `null` if unavailable.
     private final @Nullable Cores cores;
 
-    /// Creates processor information from the supplied name, vendor, and core counts.
+    /// Creates a processor snapshot.
     private CentralProcessor(String name, @Nullable HardwareVendor vendor, @Nullable Cores cores) {
         this.name = name;
         this.vendor = vendor;
@@ -86,72 +86,68 @@ public final class CentralProcessor {
         return vendor;
     }
 
-    /// Returns the processor core counts, or `null` if unknown.
+    /// Returns observed or synthetic core counts, or `null` if unavailable.
     public @Nullable Cores getCores() {
         return cores;
     }
 
-    /// Returns the processor name and known core counts.
+    /// Returns the name with P/E counts or a core total, appending threads when their count differs.
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder(128);
-        if (cores != null && cores.packages > 1)
-            builder.append(cores.packages).append(" x ");
-
-        builder.append(name);
-
+        StringBuilder builder = new StringBuilder(name);
         if (cores != null) {
             builder.append(" (");
-            builder.append(cores.physical).append(" Cores");
-            if (cores.logical > 0 && cores.logical != cores.physical)
+            if (cores.efficiency > 0)
+                builder.append(cores.performance).append("P + ").append(cores.efficiency).append('E');
+            else
+                builder.append(cores.physical()).append(" Cores");
+            if (cores.logical != cores.physical())
                 builder.append(" / ").append(cores.logical).append(" Threads");
-            builder.append(")");
+            builder.append(')');
         }
-
         return builder.toString();
     }
 
-    /// Reported processor topology.
+    /// Positive physical and logical core totals for a processor or synthetic display fallback.
     ///
-    /// @param physical the physical core count
-    /// @param logical the logical processor count
-    /// @param packages the processor package count
-    public record Cores(int physical, int logical, int packages) {
-
-        /// Creates counts for one package, using the logical count as the physical count.
-        public Cores(int logical) {
-            this(logical, logical, 1);
+    /// Performance and efficiency counts deliberately merge performance tiers to simplify display;
+    /// they do not represent physical clusters. Unclassified physical cores are counted as performance cores.
+    /// Logical counts may be lower than physical totals when the source reports fewer available threads.
+    /// Synthetic fallbacks may use the JVM's available processor count for both logical and performance totals.
+    ///
+    /// @param logical the positive logical processor count
+    /// @param performance the nonnegative physical core count excluding identified efficiency cores
+    /// @param efficiency the nonnegative physical core count classified as efficiency cores
+    public record Cores(int logical, int performance, int efficiency) {
+        /// Requires positive logical and physical totals, nonnegative categories, and no physical total overflow.
+        public Cores {
+            long physical = (long) performance + efficiency;
+            if (logical <= 0 || performance < 0 || efficiency < 0 || physical <= 0 || physical > Integer.MAX_VALUE)
+                throw new IllegalArgumentException("Invalid processor core counts");
         }
 
-        /// Returns the physical, logical, and package counts.
-        @Override
-        public String toString() {
-            return String.format("Cores[physical=%d, logical=%d, packages=%d]", physical, logical, packages);
+        /// Returns the physical core count as the sum of performance and efficiency cores.
+        public int physical() {
+            return performance + efficiency;
         }
     }
 
-    /// Builds processor information with optional vendor and core counts.
+    /// Builds processor information.
     public static final class Builder {
-
         /// The display name, or `null` if unset.
         private @Nullable String name;
 
         /// The hardware vendor, or `null` if unset.
         private @Nullable HardwareVendor vendor;
 
-        /// The processor core counts, or `null` if unset.
+        /// The processor's core counts, or `null` if unset.
         private @Nullable Cores cores;
 
-        /// Creates processor information, using a vendor-based name or `Unknown` if no name was set.
+        /// Creates a snapshot, using a vendor-based name or `Unknown` if no name was set.
         public CentralProcessor build() {
             @Nullable String name = this.name;
-            if (name == null) {
-                if (vendor != null)
-                    name = vendor + " Processor";
-                else
-                    name = "Unknown";
-            }
-
+            if (name == null)
+                name = vendor != null ? vendor + " Processor" : "Unknown";
             return new CentralProcessor(name, vendor, cores);
         }
 
@@ -177,12 +173,12 @@ public final class CentralProcessor {
             return this;
         }
 
-        /// Returns the processor core counts, or `null` if unset.
+        /// Returns the processor's core counts, or `null` if unset.
         public @Nullable Cores getCores() {
             return cores;
         }
 
-        /// Sets the processor core counts; `null` clears it. Returns this builder.
+        /// Sets the processor's core counts; `null` clears them. Returns this builder.
         public Builder setCores(@Nullable Cores cores) {
             this.cores = cores;
             return this;
