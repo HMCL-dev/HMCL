@@ -97,7 +97,7 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
         /// The row's shared hover and ripple feedback.
         private final RipplerContainer graphic;
 
-        /// Displays progress while running and a pending icon while awaiting user input.
+        /// Centers running and pending indicators in a fixed-size slot to keep row titles aligned.
         private final StackPane statusIcon = new StackPane();
 
         /// Restores progress or invokes the pending completion action.
@@ -113,6 +113,9 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
             row.setPadding(new Insets(8));
             row.setCursor(Cursor.HAND);
 
+            statusIcon.setMinSize(32, 32);
+            statusIcon.setPrefSize(32, 32);
+            statusIcon.setMaxSize(32, 32);
             content.setMinWidth(0);
             content.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(content, Priority.ALWAYS);
