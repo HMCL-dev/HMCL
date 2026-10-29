@@ -107,6 +107,8 @@ public record HardwareVendor(String name) {
         if (lower.startsWith("mediatek")) return MTK;
         if (lower.equals("qcom") || lower.startsWith("qualcomm")) return QUALCOMM;
         if (lower.startsWith("apple")) return APPLE;
+        if (lower.startsWith("vmware")) return VMWARE;
+        if (lower.equals("parallel") || lower.equals("parallels") || lower.startsWith("parallels ")) return PARALLEL;
         if (lower.startsWith("microsoft")) return MICROSOFT;
         if (lower.startsWith("imagination") || lower.equals("img")) return IMG;
         if (lower.startsWith("loongson")) return LOONGSON;
@@ -138,7 +140,7 @@ public record HardwareVendor(String name) {
 
     /// Returns the vendor mapped to a PCI vendor ID, or `null` if unmapped.
     public static @Nullable HardwareVendor ofPciVendorId(int vendorId) {
-        // https://devicehunt.com/all-pci-vendors
+        // https://devicehunt.com/vendors/pci
         return switch (vendorId) {
             case 0x106b -> APPLE; // AMD Pensando Systems
             case 0x1002, 0x1022, 0x1dd8, 0x1924 -> AMD; // AMD Solarflare

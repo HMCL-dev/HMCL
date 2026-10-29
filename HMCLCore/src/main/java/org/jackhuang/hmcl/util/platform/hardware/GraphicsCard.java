@@ -52,8 +52,8 @@ public final class GraphicsCard {
     /// The hardware vendor, or `null` if unset.
     private final @Nullable HardwareVendor vendor;
 
-    /// The adapter type, or `null` if unset.
-    private final @Nullable Type type;
+    /// The adapter type, defaulting to [Type#UNKNOWN].
+    private final Type type;
 
     /// The driver name, or `null` if unset.
     private final @Nullable String driver;
@@ -64,26 +64,14 @@ public final class GraphicsCard {
     /// The Vulkan driver file paths.
     private final @Unmodifiable List<Path> vulkanDriverFiles;
 
-    /// Whether the detector identified this adapter as a known virtual display adapter.
-    private final boolean virtualDisplayAdapter;
-
     /// Creates an adapter with the supplied metadata and detection result.
-    private GraphicsCard(String name, @Nullable HardwareVendor vendor, @Nullable Type type, @Nullable String driver, @Nullable String driverVersion, @Unmodifiable List<Path> vulkanDriverFiles, boolean virtualDisplayAdapter) {
+    private GraphicsCard(String name, @Nullable HardwareVendor vendor, Type type, @Nullable String driver, @Nullable String driverVersion, @Unmodifiable List<Path> vulkanDriverFiles) {
         this.name = Objects.requireNonNull(name);
         this.vendor = vendor;
-        this.type = type;
+        this.type = Objects.requireNonNull(type);
         this.driver = driver;
         this.driverVersion = driverVersion;
         this.vulkanDriverFiles = vulkanDriverFiles;
-        this.virtualDisplayAdapter = virtualDisplayAdapter;
-    }
-
-    /// Returns whether this adapter was identified as a known virtual display adapter.
-    ///
-    /// A false result also includes adapters whose classification is unknown;
-    /// it does not establish that the adapter is physical.
-    public boolean isVirtualDisplayAdapter() {
-        return virtualDisplayAdapter;
     }
 
     /// Returns the display name.
@@ -106,8 +94,8 @@ public final class GraphicsCard {
         return driverVersion;
     }
 
-    /// Returns the adapter type, or `null` if unknown.
-    public @Nullable Type getType() {
+    /// Returns the adapter type, or [Type#UNKNOWN] if undetermined.
+    public Type getType() {
         return type;
     }
 
@@ -135,21 +123,44 @@ public final class GraphicsCard {
             builder.append(')');
         }
 
-        if (type != null) {
-            builder.append(" [").append(type).append(']');
+        if (type != Type.UNKNOWN) {
+            builder.append(" [").append(type.getDisplayName()).append(']');
         }
 
         return builder.toString();
     }
 
-    /// Classifies an adapter as integrated or discrete.
+    /// Classifies an adapter, using [#UNKNOWN] when its type is undetermined.
     public enum Type {
 
         /// An integrated graphics adapter.
-        Integrated,
+        INTEGRATED("Integrated"),
 
         /// A discrete graphics adapter.
-        Discrete
+        DISCRETE("Discrete"),
+
+        /// A graphics adapter provided by a virtualization platform.
+        VIRTUAL("Virtual"),
+
+        /// A display adapter that does not provide its own GPU rendering capability.
+        DISPLAY_ONLY("DisplayOnly"),
+
+        /// An adapter whose type could not be determined.
+        UNKNOWN("Unknown"),
+        ;
+
+        /// The human-readable adapter type name.
+        private final String displayName;
+
+        /// Creates an adapter type with the supplied display name.
+        Type(String displayName) {
+            this.displayName = displayName;
+        }
+
+        /// Returns the human-readable adapter type name.
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
     /// Builds graphics adapter information from optional detected metadata.
@@ -161,8 +172,8 @@ public final class GraphicsCard {
         /// The hardware vendor, or `null` if unset.
         private @Nullable HardwareVendor vendor;
 
-        /// The adapter type, or `null` if unset.
-        private @Nullable Type type;
+        /// The adapter type, defaulting to [Type#UNKNOWN].
+        private Type type = Type.UNKNOWN;
 
         /// The driver name, or `null` if unset.
         private @Nullable String driver;
@@ -172,9 +183,6 @@ public final class GraphicsCard {
 
         /// The Vulkan driver file paths, or `null` if unset.
         private @Nullable List<Path> vulkanDriverFiles;
-
-        /// Whether the adapter was identified as a known virtual display adapter; initially false.
-        private boolean virtualDisplayAdapter;
 
         /// Creates an adapter, supplying a vendor-based or unknown name if no name was set.
         ///
@@ -190,17 +198,7 @@ public final class GraphicsCard {
 
             List<Path> vulkanDriverFiles = Objects.requireNonNullElse(this.vulkanDriverFiles, List.of());
 
-            return new GraphicsCard(name, vendor, type, driver, driverVersion, List.copyOf(vulkanDriverFiles), virtualDisplayAdapter);
-        }
-
-        /// Sets whether the detector identified the adapter as a known virtual display adapter.
-        ///
-        /// @param virtualDisplayAdapter true for an identified virtual display adapter;
-        ///                              false otherwise, including when classification is unknown
-        /// @return this builder
-        public Builder setVirtualDisplayAdapter(boolean virtualDisplayAdapter) {
-            this.virtualDisplayAdapter = virtualDisplayAdapter;
-            return this;
+            return new GraphicsCard(name, vendor, type, driver, driverVersion, List.copyOf(vulkanDriverFiles));
         }
 
         /// Returns the display name, or `null` if unset.
@@ -225,14 +223,14 @@ public final class GraphicsCard {
             return this;
         }
 
-        /// Returns the adapter type, or `null` if unset.
-        public @Nullable Type getType() {
+        /// Returns the adapter type, defaulting to [Type#UNKNOWN].
+        public Type getType() {
             return type;
         }
 
-        /// Sets the adapter type; `null` clears it. Returns this builder.
-        public Builder setType(@Nullable Type type) {
-            this.type = type;
+        /// Sets the non-null adapter type; use [Type#UNKNOWN] to reset it. Returns this builder.
+        public Builder setType(Type type) {
+            this.type = Objects.requireNonNull(type);
             return this;
         }
 

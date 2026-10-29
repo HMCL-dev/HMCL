@@ -7,15 +7,17 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * @author Glavo
- */
+/// Detects Windows hardware information.
+///
+/// @author Glavo
+@NotNullByDefault
 public final class WindowsHardwareDetector extends HardwareDetector {
 
     /// Detects Windows processors, using the default detector when native information is unavailable.
@@ -25,10 +27,11 @@ public final class WindowsHardwareDetector extends HardwareDetector {
         return processors.isEmpty() ? super.detectCentralProcessors() : processors;
     }
 
+    /// Returns an immutable graphics card list, empty if detection is unsupported or fails.
     @Override
-    public List<GraphicsCard> detectGraphicsCards() {
+    public @Unmodifiable List<GraphicsCard> detectGraphicsCards() {
         if (!OperatingSystem.isWindows7OrLater())
-            return null;
+            return List.of();
         return WindowsGPUDetector.detect();
     }
 
