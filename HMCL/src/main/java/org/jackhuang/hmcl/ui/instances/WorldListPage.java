@@ -54,10 +54,11 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
     @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
-    private final BooleanProperty supportQuickPlay = new SimpleBooleanProperty(this, "supportQuickPlay", false);
     private Path savesDir;
     private List<WorldFolder> worlds;
     private @Nullable HMCLGameInstance gameInstance;
+    private final BooleanProperty supportQuickPlay = new SimpleBooleanProperty(this, "supportQuickPlay", false);
+
     private int refreshCount = 0;
 
     /// Creates a world list that reloads when `instanceContext` changes.
