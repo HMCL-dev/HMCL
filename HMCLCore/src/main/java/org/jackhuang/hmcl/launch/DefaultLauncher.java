@@ -18,6 +18,7 @@ import org.jackhuang.hmcl.util.platform.macos.HomebrewUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -766,13 +767,17 @@ public class DefaultLauncher extends Launcher {
         }
 
         if (options.getRenderer() == Renderer.DEFAULT) {
-            List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
-            if (graphicsCards != null && graphicsCards.size() == 2) {
+            @Unmodifiable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards().stream()
+                    .filter(it -> it.getType() != GraphicsCard.Type.Virtual)
+                    .toList();
+            if (graphicsCards.size() == 2) {
                 GraphicsCard card0 = graphicsCards.get(0);
                 GraphicsCard card1 = graphicsCards.get(1);
 
-                if (card0.getType() != null && card1.getType() != null
-                        && card0.getType() != card1.getType()) {
+                boolean hasIntegrated = card0.getType() == GraphicsCard.Type.Integrated || card1.getType() == GraphicsCard.Type.Integrated;
+                boolean hasDiscrete = card0.getType() == GraphicsCard.Type.Discrete || card1.getType() == GraphicsCard.Type.Discrete;
+
+                if (hasIntegrated && hasDiscrete) {
                     GraphicsCard discreteGraphicsCard = card0.getType() == GraphicsCard.Type.Discrete ? card0 : card1;
 
                     if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {

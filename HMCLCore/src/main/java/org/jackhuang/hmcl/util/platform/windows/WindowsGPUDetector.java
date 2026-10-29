@@ -8,7 +8,9 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -207,18 +209,19 @@ final class WindowsGPUDetector {
         return result;
     }
 
-    static @Nullable List<GraphicsCard> detect() {
+    /// Returns an immutable adapter list, empty if detection fails.
+    static @NotNull @Unmodifiable List<GraphicsCard> detect() {
         try {
-            WinReg reg = WinReg.INSTANCE;
+            @Nullable WinReg reg = WinReg.INSTANCE;
             if (reg != null) {
                 List<GraphicsCard> res = detectByRegistry(reg);
                 if (!res.isEmpty())
-                    return res;
+                    return List.copyOf(res);
             }
-            return detectByCim();
+            return List.copyOf(detectByCim());
         } catch (Throwable e) {
             LOG.warning("Failed to get graphics cards", e);
-            return null;
+            return List.of();
         }
     }
 

@@ -101,30 +101,35 @@ final class FastFetchUtils {
         return List.of(builder.setCores(new CentralProcessor.Cores(threads, cores, 0)).build());
     }
 
-    /// Returns a mutable list of detected adapters, or `null` if no usable GPU response is available.
-    static @Nullable List<GraphicsCard> detectGraphicsCards() {
-        @Nullable List<@Nullable GPUInfo> gpuInfos = get("GPU", JsonUtils.listTypeOf(GPUInfo.class));
-        if (gpuInfos == null)
-            return null;
+    /// Returns an immutable adapter list, empty if Fastfetch is unavailable or detection fails.
+    static @Unmodifiable List<GraphicsCard> detectGraphicsCards() {
+        try {
+            @Nullable List<@Nullable GPUInfo> gpuInfos = get("GPU", JsonUtils.listTypeOf(GPUInfo.class));
+            if (gpuInfos == null)
+                return List.of();
 
-        ArrayList<GraphicsCard> result = new ArrayList<>(gpuInfos.size());
-        for (@Nullable GPUInfo gpuInfo : gpuInfos) {
-            if (gpuInfo == null)
-                continue;
+            ArrayList<GraphicsCard> result = new ArrayList<>(gpuInfos.size());
+            for (@Nullable GPUInfo gpuInfo : gpuInfos) {
+                if (gpuInfo == null)
+                    continue;
 
-            GraphicsCard.Builder builder = new GraphicsCard.Builder()
-                    .setName(gpuInfo.name)
-                    .setVendor(HardwareVendor.of(gpuInfo.vendor))
-                    .setDriver(gpuInfo.driver);
+                GraphicsCard.Builder builder = new GraphicsCard.Builder()
+                        .setName(gpuInfo.name)
+                        .setVendor(HardwareVendor.of(gpuInfo.vendor))
+                        .setDriver(gpuInfo.driver);
 
-            if ("Discrete".equalsIgnoreCase(gpuInfo.type))
-                builder.setType(GraphicsCard.Type.Discrete);
-            else if ("Integrated".equalsIgnoreCase(gpuInfo.type))
-                builder.setType(GraphicsCard.Type.Integrated);
+                if ("Discrete".equalsIgnoreCase(gpuInfo.type))
+                    builder.setType(GraphicsCard.Type.Discrete);
+                else if ("Integrated".equalsIgnoreCase(gpuInfo.type))
+                    builder.setType(GraphicsCard.Type.Integrated);
 
-            result.add(builder.build());
+                result.add(builder.build());
+            }
+            return List.copyOf(result);
+        } catch (Throwable e) {
+            LOG.warning("Failed to get graphics card info from fastfetch", e);
+            return List.of();
         }
-        return result;
     }
 
     /// A Fastfetch module response.

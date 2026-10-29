@@ -106,27 +106,25 @@ public final class AboutPage extends SpinnerPane {
                 environment.getContent().add(pane);
             }
 
-            @Nullable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
-            if (graphicsCards != null) {
-                @Unmodifiable List<GraphicsCard> visibleGraphicsCards = graphicsCards.stream()
-                        .filter(card -> card.getType() != GraphicsCard.Type.Virtual && !"Unknown".equals(card.getName()))
-                        .toList();
-                int index = 1;
-                for (GraphicsCard graphicsCard : visibleGraphicsCards) {
-                    String title = index == 1 && visibleGraphicsCards.size() == 1
-                            ? i18n("about.environment.gpu")
-                            : i18n("about.environment.gpu.n", index);
-                    index++;
+            @Unmodifiable List<GraphicsCard> visibleGraphicsCards = SystemInfo.getGraphicsCards().stream()
+                    .filter(card -> card.getType() != GraphicsCard.Type.Virtual && !"Unknown".equals(card.getName()))
+                    .toList();
 
-                    var button = new LinePane();
-                    button.setLargeTitle(true);
-                    button.setTitle(title);
-                    button.setSubtitle(graphicsCard.toString());
+            for (int i = 0; i < visibleGraphicsCards.size(); i++) {
+                GraphicsCard graphicsCard = visibleGraphicsCards.get(i);
 
-                    button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
+                String title = visibleGraphicsCards.size() == 1
+                        ? i18n("about.environment.gpu")
+                        : i18n("about.environment.gpu.n", i + 1);
 
-                    environment.getContent().add(button);
-                }
+                var button = new LinePane();
+                button.setLargeTitle(true);
+                button.setTitle(title);
+                button.setSubtitle(graphicsCard.toString());
+
+                button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
+
+                environment.getContent().add(button);
             }
 
             var java = new LinePane();
