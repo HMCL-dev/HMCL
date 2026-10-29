@@ -29,6 +29,9 @@ public record HardwareVendor(String name) {
     /// The ARM vendor.
     public static final HardwareVendor ARM = new HardwareVendor("ARM");
 
+    /// The Xiaomi vendor.
+    public static final HardwareVendor XIAOMI = new HardwareVendor("Xiaomi");
+
     /// The Qualcomm vendor.
     public static final HardwareVendor QUALCOMM = new HardwareVendor("Qualcomm");
 
@@ -110,6 +113,7 @@ public record HardwareVendor(String name) {
         if (lower.startsWith("mediatek")) return MTK;
         if (lower.equals("qcom") || lower.startsWith("qualcomm")) return QUALCOMM;
         if (lower.startsWith("apple")) return APPLE;
+        if (lower.equals("xiaomi") || lower.equals("xring")) return XIAOMI;
         if (lower.startsWith("vmware")) return VMWARE;
         if (lower.startsWith("red hat") || lower.equals("redhat")) return RED_HAT;
         if (lower.equals("parallel") || lower.equals("parallels") || lower.startsWith("parallels ")) return PARALLEL;
