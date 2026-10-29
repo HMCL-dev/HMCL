@@ -54,12 +54,10 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
     @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
-
+    private final BooleanProperty supportQuickPlay = new SimpleBooleanProperty(this, "supportQuickPlay", false);
     private Path savesDir;
     private List<WorldFolder> worlds;
     private @Nullable HMCLGameInstance gameInstance;
-    private final BooleanProperty supportQuickPlay = new SimpleBooleanProperty(this, "supportQuickPlay", false);
-
     private int refreshCount = 0;
 
     /// Creates a world list that reloads when `instanceContext` changes.
@@ -115,17 +113,14 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
             gameInstance.getVersion();
             if (Files.exists(savesDir)) {
                 try (Stream<Path> stream = Files.list(savesDir)) {
-                    return stream
-                            .filter(Files::isDirectory)
-                            .flatMap(world -> {
-                                try {
-                                    return Stream.of(new WorldFolder(world.toAbsolutePath().normalize()));
-                                } catch (IOException e) {
-                                    LOG.warning("Failed to read world " + world, e);
-                                    return Stream.empty();
-                                }
-                            })
-                            .toList();
+                    return stream.filter(Files::isDirectory).flatMap(world -> {
+                        try {
+                            return Stream.of(new WorldFolder(world.toAbsolutePath().normalize()));
+                        } catch (IOException e) {
+                            LOG.warning("Failed to read world " + world, e);
+                            return Stream.empty();
+                        }
+                    }).toList();
                 } catch (IOException e) {
                     LOG.warning("Failed to read saves", e);
                 }
@@ -137,7 +132,7 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
                 return;
             }
 
-            supportQuickPlay.set(QuickPlayOption.isSupported(gameInstance.getVersion()));
+            supportQuickPlay.set(QuickPlayOption.isSupportedVersion(gameInstance.getVersion()));
 
             worlds = result;
             updateWorldList();
@@ -183,15 +178,15 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
 
                             world.installTo(worldDir, name);
                         }).whenComplete(Schedulers.javafx(), () -> {
-                                    handler.resolve();
-                                    refresh();
-                                }, e -> {
-                                    if (e instanceof FileAlreadyExistsException)
-                                        handler.reject(i18n("world.add.failed", i18n("world.add.already_exists")));
-                                    else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
-                                        handler.reject(i18n("world.add.failed", i18n("install.new_game.malformed")));
-                                    else
-                                        handler.reject(i18n("world.add.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
+                            handler.resolve();
+                            refresh();
+                        }, e -> {
+                            if (e instanceof FileAlreadyExistsException)
+                                handler.reject(i18n("world.add.failed", i18n("world.add.already_exists")));
+                            else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
+                                handler.reject(i18n("world.add.failed", i18n("install.new_game.malformed")));
+                            else
+                                handler.reject(i18n("world.add.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
                         }).start(),
                         world.getWorldName(),
                         new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid)
@@ -220,17 +215,17 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
         WorldManageUIUtils.copyWorld(world, this::refresh);
     }
 
-    public void reveal(World world) {
+    public void reveal(WorldFolder world) {
         FXUtils.openFolder(world.getFile());
     }
 
-    public void launch(World world) {
+    public void launch(WorldFolder world) {
         if (gameInstance != null) {
             Instances.launchAndEnterWorld(gameInstance, world.getFileName());
         }
     }
 
-    public void generateLaunchScript(World world) {
+    public void generateLaunchScript(WorldFolder world) {
         if (gameInstance != null) {
             Instances.generateLaunchScriptForQuickEnterWorld(gameInstance, world.getFileName());
         }
@@ -289,7 +284,7 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
                 right.getChildren().add(btnLaunch);
                 FXUtils.installFastTooltip(btnLaunch, i18n("instance.launch"));
                 btnLaunch.setOnAction(event -> {
-                    World world = getItem();
+                    WorldFolder world = getItem();
                     if (world != null)
                         page.launch(world);
                 });

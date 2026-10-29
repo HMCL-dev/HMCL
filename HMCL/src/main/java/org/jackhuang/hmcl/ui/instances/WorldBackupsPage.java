@@ -75,23 +75,21 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 try (Stream<Path> paths = Files.list(backupsDir)) {
                     ArrayList<BackupInfo> result = new ArrayList<>();
 
-                    paths.forEach(path -> {
-                        if (Files.isRegularFile(path)) {
-                            try {
-                                Matcher matcher = backupFileNamePattern.matcher(path.getFileName().toString());
-                                if (matcher.matches()) {
-                                    LocalDateTime time = LocalDateTime.parse(matcher.group("datetime"), TIME_FORMATTER);
-                                    int count = 0;
+                    paths.filter(Files::isRegularFile).forEach(path -> {
+                        try {
+                            Matcher matcher = backupFileNamePattern.matcher(path.getFileName().toString());
+                            if (matcher.matches()) {
+                                LocalDateTime time = LocalDateTime.parse(matcher.group("datetime"), TIME_FORMATTER);
+                                int count = 0;
 
-                                    if (matcher.group("count") != null) {
-                                        count = Integer.parseInt(matcher.group("count"));
-                                    }
-
-                                    result.add(new BackupInfo(path, World.of(path), time, count));
+                                if (matcher.group("count") != null) {
+                                    count = Integer.parseInt(matcher.group("count"));
                                 }
-                            } catch (Throwable e) {
-                                LOG.warning("Failed to load backup file " + path, e);
+
+                                result.add(new BackupInfo(path, World.of(path), time, count));
                             }
+                        } catch (Throwable e) {
+                            LOG.warning("Failed to load backup file " + path, e);
                         }
                     });
 

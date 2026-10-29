@@ -72,7 +72,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
 
-        supportQuickPlay = QuickPlayOption.isSupported(gameInstance.getVersion());
+        supportQuickPlay = QuickPlayOption.isSupportedVersion(gameInstance.getVersion());
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
