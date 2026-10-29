@@ -101,7 +101,7 @@ final class WindowsGPUDetector {
                         || model.matches("(?i)(RX )?Vega ([2-9]|10|11)( Graphics)?"))
                     return GraphicsCard.Type.INTEGRATED;
 
-                if (model.matches("(?i)RX [0-9]{3,4}([A-Z]*| .*)")
+                if (model.matches("(?i)RX [0-9]{3,4}[A-Z]*( .*)?")
                         || model.matches("(?i)(RX )?Vega (56|64)( .*)?")
                         || model.matches("(?i)VII( .*)?"))
                     return GraphicsCard.Type.DISCRETE;
