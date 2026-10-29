@@ -550,6 +550,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
         return getLayout().getInstanceGameSettingsFile(id);
     }
 
+    /// Resolves instance and preset preferences into launch options, including heap limits and GC strategy.
     public LaunchOptions.Builder getLaunchOptions(
             JavaRuntime javaRuntime,
             Path javaExecutable,
@@ -604,6 +605,7 @@ public class HMCLGameInstance extends DefaultGameInstance {
                 .setPreLaunchCommand(vs.getInheritable(GameSettings::preLaunchCommandProperty))
                 .setPostExitCommand(vs.getInheritable(GameSettings::postExitCommandProperty))
                 .setNoGeneratedJVMArgs(noJVMOptions)
+                .setGcStrategy(vs.getInheritable(GameSettings::gcStrategyProperty))
                 .setNoGeneratedOptimizingJVMArgs(vs.getInheritable(GameSettings::noOptimizingJVMOptionsProperty))
                 .setUseCustomNatives(vs.getInheritable(GameSettings::useCustomNativesProperty))
                 .setNativesDir(vs.getInheritable(GameSettings::nativesDirectoryProperty))

@@ -12,13 +12,16 @@ import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnknownNullability;
 
 import java.util.Collection;
@@ -33,20 +36,41 @@ public class LineSelectButton<T extends @UnknownNullability Object> extends Line
     private static final String DEFAULT_STYLE_CLASS = "line-select-button";
     private static final PseudoClass SELECTED_PSEUDO_CLASS = PseudoClass.getPseudoClass("selected");
 
-    private JFXPopup popup;
+    /// Popup containing the choices, created on first use.
+    private @Nullable JFXPopup popup;
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private ObservableList<Node> popupItems; // keep a reference
 
+    /// Identifies a menu item's description tooltip for cleanup when its popup closes.
+    private static final Object DESCRIPTION_TOOLTIP_KEY = new Object();
+
+    /// Whether descriptions appear on hover instead of occupying space inside menu items.
+    private final BooleanProperty descriptionAsTooltip = new SimpleBooleanProperty(this, "descriptionAsTooltip");
+
+    /// Shows the current choice's description when tooltip mode is enabled and the menu is closed.
+    private final Tooltip descriptionTooltip = createDescriptionTooltip();
+
+    /// Creates a selector with inline menu descriptions by default and optional tooltip descriptions.
     public LineSelectButton() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
         InvalidationListener updateTrailingText = observable -> {
-            Function<T, String> converter = getConverter();
-            T value = getValue();
+            @Nullable Function<T, String> converter = getConverter();
+            @Nullable T value = getValue();
             setTrailingText(converter != null ? converter.apply(value) : Objects.toString(value, ""));
         };
         converterProperty().addListener(updateTrailingText);
         valueProperty().addListener(updateTrailingText);
+
+        descriptionTooltip.textProperty().bind(Bindings.createStringBinding(() -> {
+            if (!isDescriptionAsTooltip())
+                return "";
+            @Nullable Function<T, String> description = getDescriptionConverter();
+            @Nullable T selected = getValue();
+            return description != null && selected != null ? description.apply(selected) : "";
+        }, valueProperty(), descriptionConverterProperty(), descriptionAsTooltip));
+        descriptionTooltip.textProperty().addListener(observable -> updateDescriptionTooltip());
+        descriptionAsTooltip.addListener(observable -> updateDescriptionTooltip());
 
         setTrailingIcon(SVG.UNFOLD_MORE);
 
@@ -59,6 +83,7 @@ public class LineSelectButton<T extends @UnknownNullability Object> extends Line
         });
     }
 
+    /// Toggles the choices and creates descriptions using the selected inline or tooltip mode.
     @Override
     public void fire() {
         super.fire();
@@ -76,30 +101,40 @@ public class LineSelectButton<T extends @UnknownNullability Object> extends Line
                 var itemTitleLabel = new Label();
                 itemTitleLabel.getStyleClass().add("title-label");
                 itemTitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                    Function<T, String> converter = getConverter();
+                    @Nullable Function<T, String> converter = getConverter();
                     return converter != null ? converter.apply(item) : Objects.toString(item, "");
                 }, converterProperty()));
 
                 var itemSubtitleLabel = new Label();
                 itemSubtitleLabel.getStyleClass().add("subtitle-label");
                 itemSubtitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                    Function<T, String> descriptionConverter = getDescriptionConverter();
+                    @Nullable Function<T, String> descriptionConverter = getDescriptionConverter();
                     return descriptionConverter != null ? descriptionConverter.apply(item) : "";
                 }, descriptionConverterProperty()));
-
-                FXUtils.onChangeAndOperate(itemSubtitleLabel.textProperty(), text -> {
-                    if (text == null || text.isEmpty()) {
-                        vbox.getChildren().setAll(itemTitleLabel);
-                    } else {
-                        vbox.getChildren().setAll(itemTitleLabel, itemSubtitleLabel);
-                    }
-                });
 
                 var wrapper = new StackPane(vbox);
                 wrapper.setAlignment(Pos.CENTER_LEFT);
                 wrapper.getStyleClass().add("menu-container");
                 wrapper.setMouseTransparent(true);
                 RipplerContainer ripplerContainer = new RipplerContainer(wrapper);
+                Tooltip tooltip = createDescriptionTooltip();
+                tooltip.textProperty().bind(itemSubtitleLabel.textProperty());
+                ripplerContainer.getProperties().put(DESCRIPTION_TOOLTIP_KEY, tooltip);
+                Runnable updateDescription = () -> {
+                    @Nullable String text = tooltip.getText();
+                    boolean hasDescription = text != null && !text.isEmpty();
+                    if (!isDescriptionAsTooltip() && hasDescription)
+                        vbox.getChildren().setAll(itemTitleLabel, itemSubtitleLabel);
+                    else
+                        vbox.getChildren().setAll(itemTitleLabel);
+                    tooltip.hide();
+                    Tooltip.uninstall(ripplerContainer, tooltip);
+                    if (isDescriptionAsTooltip() && hasDescription)
+                        installDescriptionTooltip(ripplerContainer, tooltip);
+                };
+                descriptionAsTooltip.addListener(observable -> updateDescription.run());
+                tooltip.textProperty().addListener(observable -> updateDescription.run());
+                updateDescription.run();
                 FXUtils.onClicked(ripplerContainer, () -> {
                     setValue(item);
                     popup.hide();
@@ -111,8 +146,16 @@ public class LineSelectButton<T extends @UnknownNullability Object> extends Line
                 return ripplerContainer;
             }));
 
-            popup.showingProperty().addListener((observable, oldValue, newValue) ->
-                    ripplerContainer.setPressFeedbackEnabled(!newValue));
+            popup.showingProperty().addListener((observable, oldValue, newValue) -> {
+                ripplerContainer.setPressFeedbackEnabled(!newValue);
+                updateDescriptionTooltip();
+                if (!newValue) {
+                    for (Node item : popupItems) {
+                        if (item.getProperties().get(DESCRIPTION_TOOLTIP_KEY) instanceof Tooltip tooltip)
+                            tooltip.hide();
+                    }
+                }
+            });
         }
 
         if (popup.isShowing()) {
@@ -124,6 +167,44 @@ public class LineSelectButton<T extends @UnknownNullability Object> extends Line
                     vPosition == JFXPopup.PopupVPosition.TOP ? this.getHeight() : -this.getHeight(),
                     true);
         }
+    }
+
+    /// Returns whether choice descriptions are displayed only through tooltips.
+    public boolean isDescriptionAsTooltip() {
+        return descriptionAsTooltip.get();
+    }
+
+    /// Enables tooltips for both the current choice and menu choices without changing selection behavior.
+    public void setDescriptionAsTooltip(boolean value) {
+        descriptionAsTooltip.set(value);
+    }
+
+    /// Returns the opt-in description display mode; the default preserves inline menu descriptions.
+    public @NotNull BooleanProperty descriptionAsTooltipProperty() {
+        return descriptionAsTooltip;
+    }
+
+    /// Refreshes the current choice's tooltip and suppresses it while its menu is open.
+    private void updateDescriptionTooltip() {
+        Tooltip.uninstall(ripplerContainer, descriptionTooltip);
+        descriptionTooltip.hide();
+        @Nullable String text = descriptionTooltip.getText();
+        if (isDescriptionAsTooltip() && text != null && !text.isEmpty() && (popup == null || !popup.isShowing()))
+            installDescriptionTooltip(ripplerContainer, descriptionTooltip);
+    }
+
+    /// Creates a bounded, wrapping tooltip so multiline explanations fit within the screen.
+    private static @NotNull Tooltip createDescriptionTooltip() {
+        Tooltip tooltip = new Tooltip();
+        tooltip.setWrapText(true);
+        tooltip.setMaxWidth(480);
+        return tooltip;
+    }
+
+    /// Uses the shared hover delay with extra reading time for detailed choice descriptions.
+    private static void installDescriptionTooltip(@NotNull Node node, @NotNull Tooltip tooltip) {
+        FXUtils.installSlowTooltip(node, tooltip);
+        tooltip.setShowDuration(Duration.seconds(20));
     }
 
     private final ObjectProperty<T> value = new SimpleObjectProperty<>(this, "value");
@@ -158,19 +239,23 @@ public class LineSelectButton<T extends @UnknownNullability Object> extends Line
         converterProperty().set(it -> it != null ? value.apply(it) : "");
     }
 
-    private ObjectProperty<Function<T, String>> descriptionConverter;
+    /// Optional converter supplying inline or tooltip descriptions for each choice.
+    private @Nullable ObjectProperty<@Nullable Function<T, String>> descriptionConverter;
 
-    public ObjectProperty<Function<T, String>> descriptionConverterProperty() {
+    /// Returns the converter property, whose null value means that choices have no description.
+    public @NotNull ObjectProperty<@Nullable Function<T, String>> descriptionConverterProperty() {
         if (descriptionConverter == null)
             descriptionConverter = new SimpleObjectProperty<>(this, "descriptionConverter");
         return descriptionConverter;
     }
 
-    public Function<T, String> getDescriptionConverter() {
+    /// Returns the current description converter, or null when descriptions are absent.
+    public @Nullable Function<T, String> getDescriptionConverter() {
         return descriptionConverterProperty().get();
     }
 
-    public void setDescriptionConverter(Function<T, String> value) {
+    /// Sets or clears the converter used for descriptions in either display mode.
+    public void setDescriptionConverter(@Nullable Function<T, String> value) {
         descriptionConverterProperty().set(value);
     }
 

@@ -255,8 +255,9 @@ public final class CommandBuilder {
         return raw.removeIf(i -> pred.test(i.arg));
     }
 
+    /// Tests explicit arguments and arguments loaded from external JVM option files.
     public boolean noneMatch(Predicate<String> predicate) {
-        return raw.stream().noneMatch(it -> predicate.test(it.arg));
+        return allExistingArgs().noneMatch(predicate);
     }
 
     @Override

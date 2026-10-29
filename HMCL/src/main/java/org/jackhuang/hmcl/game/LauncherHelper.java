@@ -22,6 +22,8 @@ import org.jackhuang.hmcl.setting.JavaVersionType;
 import org.jackhuang.hmcl.setting.LauncherVisibility;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.game.GcStrategyErrorDialog;
+import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -335,6 +337,7 @@ public final class LauncherHelper {
         launchingStepsPane.setExecutor(executor, false);
         executor.addTaskListener(new TaskListener() {
 
+            /// Presents launch failures, including actionable collector errors for the captured instance.
             @Override
             public void onStop(boolean success, TaskExecutor executor) {
                 runLater(() -> {
@@ -345,6 +348,13 @@ public final class LauncherHelper {
                         if (!success) {
                             Exception ex = executor.getException();
                             if (ex != null && !(ex instanceof CancellationException)) {
+                                if (ex instanceof GcStrategyException failure) {
+                                    Controllers.dialog(GcStrategyErrorDialog.create(failure,
+                                            scriptFile == null ? i18n("launch.failed") : i18n("instance.launch_script.failed"),
+                                            () -> Instances.modifyGameSettings(gameInstance)));
+                                    launchingStepsPane.setExecutor(null);
+                                    return;
+                                }
                                 String message;
                                 if (ex instanceof ModpackCompletionException) {
                                     if (ex.getCause() instanceof FileNotFoundException)

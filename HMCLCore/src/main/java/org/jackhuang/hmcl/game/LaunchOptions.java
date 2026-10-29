@@ -38,6 +38,8 @@ public class LaunchOptions implements Serializable {
     private ProxyOption proxyOption;
     private boolean noGeneratedJVMArgs;
     private boolean noGeneratedOptimizingJVMArgs;
+    /// Collector preference; absent settings preserve the original tuned-G1 policy.
+    private @NotNull GcStrategy gcStrategy = GcStrategy.TUNED_G1;
     private String preLaunchCommand;
     private String postExitCommand;
     private boolean useCustomNatives;
@@ -55,6 +57,11 @@ public class LaunchOptions implements Serializable {
 
     public GameInstanceID getInstanceId() {
         return instanceId;
+    }
+
+    /// Returns the collector preference resolved from the instance and its preset.
+    public @NotNull GcStrategy getGcStrategy() {
+        return gcStrategy;
     }
 
     /**
@@ -429,6 +436,12 @@ public class LaunchOptions implements Serializable {
 
         public Builder setNoGeneratedJVMArgs(boolean noGeneratedJVMArgs) {
             options.noGeneratedJVMArgs = noGeneratedJVMArgs;
+            return this;
+        }
+
+        /// Sets the collector preference without changing heap capacity or argument generation switches.
+        public @NotNull Builder setGcStrategy(@NotNull GcStrategy gcStrategy) {
+            options.gcStrategy = Objects.requireNonNull(gcStrategy);
             return this;
         }
 

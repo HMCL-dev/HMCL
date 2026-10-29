@@ -398,6 +398,19 @@ public sealed abstract class GameSettings extends ObservableSetting {
         return jvmOptions;
     }
 
+    /// Property name for the independently inheritable collector preference.
+    public static final String PROPERTY_GC_STRATEGY = "gcStrategy";
+
+    /// Collector preference; missing, null and unknown values retain the original tuned-G1 default.
+    @SerializedName(PROPERTY_GC_STRATEGY)
+    private final InheritableProperty<GcStrategy> gcStrategy =
+            newInheritableProperty(PROPERTY_GC_STRATEGY, GcStrategy.TUNED_G1);
+
+    /// Returns the collector preference independently of heap capacity and JVM argument generation.
+    public InheritableProperty<GcStrategy> gcStrategyProperty() {
+        return gcStrategy;
+    }
+
     /// Property name for disabling generated JVM options.
     public static final String PROPERTY_NO_JVM_OPTIONS = "noJVMOptions";
 

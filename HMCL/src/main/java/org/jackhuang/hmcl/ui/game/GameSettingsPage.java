@@ -108,7 +108,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
     private final InvalidationListener javaListener = o -> refreshJavaSettings();
     private final InvalidationListener weakJavaListener = holder.weak(javaListener);
 
-    /// Creates a settings page.
+    /// Creates instance or preset settings, with independently inherited launch preferences and GC guidance.
     ///
     /// @param settingType     [GameSettings.Instance] or [GameSettings.Preset]
     /// @param instanceContext parent instance property for instance settings; ignored for presets and may be `null`
@@ -645,6 +645,15 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
             var noJVMCheckPane = createInheritableBooleanButton(GameSettings::notCheckJVMProperty);
             jvmSettings.getContent().add(noJVMCheckPane);
             noJVMCheckPane.setTitle(i18n("settings.advanced.dont_check_jvm_validity"));
+
+            var gcStrategyPane = createInheritableButton(
+                    GameSettings::gcStrategyProperty,
+                    strategy -> i18n("settings.advanced.gc_strategy." + strategy.name().toLowerCase(Locale.ROOT)),
+                    strategy -> i18n("settings.advanced.gc_strategy." + strategy.name().toLowerCase(Locale.ROOT) + ".desc"),
+                    GcStrategy.values());
+            jvmSettings.getContent().add(gcStrategyPane);
+            gcStrategyPane.setTitle(i18n("settings.advanced.gc_strategy"));
+            gcStrategyPane.setDescriptionAsTooltip(true);
 
             var jvmArgsPane = new LinePane();
             jvmSettings.getContent().add(jvmArgsPane);
