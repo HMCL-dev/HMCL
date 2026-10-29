@@ -212,7 +212,7 @@ final class LinuxGPUDetector {
                     deviceId, subclassStr));
         }
 
-        if (builder.getType() == null) {
+        if (builder.getType() == GraphicsCard.Type.UNKNOWN) {
             if (builder.getVendor() == HardwareVendor.NVIDIA) {
                 if (builder.getName().startsWith("NVIDIA GeForce")
                         || builder.getName().startsWith("NVIDIA Quadro")

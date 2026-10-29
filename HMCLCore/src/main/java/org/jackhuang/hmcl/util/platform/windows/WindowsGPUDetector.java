@@ -70,14 +70,14 @@ final class WindowsGPUDetector {
 
     /// Identifies display-only and virtual adapters before applying AMD name rules and the DAC heuristic.
     /// Recognized AMD names are heuristic evidence, not a hardware guarantee. Unmatched names and
-    /// other vendors retain the DAC result, or `null` when the DAC value is absent.
+    /// other vendors retain the DAC result, or `UNKNOWN` when the DAC value is absent.
     ///
     /// @param name the adapter name or driver description normalized by [GraphicsCard#cleanName(String)], or `null`
     /// @param vendor the resolved hardware vendor, or `null`
     /// @param dacType the decoded DAC description, or `null` if absent
     /// @param matchingDeviceId the matched device ID, or `null` if absent
-    /// @return the detected or estimated type, or `null` if no rule applies
-    static GraphicsCard.@Nullable Type inferType(@Nullable String name,
+    /// @return the detected or estimated type, or `UNKNOWN` if no rule applies
+    static GraphicsCard.@NotNull Type inferType(@Nullable String name,
                                                  @Nullable HardwareVendor vendor,
                                                  @Nullable String dacType,
                                                  @Nullable String matchingDeviceId) {
@@ -117,7 +117,7 @@ final class WindowsGPUDetector {
                 return GraphicsCard.Type.DISCRETE;
             }
         } else {
-            return null;
+            return GraphicsCard.Type.UNKNOWN;
         }
     }
 

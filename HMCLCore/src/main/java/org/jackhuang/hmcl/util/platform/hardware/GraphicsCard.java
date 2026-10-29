@@ -52,8 +52,8 @@ public final class GraphicsCard {
     /// The hardware vendor, or `null` if unset.
     private final @Nullable HardwareVendor vendor;
 
-    /// The adapter type, or `null` if unset.
-    private final @Nullable Type type;
+    /// The adapter type, defaulting to [Type#UNKNOWN].
+    private final Type type;
 
     /// The driver name, or `null` if unset.
     private final @Nullable String driver;
@@ -65,10 +65,10 @@ public final class GraphicsCard {
     private final @Unmodifiable List<Path> vulkanDriverFiles;
 
     /// Creates an adapter with the supplied metadata and detection result.
-    private GraphicsCard(String name, @Nullable HardwareVendor vendor, @Nullable Type type, @Nullable String driver, @Nullable String driverVersion, @Unmodifiable List<Path> vulkanDriverFiles) {
+    private GraphicsCard(String name, @Nullable HardwareVendor vendor, Type type, @Nullable String driver, @Nullable String driverVersion, @Unmodifiable List<Path> vulkanDriverFiles) {
         this.name = Objects.requireNonNull(name);
         this.vendor = vendor;
-        this.type = type;
+        this.type = Objects.requireNonNull(type);
         this.driver = driver;
         this.driverVersion = driverVersion;
         this.vulkanDriverFiles = vulkanDriverFiles;
@@ -94,8 +94,8 @@ public final class GraphicsCard {
         return driverVersion;
     }
 
-    /// Returns the adapter type, or `null` if unknown.
-    public @Nullable Type getType() {
+    /// Returns the adapter type, or [Type#UNKNOWN] if undetermined.
+    public Type getType() {
         return type;
     }
 
@@ -123,15 +123,18 @@ public final class GraphicsCard {
             builder.append(')');
         }
 
-        if (type != null) {
+        if (type != Type.UNKNOWN) {
             builder.append(" [").append(type.getDisplayName()).append(']');
         }
 
         return builder.toString();
     }
 
-    /// Classifies an adapter as integrated, discrete, virtual, or display-only.
+    /// Classifies an adapter, using [#UNKNOWN] when its type is undetermined.
     public enum Type {
+
+        /// An adapter whose type could not be determined.
+        UNKNOWN("Unknown"),
 
         /// An integrated graphics adapter.
         INTEGRATED("Integrated"),
@@ -168,8 +171,8 @@ public final class GraphicsCard {
         /// The hardware vendor, or `null` if unset.
         private @Nullable HardwareVendor vendor;
 
-        /// The adapter type, or `null` if unset.
-        private @Nullable Type type;
+        /// The adapter type, defaulting to [Type#UNKNOWN].
+        private Type type = Type.UNKNOWN;
 
         /// The driver name, or `null` if unset.
         private @Nullable String driver;
@@ -219,14 +222,14 @@ public final class GraphicsCard {
             return this;
         }
 
-        /// Returns the adapter type, or `null` if unset.
-        public @Nullable Type getType() {
+        /// Returns the adapter type, defaulting to [Type#UNKNOWN].
+        public Type getType() {
             return type;
         }
 
-        /// Sets the adapter type; `null` clears it. Returns this builder.
-        public Builder setType(@Nullable Type type) {
-            this.type = type;
+        /// Sets the non-null adapter type; use [Type#UNKNOWN] to reset it. Returns this builder.
+        public Builder setType(Type type) {
+            this.type = Objects.requireNonNull(type);
             return this;
         }
 
