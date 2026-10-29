@@ -787,7 +787,8 @@ public class DefaultLauncher extends Launcher {
                     GraphicsCard discreteGraphicsCard = card0.getType() == GraphicsCard.Type.Discrete ? card0 : card1;
 
                     if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                        if (HardwareVendor.NVIDIA.equals(discreteGraphicsCard.getVendor())) {
+                        if (HardwareVendor.NVIDIA.equals(discreteGraphicsCard.getVendor())
+                                && "nvidia".equals(discreteGraphicsCard.getDriver())) {
                             // https://askubuntu.com/a/1350825
                             env.put("__NV_PRIME_RENDER_OFFLOAD", "1");
                             env.put("__GLX_VENDOR_LIBRARY_NAME", "nvidia");

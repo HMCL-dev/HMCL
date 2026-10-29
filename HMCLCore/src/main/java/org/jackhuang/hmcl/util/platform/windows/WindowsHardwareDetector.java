@@ -7,7 +7,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -18,11 +18,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class WindowsHardwareDetector extends HardwareDetector {
 
+    /// Detects Windows processors, using the default detector when native information is unavailable.
     @Override
-    public @Nullable CentralProcessor detectCentralProcessor() {
-        if (!OperatingSystem.isWindows7OrLater())
-            return null;
-        return WindowsCPUDetector.detect();
+    public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
+        @Unmodifiable List<CentralProcessor> processors = OperatingSystem.isWindows7OrLater() ? WindowsCPUDetector.detect() : List.of();
+        return processors.isEmpty() ? super.detectCentralProcessors() : processors;
     }
 
     @Override
