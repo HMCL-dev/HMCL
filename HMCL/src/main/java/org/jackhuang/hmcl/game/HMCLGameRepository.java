@@ -528,7 +528,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         else
             suggested = (long) (threshold1 * 0.8 + (threshold2 - threshold1) * 0.4 + (usable - threshold2) * 0.2);
 
-        return MathUtils.clamp(suggested, minMemory, maxMemory);
+        return MathUtils.clamp(suggested & ~0xFFFFFL, minMemory, maxMemory);
     }
 
 }
