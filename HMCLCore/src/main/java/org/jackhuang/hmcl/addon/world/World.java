@@ -89,20 +89,7 @@ public final class World extends LocalAddonFile<World> {
     }
 
     public String getWorldName() {
-        return getLevelData().levelName.get();
-    }
-
-    public void setWorldName(String worldName) throws IOException {
-        levelData.levelName().setValue(worldName);
-        writeTag(levelData.rootTag(), levelData.file());
-    }
-
-    public @Nullable GameVersionNumber getGameVersion() {
-        return levelData.getGameVersion();
-    }
-
-    public long getLastPlayed() {
-        return getLevelData().lastPlayed.get();
+        return levelData.levelName.get();
     }
 
     @Override
@@ -110,12 +97,20 @@ public final class World extends LocalAddonFile<World> {
         return fileName;
     }
 
+    public @Nullable Image getIcon() {
+        return icon;
+    }
+
     public LevelData getLevelData() {
         return levelData;
     }
 
-    public @Nullable Image getIcon() {
-        return icon;
+    public @Nullable GameVersionNumber getGameVersion() {
+        return levelData.getGameVersion();
+    }
+
+    public long getLastPlayed() {
+        return levelData.lastPlayed.get();
     }
 
     public @Nullable CompoundTag getNormalizedWorldGenSettingsData() {
@@ -199,6 +194,11 @@ public final class World extends LocalAddonFile<World> {
         writeTag(levelData.rootTag(), levelData.file());
         writeTag(worldGenSettingsData.back, worldGenSettingsData.file);
         writeTag(playerData.data, playerData.file);
+    }
+
+    public void setWorldName(String worldName) throws IOException {
+        levelData.levelName().setValue(worldName);
+        writeTag(levelData.rootTag(), levelData.file());
     }
 
     private void writeTag(@Nullable CompoundTag nbt, @Nullable Path path) throws IOException {
