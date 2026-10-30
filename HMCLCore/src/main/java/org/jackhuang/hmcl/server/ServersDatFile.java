@@ -10,6 +10,7 @@ import org.glavo.nbt.tag.TagType;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.ByteArrayOutputStream;
@@ -17,7 +18,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
@@ -38,8 +38,8 @@ public class ServersDatFile {
         reload();
     }
 
-    public @NotNull List<@NotNull ServerEntry> getEntries() {
-        return Collections.unmodifiableList(entries);
+    public @NotNull @Unmodifiable List<@NotNull ServerEntry> getEntries() {
+        return List.copyOf(entries);
     }
 
     public @NotNull Path getFile() {
@@ -151,7 +151,7 @@ public class ServersDatFile {
     }
 
     public final class ServerEntry {
-        private @NotNull Server server;
+        private volatile @NotNull Server server;
 
         private ServerEntry(@NotNull Server server) {
             this.server = server;

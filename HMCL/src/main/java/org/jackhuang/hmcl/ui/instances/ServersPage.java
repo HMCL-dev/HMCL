@@ -9,7 +9,6 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.geometry.HPos;
@@ -61,8 +60,8 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
     private final Lock handleLock = new ReentrantLock();
     private @Nullable HMCLGameInstance gameInstance;
-    private Map<Path, Set<HMCLGameInstance>> holdInstancesMap = new HashMap<>();
-    private Map<Path, ServersDatFile> serversDatFiles = new HashMap<>();
+    private volatile Map<Path, Set<HMCLGameInstance>> holdInstancesMap = new HashMap<>();
+    private volatile Map<Path, ServersDatFile> serversDatFiles = new HashMap<>();
     private List<ServerListItem> serverListEntries = new ArrayList<>();
 
     private int refreshCount = 0;
@@ -193,14 +192,35 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
     }
 
     public void addServerToInstance(Server server, @NotNull HMCLGameInstance toInstance) {
+        ServersDatFile serversDatFile = serversDatFiles.get(toInstance.getServersDatFilePath());
+        if (serversDatFile != null) {
+            addServerToServersDatFile(server, serversDatFile, toInstance);
+        }
+
+        Task.supplyAsync(Schedulers.io(), () ->
+                new ServersDatFile(toInstance.getServersDatFilePath())
+        ).whenComplete(Schedulers.javafx(), (datFile, exception) -> {
+            if (exception != null) {
+                LOG.warning("Failed to load servers from dat file: " + toInstance.getServersDatFilePath(), exception);
+            }
+
+            ServersDatFile dirt = serversDatFiles.get(toInstance.getServersDatFilePath());
+            if (dirt != null) {
+                addServerToServersDatFile(server, dirt, toInstance);
+                return;
+            }
+            if (datFile != null) {
+                serversDatFiles.put(toInstance.getServersDatFilePath(), datFile);
+                addServerToServersDatFile(server, datFile, toInstance);
+            }
+        }).start();
+    }
+
+
+    public void addServerToServersDatFile(Server server, @NotNull ServersDatFile serversDatFile, @NotNull HMCLGameInstance toInstance) {
         Task.supplyAsync(Schedulers.io(), () -> {
             handleLock.lock();
             try {
-                ServersDatFile serversDatFile = serversDatFiles.get(toInstance.getServersDatFilePath());
-                if (serversDatFile == null) {
-                    serversDatFile = new ServersDatFile(toInstance.getServersDatFilePath());
-                }
-
                 return serversDatFile.addServer(server);
             } finally {
                 handleLock.unlock();
@@ -363,8 +383,6 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         private final Label realServerLabel = new Label();
         private final Label queryLabel = new Label();
 
-        private final Tooltip atLabelTooltip = new Tooltip();
-        private final Tooltip queryLabelTooltip = new Tooltip();
 
         public ServerAddressMaskPane(@Nullable String serverIP) {
             getChildren().add(atLabel);
@@ -402,31 +420,24 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 atLabel.setText("");
                 realServerLabel.setText("");
                 queryLabel.setText("");
-
-                atLabelTooltip.setText("");
-                queryLabelTooltip.setText("");
                 return;
             }
             int queryStart = serverIP.lastIndexOf('?');
             if (queryStart != -1) {
                 String queryStr = serverIP.substring(queryStart);
                 queryLabel.setText(queryStr);
-                atLabelTooltip.setText(queryStr);
                 serverIP = serverIP.substring(0, queryStart);
             } else {
                 queryLabel.setText("");
-                atLabelTooltip.setText("");
             }
 
             int atEnd = serverIP.indexOf('@');
             if (atEnd != -1) {
                 String atStr = serverIP.substring(0, atEnd + 1);
                 atLabel.setText(atStr);
-                atLabelTooltip.setText(atStr);
                 serverIP = serverIP.substring(atEnd + 1);
             } else {
                 atLabel.setText("");
-                atLabelTooltip.setText("");
             }
 
             realServerLabel.setText(serverIP);
@@ -452,17 +463,11 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         private final JFXButton btnAccept = new JFXButton();
         private final JFXButton btnCancel = new JFXButton();
         private final SpinnerPane spinner = new SpinnerPane();
-        private final Label lblErrorLabel = new Label();
-
-        private final SimpleBooleanProperty stillActionProgress = new SimpleBooleanProperty(false);
-
-        private boolean cancelled;
 
         public EditServerDialog(Type type, @Nullable Server reference, Consumer<Server> handleCallback) {
             this.type = type;
             this.reference = reference;
             this.handleCallback = handleCallback;
-            this.cancelled = false;
 
             getStyleClass().add("skin-pane");
 
@@ -593,9 +598,6 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 }
             });
 
-            lblErrorLabel.setWrapText(true);
-            lblErrorLabel.setMaxWidth(400);
-
             btnCancel.setText(i18n("button.cancel"));
             btnCancel.getStyleClass().add("dialog-cancel");
             onEscPressed(this, btnCancel::fire);
@@ -606,7 +608,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             HBox actions = new HBox(spinner, btnCancel);
             actions.setAlignment(Pos.CENTER_RIGHT);
 
-            rootLayout.setActions(lblErrorLabel, actions);
+            rootLayout.setActions(actions);
 
             btnCancel.setOnAction(e -> onCancel());
             btnAccept.setOnAction(ignored -> {
@@ -620,55 +622,20 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                     serverName = serverNameField.getText();
                 }
 
-                if (!stillActionProgress.get()) {
-                    onAdd(serverPackStatus, serverName, serverIP);
-                    return;
-                }
-
                 fireEvent(new DialogCloseEvent());
                 if (reference != null) {
                     handleCallback.accept(reference
-                            .withIp(serverIP)
                             .withName(serverName)
+                            .withIp(serverIP)
                             .withServerPackStatus(serverPackStatus)
                     );
                 } else {
-                    handleCallback.accept(Server.createServer(serverPackStatus, serverIP, serverName));
+                    handleCallback.accept(Server.createServer(serverPackStatus, serverName, serverIP));
                 }
             });
-
-            ChangeListener<String> contentChangeListener = (ignored0, ignored1, ignored2) -> {
-                if (stillActionProgress.get()) {
-                    hideStillAction();
-                }
-            };
-            serverIpField.textProperty().addListener(contentChangeListener);
-        }
-
-        private void hideStillAction() {
-            stillActionProgress.set(false);
-            lblErrorLabel.setText("");
-            btnAccept.setText(switch (type) {
-                case EDIT -> i18n("server.manage.edit.accept");
-                case ADD -> i18n("server.manage.add.accept");
-            });
-        }
-
-        private void onAdd(Server.ServerPackStatus packStatus, String serverName, String serverIP) {
-            fireEvent(new DialogCloseEvent());
-            if (reference != null) {
-                handleCallback.accept(reference
-                        .withIp(serverIP)
-                        .withName(serverName)
-                        .withServerPackStatus(packStatus)
-                );
-            } else {
-                handleCallback.accept(Server.createServer(packStatus, serverName, serverIP));
-            }
         }
 
         private void onCancel() {
-            cancelled = true;
             fireEvent(new DialogCloseEvent());
         }
 
@@ -810,7 +777,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
 
-            IconedMenuItem copyToInstanceMEnuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("server.manage.copy.to.instance"),
+            IconedMenuItem copyToInstanceMenuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("server.manage.copy.to.instance"),
                     () -> page.copyToInstance(holder), popup
             );
             popupMenu.getContent().addAll(
@@ -829,13 +796,13 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                             page.copyServerIp(holder), popup
                     ),
                     new MenuSeparator(),
-                    copyToInstanceMEnuItem,
+                    copyToInstanceMenuItem,
                     new IconedMenuItem(SVG.DELETE_FOREVER, i18n("server.manage.file.delete"), () ->
                             page.delete(holder), popup
                     )
             );
             if (page.gameInstance != null) {
-                copyToInstanceMEnuItem.setDisable(holder.storageEntry.getServersDatFile().getFile().equals(page.gameInstance.getServersDatFilePath()));
+                copyToInstanceMenuItem.setDisable(holder.storageEntry.getServersDatFile().getFile().equals(page.gameInstance.getServersDatFilePath()));
             }
 
             JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
