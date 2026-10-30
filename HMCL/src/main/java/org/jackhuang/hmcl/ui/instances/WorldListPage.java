@@ -22,8 +22,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.addon.world.WorldFolder;
-import org.jackhuang.hmcl.addon.world.WorldZipFile;
+import org.jackhuang.hmcl.addon.world.World;
+import org.jackhuang.hmcl.addon.world.WorldManager;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -35,16 +35,12 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
@@ -52,16 +48,14 @@ import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class WorldListPage extends ListPageBase<WorldFolder> {
+public final class WorldListPage extends ListPageBase<World> {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
     @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
-
-    private Path savesDir;
-    private List<WorldFolder> worlds;
-    private @Nullable HMCLGameInstance gameInstance;
     private final BooleanProperty supportQuickPlay = new SimpleBooleanProperty(this, "supportQuickPlay", false);
-
+    private List<World> worlds;
+    private @Nullable HMCLGameInstance gameInstance;
+    private @Nullable WorldManager worldManager;
     private int refreshCount = 0;
 
     /// Creates a world list that reloads when `instanceContext` changes.
@@ -86,8 +80,14 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
     }
 
     public void loadInstance(HMCLGameInstance.Optional instance) {
-        this.gameInstance = instance.instance();
-        this.savesDir = gameInstance != null ? gameInstance.getSavesDirectory() : null;
+        gameInstance = instance.instance();
+        if (gameInstance == null) {
+            worldManager = null;
+            getItems().clear();
+            return;
+        }
+
+        worldManager = gameInstance.getWorldManager();
         refresh();
     }
 
@@ -105,31 +105,20 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
     }
 
     public void refresh() {
-        if (gameInstance == null || savesDir == null)
+        if (worldManager == null || gameInstance == null)
             return;
+        WorldManager manager = worldManager;
 
         int currentRefresh = ++refreshCount;
-        HMCLGameInstance gameInstance = this.gameInstance;
+        supportQuickPlay.set(QuickPlayOption.isSupportedVersion(gameInstance.getVersion()));
 
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
-            // Ensure the game version number is parsed
-            gameInstance.getVersion();
-            try (Stream<Path> stream = Files.list(savesDir)) {
-                return stream.filter(Files::isDirectory).flatMap(world -> {
-                    try {
-                        return Stream.of(new WorldFolder(world.toAbsolutePath().normalize()));
-                    } catch (IOException e) {
-                        LOG.warning("Failed to read world " + world, e);
-                        return Stream.empty();
-                    }
-                }).toList();
-            }
+            manager.refresh();
+            return manager.getLocalFiles();
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh)
                 return; // A newer refresh task is running, discard this result
-
-            supportQuickPlay.set(QuickPlayOption.isSupportedVersion(gameInstance.getVersion()));
 
             if (exception != null) {
                 LOG.warning("Failed to load world list page", exception);
@@ -157,35 +146,25 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
     }
 
     private void installWorld(Path zipFile) {
-        // Only accept one world file because user is required to confirm the new world name
-        // Or too many input dialogs are popped.
-        Task.supplyAsync(() -> new WorldZipFile(zipFile)).whenComplete(
+        if (worldManager == null)
+            return;
+        WorldManager manager = worldManager;
+
+        Task.supplyAsync(() -> WorldManager.getWorldInfoFromZip(zipFile, false)).whenComplete(
                 Schedulers.javafx(),
                 world -> Controllers.prompt(
                         i18n("world.name.enter"),
-                        (name, handler) -> Task.runAsync(() -> {
-                            Path worldDir;
-                            try {
-                                worldDir = savesDir.resolve(name);
-                            } catch (InvalidPathException e) {
-                                throw new IOException(e);
-                            }
-                            if (Files.isDirectory(worldDir))
-                                throw new FileAlreadyExistsException("World already exists");
-
-                            world.installTo(worldDir, name);
-                        }).whenComplete(Schedulers.javafx(), () -> {
-                            handler.resolve();
-                            refresh();
-                        }, e -> {
-                            if (e instanceof FileAlreadyExistsException)
-                                handler.reject(i18n("world.add.failed", i18n("world.add.already_exists")));
-                            else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
-                                handler.reject(i18n("world.add.failed", i18n("install.new_game.malformed")));
-                            else
-                                handler.reject(i18n("world.add.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
-                        }).start(),
-                        world.getWorldName(),
+                        (name, handler) -> Task.runAsync(() -> manager.install(zipFile, name))
+                                .whenComplete(Schedulers.javafx(), () -> {
+                                    handler.resolve();
+                                    refresh();
+                                }, e -> {
+                                    if (e instanceof FileAlreadyExistsException)
+                                        handler.reject(i18n("world.add.failed", i18n("world.add.already_exists")));
+                                    else
+                                        handler.reject(i18n("world.add.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
+                                }).start(),
+                        world.levelData().levelName().get(),
                         new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid)
                 ),
                 e -> {
@@ -194,35 +173,35 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
                 }).start();
     }
 
-    private void showManagePage(WorldFolder world) {
+    private void showManagePage(World world) {
         if (gameInstance != null) {
             Controllers.navigate(new WorldManagePage(world, gameInstance));
         }
     }
 
-    public void export(WorldFolder world) {
+    public void export(World world) {
         WorldManageUIUtils.export(world);
     }
 
-    public void delete(WorldFolder world) {
+    public void delete(World world) {
         WorldManageUIUtils.delete(world, this::refresh);
     }
 
-    public void copy(WorldFolder world) {
+    public void copy(World world) {
         WorldManageUIUtils.copyWorld(world, this::refresh);
     }
 
-    public void reveal(WorldFolder world) {
+    public void reveal(World world) {
         FXUtils.openFolder(world.getFile());
     }
 
-    public void launch(WorldFolder world) {
+    public void launch(World world) {
         if (gameInstance != null) {
             Instances.launchAndEnterWorld(gameInstance, world.getFileName());
         }
     }
 
-    public void generateLaunchScript(WorldFolder world) {
+    public void generateLaunchScript(World world) {
         if (gameInstance != null) {
             Instances.generateLaunchScriptForQuickEnterWorld(gameInstance, world.getFileName());
         }
@@ -236,38 +215,7 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
         return supportQuickPlay;
     }
 
-    private final class WorldListPageSkin extends ToolbarListPageSkin<WorldFolder, WorldListPage> {
-
-        WorldListPageSkin() {
-            super(WorldListPage.this);
-
-            StackPane placeholderContainer = new StackPane();
-            placeholderContainer.getStyleClass().add("notice-pane");
-            Label placeholderLabel = new Label(i18n("world.empty"));
-            placeholderContainer.getChildren().add(placeholderLabel);
-            listView.setPlaceholder(placeholderContainer);
-        }
-
-        @Override
-        protected List<Node> initializeToolbar(WorldListPage skinnable) {
-            JFXCheckBox chkShowAll = new JFXCheckBox(i18n("world.show_all"));
-            chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
-
-            return Arrays.asList(
-                    chkShowAll,
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add),
-                    createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download)
-            );
-        }
-
-        @Override
-        protected ListCell<WorldFolder> createListCell(JFXListView<WorldFolder> listView) {
-            return new WorldListCell(getSkinnable());
-        }
-    }
-
-    private static final class WorldListCell extends ListCell<WorldFolder> {
+    private static final class WorldListCell extends ListCell<World> {
 
         private final WorldListPage page;
 
@@ -312,7 +260,7 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
                 right.getChildren().add(btnLaunch);
                 FXUtils.installFastTooltip(btnLaunch, i18n("instance.launch"));
                 btnLaunch.setOnAction(event -> {
-                    WorldFolder world = getItem();
+                    World world = getItem();
                     if (world != null)
                         page.launch(world);
                 });
@@ -320,7 +268,7 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
                 JFXButton btnMore = FXUtils.newToggleButton4(SVG.MORE_VERT);
                 right.getChildren().add(btnMore);
                 btnMore.setOnAction(event -> {
-                    WorldFolder world = getItem();
+                    World world = getItem();
                     if (world != null)
                         showPopupMenu(world, page.supportQuickPlayProperty().get(), JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
                 });
@@ -331,7 +279,7 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
                 if (event.getClickCount() != 1)
                     return;
 
-                WorldFolder world = getItem();
+                World world = getItem();
                 if (world == null)
                     return;
 
@@ -343,8 +291,8 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
         }
 
         @Override
-        protected void updateItem(WorldFolder world, boolean empty) {
-            WorldFolder oldWorld = getItem();
+        protected void updateItem(World world, boolean empty) {
+            World oldWorld = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(world, empty);
@@ -382,7 +330,7 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
 
         // Popup Menu
 
-        public void showPopupMenu(WorldFolder world, boolean supportQuickPlay, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
+        public void showPopupMenu(World world, boolean supportQuickPlay, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
             boolean worldLocked = world.isLocked();
 
             PopupMenu popupMenu = new PopupMenu();
@@ -438,6 +386,37 @@ public final class WorldListPage extends ListPageBase<WorldFolder> {
 
             JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
             popup.show(this, vPosition, hPosition, initOffsetX, vPosition == JFXPopup.PopupVPosition.TOP ? initOffsetY : -initOffsetY);
+        }
+    }
+
+    private final class WorldListPageSkin extends ToolbarListPageSkin<World, WorldListPage> {
+
+        WorldListPageSkin() {
+            super(WorldListPage.this);
+
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("world.empty"));
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
+        }
+
+        @Override
+        protected List<Node> initializeToolbar(WorldListPage skinnable) {
+            JFXCheckBox chkShowAll = new JFXCheckBox(i18n("world.show_all"));
+            chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
+
+            return Arrays.asList(
+                    chkShowAll,
+                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add),
+                    createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download)
+            );
+        }
+
+        @Override
+        protected ListCell<World> createListCell(JFXListView<World> listView) {
+            return new WorldListCell(getSkinnable());
         }
     }
 }

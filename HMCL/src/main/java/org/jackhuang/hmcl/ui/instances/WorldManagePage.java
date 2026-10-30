@@ -9,9 +9,9 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.addon.world.World;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.QuickPlayOption;
-import org.jackhuang.hmcl.addon.world.WorldFolder;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -35,7 +35,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class WorldManagePage extends DecoratorAnimatedPage implements DecoratorPage {
 
-    private final WorldFolder world;
+    private final World world;
     private final Path backupsDir;
     private final HMCLGameInstance gameInstance;
     private final boolean supportQuickPlay;
@@ -52,7 +52,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DataPackListPage> dataPackTab = new TabHeader.Tab<>("dataPackListPage");
 
-    public WorldManagePage(WorldFolder world, HMCLGameInstance gameInstance) {
+    public WorldManagePage(World world, HMCLGameInstance gameInstance) {
         this.world = world;
         this.gameInstance = gameInstance;
         this.backupsDir = gameInstance.getBackupsDirectory();
@@ -147,7 +147,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.state.set(new DecoratorPage.State(title, null, true, true, true));
     }
 
-    public WorldFolder getWorld() {
+    public World getWorld() {
         return world;
     }
 
