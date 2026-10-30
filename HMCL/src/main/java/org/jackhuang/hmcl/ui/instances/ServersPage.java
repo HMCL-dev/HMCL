@@ -195,6 +195,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         ServersDatFile serversDatFile = serversDatFiles.get(toInstance.getServersDatFilePath());
         if (serversDatFile != null) {
             addServerToServersDatFile(server, serversDatFile, toInstance);
+            return;
         }
 
         Task.supplyAsync(Schedulers.io(), () ->
@@ -215,7 +216,6 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             }
         }).start();
     }
-
 
     public void addServerToServersDatFile(Server server, @NotNull ServersDatFile serversDatFile, @NotNull HMCLGameInstance toInstance) {
         Task.supplyAsync(Schedulers.io(), () -> {
@@ -359,7 +359,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
     }
 
     public void copyServerIp(ServerListItem item) {
-        FXUtils.copyText(item.getServer().getIp(), i18n("server.manage.ip.copyed.toast"));
+        FXUtils.copyText(item.getServer().getIp(), i18n("server.manage.ip.copied.toast"));
     }
 
     public void copyToInstance(ServerListItem item) {
@@ -382,7 +382,6 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
         private final Label atLabel = new Label();
         private final Label realServerLabel = new Label();
         private final Label queryLabel = new Label();
-
 
         public ServerAddressMaskPane(@Nullable String serverIP) {
             getChildren().add(atLabel);
