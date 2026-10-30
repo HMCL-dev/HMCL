@@ -66,7 +66,7 @@ public class WorldManager extends LocalAddonManager<World> {
                 try (Stream<Path> stream = Files.list(savesDirectory)) {
                     stream.filter(Files::isDirectory).forEach(world -> {
                         try {
-                            localFiles.add(new World(world.toAbsolutePath().normalize()));
+                            localFiles.add(new World(this, world.toAbsolutePath().normalize()));
                         } catch (IOException e) {
                             LOG.warning("Failed to read world " + world, e);
                         }
@@ -111,9 +111,36 @@ public class WorldManager extends LocalAddonManager<World> {
                 new Unzipper(worldZip, worldDir).setSubDirectory(resolveRoot(fs).toString()).unzip();
             }
 
-            World world = new World(worldDir);
+            World world = new World(this, worldDir);
             world.setWorldName(newName);
             localFiles.add(world);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void copy(World world, String newName) throws IOException {
+        lock.lock();
+        try {
+            world.checkLock();
+            Path newPath = world.file.resolveSibling(newName);
+            FileUtils.copyDirectory(world.file, newPath);
+            World w = new World(this, newPath);
+            w.setWorldName(newName);
+            localFiles.add(w);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean delete(World world) throws IOException {
+        lock.lock();
+        try {
+            if (world.worldManager != this)
+                return false;
+            world.delete();
+            localFiles.remove(world);
+            return true;
         } finally {
             lock.unlock();
         }

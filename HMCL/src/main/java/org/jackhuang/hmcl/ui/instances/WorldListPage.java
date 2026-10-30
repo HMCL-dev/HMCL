@@ -179,16 +179,8 @@ public final class WorldListPage extends ListPageBase<World> {
         }
     }
 
-    public void export(World world) {
-        WorldManageUIUtils.export(world);
-    }
-
-    public void delete(World world) {
-        WorldManageUIUtils.delete(world, this::refresh);
-    }
-
-    public void copy(World world) {
-        WorldManageUIUtils.copyWorld(world, this::refresh);
+    public @Nullable WorldManager getWorldManager() {
+        return worldManager;
     }
 
     public void reveal(World world) {
@@ -394,21 +386,24 @@ public final class WorldListPage extends ListPageBase<World> {
                 }
             }
 
-            IconedMenuItem exportMenuItem = new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> page.export(world), popup);
-            exportMenuItem.setDisable(worldLocked);
+            if (page.getWorldManager() != null) {
+                var uiToolbox = new WorldManageUIToolbox(world, page.getWorldManager());
+                IconedMenuItem exportMenuItem = new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), uiToolbox::export, popup);
+                exportMenuItem.setDisable(worldLocked);
 
-            IconedMenuItem deleteMenuItem = new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> page.delete(world), popup);
-            deleteMenuItem.setDisable(worldLocked);
+                IconedMenuItem deleteMenuItem = new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> uiToolbox.delete(page::refresh, null), popup);
+                deleteMenuItem.setDisable(worldLocked);
 
-            IconedMenuItem duplicateMenuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> page.copy(world), popup);
-            duplicateMenuItem.setDisable(worldLocked);
+                IconedMenuItem duplicateMenuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> uiToolbox.copyWorld(page::refresh), popup);
+                duplicateMenuItem.setDisable(worldLocked);
 
-            popupMenu.getContent().addAll(
-                    new MenuSeparator(),
-                    exportMenuItem,
-                    deleteMenuItem,
-                    duplicateMenuItem
-            );
+                popupMenu.getContent().addAll(
+                        new MenuSeparator(),
+                        exportMenuItem,
+                        deleteMenuItem,
+                        duplicateMenuItem
+                );
+            }
 
             popupMenu.getContent().addAll(
                     new MenuSeparator(),

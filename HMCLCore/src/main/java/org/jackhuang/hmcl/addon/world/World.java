@@ -30,13 +30,15 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public final class World extends LocalAddonFile<World> {
     final Path file;
+    final WorldManager worldManager;
     private final String fileName;
     private final @Nullable Image icon;
     private LevelData levelData;
     private WorldGenSettingsData worldGenSettingsData;
     private PlayerData playerData;
 
-    public World(Path file) throws IOException {
+    public World(WorldManager worldManager, Path file) throws IOException {
+        this.worldManager = worldManager;
         this.file = file;
         icon = loadIcon(file);
         fileName = FileUtils.getName(file);
@@ -235,7 +237,7 @@ public final class World extends LocalAddonFile<World> {
         }
     }
 
-    private void checkLock() throws WorldLockedException {
+    public void checkLock() throws WorldLockedException {
         if (isLocked())
             throw new WorldLockedException("The world " + getFile() + " has been locked");
     }
@@ -258,13 +260,6 @@ public final class World extends LocalAddonFile<World> {
     public void delete() throws IOException {
         checkLock();
         FileUtils.deleteDirectory(file);
-    }
-
-    public void copy(String newName) throws IOException {
-        checkLock();
-        Path newPath = file.resolveSibling(newName);
-        FileUtils.copyDirectory(file, newPath);
-        new World(newPath).setWorldName(newName);
     }
 
     public void export(Path zip, String worldName) throws IOException {

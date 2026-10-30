@@ -38,6 +38,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final World world;
     private final Path backupsDir;
     private final HMCLGameInstance gameInstance;
+    private final WorldManageUIToolbox uiToolbox;
     private final boolean supportQuickPlay;
     private FileChannel sessionLockChannel;
 
@@ -56,6 +57,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.world = world;
         this.gameInstance = gameInstance;
         this.backupsDir = gameInstance.getBackupsDirectory();
+        this.uiToolbox = new WorldManageUIToolbox(world, gameInstance.getWorldManager());
 
         updateSessionLockChannel();
 
@@ -110,7 +112,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     private void updateSessionLockChannel() {
         if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
-            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
+            sessionLockChannel = uiToolbox.getSessionLockChannel();
             readOnly.set(sessionLockChannel == null);
         }
     }
@@ -124,7 +126,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public void onExited(Navigator.NavigationEvent event) {
         try {
-            WorldManageUIUtils.closeSessionLockChannel(world, sessionLockChannel);
+            uiToolbox.closeSessionLockChannel(sessionLockChannel);
         } catch (IOException ignored) {
         }
     }
@@ -149,6 +151,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public World getWorld() {
         return world;
+    }
+
+    public WorldManageUIToolbox getWorldUIToolbox() {
+        return uiToolbox;
     }
 
     public Path getBackupsDir() {
@@ -253,9 +259,9 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     }
 
                     managePopupMenu.getContent().addAll(
-                            new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(getSkinnable().world, getSkinnable().sessionLockChannel), managePopup),
-                            new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> WorldManageUIUtils.delete(getSkinnable().world, () -> getSkinnable().fireEvent(new PageCloseEvent()), getSkinnable().sessionLockChannel), managePopup),
-                            new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(getSkinnable().world, null), managePopup)
+                            new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> getSkinnable().getWorldUIToolbox().export(getSkinnable().sessionLockChannel), managePopup),
+                            new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> getSkinnable().getWorldUIToolbox().delete(() -> getSkinnable().fireEvent(new PageCloseEvent()), getSkinnable().sessionLockChannel), managePopup),
+                            new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> getSkinnable().getWorldUIToolbox().copyWorld(null), managePopup)
                     );
 
                     toolbar.addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managePopupMenuItem ->
