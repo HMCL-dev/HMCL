@@ -97,7 +97,7 @@ final class TaskExecutorDialogPaneTest {
                 assertEquals(TaskManager.Status.IDLE, TaskManager.getInstance().statusProperty().get());
                 assertSame(icon, tasksButton.getGraphic());
                 Node progress = pane.getCenter();
-                pane.background();
+                pane.runInBackground();
                 assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
                 Node spinner = Objects.requireNonNull(tasksButton.getGraphic());
                 assertInstanceOf(JFXSpinner.class, spinner);
@@ -118,17 +118,17 @@ final class TaskExecutorDialogPaneTest {
                 second.setExecutor(secondExecutor, false);
                 secondExecutor.start();
                 Controllers.dialog(second);
-                second.background();
+                second.runInBackground();
                 Node nextSpinner = Objects.requireNonNull(tasksButton.getGraphic());
                 assertInstanceOf(JFXSpinner.class, nextSpinner);
                 assertNotSame(spinner, nextSpinner);
-                pane.background();
+                pane.runInBackground();
                 pane.restore();
                 assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
                 assertSame(nextSpinner, tasksButton.getGraphic());
 
                 AtomicInteger actions = new AtomicInteger();
-                pane.background();
+                pane.runInBackground();
                 assertFalse(pane.runOrDeferCompletionAction("Install", "Ready to install", actions::incrementAndGet));
                 assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
                 assertSame(nextSpinner, tasksButton.getGraphic());
@@ -136,7 +136,7 @@ final class TaskExecutorDialogPaneTest {
                 assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
                 SVGPath pendingIcon = assertInstanceOf(SVGPath.class, tasksButton.getGraphic());
                 assertEquals(SVG.PENDING.getPath(), pendingIcon.getContent());
-                second.background();
+                second.runInBackground();
                 assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
                 Node resumedSpinner = assertInstanceOf(JFXSpinner.class, tasksButton.getGraphic());
                 assertNotSame(nextSpinner, resumedSpinner);
@@ -231,8 +231,8 @@ final class TaskExecutorDialogPaneTest {
                 StackPane container = new StackPane();
                 new Scene(container);
                 for (int i = 0; i < 3; i++) {
-                    pane.background();
-                    pane.background();
+                    pane.runInBackground();
+                    pane.runInBackground();
                     assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
                     assertFalse(DialogUtils.isShowing(pane));
                     assertFalse(executor.isCancelled());
@@ -249,7 +249,7 @@ final class TaskExecutorDialogPaneTest {
                     assertEquals(1, stack.size());
                 }
                 assertEquals(1, backgroundCalls.get());
-                pane.background();
+                pane.runInBackground();
                 Label other = new Label("Another dialog");
                 DialogUtils.show(container, other);
                 return true;
@@ -290,13 +290,13 @@ final class TaskExecutorDialogPaneTest {
                     first.setExecutor(Task.runAsync(() -> assertTrue(release.await(10, TimeUnit.SECONDS))).executor());
                     Controllers.dialog(first);
                     completions.add(first.startExecutor());
-                    first.background();
+                    first.runInBackground();
                     second.setExecutor(Task.runAsync(executions::incrementAndGet).executor());
                     Controllers.dialog(second);
                     completions.add(second.startExecutor());
                     assertTrue(second.queuedProperty().get());
                     assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
-                    second.background();
+                    second.runInBackground();
                     assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
                     assertFalse(DialogUtils.isShowing(second));
                     second.restore();
@@ -304,7 +304,7 @@ final class TaskExecutorDialogPaneTest {
                     assertTrue(DialogUtils.isShowing(second));
                     assertTrue(second.queuedProperty().get());
                     assertEquals(0, executions.get());
-                    second.background();
+                    second.runInBackground();
                     first.setExecutor(null);
                     assertEquals(TaskManager.Status.PENDING, TaskManager.getInstance().statusProperty().get());
                 } finally {
@@ -337,7 +337,7 @@ final class TaskExecutorDialogPaneTest {
             StackPane container = new StackPane();
             new Scene(container);
             DialogUtils.show(container, dialog);
-            dialog.background();
+            dialog.runInBackground();
             assertEquals(TaskManager.Status.RUNNING, TaskManager.getInstance().statusProperty().get());
             assertThrows(UnsupportedOperationException.class,
                     () -> TaskManager.getInstance().getTasks().clear());
@@ -369,7 +369,7 @@ final class TaskExecutorDialogPaneTest {
             new Scene(container);
             DialogUtils.show(container, dialog);
             executor.start();
-            dialog.background();
+            dialog.runInBackground();
             page.applyCss();
             page.layout();
             assertFalse(page.lookupAll(".jfx-spinner").isEmpty());
@@ -419,7 +419,7 @@ final class TaskExecutorDialogPaneTest {
             DialogUtils.show(container, dialog);
             executor.start();
             if (restore) {
-                dialog.background();
+                dialog.runInBackground();
                 DialogUtils.show(container, dialog);
             }
             AtomicInteger installations = new AtomicInteger();
@@ -449,7 +449,7 @@ final class TaskExecutorDialogPaneTest {
             new Scene(container);
             DialogUtils.show(container, dialog);
             executor.start();
-            dialog.background();
+            dialog.runInBackground();
             assertFalse(dialog.runOrDeferCompletionAction("Install", "Ready to install", installations::incrementAndGet));
             if (detach)
                 dialog.setExecutor(null);

@@ -97,7 +97,7 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
             btnBackground.setAccessibleText(i18n("task.background"));
             FXUtils.installFastTooltip(btnBackground, i18n("task.background"));
             btnBackground.setDisable(true);
-            btnBackground.setOnAction(event -> background());
+            btnBackground.setOnAction(event -> runInBackground());
 
             HBox header = new HBox(8, lblTitle, btnBackground);
             header.setAlignment(Pos.CENTER_LEFT);
@@ -265,7 +265,7 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
     /// Hides an active or queued dialog without invoking cancellation or changing execution.
     ///
     /// Has no effect if execution has stopped or the dialog is already hidden.
-    public void background() {
+    public void runInBackground() {
         FXUtils.checkFxUserThread();
         if ((!running && !queued.get()) || !DialogUtils.isShowing(this))
             return;
