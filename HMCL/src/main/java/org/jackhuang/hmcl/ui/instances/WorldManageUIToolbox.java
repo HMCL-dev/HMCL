@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -28,11 +27,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
 public record WorldManageUIToolbox(World world, WorldManager manager) {
-    public void delete(Runnable runnable, @Nullable FileChannel sessionLockChannel) {
+    public void delete(Runnable runnable) {
         Controllers.confirm(
                 i18n("button.remove.confirm"),
                 i18n("world.delete"),
-                () -> Task.runAsync(() -> closeSessionLockChannel(sessionLockChannel))
+                () -> Task.runAsync(world::unlock)
                         .thenRunAsync(() -> manager.delete(world))
                         .whenComplete(Schedulers.javafx(), exception -> {
                             if (exception == null) {
@@ -48,10 +47,6 @@ public record WorldManageUIToolbox(World world, WorldManager manager) {
     }
 
     public void export() {
-        export(null);
-    }
-
-    public void export(@Nullable FileChannel sessionLockChannel) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("world.export.title"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
@@ -62,7 +57,7 @@ public record WorldManageUIToolbox(World world, WorldManager manager) {
         }
 
         try {
-            closeSessionLockChannel(sessionLockChannel);
+            world.unlock();
         } catch (IOException e) {
             return;
         }
@@ -93,26 +88,5 @@ public record WorldManageUIToolbox(World world, WorldManager manager) {
                         }
                     }).start();
         }, "", new RequiredValidator(), new Validator(i18n("world.duplicate.failed.invalid_name"), FileUtils::isNameValid));
-    }
-
-    public void closeSessionLockChannel(@Nullable FileChannel sessionLockChannel) throws IOException {
-        if (sessionLockChannel != null) {
-            try {
-                sessionLockChannel.close();
-                LOG.info("Closed session lock channel of the world " + world.getFileName());
-            } catch (IOException e) {
-                throw new IOException("Failed to close session lock channel of the world " + world.getFile(), e);
-            }
-        }
-    }
-
-    public @Nullable FileChannel getSessionLockChannel() {
-        try {
-            FileChannel lock = world.lock();
-            LOG.info("Acquired lock on world " + world.getFileName());
-            return lock;
-        } catch (WorldLockedException ignored) {
-            return null;
-        }
     }
 }

@@ -17,7 +17,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -34,6 +33,7 @@ public final class World {
     private LevelData levelData;
     private WorldGenSettingsData worldGenSettingsData;
     private PlayerData playerData;
+    private @Nullable FileChannel worldLock;
 
     public World(WorldManager worldManager, Path file) throws IOException {
         this.worldManager = worldManager;
@@ -213,32 +213,41 @@ public final class World {
         return file.resolve("session.lock");
     }
 
-    public FileChannel lock() throws WorldLockedException {
+    public void lock() throws WorldLockedException {
         Path lockFile = getLockFile();
         FileChannel channel = null;
         try {
             channel = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
             channel.write(ByteBuffer.wrap("\u2603".getBytes(StandardCharsets.UTF_8)));
             channel.force(true);
-            FileLock fileLock = channel.tryLock();
-            if (fileLock != null) {
-                return channel;
-            } else {
+            if (channel.tryLock() == null) {
                 IOUtils.closeQuietly(channel);
                 throw new WorldLockedException("The world " + getFile() + " has been locked");
-            }
+            } else
+                worldLock = channel;
         } catch (IOException e) {
             IOUtils.closeQuietly(channel);
             throw new WorldLockedException(e);
         }
     }
 
-    public void checkLock() throws WorldLockedException {
-        if (isLocked())
-            throw new WorldLockedException("The world " + getFile() + " has been locked");
+    public void unlock() throws IOException {
+        if (worldLock == null)
+            return;
+        try {
+            worldLock.close();
+        } finally {
+            worldLock = null;
+        }
+    }
+
+    public boolean holdsLock() {
+        return worldLock != null;
     }
 
     public boolean isLocked() {
+        if (holdsLock())
+            return true;
         Path lockFile = getLockFile();
         try (FileChannel fileChannel = FileChannel.open(lockFile, StandardOpenOption.WRITE)) {
             return fileChannel.tryLock() == null;
@@ -253,7 +262,8 @@ public final class World {
     }
 
     public void delete() throws IOException {
-        checkLock();
+        if (isLocked())
+            throw new WorldLockedException("The world " + getFile() + " has been locked");
         FileUtils.deleteDirectory(file);
     }
 

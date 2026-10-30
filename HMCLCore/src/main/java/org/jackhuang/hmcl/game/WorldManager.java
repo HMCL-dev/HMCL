@@ -120,7 +120,8 @@ public final class WorldManager {
     public void copy(World world, String newName) throws IOException {
         lock.lock();
         try {
-            world.checkLock();
+            if (world.isLocked())
+                throw new WorldLockedException("The world " + world.getFile() + " has been locked");
             Path newPath = world.file.resolveSibling(newName);
             FileUtils.copyDirectory(world.file, newPath);
             World w = new World(this, newPath);

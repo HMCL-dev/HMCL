@@ -391,7 +391,7 @@ public final class WorldListPage extends ListPageBase<World> {
                 IconedMenuItem exportMenuItem = new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), uiToolbox::export, popup);
                 exportMenuItem.setDisable(worldLocked);
 
-                IconedMenuItem deleteMenuItem = new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> uiToolbox.delete(page::refresh, null), popup);
+                IconedMenuItem deleteMenuItem = new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> uiToolbox.delete(page::refresh), popup);
                 deleteMenuItem.setDisable(worldLocked);
 
                 IconedMenuItem duplicateMenuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> uiToolbox.copyWorld(page::refresh), popup);

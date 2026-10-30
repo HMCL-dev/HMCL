@@ -9,10 +9,7 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.game.World;
-import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.QuickPlayOption;
-import org.jackhuang.hmcl.game.WorldManager;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -25,7 +22,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -41,12 +37,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final HMCLGameInstance gameInstance;
     private final WorldManageUIToolbox uiToolbox;
     private final boolean supportQuickPlay;
-    private FileChannel sessionLockChannel;
 
     private final ObjectProperty<State> state;
     private boolean isFirstNavigation = true;
     private final BooleanProperty refreshable = new SimpleBooleanProperty(true);
-    private final BooleanProperty readOnly = new SimpleBooleanProperty(false);
+    private final BooleanProperty readOnly = new SimpleBooleanProperty(true);
 
     private final TransitionPane transitionPane = new TransitionPane();
     private final TabHeader header = new TabHeader(transitionPane);
@@ -112,9 +107,12 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     private void updateSessionLockChannel() {
-        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
-            sessionLockChannel = uiToolbox.getSessionLockChannel();
-            readOnly.set(sessionLockChannel == null);
+        if (!world.holdsLock()) {
+            try {
+                world.lock();
+            } catch (WorldLockedException ignored) {
+            }
+            readOnly.set(!world.holdsLock());
         }
     }
 
@@ -127,7 +125,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public void onExited(Navigator.NavigationEvent event) {
         try {
-            uiToolbox.closeSessionLockChannel(sessionLockChannel);
+            world.unlock();
         } catch (IOException ignored) {
         }
     }
@@ -260,8 +258,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     }
 
                     managePopupMenu.getContent().addAll(
-                            new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> getSkinnable().getWorldUIToolbox().export(getSkinnable().sessionLockChannel), managePopup),
-                            new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> getSkinnable().getWorldUIToolbox().delete(() -> getSkinnable().fireEvent(new PageCloseEvent()), getSkinnable().sessionLockChannel), managePopup),
+                            new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> getSkinnable().getWorldUIToolbox().export(), managePopup),
+                            new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> getSkinnable().getWorldUIToolbox().delete(() -> getSkinnable().fireEvent(new PageCloseEvent())), managePopup),
                             new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> getSkinnable().getWorldUIToolbox().copyWorld(null), managePopup)
                     );
 
