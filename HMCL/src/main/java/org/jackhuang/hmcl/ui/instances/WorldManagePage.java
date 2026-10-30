@@ -12,6 +12,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.QuickPlayOption;
+import org.jackhuang.hmcl.game.WorldManager;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -53,11 +54,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DataPackListPage> dataPackTab = new TabHeader.Tab<>("dataPackListPage");
 
-    public WorldManagePage(World world, HMCLGameInstance gameInstance) {
+    public WorldManagePage(World world, WorldManager manager, HMCLGameInstance gameInstance) {
         this.world = world;
         this.gameInstance = gameInstance;
         this.backupsDir = gameInstance.getBackupsDirectory();
-        this.uiToolbox = new WorldManageUIToolbox(world, gameInstance.getWorldManager());
+        this.uiToolbox = new WorldManageUIToolbox(world, manager);
 
         updateSessionLockChannel();
 

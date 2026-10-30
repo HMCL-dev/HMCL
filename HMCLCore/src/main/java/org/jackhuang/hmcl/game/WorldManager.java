@@ -26,8 +26,8 @@ public final class WorldManager {
     private final Path savesDirectory;
     private boolean loaded = false;
 
-    public WorldManager(DefaultGameInstance instance) {
-        savesDirectory = instance.getSavesDirectory();
+    public WorldManager(Path savesDirectory) {
+        this.savesDirectory = savesDirectory;
     }
 
     private static Path resolveRoot(FileSystem fs) throws IOException {

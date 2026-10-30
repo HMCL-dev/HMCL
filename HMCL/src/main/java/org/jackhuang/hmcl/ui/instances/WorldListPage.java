@@ -87,7 +87,7 @@ public final class WorldListPage extends ListPageBase<World> {
             return;
         }
 
-        worldManager = gameInstance.getWorldManager();
+        worldManager = new WorldManager(gameInstance.getSavesDirectory());
         refresh();
     }
 
@@ -175,7 +175,7 @@ public final class WorldListPage extends ListPageBase<World> {
 
     private void showManagePage(World world) {
         if (gameInstance != null) {
-            Controllers.navigate(new WorldManagePage(world, gameInstance));
+            Controllers.navigate(new WorldManagePage(world, worldManager, gameInstance));
         }
     }
 
