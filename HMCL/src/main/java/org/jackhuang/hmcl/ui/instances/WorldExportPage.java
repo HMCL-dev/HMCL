@@ -5,7 +5,7 @@ package org.jackhuang.hmcl.ui.instances;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.Skin;
-import org.jackhuang.hmcl.game.WorldFolder;
+import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardSinglePage;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -19,9 +19,9 @@ public class WorldExportPage extends WizardSinglePage {
     private final StringProperty path = new SimpleStringProperty();
     private final StringProperty gameVersion = new SimpleStringProperty();
     private final StringProperty worldName = new SimpleStringProperty();
-    private final WorldFolder world;
+    private final World world;
 
-    public WorldExportPage(WorldFolder world, Path export, Runnable onFinish) {
+    public WorldExportPage(World world, Path export, Runnable onFinish) {
         super(onFinish);
 
         this.world = world;

@@ -16,7 +16,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.World;
-import org.jackhuang.hmcl.game.WorldFolder;
+import org.jackhuang.hmcl.game.WorldManager;
 import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -54,7 +54,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.BackupInfo> implements WorldManagePage.WorldRefreshable {
     static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
-    private final WorldFolder world;
+    private final World world;
     private final Path backupsDir;
     private final BooleanProperty readOnly;
     private final Pattern backupFileNamePattern;
@@ -86,7 +86,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                                     count = Integer.parseInt(matcher.group("count"));
                                 }
 
-                                result.add(new BackupInfo(path, World.of(path), time, count));
+                                result.add(new BackupInfo(path, WorldManager.getWorldInfoFromZip(path, true), time, count));
                             }
                         } catch (Throwable e) {
                             LOG.warning("Failed to load backup file " + path, e);
@@ -128,7 +128,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 count = Integer.parseInt(matcher.group("count"));
             }
 
-            return Pair.pair(path, new BackupInfo(path, World.of(path), time, count));
+            return Pair.pair(path, new BackupInfo(path, WorldManager.getWorldInfoFromZip(path, true), time, count));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 WorldBackupsPage.this.getItems().add(result.getValue());
@@ -169,18 +169,18 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
 
     public final class BackupInfo extends Control implements Comparable<BackupInfo> {
         private final Path file;
-        private final World backupWorld;
+        private final WorldManager.WorldInfo backupWorld;
         private final LocalDateTime backupTime;
         private final int count;
 
-        public BackupInfo(Path file, World backupWorld, LocalDateTime backupTime, int count) {
+        public BackupInfo(Path file, WorldManager.WorldInfo backupWorld, LocalDateTime backupTime, int count) {
             this.file = file;
             this.backupWorld = backupWorld;
             this.backupTime = backupTime;
             this.count = count;
         }
 
-        public World getBackupWorld() {
+        public WorldManager.WorldInfo getBackupWorld() {
             return backupWorld;
         }
 
@@ -214,7 +214,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         BackupInfoSkin(BackupInfo skinnable) {
             super(skinnable);
 
-            World world = skinnable.getBackupWorld();
+            WorldManager.WorldInfo world = skinnable.getBackupWorld();
 
             BorderPane root = new BorderPane();
             root.getStyleClass().add("md-list-cell");
@@ -227,18 +227,18 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
 
                 var imageView = new ImageContainer(32);
                 left.getChildren().add(imageView);
-                imageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
+                imageView.setImage(world.icon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.icon());
             }
 
             {
                 TwoLineListItem item = new TwoLineListItem();
                 root.setCenter(item);
 
-                item.setTitle(parseColorEscapes(skinnable.getBackupWorld().getWorldName()));
+                item.setTitle(parseColorEscapes(world.levelData().levelName().get()));
                 item.setSubtitle(formatDateTime(skinnable.getBackupTime()) + (skinnable.count == 0 ? "" : " (" + skinnable.count + ")"));
 
-                if (world.getGameVersion() != null)
-                    item.addTag(I18n.getDisplayVersion(world.getGameVersion()));
+                if (world.levelData().getGameVersion() != null)
+                    item.addTag(I18n.getDisplayVersion(world.levelData().getGameVersion()));
             }
 
             {

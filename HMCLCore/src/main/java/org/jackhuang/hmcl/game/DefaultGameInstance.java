@@ -58,6 +58,9 @@ public abstract class DefaultGameInstance implements GameInstance {
     /// Lazily created resource-pack manager for this snapshot member only.
     private @Nullable ResourcePackManager resourcePackManager;
 
+    /// Lazily created world manager for this snapshot member only.
+    private @Nullable WorldManager worldManager;
+
     protected DefaultGameInstance(
             DefaultGameRepositorySnapshot snapshot,
             GameInstanceID id,
@@ -197,6 +200,13 @@ public abstract class DefaultGameInstance implements GameInstance {
             resourcePackManager = new ResourcePackManager(this);
         }
         return resourcePackManager;
+    }
+
+    public WorldManager getWorldManager() {
+        if (worldManager == null) {
+            worldManager = new WorldManager(this);
+        }
+        return worldManager;
     }
 
     /// Detects the Minecraft game version from this instance's primary client jar.

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import org.jackhuang.hmcl.game.WorldFolder;
+import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Task;
 import org.jetbrains.annotations.NotNullByDefault;
 
@@ -22,11 +22,11 @@ import java.util.zip.ZipOutputStream;
 @NotNullByDefault
 public final class WorldBackupTask extends Task<Path> {
 
-    private final WorldFolder world;
+    private final World world;
     private final Path backupsDir;
     private final boolean needLock;
 
-    public WorldBackupTask(WorldFolder world, Path backupsDir, boolean needLock) {
+    public WorldBackupTask(World world, Path backupsDir, boolean needLock) {
         this.world = world;
         this.backupsDir = backupsDir;
         this.needLock = needLock;
