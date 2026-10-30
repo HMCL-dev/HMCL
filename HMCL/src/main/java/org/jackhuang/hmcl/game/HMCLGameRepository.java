@@ -529,7 +529,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             suggested = (long) (threshold1 * 0.8 + (usable - threshold1) * 0.4);
         else
             suggested = Math.min(
-                    (long) (threshold1 * 0.8 + threshold2 * 0.4 + (usable - threshold2) * 0.2),
+                    (long) (threshold1 * 0.8 + (threshold2 - threshold1) * 0.4 + (usable - threshold2) * 0.2),
                     maxMemory
             );
 
