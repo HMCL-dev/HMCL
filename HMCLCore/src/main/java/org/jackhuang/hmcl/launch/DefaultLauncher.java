@@ -267,6 +267,7 @@ public class DefaultLauncher extends Launcher {
             libraryClasspath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
             libraryClasspath.removeIf(c -> c.contains("platform-3.4.0"));
             libraryClasspath.removeIf(c -> c.contains("icu4j-core-mojang"));
+            libraryClasspath.removeIf(c -> c.contains("patchy-1.3.9"));
         }
 
         Path jar = instance.getInstanceJarFile();

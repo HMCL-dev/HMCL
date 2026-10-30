@@ -6,12 +6,16 @@ import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
+import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.GameInstanceManifest;
 import org.jackhuang.hmcl.game.GameInstancePatch;
+import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -131,14 +135,52 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
             cleanroomVersion = selfVersion;
         }
 
+        InstallProfile profile;
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(Objects.requireNonNull(installer))) {
+            profile = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("install_profile.json")), InstallProfile.class);
+        }
+
+        // Since 0.7, installers no longer bundle the Cleanroom jar, and point to Maven repositories instead.
+        Map<String, String> repositories = Objects.requireNonNullElse(profile.repositories(), Map.of());
+        List<Library> remoteLibraries = profile.libraries().stream()
+                .filter(library -> !library.hasDownloadURL() && repositories.containsKey(library.groupId()))
+                .map(library -> withRepository(library, repositories))
+                .toList();
+
         task = new GameDownloadTask(dependencyManager, manifest)
-                .thenComposeAsync(minecraftJar -> new ForgeNewInstallTask(
-                        dependencyManager,
-                        manifest,
-                        minecraftJar,
-                        cleanroomVersion,
-                        Objects.requireNonNull(installer)))
-                .thenApplyAsync(patch -> patch.withId(GameComponentType.CLEANROOM));
+                .thenComposeAsync(minecraftJar -> new GameLibrariesTask(dependencyManager, manifest, true, remoteLibraries)
+                        .thenComposeAsync(new ForgeNewInstallTask(
+                                dependencyManager,
+                                manifest,
+                                minecraftJar,
+                                cleanroomVersion,
+                                Objects.requireNonNull(installer))))
+                .thenApplyAsync(patch -> patch
+                        .withLibraries(patch.getLibraries().stream()
+                                .map(library -> withRepository(library, repositories))
+                                .toList())
+                        .withId(GameComponentType.CLEANROOM));
+    }
+
+    /// Fields of the Cleanroom installer profile used by this task.
+    ///
+    /// @param libraries    libraries required by the installer
+    /// @param repositories Maven repository base URLs keyed by group ID, present since Cleanroom 0.7
+    @JsonSerializable
+    private record InstallProfile(List<Library> libraries, @Nullable Map<String, String> repositories) {
+    }
+
+    /// Points a library without a download URL at the Maven repository declared for its group.
+    ///
+    /// @param library      library to resolve
+    /// @param repositories Maven repository base URLs keyed by group ID
+    /// @return the library with its repository set, or the original library if it is unchanged
+    private static Library withRepository(Library library, Map<String, String> repositories) {
+        String repository = repositories.get(library.groupId());
+        if (repository == null || library.hasDownloadURL())
+            return library;
+        return new Library(library.artifact(), repository, library.downloads(), library.checksums(), library.extract(),
+                library.natives(), library.rules(), library.hint(), library.filename());
     }
 
     /// Creates a task that installs Cleanroom from a local installer JAR.
@@ -182,6 +224,6 @@ public final class CleanroomInstallTask extends Task<GameInstancePatch> {
     }
 
     private static String modifyVersion(String version) {
-        return version.replace("cleanroom-", "");
+        return StringUtils.substringAfter(version, "Cleanroom-", version);
     }
 }
