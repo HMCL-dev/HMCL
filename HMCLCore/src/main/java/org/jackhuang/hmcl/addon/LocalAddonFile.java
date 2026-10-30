@@ -22,7 +22,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /// @param <T> this type of addon
-public abstract class LocalAddonFile<T extends LocalAddonFile<?>> implements Comparable<T> {
+public abstract class LocalAddonFile<T extends LocalAddonFile<T>> implements Comparable<T> {
 
     protected LocalAddonFile() {
     }
