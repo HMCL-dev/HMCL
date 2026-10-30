@@ -274,12 +274,12 @@ public final class Instances {
     /// Queues an asset check with a fresh asset index for the supplied instance.
     /// The progress dialog does not permit cancellation.
     public static void updateGameAssets(HMCLGameInstance gameInstance) {
-        TaskExecutor executor = new GameAssetDownloadTask(
+        Task<?> task = new GameAssetDownloadTask(
                 gameInstance.getRepository().getDependency(),
                 gameInstance.getResolvedManifest(),
                 GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY,
-                true).executor();
-        Controllers.taskDialog(executor, i18n("instance.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL).startExecutor();
+                true);
+        Controllers.taskDialog(task, i18n("instance.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL);
     }
 
     public static void cleanInstance(HMCLGameInstance gameInstance) {

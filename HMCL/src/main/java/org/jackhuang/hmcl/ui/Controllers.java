@@ -648,18 +648,6 @@ public final class Controllers {
         return pane.getCompletableFuture();
     }
 
-    /// Creates and returns a progress pane without starting the executor.
-    ///
-    /// Requests closure when the executor stops. A null title supplies no title text.
-    /// The pane is connected to the executor even if no decorator exists. See [#dialog(Region)].
-    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, @Nullable String title, TaskCancellationAction onCancel) {
-        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
-        pane.setTitle(title);
-        pane.setExecutor(executor);
-        dialog(pane);
-        return pane;
-    }
-
     /// Creates a task dialog and submits its executor to the serial business-task queue.
     ///
     /// Submits the executor even if the pane cannot be shown, and returns the pane.
@@ -677,7 +665,10 @@ public final class Controllers {
     public static TaskExecutorDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel,
                                                   @Nullable TaskExecutorDialogPane parent) {
         TaskExecutor executor = task.executor();
-        TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
+        TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
+        pane.setTitle(title);
+        pane.setExecutor(executor);
+        dialog(pane);
         pane.startExecutor(parent);
         return pane;
     }
