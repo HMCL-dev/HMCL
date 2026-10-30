@@ -511,17 +511,10 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return -1L;
         }
 
-        long base;
-        if (memoryStatus.available() < memoryStatus.total()) {
-            // Avoid allocating too little memory when the user's memory usage is extremely high
-            base = Math.min(
-                    (long) (memoryStatus.total() * 0.05 + memoryStatus.available() * 0.95),
-                    memoryStatus.total());
-        } else {
-            base = memoryStatus.available();
-        }
-
-        final long usable = Math.max(base - reserved, 0);
+        final long usable = Math.max(
+                Math.max(memoryStatus.available(), memoryStatus.total() / 16) - reserved,
+                0
+        );
 
         long suggested;
         if (usable <= threshold1)
