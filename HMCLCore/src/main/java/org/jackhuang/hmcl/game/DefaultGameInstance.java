@@ -203,7 +203,7 @@ public abstract class DefaultGameInstance implements GameInstance {
         return resourcePackManager;
     }
 
-    public  WorldManager getWorldManager() {
+    public WorldManager getWorldManager() {
         if (worldManager == null) {
             worldManager = new WorldManager(this);
         }

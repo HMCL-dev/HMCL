@@ -101,7 +101,6 @@ public final class World extends LocalAddonFile<World> {
         return levelData.getGameVersion();
     }
 
-
     public long getLastPlayed() {
         return getLevelData().lastPlayed.get();
     }

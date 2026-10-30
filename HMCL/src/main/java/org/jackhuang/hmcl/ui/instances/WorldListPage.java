@@ -215,6 +215,37 @@ public final class WorldListPage extends ListPageBase<World> {
         return supportQuickPlay;
     }
 
+    private final class WorldListPageSkin extends ToolbarListPageSkin<World, WorldListPage> {
+
+        WorldListPageSkin() {
+            super(WorldListPage.this);
+
+            StackPane placeholderContainer = new StackPane();
+            placeholderContainer.getStyleClass().add("notice-pane");
+            Label placeholderLabel = new Label(i18n("world.empty"));
+            placeholderContainer.getChildren().add(placeholderLabel);
+            listView.setPlaceholder(placeholderContainer);
+        }
+
+        @Override
+        protected List<Node> initializeToolbar(WorldListPage skinnable) {
+            JFXCheckBox chkShowAll = new JFXCheckBox(i18n("world.show_all"));
+            chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
+
+            return Arrays.asList(
+                    chkShowAll,
+                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add),
+                    createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download)
+            );
+        }
+
+        @Override
+        protected ListCell<World> createListCell(JFXListView<World> listView) {
+            return new WorldListCell(getSkinnable());
+        }
+    }
+
     private static final class WorldListCell extends ListCell<World> {
 
         private final WorldListPage page;
@@ -386,37 +417,6 @@ public final class WorldListPage extends ListPageBase<World> {
 
             JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
             popup.show(this, vPosition, hPosition, initOffsetX, vPosition == JFXPopup.PopupVPosition.TOP ? initOffsetY : -initOffsetY);
-        }
-    }
-
-    private final class WorldListPageSkin extends ToolbarListPageSkin<World, WorldListPage> {
-
-        WorldListPageSkin() {
-            super(WorldListPage.this);
-
-            StackPane placeholderContainer = new StackPane();
-            placeholderContainer.getStyleClass().add("notice-pane");
-            Label placeholderLabel = new Label(i18n("world.empty"));
-            placeholderContainer.getChildren().add(placeholderLabel);
-            listView.setPlaceholder(placeholderContainer);
-        }
-
-        @Override
-        protected List<Node> initializeToolbar(WorldListPage skinnable) {
-            JFXCheckBox chkShowAll = new JFXCheckBox(i18n("world.show_all"));
-            chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
-
-            return Arrays.asList(
-                    chkShowAll,
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add),
-                    createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download)
-            );
-        }
-
-        @Override
-        protected ListCell<World> createListCell(JFXListView<World> listView) {
-            return new WorldListCell(getSkinnable());
         }
     }
 }
