@@ -19,6 +19,7 @@ import org.jackhuang.hmcl.setting.LegacyGameSettingsMigrator;
 import org.jackhuang.hmcl.setting.GameSettingsPresetID;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.MathUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Bits;
@@ -499,15 +500,18 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     public static long getAutoAllocatedMemory(PhysicalMemoryStatus memoryStatus, Platform platform) {
         final long minMemory = 128 * 1024 * 1024; // 128 MiB
-        final long maxMemory = 24L * 1024 * 1024 * 1024; // 24 GiB
+        final long maxMemory = platform.getBits() == Bits.BIT_32
+                //
+                ? 768 * 1024 * 1024 // 768 MiB
+                : 24L * 1024 * 1024 * 1024; // 24 GiB
 
         // Reserve memory for off-heap memory and HMCL itself
-        final long reserved = 512 * 1024 * 1024; // 256 MiB
+        final long reserved = 256 * 1024 * 1024; // 256 MiB
 
         final long threshold1 = 8L * 1024 * 1024 * 1024;  // 8 GiB
         final long threshold2 = 16L * 1024 * 1024 * 1024; // 16 GiB
 
-        if (memoryStatus.total() <= minMemory || memoryStatus.available() <= 0) {
+        if (memoryStatus.total() <= minMemory || memoryStatus.available() < 0) {
             return -1L;
         }
 
@@ -522,15 +526,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         else if (usable <= threshold2)
             suggested = (long) (threshold1 * 0.8 + (usable - threshold1) * 0.4);
         else
-            suggested = Math.min(
-                    (long) (threshold1 * 0.8 + (threshold2 - threshold1) * 0.4 + (usable - threshold2) * 0.2),
-                    maxMemory
-            );
+            suggested = (long) (threshold1 * 0.8 + (threshold2 - threshold1) * 0.4 + (usable - threshold2) * 0.2);
 
-        if (platform.getBits() == Bits.BIT_32)
-            suggested = Math.min(suggested, 768 * 1024 * 1024);
-
-        return Math.max(suggested, minMemory);
+        return MathUtils.clamp(suggested, minMemory, maxMemory);
     }
 
 }
