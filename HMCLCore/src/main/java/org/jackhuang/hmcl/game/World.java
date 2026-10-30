@@ -25,7 +25,7 @@ import java.util.zip.GZIPOutputStream;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
-public final class World implements AutoCloseable {
+public final class World implements AutoCloseable, Comparable<World> {
     final Path file;
     final WorldManager worldManager;
     private final String fileName;
@@ -60,12 +60,11 @@ public final class World implements AutoCloseable {
 
     static LevelData resolveLevelData(Path root, String missingLevelDataMessage) throws IOException {
         Path levelDataPath = root.resolve("level.dat");
-        if (!Files.exists(levelDataPath)) { // version 20w14infinite
+        if (!Files.exists(levelDataPath)) // version 20w14infinite
             levelDataPath = root.resolve("special_level.dat");
-        }
-        if (!Files.exists(levelDataPath)) {
+
+        if (!Files.exists(levelDataPath))
             throw new IOException(missingLevelDataMessage);
-        }
 
         CompoundTag levelData = NBTCodec.of().readTag(levelDataPath, TagType.COMPOUND);
         if (!(levelData.get("Data") instanceof CompoundTag data))
@@ -87,17 +86,12 @@ public final class World implements AutoCloseable {
         return fileName;
     }
 
+    public @Nullable Image getIcon() {
+        return icon;
+    }
+
     public String getWorldName() {
         return levelData.levelName.get();
-    }
-
-    public void setWorldName(String worldName) throws IOException {
-        levelData.levelName().setValue(worldName);
-        writeTag(levelData.rootTag(), levelData.file());
-    }
-
-    public Path getLockFile() {
-        return file.resolve("session.lock");
     }
 
     public LevelData getLevelData() {
@@ -157,10 +151,6 @@ public final class World implements AutoCloseable {
         return false;
     }
 
-    public @Nullable Image getIcon() {
-        return icon;
-    }
-
     public boolean supportDataPacks() {
         return getGameVersion() != null && getGameVersion().isAtLeast("1.13", "17w43a");
     }
@@ -197,6 +187,15 @@ public final class World implements AutoCloseable {
         }
     }
 
+    public void setWorldName(String worldName) throws IOException {
+        levelData.levelName().setValue(worldName);
+        writeTag(levelData.rootTag(), levelData.file());
+    }
+
+    public Path getLockFile() {
+        return file.resolve("session.lock");
+    }
+
     public void delete() throws IOException {
         if (isLocked())
             throw new WorldLockedException("The world " + getFile() + " has been locked");
@@ -221,18 +220,15 @@ public final class World implements AutoCloseable {
         if (worldLock != null)
             return this;
         Path lockFile = getLockFile();
-        FileChannel channel = null;
         try {
-            channel = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-            channel.write(ByteBuffer.wrap("\u2603".getBytes(StandardCharsets.UTF_8)));
-            channel.force(true);
-            if (channel.tryLock() != null) {
-                worldLock = channel;
+            worldLock = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            worldLock.write(ByteBuffer.wrap("\u2603".getBytes(StandardCharsets.UTF_8)));
+            worldLock.force(true);
+            if (worldLock.tryLock() != null)
                 return this;
-            }
         } catch (IOException ignored) {
         }
-        IOUtils.closeQuietly(channel);
+        close();
         return null;
     }
 
@@ -279,6 +275,7 @@ public final class World implements AutoCloseable {
         }
     }
 
+    @Override
     public int compareTo(World o) {
         return getFile().compareTo(o.getFile());
     }

@@ -10,8 +10,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
-import java.nio.file.*;
-import java.util.Comparator;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -75,22 +77,16 @@ public final class WorldManager {
         }
     }
 
-    public Comparator<World> getComparator() {
-        return World::compareTo;
-    }
-
     public @Unmodifiable List<World> getLocalFiles() throws IOException {
         synchronized (lock) {
             if (!loaded)
                 refresh();
-            return localFiles.stream().sorted(getComparator()).toList();
+            return localFiles.stream().sorted(World::compareTo).toList();
         }
     }
 
     public void install(Path worldZip, String newName) throws IOException {
         synchronized (lock) {
-            if (!loaded)
-                refresh();
             Files.createDirectories(savesDirectory);
 
             Path worldDir = savesDirectory.resolve(newName);
