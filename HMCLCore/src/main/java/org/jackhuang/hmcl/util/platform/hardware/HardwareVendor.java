@@ -29,6 +29,9 @@ public record HardwareVendor(String name) {
     /// The ARM vendor.
     public static final HardwareVendor ARM = new HardwareVendor("ARM");
 
+    /// The Xiaomi vendor.
+    public static final HardwareVendor XIAOMI = new HardwareVendor("Xiaomi");
+
     /// The Qualcomm vendor.
     public static final HardwareVendor QUALCOMM = new HardwareVendor("Qualcomm");
 
@@ -40,6 +43,9 @@ public record HardwareVendor(String name) {
 
     /// The Parallel vendor.
     public static final HardwareVendor PARALLEL = new HardwareVendor("Parallel");
+
+    /// The Red Hat vendor.
+    public static final HardwareVendor RED_HAT = new HardwareVendor("Red Hat");
 
     /// The Microsoft vendor.
     public static final HardwareVendor MICROSOFT = new HardwareVendor("Microsoft");
@@ -107,7 +113,9 @@ public record HardwareVendor(String name) {
         if (lower.startsWith("mediatek")) return MTK;
         if (lower.equals("qcom") || lower.startsWith("qualcomm")) return QUALCOMM;
         if (lower.startsWith("apple")) return APPLE;
+        if (lower.equals("xiaomi") || lower.equals("xring")) return XIAOMI;
         if (lower.startsWith("vmware")) return VMWARE;
+        if (lower.startsWith("red hat") || lower.equals("redhat")) return RED_HAT;
         if (lower.equals("parallel") || lower.equals("parallels") || lower.startsWith("parallels ")) return PARALLEL;
         if (lower.startsWith("microsoft")) return MICROSOFT;
         if (lower.startsWith("imagination") || lower.equals("img")) return IMG;
@@ -151,6 +159,7 @@ public record HardwareVendor(String name) {
             case 0x14c3 -> MTK;
             case 0x15ad -> VMWARE;
             case 0x1ab8 -> PARALLEL;
+            case 0x1af4 -> RED_HAT;
             case 0x1414 -> MICROSOFT;
             case 0x182f, 0x14e4 -> BROADCOM;
             case 0x0014 -> LOONGSON;
