@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -87,7 +86,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                                     count = Integer.parseInt(matcher.group("count"));
                                 }
 
-                                result.add(new BackupInfo(path, time, count));
+                                result.add(new BackupInfo(path, time, WorldManager.getWorldInfoFromZip(path, true), count));
                             }
                         } catch (Throwable e) {
                             LOG.warning("Failed to load backup file " + path, e);
@@ -129,7 +128,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 count = Integer.parseInt(matcher.group("count"));
             }
 
-            return Pair.pair(path, new BackupInfo(path, time, count));
+            return Pair.pair(path, new BackupInfo(path, time, WorldManager.getWorldInfoFromZip(path, true), count));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 WorldBackupsPage.this.getItems().add(result.getValue());
@@ -174,12 +173,11 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         private final int count;
         private final WorldManager.WorldInfo world;
 
-        public BackupInfo(Path file, LocalDateTime backupTime, int count) throws IOException {
+        public BackupInfo(Path file, LocalDateTime backupTime, WorldManager.WorldInfo world, int count) {
             this.file = file;
             this.backupTime = backupTime;
             this.count = count;
-
-            world = WorldManager.getWorldInfoFromZip(file, true);
+            this.world = world;
         }
 
         public LocalDateTime getBackupTime() {
