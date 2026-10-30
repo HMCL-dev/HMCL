@@ -18,7 +18,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -31,17 +30,18 @@ public record WorldManageUIToolbox(World world, WorldManager manager) {
         Controllers.confirm(
                 i18n("button.remove.confirm"),
                 i18n("world.delete"),
-                () -> Task.runAsync(world::unlock)
-                        .thenRunAsync(() -> manager.delete(world))
-                        .whenComplete(Schedulers.javafx(), exception -> {
-                            if (exception == null) {
-                                runnable.run();
-                            } else if (exception instanceof WorldLockedException) {
-                                Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
-                            } else {
-                                Controllers.dialog(i18n("world.delete.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
-                            }
-                        }).start(),
+                () -> Task.runAsync(() -> {
+                    world.close();
+                    manager.delete(world);
+                }).whenComplete(Schedulers.javafx(), exception -> {
+                    if (exception == null) {
+                        runnable.run();
+                    } else if (exception instanceof WorldLockedException) {
+                        Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
+                    } else {
+                        Controllers.dialog(i18n("world.delete.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
+                    }
+                }).start(),
                 null
         );
     }
@@ -56,12 +56,7 @@ public record WorldManageUIToolbox(World world, WorldManager manager) {
             return;
         }
 
-        try {
-            world.unlock();
-        } catch (IOException e) {
-            return;
-        }
-
+        world.close();
         Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller -> new WorldExportPage(world, file, controller::onFinish)));
     }
 
@@ -74,19 +69,17 @@ public record WorldManageUIToolbox(World world, WorldManager manager) {
                 return;
             }
 
-            Task.runAsync(Schedulers.io(), () -> manager.copy(world, result))
-                    .thenRunAsync(Schedulers.javafx(), () -> {
-                        Controllers.showToast(i18n("world.duplicate.success.toast"));
-                        if (runnable != null)
-                            runnable.run();
-                    }).whenComplete(Schedulers.javafx(), (throwable) -> {
-                        if (throwable == null) {
-                            handler.resolve();
-                        } else {
-                            handler.reject(i18n("world.duplicate.failed"));
-                            LOG.warning("Failed to duplicate world " + world.getFile(), throwable);
-                        }
-                    }).start();
+            Task.runAsync(Schedulers.io(), () -> manager.copy(world, result)).whenComplete(Schedulers.javafx(), (throwable) -> {
+                if (throwable == null) {
+                    Controllers.showToast(i18n("world.duplicate.success.toast"));
+                    if (runnable != null)
+                        runnable.run();
+                    handler.resolve();
+                } else {
+                    handler.reject(i18n("world.duplicate.failed"));
+                    LOG.warning("Failed to duplicate world " + world.getFile(), throwable);
+                }
+            }).start();
         }, "", new RequiredValidator(), new Validator(i18n("world.duplicate.failed.invalid_name"), FileUtils::isNameValid));
     }
 }

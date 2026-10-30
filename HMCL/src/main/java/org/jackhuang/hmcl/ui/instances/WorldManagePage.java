@@ -35,7 +35,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final World world;
     private final Path backupsDir;
     private final HMCLGameInstance gameInstance;
-    private final WorldManageUIToolbox uiToolbox;
+    private final WorldManager worldManager;
     private final boolean supportQuickPlay;
 
     private final ObjectProperty<State> state;
@@ -53,9 +53,9 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.world = world;
         this.gameInstance = gameInstance;
         this.backupsDir = gameInstance.getBackupsDirectory();
-        this.uiToolbox = new WorldManageUIToolbox(world, manager);
+        this.worldManager = manager;
 
-        updateSessionLockChannel();
+        readOnly.set(world.tryLock() == null);
 
         try {
             this.world.reloadWorldData();
@@ -72,7 +72,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         supportQuickPlay = QuickPlayOption.isSupportedVersion(gameInstance.getVersion());
 
-        this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
+        this.addEventHandler(Navigator.NavigationEvent.EXITED, event -> world.close());
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
     }
 
@@ -83,7 +83,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     @Override
     public void refresh() {
-        updateSessionLockChannel();
+        readOnly.set(world.tryLock() == null);
         try {
             world.reloadWorldData();
         } catch (IOException e) {
@@ -106,28 +106,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         });
     }
 
-    private void updateSessionLockChannel() {
-        if (!world.holdsLock()) {
-            try {
-                world.lock();
-            } catch (WorldLockedException ignored) {
-            }
-            readOnly.set(!world.holdsLock());
-        }
-    }
-
     private void onNavigated(Navigator.NavigationEvent event) {
         if (isFirstNavigation)
             isFirstNavigation = false;
         else
             refresh();
-    }
-
-    public void onExited(Navigator.NavigationEvent event) {
-        try {
-            world.unlock();
-        } catch (IOException ignored) {
-        }
     }
 
     public void launch() {
@@ -150,10 +133,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public World getWorld() {
         return world;
-    }
-
-    public WorldManageUIToolbox getWorldUIToolbox() {
-        return uiToolbox;
     }
 
     public Path getBackupsDir() {
@@ -257,10 +236,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                         );
                     }
 
+                    WorldManageUIToolbox uiToolbox = new WorldManageUIToolbox(getSkinnable().world, getSkinnable().worldManager);
                     managePopupMenu.getContent().addAll(
-                            new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> getSkinnable().getWorldUIToolbox().export(), managePopup),
-                            new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> getSkinnable().getWorldUIToolbox().delete(() -> getSkinnable().fireEvent(new PageCloseEvent())), managePopup),
-                            new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> getSkinnable().getWorldUIToolbox().copyWorld(null), managePopup)
+                            new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), uiToolbox::export, managePopup),
+                            new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> uiToolbox.delete(() -> getSkinnable().fireEvent(new PageCloseEvent())), managePopup),
+                            new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> uiToolbox.copyWorld(null), managePopup)
                     );
 
                     toolbar.addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managePopupMenuItem ->

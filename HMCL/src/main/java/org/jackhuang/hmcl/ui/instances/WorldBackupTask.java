@@ -32,9 +32,7 @@ public final class WorldBackupTask extends Task<Path> {
     @Override
     public void execute() throws Exception {
         boolean needLock = !world.holdsLock();
-        if (needLock)
-            world.lock();
-        try {
+        try (World ignore = needLock ? world.lock() : null) {
             Files.createDirectories(backupsDir);
             String time = LocalDateTime.now().format(WorldBackupsPage.TIME_FORMATTER);
             String baseName = time + "_" + world.getFileName();
@@ -72,9 +70,6 @@ public final class WorldBackupTask extends Task<Path> {
             }
 
             setResult(backupFile);
-        } finally {
-            if (needLock)
-                world.unlock();
         }
     }
 }

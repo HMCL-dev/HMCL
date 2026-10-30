@@ -25,7 +25,7 @@ import java.util.zip.GZIPOutputStream;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @NotNullByDefault
-public final class World {
+public final class World implements AutoCloseable {
     final Path file;
     final WorldManager worldManager;
     private final String fileName;
@@ -213,32 +213,36 @@ public final class World {
         return file.resolve("session.lock");
     }
 
-    public void lock() throws WorldLockedException {
+    public @Nullable World tryLock() {
+        if (worldLock != null)
+            return this;
         Path lockFile = getLockFile();
         FileChannel channel = null;
         try {
             channel = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
             channel.write(ByteBuffer.wrap("\u2603".getBytes(StandardCharsets.UTF_8)));
             channel.force(true);
-            if (channel.tryLock() == null) {
-                IOUtils.closeQuietly(channel);
-                throw new WorldLockedException("The world " + getFile() + " has been locked");
-            } else
+            if (channel.tryLock() != null) {
                 worldLock = channel;
-        } catch (IOException e) {
-            IOUtils.closeQuietly(channel);
-            throw new WorldLockedException(e);
+                return this;
+            }
+        } catch (IOException ignored) {
         }
+        IOUtils.closeQuietly(channel);
+        return null;
     }
 
-    public void unlock() throws IOException {
-        if (worldLock == null)
-            return;
-        try {
-            worldLock.close();
-        } finally {
-            worldLock = null;
-        }
+    public World lock() throws WorldLockedException {
+        World w = tryLock();
+        if (w == null)
+            throw new WorldLockedException("The world " + getFile() + " has been locked");
+        return w;
+    }
+
+    @Override
+    public void close() {
+        IOUtils.closeQuietly(worldLock);
+        worldLock = null;
     }
 
     public boolean holdsLock() {
@@ -246,7 +250,7 @@ public final class World {
     }
 
     public boolean isLocked() {
-        if (holdsLock())
+        if (worldLock != null)
             return true;
         Path lockFile = getLockFile();
         try (FileChannel fileChannel = FileChannel.open(lockFile, StandardOpenOption.WRITE)) {
@@ -268,6 +272,8 @@ public final class World {
     }
 
     public void export(Path zip, String worldName) throws IOException {
+        if (isLocked())
+            throw new WorldLockedException("The world " + getFile() + " has been locked");
         try (Zipper zipper = new Zipper(zip)) {
             zipper.putDirectory(file, worldName);
         }
