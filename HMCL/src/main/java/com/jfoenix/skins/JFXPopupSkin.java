@@ -73,7 +73,8 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
         control.setY(control.getY() + (vAlign == PopupVPosition.BOTTOM ? -container.getHeight() + offsetY : offsetY));
     }
 
-    public final void animate() {
+    /// Starts opening; subclasses may suppress it while closing.
+    public void animate() {
         if (animation != null) {
             if (animation.getStatus() == Status.STOPPED) {
                 container.setOpacity(1);
