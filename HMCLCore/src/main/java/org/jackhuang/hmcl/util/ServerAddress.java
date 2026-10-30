@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -18,22 +16,8 @@ public record ServerAddress(
         Map<String, String> queryProperties
 ) {
 
-    private static final int DEFAULT_SERVER_PORT = 25565;
-
-    public ServerAddress(@NotNull String host) {
-        this(host, DEFAULT_SERVER_PORT);
-    }
-
-    private static IllegalArgumentException illegalAddress(String address) {
-        return new IllegalArgumentException("Invalid server address: " + address);
-    }
-
-    public ServerAddress(@NotNull String host, int port) {
-        this(new HostAndPort(host, port), new LinkedHashMap<>());
-    }
-
     /**
-     * @throws IllegalArgumentException if the input is not a valid server address
+     * @throws IllegalArgumentException if the raw is not a valid server address
      */
     public static @NotNull ServerAddress parse(@NotNull final String raw) {
         String input = raw;
@@ -46,21 +30,11 @@ public record ServerAddress(
             int queryStart = input.lastIndexOf('?');
             if (queryStart != -1) {
                 String queryPropertyStr = input.substring(queryStart + 1);
-                String[] args = queryPropertyStr.split("&");
-                for (String arg : args) {
-                    int separator = arg.indexOf('=');
 
-                    String key;
-                    String value;
-                    if (separator >= 0) {
-                        key = URLDecoder.decode(arg.substring(0, separator), StandardCharsets.UTF_8);
-                        value = URLDecoder.decode(arg.substring(separator + 1), StandardCharsets.UTF_8);
-                    } else {
-                        key = URLDecoder.decode(arg, StandardCharsets.UTF_8);
-                        value = "";
-                    }
-                    queryProperties.put(key, value);
+                for (Pair<String, String> pair : NetworkUtils.parseQuery(queryPropertyStr, true)) {
+                    queryProperties.put(pair.key(), pair.value() == null ? "" : pair.value());
                 }
+
                 input = input.substring(0, queryStart);
             }
             int atEnd = input.indexOf('@');
@@ -76,27 +50,11 @@ public record ServerAddress(
     }
 
     public String toServerIp(boolean containQueryArgs) {
-        StringBuilder sb = new StringBuilder(hostAndPort.toString());
         if (containQueryArgs) {
             if (!queryProperties.isEmpty()) {
-                StringBuilder queryArgBuilder = new StringBuilder();
-                boolean first = true;
-
-                for (Map.Entry<String, String> entry : queryProperties.entrySet()) {
-                    String key = entry.getKey();
-                    if (!first) {
-                        queryArgBuilder.append("&");
-                    }
-                    first = false;
-
-                    queryArgBuilder.append(URLEncoder.encode(key, StandardCharsets.UTF_8));
-                    queryArgBuilder.append("=");
-                    queryArgBuilder.append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
-                }
-                sb.append("?");
-                sb.append(queryArgBuilder);
+                return NetworkUtils.withQuery(hostAndPort.toString(), queryProperties);
             }
         }
-        return sb.toString();
+        return hostAndPort.toString();
     }
 }

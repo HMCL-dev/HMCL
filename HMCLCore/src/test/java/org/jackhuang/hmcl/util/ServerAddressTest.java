@@ -28,6 +28,15 @@ public final class ServerAddressTest {
                 ServerAddress.parse("testId@example.com"));
         assertEquals(new ServerAddress(new HostAndPort("example.com", 25565), Map.of("k", "v", "x", "1")),
                 ServerAddress.parse("example.com?x=1&k=v"));
+
+        ServerAddress badAddress = ServerAddress.parse("overwrite@example.com:12345?_id=serverId&badArg1&badArg2&badArg3=badValue1=badValue2=badValue3&=&&&");
+        assertEquals(new ServerAddress(new HostAndPort("example.com", 12345), Map.of(
+                "_id", "overwrite",
+                "badArg1", "",
+                "badArg2", "",
+                "badArg3", "badValue1=badValue2=badValue3",
+                "", ""
+        )), badAddress);
     }
 
     @Test
