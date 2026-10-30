@@ -15,13 +15,12 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class WorldManager {
-    private final ReentrantLock lock = new ReentrantLock();
+    private final Object lock = new Object();
     private final Set<World> localFiles = new LinkedHashSet<>();
     private final Path savesDirectory;
     private boolean loaded = false;
@@ -58,8 +57,7 @@ public final class WorldManager {
     }
 
     public void refresh() throws IOException {
-        lock.lock();
-        try {
+        synchronized (lock) {
             localFiles.clear();
 
             if (Files.isDirectory(savesDirectory)) {
@@ -74,8 +72,6 @@ public final class WorldManager {
                 }
             }
             loaded = true;
-        } finally {
-            lock.unlock();
         }
     }
 
@@ -84,19 +80,15 @@ public final class WorldManager {
     }
 
     public @Unmodifiable List<World> getLocalFiles() throws IOException {
-        lock.lock();
-        try {
+        synchronized (lock) {
             if (!loaded)
                 refresh();
             return localFiles.stream().sorted(getComparator()).toList();
-        } finally {
-            lock.unlock();
         }
     }
 
     public void install(Path worldZip, String newName) throws IOException {
-        lock.lock();
-        try {
+        synchronized (lock) {
             if (!loaded)
                 refresh();
             Files.createDirectories(savesDirectory);
@@ -112,14 +104,11 @@ public final class WorldManager {
             World world = new World(this, worldDir);
             world.setWorldName(newName);
             localFiles.add(world);
-        } finally {
-            lock.unlock();
         }
     }
 
     public void copy(World world, String newName) throws IOException {
-        lock.lock();
-        try {
+        synchronized (lock) {
             if (world.isLocked())
                 throw new WorldLockedException("The world " + world.getFile() + " has been locked");
             Path newPath = world.file.resolveSibling(newName);
@@ -127,21 +116,16 @@ public final class WorldManager {
             World w = new World(this, newPath);
             w.setWorldName(newName);
             localFiles.add(w);
-        } finally {
-            lock.unlock();
         }
     }
 
     public boolean delete(World world) throws IOException {
-        lock.lock();
-        try {
+        synchronized (lock) {
             if (world.worldManager != this)
                 return false;
             world.delete();
             localFiles.remove(world);
             return true;
-        } finally {
-            lock.unlock();
         }
     }
 
