@@ -498,8 +498,14 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public static long getAutoAllocatedMemory(PhysicalMemoryStatus memoryStatus, Platform platform) {
-        long minMemory = 256 * 1024 * 1024; // 256 MiB
-        long maxMemory = 24L * 1024 * 1024 * 1024; // 24 GiB
+        final long minMemory = 256 * 1024 * 1024; // 256 MiB
+        final long maxMemory = 24L * 1024 * 1024 * 1024; // 24 GiB
+
+        // Reserve memory for off-heap memory and HMCL itself
+        final long reserved = 512 * 1024 * 1024; // 256 MiB
+
+        final long threshold1 = 8L * 1024 * 1024 * 1024;  // 8 GiB
+        final long threshold2 = 16L * 1024 * 1024 * 1024; // 16 GiB
 
         if (memoryStatus.total() <= minMemory || memoryStatus.available() <= 0) {
             return minMemory;
@@ -507,20 +513,16 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         long base;
         if (memoryStatus.available() < memoryStatus.total()) {
+            // Avoid allocating too little memory when the user's memory usage is extremely high
             base = Math.min(
-                    (long) (memoryStatus.total() * 0.5 + memoryStatus.available() * 0.5),
+                    (long) (memoryStatus.total() * 0.05 + memoryStatus.available() * 0.95),
                     memoryStatus.total());
         } else {
             base = memoryStatus.available();
         }
 
-        long usable = base - 512 * 1024 * 1024; // Reserve 512 MiB memory for off-heap memory and HMCL itself
-        if (usable <= 0) {
-            return base;
-        }
 
-        final long threshold1 = 8L * 1024 * 1024 * 1024;  // 8 GiB
-        final long threshold2 = 16L * 1024 * 1024 * 1024; // 16 GiB
+        final long usable = Math.max(base - reserved, 0);
 
         long suggested;
         if (usable <= threshold1)
