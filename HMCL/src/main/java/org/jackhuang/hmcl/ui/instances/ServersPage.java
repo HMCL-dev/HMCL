@@ -797,7 +797,7 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
                 List<String> tags = new ArrayList<>();
                 for (HMCLGameInstance checkInstance : item.holdInstances) {
                     if (checkInstance.equals(gameInstance)) {
-                        tags.addFirst(i18n("server.tag.hold.current"));
+                        tags.add(0, i18n("server.tag.hold.current"));
                     } else {
                         tags.add(checkInstance.getId().id());
                     }

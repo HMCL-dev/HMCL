@@ -120,7 +120,7 @@ class ServersDatFileTest {
         assertEquals(1, dat.getEntries().size());
         assertNotEquals("", dat.getCurrentFileHash());
 
-        Server s = dat.getEntries().getFirst().getServer();
+        Server s = dat.getEntries().get(0).getServer();
         assertEquals(Server.ServerPackStatus.ENABLED, s.getServerPackStatus());
         assertEquals("AAAAA", s.getIcon());
         assertEquals("mc.example.com", s.getIp());
@@ -140,7 +140,7 @@ class ServersDatFileTest {
         writeRoot(file, root);
 
         ServersDatFile dat = new ServersDatFile(file);
-        Server s = dat.getEntries().getFirst().getServer();
+        Server s = dat.getEntries().get(0).getServer();
         assertEquals(Server.ServerPackStatus.PROMPT, s.getServerPackStatus());
         assertNull(s.getIcon());
         assertEquals("x", s.getIp());
@@ -162,11 +162,11 @@ class ServersDatFileTest {
         assertEquals(1, dat1.getEntries().size());
         assertNotEquals("", dat1.getCurrentFileHash());
 
-        assertEquals(Server.ServerPackStatus.ENABLED, dat1.getEntries().getFirst().getServer().getServerPackStatus());
-        dat1.getEntries().getFirst().modify(server1 -> server1.withServerPackStatus(Server.ServerPackStatus.DISABLED));
-        assertEquals(Server.ServerPackStatus.DISABLED, dat1.getEntries().getFirst().getServer().getServerPackStatus());
+        assertEquals(Server.ServerPackStatus.ENABLED, dat1.getEntries().get(0).getServer().getServerPackStatus());
+        dat1.getEntries().get(0).modify(server1 -> server1.withServerPackStatus(Server.ServerPackStatus.DISABLED));
+        assertEquals(Server.ServerPackStatus.DISABLED, dat1.getEntries().get(0).getServer().getServerPackStatus());
 
-        dat1.getEntries().getFirst().delete();
+        dat1.getEntries().get(0).delete();
         assertTrue(dat1.getEntries().isEmpty());
     }
 
@@ -205,12 +205,12 @@ class ServersDatFileTest {
         assertEquals(1, dat1.getEntries().size());
 
         assertThrows(ServersDatFile.FileModifiedExternalException.class, () ->
-                dat1.getEntries().getFirst().delete()
+                dat1.getEntries().get(0).delete()
         );
         assertEquals(1, dat1.getEntries().size());
 
         assertThrows(ServersDatFile.FileModifiedExternalException.class, () ->
-                dat1.getEntries().getFirst().modify(server -> server.withIp("server.new.ip").withName("server new name"))
+                dat1.getEntries().get(0).modify(server -> server.withIp("server.new.ip").withName("server new name"))
         );
         assertEquals(1, dat1.getEntries().size());
     }
@@ -233,7 +233,7 @@ class ServersDatFileTest {
         ServersDatFile dat = new ServersDatFile(file);
         dat.addServer(server(Server.ServerPackStatus.PROMPT, null, "a", "A"));
 
-        ServersDatFile.ServerEntry entry = dat.getEntries().getFirst();
+        ServersDatFile.ServerEntry entry = dat.getEntries().get(0);
         Server before = entry.getServer();
 
         appendGarbage(file);
@@ -253,7 +253,7 @@ class ServersDatFileTest {
         dat1.addServer(server(Server.ServerPackStatus.ENABLED, "no icon 1", "server.ip 1", "server name 1"));
         dat1.addServer(server(Server.ServerPackStatus.ENABLED, "no icon 2", "server.ip 2", "server name 2"));
 
-        ServersDatFile.ServerEntry last = dat1.getEntries().getLast();
+        ServersDatFile.ServerEntry last = dat1.getEntries().get(dat1.getEntries().size() - 1);
         last.delete();
 
         assertEquals(1, dat1.getEntries().size());
@@ -273,7 +273,7 @@ class ServersDatFileTest {
 
         ServersDatFile reader = new ServersDatFile(file);
         assertEquals(1, reader.getEntries().size());
-        Server s = reader.getEntries().getFirst().getServer();
+        Server s = reader.getEntries().get(0).getServer();
         assertEquals(Server.ServerPackStatus.ENABLED, s.getServerPackStatus());
         assertEquals("i", s.getIcon());
         assertEquals("ip", s.getIp());
