@@ -200,12 +200,12 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 getSkinnable().tabController.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab);
                 getSkinnable().tabController.selectTab(getSkinnable().worldInfoTab);
 
-                tabBar.addNavigationDrawerTab(getSkinnable().tabController, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
-                        .addNavigationDrawerTab(getSkinnable().tabController, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
+                tabBar.addNavigationDrawerTab(getSkinnable().tabController, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL, false)
+                        .addNavigationDrawerTab(getSkinnable().tabController, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL, false);
 
                 if (getSkinnable().world.supportDataPacks()) {
                     getSkinnable().tabController.getTabs().add(getSkinnable().dataPackTab);
-                    tabBar.addNavigationDrawerTab(getSkinnable().tabController, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
+                    tabBar.addNavigationDrawerTab(getSkinnable().tabController, getSkinnable().dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL, false);
                 }
             }
 
