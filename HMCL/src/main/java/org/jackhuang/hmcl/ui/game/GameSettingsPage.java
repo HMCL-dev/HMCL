@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.ui.instances.GameInstanceIconDialog;
 import org.jackhuang.hmcl.ui.instances.GameInstancePage;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -511,7 +512,16 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                 var noneOption = new RadioChoiceList.Choice<>(i18n("settings.game.quick_play.none"), QuickPlayType.NONE);
 
                 var multiplayerTextField = new JFXTextField();
-                multiplayerTextField.setValidators(new MinecraftServerAddressValidator(null, true));
+                multiplayerTextField.setValidators(new Validator(str -> {
+                    if (StringUtils.isBlank(str))
+                        return true;
+                    try {
+                        ServerAddress.parse(str);
+                        return true;
+                    } catch (Exception ignored) {
+                        return false;
+                    }
+                }));
                 FXUtils.setValidateWhileTextChanged(multiplayerTextField, true);
                 @Nullable JFXButton multiplayerInheritanceButton = !isPresetSetting ? createInheritanceButton() : null;
                 var multiplayerOption = new EditorChoice<>(
