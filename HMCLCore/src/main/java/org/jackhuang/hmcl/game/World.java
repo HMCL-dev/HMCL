@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
@@ -43,6 +43,21 @@ public final class World implements AutoCloseable {
         reloadWorldData();
     }
 
+    static @Nullable Image loadIcon(Path root) {
+        Path iconFile = root.resolve("icon.png");
+        @Nullable Image icon = null;
+        if (Files.isRegularFile(iconFile)) {
+            try (InputStream inputStream = Files.newInputStream(iconFile)) {
+                icon = new Image(inputStream, 64, 64, true, false);
+                if (icon.isError())
+                    throw icon.getException();
+            } catch (Exception e) {
+                LOG.warning("Failed to load world icon", e);
+            }
+        }
+        return icon;
+    }
+
     static LevelData resolveLevelData(Path root, String missingLevelDataMessage) throws IOException {
         Path levelDataPath = root.resolve("level.dat");
         if (!Files.exists(levelDataPath)) { // version 20w14infinite
@@ -64,51 +79,29 @@ public final class World implements AutoCloseable {
         return new LevelData(data, levelName, lastPlayed, levelData, levelDataPath);
     }
 
-    static @Nullable Image loadIcon(Path root) {
-        Path iconFile = root.resolve("icon.png");
-        @Nullable Image icon = null;
-        if (Files.isRegularFile(iconFile)) {
-            try (InputStream inputStream = Files.newInputStream(iconFile)) {
-                icon = new Image(inputStream, 64, 64, true, false);
-                if (icon.isError())
-                    throw icon.getException();
-            } catch (Exception e) {
-                LOG.warning("Failed to load world icon", e);
-            }
-        }
-        return icon;
-    }
-
     public Path getFile() {
         return file;
-    }
-
-    public boolean supportDataPacks() {
-        return getGameVersion() != null && getGameVersion().isAtLeast("1.13", "17w43a");
-    }
-
-    public String getWorldName() {
-        return levelData.levelName.get();
     }
 
     public String getFileName() {
         return fileName;
     }
 
-    public @Nullable Image getIcon() {
-        return icon;
+    public String getWorldName() {
+        return levelData.levelName.get();
+    }
+
+    public void setWorldName(String worldName) throws IOException {
+        levelData.levelName().setValue(worldName);
+        writeTag(levelData.rootTag(), levelData.file());
+    }
+
+    public Path getLockFile() {
+        return file.resolve("session.lock");
     }
 
     public LevelData getLevelData() {
         return levelData;
-    }
-
-    public @Nullable GameVersionNumber getGameVersion() {
-        return levelData.getGameVersion();
-    }
-
-    public long getLastPlayed() {
-        return levelData.lastPlayed.get();
     }
 
     public @Nullable CompoundTag getNormalizedWorldGenSettingsData() {
@@ -117,6 +110,14 @@ public final class World implements AutoCloseable {
 
     public @Nullable CompoundTag getPlayerData() {
         return playerData.data;
+    }
+
+    public long getLastPlayed() {
+        return levelData.lastPlayed.get();
+    }
+
+    public @Nullable GameVersionNumber getGameVersion() {
+        return levelData.getGameVersion();
     }
 
     public @Nullable Long getSeed() {
@@ -156,6 +157,14 @@ public final class World implements AutoCloseable {
         return false;
     }
 
+    public @Nullable Image getIcon() {
+        return icon;
+    }
+
+    public boolean supportDataPacks() {
+        return getGameVersion() != null && getGameVersion().isAtLeast("1.13", "17w43a");
+    }
+
     public void reloadWorldData() throws IOException {
         levelData = resolveLevelData(file, "Not a valid world directory since level.dat or special_level.dat cannot be found.");
 
@@ -188,29 +197,24 @@ public final class World implements AutoCloseable {
         }
     }
 
+    public void delete() throws IOException {
+        if (isLocked())
+            throw new WorldLockedException("The world " + getFile() + " has been locked");
+        FileUtils.deleteDirectory(file);
+    }
+
+    public void export(Path zip, String worldName) throws IOException {
+        if (isLocked())
+            throw new WorldLockedException("The world " + getFile() + " has been locked");
+        try (Zipper zipper = new Zipper(zip)) {
+            zipper.putDirectory(file, worldName);
+        }
+    }
+
     public void writeWorldData() throws IOException {
         writeTag(levelData.rootTag(), levelData.file());
         writeTag(worldGenSettingsData.back, worldGenSettingsData.file);
         writeTag(playerData.data, playerData.file);
-    }
-
-    public void setWorldName(String worldName) throws IOException {
-        levelData.levelName().setValue(worldName);
-        writeTag(levelData.rootTag(), levelData.file());
-    }
-
-    private void writeTag(@Nullable CompoundTag nbt, @Nullable Path path) throws IOException {
-        if (nbt == null || path == null)
-            return;
-        FileUtils.saveSafely(path, os -> {
-            try (OutputStream gos = new GZIPOutputStream(os)) {
-                NBTCodec.of().writeTag(gos, nbt);
-            }
-        });
-    }
-
-    public Path getLockFile() {
-        return file.resolve("session.lock");
     }
 
     public @Nullable World tryLock() {
@@ -249,6 +253,16 @@ public final class World implements AutoCloseable {
         return worldLock != null;
     }
 
+    private void writeTag(@Nullable CompoundTag nbt, @Nullable Path path) throws IOException {
+        if (nbt == null || path == null)
+            return;
+        FileUtils.saveSafely(path, os -> {
+            try (OutputStream gos = new GZIPOutputStream(os)) {
+                NBTCodec.of().writeTag(gos, nbt);
+            }
+        });
+    }
+
     public boolean isLocked() {
         if (worldLock != null)
             return true;
@@ -262,20 +276,6 @@ public final class World implements AutoCloseable {
         } catch (IOException e) {
             LOG.warning("Failed to open the lock file " + lockFile, e);
             return false;
-        }
-    }
-
-    public void delete() throws IOException {
-        if (isLocked())
-            throw new WorldLockedException("The world " + getFile() + " has been locked");
-        FileUtils.deleteDirectory(file);
-    }
-
-    public void export(Path zip, String worldName) throws IOException {
-        if (isLocked())
-            throw new WorldLockedException("The world " + getFile() + " has been locked");
-        try (Zipper zipper = new Zipper(zip)) {
-            zipper.putDirectory(file, worldName);
         }
     }
 
