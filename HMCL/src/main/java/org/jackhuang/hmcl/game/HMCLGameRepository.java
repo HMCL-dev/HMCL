@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -496,23 +497,46 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public static long getAutoAllocatedMemory(long available, Platform platform) {
-        long usable = available - 512 * 1024 * 1024; // Reserve 512 MiB memory for off-heap memory and HMCL itself
-        if (usable <= 0) {
-            return available;
+    public static long getAutoAllocatedMemory(PhysicalMemoryStatus memoryStatus, Platform platform) {
+        long minMemory = 256 * 1024 * 1024; // 256 MiB
+        long maxMemory = 24L * 1024 * 1024 * 1024; // 24 GiB
+
+        if (memoryStatus.total() <= minMemory || memoryStatus.available() <= 0) {
+            return minMemory;
         }
 
-        final long threshold = 8L * 1024 * 1024 * 1024; // 8 GiB
-        final long suggested;
-        if (usable <= threshold)
+        long base;
+        if (memoryStatus.available() < memoryStatus.total()) {
+            base = Math.min(
+                    (long) (memoryStatus.total() * 0.5 + memoryStatus.available() * 0.5),
+                    memoryStatus.total());
+        } else {
+            base = memoryStatus.available();
+        }
+
+        long usable = base - 512 * 1024 * 1024; // Reserve 512 MiB memory for off-heap memory and HMCL itself
+        if (usable <= 0) {
+            return base;
+        }
+
+        final long threshold1 = 8L * 1024 * 1024 * 1024;  // 8 GiB
+        final long threshold2 = 16L * 1024 * 1024 * 1024; // 16 GiB
+
+        long suggested;
+        if (usable <= threshold1)
             suggested = (long) (usable * 0.8);
+        else if (usable <= threshold2)
+            suggested = (long) (threshold1 * 0.8 + (usable - threshold1) * 0.4);
         else
             suggested = Math.min(
-                    (long) (threshold * 0.8 + (usable - threshold) * 0.2),
-                    16L * 1024 * 1024 * 1024);
-        return platform.getBits() == Bits.BIT_32
-                ? Math.min(suggested, 768 * 1024 * 1024) // https://github.com/HMCL-dev/HMCL/issues/6638
-                : suggested;
+                    (long) (threshold1 * 0.8 + threshold2 * 0.4 + (usable - threshold2) * 0.2),
+                    maxMemory
+            );
+
+        if (platform.getBits() == Bits.BIT_32)
+            suggested = Math.min(suggested, 768 * 1024 * 1024);
+
+        return Math.max(suggested, minMemory);
     }
 
 }
