@@ -501,7 +501,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public static long getAutoAllocatedMemory(PhysicalMemoryStatus memoryStatus, Platform platform) {
         final long minMemory = 128 * 1024 * 1024; // 128 MiB
         final long maxMemory = platform.getBits() == Bits.BIT_32
-                //
+                // https://github.com/HMCL-dev/HMCL/issues/6638
                 ? 768 * 1024 * 1024 // 768 MiB
                 : 24L * 1024 * 1024 * 1024; // 24 GiB
 
