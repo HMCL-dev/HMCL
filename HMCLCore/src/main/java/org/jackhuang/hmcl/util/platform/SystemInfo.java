@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.DataSizeUnit;
@@ -25,15 +10,21 @@ import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
 import org.jackhuang.hmcl.util.platform.windows.*;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Provides cached hardware information and current physical memory usage.
+@NotNullByDefault
 public final class SystemInfo {
 
+    /// Lazily initializes the platform detector and cached hardware information.
     private static final class Holder {
+
+        /// The hardware detector for the current operating system.
         public static final HardwareDetector DETECTOR;
 
         static {
@@ -47,31 +38,39 @@ public final class SystemInfo {
                 DETECTOR = new HardwareDetector();
         }
 
+        /// The detected total physical memory size, in bytes.
         public static final long TOTAL_MEMORY = DETECTOR.getTotalMemorySize();
-        public static final @Nullable CentralProcessor CENTRAL_PROCESSOR = DETECTOR.detectCentralProcessor();
-        public static final @Nullable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
+
+        /// A nonempty immutable processor snapshot supplied by the detector.
+        public static final @Unmodifiable List<CentralProcessor> CENTRAL_PROCESSORS = DETECTOR.detectCentralProcessors();
+
+        /// The immutable graphics card snapshot, empty if detection is unavailable or fails.
+        public static final @Unmodifiable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
     }
 
+    /// Initializes cached hardware information if needed and logs a system summary on each call.
     public static void initialize() {
         StringBuilder builder = new StringBuilder("System Info:");
 
         // CPU
-        CentralProcessor cpu = getCentralProcessor();
-        if (cpu != null)
-            builder.append("\n - CPU: ").append(cpu);
+        @Unmodifiable List<CentralProcessor> processors = getCentralProcessors();
+        for (int i = 0; i < processors.size(); i++) {
+            builder.append("\n - CPU");
+            if (processors.size() > 1)
+                builder.append(' ').append(i + 1);
+            builder.append(": ").append(processors.get(i));
+        }
 
         // Graphics Card
-        List<GraphicsCard> graphicsCards = getGraphicsCards();
-        if (graphicsCards != null) {
-            if (graphicsCards.isEmpty())
-                builder.append("\n - GPU: Not Found");
-            else if (graphicsCards.size() == 1)
-                builder.append("\n - GPU: ").append(graphicsCards.get(0));
-            else {
-                int index = 1;
-                for (GraphicsCard graphicsCard : graphicsCards) {
-                    builder.append("\n - GPU ").append(index++).append(": ").append(graphicsCard);
-                }
+        @Unmodifiable List<GraphicsCard> graphicsCards = getGraphicsCards();
+        if (graphicsCards.isEmpty())
+            builder.append("\n - GPU: Not Found");
+        else if (graphicsCards.size() == 1)
+            builder.append("\n - GPU: ").append(graphicsCards.get(0));
+        else {
+            int index = 1;
+            for (GraphicsCard graphicsCard : graphicsCards) {
+                builder.append("\n - GPU ").append(index++).append(": ").append(graphicsCard);
             }
         }
 
@@ -90,6 +89,9 @@ public final class SystemInfo {
         LOG.info(builder.toString());
     }
 
+    /// Returns a snapshot using the cached total and currently available physical memory.
+    ///
+    /// Returns [PhysicalMemoryStatus#INVALID] if the total is non-positive or available memory is negative.
     public static PhysicalMemoryStatus getPhysicalMemoryStatus() {
         long totalMemorySize = getTotalMemorySize();
         long freeMemorySize = getFreeMemorySize();
@@ -99,14 +101,21 @@ public final class SystemInfo {
                 : PhysicalMemoryStatus.INVALID;
     }
 
+    /// Returns the cached total physical memory size in bytes, or zero if detection is unsupported.
     public static long getTotalMemorySize() {
         return Holder.TOTAL_MEMORY;
     }
 
+    /// Queries the available physical memory in bytes, including reclaimable memory where supported.
+    ///
+    /// Returns zero if detection is unsupported.
     public static long getFreeMemorySize() {
         return Holder.DETECTOR.getFreeMemorySize();
     }
 
+    /// Returns the cached total minus the currently available physical memory, in bytes, clamped to zero.
+    ///
+    /// Returns zero without querying available memory if the cached total is non-positive.
     public static long getUsedMemorySize() {
         long totalMemorySize = getTotalMemorySize();
         if (totalMemorySize <= 0)
@@ -115,14 +124,22 @@ public final class SystemInfo {
         return Long.max(0, totalMemorySize - getFreeMemorySize());
     }
 
-    public static @Nullable CentralProcessor getCentralProcessor() {
-        return Holder.CENTRAL_PROCESSOR;
+    /// Returns a nonempty immutable list of processor snapshots in stable order.
+    ///
+    /// Sources without package topology may provide only the first processor identity.
+    /// If detection returns no processors, a synthetic `Unknown` processor with no vendor is supplied.
+    /// For a single entry with no core counts, logical and performance counts use [Runtime#availableProcessors()].
+    /// These display estimates do not establish the hardware's physical core count or package topology.
+    public static @Unmodifiable List<CentralProcessor> getCentralProcessors() {
+        return Holder.CENTRAL_PROCESSORS;
     }
 
-    public static @Nullable List<GraphicsCard> getGraphicsCards() {
+    /// Returns the cached immutable graphics card list, empty if no cards were reported or detection failed.
+    public static @Unmodifiable List<GraphicsCard> getGraphicsCards() {
         return Holder.GRAPHICS_CARDS;
     }
 
+    /// Prevents instantiation of this utility class.
     private SystemInfo() {
     }
 }

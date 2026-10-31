@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.TypeAdapter;
@@ -331,79 +316,76 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     supported.addAll(List.of(LAVAPIPE, DOZEN));
 
-                    List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
-                    if (graphicsCards != null) {
-                        EnumSet<Vulkan> foundSupported = EnumSet.noneOf(Vulkan.class);
-                        for (GraphicsCard card : graphicsCards) {
-                            if (!card.getVulkanDriverFiles().isEmpty()) {
-                                for (Path icdFile : card.getVulkanDriverFiles()) {
-                                    String fileName = FileUtils.getName(icdFile);
-                                    if (!fileName.endsWith(".json"))
-                                        continue;
+                    EnumSet<Vulkan> foundSupported = EnumSet.noneOf(Vulkan.class);
+                    for (GraphicsCard card : SystemInfo.getGraphicsCards()) {
+                        if (!card.getVulkanDriverFiles().isEmpty()) {
+                            for (Path icdFile : card.getVulkanDriverFiles()) {
+                                String fileName = FileUtils.getName(icdFile);
+                                if (!fileName.endsWith(".json"))
+                                    continue;
 
-                                    Vulkan driver;
+                                Vulkan driver;
 
-                                    Matcher matcher = icdFileNamePattern.matcher(fileName);
-                                    if (matcher.matches()) {
-                                        String icdName = matcher.group("name");
-                                        driver = icdNameToDriver.get(icdName);
-                                    } else {
-                                        switch (fileName.substring(0, fileName.length() - ".json".length())) {
-                                            case "igvk64" -> {
-                                                if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_64)
-                                                    driver = INTEL_VULKAN;
-                                                else
-                                                    continue;
-                                            }
-                                            case "igvk32" -> {
-                                                if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
-                                                    driver = INTEL_VULKAN;
-                                                else
-                                                    continue;
-                                            }
-                                            case "nv-vk64" -> {
-                                                if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_64)
-                                                    driver = NVIDIA_VULKAN;
-                                                else
-                                                    continue;
-                                            }
-                                            case "nv-vk32" -> {
-                                                if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
-                                                    driver = NVIDIA_VULKAN;
-                                                else
-                                                    continue;
-                                            }
-                                            case "amd-vulkan64" -> {
-                                                if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_64)
-                                                    driver = AMDVLK;
-                                                else
-                                                    continue;
-                                            }
-                                            case "amd-vulkan32" -> {
-                                                if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
-                                                    driver = AMDVLK;
-                                                else
-                                                    continue;
-                                            }
-                                            case "qcvk_icd_arm64x" -> {
-                                                if (Architecture.SYSTEM_ARCH == Architecture.ARM64)
-                                                    driver = QUALCOMM;
-                                                else
-                                                    continue;
-                                            }
-                                            default -> {
+                                Matcher matcher = icdFileNamePattern.matcher(fileName);
+                                if (matcher.matches()) {
+                                    String icdName = matcher.group("name");
+                                    driver = icdNameToDriver.get(icdName);
+                                } else {
+                                    switch (fileName.substring(0, fileName.length() - ".json".length())) {
+                                        case "igvk64" -> {
+                                            if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_64)
+                                                driver = INTEL_VULKAN;
+                                            else
                                                 continue;
-                                            }
+                                        }
+                                        case "igvk32" -> {
+                                            if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
+                                                driver = INTEL_VULKAN;
+                                            else
+                                                continue;
+                                        }
+                                        case "nv-vk64" -> {
+                                            if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_64)
+                                                driver = NVIDIA_VULKAN;
+                                            else
+                                                continue;
+                                        }
+                                        case "nv-vk32" -> {
+                                            if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
+                                                driver = NVIDIA_VULKAN;
+                                            else
+                                                continue;
+                                        }
+                                        case "amd-vulkan64" -> {
+                                            if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_64)
+                                                driver = AMDVLK;
+                                            else
+                                                continue;
+                                        }
+                                        case "amd-vulkan32" -> {
+                                            if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
+                                                driver = AMDVLK;
+                                            else
+                                                continue;
+                                        }
+                                        case "qcvk_icd_arm64x" -> {
+                                            if (Architecture.SYSTEM_ARCH == Architecture.ARM64)
+                                                driver = QUALCOMM;
+                                            else
+                                                continue;
+                                        }
+                                        default -> {
+                                            continue;
                                         }
                                     }
-
-                                    driverToIcdFile.putIfAbsent(driver, icdFile);
-                                    foundSupported.add(driver);
                                 }
+
+                                driverToIcdFile.putIfAbsent(driver, icdFile);
+                                foundSupported.add(driver);
                             }
                         }
-                        supported.addAll(foundSupported);
                     }
+                    supported.addAll(foundSupported);
 
                 } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                     // LWJGL integrates MoltenVK, so it is always available

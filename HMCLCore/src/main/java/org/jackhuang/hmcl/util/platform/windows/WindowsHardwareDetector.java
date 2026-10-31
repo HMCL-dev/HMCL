@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform.windows;
 
 import org.jackhuang.hmcl.util.platform.NativeUtils;
@@ -22,28 +7,31 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * @author Glavo
- */
+/// Detects Windows hardware information.
+///
+/// @author Glavo
+@NotNullByDefault
 public final class WindowsHardwareDetector extends HardwareDetector {
 
+    /// Detects Windows processors, using the default detector when native information is unavailable.
     @Override
-    public @Nullable CentralProcessor detectCentralProcessor() {
-        if (!OperatingSystem.isWindows7OrLater())
-            return null;
-        return WindowsCPUDetector.detect();
+    public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
+        @Unmodifiable List<CentralProcessor> processors = OperatingSystem.isWindows7OrLater() ? WindowsCPUDetector.detect() : List.of();
+        return processors.isEmpty() ? super.detectCentralProcessors() : processors;
     }
 
+    /// Returns an immutable graphics card list, empty if detection is unsupported or fails.
     @Override
-    public List<GraphicsCard> detectGraphicsCards() {
+    public @Unmodifiable List<GraphicsCard> detectGraphicsCards() {
         if (!OperatingSystem.isWindows7OrLater())
-            return null;
+            return List.of();
         return WindowsGPUDetector.detect();
     }
 

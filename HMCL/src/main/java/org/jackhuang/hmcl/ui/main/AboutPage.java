@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2022  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2022 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
 import com.google.gson.*;
@@ -36,19 +21,24 @@ import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Displays launcher, system hardware, and project information.
 @NotNullByDefault
 public final class AboutPage extends SpinnerPane {
 
+    /// Keeps theme listeners alive while the page is visible.
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
+    /// Builds the page from cached hardware information and bundled project lists.
     public AboutPage() {
         VBox content = new VBox();
         content.getStyleClass().add("spinner-pane-content");
@@ -88,42 +78,62 @@ public final class AboutPage extends SpinnerPane {
                 environment.getContent().add(memory);
             }
 
-            @Nullable CentralProcessor cpu = SystemInfo.getCentralProcessor();
-            if (cpu != null) {
-                String title = i18n("about.environment.cpu");
+            @Unmodifiable List<CentralProcessor> processors = SystemInfo.getCentralProcessors();
+            for (int i = 0; i < processors.size(); i++) {
+                String title = processors.size() == 1
+                        ? i18n("about.environment.cpu")
+                        : i18n("about.environment.cpu.n", i + 1);
+                CentralProcessor processor = processors.get(i);
+                String name = processor.getName();
+                @Nullable CentralProcessor.Cores cores = processor.getCores();
+                String subtitle;
+                if (cores == null)
+                    subtitle = i18n("about.environment.cpu.name", name);
+                else if (cores.efficiency() > 0) {
+                    subtitle = cores.logical() == cores.physical()
+                            ? i18n("about.environment.cpu.name.cores.hybrid", name, cores.performance(), cores.efficiency())
+                            : i18n("about.environment.cpu.name.cores.hybrid.threads", name, cores.performance(), cores.efficiency(), cores.logical());
+                } else {
+                    subtitle = cores.logical() == cores.physical()
+                            ? i18n("about.environment.cpu.name.cores", name, cores.physical())
+                            : i18n("about.environment.cpu.name.cores.threads", name, cores.physical(), cores.logical());
+                }
+
+                var pane = new LinePane();
+                pane.setLargeTitle(true);
+                pane.setTitle(title);
+                pane.setSubtitle(subtitle);
+                pane.setLeading(SVG.LUCIDE_CPU.createIcon(32));
+                environment.getContent().add(pane);
+            }
+
+            @Unmodifiable List<GraphicsCard> visibleGraphicsCards = SystemInfo.getGraphicsCards().stream()
+                    .filter(card -> card.getType() != GraphicsCard.Type.DISPLAY_ONLY && !"Unknown".equals(card.getName()))
+                    .sorted(Comparator.comparing(GraphicsCard::getType))
+                    .toList();
+
+            for (int i = 0; i < visibleGraphicsCards.size(); i++) {
+                GraphicsCard graphicsCard = visibleGraphicsCards.get(i);
+
+                String title = visibleGraphicsCards.size() == 1
+                        ? i18n("about.environment.gpu")
+                        : i18n("about.environment.gpu.n", i + 1);
+
                 var button = new LinePane();
                 button.setLargeTitle(true);
                 button.setTitle(title);
-                button.setSubtitle(cpu.toString());
-                button.setLeading(SVG.LUCIDE_CPU.createIcon(32));
+                button.setSubtitle(graphicsCard.toString());
+
+                button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
 
                 environment.getContent().add(button);
-            }
-
-            @Nullable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
-            if (graphicsCards != null) {
-                int index = 1;
-                for (GraphicsCard graphicsCard : graphicsCards) {
-                    String name = index == 1 && graphicsCards.size() == 1
-                            ? i18n("about.environment.gpu")
-                            : i18n("about.environment.gpu.n", index);
-                    index++;
-                    var button = new LinePane();
-                    button.setLargeTitle(true);
-                    button.setTitle(name);
-                    button.setSubtitle(graphicsCard.getName());
-
-                    button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
-
-                    environment.getContent().add(button);
-                }
             }
 
             var java = new LinePane();
             java.setLargeTitle(true);
             java.setLeading(SVG.LOCAL_CAFE.createIcon(32));
             java.setTitle("Java");
-            java.setSubtitle("%s, %s by %s".formatted(
+            java.setSubtitle("%s, %s, %s".formatted(
                     Runtime.version().toString(),
                     System.getProperty("java.vm.name"),
                     System.getProperty("java.vendor")));
@@ -141,7 +151,7 @@ public final class AboutPage extends SpinnerPane {
 
         ComponentList legal = new ComponentList();
         {
-            var copyright = new LineButton();
+            var copyright = new LinePane();
             copyright.setLargeTitle(true);
             copyright.setTitle(i18n("about.copyright"));
             copyright.setSubtitle(i18n("about.copyright.statement"));
