@@ -36,32 +36,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/// Displays a title, tags, and an optional subtitle between optional leading and trailing nodes.
-/// Both text rows are left-aligned and vertically centered together within this pane.
-/// Side nodes are vertically centered and separated from the text by 12 pixels by default.
-/// They receive their preferred widths, shrinking toward their minimum widths when
-/// necessary to accommodate the text area's minimum width. The title-trailing node receives
-/// its preferred width, then the title receives up to its preferred width. Tags that do
-/// not fit are replaced by a single `+N` tag with a tooltip listing the hidden values.
+/// Displays a title and optional subtitle, tags, and leading or trailing nodes.
+/// The first row contains the title, an optional title-trailing node, and tags.
+/// The subtitle occupies the full text width below it. Both rows are left-aligned
+/// and vertically centered together; side nodes are centered independently.
+/// Wrapping can be configured separately through [#getTitleLabel()] and [#getSubtitleLabel()].
+///
+/// Side nodes receive their preferred widths, shrinking toward their minimum widths
+/// when needed to accommodate the text area's minimum width. [#getSideSpacing()] and
+/// [#setMargin(Node, Insets)] control their separation from the text.
+/// The title-trailing node receives its preferred width. Tags that do not fit after
+/// the title are folded into a `+N` tag whose tooltip lists the hidden values.
 /// The title may shrink below its minimum width to preserve space for this tag.
-/// Without tags, the title's minimum width is respected. On JavaFX 23 or later,
-/// truncated title and subtitle text shows its full value in a tooltip.
-/// Untruncated text and expanded tags are mouse-transparent; truncated text,
-/// the collapsed tag, and optional nodes receive mouse input.
-/// The children list is managed by this component and must not be modified directly.
+/// Without tags, the title's minimum width is respected.
+///
+/// On JavaFX 23 or later, truncated title and subtitle text receives mouse input
+/// to show its full value in a tooltip. Other text and expanded tags are mouse-transparent.
+/// Primary clicks on tooltip targets act as background clicks in the nearest [RipplerContainer].
+///
+/// Only managed nodes participate in layout. Leading, trailing, and title-trailing
+/// nodes are detached while both invisible and unmanaged. A node must not occupy multiple slots.
+/// This component manages its children list; callers must not modify it directly.
 @NotNullByDefault
 public class TwoLineListItem extends Pane {
     /// The default spacing between the text area and each managed side node.
     public static final double SIDE_SPACING = 12;
-
-    /// The spacing between adjacent tags.
-    private static final double TAG_SPACING = 8;
-
-    /// The hover delay used by the application's fast tooltips.
-    private static final Duration TAG_TOOLTIP_SHOW_DELAY = Duration.millis(50);
-
-    /// Selects the warning appearance for rendered tags.
-    private static final PseudoClass WARNING_PSEUDO_CLASS = PseudoClass.getPseudoClass("warning");
 
     /// Sets the margin around a leading or trailing node; null removes the margin.
     /// Uses the same constraint as [HBox#setMargin(Node, Insets)] so a node can retain
@@ -76,10 +75,10 @@ public class TwoLineListItem extends Pane {
     }
 
     /// The primary text label, whose minimum width is respected when no tags are present.
-    private final Label lblTitle = new Label();
+    private final Label titleLabel = new Label();
 
     /// The lazily created subtitle label, attached only while the subtitle is non-null.
-    private @Nullable Label lblSubtitle;
+    private @Nullable Label subtitleLabel;
 
     /// The optional node immediately following the title.
     private @Nullable Node titleTrailing;
@@ -90,11 +89,8 @@ public class TwoLineListItem extends Pane {
     /// The optional trailing-node property, allocated when first requested.
     private @Nullable ObjectProperty<@Nullable Node> trailing;
 
-    /// Observes side-node visibility and layout participation.
-    private final InvalidationListener sideNodeListener = observable -> updateSideNodes();
-
-    /// Observes trailing-node visibility and layout participation.
-    private final InvalidationListener titleTrailingListener = observable -> updateTitleTrailing();
+    /// Updates optional-node attachment when visibility or layout participation changes.
+    private final InvalidationListener optionalNodeListener = observable -> updateOptionalNodes();
 
     /// The gap after the title and its trailing node; tag-to-tag spacing is independent.
     private double titleSpacing;
@@ -125,7 +121,7 @@ public class TwoLineListItem extends Pane {
         /// Updates the title label.
         @Override
         protected void invalidated() {
-            lblTitle.setText(get());
+            titleLabel.setText(get());
         }
     };
 
@@ -137,11 +133,11 @@ public class TwoLineListItem extends Pane {
         getStyleClass().add("two-line-list-item");
         setMouseTransparent(true);
         setPickOnBounds(false);
-        lblTitle.getStyleClass().add("title");
-        lblTitle.setTextOverrun(OverrunStyle.ELLIPSIS);
-        lblTitle.setMinWidth(0);
-        initializeTextLabel(lblTitle);
-        getChildren().add(lblTitle);
+        titleLabel.getStyleClass().add("title");
+        titleLabel.setTextOverrun(OverrunStyle.ELLIPSIS);
+        titleLabel.setMinWidth(0);
+        initializeTextLabel(titleLabel);
+        getChildren().add(titleLabel);
     }
 
     /// Creates an item with the given title and optional subtitle.
@@ -192,9 +188,9 @@ public class TwoLineListItem extends Pane {
                         label.setText(text);
                         if (label.getParent() != TwoLineListItem.this)
                             getChildren().add(label);
-                    } else if (lblSubtitle != null) {
-                        lblSubtitle.setText(null);
-                        getChildren().remove(lblSubtitle);
+                    } else if (subtitleLabel != null) {
+                        subtitleLabel.setText(null);
+                        getChildren().remove(subtitleLabel);
                     }
                     updateMouseTransparency();
                     requestLayout();
@@ -216,41 +212,26 @@ public class TwoLineListItem extends Pane {
         subtitleProperty().set(subtitle);
     }
 
-    /// Returns the title label for text wrapping and sizing configuration.
+    /// Returns the title label for wrapping, styling, and sizing configuration.
+    /// Use [#setTitle(String)] to update the title property and its displayed text together.
     public Label getTitleLabel() {
-        return lblTitle;
+        return titleLabel;
     }
 
-    /// Returns the subtitle label, creating it if necessary without attaching it.
+    /// Returns the subtitle label for wrapping, styling, and sizing configuration.
+    /// Creates the label if necessary without attaching it.
     /// Use [#setSubtitle(String)] to display the second row.
     public Label getSubtitleLabel() {
-        if (lblSubtitle == null) {
-            lblSubtitle = new Label();
-            lblSubtitle.getStyleClass().add("subtitle");
-            initializeTextLabel(lblSubtitle);
+        if (subtitleLabel == null) {
+            subtitleLabel = new Label();
+            subtitleLabel.getStyleClass().add("subtitle");
+            initializeTextLabel(subtitleLabel);
         }
-        return lblSubtitle;
-    }
-
-    /// Enables lazy truncation tooltips while preserving background clicks in surrounding ripplers.
-    private void initializeTextLabel(Label label) {
-        label.setMouseTransparent(true);
-        FXUtils.showTooltipWhenTruncated(label);
-        @Nullable ReadOnlyBooleanProperty truncated = FXUtils.textTruncatedProperty(label);
-        if (truncated != null) {
-            RipplerContainer.enableBackgroundMouseEvents(label);
-            label.setMouseTransparent(!truncated.get());
-            truncated.addListener((observable, oldValue, newValue) -> {
-                label.setMouseTransparent(!newValue);
-                updateMouseTransparency();
-            });
-        }
+        return subtitleLabel;
     }
 
     /// Returns the leading-node property, initially null.
-    /// Null removes the node. Nodes that are both invisible and unmanaged are detached
-    /// until either property becomes true. Only managed nodes occupy layout space.
-    /// A node must not simultaneously occupy another slot in this item.
+    /// Its value appears before the text area; null removes it.
     public final ObjectProperty<@Nullable Node> leadingProperty() {
         if (leading == null)
             leading = createSideProperty("leading");
@@ -268,9 +249,7 @@ public class TwoLineListItem extends Pane {
     }
 
     /// Returns the trailing-node property, initially null.
-    /// Null removes the node. Nodes that are both invisible and unmanaged are detached
-    /// until either property becomes true. Only managed nodes occupy layout space.
-    /// A node must not simultaneously occupy another slot in this item.
+    /// Its value appears after the text area; null removes it.
     public final ObjectProperty<@Nullable Node> trailingProperty() {
         if (trailing == null)
             trailing = createSideProperty("trailing");
@@ -287,107 +266,14 @@ public class TwoLineListItem extends Pane {
         trailingProperty().set(node);
     }
 
-    /// Creates a property that transfers attachment and listeners when its node changes.
-    private ObjectProperty<@Nullable Node> createSideProperty(String name) {
-        return new ObjectPropertyBase<>() {
-            /// The node whose listeners are currently installed.
-            private @Nullable Node previous;
-
-            /// Returns the item owning this property.
-            @Override
-            public Object getBean() {
-                return TwoLineListItem.this;
-            }
-
-            /// Returns the side represented by this property.
-            @Override
-            public String getName() {
-                return name;
-            }
-
-            /// Removes the previous node and starts observing the replacement.
-            @Override
-            protected void invalidated() {
-                if (previous != null) {
-                    previous.visibleProperty().removeListener(sideNodeListener);
-                    previous.managedProperty().removeListener(sideNodeListener);
-                    getChildren().remove(previous);
-                }
-                previous = get();
-                if (previous != null) {
-                    previous.visibleProperty().addListener(sideNodeListener);
-                    previous.managedProperty().addListener(sideNodeListener);
-                }
-                updateSideNodes();
-            }
-        };
-    }
-
-    /// Attaches side nodes that need rendering or layout and updates input participation.
-    private void updateSideNodes() {
-        updateSideNode(getLeading());
-        updateSideNode(getTrailing());
-        updateMouseTransparency();
-        requestLayout();
-    }
-
-    /// Attaches a side node unless it is both invisible and unmanaged.
-    private void updateSideNode(@Nullable Node node) {
-        if (node == null)
-            return;
-        if (node.isVisible() || node.isManaged()) {
-            if (node.getParent() != this)
-                getChildren().add(node);
-        } else {
-            getChildren().remove(node);
-        }
-    }
-
-    /// Enables input for truncated text, optional nodes, and the collapsed tag.
-    private void updateMouseTransparency() {
-        setMouseTransparent(lblTitle.isMouseTransparent()
-                && (lblSubtitle == null || lblSubtitle.getParent() != this || lblSubtitle.isMouseTransparent())
-                && !isVisible(getLeading()) && !isVisible(getTrailing())
-                && !isVisible(titleTrailing) && (tagState == null || !tagState.collapsedTag.isVisible()));
-    }
-
-    /// Returns whether an optional node is visible.
-    private static boolean isVisible(@Nullable Node node) {
-        return node != null && node.isVisible();
-    }
-
     /// Sets the node displayed immediately after the title, or removes it if null.
-    /// A node that is both invisible and unmanaged is detached until either property
-    /// becomes true. Assigning a visible node enables input for that node while the
-    /// untruncated text and expanded tags remain mouse-transparent.
+    /// The node precedes the tags and receives its preferred width when managed.
     public final void setTitleTrailing(@Nullable Node node) {
         if (titleTrailing == node)
             return;
-        if (titleTrailing != null) {
-            titleTrailing.visibleProperty().removeListener(titleTrailingListener);
-            titleTrailing.managedProperty().removeListener(titleTrailingListener);
-            getChildren().remove(titleTrailing);
-        }
+        @Nullable Node previous = titleTrailing;
         titleTrailing = node;
-        if (node != null) {
-            node.visibleProperty().addListener(titleTrailingListener);
-            node.managedProperty().addListener(titleTrailingListener);
-        }
-        updateTitleTrailing();
-    }
-
-    /// Updates trailing-node attachment and mouse input participation.
-    private void updateTitleTrailing() {
-        if (titleTrailing != null) {
-            if (titleTrailing.isVisible() || titleTrailing.isManaged()) {
-                if (titleTrailing.getParent() != this)
-                    getChildren().add(1, titleTrailing);
-            } else {
-                getChildren().remove(titleTrailing);
-            }
-        }
-        updateMouseTransparency();
-        requestLayout();
+        replaceOptionalNode(previous, node);
     }
 
     /// Sets the non-negative gap after title-row content, excluding gaps between adjacent tags.
@@ -417,9 +303,9 @@ public class TwoLineListItem extends Pane {
         }
     }
 
-    /// Returns the live, mutable list of non-null tag values displayed after the title-trailing node.
-    /// Values may be repeated or shared between components. Replace a value to change its
-    /// text or type. Changes must be made on the JavaFX application thread once this item
+    /// Returns the live, mutable tag list in display order.
+    /// Values must be non-null and may be repeated or shared between components.
+    /// Replace a value to change its text or type. Changes must be made on the JavaFX application thread once this item
     /// is attached to a showing scene. Tags are displayed in order; a suffix that does not
     /// fit is replaced by a `+N` tag whose tooltip lists the hidden values, one per line.
     public ObservableList<Tag> getTags() {
@@ -428,19 +314,6 @@ public class TwoLineListItem extends Pane {
             tags.addListener(this::updateTags);
         }
         return tags;
-    }
-
-    /// Updates the changed suffix, allocating rendering state only for a nonempty tag list.
-    private void updateTags(ListChangeListener.Change<? extends Tag> change) {
-        if (tagState == null) {
-            if (change.getList().isEmpty())
-                return;
-            tagState = new TagState(getTags());
-        }
-        int from = change.getList().size();
-        while (change.next())
-            from = Math.min(from, change.getFrom());
-        tagState.updateTags(from);
     }
 
     /// Appends a tag with the given text and type.
@@ -482,14 +355,119 @@ public class TwoLineListItem extends Pane {
         return Orientation.HORIZONTAL;
     }
 
-    /// Returns whether the trailing node participates in layout.
-    private boolean hasManagedTrailing() {
-        return titleTrailing != null && titleTrailing.isManaged();
+    /// Returns the current text and tag values for diagnostics.
+    @Override
+    public String toString() {
+        return "TwoLineListItem[title=%s, subtitle=%s, tags=%s]".formatted(getTitle(), getSubtitle(), tags);
+    }
+
+    /// Enables lazy truncation tooltips while preserving background clicks in surrounding ripplers.
+    private void initializeTextLabel(Label label) {
+        label.setMouseTransparent(true);
+        FXUtils.showTooltipWhenTruncated(label);
+        @Nullable ReadOnlyBooleanProperty truncated = FXUtils.textTruncatedProperty(label);
+        if (truncated != null) {
+            RipplerContainer.enableBackgroundMouseEvents(label);
+            label.setMouseTransparent(!truncated.get());
+            truncated.addListener((observable, oldValue, newValue) -> {
+                label.setMouseTransparent(!newValue);
+                updateMouseTransparency();
+            });
+        }
+    }
+
+    /// Creates a property that transfers attachment and listeners when its node changes.
+    private ObjectProperty<@Nullable Node> createSideProperty(String name) {
+        return new ObjectPropertyBase<>() {
+            /// The node whose listeners are currently installed.
+            private @Nullable Node previous;
+
+            /// Returns the item owning this property.
+            @Override
+            public Object getBean() {
+                return TwoLineListItem.this;
+            }
+
+            /// Returns the side represented by this property.
+            @Override
+            public String getName() {
+                return name;
+            }
+
+            /// Removes the previous node and starts observing the replacement.
+            @Override
+            protected void invalidated() {
+                @Nullable Node oldNode = previous;
+                previous = get();
+                replaceOptionalNode(oldNode, previous);
+            }
+        };
+    }
+
+    /// Transfers visibility and managed-state listeners from the old node to its replacement.
+    private void replaceOptionalNode(@Nullable Node previous, @Nullable Node node) {
+        if (previous != null) {
+            previous.visibleProperty().removeListener(optionalNodeListener);
+            previous.managedProperty().removeListener(optionalNodeListener);
+            getChildren().remove(previous);
+        }
+        if (node != null) {
+            node.visibleProperty().addListener(optionalNodeListener);
+            node.managedProperty().addListener(optionalNodeListener);
+        }
+        updateOptionalNodes();
+    }
+
+    /// Updates optional-node attachment, input participation, and layout.
+    private void updateOptionalNodes() {
+        updateOptionalNode(getLeading(), getChildren().size());
+        updateOptionalNode(getTrailing(), getChildren().size());
+        updateOptionalNode(titleTrailing, 1);
+        updateMouseTransparency();
+        requestLayout();
+    }
+
+    /// Attaches a visible or managed node at the given index if it is not already a child.
+    private void updateOptionalNode(@Nullable Node node, int index) {
+        if (node == null)
+            return;
+        if (node.isVisible() || node.isManaged()) {
+            if (node.getParent() != this)
+                getChildren().add(index, node);
+        } else {
+            getChildren().remove(node);
+        }
+    }
+
+    /// Enables input for truncated text, optional nodes, and the collapsed tag.
+    private void updateMouseTransparency() {
+        setMouseTransparent(titleLabel.isMouseTransparent()
+                && (subtitleLabel == null || subtitleLabel.getParent() != this || subtitleLabel.isMouseTransparent())
+                && !isVisible(getLeading()) && !isVisible(getTrailing())
+                && !isVisible(titleTrailing) && (tagState == null || !tagState.collapsedTag.isVisible()));
+    }
+
+    /// Returns whether an optional node is visible.
+    private static boolean isVisible(@Nullable Node node) {
+        return node != null && node.isVisible();
+    }
+
+    /// Updates the changed suffix, allocating rendering state only for a nonempty tag list.
+    private void updateTags(ListChangeListener.Change<? extends Tag> change) {
+        if (tagState == null) {
+            if (change.getList().isEmpty())
+                return;
+            tagState = new TagState(getTags());
+        }
+        int from = change.getList().size();
+        while (change.next())
+            from = Math.min(from, change.getFrom());
+        tagState.updateTags(from);
     }
 
     /// Returns whether the subtitle participates in layout.
     private boolean hasSubtitle() {
-        return lblSubtitle != null && lblSubtitle.getParent() == this && lblSubtitle.isManaged();
+        return subtitleLabel != null && subtitleLabel.getParent() == this && subtitleLabel.isManaged();
     }
 
     /// Returns a node's snapped preferred width, bounded by its minimum and maximum widths.
@@ -541,7 +519,7 @@ public class TwoLineListItem extends Pane {
 
     /// Returns the gap between the title and its managed trailing node.
     private double trailingGap() {
-        return lblTitle.isManaged() && hasManagedTrailing() ? snapSpaceX(titleSpacing) : 0;
+        return titleLabel.isManaged() && isManaged(titleTrailing) ? snapSpaceX(titleSpacing) : 0;
     }
 
     /// Returns whether there are tag values to display.
@@ -551,31 +529,31 @@ public class TwoLineListItem extends Pane {
 
     /// Returns the gap before the first tag, if other first-row content precedes it.
     private double tagsGap() {
-        return hasTags() && (lblTitle.isManaged() || hasManagedTrailing()) ? snapSpaceX(titleSpacing) : 0;
+        return hasTags() && (titleLabel.isManaged() || isManaged(titleTrailing)) ? snapSpaceX(titleSpacing) : 0;
     }
 
     /// Computes the text area's natural width with every tag expanded.
     private double textPrefWidth() {
-        double width = lblTitle.isManaged() ? preferredWidth(lblTitle) : 0;
-        if (hasManagedTrailing())
+        double width = titleLabel.isManaged() ? preferredWidth(titleLabel) : 0;
+        if (isManaged(titleTrailing))
             width += trailingGap() + preferredWidth(titleTrailing);
         width += tagsGap();
         if (hasTags())
             width += tagState.tagsPrefWidth();
         if (hasSubtitle())
-            width = Math.max(width, preferredWidth(lblSubtitle));
+            width = Math.max(width, preferredWidth(subtitleLabel));
         return width;
     }
 
     /// Computes the text area's minimum width, preserving tags before the title.
     private double textMinWidth() {
-        double width = !hasTags() && lblTitle.isManaged() ? snapSizeX(lblTitle.minWidth(-1)) : 0;
-        if (hasManagedTrailing())
+        double width = !hasTags() && titleLabel.isManaged() ? snapSizeX(titleLabel.minWidth(-1)) : 0;
+        if (isManaged(titleTrailing))
             width += trailingGap() + preferredWidth(titleTrailing);
         if (hasTags())
             width += tagsGap() + tagState.tagsMinWidth();
         if (hasSubtitle())
-            width = Math.max(width, snapSizeX(lblSubtitle.minWidth(-1)));
+            width = Math.max(width, snapSizeX(subtitleLabel.minWidth(-1)));
         return width;
     }
 
@@ -635,20 +613,23 @@ public class TwoLineListItem extends Pane {
 
     /// Reserves the trailing node and minimum tag area, then gives remaining width to the title.
     private FirstLineSize measureFirstLine(double width) {
-        double trailingWidth = hasManagedTrailing() ? preferredWidth(titleTrailing) : 0;
-        double titleWidth = lblTitle.isManaged() ? preferredWidth(lblTitle) : 0;
-        if (width >= 0 && lblTitle.isManaged()) {
-            double minimum = hasTags() ? 0 : snapSizeX(lblTitle.minWidth(-1));
-            titleWidth = Math.max(minimum, Math.min(titleWidth,
-                    Math.max(0, width - trailingWidth - trailingGap() - tagsGap() - (hasTags() ? tagState.tagsMinWidth() : 0))));
+        boolean tagged = hasTags();
+        boolean hasTrailing = isManaged(titleTrailing);
+        double trailingWidth = hasTrailing ? preferredWidth(titleTrailing) : 0;
+        double titleWidth = titleLabel.isManaged() ? preferredWidth(titleLabel) : 0;
+        double gaps = trailingGap() + tagsGap();
+        if (width >= 0 && titleLabel.isManaged()) {
+            double minimum = tagged ? 0 : snapSizeX(titleLabel.minWidth(-1));
+            double available = Math.max(0, width - trailingWidth - gaps - (tagged ? tagState.tagsMinWidth() : 0));
+            titleWidth = Math.max(minimum, Math.min(titleWidth, available));
         }
-        double available = width < 0 ? Double.POSITIVE_INFINITY
-                : width - titleWidth - trailingWidth - trailingGap() - tagsGap();
-        double height = lblTitle.isManaged() && titleWidth > 0 ? snapSizeY(lblTitle.prefHeight(titleWidth)) : 0;
-        if (hasManagedTrailing())
+        double height = titleLabel.isManaged() && titleWidth > 0 ? snapSizeY(titleLabel.prefHeight(titleWidth)) : 0;
+        if (hasTrailing)
             height = Math.max(height, snapSizeY(titleTrailing.prefHeight(trailingWidth)));
-        if (!hasTags())
+        if (!tagged)
             return new FirstLineSize(titleWidth, trailingWidth, 0, 0, height);
+
+        double available = width < 0 ? Double.POSITIVE_INFINITY : width - titleWidth - trailingWidth - gaps;
         TagState.TagLayout tags = tagState.measureTags(available);
         height = Math.max(height, tagState.tagMetrics().heights()[tags.visibleTags()]);
         if (tags.collapsedWidth() > 0)
@@ -663,7 +644,7 @@ public class TwoLineListItem extends Pane {
         RowSize row = measureRow(contentWidth);
         double height = measureFirstLine(row.textWidth()).height();
         if (hasSubtitle())
-            height += snapSizeY(lblSubtitle.prefHeight(row.textWidth()));
+            height += snapSizeY(subtitleLabel.prefHeight(row.textWidth()));
         height = Math.max(height, sideAreaHeight(getLeading(), row.leadingWidth()));
         height = Math.max(height, sideAreaHeight(getTrailing(), row.trailingWidth()));
         return snappedTopInset() + height + snappedBottomInset();
@@ -685,7 +666,7 @@ public class TwoLineListItem extends Pane {
         double textLeft = left + row.leadingWidth() + sideSpacing(getLeading());
         double x = textLeft;
         FirstLineSize first = measureFirstLine(row.textWidth());
-        double subtitleHeight = hasSubtitle() ? snapSizeY(lblSubtitle.prefHeight(row.textWidth())) : 0;
+        double subtitleHeight = hasSubtitle() ? snapSizeY(subtitleLabel.prefHeight(row.textWidth())) : 0;
         double extraHeight = Math.max(0, height - first.height() - subtitleHeight);
         double y = snappedTopInset() + snapPositionY(extraHeight / 2);
 
@@ -698,11 +679,11 @@ public class TwoLineListItem extends Pane {
             layoutSideNode(getTrailing(), trailingX, row.trailingWidth(), height);
         }
 
-        if (lblTitle.isManaged()) {
-            layoutFirstLineNode(lblTitle, x, y, first.titleWidth(), first.height());
+        if (titleLabel.isManaged()) {
+            layoutFirstLineNode(titleLabel, x, y, first.titleWidth(), first.height());
             x += first.titleWidth();
         }
-        if (hasManagedTrailing()) {
+        if (isManaged(titleTrailing)) {
             x += trailingGap();
             layoutFirstLineNode(titleTrailing, x, y, first.trailingWidth(), first.height());
             x += first.trailingWidth();
@@ -711,7 +692,7 @@ public class TwoLineListItem extends Pane {
             tagState.layoutTags(x + tagsGap(), y, first);
         updateMouseTransparency();
         if (hasSubtitle())
-            lblSubtitle.resizeRelocate(textLeft, y + first.height(), row.textWidth(), subtitleHeight);
+            subtitleLabel.resizeRelocate(textLeft, y + first.height(), row.textWidth(), subtitleHeight);
     }
 
     /// Centers a side node vertically within its margin-adjusted row area.
@@ -730,15 +711,19 @@ public class TwoLineListItem extends Pane {
         node.resizeRelocate(x, y + snapPositionY((rowHeight - height) / 2), width, height);
     }
 
-    /// Returns the current text and tag values for diagnostics.
-    @Override
-    public String toString() {
-        return "TwoLineListItem[title=%s, subtitle=%s, tags=%s]".formatted(getTitle(), getSubtitle(), tags);
-    }
-
     /// Labels, tooltip, and measurement caches created only for items that have used tags.
     @NotNullByDefault
     private final class TagState {
+
+        /// The spacing between adjacent tags.
+        private static final double TAG_SPACING = 8;
+
+        /// The hover delay used by the application's fast tooltips.
+        private static final Duration TAG_TOOLTIP_SHOW_DELAY = Duration.millis(50);
+
+        /// Selects the warning appearance for rendered tags.
+        private static final PseudoClass WARNING_PSEUDO_CLASS = PseudoClass.getPseudoClass("warning");
+
         /// The live tag values rendered by this state.
         private final ObservableList<Tag> values;
 
