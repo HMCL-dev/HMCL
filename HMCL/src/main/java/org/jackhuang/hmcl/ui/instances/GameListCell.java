@@ -31,8 +31,8 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     private final JFXRadioButton chkSelected;
     private final JFXButton btnUpgrade;
+    private final JFXButton btnInstanceManagement;
     private final JFXButton btnManage;
-    private final JFXButton btnMenu;
 
     private final HBox right;
 
@@ -101,18 +101,18 @@ public final class GameListCell extends ListCell<GameListItem> {
             FXUtils.installFastTooltip(btnUpgrade, i18n("instance.update"));
             right.getChildren().add(btnUpgrade);
 
-            this.btnManage = FXUtils.newToggleButton4(SVG.SETTINGS);
-            btnManage.setOnAction(e -> {
+            this.btnInstanceManagement = FXUtils.newToggleButton4(SVG.SETTINGS);
+            btnInstanceManagement.setOnAction(e -> {
                 GameListItem item = this.getItem();
                 if (item != null)
                     item.modifyGameSettings();
             });
-            BorderPane.setAlignment(btnManage, Pos.CENTER);
-            FXUtils.installFastTooltip(btnManage, i18n("instance.manage.manage"));
-            right.getChildren().add(btnManage);
+            BorderPane.setAlignment(btnInstanceManagement, Pos.CENTER);
+            FXUtils.installFastTooltip(btnInstanceManagement, i18n("instance.manage.manage"));
+            right.getChildren().add(btnInstanceManagement);
 
-            this.btnMenu = FXUtils.newToggleButton4(SVG.MORE_VERT);
-            btnMenu.setOnAction(e -> {
+            this.btnManage = FXUtils.newToggleButton4(SVG.MORE_VERT);
+            btnManage.setOnAction(e -> {
                 GameListItem item = this.getItem();
                 if (item == null)
                     return;
@@ -121,9 +121,9 @@ public final class GameListCell extends ListCell<GameListItem> {
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
                 popup.show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, vPosition == JFXPopup.PopupVPosition.TOP ? root.getHeight() : -root.getHeight());
             });
-            BorderPane.setAlignment(btnMenu, Pos.CENTER);
-            FXUtils.installFastTooltip(btnMenu, i18n("settings.game.management"));
-            right.getChildren().add(btnMenu);
+            BorderPane.setAlignment(btnManage, Pos.CENTER);
+            FXUtils.installFastTooltip(btnManage, i18n("settings.game.management"));
+            right.getChildren().add(btnManage);
         }
 
         root.setCursor(Cursor.HAND);
@@ -174,7 +174,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             this.tag.bind(item.tagProperty());
             if (item.canUpdate())
                 this.right.getChildren().add(btnUpgrade);
-            this.right.getChildren().addAll(btnManage, btnMenu);
+            this.right.getChildren().addAll(btnInstanceManagement, btnManage);
         }
     }
 
