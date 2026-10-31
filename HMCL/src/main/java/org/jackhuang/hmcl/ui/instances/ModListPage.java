@@ -51,23 +51,18 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.ref.WeakReference;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.Objects;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
@@ -249,29 +244,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
 
         HMCLGameInstance gameInstance = this.gameInstance;
-        Runnable action = () -> Controllers.taskDialog(Task
-                        .composeAsync(() -> {
-                            GameVersionNumber version = gameInstance.getVersion();
-                            if (version != GameVersionNumber.unknown()) {
-                                return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), mods);
-                            } else {
-                                LOG.warning("Failed to check for updates, due to unable to get instance game version");
-                                return null;
-                            }
-                        })
-                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                            if (exception instanceof CancellationException) return;
-                            if (exception != null || result == null) {
-                                Controllers.dialog(i18n("addon.check_update.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
-                                if (exception != null) LOG.warning("Failed to check for updates", exception);
-                            } else if (result.commonUpdates().isEmpty()) {
-                                Controllers.dialog(i18n("addon.check_update.empty"));
-                            } else {
-                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), modManager.getDirectory(), result));
-                            }
-                        })
-                        .withStagesHints("update.checking"),
-                i18n("addon.check_update"), TaskCancellationAction.NORMAL);
+        Runnable action = () -> AddonCheckUpdatesTask.openAddonsCheckUpdateDialog(gameInstance, mods, gameInstance.getRunDirectory());
 
         if (gameInstance.isModpack()) {
             Controllers.confirm(
@@ -320,7 +293,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final HBox toolbarNormal;
         private final HBox toolbarSelecting;
 
-        private final JFXListView<ModListPage.ModInfoObject> listView;
+        private final JFXListView<ModInfoObject> listView;
 
         /// Whether the search mechanism is currently active.
         private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
@@ -387,7 +360,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                                 skinnable.checkUpdates(
                                         listView.getItems().stream()
-                                                .map(ModListPage.ModInfoObject::getModInfo)
+                                                .map(ModInfoObject::getModInfo)
                                                 .toList()
                                 )
                         ),
@@ -421,7 +394,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                                 skinnable.checkUpdates(
                                         listView.getSelectionModel().getSelectedItems().stream()
-                                                .map(ModListPage.ModInfoObject::getModInfo)
+                                                .map(ModInfoObject::getModInfo)
                                                 .toList()
                                 )
                         ),
@@ -458,7 +431,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 ComponentList.setVgrow(center, Priority.ALWAYS);
                 center.loadingProperty().bind(skinnable.loadingProperty());
 
-                listView.setCellFactory(x -> new ModListPage.ModInfoListCell(listView, skinnable));
+                listView.setCellFactory(x -> new ModInfoListCell(listView, skinnable));
                 listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
                 StackPane placeholderContainer = new StackPane();
@@ -478,17 +451,17 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 listView.setPlaceholder(placeholderContainer);
 
                 Bindings.bindContent(listView.getItems(), skinnable.getItems());
-                skinnable.getItems().addListener((ListChangeListener<? super ModListPage.ModInfoObject>) c -> {
+                skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
                     if (isSearching.get()) {
                         search();
                     }
                 });
 
                 listView.setOnContextMenuRequested(event -> {
-                    ModListPage.ModInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
+                    ModInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
                     if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
                         listView.getSelectionModel().clearSelection();
-                        Controllers.dialog(new ModListPage.ModInfoDialog(selectedItem));
+                        Controllers.dialog(new ModInfoDialog(selectedItem));
                     }
                 });
 
@@ -533,7 +506,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 }
 
                 // Do we need to search in the background thread?
-                for (ModListPage.ModInfoObject item : getSkinnable().getItems()) {
+                for (ModInfoObject item : getSkinnable().getItems()) {
                     LocalModFile modInfo = item.getModInfo();
                     if (predicate.test(modInfo.getFileName())
                             || predicate.test(modInfo.getName())
@@ -578,27 +551,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
 
         private Image loadIcon() {
-            List<String> iconPaths = new ArrayList<>();
-
-            if (StringUtils.isNotBlank(this.localModFile.getLogoPath())) {
-                iconPaths.add(this.localModFile.getLogoPath());
-            }
-
-            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(this.localModFile.getFile())) {
-                for (String path : iconPaths) {
-                    Path iconPath = fs.getPath(path);
-                    if (Files.exists(iconPath)) {
-                        Image image = FXUtils.loadImage(iconPath, 80, 80, true, true);
-                        if (!image.isError() && image.getWidth() > 0 && image.getHeight() > 0 &&
-                                Math.abs(image.getWidth() - image.getHeight()) < 1) {
-                            return image;
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                LOG.warning("Failed to load mod icons", e);
-            }
-
+            Image icon = localModFile.loadIcon();
+            if (icon != null) return icon;
             return getDefaultIcon();
         }
     }

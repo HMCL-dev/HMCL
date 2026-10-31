@@ -49,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
@@ -57,12 +58,16 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage {
-    public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_MOD =
-            (downloadProvider, repository, version, mod, file) -> download(downloadProvider, repository, version, file, "mods");
-    public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_RESOURCE_PACK =
-            (downloadProvider, repository, version, pack, file) -> download(downloadProvider, repository, version, file, "resourcepacks");
-    public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_SHADER =
-            (downloadProvider, repository, version, shader, file) -> download(downloadProvider, repository, version, file, "shaderpacks");
+
+    public static final Set<RemoteAddon.Type> SUPPORTED_TYPES = Set.of(
+            RemoteAddon.Type.MOD,
+            RemoteAddon.Type.RESOURCE_PACK,
+            RemoteAddon.Type.SHADER_PACK,
+            RemoteAddon.Type.MODPACK
+    );
+
+    public static final DownloadCallback DEFAULT_CALLBACK = (downloadProvider, repository, instanceId, addon, file) ->
+            download(null, downloadProvider, repository, instanceId, addon, file);
 
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
     /// Manages tab selection and content transitions independently of the sidebar.
@@ -85,10 +90,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private WeakListenerHolder listenerHolder;
 
     public DownloadPage() {
-        this(null);
+        this(DEFAULT_CALLBACK);
     }
 
-    public DownloadPage(GameInstanceID uploadInstance) {
+    public DownloadPage(DownloadCallback callback) {
         this.newGameTab = new TabItem<>(() -> new VersionsPage(
                 versionPageNavigator,
                 i18n("install.installer.choose", i18n("install.installer.game")),
@@ -96,9 +101,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 DownloadProviders.getDownloadProvider(),
                 GameComponentType.GAME, versionPageNavigator::onGameSelected));
         this.modpackTab = newDownloadListTab(() -> {
-            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((downloadProvider, repository, __, modpack, file) -> {
-                Instances.downloadModpackImpl(downloadProvider, repository, uploadInstance, modpack, file);
-            }, false);
+            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack(callback, false);
 
             JFXButton installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
             installLocalModpackButton.setOnAction(e -> Instances.importModpack());
@@ -106,10 +109,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             page.getActions().add(installLocalModpackButton);
             return page;
         });
-        this.modTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofMod(FOR_MOD, true));
-        this.resourcePackTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofResourcePack(FOR_RESOURCE_PACK, true));
-        this.shaderTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofShaderPack(FOR_SHADER, true));
-        this.worldTab = newDownloadListTab(() -> new DownloadListPage(RemoteAddon.Type.WORLD, CurseForgeRemoteAddonRepository.getInstance()));
+        this.modTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofMod(callback, true));
+        this.resourcePackTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofResourcePack(callback, true));
+        this.shaderTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofShaderPack(callback, true));
+        this.worldTab = newDownloadListTab(() -> new DownloadListPage(RemoteAddon.Type.WORLD, CurseForgeRemoteAddonRepository.getInstance(), callback, false));
 
         this.tabController = new TabController(transitionPane,
                 newGameTab,
@@ -131,7 +134,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 .startCategory(i18n("download.content").toUpperCase(Locale.ROOT))
                 .addNavigationDrawerTab(tabController, modTab, i18n("mods"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                 .addNavigationDrawerTab(tabController, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
-                .addNavigationDrawerTab(tabController, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
+                .addNavigationDrawerTab(tabController, shaderTab, i18n("shaderpack"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
                 .addNavigationDrawerTab(tabController, worldTab, i18n("world"), SVG.PUBLIC);
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
@@ -145,6 +148,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             page.loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()));
             return page;
         });
+    }
+
+    public static boolean canDownload(RemoteAddon addon) {
+        return SUPPORTED_TYPES.contains(addon.type());
     }
 
     public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file, String subdirectoryName) {
@@ -182,6 +189,17 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             handler.resolve();
         }, file.file().filename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("game_directory.already_exists"), existingPaths::notContains));
 
+    }
+
+    /// @param updateInstance id of instance to upgrade, only for modpacks
+    public static void download(@Nullable GameInstanceID updateInstance, DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon addon, RemoteAddon.Version file) {
+        if (addon.type() == null || !canDownload(addon)) return;
+        switch (addon.type()) {
+            case MODPACK -> Instances.downloadModpackImpl(downloadProvider, repository, updateInstance, addon, file);
+            case MOD -> download(downloadProvider, repository, instanceId, file, "mods");
+            case RESOURCE_PACK -> download(downloadProvider, repository, instanceId, file, "resourcepacks");
+            case SHADER_PACK -> download(downloadProvider, repository, instanceId, file, "shaderpacks");
+        }
     }
 
     private void loadVersions(HMCLGameRepository repository) {
@@ -222,14 +240,19 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         tabController.selectTab(modpackTab, false);
     }
 
+    public DownloadListPage showModDownloads() {
+        tabController.selectTab(modTab, false);
+        return modTab.getNode();
+    }
+
     public DownloadListPage showResourcePackDownloads() {
         tabController.selectTab(resourcePackTab, false);
         return resourcePackTab.getNode();
     }
 
-    public DownloadListPage showModDownloads() {
-        tabController.selectTab(modTab, false);
-        return modTab.getNode();
+    public DownloadListPage showShaderDownloads() {
+        tabController.selectTab(shaderTab, false);
+        return shaderTab.getNode();
     }
 
     public void showWorldDownloads() {
@@ -367,5 +390,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         public boolean cancel() {
             return true;
         }
+    }
+
+    @FunctionalInterface
+    public interface DownloadCallback {
+        void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon addon, RemoteAddon.Version file);
     }
 }

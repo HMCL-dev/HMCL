@@ -150,7 +150,9 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
 
     public void onChooseRepository() {
         String modPackName = controller.getSettings().get(MODPACK_NAME);
-        DownloadPage downloadPage = new DownloadPage(modPackName != null ? new GameInstanceID(modPackName) : null);
+        GameInstanceID updateInstanceId = modPackName != null ? new GameInstanceID(modPackName) : null;
+        DownloadPage downloadPage = new DownloadPage((downloadProvider, repository, instanceId, addon, file) ->
+                DownloadPage.download(updateInstanceId, downloadProvider, repository, instanceId, addon, file));
         downloadPage.showModpackDownloads();
         Controllers.navigate(downloadPage);
     }

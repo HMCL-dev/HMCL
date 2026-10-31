@@ -20,12 +20,12 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.addon.shader.ShaderPackFile;
 import org.jackhuang.hmcl.addon.update.AddonUpdate;
 import org.jackhuang.hmcl.addon.LocalAddonFile;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.RemoteAddonRepository;
 import org.jackhuang.hmcl.addon.mod.LocalModFile;
-import org.jackhuang.hmcl.addon.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.addon.update.AddonUpdateTask;
@@ -42,12 +42,10 @@ import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
 
 import java.lang.ref.WeakReference;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
+
 import org.jackhuang.hmcl.util.javafx.Subscription;
 
 import java.nio.file.Path;
@@ -286,56 +284,20 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                     .getIcon();
             }
 
-            return null;
+            if (data.localAddonFile() instanceof ShaderPackFile shaderPackFile) {
+                return switch (shaderPackFile.getShaderLoaderType()) {
+                    case OPTIFINE_IRIS -> FXUtils.newBuiltinImage("/assets/img/opti-iris.png");
+                    default -> FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+                };
+            }
+
+            return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
         }
 
         private Image loadIcon() {
-            if (data.localAddonFile() instanceof LocalModFile localModFile) {
-                List<String> iconPaths = new ArrayList<>();
-
-                if (StringUtils.isNotBlank(localModFile.getLogoPath())) {
-                    iconPaths.add(localModFile.getLogoPath());
-                }
-
-                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(localModFile.getFile())) {
-
-                    for (String path : iconPaths) {
-                        Path iconPath = fs.getPath(path);
-
-                        if (Files.exists(iconPath)) {
-                            Image image = FXUtils.loadImage(
-                                iconPath,
-                                80,
-                                80,
-                                true,
-                                true
-                            );
-
-                            if (!image.isError()
-                                && image.getWidth() > 0
-                                && image.getHeight() > 0
-                                && Math.abs(image.getWidth() - image.getHeight()) < 1
-                            ) {
-                                return image;
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    LOG.warning("Failed to load addon icons", e);
-                }
-            }
-            
-            if (data.localAddonFile() instanceof ResourcePackFile resourcePackFile) {
-                Image image = resourcePackFile.loadIcon();
-
-                if (image != null
-                    && !image.isError()
-                    && image.getWidth() > 0
-                    && image.getHeight() > 0
-                    && Math.abs(image.getWidth() - image.getHeight()) < 1
-                ) {
-                    return image;
-                }
+            Image icon = data.localAddonFile().loadIcon(80D, 80D, true, true);
+            if (icon != null && !icon.isError() && icon.getWidth() > 0 && icon.getHeight() > 0 && Math.abs(icon.getWidth() - icon.getHeight()) < 1) {
+                return icon;
             }
 
             return getDefaultIcon();
@@ -418,12 +380,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             content.addTag(item.getSource());
             content.addTag(item.getTargetVersionType());
 
-            if (addonFile instanceof LocalModFile modFile) {
-                content.setTitle(modFile.getName());
-            } else if (addonFile instanceof ResourcePackFile resourcePackFile) {
-                content.setTitle(resourcePackFile.getFileName());
-            }
-
+            content.setTitle(addonFile.getName());
             content.setSubtitle(item.getCurrentVersion() + " → " + item.getTargetVersion());
 
             setGraphic(pane);

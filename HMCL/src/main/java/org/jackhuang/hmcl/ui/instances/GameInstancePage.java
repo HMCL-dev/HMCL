@@ -52,6 +52,8 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     private final TabItem<SchematicsPage> schematicsTab;
     /// The installed resource packs tab bound to the current game instance.
     private final TabItem<ResourcePackListPage> resourcePackTab;
+    /// The installed shader packs tab bound to the current game instance.
+    private final TabItem<ShaderPackListPage> shaderListTab;
     /// The screenshots tab bound to the current game instance.
     private final TabItem<ScreenshotsPage> screenshotsTab;
     private final TransitionPane transitionPane = new TransitionPane();
@@ -84,6 +86,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         this.installerListTab = new TabItem<>(() -> new InstallerListPage(instance));
         this.modListTab = new TabItem<>(() -> new ModListPage(instance));
         this.resourcePackTab = new TabItem<>(() -> new ResourcePackListPage(instance));
+        this.shaderListTab = new TabItem<>(() -> new ShaderPackListPage(instance));
         this.worldListTab = new TabItem<>(() -> new WorldListPage(instance));
         this.schematicsTab = new TabItem<>(() -> new SchematicsPage(instance));
         this.screenshotsTab = new TabItem<>(() -> new ScreenshotsPage(instance));
@@ -93,6 +96,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                 installerListTab,
                 modListTab,
                 resourcePackTab,
+                shaderListTab,
                 worldListTab,
                 schematicsTab,
                 screenshotsTab);
@@ -357,6 +361,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         .addNavigationDrawerTab(control.tabController, control.installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL)
                         .addNavigationDrawerTab(control.tabController, control.modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                         .addNavigationDrawerTab(control.tabController, control.resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
+                        .addNavigationDrawerTab(control.tabController, control.shaderListTab, i18n("shaderpack.manage"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
                         .addNavigationDrawerTab(control.tabController, control.worldListTab, i18n("world.manage"), SVG.PUBLIC)
                         .addNavigationDrawerTab(control.tabController, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);
@@ -369,9 +374,9 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                         new MenuSeparator(),
                         new IconedMenuItem(SVG.EXTENSION, i18n("folder.mod"), () -> control.onBrowse("mods"), browsePopup),
                         new IconedMenuItem(SVG.TEXTURE, i18n("folder.resourcepacks"), () -> control.onBrowse("resourcepacks"), browsePopup),
+                        new IconedMenuItem(SVG.WB_SUNNY, i18n("folder.shaderpacks"), () -> control.onBrowse("shaderpacks"), browsePopup),
                         new IconedMenuItem(SVG.PUBLIC, i18n("folder.saves"), () -> control.onBrowse("saves"), browsePopup),
                         new IconedMenuItem(SVG.SCHEMA, i18n("folder.schematics"), control::onBrowseSchematics, browsePopup),
-                        new IconedMenuItem(SVG.WB_SUNNY, i18n("folder.shaderpacks"), () -> control.onBrowse("shaderpacks"), browsePopup),
                         new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("folder.screenshots"), () -> control.onBrowse("screenshots"), browsePopup),
                         new MenuSeparator(),
                         new IconedMenuItem(SVG.SCRIPT, i18n("folder.logs"), () -> control.onBrowse("logs"), browsePopup),

@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
@@ -77,10 +78,6 @@ public class DownloadListPage extends Control implements DecoratorPage {
     private final DownloadProvider downloadProvider;
 
     private Runnable retrySearch;
-
-    public DownloadListPage(@NotNull RemoteAddon.Type type, RemoteAddonRepository repository) {
-        this(type, repository, null, false);
-    }
 
     public DownloadListPage(@NotNull RemoteAddon.Type type, RemoteAddonRepository repository, DownloadPage.DownloadCallback callback, boolean instanceSelection) {
         this.type = Objects.requireNonNull(type);
@@ -590,7 +587,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
             FXUtils.onClicked(wrapper, () -> {
                 RemoteAddon item = getItem();
                 if (item != null) {
-                    Controllers.navigate(new DownloadPage(page, item, page.getInstanceOptional(), page.callback));
+                    Controllers.navigate(new AddonDownloadPage(page, item, page.getInstanceOptional(), page.callback));
                 }
             });
 
