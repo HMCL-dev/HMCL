@@ -7,6 +7,9 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -21,8 +24,13 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
+/// Displays a title, optional subtitle and tags, and optional leading and trailing nodes.
+///
 /// @author Glavo
 public abstract class LineComponent extends StackPane implements NoPaddingComponent {
     private static final String DEFAULT_STYLE_CLASS = "line-component";
@@ -42,7 +50,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
 
     protected final HBox container;
 
-    /// The row containing the title and its optional trailing node.
+    /// The row containing the title, its optional trailing node, and tags.
     private final HBox titleLine;
 
     /// The primary title label.
@@ -59,6 +67,9 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
 
     /// The optional subtitle label.
     private @Nullable Label subtitleLabel;
+
+    /// Stores the mutable tag list once tag support has been initialized.
+    private @Nullable ObservableList<Tag> tags;
 
     /// Creates a row with mouse-transparent title text and independently interactive optional nodes.
     public LineComponent() {
@@ -77,7 +88,19 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         titleLabel.setMouseTransparent(true);
         titleLabel.setPickOnBounds(false);
 
-        this.titleLine = new HBox(4, titleLabel);
+        this.titleLine = new HBox(4, titleLabel) {
+            /// Includes the tags' natural width when requesting space from the parent.
+            @Override
+            protected double computePrefWidth(double height) {
+                double width = super.computePrefWidth(height);
+                for (Node child : getManagedChildren()) {
+                    if (child instanceof TagsBox tagsBox) {
+                        width += snapSizeX(tagsBox.computeNaturalPrefWidth(height));
+                    }
+                }
+                return width;
+            }
+        };
         titleLine.setAlignment(Pos.CENTER_LEFT);
         titleLine.setPickOnBounds(false);
 
@@ -195,12 +218,30 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
             boolean attached = titleTrailing.getParent() == titleLine;
             if (titleTrailing.isVisible() || titleTrailing.isManaged()) {
                 if (!attached)
-                    titleLine.getChildren().add(titleTrailing);
+                    titleLine.getChildren().add(1, titleTrailing);
             } else if (attached) {
                 titleLine.getChildren().remove(titleTrailing);
             }
         }
         titleContainer.setMouseTransparent(titleTrailing == null || !titleTrailing.isVisible());
+    }
+
+    /// Returns the mutable list of tags displayed after the title and its optional trailing node.
+    /// Changes to the list are reflected in the row. Tags do not receive mouse input;
+    /// content that exceeds the space left by the title and other nodes is clipped.
+    /// An empty list occupies no space. Tag values may be shared or repeated in the list.
+    /// Replace a value in the list to change its text or type. Changes must be made on
+    /// the JavaFX application thread once this component is attached to a showing scene.
+    ///
+    /// @return the live list of tag values; elements must be non-null
+    public final ObservableList<Tag> getTags() {
+        if (tags == null) {
+            tags = FXCollections.observableArrayList();
+
+            titleLine.getChildren().add(new TagsBox(tags));
+            tags.addListener((ListChangeListener<Tag>) change -> updatePreferredHeight());
+        }
+        return tags;
     }
 
     public void setLargeTitle(boolean largeTitle) {

@@ -2,12 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -15,8 +13,6 @@ import javafx.scene.control.OverrunStyle;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -166,87 +162,61 @@ public class TwoLineListItem extends VBox {
         return lblSubtitle;
     }
 
-    private static Label createTag(String tag, PseudoClass pseudoClass) {
-        var tagLabel = new Label(tag);
-        tagLabel.getStyleClass().add("tag");
-        tagLabel.setMinWidth(Label.USE_PREF_SIZE);
-        if (pseudoClass != null)
-            tagLabel.pseudoClassStateChanged(pseudoClass, true);
-        return tagLabel;
-    }
-
     /// Stores the mutable tag list once tag support has been initialized.
-    private @Nullable ObservableList<Label> tags;
+    private @Nullable ObservableList<Tag> tags;
 
     /// Returns the mutable list of tags displayed after the title.
-    public ObservableList<Label> getTags() {
+    /// Tag values may be shared or repeated in the list. Replace a value to change its
+    /// text or type. Changes must be made on the JavaFX application thread once this
+    /// component is attached to a showing scene.
+    ///
+    /// @return the live list of tag values; elements must be non-null
+    public ObservableList<Tag> getTags() {
         if (tags == null) {
             tags = FXCollections.observableArrayList();
 
-            var tagsBox = new TagsBox();
-            tagsBox.getStyleClass().add("tags");
-            tagsBox.setAlignment(Pos.CENTER_LEFT);
-
-            HBox.setHgrow(tagsBox, Priority.SOMETIMES);
-
-            Bindings.bindContent(tagsBox.getChildren(), tags);
-            var isNotEmpty = Bindings.isNotEmpty(tags);
-            tagsBox.managedProperty().bind(isNotEmpty);
-            tagsBox.visibleProperty().bind(isNotEmpty);
-
-            FXUtils.setOverflowHidden(tagsBox);
-
             HBox.setHgrow(lblTitle, Priority.ALWAYS);
             lblTitle.setMinWidth(0);
-            firstLine.getChildren().setAll(lblTitle, tagsBox);
+            firstLine.getChildren().setAll(lblTitle, new TagsBox(tags));
         }
         return tags;
     }
 
-    /// Reports its natural width separately from the width used to allocate space within the title row.
-    @NotNullByDefault
-    private static final class TagsBox extends HBox {
-
-        /// Creates a tag container with zero minimum and preferred allocation widths.
-        private TagsBox() {
-            super(8);
-            // Start at zero during HBox allocation so tags do not compete with the title for space.
-            setPrefWidth(0);
-            setMinWidth(0);
-        }
-
-        /// Returns the computed preferred width without applying the zero preferred-width override.
-        ///
-        /// @param height the available height, or -1 if unspecified
-        /// @return the natural preferred width of the tags and their container
-        private double computeNaturalPrefWidth(double height) {
-            return super.computePrefWidth(height);
-        }
+    /// Appends a tag with the given text and type.
+    ///
+    /// @param tag the tag text, or null for no text
+    /// @param type the tag's semantic type
+    /// @throws NullPointerException if type is null
+    public void addTag(@Nullable String tag, Tag.Type type) {
+        getTags().add(new Tag(tag, type));
     }
 
-    public void addTag(String tag, PseudoClass pseudoClass) {
-        getTags().add(createTag(tag, pseudoClass));
+    /// Appends a tag with the default appearance and the given text.
+    /// Null creates a tag with no text.
+    public void addTag(@Nullable String tag) {
+        addTag(tag, Tag.Type.NORMAL);
     }
 
-    public void addTag(String tag) {
-        addTag(tag, null);
+    /// Appends tags in the collection's iteration order, retaining duplicate text.
+    /// Null elements create tags with no text.
+    public void addTags(Collection<@Nullable String> tags) {
+        getTags().addAll(tags.stream().map(Tag::new).toList());
     }
 
-    public void addTags(Collection<String> tags) {
-        getTags().addAll(tags.stream().map(tag -> createTag(tag, null)).toList());
-    }
-
-    public void addTagsIfNotExist(Collection<String> tags) {
-        var current = getTags().stream().map(Label::getText).collect(Collectors.toSet());
+    /// Appends each distinct text not already present in the tag list, in iteration order.
+    /// Text is compared using [String#equals(Object)] regardless of type.
+    /// Null elements create tags with no text.
+    public void addTagsIfNotExist(Collection<@Nullable String> tags) {
+        var current = getTags().stream().map(Tag::text).collect(Collectors.toSet());
         var target = new LinkedHashSet<>(tags);
         target.removeAll(current);
         addTags(target);
     }
 
-    private static final PseudoClass WARNING_PSEUDO_CLASS = PseudoClass.getPseudoClass("warning");
-
-    public void addTagWarning(String tag) {
-        addTag(tag, WARNING_PSEUDO_CLASS);
+    /// Appends a tag with the warning appearance and the given text.
+    /// Null creates a tag with no text.
+    public void addTagWarning(@Nullable String tag) {
+        getTags().add(Tag.warning(tag));
     }
 
     @Override

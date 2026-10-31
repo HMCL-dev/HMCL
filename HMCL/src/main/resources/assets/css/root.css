@@ -311,7 +311,7 @@
     -fx-pref-height: 0;
 }
 
-.two-line-list-item > .first-line .tag {
+.tag {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
     -fx-background-radius: 2;
@@ -320,7 +320,7 @@
     -fx-font-size: 12px;
 }
 
-.two-line-list-item > .first-line .tag:warning {
+.tag:warning {
     -fx-text-fill: -monet-on-error-container;
     -fx-background-color: -fixed-warning-tag-background;
 }
