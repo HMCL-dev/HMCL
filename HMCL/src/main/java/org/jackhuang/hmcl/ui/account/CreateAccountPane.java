@@ -479,6 +479,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 add(box, 0, rowIndex);
 
                 GridPane advancedMenu = new GridPane();
+                advancedMenu.setHgap(8);
+                advancedMenu.setVgap(8);
 
                 Label lblUUID = new Label(i18n("account.methods.offline.uuid"));
                 setHalignment(lblUUID, HPos.LEFT);
