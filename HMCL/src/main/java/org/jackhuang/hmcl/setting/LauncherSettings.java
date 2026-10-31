@@ -580,6 +580,33 @@ public final class LauncherSettings extends ObservableSetting implements JsonSch
         return proxyPassword;
     }
 
+    /// Whether custom OpenBMCLAPI cluster node acceleration is enabled.
+    @SerializedName("customOpenBmclapiNodeEnabled")
+    private final BooleanProperty customOpenBmclapiNodeEnabled = new SimpleBooleanProperty();
+
+    /// Returns the custom OpenBMCLAPI cluster node acceleration enable property.
+    public BooleanProperty customOpenBmclapiNodeEnabledProperty() {
+        return customOpenBmclapiNodeEnabled;
+    }
+
+    /// The configured custom OpenBMCLAPI cluster node URL.
+    @SerializedName("customOpenBmclapiNodeUrl")
+    private final StringProperty customOpenBmclapiNodeUrl = new SimpleStringProperty();
+
+    /// Returns the custom OpenBMCLAPI cluster node URL property.
+    public StringProperty customOpenBmclapiNodeUrlProperty() {
+        return customOpenBmclapiNodeUrl;
+    }
+
+    /// The configured custom OpenBMCLAPI cluster node secret.
+    @SerializedName("customOpenBmclapiNodeSecret")
+    private final StringProperty customOpenBmclapiNodeSecret = new SimpleStringProperty();
+
+    /// Returns the custom OpenBMCLAPI cluster node secret property.
+    public StringProperty customOpenBmclapiNodeSecretProperty() {
+        return customOpenBmclapiNodeSecret;
+    }
+
     /// The selected game directory ID.
     ///
     /// This field is owned by [GameDirectoryManager]. Code outside [GameDirectoryManager] should not modify it directly.

@@ -12,20 +12,26 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
+import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.setting.DownloadSource;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
 import org.jackhuang.hmcl.setting.ProxyType;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
+
+import java.net.HttpURLConnection;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -174,6 +180,62 @@ public class DownloadSettingsPage extends StackPane {
 
             downloadList.getContent().addAll(fileCommonLocationSublist, downloadThreadsSublist);
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadList);
+        }
+
+        {
+            VBox openbmclapiList = new VBox(10);
+            openbmclapiList.getStyleClass().add("card-non-transparent");
+            openbmclapiList.setPadding(new Insets(10));
+
+            JFXCheckBox chkEnable = new JFXCheckBox(i18n("settings.launcher.openbmclapi.enable"));
+            chkEnable.selectedProperty().bindBidirectional(settings().customOpenBmclapiNodeEnabledProperty());
+
+            Label hintLabel = new Label(i18n("settings.launcher.openbmclapi.desc"));
+            hintLabel.getStyleClass().add("text-gray");
+            hintLabel.setWrapText(true);
+
+            GridPane configPane = new GridPane();
+            configPane.setPadding(new Insets(10, 0, 0, 0));
+            configPane.setHgap(20);
+            configPane.setVgap(10);
+            ColumnConstraints colHgrow = new ColumnConstraints();
+            colHgrow.setHgrow(Priority.ALWAYS);
+            configPane.getColumnConstraints().setAll(new ColumnConstraints(), colHgrow);
+
+            Label nodeUrlLabel = new Label(i18n("settings.launcher.openbmclapi.node_url"));
+            GridPane.setRowIndex(nodeUrlLabel, 0);
+            GridPane.setColumnIndex(nodeUrlLabel, 0);
+
+            JFXTextField txtNodeUrl = new JFXTextField();
+            txtNodeUrl.setPromptText(i18n("settings.launcher.openbmclapi.node_url.prompt"));
+            FXUtils.bindString(txtNodeUrl, settings().customOpenBmclapiNodeUrlProperty());
+            GridPane.setRowIndex(txtNodeUrl, 0);
+            GridPane.setColumnIndex(txtNodeUrl, 1);
+
+            Label secretLabel = new Label(i18n("settings.launcher.openbmclapi.cluster_secret"));
+            GridPane.setRowIndex(secretLabel, 1);
+            GridPane.setColumnIndex(secretLabel, 0);
+
+            JFXPasswordField txtSecret = new JFXPasswordField();
+            txtSecret.setPromptText(i18n("settings.launcher.openbmclapi.cluster_secret.prompt"));
+            txtSecret.textProperty().bindBidirectional(settings().customOpenBmclapiNodeSecretProperty());
+            GridPane.setRowIndex(txtSecret, 1);
+            GridPane.setColumnIndex(txtSecret, 1);
+
+            HBox actionsBox = new HBox(10);
+            actionsBox.setAlignment(Pos.CENTER_LEFT);
+            actionsBox.setPadding(new Insets(10, 0, 0, 0));
+
+            JFXButton btnTest = FXUtils.newBorderButton(i18n("settings.launcher.openbmclapi.test"));
+            actionsBox.getChildren().add(btnTest);
+            btnTest.setOnAction(e -> testOpenBmclapiNode(btnTest));
+
+            configPane.getChildren().addAll(nodeUrlLabel, txtNodeUrl, secretLabel, txtSecret);
+            configPane.disableProperty().bind(settings().customOpenBmclapiNodeEnabledProperty().not());
+            actionsBox.disableProperty().bind(settings().customOpenBmclapiNodeEnabledProperty().not());
+
+            openbmclapiList.getChildren().addAll(chkEnable, hintLabel, configPane, actionsBox);
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.openbmclapi")), openbmclapiList);
         }
 
         {
@@ -358,5 +420,52 @@ public class DownloadSettingsPage extends StackPane {
                     }).setSignificance(Task.TaskSignificance.MINOR)
                     .start();
         }
+    }
+
+    @FXThread
+    private boolean testingOpenBmclapi = false;
+
+    private void testOpenBmclapiNode(JFXButton testButton) {
+        if (testingOpenBmclapi) return;
+        String rawUrl = settings().customOpenBmclapiNodeUrlProperty().get();
+        if (StringUtils.isBlank(rawUrl)) {
+            Controllers.dialog(i18n("settings.launcher.openbmclapi.test.empty_url"), null, MessageDialogPane.MessageType.WARNING);
+            return;
+        }
+
+        testingOpenBmclapi = true;
+        testButton.setMinWidth(testButton.getWidth());
+        String originalText = testButton.getText();
+        testButton.setText("");
+        var spinner = new JFXSpinner();
+        spinner.setRadius(8);
+        testButton.setGraphic(spinner);
+
+        Task.supplyAsync(i18n("settings.launcher.openbmclapi.test.testing"), Schedulers.io(), () -> {
+            WebURL url = WebURL.parseBrowserInput(rawUrl);
+            HttpURLConnection connection = NetworkUtils.createHttpConnection(url);
+            try {
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(5000);
+                connection.setRequestMethod("GET");
+                connection.connect();
+                return connection.getResponseCode();
+            } finally {
+                connection.disconnect();
+            }
+        }).whenComplete(Schedulers.javafx(), (res, ex) -> {
+            testButton.setGraphic(null);
+            testButton.setText(originalText);
+            testingOpenBmclapi = false;
+
+            if (ex != null) {
+                Throwable cause = ex instanceof java.util.concurrent.CompletionException && ex.getCause() != null
+                        ? ex.getCause()
+                        : ex;
+                Controllers.dialog(i18n("settings.launcher.openbmclapi.test.failed", cause.getLocalizedMessage()), null, MessageDialogPane.MessageType.ERROR);
+            } else {
+                Controllers.dialog(i18n("settings.launcher.openbmclapi.test.success"), null, MessageDialogPane.MessageType.INFO);
+            }
+        }).setSignificance(Task.TaskSignificance.MINOR).start();
     }
 }

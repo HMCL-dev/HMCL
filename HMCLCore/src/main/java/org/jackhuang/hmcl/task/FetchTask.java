@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.task;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.download.DownloadCandidate;
 import org.jackhuang.hmcl.download.DownloadCandidates;
+import org.jackhuang.hmcl.download.OpenBMCLAPICustomNode;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.*;
@@ -363,6 +364,7 @@ public abstract class FetchTask<T extends @UnknownNullability Object> extends Ta
                                 if (!NetworkUtils.isHttpUri(target))
                                     throw new IOException("Redirected to non-HTTP URL: " + target);
 
+                                target = OpenBMCLAPICustomNode.rewriteUrl(target);
                                 currentURI = target;
                             } else {
                                 keepConnection = true;

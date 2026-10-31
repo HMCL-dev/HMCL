@@ -57,6 +57,9 @@ public final class DownloadProviders {
 
         FXUtils.onChangeAndOperate(settings().versionListSourceProperty(), PROVIDER::setVersionListSource);
         FXUtils.onChangeAndOperate(settings().fileDownloadSourceProperty(), PROVIDER::setFileSource);
+        FXUtils.onChangeAndOperate(settings().customOpenBmclapiNodeEnabledProperty(), OpenBMCLAPICustomNode::setEnabled);
+        FXUtils.onChangeAndOperate(settings().customOpenBmclapiNodeUrlProperty(), OpenBMCLAPICustomNode::setNodeUrl);
+        FXUtils.onChangeAndOperate(settings().customOpenBmclapiNodeSecretProperty(), OpenBMCLAPICustomNode::setClusterSecret);
     }
 
     /**
