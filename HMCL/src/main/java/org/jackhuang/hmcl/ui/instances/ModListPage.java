@@ -752,6 +752,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             setSelectable();
 
             activeIndicator.setSize(8);
+            activeIndicator.setPadding(Insets.EMPTY);
             FXUtils.setLimitHeight(activeIndicator, 30);
 
             imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
