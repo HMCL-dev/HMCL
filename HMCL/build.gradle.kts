@@ -1,43 +1,37 @@
-import org.jackhuang.hmcl.gradle.TerracottaConfigUpgradeTask
 import org.jackhuang.hmcl.gradle.addon.FormatJsonFile
 import org.jackhuang.hmcl.gradle.addon.UpdateAddonProjectInfos
 import org.jackhuang.hmcl.gradle.ci.GitHubActionUtils
 import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
-import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
-import org.jackhuang.hmcl.gradle.l10n.CreateLanguageList
-import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
-import org.jackhuang.hmcl.gradle.l10n.SyncTranslations
-import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
+import org.jackhuang.hmcl.gradle.l10n.*
 import org.jackhuang.hmcl.gradle.pack.CreateDeb
 import org.jackhuang.hmcl.gradle.pack.ReleaseType
+import org.jackhuang.hmcl.gradle.terracotta.AbstractTerracottaTask
+import org.jackhuang.hmcl.gradle.terracotta.TerracottaConfigUpgradeTask
+import org.jackhuang.hmcl.gradle.terracotta.TerracottaConfigValidateTask
+import org.jackhuang.hmcl.gradle.utils.ArtifactUtils.Companion.resolveArtifactFile
+import org.jackhuang.hmcl.gradle.utils.ArtifactUtils.Companion.attachSignature
+import org.jackhuang.hmcl.gradle.utils.ArtifactUtils.Companion.createChecksum
 import org.jackhuang.hmcl.gradle.utils.PropertiesUtils
 import org.jackhuang.hmcl.gradle.utils.OfficialBuildValueSource
-import java.net.URI
-import java.nio.file.FileSystems
-import java.nio.file.Files
-import java.security.KeyFactory
-import java.security.MessageDigest
-import java.security.Signature
-import java.security.spec.PKCS8EncodedKeySpec
 import java.util.zip.ZipFile
 
 plugins {
     alias(libs.plugins.shadow)
 }
 
-val projectConfig = PropertiesUtils.load(rootProject.file("config/project.properties").toPath())
+val projectConfig = PropertiesUtils.load(providers.fileContents(rootProject.layout.projectDirectory.file("config/project.properties")))
 
 val isOfficial = JenkinsUtils.IS_ON_CI || GitHubActionUtils.IS_ON_OFFICIAL_REPO
 
-val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" else "unofficial"
-val versionRoot = System.getenv("VERSION_ROOT") ?: projectConfig.getProperty("versionRoot") ?: "3"
+val versionType = providers.environmentVariable("VERSION_TYPE").getOrElse(if (isOfficial) "nightly" else "unofficial")
+val versionRoot = providers.environmentVariable("VERSION_ROOT").getOrElse(projectConfig.getProperty("versionRoot") ?: "3")
 
-val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
-val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
+val microsoftAuthId = providers.environmentVariable("MICROSOFT_AUTH_ID").getOrElse("")
+val curseForgeApiKey = providers.environmentVariable("CURSEFORGE_API_KEY").getOrElse("")
 
-val launcherExe = System.getenv("HMCL_LAUNCHER_EXE") ?: ""
+val launcherExe = providers.environmentVariable("HMCL_LAUNCHER_EXE").getOrElse("")
 
-val buildNumber = System.getenv("BUILD_NUMBER")?.toInt()
+val buildNumber = providers.environmentVariable("BUILD_NUMBER").orNull?.toInt()
 if (buildNumber != null) {
     version = if (JenkinsUtils.IS_ON_CI && versionType == "dev") {
         "$versionRoot.0.$buildNumber"
@@ -45,7 +39,7 @@ if (buildNumber != null) {
         "$versionRoot.$buildNumber"
     }
 } else {
-    val shortCommit = System.getenv("GITHUB_SHA")?.lowercase()?.substring(0, 7)
+    val shortCommit = providers.environmentVariable("GITHUB_SHA").orNull?.lowercase()?.substring(0, 7)
     version = if (shortCommit.isNullOrBlank()) {
         "$versionRoot.SNAPSHOT"
     } else if (isOfficial) {
@@ -76,47 +70,6 @@ dependencies {
 
     embedResources(libs.authlib.injector)
     embedResources(libs.lwjgl.unsafe.agent)
-}
-
-fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
-
-fun createChecksum(file: File) {
-    val algorithms = linkedMapOf(
-        "SHA-1" to "sha1",
-        "SHA-256" to "sha256",
-        "SHA-512" to "sha512"
-    )
-
-    algorithms.forEach { (algorithm, ext) ->
-        File(file.parentFile, "${file.name}.$ext").writeText(
-            digest(algorithm, file.readBytes()).joinToString(separator = "", postfix = "\n") { "%02x".format(it) }
-        )
-    }
-}
-
-fun attachSignature(jar: File) {
-    val keyLocation = System.getenv("HMCL_SIGNATURE_KEY")
-    if (keyLocation == null) {
-        logger.warn("Missing signature key")
-        return
-    }
-
-    val privatekey = KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(File(keyLocation).readBytes()))
-    val signer = Signature.getInstance("SHA512withRSA")
-    signer.initSign(privatekey)
-    ZipFile(jar).use { zip ->
-        zip.stream()
-            .sorted(Comparator.comparing { it.name })
-            .filter { it.name != "META-INF/hmcl_signature" }
-            .forEach {
-                signer.update(digest("SHA-512", it.name.toByteArray()))
-                signer.update(digest("SHA-512", zip.getInputStream(it).readBytes()))
-            }
-    }
-    val signature = signer.sign()
-    FileSystems.newFileSystem(URI.create("jar:" + jar.toURI()), emptyMap<String, Any>()).use { zipfs ->
-        Files.newOutputStream(zipfs.getPath("META-INF/hmcl_signature")).use { it.write(signature) }
-    }
 }
 
 tasks.withType<JavaCompile> {
@@ -162,7 +115,7 @@ val createPropertiesFile = tasks.register<WriteProperties>("createPropertiesFile
 
     property("hmcl.version", project.version.toString())
     property("hmcl.add-opens", addOpens.joinToString(" "))
-    System.getenv("GITHUB_SHA")?.let { property("hmcl.version.hash", it) }
+    providers.environmentVariable("GITHUB_SHA").orNull?.let { property("hmcl.version.hash", it) }
     property("hmcl.version.type", versionType)
     property("hmcl.microsoft.auth.id", microsoftAuthId)
     property("hmcl.curseforge.apikey", curseForgeApiKey)
@@ -182,10 +135,10 @@ val createPropertiesFile = tasks.register<WriteProperties>("createPropertiesFile
 
 tasks.jar {
     enabled = false
-    dependsOn(tasks["shadowJar"])
+    dependsOn(tasks.shadowJar)
 }
 
-val jarPath = tasks.jar.get().archiveFile.get().asFile
+val jarProvider : Provider<File> = tasks.jar.map { it.archiveFile.get().asFile }
 
 tasks.shadowJar {
     dependsOn(createPropertiesFile)
@@ -226,9 +179,17 @@ tasks.shadowJar {
         }
     }
 
+    val jarFileProvider = jarProvider
+    val keyLocationProvider = providers.environmentVariable("HMCL_SIGNATURE_KEY")
+
     doLast {
-        attachSignature(jarPath)
-        createChecksum(jarPath)
+        val keyLocation = keyLocationProvider.orNull
+        if (keyLocation != null) {
+            attachSignature(jarFileProvider.get(), keyLocation)
+        } else {
+            logger.warn("Missing signature key")
+        }
+        createChecksum(jarFileProvider.get())
     }
 }
 
@@ -236,6 +197,7 @@ tasks.processResources {
     dependsOn(upsideDownTranslate)
     dependsOn(createLocaleNamesResourceBundle)
     dependsOn(createLanguageList)
+    dependsOn(validateTerracottaConfig)
 
     into("assets/") {
         from(createPropertiesFile.flatMap { it.destinationFile })
@@ -247,29 +209,25 @@ tasks.processResources {
         from(upsideDownTranslate.map { it.outputFile })
         from(createLocaleNamesResourceBundle.map { it.outputDirectory })
     }
-
-    inputs.property("terracotta_version", libs.versions.terracotta)
-    doLast {
-        upgradeTerracottaConfig.get().checkValid()
-    }
 }
-
-fun artifactFile(ext: String) = jarPath.resolveSibling(jarPath.nameWithoutExtension + '.' + ext)
 
 val makeExecutables = tasks.register("makeExecutables") {
     val extensions = listOf("exe", "sh")
 
     dependsOn(tasks.jar)
 
-    inputs.file(jarPath)
-    outputs.files(extensions.map { artifactFile(it) })
+    inputs.file(jarProvider)
+    outputs.files(extensions.map { ext -> jarProvider.map { resolveArtifactFile(it, ext) }})
+
+    val jarFileProvider = jarProvider
 
     doLast {
-        val jarContent = jarPath.readBytes()
+        val jar = jarFileProvider.get()
+        val jarContent = jar.readBytes()
 
-        ZipFile(jarPath).use { zipFile ->
+        ZipFile(jar).use { zipFile ->
             for (extension in extensions) {
-                val output = artifactFile(extension)
+                val output = resolveArtifactFile(jar, extension)
                 val entry = zipFile.getEntry("assets/HMCLauncher.$extension")
                     ?: throw GradleException("HMCLauncher.$extension not found")
 
@@ -287,7 +245,7 @@ val makeExecutables = tasks.register("makeExecutables") {
 val makeDeb = tasks.register("makeDeb", CreateDeb::class) {
     dependsOn(makeExecutables)
 
-    val debFile = layout.file(provider { artifactFile("deb") })
+    val debProvider = jarProvider.map { resolveArtifactFile(it, "deb") }
 
     val debChannel = when (versionType) {
         "stable" -> ReleaseType.STABLE
@@ -298,12 +256,12 @@ val makeDeb = tasks.register("makeDeb", CreateDeb::class) {
     version.set(project.version.toString())
     releaseType.set(debChannel)
     launcherClassName.set("org.jackhuang.hmcl.Launcher")
-    appShFile.set(layout.file(provider { artifactFile("sh") }))
+    appShFile.set(layout.file(jarProvider.map { resolveArtifactFile(it, "sh") }))
     iconFile.set(layout.projectDirectory.file("image/hmcl.png"))
-    outputFile.set(debFile)
+    outputFile.set(layout.file(debProvider))
 
     doLast {
-        createChecksum(debFile.get().asFile)
+        createChecksum(debProvider.get())
     }
 }
 
@@ -377,49 +335,56 @@ tasks.register<JavaExec>("run") {
 
     group = "application"
 
-    classpath = files(jarPath)
+    classpath = files(jarProvider)
     workingDir = rootProject.rootDir
 
-    val vmOptions = parseToolOptions(System.getenv("HMCL_JAVA_OPTS") ?: "-Xmx1g")
+    val vmOptions = parseToolOptions(providers.environmentVariable("HMCL_JAVA_OPTS").getOrElse("-Xmx1g"))
     if (vmOptions.none { it.startsWith("-Dhmcl.offline.auth.restricted=") })
         vmOptions += "-Dhmcl.offline.auth.restricted=false"
 
     jvmArgs(vmOptions)
 
-    val hmclJavaHome = System.getenv("HMCL_JAVA_HOME")
+    val hmclJavaHome = providers.environmentVariable("HMCL_JAVA_HOME").orNull
     if (hmclJavaHome != null) {
-        this.executable(
+        executable(
             file(hmclJavaHome).resolve("bin")
-                .resolve(if (System.getProperty("os.name").lowercase().startsWith("windows")) "java.exe" else "java")
+                .resolve(if (providers.systemProperty("os.name").orNull?.lowercase()?.startsWith("windows") ?: false) "java.exe" else "java")
         )
     }
+    val javaHomeProvider = providers.systemProperty("java.home")
 
     doFirst {
         logger.quiet("HMCL_JAVA_OPTS: {}", vmOptions)
-        logger.quiet("HMCL_JAVA_HOME: {}", hmclJavaHome ?: System.getProperty("java.home"))
+        logger.quiet("HMCL_JAVA_HOME: {}", hmclJavaHome ?: javaHomeProvider.orNull)
     }
 }
 
 // terracotta
 
-val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgradeTerracottaConfig") {
-    val destination = layout.projectDirectory.file("src/main/resources/assets/terracotta.json")
-    val source = layout.projectDirectory.file("terracotta-template.json");
+val terracottaConfigFile = layout.projectDirectory.file("src/main/resources/assets/terracotta.json")
 
-    classifiers.set(
-        listOf(
-            "windows-x86_64", "windows-arm64",
-            "macos-x86_64", "macos-arm64",
-            "linux-x86_64", "linux-arm64", "linux-loongarch64", "linux-riscv64",
-            "freebsd-x86_64"
-        )
+val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgradeTerracottaConfig") {
+    configFile = terracottaConfigFile
+
+    classifiers = listOf(
+        "windows-x86_64", "windows-arm64",
+        "macos-x86_64", "macos-arm64",
+        "linux-x86_64", "linux-arm64", "linux-loongarch64", "linux-riscv64",
+        "freebsd-x86_64"
     )
 
-    version.set(libs.versions.terracotta)
-    downloadURL.set($$"https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz")
+    downloadURL = $$"https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz"
 
-    templateFile.set(source)
-    outputFile.set(destination)
+    templateFile = layout.projectDirectory.file("terracotta-template.json")
+}
+
+val validateTerracottaConfig = tasks.register<TerracottaConfigValidateTask>("validateTerracottaConfig") {
+    configFile = terracottaConfigFile
+    upgradeTaskPath = upgradeTerracottaConfig.map { it.path }
+}
+
+tasks.withType<AbstractTerracottaTask> {
+    version = libs.versions.terracotta
 }
 
 // Check Translations
@@ -458,13 +423,12 @@ val createLanguageList = tasks.register<CreateLanguageList>("createLanguageList"
     outputFile.set(generatedDir.map { it.file("languages.json") })
 }
 
-val createLocaleNamesResourceBundle =
-    tasks.register<CreateLocaleNamesResourceBundle>("createLocaleNamesResourceBundle") {
-        dependsOn(createLanguageList)
+val createLocaleNamesResourceBundle = tasks.register<CreateLocaleNamesResourceBundle>("createLocaleNamesResourceBundle") {
+    dependsOn(createLanguageList)
 
-        languagesFile.set(createLanguageList.flatMap { it.outputFile })
-        outputDirectory.set(generatedDir.map { it.dir("generated/LocaleNames") })
-    }
+    languagesFile.set(createLanguageList.flatMap { it.outputFile })
+    outputDirectory.set(generatedDir.map { it.dir("generated/LocaleNames") })
+}
 
 // mcmod data
 
