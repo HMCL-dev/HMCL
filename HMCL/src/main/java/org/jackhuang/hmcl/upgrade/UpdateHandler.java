@@ -15,7 +15,6 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.UpgradeDialog;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -60,14 +59,14 @@ public final class UpdateHandler {
             return true;
         }
 
-        if (args.length == 2 && args[0].equals("--apply-to")) {
+        if (args.length > 0 && args[0].equals("--apply-to")) {
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && !OperatingSystem.isWindows7OrLater()) {
                 SwingUtils.showErrorDialog(i18n("fatal.apply_update_need_win7", Metadata.PUBLISH_URL));
                 return true;
             }
 
             try {
-                applyUpdate(Paths.get(args[1]));
+                applyUpdate(Paths.get(args[1]), args.length > 2 && args[2].equals("--silent"));
             } catch (IOException e) {
                 LOG.warning("Failed to apply update", e);
                 SwingUtils.showErrorDialog(i18n("fatal.apply_update_failure", Metadata.MANUAL_UPDATE_URL) + "\n" + StringUtils.getStackTrace(e));
@@ -81,6 +80,30 @@ public final class UpdateHandler {
         }
 
         return false;
+    }
+
+    public static void finishUpdate(Path downloaded, boolean silent) throws IOException {
+        if (!IntegrityChecker.isSelfVerified() && !IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
+            throw new IOException("Current JAR is not verified");
+        }
+
+        var latch = new CountDownLatch(1);
+        Platform.runLater(() -> {
+            try {
+                SettingsManager.savePendingChanges();
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        try {
+            latch.await();
+        } catch (InterruptedException ignored) {
+            // Ignore
+        }
+
+        requestUpdate(downloaded, getCurrentLocation(), silent);
+        EntryPoint.exit(0);
     }
 
     public static void updateFrom(RemoteVersion version) {
@@ -109,33 +132,7 @@ public final class UpdateHandler {
 
                 if (success) {
                     try {
-                        if (!IntegrityChecker.isSelfVerified() && !IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
-                            throw new IOException("Current JAR is not verified");
-                        }
-
-                        var latch = new CountDownLatch(1);
-                        Platform.runLater(() -> {
-                            try {
-                                SettingsManager.savePendingChanges();
-                            } finally {
-                                latch.countDown();
-                            }
-                        });
-
-                        try {
-                            latch.await();
-                        } catch (InterruptedException ignored) {
-                            // Ignore
-                        }
-
-                        try {
-                            FileSaver.waitForAllSaves();
-                        } catch (InterruptedException ignored) {
-                            // Ignore
-                        }
-
-                        requestUpdate(downloaded, getCurrentLocation());
-                        EntryPoint.exit(0);
+                        finishUpdate(downloaded, false);
                     } catch (IOException e) {
                         LOG.warning("Failed to update to " + version, e);
                         Platform.runLater(() -> Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageType.ERROR));
@@ -152,7 +149,7 @@ public final class UpdateHandler {
         }));
     }
 
-    private static void applyUpdate(Path target) throws IOException {
+    private static void applyUpdate(Path target, boolean silent) throws IOException {
         LOG.info("Applying update to " + target);
 
         Path self = getCurrentLocation();
@@ -172,14 +169,14 @@ public final class UpdateHandler {
             }
         }
 
-        startJava(target);
+        if (!silent) startJava(target);
     }
 
-    private static void requestUpdate(Path updateTo, Path self) throws IOException {
+    private static void requestUpdate(Path updateTo, Path self, boolean silent) throws IOException {
         if (!IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
             IntegrityChecker.verifyJar(updateTo);
         }
-        startJava(updateTo, "--apply-to", self.toString());
+        startJava(updateTo, "--apply-to", self.toString(), silent ? "--silent" : "");
     }
 
     public static void startJava(Path jar, String... appArgs) throws IOException {
@@ -260,7 +257,7 @@ public final class UpdateHandler {
         Path location = getParentApplicationLocation()
                 .orElseThrow(() -> new IOException("Failed to get parent application location"));
 
-        requestUpdate(getCurrentLocation(), location);
+        requestUpdate(getCurrentLocation(), location, false);
     }
 
     /**
