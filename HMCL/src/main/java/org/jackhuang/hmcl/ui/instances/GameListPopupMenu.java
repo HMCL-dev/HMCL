@@ -21,10 +21,13 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.WindowEvent;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -33,18 +36,19 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /// Displays game instances in a popup selection list.
 ///
 /// @author Glavo
+@NotNullByDefault
 public final class GameListPopupMenu extends StackPane {
 
     private static final String KEY = GameListPopupMenu.class.getName() + ".popup";
 
+    /// Dismisses the owner's popup; returns true while it is showing or closing.
     public static boolean hideShowing(Node owner) {
-        JFXPopup popup = (JFXPopup) owner.getProperties().get(KEY);
-        if (popup != null && popup.isShowing()) {
-            popup.hide();
-            return true;
-        } else {
+        if (!(owner.getProperties().get(KEY) instanceof JFXPopup popup && popup.isShowing())) {
             return false;
         }
+
+        popup.hide();
+        return true;
     }
 
     /// Shows an instance selection popup relative to its owner.
@@ -79,11 +83,10 @@ public final class GameListPopupMenu extends StackPane {
         menu.getItems().setAll(instances.stream()
                 .map(GameItem::new)
                 .toList());
-        JFXPopup popup = new JFXPopup(menu);
+        JFXPopup popup = new GameListPopup(menu, AnimationUtils.isAnimationEnabled());
         owner.getProperties().put(KEY, popup);
         popup.addEventFilter(WindowEvent.WINDOW_HIDDEN, event -> owner.getProperties().remove(KEY, popup));
         popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY, true);
-
         return popup;
     }
 
@@ -107,6 +110,7 @@ public final class GameListPopupMenu extends StackPane {
         FXUtils.onChangeAndOperate(isEmpty, empty -> getChildren().setAll(empty ? placeholder : listView));
     }
 
+    /// Returns the mutable instance list.
     public ObservableList<GameItem> getItems() {
         return listView.getItems();
     }
@@ -130,10 +134,10 @@ public final class GameListPopupMenu extends StackPane {
 
             this.content = new TwoLineListItem();
             this.content.setMouseTransparent(true);
-            FXUtils.onChangeAndOperate(tag, tag -> {
+            FXUtils.onChangeAndOperate(tag, (@Nullable String value) -> {
                 content.getTags().clear();
-                if (StringUtils.isNotBlank(tag)) {
-                    content.addTag(tag);
+                if (StringUtils.isNotBlank(value)) {
+                    content.addTag(value);
                 }
             });
 
@@ -151,7 +155,7 @@ public final class GameListPopupMenu extends StackPane {
             rootPane.maxWidthProperty().bind(listView.widthProperty().subtract(5));
 
             FXUtils.onClicked(rootPane, () -> {
-                GameItem item = getItem();
+                @Nullable GameItem item = getItem();
                 if (item != null) {
                     item.getRepository().setSelectedInstance(item.getGameInstance());
                     if (getScene().getWindow() instanceof JFXPopup popup)
@@ -163,8 +167,8 @@ public final class GameListPopupMenu extends StackPane {
         }
 
         @Override
-        protected void updateItem(GameItem item, boolean empty) {
-            GameItem oldItem = getItem();
+        protected void updateItem(@Nullable GameItem item, boolean empty) {
+            @Nullable GameItem oldItem = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(item, empty);
