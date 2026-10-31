@@ -384,8 +384,9 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         dummyCell.twoLineListItem.setTitle("Dummy");
                         dummyCell.twoLineListItem.setSubtitle("Dummy");
                         dummyCell.imageView.setImage(GameInstanceIconType.GRASS.getIcon());
-                        prepareNode(dummyCell.twoLineListItem);
-                        list.setFixedCellSize(dummyCell.twoLineListItem.prefHeight(-1));
+                        // Prepare the unattached row root; its content already belongs to the rippler.
+                        prepareNode(dummyCell.ripplerContainer);
+                        list.setFixedCellSize(dummyCell.ripplerContainer.prefHeight(-1));
 
                         VBox.setVgrow(list, Priority.ALWAYS);
 

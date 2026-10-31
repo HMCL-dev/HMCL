@@ -499,6 +499,49 @@ public final class TwoLineListItemLayoutTest {
         checked.get(30, TimeUnit.SECONDS);
     }
 
+    /// Verifies page skin initialization measures a complete row without reparenting its content.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    public void testRemoteVersionPageInitialization(boolean game) throws ReflectiveOperationException {
+        initializeAnimations();
+        onFxThread(() -> {
+            DownloadProvider provider = new DownloadProvider() {
+                /// Supplies an empty version list without accessing the network.
+                @Override
+                public @Unmodifiable Task<ComponentRemoteVersionList<?>> getVersionsAsync(
+                        GameComponentType type, @Nullable GameVersionNumber version, boolean refresh) {
+                    return Task.completed(ComponentRemoteVersionList.of(type));
+                }
+            };
+            VersionsPage page = new VersionsPage(null, "Versions", GameVersionNumber.asGameVersion("1.20.1"),
+                    provider, game ? GameComponentType.GAME : GameComponentType.FORGE, () -> {});
+            try {
+                var type = Class.forName("org.jackhuang.hmcl.ui.download.VersionsPage$VersionsPageSkin");
+                var constructor = type.getDeclaredConstructor(VersionsPage.class);
+                constructor.setAccessible(true);
+                // CSS initialization needs font settings without loading the user's configuration.
+                var settingsField = SettingsManager.class.getDeclaredField("launcherSettings");
+                settingsField.setAccessible(true);
+                @Nullable Object previous = settingsField.get(null);
+                LauncherSettings settings = new LauncherSettings();
+                settings.launcherFontFamilyProperty().set("System");
+                try {
+                    settingsField.set(null, settings);
+                    var skin = constructor.newInstance(page);
+                    var listField = type.getDeclaredField("list");
+                    listField.setAccessible(true);
+                    ListView<?> list = (ListView<?>) listField.get(skin);
+                    assertTrue(Double.isFinite(list.getFixedCellSize()));
+                    assertTrue(list.getFixedCellSize() > 20);
+                } finally {
+                    settingsField.set(null, previous);
+                }
+            } catch (ReflectiveOperationException failure) {
+                throw new AssertionError(failure);
+            }
+        });
+    }
+
     /// Verifies version rows use their list width and fold or expand tags when that width changes.
     @Test
     public void testRemoteVersionCellWidth() throws ReflectiveOperationException {
