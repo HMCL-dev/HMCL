@@ -20,6 +20,7 @@ import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
 import javafx.stage.Window;
 import javafx.util.Duration;
@@ -58,7 +59,7 @@ import java.util.stream.Collectors;
 /// nodes are detached while both invisible and unmanaged. A node must not occupy multiple slots.
 /// This component manages its children list; callers must not modify it directly.
 @NotNullByDefault
-public class TwoLineListItem extends Pane {
+public class TwoLineListItem extends Region {
     /// The default spacing between the text area and each managed side node.
     public static final double SIDE_SPACING = 12;
 

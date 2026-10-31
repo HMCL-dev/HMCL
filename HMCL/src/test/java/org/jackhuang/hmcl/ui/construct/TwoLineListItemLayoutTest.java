@@ -86,8 +86,8 @@ public final class TwoLineListItemLayoutTest {
 
             item.addTags(List.of("Fabric", "Quilt"));
             layout(parent, 800);
-            assertEquals(5, item.getChildren().size());
-            assertTrue(item.getChildren().stream().allMatch(Label.class::isInstance));
+            assertEquals(5, item.getChildrenUnmodifiable().size());
+            assertTrue(item.getChildrenUnmodifiable().stream().allMatch(Label.class::isInstance));
             assertTagsFit(item);
             double taggedWidth = item.getWidth();
             assertTrue(taggedWidth > originalWidth);
@@ -159,7 +159,7 @@ public final class TwoLineListItemLayoutTest {
             item.addTags(IntStream.rangeClosed(1, 12).mapToObj(i -> "Tag " + i).toList());
             VBox parent = new VBox(item);
             new Scene(parent);
-            for (Node node : item.getChildren()) {
+            for (Node node : item.getChildrenUnmodifiable()) {
                 if (node.getStyleClass().contains("tag"))
                     node.setStyle("-fx-font-size: 19px; -fx-padding: 3px 11px; -fx-label-padding: 0 2px;");
             }
@@ -247,7 +247,7 @@ public final class TwoLineListItemLayoutTest {
                 layout(parent, 400);
                 assertSame(values, item.getTags());
                 assertNull(stateField.get(item));
-                assertEquals(2, item.getChildren().size());
+                assertEquals(2, item.getChildrenUnmodifiable().size());
 
                 values.add(new Tag("First tag", Tag.Type.NORMAL));
                 assertNotNull(stateField.get(item));
@@ -272,7 +272,7 @@ public final class TwoLineListItemLayoutTest {
             TwoLineListItem item = new TwoLineListItem("Title", null);
             AtomicInteger added = new AtomicInteger();
             AtomicInteger removed = new AtomicInteger();
-            item.getChildren().addListener((ListChangeListener<Node>) change -> {
+            item.getChildrenUnmodifiable().addListener((ListChangeListener<Node>) change -> {
                 while (change.next()) {
                     for (Node node : change.getAddedSubList()) {
                         if (isExpandedTag(node))
@@ -1164,7 +1164,7 @@ public final class TwoLineListItemLayoutTest {
 
             assertEquals(13, item.getTitleLabel().getFont().getSize());
             assertEquals(10, item.getSubtitleLabel().getFont().getSize());
-            double top = item.getChildren().stream().filter(Node::isVisible).mapToDouble(node -> node.getLayoutY()).min().orElseThrow();
+            double top = item.getChildrenUnmodifiable().stream().filter(Node::isVisible).mapToDouble(node -> node.getLayoutY()).min().orElseThrow();
             double bottom = item.getHeight() - item.getSubtitleLabel().getBoundsInParent().getMaxY();
             assertTrue(top > 0);
             assertEquals(top, bottom, 1);
@@ -1187,7 +1187,7 @@ public final class TwoLineListItemLayoutTest {
 
     /// Returns rendered tags in their scene-graph order.
     private static @Unmodifiable List<Label> labels(TwoLineListItem item) {
-        return item.getChildren().stream().filter(node -> node.getStyleClass().contains("tag")
+        return item.getChildrenUnmodifiable().stream().filter(node -> node.getStyleClass().contains("tag")
                         && !node.getStyleClass().contains("collapsed-tag"))
                 .map(Label.class::cast).toList();
     }
