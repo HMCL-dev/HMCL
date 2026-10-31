@@ -1053,69 +1053,114 @@ public final class TwoLineListItemLayoutTest {
         });
     }
 
-    /// Verifies the button-owned trailing group keeps its identity, order, and independent actions.
+    /// Verifies the private trailing group reuses its label and observes only the current icon.
     @Test
     public void testLineButtonTrailingGroup() throws ReflectiveOperationException {
         initializeAnimations();
         onFxThread(() -> {
             LineButton line = new LineButton();
             line.setTitle("Setting");
+            assertNull(line.container.getTrailing());
             line.setTrailingText("Value");
-            Label icon = new Label(">");
+            Button icon = new Button("Icon");
             line.setTrailingIcon(icon);
-            Button extra = new Button("Extra");
-            line.getTrailingBox().getChildren().add(0, extra);
             VBox parent = new VBox(line);
             new Scene(parent);
             layout(parent, 400);
-            TwoLineListItem content = (TwoLineListItem) requireNonNull(line.lookup(".line-component-container"));
+            TwoLineListItem content = line.container;
             HBox group = (HBox) requireNonNull(content.getTrailing());
-            assertSame(extra, group.getChildren().get(0));
-            Label text = (Label) group.getChildren().get(1);
+            Label text = (Label) group.getChildren().get(0);
             assertEquals("Value", text.getText());
-            assertSame(icon, group.getChildren().get(2));
+            assertEquals(List.of(text, icon), group.getChildren());
 
             AtomicInteger rowActions = new AtomicInteger();
-            AtomicInteger extraActions = new AtomicInteger();
+            AtomicInteger iconActions = new AtomicInteger();
             line.setOnAction(event -> rowActions.incrementAndGet());
-            extra.setOnAction(event -> extraActions.incrementAndGet());
-            extra.fire();
-            assertEquals(1, extraActions.get());
+            icon.setOnAction(event -> iconActions.incrementAndGet());
+            icon.fire();
+            assertEquals(1, iconActions.get());
             assertEquals(0, rowActions.get());
             line.fire();
             assertEquals(1, rowActions.get());
 
-            for (Node child : group.getChildren()) {
-                child.setVisible(false);
-                child.setManaged(false);
-            }
-            layout(parent, 400);
+            line.setTrailingText(null);
+            assertEquals(List.of(icon), group.getChildren());
+            icon.setVisible(false);
+            icon.setManaged(false);
             assertNull(group.getParent());
             double collapsedWidth = content.prefWidth(-1);
-            extra.setVisible(true);
-            extra.setManaged(true);
+            icon.setVisible(true);
+            icon.setManaged(true);
             assertSame(content, group.getParent());
-            assertFalse(content.isMouseTransparent());
             assertTrue(content.prefWidth(-1) > collapsedWidth);
 
-            line.setTrailingText(null);
-            group.getChildren().remove(extra);
-            assertSame(group, content.getTrailing());
-            assertEquals(List.of(icon), group.getChildren());
-            icon.setManaged(true);
-            icon.setVisible(true);
-            assertSame(group, icon.getParent());
+            Button replacement = new Button("Replacement");
+            line.setTrailingIcon(replacement);
+            assertNull(icon.getParent());
+            icon.setVisible(false);
+            icon.setManaged(false);
+            assertTrue(group.isVisible());
+            assertTrue(group.isManaged());
+            line.setTrailingText("Restored");
+            assertEquals(List.of(text, replacement), group.getChildren());
+            assertEquals("Restored", text.getText());
+            line.setTrailingText("");
             line.setTrailingIcon((Node) null);
             assertSame(group, content.getTrailing());
             assertNull(group.getParent());
             assertTrue(group.getChildren().isEmpty());
-            assertNull(icon.getParent());
-            text.setManaged(true);
-            text.setVisible(true);
-            assertNull(group.getParent());
-            line.setTrailingText("Restored");
+            replacement.setVisible(false);
+            replacement.setManaged(false);
+            assertFalse(group.isVisible());
+            assertFalse(group.isManaged());
+            line.setTrailingText("Value");
             assertSame(group, content.getTrailing());
+            assertEquals(List.of(text), group.getChildren());
             assertSame(content, group.getParent());
+        });
+    }
+
+    /// Verifies the update selector composes its own action without modifying the value/icon group.
+    @Test
+    public void testUpdateChannelButtonComposition() throws ReflectiveOperationException {
+        initializeAnimations();
+        onFxThread(() -> {
+            try {
+                var type = Class.forName("org.jackhuang.hmcl.ui.main.SettingsPage$UpdateChannelButton");
+                var constructor = type.getDeclaredConstructor(Node.class);
+                constructor.setAccessible(true);
+                Button update = new Button("Update");
+                LineButton line = (LineButton) constructor.newInstance(update);
+                line.setTitle("Update channel");
+                line.setTrailingText("Stable");
+                VBox parent = new VBox(line);
+                new Scene(parent);
+                layout(parent, 500);
+                HBox outer = (HBox) line.container.getTrailing();
+                assertSame(update, outer.getChildren().get(0));
+                HBox selection = (HBox) outer.getChildren().get(1);
+                Label text = (Label) selection.getChildren().get(0);
+                assertEquals("Stable", text.getText());
+                assertSame(line.getTrailingIcon(), selection.getChildren().get(1));
+                double width = outer.prefWidth(-1);
+                update.setVisible(false);
+                update.setManaged(false);
+                assertTrue(outer.prefWidth(-1) < width);
+                line.setTrailingText("Development");
+                assertEquals("Development", text.getText());
+                assertSame(outer, line.container.getTrailing());
+                assertSame(outer, selection.getParent());
+                line.setTrailingText(null);
+                line.setTrailingText("Restored");
+                assertEquals(List.of(text, line.getTrailingIcon()), selection.getChildren());
+                AtomicInteger actions = new AtomicInteger();
+                update.setOnAction(event -> actions.incrementAndGet());
+                update.fire();
+                assertEquals(1, actions.get());
+                assertEquals(List.of(update, selection), outer.getChildren());
+            } catch (ReflectiveOperationException failure) {
+                throw new AssertionError(failure);
+            }
         });
     }
 
@@ -1133,7 +1178,7 @@ public final class TwoLineListItemLayoutTest {
             new Scene(parent);
             layout(parent, 500);
             LineButton header = (LineButton) wrapper.getChildren().get(0);
-            HBox group = header.getTrailingBox();
+            HBox group = (HBox) header.container.getTrailing();
             assertEquals("Description", ((Label) group.getChildren().get(0)).getText());
             HBox actions = (HBox) header.getTrailingIcon();
             assertSame(actions, group.getChildren().get(1));

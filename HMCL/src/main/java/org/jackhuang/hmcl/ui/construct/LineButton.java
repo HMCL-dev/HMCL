@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
-import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -39,31 +38,15 @@ public class LineButton extends LineButtonBase {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
-    /// The trailing group, created only when text, an icon, or subclass content is needed.
+    /// The private group containing only this button's trailing text and icon.
     private @Nullable HBox trailingBox;
 
-    /// Returns the persistent group containing trailing text and the trailing icon.
-    /// Subclasses may add their own children. The group occupies space while any child is managed,
-    /// and is visible while any child is visible. It is retained even with zero or one child.
-    protected final HBox getTrailingBox() {
+    /// Creates the trailing group on first use and retains it across text and icon changes.
+    private HBox getTrailingBox() {
         if (trailingBox == null) {
             HBox box = new HBox(SPACING);
             box.setAlignment(Pos.CENTER_LEFT);
             box.setPickOnBounds(false);
-            InvalidationListener listener = observable -> updateTrailingBox();
-            box.getChildren().addListener((ListChangeListener<Node>) change -> {
-                while (change.next()) {
-                    for (Node node : change.getRemoved()) {
-                        node.visibleProperty().removeListener(listener);
-                        node.managedProperty().removeListener(listener);
-                    }
-                    for (Node node : change.getAddedSubList()) {
-                        node.visibleProperty().addListener(listener);
-                        node.managedProperty().addListener(listener);
-                    }
-                }
-                updateTrailingBox();
-            });
             trailingBox = box;
             updateTrailingBox();
             container.setTrailing(box);
@@ -71,11 +54,14 @@ public class LineButton extends LineButtonBase {
         return trailingBox;
     }
 
-    /// Removes empty or inactive trailing content from layout and mouse picking.
+    /// Updates group participation from the text value and the icon's own state.
     private void updateTrailingBox() {
         if (trailingBox != null) {
-            trailingBox.setManaged(trailingBox.getChildren().stream().anyMatch(Node::isManaged));
-            trailingBox.setVisible(trailingBox.getChildren().stream().anyMatch(Node::isVisible));
+            @Nullable String text = getTrailingText();
+            boolean hasText = text != null && !text.isEmpty();
+            @Nullable Node icon = getTrailingIcon();
+            trailingBox.setManaged(hasText || icon != null && icon.isManaged());
+            trailingBox.setVisible(hasText || icon != null && icon.isVisible());
         }
     }
 
@@ -148,19 +134,18 @@ public class LineButton extends LineButtonBase {
                             trailingTextLabel.getStyleClass().add("trailing-label");
                             trailingTextLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
                             trailingTextLabel.setMouseTransparent(true);
+                            trailingTextLabel.setMinWidth(50);
+                            trailingTextLabel.setAlignment(Pos.CENTER_RIGHT);
                         }
                         trailingTextLabel.setText(message);
-                        trailingTextLabel.setMinWidth(50);
-                        trailingTextLabel.setAlignment(Pos.CENTER_RIGHT);
                         HBox box = getTrailingBox();
-                        if (trailingTextLabel.getParent() != box) {
-                            int iconIndex = box.getChildren().indexOf(getTrailingIcon());
-                            box.getChildren().add(iconIndex < 0 ? box.getChildren().size() : iconIndex, trailingTextLabel);
-                        }
+                        if (trailingTextLabel.getParent() != box)
+                            box.getChildren().add(0, trailingTextLabel);
                     } else if (trailingTextLabel != null) {
                         trailingTextLabel.setText("");
                         getTrailingBox().getChildren().remove(trailingTextLabel);
                     }
+                    updateTrailingBox();
                 }
             };
         }
@@ -188,6 +173,9 @@ public class LineButton extends LineButtonBase {
                 /// The icon currently attached to the trailing group.
                 private @Nullable Node previous;
 
+                /// Tracks visibility and layout participation of the current icon only.
+                private final InvalidationListener iconListener = observable -> updateTrailingBox();
+
                 /// Returns the button owning this property.
                 @Override
                 public Object getBean() {
@@ -203,11 +191,18 @@ public class LineButton extends LineButtonBase {
                 /// Replaces the icon at the end of the trailing group.
                 @Override
                 protected void invalidated() {
-                    if (previous != null)
+                    if (previous != null) {
+                        previous.visibleProperty().removeListener(iconListener);
+                        previous.managedProperty().removeListener(iconListener);
                         getTrailingBox().getChildren().remove(previous);
+                    }
                     previous = get();
-                    if (previous != null)
+                    if (previous != null) {
+                        previous.visibleProperty().addListener(iconListener);
+                        previous.managedProperty().addListener(iconListener);
                         getTrailingBox().getChildren().add(previous);
+                    }
+                    updateTrailingBox();
                 }
             };
 
