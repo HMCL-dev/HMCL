@@ -8,6 +8,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -21,7 +22,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /// @param <T> this type of addon
-public abstract class LocalAddonFile<T> implements Comparable<T> {
+public abstract class LocalAddonFile<T extends LocalAddonFile<T>> implements Comparable<T> {
 
     protected LocalAddonFile() {
     }
@@ -80,6 +81,11 @@ public abstract class LocalAddonFile<T> implements Comparable<T> {
     }
 
     public void onUpdated(String newFileNameWithExt) {
+    }
+
+    @Override
+    public int compareTo(@NotNull T o) {
+        return getFileName().compareTo(o.getFileName());
     }
 
     @NotNullByDefault
