@@ -31,7 +31,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     private final JFXRadioButton chkSelected;
     private final JFXButton btnUpgrade;
-    private final JFXButton btnInstanceManagement;
+    private final JFXButton btnEditInstance;
     private final JFXButton btnManage;
 
     private final HBox right;
@@ -101,15 +101,15 @@ public final class GameListCell extends ListCell<GameListItem> {
             FXUtils.installFastTooltip(btnUpgrade, i18n("instance.update"));
             right.getChildren().add(btnUpgrade);
 
-            this.btnInstanceManagement = FXUtils.newToggleButton4(SVG.SETTINGS);
-            btnInstanceManagement.setOnAction(e -> {
+            this.btnEditInstance = FXUtils.newToggleButton4(SVG.SETTINGS);
+            btnEditInstance.setOnAction(e -> {
                 GameListItem item = this.getItem();
                 if (item != null)
                     item.modifyGameSettings();
             });
-            BorderPane.setAlignment(btnInstanceManagement, Pos.CENTER);
-            FXUtils.installFastTooltip(btnInstanceManagement, i18n("instance.manage.manage"));
-            right.getChildren().add(btnInstanceManagement);
+            BorderPane.setAlignment(btnEditInstance, Pos.CENTER);
+            FXUtils.installFastTooltip(btnEditInstance, i18n("instance.manage.manage"));
+            right.getChildren().add(btnEditInstance);
 
             this.btnManage = FXUtils.newToggleButton4(SVG.MORE_VERT);
             btnManage.setOnAction(e -> {
@@ -174,7 +174,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             this.tag.bind(item.tagProperty());
             if (item.canUpdate())
                 this.right.getChildren().add(btnUpgrade);
-            this.right.getChildren().addAll(btnInstanceManagement, btnManage);
+            this.right.getChildren().addAll(btnEditInstance, btnManage);
         }
     }
 
