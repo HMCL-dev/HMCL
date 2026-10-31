@@ -23,6 +23,7 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
@@ -188,10 +189,10 @@ public class MenuUpDownButton extends Control {
                 if (getSkinnable() == null || getSkinnable().isExpanded() != expanded) return;
 
                 if (expanded) {
-                    var scene = getSkinnable().getScene();
+                    Scene scene = getSkinnable().getScene();
 
                     if (scene != null) {
-                        var sceneRoot = scene.getRoot();
+                        Parent sceneRoot = scene.getRoot();
                         sceneRoot.applyCss();
                         sceneRoot.layout();
                     }
