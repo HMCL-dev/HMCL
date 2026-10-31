@@ -3,8 +3,10 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.application.Platform;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -14,7 +16,11 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import org.jackhuang.hmcl.setting.LauncherSettings;
+import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -26,6 +32,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.*;
@@ -176,7 +183,9 @@ public final class TwoLineListItemLayoutTest {
             new Scene(parent);
             layout(parent, 280);
 
-            TwoLineListItem content = (TwoLineListItem) requireNonNull(line.lookup(".title-container"));
+            TwoLineListItem content = (TwoLineListItem) requireNonNull(line.lookup(".line-component-container"));
+            assertSame(line, content.getParent());
+            assertSame(content, right.getParent());
             Label subtitle = content.getSubtitleLabel();
             assertEquals(content.getTitleLabel().prefWidth(-1), content.getTitleLabel().getWidth(), 1);
             assertTrue(line.getHeight() >= 48);
@@ -194,8 +203,210 @@ public final class TwoLineListItemLayoutTest {
             assertEquals(48, line.getHeight(), 0.001);
             assertFalse(content.isMouseTransparent());
             line.setTitleTrailing(null);
+            assertFalse(content.isMouseTransparent());
+            line.setRight(null);
             assertTrue(content.isMouseTransparent());
         });
+    }
+
+    /// Verifies binding, replacement, visibility, and managed-state changes for optional side nodes.
+    @Test
+    public void testSideNodeProperties() {
+        onFxThread(() -> {
+            TwoLineListItem item = new TwoLineListItem("Title", null);
+            var source = new SimpleObjectProperty<@Nullable Node>();
+            item.leadingProperty().bind(source);
+            Button leading = new Button("Leading");
+            source.set(leading);
+            Button trailing = new Button("Trailing");
+            item.setTrailing(trailing);
+            HBox parent = new HBox(item);
+            new Scene(parent);
+            layout(parent, 800);
+            assertSame(item, item.leadingProperty().getBean());
+            assertSame(item, item.trailingProperty().getBean());
+            assertSame(leading, item.getLeading());
+            assertSame(item, leading.getParent());
+            assertFalse(item.isMouseTransparent());
+
+            double originalWidth = item.prefWidth(-1);
+            leading.setVisible(false);
+            assertEquals(originalWidth, item.prefWidth(-1));
+            assertSame(item, leading.getParent());
+            leading.setManaged(false);
+            assertNull(leading.getParent());
+            assertTrue(item.prefWidth(-1) < originalWidth);
+            assertFalse(item.isMouseTransparent());
+            leading.setManaged(true);
+            leading.setVisible(true);
+            assertSame(item, leading.getParent());
+
+            Button replacement = new Button("Replacement");
+            source.set(replacement);
+            assertNull(leading.getParent());
+            leading.setVisible(false);
+            leading.setVisible(true);
+            assertNull(leading.getParent());
+            assertSame(item, replacement.getParent());
+            source.set(null);
+            assertFalse(item.isMouseTransparent());
+            item.setTrailing(null);
+            assertTrue(item.isMouseTransparent());
+        });
+    }
+
+    /// Verifies side margins, vertical centering, wrapped text width, and clipping before the trailing control.
+    @Test
+    public void testSideNodeLayout() {
+        onFxThread(() -> {
+            TwoLineListItem item = new TwoLineListItem("Title", "An explanation that wraps. ".repeat(15));
+            item.setPadding(new Insets(7, 11, 13, 17));
+            item.getSubtitleLabel().setWrapText(true);
+            item.addTag("A long tag ".repeat(30));
+            Region leading = new Region();
+            leading.setMinSize(40, 40);
+            leading.setPrefSize(40, 40);
+            leading.setMaxSize(40, 40);
+            Button trailing = new Button("Open");
+            trailing.setMinWidth(Region.USE_PREF_SIZE);
+            item.setLeading(leading);
+            item.setTrailing(trailing);
+            TwoLineListItem.setMargin(leading, new Insets(3, 5, 9, 2));
+            TwoLineListItem.setMargin(trailing, new Insets(5, 3, 1, 7));
+            VBox parent = new VBox(item);
+            new Scene(parent);
+            layout(parent, 320);
+
+            assertSame(item, leading.getParent());
+            assertSame(item, trailing.getParent());
+            assertEquals(19, leading.getLayoutX(), 0.001);
+            double textLeft = leading.getBoundsInParent().getMaxX() + 5 + TwoLineListItem.SIDE_SPACING;
+            assertEquals(textLeft, item.getTitleLabel().getLayoutX(), 0.001);
+            assertEquals(textLeft, item.getSubtitleLabel().getLayoutX(), 0.001);
+            assertEquals(item.getWidth() - 14, trailing.getBoundsInParent().getMaxX(), 0.001);
+            double textRight = trailing.getLayoutX() - 7 - TwoLineListItem.SIDE_SPACING;
+            assertEquals(textRight, item.getSubtitleLabel().getBoundsInParent().getMaxX(), 0.001);
+            Label tag = labels(item).get(0);
+            Rectangle clip = (Rectangle) tag.getClip();
+            assertTrue(clip.getWidth() > 0 && clip.getWidth() < tag.getWidth());
+            assertEquals(textRight, tag.getLayoutX() + clip.getWidth(), 0.001);
+            assertTrue(item.getSubtitleLabel().getHeight() > item.getSubtitleLabel().prefHeight(-1));
+            double rowCenter = 7 + (item.getHeight() - 20) / 2;
+            assertEquals(rowCenter - 3, leading.getLayoutY() + leading.getHeight() / 2, 1);
+            assertEquals(rowCenter + 2, trailing.getLayoutY() + trailing.getHeight() / 2, 1);
+
+            double heightWithMargins = item.prefHeight(item.getWidth());
+            TwoLineListItem.setMargin(trailing, new Insets(5, 30, 1, 70));
+            layout(parent, 320);
+            assertTrue(item.getHeight() > heightWithMargins);
+        });
+    }
+
+    /// Verifies flexible trailing content shrinks without displacing the title or exceeding row bounds.
+    @Test
+    public void testSideNodeWidthConstraints() {
+        onFxThread(() -> {
+            TwoLineListItem item = new TwoLineListItem("Setting", null);
+            item.getTitleLabel().setMinWidth(Region.USE_PREF_SIZE);
+            Label trailing = new Label("A long selected value ".repeat(30));
+            trailing.setMinWidth(50);
+            item.setTrailing(trailing);
+            item.addTag("Tag");
+            VBox parent = new VBox(item);
+            new Scene(parent);
+            layout(parent, 300);
+            assertEquals(item.getTitleLabel().prefWidth(-1), item.getTitleLabel().getWidth(), 1);
+            assertTrue(trailing.getWidth() >= 50 && trailing.getWidth() < trailing.prefWidth(-1));
+            assertTrue(trailing.getLayoutX() >= item.getTitleLabel().getBoundsInParent().getMaxX());
+            assertEquals(item.getWidth(), trailing.getBoundsInParent().getMaxX(), 0.001);
+            assertEquals(0, ((Rectangle) labels(item).get(0).getClip()).getWidth());
+        });
+    }
+
+    /// Verifies subclass trailing slots keep their order, collapse when hidden, and preserve independent actions.
+    @Test
+    public void testGroupedLineButtonTrailingNodes() throws ReflectiveOperationException {
+        initializeAnimations();
+        onFxThread(() -> {
+            ExtraLineButton line = new ExtraLineButton();
+            line.setTitle("Setting");
+            line.setTrailingText("Value");
+            Label icon = new Label(">");
+            line.setTrailingIcon(icon);
+            Button extra = new Button("Extra");
+            line.setExtraTrailing(extra);
+            VBox parent = new VBox(line);
+            new Scene(parent);
+            layout(parent, 400);
+            TwoLineListItem content = (TwoLineListItem) requireNonNull(line.lookup(".line-component-container"));
+            HBox group = (HBox) requireNonNull(content.getTrailing());
+            assertEquals("Value", ((Label) group.getChildren().get(0)).getText());
+            assertSame(extra, group.getChildren().get(1));
+            assertSame(icon, group.getChildren().get(2));
+
+            AtomicInteger rowActions = new AtomicInteger();
+            AtomicInteger extraActions = new AtomicInteger();
+            line.setOnAction(event -> rowActions.incrementAndGet());
+            extra.setOnAction(event -> extraActions.incrementAndGet());
+            extra.fire();
+            assertEquals(1, extraActions.get());
+            assertEquals(0, rowActions.get());
+            line.fire();
+            assertEquals(1, rowActions.get());
+
+            for (Node child : group.getChildren()) {
+                child.setVisible(false);
+                child.setManaged(false);
+            }
+            layout(parent, 400);
+            assertNull(group.getParent());
+            double collapsedWidth = content.prefWidth(-1);
+            extra.setVisible(true);
+            extra.setManaged(true);
+            assertSame(content, group.getParent());
+            assertFalse(content.isMouseTransparent());
+            assertTrue(content.prefWidth(-1) > collapsedWidth);
+
+            line.setTrailingText(null);
+            line.setExtraTrailing(null);
+            assertSame(icon, content.getTrailing());
+            icon.setManaged(true);
+            icon.setVisible(true);
+            assertSame(content, icon.getParent());
+            line.setTrailingIcon((Node) null);
+            assertNull(content.getTrailing());
+            assertNull(icon.getParent());
+        });
+    }
+
+    /// Supplies an extra trailing slot between the value and icon, as expandable headers do.
+    @NotNullByDefault
+    private static final class ExtraLineButton extends LineButton {
+        /// Places the icon after the extra trailing slot.
+        @Override
+        protected int getTrailingIconIndex() {
+            return IDX_TRAILING + 2;
+        }
+
+        /// Replaces the optional extra control.
+        private void setExtraTrailing(@Nullable Node node) {
+            setNode(IDX_TRAILING + 1, node);
+        }
+    }
+
+    /// Initializes the animation default with in-memory settings without loading or saving user configuration.
+    private static void initializeAnimations() throws ReflectiveOperationException {
+        var field = SettingsManager.class.getDeclaredField("launcherSettings");
+        field.setAccessible(true);
+        @Nullable Object previous = field.get(null);
+        LauncherSettings settings = new LauncherSettings();
+        settings.animationDisabledProperty().set(true);
+        try {
+            field.set(null, settings);
+            AnimationUtils.init();
+        } finally {
+            field.set(null, previous);
+        }
     }
 
     /// Verifies flattened selectors, theme colors, vertical centering, and subtitle removal.

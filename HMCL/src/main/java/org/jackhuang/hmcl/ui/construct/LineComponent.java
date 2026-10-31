@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
 import javafx.beans.property.StringProperty;
@@ -18,8 +19,10 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 /// Displays a title, optional subtitle and tags, and optional leading and trailing nodes.
@@ -31,38 +34,29 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     private static final PseudoClass PSEUDO_LARGER_TITLE = PseudoClass.getPseudoClass("large-title");
 
     protected static final int IDX_LEADING = 0;
-    protected static final int IDX_TITLE = 1;
     protected static final int IDX_TRAILING = 2;
 
-    public static final double SPACING = 12;
+    /// The gap between the text area and side nodes, and between grouped trailing nodes.
+    public static final double SPACING = TwoLineListItem.SIDE_SPACING;
     public static final double DEFAULT_ICON_SIZE = 20;
 
-    public static void setMargin(Node child, Insets value) {
-        HBox.setMargin(child, value);
+    /// Sets the margin of a leading or trailing node; null removes it.
+    public static void setMargin(Node child, @Nullable Insets value) {
+        TwoLineListItem.setMargin(child, value);
     }
 
-    protected final HBox container;
-
-    /// The pane laying out the title, optional trailing node, tags, and subtitle.
-    private final TwoLineListItem titleContainer;
+    /// The pane laying out the entire row, including optional side nodes.
+    protected final TwoLineListItem container;
 
     /// Creates a row with mouse-transparent title text and independently interactive optional nodes.
     public LineComponent() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
-        this.container = new HBox(SPACING);
-        container.getStyleClass().add("line-component-container");
-        container.setAlignment(Pos.CENTER_LEFT);
-        container.setPickOnBounds(true);
-
-        this.titleContainer = new TwoLineListItem();
-        titleContainer.getStyleClass().setAll("title-container");
-        titleContainer.setTitleSpacing(4);
-        titleContainer.getTitleLabel().getStyleClass().setAll("label", "title-label");
-        titleContainer.getTitleLabel().setMinWidth(Region.USE_PREF_SIZE);
-        HBox.setHgrow(titleContainer, Priority.ALWAYS);
-
-        this.setNode(IDX_TITLE, titleContainer);
+        this.container = new TwoLineListItem();
+        container.getStyleClass().setAll("line-component-container");
+        container.setTitleSpacing(4);
+        container.getTitleLabel().getStyleClass().setAll("label", "title-label");
+        container.getTitleLabel().setMinWidth(Region.USE_PREF_SIZE);
 
         this.getChildren().setAll(container);
     }
@@ -85,20 +79,68 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         return computePrefHeight(width);
     }
 
-    /// Stores optional row nodes by their layout slot.
-    private @Nullable Node[] nodes = new Node[2];
+    /// Stores optional trailing nodes by the slots used by line subclasses.
+    private @Nullable Node[] nodes = new Node[0];
 
-    /// Replaces a row slot, removing the slot's content when node is null.
+    /// Groups multiple trailing nodes into the content pane's single trailing slot.
+    private @Nullable HBox trailingGroup;
+
+    /// Collapses the trailing group when its children no longer require rendering or layout.
+    private final InvalidationListener trailingGroupListener = observable -> updateTrailingGroup();
+
+    /// Replaces the leading slot or a trailing slot; null removes its content.
+    /// Trailing slots are displayed in increasing index order, grouped only when more than one is populated.
     ///
-    /// @param idx the non-negative slot index
+    /// @param idx [#IDX_LEADING] or an index greater than or equal to [#IDX_TRAILING]
     /// @param node the node to display, or null to remove it
+    /// @throws IllegalArgumentException if idx does not identify a leading or trailing slot
     protected void setNode(int idx, @Nullable Node node) {
+        if (idx == IDX_LEADING) {
+            setLeading(node);
+            return;
+        }
+        if (idx < IDX_TRAILING)
+            throw new IllegalArgumentException("Invalid row slot: " + idx);
         if (nodes.length <= idx)
             nodes = Arrays.copyOf(nodes, idx + 1);
+        if (nodes[idx] == node)
+            return;
 
-        if (nodes[idx] != node) {
-            nodes[idx] = node;
-            container.getChildren().setAll(Arrays.stream(nodes).filter(Objects::nonNull).toArray(Node[]::new));
+        @Nullable Node previous = nodes[idx];
+        if (previous != null) {
+            previous.visibleProperty().removeListener(trailingGroupListener);
+            previous.managedProperty().removeListener(trailingGroupListener);
+        }
+        nodes[idx] = node;
+        if (node != null) {
+            node.visibleProperty().addListener(trailingGroupListener);
+            node.managedProperty().addListener(trailingGroupListener);
+        }
+
+        @Unmodifiable List<Node> trailingNodes = Arrays.stream(nodes).filter(Objects::nonNull).toList();
+        // Detach before moving nodes between the direct slot and a multi-node group.
+        container.setTrailing(null);
+        if (trailingGroup != null)
+            trailingGroup.getChildren().clear();
+        if (trailingNodes.size() == 1) {
+            container.setTrailing(trailingNodes.get(0));
+        } else if (trailingNodes.size() > 1) {
+            if (trailingGroup == null) {
+                trailingGroup = new HBox(SPACING);
+                trailingGroup.setAlignment(Pos.CENTER_LEFT);
+                trailingGroup.setPickOnBounds(false);
+            }
+            trailingGroup.getChildren().setAll(trailingNodes);
+            updateTrailingGroup();
+            container.setTrailing(trailingGroup);
+        }
+    }
+
+    /// Updates the group's own visibility and management from its current children.
+    private void updateTrailingGroup() {
+        if (trailingGroup != null) {
+            trailingGroup.setManaged(trailingGroup.getChildren().stream().anyMatch(Node::isManaged));
+            trailingGroup.setVisible(trailingGroup.getChildren().stream().anyMatch(Node::isVisible));
         }
     }
 
@@ -106,7 +148,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     /// Null removes the node; non-null nodes retain their own mouse input handling.
     /// Nodes that are both invisible and unmanaged remain detached until either property becomes true.
     public final void setTitleTrailing(@Nullable Node node) {
-        titleContainer.setTitleTrailing(node);
+        container.setTitleTrailing(node);
     }
 
     /// Returns the mutable list of tags displayed after the title and its optional trailing node.
@@ -118,7 +160,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     ///
     /// @return the live list of tag values; elements must be non-null
     public final ObservableList<Tag> getTags() {
-        return titleContainer.getTags();
+        return container.getTags();
     }
 
     public void setLargeTitle(boolean largeTitle) {
@@ -140,7 +182,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         /// Updates the title displayed by the content pane.
         @Override
         protected void invalidated() {
-            titleContainer.setTitle(get());
+            container.setTitle(get());
         }
     };
 
@@ -181,12 +223,12 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
                 protected void invalidated() {
                     @Nullable String subtitle = get();
                     if (subtitle != null && !subtitle.isEmpty()) {
-                        Label label = titleContainer.getSubtitleLabel();
+                        Label label = container.getSubtitleLabel();
                         label.getStyleClass().setAll("label", "subtitle-label");
                         label.setWrapText(true);
-                        titleContainer.setSubtitle(subtitle);
+                        container.setSubtitle(subtitle);
                     } else {
-                        titleContainer.setSubtitle(null);
+                        container.setSubtitle(null);
                     }
                 }
             };
@@ -205,9 +247,11 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         subtitleProperty().set(subtitle);
     }
 
-    private ObjectProperty<Node> leading;
+    /// The lazily created leading-node property forwarded to the content pane.
+    private @Nullable ObjectProperty<@Nullable Node> leading;
 
-    public final ObjectProperty<Node> leadingProperty() {
+    /// Returns the leading-node property, initially null.
+    public final ObjectProperty<@Nullable Node> leadingProperty() {
         if (leading == null) {
             leading = new ObjectPropertyBase<>() {
                 @Override
@@ -222,26 +266,31 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
 
                 @Override
                 protected void invalidated() {
-                    setNode(IDX_LEADING, get());
+                    container.setLeading(get());
                 }
             };
         }
         return leading;
     }
 
-    public final Node getLeading() {
-        return leadingProperty().get();
+    /// Returns the leading node, or null if none is assigned.
+    public final @Nullable Node getLeading() {
+        return leading == null ? null : leading.get();
     }
 
-    public final void setLeading(Node node) {
+    /// Sets the leading node; null removes it.
+    public final void setLeading(@Nullable Node node) {
         leadingProperty().set(node);
     }
 
-    public void setLeading(Image icon) {
+    /// Sets a mouse-transparent leading image at its natural dimensions.
+    public void setLeading(@Nullable Image icon) {
         setLeading(icon, -1);
     }
 
-    public void setLeading(Image icon, double size) {
+    /// Sets a mouse-transparent leading image, fitting within size when positive.
+    /// A non-positive size uses the image's natural dimensions; a null image displays no pixels.
+    public void setLeading(@Nullable Image icon, double size) {
         var imageView = new ImageView(icon);
         if (size > 0) {
             imageView.setFitWidth(size);
@@ -251,17 +300,19 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         }
         imageView.setMouseTransparent(true);
 
-        setNode(IDX_LEADING, imageView);
+        setLeading(imageView);
     }
 
+    /// Sets a mouse-transparent leading SVG at the default icon size.
     public void setLeading(SVG svg) {
         setLeading(svg, DEFAULT_ICON_SIZE);
     }
 
+    /// Sets a mouse-transparent leading SVG at the specified size.
     public void setLeading(SVG svg, double size) {
         Node node = svg.createIcon(size);
         node.setMouseTransparent(true);
-        setNode(IDX_LEADING, node);
+        setLeading(node);
     }
 
 }

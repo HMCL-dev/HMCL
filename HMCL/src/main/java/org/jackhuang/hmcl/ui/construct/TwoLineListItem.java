@@ -3,16 +3,20 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.InvalidationListener;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ObjectPropertyBase;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
+import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.OverrunStyle;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -25,20 +29,37 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/// Displays a title, optional title-trailing node, tags, and an optional subtitle.
-/// Both rows are left-aligned and vertically centered together within this pane.
-/// All content is laid out directly in this pane. The title-trailing node receives
+/// Displays a title, tags, and an optional subtitle between optional leading and trailing nodes.
+/// Both text rows are left-aligned and vertically centered together within this pane.
+/// Side nodes are vertically centered and separated from the text by 12 pixels.
+/// They receive their preferred widths, shrinking toward their minimum widths when
+/// necessary to accommodate the text area's minimum width. The title-trailing node receives
 /// its preferred width, then the title receives up to its preferred width, subject
 /// to its minimum width. Tags use the remaining space and are clipped at the right edge.
-/// Text is mouse-transparent; an optional title-trailing node retains its own input handling.
+/// Text is mouse-transparent; optional nodes retain their own input handling.
 /// The children list is managed by this component and must not be modified directly.
 @NotNullByDefault
 public class TwoLineListItem extends Pane {
+    /// The spacing between the text area and each managed side node.
+    public static final double SIDE_SPACING = 12;
+
     /// The spacing between adjacent tags.
     private static final double TAG_SPACING = 8;
 
     /// Selects the warning appearance for rendered tags.
     private static final PseudoClass WARNING_PSEUDO_CLASS = PseudoClass.getPseudoClass("warning");
+
+    /// Sets the margin around a leading or trailing node; null removes the margin.
+    /// Uses the same constraint as [HBox#setMargin(Node, Insets)] so a node can retain
+    /// its margins when moved into a horizontal group. Title and tag nodes do not use this constraint.
+    public static void setMargin(Node child, @Nullable Insets margin) {
+        HBox.setMargin(child, margin);
+    }
+
+    /// Returns the margin around a side node, or null when none is assigned.
+    public static @Nullable Insets getMargin(Node child) {
+        return HBox.getMargin(child);
+    }
 
     /// The primary text label, whose minimum width controls whether the title may shrink.
     private final Label lblTitle = new Label();
@@ -48,6 +69,15 @@ public class TwoLineListItem extends Pane {
 
     /// The optional node immediately following the title.
     private @Nullable Node titleTrailing;
+
+    /// The optional leading-node property, allocated when first requested.
+    private @Nullable ObjectProperty<@Nullable Node> leading;
+
+    /// The optional trailing-node property, allocated when first requested.
+    private @Nullable ObjectProperty<@Nullable Node> trailing;
+
+    /// Observes side-node visibility and layout participation.
+    private final InvalidationListener sideNodeListener = observable -> updateSideNodes();
 
     /// Observes trailing-node visibility and layout participation.
     private final InvalidationListener titleTrailingListener = observable -> updateTitleTrailing();
@@ -184,6 +214,112 @@ public class TwoLineListItem extends Pane {
         return lblSubtitle;
     }
 
+    /// Returns the leading-node property, initially null.
+    /// Null removes the node. Nodes that are both invisible and unmanaged are detached
+    /// until either property becomes true. Only managed nodes occupy layout space.
+    /// A node must not simultaneously occupy another slot in this item.
+    public final ObjectProperty<@Nullable Node> leadingProperty() {
+        if (leading == null)
+            leading = createSideProperty("leading");
+        return leading;
+    }
+
+    /// Returns the leading node, or null if none is assigned.
+    public final @Nullable Node getLeading() {
+        return leading == null ? null : leading.get();
+    }
+
+    /// Sets the node before the text area; null removes it.
+    public final void setLeading(@Nullable Node node) {
+        leadingProperty().set(node);
+    }
+
+    /// Returns the trailing-node property, initially null.
+    /// Null removes the node. Nodes that are both invisible and unmanaged are detached
+    /// until either property becomes true. Only managed nodes occupy layout space.
+    /// A node must not simultaneously occupy another slot in this item.
+    public final ObjectProperty<@Nullable Node> trailingProperty() {
+        if (trailing == null)
+            trailing = createSideProperty("trailing");
+        return trailing;
+    }
+
+    /// Returns the node after the text area, or null if none is assigned.
+    public final @Nullable Node getTrailing() {
+        return trailing == null ? null : trailing.get();
+    }
+
+    /// Sets the node after the text area; null removes it.
+    public final void setTrailing(@Nullable Node node) {
+        trailingProperty().set(node);
+    }
+
+    /// Creates a property that transfers attachment and listeners when its node changes.
+    private ObjectProperty<@Nullable Node> createSideProperty(String name) {
+        return new ObjectPropertyBase<>() {
+            /// The node whose listeners are currently installed.
+            private @Nullable Node previous;
+
+            /// Returns the item owning this property.
+            @Override
+            public Object getBean() {
+                return TwoLineListItem.this;
+            }
+
+            /// Returns the side represented by this property.
+            @Override
+            public String getName() {
+                return name;
+            }
+
+            /// Removes the previous node and starts observing the replacement.
+            @Override
+            protected void invalidated() {
+                if (previous != null) {
+                    previous.visibleProperty().removeListener(sideNodeListener);
+                    previous.managedProperty().removeListener(sideNodeListener);
+                    getChildren().remove(previous);
+                }
+                previous = get();
+                if (previous != null) {
+                    previous.visibleProperty().addListener(sideNodeListener);
+                    previous.managedProperty().addListener(sideNodeListener);
+                }
+                updateSideNodes();
+            }
+        };
+    }
+
+    /// Attaches side nodes that need rendering or layout and updates input participation.
+    private void updateSideNodes() {
+        updateSideNode(getLeading());
+        updateSideNode(getTrailing());
+        updateMouseTransparency();
+        requestLayout();
+    }
+
+    /// Attaches a side node unless it is both invisible and unmanaged.
+    private void updateSideNode(@Nullable Node node) {
+        if (node == null)
+            return;
+        if (node.isVisible() || node.isManaged()) {
+            if (node.getParent() != this)
+                getChildren().add(node);
+        } else {
+            getChildren().remove(node);
+        }
+    }
+
+    /// Allows optional visible nodes to receive input while text remains mouse-transparent.
+    private void updateMouseTransparency() {
+        setMouseTransparent(!isVisible(getLeading()) && !isVisible(getTrailing()) && !isVisible(titleTrailing));
+    }
+
+    /// Returns whether an optional node is visible.
+    private static boolean isVisible(@Nullable Node node) {
+        return node != null && node.isVisible();
+    }
+
     /// Sets the node displayed immediately after the title, or removes it if null.
     /// A node that is both invisible and unmanaged is detached until either property
     /// becomes true. Assigning a visible node enables input for that node while the
@@ -214,7 +350,7 @@ public class TwoLineListItem extends Pane {
                 getChildren().remove(titleTrailing);
             }
         }
-        setMouseTransparent(titleTrailing == null || !titleTrailing.isVisible());
+        updateMouseTransparency();
         requestLayout();
     }
 
@@ -312,6 +448,48 @@ public class TwoLineListItem extends Pane {
         return snapSizeX(Math.max(node.minWidth(-1), Math.min(node.prefWidth(-1), node.maxWidth(-1))));
     }
 
+    /// Returns whether an optional node participates in layout.
+    private static boolean isManaged(@Nullable Node node) {
+        return node != null && node.isManaged();
+    }
+
+    /// Returns a node's margin, using zero insets when none is assigned.
+    private static Insets margin(Node node) {
+        @Nullable Insets value = getMargin(node);
+        return value == null ? Insets.EMPTY : value;
+    }
+
+    /// Returns the horizontal margins and text gap occupied by a managed side node.
+    private double sideSpacing(@Nullable Node node) {
+        if (!isManaged(node))
+            return 0;
+        Insets margin = margin(node);
+        return snapSpaceX(margin.getLeft()) + snapSpaceX(margin.getRight()) + snapSpaceX(SIDE_SPACING);
+    }
+
+    /// Returns a managed side node's snapped preferred width, or zero when absent from layout.
+    private double sidePreferredWidth(@Nullable Node node) {
+        return isManaged(node) ? preferredWidth(node) : 0;
+    }
+
+    /// Returns a managed side node's snapped minimum width, or zero when absent from layout.
+    private double sideMinWidth(@Nullable Node node) {
+        return isManaged(node) ? snapSizeX(node.minWidth(-1)) : 0;
+    }
+
+    /// Returns a side node's bounded preferred height at its allocated width.
+    private double sideHeight(Node node, double width) {
+        return snapSizeY(Math.max(node.minHeight(width), Math.min(node.prefHeight(width), node.maxHeight(width))));
+    }
+
+    /// Returns a managed side node's preferred height including its vertical margins.
+    private double sideAreaHeight(@Nullable Node node, double width) {
+        if (!isManaged(node))
+            return 0;
+        Insets margin = margin(node);
+        return snapSpaceY(margin.getTop()) + sideHeight(node, width) + snapSpaceY(margin.getBottom());
+    }
+
     /// Returns the gap between the title and its managed trailing node.
     private double trailingGap() {
         return lblTitle.isManaged() && hasManagedTrailing() ? snapSpaceX(titleSpacing) : 0;
@@ -322,9 +500,8 @@ public class TwoLineListItem extends Pane {
         return !tagLabels.isEmpty() && (lblTitle.isManaged() || hasManagedTrailing()) ? snapSpaceX(titleSpacing) : 0;
     }
 
-    /// Computes natural width, including every tag even when some would be clipped at layout time.
-    @Override
-    protected double computePrefWidth(double height) {
+    /// Computes the text area's natural width, including tags that may be clipped during layout.
+    private double textPrefWidth() {
         double width = lblTitle.isManaged() ? preferredWidth(lblTitle) : 0;
         if (hasManagedTrailing())
             width += trailingGap() + preferredWidth(titleTrailing);
@@ -334,18 +511,60 @@ public class TwoLineListItem extends Pane {
         width += snapSpaceX(TAG_SPACING) * Math.max(0, tagLabels.size() - 1);
         if (hasSubtitle())
             width = Math.max(width, preferredWidth(lblSubtitle));
-        return snappedLeftInset() + width + snappedRightInset();
+        return width;
     }
 
-    /// Computes minimum width from text and the title-trailing node; tags may be fully clipped.
-    @Override
-    protected double computeMinWidth(double height) {
+    /// Computes the text area's minimum width; tags may be fully clipped.
+    private double textMinWidth() {
         double width = lblTitle.isManaged() ? snapSizeX(lblTitle.minWidth(-1)) : 0;
         if (hasManagedTrailing())
             width += trailingGap() + preferredWidth(titleTrailing);
         if (hasSubtitle())
             width = Math.max(width, snapSizeX(lblSubtitle.minWidth(-1)));
-        return snappedLeftInset() + width + snappedRightInset();
+        return width;
+    }
+
+    /// Computes natural width from both side nodes, their margins, and the full text area.
+    @Override
+    protected double computePrefWidth(double height) {
+        return snappedLeftInset() + sidePreferredWidth(getLeading()) + sideSpacing(getLeading())
+                + textPrefWidth() + sidePreferredWidth(getTrailing()) + sideSpacing(getTrailing()) + snappedRightInset();
+    }
+
+    /// Computes the minimum row width from side-node and text constraints, including margins.
+    @Override
+    protected double computeMinWidth(double height) {
+        return snappedLeftInset() + sideMinWidth(getLeading()) + sideSpacing(getLeading())
+                + textMinWidth() + sideMinWidth(getTrailing()) + sideSpacing(getTrailing()) + snappedRightInset();
+    }
+
+    /// Describes horizontal allocation within the pane's insets.
+    ///
+    /// @param leadingWidth the leading node's width, excluding margins
+    /// @param textWidth the text area's width, or -1 when unconstrained
+    /// @param trailingWidth the trailing node's width, excluding margins
+    @NotNullByDefault
+    private record RowSize(double leadingWidth, double textWidth, double trailingWidth) {
+    }
+
+    /// Allocates side widths first, shrinking them as needed to preserve the text area's minimum width.
+    private RowSize measureRow(double width) {
+        double leadingWidth = sidePreferredWidth(getLeading());
+        double trailingWidth = sidePreferredWidth(getTrailing());
+        if (width < 0)
+            return new RowSize(leadingWidth, -1, trailingWidth);
+
+        double available = Math.max(0, width - sideSpacing(getLeading()) - sideSpacing(getTrailing()));
+        double deficit = Math.max(0, leadingWidth + trailingWidth + textMinWidth() - available);
+        double leadingCapacity = Math.max(0, leadingWidth - sideMinWidth(getLeading()));
+        double trailingCapacity = Math.max(0, trailingWidth - sideMinWidth(getTrailing()));
+        // Share the deficit, then give any unfulfilled share to the side that can still shrink.
+        double leadingShrink = Math.min(leadingCapacity, deficit / 2);
+        double trailingShrink = Math.min(trailingCapacity, deficit - leadingShrink);
+        leadingShrink = Math.min(leadingCapacity, deficit - trailingShrink);
+        leadingWidth -= leadingShrink;
+        trailingWidth -= trailingShrink;
+        return new RowSize(leadingWidth, Math.max(0, available - leadingWidth - trailingWidth), trailingWidth);
     }
 
     /// Describes the first-row dimensions at a particular available width.
@@ -377,9 +596,12 @@ public class TwoLineListItem extends Pane {
     @Override
     protected double computePrefHeight(double width) {
         double contentWidth = width < 0 ? -1 : Math.max(0, width - snappedLeftInset() - snappedRightInset());
-        double height = measureFirstLine(contentWidth).height();
+        RowSize row = measureRow(contentWidth);
+        double height = measureFirstLine(row.textWidth()).height();
         if (hasSubtitle())
-            height += snapSizeY(lblSubtitle.prefHeight(contentWidth));
+            height += snapSizeY(lblSubtitle.prefHeight(row.textWidth()));
+        height = Math.max(height, sideAreaHeight(getLeading(), row.leadingWidth()));
+        height = Math.max(height, sideAreaHeight(getTrailing(), row.trailingWidth()));
         return snappedTopInset() + height + snappedBottomInset();
     }
 
@@ -389,16 +611,28 @@ public class TwoLineListItem extends Pane {
         return computePrefHeight(width);
     }
 
-    /// Positions both rows and clips each tag independently to the remaining horizontal space.
+    /// Positions side nodes around the two text rows and clips tags to the text area's right edge.
     @Override
     protected void layoutChildren() {
-        double x = snappedLeftInset();
-        double width = Math.max(0, getWidth() - x - snappedRightInset());
+        double left = snappedLeftInset();
+        double width = Math.max(0, getWidth() - left - snappedRightInset());
         double height = Math.max(0, getHeight() - snappedTopInset() - snappedBottomInset());
-        FirstLineSize first = measureFirstLine(width);
-        double subtitleHeight = hasSubtitle() ? snapSizeY(lblSubtitle.prefHeight(width)) : 0;
+        RowSize row = measureRow(width);
+        double textLeft = left + row.leadingWidth() + sideSpacing(getLeading());
+        double x = textLeft;
+        FirstLineSize first = measureFirstLine(row.textWidth());
+        double subtitleHeight = hasSubtitle() ? snapSizeY(lblSubtitle.prefHeight(row.textWidth())) : 0;
         double extraHeight = Math.max(0, height - first.height() - subtitleHeight);
         double y = snappedTopInset() + snapPositionY(extraHeight / 2);
+
+        if (isManaged(getLeading()))
+            layoutSideNode(getLeading(), left, row.leadingWidth(), height);
+        if (isManaged(getTrailing())) {
+            Insets margin = margin(getTrailing());
+            double trailingX = getWidth() - snappedRightInset() - row.trailingWidth()
+                    - snapSpaceX(margin.getLeft()) - snapSpaceX(margin.getRight());
+            layoutSideNode(getTrailing(), trailingX, row.trailingWidth(), height);
+        }
 
         if (lblTitle.isManaged()) {
             layoutFirstLineNode(lblTitle, x, y, first.titleWidth(), first.height());
@@ -410,7 +644,7 @@ public class TwoLineListItem extends Pane {
             x += first.trailingWidth();
         }
         x += tagsGap();
-        double right = getWidth() - snappedRightInset();
+        double right = textLeft + row.textWidth();
         for (Label label : tagLabels) {
             double tagWidth = preferredWidth(label);
             layoutFirstLineNode(label, x, y, tagWidth, first.height());
@@ -422,7 +656,17 @@ public class TwoLineListItem extends Pane {
             x += tagWidth + snapSpaceX(TAG_SPACING);
         }
         if (hasSubtitle())
-            lblSubtitle.resizeRelocate(snappedLeftInset(), y + first.height(), width, subtitleHeight);
+            lblSubtitle.resizeRelocate(textLeft, y + first.height(), row.textWidth(), subtitleHeight);
+    }
+
+    /// Centers a side node vertically within its margin-adjusted row area.
+    private void layoutSideNode(Node node, double x, double width, double rowHeight) {
+        Insets margin = margin(node);
+        double height = sideHeight(node, width);
+        double top = snapSpaceY(margin.getTop());
+        double bottom = snapSpaceY(margin.getBottom());
+        double y = snappedTopInset() + top + snapPositionY(Math.max(0, rowHeight - top - bottom - height) / 2);
+        node.resizeRelocate(x + snapSpaceX(margin.getLeft()), y, width, height);
     }
 
     /// Vertically centers a child within the first row at its preferred height.
