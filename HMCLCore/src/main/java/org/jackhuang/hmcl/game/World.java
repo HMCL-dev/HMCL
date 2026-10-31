@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.game;
 import javafx.scene.image.Image;
 import org.glavo.nbt.io.NBTCodec;
 import org.glavo.nbt.tag.*;
+import org.jackhuang.hmcl.addon.datapack.DataPackManager;
 import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +41,9 @@ public final class World {
 
     private CompoundTag playerData; // Use for both reading/modification and writing back to the file
     private Path playerDataPath;
+
+    /// Lazily created data pack manager.
+    private @Nullable DataPackManager dataPackManager;
 
     public World(Path file) throws IOException {
         this.file = file;
@@ -430,24 +434,11 @@ public final class World {
         }
     }
 
-    public static List<World> getWorlds(Path savesDir) {
-        if (Files.exists(savesDir)) {
-            try (Stream<Path> stream = Files.list(savesDir)) {
-                return stream
-                        .filter(Files::isDirectory)
-                        .flatMap(world -> {
-                            try {
-                                return Stream.of(new World(world.toAbsolutePath().normalize()));
-                            } catch (IOException e) {
-                                LOG.warning("Failed to read world " + world, e);
-                                return Stream.empty();
-                            }
-                        })
-                        .toList();
-            } catch (IOException e) {
-                LOG.warning("Failed to read saves", e);
-            }
+    /// Returns the data pack manager for this world.
+    public DataPackManager getDataPackManager() {
+        if (dataPackManager == null) {
+            dataPackManager = new DataPackManager(this);
         }
-        return List.of();
+        return dataPackManager;
     }
 }
