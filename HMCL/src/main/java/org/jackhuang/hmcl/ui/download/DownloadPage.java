@@ -166,22 +166,33 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         Controllers.prompt(i18n("archive.file.name"), (result, handler) -> {
             Path dest = targetPath.resolve(result);
 
-            Controllers.taskDialog(Task.composeAsync(() -> {
-                var task = new FileDownloadTask(downloadProvider.getDownloadCandidates(file.file().url()), dest);
-                task.setName(file.name());
-                return task;
-            }).whenComplete(Schedulers.javafx(), exception -> {
-                if (exception != null) {
-                    if (!(exception instanceof CancellationException)) {
-                        Controllers.dialog(I18n.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
-                    }
-                } else {
-                    Controllers.showToast(i18n("install.success"));
-                }
-            }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
+            downloadAsync(downloadProvider, file, dest);
             handler.resolve();
         }, file.file().filename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("game_directory.already_exists"), existingPaths::notContains));
 
+    }
+
+    /// Downloads the selected remote file and offers to retry without the proxy if it is unreachable.
+    ///
+    /// @param downloadProvider the provider used to create download candidates
+    /// @param file             the remote file to download
+    /// @param dest             the destination path of the downloaded file
+    private static void downloadAsync(DownloadProvider downloadProvider, RemoteAddon.Version file, Path dest) {
+        Controllers.taskDialog(Task.composeAsync(() -> {
+            var task = new FileDownloadTask(downloadProvider.getDownloadCandidates(file.file().url()), dest);
+            task.setName(file.name());
+            return task;
+        }).whenComplete(Schedulers.javafx(), exception -> {
+            if (exception != null) {
+                if (!(exception instanceof CancellationException)) {
+                    ProxyFailureHandler.handle(exception,
+                            () -> downloadAsync(downloadProvider, file, dest),
+                            () -> Controllers.dialog(I18n.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR));
+                }
+            } else {
+                Controllers.showToast(i18n("install.success"));
+            }
+        }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
     }
 
     private void loadVersions(HMCLGameRepository repository) {
