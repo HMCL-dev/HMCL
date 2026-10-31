@@ -37,7 +37,7 @@ public class LinePane extends LineComponent {
                 /// Replaces the row's trailing node without introducing a container.
                 @Override
                 protected void invalidated() {
-                    container.setTrailing(get());
+                    setTrailing(get());
                 }
             };
         }

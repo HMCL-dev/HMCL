@@ -28,7 +28,6 @@ public class GameDirectoryListItemSkin extends SkinBase<GameDirectoryListItem> {
         super(skinnable);
 
         TwoLineListItem item = new TwoLineListItem();
-        item.setSideSpacing(0);
         RipplerContainer container = new RipplerContainer(item);
 
         SVGContainer left = (skinnable.isSelected() ? SVG.FOLDER_FILL : SVG.FOLDER).createIcon(20);

@@ -576,7 +576,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
             content.setPadding(new Insets(8));
             content.setCursor(Cursor.HAND);
-            content.setSideSpacing(8);
+            TwoLineListItem.setMargin(imageContainer, new Insets(0, 8, 0, 0));
             imageContainer.setMouseTransparent(true);
             content.setLeading(imageContainer);
 

@@ -27,11 +27,18 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     private static final double MIN_HEIGHT = 48.0;
     private static final PseudoClass PSEUDO_LARGER_TITLE = PseudoClass.getPseudoClass("large-title");
 
-    /// The gap between the text area and side nodes, and between grouped trailing nodes.
-    public static final double SPACING = TwoLineListItem.SIDE_SPACING;
+    /// The default gap between text and side nodes, also used within trailing groups.
+    public static final double SPACING = 12;
+
+    /// The default margin separating a leading node from the text.
+    private static final Insets LEADING_MARGIN = new Insets(0, SPACING, 0, 0);
+
+    /// The default margin separating a trailing node from the text.
+    private static final Insets TRAILING_MARGIN = new Insets(0, 0, 0, SPACING);
     public static final double DEFAULT_ICON_SIZE = 20;
 
-    /// Sets the margin of a leading or trailing node; null removes it.
+    /// Sets the full margin of a leading or trailing node, including its separation from the text.
+    /// Null removes the margin; [Insets#EMPTY] explicitly requests no margin.
     public static void setMargin(Node child, @Nullable Insets value) {
         TwoLineListItem.setMargin(child, value);
     }
@@ -68,6 +75,14 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     @Override
     protected double computeMinHeight(double width) {
         return computePrefHeight(width);
+    }
+
+    /// Sets the trailing node, supplying a 12-pixel left margin only if no margin is assigned.
+    /// Null removes the node. Subclasses may supply a container for multiple trailing controls.
+    protected final void setTrailing(@Nullable Node node) {
+        if (node != null && TwoLineListItem.getMargin(node) == null)
+            setMargin(node, TRAILING_MARGIN);
+        container.setTrailing(node);
     }
 
     /// Sets the node displayed immediately after the title label.
@@ -178,6 +193,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     private @Nullable ObjectProperty<@Nullable Node> leading;
 
     /// Returns the leading-node property, initially null.
+    /// Assigning a node supplies a 12-pixel right margin only if no margin is assigned.
     public final ObjectProperty<@Nullable Node> leadingProperty() {
         if (leading == null) {
             leading = new ObjectPropertyBase<>() {
@@ -191,9 +207,13 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
                     return "leading";
                 }
 
+                /// Applies the default margin when absent and replaces the leading node.
                 @Override
                 protected void invalidated() {
-                    container.setLeading(get());
+                    @Nullable Node node = get();
+                    if (node != null && TwoLineListItem.getMargin(node) == null)
+                        setMargin(node, LEADING_MARGIN);
+                    container.setLeading(node);
                 }
             };
         }
@@ -205,7 +225,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         return leading == null ? null : leading.get();
     }
 
-    /// Sets the leading node; null removes it.
+    /// Sets the leading node; null removes it. See [#leadingProperty()] for default margins.
     public final void setLeading(@Nullable Node node) {
         leadingProperty().set(node);
     }

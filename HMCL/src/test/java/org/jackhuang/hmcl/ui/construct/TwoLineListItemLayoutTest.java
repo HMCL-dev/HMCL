@@ -490,7 +490,7 @@ public final class TwoLineListItemLayoutTest {
                 assertInstanceOf(ImageContainer.class, content.getLeading());
                 assertSame(content, content.getLeading().getParent());
                 assertInstanceOf(RipplerContainer.class, content.getParent());
-                assertEquals(8, content.getSideSpacing());
+                assertEquals(new Insets(0, 8, 0, 0), TwoLineListItem.getMargin(content.getLeading()));
                 Label summary = collapsedTag(content);
                 verifyTooltipHover(stage, summary, () ->
                         assertEquals("Fabric\nQuilt", summary.getTooltip().getText()), checked);
@@ -630,7 +630,8 @@ public final class TwoLineListItemLayoutTest {
                 assertSame(content, ((RipplerContainer) cell.getGraphic()).getContainer());
                 assertSame(content, content.getLeading().getParent());
                 assertSame(content, content.getTrailing().getParent());
-                assertEquals(16, content.getSideSpacing());
+                assertEquals(new Insets(0, 16, 0, 0), TwoLineListItem.getMargin(content.getLeading()));
+                assertEquals(new Insets(0, 0, 0, 16), TwoLineListItem.getMargin(content.getTrailing()));
                 Label summary = collapsedTag(content);
                 assertTrue(summary.isVisible());
                 assertTrue(summary.localToScene(summary.getBoundsInLocal()).getMaxX() <= 200);
@@ -820,7 +821,7 @@ public final class TwoLineListItemLayoutTest {
             Button right = new Button("Open");
             right.setMinWidth(Region.USE_PREF_SIZE);
             line.setRight(right);
-            LineComponent.setMargin(right, new Insets(0, 5, 0, 7));
+            LineComponent.setMargin(right, new Insets(0, 5, 0, 19));
             VBox parent = new VBox(line);
             new Scene(parent);
             layout(parent, 280);
@@ -897,10 +898,10 @@ public final class TwoLineListItemLayoutTest {
         });
     }
 
-    /// Verifies configurable side gaps affect sizing and layout without changing node margins.
+    /// Verifies side margins supply the entire gap and changes invalidate row sizing.
     @ParameterizedTest
     @ValueSource(doubles = {0, 8, 12, 16})
-    public void testSideSpacing(double spacing) {
+    public void testSideMarginsControlSpacing(double spacing) {
         onFxThread(() -> {
             TwoLineListItem item = new TwoLineListItem("Title", "Subtitle");
             Region leading = new Region();
@@ -910,24 +911,64 @@ public final class TwoLineListItemLayoutTest {
             Button trailing = new Button("Action");
             item.setLeading(leading);
             item.setTrailing(trailing);
-            TwoLineListItem.setMargin(leading, new Insets(0, 3, 0, 5));
-            TwoLineListItem.setMargin(trailing, new Insets(0, 7, 0, 9));
             VBox parent = new VBox(item);
             new Scene(parent);
             layout(parent, 400);
-            assertEquals(12, item.getSideSpacing());
             double width = item.prefWidth(-1);
-            item.setSideSpacing(spacing);
+            assertEquals(leading.getBoundsInParent().getMaxX(), item.getTitleLabel().getLayoutX(), 0.001);
+            assertEquals(trailing.getLayoutX(), item.getSubtitleLabel().getBoundsInParent().getMaxX(), 0.001);
+            TwoLineListItem.setMargin(leading, new Insets(0, 3 + spacing, 0, 5));
+            TwoLineListItem.setMargin(trailing, new Insets(0, 7, 0, 9 + spacing));
             layout(parent, 400);
-            assertEquals(width + 2 * (spacing - 12), item.prefWidth(-1), 0.001);
+            assertEquals(width + 24 + 2 * spacing, item.prefWidth(-1), 0.001);
             assertEquals(leading.getBoundsInParent().getMaxX() + 3 + spacing,
                     item.getTitleLabel().getLayoutX(), 0.001);
             assertEquals(trailing.getLayoutX() - 9 - spacing,
                     item.getSubtitleLabel().getBoundsInParent().getMaxX(), 0.001);
-            assertThrows(IllegalArgumentException.class, () -> item.setSideSpacing(-1));
-            assertThrows(IllegalArgumentException.class, () -> item.setSideSpacing(Double.NaN));
-            assertThrows(IllegalArgumentException.class, () -> item.setSideSpacing(Double.POSITIVE_INFINITY));
-            assertEquals(spacing, item.getSideSpacing());
+            TwoLineListItem.setMargin(leading, null);
+            TwoLineListItem.setMargin(trailing, null);
+            layout(parent, 400);
+            assertEquals(width, item.prefWidth(-1), 0.001);
+        });
+    }
+
+    /// Verifies line defaults are applied once and preserve explicit margins, including zero.
+    @Test
+    public void testLineComponentDefaultMargins() {
+        onFxThread(() -> {
+            LinePane line = new LinePane();
+            line.setTitle("Title");
+            Label leading = new Label("Icon");
+            Button trailing = new Button("Action");
+            line.setLeading(leading);
+            line.setRight(trailing);
+            Insets leadingMargin = new Insets(0, 12, 0, 0);
+            Insets trailingMargin = new Insets(0, 0, 0, 12);
+            assertEquals(leadingMargin, TwoLineListItem.getMargin(leading));
+            assertEquals(trailingMargin, TwoLineListItem.getMargin(trailing));
+            line.setLeading((Node) null);
+            line.setRight(null);
+            line.setLeading(leading);
+            line.setRight(trailing);
+            assertEquals(leadingMargin, TwoLineListItem.getMargin(leading));
+            assertEquals(trailingMargin, TwoLineListItem.getMargin(trailing));
+
+            VBox parent = new VBox(line);
+            new Scene(parent);
+            layout(parent, 400);
+            double width = line.container.prefWidth(-1);
+            line.setLeading((Node) null);
+            line.setRight(null);
+            LineComponent.setMargin(leading, new Insets(0, 8, 0, 0));
+            LineComponent.setMargin(trailing, Insets.EMPTY);
+            line.setLeading(leading);
+            line.setRight(trailing);
+            layout(parent, 400);
+            assertEquals(new Insets(0, 8, 0, 0), TwoLineListItem.getMargin(leading));
+            assertEquals(Insets.EMPTY, TwoLineListItem.getMargin(trailing));
+            assertEquals(width - 16, line.container.prefWidth(-1), 0.001);
+            assertEquals(leading.getBoundsInParent().getMaxX() + 8,
+                    line.container.getTitleLabel().getLayoutX(), 0.001);
         });
     }
 
@@ -1039,8 +1080,8 @@ public final class TwoLineListItemLayoutTest {
             trailing.setMinWidth(Region.USE_PREF_SIZE);
             item.setLeading(leading);
             item.setTrailing(trailing);
-            TwoLineListItem.setMargin(leading, new Insets(3, 5, 9, 2));
-            TwoLineListItem.setMargin(trailing, new Insets(5, 3, 1, 7));
+            TwoLineListItem.setMargin(leading, new Insets(3, 17, 9, 2));
+            TwoLineListItem.setMargin(trailing, new Insets(5, 3, 1, 19));
             VBox parent = new VBox(item);
             new Scene(parent);
             layout(parent, 320);
@@ -1048,11 +1089,11 @@ public final class TwoLineListItemLayoutTest {
             assertSame(item, leading.getParent());
             assertSame(item, trailing.getParent());
             assertEquals(19, leading.getLayoutX(), 0.001);
-            double textLeft = leading.getBoundsInParent().getMaxX() + 5 + TwoLineListItem.SIDE_SPACING;
+            double textLeft = leading.getBoundsInParent().getMaxX() + 17;
             assertEquals(textLeft, item.getTitleLabel().getLayoutX(), 0.001);
             assertEquals(textLeft, item.getSubtitleLabel().getLayoutX(), 0.001);
             assertEquals(item.getWidth() - 14, trailing.getBoundsInParent().getMaxX(), 0.001);
-            double textRight = trailing.getLayoutX() - 7 - TwoLineListItem.SIDE_SPACING;
+            double textRight = trailing.getLayoutX() - 19;
             assertEquals(textRight, item.getSubtitleLabel().getBoundsInParent().getMaxX(), 0.001);
             Label tag = labels(item).get(0);
             assertFalse(tag.isVisible());
@@ -1065,7 +1106,7 @@ public final class TwoLineListItemLayoutTest {
             assertEquals(rowCenter + 2, trailing.getLayoutY() + trailing.getHeight() / 2, 1);
 
             double heightWithMargins = item.prefHeight(item.getWidth());
-            TwoLineListItem.setMargin(trailing, new Insets(5, 30, 1, 70));
+            TwoLineListItem.setMargin(trailing, new Insets(5, 30, 1, 82));
             layout(parent, 320);
             assertTrue(item.getHeight() > heightWithMargins);
         });
@@ -1080,6 +1121,7 @@ public final class TwoLineListItemLayoutTest {
             Label trailing = new Label("A long selected value ".repeat(30));
             trailing.setMinWidth(50);
             item.setTrailing(trailing);
+            TwoLineListItem.setMargin(trailing, new Insets(0, 0, 0, 12));
             item.addTag("Tag");
             VBox parent = new VBox(item);
             new Scene(parent);
@@ -1090,7 +1132,7 @@ public final class TwoLineListItemLayoutTest {
             assertEquals(item.getWidth(), trailing.getBoundsInParent().getMaxX(), 0.001);
             Label summary = collapsedTag(item);
             assertTrue(summary.isVisible());
-            assertTrue(summary.getBoundsInParent().getMaxX() <= trailing.getLayoutX() - TwoLineListItem.SIDE_SPACING);
+            assertTrue(summary.getBoundsInParent().getMaxX() <= trailing.getLayoutX() - 12);
         });
     }
 
@@ -1180,6 +1222,8 @@ public final class TwoLineListItemLayoutTest {
                 HBox outer = (HBox) line.container.getTrailing();
                 assertSame(update, outer.getChildren().get(0));
                 HBox selection = (HBox) outer.getChildren().get(1);
+                assertEquals(new Insets(0, 0, 0, 12), TwoLineListItem.getMargin(outer));
+                assertNull(HBox.getMargin(selection));
                 Label text = (Label) selection.getChildren().get(0);
                 assertEquals("Stable", text.getText());
                 assertSame(line.getTrailingIcon(), selection.getChildren().get(1));

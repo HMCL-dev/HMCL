@@ -39,7 +39,6 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
 
         TwoLineListItem item = new TwoLineListItem();
         item.getStyleClass().add("container");
-        item.setSideSpacing(0);
 
         container = new RipplerContainer(item);
         container.setOnAction(event -> {

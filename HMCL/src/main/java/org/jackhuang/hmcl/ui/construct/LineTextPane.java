@@ -49,12 +49,12 @@ public final class LineTextPane extends LineComponent {
                             FXUtils.copyOnDoubleClick(rightLabel);
                         }
                         rightLabel.setText(text);
-                        container.setTrailing(rightLabel);
+                        setTrailing(rightLabel);
                     } else {
                         if (rightLabel != null)
                             rightLabel.setText(null);
 
-                        container.setTrailing(null);
+                        setTrailing(null);
                     }
                 }
             };

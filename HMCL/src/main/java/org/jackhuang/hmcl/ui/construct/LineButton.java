@@ -49,7 +49,7 @@ public class LineButton extends LineButtonBase {
             box.setPickOnBounds(false);
             trailingBox = box;
             updateTrailingBox();
-            container.setTrailing(box);
+            setTrailing(box);
         }
         return trailingBox;
     }

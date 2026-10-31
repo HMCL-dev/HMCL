@@ -377,11 +377,12 @@ public final class SettingsPage extends ScrollPane {
         private UpdateChannelButton(Node updateButton) {
             getStyleClass().add("update-pane");
             Node selection = Objects.requireNonNull(container.getTrailing());
-            container.setTrailing(null);
+            setTrailing(null);
+            setMargin(selection, null);
             HBox trailing = new HBox(SPACING, updateButton, selection);
             trailing.setAlignment(Pos.CENTER_LEFT);
             trailing.setPickOnBounds(false);
-            container.setTrailing(trailing);
+            setTrailing(trailing);
         }
     }
 }

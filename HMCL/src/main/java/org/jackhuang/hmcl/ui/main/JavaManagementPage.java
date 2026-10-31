@@ -239,7 +239,6 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             label.setStyle("-fx-background-color: -monet-secondary-container; -fx-background-radius: 2; -fx-padding: 2; -fx-font-weight: normal; -fx-font-size: 16px;");
 
             this.content = new TwoLineListItem();
-            content.setSideSpacing(0);
             content.setLeading(label);
             TwoLineListItem.setMargin(label, new Insets(0, 8, 0, 0));
 

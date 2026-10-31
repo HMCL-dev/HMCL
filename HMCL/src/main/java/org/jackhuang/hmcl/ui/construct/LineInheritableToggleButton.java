@@ -74,7 +74,7 @@ public final class LineInheritableToggleButton extends LineButtonBase {
         FXUtils.setLimitHeight(toggleButton, 30);
 
         setTitleTrailing(inheritButton);
-        container.setTrailing(toggleButton);
+        setTrailing(toggleButton);
 
         rawValue.addListener(observable -> refresh());
         overridden.addListener(observable -> refresh());

@@ -151,7 +151,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             imageView.setMouseTransparent(true);
 
-            twoLineListItem.setSideSpacing(16);
+            TwoLineListItem.setMargin(imageView, new Insets(0, 16, 0, 0));
             twoLineListItem.setLeading(imageView);
 
             HBox actions = new HBox(8);
@@ -170,6 +170,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 actions.getChildren().add(actionButton);
             }
 
+            TwoLineListItem.setMargin(actions, new Insets(0, 0, 0, 16));
             twoLineListItem.setTrailing(actions);
             twoLineListItem.getStyleClass().add("md-list-cell");
             twoLineListItem.setPadding(new Insets(10, 16, 10, 16));

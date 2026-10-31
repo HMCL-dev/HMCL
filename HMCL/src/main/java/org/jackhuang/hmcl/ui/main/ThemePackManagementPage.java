@@ -415,7 +415,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             if (!StringUtils.isBlank(authors)) {
                 title.addTag(i18n("archive.author") + ": " + authors);
             }
-            title.setSideSpacing(8);
+            TwoLineListItem.setMargin(icon, new Insets(0, 8, 0, 0));
             title.setLeading(icon);
             setHeading(title);
 
@@ -646,7 +646,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
             content.getStyleClass().add("md-list-cell");
             content.setPadding(new Insets(8));
-            content.setSideSpacing(0);
             content.setCursor(Cursor.HAND);
 
             var ripplerContainer = new RipplerContainer(content);

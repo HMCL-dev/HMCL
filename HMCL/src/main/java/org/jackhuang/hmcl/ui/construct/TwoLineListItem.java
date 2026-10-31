@@ -43,8 +43,8 @@ import java.util.stream.Collectors;
 /// Wrapping can be configured separately through [#getTitleLabel()] and [#getSubtitleLabel()].
 ///
 /// Side nodes receive their preferred widths, shrinking toward their minimum widths
-/// when needed to accommodate the text area's minimum width. [#getSideSpacing()] and
-/// [#setMargin(Node, Insets)] control their separation from the text.
+/// when needed to accommodate the text area's minimum width. Side nodes have no default
+/// gap from the text; use [#setMargin(Node, Insets)] to specify their separation.
 /// The title-trailing node receives its preferred width. Tags that do not fit after
 /// the title are folded into a `+N` tag whose tooltip lists the hidden values.
 /// The title may shrink below its minimum width to preserve space for this tag.
@@ -59,9 +59,6 @@ import java.util.stream.Collectors;
 /// This component manages its children list; callers must not modify it directly.
 @NotNullByDefault
 public class TwoLineListItem extends Region {
-    /// The default spacing between the text area and each managed side node.
-    public static final double SIDE_SPACING = 12;
-
     /// Sets the margin around a leading or trailing node; null removes the margin.
     /// Uses the same constraint as [HBox#setMargin(Node, Insets)] so a node can retain
     /// its margins when moved into a horizontal group. Title and tag nodes do not use this constraint.
@@ -94,9 +91,6 @@ public class TwoLineListItem extends Region {
 
     /// The gap after the title and its trailing node; tag-to-tag spacing is independent.
     private double titleSpacing;
-
-    /// The gap between the text area and each managed side node, excluding margins.
-    private double sideSpacing = SIDE_SPACING;
 
     /// The mutable tag values, allocated when first requested.
     private @Nullable ObservableList<Tag> tags;
@@ -286,23 +280,6 @@ public class TwoLineListItem extends Region {
         requestLayout();
     }
 
-    /// Returns the gap between text and each managed side node, excluding margins; defaults to 12 pixels.
-    public final double getSideSpacing() {
-        return sideSpacing;
-    }
-
-    /// Sets the non-negative gap between text and each managed side node, excluding margins.
-    ///
-    /// @throws IllegalArgumentException if spacing is negative or not finite
-    public final void setSideSpacing(double spacing) {
-        if (!Double.isFinite(spacing) || spacing < 0)
-            throw new IllegalArgumentException("Spacing must be finite and non-negative");
-        if (sideSpacing != spacing) {
-            sideSpacing = spacing;
-            requestLayout();
-        }
-    }
-
     /// Returns the live, mutable tag list in display order.
     /// Values must be non-null and may be repeated or shared between components.
     /// Replace a value to change its text or type. Changes must be made on the JavaFX application thread once this item
@@ -486,12 +463,12 @@ public class TwoLineListItem extends Region {
         return value == null ? Insets.EMPTY : value;
     }
 
-    /// Returns the horizontal margins and text gap occupied by a managed side node.
-    private double sideSpacing(@Nullable Node node) {
+    /// Returns the horizontal margins occupied by a managed side node.
+    private double sideMarginWidth(@Nullable Node node) {
         if (!isManaged(node))
             return 0;
         Insets margin = margin(node);
-        return snapSpaceX(margin.getLeft()) + snapSpaceX(margin.getRight()) + snapSpaceX(sideSpacing);
+        return snapSpaceX(margin.getLeft()) + snapSpaceX(margin.getRight());
     }
 
     /// Returns a managed side node's snapped preferred width, or zero when absent from layout.
@@ -560,15 +537,15 @@ public class TwoLineListItem extends Region {
     /// Computes natural width from both side nodes, their margins, and the full text area.
     @Override
     protected double computePrefWidth(double height) {
-        return snappedLeftInset() + sidePreferredWidth(getLeading()) + sideSpacing(getLeading())
-                + textPrefWidth() + sidePreferredWidth(getTrailing()) + sideSpacing(getTrailing()) + snappedRightInset();
+        return snappedLeftInset() + sidePreferredWidth(getLeading()) + sideMarginWidth(getLeading())
+                + textPrefWidth() + sidePreferredWidth(getTrailing()) + sideMarginWidth(getTrailing()) + snappedRightInset();
     }
 
     /// Computes the minimum row width from side-node and text constraints, including margins.
     @Override
     protected double computeMinWidth(double height) {
-        return snappedLeftInset() + sideMinWidth(getLeading()) + sideSpacing(getLeading())
-                + textMinWidth() + sideMinWidth(getTrailing()) + sideSpacing(getTrailing()) + snappedRightInset();
+        return snappedLeftInset() + sideMinWidth(getLeading()) + sideMarginWidth(getLeading())
+                + textMinWidth() + sideMinWidth(getTrailing()) + sideMarginWidth(getTrailing()) + snappedRightInset();
     }
 
     /// Describes horizontal allocation within the pane's insets.
@@ -587,7 +564,7 @@ public class TwoLineListItem extends Region {
         if (width < 0)
             return new RowSize(leadingWidth, -1, trailingWidth);
 
-        double available = Math.max(0, width - sideSpacing(getLeading()) - sideSpacing(getTrailing()));
+        double available = Math.max(0, width - sideMarginWidth(getLeading()) - sideMarginWidth(getTrailing()));
         double deficit = Math.max(0, leadingWidth + trailingWidth + textMinWidth() - available);
         double leadingCapacity = Math.max(0, leadingWidth - sideMinWidth(getLeading()));
         double trailingCapacity = Math.max(0, trailingWidth - sideMinWidth(getTrailing()));
@@ -663,7 +640,7 @@ public class TwoLineListItem extends Region {
         double width = Math.max(0, getWidth() - left - snappedRightInset());
         double height = Math.max(0, getHeight() - snappedTopInset() - snappedBottomInset());
         RowSize row = measureRow(width);
-        double textLeft = left + row.leadingWidth() + sideSpacing(getLeading());
+        double textLeft = left + row.leadingWidth() + sideMarginWidth(getLeading());
         double x = textLeft;
         FirstLineSize first = measureFirstLine(row.textWidth());
         double subtitleHeight = hasSubtitle() ? snapSizeY(subtitleLabel.prefHeight(row.textWidth())) : 0;

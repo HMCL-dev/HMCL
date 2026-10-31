@@ -40,7 +40,6 @@ public final class GameListCell extends ListCell<GameListItem> {
     /// Creates a game instance cell with selection controls and interactive tags.
     public GameListCell() {
         TwoLineListItem root = this.content = new TwoLineListItem();
-        root.setSideSpacing(0);
         root.getStyleClass().add("md-list-cell");
         root.setPadding(new Insets(8, 8, 8, 0));
 

@@ -383,11 +383,11 @@ public class DownloadPage extends Control implements DecoratorPage {
             this.addon = addon;
 
             container.setPadding(new Insets(10, 24, 10, 24));
-            container.setSideSpacing(8);
             container.getTitleLabel().setMinWidth(0);
             setLargeTitle(true);
             var imageView = new ImageContainer(40);
             imageView.setMouseTransparent(true);
+            setMargin(imageView, new Insets(0, 8, 0, 0));
             setLeading(imageView);
             FXUtils.setLimitHeight(this, 60);
 
