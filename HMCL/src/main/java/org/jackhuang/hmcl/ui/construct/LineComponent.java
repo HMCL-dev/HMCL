@@ -2,13 +2,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -19,15 +16,11 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /// Displays a title, optional subtitle and tags, and optional leading and trailing nodes.
 ///
@@ -50,72 +43,28 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
 
     protected final HBox container;
 
-    /// The row containing the title, its optional trailing node, and tags.
-    private final HBox titleLine;
-
-    /// The primary title label.
-    private final Label titleLabel;
-
-    /// The container holding the title row and optional subtitle.
-    private final VBox titleContainer;
-
-    /// The optional node displayed immediately after the title.
-    private @Nullable Node titleTrailing;
-
-    /// Tracks visibility and layout participation only when a trailing node has been assigned.
-    private @Nullable InvalidationListener titleTrailingListener;
-
-    /// The optional subtitle label.
-    private @Nullable Label subtitleLabel;
-
-    /// Stores the mutable tag list once tag support has been initialized.
-    private @Nullable ObservableList<Tag> tags;
+    /// The pane laying out the title, optional trailing node, tags, and subtitle.
+    private final TwoLineListItem titleContainer;
 
     /// Creates a row with mouse-transparent title text and independently interactive optional nodes.
     public LineComponent() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
-
-        this.setMinHeight(MIN_HEIGHT);
 
         this.container = new HBox(SPACING);
         container.getStyleClass().add("line-component-container");
         container.setAlignment(Pos.CENTER_LEFT);
         container.setPickOnBounds(true);
 
-        this.titleLabel = new Label();
-        titleLabel.getStyleClass().add("title-label");
-        titleLabel.setMinWidth(Region.USE_PREF_SIZE);
-        titleLabel.setMouseTransparent(true);
-        titleLabel.setPickOnBounds(false);
-
-        this.titleLine = new HBox(4, titleLabel) {
-            /// Includes the tags' natural width when requesting space from the parent.
-            @Override
-            protected double computePrefWidth(double height) {
-                double width = super.computePrefWidth(height);
-                for (Node child : getManagedChildren()) {
-                    if (child instanceof TagsBox tagsBox) {
-                        width += snapSizeX(tagsBox.computeNaturalPrefWidth(height));
-                    }
-                }
-                return width;
-            }
-        };
-        titleLine.setAlignment(Pos.CENTER_LEFT);
-        titleLine.setPickOnBounds(false);
-
-        this.titleContainer = new VBox(titleLine);
-        titleContainer.getStyleClass().add("title-container");
-        titleContainer.setAlignment(Pos.CENTER_LEFT);
-        titleContainer.minWidthProperty().bind(titleLine.prefWidthProperty());
-        titleContainer.setMouseTransparent(true);
-        titleContainer.setPickOnBounds(false);
+        this.titleContainer = new TwoLineListItem();
+        titleContainer.getStyleClass().setAll("title-container");
+        titleContainer.setTitleSpacing(4);
+        titleContainer.getTitleLabel().getStyleClass().setAll("label", "title-label");
+        titleContainer.getTitleLabel().setMinWidth(Region.USE_PREF_SIZE);
         HBox.setHgrow(titleContainer, Priority.ALWAYS);
 
         this.setNode(IDX_TITLE, titleContainer);
 
         this.getChildren().setAll(container);
-        widthProperty().addListener(observable -> updatePreferredHeight());
     }
 
     /// Computes wrapped subtitle height from the row width.
@@ -124,68 +73,32 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         return Orientation.HORIZONTAL;
     }
 
-    /// Computes preferred row height from the title column width after fixed-width nodes are removed.
+    /// Computes preferred row height from the horizontal layout, including child margins and wrapped text.
     @Override
     protected double computePrefHeight(double width) {
-        return computeLineHeight(width);
+        return Math.max(MIN_HEIGHT, super.computePrefHeight(width));
     }
 
     /// Keeps wrapped subtitle rows from being compressed below their preferred height.
     @Override
     protected double computeMinHeight(double width) {
-        return computeLineHeight(width);
+        return computePrefHeight(width);
     }
 
-    /// Computes row height with the same width split used by the `HBox` at layout time.
-    private double computeLineHeight(double width) {
-        double horizontalInsets = container.snappedLeftInset() + container.snappedRightInset();
-        double verticalInsets = container.snappedTopInset() + container.snappedBottomInset();
-        double contentWidth = width < 0 ? -1 : Math.max(0, width - horizontalInsets);
+    /// Stores optional row nodes by their layout slot.
+    private @Nullable Node[] nodes = new Node[2];
 
-        int managedCount = 0;
-        double fixedWidth = 0;
-        double contentHeight = 0;
-        for (Node child : container.getChildren()) {
-            if (!child.isManaged()) {
-                continue;
-            }
-
-            managedCount++;
-            if (child == titleContainer) {
-                continue;
-            }
-
-            fixedWidth += child.prefWidth(-1);
-            contentHeight = Math.max(contentHeight, child.prefHeight(-1));
-        }
-
-        double titleWidth = contentWidth < 0
-                ? -1
-                : Math.max(0, contentWidth - fixedWidth - container.getSpacing() * Math.max(0, managedCount - 1));
-        contentHeight = Math.max(contentHeight, computeTitleHeight(titleWidth));
-
-        return Math.max(MIN_HEIGHT, verticalInsets + contentHeight);
-    }
-
-    /// Computes the height of the title column at the given width.
-    private double computeTitleHeight(double width) {
-        double height = titleLine.prefHeight(width);
-        if (subtitleLabel != null && subtitleLabel.getParent() == titleContainer) {
-            height += titleContainer.getSpacing() + subtitleLabel.prefHeight(width);
-        }
-        return height;
-    }
-
-    private Node[] nodes = new Node[2];
-
-    protected void setNode(int idx, Node node) {
+    /// Replaces a row slot, removing the slot's content when node is null.
+    ///
+    /// @param idx the non-negative slot index
+    /// @param node the node to display, or null to remove it
+    protected void setNode(int idx, @Nullable Node node) {
         if (nodes.length <= idx)
             nodes = Arrays.copyOf(nodes, idx + 1);
 
         if (nodes[idx] != node) {
             nodes[idx] = node;
             container.getChildren().setAll(Arrays.stream(nodes).filter(Objects::nonNull).toArray(Node[]::new));
-            updatePreferredHeight();
         }
     }
 
@@ -193,37 +106,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     /// Null removes the node; non-null nodes retain their own mouse input handling.
     /// Nodes that are both invisible and unmanaged remain detached until either property becomes true.
     public final void setTitleTrailing(@Nullable Node node) {
-        if (titleTrailing == node) {
-            return;
-        }
-
-        if (titleTrailing != null) {
-            titleTrailing.visibleProperty().removeListener(titleTrailingListener);
-            titleTrailing.managedProperty().removeListener(titleTrailingListener);
-            titleLine.getChildren().remove(titleTrailing);
-        }
-        titleTrailing = node;
-        if (node != null) {
-            if (titleTrailingListener == null)
-                titleTrailingListener = observable -> updateTitleTrailing();
-            node.visibleProperty().addListener(titleTrailingListener);
-            node.managedProperty().addListener(titleTrailingListener);
-        }
-        updateTitleTrailing();
-    }
-
-    /// Attaches the trailing node only when it needs rendering or layout space.
-    private void updateTitleTrailing() {
-        if (titleTrailing != null) {
-            boolean attached = titleTrailing.getParent() == titleLine;
-            if (titleTrailing.isVisible() || titleTrailing.isManaged()) {
-                if (!attached)
-                    titleLine.getChildren().add(1, titleTrailing);
-            } else if (attached) {
-                titleLine.getChildren().remove(titleTrailing);
-            }
-        }
-        titleContainer.setMouseTransparent(titleTrailing == null || !titleTrailing.isVisible());
+        titleContainer.setTitleTrailing(node);
     }
 
     /// Returns the mutable list of tags displayed after the title and its optional trailing node.
@@ -235,19 +118,14 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     ///
     /// @return the live list of tag values; elements must be non-null
     public final ObservableList<Tag> getTags() {
-        if (tags == null) {
-            tags = FXCollections.observableArrayList();
-
-            titleLine.getChildren().add(new TagsBox(tags));
-            tags.addListener((ListChangeListener<Tag>) change -> updatePreferredHeight());
-        }
-        return tags;
+        return titleContainer.getTags();
     }
 
     public void setLargeTitle(boolean largeTitle) {
         pseudoClassStateChanged(PSEUDO_LARGER_TITLE, largeTitle);
     }
 
+    /// The title text forwarded to the content pane.
     private final StringProperty title = new StringPropertyBase() {
         @Override
         public Object getBean() {
@@ -259,26 +137,32 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
             return "title";
         }
 
+        /// Updates the title displayed by the content pane.
         @Override
         protected void invalidated() {
-            titleLabel.setText(get());
+            titleContainer.setTitle(get());
         }
     };
 
+    /// Returns the title property; null text is displayed as empty.
     public final StringProperty titleProperty() {
         return title;
     }
 
-    public String getTitle() {
+    /// Returns the title text, or null if none is assigned.
+    public @Nullable String getTitle() {
         return titleProperty().get();
     }
 
-    public void setTitle(String title) {
+    /// Sets the title text; null is displayed as empty.
+    public void setTitle(@Nullable String title) {
         titleProperty().set(title);
     }
 
-    private StringProperty subtitle;
+    /// The lazily created subtitle property; null and empty values omit the second row.
+    private @Nullable StringProperty subtitle;
 
+    /// Returns the subtitle property; null and empty values omit the second row.
     public final StringProperty subtitleProperty() {
         if (subtitle == null) {
             subtitle = new StringPropertyBase() {
@@ -292,26 +176,18 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
                     return LineComponent.this;
                 }
 
+                /// Updates the wrapping subtitle in the content pane.
                 @Override
                 protected void invalidated() {
-                    String subtitle = get();
+                    @Nullable String subtitle = get();
                     if (subtitle != null && !subtitle.isEmpty()) {
-                        if (subtitleLabel == null) {
-                            subtitleLabel = new Label();
-                            subtitleLabel.setWrapText(true);
-                            subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
-                            subtitleLabel.setMouseTransparent(true);
-                            subtitleLabel.getStyleClass().add("subtitle-label");
-                        }
-                        subtitleLabel.setText(subtitle);
-                        if (titleContainer.getChildren().size() == 1)
-                            titleContainer.getChildren().add(subtitleLabel);
-                    } else if (subtitleLabel != null) {
-                        subtitleLabel.setText(null);
-                        if (titleContainer.getChildren().size() == 2)
-                            titleContainer.getChildren().remove(1);
+                        Label label = titleContainer.getSubtitleLabel();
+                        label.getStyleClass().setAll("label", "subtitle-label");
+                        label.setWrapText(true);
+                        titleContainer.setSubtitle(subtitle);
+                    } else {
+                        titleContainer.setSubtitle(null);
                     }
-                    updatePreferredHeight();
                 }
             };
         }
@@ -319,29 +195,14 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         return subtitle;
     }
 
-    public final String getSubtitle() {
+    /// Returns the assigned subtitle text, or null if none is assigned.
+    public final @Nullable String getSubtitle() {
         return subtitle != null ? subtitle.get() : null;
     }
 
-    public final void setSubtitle(String subtitle) {
+    /// Sets the subtitle text; null and empty values omit the second row.
+    public final void setSubtitle(@Nullable String subtitle) {
         subtitleProperty().set(subtitle);
-    }
-
-    /// Updates the fixed preferred height after the row width or subtitle content changes.
-    private void updatePreferredHeight() {
-        if (FXUtils.getLimitHeight(this) > 0) return;
-
-        double width = getWidth();
-        if (width <= 0) {
-            setMinHeight(MIN_HEIGHT);
-            setPrefHeight(Region.USE_COMPUTED_SIZE);
-            return;
-        }
-
-        applyCss();
-        double height = computeLineHeight(width);
-        setMinHeight(height);
-        setPrefHeight(height);
     }
 
     private ObjectProperty<Node> leading;

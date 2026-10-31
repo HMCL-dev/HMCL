@@ -215,7 +215,6 @@ public class DownloadPage extends Control implements DecoratorPage {
                         .filter(category -> getSkinnable().page.shouldDisplayCategory(category))
                         .map(category -> getSkinnable().page.getLocalizedCategory(category, null))
                         .forEach(content::addTag);
-                content.getFirstLine().setMinWidth(0);
                 descriptionPane.getChildren().add(content);
 
                 @Nullable String mcmodUrl = mod != null ? mod.mcmodUrl() : null;

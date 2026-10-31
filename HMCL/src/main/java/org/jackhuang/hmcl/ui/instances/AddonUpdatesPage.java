@@ -354,7 +354,6 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
         AddonUpdateListCell() {
             HBox hbox = new HBox(16);
             HBox.setHgrow(content, Priority.ALWAYS);
-            content.setAlignment(Pos.CENTER);
             hbox.setAlignment(Pos.CENTER);
 
             hbox.getChildren().setAll(enabledBox, imageContainer, content, changelogButton);
