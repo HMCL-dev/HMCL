@@ -32,7 +32,6 @@ public final class GameListCell extends ListCell<GameListItem> {
     private final JFXRadioButton chkSelected;
     private final JFXButton btnUpgrade;
     private final JFXButton btnManage;
-    private final JFXButton btnLaunch;
     private final JFXButton btnMenu;
 
     private final HBox right;
@@ -101,16 +100,6 @@ public final class GameListCell extends ListCell<GameListItem> {
             });
             FXUtils.installFastTooltip(btnUpgrade, i18n("instance.update"));
             right.getChildren().add(btnUpgrade);
-
-            this.btnLaunch = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
-            btnLaunch.setOnAction(e -> {
-                GameListItem item = this.getItem();
-                if (item != null)
-                    item.testGame();
-            });
-            BorderPane.setAlignment(btnLaunch, Pos.CENTER);
-            FXUtils.installFastTooltip(btnLaunch, i18n("instance.launch.test"));
-            right.getChildren().add(btnLaunch);
 
             this.btnManage = FXUtils.newToggleButton4(SVG.SETTINGS);
             btnManage.setOnAction(e -> {
@@ -185,7 +174,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             this.tag.bind(item.tagProperty());
             if (item.canUpdate())
                 this.right.getChildren().add(btnUpgrade);
-            this.right.getChildren().addAll(btnLaunch, btnManage, btnMenu);
+            this.right.getChildren().addAll(btnManage, btnMenu);
         }
     }
 
