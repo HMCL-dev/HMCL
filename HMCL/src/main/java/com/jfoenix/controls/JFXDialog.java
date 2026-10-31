@@ -1,20 +1,19 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package com.jfoenix.controls;
@@ -25,13 +24,11 @@ import com.jfoenix.effects.JFXDepthManager;
 import com.jfoenix.transitions.CachedTransition;
 import javafx.animation.*;
 import javafx.beans.DefaultProperty;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ObjectPropertyBase;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.*;
 import javafx.css.*;
 import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.event.WeakEventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
 import javafx.scene.Node;
@@ -45,11 +42,16 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
+import org.jackhuang.hmcl.util.Holder;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /// Note: for JFXDialog to work properly, the root node **MUST**
 /// be of type [StackPane]
@@ -76,7 +78,15 @@ public class JFXDialog extends StackPane {
     private Region content;
     private Transition animation;
 
-    private final EventHandler<? super MouseEvent> closeHandler = e -> close();
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
+    private final Holder<?> closeHandlerHolder;
+    private final WeakEventHandler<? super MouseEvent> closeHandler;
+
+    {
+        EventHandler<? super MouseEvent> realCloseHandler = e -> close();
+        closeHandler = new WeakEventHandler<>(realCloseHandler);
+        closeHandlerHolder = new Holder<>(realCloseHandler);
+    }
 
     /// creates empty JFXDialog control with CENTER animation type
     public JFXDialog() {
@@ -119,7 +129,12 @@ public class JFXDialog extends StackPane {
     ///   - BOTTOM
     ///   - LEFT
     public JFXDialog(StackPane dialogContainer, Region content, DialogTransition transitionType, boolean overlayClose) {
+        this(dialogContainer, content, null, transitionType, overlayClose);
+    }
+
+    public JFXDialog(StackPane dialogContainer, Region content, @Nullable StackPane overlayPane, DialogTransition transitionType, boolean overlayClose) {
         setOverlayClose(overlayClose);
+        setOverlayPane(overlayPane);
         initialize();
         setContent(content);
         setDialogContainer(dialogContainer);
@@ -129,21 +144,35 @@ public class JFXDialog extends StackPane {
     }
 
     private void initChangeListeners() {
-        overlayCloseProperty().addListener((o, oldVal, newVal) -> {
-            if (newVal) {
-                this.addEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
+        FXUtils.onChange(overlayCloseProperty(), b -> {
+            if (b) {
+                getOverlayPane().addEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
             } else {
-                this.removeEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
+                getOverlayPane().removeEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
+            }
+        });
+        this.overlayPaneProperty().addListener((observable, oldValue, newValue) -> {
+            if (oldValue == null) oldValue = JFXDialog.this;
+            if (newValue == null) newValue = JFXDialog.this;
+            if (oldValue == newValue) return;
+            oldValue.getStyleClass().remove("jfx-dialog-overlay-pane");
+            oldValue.setBackground(null);
+            oldValue.removeEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
+            newValue.getStyleClass().add("jfx-dialog-overlay-pane");
+            newValue.setBackground(new Background(new BackgroundFill(Color.rgb(0, 0, 0, 0.1), null, null)));
+            // close the dialog if clicked on the overlay pane
+            if (overlayClose.get()) {
+                newValue.addEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
             }
         });
     }
 
     private void initialize() {
-        this.setVisible(false);
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
-        this.transitionType.addListener((o, oldVal, newVal) -> {
-            animation = getShowAnimation(transitionType.get());
-        });
+        this.setVisible(false);
+
+        FXUtils.onChange(overlayPane, t -> animation = getShowAnimation(transitionType.get()));
+        FXUtils.onChange(transitionType, t -> animation = getShowAnimation(transitionType.get()));
 
         contentHolder = new StackPane();
         JFXDepthManager.setDepth(contentHolder, 4);
@@ -151,13 +180,18 @@ public class JFXDialog extends StackPane {
         // ensure stackpane is never resized beyond it's preferred size
         contentHolder.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
         this.getChildren().add(contentHolder);
-        this.getStyleClass().add("jfx-dialog-overlay-pane");
         StackPane.setAlignment(contentHolder, Pos.CENTER);
-        this.setBackground(new Background(new BackgroundFill(Color.rgb(0, 0, 0, 0.1), null, null)));
+
+        FXUtils.onChangeAndOperate(overlayPane, t -> setPickOnBounds(t == this || t == null));
+
+        getOverlayPane().setVisible(false);
+        getOverlayPane().getStyleClass().add("jfx-dialog-overlay-pane");
+        getOverlayPane().setBackground(new Background(new BackgroundFill(Color.rgb(0, 0, 0, 0.1), null, null)));
         // close the dialog if clicked on the overlay pane
         if (overlayClose.get()) {
-            this.addEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
+            getOverlayPane().addEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
         }
+
         // prevent propagating the events to overlay pane
         contentHolder.addEventHandler(MouseEvent.ANY, Event::consume);
     }
@@ -212,6 +246,21 @@ public class JFXDialog extends StackPane {
 
     public final void setOverlayClose(final boolean overlayClose) {
         this.overlayCloseProperty().set(overlayClose);
+    }
+
+    private final ObjectProperty<StackPane> overlayPane = new SimpleObjectProperty<>(this);
+
+    public final ObjectProperty<StackPane> overlayPaneProperty() {
+        return this.overlayPane;
+    }
+
+    @NotNull
+    public final StackPane getOverlayPane() {
+        return Objects.requireNonNullElse(this.overlayPaneProperty().get(), this);
+    }
+
+    public final void setOverlayPane(final StackPane overlayPane) {
+        this.overlayPaneProperty().set(overlayPane == null ? this : overlayPane);
     }
 
     /// if sets to true, the content of dialog container will be cached and replaced with an image
@@ -274,8 +323,10 @@ public class JFXDialog extends StackPane {
         if (animation != null) {
             animation.play();
         } else {
-            setVisible(true);
-            setOpacity(1);
+            this.setVisible(true);
+            contentHolder.setOpacity(1);
+            getOverlayPane().setVisible(true);
+            getOverlayPane().setOpacity(1);
             Event.fireEvent(JFXDialog.this, new JFXDialogEvent(JFXDialogEvent.OPENED));
         }
     }
@@ -291,8 +342,10 @@ public class JFXDialog extends StackPane {
                 closeDialog();
             });
         } else {
-            setOpacity(0);
-            setVisible(false);
+            this.setVisible(false);
+            contentHolder.setOpacity(0);
+            getOverlayPane().setOpacity(0);
+            getOverlayPane().setVisible(false);
             closeDialog();
         }
     }
@@ -340,6 +393,7 @@ public class JFXDialog extends StackPane {
 
     private void resetProperties() {
         this.setVisible(false);
+        getOverlayPane().setVisible(false);
         contentHolder.setTranslateX(0);
         contentHolder.setTranslateY(0);
         contentHolder.setScaleX(1);
@@ -354,17 +408,22 @@ public class JFXDialog extends StackPane {
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(contentHolder.scaleXProperty(), INITIAL_SCALE, INTERPOLATOR),
                             new KeyValue(contentHolder.scaleYProperty(), INITIAL_SCALE, INTERPOLATOR),
-                            new KeyValue(JFXDialog.this.visibleProperty(), false, Motion.LINEAR)
+                            new KeyValue(JFXDialog.this.visibleProperty(), false, Motion.LINEAR),
+                            new KeyValue(getOverlayPane().visibleProperty(), false, Motion.LINEAR)
                     ),
                     new KeyFrame(Duration.millis(10),
                             new KeyValue(JFXDialog.this.visibleProperty(), true, Motion.LINEAR),
-                            new KeyValue(JFXDialog.this.opacityProperty(), 0, INTERPOLATOR)
+                            new KeyValue(contentHolder.opacityProperty(), 0, INTERPOLATOR),
+                            new KeyValue(getOverlayPane().visibleProperty(), true, Motion.LINEAR),
+                            new KeyValue(getOverlayPane().opacityProperty(), 0, INTERPOLATOR)
                     ),
                     new KeyFrame(Motion.EXTRA_LONG4,
                             new KeyValue(contentHolder.scaleXProperty(), 1, INTERPOLATOR),
                             new KeyValue(contentHolder.scaleYProperty(), 1, INTERPOLATOR),
                             new KeyValue(JFXDialog.this.visibleProperty(), true, Motion.LINEAR),
-                            new KeyValue(JFXDialog.this.opacityProperty(), 1, INTERPOLATOR)
+                            new KeyValue(contentHolder.opacityProperty(), 1, INTERPOLATOR),
+                            new KeyValue(getOverlayPane().visibleProperty(), true, Motion.LINEAR),
+                            new KeyValue(getOverlayPane().opacityProperty(), 1, INTERPOLATOR)
                     ))
             );
             // reduce the number to increase the shifting , increase number to reduce shifting
