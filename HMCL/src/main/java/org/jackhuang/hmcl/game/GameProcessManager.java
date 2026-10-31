@@ -11,7 +11,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.GameLogsHolder;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.instances.Instances;
-import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
