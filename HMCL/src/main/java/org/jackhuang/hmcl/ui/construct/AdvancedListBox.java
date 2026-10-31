@@ -13,6 +13,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.SVGContainer;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,10 +83,11 @@ public class AdvancedListBox extends ScrollPane {
     ///
     /// @param leftGraphic the item icon, or null for no icon
     /// @return this list box
-    public AdvancedListBox addNavigationDrawerTab(TabController controller, TabItem<?> tab, String title, @Nullable SVG leftGraphic) {
+    public AdvancedListBox addNavigationDrawerTab(TabController controller, TabItem<?> tab, String title, @Nullable SVG leftGraphic, boolean prewarm) {
         AdvancedListItem item = createNavigationDrawerItem(title, leftGraphic);
         item.activeProperty().bind(controller.selectedTabProperty().isEqualTo(tab));
         item.setOnAction(e -> controller.selectTab(tab));
+        if (prewarm && AnimationUtils.isAnimationEnabled()) item.setPrepareAction(() -> controller.prewarmTab(tab));
         return add(item);
     }
 
@@ -93,7 +95,7 @@ public class AdvancedListBox extends ScrollPane {
     ///
     /// @return this list box
     public AdvancedListBox addNavigationDrawerTab(TabController controller, TabItem<?> tab, String title,
-                                                  SVG unselectedGraphic, SVG selectedGraphic) {
+                                                  SVG unselectedGraphic, SVG selectedGraphic, boolean prewarm) {
         AdvancedListItem item = createNavigationDrawerItem(title, null);
         item.activeProperty().bind(controller.selectedTabProperty().isEqualTo(tab));
         item.setOnAction(e -> controller.selectTab(tab));
@@ -104,6 +106,7 @@ public class AdvancedListBox extends ScrollPane {
         AdvancedListItem.setMargin(leftGraphic, AdvancedListItem.LEFT_ICON_MARGIN);
         FXUtils.onChange(item.activeProperty(), active -> leftGraphic.setIcon(active ? selectedGraphic : unselectedGraphic, Motion.SHORT4));
         item.setLeftGraphic(leftGraphic);
+        if (prewarm && AnimationUtils.isAnimationEnabled()) item.setPrepareAction(() -> controller.prewarmTab(tab));
         return add(item);
     }
 
