@@ -6,8 +6,9 @@ import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadCandidates;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile;
+import org.jackhuang.hmcl.download.forge.ForgeNewInstallProfile.Processor;
+import org.jackhuang.hmcl.download.forge.ProcessorReuse;
 import org.jackhuang.hmcl.download.game.GameInstanceJsonDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
@@ -79,6 +80,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
                     try (InputStream stream = Files.newInputStream(artifact)) {
                         code = (DigestUtils.digestToString("SHA-1", stream));
                     }
+                    processorOutputHashes.put(artifact, code);
 
                     if (!Objects.equals(code, value)) {
                         Files.delete(artifact);
@@ -147,6 +149,7 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
                 try (InputStream stream = Files.newInputStream(artifact)) {
                     code = DigestUtils.digestToString("SHA-1", stream);
                 }
+                processorOutputHashes.put(artifact, code);
 
                 if (!Objects.equals(code, entry.getValue())) {
                     Files.delete(artifact);
@@ -164,6 +167,8 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
     private final Path installer;
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
+    /// SHA-1 values the processor tasks computed while verifying their declared outputs.
+    private final Map<Path, String> processorOutputHashes = new HashMap<>();
 
     private ForgeNewInstallProfile profile;
     private List<Processor> processors;
@@ -399,12 +404,19 @@ public class NeoForgeOldInstallTask extends Task<GameInstancePatch> {
         vars.put("INSTALLER", installer.toAbsolutePath().toString());
         vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLayout().getLibrariesDirectory()));
 
-        updateProgress(0, processors.size());
-
-        Task<?> processorsTask = Task.runSequentially(
+        boolean canSkip = ProcessorReuse.canReuseRecordedArtifacts(processors, vars, installer);
+        updateProgress(canSkip ? processors.size() : 0, processors.size());
+        Task<?> processorsTask = ProcessorReuse.createProcessorsTask(
+                processors,
+                vars,
+                installer,
+                canSkip,
+                "Skipping " + processors.size() + " NeoForge processors for " + selfVersion
+                        + ": the artifacts recorded by the last install are still current",
                 processors.stream()
                         .map(processor -> createProcessorTask(processor, vars))
-                        .toArray(Task<?>[]::new));
+                        .toList(),
+                processorOutputHashes);
 
         dependencies.add(
                 processorsTask.thenComposeAsync(
