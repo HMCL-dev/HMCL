@@ -505,10 +505,10 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (platform.getBits() == Bits.BIT_32) {
             // https://github.com/HMCL-dev/HMCL/issues/6638
             maxHeapSize = 768 * 1024 * 1024;        // 768 MiB
-            minHeapSize = 128 * 1024 * 1024;        // 128 MiB
+            minHeapSize = 256 * 1024 * 1024;        // 128 MiB
         } else {
             maxHeapSize = 24L * 1024 * 1024 * 1024; //  24 GiB
-            minHeapSize = 256 * 1024 * 1024;        // 256 MiB
+            minHeapSize = 512 * 1024 * 1024;        // 512 MiB
         }
 
         // Reserve memory for off-heap memory and HMCL itself
