@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.util.platform;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -193,62 +194,40 @@ public final class CommandBuilder {
         return null;
     }
 
-    public String addUnstableDefault(String opt, boolean value) {
+    /// Adds a boolean JVM default, returning the existing argument or `null` when added.
+    public @Nullable String addUnstableDefault(String opt, boolean value) {
         return addUnstableDefault(opt, value, true);
     }
 
-    private String addUnstableDefault(String opt, boolean value, boolean parse) {
-        for (Item item : raw) {
-            final Matcher matcher = UNSTABLE_BOOLEAN_OPTION_PATTERN.matcher(item.arg);
-            if (matcher.matches()) {
-                if (matcher.group("key").equals(opt)) {
-                    return item.arg;
-                }
-            }
-        }
-
-        for (String arg : external) {
-            final Matcher matcher = UNSTABLE_BOOLEAN_OPTION_PATTERN.matcher(arg);
-            if (matcher.matches()) {
-                if (matcher.group("key").equals(opt)) {
-                    return arg;
-                }
-            }
-        }
-
-        if (value) {
-            raw.add(new Item("-XX:+" + opt, parse));
-        } else {
-            raw.add(new Item("-XX:-" + opt, parse));
-        }
-        return null;
+    /// Adds a boolean default using the requested escaping mode.
+    private @Nullable String addUnstableDefault(String opt, boolean value, boolean parse) {
+        return addUnstableDefault(UNSTABLE_BOOLEAN_OPTION_PATTERN, opt, (value ? "-XX:+" : "-XX:-") + opt, parse);
     }
 
-    public String addUnstableDefault(String opt, String value) {
+    /// Adds a JVM value default, returning the existing argument or `null` when added.
+    public @Nullable String addUnstableDefault(String opt, String value) {
         return addUnstableDefault(opt, value, true);
     }
 
-    private String addUnstableDefault(String opt, String value, boolean parse) {
-        for (Item item : raw) {
-            final Matcher matcher = UNSTABLE_OPTION_PATTERN.matcher(item.arg);
-            if (matcher.matches()) {
-                if (matcher.group("key").equals(opt)) {
-                    return item.arg;
-                }
-            }
-        }
+    /// Adds a value default using the requested escaping mode.
+    private @Nullable String addUnstableDefault(String opt, String value, boolean parse) {
+        return addUnstableDefault(UNSTABLE_OPTION_PATTERN, opt, "-XX:" + opt + "=" + value, parse);
+    }
 
-        for (String arg : external) {
-            final Matcher matcher = UNSTABLE_OPTION_PATTERN.matcher(arg);
-            if (matcher.matches()) {
-                if (matcher.group("key").equals(opt)) {
-                    return arg;
-                }
-            }
+    /// Matches the option's syntax and exact name, searching explicit arguments before external ones.
+    /// Returns the first match without changing it, or adds the default and returns `null`.
+    private @Nullable String addUnstableDefault(Pattern pattern, String opt, String argument, boolean parse) {
+        @Nullable String existing = allExistingArgs()
+                .filter(arg -> {
+                    Matcher matcher = pattern.matcher(arg);
+                    return matcher.matches() && matcher.group("key").equals(opt);
+                })
+                .findFirst()
+                .orElse(null);
+        if (existing == null) {
+            raw.add(new Item(argument, parse));
         }
-
-        raw.add(new Item("-XX:" + opt + "=" + value, parse));
-        return null;
+        return existing;
     }
 
     public boolean removeIf(Predicate<String> pred) {
