@@ -401,7 +401,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 fireEvent(new DialogCloseEvent());
                 Controllers.navigate(new DownloadPage(page, addon, instanceReference, callback));
             });
-            setNode(IDX_LEADING, pane);
+            setLeading(pane);
 
             @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(type);
             @Nullable AddonProjectInfo mod = registry != null ? registry.getInfoByCurseForgeId(addon.slug()) : null;

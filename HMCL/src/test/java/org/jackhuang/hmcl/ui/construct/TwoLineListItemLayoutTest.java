@@ -1053,25 +1053,26 @@ public final class TwoLineListItemLayoutTest {
         });
     }
 
-    /// Verifies subclass trailing slots keep their order, collapse when hidden, and preserve independent actions.
+    /// Verifies the button-owned trailing group keeps its identity, order, and independent actions.
     @Test
-    public void testGroupedLineButtonTrailingNodes() throws ReflectiveOperationException {
+    public void testLineButtonTrailingGroup() throws ReflectiveOperationException {
         initializeAnimations();
         onFxThread(() -> {
-            ExtraLineButton line = new ExtraLineButton();
+            LineButton line = new LineButton();
             line.setTitle("Setting");
             line.setTrailingText("Value");
             Label icon = new Label(">");
             line.setTrailingIcon(icon);
             Button extra = new Button("Extra");
-            line.setExtraTrailing(extra);
+            line.getTrailingBox().getChildren().add(0, extra);
             VBox parent = new VBox(line);
             new Scene(parent);
             layout(parent, 400);
             TwoLineListItem content = (TwoLineListItem) requireNonNull(line.lookup(".line-component-container"));
             HBox group = (HBox) requireNonNull(content.getTrailing());
-            assertEquals("Value", ((Label) group.getChildren().get(0)).getText());
-            assertSame(extra, group.getChildren().get(1));
+            assertSame(extra, group.getChildren().get(0));
+            Label text = (Label) group.getChildren().get(1);
+            assertEquals("Value", text.getText());
             assertSame(icon, group.getChildren().get(2));
 
             AtomicInteger rowActions = new AtomicInteger();
@@ -1098,30 +1099,64 @@ public final class TwoLineListItemLayoutTest {
             assertTrue(content.prefWidth(-1) > collapsedWidth);
 
             line.setTrailingText(null);
-            line.setExtraTrailing(null);
-            assertSame(icon, content.getTrailing());
+            group.getChildren().remove(extra);
+            assertSame(group, content.getTrailing());
+            assertEquals(List.of(icon), group.getChildren());
             icon.setManaged(true);
             icon.setVisible(true);
-            assertSame(content, icon.getParent());
+            assertSame(group, icon.getParent());
             line.setTrailingIcon((Node) null);
-            assertNull(content.getTrailing());
+            assertSame(group, content.getTrailing());
+            assertNull(group.getParent());
+            assertTrue(group.getChildren().isEmpty());
             assertNull(icon.getParent());
+            text.setManaged(true);
+            text.setVisible(true);
+            assertNull(group.getParent());
+            line.setTrailingText("Restored");
+            assertSame(group, content.getTrailing());
+            assertSame(content, group.getParent());
         });
     }
 
-    /// Supplies an extra trailing slot between the value and icon, as expandable headers do.
-    @NotNullByDefault
-    private static final class ExtraLineButton extends LineButton {
-        /// Places the icon after the extra trailing slot.
-        @Override
-        protected int getTrailingIconIndex() {
-            return IDX_TRAILING + 2;
-        }
+    /// Verifies sublist headers own their action group and preserve the description/action/arrow order.
+    @Test
+    public void testSublistHeaderTrailingGroup() throws ReflectiveOperationException {
+        initializeAnimations();
+        onFxThread(() -> {
+            ComponentSublist sublist = new ComponentSublist();
+            sublist.setDescription("Description");
+            Button extra = new Button("Extra");
+            sublist.setTrailing(extra);
+            ComponentSublistWrapper wrapper = new ComponentSublistWrapper(sublist);
+            VBox parent = new VBox(wrapper);
+            new Scene(parent);
+            layout(parent, 500);
+            LineButton header = (LineButton) wrapper.getChildren().get(0);
+            HBox group = header.getTrailingBox();
+            assertEquals("Description", ((Label) group.getChildren().get(0)).getText());
+            HBox actions = (HBox) header.getTrailingIcon();
+            assertSame(actions, group.getChildren().get(1));
+            assertSame(extra, actions.getChildren().get(0));
+            Node arrow = actions.getChildren().get(1);
+            assertTrue(arrow.getStyleClass().contains("expand-icon"));
 
-        /// Replaces the optional extra control.
-        private void setExtraTrailing(@Nullable Node node) {
-            setNode(IDX_TRAILING + 1, node);
-        }
+            double width = actions.prefWidth(-1);
+            extra.setVisible(false);
+            extra.setManaged(false);
+            assertTrue(actions.prefWidth(-1) < width);
+            Button replacement = new Button("Replacement");
+            sublist.setTrailing(replacement);
+            assertNull(extra.getParent());
+            assertEquals(List.of(replacement, arrow), actions.getChildren());
+            sublist.setTrailing(null);
+            assertEquals(List.of(arrow), actions.getChildren());
+            sublist.setDescription("");
+            assertEquals(List.of(actions), group.getChildren());
+            sublist.setDescription("Restored");
+            assertEquals("Restored", ((Label) group.getChildren().get(0)).getText());
+            assertSame(actions, group.getChildren().get(1));
+        });
     }
 
     /// Initializes the animation default with in-memory settings without loading or saving user configuration.

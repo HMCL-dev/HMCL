@@ -6,6 +6,7 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.scene.control.Label;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jetbrains.annotations.Nullable;
 
 /// @author Glavo
 public final class LineTextPane extends LineComponent {
@@ -16,38 +17,44 @@ public final class LineTextPane extends LineComponent {
         this.getStyleClass().addAll(DEFAULT_STYLE_CLASS);
     }
 
-    private StringProperty text;
+    /// The lazily created text displayed to the right of the title.
+    private @Nullable StringProperty text;
 
+    /// Returns the right-side text property; null and empty text omit the label.
     public StringProperty textProperty() {
         if (text == null) {
             text = new StringPropertyBase() {
-                private Label rightLabel;
+                /// The reusable right-side label, created when nonempty text is assigned.
+                private @Nullable Label rightLabel;
 
+                /// Returns the pane owning this property.
                 @Override
                 public Object getBean() {
                     return LineTextPane.this;
                 }
 
+                /// Returns the property name.
                 @Override
                 public String getName() {
                     return "text";
                 }
 
+                /// Updates the label and attaches it directly to the row while nonempty.
                 @Override
                 protected void invalidated() {
-                    String text = get();
+                    @Nullable String text = get();
                     if (text != null && !text.isEmpty()) {
                         if (rightLabel == null) {
                             rightLabel = FXUtils.newSafeTruncatedLabel();
                             FXUtils.copyOnDoubleClick(rightLabel);
                         }
                         rightLabel.setText(text);
-                        setNode(IDX_TRAILING, rightLabel);
+                        container.setTrailing(rightLabel);
                     } else {
                         if (rightLabel != null)
                             rightLabel.setText(null);
 
-                        setNode(IDX_TRAILING, null);
+                        container.setTrailing(null);
                     }
                 }
             };
@@ -55,11 +62,13 @@ public final class LineTextPane extends LineComponent {
         return text;
     }
 
-    public String getText() {
+    /// Returns the right-side text, or null if none is assigned.
+    public @Nullable String getText() {
         return textProperty().get();
     }
 
-    public void setText(String text) {
+    /// Sets the right-side text; null and empty text omit the label.
+    public void setText(@Nullable String text) {
         textProperty().set(text);
     }
 }

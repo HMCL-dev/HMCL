@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
 import javafx.beans.property.StringProperty;
@@ -11,19 +10,14 @@ import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 
 /// Displays a title, optional subtitle and tags, and optional leading and trailing nodes.
 ///
@@ -32,9 +26,6 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     private static final String DEFAULT_STYLE_CLASS = "line-component";
     private static final double MIN_HEIGHT = 48.0;
     private static final PseudoClass PSEUDO_LARGER_TITLE = PseudoClass.getPseudoClass("large-title");
-
-    protected static final int IDX_LEADING = 0;
-    protected static final int IDX_TRAILING = 2;
 
     /// The gap between the text area and side nodes, and between grouped trailing nodes.
     public static final double SPACING = TwoLineListItem.SIDE_SPACING;
@@ -48,7 +39,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     /// The pane laying out the entire row, including optional side nodes.
     protected final TwoLineListItem container;
 
-    /// Creates a row with mouse-transparent title text and independently interactive optional nodes.
+    /// Creates a row with truncation tooltips and independently interactive optional nodes.
     public LineComponent() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
@@ -79,72 +70,7 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         return computePrefHeight(width);
     }
 
-    /// Stores optional trailing nodes by the slots used by line subclasses.
-    private @Nullable Node[] nodes = new Node[0];
-
-    /// Groups multiple trailing nodes into the content pane's single trailing slot.
-    private @Nullable HBox trailingGroup;
-
-    /// Collapses the trailing group when its children no longer require rendering or layout.
-    private final InvalidationListener trailingGroupListener = observable -> updateTrailingGroup();
-
-    /// Replaces the leading slot or a trailing slot; null removes its content.
-    /// Trailing slots are displayed in increasing index order, grouped only when more than one is populated.
-    ///
-    /// @param idx [#IDX_LEADING] or an index greater than or equal to [#IDX_TRAILING]
-    /// @param node the node to display, or null to remove it
-    /// @throws IllegalArgumentException if idx does not identify a leading or trailing slot
-    protected void setNode(int idx, @Nullable Node node) {
-        if (idx == IDX_LEADING) {
-            setLeading(node);
-            return;
-        }
-        if (idx < IDX_TRAILING)
-            throw new IllegalArgumentException("Invalid row slot: " + idx);
-        if (nodes.length <= idx)
-            nodes = Arrays.copyOf(nodes, idx + 1);
-        if (nodes[idx] == node)
-            return;
-
-        @Nullable Node previous = nodes[idx];
-        if (previous != null) {
-            previous.visibleProperty().removeListener(trailingGroupListener);
-            previous.managedProperty().removeListener(trailingGroupListener);
-        }
-        nodes[idx] = node;
-        if (node != null) {
-            node.visibleProperty().addListener(trailingGroupListener);
-            node.managedProperty().addListener(trailingGroupListener);
-        }
-
-        @Unmodifiable List<Node> trailingNodes = Arrays.stream(nodes).filter(Objects::nonNull).toList();
-        // Detach before moving nodes between the direct slot and a multi-node group.
-        container.setTrailing(null);
-        if (trailingGroup != null)
-            trailingGroup.getChildren().clear();
-        if (trailingNodes.size() == 1) {
-            container.setTrailing(trailingNodes.get(0));
-        } else if (trailingNodes.size() > 1) {
-            if (trailingGroup == null) {
-                trailingGroup = new HBox(SPACING);
-                trailingGroup.setAlignment(Pos.CENTER_LEFT);
-                trailingGroup.setPickOnBounds(false);
-            }
-            trailingGroup.getChildren().setAll(trailingNodes);
-            updateTrailingGroup();
-            container.setTrailing(trailingGroup);
-        }
-    }
-
-    /// Updates the group's own visibility and management from its current children.
-    private void updateTrailingGroup() {
-        if (trailingGroup != null) {
-            trailingGroup.setManaged(trailingGroup.getChildren().stream().anyMatch(Node::isManaged));
-            trailingGroup.setVisible(trailingGroup.getChildren().stream().anyMatch(Node::isVisible));
-        }
-    }
-
-    /// Sets the node displayed immediately after the mouse-transparent title label.
+    /// Sets the node displayed immediately after the title label.
     /// Null removes the node; non-null nodes retain their own mouse input handling.
     /// Nodes that are both invisible and unmanaged remain detached until either property becomes true.
     public final void setTitleTrailing(@Nullable Node node) {

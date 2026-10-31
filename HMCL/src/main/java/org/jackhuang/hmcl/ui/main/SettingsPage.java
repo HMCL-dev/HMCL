@@ -77,12 +77,7 @@ public final class SettingsPage extends ScrollPane {
 
                         {
                             getStyleClass().add("update-pane");
-                            setNode(IDX_TRAILING, updateButton);
-                        }
-
-                        @Override
-                        protected int getTrailingTextIndex() {
-                            return LineComponent.IDX_TRAILING + 1;
+                            getTrailingBox().getChildren().add(0, updateButton);
                         }
                     };
                     updateChannel = updatePane.valueProperty();

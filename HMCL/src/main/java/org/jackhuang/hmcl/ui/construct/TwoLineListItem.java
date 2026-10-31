@@ -19,7 +19,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.OverrunStyle;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
 import javafx.stage.Window;

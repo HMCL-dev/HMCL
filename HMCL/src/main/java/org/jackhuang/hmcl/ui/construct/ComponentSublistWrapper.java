@@ -7,6 +7,7 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.css.PseudoClass;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.input.MouseEvent;
@@ -21,6 +22,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -44,13 +46,16 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
         expandIcon.getStyleClass().add("expand-icon");
         expandIcon.setMouseTransparent(true);
 
-        HeaderButton header = new HeaderButton();
+        LineButton header = new LineButton();
         header.getStyleClass().add("options-sublist-header");
         header.titleProperty().bind(sublist.titleProperty());
         header.subtitleProperty().bind(sublist.subtitleProperty());
         header.leadingProperty().bind(sublist.leadingProperty());
         header.trailingTextProperty().bind(sublist.descriptionProperty());
-        header.setTrailingIcon(expandIcon);
+        HBox headerActions = new HBox(LineComponent.SPACING, expandIcon);
+        headerActions.setAlignment(Pos.CENTER_LEFT);
+        headerActions.setPickOnBounds(false);
+        header.setTrailingIcon(headerActions);
         header.setOnAction(event -> {
             if (expandAnimation != null && expandAnimation.getStatus() == Animation.Status.RUNNING) {
                 expandAnimation.stop();
@@ -160,7 +165,13 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
         sublist.titleTrailingProperty().addListener(updateTitleTrailing);
         updateTitleTrailing.invalidated(null);
 
-        InvalidationListener updateTrailing = observable -> header.setExtraTrailing(sublist.getTrailing());
+        InvalidationListener updateTrailing = observable -> {
+            @Nullable Node trailing = sublist.getTrailing();
+            if (trailing == null)
+                headerActions.getChildren().setAll(expandIcon);
+            else
+                headerActions.getChildren().setAll(trailing, expandIcon);
+        };
         sublist.trailingProperty().addListener(updateTrailing);
         updateTrailing.invalidated(null);
 
@@ -258,19 +269,5 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
         container.setMinHeight(height);
         container.setPrefHeight(height);
         container.setMaxHeight(height);
-    }
-
-    private static final class HeaderButton extends LineButton {
-        private static final int EXTRA_TRAILING_INDEX = IDX_TRAILING + 1;
-
-        @Override
-        protected int getTrailingIconIndex() {
-            return IDX_TRAILING + 2;
-        }
-
-        private void setExtraTrailing(Node node) {
-            setNode(EXTRA_TRAILING_INDEX, node);
-        }
-
     }
 }

@@ -12,6 +12,7 @@ public final class LineToggleButton extends LineButtonBase {
 
     private final JFXToggleButton toggleButton;
 
+    /// Creates a row with a directly attached toggle bound to the selected state.
     public LineToggleButton() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
@@ -19,7 +20,7 @@ public final class LineToggleButton extends LineButtonBase {
         toggleButton.selectedProperty().bindBidirectional(selectedProperty());
         toggleButton.setSize(8);
         FXUtils.setLimitHeight(toggleButton, 30);
-        setNode(IDX_TRAILING, toggleButton);
+        container.setTrailing(toggleButton);
     }
 
     @Override
