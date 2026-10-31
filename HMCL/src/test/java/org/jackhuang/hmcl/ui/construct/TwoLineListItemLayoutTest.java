@@ -6,6 +6,8 @@ import com.jfoenix.controls.JFXListView;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -23,7 +25,10 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.robot.Robot;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.ComponentRemoteVersionList;
@@ -45,6 +50,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -117,7 +123,7 @@ public final class TwoLineListItemLayoutTest {
             assertEquals(252, item.getWidth(), 0.001);
             Label summary = collapsedTag(item);
             assertEquals("+2", summary.getText());
-            assertEquals("- Fabric\n- NeoForge", summary.getTooltip().getText());
+            assertEquals("- Fabric\n- NeoForge", prepareTooltipText(summary));
             assertEquals(item.getWidth(), item.getTitleLabel().getWidth() + summary.getWidth(), 0.001);
             for (Label tag : labels(item))
                 assertFalse(tag.isVisible());
@@ -182,7 +188,7 @@ public final class TwoLineListItemLayoutTest {
                 if (hidden > 0) {
                     assertEquals("+" + hidden, summary.getText());
                     assertEquals(labels.subList(expanded, labels.size()).stream()
-                            .map(tag -> "- " + tag.getText()).collect(Collectors.joining("\n")), summary.getTooltip().getText());
+                            .map(tag -> "- " + tag.getText()).collect(Collectors.joining("\n")), prepareTooltipText(summary));
                     assertTrue(summary.getWidth() >= summary.prefWidth(-1), "Summary text is clipped");
                     assertTrue(summary.getBoundsInParent().getMaxX() <= item.getWidth(), "Summary exceeds row bounds");
                     assertTrue(summary.getLayoutX() >= item.getTitleLabel().getBoundsInParent().getMaxX() + 4);
@@ -201,7 +207,7 @@ public final class TwoLineListItemLayoutTest {
             item.getTags().setAll(Tag.warning("Changed"), new Tag("Changed", Tag.Type.NORMAL));
             layout(parent, item.minWidth(-1));
             assertEquals("+2", summary.getText());
-            assertEquals("- Changed\n- Changed", summary.getTooltip().getText());
+            assertEquals("- Changed\n- Changed", prepareTooltipText(summary));
             item.getTags().clear();
             layout(parent, 500);
             assertFalse(summary.isVisible());
@@ -212,6 +218,183 @@ public final class TwoLineListItemLayoutTest {
             assertTagsFit(item);
             assertFalse(summary.isVisible());
         });
+    }
+
+    /// Verifies construction, empty-list access, CSS, and sizing do not allocate tag rendering state.
+    @Test
+    public void testTagStateIsLazy() throws ReflectiveOperationException {
+        var stateField = TwoLineListItem.class.getDeclaredField("tagState");
+        stateField.setAccessible(true);
+        var valuesField = TwoLineListItem.class.getDeclaredField("tags");
+        valuesField.setAccessible(true);
+        onFxThread(() -> {
+            try {
+                TwoLineListItem item = new TwoLineListItem("Title", "Subtitle");
+                assertNull(valuesField.get(item));
+                assertNull(stateField.get(item));
+                VBox parent = new VBox(item);
+                new Scene(parent);
+                layout(parent, 200);
+                item.minWidth(-1);
+                item.minHeight(200);
+                assertNull(valuesField.get(item));
+                assertNull(stateField.get(item));
+
+                var values = item.getTags();
+                values.clear();
+                layout(parent, 400);
+                assertSame(values, item.getTags());
+                assertNull(stateField.get(item));
+                assertEquals(2, item.getChildren().size());
+
+                values.add(new Tag("First tag", Tag.Type.NORMAL));
+                assertNotNull(stateField.get(item));
+                layout(parent, 400);
+                assertTagsFit(item);
+                values.clear();
+                layout(parent, 400);
+                assertTrue(labels(item).isEmpty());
+                values.add(Tag.warning("Reused item"));
+                layout(parent, 400);
+                assertTagsFit(item);
+            } catch (IllegalAccessException failure) {
+                throw new AssertionError(failure);
+            }
+        });
+    }
+
+    /// Verifies labels are reused by position and only count changes add or remove renderers.
+    @Test
+    public void testTagLabelReuse() {
+        onFxThread(() -> {
+            TwoLineListItem item = new TwoLineListItem("Title", null);
+            AtomicInteger added = new AtomicInteger();
+            AtomicInteger removed = new AtomicInteger();
+            item.getChildren().addListener((ListChangeListener<Node>) change -> {
+                while (change.next()) {
+                    for (Node node : change.getAddedSubList()) {
+                        if (isExpandedTag(node))
+                            added.incrementAndGet();
+                    }
+                    for (Node node : change.getRemoved()) {
+                        if (isExpandedTag(node))
+                            removed.incrementAndGet();
+                    }
+                }
+            });
+            for (int i = 0; i < 1000; i++)
+                item.addTag("Tag " + i);
+            assertEquals(1000, added.get());
+            assertEquals(0, removed.get());
+            @Unmodifiable List<Label> initial = labels(item);
+            item.getTags().add(1, Tag.warning("Inserted"));
+            assertSame(initial.get(0), labels(item).get(0));
+            assertSame(initial.get(1), labels(item).get(1));
+            assertEquals("Inserted", initial.get(1).getText());
+            assertTrue(initial.get(1).getPseudoClassStates().contains(PseudoClass.getPseudoClass("warning")));
+            assertEquals(1001, added.get());
+            assertEquals(0, removed.get());
+            item.getTags().set(2, new Tag("Replaced", Tag.Type.NORMAL));
+            assertEquals(1001, added.get());
+            assertEquals(0, removed.get());
+            assertSame(initial.get(2), labels(item).get(2));
+            assertEquals("Replaced", initial.get(2).getText());
+            item.getTags().remove(1, 3);
+            assertEquals(2, removed.get());
+            assertSame(initial.get(1), labels(item).get(1));
+            assertEquals("Tag 2", initial.get(1).getText());
+            assertFalse(initial.get(1).getPseudoClassStates().contains(PseudoClass.getPseudoClass("warning")));
+
+            @Unmodifiable List<Label> beforeSort = labels(item);
+            FXCollections.sort(item.getTags(), Comparator.comparing(Tag::text).reversed());
+            assertEquals(beforeSort, labels(item));
+            for (int i = 0; i < beforeSort.size(); i++)
+                assertEquals(item.getTags().get(i).text(), beforeSort.get(i).getText());
+            item.getTags().setAll(IntStream.range(0, beforeSort.size()).mapToObj(i -> Tag.warning("Replacement " + i)).toList());
+            assertEquals(beforeSort, labels(item));
+            assertEquals(1001, added.get());
+            assertEquals(2, removed.get());
+            for (int i = 0; i < beforeSort.size(); i++) {
+                assertEquals("Replacement " + i, beforeSort.get(i).getText());
+                assertTrue(beforeSort.get(i).getPseudoClassStates().contains(PseudoClass.getPseudoClass("warning")));
+            }
+            item.getTags().clear();
+            assertTrue(labels(item).isEmpty());
+            assertTrue(beforeSort.stream().allMatch(label -> label.getParent() == null));
+        });
+    }
+
+    /// Verifies folded tags reuse dimensions during resizing and prepare tooltip text only on demand.
+    @Test
+    public void testManyFoldedTagsReuseMeasurements() throws ReflectiveOperationException {
+        var stateField = TwoLineListItem.class.getDeclaredField("tagState");
+        stateField.setAccessible(true);
+        var metricsField = stateField.getType().getDeclaredField("tagMetrics");
+        metricsField.setAccessible(true);
+        var measureField = stateField.getType().getDeclaredField("tagMeasureText");
+        measureField.setAccessible(true);
+        onFxThread(() -> {
+            try {
+                TwoLineListItem item = new TwoLineListItem("A long title ".repeat(100), null);
+                for (int i = 0; i < 1000; i++)
+                    item.addTag("Tag " + i);
+                Object state = requireNonNull(stateField.get(item));
+                Text measuringText = (Text) measureField.get(state);
+                AtomicInteger measurements = new AtomicInteger();
+                measuringText.textProperty().addListener(observable -> measurements.incrementAndGet());
+                VBox parent = new VBox(item);
+                new Scene(parent);
+                layout(parent, 200);
+                // Let newly installed label skins finish their initial layout before checking reuse.
+                layout(parent, 200);
+                Label summary = collapsedTag(item);
+                assertEquals("+1000", summary.getText());
+                assertTrue(summary.getTooltip().getText().isEmpty());
+                Object metrics = requireNonNull(metricsField.get(state));
+                int originalMeasurements = measurements.get();
+                assertTrue(originalMeasurements < 10, "Measured summaries for the hidden suffix");
+                for (int width = 200; width < 400; width++) {
+                    layout(parent, width);
+                    assertSame(metrics, metricsField.get(state), "Resizing remeasured hidden tags");
+                    assertEquals(originalMeasurements, measurements.get());
+                    assertTrue(summary.getTooltip().getText().isEmpty());
+                }
+
+                String description = prepareTooltipText(summary);
+                assertEquals(1000, description.lines().count());
+                assertTrue(description.startsWith("- Tag 0\n"));
+                assertTrue(description.endsWith("- Tag 999"));
+                layout(parent, 250);
+                assertSame(description, prepareTooltipText(summary));
+
+                double originalWidth = item.prefWidth(-1);
+                labels(item).get(500).setStyle("-fx-font-size: 30px; -fx-padding: 3px 15px;");
+                layout(parent, 250);
+                assertTrue(item.prefWidth(-1) > originalWidth);
+                assertNotSame(metrics, metricsField.get(state));
+                double summaryWidth = summary.getWidth();
+                summary.setFont(Font.font(30));
+                layout(parent, 250);
+                assertTrue(summary.getWidth() > summaryWidth);
+                assertTrue(summary.getBoundsInParent().getMaxX() <= item.getWidth());
+
+                item.getTags().set(999, Tag.warning("Changed"));
+                layout(parent, 250);
+                assertTrue(summary.getTooltip().getText().isEmpty());
+                assertTrue(prepareTooltipText(summary).endsWith("- Changed"));
+                item.getTags().clear();
+                layout(parent, 250);
+                assertFalse(summary.isVisible());
+                assertTrue(summary.getTooltip().getText().isEmpty());
+            } catch (IllegalAccessException failure) {
+                throw new AssertionError(failure);
+            }
+        });
+    }
+
+    /// Returns whether a child renders a tag value rather than the collapsed summary.
+    private static boolean isExpandedTag(Node node) {
+        return node.getStyleClass().contains("tag") && !node.getStyleClass().contains("collapsed-tag");
     }
 
     /// Verifies summary hover opens a tooltip and clicks activate only the nearest row once.
@@ -754,6 +937,13 @@ public final class TwoLineListItemLayoutTest {
     /// Returns the summary tag, including when it is hidden.
     private static Label collapsedTag(TwoLineListItem item) {
         return (Label) requireNonNull(item.lookup(".collapsed-tag"));
+    }
+
+    /// Runs the tooltip's preparation callback without opening a window for text-only assertions.
+    private static String prepareTooltipText(Label summary) {
+        var tooltip = summary.getTooltip();
+        tooltip.getOnShowing().handle(new WindowEvent(tooltip, WindowEvent.WINDOW_SHOWING));
+        return tooltip.getText();
     }
 
     /// Verifies every tag is a visible direct child displayed at its full preferred width.

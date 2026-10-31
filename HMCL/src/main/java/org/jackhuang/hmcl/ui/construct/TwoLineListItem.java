@@ -20,6 +20,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.text.Text;
+import javafx.stage.Window;
 import javafx.util.Duration;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +28,10 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /// Displays a title, tags, and an optional subtitle between optional leading and trailing nodes.
@@ -95,14 +98,8 @@ public class TwoLineListItem extends Pane {
     /// The mutable tag values, allocated when first requested.
     private @Nullable ObservableList<Tag> tags;
 
-    /// The labels rendering tag values in list order.
-    private final List<Label> tagLabels = new ArrayList<>();
-
-    /// The lazily created label summarizing tags that do not fit in the first row.
-    private @Nullable Label collapsedTag;
-
-    /// Measures summary text without changing the displayed label during size queries.
-    private final Text tagMeasureText = new Text();
+    /// Rendering state, allocated only when the first tag is added.
+    private @Nullable TagState tagState;
 
     /// The primary title text.
     private final StringProperty title = new StringPropertyBase() {
@@ -326,7 +323,7 @@ public class TwoLineListItem extends Pane {
     /// Allows optional nodes and the collapsed tag to receive input while text remains mouse-transparent.
     private void updateMouseTransparency() {
         setMouseTransparent(!isVisible(getLeading()) && !isVisible(getTrailing())
-                && !isVisible(titleTrailing) && !isVisible(collapsedTag));
+                && !isVisible(titleTrailing) && (tagState == null || !tagState.collapsedTag.isVisible()));
     }
 
     /// Returns whether an optional node is visible.
@@ -386,42 +383,22 @@ public class TwoLineListItem extends Pane {
     public ObservableList<Tag> getTags() {
         if (tags == null) {
             tags = FXCollections.observableArrayList();
-            tags.addListener((ListChangeListener<Tag>) change -> {
-                @Unmodifiable List<Label> labels = change.getList().stream().map(TwoLineListItem::createTagLabel).toList();
-                getChildren().removeAll(tagLabels);
-                tagLabels.clear();
-                tagLabels.addAll(labels);
-                getChildren().addAll(tagLabels);
-                if (collapsedTag == null && !labels.isEmpty()) {
-                    collapsedTag = createTagLabel(new Tag("+" + labels.size(), Tag.Type.NORMAL));
-                    collapsedTag.getStyleClass().add("collapsed-tag");
-                    collapsedTag.setMouseTransparent(false);
-                    Tooltip tooltip = new Tooltip();
-                    tooltip.setShowDelay(TAG_TOOLTIP_SHOW_DELAY);
-                    tooltip.setHideDelay(Duration.ZERO);
-                    collapsedTag.setTooltip(tooltip);
-                    RipplerContainer.enableBackgroundMouseEvents(collapsedTag);
-                    getChildren().add(collapsedTag);
-                }
-                if (collapsedTag != null) {
-                    collapsedTag.setVisible(false);
-                    collapsedTag.getTooltip().hide();
-                }
-                updateMouseTransparency();
-                requestLayout();
-            });
+            tags.addListener(this::updateTags);
         }
         return tags;
     }
 
-    /// Creates a mouse-transparent tag label displayed at its full preferred width.
-    private static Label createTagLabel(Tag tag) {
-        var label = new Label(tag.text());
-        label.getStyleClass().add("tag");
-        label.setMinWidth(USE_PREF_SIZE);
-        label.setMouseTransparent(true);
-        label.pseudoClassStateChanged(WARNING_PSEUDO_CLASS, tag.type() == Tag.Type.WARNING);
-        return label;
+    /// Updates the changed suffix, allocating rendering state only for a nonempty tag list.
+    private void updateTags(ListChangeListener.Change<? extends Tag> change) {
+        if (tagState == null) {
+            if (change.getList().isEmpty())
+                return;
+            tagState = new TagState(getTags());
+        }
+        int from = change.getList().size();
+        while (change.next())
+            from = Math.min(from, change.getFrom());
+        tagState.updateTags(from);
     }
 
     /// Appends a tag with the given text and type.
@@ -525,9 +502,14 @@ public class TwoLineListItem extends Pane {
         return lblTitle.isManaged() && hasManagedTrailing() ? snapSpaceX(titleSpacing) : 0;
     }
 
+    /// Returns whether there are tag values to display.
+    private boolean hasTags() {
+        return tags != null && !tags.isEmpty();
+    }
+
     /// Returns the gap before the first tag, if other first-row content precedes it.
     private double tagsGap() {
-        return !tagLabels.isEmpty() && (lblTitle.isManaged() || hasManagedTrailing()) ? snapSpaceX(titleSpacing) : 0;
+        return hasTags() && (lblTitle.isManaged() || hasManagedTrailing()) ? snapSpaceX(titleSpacing) : 0;
     }
 
     /// Computes the text area's natural width with every tag expanded.
@@ -536,44 +518,20 @@ public class TwoLineListItem extends Pane {
         if (hasManagedTrailing())
             width += trailingGap() + preferredWidth(titleTrailing);
         width += tagsGap();
-        width += tagsPrefWidth();
+        if (hasTags())
+            width += tagState.tagsPrefWidth();
         if (hasSubtitle())
             width = Math.max(width, preferredWidth(lblSubtitle));
         return width;
     }
 
-    /// Returns the natural width of all expanded tags and their intervening gaps.
-    private double tagsPrefWidth() {
-        double width = snapSpaceX(TAG_SPACING) * Math.max(0, tagLabels.size() - 1);
-        for (Label label : tagLabels)
-            width += preferredWidth(label);
-        return width;
-    }
-
-    /// Measures a summary using its current font, label padding, and region insets.
-    private double collapsedTagWidth(int count) {
-        if (collapsedTag == null)
-            return 0;
-        tagMeasureText.setFont(collapsedTag.getFont());
-        tagMeasureText.setText("+" + count);
-        Insets insets = collapsedTag.getInsets();
-        Insets padding = collapsedTag.getLabelPadding();
-        return snapSizeX(tagMeasureText.getLayoutBounds().getWidth())
-                + snapSpaceX(insets.getLeft()) + snapSpaceX(insets.getRight())
-                + snapSpaceX(padding.getLeft()) + snapSpaceX(padding.getRight());
-    }
-
-    /// Reserves enough width for either all tags or a summary of all tags, whichever is smaller.
-    private double tagsMinWidth() {
-        return tagLabels.isEmpty() ? 0 : Math.min(tagsPrefWidth(), collapsedTagWidth(tagLabels.size()));
-    }
-
     /// Computes the text area's minimum width, preserving tags before the title.
     private double textMinWidth() {
-        double width = tagLabels.isEmpty() && lblTitle.isManaged() ? snapSizeX(lblTitle.minWidth(-1)) : 0;
+        double width = !hasTags() && lblTitle.isManaged() ? snapSizeX(lblTitle.minWidth(-1)) : 0;
         if (hasManagedTrailing())
             width += trailingGap() + preferredWidth(titleTrailing);
-        width += tagsGap() + tagsMinWidth();
+        if (hasTags())
+            width += tagsGap() + tagState.tagsMinWidth();
         if (hasSubtitle())
             width = Math.max(width, snapSizeX(lblSubtitle.minWidth(-1)));
         return width;
@@ -638,34 +596,22 @@ public class TwoLineListItem extends Pane {
         double trailingWidth = hasManagedTrailing() ? preferredWidth(titleTrailing) : 0;
         double titleWidth = lblTitle.isManaged() ? preferredWidth(lblTitle) : 0;
         if (width >= 0 && lblTitle.isManaged()) {
-            double minimum = tagLabels.isEmpty() ? snapSizeX(lblTitle.minWidth(-1)) : 0;
+            double minimum = hasTags() ? 0 : snapSizeX(lblTitle.minWidth(-1));
             titleWidth = Math.max(minimum, Math.min(titleWidth,
-                    Math.max(0, width - trailingWidth - trailingGap() - tagsGap() - tagsMinWidth())));
+                    Math.max(0, width - trailingWidth - trailingGap() - tagsGap() - (hasTags() ? tagState.tagsMinWidth() : 0))));
         }
-        int visibleTags = tagLabels.size();
-        double collapsedWidth = 0;
-        double available = width - titleWidth - trailingWidth - trailingGap() - tagsGap();
-        if (width >= 0 && !tagLabels.isEmpty() && tagsPrefWidth() > available) {
-            visibleTags = 0;
-            collapsedWidth = collapsedTagWidth(tagLabels.size());
-            double prefixWidth = 0;
-            for (int i = 1; i < tagLabels.size(); i++) {
-                prefixWidth += preferredWidth(tagLabels.get(i - 1)) + snapSpaceX(TAG_SPACING);
-                double summaryWidth = collapsedTagWidth(tagLabels.size() - i);
-                if (prefixWidth + summaryWidth <= available) {
-                    visibleTags = i;
-                    collapsedWidth = summaryWidth;
-                }
-            }
-        }
+        double available = width < 0 ? Double.POSITIVE_INFINITY
+                : width - titleWidth - trailingWidth - trailingGap() - tagsGap();
         double height = lblTitle.isManaged() && titleWidth > 0 ? snapSizeY(lblTitle.prefHeight(titleWidth)) : 0;
         if (hasManagedTrailing())
             height = Math.max(height, snapSizeY(titleTrailing.prefHeight(trailingWidth)));
-        for (int i = 0; i < visibleTags; i++)
-            height = Math.max(height, snapSizeY(tagLabels.get(i).prefHeight(-1)));
-        if (collapsedWidth > 0)
-            height = Math.max(height, snapSizeY(collapsedTag.prefHeight(collapsedWidth)));
-        return new FirstLineSize(titleWidth, trailingWidth, visibleTags, collapsedWidth, height);
+        if (!hasTags())
+            return new FirstLineSize(titleWidth, trailingWidth, 0, 0, height);
+        TagState.TagLayout tags = tagState.measureTags(available);
+        height = Math.max(height, tagState.tagMetrics().heights()[tags.visibleTags()]);
+        if (tags.collapsedWidth() > 0)
+            height = Math.max(height, snapSizeY(tagState.collapsedTag.prefHeight(tags.collapsedWidth())));
+        return new FirstLineSize(titleWidth, trailingWidth, tags.visibleTags(), tags.collapsedWidth(), height);
     }
 
     /// Computes preferred height using the same width allocation as layout.
@@ -719,28 +665,8 @@ public class TwoLineListItem extends Pane {
             layoutFirstLineNode(titleTrailing, x, y, first.trailingWidth(), first.height());
             x += first.trailingWidth();
         }
-        x += tagsGap();
-        for (int i = 0; i < tagLabels.size(); i++) {
-            Label label = tagLabels.get(i);
-            label.setVisible(i < first.visibleTags());
-            if (label.isVisible()) {
-                double tagWidth = preferredWidth(label);
-                layoutFirstLineNode(label, x, y, tagWidth, first.height());
-                x += tagWidth + snapSpaceX(TAG_SPACING);
-            }
-        }
-        if (collapsedTag != null) {
-            collapsedTag.setVisible(first.visibleTags() < tagLabels.size());
-            if (collapsedTag.isVisible()) {
-                collapsedTag.setText("+" + (tagLabels.size() - first.visibleTags()));
-                collapsedTag.getTooltip().setText(tagLabels.subList(first.visibleTags(), tagLabels.size()).stream()
-                        .map(label -> "- " + label.getText().replace('\n', ' ').replace('\r', ' '))
-                        .collect(Collectors.joining("\n")));
-                layoutFirstLineNode(collapsedTag, x, y, first.collapsedWidth(), first.height());
-            } else {
-                collapsedTag.getTooltip().hide();
-            }
-        }
+        if (tagState != null)
+            tagState.layoutTags(x + tagsGap(), y, first);
         updateMouseTransparency();
         if (hasSubtitle())
             lblSubtitle.resizeRelocate(textLeft, y + first.height(), row.textWidth(), subtitleHeight);
@@ -766,5 +692,282 @@ public class TwoLineListItem extends Pane {
     @Override
     public String toString() {
         return "TwoLineListItem[title=%s, subtitle=%s, tags=%s]".formatted(getTitle(), getSubtitle(), tags);
+    }
+
+    /// Labels, tooltip, and measurement caches created only for items that have used tags.
+    @NotNullByDefault
+    private final class TagState {
+        /// The live tag values rendered by this state.
+        private final ObservableList<Tag> values;
+
+        /// The labels rendering tag values in list order.
+        private final List<TagLabel> tagLabels = new ArrayList<>();
+
+        /// The label summarizing tags that do not fit in the first row.
+        private final Label collapsedTag = new Label();
+
+        /// Measures summary text without changing the displayed label during size queries.
+        private final Text tagMeasureText = new Text();
+
+        /// The aggregate tag dimensions, invalidated by tag changes and label layout requests.
+        private @Nullable TagMetrics tagMetrics;
+
+        /// Summary widths measured with the current font, padding, and pixel scale.
+        private final Map<Integer, Double> collapsedWidths = new HashMap<>();
+
+        /// Invalidates summary measurements when CSS changes their geometry.
+        private final InvalidationListener collapsedMetricsListener = observable -> {
+            collapsedWidths.clear();
+            tagLayout = null;
+            requestLayout();
+        };
+
+        /// The horizontal pixel scale used by cached measurements, or zero when snapping is disabled.
+        private double tagScaleX = Double.NaN;
+
+        /// The vertical pixel scale used by cached measurements, or zero when snapping is disabled.
+        private double tagScaleY = Double.NaN;
+
+        /// The most recently computed tag allocation.
+        private @Nullable TagLayout tagLayout;
+
+        /// The available width used by the cached tag allocation.
+        private double tagLayoutWidth;
+
+        /// The visible prefix from the last layout, or -1 after the tag list changes.
+        private int visibleTagCount;
+
+        /// Whether the tooltip text must be rebuilt before its next display.
+        private boolean collapsedTooltipDirty = true;
+
+        /// Creates tag rendering state and prepares the tooltip only when it is about to be shown.
+        private TagState(ObservableList<Tag> values) {
+            this.values = values;
+            collapsedTag.setText("+" + values.size());
+            styleTagLabel(collapsedTag, Tag.Type.NORMAL);
+            collapsedTag.getStyleClass().add("collapsed-tag");
+            Tooltip tooltip = new Tooltip();
+            tooltip.setShowDelay(TAG_TOOLTIP_SHOW_DELAY);
+            tooltip.setHideDelay(Duration.ZERO);
+            tooltip.setOnShowing(event -> updateCollapsedTooltip());
+            collapsedTag.setTooltip(tooltip);
+            collapsedTag.fontProperty().addListener(collapsedMetricsListener);
+            collapsedTag.insetsProperty().addListener(collapsedMetricsListener);
+            collapsedTag.labelPaddingProperty().addListener(collapsedMetricsListener);
+            RipplerContainer.enableBackgroundMouseEvents(collapsedTag);
+            getChildren().add(collapsedTag);
+        }
+
+        /// Rebuilds the hidden-tag description only after its values or visible prefix change.
+        private void updateCollapsedTooltip() {
+            if (collapsedTooltipDirty && visibleTagCount >= 0) {
+                collapsedTag.getTooltip().setText(values.subList(visibleTagCount, values.size()).stream()
+                        .map(tag -> tag.text().replace('\n', ' ').replace('\r', ' '))
+                        .collect(Collectors.joining("\n")));
+                collapsedTooltipDirty = false;
+            }
+        }
+
+        /// Applies the shared tag appearance and preferred-width minimum.
+        private static void styleTagLabel(Label label, Tag.Type type) {
+            label.getStyleClass().add("tag");
+            label.setMinWidth(USE_PREF_SIZE);
+            label.pseudoClassStateChanged(WARNING_PSEUDO_CLASS, type == Tag.Type.WARNING);
+        }
+
+        /// A tag renderer that invalidates cached dimensions when its text or CSS requests layout.
+        @NotNullByDefault
+        private static final class TagLabel extends Label {
+            /// The rendering state, cleared on removal and unset during superclass construction.
+            private @Nullable TagState owner;
+
+            /// Creates an initially hidden renderer for one tag value.
+            private TagLabel(TagState owner, Tag tag) {
+                super(tag.text());
+                styleTagLabel(this, tag.type());
+                setMouseTransparent(true);
+                setVisible(false);
+                this.owner = owner;
+            }
+
+            /// Invalidates aggregate dimensions even when this label was already awaiting layout.
+            @Override
+            public void requestLayout() {
+                if (owner != null)
+                    owner.invalidateTagMetrics();
+                super.requestLayout();
+            }
+        }
+
+        /// Invalidates tag dimensions and the allocation derived from them.
+        private void invalidateTagMetrics() {
+            tagMetrics = null;
+            tagLayout = null;
+        }
+
+        /// Reuses labels by position, updating text and type from the first changed index onward.
+        private void updateTags(int from) {
+            int size = values.size();
+            if (tagLabels.size() > size) {
+                List<TagLabel> removed = tagLabels.subList(size, tagLabels.size());
+                for (TagLabel label : removed)
+                    label.owner = null;
+                getChildren().removeAll(removed);
+                removed.clear();
+            }
+            for (int i = from; i < size; i++) {
+                Tag tag = values.get(i);
+                if (i < tagLabels.size()) {
+                    Label label = tagLabels.get(i);
+                    label.setText(tag.text());
+                    label.pseudoClassStateChanged(WARNING_PSEUDO_CLASS, tag.type() == Tag.Type.WARNING);
+                } else {
+                    TagLabel label = new TagLabel(this, tag);
+                    tagLabels.add(label);
+                    getChildren().add(label);
+                }
+            }
+            invalidateTagMetrics();
+            collapsedWidths.clear();
+            visibleTagCount = -1;
+            collapsedTooltipDirty = true;
+            collapsedTag.setVisible(false);
+            collapsedTag.getTooltip().hide();
+            collapsedTag.getTooltip().setText("");
+            updateMouseTransparency();
+            requestLayout();
+        }
+
+        /// Immutable measurements for all tags with the current CSS and pixel scale.
+        ///
+        /// @param widths the individual preferred widths, in tag order
+        /// @param heights the maximum preferred height for each prefix, starting with the empty prefix
+        /// @param width the total width including spacing between tags
+        @NotNullByDefault
+        private record TagMetrics(double @Unmodifiable [] widths, double @Unmodifiable [] heights, double width) {
+        }
+
+        /// Invalidates snapped dimensions when pixel snapping or the window's rendering scale changes.
+        private void updateTagScale() {
+            @Nullable Window window = getScene() == null ? null : getScene().getWindow();
+            double scaleX = isSnapToPixel() ? (window == null ? 1 : window.getRenderScaleX()) : 0;
+            double scaleY = isSnapToPixel() ? (window == null ? 1 : window.getRenderScaleY()) : 0;
+            if (scaleX != tagScaleX || scaleY != tagScaleY) {
+                tagScaleX = scaleX;
+                tagScaleY = scaleY;
+                invalidateTagMetrics();
+                collapsedWidths.clear();
+            }
+        }
+
+        /// Measures tags once after their values, geometry, or pixel scale change.
+        private TagMetrics tagMetrics() {
+            updateTagScale();
+            if (tagMetrics == null) {
+                double[] widths = new double[tagLabels.size()];
+                double[] heights = new double[tagLabels.size() + 1];
+                double width = snapSpaceX(TAG_SPACING) * Math.max(0, tagLabels.size() - 1);
+                for (int i = 0; i < tagLabels.size(); i++) {
+                    Label label = tagLabels.get(i);
+                    widths[i] = preferredWidth(label);
+                    width += widths[i];
+                    heights[i + 1] = Math.max(heights[i], snapSizeY(label.prefHeight(-1)));
+                }
+                tagMetrics = new TagMetrics(widths, heights, width);
+            }
+            return tagMetrics;
+        }
+
+        /// Returns the cached natural width of all expanded tags and their intervening gaps.
+        private double tagsPrefWidth() {
+            return tagMetrics().width();
+        }
+
+        /// Returns a cached summary width for the current font, padding, and pixel scale.
+        private double collapsedTagWidth(int count) {
+            updateTagScale();
+            return collapsedWidths.computeIfAbsent(count, this::measureCollapsedTagWidth);
+        }
+
+        /// Measures summary text without changing the displayed label.
+        private double measureCollapsedTagWidth(int count) {
+            tagMeasureText.setFont(collapsedTag.getFont());
+            tagMeasureText.setText("+" + count);
+            Insets insets = collapsedTag.getInsets();
+            Insets padding = collapsedTag.getLabelPadding();
+            return snapSizeX(tagMeasureText.getLayoutBounds().getWidth())
+                    + snapSpaceX(insets.getLeft()) + snapSpaceX(insets.getRight())
+                    + snapSpaceX(padding.getLeft()) + snapSpaceX(padding.getRight());
+        }
+
+        /// Describes which prefix fits alongside the summary in the available tag area.
+        ///
+        /// @param visibleTags the number of expanded tags
+        /// @param collapsedWidth the summary width, or zero when every tag fits
+        @NotNullByDefault
+        private record TagLayout(int visibleTags, double collapsedWidth) {
+        }
+
+        /// Allocates cached tag widths, stopping once the prefix alone exceeds the available space.
+        private TagLayout measureTags(double available) {
+            TagMetrics metrics = tagMetrics();
+            if (tagLayout != null && available == tagLayoutWidth)
+                return tagLayout;
+            int visible = tagLabels.size();
+            double collapsedWidth = 0;
+            if (!tagLabels.isEmpty() && metrics.width() > available) {
+                visible = 0;
+                collapsedWidth = collapsedTagWidth(tagLabels.size());
+                double prefixWidth = 0;
+                for (int i = 1; i < tagLabels.size(); i++) {
+                    prefixWidth += metrics.widths()[i - 1] + snapSpaceX(TAG_SPACING);
+                    // Summary widths can decrease at digit boundaries; the prefix itself only grows.
+                    if (prefixWidth > available)
+                        break;
+                    double summaryWidth = collapsedTagWidth(tagLabels.size() - i);
+                    if (prefixWidth + summaryWidth <= available) {
+                        visible = i;
+                        collapsedWidth = summaryWidth;
+                    }
+                }
+            }
+            tagLayoutWidth = available;
+            tagLayout = new TagLayout(visible, collapsedWidth);
+            return tagLayout;
+        }
+
+        /// Reserves enough width for either all tags or a summary of all tags, whichever is smaller.
+        private double tagsMinWidth() {
+            return tagLabels.isEmpty() ? 0 : Math.min(tagsPrefWidth(), collapsedTagWidth(tagLabels.size()));
+        }
+
+        /// Positions only the visible prefix and updates the summary when its contents change.
+        private void layoutTags(double x, double y, FirstLineSize first) {
+            if (tagLabels.isEmpty())
+                return;
+            TagMetrics metrics = tagMetrics();
+            if (visibleTagCount != first.visibleTags()) {
+                int from = visibleTagCount < 0 ? 0 : Math.min(visibleTagCount, first.visibleTags());
+                int to = visibleTagCount < 0 ? tagLabels.size() : Math.max(visibleTagCount, first.visibleTags());
+                for (int i = from; i < to; i++)
+                    tagLabels.get(i).setVisible(i < first.visibleTags());
+                visibleTagCount = first.visibleTags();
+                collapsedTooltipDirty = true;
+            }
+            for (int i = 0; i < visibleTagCount; i++) {
+                double tagWidth = metrics.widths()[i];
+                layoutFirstLineNode(tagLabels.get(i), x, y, tagWidth, first.height());
+                x += tagWidth + snapSpaceX(TAG_SPACING);
+            }
+            collapsedTag.setVisible(visibleTagCount < tagLabels.size());
+            if (collapsedTag.isVisible()) {
+                collapsedTag.setText("+" + (tagLabels.size() - visibleTagCount));
+                if (collapsedTag.getTooltip().isShowing())
+                    updateCollapsedTooltip();
+                layoutFirstLineNode(collapsedTag, x, y, first.collapsedWidth(), first.height());
+            } else {
+                collapsedTag.getTooltip().hide();
+            }
+        }
     }
 }
