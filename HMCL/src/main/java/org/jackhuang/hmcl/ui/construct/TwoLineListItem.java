@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 
 /// Displays a title, tags, and an optional subtitle between optional leading and trailing nodes.
 /// Both text rows are left-aligned and vertically centered together within this pane.
-/// Side nodes are vertically centered and separated from the text by 12 pixels.
+/// Side nodes are vertically centered and separated from the text by 12 pixels by default.
 /// They receive their preferred widths, shrinking toward their minimum widths when
 /// necessary to accommodate the text area's minimum width. The title-trailing node receives
 /// its preferred width, then the title receives up to its preferred width. Tags that do
@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 /// The children list is managed by this component and must not be modified directly.
 @NotNullByDefault
 public class TwoLineListItem extends Pane {
-    /// The spacing between the text area and each managed side node.
+    /// The default spacing between the text area and each managed side node.
     public static final double SIDE_SPACING = 12;
 
     /// The spacing between adjacent tags.
@@ -94,6 +94,9 @@ public class TwoLineListItem extends Pane {
 
     /// The gap after the title and its trailing node; tag-to-tag spacing is independent.
     private double titleSpacing;
+
+    /// The gap between the text area and each managed side node, excluding margins.
+    private double sideSpacing = SIDE_SPACING;
 
     /// The mutable tag values, allocated when first requested.
     private @Nullable ObservableList<Tag> tags;
@@ -375,6 +378,23 @@ public class TwoLineListItem extends Pane {
         requestLayout();
     }
 
+    /// Returns the gap between text and each managed side node, excluding margins; defaults to 12 pixels.
+    public final double getSideSpacing() {
+        return sideSpacing;
+    }
+
+    /// Sets the non-negative gap between text and each managed side node, excluding margins.
+    ///
+    /// @throws IllegalArgumentException if spacing is negative or not finite
+    public final void setSideSpacing(double spacing) {
+        if (!Double.isFinite(spacing) || spacing < 0)
+            throw new IllegalArgumentException("Spacing must be finite and non-negative");
+        if (sideSpacing != spacing) {
+            sideSpacing = spacing;
+            requestLayout();
+        }
+    }
+
     /// Returns the live, mutable list of non-null tag values displayed after the title-trailing node.
     /// Values may be repeated or shared between components. Replace a value to change its
     /// text or type. Changes must be made on the JavaFX application thread once this item
@@ -471,7 +491,7 @@ public class TwoLineListItem extends Pane {
         if (!isManaged(node))
             return 0;
         Insets margin = margin(node);
-        return snapSpaceX(margin.getLeft()) + snapSpaceX(margin.getRight()) + snapSpaceX(SIDE_SPACING);
+        return snapSpaceX(margin.getLeft()) + snapSpaceX(margin.getRight()) + snapSpaceX(sideSpacing);
     }
 
     /// Returns a managed side node's snapped preferred width, or zero when absent from layout.

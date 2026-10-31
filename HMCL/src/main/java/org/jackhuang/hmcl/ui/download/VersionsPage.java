@@ -140,7 +140,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
         private final TwoLineListItem twoLineListItem = new TwoLineListItem();
         private final ImageView imageView = new ImageView();
-        private final StackPane pane = new StackPane();
         private final RipplerContainer ripplerContainer;
 
         /// Creates a version row constrained to its list viewport; null creates a sizing-only row.
@@ -152,12 +151,12 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             imageView.setMouseTransparent(true);
 
-            HBox hbox = new HBox(16);
-            HBox.setHgrow(twoLineListItem, Priority.ALWAYS);
-            hbox.setAlignment(Pos.CENTER);
+            twoLineListItem.setSideSpacing(16);
+            twoLineListItem.setLeading(imageView);
 
             HBox actions = new HBox(8);
             actions.setAlignment(Pos.CENTER);
+            actions.setPickOnBounds(false);
             {
                 if (control.componentType == GameComponentType.GAME) {
                     JFXButton wikiButton = newToggleButton4(SVG.GLOBE_BOOK);
@@ -171,11 +170,10 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 actions.getChildren().add(actionButton);
             }
 
-            hbox.getChildren().setAll(imageView, twoLineListItem, actions);
-
-            pane.getStyleClass().add("md-list-cell");
-            StackPane.setMargin(hbox, new Insets(10, 16, 10, 16));
-            pane.getChildren().setAll(ripplerContainer = new RipplerContainer(hbox));
+            twoLineListItem.setTrailing(actions);
+            twoLineListItem.getStyleClass().add("md-list-cell");
+            twoLineListItem.setPadding(new Insets(10, 16, 10, 16));
+            ripplerContainer = new RipplerContainer(twoLineListItem);
 
             FXUtils.onClicked(this, this::onAction);
         }
@@ -197,9 +195,10 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             FXUtils.openLink(I18n.getWikiLink((GameRemoteVersion) item));
         }
 
+        /// Updates the shared row for a remote version or clears the graphic for an empty cell.
         @Override
-        public void updateItem(ComponentRemoteVersion remoteVersion, boolean empty) {
-            ComponentRemoteVersion oldRemoteVersion = getItem();
+        public void updateItem(@Nullable ComponentRemoteVersion remoteVersion, boolean empty) {
+            @Nullable ComponentRemoteVersion oldRemoteVersion = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(remoteVersion, empty);
@@ -208,11 +207,11 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             ripplerContainer.resetFeedback();
 
-            if (empty) {
+            if (empty || remoteVersion == null) {
                 setGraphic(null);
                 return;
             }
-            setGraphic(pane);
+            setGraphic(ripplerContainer);
 
             twoLineListItem.setTitle(I18n.getDisplayVersion(remoteVersion));
             if (remoteVersion.getReleaseDate() != null) {
@@ -385,8 +384,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         dummyCell.twoLineListItem.setTitle("Dummy");
                         dummyCell.twoLineListItem.setSubtitle("Dummy");
                         dummyCell.imageView.setImage(GameInstanceIconType.GRASS.getIcon());
-                        prepareNode(dummyCell.pane);
-                        list.setFixedCellSize(dummyCell.pane.prefHeight(-1));
+                        prepareNode(dummyCell.twoLineListItem);
+                        list.setFixedCellSize(dummyCell.twoLineListItem.prefHeight(-1));
 
                         VBox.setVgrow(list, Priority.ALWAYS);
 

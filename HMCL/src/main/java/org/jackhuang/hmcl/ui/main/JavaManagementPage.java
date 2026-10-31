@@ -13,9 +13,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.java.JavaInfo;
@@ -233,13 +231,6 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         /// Creates a Java runtime cell with interactive tags and independent removal controls.
         JavaItemCell(JFXListView<JavaRuntime> listView) {
-            BorderPane root = new BorderPane();
-
-            HBox center = new HBox();
-            center.setPickOnBounds(false);
-            center.setSpacing(8);
-            center.setAlignment(Pos.CENTER_LEFT);
-
             label.setAlignment(Pos.CENTER);
             label.setMouseTransparent(true);
             FXUtils.setLimitWidth(label, 32);
@@ -248,18 +239,16 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             label.setStyle("-fx-background-color: -monet-secondary-container; -fx-background-radius: 2; -fx-padding: 2; -fx-font-weight: normal; -fx-font-size: 16px;");
 
             this.content = new TwoLineListItem();
-            HBox.setHgrow(content, Priority.ALWAYS);
-
-            BorderPane.setAlignment(content, Pos.CENTER);
-            center.getChildren().setAll(label, content);
-            root.setCenter(center);
+            content.setSideSpacing(0);
+            content.setLeading(label);
+            TwoLineListItem.setMargin(label, new Insets(0, 8, 0, 0));
 
             HBox right = new HBox();
             right.setAlignment(Pos.CENTER_RIGHT);
             {
                 JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 revealButton.setOnAction(e -> {
-                    JavaRuntime java = getItem();
+                    @Nullable JavaRuntime java = getItem();
                     if (java != null)
                         onReveal(java);
                 });
@@ -268,7 +257,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 removeButton = new JFXButton();
                 removeButton.getStyleClass().add("toggle-icon4");
                 removeButton.setOnAction(e -> {
-                    JavaRuntime java = getItem();
+                    @Nullable JavaRuntime java = getItem();
                     if (java != null)
                         onRemove(java);
                 });
@@ -282,12 +271,12 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
                 right.getChildren().setAll(revealButton, removeButton);
             }
-            root.setRight(right);
+            right.setPickOnBounds(false);
+            content.setTrailing(right);
+            content.getStyleClass().add("md-list-cell");
+            content.setPadding(new Insets(8));
 
-            root.getStyleClass().add("md-list-cell");
-            root.setPadding(new Insets(8));
-
-            this.graphic = new RipplerContainer(root);
+            this.graphic = new RipplerContainer(content);
             graphic.setPressFeedbackEnabled(false);
 
             FXUtils.limitCellWidth(listView, this);

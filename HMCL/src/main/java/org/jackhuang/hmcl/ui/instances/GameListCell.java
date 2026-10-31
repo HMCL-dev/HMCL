@@ -11,13 +11,12 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -40,7 +39,8 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     /// Creates a game instance cell with selection controls and interactive tags.
     public GameListCell() {
-        BorderPane root = new BorderPane();
+        TwoLineListItem root = this.content = new TwoLineListItem();
+        root.setSideSpacing(0);
         root.getStyleClass().add("md-list-cell");
         root.setPadding(new Insets(8, 8, 8, 0));
 
@@ -49,54 +49,45 @@ public final class GameListCell extends ListCell<GameListItem> {
 
         {
             this.chkSelected = new JFXRadioButton() {
+                /// Selects this cell's game instance when the radio button is enabled and unselected.
                 @Override
                 public void fire() {
                     if (!isDisable() && !isSelected()) {
                         fireEvent(new ActionEvent());
-                        GameListItem item = GameListCell.this.getItem();
+                        @Nullable GameListItem item = GameListCell.this.getItem();
                         if (item != null) {
                             item.getRepository().setSelectedInstance(item.getGameInstance());
                         }
                     }
                 }
             };
-            root.setLeft(chkSelected);
-            BorderPane.setAlignment(chkSelected, Pos.CENTER);
         }
 
         {
-            HBox center = new HBox();
-            BorderPane.setMargin(center, new Insets(0, 0, 0, 8));
-            center.setPickOnBounds(false);
-            root.setCenter(center);
-            center.setPrefWidth(Region.USE_PREF_SIZE);
-            center.setSpacing(8);
-            center.setAlignment(Pos.CENTER_LEFT);
-
             this.imageView = new ImageContainer(32);
             imageView.setMouseTransparent(true);
-
-            this.content = new TwoLineListItem();
-            BorderPane.setAlignment(content, Pos.CENTER);
+            HBox leading = new HBox(8, chkSelected, imageView);
+            leading.setAlignment(Pos.CENTER_LEFT);
+            leading.setPickOnBounds(false);
+            TwoLineListItem.setMargin(leading, new Insets(0, 8, 0, 0));
+            content.setLeading(leading);
 
             FXUtils.onChangeAndOperate(tag, tag -> {
                 content.getTags().clear();
                 if (StringUtils.isNotBlank(tag))
                     content.addTag(tag);
             });
-
-            center.getChildren().setAll(imageView, content);
         }
 
         {
             this.right = new HBox();
-            root.setRight(right);
-
+            content.setTrailing(right);
             right.setAlignment(Pos.CENTER_RIGHT);
+            right.setPickOnBounds(false);
 
             this.btnUpgrade = FXUtils.newToggleButton4(SVG.UPDATE);
             btnUpgrade.setOnAction(e -> {
-                GameListItem item = this.getItem();
+                @Nullable GameListItem item = this.getItem();
                 if (item != null)
                     item.update();
             });
@@ -105,17 +96,16 @@ public final class GameListCell extends ListCell<GameListItem> {
 
             this.btnLaunch = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
             btnLaunch.setOnAction(e -> {
-                GameListItem item = this.getItem();
+                @Nullable GameListItem item = this.getItem();
                 if (item != null)
                     item.testGame();
             });
-            BorderPane.setAlignment(btnLaunch, Pos.CENTER);
             FXUtils.installFastTooltip(btnLaunch, i18n("instance.launch.test"));
             right.getChildren().add(btnLaunch);
 
             this.btnManage = FXUtils.newToggleButton4(SVG.MORE_VERT);
             btnManage.setOnAction(e -> {
-                GameListItem item = this.getItem();
+                @Nullable GameListItem item = this.getItem();
                 if (item == null)
                     return;
 
@@ -123,14 +113,13 @@ public final class GameListCell extends ListCell<GameListItem> {
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
                 popup.show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, vPosition == JFXPopup.PopupVPosition.TOP ? root.getHeight() : -root.getHeight());
             });
-            BorderPane.setAlignment(btnManage, Pos.CENTER);
             FXUtils.installFastTooltip(btnManage, i18n("settings.game.management"));
             right.getChildren().add(btnManage);
         }
 
         root.setCursor(Cursor.HAND);
         container.setOnMouseClicked(e -> {
-            GameListItem item = getItem();
+            @Nullable GameListItem item = getItem();
             if (item == null)
                 return;
 

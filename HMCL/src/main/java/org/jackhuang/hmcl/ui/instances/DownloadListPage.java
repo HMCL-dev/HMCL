@@ -566,6 +566,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
         private final TwoLineListItem content = new TwoLineListItem();
         private final ImageContainer imageContainer = new ImageContainer(40);
 
+        /// Creates a download card with its icon and text laid out by the same row.
         private DownloadListCell(DownloadListPage page, JFXListView<RemoteAddon> listView, RemoteImageLoader iconLoader) {
             this.page = page;
             this.listView = listView;
@@ -573,17 +574,13 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
             setPadding(PADDING);
 
-            HBox container = new HBox(8);
-            container.setPadding(new Insets(8));
-            container.setCursor(Cursor.HAND);
-            container.setAlignment(Pos.CENTER_LEFT);
-
+            content.setPadding(new Insets(8));
+            content.setCursor(Cursor.HAND);
+            content.setSideSpacing(8);
             imageContainer.setMouseTransparent(true);
+            content.setLeading(imageContainer);
 
-            container.getChildren().setAll(imageContainer, content);
-            HBox.setHgrow(content, Priority.ALWAYS);
-
-            this.graphic = new RipplerContainer(container);
+            this.graphic = new RipplerContainer(content);
             wrapper.getChildren().setAll(this.graphic);
             wrapper.getStyleClass().add("card-no-padding");
 

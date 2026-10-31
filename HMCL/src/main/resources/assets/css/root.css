@@ -160,16 +160,14 @@
     -fx-background-color: null;
 }
 
-.advanced-list-item > .rippler-container > .container > .two-line-list-item {
+.advanced-list-item > .rippler-container > .container > .title {
     -fx-padding: 0 0 0 10;
-}
-
-.advanced-list-item > .rippler-container > .container > .two-line-list-item > .title {
     -fx-font-size: 13;
     -fx-text-alignment: justify;
 }
 
-.advanced-list-item > .rippler-container > .container > .two-line-list-item > .subtitle {
+.advanced-list-item > .rippler-container > .container > .subtitle {
+    -fx-padding: 0 0 0 10;
     -fx-font-size: 10;
     -fx-text-alignment: justify;
 }
@@ -178,7 +176,7 @@
     -jfx-selected-background-fill: -monet-secondary-container;
 }
 
-.advanced-list-item:selected > .rippler-container > .container > .two-line-list-item > .title {
+.advanced-list-item:selected > .rippler-container > .container > .title {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-font-weight: bold;
 }
@@ -187,27 +185,23 @@
     -fx-fill: -monet-on-secondary-container;
 }
 
-.navigation-drawer-item > .rippler-container > .container > VBox {
-    -fx-padding: 0 0 0 0;
-}
-
-.game-directory-list-item > .rippler-container > BorderPane > .two-line-list-item > .title {
+.game-directory-list-item > .rippler-container > .two-line-list-item > .title {
     -fx-font-size: 13;
 }
 
-.game-directory-list-item > .rippler-container > BorderPane > .two-line-list-item > .subtitle {
+.game-directory-list-item > .rippler-container > .two-line-list-item > .subtitle {
     -fx-font-size: 10;
 }
 
-.game-directory-list-item > .rippler-container > BorderPane {
+.game-directory-list-item > .rippler-container > .two-line-list-item {
     -fx-padding: 8 0 8 16;
 }
 
-.game-directory-list-item:selected > .rippler-container > BorderPane {
+.game-directory-list-item:selected > .rippler-container > .two-line-list-item {
     -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
-.game-directory-list-item:selected > .rippler-container > BorderPane > .two-line-list-item > .title {
+.game-directory-list-item:selected > .rippler-container > .two-line-list-item > .title {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-font-weight: bold;
 }

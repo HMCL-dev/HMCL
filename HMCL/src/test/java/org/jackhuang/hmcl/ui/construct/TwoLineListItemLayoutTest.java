@@ -123,7 +123,7 @@ public final class TwoLineListItemLayoutTest {
             assertEquals(252, item.getWidth(), 0.001);
             Label summary = collapsedTag(item);
             assertEquals("+2", summary.getText());
-            assertEquals("- Fabric\n- NeoForge", prepareTooltipText(summary));
+            assertEquals("Fabric\nNeoForge", prepareTooltipText(summary));
             assertEquals(item.getWidth(), item.getTitleLabel().getWidth() + summary.getWidth(), 0.001);
             for (Label tag : labels(item))
                 assertFalse(tag.isVisible());
@@ -188,7 +188,7 @@ public final class TwoLineListItemLayoutTest {
                 if (hidden > 0) {
                     assertEquals("+" + hidden, summary.getText());
                     assertEquals(labels.subList(expanded, labels.size()).stream()
-                            .map(tag -> "- " + tag.getText()).collect(Collectors.joining("\n")), prepareTooltipText(summary));
+                            .map(Label::getText).collect(Collectors.joining("\n")), prepareTooltipText(summary));
                     assertTrue(summary.getWidth() >= summary.prefWidth(-1), "Summary text is clipped");
                     assertTrue(summary.getBoundsInParent().getMaxX() <= item.getWidth(), "Summary exceeds row bounds");
                     assertTrue(summary.getLayoutX() >= item.getTitleLabel().getBoundsInParent().getMaxX() + 4);
@@ -207,7 +207,7 @@ public final class TwoLineListItemLayoutTest {
             item.getTags().setAll(Tag.warning("Changed"), new Tag("Changed", Tag.Type.NORMAL));
             layout(parent, item.minWidth(-1));
             assertEquals("+2", summary.getText());
-            assertEquals("- Changed\n- Changed", prepareTooltipText(summary));
+            assertEquals("Changed\nChanged", prepareTooltipText(summary));
             item.getTags().clear();
             layout(parent, 500);
             assertFalse(summary.isVisible());
@@ -362,8 +362,8 @@ public final class TwoLineListItemLayoutTest {
 
                 String description = prepareTooltipText(summary);
                 assertEquals(1000, description.lines().count());
-                assertTrue(description.startsWith("- Tag 0\n"));
-                assertTrue(description.endsWith("- Tag 999"));
+                assertTrue(description.startsWith("Tag 0\n"));
+                assertTrue(description.endsWith("Tag 999"));
                 layout(parent, 250);
                 assertSame(description, prepareTooltipText(summary));
 
@@ -381,7 +381,7 @@ public final class TwoLineListItemLayoutTest {
                 item.getTags().set(999, Tag.warning("Changed"));
                 layout(parent, 250);
                 assertTrue(summary.getTooltip().getText().isEmpty());
-                assertTrue(prepareTooltipText(summary).endsWith("- Changed"));
+                assertTrue(prepareTooltipText(summary).endsWith("Changed"));
                 item.getTags().clear();
                 layout(parent, 250);
                 assertFalse(summary.isVisible());
@@ -429,7 +429,7 @@ public final class TwoLineListItemLayoutTest {
                 assertEquals(1, actions.get());
                 assertEquals(0, outerActions.get());
                 assertEquals(1, clicks.get());
-                assertEquals("- Fabric\n- Warning", summary.getTooltip().getText());
+                assertEquals("Fabric\nWarning", summary.getTooltip().getText());
                 layout(parent, 3000);
                 assertFalse(summary.isVisible());
                 assertFalse(summary.getTooltip().isShowing());
@@ -484,9 +484,13 @@ public final class TwoLineListItemLayoutTest {
                 wrapperField.setAccessible(true);
                 cell.setGraphic((Node) wrapperField.get(cell));
                 layout(parent, 300);
+                assertInstanceOf(ImageContainer.class, content.getLeading());
+                assertSame(content, content.getLeading().getParent());
+                assertInstanceOf(RipplerContainer.class, content.getParent());
+                assertEquals(8, content.getSideSpacing());
                 Label summary = collapsedTag(content);
                 verifyTooltipHover(stage, summary, () ->
-                        assertEquals("- Fabric\n- Quilt", summary.getTooltip().getText()), checked);
+                        assertEquals("Fabric\nQuilt", summary.getTooltip().getText()), checked);
             } catch (Throwable failure) {
                 stage.close();
                 checked.completeExceptionally(failure);
@@ -536,6 +540,11 @@ public final class TwoLineListItemLayoutTest {
                 contentField.setAccessible(true);
                 TwoLineListItem content = (TwoLineListItem) contentField.get(cell);
                 assertTrue(cell.getWidth() <= 200);
+                assertInstanceOf(RipplerContainer.class, cell.getGraphic());
+                assertSame(content, ((RipplerContainer) cell.getGraphic()).getContainer());
+                assertSame(content, content.getLeading().getParent());
+                assertSame(content, content.getTrailing().getParent());
+                assertEquals(16, content.getSideSpacing());
                 Label summary = collapsedTag(content);
                 assertTrue(summary.isVisible());
                 assertTrue(summary.localToScene(summary.getBoundsInLocal()).getMaxX() <= 200);
@@ -723,6 +732,132 @@ public final class TwoLineListItemLayoutTest {
         });
     }
 
+    /// Verifies configurable side gaps affect sizing and layout without changing node margins.
+    @ParameterizedTest
+    @ValueSource(doubles = {0, 8, 12, 16})
+    public void testSideSpacing(double spacing) {
+        onFxThread(() -> {
+            TwoLineListItem item = new TwoLineListItem("Title", "Subtitle");
+            Region leading = new Region();
+            leading.setMinSize(32, 32);
+            leading.setPrefSize(32, 32);
+            leading.setMaxSize(32, 32);
+            Button trailing = new Button("Action");
+            item.setLeading(leading);
+            item.setTrailing(trailing);
+            TwoLineListItem.setMargin(leading, new Insets(0, 3, 0, 5));
+            TwoLineListItem.setMargin(trailing, new Insets(0, 7, 0, 9));
+            VBox parent = new VBox(item);
+            new Scene(parent);
+            layout(parent, 400);
+            assertEquals(12, item.getSideSpacing());
+            double width = item.prefWidth(-1);
+            item.setSideSpacing(spacing);
+            layout(parent, 400);
+            assertEquals(width + 2 * (spacing - 12), item.prefWidth(-1), 0.001);
+            assertEquals(leading.getBoundsInParent().getMaxX() + 3 + spacing,
+                    item.getTitleLabel().getLayoutX(), 0.001);
+            assertEquals(trailing.getLayoutX() - 9 - spacing,
+                    item.getSubtitleLabel().getBoundsInParent().getMaxX(), 0.001);
+            assertThrows(IllegalArgumentException.class, () -> item.setSideSpacing(-1));
+            assertThrows(IllegalArgumentException.class, () -> item.setSideSpacing(Double.NaN));
+            assertThrows(IllegalArgumentException.class, () -> item.setSideSpacing(Double.POSITIVE_INFINITY));
+            assertEquals(spacing, item.getSideSpacing());
+        });
+    }
+
+    /// Verifies migrated game, Java, and theme-pack cells attach their icon and actions directly to the row.
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "org.jackhuang.hmcl.ui.instances.GameListCell",
+            "org.jackhuang.hmcl.ui.main.JavaManagementPage$JavaItemCell",
+            "org.jackhuang.hmcl.ui.main.ThemePackManagementPage$ThemePackItemCell"
+    })
+    public void testMigratedCellStructure(String className) throws ReflectiveOperationException {
+        initializeAnimations();
+        onFxThread(() -> {
+            try {
+                var type = Class.forName(className);
+                var constructor = type.getDeclaredConstructors()[0];
+                constructor.setAccessible(true);
+                JFXListView<Object> list = new JFXListView<>();
+                list.resize(400, 100);
+                ListCell<?> cell = (ListCell<?>) (constructor.getParameterCount() == 0
+                        ? constructor.newInstance()
+                        : constructor.newInstance(className.contains("JavaItemCell") ? list : null));
+                var contentField = type.getDeclaredField("content");
+                contentField.setAccessible(true);
+                TwoLineListItem content = (TwoLineListItem) contentField.get(cell);
+                var graphicField = type.getDeclaredField("graphic");
+                graphicField.setAccessible(true);
+                RipplerContainer graphic = (RipplerContainer) graphicField.get(cell);
+                assertSame(content, graphic.getContainer());
+                assertSame(content, content.getLeading().getParent());
+                assertSame(content, content.getTrailing().getParent());
+                cell.setGraphic(graphic);
+                content.setTitle("Title");
+                content.setSubtitle("Subtitle");
+                VBox parent = new VBox(cell);
+                parent.setStyle("-monet-secondary-container: #eeeeee;");
+                new Scene(parent);
+                layout(parent, 400);
+                assertEquals(content.getLeading().getBoundsInParent().getMaxX() + 8,
+                        content.getTitleLabel().getLayoutX(), 0.001);
+            } catch (ReflectiveOperationException failure) {
+                throw new AssertionError(failure);
+            }
+        });
+    }
+
+    /// Verifies advanced items retain graphic bindings, margins, actions, and graphic release after flattening.
+    @Test
+    public void testAdvancedItemDirectLayout() throws ReflectiveOperationException {
+        initializeAnimations();
+        onFxThread(() -> {
+            AdvancedListItem control = new AdvancedListItem();
+            control.setTitle("Title");
+            control.setSubtitle("Subtitle");
+            Region leading = new Region();
+            leading.setMinSize(32, 32);
+            leading.setPrefSize(32, 32);
+            leading.setMaxSize(32, 32);
+            leading.setMouseTransparent(true);
+            AdvancedListItem.setMargin(leading, new Insets(0, 6, 0, 6));
+            control.setLeftGraphic(leading);
+            Button action = new Button("Action");
+            control.setRightGraphic(action);
+            var skin = new AdvancedListItemSkin(control);
+            control.setSkin(skin);
+            VBox parent = new VBox(control);
+            new Scene(parent);
+            layout(parent, 400);
+            TwoLineListItem content = (TwoLineListItem) requireNonNull(control.lookup(".two-line-list-item"));
+            assertInstanceOf(RipplerContainer.class, content.getParent());
+            assertSame(content, leading.getParent());
+            assertSame(content, action.getParent());
+            assertEquals(6, leading.getLayoutX() - content.getInsets().getLeft(), 0.001);
+            assertEquals(leading.getBoundsInParent().getMaxX() + 6, content.getTitleLabel().getLayoutX(), 0.001);
+            AtomicInteger rowActions = new AtomicInteger();
+            AtomicInteger buttonActions = new AtomicInteger();
+            control.setOnAction(event -> rowActions.incrementAndGet());
+            action.setOnAction(event -> buttonActions.incrementAndGet());
+            action.fire();
+            assertEquals(1, buttonActions.get());
+            assertEquals(0, rowActions.get());
+            ((RipplerContainer) content.getParent()).fire();
+            assertEquals(1, rowActions.get());
+            control.setTitle("Updated");
+            assertEquals("Updated", content.getTitle());
+            Button replacement = new Button("Replacement");
+            control.setRightGraphic(replacement);
+            assertNull(action.getParent());
+            assertSame(content, replacement.getParent());
+            skin.dispose();
+            assertNull(leading.getParent());
+            assertNull(replacement.getParent());
+        });
+    }
+
     /// Verifies side margins, vertical centering, wrapped text width, and folding before the trailing control.
     @Test
     public void testSideNodeLayout() {
@@ -887,9 +1022,8 @@ public final class TwoLineListItemLayoutTest {
         onFxThread(() -> {
             TwoLineListItem item = new TwoLineListItem("Title", "Subtitle");
             item.addTagWarning("Warning");
-            HBox container = new HBox(item);
-            container.getStyleClass().add("container");
-            StackPane rippler = new StackPane(container);
+            item.getStyleClass().add("container");
+            StackPane rippler = new StackPane(item);
             rippler.getStyleClass().add("rippler-container");
             StackPane parent = new StackPane(rippler);
             parent.getStyleClass().add("advanced-list-item");
