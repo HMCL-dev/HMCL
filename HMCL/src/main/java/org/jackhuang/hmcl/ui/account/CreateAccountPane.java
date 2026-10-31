@@ -479,6 +479,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 add(box, 0, rowIndex);
 
                 GridPane advancedMenu = new GridPane();
+                advancedMenu.setPadding(new Insets(8, 0, 0, 0));
                 advancedMenu.setHgap(8);
                 advancedMenu.setVgap(8);
 
