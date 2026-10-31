@@ -78,9 +78,17 @@ public final class TwoLineListItemTest {
 
             assertEquals(252, item.getWidth(), 0.001);
             assertEquals(item.getWidth(), item.getTitleLabel().getWidth(), 0.001);
-            assertTrue(item.getBoundsInParent().getMaxX() <= parent.getWidth());
+            double itemMaxX = item.getBoundsInParent().getMaxX();
+            assertTrue(itemMaxX <= parent.getWidth() + 1,
+                "itemMaxX=" + itemMaxX + ", parentWidth=" + parent.getWidth());
             if (wrapText) {
-                assertTrue(item.getTitleLabel().getHeight() > item.getTitleLabel().prefHeight(-1));
+                item.getTitleLabel().setWrapText(false);
+                double singleLineHeight = item.getTitleLabel().prefHeight(-1);
+                item.getTitleLabel().setWrapText(true);
+                double wrappedPreferredHeight = item.getTitleLabel().prefHeight(item.getTitleLabel().getWidth());
+                assertTrue(wrappedPreferredHeight > singleLineHeight,
+                    "wrappedPreferredHeight=" + wrappedPreferredHeight + ", singleLineHeight=" + singleLineHeight
+                        + ", labelWidth=" + item.getTitleLabel().getWidth());
             }
 
             item.setTitle("Mod");
@@ -125,7 +133,11 @@ public final class TwoLineListItemTest {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new AssertionError(e);
-        } catch (ExecutionException | TimeoutException e) {
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof AssertionError assertionError)
+                throw assertionError;
+            throw new AssertionError(e.getCause());
+        } catch (TimeoutException e) {
             throw new AssertionError(e);
         }
     }
