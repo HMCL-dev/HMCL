@@ -319,7 +319,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                             .getInstallTask(this, manifest, modsDirectory)
                             .thenApplyAsync(patch -> patch == null
                                     ? manifest
-                                    : manifest.addPatch(patch).reconstructByPatches()
+                                    : manifest.withBaseGamePatch(componentVersion.getGameVersion().toString())
+                                            .addPatch(patch).reconstructByPatches()
                             );
                 })
                 .withStage("hmcl.install.%s:%s".formatted(
@@ -447,7 +448,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                 })
                 .thenApplyAsync(patch -> patch == null
                         ? baseManifest
-                        : baseManifest.addPatch(patch).reconstructByPatches());
+                        : baseManifest.withBaseGamePatch(gameVersion).addPatch(patch).reconstructByPatches());
     }
 
     /// Indicates that a local library installer is not recognized by any supported installer.

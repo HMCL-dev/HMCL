@@ -3,6 +3,8 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,106 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Tests for game instance manifest parsing and resolution behavior.
 @NotNullByDefault
 public final class GameInstanceManifestTest {
+
+    /// Only independent modern vanilla manifests with a null patch list qualify without a game patch.
+    @Test
+    public void testModifiableWithoutGamePatch() {
+        GameInstanceManifest vanilla = manifest("example", GameComponentAnalyzer.VANILLA_MAIN, null, null, null);
+        assertTrue(vanilla.isModifiable());
+        assertFalse(vanilla.withPatches(List.of()).isModifiable());
+        assertFalse(vanilla.withInheritsFrom(new GameInstanceID("parent")).isModifiable());
+        assertFalse(vanilla.withMainClass(null).isModifiable());
+        assertFalse(vanilla.withMainClass("net.minecraft.launchwrapper.Launch").isModifiable());
+        assertFalse(vanilla.withMainClass("com.mojang.rubydung.RubyDung").isModifiable());
+        assertFalse(vanilla.withMainClass("net.fabricmc.loader.impl.launch.knot.KnotClient").isModifiable());
+        assertFalse(vanilla.withMainClass("example.Main").isModifiable());
+        assertFalse(vanilla.withPatches(List.of(patch("custom", null))).isModifiable());
+        assertNull(vanilla.patches());
+        assertNull(vanilla.root());
+    }
+
+    /// Existing game patches continue to allow independent modded manifests to be modified.
+    @Test
+    public void testModifiableWithGamePatch() {
+        GameInstanceManifest modded = manifest("example", GameComponentAnalyzer.MOD_LAUNCHER_MAIN, true, null,
+                List.of(patch(GameComponentType.GAME.getPatchId(), GameComponentAnalyzer.VANILLA_MAIN)));
+        assertTrue(modded.isModifiable());
+        assertFalse(modded.withInheritsFrom(new GameInstanceID("parent")).isModifiable());
+        assertSame(modded, modded.withBaseGamePatch("1.21.1"));
+    }
+
+    /// Base patch conversion leaves unsupported manifests unchanged and is idempotent.
+    @Test
+    public void testBaseGamePatchConversionBoundaries() {
+        GameInstanceManifest vanilla = manifest("example", GameComponentAnalyzer.VANILLA_MAIN, false, null, null);
+        GameInstanceManifest converted = vanilla.withBaseGamePatch("1.21.1");
+        assertTrue(converted.isRoot());
+        assertEquals(1, converted.getPatches().size());
+        assertSame(converted, converted.withBaseGamePatch("1.21.2"));
+        assertFalse(vanilla.isRoot());
+        assertNull(vanilla.patches());
+
+        GameInstanceManifest emptyPatches = vanilla.withPatches(List.of());
+        GameInstanceManifest inherited = vanilla.withInheritsFrom(new GameInstanceID("parent"));
+        GameInstanceManifest unknown = vanilla.withMainClass("example.Main");
+        GameInstanceManifest patched = vanilla.withPatches(List.of(patch("custom", null)));
+        assertSame(emptyPatches, emptyPatches.withBaseGamePatch("1.21.1"));
+        assertSame(inherited, inherited.withBaseGamePatch("1.21.1"));
+        assertSame(unknown, unknown.withBaseGamePatch("1.21.1"));
+        assertSame(patched, patched.withBaseGamePatch("1.21.1"));
+    }
+
+    /// Installing and removing a loader preserves the original vanilla launch metadata after serialization.
+    @Test
+    public void testVanillaComponentInstallationRoundTrip() {
+        GameInstanceManifest vanilla = GameInstanceManifest.fromJson(JsonParser.parseString("""
+                {
+                    "id": "renamed-instance",
+                    "jar": "1.21.1",
+                    "mainClass": "net.minecraft.client.main.Main",
+                    "minecraftArguments": "--username Player",
+                    "arguments": {"game": ["--version", "1.21.1"], "jvm": ["-Xmx2G"]},
+                    "assetIndex": {"id": "17", "url": "https://example.com/assets.json"},
+                    "assets": "17",
+                    "complianceLevel": 1,
+                    "javaVersion": {"component": "java-runtime-delta", "majorVersion": 21},
+                    "libraries": [{"name": "example:vanilla:1.0"}],
+                    "compatibilityRules": [{"action": "allow"}],
+                    "downloads": {"client": {"url": "https://example.com/client.jar"}},
+                    "logging": {"client": {
+                        "file": {"id": "client.xml", "url": "https://example.com/client.xml"},
+                        "argument": "-Dlog.config=${path}", "type": "log4j2-xml"
+                    }},
+                    "type": "release",
+                    "time": "2024-08-08T12:00:00Z",
+                    "releaseTime": "2024-08-08T12:00:00Z",
+                    "minimumLauncherVersion": 21
+                }
+                """).getAsJsonObject(), true);
+        GameInstancePatch loader = new GameInstancePatch(
+                GameComponentType.FABRIC.getPatchId(), "0.16.0", GameInstancePatch.PRIORITY_LOADER,
+                new Arguments().addGameArguments("--loader-option"),
+                "net.fabricmc.loader.impl.launch.knot.KnotClient",
+                List.of(new Library("net.fabricmc", "fabric-loader", "0.16.0")));
+
+        GameInstanceManifest installed = vanilla.withBaseGamePatch("1.21.1")
+                .addPatch(loader).reconstructByPatches();
+        assertEquals(loader.mainClass(), installed.mainClass());
+        assertEquals(2, installed.getLibraries().size());
+        assertEquals(vanilla.assetIndex(), installed.assetIndex());
+        assertEquals(vanilla.downloads(), installed.downloads());
+        assertTrue(installed.isModifiable());
+        assertEquals("1.21.1", GameComponentAnalyzer.analyze(installed, GameVersionNumber.unknown())
+                .getVersion(GameComponentType.GAME));
+
+        GameInstanceManifest restored = GameInstanceManifest.fromJson(installed.toJsonObject(), true)
+                .removeComponent(GameComponentType.FABRIC);
+        assertEquals(vanilla.toPatch().toJsonObject(), restored.toPatch().toJsonObject());
+        assertTrue(restored.isModifiable());
+        assertFalse(restored.hasPatch(GameComponentType.FABRIC));
+        assertNull(vanilla.patches());
+        assertNull(vanilla.root());
+    }
 
     /// Ordinary manifest edits preserve absent nullable Boolean fields.
     @Test
