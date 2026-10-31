@@ -31,8 +31,9 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     private final JFXRadioButton chkSelected;
     private final JFXButton btnUpgrade;
-    private final JFXButton btnLaunch;
     private final JFXButton btnManage;
+    private final JFXButton btnLaunch;
+    private final JFXButton btnMenu;
 
     private final HBox right;
 
@@ -111,8 +112,18 @@ public final class GameListCell extends ListCell<GameListItem> {
             FXUtils.installFastTooltip(btnLaunch, i18n("instance.launch.test"));
             right.getChildren().add(btnLaunch);
 
-            this.btnManage = FXUtils.newToggleButton4(SVG.MORE_VERT);
+            this.btnManage = FXUtils.newToggleButton4(SVG.SETTINGS);
             btnManage.setOnAction(e -> {
+                GameListItem item = this.getItem();
+                if (item != null)
+                    item.modifyGameSettings();
+            });
+            BorderPane.setAlignment(btnManage, Pos.CENTER);
+            FXUtils.installFastTooltip(btnManage, i18n("instance.manage.manage"));
+            right.getChildren().add(btnManage);
+
+            this.btnMenu = FXUtils.newToggleButton4(SVG.MORE_VERT);
+            btnMenu.setOnAction(e -> {
                 GameListItem item = this.getItem();
                 if (item == null)
                     return;
@@ -121,9 +132,9 @@ public final class GameListCell extends ListCell<GameListItem> {
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
                 popup.show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, vPosition == JFXPopup.PopupVPosition.TOP ? root.getHeight() : -root.getHeight());
             });
-            BorderPane.setAlignment(btnManage, Pos.CENTER);
-            FXUtils.installFastTooltip(btnManage, i18n("settings.game.management"));
-            right.getChildren().add(btnManage);
+            BorderPane.setAlignment(btnMenu, Pos.CENTER);
+            FXUtils.installFastTooltip(btnMenu, i18n("settings.game.management"));
+            right.getChildren().add(btnMenu);
         }
 
         root.setCursor(Cursor.HAND);
@@ -134,7 +145,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
             if (e.getButton() == MouseButton.PRIMARY) {
                 if (e.getClickCount() == 1) {
-                    item.modifyGameSettings();
+                    item.getRepository().setSelectedInstance(item.getGameInstance());
                 }
             } else if (e.getButton() == MouseButton.SECONDARY) {
                 JFXPopup popup = getPopup(item);
@@ -174,7 +185,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             this.tag.bind(item.tagProperty());
             if (item.canUpdate())
                 this.right.getChildren().add(btnUpgrade);
-            this.right.getChildren().addAll(btnLaunch, btnManage);
+            this.right.getChildren().addAll(btnLaunch, btnManage, btnMenu);
         }
     }
 
@@ -185,8 +196,6 @@ public final class GameListCell extends ListCell<GameListItem> {
         menu.getContent().setAll(
                 new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch.test"), item::testGame, popup),
                 new IconedMenuItem(SVG.SCRIPT, i18n("instance.launch_script"), item::generateLaunchScript, popup),
-                new MenuSeparator(),
-                new IconedMenuItem(SVG.SETTINGS, i18n("instance.manage.manage"), item::modifyGameSettings, popup),
                 new MenuSeparator(),
                 new IconedMenuItem(SVG.EDIT, i18n("instance.manage.rename"), item::rename, popup),
                 new IconedMenuItem(SVG.FOLDER_COPY, i18n("instance.manage.duplicate"), item::duplicate, popup),
