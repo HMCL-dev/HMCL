@@ -280,8 +280,7 @@ public class MenuUpDownButton extends Control {
 
                 if (getSkinnable().getContent().contains(node)) return false;
 
-                WeakInvalidationListener weakListener =
-                        weakContentLayoutListeners.remove(node);
+                WeakInvalidationListener weakListener = weakContentLayoutListeners.remove(node);
 
                 if (weakListener != null) {
                     node.layoutBoundsProperty().removeListener(weakListener);
@@ -313,11 +312,11 @@ public class MenuUpDownButton extends Control {
         private void updateExpandedContentHeight() {
             if (
                 !getSkinnable().isExpanded()
-                || heightUpdatePending
-                || (
-                    expandAnimation != null
-                    && expandAnimation.getStatus() == Animation.Status.RUNNING
-                )
+                    || heightUpdatePending
+                    || (
+                        expandAnimation != null
+                        && expandAnimation.getStatus() == Animation.Status.RUNNING
+                    )
             ) {
                 return;
             }
