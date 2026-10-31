@@ -31,6 +31,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.ComponentRemoteVersionList;
 import org.jackhuang.hmcl.download.DownloadProvider;
@@ -538,6 +539,46 @@ public final class TwoLineListItemLayoutTest {
                 } finally {
                     settingsField.set(null, previous);
                 }
+            } catch (ReflectiveOperationException failure) {
+                throw new AssertionError(failure);
+            }
+        });
+    }
+
+    /// Verifies dependency rows share one text layout with their icon and fit long text within a fixed height.
+    @Test
+    public void testDependencyAddonRowLayout() throws ReflectiveOperationException {
+        initializeAnimations();
+        onFxThread(() -> {
+            RemoteAddon addon = new RemoteAddon("", "", "A long dependency title ".repeat(12),
+                    "A long dependency description ".repeat(12), List.of(), "", "", RemoteAddon.BROKEN.data(), null);
+            try {
+                var type = Class.forName("org.jackhuang.hmcl.ui.instances.DownloadPage$DependencyAddonItem");
+                var constructor = type.getDeclaredConstructors()[0];
+                constructor.setAccessible(true);
+                LineButton line = (LineButton) constructor.newInstance(null, addon, null);
+                VBox parent = new VBox(line);
+                new Scene(parent);
+                layout(parent, 300);
+                TwoLineListItem content = line.container;
+                assertEquals(1, line.lookupAll("*").stream().filter(TwoLineListItem.class::isInstance).count());
+                assertInstanceOf(ImageContainer.class, line.getLeading());
+                assertSame(content, line.getLeading().getParent());
+                assertEquals(addon.title(), line.getTitle());
+                assertEquals(addon.description(), line.getSubtitle());
+                assertEquals(60, line.getHeight());
+                assertEquals(24, line.getLeading().getLayoutX(), 0.001);
+                assertEquals(8, content.getTitleLabel().getLayoutX() - line.getLeading().getBoundsInParent().getMaxX(), 0.001);
+                assertFalse(content.getSubtitleLabel().isWrapText());
+                assertTrue(requireNonNull(FXUtils.textTruncatedProperty(content.getTitleLabel())).get());
+                assertTrue(requireNonNull(FXUtils.textTruncatedProperty(content.getSubtitleLabel())).get());
+                assertTrue(content.getSubtitleLabel().getBoundsInParent().getMaxY() <= 50);
+                line.getTags().addAll(new Tag("Fabric", Tag.Type.NORMAL), new Tag("Quilt", Tag.Type.NORMAL));
+                layout(parent, 300);
+                Label summary = collapsedTag(content);
+                assertEquals("+2", summary.getText());
+                assertTrue(summary.getBoundsInParent().getMaxX() <= content.getWidth() - content.getInsets().getRight());
+                assertEquals("Fabric\nQuilt", prepareTooltipText(summary));
             } catch (ReflectiveOperationException failure) {
                 throw new AssertionError(failure);
             }

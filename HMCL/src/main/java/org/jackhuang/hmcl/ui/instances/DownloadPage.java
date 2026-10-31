@@ -363,7 +363,9 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
+    /// Displays an addon dependency and opens its download page when activated.
     private static final class DependencyAddonItem extends LineButton {
+        /// Returns the localized dependency type, or its lowercase enum name for other types.
         public static String translateDependencyType(RemoteAddon.DependencyType dependencyType) {
             return switch (dependencyType) {
                 case EMBEDDED -> i18n("addon.dependency.embedded");
@@ -373,25 +375,24 @@ public class DownloadPage extends Control implements DecoratorPage {
             };
         }
 
+        /// The dependency represented by this row.
         public final RemoteAddon addon;
 
         /// Creates a dependency row that opens the addon's download page.
         DependencyAddonItem(DownloadListPage page, RemoteAddon addon, HMCLGameInstance.Optional instanceReference) {
             this.addon = addon;
 
-            HBox pane = new HBox(8);
-            pane.setPadding(new Insets(0, 8, 0, 8));
-            pane.setAlignment(Pos.CENTER_LEFT);
-            TwoLineListItem content = new TwoLineListItem();
-            pane.setPickOnBounds(false);
-            HBox.setHgrow(content, Priority.ALWAYS);
+            container.setPadding(new Insets(10, 24, 10, 24));
+            container.setSideSpacing(8);
+            container.getTitleLabel().setMinWidth(0);
+            setLargeTitle(true);
             var imageView = new ImageContainer(40);
             imageView.setMouseTransparent(true);
-            pane.getChildren().setAll(imageView, content);
+            setLeading(imageView);
             FXUtils.setLimitHeight(this, 60);
 
-            RemoteAddon.Type type = addon.type();
-            DownloadCallback callback = type == null ? null : switch (type) {
+            RemoteAddon.@Nullable Type type = addon.type();
+            @Nullable DownloadCallback callback = type == null ? null : switch (type) {
                 case MOD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD;
                 case RESOURCE_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK;
                 case SHADER_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_SHADER;
@@ -401,15 +402,14 @@ public class DownloadPage extends Control implements DecoratorPage {
                 fireEvent(new DialogCloseEvent());
                 Controllers.navigate(new DownloadPage(page, addon, instanceReference, callback));
             });
-            setLeading(pane);
-
             @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(type);
             @Nullable AddonProjectInfo mod = registry != null ? registry.getInfoByCurseForgeId(addon.slug()) : null;
-            content.setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : addon.title());
-            content.setSubtitle(addon.description());
+            setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : addon.title());
+            setSubtitle(addon.description());
+            container.getSubtitleLabel().setWrapText(false);
             for (String category : addon.categories()) {
                 if (page.shouldDisplayCategory(category))
-                    content.addTag(page.getLocalizedCategory(category, null));
+                    getTags().add(new Tag(page.getLocalizedCategory(category, null), Tag.Type.NORMAL));
             }
             if (StringUtils.isNotBlank(addon.iconUrl())) {
                 imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.iconUrl(), 80, 80, true, true));
