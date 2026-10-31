@@ -54,6 +54,7 @@ public final class JarUtils {
         }
     }
 
+    /// Get the jar location of current application. Return null if not found
     @Nullable
     public static Path thisJarPath() {
         return THIS_JAR;
