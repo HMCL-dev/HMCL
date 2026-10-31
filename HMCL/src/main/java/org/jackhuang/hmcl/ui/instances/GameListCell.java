@@ -2,11 +2,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXPopup;
+import com.jfoenix.controls.JFXRadioButton;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
+import javafx.geometry.NodeOrientation;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
@@ -37,6 +41,10 @@ public final class GameListCell extends ListCell<GameListItem> {
     private final HBox right;
 
     private final StringProperty tag = new SimpleStringProperty();
+
+    private JFXPopup managementPopup;
+
+    private GameListItem managementPopupItem;
 
     public GameListCell() {
         BorderPane root = new BorderPane();
@@ -117,9 +125,22 @@ public final class GameListCell extends ListCell<GameListItem> {
                 if (item == null)
                     return;
 
-                JFXPopup popup = getPopup(item);
+                JFXPopup popup = getManagementPopup(item);
+                if (popup.isShowing()) {
+                    popup.hide();
+                    return;
+                }
+
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
-                popup.show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, vPosition == JFXPopup.PopupVPosition.TOP ? root.getHeight() : -root.getHeight());
+                boolean below = vPosition == JFXPopup.PopupVPosition.TOP;
+                Point2D offset = root.localToScene(0, 0).subtract(btnManage.localToScene(0, 0));
+                double offsetX = offset.getX() + root.getWidth() - btnManage.getWidth();
+                double offsetY = offset.getY() + (below ? root.getHeight() : -btnManage.getHeight());
+                if (btnManage.getEffectiveNodeOrientation() == NodeOrientation.RIGHT_TO_LEFT)
+                    offsetX = -offsetX;
+                // Only this button bypasses auto-hide, so its action can toggle the menu.
+                // Keep the popup aligned to the cell while making the button its owner.
+                popup.show(btnManage, vPosition, JFXPopup.PopupHPosition.RIGHT, offsetX, offsetY, true);
             });
             BorderPane.setAlignment(btnManage, Pos.CENTER);
             FXUtils.installFastTooltip(btnManage, i18n("settings.game.management"));
@@ -137,8 +158,9 @@ public final class GameListCell extends ListCell<GameListItem> {
                     item.modifyGameSettings();
                 }
             } else if (e.getButton() == MouseButton.SECONDARY) {
-                JFXPopup popup = getPopup(item);
+                JFXPopup popup = getManagementPopup(item);
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
+                // Repeated right-clicks reopen and reposition even during the closing animation
                 popup.show(root, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - root.getHeight());
             }
         });
@@ -152,6 +174,12 @@ public final class GameListCell extends ListCell<GameListItem> {
         super.updateItem(item, empty);
 
         if (oldItem == item && oldEmpty == empty) return;
+
+        if (managementPopup != null) {
+            managementPopup.hide();
+            managementPopup = null;
+            managementPopupItem = null;
+        }
 
         this.graphic.resetFeedback();
 
@@ -178,7 +206,18 @@ public final class GameListCell extends ListCell<GameListItem> {
         }
     }
 
-    private static JFXPopup getPopup(GameListItem item) {
+    private JFXPopup getManagementPopup(GameListItem item) {
+        if (managementPopup == null || managementPopupItem != item) {
+            if (managementPopup != null) {
+                managementPopup.hide();
+            }
+            managementPopup = createPopup(item);
+            managementPopupItem = item;
+        }
+        return managementPopup;
+    }
+
+    private static JFXPopup createPopup(GameListItem item) {
         PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
 
