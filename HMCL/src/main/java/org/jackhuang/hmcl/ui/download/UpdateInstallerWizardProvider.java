@@ -118,7 +118,24 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
         return true;
     }
 
-    public static void alertFailureMessage(Exception exception, Runnable next) {
+    /// Shows a message describing the failure, offering to disable an unreachable proxy first.
+    ///
+    /// @param exception the failure to report
+    /// @param next      the action that dismisses the wizard, or `null` if no wizard is open
+    public static void alertFailureMessage(Exception exception, @Nullable Runnable next) {
+        ProxyFailureHandler.handle(exception, () -> {
+            if (next != null) {
+                next.run();
+            }
+            Controllers.showToast(i18n("download.proxy_unavailable.disabled"));
+        }, () -> alertFailureMessageImpl(exception, next));
+    }
+
+    /// Shows the failure message that matches the exception type.
+    ///
+    /// @param exception the failure to report
+    /// @param next      the action that dismisses the wizard, or `null` if no wizard is open
+    private static void alertFailureMessageImpl(Exception exception, @Nullable Runnable next) {
         if (exception instanceof LibraryDownloadException) {
             String message = i18n("launch.failed.download_library", ((LibraryDownloadException) exception).getLibrary().name()) + "\n";
             if (exception.getCause() instanceof ResponseCodeException rce) {
