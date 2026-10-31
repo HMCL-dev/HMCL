@@ -725,14 +725,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final ModListPage page;
 
-        private final JFXToggleButton activeIndicator = new JFXToggleButton();
+        private final JFXToggleButton activeToggle = new JFXToggleButton();
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
         private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
 
-        private final InvalidationListener activeListener = obs -> activeIndicator.setSelected(getItem().getModInfo().isActive());
+        private final InvalidationListener activeListener = obs -> activeToggle.setSelected(getItem().getModInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
@@ -751,15 +751,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             content.setMouseTransparent(true);
             setSelectable();
 
-            activeIndicator.setSize(8);
-            activeIndicator.setPadding(Insets.EMPTY);
-            FXUtils.setLimitHeight(activeIndicator, 30);
+            activeToggle.setSize(8);
+            activeToggle.setPadding(Insets.EMPTY);
+            FXUtils.setLimitHeight(activeToggle, 30);
 
             imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
-            container.getChildren().setAll(imageContainer, content, restoreButton, revealButton, infoButton, activeIndicator);
+            container.getChildren().setAll(imageContainer, content, restoreButton, revealButton, infoButton, activeToggle);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -832,15 +832,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             }
 
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
-            activeIndicator.setSelected(modInfo.isActive());
-            activeIndicator.setOnAction(event -> {
+            activeToggle.setSelected(modInfo.isActive());
+            activeToggle.setOnAction(event -> {
                 try {
-                    modInfo.setActive(activeIndicator.isSelected());
+                    modInfo.setActive(activeToggle.isSelected());
                 } catch (IOException e) {
                     LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
                     Controllers.showToast(i18n("mods.toggle.failed"));
                 } finally {
-                    activeIndicator.setSelected(modInfo.isActive());
+                    activeToggle.setSelected(modInfo.isActive());
                 }
             });
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
