@@ -124,8 +124,6 @@ public class MenuUpDownButton extends Control {
             button.setGraphic(headerContent);
             button.setOnAction(event -> control.setExpanded(!control.isExpanded()));
 
-            contentBox.getChildren().setAll(control.getContent());
-
             contentContainer.getChildren().setAll(contentBox);
             contentContainer.getStyleClass().add("menu-up-down-content");
 
@@ -141,6 +139,9 @@ public class MenuUpDownButton extends Control {
             control.getContent().addListener(contentListener);
             control.expandedProperty().addListener(expandedListener);
 
+            updateContent();
+            updateObservedContentNodes();
+
             if (control.isExpanded()) {
                 updateExpanded(true);
             } else {
@@ -152,6 +153,8 @@ public class MenuUpDownButton extends Control {
         }
 
         private void updateContent() {
+            contentBox.getChildren().setAll(getSkinnable().getContent());
+
             if (getSkinnable().isExpanded()) {
                 Platform.runLater(() -> {
                     if (getSkinnable() != null
