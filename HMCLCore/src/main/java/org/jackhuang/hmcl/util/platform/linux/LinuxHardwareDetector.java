@@ -6,7 +6,8 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,30 +20,28 @@ import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * @author Glavo
- */
+/// Detects Linux hardware information.
+///
+/// @author Glavo
+@NotNullByDefault
 public final class LinuxHardwareDetector extends HardwareDetector {
 
+    /// Detects Linux processors, using the default detector when native information is unavailable.
     @Override
-    public @Nullable CentralProcessor detectCentralProcessor() {
+    public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
-            return null;
-        CentralProcessor cpu = LinuxCPUDetector.detect();
-        return cpu != null ? cpu : super.detectCentralProcessor();
+            return super.detectCentralProcessors();
+        @Unmodifiable List<CentralProcessor> processors = LinuxCPUDetector.detect();
+        return processors.isEmpty() ? super.detectCentralProcessors() : processors;
     }
 
+    /// Returns an immutable graphics card list, empty if detection is unsupported or fails.
     @Override
-    public List<GraphicsCard> detectGraphicsCards() {
+    public @Unmodifiable List<GraphicsCard> detectGraphicsCards() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
-            return null;
-        List<GraphicsCard> cards = LinuxGPUDetector.detect();
-        if (cards == null || cards.isEmpty()) {
-            List<GraphicsCard> fastfetchResults = super.detectGraphicsCards();
-            if (fastfetchResults != null) // Avoid overwriting empty lists with null
-                cards = fastfetchResults;
-        }
-        return cards;
+            return List.of();
+        @Unmodifiable List<GraphicsCard> cards = LinuxGPUDetector.detect();
+        return cards.isEmpty() ? super.detectGraphicsCards() : cards;
     }
 
     private static final Path MEMINFO = Paths.get("/proc/meminfo");

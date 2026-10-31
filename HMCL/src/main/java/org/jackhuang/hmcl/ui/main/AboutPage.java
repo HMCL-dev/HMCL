@@ -25,16 +25,20 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Displays launcher, system hardware, and project information.
 @NotNullByDefault
 public final class AboutPage extends SpinnerPane {
 
+    /// Keeps theme listeners alive while the page is visible.
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
+    /// Builds the page from cached hardware information and bundled project lists.
     public AboutPage() {
         VBox content = new VBox();
         content.getStyleClass().add("spinner-pane-content");
@@ -74,73 +78,55 @@ public final class AboutPage extends SpinnerPane {
                 environment.getContent().add(memory);
             }
 
-            @Nullable CentralProcessor cpu = SystemInfo.getCentralProcessor();
-            if (cpu != null) {
-                int cpuCount;
-                int logicalPerPackage;
-                int physicalPerPackage;
-
-                CentralProcessor.Cores cores = cpu.getCores();
-                if (cores != null && cores.packages() > 1) {
-                    cpuCount = cores.packages();
-
-                    // TODO: Usually, all CPUs on a multi-socket platform have the same core count, but environments
-                    // like Linux allow some cores to be offline, in which case cores and threads cannot be evenly
-                    // distributed. In the future, we may consider detecting the CPU topology in more detail to
-                    // handle this case correctly.
-                    logicalPerPackage = cores.logical() / cores.packages();
-                    physicalPerPackage = cores.physical() / cores.packages();
+            @Unmodifiable List<CentralProcessor> processors = SystemInfo.getCentralProcessors();
+            for (int i = 0; i < processors.size(); i++) {
+                String title = processors.size() == 1
+                        ? i18n("about.environment.cpu")
+                        : i18n("about.environment.cpu.n", i + 1);
+                CentralProcessor processor = processors.get(i);
+                String name = processor.getName();
+                @Nullable CentralProcessor.Cores cores = processor.getCores();
+                String subtitle;
+                if (cores == null)
+                    subtitle = i18n("about.environment.cpu.name", name);
+                else if (cores.efficiency() > 0) {
+                    subtitle = cores.logical() == cores.physical()
+                            ? i18n("about.environment.cpu.name.cores.hybrid", name, cores.performance(), cores.efficiency())
+                            : i18n("about.environment.cpu.name.cores.hybrid.threads", name, cores.performance(), cores.efficiency(), cores.logical());
                 } else {
-                    cpuCount = 1;
-                    if (cores != null) {
-                        logicalPerPackage = cores.logical();
-                        physicalPerPackage = cores.physical();
-                    } else {
-                        logicalPerPackage = 0;
-                        physicalPerPackage = 0;
-                    }
+                    subtitle = cores.logical() == cores.physical()
+                            ? i18n("about.environment.cpu.name.cores", name, cores.physical())
+                            : i18n("about.environment.cpu.name.cores.threads", name, cores.physical(), cores.logical());
                 }
 
-                String cpuName;
-                if (logicalPerPackage == 0) {
-                    cpuName = i18n("about.environment.cpu.name", cpu.getName());
-                } else if (logicalPerPackage > 0 && logicalPerPackage != physicalPerPackage)
-                    cpuName = i18n("about.environment.cpu.name.cores.hyper_threading", cpu.getName(), physicalPerPackage, logicalPerPackage);
-                else
-                    cpuName = i18n("about.environment.cpu.name.cores", cpu.getName(), physicalPerPackage);
-
-                for (int i = 1; i <= cpuCount; i++) {
-                    var button = new LinePane();
-                    button.setLargeTitle(true);
-                    button.setTitle(i == 1 && cpuCount == 1
-                            ? i18n("about.environment.cpu")
-                            : i18n("about.environment.cpu.n", i));
-                    button.setSubtitle(cpuName);
-                    button.setLeading(SVG.LUCIDE_CPU.createIcon(32));
-                    environment.getContent().add(button);
-                }
+                var pane = new LinePane();
+                pane.setLargeTitle(true);
+                pane.setTitle(title);
+                pane.setSubtitle(subtitle);
+                pane.setLeading(SVG.LUCIDE_CPU.createIcon(32));
+                environment.getContent().add(pane);
             }
 
-            @Nullable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
-            if (graphicsCards != null) {
-                @Unmodifiable List<GraphicsCard> visibleGraphicsCards = graphicsCards.stream()
-                        .filter(card -> !card.isVirtualDisplayAdapter())
-                        .toList();
-                int index = 1;
-                for (GraphicsCard graphicsCard : visibleGraphicsCards) {
-                    String name = index == 1 && visibleGraphicsCards.size() == 1
-                            ? i18n("about.environment.gpu")
-                            : i18n("about.environment.gpu.n", index);
-                    index++;
-                    var button = new LinePane();
-                    button.setLargeTitle(true);
-                    button.setTitle(name);
-                    button.setSubtitle(graphicsCard.getName());
+            @Unmodifiable List<GraphicsCard> visibleGraphicsCards = SystemInfo.getGraphicsCards().stream()
+                    .filter(card -> card.getType() != GraphicsCard.Type.DISPLAY_ONLY && !"Unknown".equals(card.getName()))
+                    .sorted(Comparator.comparing(GraphicsCard::getType))
+                    .toList();
 
-                    button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
+            for (int i = 0; i < visibleGraphicsCards.size(); i++) {
+                GraphicsCard graphicsCard = visibleGraphicsCards.get(i);
 
-                    environment.getContent().add(button);
-                }
+                String title = visibleGraphicsCards.size() == 1
+                        ? i18n("about.environment.gpu")
+                        : i18n("about.environment.gpu.n", i + 1);
+
+                var button = new LinePane();
+                button.setLargeTitle(true);
+                button.setTitle(title);
+                button.setSubtitle(graphicsCard.toString());
+
+                button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
+
+                environment.getContent().add(button);
             }
 
             var java = new LinePane();
@@ -165,7 +151,7 @@ public final class AboutPage extends SpinnerPane {
 
         ComponentList legal = new ComponentList();
         {
-            var copyright = new LineButton();
+            var copyright = new LinePane();
             copyright.setLargeTitle(true);
             copyright.setTitle(i18n("about.copyright"));
             copyright.setSubtitle(i18n("about.copyright.statement"));

@@ -3,11 +3,14 @@
 package org.jackhuang.hmcl.util.platform.hardware;
 
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -18,15 +21,19 @@ import java.util.Map;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * @author Glavo
- */
+/// Reads processor and graphics adapter metadata from Fastfetch JSON output.
+///
+/// @author Glavo
+@NotNullByDefault
 final class FastFetchUtils {
+
+    /// Prevents instantiation of this utility class.
     private FastFetchUtils() {
     }
 
-    private static <T> T get(String type, TypeToken<T> resultType) {
-        Path fastfetch = SystemUtils.which(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "fastfetch.exe" : "fastfetch");
+    /// Runs Fastfetch for one module, returning `null` if execution or response parsing fails.
+    private static <T> @Nullable T get(String type, TypeToken<T> resultType) {
+        @Nullable Path fastfetch = SystemUtils.which(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "fastfetch.exe" : "fastfetch");
         if (fastfetch == null)
             return null;
 
@@ -44,9 +51,9 @@ final class FastFetchUtils {
             int idx = output.indexOf('[');
             String json = idx >= 0 ? output.substring(idx) : output;
 
-            List<Result<T>> list = JsonUtils.GSON.fromJson(json, JsonUtils.listTypeOf(Result.typeOf(resultType)));
+            @Nullable List<@Nullable Result<T>> list = JsonUtils.GSON.fromJson(json, JsonUtils.listTypeOf(Result.typeOf(resultType)));
 
-            Result<T> result;
+            @Nullable Result<T> result;
             if (list == null
                     || list.size() != 1
                     || (result = list.get(0)) == null
@@ -62,84 +69,105 @@ final class FastFetchUtils {
         }
     }
 
-    static @Nullable CentralProcessor detectCentralProcessor() {
-        CPUInfo cpuInfo = get("CPU", TypeToken.get(CPUInfo.class));
-
+    /// Returns one aggregate processor with the reported system-wide physical and logical counts.
+    /// A missing or invalid count is estimated from the other; JVM availability is used only when both are unavailable.
+    static @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
+        @Nullable CPUInfo cpuInfo = get("CPU", TypeToken.get(CPUInfo.class));
         if (cpuInfo == null)
-            return null;
+            return List.of();
 
         CentralProcessor.Builder builder = new CentralProcessor.Builder()
-                .setName(cpuInfo.cpu)
-                .setVendor(HardwareVendor.of(cpuInfo.vendor));
-
+                .setName(cpuInfo.cpu).setVendor(HardwareVendor.of(cpuInfo.vendor));
+        int cores = 0;
+        int threads = 0;
         if (cpuInfo.cores != null) {
+            @Nullable String physical = cpuInfo.cores.get("physical");
+            @Nullable String logical = cpuInfo.cores.get("logical");
             try {
-                String physical = cpuInfo.cores.get("physical");
-                String logical = cpuInfo.cores.get("logical");
-
-                int cores = physical != null ? Integer.parseInt(physical) : 0;
-                int threads = logical != null ? Integer.parseInt(logical) : 0;
-                int packages = Integer.max(cpuInfo.packages, 1);
-
-                if (cores > 0 && threads == 0)
-                    threads = cores;
-                else if (threads > 0 && cores == 0)
-                    cores = threads;
-
-                builder.setCores(new CentralProcessor.Cores(cores, threads, packages));
-            } catch (Throwable ignored) {
+                if (physical != null)
+                    cores = Integer.parseInt(physical);
+            } catch (NumberFormatException ignored) {
+            }
+            try {
+                if (logical != null)
+                    threads = Integer.parseInt(logical);
+            } catch (NumberFormatException ignored) {
             }
         }
-
-        return builder.build();
+        if (threads <= 0)
+            threads = cores > 0 ? cores : Runtime.getRuntime().availableProcessors();
+        if (cores <= 0)
+            cores = threads;
+        return List.of(builder.setCores(new CentralProcessor.Cores(threads, cores, 0)).build());
     }
 
-    static @Nullable List<GraphicsCard> detectGraphicsCards() {
-        List<GPUInfo> gpuInfos = get("GPU", JsonUtils.listTypeOf(GPUInfo.class));
-        if (gpuInfos == null)
-            return null;
+    /// Returns an immutable adapter list, empty if Fastfetch is unavailable or detection fails.
+    static @Unmodifiable List<GraphicsCard> detectGraphicsCards() {
+        try {
+            @Nullable List<@Nullable GPUInfo> gpuInfos = get("GPU", JsonUtils.listTypeOf(GPUInfo.class));
+            if (gpuInfos == null)
+                return List.of();
 
-        ArrayList<GraphicsCard> result = new ArrayList<>(gpuInfos.size());
-        for (GPUInfo gpuInfo : gpuInfos) {
-            if (gpuInfo == null)
-                continue;
+            ArrayList<GraphicsCard> result = new ArrayList<>(gpuInfos.size());
+            for (@Nullable GPUInfo gpuInfo : gpuInfos) {
+                if (gpuInfo == null)
+                    continue;
 
-            GraphicsCard.Builder builder = new GraphicsCard.Builder()
-                    .setName(gpuInfo.name)
-                    .setVendor(HardwareVendor.of(gpuInfo.vendor))
-                    .setDriver(gpuInfo.driver);
+                GraphicsCard.Builder builder = new GraphicsCard.Builder()
+                        .setName(gpuInfo.name)
+                        .setVendor(HardwareVendor.of(gpuInfo.vendor))
+                        .setDriver(gpuInfo.driver);
 
-            if ("Discrete".equalsIgnoreCase(gpuInfo.type))
-                builder.setType(GraphicsCard.Type.Discrete);
-            else if ("Integrated".equalsIgnoreCase(gpuInfo.type))
-                builder.setType(GraphicsCard.Type.Integrated);
+                if (HardwareVendor.VMWARE.equals(builder.getVendor())
+                        || HardwareVendor.PARALLEL.equals(builder.getVendor())
+                        || HardwareVendor.RED_HAT.equals(builder.getVendor()))
+                    builder.setType(GraphicsCard.Type.VIRTUAL);
+                else if ("Discrete".equalsIgnoreCase(gpuInfo.type))
+                    builder.setType(GraphicsCard.Type.DISCRETE);
+                else if ("Integrated".equalsIgnoreCase(gpuInfo.type))
+                    builder.setType(GraphicsCard.Type.INTEGRATED);
 
-            result.add(builder.build());
+                result.add(builder.build());
+            }
+            return List.copyOf(result);
+        } catch (Throwable e) {
+            LOG.warning("Failed to get graphics card info from fastfetch", e);
+            return List.of();
         }
-        return result;
     }
 
-    @SuppressWarnings("unchecked")
-    private static final class Result<T> {
+    /// A Fastfetch module response.
+    ///
+    /// @param type the module name, or `null` if absent
+    /// @param result the module payload, or `null` if absent
+    @JsonSerializable
+    private record Result<T>(@Nullable String type, @Nullable T result) {
+
+        /// Returns the Gson type token for a response with the supplied payload type.
+        @SuppressWarnings("unchecked")
         static <T> TypeToken<Result<T>> typeOf(TypeToken<T> type) {
             return (TypeToken<Result<T>>) TypeToken.getParameterized(Result.class, type.getType());
         }
-
-        String type;
-        T result;
     }
 
-    private static final class CPUInfo {
-        String cpu;
-        String vendor;
-        int packages;
-        Map<String, String> cores;
+    /// Processor metadata decoded from a Fastfetch CPU response.
+    ///
+    /// @param cpu the processor name, or `null` if absent
+    /// @param vendor the vendor name, or `null` if absent
+    /// @param cores core counts keyed by kind, or `null` if absent
+    @JsonSerializable
+    private record CPUInfo(@Nullable String cpu, @Nullable String vendor,
+                           @Nullable Map<String, @Nullable String> cores) {
     }
 
-    private static final class GPUInfo {
-        String name;
-        String vendor;
-        String type;
-        String driver;
+    /// Adapter metadata decoded from a Fastfetch GPU response.
+    ///
+    /// @param name the adapter name, or `null` if absent
+    /// @param vendor the vendor name, or `null` if absent
+    /// @param type the adapter classification, or `null` if absent
+    /// @param driver the driver name, or `null` if absent
+    @JsonSerializable
+    private record GPUInfo(@Nullable String name, @Nullable String vendor,
+                           @Nullable String type, @Nullable String driver) {
     }
 }

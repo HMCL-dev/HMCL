@@ -36,17 +36,19 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
     private static final int TERRACOTTA_AGREEMENT_VERSION = 2;
 
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("terracotta.terracotta")));
-    private final TabHeader tab;
-    private final TabHeader.Tab<TerracottaControllerPage> statusPage = new TabHeader.Tab<>("statusPage");
+    /// Manages tab selection and content transitions independently of the sidebar.
+    private final TabController tabController;
+    /// The tab displaying the Terracotta controller page.
+    private final TabItem<TerracottaControllerPage> statusPage;
     private final TransitionPane transitionPane = new TransitionPane();
 
     @SuppressWarnings("unused")
     private @Nullable ChangeListener<@Nullable HMCLGameInstance> instanceChangeListenerHolder;
 
     public TerracottaPage() {
-        statusPage.setNodeSupplier(TerracottaControllerPage::new);
-        tab = new TabHeader(transitionPane, statusPage);
-        tab.select(statusPage);
+        statusPage = new TabItem<>(TerracottaControllerPage::new);
+        tabController = new TabController(transitionPane, statusPage);
+        tabController.selectTab(statusPage);
 
         BorderPane left = new BorderPane();
         FXUtils.setLimitWidth(left, 200);
@@ -54,7 +56,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         setLeft(left);
 
         AdvancedListBox sideBar = new AdvancedListBox()
-                .addNavigationDrawerTab(tab, statusPage, i18n("terracotta.status"), SVG.TUNE);
+                .addNavigationDrawerTab(tabController, statusPage, i18n("terracotta.status"), SVG.TUNE);
         left.setTop(sideBar);
 
         AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
@@ -98,7 +100,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
 
     @Override
     public void onPageShown() {
-        tab.onPageShown();
+        tabController.onPageShown();
 
         if (SettingsManager.userState().terracottaAgreementVersionProperty().get() < TERRACOTTA_AGREEMENT_VERSION) {
             Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5, MessageDialogPane.MessageType.INFO, () -> {
@@ -110,7 +112,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
 
     @Override
     public void onPageHidden() {
-        tab.onPageHidden();
+        tabController.onPageHidden();
     }
 
     @Override
