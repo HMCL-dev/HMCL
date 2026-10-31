@@ -66,7 +66,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -726,14 +725,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final ModListPage page;
 
-        private final JFXCheckBox checkBox = new JFXCheckBox();
+        private final JFXToggleButton activeIndicator = new JFXToggleButton();
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
         private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
 
-        private final InvalidationListener activeListener = obs -> checkBox.setSelected(getItem().getModInfo().isActive());
+        private final InvalidationListener activeListener = obs -> activeIndicator.setSelected(getItem().getModInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
@@ -752,11 +751,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             content.setMouseTransparent(true);
             setSelectable();
 
+            activeIndicator.setSize(8);
+            FXUtils.setLimitHeight(activeIndicator, 30);
+
             imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
-            container.getChildren().setAll(checkBox, imageContainer, content, restoreButton, revealButton, infoButton);
+            container.getChildren().setAll(imageContainer, content, restoreButton, revealButton, infoButton, activeIndicator);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -829,15 +831,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             }
 
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
-            checkBox.setSelected(modInfo.isActive());
-            checkBox.setOnAction(event -> {
+            activeIndicator.setSelected(modInfo.isActive());
+            activeIndicator.setOnAction(event -> {
                 try {
-                    modInfo.setActive(checkBox.isSelected());
+                    modInfo.setActive(activeIndicator.isSelected());
                 } catch (IOException e) {
                     LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
                     Controllers.showToast(i18n("mods.toggle.failed"));
                 } finally {
-                    checkBox.setSelected(modInfo.isActive());
+                    activeIndicator.setSelected(modInfo.isActive());
                 }
             });
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
