@@ -40,7 +40,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 
-public class MenuUpDownButton extends Control {
+public class ExpandablePane extends Control {
 
     private final BooleanProperty expanded = new SimpleBooleanProperty(this, "expanded", false);
 
@@ -48,13 +48,13 @@ public class MenuUpDownButton extends Control {
 
     private final ObservableList<Node> content = FXCollections.observableArrayList();
 
-    public MenuUpDownButton() {
-        getStyleClass().add("menu-up-down-button");
+    public ExpandablePane() {
+        getStyleClass().add("expandable-pane");
     }
 
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new MenuUpDownButtonSkin(this);
+        return new ExpandablePaneSkin(this);
     }
 
     public boolean isExpanded() {
@@ -85,7 +85,7 @@ public class MenuUpDownButton extends Control {
         return content;
     }
 
-    private static class MenuUpDownButtonSkin extends SkinBase<MenuUpDownButton> {
+    private static class ExpandablePaneSkin extends SkinBase<ExpandablePane> {
 
         private final Map<Node, InvalidationListener> contentLayoutListeners = new IdentityHashMap<>();
 
@@ -114,7 +114,7 @@ public class MenuUpDownButton extends Control {
 
         private final ChangeListener<Boolean> expandedListener = (observable, oldValue, newValue) -> updateExpanded(newValue);
 
-        protected MenuUpDownButtonSkin(MenuUpDownButton control) {
+        protected ExpandablePaneSkin(ExpandablePane control) {
             super(control);
 
             label.textProperty().bind(control.textProperty());
@@ -344,7 +344,7 @@ public class MenuUpDownButton extends Control {
 
         @Override
         public void dispose() {
-            MenuUpDownButton control = getSkinnable();
+            ExpandablePane control = getSkinnable();
 
             if (expandAnimation != null) {
                 expandAnimation.stop();
