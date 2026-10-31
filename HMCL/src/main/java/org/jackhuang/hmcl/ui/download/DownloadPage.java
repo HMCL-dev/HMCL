@@ -33,9 +33,7 @@ import org.jackhuang.hmcl.ui.construct.TabItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.instances.DownloadListPage;
-import org.jackhuang.hmcl.ui.instances.HMCLLocalizedDownloadListPage;
-import org.jackhuang.hmcl.ui.instances.Instances;
+import org.jackhuang.hmcl.ui.instances.*;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
@@ -63,6 +61,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             (downloadProvider, repository, version, pack, file) -> download(downloadProvider, repository, version, file, "resourcepacks");
     public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_SHADER =
             (downloadProvider, repository, version, shader, file) -> download(downloadProvider, repository, version, file, "shaderpacks");
+    public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_WORLD =
+            (downloadProvider, repository, version, world, file) -> WorldManageUIUtils.downloadWorld(downloadProvider, repository, version, file);
 
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
     /// Manages tab selection and content transitions independently of the sidebar.
@@ -109,7 +109,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         this.modTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofMod(FOR_MOD, true));
         this.resourcePackTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofResourcePack(FOR_RESOURCE_PACK, true));
         this.shaderTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofShaderPack(FOR_SHADER, true));
-        this.worldTab = newDownloadListTab(() -> new DownloadListPage(RemoteAddon.Type.WORLD, CurseForgeRemoteAddonRepository.getInstance()));
+        this.worldTab = newDownloadListTab(() -> new DownloadListPage(RemoteAddon.Type.WORLD, CurseForgeRemoteAddonRepository.getInstance(), FOR_WORLD, true));
 
         this.tabController = new TabController(transitionPane,
                 newGameTab,
