@@ -16,9 +16,10 @@ import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.OverrunStyle;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -34,9 +35,11 @@ import java.util.stream.Collectors;
 /// Side nodes are vertically centered and separated from the text by 12 pixels.
 /// They receive their preferred widths, shrinking toward their minimum widths when
 /// necessary to accommodate the text area's minimum width. The title-trailing node receives
-/// its preferred width, then the title receives up to its preferred width, subject
-/// to its minimum width. Tags use the remaining space and are clipped at the right edge.
-/// Text is mouse-transparent; optional nodes retain their own input handling.
+/// its preferred width, then the title receives up to its preferred width. Tags that do
+/// not fit are replaced by a single `+N` tag with a tooltip listing the hidden values.
+/// The title may shrink below its minimum width to preserve space for this tag.
+/// Without tags, the title's minimum width is respected. Text and expanded tags are
+/// mouse-transparent; the collapsed tag and optional nodes receive mouse input.
 /// The children list is managed by this component and must not be modified directly.
 @NotNullByDefault
 public class TwoLineListItem extends Pane {
@@ -61,7 +64,7 @@ public class TwoLineListItem extends Pane {
         return HBox.getMargin(child);
     }
 
-    /// The primary text label, whose minimum width controls whether the title may shrink.
+    /// The primary text label, whose minimum width is respected when no tags are present.
     private final Label lblTitle = new Label();
 
     /// The lazily created subtitle label, attached only while the subtitle is non-null.
@@ -88,8 +91,14 @@ public class TwoLineListItem extends Pane {
     /// The mutable tag values, allocated when first requested.
     private @Nullable ObservableList<Tag> tags;
 
-    /// The labels rendering tag values in list order, each with its own overflow clip.
+    /// The labels rendering tag values in list order.
     private final List<Label> tagLabels = new ArrayList<>();
+
+    /// The lazily created label summarizing tags that do not fit in the first row.
+    private @Nullable Label collapsedTag;
+
+    /// Measures summary text without changing the displayed label during size queries.
+    private final Text tagMeasureText = new Text();
 
     /// The primary title text.
     private final StringProperty title = new StringPropertyBase() {
@@ -310,9 +319,10 @@ public class TwoLineListItem extends Pane {
         }
     }
 
-    /// Allows optional visible nodes to receive input while text remains mouse-transparent.
+    /// Allows optional nodes and the collapsed tag to receive input while text remains mouse-transparent.
     private void updateMouseTransparency() {
-        setMouseTransparent(!isVisible(getLeading()) && !isVisible(getTrailing()) && !isVisible(titleTrailing));
+        setMouseTransparent(!isVisible(getLeading()) && !isVisible(getTrailing())
+                && !isVisible(titleTrailing) && !isVisible(collapsedTag));
     }
 
     /// Returns whether an optional node is visible.
@@ -323,7 +333,7 @@ public class TwoLineListItem extends Pane {
     /// Sets the node displayed immediately after the title, or removes it if null.
     /// A node that is both invisible and unmanaged is detached until either property
     /// becomes true. Assigning a visible node enables input for that node while the
-    /// text and tags remain mouse-transparent.
+    /// text and expanded tags remain mouse-transparent.
     public final void setTitleTrailing(@Nullable Node node) {
         if (titleTrailing == node)
             return;
@@ -367,7 +377,8 @@ public class TwoLineListItem extends Pane {
     /// Returns the live, mutable list of non-null tag values displayed after the title-trailing node.
     /// Values may be repeated or shared between components. Replace a value to change its
     /// text or type. Changes must be made on the JavaFX application thread once this item
-    /// is attached to a showing scene.
+    /// is attached to a showing scene. Tags are displayed in order; a suffix that does not
+    /// fit is replaced by a `+N` tag whose tooltip lists the hidden values, one per line.
     public ObservableList<Tag> getTags() {
         if (tags == null) {
             tags = FXCollections.observableArrayList();
@@ -377,19 +388,31 @@ public class TwoLineListItem extends Pane {
                 tagLabels.clear();
                 tagLabels.addAll(labels);
                 getChildren().addAll(tagLabels);
+                if (collapsedTag == null && !labels.isEmpty()) {
+                    collapsedTag = createTagLabel(new Tag("+" + labels.size(), Tag.Type.NORMAL));
+                    collapsedTag.getStyleClass().add("collapsed-tag");
+                    collapsedTag.setMouseTransparent(false);
+                    collapsedTag.setTooltip(new Tooltip());
+                    RipplerContainer.enableBackgroundMouseEvents(collapsedTag);
+                    getChildren().add(collapsedTag);
+                }
+                if (collapsedTag != null) {
+                    collapsedTag.setVisible(false);
+                    collapsedTag.getTooltip().hide();
+                }
+                updateMouseTransparency();
                 requestLayout();
             });
         }
         return tags;
     }
 
-    /// Creates a mouse-transparent tag label with a clip updated by this pane's layout.
+    /// Creates a mouse-transparent tag label displayed at its full preferred width.
     private static Label createTagLabel(Tag tag) {
         var label = new Label(tag.text());
         label.getStyleClass().add("tag");
         label.setMinWidth(USE_PREF_SIZE);
         label.setMouseTransparent(true);
-        label.setClip(new Rectangle());
         label.pseudoClassStateChanged(WARNING_PSEUDO_CLASS, tag.type() == Tag.Type.WARNING);
         return label;
     }
@@ -500,25 +523,50 @@ public class TwoLineListItem extends Pane {
         return !tagLabels.isEmpty() && (lblTitle.isManaged() || hasManagedTrailing()) ? snapSpaceX(titleSpacing) : 0;
     }
 
-    /// Computes the text area's natural width, including tags that may be clipped during layout.
+    /// Computes the text area's natural width with every tag expanded.
     private double textPrefWidth() {
         double width = lblTitle.isManaged() ? preferredWidth(lblTitle) : 0;
         if (hasManagedTrailing())
             width += trailingGap() + preferredWidth(titleTrailing);
         width += tagsGap();
-        for (Label label : tagLabels)
-            width += preferredWidth(label);
-        width += snapSpaceX(TAG_SPACING) * Math.max(0, tagLabels.size() - 1);
+        width += tagsPrefWidth();
         if (hasSubtitle())
             width = Math.max(width, preferredWidth(lblSubtitle));
         return width;
     }
 
-    /// Computes the text area's minimum width; tags may be fully clipped.
+    /// Returns the natural width of all expanded tags and their intervening gaps.
+    private double tagsPrefWidth() {
+        double width = snapSpaceX(TAG_SPACING) * Math.max(0, tagLabels.size() - 1);
+        for (Label label : tagLabels)
+            width += preferredWidth(label);
+        return width;
+    }
+
+    /// Measures a summary using its current font, label padding, and region insets.
+    private double collapsedTagWidth(int count) {
+        if (collapsedTag == null)
+            return 0;
+        tagMeasureText.setFont(collapsedTag.getFont());
+        tagMeasureText.setText("+" + count);
+        Insets insets = collapsedTag.getInsets();
+        Insets padding = collapsedTag.getLabelPadding();
+        return snapSizeX(tagMeasureText.getLayoutBounds().getWidth())
+                + snapSpaceX(insets.getLeft()) + snapSpaceX(insets.getRight())
+                + snapSpaceX(padding.getLeft()) + snapSpaceX(padding.getRight());
+    }
+
+    /// Reserves enough width for either all tags or a summary of all tags, whichever is smaller.
+    private double tagsMinWidth() {
+        return tagLabels.isEmpty() ? 0 : Math.min(tagsPrefWidth(), collapsedTagWidth(tagLabels.size()));
+    }
+
+    /// Computes the text area's minimum width, preserving tags before the title.
     private double textMinWidth() {
-        double width = lblTitle.isManaged() ? snapSizeX(lblTitle.minWidth(-1)) : 0;
+        double width = tagLabels.isEmpty() && lblTitle.isManaged() ? snapSizeX(lblTitle.minWidth(-1)) : 0;
         if (hasManagedTrailing())
             width += trailingGap() + preferredWidth(titleTrailing);
+        width += tagsGap() + tagsMinWidth();
         if (hasSubtitle())
             width = Math.max(width, snapSizeX(lblSubtitle.minWidth(-1)));
         return width;
@@ -571,25 +619,46 @@ public class TwoLineListItem extends Pane {
     ///
     /// @param titleWidth the title label's allocated width
     /// @param trailingWidth the managed trailing node's allocated width, or zero
+    /// @param visibleTags the number of expanded tags preceding the summary
+    /// @param collapsedWidth the summary tag's width, or zero when every tag fits
     /// @param height the maximum preferred height of the first-row children
     @NotNullByDefault
-    private record FirstLineSize(double titleWidth, double trailingWidth, double height) {
+    private record FirstLineSize(double titleWidth, double trailingWidth, int visibleTags, double collapsedWidth, double height) {
     }
 
-    /// Measures the first row, giving title text priority over tags after reserving the trailing node.
+    /// Reserves the trailing node and minimum tag area, then gives remaining width to the title.
     private FirstLineSize measureFirstLine(double width) {
         double trailingWidth = hasManagedTrailing() ? preferredWidth(titleTrailing) : 0;
         double titleWidth = lblTitle.isManaged() ? preferredWidth(lblTitle) : 0;
         if (width >= 0 && lblTitle.isManaged()) {
-            titleWidth = Math.max(snapSizeX(lblTitle.minWidth(-1)),
-                    Math.min(titleWidth, Math.max(0, width - trailingWidth - trailingGap())));
+            double minimum = tagLabels.isEmpty() ? snapSizeX(lblTitle.minWidth(-1)) : 0;
+            titleWidth = Math.max(minimum, Math.min(titleWidth,
+                    Math.max(0, width - trailingWidth - trailingGap() - tagsGap() - tagsMinWidth())));
         }
-        double height = lblTitle.isManaged() ? snapSizeY(lblTitle.prefHeight(titleWidth)) : 0;
+        int visibleTags = tagLabels.size();
+        double collapsedWidth = 0;
+        double available = width - titleWidth - trailingWidth - trailingGap() - tagsGap();
+        if (width >= 0 && !tagLabels.isEmpty() && tagsPrefWidth() > available) {
+            visibleTags = 0;
+            collapsedWidth = collapsedTagWidth(tagLabels.size());
+            double prefixWidth = 0;
+            for (int i = 1; i < tagLabels.size(); i++) {
+                prefixWidth += preferredWidth(tagLabels.get(i - 1)) + snapSpaceX(TAG_SPACING);
+                double summaryWidth = collapsedTagWidth(tagLabels.size() - i);
+                if (prefixWidth + summaryWidth <= available) {
+                    visibleTags = i;
+                    collapsedWidth = summaryWidth;
+                }
+            }
+        }
+        double height = lblTitle.isManaged() && titleWidth > 0 ? snapSizeY(lblTitle.prefHeight(titleWidth)) : 0;
         if (hasManagedTrailing())
             height = Math.max(height, snapSizeY(titleTrailing.prefHeight(trailingWidth)));
-        for (Label label : tagLabels)
-            height = Math.max(height, snapSizeY(label.prefHeight(-1)));
-        return new FirstLineSize(titleWidth, trailingWidth, height);
+        for (int i = 0; i < visibleTags; i++)
+            height = Math.max(height, snapSizeY(tagLabels.get(i).prefHeight(-1)));
+        if (collapsedWidth > 0)
+            height = Math.max(height, snapSizeY(collapsedTag.prefHeight(collapsedWidth)));
+        return new FirstLineSize(titleWidth, trailingWidth, visibleTags, collapsedWidth, height);
     }
 
     /// Computes preferred height using the same width allocation as layout.
@@ -611,7 +680,7 @@ public class TwoLineListItem extends Pane {
         return computePrefHeight(width);
     }
 
-    /// Positions side nodes around the two text rows and clips tags to the text area's right edge.
+    /// Positions side nodes around the text rows and replaces overflowing tags with a summary.
     @Override
     protected void layoutChildren() {
         double left = snappedLeftInset();
@@ -644,17 +713,28 @@ public class TwoLineListItem extends Pane {
             x += first.trailingWidth();
         }
         x += tagsGap();
-        double right = textLeft + row.textWidth();
-        for (Label label : tagLabels) {
-            double tagWidth = preferredWidth(label);
-            layoutFirstLineNode(label, x, y, tagWidth, first.height());
-            Rectangle clip = (Rectangle) label.getClip();
-            clip.setWidth(Math.max(0, Math.min(tagWidth, right - x)));
-            clip.setHeight(label.getHeight());
-            // Fully clipped tags must not extend the pane's visual bounds at their off-screen positions.
-            label.setVisible(clip.getWidth() > 0);
-            x += tagWidth + snapSpaceX(TAG_SPACING);
+        for (int i = 0; i < tagLabels.size(); i++) {
+            Label label = tagLabels.get(i);
+            label.setVisible(i < first.visibleTags());
+            if (label.isVisible()) {
+                double tagWidth = preferredWidth(label);
+                layoutFirstLineNode(label, x, y, tagWidth, first.height());
+                x += tagWidth + snapSpaceX(TAG_SPACING);
+            }
         }
+        if (collapsedTag != null) {
+            collapsedTag.setVisible(first.visibleTags() < tagLabels.size());
+            if (collapsedTag.isVisible()) {
+                collapsedTag.setText("+" + (tagLabels.size() - first.visibleTags()));
+                collapsedTag.getTooltip().setText(tagLabels.subList(first.visibleTags(), tagLabels.size()).stream()
+                        .map(label -> "- " + label.getText().replace('\n', ' ').replace('\r', ' '))
+                        .collect(Collectors.joining("\n")));
+                layoutFirstLineNode(collapsedTag, x, y, first.collapsedWidth(), first.height());
+            } else {
+                collapsedTag.getTooltip().hide();
+            }
+        }
+        updateMouseTransparency();
         if (hasSubtitle())
             lblSubtitle.resizeRelocate(textLeft, y + first.height(), row.textWidth(), subtitleHeight);
     }
@@ -671,7 +751,7 @@ public class TwoLineListItem extends Pane {
 
     /// Vertically centers a child within the first row at its preferred height.
     private void layoutFirstLineNode(Node node, double x, double y, double width, double rowHeight) {
-        double height = snapSizeY(node.prefHeight(width));
+        double height = width > 0 ? snapSizeY(node.prefHeight(width)) : 0;
         node.resizeRelocate(x, y + snapPositionY((rowHeight - height) / 2), width, height);
     }
 

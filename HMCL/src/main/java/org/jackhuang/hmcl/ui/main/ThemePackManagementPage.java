@@ -656,7 +656,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             HBox center = new HBox();
             center.setSpacing(8);
             center.setAlignment(Pos.CENTER_LEFT);
-            center.setMouseTransparent(true);
+            center.setPickOnBounds(false);
             root.setCenter(center);
 
             icon.setMouseTransparent(true);

@@ -38,6 +38,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     private final StringProperty tag = new SimpleStringProperty();
 
+    /// Creates a game instance cell with selection controls and interactive tags.
     public GameListCell() {
         BorderPane root = new BorderPane();
         root.getStyleClass().add("md-list-cell");
@@ -66,13 +67,14 @@ public final class GameListCell extends ListCell<GameListItem> {
         {
             HBox center = new HBox();
             BorderPane.setMargin(center, new Insets(0, 0, 0, 8));
-            center.setMouseTransparent(true);
+            center.setPickOnBounds(false);
             root.setCenter(center);
             center.setPrefWidth(Region.USE_PREF_SIZE);
             center.setSpacing(8);
             center.setAlignment(Pos.CENTER_LEFT);
 
             this.imageView = new ImageContainer(32);
+            imageView.setMouseTransparent(true);
 
             this.content = new TwoLineListItem();
             BorderPane.setAlignment(content, Pos.CENTER);

@@ -375,6 +375,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         public final RemoteAddon addon;
 
+        /// Creates a dependency row that opens the addon's download page.
         DependencyAddonItem(DownloadListPage page, RemoteAddon addon, HMCLGameInstance.Optional instanceReference) {
             this.addon = addon;
 
@@ -382,9 +383,10 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.setPadding(new Insets(0, 8, 0, 8));
             pane.setAlignment(Pos.CENTER_LEFT);
             TwoLineListItem content = new TwoLineListItem();
-            pane.setMouseTransparent(true);
+            pane.setPickOnBounds(false);
             HBox.setHgrow(content, Priority.ALWAYS);
             var imageView = new ImageContainer(40);
+            imageView.setMouseTransparent(true);
             pane.getChildren().setAll(imageView, content);
             FXUtils.setLimitHeight(this, 60);
 
@@ -417,7 +419,13 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class AddonItem extends StackPane {
 
+        /// Creates a version summary that opens its details when clicked.
         AddonItem(RemoteAddon mod, RemoteAddon.Version dataItem, DownloadPage selfPage) {
+            this(mod, dataItem, selfPage, true);
+        }
+
+        /// Creates a version summary, optionally enabling navigation to its details.
+        AddonItem(RemoteAddon mod, RemoteAddon.Version dataItem, DownloadPage selfPage, boolean interactive) {
             VBox pane = new VBox(8);
             pane.setPadding(new Insets(8, 0, 8, 0));
 
@@ -425,10 +433,11 @@ public class DownloadPage extends Control implements DecoratorPage {
                 HBox descPane = new HBox(8);
                 descPane.setPadding(new Insets(0, 8, 0, 8));
                 descPane.setAlignment(Pos.CENTER_LEFT);
-                descPane.setMouseTransparent(true);
+                descPane.setPickOnBounds(false);
 
                 {
                     StackPane graphicPane = new StackPane();
+                    graphicPane.setMouseTransparent(true);
                     TwoLineListItem content = new TwoLineListItem();
                     HBox.setHgrow(content, Priority.ALWAYS);
                     content.setTitle(dataItem.name());
@@ -477,7 +486,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             }
 
             RipplerContainer container = new RipplerContainer(pane);
-            FXUtils.onClicked(container, () -> Controllers.dialog(new AddonVersion(mod, dataItem, selfPage)));
+            container.setPressFeedbackEnabled(interactive);
+            if (interactive)
+                FXUtils.onClicked(container, () -> Controllers.dialog(new AddonVersion(mod, dataItem, selfPage)));
             getChildren().setAll(container);
 
             // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
@@ -486,6 +497,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class AddonVersion extends JFXDialogLayout {
+        /// Creates version details with dependency downloads and a non-navigating summary.
         public AddonVersion(RemoteAddon mod, RemoteAddon.Version version, DownloadPage selfPage) {
             RemoteAddon.Type type = selfPage.type;
 
@@ -500,8 +512,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
-            var addonItem = new AddonItem(mod, version, selfPage);
-            addonItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
+            var addonItem = new AddonItem(mod, version, selfPage, false);
             box.getChildren().setAll(addonItem);
 
             JFXHyperlink changelogButton = new JFXHyperlink(i18n("addon.changelog"));

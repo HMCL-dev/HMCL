@@ -231,15 +231,17 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         private final StackPane removeIconPane;
         private final Tooltip removeTooltip = new Tooltip();
 
+        /// Creates a Java runtime cell with interactive tags and independent removal controls.
         JavaItemCell(JFXListView<JavaRuntime> listView) {
             BorderPane root = new BorderPane();
 
             HBox center = new HBox();
-            center.setMouseTransparent(true);
+            center.setPickOnBounds(false);
             center.setSpacing(8);
             center.setAlignment(Pos.CENTER_LEFT);
 
             label.setAlignment(Pos.CENTER);
+            label.setMouseTransparent(true);
             FXUtils.setLimitWidth(label, 32);
             FXUtils.setLimitHeight(label, 32);
 

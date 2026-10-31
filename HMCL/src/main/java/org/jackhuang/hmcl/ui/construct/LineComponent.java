@@ -152,8 +152,9 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
     }
 
     /// Returns the mutable list of tags displayed after the title and its optional trailing node.
-    /// Changes to the list are reflected in the row. Tags do not receive mouse input;
-    /// content that exceeds the space left by the title and other nodes is clipped.
+    /// Changes to the list are reflected in the row. Tags that do not fit are replaced
+    /// by a single `+N` tag whose tooltip lists the hidden values, one per line.
+    /// The title may shrink to preserve space for this summary.
     /// An empty list occupies no space. Tag values may be shared or repeated in the list.
     /// Replace a value in the list to change its text or type. Changes must be made on
     /// the JavaFX application thread once this component is attached to a showing scene.
