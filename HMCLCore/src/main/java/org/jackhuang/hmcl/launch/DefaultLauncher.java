@@ -6,7 +6,6 @@ import org.glavo.uuid.UUIDs;
 import org.jackhuang.hmcl.addon.mod.ModLoaderType;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -648,7 +647,7 @@ public class DefaultLauncher extends Launcher {
     }
 
     @Override
-    public ManagedProcess launch() throws IOException, InterruptedException {
+    public ProcessInfo launch() throws IOException, InterruptedException {
         Path nativeFolder = getNativeFolder();
 
         final Command command = generateCommandLine(nativeFolder);
@@ -680,24 +679,38 @@ public class DefaultLauncher extends Launcher {
             SystemUtils.callExternalProcess(builder);
         }
 
-        Process process;
         try {
-            ProcessBuilder builder = new ProcessBuilder(rawCommandLine).directory(runDirectory.toFile());
-            if (listener == null) {
-                builder.inheritIO();
-            }
-            Path appdata = options.getGameDir().toAbsolutePath().getParent();
-            if (appdata != null) builder.environment().put("APPDATA", appdata.toString());
-
-            builder.environment().putAll(getEnvVars(nativeFolder));
-            process = builder.start();
+            return startProcess(rawCommandLine, getEnvVars(nativeFolder), command.encoding);
         } catch (IOException e) {
             throw new ProcessCreationException(e);
         }
+    }
 
-        ManagedProcess p = new ManagedProcess(process, rawCommandLine);
+    /// start game process from the final commandline and envVars and attach listeners
+    ///
+    /// @return the game process
+    protected ProcessInfo startProcess(List<String> commandLine, Map<String, String> envVars, Charset encoding) throws IOException {
+        ProcessBuilder builder = new ProcessBuilder(commandLine).directory(instance.getRunDirectory().toFile());
+        if (listener == null) {
+            builder.inheritIO();
+        }
+        Path appdata = options.getGameDir().toAbsolutePath().getParent();
+        if (appdata != null) builder.environment().put("APPDATA", appdata.toString());
+        builder.environment().putAll(envVars);
+
+        ManagedProcess p = new ManagedProcess(builder);
         if (listener != null)
-            startMonitors(p, nativeFolder, listener, command.encoding, daemon);
+            ManagedProcessAttacher.attachListener(p, listener, encoding, (exitCode, exitType) -> {
+                if (StringUtils.isNotBlank(options.getPostExitCommand())) {
+                    try {
+                        ProcessBuilder postExitProcessBuilder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), envVars)).directory(options.getGameDir().toFile());
+                        postExitProcessBuilder.environment().putAll(envVars);
+                        SystemUtils.callExternalProcess(postExitProcessBuilder);
+                    } catch (Throwable e) {
+                        LOG.warning("An Exception happened while running exit command.", e);
+                    }
+                }
+            }, daemon);
         return p;
     }
 
@@ -1008,33 +1021,6 @@ public class DefaultLauncher extends Launcher {
 
         if (usePowerShell && !CommandBuilder.hasExecutionPolicy())
             throw new ExecutionPolicyLimitException();
-    }
-
-    private void startMonitors(ManagedProcess managedProcess, Path nativeFolder, ProcessListener processListener, Charset encoding, boolean isDaemon) {
-        processListener.setProcess(managedProcess);
-        Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
-            processListener.onLog(it, false);
-            managedProcess.addLine(it);
-        }, encoding), "stdout-pump", isDaemon);
-        managedProcess.addRelatedThread(stdout);
-        Thread stderr = Lang.thread(new StreamPump(managedProcess.getProcess().getErrorStream(), it -> {
-            processListener.onLog(it, true);
-            managedProcess.addLine(it);
-        }, encoding), "stderr-pump", isDaemon);
-        managedProcess.addRelatedThread(stderr);
-        managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), (exitCode, exitType) -> {
-            processListener.onExit(exitCode, exitType);
-
-            if (StringUtils.isNotBlank(options.getPostExitCommand())) {
-                try {
-                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), getEnvVars(nativeFolder))).directory(options.getGameDir().toFile());
-                    builder.environment().putAll(getEnvVars(nativeFolder));
-                    SystemUtils.callExternalProcess(builder);
-                } catch (Throwable e) {
-                    LOG.warning("An Exception happened while running exit command.", e);
-                }
-            }
-        }), "exit-waiter", isDaemon));
     }
 
     private record Command(

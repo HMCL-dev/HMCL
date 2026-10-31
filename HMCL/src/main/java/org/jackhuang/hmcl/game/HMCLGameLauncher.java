@@ -6,16 +6,18 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.monitor.MonitorLauncher;
 import org.jackhuang.hmcl.util.NativePatcher;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
-import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.ProcessInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Stream;
@@ -139,9 +141,18 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     @Override
-    public ManagedProcess launch() throws IOException, InterruptedException {
+    public ProcessInfo launch() throws IOException, InterruptedException {
         generateOptionsTxt();
         return super.launch();
+    }
+
+    @Override
+    protected ProcessInfo startProcess(List<String> commandLine, Map<String, String> envVars, Charset encoding) throws IOException {
+        if (!MonitorLauncher.MONITOR_ENABLED || !(instance instanceof HMCLGameInstance hmclGameInstance))
+            return super.startProcess(commandLine, envVars, encoding);
+
+        /// using monitor to launch game if enabled
+        return MonitorLauncher.launchNewMonitor(commandLine, envVars, encoding, listener, hmclGameInstance, options);
     }
 
     @Override
