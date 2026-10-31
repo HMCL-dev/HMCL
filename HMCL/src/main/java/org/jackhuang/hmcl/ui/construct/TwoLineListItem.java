@@ -20,6 +20,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.text.Text;
+import javafx.util.Duration;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -48,6 +49,9 @@ public class TwoLineListItem extends Pane {
 
     /// The spacing between adjacent tags.
     private static final double TAG_SPACING = 8;
+
+    /// The hover delay used by the application's fast tooltips.
+    private static final Duration TAG_TOOLTIP_SHOW_DELAY = Duration.millis(50);
 
     /// Selects the warning appearance for rendered tags.
     private static final PseudoClass WARNING_PSEUDO_CLASS = PseudoClass.getPseudoClass("warning");
@@ -392,7 +396,10 @@ public class TwoLineListItem extends Pane {
                     collapsedTag = createTagLabel(new Tag("+" + labels.size(), Tag.Type.NORMAL));
                     collapsedTag.getStyleClass().add("collapsed-tag");
                     collapsedTag.setMouseTransparent(false);
-                    collapsedTag.setTooltip(new Tooltip());
+                    Tooltip tooltip = new Tooltip();
+                    tooltip.setShowDelay(TAG_TOOLTIP_SHOW_DELAY);
+                    tooltip.setHideDelay(Duration.ZERO);
+                    collapsedTag.setTooltip(tooltip);
                     RipplerContainer.enableBackgroundMouseEvents(collapsedTag);
                     getChildren().add(collapsedTag);
                 }

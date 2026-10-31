@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
+import com.jfoenix.controls.JFXListView;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
@@ -11,6 +12,8 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
@@ -19,11 +22,20 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.robot.Robot;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
+import org.jackhuang.hmcl.download.ComponentRemoteVersionList;
+import org.jackhuang.hmcl.download.DownloadProvider;
+import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.download.VersionsPage;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -32,6 +44,7 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -229,34 +242,162 @@ public final class TwoLineListItemLayoutTest {
             summary.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 1, 1, 1, 1, MouseButton.PRIMARY,
                     1, false, false, false, false, false, false, false, false, false, true,
                     new PickResult(summary, 1, 1)));
-            summary.getTooltip().setShowDelay(Duration.ZERO);
-            var position = summary.localToScreen(1, 1);
-            summary.fireEvent(new MouseEvent(MouseEvent.MOUSE_MOVED, 1, 1, position.getX(), position.getY(),
-                    MouseButton.NONE, 0, false, false, false, false, false, false, false, false, false, true,
-                    new PickResult(summary, 1, 1)));
-            PauseTransition delay = new PauseTransition(Duration.millis(200));
-            delay.setOnFinished(event -> {
-                try {
-                    assertEquals(1, actions.get());
-                    assertEquals(0, outerActions.get());
-                    assertEquals(1, clicks.get());
-                    for (@Nullable Node node = summary; node != null; node = node.getParent())
-                        assertFalse(node.isMouseTransparent());
-                    assertTrue(summary.getTooltip().isShowing());
-                    assertEquals("- Fabric\n- Warning", summary.getTooltip().getText());
-                    layout(parent, 3000);
-                    assertFalse(summary.isVisible());
-                    assertFalse(summary.getTooltip().isShowing());
-                    checked.complete(null);
-                } catch (Throwable failure) {
-                    checked.completeExceptionally(failure);
-                } finally {
-                    stage.close();
-                }
-            });
-            delay.play();
+            verifyTooltipHover(stage, summary, () -> {
+                assertEquals(1, actions.get());
+                assertEquals(0, outerActions.get());
+                assertEquals(1, clicks.get());
+                assertEquals("- Fabric\n- Warning", summary.getTooltip().getText());
+                layout(parent, 3000);
+                assertFalse(summary.isVisible());
+                assertFalse(summary.getTooltip().isShowing());
+            }, checked);
         });
         checked.get(30, TimeUnit.SECONDS);
+    }
+
+    /// Verifies mouse picking and tooltip activation through the download cell's actual wrappers.
+    @Test
+    public void testDownloadCellTooltip() throws Exception {
+        initializeAnimations();
+        CompletableFuture<Void> checked = new CompletableFuture<>();
+        onFxThread(() -> {
+            Platform.setImplicitExit(false);
+            Stage stage = new Stage();
+            try {
+                var type = Class.forName("org.jackhuang.hmcl.ui.instances.DownloadListPage$DownloadListCell");
+                var constructor = type.getDeclaredConstructors()[0];
+                constructor.setAccessible(true);
+                JFXListView<@Nullable Object> list = new JFXListView<>();
+                list.getProperties().put("no-smooth-scrolling", true);
+                list.setCellFactory(view -> {
+                    try {
+                        @SuppressWarnings("unchecked")
+                        ListCell<@Nullable Object> cell = (ListCell<@Nullable Object>) constructor.newInstance(null, view, null);
+                        return cell;
+                    } catch (ReflectiveOperationException failure) {
+                        throw new AssertionError(failure);
+                    }
+                });
+                list.getItems().add(null);
+                VBox parent = new VBox(list);
+                parent.setStyle("-monet-on-surface: #111111; -monet-on-surface-variant: #222222; "
+                        + "-monet-on-secondary-container: #333333; -monet-secondary-container: #eeeeee; "
+                        + "-monet-surface-container-low-transparent-80: #eeeeee; "
+                        + "-monet-inverse-on-surface: #ffffff; -monet-inverse-surface: #222222; -monet-surface-tint: #333333;");
+                Scene scene = new Scene(parent, 300, 200);
+                scene.getStylesheets().add(requireNonNull(getClass().getResource("/assets/css/root.css")).toExternalForm());
+                stage.setScene(scene);
+                stage.show();
+                layout(parent, 300);
+                ListCell<?> cell = list.lookupAll(".list-cell").stream().filter(ListCell.class::isInstance)
+                        .map(ListCell.class::cast).filter(candidate -> candidate.getIndex() == 0).findFirst().orElseThrow();
+                // Supply visual data directly, avoiding repository access, image loading, and navigation.
+                var contentField = type.getDeclaredField("content");
+                contentField.setAccessible(true);
+                TwoLineListItem content = (TwoLineListItem) contentField.get(cell);
+                content.setTitle("A long addon title ".repeat(10));
+                content.addTags(List.of("Fabric", "Quilt"));
+                var wrapperField = type.getDeclaredField("wrapper");
+                wrapperField.setAccessible(true);
+                cell.setGraphic((Node) wrapperField.get(cell));
+                layout(parent, 300);
+                Label summary = collapsedTag(content);
+                verifyTooltipHover(stage, summary, () ->
+                        assertEquals("- Fabric\n- Quilt", summary.getTooltip().getText()), checked);
+            } catch (Throwable failure) {
+                stage.close();
+                checked.completeExceptionally(failure);
+            }
+        });
+        checked.get(30, TimeUnit.SECONDS);
+    }
+
+    /// Verifies version rows use their list width and fold or expand tags when that width changes.
+    @Test
+    public void testRemoteVersionCellWidth() throws ReflectiveOperationException {
+        initializeAnimations();
+        onFxThread(() -> {
+            DownloadProvider provider = new DownloadProvider() {
+                /// Supplies an empty version list without accessing the network.
+                @Override
+                public @Unmodifiable Task<ComponentRemoteVersionList<?>> getVersionsAsync(
+                        GameComponentType type, @Nullable GameVersionNumber version, boolean refresh) {
+                    return Task.completed(ComponentRemoteVersionList.of(type));
+                }
+            };
+            VersionsPage page = new VersionsPage(null, "Versions", GameVersionNumber.asGameVersion("1.20.1"),
+                    provider, GameComponentType.FORGE, () -> {});
+            ListView<ComponentRemoteVersion> list = new ListView<>();
+            list.setFixedCellSize(70);
+            try {
+                var type = Class.forName("org.jackhuang.hmcl.ui.download.VersionsPage$RemoteVersionListCell");
+                var constructor = type.getDeclaredConstructor(VersionsPage.class, ListView.class);
+                constructor.setAccessible(true);
+                list.setCellFactory(view -> {
+                    try {
+                        @SuppressWarnings("unchecked")
+                        ListCell<ComponentRemoteVersion> cell = (ListCell<ComponentRemoteVersion>) constructor.newInstance(page, view);
+                        return cell;
+                    } catch (ReflectiveOperationException failure) {
+                        throw new AssertionError(failure);
+                    }
+                });
+                list.getItems().add(new ForgeRemoteVersion(GameVersionNumber.asGameVersion("1.20.1"),
+                        "47.4.3-experimental-".repeat(5), Instant.EPOCH, List.of()));
+                VBox parent = new VBox(list);
+                new Scene(parent);
+                layout(parent, 200);
+                ListCell<?> cell = list.lookupAll(".list-cell").stream().filter(ListCell.class::isInstance)
+                        .map(ListCell.class::cast).filter(candidate -> candidate.getIndex() == 0).findFirst().orElseThrow();
+                var contentField = type.getDeclaredField("twoLineListItem");
+                contentField.setAccessible(true);
+                TwoLineListItem content = (TwoLineListItem) contentField.get(cell);
+                assertTrue(cell.getWidth() <= 200);
+                Label summary = collapsedTag(content);
+                assertTrue(summary.isVisible());
+                assertTrue(summary.localToScene(summary.getBoundsInLocal()).getMaxX() <= 200);
+
+                layout(parent, 1600);
+                assertTrue(cell.getWidth() > 200);
+                assertFalse(summary.isVisible());
+                assertTagsFit(content);
+            } catch (ReflectiveOperationException failure) {
+                throw new AssertionError(failure);
+            }
+        });
+    }
+
+    /// Moves a real pointer over a summary and checks its tooltip without overriding the production delay.
+    private static void verifyTooltipHover(Stage stage, Label summary, Runnable assertions, CompletableFuture<Void> checked) {
+        PauseTransition settle = new PauseTransition(Duration.millis(200));
+        settle.setOnFinished(event -> {
+            var position = summary.localToScreen(summary.getWidth() / 2, summary.getHeight() / 2);
+            new Robot().mouseMove(position);
+            // Entering the window may produce only an enter event; move again inside the tag.
+            PauseTransition move = new PauseTransition(Duration.millis(100));
+            move.setOnFinished(ignored -> {
+                new Robot().mouseMove(position.add(1, 0));
+                PauseTransition check = new PauseTransition(Duration.millis(200));
+                check.setOnFinished(finished -> {
+                    try {
+                        assertTrue(summary.isHover(), "Summary does not receive hover");
+                        for (@Nullable Node node = summary; node != null; node = node.getParent())
+                            assertFalse(node.isMouseTransparent());
+                        assertTrue(summary.getTooltip().isShowing(), "Summary tooltip is not showing");
+                        assertions.run();
+                        checked.complete(null);
+                    } catch (Throwable failure) {
+                        checked.completeExceptionally(failure);
+                    } finally {
+                        summary.getTooltip().hide();
+                        stage.close();
+                    }
+                });
+                check.play();
+            });
+            move.play();
+        });
+        settle.play();
     }
 
     /// Verifies trailing-node lifecycle and independent rendering of repeated and shared tag values.

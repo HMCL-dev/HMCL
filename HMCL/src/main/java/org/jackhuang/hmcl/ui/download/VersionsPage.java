@@ -143,8 +143,12 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final StackPane pane = new StackPane();
         private final RipplerContainer ripplerContainer;
 
-        RemoteVersionListCell(VersionsPage control) {
+        /// Creates a version row constrained to its list viewport; null creates a sizing-only row.
+        RemoteVersionListCell(VersionsPage control, @Nullable ListView<ComponentRemoteVersion> listView) {
             this.control = control;
+
+            if (listView != null)
+                FXUtils.limitCellWidth(listView, this);
 
             imageView.setMouseTransparent(true);
 
@@ -288,6 +292,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final JFXTextField nameField;
         private final JFXComboBox<VersionTypeFilter> categoryField = new JFXComboBox<>();
 
+        /// Creates the searchable version list with viewport-constrained cells and loading states.
         VersionsPageSkin(VersionsPage control) {
             super(control);
 
@@ -376,7 +381,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         list = new JFXListView<>();
                         list.getStyleClass().add("jfx-list-view-float");
 
-                        RemoteVersionListCell dummyCell = new RemoteVersionListCell(control);
+                        RemoteVersionListCell dummyCell = new RemoteVersionListCell(control, null);
                         dummyCell.twoLineListItem.setTitle("Dummy");
                         dummyCell.twoLineListItem.setSubtitle("Dummy");
                         dummyCell.imageView.setImage(GameInstanceIconType.GRASS.getIcon());
@@ -389,7 +394,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         if (!control.versions.isEmpty())
                             updateList();
 
-                        list.setCellFactory(listView -> new RemoteVersionListCell(control));
+                        list.setCellFactory(listView -> new RemoteVersionListCell(control, listView));
 
                         ComponentList.setVgrow(list, Priority.ALWAYS);
 
