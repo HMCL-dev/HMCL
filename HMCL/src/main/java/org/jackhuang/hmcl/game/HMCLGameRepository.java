@@ -514,7 +514,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         // Reserve memory for off-heap memory and HMCL itself
         final long reserved = 256 * 1024 * 1024; // 256 MiB
 
-        final long threshold1 = 8L * 1024 * 1024 * 1024;  // 8 GiB
+        final long threshold1 = 8L * 1024 * 1024 * 1024;  //  8 GiB
         final long threshold2 = 16L * 1024 * 1024 * 1024; // 16 GiB
 
         if (memoryStatus.total() <= minHeapSize || memoryStatus.available() < 0) {
