@@ -1,87 +1,60 @@
-// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Glavo
  */
-public record ServerAddress(String host, int port) {
-
-    private static final int UNKNOWN_PORT = -1;
-
-    private static IllegalArgumentException illegalAddress(String address) {
-        return new IllegalArgumentException("Invalid server address: " + address);
-    }
+public record ServerAddress(
+        HostAndPort hostAndPort,
+        Map<String, String> queryProperties
+) {
 
     /**
-     * @throws IllegalArgumentException if the address is not a valid server address
+     * @throws IllegalArgumentException if the raw is not a valid server address
      */
-    public static @NotNull ServerAddress parse(@NotNull String address) {
-        Objects.requireNonNull(address);
+    public static @NotNull ServerAddress parse(@NotNull final String raw) {
+        String input = raw;
+        try {
+            input = input.trim();
 
-        if (!address.startsWith("[")) {
-            int colonPos = address.indexOf(':');
-            if (colonPos >= 0) {
-                if (colonPos == address.length() - 1)
-                    throw illegalAddress(address);
+            Map<String, String> queryProperties = new LinkedHashMap<>();
 
-                String host = address.substring(0, colonPos);
-                int port;
-                try {
-                    port = Integer.parseInt(address.substring(colonPos + 1));
-                } catch (NumberFormatException e) {
-                    throw illegalAddress(address);
+            // parse query properties
+            int queryStart = input.lastIndexOf('?');
+            if (queryStart != -1) {
+                String queryPropertyStr = input.substring(queryStart + 1);
+
+                for (Pair<String, String> pair : NetworkUtils.parseQuery(queryPropertyStr, true)) {
+                    queryProperties.put(pair.key(), pair.value() == null ? "" : pair.value());
                 }
-                if (port < 0 || port > 0xFFFF)
-                    throw illegalAddress(address);
-                return new ServerAddress(host, port);
-            } else {
-                return new ServerAddress(address);
+
+                input = input.substring(0, queryStart);
             }
-        } else {
-            // Parse IPv6 address
-            int colonIndex = address.indexOf(':');
-            int closeBracketIndex = address.lastIndexOf(']');
-
-            if (colonIndex < 0 || closeBracketIndex < colonIndex)
-                throw illegalAddress(address);
-
-            String host = address.substring(1, closeBracketIndex);
-            if (closeBracketIndex == address.length() - 1)
-                return new ServerAddress(host);
-
-            if (address.length() < closeBracketIndex + 3 || address.charAt(closeBracketIndex + 1) != ':')
-                throw illegalAddress(address);
-
-            int port;
-            try {
-                port = Integer.parseInt(address.substring(closeBracketIndex + 2));
-            } catch (NumberFormatException e) {
-                throw illegalAddress(address);
+            int atEnd = input.indexOf('@');
+            if (atEnd != -1) {
+                queryProperties.put("_id", input.substring(0, atEnd));
+                input = input.substring(atEnd + 1);
             }
 
-            if (port < 0 || port > 0xFFFF)
-                throw illegalAddress(address);
-
-            return new ServerAddress(host, port);
+            return new ServerAddress(HostAndPort.parseHostAndPort(input, 25565), queryProperties);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to parse URL " + raw, e);
         }
     }
 
-    public ServerAddress(@NotNull String host) {
-        this(host, UNKNOWN_PORT);
-    }
-
-    public ServerAddress(@NotNull String host, int port) {
-        this.host = Objects.requireNonNull(host);
-        this.port = port;
-    }
-
-    @Override
-    public @NotNull String toString() {
-        return String.format("ServerAddress[host='%s', port=%d]", host, port);
+    public String toServerIp(boolean containQueryArgs) {
+        if (containQueryArgs) {
+            if (!queryProperties.isEmpty()) {
+                return NetworkUtils.withQuery(hostAndPort.toString(), queryProperties);
+            }
+        }
+        return hostAndPort.toString();
     }
 }
