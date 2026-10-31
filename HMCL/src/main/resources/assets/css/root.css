@@ -1032,13 +1032,6 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
 }
 
-.options-list.transparent-background .options-sublist,
-.options-list.transparent-background .options-sublist-wrapper,
-.options-list.transparent-background .options-sublist-wrapper > .container,
-.options-list.transparent-background .options-sublist .options-list-item {
-    -fx-background-color: transparent;
-}
-
 .depth-0 {
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0), 0, 0, 0, 0);
 }
