@@ -499,11 +499,17 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public static long getAutoAllocatedMemory(PhysicalMemoryStatus memoryStatus, Platform platform) {
-        final long minMemory = 128 * 1024 * 1024; // 128 MiB
-        final long maxMemory = platform.getBits() == Bits.BIT_32
-                // https://github.com/HMCL-dev/HMCL/issues/6638
-                ? 768 * 1024 * 1024 // 768 MiB
-                : 24L * 1024 * 1024 * 1024; // 24 GiB
+        final long minHeapSize;
+        final long maxHeapSize;
+
+        if (platform.getBits() == Bits.BIT_32) {
+            // https://github.com/HMCL-dev/HMCL/issues/6638
+            maxHeapSize = 768 * 1024 * 1024;        // 768 MiB
+            minHeapSize = 128 * 1024 * 1024;        // 128 MiB
+        } else {
+            maxHeapSize = 24L * 1024 * 1024 * 1024; //  24 GiB
+            minHeapSize = 256 * 1024 * 1024;        // 256 MiB
+        }
 
         // Reserve memory for off-heap memory and HMCL itself
         final long reserved = 256 * 1024 * 1024; // 256 MiB
@@ -511,7 +517,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         final long threshold1 = 8L * 1024 * 1024 * 1024;  // 8 GiB
         final long threshold2 = 16L * 1024 * 1024 * 1024; // 16 GiB
 
-        if (memoryStatus.total() <= minMemory || memoryStatus.available() < 0) {
+        if (memoryStatus.total() <= minHeapSize || memoryStatus.available() < 0) {
             return -1L;
         }
 
@@ -528,7 +534,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         else
             suggested = (long) (threshold1 * 0.8 + (threshold2 - threshold1) * 0.4 + (usable - threshold2) * 0.2);
 
-        return MathUtils.clamp(suggested & ~0xFFFFFL, minMemory, maxMemory);
+        return MathUtils.clamp(suggested & ~0xFFFFFL, minHeapSize, maxHeapSize);
     }
 
 }
