@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
@@ -22,6 +23,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.text.Text;
 import javafx.stage.Window;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -42,8 +44,10 @@ import java.util.stream.Collectors;
 /// its preferred width, then the title receives up to its preferred width. Tags that do
 /// not fit are replaced by a single `+N` tag with a tooltip listing the hidden values.
 /// The title may shrink below its minimum width to preserve space for this tag.
-/// Without tags, the title's minimum width is respected. Text and expanded tags are
-/// mouse-transparent; the collapsed tag and optional nodes receive mouse input.
+/// Without tags, the title's minimum width is respected. On JavaFX 23 or later,
+/// truncated title and subtitle text shows its full value in a tooltip.
+/// Untruncated text and expanded tags are mouse-transparent; truncated text,
+/// the collapsed tag, and optional nodes receive mouse input.
 /// The children list is managed by this component and must not be modified directly.
 @NotNullByDefault
 public class TwoLineListItem extends Pane {
@@ -128,7 +132,7 @@ public class TwoLineListItem extends Pane {
     /// The subtitle text property, allocated when first requested.
     private @Nullable StringProperty subtitle;
 
-    /// Creates an empty item with mouse-transparent text and a shrinkable title.
+    /// Creates an empty item with truncation tooltips and a shrinkable title.
     public TwoLineListItem() {
         getStyleClass().add("two-line-list-item");
         setMouseTransparent(true);
@@ -136,7 +140,7 @@ public class TwoLineListItem extends Pane {
         lblTitle.getStyleClass().add("title");
         lblTitle.setTextOverrun(OverrunStyle.ELLIPSIS);
         lblTitle.setMinWidth(0);
-        lblTitle.setMouseTransparent(true);
+        initializeTextLabel(lblTitle);
         getChildren().add(lblTitle);
     }
 
@@ -192,6 +196,7 @@ public class TwoLineListItem extends Pane {
                         lblSubtitle.setText(null);
                         getChildren().remove(lblSubtitle);
                     }
+                    updateMouseTransparency();
                     requestLayout();
                 }
             };
@@ -222,9 +227,24 @@ public class TwoLineListItem extends Pane {
         if (lblSubtitle == null) {
             lblSubtitle = new Label();
             lblSubtitle.getStyleClass().add("subtitle");
-            lblSubtitle.setMouseTransparent(true);
+            initializeTextLabel(lblSubtitle);
         }
         return lblSubtitle;
+    }
+
+    /// Enables lazy truncation tooltips while preserving background clicks in surrounding ripplers.
+    private void initializeTextLabel(Label label) {
+        label.setMouseTransparent(true);
+        FXUtils.showTooltipWhenTruncated(label);
+        @Nullable ReadOnlyBooleanProperty truncated = FXUtils.textTruncatedProperty(label);
+        if (truncated != null) {
+            RipplerContainer.enableBackgroundMouseEvents(label);
+            label.setMouseTransparent(!truncated.get());
+            truncated.addListener((observable, oldValue, newValue) -> {
+                label.setMouseTransparent(!newValue);
+                updateMouseTransparency();
+            });
+        }
     }
 
     /// Returns the leading-node property, initially null.
@@ -323,9 +343,11 @@ public class TwoLineListItem extends Pane {
         }
     }
 
-    /// Allows optional nodes and the collapsed tag to receive input while text remains mouse-transparent.
+    /// Enables input for truncated text, optional nodes, and the collapsed tag.
     private void updateMouseTransparency() {
-        setMouseTransparent(!isVisible(getLeading()) && !isVisible(getTrailing())
+        setMouseTransparent(lblTitle.isMouseTransparent()
+                && (lblSubtitle == null || lblSubtitle.getParent() != this || lblSubtitle.isMouseTransparent())
+                && !isVisible(getLeading()) && !isVisible(getTrailing())
                 && !isVisible(titleTrailing) && (tagState == null || !tagState.collapsedTag.isVisible()));
     }
 
@@ -337,7 +359,7 @@ public class TwoLineListItem extends Pane {
     /// Sets the node displayed immediately after the title, or removes it if null.
     /// A node that is both invisible and unmanaged is detached until either property
     /// becomes true. Assigning a visible node enables input for that node while the
-    /// text and expanded tags remain mouse-transparent.
+    /// untruncated text and expanded tags remain mouse-transparent.
     public final void setTitleTrailing(@Nullable Node node) {
         if (titleTrailing == node)
             return;

@@ -16,6 +16,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
@@ -38,6 +39,7 @@ import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.download.VersionsPage;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -602,11 +604,90 @@ public final class TwoLineListItemLayoutTest {
         });
     }
 
-    /// Moves a real pointer over a summary and checks its tooltip without overriding the production delay.
+    /// Verifies truncation tooltips are lazy, reusable, and preserve row clicks for either text label.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    public void testTruncatedTextTooltip(boolean subtitle) throws Exception {
+        initializeAnimations();
+        CompletableFuture<Void> checked = new CompletableFuture<>();
+        onFxThread(() -> {
+            Platform.setImplicitExit(false);
+            TwoLineListItem item = new TwoLineListItem("Title", "Subtitle");
+            Label label = subtitle ? item.getSubtitleLabel() : item.getTitleLabel();
+            RipplerContainer inner = new RipplerContainer(item);
+            RipplerContainer outer = new RipplerContainer(inner);
+            VBox parent = new VBox(outer);
+            Stage stage = new Stage();
+            stage.setScene(new Scene(parent, 250, 100));
+            stage.show();
+            try {
+                layout(parent, 250);
+                assertTrue(label.isMouseTransparent());
+                assertTrue(item.isMouseTransparent());
+                assertTrue(label.getProperties().values().stream().noneMatch(Tooltip.class::isInstance));
+
+                label.setText("A long description that cannot fit on one line. ".repeat(3));
+                layout(parent, 250);
+                assertTrue(requireNonNull(FXUtils.textTruncatedProperty(label)).get());
+                Tooltip tooltip = label.getProperties().values().stream().filter(Tooltip.class::isInstance)
+                        .map(Tooltip.class::cast).findFirst().orElseThrow();
+                assertEquals(label.getText(), tooltip.getText());
+                assertFalse(label.isMouseTransparent());
+                assertFalse(item.isMouseTransparent());
+
+                layout(parent, 2000);
+                assertFalse(requireNonNull(FXUtils.textTruncatedProperty(label)).get());
+                assertTrue(label.isMouseTransparent());
+                assertTrue(item.isMouseTransparent());
+                label.setText(label.getText() + "Updated");
+                layout(parent, 250);
+                assertEquals(label.getText(), tooltip.getText());
+                assertTrue(label.getProperties().containsValue(tooltip));
+
+                AtomicInteger innerActions = new AtomicInteger();
+                AtomicInteger outerActions = new AtomicInteger();
+                inner.setOnAction(event -> innerActions.incrementAndGet());
+                outer.setOnAction(event -> outerActions.incrementAndGet());
+                label.fireEvent(new MouseEvent(MouseEvent.MOUSE_CLICKED, 1, 1, 1, 1, MouseButton.PRIMARY,
+                        1, false, false, false, false, false, false, false, false, false, true,
+                        new PickResult(label, 1, 1)));
+                verifyTooltipHover(stage, label, tooltip, () -> {
+                    assertEquals(1, innerActions.get());
+                    assertEquals(0, outerActions.get());
+                    label.setWrapText(true);
+                    layout(parent, 250);
+                    assertFalse(requireNonNull(FXUtils.textTruncatedProperty(label)).get());
+                    assertTrue(label.isMouseTransparent());
+                    assertTrue(item.isMouseTransparent());
+                    label.setWrapText(false);
+                    layout(parent, 250);
+                    assertFalse(item.isMouseTransparent());
+                    if (subtitle)
+                        item.setSubtitle(null);
+                    else
+                        label.setText("Title");
+                    layout(parent, 250);
+                    assertTrue(item.isMouseTransparent());
+                }, checked);
+            } catch (Throwable failure) {
+                stage.close();
+                checked.completeExceptionally(failure);
+            }
+        });
+        checked.get(30, TimeUnit.SECONDS);
+    }
+
+    /// Checks the collapsed tag's tooltip using a real pointer.
     private static void verifyTooltipHover(Stage stage, Label summary, Runnable assertions, CompletableFuture<Void> checked) {
+        verifyTooltipHover(stage, summary, summary.getTooltip(), assertions, checked);
+    }
+
+    /// Moves a real pointer over a label and checks its tooltip without overriding the production delay.
+    private static void verifyTooltipHover(Stage stage, Label label, Tooltip tooltip,
+                                           Runnable assertions, CompletableFuture<Void> checked) {
         PauseTransition settle = new PauseTransition(Duration.millis(200));
         settle.setOnFinished(event -> {
-            var position = summary.localToScreen(summary.getWidth() / 2, summary.getHeight() / 2);
+            var position = label.localToScreen(label.getWidth() / 2, label.getHeight() / 2);
             new Robot().mouseMove(position);
             // Entering the window may produce only an enter event; move again inside the tag.
             PauseTransition move = new PauseTransition(Duration.millis(100));
@@ -615,16 +696,16 @@ public final class TwoLineListItemLayoutTest {
                 PauseTransition check = new PauseTransition(Duration.millis(200));
                 check.setOnFinished(finished -> {
                     try {
-                        assertTrue(summary.isHover(), "Summary does not receive hover");
-                        for (@Nullable Node node = summary; node != null; node = node.getParent())
+                        assertTrue(label.isHover(), "Label does not receive hover");
+                        for (@Nullable Node node = label; node != null; node = node.getParent())
                             assertFalse(node.isMouseTransparent());
-                        assertTrue(summary.getTooltip().isShowing(), "Summary tooltip is not showing");
+                        assertTrue(tooltip.isShowing(), "Tooltip is not showing");
                         assertions.run();
                         checked.complete(null);
                     } catch (Throwable failure) {
                         checked.completeExceptionally(failure);
                     } finally {
-                        summary.getTooltip().hide();
+                        tooltip.hide();
                         stage.close();
                     }
                 });
