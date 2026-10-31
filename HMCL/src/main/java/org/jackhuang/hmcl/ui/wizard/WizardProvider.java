@@ -8,6 +8,9 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 public interface WizardProvider {
 
+    /// Settings key that marks a wizard task for the shared download queue.
+    SettingsMap.Key<Boolean> QUEUE_TASK = new SettingsMap.Key<>("queue_task");
+
     void start(SettingsMap settings);
 
     Object finish(SettingsMap settings);

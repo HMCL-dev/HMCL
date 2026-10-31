@@ -154,15 +154,20 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
     }
 
     private void updateFiles() {
+        List<AddonUpdateObject> enabledUpdates = objects.stream()
+            .filter(AddonUpdateObject::isEnabled)
+            .toList();
+        String downloadedNames = enabledUpdates.stream()
+            .map(AddonUpdateObject::getFileName)
+            .collect(Collectors.joining(", "));
         AddonUpdateTask task = new AddonUpdateTask(
                 downloadProvider,
                 localAddonDirectory,
-                objects.stream()
-                        .filter(AddonUpdateObject::isEnabled)
+            enabledUpdates.stream()
                         .map(AddonUpdateObject::getData)
                         .toList()
         );
-        Controllers.taskDialog(
+        Controllers.addDownloadTask(
                 task.whenComplete(Schedulers.javafx(), exception -> {
                     fireEvent(new PageCloseEvent());
                     if (!task.getFailedAddons().isEmpty()) {
@@ -173,11 +178,10 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                     }
 
                     if (exception == null) {
-                        Controllers.dialog(i18n("install.success"));
+                        Controllers.dialog(i18n("download.completed", i18n("download.type.mod"), downloadedNames));
                     }
                 }),
-                i18n("addon.check_update"),
-                TaskCancellationAction.NORMAL);
+                i18n("download.item", i18n("download.type.mod"), downloadedNames));
     }
 
     private void exportList() {

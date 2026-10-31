@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -164,14 +165,20 @@ public class DownloadPage extends Control implements DecoratorPage {
             return;
         }
 
-        Controllers.taskDialog(
+        String typeName = i18n("download.type." + type.name().toLowerCase(Locale.ROOT));
+        Controllers.addDownloadTask(
                 Task.composeAsync(() -> {
                     var task = new FileDownloadTask(file.file().url(), dest, file.file().getIntegrityCheck());
                     task.setName(file.name());
                     return task;
+                }).whenComplete(Schedulers.javafx(), exception -> {
+                    if (exception == null) {
+                        Controllers.showToast(i18n("download.completed", typeName, file.name()));
+                    } else if (!(exception instanceof CancellationException)) {
+                        Controllers.dialog(I18n.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                    }
                 }),
-                i18n("message.downloading"),
-                TaskCancellationAction.NORMAL);
+                i18n("download.item", typeName, file.name()));
     }
 
     @Override

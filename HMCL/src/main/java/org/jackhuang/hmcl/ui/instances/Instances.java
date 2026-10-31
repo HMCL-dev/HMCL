@@ -76,11 +76,13 @@ public final class Instances {
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
         }
-        Controllers.taskDialog(
+        String typeName = i18n("download.type.modpack");
+        Controllers.addDownloadTask(
                 new FileDownloadTask(downloadURLs, modpack)
                         .setName(file.name())
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
+                                Controllers.showToast(i18n("download.modpack.file.completed", file.name()));
                                 ModpackInstallWizardProvider installWizardProvider;
                                 if (instanceId != null)
                                     installWizardProvider = new ModpackInstallWizardProvider(repository, modpack, instanceId);
@@ -95,8 +97,7 @@ public final class Instances {
                                         i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
                             }
                         }),
-                i18n("message.downloading"),
-                TaskCancellationAction.NORMAL
+                i18n("download.item", typeName, file.name())
         );
     }
 
@@ -182,7 +183,7 @@ public final class Instances {
                     newManifest);
             AtomicReference<GameRepositoryDraft> activeDraft = new AtomicReference<>();
 
-            Controllers.taskDialog(
+            Controllers.addDownloadTask(
                     Task.supplyAsync(() -> {
                                 GameRepositoryDraft draft = repository.openDraft();
                                 activeDraft.set(draft);
@@ -222,7 +223,7 @@ public final class Instances {
                                     Controllers.dialog(
                                             I18n.localizeErrorMessage(exception), i18n("install.failed"), MessageDialogPane.MessageType.ERROR);
                                 }
-                            }), i18n("install.new_game"), TaskCancellationAction.NORMAL);
+                            }), i18n("install.new_game"));
         }, FileUtils.getNameWithoutExtension(file), new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidInstanceId), new Validator(i18n("install.new_game.already_exists"), newVersionName -> !repository.instanceIdConflicts(newVersionName)));
     }
 
@@ -264,8 +265,7 @@ public final class Instances {
                 gameInstance.getResolvedManifest(),
                 GameAssetDownloadTask.DOWNLOAD_INDEX_FORCIBLY,
                 true).executor();
-        Controllers.taskDialog(executor, i18n("instance.manage.redownload_assets_index"), TaskCancellationAction.NO_CANCEL);
-        executor.start();
+        Controllers.addDownloadTask(executor, i18n("instance.manage.redownload_assets_index"));
     }
 
     public static void cleanInstance(HMCLGameInstance gameInstance) {

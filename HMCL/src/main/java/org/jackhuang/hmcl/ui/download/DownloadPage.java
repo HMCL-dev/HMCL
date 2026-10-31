@@ -41,7 +41,6 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.FileNameSet;
 import org.jackhuang.hmcl.util.SettingsMap;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -58,15 +57,17 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage {
     public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_MOD =
-            (downloadProvider, repository, version, mod, file) -> download(downloadProvider, repository, version, file, "mods");
+            (downloadProvider, repository, version, mod, file) -> download(downloadProvider, repository, version, file, "mods", RemoteAddon.Type.MOD);
     public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_RESOURCE_PACK =
-            (downloadProvider, repository, version, pack, file) -> download(downloadProvider, repository, version, file, "resourcepacks");
+            (downloadProvider, repository, version, pack, file) -> download(downloadProvider, repository, version, file, "resourcepacks", RemoteAddon.Type.RESOURCE_PACK);
     public static final org.jackhuang.hmcl.ui.instances.DownloadPage.DownloadCallback FOR_SHADER =
-            (downloadProvider, repository, version, shader, file) -> download(downloadProvider, repository, version, file, "shaderpacks");
+            (downloadProvider, repository, version, shader, file) -> download(downloadProvider, repository, version, file, "shaderpacks", RemoteAddon.Type.SHADER_PACK);
 
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
     /// Manages tab selection and content transitions independently of the sidebar.
     private final TabController tabController;
+    /// The tab that displays pending and completed downloads.
+    private final TabItem<DownloadQueuePage> downloadQueueTab;
     /// The tab for choosing a game version to install.
     private final TabItem<VersionsPage> newGameTab;
     /// The tab for browsing and importing modpacks.
@@ -89,6 +90,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public DownloadPage(GameInstanceID uploadInstance) {
+        this.downloadQueueTab = new TabItem<>(() -> new DownloadQueuePage(Controllers.getDownloadQueue()));
         this.newGameTab = new TabItem<>(() -> new VersionsPage(
                 versionPageNavigator,
                 i18n("install.installer.choose", i18n("install.installer.game")),
@@ -112,6 +114,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         this.worldTab = newDownloadListTab(() -> new DownloadListPage(RemoteAddon.Type.WORLD, CurseForgeRemoteAddonRepository.getInstance()));
 
         this.tabController = new TabController(transitionPane,
+            downloadQueueTab,
                 newGameTab,
                 modpackTab,
                 modTab,
@@ -125,6 +128,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         tabController.selectTab(newGameTab);
 
         AdvancedListBox sideBar = new AdvancedListBox()
+            .startCategory(i18n("download").toUpperCase(Locale.ROOT))
+            .addNavigationDrawerTab(tabController, downloadQueueTab, i18n("download.list"), SVG.DOWNLOAD)
                 .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
                 .addNavigationDrawerTab(tabController, newGameTab, i18n("game"), SVG.STADIA_CONTROLLER, SVG.STADIA_CONTROLLER_FILL)
                 .addNavigationDrawerTab(tabController, modpackTab, i18n("modpack"), SVG.PACKAGE2, SVG.PACKAGE2_FILL)
@@ -147,7 +152,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         });
     }
 
-    public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file, String subdirectoryName) {
+    public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file, String subdirectoryName, RemoteAddon.Type type) {
         @Nullable HMCLGameInstance instance = instanceId != null
                 ? repository.findInstance(instanceId)
                 : repository.getSelectedInstance();
@@ -165,8 +170,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         Controllers.prompt(i18n("archive.file.name"), (result, handler) -> {
             Path dest = targetPath.resolve(result);
+            String typeName = i18n("download.type." + type.name().toLowerCase(Locale.ROOT));
 
-            Controllers.taskDialog(Task.composeAsync(() -> {
+            Controllers.addDownloadTask(Task.composeAsync(() -> {
                 var task = new FileDownloadTask(downloadProvider.getDownloadCandidates(file.file().url()), dest);
                 task.setName(file.name());
                 return task;
@@ -176,9 +182,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                         Controllers.dialog(I18n.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
                     }
                 } else {
-                    Controllers.showToast(i18n("install.success"));
+                    Controllers.showToast(i18n("download.completed", typeName, file.name()));
                 }
-            }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
+            }), i18n("download.item", typeName, file.name()));
             handler.resolve();
         }, file.file().filename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid), new Validator(i18n("game_directory.already_exists"), existingPaths::notContains));
 
@@ -216,6 +222,11 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     public void showGameDownloads() {
         tabController.selectTab(newGameTab, false);
+    }
+
+    /// Selects the download queue tab.
+    public void showDownloadQueue() {
+        tabController.selectTab(downloadQueueTab, false);
     }
 
     public void showModpackDownloads() {
@@ -346,8 +357,11 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         @Override
         public Object finish(SettingsMap settings) {
-            settings.put("title", i18n("install.new_game.installation"));
-            settings.put("success_message", i18n("install.success"));
+            @Nullable GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
+            String instanceName = instanceId != null ? instanceId.toString() : gameVersion.getGameVersion().toString();
+            String instanceType = i18n("download.type.instance");
+            settings.put("title", i18n("download.item", instanceType, instanceName));
+            settings.put("success_message", i18n("download.instance.completed", instanceName));
             settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
 
             return finishVersionDownloadingAsync(settings);

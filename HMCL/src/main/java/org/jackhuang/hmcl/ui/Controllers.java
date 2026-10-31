@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.Decorator;
 import org.jackhuang.hmcl.ui.download.DownloadPage;
+import org.jackhuang.hmcl.ui.download.DownloadQueue;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
 import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
@@ -220,6 +221,33 @@ public final class Controllers {
 
     /// The cached download page.
     private static @Nullable DownloadPage downloadPage;
+
+    /// The shared queue for download tasks.
+    private static final DownloadQueue downloadQueue = new DownloadQueue();
+
+    /// Returns the shared download queue.
+    public static DownloadQueue getDownloadQueue() {
+        return downloadQueue;
+    }
+
+    /// Adds a download task to the queue without opening a task dialog.
+    public static void addDownloadTask(Task<?> task, String title) {
+        downloadQueue.add(task, title);
+        Platform.runLater(Controllers::navigateToDownloadQueue);
+    }
+
+    /// Adds a download executor to the queue without opening a task dialog.
+    public static void addDownloadTask(TaskExecutor executor, String title) {
+        downloadQueue.add(executor, title);
+        Platform.runLater(Controllers::navigateToDownloadQueue);
+    }
+
+    /// Opens the shared download list after a task has been queued.
+    private static void navigateToDownloadQueue() {
+        DownloadPage page = getDownloadPage();
+        page.showDownloadQueue();
+        navigate(page);
+    }
 
     /// Creates and attaches the download page for a layout pulse unless already cached.
     @FXThread

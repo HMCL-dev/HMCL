@@ -30,6 +30,10 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
     @Override
     public void handleTask(SettingsMap settings, Task<?> task) {
         @Nullable WizardProvider.TaskCleanup cleanup = settings.remove(WizardProvider.TaskCleanup.KEY);
+        boolean queueTask = cleanup != null || Boolean.TRUE.equals(settings.remove(WizardProvider.QUEUE_TASK));
+        Runnable finishDisplay = queueTask ? () -> { } : this::onEnd;
+        Object title = settings.get("title");
+        String taskTitle = title instanceof String titleMessage ? titleMessage : i18n("message.doing");
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(it -> {
             if (cleanup != null) {
                 // Keep the installation modal until onStop has released its repository draft.
@@ -41,13 +45,10 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
         });
 
         pane.setTitle(i18n("message.doing"));
-        if (settings.containsKey("title")) {
-            Object title = settings.get("title");
-            if (title instanceof StringProperty titleProperty)
-                pane.titleProperty().bind(titleProperty);
-            else if (title instanceof String titleMessage)
-                pane.setTitle(titleMessage);
-        }
+        if (title instanceof StringProperty titleProperty)
+            pane.titleProperty().bind(titleProperty);
+        else if (title instanceof String titleMessage)
+            pane.setTitle(titleMessage);
 
         runInFX(() -> {
             TaskExecutor executor = task.executor(new TaskListener() {
@@ -69,44 +70,49 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                     runInFX(() -> {
                         if (success && completedFailure == null) {
                             if (settings.get("success_message") instanceof String successMessage)
-                                Controllers.dialog(successMessage, null, MessageType.SUCCESS, () -> onEnd());
+                                Controllers.dialog(successMessage, null, MessageType.SUCCESS, finishDisplay);
                             else if (!settings.containsKey("forbid_success_message"))
-                                Controllers.dialog(i18n("message.success"), null, MessageType.SUCCESS, () -> onEnd());
+                                Controllers.dialog(i18n("message.success"), null, MessageType.SUCCESS, finishDisplay);
                         } else {
                             if (completedFailure == null) {
-                                onEnd();
+                                finishDisplay.run();
                                 return;
                             }
 
                             if (completedFailure instanceof CancellationException) {
-                                onEnd();
+                                finishDisplay.run();
                                 return;
                             }
 
                             if (completedFailure.getCause() instanceof OutOfMemoryError outOfMemoryError) {
                                 try {
-                                    Controllers.dialog(StringUtils.getStackTrace(outOfMemoryError), null, MessageType.ERROR, () -> onEnd());
+                                    Controllers.dialog(StringUtils.getStackTrace(outOfMemoryError), null, MessageType.ERROR, finishDisplay);
                                 } catch (OutOfMemoryError ignored) {
-                                    onEnd();
+                                    finishDisplay.run();
                                 }
                                 return;
                             }
 
                             String appendix = StringUtils.getStackTrace(completedFailure);
                             if (settings.get(WizardProvider.FailureCallback.KEY) != null)
-                                settings.get(WizardProvider.FailureCallback.KEY).onFail(settings, completedFailure, () -> onEnd());
+                                settings.get(WizardProvider.FailureCallback.KEY).onFail(settings, completedFailure, finishDisplay);
                             else if (settings.get("failure_message") instanceof String failureMessage)
-                                Controllers.dialog(appendix, failureMessage, MessageType.ERROR, () -> onEnd());
+                                Controllers.dialog(appendix, failureMessage, MessageType.ERROR, finishDisplay);
                             else if (!settings.containsKey("forbid_failure_message"))
-                                Controllers.dialog(appendix, i18n("wizard.failed"), MessageType.ERROR, () -> onEnd());
+                                Controllers.dialog(appendix, i18n("wizard.failed"), MessageType.ERROR, finishDisplay);
                         }
 
                     });
                 }
             });
-            pane.setExecutor(executor);
-            Controllers.dialog(pane);
-            executor.start();
+            if (queueTask) {
+                Controllers.addDownloadTask(executor, taskTitle);
+                onEnd();
+            } else {
+                pane.setExecutor(executor);
+                Controllers.dialog(pane);
+                executor.start();
+            }
         });
     }
 }

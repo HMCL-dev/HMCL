@@ -17,6 +17,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -115,8 +116,11 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
 
     @Override
     public Object finish(SettingsMap settings) {
-        settings.put("title", i18n("install.modpack.installation"));
-        settings.put("success_message", i18n("install.success"));
+        @Nullable String modpackName = settings.get(LocalModpackPage.MODPACK_NAME);
+        String displayName = modpackName != null ? modpackName : i18n("download.type.modpack");
+        settings.put(WizardProvider.QUEUE_TASK, true);
+        settings.put("title", i18n("download.item", i18n("download.type.modpack"), displayName));
+        settings.put("success_message", i18n("download.modpack.install.completed", displayName));
         settings.put(FailureCallback.KEY, (ignored, exception, next) -> {
             if (exception instanceof ModpackCompletionException) {
                 if (exception.getCause() instanceof FileNotFoundException) {

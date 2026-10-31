@@ -299,7 +299,19 @@ public final class MainPage extends StackPane implements DecoratorPage {
             launchPane.getChildren().setAll(launchButton, menuButton);
         }
 
-        getChildren().addAll(updatePane, launchPane);
+        JFXButton downloadQueueButton = FXUtils.newBorderButton(i18n("download.list"));
+        downloadQueueButton.getStyleClass().add("download-queue-button");
+        downloadQueueButton.setGraphic(SVG.DOWNLOAD.createIcon(16));
+        downloadQueueButton.setOnAction(e -> {
+            Controllers.getDownloadPage().showDownloadQueue();
+            Controllers.navigate(Controllers.getDownloadPage());
+        });
+
+        VBox launchControls = new VBox(8, downloadQueueButton, launchPane);
+        launchControls.setAlignment(Pos.BOTTOM_RIGHT);
+        StackPane.setAlignment(launchControls, Pos.BOTTOM_RIGHT);
+
+        getChildren().addAll(updatePane, launchControls);
 
     }
 
@@ -380,7 +392,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                                 MessageDialogPane.MessageType.WARNING);
                     }
                 });
-        Controllers.taskDialog(task, i18n("instance.launch.empty.installing"), TaskCancellationAction.NORMAL);
+        Controllers.addDownloadTask(task, i18n("instance.launch.empty.installing"));
     }
 
     private void onUpgrade() {

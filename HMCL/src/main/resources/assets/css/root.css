@@ -424,6 +424,20 @@
     -fx-min-width: 230px;
 }
 
+.download-queue-button {
+    -fx-min-width: 230px;
+    -fx-max-width: 230px;
+    -fx-min-height: 36px;
+    -fx-max-height: 36px;
+    -fx-background-color: -monet-surface-variant;
+    -fx-background-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.download-queue-button .svg {
+    -fx-fill: -monet-on-surface-variant;
+}
+
 .launch-pane > .jfx-button {
     -fx-translate-y: 1px;
     -fx-max-height: 55px;

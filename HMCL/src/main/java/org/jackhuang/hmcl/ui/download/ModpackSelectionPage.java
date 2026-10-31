@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.ui.construct.URLValidator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.nio.file.Files;
@@ -111,7 +110,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
             try {
                 if (url.endsWith("server-manifest.json")) {
                     // if urlString ends with .json, we assume that the url is server-manifest.json
-                    Controllers.taskDialog(new GetTask(WebURL.parse(url)).whenComplete(Schedulers.javafx(), (result, e) -> {
+                    Controllers.addDownloadTask(new GetTask(WebURL.parse(url)).whenComplete(Schedulers.javafx(), (result, e) -> {
                         ServerModpackManifest manifest = JsonUtils.fromMaybeMalformedJson(result, ServerModpackManifest.class);
                         if (manifest == null) {
                             handler.reject(i18n("modpack.type.server.malformed"));
@@ -122,15 +121,16 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                         } else {
                             handler.reject(e.getMessage());
                         }
-                    }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
+                    }), i18n("message.downloading"));
                 } else {
                     // otherwise we still consider the file as modpack zip file
                     // since casually the url may not ends with ".zip"
                     Path modpack = Files.createTempFile("modpack", ".zip");
-                    Controllers.taskDialog(
+                    Controllers.addDownloadTask(
                             new FileDownloadTask(url, modpack)
                                     .whenComplete(Schedulers.javafx(), e -> {
                                         if (e == null) {
+                                            Controllers.showToast(i18n("download.modpack.file.completed", modpack.getFileName()));
                                             handler.resolve();
                                             controller.getSettings().put(MODPACK_FILE, modpack);
                                             controller.onNext();
@@ -138,8 +138,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                                             handler.reject(e.getMessage());
                                         }
                                     }),
-                            i18n("message.downloading"),
-                            TaskCancellationAction.NORMAL
+                                i18n("download.item", i18n("download.type.modpack"), modpack.getFileName())
                     );
                 }
             } catch (Exception e) {
