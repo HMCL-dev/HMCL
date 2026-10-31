@@ -84,6 +84,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     private final ReentrantLock lock = new ReentrantLock();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
+    /// Called after a mod was pinned or unpinned.
+    private @Nullable Runnable pinnedStateChanged;
+
     private ModManager modManager;
     private @Nullable HMCLGameInstance gameInstance;
 
@@ -141,7 +144,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             lock.lock();
             try {
                 modManager.refresh();
-                return modManager.getLocalFiles().stream().map(ModInfoObject::new).toList();
+                return modManager.getLocalFiles().stream()
+                        .map(file -> new ModInfoObject(file, modManager.isPinned(file.getFile())))
+                        .toList();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } finally {
@@ -242,9 +247,51 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
     }
 
+    /// Pins or unpins the given mods.
+    void setPinned(Collection<ModInfoObject> items, boolean pinned) {
+        ModManager manager = modManager;
+        // While the list reloads, the items still belong to the previous mod directory.
+        if (manager == null || isLoading()) {
+            return;
+        }
+
+        try {
+            manager.setPinned(items.stream()
+                    .map(item -> item.getModInfo().getFile())
+                    .toList(), pinned);
+        } catch (IOException e) {
+            LOG.warning("Unable to save pinned mods", e);
+            Controllers.dialog(i18n("message.failed") + "\n" + e,
+                    i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            return;
+        }
+
+        for (ModInfoObject item : items) {
+            item.setPinned(pinned);
+        }
+        if (pinnedStateChanged != null) {
+            pinnedStateChanged.run();
+        }
+    }
+
+    /// Returns whether the update check skips the given mod.
+    boolean isPinned(LocalModFile file) {
+        ModManager manager = modManager;
+        return manager != null && manager.isPinned(file.getFile());
+    }
+
+    /// Checks for updates of the given mods, ignoring the pinned ones.
     public void checkUpdates(Collection<LocalModFile> mods) {
         Objects.requireNonNull(mods);
         if (isLoading() || gameInstance == null) {
+            return;
+        }
+
+        List<LocalModFile> targets = mods.stream()
+                .filter(mod -> !isPinned(mod))
+                .toList();
+        if (targets.isEmpty()) {
+            Controllers.dialog(i18n("mods.pin.nothing"));
             return;
         }
 
@@ -253,7 +300,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         .composeAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
                             if (version != GameVersionNumber.unknown()) {
-                                return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), mods);
+                                return new AddonCheckUpdatesTask(DownloadProviders.getDownloadProvider(), version.toString(), targets);
                             } else {
                                 LOG.warning("Failed to check for updates, due to unable to get instance game version");
                                 return null;
@@ -319,6 +366,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final HBox searchBar;
         private final HBox toolbarNormal;
         private final HBox toolbarSelecting;
+
+        /// Pins or unpins the selected mods.
+        private final JFXButton pinSelected;
 
         private final JFXListView<ModListPage.ModInfoObject> listView;
 
@@ -400,9 +450,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 // reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
                 var selectAll = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
 
+                // Pins or unpins every selected mod at once.
+                pinSelected = createToolbarButton2(i18n("mods.pin"), SVG.KEEP, () ->
+                        skinnable.setPinned(listView.getSelectionModel().getSelectedItems(), !allPinned()));
+                skinnable.pinnedStateChanged = this::updatePinSelectedButton;
+
                 ListChangeListener<Object> listener = change -> {
                     selectAll.setDisable(!listView.getItems().isEmpty()
                             && listView.getSelectionModel().getSelectedItems().size() == listView.getItems().size());
+                    updatePinSelectedButton();
                 };
 
                 listView.getSelectionModel().getSelectedItems().addListener(listener);
@@ -418,6 +474,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                                 skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
                         createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
                                 skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
+                        pinSelected,
                         createToolbarButton2(i18n("addon.check_update.button"), SVG.UPDATE, () ->
                                 skinnable.checkUpdates(
                                         listView.getSelectionModel().getSelectedItems().stream()
@@ -513,6 +570,19 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             }
         }
 
+        /// Whether every selected mod is pinned.
+        private boolean allPinned() {
+            ObservableList<ModListPage.ModInfoObject> selected = listView.getSelectionModel().getSelectedItems();
+            return !selected.isEmpty() && selected.stream().allMatch(ModListPage.ModInfoObject::isPinned);
+        }
+
+        /// Updates the text and glyph of [#pinSelected] to match the selection.
+        private void updatePinSelectedButton() {
+            boolean allPinned = allPinned();
+            pinSelected.setText(i18n(allPinned ? "mods.unpin" : "mods.pin"));
+            pinSelected.setGraphic((allPinned ? SVG.KEEP_FILL : SVG.KEEP).createIcon(20));
+        }
+
         private void search() {
             isSearching.set(true);
 
@@ -555,17 +625,36 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         /// Matching project metadata, or null if the local mod cannot be identified.
         private final @Nullable ModProjectInfo projectInfo;
 
+        /// Whether this mod is pinned to its current version.
+        private final SimpleBooleanProperty pinned;
+
         private final ItemPropertyAsyncCache<Image, ModInfoObject> iconCache;
 
-        ModInfoObject(LocalModFile localModFile) {
+        ModInfoObject(LocalModFile localModFile, boolean pinned) {
             this.localModFile = localModFile;
             this.projectInfo = AddonProjectInfoRegistry.MOD.getInfo(localModFile.getId(), localModFile.getName());
+            this.pinned = new SimpleBooleanProperty(this, "pinned", pinned);
 
             this.iconCache = new ItemPropertyAsyncCache.Soft<>(this, this::loadIcon, this::getDefaultIcon);
         }
 
         public LocalModFile getModInfo() {
             return localModFile;
+        }
+
+        /// Whether the update check skips this mod.
+        public boolean isPinned() {
+            return pinned.get();
+        }
+
+        /// The pin state, which the list cells observe.
+        public ReadOnlyBooleanProperty pinnedProperty() {
+            return pinned;
+        }
+
+        /// Records the pin state once it was written to disk.
+        private void setPinned(boolean pinned) {
+            this.pinned.set(pinned);
         }
 
         /// Returns matching project metadata, or null if no project was found.
@@ -729,6 +818,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final JFXCheckBox checkBox = new JFXCheckBox();
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
+        private final JFXButton pinButton = FXUtils.newToggleButton4(SVG.KEEP);
+        /// Tooltip of [#pinButton].
+        private final Tooltip pinTooltip = new Tooltip(i18n("mods.pin"));
         private final JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
         private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
@@ -736,6 +828,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final InvalidationListener activeListener = obs -> checkBox.setSelected(getItem().getModInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
+
+        private final InvalidationListener pinnedListener = obs -> applyPinState(getItem());
+        private final WeakInvalidationListener weakPinnedListener = new WeakInvalidationListener(pinnedListener);
+        private @Nullable ReadOnlyBooleanProperty observedPinnedProperty;
 
         private Tooltip warningTooltip;
 
@@ -754,9 +850,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
 
+            FXUtils.installFastTooltip(pinButton, pinTooltip);
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
-            container.getChildren().setAll(checkBox, imageContainer, content, restoreButton, revealButton, infoButton);
+            container.getChildren().setAll(checkBox, imageContainer, content, restoreButton, pinButton, revealButton, infoButton);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -766,6 +863,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             if (observedActiveProperty != null)
                 observedActiveProperty.removeListener(weakActiveListener);
+            if (observedPinnedProperty != null)
+                observedPinnedProperty.removeListener(weakPinnedListener);
 
             pseudoClassStateChanged(WARNING, false);
             if (warningTooltip != null) {
@@ -840,7 +939,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                     checkBox.setSelected(modInfo.isActive());
                 }
             });
-            restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
+            // Managed as well, so the pin icon does not move when there is no file to restore.
+            boolean hasOldFiles = !modInfo.getMod().getOldFiles().isEmpty();
+            restoreButton.setVisible(hasOldFiles);
+            restoreButton.setManaged(hasOldFiles);
             restoreButton.setOnAction(e -> {
                 menu.get().getContent().setAll(modInfo.getMod().getOldFiles().stream()
                         .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(),
@@ -854,6 +956,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             revealButton.setOnAction(e -> FXUtils.showFileInExplorer(modInfo.getFile()));
             infoButton.setOnAction(e -> Controllers.dialog(new ModInfoDialog(dataItem)));
 
+            pinButton.setDisable(modInfo.isOld());
+            (observedPinnedProperty = dataItem.pinnedProperty()).addListener(weakPinnedListener);
+            applyPinState(dataItem);
+            pinButton.setOnAction(e -> page.setPinned(List.of(dataItem), !dataItem.isPinned()));
+
             if (!warning.isEmpty()) {
                 pseudoClassStateChanged(WARNING, true);
 
@@ -864,5 +971,22 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 FXUtils.installFastTooltip(this, warningTooltip);
             }
         }
+
+        /// Updates the pin tag, icon and tooltip of the cell.
+        private void applyPinState(@Nullable ModInfoObject item) {
+            if (item == null) {
+                return;
+            }
+
+            String text = i18n("mods.pinned");
+            content.getTags().removeIf(label -> text.equals(label.getText()));
+            if (item.isPinned()) {
+                content.addTag(text);
+            }
+            // A pinned mod shows the filled glyph.
+            pinButton.setGraphic((item.isPinned() ? SVG.KEEP_FILL : SVG.KEEP).createIcon());
+            pinTooltip.setText(i18n(item.isPinned() ? "mods.unpin" : "mods.pin"));
+        }
+
     }
 }
