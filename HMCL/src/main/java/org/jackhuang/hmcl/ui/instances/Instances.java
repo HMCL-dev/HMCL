@@ -15,7 +15,10 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
 import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.game.*;
-import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.setting.AuthlibInjectorServers;
+import org.jackhuang.hmcl.setting.GameDirectoryManager;
+import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -363,9 +366,19 @@ public final class Instances {
                 launcherHelper.setQuickPlayOption(new QuickPlayOption.SinglePlayer(worldFolderName)));
     }
 
+    public static void launchAndEnterServer(@Nullable HMCLGameInstance gameInstance, @Nullable String ip) {
+        launch(gameInstance, launcherHelper ->
+                launcherHelper.setQuickPlayOption(new QuickPlayOption.MultiPlayer(ip)));
+    }
+
     public static void generateLaunchScriptForQuickEnterWorld(HMCLGameInstance gameInstance, String worldFolderName) {
         generateLaunchScript(gameInstance, launcherHelper ->
                 launcherHelper.setQuickPlayOption(new QuickPlayOption.SinglePlayer(worldFolderName)));
+    }
+
+    public static void generateLaunchScriptForQuickConnectServer(HMCLGameInstance gameInstance, String ip) {
+        generateLaunchScript(gameInstance, launcherHelper ->
+                launcherHelper.setQuickPlayOption(new QuickPlayOption.MultiPlayer(ip)));
     }
 
     private static void ensureSelectedAccount(Consumer<Account> action) {
