@@ -849,7 +849,7 @@ public final class LauncherHelper {
         private final LaunchOptions launchOptions;
         private ManagedProcess process;
         private volatile boolean lwjgl;
-        private LogWindow logWindow;
+        private GameLogsHolder logsHolder;
         private final boolean detectWindow;
         private final CircularArrayList<Log> logs;
         private final CountDownLatch launchingLatch;
@@ -872,12 +872,8 @@ public final class LauncherHelper {
             return process;
         }
 
-        public LogWindow getLogWindow() {
-            return logWindow;
-        }
-
-        public CircularArrayList<Log> getLogs() {
-            return logs;
+        public GameLogsHolder getLogsHolder() {
+            return logsHolder;
         }
 
         public HMCLGameInstance getGameInstance() {
@@ -904,11 +900,11 @@ public final class LauncherHelper {
             {
                 CountDownLatch logWindowLatch = new CountDownLatch(1);
                 runLater(() -> {
-                    logWindow = new LogWindow(process, logs);
-                    logWindow.logLine(new Log(Logger.filterForbiddenToken("Command: " + new CommandBuilder().addAll(process.getCommands())), Log4jLevel.INFO));
+                    logsHolder = new GameLogsHolder(process, logs);
+                    logsHolder.logLine(new Log(Logger.filterForbiddenToken("Command: " + new CommandBuilder().addAll(process.getCommands())), Log4jLevel.INFO));
                     if (process.getClasspath() != null)
-                        logWindow.logLine(new Log("ClassPath: " + process.getClasspath(), Log4jLevel.INFO));
-                    if (launcherHelper.showLogs) logWindow.show();
+                        logsHolder.logLine(new Log("ClassPath: " + process.getClasspath(), Log4jLevel.INFO));
+                    if (launcherHelper.showLogs) logsHolder.showWindow();
                     logWindowLatch.countDown();
                 });
 
@@ -920,10 +916,10 @@ public final class LauncherHelper {
                     private void submitLogs() {
                         if (currentLogs.size() == 1) {
                             Log log = currentLogs.get(0);
-                            runLater(() -> logWindow.logLine(log));
+                            runLater(() -> logsHolder.logLine(log));
                         } else {
                             runLater(() -> {
-                                logWindow.logLines(currentLogs);
+                                logsHolder.logLines(currentLogs);
                                 semaphore.release();
                             });
                             semaphore.acquireUninterruptibly();

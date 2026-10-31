@@ -8,7 +8,7 @@ import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.LogWindow;
+import org.jackhuang.hmcl.ui.GameLogsHolder;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.instances.Instances;
 import org.jackhuang.hmcl.util.CircularArrayList;
@@ -74,7 +74,6 @@ public final class GameProcessManager {
     public static final class GameProcessHolder {
 
         private final WeakReference<ManagedProcess> processRef;
-        private WeakReference<LogWindow> logWindowRef;
 
         @SuppressWarnings("FieldCanBeLocal")
         private final WeakListenerHolder holder = new WeakListenerHolder();
@@ -82,16 +81,13 @@ public final class GameProcessManager {
         private final String id;
         private final HMCLGameInstance instance;
 
-        private final CircularArrayList<Log> logs;
-        private final ReadOnlyStringWrapper lastLogLine = new ReadOnlyStringWrapper(null);
+        private final GameLogsHolder logsHolder;
         private final ReadOnlyBooleanWrapper exited = new ReadOnlyBooleanWrapper();
 
         private GameProcessHolder(LauncherHelper.HMCLProcessListener processListener) {
             this.processRef = new WeakReference<>(processListener.getProcess());
-            this.logWindowRef = new WeakReference<>(processListener.getLogWindow());
+            this.logsHolder = processListener.getLogsHolder();
             this.instance = processListener.getGameInstance();
-            this.logs = processListener.getLogs();
-            this.lastLogLine.bind(processListener.getLogWindow().lastLogLineProperty());
             {
                 String id = processListener.getGameInstance().getId().id();
                 int i = idToLaunchedCount.computeIfAbsent(id, k -> 0) + 1;
@@ -111,7 +107,7 @@ public final class GameProcessManager {
         }
 
         public ReadOnlyStringProperty lastLogLineProperty() {
-            return lastLogLine.getReadOnlyProperty();
+            return logsHolder.lastLogLineProperty();
         }
 
         public ReadOnlyBooleanProperty exitedProperty() {
@@ -127,17 +123,7 @@ public final class GameProcessManager {
         }
 
         public void showLogWindow() {
-            LogWindow logWindow;
-            LogWindow cached;
-            if ((cached = logWindowRef.get()) == null) {
-                logWindow = new LogWindow();
-                logWindow.logLines(logs);
-                logWindowRef = new WeakReference<>(logWindow);
-            } else {
-                logWindow = cached;
-            }
-            logWindow.show();
-            logWindow.requestFocus();
+            logsHolder.showWindow();
         }
 
         public void terminate() {
