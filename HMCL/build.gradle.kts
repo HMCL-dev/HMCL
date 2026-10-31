@@ -46,12 +46,18 @@ if (buildNumber != null) {
     }
 } else {
     val shortCommit = System.getenv("GITHUB_SHA")?.lowercase()?.substring(0, 7)
+    val additionalClassifier = System.getenv("ADDITIONAL_CLASSIFIER") ?: ""
+    val suffix = if (additionalClassifier.isBlank()) {
+        "$shortCommit"
+    } else {
+        "$shortCommit-$additionalClassifier"
+    }
     version = if (shortCommit.isNullOrBlank()) {
         "$versionRoot.SNAPSHOT"
     } else if (isOfficial) {
-        "$versionRoot.dev-$shortCommit"
+        "$versionRoot.dev-$suffix"
     } else {
-        "$versionRoot.unofficial-$shortCommit"
+        "$versionRoot.unofficial-$suffix"
     }
 }
 
@@ -398,6 +404,10 @@ tasks.register<JavaExec>("run") {
         logger.quiet("HMCL_JAVA_OPTS: {}", vmOptions)
         logger.quiet("HMCL_JAVA_HOME: {}", hmclJavaHome ?: System.getProperty("java.home"))
     }
+}
+
+tasks.withType<Test> {
+    jvmArgs(addOpens.map { "--add-opens=$it=ALL-UNNAMED" })
 }
 
 // terracotta

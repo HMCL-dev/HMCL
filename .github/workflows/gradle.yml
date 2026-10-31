@@ -9,49 +9,80 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        java: ['17', '25', '27']
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      ADDITIONAL_CLASSIFIER: ${{ matrix.os }}-JDK${{ matrix.java }}
 
     steps:
     - uses: actions/checkout@v6
-    - name: Set up JDK 17
+    - name: Set up JDK
       uses: actions/setup-java@v6
       with:
         distribution: 'liberica'
-        java-version: '17'
+        java-version: ${{ matrix.java }}
         java-package: 'jdk+fx'
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v5
       with:
         cache-cleanup: never
-    - name: Build with Gradle
-      run: xvfb-run --auto-servernum ./gradlew build --no-daemon --parallel
+    - name: Build with Gradle on Ubuntu
+      if: runner.os == 'Linux'
+      run: xvfb-run --auto-servernum ./gradlew build --no-daemon --parallel --stacktrace
       env:
         JAVA_TOOL_OPTIONS: -Djava.awt.headless=true
         MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
         CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
-    - name: Get short SHA
+    - name: Build with Gradle on Windows
+      if: runner.os == 'Windows'
+      run: .\gradlew.bat build --no-daemon --parallel --stacktrace
+      env:
+        JAVA_TOOL_OPTIONS: "-Dhmcl.native.encoding=GB18030"
+        MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
+        CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+    - name: Build with Gradle on macOS
+      if: runner.os == 'macOS'
+      run: ./gradlew build --no-daemon --parallel --stacktrace
+      env:
+        MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
+        CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
+    - if: always()
+      name: Get short SHA
+      shell: bash
       run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+    - if: failure()
+      name: Upload test report
+      uses: actions/upload-artifact@v7
+      with:
+        name: HMCL-test-report-html-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}
+        path: "**/build/reports/tests/test/"
     - name: Upload JAR
       uses: actions/upload-artifact@v7
       with:
-        name: HMCL-${{ env.SHORT_SHA }}-jar
+        name: HMCL-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}-jar
         path: HMCL/build/libs/HMCL-*.jar
         archive: false
     - name: Upload EXE
       uses: actions/upload-artifact@v7
       with:
-        name: HMCL-${{ env.SHORT_SHA }}-exe
+        name: HMCL-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}-exe
         path: HMCL/build/libs/HMCL-*.exe
         archive: false
     - name: Upload SH
       uses: actions/upload-artifact@v7
       with:
-        name: HMCL-${{ env.SHORT_SHA }}-sh
+        name: HMCL-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}-sh
         path: HMCL/build/libs/HMCL-*.sh
         archive: false
     - name: Upload DEB
       uses: actions/upload-artifact@v7
       with:
-        name: HMCL-${{ env.SHORT_SHA }}-deb
+        name: HMCL-${{ env.SHORT_SHA }}-${{ env.ADDITIONAL_CLASSIFIER }}-deb
         path: HMCL/build/libs/HMCL-*.deb
         archive: false
