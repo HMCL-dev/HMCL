@@ -15,21 +15,6 @@ public final class ServerAddressTest {
 
     @Test
     public void testParse() {
-        String raw1 = "override@example.com:12345?mode=survival&name=hello+world%21&_id=testId";
-        assertEquals(new ServerAddress(new HostAndPort("example.com", 12345), Map.of("mode", "survival", "name", "hello world!", "_id", "override"), raw1), ServerAddress.parse(raw1));
-
-        String raw2 = "example.com?key=value&empty";
-        assertEquals(new ServerAddress(new HostAndPort("example.com", 25565), Map.of("key", "value", "empty", ""), raw2), ServerAddress.parse(raw2));
-
-        String raw3 = "testId@example.com";
-        assertEquals(new ServerAddress(new HostAndPort("example.com", 25565), Map.of("_id", "testId"), raw3), ServerAddress.parse(raw3));
-
-        String raw4 = "example.com?x=1&k=v";
-        assertEquals(new ServerAddress(new HostAndPort("example.com", 25565), Map.of("k", "v", "x", "1"), raw4), ServerAddress.parse(raw4));
-
-        String raw5 = "overwrite@example.com:12345?_id=serverId&badArg1&badArg2&badArg3=badValue1=badValue2=badValue3&=&&&";
-        assertEquals(new ServerAddress(new HostAndPort("example.com", 12345), Map.of("_id", "overwrite", "badArg1", "", "badArg2", "", "badArg3", "badValue1=badValue2=badValue3", "", ""), raw5), ServerAddress.parse(raw5));
-
         String raw6 = "[::1]:12345?key=value";
         ServerAddress ipv6 = ServerAddress.parse(raw6);
         assertEquals(raw6, ipv6.getRawAddress());

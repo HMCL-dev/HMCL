@@ -362,24 +362,24 @@ public class DefaultLauncher extends Launcher {
                     String quickPlayMultiplayerArg;
                     if (World.supportQueryArgServerAddress(GameVersionNumber.asGameVersion(gameVersion))) {
                         // keep original address.
-                        quickPlayMultiplayerArg = parsed.getRawAddress();
+                        quickPlayMultiplayerArg = parsed.getRawAddress().trim();
                     } else {
                         if (parsed.hasQueryProperties()) {
                             LOG.warning("Ignore the query parameters in the server address.");
-                            quickPlayMultiplayerArg = parsed.getHostAndPort().toString();
+                            quickPlayMultiplayerArg = (parsed.getUserCharacterAndBeforeContent() + parsed.getHostAndPort()).trim();
                         } else {
                             // keep original address.
-                            quickPlayMultiplayerArg = parsed.getRawAddress();
+                            quickPlayMultiplayerArg = parsed.getRawAddress().trim();
                         }
                     }
 
-                    res.add("--quickPlayMultiplayer");
-                    res.add(quickPlayMultiplayerArg);
+                    res.add("--quickPlayMultiplayer").add(quickPlayMultiplayerArg);
                 } else {
-                    res.add("--server");
-                    res.add(parsed.getHostAndPort().host());
-                    res.add("--port");
-                    res.add(String.valueOf(parsed.getHostAndPort().port()));
+                    String serverArg = (parsed.getUserCharacterAndBeforeContent() + parsed.getHostAndPort().host()).trim();
+                    String portArg = String.valueOf(parsed.getHostAndPort().port());
+
+                    res.add("--server").add(serverArg);
+                    res.add("--port").add(portArg);
 
                     if (parsed.hasQueryProperties()) {
                         LOG.warning("Ignore the query parameters in the server address.");
