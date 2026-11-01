@@ -1507,10 +1507,10 @@ public final class TwoLineListItemLayoutTest {
     /// Verifies tag glyphs are centered within the capsule across fonts, fallback glyphs, and folding.
     @ParameterizedTest
     @ValueSource(strings = {"System", "DejaVu Sans", "Noto Sans CJK SC"})
-    public void testTagGlyphsAreVerticallyCentered(String fontFamily) {
+    public void testTagGlyphsAreCentered(String fontFamily) {
         onFxThread(() -> {
             TwoLineListItem item = new TwoLineListItem("Title", null);
-            item.addTags(List.of("RISC-V 64", "\u96c6\u6210\u663e\u5361", "gyp"));
+            item.addTags(List.of("RISC-V 64", "LoongArch64", "\u96c6\u6210\u663e\u5361", "gyp"));
             item.addTagWarning("Warning");
             VBox parent = new VBox(item);
             parent.setStyle("-fx-font-family: '" + fontFamily + "'; "
@@ -1528,13 +1528,13 @@ public final class TwoLineListItemLayoutTest {
             layout(parent, 160);
             Label summary = collapsedTag(item);
             assertTrue(summary.isVisible());
-            assertEquals("+4", summary.getText());
+            assertEquals("+5", summary.getText());
             assertTagGlyphsCentered(summary);
             assertTrue(summary.getBoundsInParent().getMaxX() <= item.getWidth());
         });
     }
 
-    /// Allows pixel snapping while rejecting unequal space above and below the rendered glyphs.
+    /// Allows pixel snapping while checking visual centering on both axes.
     private static void assertTagGlyphsCentered(Label label) {
         Text text = label.getChildrenUnmodifiable().stream().filter(Text.class::isInstance)
                 .map(Text.class::cast).findFirst().orElseThrow();
@@ -1542,6 +1542,9 @@ public final class TwoLineListItemLayoutTest {
         double top = text.getBoundsInParent().getMinY();
         double bottom = label.getHeight() - text.getBoundsInParent().getMaxY();
         assertEquals(top, bottom, 1.5, "Tag glyphs are not vertically centered: " + label.getText());
+        double left = text.getBoundsInParent().getMinX();
+        double right = label.getWidth() - text.getBoundsInParent().getMaxX();
+        assertEquals(left, right, 1.5, "Tag glyphs are not horizontally centered: " + label.getText());
         assertTrue(top >= -0.5 && bottom >= -0.5, "Tag glyphs extend outside the capsule");
         assertEquals(label.prefWidth(-1), label.getWidth(), 1);
     }

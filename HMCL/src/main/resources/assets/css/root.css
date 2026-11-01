@@ -298,6 +298,7 @@
 }
 
 .tag {
+    -fx-alignment: center;
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
     -fx-background-radius: 999px;
