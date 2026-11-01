@@ -358,22 +358,31 @@ public class DefaultLauncher extends Launcher {
             try {
                 ServerAddress parsed = ServerAddress.parse(address);
                 if (World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
+
                     res.add("--quickPlayMultiplayer");
+                    String quickPlayMultiplayerArg;
                     if (World.supportQueryArgServerAddress(GameVersionNumber.asGameVersion(gameVersion))) {
-                        res.add(parsed.toServerIp(true));
+                        // keep original address.
+                        quickPlayMultiplayerArg = parsed.getRawAddress();
                     } else {
-                        res.add(parsed.toServerIp(false));
-                        if (!parsed.queryProperties().isEmpty()) {
+                        if (parsed.hasQueryProperties()) {
                             LOG.warning("Ignore the query parameters in the server address.");
+                            quickPlayMultiplayerArg = parsed.getHostAndPort().toString();
+                        } else {
+                            // keep original address.
+                            quickPlayMultiplayerArg = parsed.getRawAddress();
                         }
                     }
+
+                    res.add("--quickPlayMultiplayer");
+                    res.add(quickPlayMultiplayerArg);
                 } else {
                     res.add("--server");
-                    res.add(parsed.hostAndPort().host());
+                    res.add(parsed.getHostAndPort().host());
                     res.add("--port");
-                    res.add(String.valueOf(parsed.hostAndPort().port()));
+                    res.add(String.valueOf(parsed.getHostAndPort().port()));
 
-                    if (!parsed.queryProperties().isEmpty()) {
+                    if (parsed.hasQueryProperties()) {
                         LOG.warning("Ignore the query parameters in the server address.");
                     }
                 }

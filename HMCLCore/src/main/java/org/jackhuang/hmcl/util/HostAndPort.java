@@ -4,10 +4,6 @@ package org.jackhuang.hmcl.util;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-
 public record HostAndPort(
         @NotNull String host,
         int port
@@ -73,10 +69,6 @@ public record HostAndPort(
         return new HostAndPort(host, port);
     }
 
-    @NotNull InetSocketAddress createInetSocketAddress() throws UnknownHostException {
-        return new InetSocketAddress(InetAddress.getByName(host), port);
-    }
-
     public boolean equals(@NotNull String host, int port) {
         return host.equals(this.host) && port == this.port;
     }
@@ -94,5 +86,4 @@ public record HostAndPort(
 
         return builder.toString();
     }
-
 }
