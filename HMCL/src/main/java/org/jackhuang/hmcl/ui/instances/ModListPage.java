@@ -18,14 +18,19 @@ import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.AddonLoader;
@@ -66,7 +71,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -722,18 +726,22 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
     private static final Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
 
     private static final class ModInfoListCell extends MDListCell<ModInfoObject> {
+        private static final PseudoClass ACTIVE = PseudoClass.getPseudoClass("active");
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
         private final ModListPage page;
 
-        private final JFXCheckBox checkBox = new JFXCheckBox();
+        private final StackPane iconContainer;
         private final ImageContainer imageContainer = new ImageContainer(32);
+        private final ColorAdjust iconColorAdjust = new ColorAdjust();
+        private final Circle activeIndicator = new Circle(6);
+
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
-        private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
+        private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
 
-        private final InvalidationListener activeListener = obs -> checkBox.setSelected(getItem().getModInfo().isActive());
+        private final InvalidationListener activeListener = obs -> updateActiveState(getItem().getModInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
@@ -753,10 +761,30 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             setSelectable();
 
             imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
+            imageContainer.setEffect(iconColorAdjust);
+
+            activeIndicator.getStyleClass().add("mod-active-indicator");
+            activeIndicator.setMouseTransparent(true);
+
+            content.setPadding(new Insets(0, 0, 0, 3));
+            content.setEffect(iconColorAdjust);
+
+            iconContainer = new StackPane(imageContainer, activeIndicator);
+            iconContainer.setCursor(Cursor.HAND);
+            iconContainer.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+                if (event.getButton() == MouseButton.PRIMARY) event.consume();
+            });
+
+            StackPane.setAlignment(activeIndicator, Pos.BOTTOM_RIGHT);
+            StackPane.setMargin(activeIndicator, new Insets(0, -6, 3, 0));
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
-            container.getChildren().setAll(checkBox, imageContainer, content, restoreButton, revealButton, infoButton);
+            HBox actions = new HBox();
+            actions.setAlignment(Pos.CENTER);
+            actions.getChildren().setAll(restoreButton, revealButton, infoButton);
+
+            container.getChildren().setAll(iconContainer, content, actions);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -769,6 +797,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 observedActiveProperty.removeListener(weakActiveListener);
 
             pseudoClassStateChanged(WARNING, false);
+            activeIndicator.pseudoClassStateChanged(WARNING, false);
             if (warningTooltip != null) {
                 Tooltip.uninstall(this, warningTooltip);
                 warningTooltip = null;
@@ -832,15 +861,19 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             content.getTags().setAll(tags);
 
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
-            checkBox.setSelected(modInfo.isActive());
-            checkBox.setOnAction(event -> {
+            updateActiveState(modInfo.isActive());
+            iconContainer.setOnMouseClicked(event -> {
+                if (event.getButton() != MouseButton.PRIMARY) {
+                    return;
+                }
+
                 try {
-                    modInfo.setActive(checkBox.isSelected());
+                    modInfo.setActive(!modInfo.isActive());
                 } catch (IOException e) {
                     LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
                     Controllers.showToast(i18n("mods.toggle.failed"));
                 } finally {
-                    checkBox.setSelected(modInfo.isActive());
+                    updateActiveState(modInfo.isActive());
                 }
             });
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
@@ -859,6 +892,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             if (!warning.isEmpty()) {
                 pseudoClassStateChanged(WARNING, true);
+                activeIndicator.pseudoClassStateChanged(WARNING, true);
 
                 //noinspection ConstantValue
                 this.warningTooltip = warning.size() == 1
@@ -866,6 +900,16 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         : new Tooltip(String.join("\n", warning));
                 FXUtils.installFastTooltip(this, warningTooltip);
             }
+        }
+
+        private void updateActiveState(boolean active) {
+            iconColorAdjust.setSaturation(active ? 0.0 : -0.75);
+            iconColorAdjust.setBrightness(active ? 0.0 : -0.50);
+            activeIndicator.pseudoClassStateChanged(ACTIVE, active);
+            FXUtils.installFastTooltip(
+                iconContainer,
+                i18n(active ? "mods.disable" : "mods.enable")
+            );
         }
     }
 }
