@@ -37,7 +37,7 @@ final class JarVersionDetector {
     }
 
     /// Maps binary SHA-1 hashes to the first corresponding version identifier in the CSV.
-    private static final @Unmodifiable Map<ByteArrayKey, String> VERSIONS = loadKnownVersions();
+    static final @Unmodifiable Map<ByteArrayKey, String> VERSIONS = loadKnownVersions();
 
     /// Reads the embedded client hash table into an immutable hash-to-version mapping.
     /// Ignores blank lines and comment lines beginning with `#`.

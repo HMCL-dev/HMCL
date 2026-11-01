@@ -83,7 +83,6 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         return version != null ? asGameVersion(version) : null;
     }
 
-
     public static @Unmodifiable Map<ByteArrayKey, String> getKnownVersions() {
         return JarVersionDetector.VERSIONS;
     }
