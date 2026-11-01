@@ -313,7 +313,7 @@
 }
 
 .tag > .text {
-    -fx-bounds-type: visual;
+    -fx-bounds-type: logical_vertical_center;
 }
 
 .two-line-item-second-large {
