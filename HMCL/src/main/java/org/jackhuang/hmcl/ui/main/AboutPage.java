@@ -166,7 +166,7 @@ public final class AboutPage extends SpinnerPane {
             var java = new LinePane();
             java.setLargeTitle(true);
             java.setLeading(SVG.LOCAL_CAFE.createIcon(32));
-            java.setTitle(i18n("about.runtime.java"));
+            java.setTitle("Java");
             java.setSubtitle("%s, %s, %s".formatted(
                     Runtime.version().toString(),
                     System.getProperty("java.vm.name"),
