@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.*;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 
@@ -69,6 +70,45 @@ public final class ProxyManager {
                 return null;
         } else
             return null;
+    }
+
+    /// Returns the address of the manually configured proxy.
+    ///
+    /// The returned address is unresolved, so this method never performs DNS resolution.
+    ///
+    /// @return the configured proxy address, or `null` when the current proxy mode does not use
+    ///         a custom address or the configured address is invalid
+    public static @Nullable InetSocketAddress getCustomProxyAddress() {
+        ProxyType proxyType = settings().proxyTypeProperty().get();
+        if (!proxyType.usesCustomAddress()) {
+            return null;
+        }
+
+        @Nullable String host = settings().proxyHostProperty().get();
+        int port = settings().proxyPortProperty().get();
+
+        if (StringUtils.isBlank(host) || port < 0 || port > 0xFFFF) {
+            return null;
+        }
+
+        return InetSocketAddress.createUnresolved(Objects.requireNonNull(host), port);
+    }
+
+    /// Tests whether a TCP connection can be established with the given proxy address.
+    ///
+    /// Only the initial TCP handshake is tested; proxy authentication and tunneling are not checked.
+    ///
+    /// @param address the proxy address to test
+    /// @param timeout the maximum time to wait for the connection
+    /// @return `true` if the proxy accepted the TCP connection, `false` otherwise
+    public static boolean isProxyReachable(InetSocketAddress address, Duration timeout) {
+        try (Socket socket = new Socket()) {
+            socket.connect(address, (int) timeout.toMillis());
+            return true;
+        } catch (IOException e) {
+            LOG.warning("Failed to connect to proxy " + address, e);
+            return false;
+        }
     }
 
     /// Installs proxy and authentication handlers backed by launcher settings.
