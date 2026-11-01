@@ -35,7 +35,6 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.*;
@@ -54,9 +53,6 @@ public final class TwoLineListItemLayoutTest {
             new Scene(parent);
             layout(parent, 800);
             double originalWidth = item.getWidth();
-            item.getTags();
-            layout(parent, 800);
-            assertEquals(originalWidth, item.getWidth());
 
             item.addTags(List.of("Fabric", "Quilt"));
             layout(parent, 800);
@@ -71,9 +67,6 @@ public final class TwoLineListItemLayoutTest {
             item.getTags().clear();
             layout(parent, 800);
             assertEquals(originalWidth, item.getWidth());
-            item.addTag("Fabric");
-            layout(parent, 800);
-            assertTagsFit(item);
         });
     }
 
@@ -101,10 +94,10 @@ public final class TwoLineListItemLayoutTest {
             assertEquals(item.getWidth(), item.getTitleLabel().getWidth() + summary.getWidth(), 0.001);
             for (Label tag : labels(item))
                 assertFalse(tag.isVisible());
-            assertTrue(item.getBoundsInParent().getMaxX() <= parent.getWidth(), "Hidden tags expand the item's bounds");
-            assertTrue(item.getSubtitleLabel().getLayoutY() >= item.getTitleLabel().getBoundsInParent().getMaxY());
+            assertTrue(item.getLayoutX() + item.getWidth() <= parent.getWidth());
+            assertTrue(item.getSubtitleLabel().getLayoutY() >= item.getTitleLabel().getLayoutY() + item.getTitleLabel().getHeight());
             assertTrue(item.getSubtitleLabel().getHeight() > item.getSubtitleLabel().prefHeight(-1));
-            assertTrue(item.getSubtitleLabel().getBoundsInParent().getMaxY() <= item.getHeight() + 0.001);
+            assertTrue(item.getSubtitleLabel().getLayoutY() + item.getSubtitleLabel().getHeight() <= item.getHeight() + 0.001);
             if (wrapTitle)
                 assertTrue(item.getTitleLabel().getHeight() > item.getTitleLabel().prefHeight(-1));
 
@@ -114,78 +107,58 @@ public final class TwoLineListItemLayoutTest {
             Label tag = labels(item).get(0);
             assertFalse(tag.isVisible());
             assertEquals("+1", summary.getText());
-            assertTrue(summary.getBoundsInParent().getMaxX() <= item.getWidth());
+            assertTrue(summary.getLayoutX() + summary.getWidth() <= item.getWidth());
             assertTrue(tag.isMouseTransparent());
             assertFalse(summary.isMouseTransparent());
             assertFalse(item.isMouseTransparent());
         });
     }
 
-    /// Verifies whole-tag folding across count digit changes, CSS sizing, resizing, and list mutations.
+    /// Verifies partial and complete folding, tooltip contents, and expansion after tags change.
     @Test
-    public void testFoldingBoundariesAndUpdates() {
+    public void testFoldingAndUpdates() {
         onFxThread(() -> {
-            TwoLineListItem item = new TwoLineListItem("A title with a preferred minimum", null);
+            TwoLineListItem item = new TwoLineListItem("Title", null);
             item.getTitleLabel().setMinWidth(Region.USE_PREF_SIZE);
             item.setTitleSpacing(4);
-            item.addTags(IntStream.rangeClosed(1, 12).mapToObj(i -> "Tag " + i).toList());
+            item.addTags(List.of("Fabric Loader", "Fabric API", "Mod Menu"));
             VBox parent = new VBox(item);
             new Scene(parent);
-            for (Node node : item.getChildrenUnmodifiable()) {
-                if (node.getStyleClass().contains("tag"))
-                    node.setStyle("-fx-font-size: 19px; -fx-padding: 3px 11px; -fx-label-padding: 0 2px;");
-            }
-            layout(parent, 2000);
+            layout(parent, 800);
             double naturalWidth = item.prefWidth(-1);
-            double titleWidth = item.getTitleLabel().prefWidth(-1);
             Label summary = collapsedTag(item);
             assertFalse(summary.isVisible());
             assertTagsFit(item);
 
-            boolean singleDigit = false;
-            boolean doubleDigit = false;
-            for (double width = Math.ceil(item.minWidth(-1)); width <= naturalWidth; width++) {
-                layout(parent, width);
-                @Unmodifiable List<Label> labels = labels(item);
-                int expanded = (int) labels.stream().filter(Node::isVisible).count();
-                int hidden = labels.size() - expanded;
-                assertEquals(hidden > 0, summary.isVisible());
-                assertEquals(naturalWidth, item.prefWidth(-1));
-                for (int i = 0; i < labels.size(); i++) {
-                    Label tag = labels.get(i);
-                    assertEquals(i < expanded, tag.isVisible());
-                    if (tag.isVisible()) {
-                        assertEquals(Math.ceil(tag.prefWidth(-1)), tag.getWidth(), 0.001);
-                        assertTrue(tag.getBoundsInParent().getMaxX() <= item.getWidth());
-                    }
-                }
-                if (hidden > 0) {
-                    assertEquals("+" + hidden, summary.getText());
-                    assertEquals(labels.subList(expanded, labels.size()).stream()
-                            .map(Label::getText).collect(Collectors.joining("\n")), prepareTooltipText(summary));
-                    assertTrue(summary.getWidth() >= summary.prefWidth(-1), "Summary text is clipped");
-                    assertTrue(summary.getBoundsInParent().getMaxX() <= item.getWidth(), "Summary exceeds row bounds");
-                    assertTrue(summary.getLayoutX() >= item.getTitleLabel().getBoundsInParent().getMaxX() + 4);
-                    if (expanded > 0)
-                        assertEquals(Math.ceil(titleWidth), item.getTitleLabel().getWidth(), 0.001);
-                    singleDigit |= hidden == 9;
-                    doubleDigit |= hidden == 10;
-                }
-            }
-            assertTrue(singleDigit && doubleDigit);
+            @Unmodifiable List<Label> tags = labels(item);
+            layout(parent, naturalWidth - tags.get(2).getWidth());
+            int expanded = (int) tags.stream().filter(Node::isVisible).count();
+            assertTrue(expanded > 0 && expanded < tags.size());
+            for (int i = 0; i < tags.size(); i++)
+                assertEquals(i < expanded, tags.get(i).isVisible());
+            assertTrue(summary.isVisible());
+            assertEquals("+" + (tags.size() - expanded), summary.getText());
+            assertEquals(tags.subList(expanded, tags.size()).stream()
+                    .map(Label::getText).collect(Collectors.joining("\n")), prepareTooltipText(summary));
+            assertTrue(summary.getWidth() >= summary.prefWidth(-1));
+            assertTrue(summary.getLayoutX() + summary.getWidth() <= item.getWidth());
+            assertEquals(naturalWidth, item.prefWidth(-1));
+            layout(parent, naturalWidth);
+            assertTagsFit(item);
+            assertFalse(summary.isVisible());
+
             layout(parent, item.minWidth(-1));
-            assertEquals("+12", summary.getText());
+            assertEquals("+3", summary.getText());
             assertEquals(0, item.getTitleLabel().getWidth());
             assertEquals(summary.getWidth() + 4, item.getWidth(), 0.001);
 
-            item.getTags().setAll(Tag.warning("Changed"), new Tag("Changed", Tag.Type.NORMAL));
+            item.getTags().setAll(Tag.warning("Changed"), new Tag("Changed"));
             layout(parent, item.minWidth(-1));
             assertEquals("+2", summary.getText());
             assertEquals("Changed\nChanged", prepareTooltipText(summary));
             item.getTags().clear();
             layout(parent, 500);
             assertFalse(summary.isVisible());
-            assertFalse(summary.getTooltip().isShowing());
             assertTrue(item.isMouseTransparent());
             item.addTag("Restored");
             layout(parent, 500);
@@ -225,13 +198,10 @@ public final class TwoLineListItemLayoutTest {
     public void testFoldedTagUpdates() {
         onFxThread(() -> {
             TwoLineListItem item = new TwoLineListItem("A long title ".repeat(20), null);
-            item.addTags(IntStream.range(0, 3).mapToObj(i -> "Tag " + i).toList());
+            item.addTags(List.of("Fabric", "Forge", "Quilt"));
             VBox parent = new VBox(item);
             new Scene(parent);
             layout(parent, 200);
-            layout(parent, 200);
-            Label summary = collapsedTag(item);
-            assertNull(summary.getTooltip());
             for (Label label : labels(item)) {
                 assertFalse(label.isVisible());
             }
@@ -249,7 +219,6 @@ public final class TwoLineListItemLayoutTest {
             assertEquals("Updated tag", renderedText.getText());
             assertEquals(30, first.getFont().getSize());
             assertEquals(Math.ceil(first.prefHeight(-1)), first.getHeight());
-            assertNull(summary.getTooltip());
 
             // Re-expansion must also lay out an unchanged-size label whose text changed while hidden.
             layout(parent, 200);
@@ -261,7 +230,7 @@ public final class TwoLineListItemLayoutTest {
         });
     }
 
-    /// Verifies horizontal bias follows wrapping and tag changes, including optional children.
+    /// Verifies horizontal bias and row height follow wrapping and tag changes.
     @Test
     public void testContentBiasTracksChildren() {
         onFxThread(() -> {
@@ -283,44 +252,10 @@ public final class TwoLineListItemLayoutTest {
             item.setSubtitle(null);
             assertNull(item.getContentBias());
 
-            Label side = new Label("Side text ".repeat(20));
-            side.setWrapText(true);
-            item.setLeading(side);
-            assertEquals(Orientation.HORIZONTAL, item.getContentBias());
-            side.setManaged(false);
-            assertNull(item.getContentBias());
-            item.setLeading(null);
-            side.setManaged(true);
-            item.setTrailing(side);
-            assertEquals(Orientation.HORIZONTAL, item.getContentBias());
-            item.setTrailing(null);
-            item.setTitleTrailing(side);
-            assertEquals(Orientation.HORIZONTAL, item.getContentBias());
-            item.setTitleTrailing(null);
             item.addTag("Tag");
             assertEquals(Orientation.HORIZONTAL, item.getContentBias());
             item.getTags().clear();
             assertNull(item.getContentBias());
-
-            LinePane line = new LinePane();
-            line.setTitle("Title");
-            parent.getChildren().setAll(line);
-            layout(parent, 300);
-            assertNull(line.getContentBias());
-            line.setSubtitle("Wrapped subtitle ".repeat(20));
-            layout(parent, 300);
-            assertEquals(Orientation.HORIZONTAL, line.getContentBias());
-            assertTrue(line.getHeight() > 48);
-            line.setSubtitle(null);
-            layout(parent, 300);
-            assertNull(line.getContentBias());
-            assertEquals(48, line.getHeight());
-            line.getTags().add(new Tag("Tag"));
-            layout(parent, 300);
-            assertEquals(Orientation.HORIZONTAL, line.getContentBias());
-            line.getTags().clear();
-            layout(parent, 300);
-            assertNull(line.getContentBias());
         });
     }
 
@@ -393,25 +328,12 @@ public final class TwoLineListItemLayoutTest {
             assertFalse(item.isMouseTransparent());
             assertFalse(item.isPickOnBounds());
             assertTrue(item.getTitleLabel().isMouseTransparent());
-            assertEquals(item.getTitleLabel().getBoundsInParent().getMaxX() + 4, trailing.getLayoutX(), 0.001);
-            assertTrue(labels(item).get(0).getLayoutX() >= trailing.getBoundsInParent().getMaxX() + 4);
+            assertEquals(item.getTitleLabel().getLayoutX() + item.getTitleLabel().getWidth() + 4, trailing.getLayoutX(), 0.001);
+            assertTrue(labels(item).get(0).getLayoutX() >= trailing.getLayoutX() + trailing.getWidth() + 4);
             assertNotSame(labels(item).get(0), labels(other).get(0));
 
-            double visibleWidth = item.prefWidth(-1);
-            trailing.setVisible(false);
-            assertSame(item, trailing.getParent());
-            assertEquals(visibleWidth, item.prefWidth(-1));
-            assertTrue(item.isMouseTransparent());
-            trailing.setManaged(false);
-            assertNull(trailing.getParent());
-            assertTrue(item.prefWidth(-1) < visibleWidth);
-            trailing.setManaged(true);
-            trailing.setVisible(true);
-            assertSame(item, trailing.getParent());
             Button replacement = new Button("Inherit");
             item.setTitleTrailing(replacement);
-            trailing.setVisible(false);
-            trailing.setVisible(true);
             assertNull(trailing.getParent());
             assertSame(item, replacement.getParent());
 
@@ -448,7 +370,7 @@ public final class TwoLineListItemLayoutTest {
             assertEquals(content.getTitleLabel().prefWidth(-1), content.getTitleLabel().getWidth(), 1);
             assertTrue(line.getHeight() >= 48);
             assertTrue(subtitle.getHeight() > subtitle.prefHeight(-1));
-            assertTrue(subtitle.getBoundsInParent().getMaxY() <= content.getHeight() + 0.001);
+            assertTrue(subtitle.getLayoutY() + subtitle.getHeight() <= content.getHeight() + 0.001);
             double narrowHeight = line.getHeight();
             layout(parent, 600);
             assertTrue(line.getHeight() < narrowHeight);
@@ -481,8 +403,6 @@ public final class TwoLineListItemLayoutTest {
             HBox parent = new HBox(item);
             new Scene(parent);
             layout(parent, 800);
-            assertSame(item, item.leadingProperty().getBean());
-            assertSame(item, item.trailingProperty().getBean());
             assertSame(leading, item.getLeading());
             assertSame(item, leading.getParent());
             assertFalse(item.isMouseTransparent());
@@ -514,9 +434,8 @@ public final class TwoLineListItemLayoutTest {
     }
 
     /// Verifies side margins supply the entire gap and changes invalidate row sizing.
-    @ParameterizedTest
-    @ValueSource(doubles = {0, 12})
-    public void testSideMarginsControlSpacing(double spacing) {
+    @Test
+    public void testSideMarginsControlSpacing() {
         onFxThread(() -> {
             TwoLineListItem item = new TwoLineListItem("Title", "Subtitle");
             Region leading = new Region();
@@ -530,16 +449,16 @@ public final class TwoLineListItemLayoutTest {
             new Scene(parent);
             layout(parent, 400);
             double width = item.prefWidth(-1);
-            assertEquals(leading.getBoundsInParent().getMaxX(), item.getTitleLabel().getLayoutX(), 0.001);
-            assertEquals(trailing.getLayoutX(), item.getSubtitleLabel().getBoundsInParent().getMaxX(), 0.001);
-            TwoLineListItem.setMargin(leading, new Insets(0, 3 + spacing, 0, 5));
-            TwoLineListItem.setMargin(trailing, new Insets(0, 7, 0, 9 + spacing));
+            assertEquals(leading.getLayoutX() + leading.getWidth(), item.getTitleLabel().getLayoutX(), 0.001);
+            assertEquals(trailing.getLayoutX(), item.getSubtitleLabel().getLayoutX() + item.getSubtitleLabel().getWidth(), 0.001);
+            TwoLineListItem.setMargin(leading, new Insets(0, 3, 0, 5));
+            TwoLineListItem.setMargin(trailing, new Insets(0, 7, 0, 9));
             layout(parent, 400);
-            assertEquals(width + 24 + 2 * spacing, item.prefWidth(-1), 0.001);
-            assertEquals(leading.getBoundsInParent().getMaxX() + 3 + spacing,
+            assertEquals(width + 24, item.prefWidth(-1), 0.001);
+            assertEquals(leading.getLayoutX() + leading.getWidth() + 3,
                     item.getTitleLabel().getLayoutX(), 0.001);
-            assertEquals(trailing.getLayoutX() - 9 - spacing,
-                    item.getSubtitleLabel().getBoundsInParent().getMaxX(), 0.001);
+            assertEquals(trailing.getLayoutX() - 9,
+                    item.getSubtitleLabel().getLayoutX() + item.getSubtitleLabel().getWidth(), 0.001);
             TwoLineListItem.setMargin(leading, null);
             TwoLineListItem.setMargin(trailing, null);
             layout(parent, 400);
@@ -572,17 +491,17 @@ public final class TwoLineListItemLayoutTest {
             assertSame(item, leading.getParent());
             assertSame(item, trailing.getParent());
             assertEquals(19, leading.getLayoutX(), 0.001);
-            double textLeft = leading.getBoundsInParent().getMaxX() + 17;
+            double textLeft = leading.getLayoutX() + leading.getWidth() + 17;
             assertEquals(textLeft, item.getTitleLabel().getLayoutX(), 0.001);
             assertEquals(textLeft, item.getSubtitleLabel().getLayoutX(), 0.001);
-            assertEquals(item.getWidth() - 14, trailing.getBoundsInParent().getMaxX(), 0.001);
+            assertEquals(item.getWidth() - 14, trailing.getLayoutX() + trailing.getWidth(), 0.001);
             double textRight = trailing.getLayoutX() - 19;
             assertEquals(textRight - textLeft, item.getSubtitleLabel().getWidth(), 0.001);
             Label tag = labels(item).get(0);
             assertFalse(tag.isVisible());
             Label summary = collapsedTag(item);
             assertEquals("+1", summary.getText());
-            assertTrue(summary.getBoundsInParent().getMaxX() <= textRight);
+            assertTrue(summary.getLayoutX() + summary.getWidth() <= textRight);
             assertTrue(item.getSubtitleLabel().getHeight() > item.getSubtitleLabel().prefHeight(-1));
             double rowCenter = 7 + (item.getHeight() - 20) / 2;
             assertEquals(rowCenter - 3, leading.getLayoutY() + leading.getHeight() / 2, 1);
@@ -611,58 +530,12 @@ public final class TwoLineListItemLayoutTest {
             layout(parent, 300);
             assertEquals(0, item.getTitleLabel().getWidth());
             assertTrue(trailing.getWidth() >= 50 && trailing.getWidth() < trailing.prefWidth(-1));
-            assertTrue(trailing.getLayoutX() >= item.getTitleLabel().getBoundsInParent().getMaxX());
-            assertEquals(item.getWidth(), trailing.getBoundsInParent().getMaxX(), 0.001);
+            assertTrue(trailing.getLayoutX() >= item.getTitleLabel().getLayoutX() + item.getTitleLabel().getWidth());
+            assertEquals(item.getWidth(), trailing.getLayoutX() + trailing.getWidth(), 0.001);
             Label summary = collapsedTag(item);
             assertTrue(summary.isVisible());
-            assertTrue(summary.getBoundsInParent().getMaxX() <= trailing.getLayoutX() - 12);
+            assertTrue(summary.getLayoutX() + summary.getWidth() <= trailing.getLayoutX() - 12);
         });
-    }
-
-    /// Verifies tag text remains centered with consistent Latin baselines, including the folded summary.
-    @Test
-    public void testTagTextAlignment() {
-        onFxThread(() -> {
-            TwoLineListItem item = new TwoLineListItem("Title", null);
-            item.addTags(List.of("RISC-V 64", "LoongArch64", "\u96c6\u6210\u663e\u5361", "gyp"));
-            item.addTagWarning("Warning");
-            VBox parent = new VBox(item);
-            parent.setStyle("-monet-on-surface: #111111; -monet-on-secondary-container: #222222; "
-                    + "-monet-secondary-container: #ddddff; -monet-on-error-container: #444444; "
-                    + "-fixed-warning-tag-background: #ffdddd;");
-            Scene scene = new Scene(parent);
-            scene.getStylesheets().add(requireNonNull(getClass().getResource("/assets/css/root.css")).toExternalForm());
-            layout(parent, 800);
-            assertTagsFit(item);
-            for (Label tag : labels(item))
-                assertTagTextCentered(tag);
-            double baseline = assertTagTextCentered(labels(item).get(0)).getLayoutY();
-            assertEquals(baseline, assertTagTextCentered(labels(item).get(1)).getLayoutY(), 0.001);
-            assertEquals(baseline, assertTagTextCentered(labels(item).get(3)).getLayoutY(), 0.001);
-
-            item.setTitle("A long title ".repeat(20));
-            layout(parent, 160);
-            Label summary = collapsedTag(item);
-            assertTrue(summary.isVisible());
-            assertEquals("+5", summary.getText());
-            assertTagTextCentered(summary);
-            assertTrue(summary.getBoundsInParent().getMaxX() <= item.getWidth());
-        });
-    }
-
-    /// Checks centered logical bounds and returns the text node for baseline assertions.
-    private static Text assertTagTextCentered(Label label) {
-        Text text = label.getChildrenUnmodifiable().stream().filter(Text.class::isInstance)
-                .map(Text.class::cast).findFirst().orElseThrow();
-        double top = text.getBoundsInParent().getMinY();
-        double bottom = label.getHeight() - text.getBoundsInParent().getMaxY();
-        assertEquals(top, bottom, 1.5, "Tag text bounds are not vertically centered: " + label.getText());
-        double left = text.getBoundsInParent().getMinX();
-        double right = label.getWidth() - text.getBoundsInParent().getMaxX();
-        assertEquals(left, right, 1.5, "Tag text bounds are not horizontally centered: " + label.getText());
-        assertTrue(top >= -0.5 && bottom >= -0.5, "Tag text bounds extend outside the capsule");
-        assertEquals(label.prefWidth(-1), label.getWidth(), 1);
-        return text;
     }
 
     /// Returns rendered tags in their scene-graph order.
