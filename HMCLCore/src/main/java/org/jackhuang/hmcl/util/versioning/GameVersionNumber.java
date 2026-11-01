@@ -83,6 +83,17 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         return version != null ? asGameVersion(version) : null;
     }
 
+    /// Returns the immutable mapping from binary client JAR SHA-1 hashes to version identifiers.
+    /// The mapping is loaded once from `/assets/game/client-sha1.csv` and shared between calls.
+    /// It contains only the versions recorded in that resource; an absent hash does not imply
+    /// that the JAR is not a Minecraft client. If multiple records share a hash, the first valid
+    /// record determines its version identifier.
+    ///
+    /// Invalid records are logged and skipped. If reading or closing the resource fails with
+    /// an I/O error, the failure is logged and an empty mapping is retained.
+    ///
+    /// @return the shared immutable hash-to-version mapping, possibly empty
+    /// @throws ExceptionInInitializerError if initialization fails because the resource is missing
     public static @Unmodifiable Map<ByteArrayKey, String> getKnownVersions() {
         return JarVersionDetector.VERSIONS;
     }
