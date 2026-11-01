@@ -16,11 +16,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.SoftReference;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -364,7 +360,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
                 || ".+\\".indexOf(ch) >= 0;
     }
 
-    /// Removes supported separators and pictographs from a secondary name.
+    /// Removes supported separators from a secondary name.
     /// Returns an empty string for null, blank or unsupported names; matching is case-sensitive.
     private static String cleanSubname(@Nullable String subname) {
         if (StringUtils.isBlank(subname))
@@ -389,8 +385,7 @@ public abstract class AddonProjectInfoRegistry<I extends AddonProjectInfo> {
             if (isSupportedSubnameChar(ch)) {
                 builder.appendCodePoint(ch);
             } else if (!(Character.isWhitespace(ch)
-                    || "':_-/&()[]{}|,!?~•".indexOf(ch) >= 0
-                    || ch >= 0x1F300 && ch <= 0x1FAFF)) {
+                    || "':_-/&()[]{}|,!?~•".indexOf(ch) >= 0)) {
                 return "";
             }
             offset += Character.charCount(ch);
