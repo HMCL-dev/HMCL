@@ -766,6 +766,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             activeIndicator.getStyleClass().add("mod-active-indicator");
             activeIndicator.setMouseTransparent(true);
 
+            content.setEffect(iconColorAdjust);
+
             iconContainer = new StackPane(imageContainer, activeIndicator);
 
             StackPane.setAlignment(activeIndicator, Pos.BOTTOM_RIGHT);
