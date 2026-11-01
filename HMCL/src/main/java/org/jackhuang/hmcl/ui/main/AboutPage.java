@@ -31,7 +31,7 @@ import java.util.List;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Displays launcher, system hardware, and project information.
+/// Displays launcher, system, device, runtime, and project information.
 @NotNullByDefault
 public final class AboutPage extends SpinnerPane {
 
@@ -58,45 +58,53 @@ public final class AboutPage extends SpinnerPane {
             about.getContent().setAll(launcher);
         }
 
-        ComponentList environment = new ComponentList();
+        ComponentList systemInfo = new ComponentList();
         {
             var system = new LinePane();
             system.setLargeTitle(true);
             system.setLeading(SVG.LUCIDE_APP_WINDOW.createIcon(32));
-            system.setTitle(i18n("about.environment.system"));
+            system.setTitle(i18n("about.system.os"));
             system.setSubtitle((OperatingSystem.OS_RELEASE_PRETTY_NAME == null
                     ? "%s %s (%s)".formatted(OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion(), Architecture.SYSTEM_ARCH.getDisplayName())
                     : "%s (%s %s, %s)".formatted(OperatingSystem.OS_RELEASE_PRETTY_NAME, OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion(), Architecture.SYSTEM_ARCH.getDisplayName())));
-            environment.getContent().add(system);
+            systemInfo.getContent().add(system);
 
-            if (SystemInfo.getTotalMemorySize() > 0) {
-                var memory = new LinePane();
-                memory.setLargeTitle(true);
-                memory.setLeading(SVG.LUCIDE_MEMORY_STICK.createIcon(32));
-                memory.setTitle(i18n("about.environment.memory"));
-                memory.setSubtitle("%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
-                environment.getContent().add(memory);
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+                @Nullable String desktopName = System.getenv("XDG_CURRENT_DESKTOP");
+                if (desktopName == null || desktopName.isBlank())
+                    desktopName = System.getenv("XDG_SESSION_DESKTOP");
+                if (desktopName != null && !desktopName.isBlank()) {
+                    var desktop = new LinePane();
+                    desktop.setLargeTitle(true);
+                    desktop.setLeading(SVG.LUCIDE_APP_WINDOW.createIcon(32));
+                    desktop.setTitle(i18n("about.system.desktop"));
+                    desktop.setSubtitle(desktopName.strip());
+                    systemInfo.getContent().add(desktop);
+                }
             }
+        }
 
+        ComponentList deviceInfo = new ComponentList();
+        {
             @Unmodifiable List<CentralProcessor> processors = SystemInfo.getCentralProcessors();
             for (int i = 0; i < processors.size(); i++) {
                 String title = processors.size() == 1
-                        ? i18n("about.environment.cpu")
-                        : i18n("about.environment.cpu.n", i + 1);
+                        ? i18n("about.device.cpu")
+                        : i18n("about.device.cpu.n", i + 1);
                 CentralProcessor processor = processors.get(i);
                 String name = processor.getName();
                 @Nullable CentralProcessor.Cores cores = processor.getCores();
                 String subtitle;
                 if (cores == null)
-                    subtitle = i18n("about.environment.cpu.name", name);
+                    subtitle = i18n("about.device.cpu.name", name);
                 else if (cores.efficiency() > 0) {
                     subtitle = cores.logical() == cores.physical()
-                            ? i18n("about.environment.cpu.name.cores.hybrid", name, cores.performance(), cores.efficiency())
-                            : i18n("about.environment.cpu.name.cores.hybrid.threads", name, cores.performance(), cores.efficiency(), cores.logical());
+                            ? i18n("about.device.cpu.name.cores.hybrid", name, cores.performance(), cores.efficiency())
+                            : i18n("about.device.cpu.name.cores.hybrid.threads", name, cores.performance(), cores.efficiency(), cores.logical());
                 } else {
                     subtitle = cores.logical() == cores.physical()
-                            ? i18n("about.environment.cpu.name.cores", name, cores.physical())
-                            : i18n("about.environment.cpu.name.cores.threads", name, cores.physical(), cores.logical());
+                            ? i18n("about.device.cpu.name.cores", name, cores.physical())
+                            : i18n("about.device.cpu.name.cores.threads", name, cores.physical(), cores.logical());
                 }
 
                 var pane = new LinePane();
@@ -104,7 +112,16 @@ public final class AboutPage extends SpinnerPane {
                 pane.setTitle(title);
                 pane.setSubtitle(subtitle);
                 pane.setLeading(SVG.LUCIDE_CPU.createIcon(32));
-                environment.getContent().add(pane);
+                deviceInfo.getContent().add(pane);
+            }
+
+            if (SystemInfo.getTotalMemorySize() > 0) {
+                var memory = new LinePane();
+                memory.setLargeTitle(true);
+                memory.setLeading(SVG.LUCIDE_MEMORY_STICK.createIcon(32));
+                memory.setTitle(i18n("about.device.memory"));
+                memory.setSubtitle("%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
+                deviceInfo.getContent().add(memory);
             }
 
             @Unmodifiable List<GraphicsCard> visibleGraphicsCards = SystemInfo.getGraphicsCards().stream()
@@ -116,8 +133,8 @@ public final class AboutPage extends SpinnerPane {
                 GraphicsCard graphicsCard = visibleGraphicsCards.get(i);
 
                 String title = visibleGraphicsCards.size() == 1
-                        ? i18n("about.environment.gpu")
-                        : i18n("about.environment.gpu.n", i + 1);
+                        ? i18n("about.device.gpu")
+                        : i18n("about.device.gpu.n", i + 1);
 
                 var button = new LinePane();
                 button.setLargeTitle(true);
@@ -126,25 +143,28 @@ public final class AboutPage extends SpinnerPane {
 
                 button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
 
-                environment.getContent().add(button);
+                deviceInfo.getContent().add(button);
             }
+        }
 
+        ComponentList runtimeInfo = new ComponentList();
+        {
             var java = new LinePane();
             java.setLargeTitle(true);
             java.setLeading(SVG.LOCAL_CAFE.createIcon(32));
-            java.setTitle("Java");
+            java.setTitle(i18n("about.runtime.java"));
             java.setSubtitle("%s, %s, %s".formatted(
                     Runtime.version().toString(),
                     System.getProperty("java.vm.name"),
                     System.getProperty("java.vendor")));
-            environment.getContent().add(java);
+            runtimeInfo.getContent().add(java);
 
             var javaFX = new LinePane();
             javaFX.setLargeTitle(true);
             javaFX.setLeading(SVG.LOCAL_CAFE.createIcon(32));
             javaFX.setTitle("JavaFX");
             javaFX.setSubtitle(System.getProperty("javafx.runtime.version"));
-            environment.getContent().add(javaFX);
+            runtimeInfo.getContent().add(javaFX);
         }
 
         ComponentList deps = loadIconedTwoLineList("/assets/about/deps.json");
@@ -172,8 +192,12 @@ public final class AboutPage extends SpinnerPane {
         content.getChildren().setAll(
                 ComponentList.createComponentListTitle(i18n("about")),
                 about,
-                ComponentList.createComponentListTitle(i18n("about.environment")),
-                environment,
+                ComponentList.createComponentListTitle(i18n("about.system")),
+                systemInfo,
+                ComponentList.createComponentListTitle(i18n("about.device")),
+                deviceInfo,
+                ComponentList.createComponentListTitle(i18n("about.runtime")),
+                runtimeInfo,
                 ComponentList.createComponentListTitle(i18n("about.dependency")),
                 deps,
                 ComponentList.createComponentListTitle(i18n("about.legal")),
