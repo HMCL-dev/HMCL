@@ -26,6 +26,7 @@ import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -851,6 +852,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
             updateActiveState(modInfo.isActive());
             iconContainer.setCursor(Cursor.HAND);
+            iconContainer.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+                if (event.getButton() == MouseButton.PRIMARY) {
+                    event.consume();
+                }
+            });
             iconContainer.setOnMouseClicked(event -> {
                 if (event.getButton() != MouseButton.PRIMARY) {
                     return;
