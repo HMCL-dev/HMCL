@@ -13,6 +13,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.DataSizeUnit;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -71,16 +72,21 @@ public final class AboutPage extends SpinnerPane {
                     : "%s (%s %s, %s)".formatted(OperatingSystem.OS_RELEASE_PRETTY_NAME, OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion(), Architecture.SYSTEM_ARCH.getDisplayName())));
             systemInfo.getContent().add(system);
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 @Nullable String desktopName = System.getenv("XDG_CURRENT_DESKTOP");
-                if (desktopName == null || desktopName.isBlank())
+                if (StringUtils.isBlank(desktopName))
                     desktopName = System.getenv("XDG_SESSION_DESKTOP");
-                if (desktopName != null && !desktopName.isBlank()) {
+
+                @Nullable String sessionType = System.getenv("XDG_SESSION_TYPE");
+
+                if (StringUtils.isNotBlank(desktopName)) {
                     var desktop = new LinePane();
                     desktop.setLargeTitle(true);
                     desktop.setLeading(SVG.LUCIDE_APP_WINDOW.createIcon(32));
                     desktop.setTitle(i18n("about.system.desktop"));
-                    desktop.setSubtitle(desktopName.strip());
+                    desktop.setSubtitle(StringUtils.isNotBlank(sessionType)
+                            ? "%s (%s)".formatted(desktopName.strip(), sessionType.strip())
+                            : desktopName.strip());
                     systemInfo.getContent().add(desktop);
                 }
             }
