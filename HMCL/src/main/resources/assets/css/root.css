@@ -304,7 +304,7 @@
     -fx-background-radius: 999px;
     -fx-padding: 0 5px;
     -fx-font-weight: normal;
-    -fx-font-size: 10px;
+    -fx-font-size: 11px;
 }
 
 .tag:warning {
