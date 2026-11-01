@@ -153,7 +153,7 @@ public final class AboutPage extends SpinnerPane {
             }
 
             if (SystemInfo.getTotalMemorySize() > 0) {
-                String subtitle = i18n("about.device.memory.physical",
+                String subtitle = i18n("about.device.memory.system",
                         "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     long pageFileSize = SystemInfo.getTotalPageFileSize();
