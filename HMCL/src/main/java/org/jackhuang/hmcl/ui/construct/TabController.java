@@ -123,6 +123,17 @@ public final class TabController implements PageAware {
             pageAware.onPageShown();
     }
 
+    public void prewarmTab(TabItem<?> tab) {
+        Objects.requireNonNull(tab, "tab");
+        if (!tabs.contains(tab))
+            throw new IllegalArgumentException("Tab does not belong to this controller");
+
+        if (contentPane != null && selectedTab.get() != tab) {
+            @Nullable Node content = tab.getNode();
+            if (content != null) contentPane.prewarm(content);
+        }
+    }
+
     /// Updates selection after list changes, activating a replacement only when selection was removed.
     private void tabsChanged(ListChangeListener.Change<? extends TabItem<?>> change) {
         @Nullable TabItem<?> selected = getSelectedTab();

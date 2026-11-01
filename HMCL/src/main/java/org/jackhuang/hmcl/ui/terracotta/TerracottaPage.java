@@ -56,7 +56,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         setLeft(left);
 
         AdvancedListBox sideBar = new AdvancedListBox()
-                .addNavigationDrawerTab(tabController, statusPage, i18n("terracotta.status"), SVG.TUNE);
+                .addNavigationDrawerTab(tabController, statusPage, i18n("terracotta.status"), SVG.TUNE, false);
         left.setTop(sideBar);
 
         AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
