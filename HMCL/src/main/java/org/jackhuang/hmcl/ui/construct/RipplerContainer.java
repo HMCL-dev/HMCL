@@ -50,6 +50,15 @@ public class RipplerContainer extends StackPane {
     /// The fallback paint before a stylesheet supplies a theme color.
     private static final Color DEFAULT_FEEDBACK_FILL = Color.BLACK;
 
+    /// Marks tooltip-bearing decorations whose mouse events still activate the surrounding row.
+    private static final Object BACKGROUND_MOUSE_EVENTS = new Object();
+
+    /// Treats presses and clicks on this decoration as background input in its nearest rippler.
+    /// Hover events remain available for tooltips, and the original mouse event bubbles normally.
+    static void enableBackgroundMouseEvents(Node node) {
+        node.getProperties().put(BACKGROUND_MOUSE_EVENTS, Boolean.TRUE);
+    }
+
     /// The content supplied by the caller.
     private final Node container;
 
@@ -96,15 +105,16 @@ public class RipplerContainer extends StackPane {
             region.backgroundProperty().addListener(backgroundListener);
         updateCornerRadii();
 
-        interactionLayer.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
-            if (event.getButton() == MouseButton.PRIMARY && isFeedbackAvailable() && isPressFeedbackEnabled())
+        addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
+            if (isBackgroundEvent(event) && event.getButton() == MouseButton.PRIMARY
+                    && isFeedbackAvailable() && isPressFeedbackEnabled())
                 interactionLayer.press(event.getX(), event.getY());
         });
-        interactionLayer.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
-            if (event.getButton() == MouseButton.PRIMARY)
+        addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
+            if (isBackgroundEvent(event) && event.getButton() == MouseButton.PRIMARY)
                 interactionLayer.release();
         });
-        interactionLayer.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleBackgroundClick);
+        addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleBackgroundClick);
         addEventHandler(MouseEvent.MOUSE_ENTERED, event -> {
             pointerInside = true;
             updateVisualState();
@@ -231,9 +241,24 @@ public class RipplerContainer extends StackPane {
             fireEvent(new ActionEvent(this, this));
     }
 
+    /// Returns whether the event targets the feedback layer or an opted-in decoration in this wrapper.
+    private boolean isBackgroundEvent(MouseEvent event) {
+        if (event.getTarget() == interactionLayer)
+            return true;
+        if (!(event.getTarget() instanceof Node target))
+            return false;
+        boolean background = false;
+        for (@Nullable Node node = target; node != this; node = node.getParent()) {
+            if (node == null || node instanceof RipplerContainer)
+                return false;
+            background |= node.hasProperties() && Boolean.TRUE.equals(node.getProperties().get(BACKGROUND_MOUSE_EVENTS));
+        }
+        return background;
+    }
+
     /// Dispatches primary background actions without consuming the original mouse event.
     private void handleBackgroundClick(MouseEvent event) {
-        if (event.getTarget() == interactionLayer && event.getButton() == MouseButton.PRIMARY && !isDisabled()) {
+        if (isBackgroundEvent(event) && event.getButton() == MouseButton.PRIMARY && !isDisabled()) {
             fire();
         }
     }

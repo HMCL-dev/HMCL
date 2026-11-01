@@ -274,7 +274,6 @@ public final class ScreenshotsPage extends ListPageBase<ScreenshotsPage.Screensh
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
 
-            content.setMouseTransparent(true);
             HBox.setHgrow(content, Priority.ALWAYS);
 
             JFXButton copyButton = FXUtils.newToggleButton4(SVG.CONTENT_COPY);

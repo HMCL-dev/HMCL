@@ -49,6 +49,7 @@ import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -140,21 +141,23 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
         private final TwoLineListItem twoLineListItem = new TwoLineListItem();
         private final ImageView imageView = new ImageView();
-        private final StackPane pane = new StackPane();
         private final RipplerContainer ripplerContainer;
 
-        RemoteVersionListCell(VersionsPage control) {
+        /// Creates a version row constrained to its list viewport; null creates a sizing-only row.
+        RemoteVersionListCell(VersionsPage control, @Nullable ListView<ComponentRemoteVersion> listView) {
             this.control = control;
+
+            if (listView != null)
+                FXUtils.limitCellWidth(listView, this);
 
             imageView.setMouseTransparent(true);
 
-            HBox hbox = new HBox(16);
-            HBox.setHgrow(twoLineListItem, Priority.ALWAYS);
-            twoLineListItem.setAlignment(Pos.CENTER);
-            hbox.setAlignment(Pos.CENTER);
+            TwoLineListItem.setMargin(imageView, new Insets(0, 16, 0, 0));
+            twoLineListItem.setLeading(imageView);
 
             HBox actions = new HBox(8);
             actions.setAlignment(Pos.CENTER);
+            actions.setPickOnBounds(false);
             {
                 if (control.componentType == GameComponentType.GAME) {
                     JFXButton wikiButton = newToggleButton4(SVG.GLOBE_BOOK);
@@ -168,11 +171,11 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 actions.getChildren().add(actionButton);
             }
 
-            hbox.getChildren().setAll(imageView, twoLineListItem, actions);
-
-            pane.getStyleClass().add("md-list-cell");
-            StackPane.setMargin(hbox, new Insets(10, 16, 10, 16));
-            pane.getChildren().setAll(ripplerContainer = new RipplerContainer(hbox));
+            TwoLineListItem.setMargin(actions, new Insets(0, 0, 0, 16));
+            twoLineListItem.setTrailing(actions);
+            twoLineListItem.getStyleClass().add("md-list-cell");
+            twoLineListItem.setPadding(new Insets(10, 16, 10, 16));
+            ripplerContainer = new RipplerContainer(twoLineListItem);
 
             FXUtils.onClicked(this, this::onAction);
         }
@@ -194,9 +197,10 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             FXUtils.openLink(I18n.getWikiLink((GameRemoteVersion) item));
         }
 
+        /// Updates the shared row for a remote version or clears the graphic for an empty cell.
         @Override
-        public void updateItem(ComponentRemoteVersion remoteVersion, boolean empty) {
-            ComponentRemoteVersion oldRemoteVersion = getItem();
+        public void updateItem(@Nullable ComponentRemoteVersion remoteVersion, boolean empty) {
+            @Nullable ComponentRemoteVersion oldRemoteVersion = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(remoteVersion, empty);
@@ -205,11 +209,11 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             ripplerContainer.resetFeedback();
 
-            if (empty) {
+            if (empty || remoteVersion == null) {
                 setGraphic(null);
                 return;
             }
-            setGraphic(pane);
+            setGraphic(ripplerContainer);
 
             twoLineListItem.setTitle(I18n.getDisplayVersion(remoteVersion));
             if (remoteVersion.getReleaseDate() != null) {
@@ -218,7 +222,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 twoLineListItem.setSubtitle(null);
             }
 
-            twoLineListItem.getTags().clear();
+            var tags = new ArrayList<Tag>(2);
 
             if (remoteVersion instanceof GameRemoteVersion) {
                 ComponentRemoteVersion.Type versionType = remoteVersion.getVersionType();
@@ -226,27 +230,27 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
                 switch (versionType) {
                     case RELEASE -> {
-                        twoLineListItem.addTag(i18n("instance.game.release"));
+                        tags.add(new Tag(i18n("instance.game.release")));
                         imageView.setImage(GameInstanceIconType.GRASS.getIcon());
                     }
                     case SNAPSHOT, PENDING, UNOBFUSCATED -> {
                         if (versionType == ComponentRemoteVersion.Type.SNAPSHOT && gameVersion.isAprilFools()) {
-                            twoLineListItem.addTag(i18n("instance.game.april_fools"));
+                            tags.add(new Tag(i18n("instance.game.april_fools")));
                             imageView.setImage(GameInstanceIconType.APRIL_FOOLS.getIcon());
                         } else {
-                            twoLineListItem.addTag(i18n("instance.game.snapshot"));
+                            tags.add(new Tag(i18n("instance.game.snapshot")));
                             imageView.setImage(GameInstanceIconType.COMMAND.getIcon());
                         }
                     }
                     default -> {
-                        twoLineListItem.addTag(i18n("instance.game.old"));
+                        tags.add(new Tag(i18n("instance.game.old")));
                         imageView.setImage(GameInstanceIconType.CRAFT_TABLE.getIcon());
                     }
                 }
 
                 switch (NativePatcher.checkSupportedStatus(gameVersion, Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION)) {
-                    case UNTESTED -> twoLineListItem.addTagWarning(i18n("instance.game.support_status.untested"));
-                    case UNSUPPORTED -> twoLineListItem.addTagWarning(i18n("instance.game.support_status.unsupported"));
+                    case UNTESTED -> tags.add(Tag.warning(i18n("instance.game.support_status.untested")));
+                    case UNSUPPORTED -> tags.add(Tag.warning(i18n("instance.game.support_status.unsupported")));
                 }
             } else {
                 GameInstanceIconType iconType;
@@ -275,8 +279,9 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 if (twoLineListItem.getSubtitle() == null)
                     twoLineListItem.setSubtitle(displayGameVersion);
                 else
-                    twoLineListItem.addTag(displayGameVersion);
+                    tags.add(new Tag(displayGameVersion));
             }
+            twoLineListItem.getTags().setAll(tags);
         }
     }
 
@@ -289,6 +294,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final JFXTextField nameField;
         private final JFXComboBox<VersionTypeFilter> categoryField = new JFXComboBox<>();
 
+        /// Creates the searchable version list with viewport-constrained cells and loading states.
         VersionsPageSkin(VersionsPage control) {
             super(control);
 
@@ -377,12 +383,13 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         list = new JFXListView<>();
                         list.getStyleClass().add("jfx-list-view-float");
 
-                        RemoteVersionListCell dummyCell = new RemoteVersionListCell(control);
+                        RemoteVersionListCell dummyCell = new RemoteVersionListCell(control, null);
                         dummyCell.twoLineListItem.setTitle("Dummy");
                         dummyCell.twoLineListItem.setSubtitle("Dummy");
                         dummyCell.imageView.setImage(GameInstanceIconType.GRASS.getIcon());
-                        prepareNode(dummyCell.pane);
-                        list.setFixedCellSize(dummyCell.pane.prefHeight(-1));
+                        // Prepare the unattached row root; its content already belongs to the rippler.
+                        prepareNode(dummyCell.ripplerContainer);
+                        list.setFixedCellSize(dummyCell.ripplerContainer.prefHeight(-1));
 
                         VBox.setVgrow(list, Priority.ALWAYS);
 
@@ -390,7 +397,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         if (!control.versions.isEmpty())
                             updateList();
 
-                        list.setCellFactory(listView -> new RemoteVersionListCell(control));
+                        list.setCellFactory(listView -> new RemoteVersionListCell(control, listView));
 
                         ComponentList.setVgrow(list, Priority.ALWAYS);
 
