@@ -648,25 +648,28 @@ public final class Controllers {
         return pane.getCompletableFuture();
     }
 
-    /// Creates and returns a progress pane without starting the executor.
+    /// Creates a task dialog and submits its executor to the serial business-task queue.
     ///
-    /// Requests closure when the executor stops. A null title supplies no title text.
-    /// The pane is connected to the executor even if no decorator exists. See [#dialog(Region)].
-    public static TaskExecutorDialogPane taskDialog(TaskExecutor executor, @Nullable String title, TaskCancellationAction onCancel) {
+    /// Submits the executor even if the pane cannot be shown, and returns the pane.
+    public static TaskExecutorDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel) {
+        return taskDialog(task, title, onCancel, null);
+    }
+
+    /// Creates and submits a task dialog, optionally as a required child of an executing task.
+    ///
+    /// @param task the task to execute
+    /// @param title the dialog title, or `null`
+    /// @param onCancel the cancellation action
+    /// @param parent the executing parent dialog, or `null` to queue an independent operation
+    /// @return the submitted task dialog
+    public static TaskExecutorDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel,
+                                                  @Nullable TaskExecutorDialogPane parent) {
+        TaskExecutor executor = task.executor();
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
         pane.setTitle(title);
         pane.setExecutor(executor);
         dialog(pane);
-        return pane;
-    }
-
-    /// Creates a pane using [#taskDialog(TaskExecutor, String, TaskCancellationAction)], then starts the task's executor.
-    ///
-    /// Starts the executor even if the pane cannot be shown, and returns the pane.
-    public static TaskExecutorDialogPane taskDialog(Task<?> task, @Nullable String title, TaskCancellationAction onCancel) {
-        TaskExecutor executor = task.executor();
-        TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
-        executor.start();
+        pane.startExecutor(parent);
         return pane;
     }
 
