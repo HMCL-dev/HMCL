@@ -325,7 +325,7 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
                     LOG.warning("Failed to load addon icons", e);
                 }
             }
-            
+
             if (data.localAddonFile() instanceof ResourcePackFile resourcePackFile) {
                 Image image = resourcePackFile.loadIcon();
 

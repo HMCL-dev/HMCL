@@ -25,7 +25,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huangyuhui
  */
 public final class GameAssetDownloadTask extends Task<Void> {
-    
+
     private final AbstractDependencyManager dependencyManager;
     private final GameInstanceManifest manifest;
     private final AssetIndexInfo assetIndexInfo;
