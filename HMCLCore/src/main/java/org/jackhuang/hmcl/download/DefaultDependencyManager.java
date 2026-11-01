@@ -305,6 +305,10 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     /// Installs a component into an unpublished working manifest without constructing a
     /// [GameInstance].
     ///
+    /// Installing a game patch selects this instance's own client JAR so that
+    /// [#updateInstanceAsync] can materialize the new client when publishing the update.
+    /// Other component installations retain the existing JAR reference.
+    ///
     /// @param baseManifest     the working manifest for this step
     /// @param modsDirectory    the mods directory to use during installation
     /// @param componentVersion the remote component to install
@@ -317,11 +321,18 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                     GameInstanceManifest manifest = baseManifest.removeComponent(componentVersion.getComponentType());
                     return componentVersion
                             .getInstallTask(this, manifest, modsDirectory)
-                            .thenApplyAsync(patch -> patch == null
-                                    ? manifest
-                                    : manifest.withBaseGamePatch(componentVersion.getGameVersion().toString())
-                                            .addPatch(patch).reconstructByPatches()
-                            );
+                            .thenApplyAsync(patch -> {
+                                if (patch == null) {
+                                    return manifest;
+                                }
+
+                                GameInstanceManifest updated = manifest
+                                        .withBaseGamePatch(componentVersion.getGameVersion().toString())
+                                        .addPatch(patch).reconstructByPatches();
+                                return componentVersion.getComponentType() == GameComponentType.GAME
+                                        ? updated.withJar(updated.id())
+                                        : updated;
+                            });
                 })
                 .withStage("hmcl.install.%s:%s".formatted(
                         componentVersion.getComponentType().getPatchId(),
