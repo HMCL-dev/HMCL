@@ -110,8 +110,9 @@ enum LinuxArmSoCModel {
             new CoreIdentity(0x51, 0x002, 1, -1), 6)),
 
     /// The 18-core X2 Elite and Elite Extreme share six performance and twelve prime cores.
-    /// Counts and MIDRs cannot distinguish their SKUs; a capped guest may also match the 12-core family.
-    QUALCOMM_SNAPDRAGON_X2_ELITE_OR_EXTREME("Qualcomm Snapdragon X2 Elite / X2 Elite Extreme", HardwareVendor.QUALCOMM, Map.of(
+    /// Both use the X2 Elite family name; counts and MIDRs cannot distinguish their SKUs.
+    /// A capped guest may also match the 12-core family.
+    QUALCOMM_SNAPDRAGON_X2_ELITE_18_CORE("Qualcomm Snapdragon X2 Elite", HardwareVendor.QUALCOMM, Map.of(
             new CoreIdentity(0x51, 0x002, 2, -1), 6,
             new CoreIdentity(0x51, 0x002, 1, -1), 12));
 
@@ -157,6 +158,10 @@ enum LinuxArmSoCModel {
             case "sm8750" -> QUALCOMM_SNAPDRAGON_8_ELITE.displayName;
             case "sm8845" -> QUALCOMM_SNAPDRAGON_8_GEN_5.displayName;
             case "sm8850", "kaanapali" -> QUALCOMM_SNAPDRAGON_8_ELITE_GEN_5.displayName;
+            // Gen 6 code mapping follows Fastfetch; complete per-core signatures are not established here.
+            // https://github.com/fastfetch-cli/fastfetch/blob/aeb22b408175fe811161c996075b78e0fb260c07/src/detection/cpu/cpu_linux.c#L216-L222
+            case "sm8950" -> "Qualcomm Snapdragon 8 Elite Gen 6";
+            case "sm8975" -> "Qualcomm Snapdragon 8 Elite Extreme Gen 6";
             default -> null;
         };
     }
