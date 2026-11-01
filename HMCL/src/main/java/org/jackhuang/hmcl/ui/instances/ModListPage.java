@@ -18,12 +18,14 @@ import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -728,6 +730,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final ModListPage page;
 
+        private final StackPane iconContainer;
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final ColorAdjust iconColorAdjust = new ColorAdjust();
         private final Circle activeIndicator = new Circle(6);
@@ -736,8 +739,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
         private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
-
-        private final JFXToggleButton toggleButton = new JFXToggleButton();
 
         private final InvalidationListener activeListener = obs -> updateActiveState(getItem().getModInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
@@ -764,18 +765,16 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             activeIndicator.getStyleClass().add("mod-active-indicator");
             activeIndicator.setMouseTransparent(true);
 
-            StackPane iconContainer = new StackPane(imageContainer, activeIndicator);
+            iconContainer = new StackPane(imageContainer, activeIndicator);
 
             StackPane.setAlignment(activeIndicator, Pos.BOTTOM_RIGHT);
             StackPane.setMargin(activeIndicator, new Insets(0, -6, 3, 0));
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
-            toggleButton.setPadding(new Insets(0, 8, 0, 0));
-
             HBox actions = new HBox();
             actions.setAlignment(Pos.CENTER);
-            actions.getChildren().setAll(restoreButton, revealButton, infoButton, toggleButton);
+            actions.getChildren().setAll(restoreButton, revealButton, infoButton);
 
             container.getChildren().setAll(iconContainer, content, actions);
 
@@ -851,9 +850,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
             updateActiveState(modInfo.isActive());
-            toggleButton.setOnAction(event -> {
+            iconContainer.setCursor(Cursor.HAND);
+            iconContainer.setOnMouseClicked(event -> {
+                if (event.getButton() != MouseButton.PRIMARY) {
+                    return;
+                }
+
                 try {
-                    modInfo.setActive(toggleButton.isSelected());
+                    modInfo.setActive(!modInfo.isActive());
                 } catch (IOException e) {
                     LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
                     Controllers.showToast(i18n("mods.toggle.failed"));
@@ -887,7 +891,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
 
         private void updateActiveState(boolean active) {
-            toggleButton.setSelected(active);
             iconColorAdjust.setSaturation(active ? 0.0 : -0.75);
             iconColorAdjust.setBrightness(active ? 0.0 : -0.50);
             activeIndicator.pseudoClassStateChanged(ACTIVE, active);
