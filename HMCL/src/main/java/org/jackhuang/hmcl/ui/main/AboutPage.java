@@ -19,6 +19,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
+import org.jackhuang.hmcl.util.platform.hardware.PageFileConfiguration;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -152,11 +153,29 @@ public final class AboutPage extends SpinnerPane {
             }
 
             if (SystemInfo.getTotalMemorySize() > 0) {
+                String subtitle = "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    long pageFileSize = SystemInfo.getTotalPageFileSize();
+                    if (pageFileSize < 0) {
+                        subtitle = i18n("about.device.memory.page_files.unknown", subtitle);
+                    } else {
+                        String pageFileCapacity = "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(pageFileSize));
+                        PageFileConfiguration configuration = SystemInfo.getPageFileConfiguration();
+                        subtitle = switch (configuration.mode()) {
+                            case MANUAL -> i18n("about.device.memory.page_files.maximum", subtitle, pageFileCapacity,
+                                    "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(configuration.maximumSize())));
+                            case SYSTEM_MANAGED -> i18n("about.device.memory.page_files.system_managed", subtitle, pageFileCapacity);
+                            case MIXED -> i18n("about.device.memory.page_files.mixed", subtitle, pageFileCapacity);
+                            case UNKNOWN -> i18n("about.device.memory.page_files", subtitle, pageFileCapacity);
+                        };
+                    }
+                }
+
                 var memory = new LinePane();
                 memory.setLargeTitle(true);
                 memory.setLeading(SVG.LUCIDE_MEMORY_STICK.createIcon(32));
                 memory.setTitle(i18n("about.device.memory"));
-                memory.setSubtitle("%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
+                memory.setSubtitle(subtitle);
                 deviceInfo.getContent().add(memory);
             }
         }

@@ -48,6 +48,16 @@ public class HardwareDetector {
         return 0L;
     }
 
+    /// Queries current page file capacity in bytes; -1 means unsupported or failed, and zero means none.
+    public long getTotalPageFileSize() {
+        return -1;
+    }
+
+    /// Queries configured page file sizing policy, returning unknown if unsupported or unavailable.
+    public PageFileConfiguration getPageFileConfiguration() {
+        return PageFileConfiguration.UNKNOWN;
+    }
+
     /// Returns free physical memory in bytes, or zero if the required management bean is unavailable.
     public long getFreeMemorySize() {
         try {

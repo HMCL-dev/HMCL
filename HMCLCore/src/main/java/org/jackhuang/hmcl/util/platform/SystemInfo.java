@@ -6,6 +6,7 @@ import org.jackhuang.hmcl.util.DataSizeUnit;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
+import org.jackhuang.hmcl.util.platform.hardware.PageFileConfiguration;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
@@ -86,6 +87,16 @@ public final class SystemInfo {
         if (totalMemorySize > 0 && usedMemorySize > 0)
             builder.append(" (").append((int) (((double) usedMemorySize / totalMemorySize) * 100)).append("%)");
 
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            long pageFileSize = getTotalPageFileSize();
+            builder.append("\n - Page Files (Current Capacity): ")
+                    .append(pageFileSize >= 0 ? DataSizeUnit.format(pageFileSize) : "Unknown");
+            PageFileConfiguration configuration = getPageFileConfiguration();
+            builder.append(", Configuration: ").append(configuration.mode());
+            if (configuration.mode() == PageFileConfiguration.Mode.MANUAL)
+                builder.append(", Configured Limit: ").append(DataSizeUnit.format(configuration.maximumSize()));
+        }
+
         LOG.info(builder.toString());
     }
 
@@ -104,6 +115,18 @@ public final class SystemInfo {
     /// Returns the cached total physical memory size in bytes, or zero if detection is unsupported.
     public static long getTotalMemorySize() {
         return Holder.TOTAL_MEMORY;
+    }
+
+    /// Queries current page file capacity in bytes without caching it.
+    ///
+    /// Returns zero when no page files exist, or -1 if unsupported or detection fails.
+    public static long getTotalPageFileSize() {
+        return Holder.DETECTOR.getTotalPageFileSize();
+    }
+
+    /// Queries configured page file sizing policy without caching; changes may require a restart.
+    public static PageFileConfiguration getPageFileConfiguration() {
+        return Holder.DETECTOR.getPageFileConfiguration();
     }
 
     /// Queries the available physical memory in bytes, including reclaimable memory where supported.
