@@ -300,10 +300,10 @@
 .tag {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
-    -fx-background-radius: 2;
-    -fx-padding: 2;
+    -fx-background-radius: 999px;
+    -fx-padding: 0 5px;
     -fx-font-weight: normal;
-    -fx-font-size: 12px;
+    -fx-font-size: 10px;
 }
 
 .tag:warning {

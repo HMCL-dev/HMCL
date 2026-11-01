@@ -709,7 +709,7 @@ public class TwoLineListItem extends Region {
     private final class TagState {
 
         /// The spacing between adjacent tags.
-        private static final double TAG_SPACING = 8;
+        private static final double TAG_SPACING = 4;
 
         /// The hover delay used by the application's fast tooltips.
         private static final Duration TAG_TOOLTIP_SHOW_DELAY = Duration.millis(50);
