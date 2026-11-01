@@ -9,8 +9,7 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.game.HMCLGameInstance;
-import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -23,7 +22,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -37,13 +35,13 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final World world;
     private final Path backupsDir;
     private final HMCLGameInstance gameInstance;
+    private final WorldManager worldManager;
     private final boolean supportQuickPlay;
-    private FileChannel sessionLockChannel;
 
     private final ObjectProperty<State> state;
     private boolean isFirstNavigation = true;
     private final BooleanProperty refreshable = new SimpleBooleanProperty(true);
-    private final BooleanProperty readOnly = new SimpleBooleanProperty(false);
+    private final BooleanProperty readOnly = new SimpleBooleanProperty(true);
 
     private final TransitionPane transitionPane = new TransitionPane();
     /// Manages tab selection and content transitions independently of the sidebar.
@@ -55,12 +53,13 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     /// The tab for managing data packs in this world.
     private final TabItem<DataPackListPage> dataPackTab;
 
-    public WorldManagePage(World world, HMCLGameInstance gameInstance) {
+    public WorldManagePage(World world, WorldManager manager, HMCLGameInstance gameInstance) {
         this.world = world;
         this.gameInstance = gameInstance;
         this.backupsDir = gameInstance.getBackupsDirectory();
+        this.worldManager = manager;
 
-        updateSessionLockChannel();
+        readOnly.set(world.tryLock() == null);
 
         try {
             this.world.reloadWorldData();
@@ -75,9 +74,9 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
 
-        supportQuickPlay = World.supportQuickPlay(gameInstance.getVersion());
+        supportQuickPlay = QuickPlayOption.isSupportedVersion(gameInstance.getVersion());
 
-        this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
+        this.addEventHandler(Navigator.NavigationEvent.EXITED, event -> world.close());
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
     }
 
@@ -89,7 +88,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     /// Reloads world metadata and refreshes only tab pages whose content is already initialized.
     @Override
     public void refresh() {
-        updateSessionLockChannel();
+        readOnly.set(world.tryLock() == null);
         try {
             world.reloadWorldData();
         } catch (IOException e) {
@@ -112,25 +111,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         });
     }
 
-    private void updateSessionLockChannel() {
-        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
-            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
-            readOnly.set(sessionLockChannel == null);
-        }
-    }
-
     private void onNavigated(Navigator.NavigationEvent event) {
         if (isFirstNavigation)
             isFirstNavigation = false;
         else
             refresh();
-    }
-
-    public void onExited(Navigator.NavigationEvent event) {
-        try {
-            WorldManageUIUtils.closeSessionLockChannel(world, sessionLockChannel);
-        } catch (IOException ignored) {
-        }
     }
 
     public void launch() {
@@ -256,10 +241,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                         );
                     }
 
+                    WorldManageUIToolbox uiToolbox = new WorldManageUIToolbox(getSkinnable().world, getSkinnable().worldManager);
                     managePopupMenu.getContent().addAll(
-                            new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(getSkinnable().world, getSkinnable().sessionLockChannel), managePopup),
-                            new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> WorldManageUIUtils.delete(getSkinnable().world, () -> getSkinnable().fireEvent(new PageCloseEvent()), getSkinnable().sessionLockChannel), managePopup),
-                            new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(getSkinnable().world, null), managePopup)
+                            new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), uiToolbox::export, managePopup),
+                            new IconedMenuItem(SVG.DELETE_FOREVER, i18n("world.delete"), () -> uiToolbox.delete(() -> getSkinnable().fireEvent(new PageCloseEvent())), managePopup),
+                            new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> uiToolbox.copyWorld(null), managePopup)
                     );
 
                     toolbar.addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managePopupMenuItem ->
