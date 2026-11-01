@@ -894,6 +894,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             iconColorAdjust.setSaturation(active ? 0.0 : -0.75);
             iconColorAdjust.setBrightness(active ? 0.0 : -0.50);
             activeIndicator.pseudoClassStateChanged(ACTIVE, active);
+            FXUtils.installFastTooltip(
+                iconContainer,
+                i18n(active ? "mods.disable" : "mods.enable")
+            );
         }
     }
 }
