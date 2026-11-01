@@ -791,6 +791,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 observedActiveProperty.removeListener(weakActiveListener);
 
             pseudoClassStateChanged(WARNING, false);
+            activeIndicator.pseudoClassStateChanged(WARNING, false);
             if (warningTooltip != null) {
                 Tooltip.uninstall(this, warningTooltip);
                 warningTooltip = null;
@@ -889,6 +890,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             if (!warning.isEmpty()) {
                 pseudoClassStateChanged(WARNING, true);
+                activeIndicator.pseudoClassStateChanged(WARNING, true);
 
                 //noinspection ConstantValue
                 this.warningTooltip = warning.size() == 1

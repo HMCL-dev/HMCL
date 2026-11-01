@@ -41,3 +41,7 @@
 .mod-info-list-cell .mod-active-indicator:active {
     -fx-fill: #1bd96a;
 }
+
+.mod-info-list-cell .mod-active-indicator:warning {
+    -fx-fill: #ffa347;
+}
