@@ -93,6 +93,7 @@ public record Arguments(@SerializedName("game") @Nullable List<Argument> game, @
     static {
         List<Argument> jvm = new ArrayList<>(8);
         jvm.add(new RuledArgument(Collections.singletonList(new CompatibilityRule(CompatibilityRule.Action.ALLOW, new OSRestriction(OperatingSystem.WINDOWS))), Collections.singletonList("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump")));
+        jvm.add(new RuledArgument(Collections.singletonList(new CompatibilityRule(CompatibilityRule.Action.ALLOW, new OSRestriction(OperatingSystem.WINDOWS))), Collections.singletonList("-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT")));
         jvm.add(new RuledArgument(Collections.singletonList(new CompatibilityRule(CompatibilityRule.Action.ALLOW, new OSRestriction(OperatingSystem.WINDOWS, "^10\\."))), Arrays.asList("-Dos.name=Windows 10", "-Dos.version=10.0")));
         jvm.add(new StringArgument("-Djava.library.path=${natives_directory}"));
         jvm.add(new StringArgument("-Dminecraft.launcher.brand=${launcher_name}"));
