@@ -8,6 +8,9 @@ import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
+import org.jackhuang.hmcl.monitor.Monitor;
+import org.jackhuang.hmcl.monitor.MonitorGameProcess;
+import org.jackhuang.hmcl.monitor.MonitorLauncher;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.game.*;
@@ -843,7 +846,7 @@ public final class LauncherHelper {
 
         private final ReentrantLock lock = new ReentrantLock();
         private final LaunchOptions launchOptions;
-        private ManagedProcess process;
+        private ProcessInfo process;
         private volatile boolean lwjgl;
         private LogWindow logWindow;
         private final boolean detectWindow;
@@ -862,14 +865,14 @@ public final class LauncherHelper {
         }
 
         @Override
-        public void setProcess(ManagedProcess process) {
+        public void setProcess(ProcessInfo process) {
             this.process = process;
 
-            String command = new CommandBuilder().addAll(process.getCommands()).toString();
+            String command = new CommandBuilder().addAll(process.commands()).toString();
 
             LOG.info("Launched process: " + command);
 
-            String classpath = process.getClasspath();
+            String classpath = process.classpath();
             if (classpath != null) {
                 LOG.info("Process ClassPath: " + classpath);
             }
@@ -977,7 +980,7 @@ public final class LauncherHelper {
             if (forbiddenAccessToken != null)
                 log = log.replace(forbiddenAccessToken, "<access token>");
 
-            Log4jLevel level = isErrorStream && !log.startsWith("[authlib-injector]") ? Log4jLevel.ERROR : null;
+            @Nullable Log4jLevel level = isErrorStream && !log.startsWith("[authlib-injector]") ? Log4jLevel.ERROR : null;
             if (showLogs) {
                 if (level == null)
                     level = Objects.requireNonNullElse(Log4jLevel.guessLevel(log), Log4jLevel.INFO);
@@ -1000,7 +1003,14 @@ public final class LauncherHelper {
                     try {
                         if (!lwjgl) {
                             lwjgl = true;
-                            finishLaunch();
+                            if (process instanceof MonitorGameProcess monitorProcess
+                                    && MonitorLauncher.relaunchPolicy(launcherVisibility, showLogs) != Monitor.RelaunchPolicy.NEVER) {
+                                monitorProcess.detach();
+                                launchingLatch.countDown();
+                                runLater(Launcher::stopApplication);
+                            } else {
+                                finishLaunch();
+                            }
                         }
                     } finally {
                         lock.unlock();
@@ -1047,11 +1057,11 @@ public final class LauncherHelper {
 
     }
 
-    private static final Queue<WeakReference<ManagedProcess>> PROCESSES = new ConcurrentLinkedQueue<>();
+    private static final Queue<WeakReference<ProcessInfo>> PROCESSES = new ConcurrentLinkedQueue<>();
 
     public static int countMangedProcesses() {
         PROCESSES.removeIf(it -> {
-            ManagedProcess process = it.get();
+            ProcessInfo process = it.get();
             return process == null || !process.isRunning();
         });
         return PROCESSES.size();
@@ -1059,6 +1069,6 @@ public final class LauncherHelper {
 
     public static void stopManagedProcesses() {
         while (!PROCESSES.isEmpty())
-            Optional.ofNullable(PROCESSES.poll()).map(WeakReference::get).ifPresent(ManagedProcess::stop);
+            Optional.ofNullable(PROCESSES.poll()).map(WeakReference::get).ifPresent(ProcessInfo::stop);
     }
 }
