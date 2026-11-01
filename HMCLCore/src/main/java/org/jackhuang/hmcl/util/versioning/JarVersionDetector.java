@@ -29,28 +29,29 @@ import java.util.zip.ZipFile;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Detects version identifiers from JAR contents independently of version-number parsing.
+/// Detects version numbers from JAR contents or cached client hashes.
 @NotNullByDefault
 final class JarVersionDetector {
     /// Prevents instantiation of the detector.
     private JarVersionDetector() {
     }
 
-    /// Maps binary SHA-1 hashes to the first corresponding version identifier in the CSV.
-    static final @Unmodifiable Map<ByteArrayKey, String> VERSIONS = loadKnownVersions();
+    /// Maps binary SHA-1 hashes to the parsed version from the first corresponding CSV record.
+    static final @Unmodifiable Map<ByteArrayKey, GameVersionNumber> VERSIONS = loadKnownVersions();
 
     /// Reads the embedded client hash table into an immutable hash-to-version mapping.
     /// Ignores blank lines and comment lines beginning with `#`.
     /// Logs and skips records without exactly two fields, with a blank version identifier,
     /// or whose hash cannot be decoded by [ByteArrayKey#fromHexString(String)].
     /// Hash length is not validated. If multiple valid records share a hash, the first one determines its version name.
+    /// Parses each retained version identifier once using [GameVersionNumber#asGameVersion(String)].
     ///
     /// Closes the resource stream after reading. If reading or closing throws [IOException],
     /// logs the failure and returns an empty map.
     ///
     /// @return the immutable mappings from `/assets/game/client-sha1.csv`, possibly empty
     /// @throws IllegalStateException if the resource is missing
-    private static @Unmodifiable Map<ByteArrayKey, String> loadKnownVersions() {
+    private static @Unmodifiable Map<ByteArrayKey, GameVersionNumber> loadKnownVersions() {
         String csvContent;
         try (@Nullable InputStream input = JarVersionDetector.class.getResourceAsStream("/assets/game/client-sha1.csv")) {
             if (input == null) {
@@ -62,7 +63,7 @@ final class JarVersionDetector {
             return Map.of();
         }
 
-        var versions = new HashMap<ByteArrayKey, String>();
+        var versions = new HashMap<ByteArrayKey, GameVersionNumber>();
         csvContent.lines().forEach(line -> {
             if (line.isBlank() || line.startsWith("#")) {
                 return;
@@ -74,7 +75,8 @@ final class JarVersionDetector {
             }
 
             try {
-                versions.putIfAbsent(ByteArrayKey.fromHexString(fields[1]), fields[0]);
+                versions.computeIfAbsent(ByteArrayKey.fromHexString(fields[1]),
+                        hash -> GameVersionNumber.asGameVersion(fields[0]));
             } catch (Exception e) {
                 LOG.warning("Invalid SHA-1 hash in client SHA-1 record: " + line, e);
             }
@@ -141,10 +143,10 @@ final class JarVersionDetector {
         return null;
     }
 
-    /// Detects an identifier before conversion to [GameVersionNumber].
+    /// Detects a version number, reusing the cached object when a client hash matches.
     ///
     /// @see GameVersionNumber#detectFromJar(Path)
-    static @Nullable String detect(@Nullable Path file) {
+    static @Nullable GameVersionNumber detect(@Nullable Path file) {
         if (file == null || !Files.isRegularFile(file))
             return null;
 
@@ -153,7 +155,7 @@ final class JarVersionDetector {
             if (versionJson != null) {
                 @Nullable String result = getVersionFromJson(gameJar.getInputStream(versionJson));
                 if (result != null)
-                    return result;
+                    return GameVersionNumber.asGameVersion(result);
             }
 
             @Nullable ZipEntry minecraft = gameJar.getEntry("net/minecraft/client/Minecraft.class");
@@ -165,15 +167,15 @@ final class JarVersionDetector {
                         // For Minecraft 1.0 rc2-3, this value is "RC2"
                         if (!version.equals("RC1") && !version.equals("RC2")) {
                             if (version.equals("2.0")) {
-                                @Nullable String knownVersion = getKnownVersion(file);
-                                return knownVersion != null ? knownVersion : version;
+                                @Nullable GameVersionNumber knownVersion = getKnownVersion(file);
+                                return knownVersion != null ? knownVersion : GameVersionNumber.asGameVersion(version);
                             }
                             if (version.startsWith("Beta ")) {
-                                return "b" + version.substring("Beta ".length());
+                                return GameVersionNumber.asGameVersion("b" + version.substring("Beta ".length()));
                             } else if (version.startsWith("Alpha v")) {
-                                return "a" + version.substring("Alpha v".length());
+                                return GameVersionNumber.asGameVersion("a" + version.substring("Alpha v".length()));
                             }
-                            return version;
+                            return GameVersionNumber.asGameVersion(version);
                         }
                     }
                 }
@@ -182,7 +184,8 @@ final class JarVersionDetector {
             @Nullable ZipEntry minecraftServer = gameJar.getEntry("net/minecraft/server/MinecraftServer.class");
             if (minecraftServer != null) {
                 try (InputStream is = gameJar.getInputStream(minecraftServer)) {
-                    return getVersionFromClassMinecraftServer(is);
+                    @Nullable String version = getVersionFromClassMinecraftServer(is);
+                    return version != null ? GameVersionNumber.asGameVersion(version) : null;
                 }
             }
         } catch (IOException ignored) {
@@ -195,7 +198,7 @@ final class JarVersionDetector {
     ///
     /// @param file the JAR to hash
     /// @return the known version, or `null` if the hash is unknown or an I/O error occurs
-    private static @Nullable String getKnownVersion(Path file) {
+    private static @Nullable GameVersionNumber getKnownVersion(Path file) {
         try {
             ByteArrayKey digest = ByteArrayKey.wrap(DigestUtils.digest("SHA-1", file));
             return VERSIONS.get(digest);

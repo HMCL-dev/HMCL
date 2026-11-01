@@ -11,6 +11,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -209,12 +210,12 @@ public abstract class DefaultGameInstance implements GameInstance {
                 .get(DownloadType.CLIENT);
 
         if (clientDownloadInfo != null && clientDownloadInfo.getSha1() != null) {
-            Map<ByteArrayKey, String> knownVersions = GameVersionNumber.getKnownVersions();
+            @Unmodifiable Map<ByteArrayKey, GameVersionNumber> knownVersions = GameVersionNumber.getKnownVersions();
 
             try {
-                @Nullable String knownVersion = knownVersions.get(ByteArrayKey.fromHexString(clientDownloadInfo.getSha1()));
+                @Nullable GameVersionNumber knownVersion = knownVersions.get(ByteArrayKey.fromHexString(clientDownloadInfo.getSha1()));
                 if (knownVersion != null)
-                    return GameVersionNumber.asGameVersion(knownVersion);
+                    return knownVersion;
             } catch (Exception ignored) {
             }
         }
