@@ -767,7 +767,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             StackPane iconContainer = new StackPane(imageContainer, activeIndicator);
 
             StackPane.setAlignment(activeIndicator, Pos.BOTTOM_RIGHT);
-            StackPane.setMargin(activeIndicator, new Insets(0, -6, 0, 0));
+            StackPane.setMargin(activeIndicator, new Insets(0, -6, 3, 0));
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
