@@ -64,6 +64,9 @@ final class WindowsGPUDetector {
             "Root\\IddSampleDriver",
             "IddSampleDriver",
 
+            // Oray Sunlogin virtual display adapter
+            "Root\\OrayIddDriver",
+
             // Amyuni USB Mobile Monitor Virtual Display
             "usbmmidd"
     );
