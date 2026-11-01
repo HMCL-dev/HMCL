@@ -70,6 +70,10 @@ final class LinuxCPUDetector {
 
     /// Resolves Qualcomm names from device-tree compatibles and sysfs, returning `null` for unknown models.
     private static @Nullable String detectQualcommName(String model, String[] compatibles) {
+        @Nullable String knownName = LinuxArmSoCModel.qualcommCodeToName(model);
+        if (knownName != null)
+            return knownName;
+
         // Adapted from Fastfetch's ffCPUQualcommSnapdragonToName:
         // https://github.com/fastfetch-cli/fastfetch/blob/2f68ce7f7467ddbaaf31519c1d41455781d48492/src/detection/cpu/cpu_linux.c#L711-L776
         // The devkit shares soc_id 555 with retail X Elite chips; its compatible entry distinguishes it.
@@ -115,7 +119,7 @@ final class LinuxCPUDetector {
         return null;
     }
 
-    /// Reads the processor identity, using AVF heuristics and a virtual CPU fallback when direct names are unavailable.
+    /// Reads the processor identity, using Linux Arm heuristics and a virtual CPU fallback when direct names are unavailable.
     private static void detectNameAndVendor(CentralProcessor.Builder builder, TreeMap<Integer, Map<String, String>> cpuInfo) {
         // assert !cpuInfo.isEmpty();
         @Unmodifiable List<Path> deviceTreeRoots = List.of(
@@ -190,16 +194,11 @@ final class LinuxCPUDetector {
         }
 
         boolean avf = deviceTreeRoots.stream().anyMatch(root -> Files.isDirectory(root.resolve("avf")));
-        if (avf && (StringUtils.isBlank(modelName) || modelName.startsWith("ARMv8 Processor"))) {
-            try {
-                for (AVFSoCModel model : AVFSoCModel.values()) {
-                    if (model.matches(cpuInfo)) {
-                        builder.setName(model.getDisplayName()).setVendor(model.getVendor());
-                        return;
-                    }
-                }
-            } catch (IllegalArgumentException e) {
-                // Missing or malformed CPU identities leave the remaining name fallbacks available.
+        if (Architecture.SYSTEM_ARCH.isArm() && (StringUtils.isBlank(modelName) || modelName.startsWith("ARMv8 Processor"))) {
+            @Nullable LinuxArmSoCModel model = LinuxArmSoCModel.detect(cpuInfo);
+            if (model != null) {
+                builder.setName(model.getDisplayName()).setVendor(model.getVendor());
+                return;
             }
         }
 
