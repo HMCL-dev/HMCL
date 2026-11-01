@@ -153,7 +153,8 @@ public final class AboutPage extends SpinnerPane {
             }
 
             if (SystemInfo.getTotalMemorySize() > 0) {
-                String subtitle = "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize()));
+                String subtitle = i18n("about.device.memory.physical",
+                        "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     long pageFileSize = SystemInfo.getTotalPageFileSize();
                     if (pageFileSize < 0) {
@@ -164,9 +165,7 @@ public final class AboutPage extends SpinnerPane {
                         subtitle = switch (configuration.mode()) {
                             case MANUAL -> i18n("about.device.memory.page_files.maximum", subtitle, pageFileCapacity,
                                     "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(configuration.maximumSize())));
-                            case SYSTEM_MANAGED -> i18n("about.device.memory.page_files.system_managed", subtitle, pageFileCapacity);
-                            case MIXED -> i18n("about.device.memory.page_files.mixed", subtitle, pageFileCapacity);
-                            case UNKNOWN -> i18n("about.device.memory.page_files", subtitle, pageFileCapacity);
+                            case SYSTEM_MANAGED, MIXED, UNKNOWN -> i18n("about.device.memory.page_files", subtitle, pageFileCapacity);
                         };
                     }
                 }
