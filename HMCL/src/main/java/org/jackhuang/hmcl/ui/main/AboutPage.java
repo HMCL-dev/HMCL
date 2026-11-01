@@ -65,10 +65,10 @@ public final class AboutPage extends SpinnerPane {
             system.setLargeTitle(true);
             system.setLeading(SVG.LUCIDE_APP_WINDOW.createIcon(32));
             system.setTitle(i18n("about.system.os"));
-            system.setTitle(i18n("about.system.os"));
             system.setSubtitle((OperatingSystem.OS_RELEASE_PRETTY_NAME == null
-                    ? "%s %s (%s)".formatted(OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion(), Architecture.SYSTEM_ARCH.getDisplayName())
-                    : "%s (%s %s, %s)".formatted(OperatingSystem.OS_RELEASE_PRETTY_NAME, OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion(), Architecture.SYSTEM_ARCH.getDisplayName())));
+                    ? "%s %s".formatted(OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion())
+                    : "%s (%s %s)".formatted(OperatingSystem.OS_RELEASE_PRETTY_NAME, OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion())));
+            system.getTags().add(new Tag(Architecture.SYSTEM_ARCH.getDisplayName()));
             systemInfo.getContent().add(system);
 
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && SystemInfo.getDesktopEnvironment() != null) {
@@ -126,10 +126,31 @@ public final class AboutPage extends SpinnerPane {
 
                 var button = new LinePane();
                 button.setLargeTitle(true);
-                button.setTitle(title);
-                button.setSubtitle(graphicsCard.toString());
-
                 button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
+                button.setTitle(title);
+
+                StringBuilder subtitle = new StringBuilder(graphicsCard.getName());
+
+                if (graphicsCard.getDriver() != null || graphicsCard.getDriverVersion() != null) {
+                    subtitle.append(" (");
+                    if (graphicsCard.getDriver() != null) {
+                        subtitle.append(graphicsCard.getDriver());
+                        if (graphicsCard.getDriverVersion() != null) {
+                            subtitle.append(' ');
+                        }
+                    }
+                    if (graphicsCard.getDriverVersion() != null) {
+                        subtitle.append(graphicsCard.getDriverVersion());
+                    }
+                    subtitle.append(')');
+                }
+
+                button.setSubtitle(subtitle.toString());
+
+                switch (graphicsCard.getType()) {
+                    case INTEGRATED -> button.getTags().add(new Tag(i18n("about.device.gpu.type.integrated")));
+                    case DISCRETE -> button.getTags().add(new Tag(i18n("about.device.gpu.type.discrete")));
+                }
 
                 deviceInfo.getContent().add(button);
             }

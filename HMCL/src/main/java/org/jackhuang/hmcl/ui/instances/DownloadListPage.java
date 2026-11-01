@@ -566,6 +566,7 @@ public class DownloadListPage extends Control implements DecoratorPage {
         private final TwoLineListItem content = new TwoLineListItem();
         private final ImageContainer imageContainer = new ImageContainer(40);
 
+        /// Creates a download card with its icon and text laid out by the same row.
         private DownloadListCell(DownloadListPage page, JFXListView<RemoteAddon> listView, RemoteImageLoader iconLoader) {
             this.page = page;
             this.listView = listView;
@@ -573,17 +574,13 @@ public class DownloadListPage extends Control implements DecoratorPage {
 
             setPadding(PADDING);
 
-            HBox container = new HBox(8);
-            container.setPadding(new Insets(8));
-            container.setCursor(Cursor.HAND);
-            container.setAlignment(Pos.CENTER_LEFT);
-
+            content.setPadding(new Insets(8));
+            content.setCursor(Cursor.HAND);
+            TwoLineListItem.setMargin(imageContainer, new Insets(0, 8, 0, 0));
             imageContainer.setMouseTransparent(true);
+            content.setLeading(imageContainer);
 
-            container.getChildren().setAll(imageContainer, content);
-            HBox.setHgrow(content, Priority.ALWAYS);
-
-            this.graphic = new RipplerContainer(container);
+            this.graphic = new RipplerContainer(content);
             wrapper.getChildren().setAll(this.graphic);
             wrapper.getStyleClass().add("card-no-padding");
 
@@ -599,9 +596,10 @@ public class DownloadListPage extends Control implements DecoratorPage {
             FXUtils.limitCellWidth(listView, this);
         }
 
+        /// Updates addon text and replaces category tags together so their labels can be reused.
         @Override
-        protected void updateItem(RemoteAddon item, boolean empty) {
-            RemoteAddon oldItem = getItem();
+        protected void updateItem(@Nullable RemoteAddon item, boolean empty) {
+            @Nullable RemoteAddon oldItem = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(item, empty);
@@ -622,17 +620,15 @@ public class DownloadListPage extends Control implements DecoratorPage {
                 @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(page.type);
                 @Nullable AddonProjectInfo mod = registry != null ? registry.getInfoByCurseForgeId(item.slug()) : null;
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : item.title());
-                String description = item.description();
+                @Nullable String description = item.description();
                 if (description != null) {
                     description = description.replaceAll("\\R", " ");
                 }
                 content.setSubtitle(description);
-                content.getTags().clear();
-                for (String category : item.categories()) {
-                    if (page.shouldDisplayCategory(category)) {
-                        content.addTag(page.getLocalizedCategory(category, null));
-                    }
-                }
+                content.getTags().setAll(item.categories().stream()
+                        .filter(page::shouldDisplayCategory)
+                        .map(category -> new Tag(page.getLocalizedCategory(category, null)))
+                        .toList());
                 iconLoader.load(imageContainer.imageProperty(), item.iconUrl());
                 setGraphic(wrapper);
             }

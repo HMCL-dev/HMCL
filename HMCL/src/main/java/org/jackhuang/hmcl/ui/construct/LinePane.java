@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
 import javafx.scene.Node;
+import org.jetbrains.annotations.Nullable;
 
 /// @author Glavo
 public class LinePane extends LineComponent {
@@ -14,35 +15,42 @@ public class LinePane extends LineComponent {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
-    private ObjectProperty<Node> right;
+    /// The optional right-side node, forwarded directly to the row.
+    private @Nullable ObjectProperty<@Nullable Node> right;
 
-    public ObjectProperty<Node> rightProperty() {
+    /// Returns the right-side node property; null removes the node.
+    public ObjectProperty<@Nullable Node> rightProperty() {
         if (right == null) {
             right = new ObjectPropertyBase<>() {
+                /// Returns the pane owning this property.
                 @Override
                 public Object getBean() {
                     return LinePane.this;
                 }
 
+                /// Returns the property name.
                 @Override
                 public String getName() {
                     return "right";
                 }
 
+                /// Replaces the row's trailing node without introducing a container.
                 @Override
                 protected void invalidated() {
-                    setNode(IDX_TRAILING, get());
+                    setTrailing(get());
                 }
             };
         }
         return right;
     }
 
-    public Node getRight() {
+    /// Returns the right-side node, or null if none is assigned.
+    public @Nullable Node getRight() {
         return rightProperty().get();
     }
 
-    public void setRight(Node right) {
+    /// Sets the right-side node; null removes it.
+    public void setRight(@Nullable Node right) {
         rightProperty().set(right);
     }
 }

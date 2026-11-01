@@ -198,7 +198,6 @@ public class OptionalFilesPage extends SpinnerPane implements WizardPage {
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(content, Priority.ALWAYS);
-            content.setMouseTransparent(true);
             setSelectable();
             container.getChildren().setAll(checkBox, content);
 

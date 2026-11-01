@@ -12,11 +12,9 @@ import javafx.css.converter.PaintConverter;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Paint;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -37,14 +35,9 @@ public class AdvancedListItem extends Control {
     /// The margin applied by [#setLeftIcon(SVG)].
     public static final Insets LEFT_ICON_MARGIN = new Insets(0, 6, 0, 6);
 
-    /// Sets the graphic's [BorderPane] margin constraint; null removes the constraint.
+    /// Sets the graphic's [TwoLineListItem] margin constraint; null removes the constraint.
     public static void setMargin(Node graphic, @Nullable Insets margin) {
-        BorderPane.setMargin(graphic, margin);
-    }
-
-    /// Sets the graphic's [BorderPane] alignment constraint; null removes the constraint.
-    public static void setAlignment(Node graphic, @Nullable Pos alignment) {
-        BorderPane.setAlignment(graphic, alignment);
+        TwoLineListItem.setMargin(graphic, margin);
     }
 
     /// Creates an item whose default skin routes background clicks to [#fire()].
@@ -80,8 +73,7 @@ public class AdvancedListItem extends Control {
     public void setLeftIcon(SVG svg) {
         Node icon = svg.createIcon(LEFT_ICON_SIZE);
         icon.setMouseTransparent(true);
-        BorderPane.setMargin(icon, LEFT_ICON_MARGIN);
-        BorderPane.setAlignment(icon, Pos.CENTER);
+        setMargin(icon, LEFT_ICON_MARGIN);
         leftGraphicProperty().set(icon);
     }
 
@@ -113,7 +105,6 @@ public class AdvancedListItem extends Control {
             action.run();
             e.consume();
         });
-        setAlignment(button, Pos.CENTER);
         setRightGraphic(button);
     }
 
