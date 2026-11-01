@@ -20,21 +20,16 @@ public final class ServerAddress {
     private transient final @NotNull HostAndPort hostAndPort;
     private transient final @NotNull Map<String, String> queryProperties;
 
-    // The `USER_CHARACTER` and the preceding content in the original address.
-    private transient final @NotNull String userCharacterAndBeforeContent;
-
     // original address.
     private final @NotNull String rawAddress;
 
     private ServerAddress(
             @NotNull HostAndPort hostAndPort,
             @NotNull Map<String, String> queryProperties,
-            @NotNull String userCharacterAndBeforeContent,
             @NotNull String rawAddress
     ) {
         this.hostAndPort = hostAndPort;
         this.queryProperties = Collections.unmodifiableMap(queryProperties);
-        this.userCharacterAndBeforeContent = userCharacterAndBeforeContent;
         this.rawAddress = rawAddress;
     }
 
@@ -60,19 +55,15 @@ public final class ServerAddress {
                 input = input.substring(0, queryStart);
             }
 
-            String userCharacterAndBeforeContent;
             int atEnd = input.indexOf(USER_CHARACTER);
             if (atEnd != -1) {
                 String value = input.substring(0, atEnd);
                 queryProperties.put("_id", value);
 
-                userCharacterAndBeforeContent = USER_CHARACTER + value;
                 input = input.substring(atEnd + 1);
-            } else {
-                userCharacterAndBeforeContent = "";
             }
 
-            return new ServerAddress(HostAndPort.parseHostAndPort(input, DEFAULT_MINECRAFT_SERVER_PORT), queryProperties, userCharacterAndBeforeContent, rawAddress);
+            return new ServerAddress(HostAndPort.parse(input, DEFAULT_MINECRAFT_SERVER_PORT), queryProperties, rawAddress);
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to parse URL " + rawAddress, e);
         }
@@ -80,10 +71,6 @@ public final class ServerAddress {
 
     public @NotNull String getRawAddress() {
         return rawAddress;
-    }
-
-    public @NotNull String getUserCharacterAndBeforeContent() {
-        return userCharacterAndBeforeContent;
     }
 
     public @NotNull HostAndPort getHostAndPort() {

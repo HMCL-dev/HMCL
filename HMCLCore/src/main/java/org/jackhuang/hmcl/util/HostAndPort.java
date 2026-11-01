@@ -3,19 +3,24 @@
 package org.jackhuang.hmcl.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
-public record HostAndPort(
-        @NotNull String host,
-        int port
-) {
+import java.util.Objects;
 
-    public HostAndPort {
+public final class HostAndPort {
+    private final @NotNull String host;
+    private final int port;
+
+    @VisibleForTesting
+    HostAndPort(@NotNull String host, int port) {
         if (port < 0 || port > 65535) {
             throw new IllegalArgumentException("Invalid server address: " + port);
         }
+        this.host = host;
+        this.port = port;
     }
 
-    public static @NotNull HostAndPort parseHostAndPort(@NotNull String input, int defaultPort) {
+    public static @NotNull HostAndPort parse(@NotNull String input, int defaultPort) {
         String host;
         String portString;
 
@@ -85,5 +90,27 @@ public record HostAndPort(
         builder.append(':').append(port);
 
         return builder.toString();
+    }
+
+    public @NotNull String getHost() {
+        return host;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (obj == null || obj.getClass() != this.getClass()) return false;
+        var that = (HostAndPort) obj;
+        return Objects.equals(this.host, that.host) &&
+                this.port == that.port;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(host, port);
     }
 }

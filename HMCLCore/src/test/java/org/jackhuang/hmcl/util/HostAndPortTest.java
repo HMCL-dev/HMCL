@@ -10,24 +10,24 @@ public final class HostAndPortTest {
 
     @Test
     public void testParseHostAndPort() {
-        assertEquals(new HostAndPort("example.com", 25565), HostAndPort.parseHostAndPort("example.com", 25565));
-        assertEquals(new HostAndPort("example.com", 12345), HostAndPort.parseHostAndPort("example.com:12345", 25565));
-        assertEquals(new HostAndPort("example.com", 25565), HostAndPort.parseHostAndPort("example.com:", 25565));
-        assertEquals(new HostAndPort("127.0.0.1", 0), HostAndPort.parseHostAndPort("127.0.0.1:0", 25565));
+        assertEquals(new HostAndPort("example.com", 25565), HostAndPort.parse("example.com", 25565));
+        assertEquals(new HostAndPort("example.com", 12345), HostAndPort.parse("example.com:12345", 25565));
+        assertEquals(new HostAndPort("example.com", 25565), HostAndPort.parse("example.com:", 25565));
+        assertEquals(new HostAndPort("127.0.0.1", 0), HostAndPort.parse("127.0.0.1:0", 25565));
 
-        assertEquals(new HostAndPort("::1", 25565), HostAndPort.parseHostAndPort("[::1]", 25565));
-        assertEquals(new HostAndPort("::1", 12345), HostAndPort.parseHostAndPort("[::1]:12345", 25565));
-        assertEquals(new HostAndPort("2001:db8::1", 0), HostAndPort.parseHostAndPort("[2001:db8::1]:0", 25565));
+        assertEquals(new HostAndPort("::1", 25565), HostAndPort.parse("[::1]", 25565));
+        assertEquals(new HostAndPort("::1", 12345), HostAndPort.parse("[::1]:12345", 25565));
+        assertEquals(new HostAndPort("2001:db8::1", 0), HostAndPort.parse("[2001:db8::1]:0", 25565));
 
-        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parseHostAndPort("[", 25565));
-        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parseHostAndPort("[]:0", 25565));
-        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parseHostAndPort("[::1]|0", 25565));
-        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parseHostAndPort("[::1]:a", 25565));
-        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parseHostAndPort("[::1]:65536", 25565));
-        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parseHostAndPort("example.com:a", 25565));
-        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parseHostAndPort("example.com:-1", 25565));
-        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parseHostAndPort("example.com:65536", 25565));
-        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parseHostAndPort("   ", 25565));
+        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parse("[", 25565));
+        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parse("[]:0", 25565));
+        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parse("[::1]|0", 25565));
+        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parse("[::1]:a", 25565));
+        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parse("[::1]:65536", 25565));
+        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parse("example.com:a", 25565));
+        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parse("example.com:-1", 25565));
+        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parse("example.com:65536", 25565));
+        assertThrows(IllegalArgumentException.class, () -> HostAndPort.parse("   ", 25565));
     }
 
     @Test

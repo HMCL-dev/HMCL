@@ -362,24 +362,25 @@ public class DefaultLauncher extends Launcher {
                     String quickPlayMultiplayerArg;
                     if (World.supportQueryArgServerAddress(GameVersionNumber.asGameVersion(gameVersion))) {
                         // keep original address.
-                        quickPlayMultiplayerArg = parsed.getRawAddress().trim();
+                        quickPlayMultiplayerArg = parsed.getRawAddress();
                     } else {
                         if (parsed.hasQueryProperties()) {
                             LOG.warning("Ignore the query parameters in the server address.");
-                            quickPlayMultiplayerArg = (parsed.getUserCharacterAndBeforeContent() + parsed.getHostAndPort()).trim();
+                            // Before support for parameter addresses was introduced, the host did not permit the use of '@'.
+                            quickPlayMultiplayerArg = parsed.getHostAndPort().toString();
                         } else {
                             // keep original address.
-                            quickPlayMultiplayerArg = parsed.getRawAddress().trim();
+                            quickPlayMultiplayerArg = parsed.getRawAddress();
                         }
                     }
 
-                    res.add("--quickPlayMultiplayer").add(quickPlayMultiplayerArg);
+                    res.add("--quickPlayMultiplayer").add(quickPlayMultiplayerArg.trim());
                 } else {
-                    String serverArg = (parsed.getUserCharacterAndBeforeContent() + parsed.getHostAndPort().host()).trim();
-                    String portArg = String.valueOf(parsed.getHostAndPort().port());
+                    String serverArg = parsed.getHostAndPort().getHost();
+                    String portArg = String.valueOf(parsed.getHostAndPort().getPort());
 
-                    res.add("--server").add(serverArg);
-                    res.add("--port").add(portArg);
+                    res.add("--server").add(serverArg.trim());
+                    res.add("--port").add(portArg.trim());
 
                     if (parsed.hasQueryProperties()) {
                         LOG.warning("Ignore the query parameters in the server address.");
