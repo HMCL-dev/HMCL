@@ -10,6 +10,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -38,8 +39,10 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     private final StringProperty tag = new SimpleStringProperty();
 
-    /// Creates a game instance cell with selection controls and interactive tags.
-    public GameListCell() {
+    /// Creates a game instance cell constrained to the supplied list's viewport width.
+    public GameListCell(ListView<GameListItem> listView) {
+        FXUtils.limitCellWidth(listView, this);
+
         TwoLineListItem root = this.content = new TwoLineListItem();
         root.getStyleClass().add("md-list-cell");
         root.setPadding(new Insets(8, 8, 8, 0));
