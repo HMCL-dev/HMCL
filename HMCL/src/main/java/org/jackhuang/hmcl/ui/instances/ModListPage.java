@@ -20,12 +20,14 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.addon.AddonLoader;
@@ -725,14 +727,19 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final ModListPage page;
 
-        private final JFXToggleButton activeToggle = new JFXToggleButton();
+        private final JFXCheckBox checkBox = new JFXCheckBox();
+
         private final ImageContainer imageContainer = new ImageContainer(32);
+        private final ColorAdjust iconColorAdjust = new ColorAdjust();
+        private static final PseudoClass ACTIVE =PseudoClass.getPseudoClass("active");
+        private final Circle activeIndicator = new Circle(6);
+
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
-        private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
+        private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
 
-        private final InvalidationListener activeListener = obs -> activeToggle.setSelected(getItem().getModInfo().isActive());
+        private final InvalidationListener activeListener = obs -> updateActiveState(getItem().getModInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
@@ -751,15 +758,22 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             content.setMouseTransparent(true);
             setSelectable();
 
-            activeToggle.setSize(8);
-            activeToggle.setPadding(Insets.EMPTY);
-            FXUtils.setLimitHeight(activeToggle, 30);
-
             imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
+            imageContainer.setEffect(iconColorAdjust);
+
+            activeIndicator.getStyleClass().add("mod-active-indicator");
+            activeIndicator.setMouseTransparent(true);
+
+            StackPane iconContainer = new StackPane(imageContainer, activeIndicator);
+
+            StackPane.setAlignment(activeIndicator, Pos.BOTTOM_RIGHT);
+            StackPane.setMargin(activeIndicator, new Insets(0, -6, 0, 0));
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
-            container.getChildren().setAll(imageContainer, content, restoreButton, revealButton, infoButton, activeToggle);
+            checkBox.setPadding(new Insets(0, 8, 0, 0));
+
+            container.getChildren().setAll(iconContainer, content, restoreButton, revealButton, infoButton, checkBox);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -832,15 +846,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             }
 
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
-            activeToggle.setSelected(modInfo.isActive());
-            activeToggle.setOnAction(event -> {
+            updateActiveState(modInfo.isActive());
+            checkBox.setOnAction(event -> {
                 try {
-                    modInfo.setActive(activeToggle.isSelected());
+                    modInfo.setActive(checkBox.isSelected());
                 } catch (IOException e) {
                     LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
                     Controllers.showToast(i18n("mods.toggle.failed"));
                 } finally {
-                    activeToggle.setSelected(modInfo.isActive());
+                    updateActiveState(modInfo.isActive());
                 }
             });
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
@@ -866,6 +880,13 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         : new Tooltip(String.join("\n", warning));
                 FXUtils.installFastTooltip(this, warningTooltip);
             }
+        }
+
+        private void updateActiveState(boolean active) {
+            checkBox.setSelected(active);
+            iconColorAdjust.setSaturation(active ? 0.0 : -0.75);
+            iconColorAdjust.setBrightness(active ? 0.0 : -0.50);
+            activeIndicator.pseudoClassStateChanged(ACTIVE, active);
         }
     }
 }
