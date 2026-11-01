@@ -24,6 +24,13 @@ public record Tag(String text, Type type) {
         WARNING
     }
 
+    /// Creates a tag with the given text.
+    ///
+    /// @throws NullPointerException if text or type is null
+    public Tag(String text) {
+        this(text, Type.NORMAL);
+    }
+
     /// Creates a tag with the given text and type.
     ///
     /// @throws NullPointerException if text or type is null
