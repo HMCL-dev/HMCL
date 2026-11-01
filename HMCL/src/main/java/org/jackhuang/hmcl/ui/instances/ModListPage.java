@@ -728,8 +728,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final ModListPage page;
 
-        private final JFXCheckBox checkBox = new JFXCheckBox();
-
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final ColorAdjust iconColorAdjust = new ColorAdjust();
         private final Circle activeIndicator = new Circle(6);
@@ -738,6 +736,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
         private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
+
+        private final JFXToggleButton toggleButton = new JFXToggleButton();
 
         private final InvalidationListener activeListener = obs -> updateActiveState(getItem().getModInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
@@ -771,9 +771,13 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
-            checkBox.setPadding(new Insets(0, 8, 0, 0));
+            toggleButton.setPadding(new Insets(0, 8, 0, 0));
 
-            container.getChildren().setAll(iconContainer, content, restoreButton, revealButton, infoButton, checkBox);
+            HBox actions = new HBox();
+            actions.setAlignment(Pos.CENTER);
+            actions.getChildren().setAll(restoreButton, revealButton, infoButton, toggleButton);
+
+            container.getChildren().setAll(iconContainer, content, actions);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -847,9 +851,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
             updateActiveState(modInfo.isActive());
-            checkBox.setOnAction(event -> {
+            toggleButton.setOnAction(event -> {
                 try {
-                    modInfo.setActive(checkBox.isSelected());
+                    modInfo.setActive(toggleButton.isSelected());
                 } catch (IOException e) {
                     LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
                     Controllers.showToast(i18n("mods.toggle.failed"));
@@ -883,7 +887,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
 
         private void updateActiveState(boolean active) {
-            checkBox.setSelected(active);
+            toggleButton.setSelected(active);
             iconColorAdjust.setSaturation(active ? 0.0 : -0.75);
             iconColorAdjust.setBrightness(active ? 0.0 : -0.50);
             activeIndicator.pseudoClassStateChanged(ACTIVE, active);
