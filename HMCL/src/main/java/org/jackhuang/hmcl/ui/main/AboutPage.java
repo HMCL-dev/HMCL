@@ -150,6 +150,7 @@ public final class AboutPage extends SpinnerPane {
                 switch (graphicsCard.getType()) {
                     case INTEGRATED -> button.getTags().add(new Tag(i18n("about.device.gpu.type.integrated")));
                     case DISCRETE -> button.getTags().add(new Tag(i18n("about.device.gpu.type.discrete")));
+                    case VIRTUAL -> button.getTags().add(new Tag(i18n("about.device.gpu.type.virtual")));
                 }
 
                 deviceInfo.getContent().add(button);
