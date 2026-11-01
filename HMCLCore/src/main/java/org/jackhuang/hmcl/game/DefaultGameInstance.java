@@ -205,22 +205,22 @@ public abstract class DefaultGameInstance implements GameInstance {
     ///
     /// @return the detected version, or [GameVersionNumber#unknown()] when detection fails
     private GameVersionNumber detectVersion() {
-        GameInstanceManifest resolvedManifest = getResolvedManifest();
-        @Nullable DownloadInfo clientDownloadInfo = resolvedManifest.getDownloads()
-                .get(DownloadType.CLIENT);
-
-        if (clientDownloadInfo != null && clientDownloadInfo.getSha1() != null) {
-            @Unmodifiable Map<ByteArrayKey, GameVersionNumber> knownVersions = GameVersionNumber.getKnownVersions();
-
-            try {
-                @Nullable GameVersionNumber knownVersion = knownVersions.get(ByteArrayKey.fromHexString(clientDownloadInfo.getSha1()));
-                if (knownVersion != null)
-                    return knownVersion;
-            } catch (Exception ignored) {
-            }
-        }
-
         try {
+            GameInstanceManifest resolvedManifest = getResolvedManifest();
+            @Nullable DownloadInfo clientDownloadInfo = resolvedManifest.getDownloads()
+                    .get(DownloadType.CLIENT);
+
+            if (clientDownloadInfo != null && clientDownloadInfo.getSha1() != null) {
+                @Unmodifiable Map<ByteArrayKey, GameVersionNumber> knownVersions = GameVersionNumber.getKnownVersions();
+
+                try {
+                    @Nullable GameVersionNumber knownVersion = knownVersions.get(ByteArrayKey.fromHexString(clientDownloadInfo.getSha1()));
+                    if (knownVersion != null)
+                        return knownVersion;
+                } catch (Exception ignored) {
+                }
+            }
+
             Path jar = getInstanceJarFile();
             @Nullable GameVersionNumber detected = GameVersionNumber.detectFromJar(jar);
             if (detected == null) {
