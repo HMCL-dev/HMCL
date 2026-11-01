@@ -311,6 +311,10 @@
     -fx-background-color: -fixed-warning-tag-background;
 }
 
+.tag > .text {
+    -fx-bounds-type: visual;
+}
+
 .two-line-item-second-large {
 
 }

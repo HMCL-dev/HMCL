@@ -29,6 +29,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.robot.Robot;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextBoundsType;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Duration;
@@ -1501,6 +1502,48 @@ public final class TwoLineListItemLayoutTest {
             parent.layout();
             assertSame(item, item.getSubtitleLabel().getParent());
         });
+    }
+
+    /// Verifies tag glyphs are centered within the capsule across fonts, fallback glyphs, and folding.
+    @ParameterizedTest
+    @ValueSource(strings = {"System", "DejaVu Sans", "Noto Sans CJK SC"})
+    public void testTagGlyphsAreVerticallyCentered(String fontFamily) {
+        onFxThread(() -> {
+            TwoLineListItem item = new TwoLineListItem("Title", null);
+            item.addTags(List.of("RISC-V 64", "\u96c6\u6210\u663e\u5361", "gyp"));
+            item.addTagWarning("Warning");
+            VBox parent = new VBox(item);
+            parent.setStyle("-fx-font-family: '" + fontFamily + "'; "
+                    + "-monet-on-surface: #111111; -monet-on-secondary-container: #222222; "
+                    + "-monet-secondary-container: #ddddff; -monet-on-error-container: #444444; "
+                    + "-fixed-warning-tag-background: #ffdddd;");
+            Scene scene = new Scene(parent);
+            scene.getStylesheets().add(requireNonNull(getClass().getResource("/assets/css/root.css")).toExternalForm());
+            layout(parent, 800);
+            assertTagsFit(item);
+            for (Label tag : labels(item))
+                assertTagGlyphsCentered(tag);
+
+            item.setTitle("A long title ".repeat(20));
+            layout(parent, 160);
+            Label summary = collapsedTag(item);
+            assertTrue(summary.isVisible());
+            assertEquals("+4", summary.getText());
+            assertTagGlyphsCentered(summary);
+            assertTrue(summary.getBoundsInParent().getMaxX() <= item.getWidth());
+        });
+    }
+
+    /// Allows pixel snapping while rejecting unequal space above and below the rendered glyphs.
+    private static void assertTagGlyphsCentered(Label label) {
+        Text text = label.getChildrenUnmodifiable().stream().filter(Text.class::isInstance)
+                .map(Text.class::cast).findFirst().orElseThrow();
+        assertEquals(TextBoundsType.VISUAL, text.getBoundsType());
+        double top = text.getBoundsInParent().getMinY();
+        double bottom = label.getHeight() - text.getBoundsInParent().getMaxY();
+        assertEquals(top, bottom, 1.5, "Tag glyphs are not vertically centered: " + label.getText());
+        assertTrue(top >= -0.5 && bottom >= -0.5, "Tag glyphs extend outside the capsule");
+        assertEquals(label.prefWidth(-1), label.getWidth(), 1);
     }
 
     /// Returns rendered tags in their scene-graph order.
