@@ -77,7 +77,8 @@ final class FastFetchUtils {
             return List.of();
 
         CentralProcessor.Builder builder = new CentralProcessor.Builder()
-                .setName(cpuInfo.cpu).setVendor(HardwareVendor.of(cpuInfo.vendor));
+                .setName(CentralProcessor.cleanName(cpuInfo.cpu))
+                .setVendor(HardwareVendor.of(cpuInfo.vendor));
         int cores = 0;
         int threads = 0;
         if (cpuInfo.cores != null) {
@@ -114,7 +115,7 @@ final class FastFetchUtils {
                     continue;
 
                 GraphicsCard.Builder builder = new GraphicsCard.Builder()
-                        .setName(gpuInfo.name)
+                        .setName(GraphicsCard.cleanName(gpuInfo.name))
                         .setVendor(HardwareVendor.of(gpuInfo.vendor))
                         .setDriver(gpuInfo.driver);
 

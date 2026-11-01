@@ -30,7 +30,8 @@ public final class GameListCell extends ListCell<GameListItem> {
 
     private final JFXRadioButton chkSelected;
     private final JFXButton btnUpgrade;
-    private final JFXButton btnLaunch;
+    /// Opens the settings for this cell's game instance.
+    private final JFXButton btnEditInstance;
     private final JFXButton btnManage;
 
     private final HBox right;
@@ -93,14 +94,14 @@ public final class GameListCell extends ListCell<GameListItem> {
             FXUtils.installFastTooltip(btnUpgrade, i18n("instance.update"));
             right.getChildren().add(btnUpgrade);
 
-            this.btnLaunch = FXUtils.newToggleButton4(SVG.ROCKET_LAUNCH);
-            btnLaunch.setOnAction(e -> {
+            this.btnEditInstance = FXUtils.newToggleButton4(SVG.SETTINGS);
+            btnEditInstance.setOnAction(e -> {
                 @Nullable GameListItem item = this.getItem();
                 if (item != null)
-                    item.testGame();
+                    item.modifyGameSettings();
             });
-            FXUtils.installFastTooltip(btnLaunch, i18n("instance.launch.test"));
-            right.getChildren().add(btnLaunch);
+            FXUtils.installFastTooltip(btnEditInstance, i18n("instance.manage.manage"));
+            right.getChildren().add(btnEditInstance);
 
             this.btnManage = FXUtils.newToggleButton4(SVG.MORE_VERT);
             btnManage.setOnAction(e -> {
@@ -124,7 +125,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
             if (e.getButton() == MouseButton.PRIMARY) {
                 if (e.getClickCount() == 1) {
-                    item.modifyGameSettings();
+                    item.getRepository().setSelectedInstance(item.getGameInstance());
                 }
             } else if (e.getButton() == MouseButton.SECONDARY) {
                 JFXPopup popup = getPopup(item);
@@ -164,7 +165,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             this.tag.bind(item.tagProperty());
             if (item.canUpdate())
                 this.right.getChildren().add(btnUpgrade);
-            this.right.getChildren().addAll(btnLaunch, btnManage);
+            this.right.getChildren().addAll(btnEditInstance, btnManage);
         }
     }
 
@@ -175,8 +176,6 @@ public final class GameListCell extends ListCell<GameListItem> {
         menu.getContent().setAll(
                 new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch.test"), item::testGame, popup),
                 new IconedMenuItem(SVG.SCRIPT, i18n("instance.launch_script"), item::generateLaunchScript, popup),
-                new MenuSeparator(),
-                new IconedMenuItem(SVG.SETTINGS, i18n("instance.manage.manage"), item::modifyGameSettings, popup),
                 new MenuSeparator(),
                 new IconedMenuItem(SVG.EDIT, i18n("instance.manage.rename"), item::rename, popup),
                 new IconedMenuItem(SVG.FOLDER_COPY, i18n("instance.manage.duplicate"), item::duplicate, popup),
