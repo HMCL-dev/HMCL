@@ -472,38 +472,33 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 rowIndex++;
 
                 HBox box = new HBox();
-                MenuUpDownButton advancedButton = new MenuUpDownButton();
-                box.getChildren().setAll(advancedButton);
-                advancedButton.setText(i18n("settings.advanced"));
+                ExpandablePane advancedPane = new ExpandablePane();
+                box.getChildren().setAll(advancedPane);
+                advancedPane.setText(i18n("settings.advanced"));
                 GridPane.setColumnSpan(box, 2);
                 add(box, 0, rowIndex);
 
-                rowIndex++;
+                GridPane advancedMenu = new GridPane();
+                advancedMenu.setPadding(new Insets(8, 0, 0, 0));
+                advancedMenu.setHgap(8);
+                advancedMenu.setVgap(8);
 
                 Label lblUUID = new Label(i18n("account.methods.offline.uuid"));
-                lblUUID.managedProperty().bind(advancedButton.selectedProperty());
-                lblUUID.visibleProperty().bind(advancedButton.selectedProperty());
                 setHalignment(lblUUID, HPos.LEFT);
-                add(lblUUID, 0, rowIndex);
+                advancedMenu.add(lblUUID, 0, 0);
 
                 txtUUID = new JFXTextField();
-                txtUUID.managedProperty().bind(advancedButton.selectedProperty());
-                txtUUID.visibleProperty().bind(advancedButton.selectedProperty());
                 txtUUID.setValidators(new UUIDValidator());
                 txtUUID.promptTextProperty().bind(BindingMapping.of(txtUsername.textProperty()).map(name -> OfflineAccountFactory.getUUIDFromUserName(name).toString()));
                 txtUUID.setOnAction(e -> onAction.run());
-                add(txtUUID, 1, rowIndex);
-
-                rowIndex++;
+                advancedMenu.add(txtUUID, 1, 0);
 
                 HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-                hintPane.managedProperty().bind(advancedButton.selectedProperty());
-                hintPane.visibleProperty().bind(advancedButton.selectedProperty());
                 hintPane.setText(i18n("account.methods.offline.uuid.hint"));
                 GridPane.setColumnSpan(hintPane, 2);
-                add(hintPane, 0, rowIndex);
+                advancedMenu.add(hintPane, 0, 1);
 
-                rowIndex++;
+                advancedPane.getContent().add(advancedMenu);
             }
 
             valid = new BooleanBinding() {
