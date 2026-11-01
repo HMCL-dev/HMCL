@@ -154,6 +154,11 @@ public final class MessageDialogPane extends HBox {
             return this;
         }
 
+        public Builder addActionNoClosing(Node actionNode) {
+            dialog.actions.getChildren().add(actionNode);
+            return this;
+        }
+
         public Builder ok(@Nullable Runnable ok) {
             JFXButton btnOk = new JFXButton(i18n("button.ok"));
             btnOk.getStyleClass().add("dialog-accept");
