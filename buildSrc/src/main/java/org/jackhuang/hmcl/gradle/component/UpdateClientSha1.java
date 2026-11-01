@@ -9,11 +9,15 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
+import org.gradle.api.tasks.PathSensitive;
+import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.work.DisableCachingByDefault;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -21,16 +25,24 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.TreeMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-/// Updates the embedded client SHA-1 table from Mojang's version manifest and per-version metadata.
+/// Updates selected client hashes from Mojang and the embedded unlisted version manifest.
 /// The task downloads fresh metadata on every invocation, independently of normal resource processing.
 @NotNullByDefault
 @DisableCachingByDefault(because = "Downloads mutable remote metadata to update a checked-in resource")
 public abstract class UpdateClientSha1 extends DefaultTask {
+    /// April Fools version identifiers included even when their manifest type is snapshot.
+    private static final @Unmodifiable Set<String> APRIL_FOOLS_VERSIONS = Set.of(
+            "2.0_blue", "2.0_red", "2.0_purple", "15w14a", "1.RV-Pre1", "3D Shareware v1.34", "20w14infinite",
+            "22w13oneblockatatime", "23w13a_or_b", "24w14potato", "25w14craftmine", "26w14a"
+    );
+
     /// Configures the official manifest endpoint and disables up-to-date skipping.
     public UpdateClientSha1() {
         getManifestUrl().convention("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json");
@@ -41,12 +53,21 @@ public abstract class UpdateClientSha1 extends DefaultTask {
     @Input
     public abstract Property<String> getManifestUrl();
 
-    /// Returns the destination of the UTF-8 CSV, with no header and LF-terminated `version,sha1` rows.
-    /// Rows are sorted by the natural ordering of version identifier strings.
+    /// Returns the local manifest supplying version metadata URLs omitted from the official manifest.
+    @InputFile
+    @PathSensitive(PathSensitivity.NONE)
+    public abstract RegularFileProperty getUnlistedVersionsFile();
+
+    /// Returns the destination of the UTF-8 CSV, with SPDX comment lines and LF-terminated `version,sha1` rows.
+    /// There is no column header.
+    /// Rows follow manifest order, with official versions preceding unlisted versions.
     @OutputFile
     public abstract RegularFileProperty getOutputFile();
 
-    /// Fetches every listed version's `downloads.client.sha1` and replaces the CSV after validation.
+    /// Generates the CSV from the official and unlisted manifests and freshly downloaded metadata.
+    /// Includes releases, old alpha and beta versions, and the snapshots in [#APRIL_FOOLS_VERSIONS].
+    /// Does not read the destination file. Different version identifiers
+    /// may have the same client hash; all such entries are retained.
     /// Downloads at most eight version metadata files concurrently. Existing output is left unchanged
     /// if downloading, validation, or writing the temporary file fails.
     ///
@@ -55,28 +76,40 @@ public abstract class UpdateClientSha1 extends DefaultTask {
     /// @throws InterruptedException if interrupted while waiting for version metadata
     @TaskAction
     public void run() throws IOException, InterruptedException {
+        var output = getOutputFile().get().getAsFile().toPath().toAbsolutePath();
+        var records = new LinkedHashMap<String, String>();
         JsonObject manifest = readJson(getManifestUrl().get());
         @Nullable JsonElement versions = manifest.get("versions");
         if (versions == null || !versions.isJsonArray() || versions.getAsJsonArray().isEmpty()) {
             throw new IOException("Missing or empty version list");
         }
 
+        var entries = versions.getAsJsonArray();
+        JsonObject unlisted = readJson(getUnlistedVersionsFile().get().getAsFile().toURI().toString());
+        @Nullable JsonElement unlistedVersions = unlisted.get("versions");
+        if (unlistedVersions == null || !unlistedVersions.isJsonArray()) {
+            throw new IOException("Missing or invalid unlisted version list");
+        }
+        entries.addAll(unlistedVersions.getAsJsonArray());
+
         var executor = Executors.newFixedThreadPool(8);
-        var hashes = new TreeMap<String, Future<String>>();
-        var csv = new StringBuilder();
+        var hashes = new LinkedHashMap<String, Future<String>>();
+        var seen = new HashSet<String>();
         try {
-            for (JsonElement element : versions.getAsJsonArray()) {
+            for (JsonElement element : entries) {
                 if (!element.isJsonObject()) {
                     throw new IOException("Invalid version manifest entry: " + element);
                 }
                 JsonObject version = element.getAsJsonObject();
                 String id = requireString(version, "id");
-                if (id.isBlank() || id.indexOf(',') >= 0 || id.indexOf('"') >= 0
-                        || id.indexOf('\r') >= 0 || id.indexOf('\n') >= 0) {
-                    throw new IOException("Invalid version identifier: " + id);
-                }
-                if (hashes.containsKey(id)) {
+                validateId(id);
+                if (!seen.add(id)) {
                     throw new IOException("Duplicate version identifier: " + id);
+                }
+                String type = requireString(version, "type");
+                if (!Set.of("release", "old_alpha", "old_beta").contains(type)
+                        && !APRIL_FOOLS_VERSIONS.contains(id)) {
+                    continue;
                 }
                 String url = requireString(version, "url");
                 hashes.put(id, executor.submit(() -> readClientSha1(id, url)));
@@ -84,7 +117,7 @@ public abstract class UpdateClientSha1 extends DefaultTask {
 
             for (var entry : hashes.entrySet()) {
                 try {
-                    csv.append(entry.getKey()).append(',').append(entry.getValue().get()).append('\n');
+                    records.put(entry.getKey(), entry.getValue().get());
                 } catch (ExecutionException e) {
                     throw new IOException("Failed to read client SHA-1 for " + entry.getKey(), e.getCause());
                 }
@@ -93,7 +126,13 @@ public abstract class UpdateClientSha1 extends DefaultTask {
             executor.shutdownNow();
         }
 
-        var output = getOutputFile().get().getAsFile().toPath().toAbsolutePath();
+        var csv = new StringBuilder("""
+                # SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+                # SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
+                """);
+        for (var entry : records.entrySet()) {
+            csv.append(entry.getKey()).append(',').append(entry.getValue()).append('\n');
+        }
         var directory = output.getParent();
         Files.createDirectories(directory);
         var temporary = Files.createTempFile(directory, "client-sha1-", ".csv.tmp");
@@ -107,7 +146,17 @@ public abstract class UpdateClientSha1 extends DefaultTask {
         } finally {
             Files.deleteIfExists(temporary);
         }
-        getLogger().lifecycle("Updated {} client SHA-1 entries in {}", hashes.size(), output);
+        getLogger().lifecycle("Updated {} client SHA-1 entries in {}", records.size(), output);
+    }
+
+    /// Validates a nonblank version identifier that can be written as an unquoted CSV field.
+    ///
+    /// @throws IOException if the identifier is blank or contains a comma, quote, or line break
+    private static void validateId(String id) throws IOException {
+        if (id.isBlank() || id.indexOf(',') >= 0 || id.indexOf('"') >= 0
+                || id.indexOf('\r') >= 0 || id.indexOf('\n') >= 0) {
+            throw new IOException("Invalid version identifier: " + id);
+        }
     }
 
     /// Reads a version's client hash, verifying its identifier and the 40-digit lowercase hexadecimal hash.
