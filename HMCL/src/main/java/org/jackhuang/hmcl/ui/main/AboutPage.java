@@ -60,14 +60,28 @@ public final class AboutPage extends SpinnerPane {
 
         ComponentList systemInfo = new ComponentList();
         {
+            @Nullable String releaseName = OperatingSystem.OS_RELEASE_PRETTY_NAME;
+            if (releaseName == null || releaseName.isBlank())
+                releaseName = OperatingSystem.OS_RELEASE_NAME;
+            String systemDescription = OperatingSystem.CURRENT_OS == OperatingSystem.LINUX
+                    ? (releaseName == null || releaseName.isBlank() ? OperatingSystem.SYSTEM_NAME : releaseName)
+                    : "%s %s".formatted(OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion());
+
             var system = new LinePane();
             system.setLargeTitle(true);
             system.setLeading(SVG.LUCIDE_APP_WINDOW.createIcon(32));
             system.setTitle(i18n("about.system.os"));
-            system.setSubtitle((OperatingSystem.OS_RELEASE_PRETTY_NAME == null
-                    ? "%s %s (%s)".formatted(OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion(), Architecture.SYSTEM_ARCH.getDisplayName())
-                    : "%s (%s %s, %s)".formatted(OperatingSystem.OS_RELEASE_PRETTY_NAME, OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion(), Architecture.SYSTEM_ARCH.getDisplayName())));
+            system.setSubtitle("%s (%s)".formatted(systemDescription, Architecture.SYSTEM_ARCH.getDisplayName()));
             systemInfo.getContent().add(system);
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+                var kernel = new LinePane();
+                kernel.setLargeTitle(true);
+                kernel.setLeading(SVG.LUCIDE_APP_WINDOW.createIcon(32));
+                kernel.setTitle(i18n("about.system.kernel"));
+                kernel.setSubtitle("%s %s".formatted(OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion()));
+                systemInfo.getContent().add(kernel);
+            }
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
                 @Nullable String desktopName = System.getenv("XDG_CURRENT_DESKTOP");
