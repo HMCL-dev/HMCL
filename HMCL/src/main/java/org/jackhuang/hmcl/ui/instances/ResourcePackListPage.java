@@ -530,6 +530,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         private BooleanProperty booleanProperty = null;
 
+        /// Creates a selectable pack row with compatibility confirmation and file actions.
         public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, ResourcePackListPage page) {
             super(listView);
             this.page = page;
@@ -562,7 +563,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             });
 
             HBox.setHgrow(content, Priority.ALWAYS);
-            content.setMouseTransparent(true);
 
             root.getChildren().setAll(checkBox, imageContainer, content, btnReveal, btnInfo);
 

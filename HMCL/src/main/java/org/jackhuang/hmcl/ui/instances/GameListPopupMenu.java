@@ -10,12 +10,10 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.WindowEvent;
@@ -26,6 +24,7 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.Tag;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -122,16 +121,16 @@ public final class GameListPopupMenu extends StackPane {
 
         private final StringProperty tag = new SimpleStringProperty();
 
-        /// Creates a popup row that reuses its tag label when the instance tag changes.
+        /// Creates a popup row with a leading icon and the shared advanced-item text styling.
         public Cell(ListView<GameItem> listView) {
             this.setPadding(Insets.EMPTY);
 
             this.imageView = new ImageContainer(32);
             this.imageView.setMouseTransparent(true);
-            BorderPane.setAlignment(imageView, Pos.CENTER);
 
             this.content = new TwoLineListItem();
-            this.content.setMouseTransparent(true);
+            content.getStyleClass().add("container");
+            content.setLeading(imageView);
             FXUtils.onChangeAndOperate(tag, tag -> {
                 if (StringUtils.isNotBlank(tag))
                     content.getTags().setAll(new Tag(tag));
@@ -139,13 +138,7 @@ public final class GameListPopupMenu extends StackPane {
                     content.getTags().clear();
             });
 
-            BorderPane container = new BorderPane();
-            container.getStyleClass().add("container");
-            container.setPickOnBounds(false);
-            container.setLeft(imageView);
-            container.setCenter(content);
-
-            this.ripplerContainer = new RipplerContainer(container);
+            this.ripplerContainer = new RipplerContainer(content);
 
             StackPane rootPane = new StackPane();
             rootPane.getStyleClass().add("advanced-list-item");
@@ -153,7 +146,7 @@ public final class GameListPopupMenu extends StackPane {
             rootPane.maxWidthProperty().bind(listView.widthProperty().subtract(5));
 
             FXUtils.onClicked(rootPane, () -> {
-                GameItem item = getItem();
+                @Nullable GameItem item = getItem();
                 if (item != null) {
                     item.getRepository().setSelectedInstance(item.getGameInstance());
                     if (getScene().getWindow() instanceof JFXPopup popup)

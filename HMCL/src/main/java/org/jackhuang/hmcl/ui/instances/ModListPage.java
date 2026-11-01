@@ -739,6 +739,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private Tooltip warningTooltip;
 
+        /// Creates a selectable mod row with file actions for the supplied page.
         ModInfoListCell(JFXListView<ModInfoObject> listView, ModListPage page) {
             super(listView);
             this.page = page;
@@ -749,7 +750,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(content, Priority.ALWAYS);
-            content.setMouseTransparent(true);
             setSelectable();
 
             imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());

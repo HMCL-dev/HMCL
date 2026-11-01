@@ -256,6 +256,7 @@ public final class WorldListPage extends ListPageBase<World> {
         private final TwoLineListItem content;
         private final JFXButton btnLaunch;
 
+        /// Creates a world row with launch and management actions for the supplied page.
         public WorldListCell(WorldListPage page) {
             this.page = page;
 
@@ -277,7 +278,6 @@ public final class WorldListPage extends ListPageBase<World> {
             {
                 this.content = new TwoLineListItem();
                 root.setCenter(content);
-                content.setMouseTransparent(true);
             }
 
             {

@@ -799,13 +799,6 @@ public class TwoLineListItem extends Region {
             }
         }
 
-        /// Applies the shared tag appearance and preferred-width minimum.
-        private static void styleTagLabel(Label label, Tag.Type type) {
-            label.getStyleClass().add("tag");
-            label.setMinWidth(USE_PREF_SIZE);
-            label.pseudoClassStateChanged(WARNING_PSEUDO_CLASS, type == Tag.Type.WARNING);
-        }
-
         /// A tag renderer that measures CSS normally but skips skin layout while hidden.
         @NotNullByDefault
         private static final class TagLabel extends Label {
@@ -815,7 +808,9 @@ public class TwoLineListItem extends Region {
             /// Creates a hidden renderer; a null owner excludes the summary from tag-metric invalidation.
             private TagLabel(String text, Tag.Type type, @Nullable TagState owner) {
                 super(text);
-                styleTagLabel(this, type);
+                getStyleClass().add("tag");
+                setMinWidth(USE_PREF_SIZE);
+                pseudoClassStateChanged(WARNING_PSEUDO_CLASS, type == Tag.Type.WARNING);
                 setMouseTransparent(true);
                 setVisible(false);
                 this.owner = owner;
