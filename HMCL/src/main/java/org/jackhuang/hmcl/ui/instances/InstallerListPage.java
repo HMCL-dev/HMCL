@@ -7,6 +7,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.GameComponentAnalyzer;
+import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -52,6 +53,8 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
     }
 
     /// Rebuilds the component controls for the selected instance, or clears them if none is selected.
+    /// Minecraft editing follows the stored manifest's modifiability; other installed components
+    /// require a recognized patch to expose editing controls.
     public void loadInstance(HMCLGameInstance.Optional instance) {
         @Nullable HMCLGameInstance gameInstance = instance.instance();
         this.gameInstance = gameInstance;
@@ -78,7 +81,9 @@ public class InstallerListPage extends ListPageBase<InstallerItem> {
             if (libraryVersion != null) {
                 component.versionProperty().set(new InstallerItem.InstalledState(
                         libraryVersion,
-                        !gameInstance.getAnalyzer().isClear(component.getComponentType()),
+                        component.getComponentType() == GameComponentType.GAME
+                                ? !gameInstance.getManifest().isModifiable()
+                                : !gameInstance.getAnalyzer().isClear(component.getComponentType()),
                         false
                 ));
             } else {
