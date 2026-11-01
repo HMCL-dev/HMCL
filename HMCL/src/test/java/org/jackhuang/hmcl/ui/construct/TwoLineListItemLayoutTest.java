@@ -211,7 +211,7 @@ public final class TwoLineListItemLayoutTest {
             assertEquals(List.of("Warning", "Updated", "Other"), labels(item).stream().map(Label::getText).toList());
             assertTrue(initial.get(0).getPseudoClassStates().contains(PseudoClass.getPseudoClass("warning")));
 
-            item.getTags().removeFirst();
+            item.getTags().remove(0);
             item.getTags().add(new Tag("Added"));
             layout(parent, 800);
             assertEquals(List.of("Updated", "Other", "Added"), labels(item).stream().map(Label::getText).toList());
@@ -325,6 +325,7 @@ public final class TwoLineListItemLayoutTest {
     }
 
     /// Verifies truncated text enables tooltip interaction and wrapping or removal disables it.
+    /// On JavaFX versions before 23, verifies truncated labels remain mouse-transparent.
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     public void testTruncatedTextInteraction(boolean subtitle) {
@@ -343,6 +344,12 @@ public final class TwoLineListItemLayoutTest {
             else
                 item.setTitle(description);
             layout(parent, 250);
+            if (FXUtils.JAVAFX_MAJOR_VERSION < 23) {
+                assertNull(FXUtils.textTruncatedProperty(label));
+                assertTrue(label.isMouseTransparent());
+                assertTrue(item.isMouseTransparent());
+                return;
+            }
             assertTrue(requireNonNull(FXUtils.textTruncatedProperty(label)).get());
             assertFalse(label.isMouseTransparent());
             assertFalse(item.isMouseTransparent());
