@@ -29,8 +29,10 @@ import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,12 +49,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author huangyuhui
  */
-public final class LogWindow extends Stage {
+public final class GameLogsHolder {
     private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
     private static final Log4jLevel[] LEVELS = {Log4jLevel.FATAL, Log4jLevel.ERROR, Log4jLevel.WARN, Log4jLevel.INFO, Log4jLevel.DEBUG};
 
     private final CircularArrayList<Log> logs;
+    private final ReadOnlyStringWrapper lastLogLine = new ReadOnlyStringWrapper();
     private final Map<Log4jLevel, SimpleIntegerProperty> levelCountMap = new EnumMap<>(Log4jLevel.class);
     private final Map<Log4jLevel, SimpleBooleanProperty> levelShownMap = new EnumMap<>(Log4jLevel.class);
 
@@ -63,42 +66,51 @@ public final class LogWindow extends Stage {
         }
     }
 
-    private final LogWindowImpl impl;
-    private final ManagedProcess gameProcess;
+    private final @Nullable ManagedProcess gameProcess;
+    private final ObservableList<Log> items = FXCollections.observableList(new CircularArrayList<>());
 
-    public LogWindow(ManagedProcess gameProcess) {
+    private WeakReference<Stage> windowRef = new WeakReference<>(null);
+
+    public GameLogsHolder(@Nullable ManagedProcess gameProcess) {
         this(gameProcess, new CircularArrayList<>());
     }
 
-    public LogWindow(ManagedProcess gameProcess, CircularArrayList<Log> logs) {
-        Themes.applyNativeDarkMode(this);
-
+    public GameLogsHolder(@Nullable ManagedProcess gameProcess, CircularArrayList<Log> logs) {
         this.logs = logs;
-        this.impl = new LogWindowImpl();
-        setScene(new Scene(impl, 800, 480));
-        StyleSheets.init(getScene());
-        setTitle(i18n("logwindow.title"));
-        FXUtils.setIcon(this);
-
+        this.gameProcess = gameProcess;
         for (SimpleBooleanProperty property : levelShownMap.values()) {
             property.addListener(o -> shakeLogs());
         }
+    }
 
-        this.gameProcess = gameProcess;
-
-        FXUtils.addMacOSCloseWindowHandler(this, () -> !gameProcess.isRunning());
+    public Stage showWindow() {
+        Stage stage;
+        if ((stage = windowRef.get()) == null) {
+            stage = new Stage();
+            windowRef = new WeakReference<>(stage);
+            Themes.applyNativeDarkMode(stage);
+            LogWindowContent content = new LogWindowContent(stage);
+            stage.setScene(new Scene(content, 800, 480));
+            StyleSheets.init(stage.getScene());
+            stage.setTitle(i18n("logwindow.title"));
+            FXUtils.setIcon(stage);
+            FXUtils.addMacOSCloseWindowHandler(stage, () -> gameProcess == null || !gameProcess.isRunning());
+        }
+        stage.show();
+        stage.requestFocus();
+        return stage;
     }
 
     public void logLine(Log log) {
         Log4jLevel level = log.getLevel();
         logs.add(log);
+        lastLogLine.set(log.getLog());
         if (levelShownMap.get(level).get())
-            impl.listView.getItems().add(log);
+            items.add(log);
 
         SimpleIntegerProperty property = levelCountMap.get(log.getLevel());
         property.set(property.get() + 1);
         checkLogCount();
-        autoScroll();
     }
 
     public void logLines(List<Log> logs) {
@@ -106,18 +118,21 @@ public final class LogWindow extends Stage {
             Log4jLevel level = log.getLevel();
             this.logs.add(log);
             if (levelShownMap.get(level).get())
-                impl.listView.getItems().add(log);
+                items.add(log);
 
             SimpleIntegerProperty property = levelCountMap.get(log.getLevel());
             property.set(property.get() + 1);
         }
+        this.lastLogLine.set(logs.get(logs.size() - 1).getLog());
         checkLogCount();
-        autoScroll();
+    }
+
+    public ReadOnlyStringProperty lastLogLineProperty() {
+        return lastLogLine.getReadOnlyProperty();
     }
 
     private void shakeLogs() {
-        impl.listView.getItems().setAll(logs.stream().filter(log -> levelShownMap.get(log.getLevel()).get()).collect(Collectors.toList()));
-        autoScroll();
+        items.setAll(logs.stream().filter(log -> levelShownMap.get(log.getLevel()).get()).collect(Collectors.toList()));
     }
 
     private void checkLogCount() {
@@ -125,7 +140,6 @@ public final class LogWindow extends Stage {
         if (nRemove <= 0)
             return;
 
-        ObservableList<Log> items = impl.listView.getItems();
         int itemsSize = items.size();
         int count = 0;
 
@@ -138,12 +152,7 @@ public final class LogWindow extends Stage {
         items.remove(0, count);
     }
 
-    private void autoScroll() {
-        if (!impl.listView.getItems().isEmpty() && impl.autoScroll.get())
-            impl.listView.scrollTo(impl.listView.getItems().size() - 1);
-    }
-
-    private final class LogWindowImpl extends Control {
+    private final class LogWindowContent extends Control {
 
         private final ListView<Log> listView = new JFXListView<>();
         private final BooleanProperty autoScroll = new SimpleBooleanProperty();
@@ -151,15 +160,19 @@ public final class LogWindow extends Stage {
         private final StringProperty[] buttonText = new StringProperty[LEVELS.length];
         private final BooleanProperty[] showLevel = new BooleanProperty[LEVELS.length];
         private final JFXButton btnAlwaysOnTop = FXUtils.newToggleButton4(SVG.KEEP, 20);
-        private final Stage stage = LogWindow.this;
         private final JFXComboBox<Integer> cboLines = new JFXComboBox<>();
         private final StackPane stackPane = new StackPane();
 
-        LogWindowImpl() {
+        LogWindowContent(Stage stage) {
             getStyleClass().add("log-window");
 
             listView.getProperties().put("no-smooth-scrolling", true);
             listView.setItems(FXCollections.observableList(new CircularArrayList<>(logs.size())));
+            Bindings.bindContent(listView.getItems(), items);
+            listView.getItems().addListener((InvalidationListener) observable -> {
+                if (!items.isEmpty() && autoScroll.get())
+                    listView.scrollTo(items.size() - 1);
+            });
 
             for (int i = 0; i < LEVELS.length; i++) {
                 buttonText[i] = new SimpleStringProperty();
@@ -168,9 +181,9 @@ public final class LogWindow extends Stage {
 
             btnAlwaysOnTop.setOnAction(e -> stage.setAlwaysOnTop(!stage.isAlwaysOnTop()));
             btnAlwaysOnTop.getStyleClass().add("always-on-top-button");
-            stage.alwaysOnTopProperty().addListener((observable, oldValue, newValue) -> {
-                btnAlwaysOnTop.pseudoClassStateChanged(SELECTED, newValue);
-            });
+            FXUtils.onChange(stage.alwaysOnTopProperty(), alwaysOnTop ->
+                    btnAlwaysOnTop.pseudoClassStateChanged(SELECTED, alwaysOnTop)
+            );
 
             cboLines.getItems().setAll(500, 2000, 5000, 10000);
             cboLines.setValue(Log.getLogLines());
@@ -183,11 +196,11 @@ public final class LogWindow extends Stage {
         }
 
         private void onTerminateGame() {
-            LogWindow.this.gameProcess.stop();
+            if (gameProcess != null) gameProcess.stop();
         }
 
         private void onClear() {
-            impl.listView.getItems().clear();
+            items.clear();
             logs.clear();
         }
 
@@ -219,7 +232,7 @@ public final class LogWindow extends Stage {
                 Path dumpFile = Paths.get("minecraft-exported-jstack-dump-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".log").toAbsolutePath();
 
                 try {
-                    if (gameProcess.isRunning()) {
+                    if (gameProcess != null && gameProcess.isRunning()) {
                         GameDumpGenerator.writeDumpTo(gameProcess.getProcess().pid(), dumpFile);
                         FXUtils.showFileInExplorer(dumpFile);
                     }
@@ -236,7 +249,7 @@ public final class LogWindow extends Stage {
             });
         }
 
-        private ManagedProcess getGameProcess() {
+        private @Nullable ManagedProcess getGameProcess() {
             return gameProcess;
         }
 
@@ -246,7 +259,7 @@ public final class LogWindow extends Stage {
         }
     }
 
-    private static final class LogWindowSkin extends SkinBase<LogWindowImpl> {
+    private static final class LogWindowSkin extends SkinBase<LogWindowContent> {
         private static final PseudoClass EMPTY = PseudoClass.getPseudoClass("empty");
         private static final PseudoClass FATAL = PseudoClass.getPseudoClass("fatal");
         private static final PseudoClass ERROR = PseudoClass.getPseudoClass("error");
@@ -256,7 +269,7 @@ public final class LogWindow extends Stage {
         private static final PseudoClass TRACE = PseudoClass.getPseudoClass("trace");
         private final JFXSnackbar snackbar = new JFXSnackbar();
 
-        LogWindowSkin(LogWindowImpl control) {
+        LogWindowSkin(LogWindowContent control) {
             super(control);
 
             VBox vbox = new VBox(3);
@@ -418,12 +431,17 @@ public final class LogWindow extends Stage {
                 clearButton.setOnAction(e -> getSkinnable().onClear());
                 hBox.getChildren().setAll(autoScrollCheckBox, wrapTextCheckBox, exportLogsButton, terminateButton, exportDumpPane, clearButton);
 
-                control.getGameProcess().getProcess()
-                        .onExit()
-                        .thenRunAsync(() -> {
-                            terminateButton.setDisable(true);
-                            exportDumpButton.setDisable(true);
-                        }, Schedulers.javafx());
+                if (control.getGameProcess() != null) {
+                    control.getGameProcess().getProcess()
+                            .onExit()
+                            .thenRunAsync(() -> {
+                                terminateButton.setDisable(true);
+                                exportDumpButton.setDisable(true);
+                            }, Schedulers.javafx());
+                } else {
+                    terminateButton.setDisable(true);
+                    exportDumpButton.setDisable(true);
+                }
 
                 vbox.getChildren().add(bottom);
             }

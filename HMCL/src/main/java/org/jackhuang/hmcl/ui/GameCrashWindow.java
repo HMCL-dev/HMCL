@@ -247,13 +247,13 @@ public class GameCrashWindow extends Stage {
     }
 
     private void showLogWindow() {
-        LogWindow logWindow = new LogWindow(managedProcess);
+        GameLogsHolder logsHolder = new GameLogsHolder(managedProcess);
 
-        logWindow.logLine(new Log(Logger.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.getCommands())), Log4jLevel.INFO));
+        logsHolder.logLine(new Log(Logger.filterForbiddenToken("Command: " + new CommandBuilder().addAll(managedProcess.getCommands())), Log4jLevel.INFO));
         if (managedProcess.getClasspath() != null)
-            logWindow.logLine(new Log("ClassPath: " + managedProcess.getClasspath(), Log4jLevel.INFO));
-        logWindow.logLines(logs);
-        logWindow.show();
+            logsHolder.logLine(new Log("ClassPath: " + managedProcess.getClasspath(), Log4jLevel.INFO));
+        logsHolder.logLines(logs);
+        logsHolder.showWindow();
     }
 
     private CompletableFuture<Path> exportGameCrashInfo() {
