@@ -73,8 +73,13 @@ public final class OSRestriction {
             if (Lang.test(() -> !Pattern.compile(version).matcher(OperatingSystem.SYSTEM_VERSION.getVersion()).matches()))
                 return false;
 
-        if (arch != null)
+        if (arch != null) {
+            // Aliases such as "x64" are not regexes over checked names.
+            Architecture parsedArch = Architecture.parseArchName(arch);
+            if (parsedArch != Architecture.UNKNOWN)
+                return parsedArch == Architecture.SYSTEM_ARCH;
             return !Lang.test(() -> !Pattern.compile(arch).matcher(Architecture.SYSTEM_ARCH.getCheckedName()).matches());
+        }
 
         return true;
     }
