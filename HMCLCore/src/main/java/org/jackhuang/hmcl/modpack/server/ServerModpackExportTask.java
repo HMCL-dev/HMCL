@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.modpack.server;
 
+import org.jackhuang.hmcl.addon.RemoteAddon;
+import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
+import org.jackhuang.hmcl.addon.repository.ModrinthRemoteAddonRepository;
 import org.jackhuang.hmcl.game.DefaultGameInstance;
 import org.jackhuang.hmcl.game.GameComponentAnalyzer;
 import org.jackhuang.hmcl.game.GameComponentType;
@@ -13,9 +16,11 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -71,13 +77,38 @@ public class ServerModpackExportTask extends Task<Void> {
             Path runDirectory = instance.getRunDirectory();
             List<ModpackConfiguration.FileInformation> files = new ArrayList<>();
             zip.putDirectory(runDirectory, "overrides", path -> {
+                @Nullable String downloadUrl = null;
                 if (Modpack.acceptFile(path, blackList, exportInfo.getWhitelist())) {
                     Path file = runDirectory.resolve(path);
                     if (Files.isRegularFile(file)) {
+                        String ext = FileUtils.getExtension(file);
+                        if (ext.equalsIgnoreCase("jar") || ext.equalsIgnoreCase("zip")) {
+                            Optional<RemoteAddon.Version> modrinthVersion = Optional.empty();
+                            try {
+                                modrinthVersion = ModrinthRemoteAddonRepository.MODS.getRemoteVersionByLocalFile(file);
+                            } catch (IOException e) {
+                                LOG.warning("Failed to get remote file from Modrinth for: " + file, e);
+                            }
+                            if (modrinthVersion.isPresent())
+                                downloadUrl = modrinthVersion.get().file().url();
+                            else {
+                                Optional<RemoteAddon.Version> curseForgeVersion = Optional.empty();
+                                if (!exportInfo.isSkipCurseForgeRemoteFiles() && CurseForgeRemoteAddonRepository.isAvailable()) {
+                                    try {
+                                        curseForgeVersion = CurseForgeRemoteAddonRepository.MODS.getRemoteVersionByLocalFile(file);
+                                    } catch (IOException e) {
+                                        LOG.warning("Failed to get remote file from CurseForge for: " + file, e);
+                                    }
+                                }
+                                if (curseForgeVersion.isPresent())
+                                    downloadUrl = curseForgeVersion.get().file().url();
+                            }
+                        }
                         String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                        files.add(new ModpackConfiguration.FileInformation(relativePath, DigestUtils.digestToString("SHA-1", file)));
+                        files.add(new ModpackConfiguration.FileInformation(relativePath, DigestUtils.digestToString("SHA-1", file), downloadUrl));
                     }
-                    return true;
+                    // Embed files only when no remote download URL is available.
+                    return downloadUrl == null;
                 } else {
                     return false;
                 }
