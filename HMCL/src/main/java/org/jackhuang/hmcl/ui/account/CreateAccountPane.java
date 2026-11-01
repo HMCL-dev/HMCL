@@ -472,9 +472,9 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 rowIndex++;
 
                 HBox box = new HBox();
-                ExpandablePane advancedButton = new ExpandablePane();
-                box.getChildren().setAll(advancedButton);
-                advancedButton.setText(i18n("settings.advanced"));
+                ExpandablePane advancedPane = new ExpandablePane();
+                box.getChildren().setAll(advancedPane);
+                advancedPane.setText(i18n("settings.advanced"));
                 GridPane.setColumnSpan(box, 2);
                 add(box, 0, rowIndex);
 
@@ -498,7 +498,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 GridPane.setColumnSpan(hintPane, 2);
                 advancedMenu.add(hintPane, 0, 1);
 
-                advancedButton.getContent().add(advancedMenu);
+                advancedPane.getContent().add(advancedMenu);
             }
 
             valid = new BooleanBinding() {
