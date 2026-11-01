@@ -39,6 +39,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -320,9 +321,10 @@ public final class WorldListPage extends ListPageBase<World> {
             });
         }
 
+        /// Updates world details and replaces version and lock tags together.
         @Override
-        protected void updateItem(World world, boolean empty) {
-            World oldWorld = getItem();
+        protected void updateItem(@Nullable World world, boolean empty) {
+            @Nullable World oldWorld = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(world, empty);
@@ -330,9 +332,9 @@ public final class WorldListPage extends ListPageBase<World> {
             if (oldWorld == world && oldEmpty == empty) return;
 
             this.graphic.resetFeedback();
-            this.content.getTags().clear();
 
             if (empty || world == null) {
+                content.getTags().clear();
                 setGraphic(null);
                 imageView.setImage(null);
                 leftTooltip.setText("");
@@ -343,15 +345,17 @@ public final class WorldListPage extends ListPageBase<World> {
                 leftTooltip.setText(world.getFile().toString());
                 content.setTitle(world.getWorldName() != null ? parseColorEscapes(world.getWorldName()) : "");
 
+                var tags = new ArrayList<Tag>(2);
                 if (world.getGameVersion() != null)
-                    content.addTag(I18n.getDisplayVersion(world.getGameVersion()));
+                    tags.add(new Tag(I18n.getDisplayVersion(world.getGameVersion())));
                 if (world.isLocked()) {
-                    content.addTag(i18n("world.locked"));
+                    tags.add(new Tag(i18n("world.locked")));
                     btnLaunch.setDisable(true);
                 } else {
                     btnLaunch.setDisable(false);
                 }
 
+                content.getTags().setAll(tags);
                 content.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
 
                 setGraphic(graphic);

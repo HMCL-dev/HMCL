@@ -688,7 +688,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Updates this cell for one installed theme pack.
         @Override
         protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
-            var currentItem = getItem();
+            ThemePackManager.@Nullable InstalledThemePack currentItem = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(themePack, empty);
@@ -696,11 +696,11 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             if (Objects.equals(getItem(), currentItem) && oldEmpty == empty) return;
 
             this.graphic.resetFeedback();
-            content.getTags().clear();
             iconImage.setImage(null);
             iconFallback.setVisible(false);
 
             if (empty || themePack == null) {
+                content.getTags().clear();
                 setGraphic(null);
                 return;
             }
@@ -711,11 +711,13 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             content.setTitle(manifest.displayName());
             @Nullable String description = manifest.displayDescription();
             content.setSubtitle(StringUtils.isBlank(description) ? manifest.id() : description);
+            var tags = new ArrayList<Tag>(3);
             if (themePack.builtin()) {
-                content.addTag(i18n("theme_pack.builtin"));
+                tags.add(new Tag(i18n("theme_pack.builtin")));
             }
-            content.addTag(i18n("theme_pack.version", manifest.version()));
-            content.addTag(i18n("theme_pack.themes", manifest.themes().size()));
+            tags.add(new Tag(i18n("theme_pack.version", manifest.version())));
+            tags.add(new Tag(i18n("theme_pack.themes", manifest.themes().size())));
+            content.getTags().setAll(tags);
 
             if (themePack.builtin()) {
                 right.getChildren().clear();

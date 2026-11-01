@@ -572,8 +572,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             getContainer().getChildren().add(root);
         }
 
+        /// Updates pack details and reuses the compatibility tag when a warning remains.
         @Override
-        protected void updateControl(ResourcePackInfoObject item, boolean empty) {
+        protected void updateControl(@Nullable ResourcePackInfoObject item, boolean empty) {
             pseudoClassStateChanged(WARNING, false);
 
             if (empty || item == null) return;
@@ -581,7 +582,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             ResourcePackFile file = item.getFile();
             item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(itemProperty()));
 
-            content.getTags().clear();
             content.setTitle(file.getFileName());
             {
                 var description = file.getDescription();
@@ -602,7 +602,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 var compatibility = file.getCompatibility();
                 if (compatibility != ResourcePackFile.Compatibility.COMPATIBLE) {
                     pseudoClassStateChanged(WARNING, true);
-                    content.addTagWarning(getWarning(compatibility));
+                    content.getTags().setAll(Tag.warning(getWarning(compatibility)));
+                } else {
+                    content.getTags().clear();
                 }
             }
         }

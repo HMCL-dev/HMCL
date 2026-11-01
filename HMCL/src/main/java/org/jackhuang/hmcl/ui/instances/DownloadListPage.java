@@ -596,9 +596,10 @@ public class DownloadListPage extends Control implements DecoratorPage {
             FXUtils.limitCellWidth(listView, this);
         }
 
+        /// Updates addon text and replaces category tags together so their labels can be reused.
         @Override
-        protected void updateItem(RemoteAddon item, boolean empty) {
-            RemoteAddon oldItem = getItem();
+        protected void updateItem(@Nullable RemoteAddon item, boolean empty) {
+            @Nullable RemoteAddon oldItem = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(item, empty);
@@ -619,17 +620,15 @@ public class DownloadListPage extends Control implements DecoratorPage {
                 @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(page.type);
                 @Nullable AddonProjectInfo mod = registry != null ? registry.getInfoByCurseForgeId(item.slug()) : null;
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : item.title());
-                String description = item.description();
+                @Nullable String description = item.description();
                 if (description != null) {
                     description = description.replaceAll("\\R", " ");
                 }
                 content.setSubtitle(description);
-                content.getTags().clear();
-                for (String category : item.categories()) {
-                    if (page.shouldDisplayCategory(category)) {
-                        content.addTag(page.getLocalizedCategory(category, null));
-                    }
-                }
+                content.getTags().setAll(item.categories().stream()
+                        .filter(page::shouldDisplayCategory)
+                        .map(category -> new Tag(page.getLocalizedCategory(category, null)))
+                        .toList());
                 iconLoader.load(imageContainer.imageProperty(), item.iconUrl());
                 setGraphic(wrapper);
             }

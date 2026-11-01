@@ -49,6 +49,7 @@ import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -221,7 +222,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 twoLineListItem.setSubtitle(null);
             }
 
-            twoLineListItem.getTags().clear();
+            var tags = new ArrayList<Tag>(2);
 
             if (remoteVersion instanceof GameRemoteVersion) {
                 ComponentRemoteVersion.Type versionType = remoteVersion.getVersionType();
@@ -229,27 +230,27 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
                 switch (versionType) {
                     case RELEASE -> {
-                        twoLineListItem.addTag(i18n("instance.game.release"));
+                        tags.add(new Tag(i18n("instance.game.release")));
                         imageView.setImage(GameInstanceIconType.GRASS.getIcon());
                     }
                     case SNAPSHOT, PENDING, UNOBFUSCATED -> {
                         if (versionType == ComponentRemoteVersion.Type.SNAPSHOT && gameVersion.isAprilFools()) {
-                            twoLineListItem.addTag(i18n("instance.game.april_fools"));
+                            tags.add(new Tag(i18n("instance.game.april_fools")));
                             imageView.setImage(GameInstanceIconType.APRIL_FOOLS.getIcon());
                         } else {
-                            twoLineListItem.addTag(i18n("instance.game.snapshot"));
+                            tags.add(new Tag(i18n("instance.game.snapshot")));
                             imageView.setImage(GameInstanceIconType.COMMAND.getIcon());
                         }
                     }
                     default -> {
-                        twoLineListItem.addTag(i18n("instance.game.old"));
+                        tags.add(new Tag(i18n("instance.game.old")));
                         imageView.setImage(GameInstanceIconType.CRAFT_TABLE.getIcon());
                     }
                 }
 
                 switch (NativePatcher.checkSupportedStatus(gameVersion, Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION)) {
-                    case UNTESTED -> twoLineListItem.addTagWarning(i18n("instance.game.support_status.untested"));
-                    case UNSUPPORTED -> twoLineListItem.addTagWarning(i18n("instance.game.support_status.unsupported"));
+                    case UNTESTED -> tags.add(Tag.warning(i18n("instance.game.support_status.untested")));
+                    case UNSUPPORTED -> tags.add(Tag.warning(i18n("instance.game.support_status.unsupported")));
                 }
             } else {
                 GameInstanceIconType iconType;
@@ -278,8 +279,9 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 if (twoLineListItem.getSubtitle() == null)
                     twoLineListItem.setSubtitle(displayGameVersion);
                 else
-                    twoLineListItem.addTag(displayGameVersion);
+                    tags.add(new Tag(displayGameVersion));
             }
+            twoLineListItem.getTags().setAll(tags);
         }
     }
 

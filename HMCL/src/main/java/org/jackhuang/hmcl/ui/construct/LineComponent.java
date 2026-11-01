@@ -9,7 +9,6 @@ import javafx.beans.property.StringPropertyBase;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -57,12 +56,6 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         container.getTitleLabel().setMinWidth(Region.USE_PREF_SIZE);
 
         this.getChildren().setAll(container);
-    }
-
-    /// Computes wrapped subtitle height from the row width.
-    @Override
-    public Orientation getContentBias() {
-        return Orientation.HORIZONTAL;
     }
 
     /// Computes preferred row height from the horizontal layout, including child margins and wrapped text.

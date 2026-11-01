@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.javafx.ItemPropertyAsyncCache;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
@@ -383,9 +384,10 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
             });
         }
 
+        /// Updates addon version information and replaces tags together, reusing their labels.
         @Override
-        public void updateItem(AddonUpdateObject item, boolean empty) {
-            AddonUpdateObject oldItem = getItem();
+        public void updateItem(@Nullable AddonUpdateObject item, boolean empty) {
+            @Nullable AddonUpdateObject oldItem = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(item, empty);
@@ -411,11 +413,12 @@ public class AddonUpdatesPage extends BorderPane implements DecoratorPage {
 
             LocalAddonFile<?> addonFile = item.getLocalAddonFile();
 
-            content.getTags().clear();
+            var tags = new ArrayList<Tag>(3);
             if (addonFile instanceof LocalModFile modFile)
-                content.addTag(modFile.getId());
-            content.addTag(item.getSource());
-            content.addTag(item.getTargetVersionType());
+                tags.add(new Tag(modFile.getId()));
+            tags.add(new Tag(item.getSource()));
+            tags.add(new Tag(item.getTargetVersionType()));
+            content.getTags().setAll(tags);
 
             if (addonFile instanceof LocalModFile modFile) {
                 content.setTitle(modFile.getName());

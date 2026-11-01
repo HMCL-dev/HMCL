@@ -10,6 +10,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -352,7 +353,7 @@ public final class TwoLineListItemLayoutTest {
                 layout(parent, 200);
                 Label summary = collapsedTag(item);
                 assertEquals("+1000", summary.getText());
-                assertTrue(summary.getTooltip().getText().isEmpty());
+                assertNull(summary.getTooltip());
                 Object metrics = requireNonNull(metricsField.get(state));
                 int originalMeasurements = measurements.get();
                 assertTrue(originalMeasurements < 10, "Measured summaries for the hidden suffix");
@@ -360,7 +361,7 @@ public final class TwoLineListItemLayoutTest {
                     layout(parent, width);
                     assertSame(metrics, metricsField.get(state), "Resizing remeasured hidden tags");
                     assertEquals(originalMeasurements, measurements.get());
-                    assertTrue(summary.getTooltip().getText().isEmpty());
+                    assertNull(summary.getTooltip());
                 }
 
                 String description = prepareTooltipText(summary);
@@ -392,6 +393,146 @@ public final class TwoLineListItemLayoutTest {
             } catch (IllegalAccessException failure) {
                 throw new AssertionError(failure);
             }
+        });
+    }
+
+    /// Verifies hidden tags do not create text clips and resume skin layout after text and CSS changes.
+    @Test
+    public void testHiddenTagSkinLayout() {
+        onFxThread(() -> {
+            TwoLineListItem item = new TwoLineListItem("A long title ".repeat(20), null);
+            item.addTags(IntStream.range(0, 100).mapToObj(i -> "Tag " + i).toList());
+            VBox parent = new VBox(item);
+            new Scene(parent);
+            layout(parent, 200);
+            layout(parent, 200);
+            Label summary = collapsedTag(item);
+            assertNull(summary.getTooltip());
+            for (Label label : labels(item)) {
+                assertFalse(label.isVisible());
+                assertEquals(0, label.getWidth());
+                assertNotNull(label.getSkin());
+                assertTrue(label.getChildrenUnmodifiable().stream().allMatch(child -> child.getClip() == null));
+            }
+
+            Label first = labels(item).get(0);
+            item.getTags().set(0, Tag.warning("Updated tag"));
+            first.setStyle("-fx-font-size: 30px; -fx-padding: 4px 12px;");
+            layout(parent, 200);
+            double width = item.prefWidth(-1);
+            layout(parent, width);
+            assertTagsFit(item);
+            assertSame(first, labels(item).get(0));
+            Text renderedText = first.getChildrenUnmodifiable().stream().filter(Text.class::isInstance)
+                    .map(Text.class::cast).findFirst().orElseThrow();
+            assertEquals("Updated tag", renderedText.getText());
+            assertEquals(30, first.getFont().getSize());
+            assertEquals(Math.ceil(first.prefHeight(-1)), first.getHeight());
+            assertNull(summary.getTooltip());
+
+            // Re-expansion must also lay out an unchanged-size label whose text changed while hidden.
+            layout(parent, 200);
+            first.setText("Revised tag");
+            layout(parent, 200);
+            layout(parent, item.prefWidth(-1));
+            assertEquals("Revised tag", renderedText.getText());
+            assertTagsFit(item);
+        });
+    }
+
+    /// Verifies horizontal bias follows wrapping and tag changes, including optional children.
+    @Test
+    public void testContentBiasTracksChildren() {
+        onFxThread(() -> {
+            TwoLineListItem item = new TwoLineListItem("Title ".repeat(20), "Subtitle ".repeat(20));
+            VBox parent = new VBox(item);
+            new Scene(parent);
+            layout(parent, 300);
+            assertNull(item.getContentBias());
+            double unwrappedHeight = item.getHeight();
+            item.getTitleLabel().setWrapText(true);
+            assertEquals(Orientation.HORIZONTAL, item.getContentBias());
+            layout(parent, 300);
+            assertTrue(item.getHeight() > unwrappedHeight);
+            item.getTitleLabel().setWrapText(false);
+            item.getSubtitleLabel().setWrapText(true);
+            assertEquals(Orientation.HORIZONTAL, item.getContentBias());
+            layout(parent, 300);
+            assertTrue(item.getHeight() > unwrappedHeight);
+            item.setSubtitle(null);
+            assertNull(item.getContentBias());
+
+            Label side = new Label("Side text ".repeat(20));
+            side.setWrapText(true);
+            item.setLeading(side);
+            assertEquals(Orientation.HORIZONTAL, item.getContentBias());
+            side.setManaged(false);
+            assertNull(item.getContentBias());
+            item.setLeading(null);
+            side.setManaged(true);
+            item.setTrailing(side);
+            assertEquals(Orientation.HORIZONTAL, item.getContentBias());
+            item.setTrailing(null);
+            item.setTitleTrailing(side);
+            assertEquals(Orientation.HORIZONTAL, item.getContentBias());
+            item.setTitleTrailing(null);
+            item.addTag("Tag");
+            assertEquals(Orientation.HORIZONTAL, item.getContentBias());
+            item.getTags().clear();
+            assertNull(item.getContentBias());
+
+            LinePane line = new LinePane();
+            line.setTitle("Title");
+            parent.getChildren().setAll(line);
+            layout(parent, 300);
+            assertNull(line.getContentBias());
+            line.setSubtitle("Wrapped subtitle ".repeat(20));
+            layout(parent, 300);
+            assertEquals(Orientation.HORIZONTAL, line.getContentBias());
+            assertTrue(line.getHeight() > 48);
+            line.setSubtitle(null);
+            layout(parent, 300);
+            assertNull(line.getContentBias());
+            assertEquals(48, line.getHeight());
+            line.getTags().add(new Tag("Tag"));
+            layout(parent, 300);
+            assertEquals(Orientation.HORIZONTAL, line.getContentBias());
+            line.getTags().clear();
+            layout(parent, 300);
+            assertNull(line.getContentBias());
+        });
+    }
+
+    /// Verifies nonwrapping side and title-trailing labels reuse their cached preferred height on resize.
+    @Test
+    public void testNonwrappingHeightMeasurementsAreCached() {
+        onFxThread(() -> {
+            TwoLineListItem item = new TwoLineListItem("Title", "Subtitle");
+            AtomicInteger measurements = new AtomicInteger();
+            Label side = new Label("Side") {
+                /// Counts preferred-height computations made by the row.
+                @Override
+                protected double computePrefHeight(double width) {
+                    measurements.incrementAndGet();
+                    return super.computePrefHeight(width);
+                }
+            };
+            item.setLeading(side);
+            VBox parent = new VBox(item);
+            new Scene(parent);
+            layout(parent, 400);
+            layout(parent, 400);
+            int initial = measurements.get();
+            for (int width = 400; width < 600; width++)
+                layout(parent, width);
+            assertEquals(initial, measurements.get());
+            item.setLeading(null);
+            item.setTitleTrailing(side);
+            layout(parent, 400);
+            initial = measurements.get();
+            for (int width = 400; width < 600; width++)
+                layout(parent, width);
+            assertEquals(initial, measurements.get());
         });
     }
 
@@ -640,6 +781,16 @@ public final class TwoLineListItemLayoutTest {
                 assertTrue(cell.getWidth() > 200);
                 assertFalse(summary.isVisible());
                 assertTagsFit(content);
+
+                @Unmodifiable List<Label> originalLabels = labels(content);
+                var update = type.getDeclaredMethod("updateItem", ComponentRemoteVersion.class, boolean.class);
+                update.setAccessible(true);
+                update.invoke(cell, new ForgeRemoteVersion(GameVersionNumber.asGameVersion("1.21.1"),
+                        "52.0.1", Instant.EPOCH, List.of()), false);
+                content.layout();
+                assertEquals(originalLabels, labels(content));
+                assertEquals("1.21.1", labels(content).get(0).getText());
+                assertTagsFit(content);
             } catch (ReflectiveOperationException failure) {
                 throw new AssertionError(failure);
             }
@@ -725,7 +876,7 @@ public final class TwoLineListItemLayoutTest {
     }
 
     /// Moves a real pointer over a label and checks its tooltip without overriding the production delay.
-    private static void verifyTooltipHover(Stage stage, Label label, Tooltip tooltip,
+    private static void verifyTooltipHover(Stage stage, Label label, @Nullable Tooltip tooltip,
                                            Runnable assertions, CompletableFuture<Void> checked) {
         PauseTransition settle = new PauseTransition(Duration.millis(200));
         settle.setOnFinished(event -> {
@@ -741,13 +892,15 @@ public final class TwoLineListItemLayoutTest {
                         assertTrue(label.isHover(), "Label does not receive hover");
                         for (@Nullable Node node = label; node != null; node = node.getParent())
                             assertFalse(node.isMouseTransparent());
-                        assertTrue(tooltip.isShowing(), "Tooltip is not showing");
+                        assertTrue(requireNonNull(tooltip != null ? tooltip : label.getTooltip()).isShowing(), "Tooltip is not showing");
                         assertions.run();
                         checked.complete(null);
                     } catch (Throwable failure) {
                         checked.completeExceptionally(failure);
                     } finally {
-                        tooltip.hide();
+                        @Nullable Tooltip current = tooltip != null ? tooltip : label.getTooltip();
+                        if (current != null)
+                            current.hide();
                         stage.close();
                     }
                 });
@@ -1362,9 +1515,14 @@ public final class TwoLineListItemLayoutTest {
         return (Label) requireNonNull(item.lookup(".collapsed-tag"));
     }
 
-    /// Runs the tooltip's preparation callback without opening a window for text-only assertions.
+    /// Initializes the hover tooltip and runs its preparation callback without opening a window.
     private static String prepareTooltipText(Label summary) {
-        var tooltip = summary.getTooltip();
+        if (summary.getTooltip() == null) {
+            summary.fireEvent(new MouseEvent(MouseEvent.MOUSE_ENTERED, 1, 1, 1, 1, MouseButton.NONE,
+                    0, false, false, false, false, false, false, false, false, false, true,
+                    new PickResult(summary, 1, 1)));
+        }
+        Tooltip tooltip = requireNonNull(summary.getTooltip());
         tooltip.getOnShowing().handle(new WindowEvent(tooltip, WindowEvent.WINDOW_SHOWING));
         return tooltip.getText();
     }

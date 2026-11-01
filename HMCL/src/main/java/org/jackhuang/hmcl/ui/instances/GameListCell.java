@@ -73,9 +73,10 @@ public final class GameListCell extends ListCell<GameListItem> {
             content.setLeading(leading);
 
             FXUtils.onChangeAndOperate(tag, tag -> {
-                content.getTags().clear();
                 if (StringUtils.isNotBlank(tag))
-                    content.addTag(tag);
+                    content.getTags().setAll(new Tag(tag));
+                else
+                    content.getTags().clear();
             });
         }
 

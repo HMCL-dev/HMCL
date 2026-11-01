@@ -285,6 +285,8 @@ public class TwoLineListItem extends Region {
     /// Replace a value to change its text or type. Changes must be made on the JavaFX application thread once this item
     /// is attached to a showing scene. Tags are displayed in order; a suffix that does not
     /// fit is replaced by a `+N` tag whose tooltip lists the hidden values, one per line.
+    ///
+    /// @apiNote Use [ObservableList#setAll(Collection)] to replace tags while reusing existing labels.
     public ObservableList<Tag> getTags() {
         if (tags == null) {
             tags = FXCollections.observableArrayList();
@@ -326,10 +328,12 @@ public class TwoLineListItem extends Region {
         getTags().add(Tag.warning(tag));
     }
 
-    /// Indicates that wrapped text height depends on the allocated width.
+    /// Returns horizontal bias when folding tags or measuring width-dependent children.
     @Override
-    public Orientation getContentBias() {
-        return Orientation.HORIZONTAL;
+    public @Nullable Orientation getContentBias() {
+        return hasTags() || hasHorizontalBias(titleLabel) || hasSubtitle() && hasHorizontalBias(subtitleLabel)
+                || hasHorizontalBias(titleTrailing) || hasHorizontalBias(getLeading()) || hasHorizontalBias(getTrailing())
+                ? Orientation.HORIZONTAL : null;
     }
 
     /// Returns the current text and tag values for diagnostics.
@@ -452,6 +456,16 @@ public class TwoLineListItem extends Region {
         return snapSizeX(Math.max(node.minWidth(-1), Math.min(node.prefWidth(-1), node.maxWidth(-1))));
     }
 
+    /// Returns the preferred height, using JavaFX's cached measurement when width is irrelevant.
+    private double preferredHeight(Node node, double width) {
+        return snapSizeY(node.prefHeight(node.getContentBias() == Orientation.HORIZONTAL ? width : -1));
+    }
+
+    /// Returns whether a participating child's height depends on its width.
+    private static boolean hasHorizontalBias(@Nullable Node node) {
+        return isManaged(node) && node.getContentBias() == Orientation.HORIZONTAL;
+    }
+
     /// Returns whether an optional node participates in layout.
     private static boolean isManaged(@Nullable Node node) {
         return node != null && node.isManaged();
@@ -483,6 +497,8 @@ public class TwoLineListItem extends Region {
 
     /// Returns a side node's bounded preferred height at its allocated width.
     private double sideHeight(Node node, double width) {
+        if (node.getContentBias() != Orientation.HORIZONTAL)
+            width = -1;
         return snapSizeY(Math.max(node.minHeight(width), Math.min(node.prefHeight(width), node.maxHeight(width))));
     }
 
@@ -600,9 +616,9 @@ public class TwoLineListItem extends Region {
             double available = Math.max(0, width - trailingWidth - gaps - (tagged ? tagState.tagsMinWidth() : 0));
             titleWidth = Math.max(minimum, Math.min(titleWidth, available));
         }
-        double height = titleLabel.isManaged() && titleWidth > 0 ? snapSizeY(titleLabel.prefHeight(titleWidth)) : 0;
+        double height = titleLabel.isManaged() && titleWidth > 0 ? preferredHeight(titleLabel, titleWidth) : 0;
         if (hasTrailing)
-            height = Math.max(height, snapSizeY(titleTrailing.prefHeight(trailingWidth)));
+            height = Math.max(height, preferredHeight(titleTrailing, trailingWidth));
         if (!tagged)
             return new FirstLineSize(titleWidth, trailingWidth, 0, 0, height);
 
@@ -610,7 +626,7 @@ public class TwoLineListItem extends Region {
         TagState.TagLayout tags = tagState.measureTags(available);
         height = Math.max(height, tagState.tagMetrics().heights()[tags.visibleTags()]);
         if (tags.collapsedWidth() > 0)
-            height = Math.max(height, snapSizeY(tagState.collapsedTag.prefHeight(tags.collapsedWidth())));
+            height = Math.max(height, preferredHeight(tagState.collapsedTag, tags.collapsedWidth()));
         return new FirstLineSize(titleWidth, trailingWidth, tags.visibleTags(), tags.collapsedWidth(), height);
     }
 
@@ -621,7 +637,7 @@ public class TwoLineListItem extends Region {
         RowSize row = measureRow(contentWidth);
         double height = measureFirstLine(row.textWidth()).height();
         if (hasSubtitle())
-            height += snapSizeY(subtitleLabel.prefHeight(row.textWidth()));
+            height += preferredHeight(subtitleLabel, row.textWidth());
         height = Math.max(height, sideAreaHeight(getLeading(), row.leadingWidth()));
         height = Math.max(height, sideAreaHeight(getTrailing(), row.trailingWidth()));
         return snappedTopInset() + height + snappedBottomInset();
@@ -643,7 +659,7 @@ public class TwoLineListItem extends Region {
         double textLeft = left + row.leadingWidth() + sideMarginWidth(getLeading());
         double x = textLeft;
         FirstLineSize first = measureFirstLine(row.textWidth());
-        double subtitleHeight = hasSubtitle() ? snapSizeY(subtitleLabel.prefHeight(row.textWidth())) : 0;
+        double subtitleHeight = hasSubtitle() ? preferredHeight(subtitleLabel, row.textWidth()) : 0;
         double extraHeight = Math.max(0, height - first.height() - subtitleHeight);
         double y = snappedTopInset() + snapPositionY(extraHeight / 2);
 
@@ -684,7 +700,7 @@ public class TwoLineListItem extends Region {
 
     /// Vertically centers a child within the first row at its preferred height.
     private void layoutFirstLineNode(Node node, double x, double y, double width, double rowHeight) {
-        double height = width > 0 ? snapSizeY(node.prefHeight(width)) : 0;
+        double height = width > 0 ? preferredHeight(node, width) : 0;
         node.resizeRelocate(x, y + snapPositionY((rowHeight - height) / 2), width, height);
     }
 
@@ -708,7 +724,7 @@ public class TwoLineListItem extends Region {
         private final List<TagLabel> tagLabels = new ArrayList<>();
 
         /// The label summarizing tags that do not fit in the first row.
-        private final Label collapsedTag = new Label();
+        private final TagLabel collapsedTag = new TagLabel("", Tag.Type.NORMAL, null);
 
         /// Measures summary text without changing the displayed label during size queries.
         private final Text tagMeasureText = new Text();
@@ -738,23 +754,23 @@ public class TwoLineListItem extends Region {
         /// The available width used by the cached tag allocation.
         private double tagLayoutWidth;
 
-        /// The visible prefix from the last layout, or -1 after the tag list changes.
+        /// The number of visible tag labels in the current prefix.
         private int visibleTagCount;
+
+        /// The number of hidden values represented by the summary text.
+        private int collapsedTagCount;
 
         /// Whether the tooltip text must be rebuilt before its next display.
         private boolean collapsedTooltipDirty = true;
 
-        /// Creates tag rendering state and prepares the tooltip only when it is about to be shown.
+        /// Creates tag rendering state and defers tooltip allocation until the summary is hovered.
         private TagState(ObservableList<Tag> values) {
             this.values = values;
-            collapsedTag.setText("+" + values.size());
-            styleTagLabel(collapsedTag, Tag.Type.NORMAL);
+            collapsedTagCount = values.size();
+            collapsedTag.setText("+" + collapsedTagCount);
+            collapsedTag.setMouseTransparent(false);
             collapsedTag.getStyleClass().add("collapsed-tag");
-            Tooltip tooltip = new Tooltip();
-            tooltip.setShowDelay(TAG_TOOLTIP_SHOW_DELAY);
-            tooltip.setHideDelay(Duration.ZERO);
-            tooltip.setOnShowing(event -> updateCollapsedTooltip());
-            collapsedTag.setTooltip(tooltip);
+            collapsedTag.setOnMouseEntered(event -> initializeCollapsedTooltip());
             collapsedTag.fontProperty().addListener(collapsedMetricsListener);
             collapsedTag.insetsProperty().addListener(collapsedMetricsListener);
             collapsedTag.labelPaddingProperty().addListener(collapsedMetricsListener);
@@ -762,10 +778,21 @@ public class TwoLineListItem extends Region {
             getChildren().add(collapsedTag);
         }
 
+        /// Installs the hover tooltip once, before the first mouse-move event reaches the summary.
+        private void initializeCollapsedTooltip() {
+            if (collapsedTag.getTooltip() != null)
+                return;
+            Tooltip tooltip = new Tooltip();
+            tooltip.setShowDelay(TAG_TOOLTIP_SHOW_DELAY);
+            tooltip.setHideDelay(Duration.ZERO);
+            tooltip.setOnShowing(event -> updateCollapsedTooltip(tooltip));
+            collapsedTag.setTooltip(tooltip);
+        }
+
         /// Rebuilds the hidden-tag description only after its values or visible prefix change.
-        private void updateCollapsedTooltip() {
-            if (collapsedTooltipDirty && visibleTagCount >= 0) {
-                collapsedTag.getTooltip().setText(values.subList(visibleTagCount, values.size()).stream()
+        private void updateCollapsedTooltip(Tooltip tooltip) {
+            if (collapsedTooltipDirty) {
+                tooltip.setText(values.subList(visibleTagCount, values.size()).stream()
                         .map(tag -> tag.text().replace('\n', ' ').replace('\r', ' '))
                         .collect(Collectors.joining("\n")));
                 collapsedTooltipDirty = false;
@@ -779,19 +806,35 @@ public class TwoLineListItem extends Region {
             label.pseudoClassStateChanged(WARNING_PSEUDO_CLASS, type == Tag.Type.WARNING);
         }
 
-        /// A tag renderer that invalidates cached dimensions when its text or CSS requests layout.
+        /// A tag renderer that measures CSS normally but skips skin layout while hidden.
         @NotNullByDefault
         private static final class TagLabel extends Label {
             /// The rendering state, cleared on removal and unset during superclass construction.
             private @Nullable TagState owner;
 
-            /// Creates an initially hidden renderer for one tag value.
-            private TagLabel(TagState owner, Tag tag) {
-                super(tag.text());
-                styleTagLabel(this, tag.type());
+            /// Creates a hidden renderer; a null owner excludes the summary from tag-metric invalidation.
+            private TagLabel(String text, Tag.Type type, @Nullable TagState owner) {
+                super(text);
+                styleTagLabel(this, type);
                 setMouseTransparent(true);
                 setVisible(false);
                 this.owner = owner;
+            }
+
+            /// Resumes skin layout on expansion, including after text or CSS changed while hidden.
+            private void setTagVisible(boolean visible) {
+                if (isVisible() == visible)
+                    return;
+                setVisible(visible);
+                if (visible)
+                    super.requestLayout();
+            }
+
+            /// Avoids creating text clips for hidden, zero-width labels during the parent's layout pass.
+            @Override
+            protected void layoutChildren() {
+                if (isVisible())
+                    super.layoutChildren();
             }
 
             /// Invalidates aggregate dimensions even when this label was already awaiting layout.
@@ -826,18 +869,21 @@ public class TwoLineListItem extends Region {
                     label.setText(tag.text());
                     label.pseudoClassStateChanged(WARNING_PSEUDO_CLASS, tag.type() == Tag.Type.WARNING);
                 } else {
-                    TagLabel label = new TagLabel(this, tag);
+                    TagLabel label = new TagLabel(tag.text(), tag.type(), this);
                     tagLabels.add(label);
                     getChildren().add(label);
                 }
             }
             invalidateTagMetrics();
             collapsedWidths.clear();
-            visibleTagCount = -1;
+            visibleTagCount = Math.min(visibleTagCount, size);
             collapsedTooltipDirty = true;
-            collapsedTag.setVisible(false);
-            collapsedTag.getTooltip().hide();
-            collapsedTag.getTooltip().setText("");
+            collapsedTag.setTagVisible(false);
+            @Nullable Tooltip tooltip = collapsedTag.getTooltip();
+            if (tooltip != null) {
+                tooltip.hide();
+                tooltip.setText("");
+            }
             updateMouseTransparency();
             requestLayout();
         }
@@ -951,10 +997,10 @@ public class TwoLineListItem extends Region {
                 return;
             TagMetrics metrics = tagMetrics();
             if (visibleTagCount != first.visibleTags()) {
-                int from = visibleTagCount < 0 ? 0 : Math.min(visibleTagCount, first.visibleTags());
-                int to = visibleTagCount < 0 ? tagLabels.size() : Math.max(visibleTagCount, first.visibleTags());
+                int from = Math.min(visibleTagCount, first.visibleTags());
+                int to = Math.max(visibleTagCount, first.visibleTags());
                 for (int i = from; i < to; i++)
-                    tagLabels.get(i).setVisible(i < first.visibleTags());
+                    tagLabels.get(i).setTagVisible(i < first.visibleTags());
                 visibleTagCount = first.visibleTags();
                 collapsedTooltipDirty = true;
             }
@@ -963,14 +1009,19 @@ public class TwoLineListItem extends Region {
                 layoutFirstLineNode(tagLabels.get(i), x, y, tagWidth, first.height());
                 x += tagWidth + snapSpaceX(TAG_SPACING);
             }
-            collapsedTag.setVisible(visibleTagCount < tagLabels.size());
-            if (collapsedTag.isVisible()) {
-                collapsedTag.setText("+" + (tagLabels.size() - visibleTagCount));
-                if (collapsedTag.getTooltip().isShowing())
-                    updateCollapsedTooltip();
+            int hidden = tagLabels.size() - visibleTagCount;
+            collapsedTag.setTagVisible(hidden > 0);
+            @Nullable Tooltip tooltip = collapsedTag.getTooltip();
+            if (hidden > 0) {
+                if (collapsedTagCount != hidden) {
+                    collapsedTagCount = hidden;
+                    collapsedTag.setText("+" + hidden);
+                }
+                if (tooltip != null && tooltip.isShowing())
+                    updateCollapsedTooltip(tooltip);
                 layoutFirstLineNode(collapsedTag, x, y, first.collapsedWidth(), first.height());
-            } else {
-                collapsedTag.getTooltip().hide();
+            } else if (tooltip != null) {
+                tooltip.hide();
             }
         }
     }

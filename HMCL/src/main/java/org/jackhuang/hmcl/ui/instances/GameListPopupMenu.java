@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.Tag;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
 
@@ -121,6 +122,7 @@ public final class GameListPopupMenu extends StackPane {
 
         private final StringProperty tag = new SimpleStringProperty();
 
+        /// Creates a popup row that reuses its tag label when the instance tag changes.
         public Cell(ListView<GameItem> listView) {
             this.setPadding(Insets.EMPTY);
 
@@ -131,10 +133,10 @@ public final class GameListPopupMenu extends StackPane {
             this.content = new TwoLineListItem();
             this.content.setMouseTransparent(true);
             FXUtils.onChangeAndOperate(tag, tag -> {
-                content.getTags().clear();
-                if (StringUtils.isNotBlank(tag)) {
-                    content.addTag(tag);
-                }
+                if (StringUtils.isNotBlank(tag))
+                    content.getTags().setAll(new Tag(tag));
+                else
+                    content.getTags().clear();
             });
 
             BorderPane container = new BorderPane();

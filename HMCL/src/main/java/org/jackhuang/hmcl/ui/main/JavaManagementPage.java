@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.Tag;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.FXThread;
@@ -281,9 +282,10 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             FXUtils.limitCellWidth(listView, this);
         }
 
+        /// Updates the runtime details and reuses the architecture tag when the item changes.
         @Override
-        protected void updateItem(JavaRuntime item, boolean empty) {
-            JavaRuntime oldItem = getItem();
+        protected void updateItem(@Nullable JavaRuntime item, boolean empty) {
+            @Nullable JavaRuntime oldItem = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(item, empty);
@@ -304,8 +306,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 content.setSubtitle(item.getBinary().toString());
 
                 if (oldItem != item) {
-                    content.getTags().clear();
-                    content.addTag(item.getArchitecture().getDisplayName());                    
+                    content.getTags().setAll(new Tag(item.getArchitecture().getDisplayName()));
                 }
 
                 SVG newRemoveIcon = item.isManaged() ? SVG.DELETE_FOREVER : SVG.DELETE;
