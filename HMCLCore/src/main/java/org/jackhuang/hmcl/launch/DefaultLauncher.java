@@ -359,7 +359,6 @@ public class DefaultLauncher extends Launcher {
                 ServerAddress parsed = ServerAddress.parse(address);
                 if (World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
 
-                    res.add("--quickPlayMultiplayer");
                     String quickPlayMultiplayerArg;
                     if (World.supportQueryArgServerAddress(GameVersionNumber.asGameVersion(gameVersion))) {
                         // keep original address.
