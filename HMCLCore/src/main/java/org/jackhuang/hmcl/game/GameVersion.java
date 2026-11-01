@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.util.ByteArrayKey;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jenkinsci.constant_pool_scanner.ConstantPool;
@@ -37,8 +38,8 @@ final class GameVersion {
     private GameVersion() {
     }
 
-    /// Maps client JAR SHA-1 hashes to versions with missing, ambiguous, or special version strings.
-    private static final @Unmodifiable Map<String, String> KNOWN_VERSIONS = loadKnownVersions();
+    /// Maps binary client JAR SHA-1 hashes to versions with missing, ambiguous, or special version strings.
+    private static final @Unmodifiable Map<ByteArrayKey, String> KNOWN_VERSIONS = loadKnownVersions();
 
     /// Reads the embedded client hash table into an immutable hash-to-version mapping.
     /// Ignores blank lines and comment lines beginning with `#`.
@@ -46,12 +47,12 @@ final class GameVersion {
     ///
     /// @return the mappings from `/assets/game/client-sha1.csv`
     /// @throws IllegalStateException if the resource is missing, unreadable, or malformed
-    private static @Unmodifiable Map<String, String> loadKnownVersions() {
+    private static @Unmodifiable Map<ByteArrayKey, String> loadKnownVersions() {
         @Nullable InputStream input = GameVersion.class.getResourceAsStream("/assets/game/client-sha1.csv");
         if (input == null) {
             throw new IllegalStateException("Missing client SHA-1 table");
         }
-        var versions = new HashMap<String, String>();
+        var versions = new HashMap<ByteArrayKey, String>();
         try (var reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
             for (@Nullable String line; (line = reader.readLine()) != null; ) {
                 if (line.isBlank() || line.startsWith("#")) {
@@ -61,7 +62,7 @@ final class GameVersion {
                 if (fields.length != 2 || fields[0].isBlank() || !fields[1].matches("[0-9a-f]{40}")) {
                     throw new IllegalStateException("Invalid client SHA-1 record: " + line);
                 }
-                versions.putIfAbsent(fields[1], fields[0]);
+                versions.putIfAbsent(ByteArrayKey.fromHexString(fields[1]), fields[0]);
             }
         } catch (IOException e) {
             throw new IllegalStateException("Failed to read client SHA-1 table", e);
@@ -178,7 +179,7 @@ final class GameVersion {
     /// @return the known version, or an empty optional if the hash is unknown or an I/O error occurs
     private static Optional<String> getKnownVersion(Path file) {
         try {
-            String digest = DigestUtils.digestToString("SHA-1", file);
+            ByteArrayKey digest = ByteArrayKey.wrap(DigestUtils.digest("SHA-1", file));
             return Optional.ofNullable(KNOWN_VERSIONS.get(digest));
         } catch (IOException e) {
             return Optional.empty();
