@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.util.platform.windows;
 import com.sun.jna.*;
 import com.sun.jna.ptr.ByReference;
 import com.sun.jna.ptr.LongByReference;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -14,6 +15,73 @@ import java.util.List;
  * @author Glavo
  */
 public interface WinTypes {
+
+    /// An unsigned integer with the native pointer width.
+    ///
+    /// @see <a href="https://learn.microsoft.com/windows/win32/winprog/windows-data-types">Windows Data Types</a>
+    @NotNullByDefault
+    final class SIZE_T extends IntegerType {
+
+        /// Creates a zero value for native structure marshalling.
+        public SIZE_T() {
+            this(0);
+        }
+
+        /// Creates a value using the platform's pointer width.
+        public SIZE_T(long value) {
+            super(Native.SIZE_T_SIZE, value, true);
+        }
+    }
+
+    /// System information returned by `GetSystemInfo`.
+    ///
+    /// @see <a href="https://learn.microsoft.com/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info">SYSTEM_INFO structure</a>
+    @NotNullByDefault
+    @Structure.FieldOrder({"wProcessorArchitecture", "wReserved", "dwPageSize", "lpMinimumApplicationAddress",
+            "lpMaximumApplicationAddress", "dwActiveProcessorMask", "dwNumberOfProcessors", "dwProcessorType",
+            "dwAllocationGranularity", "wProcessorLevel", "wProcessorRevision"})
+    final class SYSTEM_INFO extends Structure {
+        /// Processor architecture reported to the calling process.
+        public short wProcessorArchitecture;
+        /// Reserved by Windows.
+        public short wReserved;
+        /// Memory page size in bytes.
+        public int dwPageSize;
+        /// Lowest accessible application address.
+        public @Nullable Pointer lpMinimumApplicationAddress;
+        /// Highest accessible application address.
+        public @Nullable Pointer lpMaximumApplicationAddress;
+        /// Active processor bit mask for the current group.
+        public SIZE_T dwActiveProcessorMask = new SIZE_T();
+        /// Number of logical processors in the current group.
+        public int dwNumberOfProcessors;
+        /// Legacy processor type identifier.
+        public int dwProcessorType;
+        /// Allocation address granularity in bytes.
+        public int dwAllocationGranularity;
+        /// Architecture-specific processor level.
+        public short wProcessorLevel;
+        /// Architecture-specific processor revision.
+        public short wProcessorRevision;
+    }
+
+    /// Current page file allocation and usage returned by `EnumPageFilesW`.
+    ///
+    /// @see <a href="https://learn.microsoft.com/windows/win32/api/psapi/ns-psapi-enum_page_file_information">ENUM_PAGE_FILE_INFORMATION structure</a>
+    @NotNullByDefault
+    @Structure.FieldOrder({"cb", "Reserved", "TotalSize", "TotalInUse", "PeakUsage"})
+    final class ENUM_PAGE_FILE_INFORMATION extends Structure {
+        /// Native structure size in bytes.
+        public int cb;
+        /// Reserved by Windows.
+        public int Reserved;
+        /// Currently allocated page file capacity in pages.
+        public SIZE_T TotalSize = new SIZE_T();
+        /// Current page file usage in pages.
+        public SIZE_T TotalInUse = new SIZE_T();
+        /// Peak page file usage in pages.
+        public SIZE_T PeakUsage = new SIZE_T();
+    }
 
     /// A 128-bit Windows globally unique identifier.
     ///

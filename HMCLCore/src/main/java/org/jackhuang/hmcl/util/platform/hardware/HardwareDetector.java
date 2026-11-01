@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.management.ManagementFactory;
@@ -36,6 +37,15 @@ public class HardwareDetector {
         return USE_FAST_FETCH ? FastFetchUtils.detectGraphicsCards() : List.of();
     }
 
+    /// Returns a desktop environment description, or `null` if detection is unsupported or no name is available.
+    ///
+    /// The description may include the session type.
+    ///
+    /// @implSpec The default implementation returns `null`.
+    public @Nullable String detectDesktopEnvironment() {
+        return null;
+    }
+
     /// Returns total physical memory in bytes, or zero if the required management bean is unavailable.
     public long getTotalMemorySize() {
         try {
@@ -46,6 +56,16 @@ public class HardwareDetector {
         }
 
         return 0L;
+    }
+
+    /// Queries current page file capacity in bytes; -1 means unsupported or failed, and zero means none.
+    public long getTotalPageFileSize() {
+        return -1;
+    }
+
+    /// Queries configured page file sizing policy, returning unknown if unsupported or unavailable.
+    public PageFileConfiguration getPageFileConfiguration() {
+        return PageFileConfiguration.UNKNOWN;
     }
 
     /// Returns free physical memory in bytes, or zero if the required management bean is unavailable.
