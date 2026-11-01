@@ -577,7 +577,7 @@ public final class TwoLineListItemLayoutTest {
             assertEquals(textLeft, item.getSubtitleLabel().getLayoutX(), 0.001);
             assertEquals(item.getWidth() - 14, trailing.getBoundsInParent().getMaxX(), 0.001);
             double textRight = trailing.getLayoutX() - 19;
-            assertEquals(textRight, item.getSubtitleLabel().getBoundsInParent().getMaxX(), 0.001);
+            assertEquals(textRight - textLeft, item.getSubtitleLabel().getWidth(), 0.001);
             Label tag = labels(item).get(0);
             assertFalse(tag.isVisible());
             Label summary = collapsedTag(item);
