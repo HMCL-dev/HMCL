@@ -581,7 +581,7 @@ public final class DefaultGameInstanceTest {
         assertEquals(folderId, instance.getManifest().id());
     }
 
-    /// Writes a minimal jar containing the version metadata consumed by [GameVersion].
+    /// Writes a minimal jar containing the version metadata consumed by [GameVersionNumber#detectFromJar(Path)].
     ///
     /// @param jar     the jar path
     /// @param version the Minecraft version stored in `version.json`
