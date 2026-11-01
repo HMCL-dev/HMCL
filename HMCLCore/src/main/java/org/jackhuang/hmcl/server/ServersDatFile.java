@@ -109,7 +109,7 @@ public class ServersDatFile {
 
                 ListTag<CompoundTag> serversTag = new ListTag<>();
                 for (ServerEntry entry : entries) {
-                    serversTag.addTag(entry.server.serverTag);
+                    serversTag.addTag(entry.server.serverTag.clone());
                 }
 
                 currentRootTag.addTag("servers", serversTag);
