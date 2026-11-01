@@ -290,23 +290,7 @@ public final class DefaultGameInstanceTest {
                 "{MINECRAFT_VERSION}",
                 markerSha1);
 
-        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
-        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("download-cache"));
-        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
-                repository,
-                new TestDownloadProvider(cacheRepository),
-                cacheRepository);
-        ForgeNewInstallTask task = new ForgeNewInstallTask(
-                dependencyManager,
-                new GameInstanceManifest(new GameInstanceID("instance")),
-                minecraftJar,
-                "forge-test",
-                installer) {
-            @Override
-            protected void updateProgressImmediately(double progress) {
-                // Avoid JavaFX toolkit initialization in this isolated processor test.
-            }
-        };
+        ForgeNewInstallTask task = createForgeInstallTask(tempDirectory, minecraftJar, installer);
 
         var executor = task.executor();
         assertTrue(executor.test(), () -> String.valueOf(executor.getException()));
@@ -328,26 +312,55 @@ public final class DefaultGameInstanceTest {
                 "{MINECRAFT_JAR}",
                 "0000000000000000000000000000000000000000");
 
-        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
-        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("download-cache"));
-        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
-                repository,
-                new TestDownloadProvider(cacheRepository),
-                cacheRepository);
-        ForgeNewInstallTask task = new ForgeNewInstallTask(
-                dependencyManager,
-                new GameInstanceManifest(new GameInstanceID("instance")),
-                minecraftJar,
-                "forge-test",
-                installer) {
-            @Override
-            protected void updateProgressImmediately(double progress) {
-                // Avoid JavaFX toolkit initialization in this isolated processor test.
-            }
-        };
+        ForgeNewInstallTask task = createForgeInstallTask(tempDirectory, minecraftJar, installer);
 
         assertFalse(task.executor().test());
         assertEquals("client", Files.readString(minecraftJar));
+    }
+
+    /// Skips the whole processor chain when every artifact it produces already matches.
+    @Test
+    public void testForgeProcessorChainSkippedWhenArtifactsExist(@TempDir Path tempDirectory)
+            throws IOException {
+        Path patched = tempDirectory.resolve("libraries/patched.jar");
+        Files.createDirectories(patched.getParent());
+        Files.writeString(patched, "patched");
+        String patchedSha1 = DigestUtils.digestToString("SHA-1", patched);
+
+        Path minecraftJar = tempDirectory.resolve("cache/client.jar");
+        Files.createDirectories(minecraftJar.getParent());
+        Files.writeString(minecraftJar, "client");
+
+        Path installer = tempDirectory.resolve("forge-installer.jar");
+        writeForgeSkipFixture(installer, patched, patchedSha1);
+
+        ForgeNewInstallTask task = createForgeInstallTask(tempDirectory, minecraftJar, installer);
+
+        // The processor jar is absent from the repository, so only a skipped chain can succeed.
+        var executor = task.executor();
+        assertTrue(executor.test(), () -> String.valueOf(executor.getException()));
+        assertEquals("patched", Files.readString(patched));
+    }
+
+    /// Runs the processor chain when a declared artifact checksum does not match.
+    @Test
+    public void testForgeProcessorChainRunsWhenArtifactMismatches(@TempDir Path tempDirectory)
+            throws IOException {
+        Path patched = tempDirectory.resolve("libraries/patched.jar");
+        Files.createDirectories(patched.getParent());
+        Files.writeString(patched, "stale");
+
+        Path minecraftJar = tempDirectory.resolve("cache/client.jar");
+        Files.createDirectories(minecraftJar.getParent());
+        Files.writeString(minecraftJar, "client");
+
+        Path installer = tempDirectory.resolve("forge-installer.jar");
+        writeForgeSkipFixture(installer, patched, "0000000000000000000000000000000000000000");
+
+        ForgeNewInstallTask task = createForgeInstallTask(tempDirectory, minecraftJar, installer);
+
+        // The chain is not skipped, so the missing processor jar makes the task fail.
+        assertFalse(task.executor().test());
     }
 
     /// Legacy verification fixes the captured instance jar rather than a newer same-id snapshot.
@@ -609,6 +622,72 @@ public final class DefaultGameInstanceTest {
         }
     }
 
+    /// Creates a Forge install task whose progress updates do not require the JavaFX toolkit.
+    ///
+    /// @param tempDirectory the test directory holding the repository and download cache
+    /// @param minecraftJar  the client JAR to install from
+    /// @param installer     the Forge installer JAR
+    /// @return the install task
+    private static ForgeNewInstallTask createForgeInstallTask(
+            Path tempDirectory, Path minecraftJar, Path installer) {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        DefaultCacheRepository cacheRepository = new DefaultCacheRepository(tempDirectory.resolve("download-cache"));
+        DefaultDependencyManager dependencyManager = new DefaultDependencyManager(
+                repository,
+                new TestDownloadProvider(cacheRepository),
+                cacheRepository);
+        return new ForgeNewInstallTask(
+                dependencyManager,
+                new GameInstanceManifest(new GameInstanceID("instance")),
+                minecraftJar,
+                "forge-test",
+                installer) {
+            @Override
+            protected void updateProgressImmediately(double progress) {
+                // Avoid JavaFX toolkit initialization in this isolated processor test.
+            }
+        };
+    }
+
+    /// Writes a Forge installer fixture whose only client processor is an artifact-only tool.
+    ///
+    /// @param installer   the installer JAR path
+    /// @param patched     the artifact the `PATCHED` data entry points to
+    /// @param patchedSha1 the checksum the `PATCHED_SHA` data entry declares
+    private static void writeForgeSkipFixture(Path installer, Path patched, String patchedSha1)
+            throws IOException {
+        Map<String, Object> profile = Map.of(
+                "spec", 1,
+                "minecraft", "1.20.1",
+                "json", "version.json",
+                "version", "forge-test",
+                "libraries", List.of(),
+                "data", Map.of(
+                        "PATCHED", Map.of("client", "'" + patched.toAbsolutePath().normalize() + "'"),
+                        "PATCHED_SHA", Map.of("client", "'" + patchedSha1 + "'")),
+                "processors", List.of(Map.of(
+                        "jar", "net.neoforged.installertools:installertools:4.0.12:fatjar",
+                        "args", List.of(
+                                "--task", "PROCESS_MINECRAFT_JAR",
+                                "--input", "{MINECRAFT_JAR}",
+                                "--output", "{PATCHED}",
+                                "--extract-libraries-to", "{ROOT}/libraries/"),
+                        "outputs", Map.of("{PATCHED}", "{PATCHED_SHA}"))));
+
+        writeForgeInstaller(installer, profile);
+    }
+
+    /// Writes a Forge installer JAR with the given install profile.
+    ///
+    /// @param installer the installer JAR path
+    /// @param profile   the install profile content
+    private static void writeForgeInstaller(Path installer, Map<String, Object> profile) throws IOException {
+        try (ZipOutputStream output = new ZipOutputStream(Files.newOutputStream(installer))) {
+            writeZipEntry(output, "install_profile.json", JsonUtils.GSON.toJson(profile));
+            writeZipEntry(output, "version.json", "{\"id\":\"forge-test\",\"libraries\":[]}");
+        }
+    }
+
     /// Writes a Forge installer fixture with one processor output.
     ///
     /// @param installer        the installer JAR path
@@ -630,10 +709,7 @@ public final class DefaultGameInstanceTest {
                         "jar", "example:processor:1.0",
                         "outputs", Map.of(outputKey, outputSha1))));
 
-        try (ZipOutputStream output = new ZipOutputStream(Files.newOutputStream(installer))) {
-            writeZipEntry(output, "install_profile.json", JsonUtils.GSON.toJson(profile));
-            writeZipEntry(output, "version.json", "{\"id\":\"forge-test\",\"libraries\":[]}");
-        }
+        writeForgeInstaller(installer, profile);
     }
 
     /// Writes one UTF-8 text entry to a ZIP stream.
