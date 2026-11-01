@@ -129,15 +129,6 @@ public final class AboutPage extends SpinnerPane {
                 deviceInfo.getContent().add(pane);
             }
 
-            if (SystemInfo.getTotalMemorySize() > 0) {
-                var memory = new LinePane();
-                memory.setLargeTitle(true);
-                memory.setLeading(SVG.LUCIDE_MEMORY_STICK.createIcon(32));
-                memory.setTitle(i18n("about.device.memory"));
-                memory.setSubtitle("%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
-                deviceInfo.getContent().add(memory);
-            }
-
             @Unmodifiable List<GraphicsCard> visibleGraphicsCards = SystemInfo.getGraphicsCards().stream()
                     .filter(card -> card.getType() != GraphicsCard.Type.DISPLAY_ONLY && !"Unknown".equals(card.getName()))
                     .sorted(Comparator.comparing(GraphicsCard::getType))
@@ -158,6 +149,15 @@ public final class AboutPage extends SpinnerPane {
                 button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
 
                 deviceInfo.getContent().add(button);
+            }
+
+            if (SystemInfo.getTotalMemorySize() > 0) {
+                var memory = new LinePane();
+                memory.setLargeTitle(true);
+                memory.setLeading(SVG.LUCIDE_MEMORY_STICK.createIcon(32));
+                memory.setTitle(i18n("about.device.memory"));
+                memory.setSubtitle("%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
+                deviceInfo.getContent().add(memory);
             }
         }
 
