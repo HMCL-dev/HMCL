@@ -12,6 +12,7 @@ import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
 import org.jackhuang.hmcl.util.platform.windows.*;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
@@ -47,6 +48,9 @@ public final class SystemInfo {
 
         /// The immutable graphics card snapshot, empty if detection is unavailable or fails.
         public static final @Unmodifiable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
+
+        /// The cached desktop environment description, or `null` if unavailable.
+        public static final @Nullable String DESKTOP = DETECTOR.detectDesktopEnvironment();
     }
 
     /// Initializes cached hardware information if needed and logs a system summary on each call.
@@ -160,6 +164,14 @@ public final class SystemInfo {
     /// Returns the cached immutable graphics card list, empty if no cards were reported or detection failed.
     public static @Unmodifiable List<GraphicsCard> getGraphicsCards() {
         return Holder.GRAPHICS_CARDS;
+    }
+
+    /// Returns the cached desktop environment description, or `null` if detection is unsupported or no name is available.
+    ///
+    /// The description includes the session type when supplied by the platform detector.
+    /// The result is detected once during initialization of the cached system information and is not refreshed.
+    public static @Nullable String getDesktopEnvironment() {
+        return Holder.DESKTOP;
     }
 
     /// Prevents instantiation of this utility class.

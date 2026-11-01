@@ -72,23 +72,13 @@ public final class AboutPage extends SpinnerPane {
                     : "%s (%s %s, %s)".formatted(OperatingSystem.OS_RELEASE_PRETTY_NAME, OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion(), Architecture.SYSTEM_ARCH.getDisplayName())));
             systemInfo.getContent().add(system);
 
-            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
-                @Nullable String desktopName = System.getenv("XDG_CURRENT_DESKTOP");
-                if (StringUtils.isBlank(desktopName))
-                    desktopName = System.getenv("XDG_SESSION_DESKTOP");
-
-                @Nullable String sessionType = System.getenv("XDG_SESSION_TYPE");
-
-                if (StringUtils.isNotBlank(desktopName)) {
-                    var desktop = new LinePane();
-                    desktop.setLargeTitle(true);
-                    desktop.setLeading(SVG.LUCIDE_APP_WINDOW.createIcon(32));
-                    desktop.setTitle(i18n("about.system.desktop"));
-                    desktop.setSubtitle(StringUtils.isNotBlank(sessionType)
-                            ? "%s (%s)".formatted(desktopName.strip(), sessionType.strip())
-                            : desktopName.strip());
-                    systemInfo.getContent().add(desktop);
-                }
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && SystemInfo.getDesktopEnvironment() != null) {
+                var desktop = new LinePane();
+                desktop.setLargeTitle(true);
+                desktop.setLeading(SVG.LUCIDE_APP_WINDOW.createIcon(32));
+                desktop.setTitle(i18n("about.system.desktop"));
+                desktop.setSubtitle(SystemInfo.getDesktopEnvironment());
+                systemInfo.getContent().add(desktop);
             }
         }
 
@@ -158,7 +148,8 @@ public final class AboutPage extends SpinnerPane {
                         subtitle = switch (configuration.mode()) {
                             case MANUAL -> i18n("about.device.memory.page_files.maximum", subtitle, pageFileCapacity,
                                     "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(configuration.maximumSize())));
-                            case SYSTEM_MANAGED, MIXED, UNKNOWN -> i18n("about.device.memory.page_files", subtitle, pageFileCapacity);
+                            case SYSTEM_MANAGED, MIXED, UNKNOWN ->
+                                    i18n("about.device.memory.page_files", subtitle, pageFileCapacity);
                         };
                     }
                 }

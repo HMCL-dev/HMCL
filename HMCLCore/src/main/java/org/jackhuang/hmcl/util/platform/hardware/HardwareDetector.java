@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.management.ManagementFactory;
@@ -34,6 +35,15 @@ public class HardwareDetector {
     /// The default implementation runs Fastfetch when enabled.
     public @Unmodifiable List<GraphicsCard> detectGraphicsCards() {
         return USE_FAST_FETCH ? FastFetchUtils.detectGraphicsCards() : List.of();
+    }
+
+    /// Returns a desktop environment description, or `null` if detection is unsupported or no name is available.
+    ///
+    /// The description may include the session type.
+    ///
+    /// @implSpec The default implementation returns `null`.
+    public @Nullable String detectDesktopEnvironment() {
+        return null;
     }
 
     /// Returns total physical memory in bytes, or zero if the required management bean is unavailable.
