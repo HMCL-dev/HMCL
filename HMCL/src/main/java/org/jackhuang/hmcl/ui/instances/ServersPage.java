@@ -693,7 +693,6 @@ public class ServersPage extends ListPageBase<ServersPage.ServerListItem> {
             container.setAlignment(Pos.CENTER_LEFT);
             VBox content = new VBox(contentLine1, contentLine2AddressMaskPane);
             HBox.setHgrow(content, Priority.ALWAYS);
-            content.setMouseTransparent(true);
             setSelectable();
 
             contentLine2AddressMaskPane.labelAddStyleClass("subtitle");
