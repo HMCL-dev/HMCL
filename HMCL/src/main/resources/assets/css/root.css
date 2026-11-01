@@ -890,7 +890,7 @@
     -fx-background-radius: 50px;
 }
 
-.expandable-pane .label {
+.expandable-pane-header-label {
     -fx-text-fill: -monet-on-surface;
 }
 

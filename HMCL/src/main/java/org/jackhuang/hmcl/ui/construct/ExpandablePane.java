@@ -48,9 +48,7 @@ public class ExpandablePane extends Control {
 
     private final ObservableList<Node> content = FXCollections.observableArrayList();
 
-    public ExpandablePane() {
-        getStyleClass().add("expandable-pane");
-    }
+    public ExpandablePane() {}
 
     @Override
     protected Skin<?> createDefaultSkin() {
@@ -117,6 +115,7 @@ public class ExpandablePane extends Control {
         protected ExpandablePaneSkin(ExpandablePane control) {
             super(control);
 
+            label.getStyleClass().add("expandable-pane-header-label");
             label.textProperty().bind(control.textProperty());
 
             headerContent.setAlignment(Pos.CENTER);
