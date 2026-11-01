@@ -731,7 +731,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final ColorAdjust iconColorAdjust = new ColorAdjust();
-        private static final PseudoClass ACTIVE =PseudoClass.getPseudoClass("active");
+        private static final PseudoClass ACTIVE = PseudoClass.getPseudoClass("active");
         private final Circle activeIndicator = new Circle(6);
 
         private final TwoLineListItem content = new TwoLineListItem();
