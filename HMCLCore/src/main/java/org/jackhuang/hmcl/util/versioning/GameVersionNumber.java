@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.versioning;
 
+import org.jackhuang.hmcl.util.ByteArrayKey;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -79,6 +81,11 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     public static @Nullable GameVersionNumber detectFromJar(@Nullable Path file) {
         @Nullable String version = JarVersionDetector.detect(file);
         return version != null ? asGameVersion(version) : null;
+    }
+
+
+    public static @Unmodifiable Map<ByteArrayKey, String> getKnownVersions() {
+        return JarVersionDetector.VERSIONS;
     }
 
     public static GameVersionNumber unknown() {

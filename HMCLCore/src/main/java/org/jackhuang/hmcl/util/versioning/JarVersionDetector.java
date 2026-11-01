@@ -41,10 +41,15 @@ final class JarVersionDetector {
 
     /// Reads the embedded client hash table into an immutable hash-to-version mapping.
     /// Ignores blank lines and comment lines beginning with `#`.
-    /// If multiple versions share a hash, the first CSV entry determines its version name.
+    /// Logs and skips records without exactly two fields, with a blank version identifier,
+    /// or whose hash cannot be decoded by [ByteArrayKey#fromHexString(String)].
+    /// Hash length is not validated. If multiple valid records share a hash, the first one determines its version name.
     ///
-    /// @return the mappings from `/assets/game/client-sha1.csv`
-    /// @throws IllegalStateException if the resource is missing, unreadable, or malformed
+    /// Closes the resource stream after reading. If reading or closing throws [IOException],
+    /// logs the failure and returns an empty map.
+    ///
+    /// @return the immutable mappings from `/assets/game/client-sha1.csv`, possibly empty
+    /// @throws IllegalStateException if the resource is missing
     private static @Unmodifiable Map<ByteArrayKey, String> loadKnownVersions() {
         String csvContent;
         try (@Nullable InputStream input = JarVersionDetector.class.getResourceAsStream("/assets/game/client-sha1.csv")) {

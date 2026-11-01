@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.util.ByteArrayKey;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -203,6 +204,21 @@ public abstract class DefaultGameInstance implements GameInstance {
     ///
     /// @return the detected version, or [GameVersionNumber#unknown()] when detection fails
     private GameVersionNumber detectVersion() {
+        GameInstanceManifest resolvedManifest = getResolvedManifest();
+        @Nullable DownloadInfo clientDownloadInfo = resolvedManifest.getDownloads()
+                .get(DownloadType.CLIENT);
+
+        if (clientDownloadInfo != null && clientDownloadInfo.getSha1() != null) {
+            Map<ByteArrayKey, String> knownVersions = GameVersionNumber.getKnownVersions();
+
+            try {
+                @Nullable String knownVersion = knownVersions.get(ByteArrayKey.fromHexString(clientDownloadInfo.getSha1()));
+                if (knownVersion != null)
+                    return GameVersionNumber.asGameVersion(knownVersion);
+            } catch (Exception ignored) {
+            }
+        }
+
         try {
             Path jar = getInstanceJarFile();
             @Nullable GameVersionNumber detected = GameVersionNumber.detectFromJar(jar);
