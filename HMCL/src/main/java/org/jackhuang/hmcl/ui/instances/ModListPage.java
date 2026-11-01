@@ -770,6 +770,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             content.setEffect(iconColorAdjust);
 
             iconContainer = new StackPane(imageContainer, activeIndicator);
+            iconContainer.setCursor(Cursor.HAND);
+            iconContainer.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+                if (event.getButton() == MouseButton.PRIMARY) event.consume();
+            });
 
             StackPane.setAlignment(activeIndicator, Pos.BOTTOM_RIGHT);
             StackPane.setMargin(activeIndicator, new Insets(0, -6, 3, 0));
@@ -855,12 +859,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
             updateActiveState(modInfo.isActive());
-            iconContainer.setCursor(Cursor.HAND);
-            iconContainer.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
-                if (event.getButton() == MouseButton.PRIMARY) {
-                    event.consume();
-                }
-            });
             iconContainer.setOnMouseClicked(event -> {
                 if (event.getButton() != MouseButton.PRIMARY) {
                     return;
