@@ -42,6 +42,8 @@ dependencies {
 }
 
 tasks.processResources {
+    mustRunAfter("updateClientSha1")
+
     listOf(
         "HMCLTransformerDiscoveryService",
         "HMCLMultiMCBootstrap"
@@ -52,6 +54,12 @@ tasks.processResources {
             from(task.outputs.files)
         }
     }
+}
+
+tasks.register("updateClientSha1", org.jackhuang.hmcl.gradle.component.UpdateClientSha1::class) {
+    description = "Update the embedded Minecraft client SHA-1 table"
+
+    outputFile.set(layout.projectDirectory.file("src/main/resources/assets/game/client-sha1.csv"))
 }
 
 tasks.register("updateLiteLoaderVersionList", org.jackhuang.hmcl.gradle.component.UpdateLiteLoaderVersionList::class) {
