@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (C) 2024 The HMCL Authors
+// SPDX-FileCopyrightText: Copyright (C) 2020-2026 The HMCL Authors
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.versioning;
 
@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,6 +59,26 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
     public static GameVersionNumber asGameVersion(Optional<String> version) {
         return version.isPresent() ? asGameVersion(version.get()) : unknown();
+    }
+
+    /// Detects a Minecraft version from a JAR's metadata, class constants, or known SHA-1 hash.
+    /// Converts the detected identifier using [#asGameVersion(String)].
+    ///
+    /// Legacy client identifiers prefixed with `Beta ` or `Alpha v` are converted to `b` or `a` notation.
+    /// A client identifier of `2.0` is refined to its color variant when its hash is known;
+    /// otherwise, `2.0` is retained, including when hashing fails.
+    ///
+    /// This method performs blocking file I/O and may read the entire file to compute its hash.
+    /// All files and streams opened by this method are closed before it returns.
+    /// The client hash table is loaded only when a hash lookup is needed.
+    /// An I/O failure may still yield a version if the fallback hash lookup succeeds.
+    ///
+    /// @param file the JAR to inspect, or `null`
+    /// @return the detected version, or `null` if the path is null, is not a regular file,
+    ///         or no version can be identified
+    public static @Nullable GameVersionNumber detectFromJar(@Nullable Path file) {
+        @Nullable String version = JarVersionDetector.detect(file);
+        return version != null ? asGameVersion(version) : null;
     }
 
     public static GameVersionNumber unknown() {

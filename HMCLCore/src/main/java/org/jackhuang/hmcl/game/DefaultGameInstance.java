@@ -205,14 +205,14 @@ public abstract class DefaultGameInstance implements GameInstance {
     private GameVersionNumber detectVersion() {
         try {
             Path jar = getInstanceJarFile();
-            Optional<String> detected = GameVersion.minecraftVersion(jar);
-            if (detected.isEmpty()) {
+            @Nullable GameVersionNumber detected = GameVersionNumber.detectFromJar(jar);
+            if (detected == null) {
                 LOG.warning("Cannot find out game version of " + id
                         + ", primary jar: " + jar
                         + ", jar exists: " + Files.exists(jar));
                 return GameVersionNumber.unknown();
             }
-            return GameVersionNumber.asGameVersion(detected.get());
+            return detected;
         } catch (NoSuchGameInstanceException e) {
             LOG.warning("Cannot resolve game version of " + id, e);
             return GameVersionNumber.unknown();
