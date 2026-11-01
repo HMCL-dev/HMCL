@@ -90,7 +90,7 @@ public class ExpandablePane extends Control {
         private final Map<Node, WeakInvalidationListener> weakContentLayoutListeners = new IdentityHashMap<>();
 
         private boolean heightUpdatePending;
-        
+
         private final VBox root = new VBox();
 
         private final JFXButton button = new JFXButton();
