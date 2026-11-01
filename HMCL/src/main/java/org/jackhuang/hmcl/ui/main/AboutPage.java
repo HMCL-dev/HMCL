@@ -128,7 +128,24 @@ public final class AboutPage extends SpinnerPane {
                 button.setLargeTitle(true);
                 button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
                 button.setTitle(title);
-                button.setSubtitle(graphicsCard.toString());
+
+                StringBuilder subtitle = new StringBuilder(graphicsCard.getName());
+
+                if (graphicsCard.getDriver() != null || graphicsCard.getDriverVersion() != null) {
+                    subtitle.append(" (");
+                    if (graphicsCard.getDriver() != null) {
+                        subtitle.append(graphicsCard.getDriver());
+                        if (graphicsCard.getDriverVersion() != null) {
+                            subtitle.append(' ');
+                        }
+                    }
+                    if (graphicsCard.getDriverVersion() != null) {
+                        subtitle.append(graphicsCard.getDriverVersion());
+                    }
+                    subtitle.append(')');
+                }
+
+                button.setSubtitle(subtitle.toString());
 
                 switch (graphicsCard.getType()) {
                     case INTEGRATED -> button.getTags().add(new Tag(i18n("about.device.gpu.type.integrated")));
