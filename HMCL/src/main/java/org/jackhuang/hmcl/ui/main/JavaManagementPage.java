@@ -4,7 +4,11 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXSpinner;
+
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -57,6 +61,8 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     private final ChangeListener<Collection<JavaRuntime>> listener;
 
     private final Runnable onInstallJava;
+
+    private final BooleanProperty refreshing = new SimpleBooleanProperty(false);
 
     public JavaManagementPage() {
         this.listener = FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), this::loadJava);
@@ -195,7 +201,36 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         protected List<Node> initializeToolbar(JavaManagementPage skinnable) {
             ArrayList<Node> res = new ArrayList<>(4);
 
-            res.add(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, JavaManager::refresh));
+            {
+                JFXButton refreshButton = createToolbarButton2(
+                    i18n("button.refresh"),
+                    SVG.REFRESH,
+                    () -> {
+                        if (skinnable.refreshing.get()) {
+                            return;
+                        }
+
+                        skinnable.refreshing.set(true);
+                        JavaManager.refresh(() -> skinnable.refreshing.set(false));
+                    }
+                );
+
+                Node refreshIcon = refreshButton.getGraphic();
+
+                JFXSpinner spinner = new JFXSpinner();
+                spinner.getStyleClass().add("small-spinner");
+                spinner.setPrefSize(20, 20);
+                spinner.setMinSize(20, 20);
+                spinner.setMaxSize(20, 20);
+
+                skinnable.refreshing.addListener((observable, oldValue, newValue) -> {
+                    refreshButton.setGraphic(newValue ? spinner : refreshIcon);
+                });
+
+                refreshButton.disableProperty().bind(skinnable.refreshing);
+                res.add(refreshButton);
+            }
+
             if (skinnable.onInstallJava != null) {
                 res.add(createToolbarButton2(i18n("java.download"), SVG.DOWNLOAD, skinnable.onInstallJava));
             }
