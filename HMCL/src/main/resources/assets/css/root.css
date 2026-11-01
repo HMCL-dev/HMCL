@@ -559,6 +559,11 @@
     -fx-text-fill: -monet-on-surface;
 }
 
+.dialog-refresh {
+    -fx-text-fill: -monet-primary;
+    -fx-padding: 0.7em 0.8em;
+}
+
 /*******************************************************************************
  *                                                                             *
  * Microsoft Login Dialog                                                      *
