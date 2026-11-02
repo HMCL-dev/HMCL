@@ -364,13 +364,10 @@ public class DefaultLauncher extends Launcher {
                         // keep original address.
                         quickPlayMultiplayerArg = parsed.getRawAddress();
                     } else {
+                        // Before support for parameter addresses was introduced, the host did not permit the use of the "@" and "?".
+                        quickPlayMultiplayerArg = parsed.getHostAndPort().toString();
                         if (parsed.hasQueryProperties()) {
                             LOG.warning("Ignore the query parameters in the server address.");
-                            // Before support for parameter addresses was introduced, the host did not permit the use of '@'.
-                            quickPlayMultiplayerArg = parsed.getHostAndPort().toString();
-                        } else {
-                            // keep original address.
-                            quickPlayMultiplayerArg = parsed.getRawAddress();
                         }
                     }
 
