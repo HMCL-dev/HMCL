@@ -10,6 +10,7 @@ import javafx.event.Event;
 import javafx.event.EventDispatchChain;
 import javafx.event.EventDispatcher;
 import javafx.event.EventHandler;
+import javafx.geometry.Bounds;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.IndexedCell;
@@ -142,11 +143,10 @@ final class ScrollUtils {
             long now = System.nanoTime();
             if (event.isDirect() && !event.isInertia())
                 directGesture = true;
+            // Platform scaling can make ordinary wheel text deltas fractional too.
             boolean precise = gesture || event.isDirect() || event.getTouchCount() > 0 || event.isInertia()
                     || (event.getTextDeltaXUnits() == ScrollEvent.HorizontalTextScrollUnits.NONE
-                    && event.getTextDeltaYUnits() == ScrollEvent.VerticalTextScrollUnits.NONE)
-                    || event.getTextDeltaY() != Math.rint(event.getTextDeltaY())
-                    || event.getTextDeltaX() != Math.rint(event.getTextDeltaX());
+                    && event.getTextDeltaYUnits() == ScrollEvent.VerticalTextScrollUnits.NONE);
             precise |= now < precisionUntil;
             if (precise && !event.isInertia())
                 precisionUntil = now + WHEEL_DURATION;
@@ -284,7 +284,14 @@ final class ScrollUtils {
             attach(null, pane.getContent());
             pane.contentProperty().addListener((ObservableValue<? extends Node> observable,
                                                @Nullable Node oldContent, @Nullable Node newContent) -> attach(oldContent, newContent));
-            pane.viewportBoundsProperty().addListener(observable -> reset());
+            pane.viewportBoundsProperty().addListener((ObservableValue<? extends Bounds> observable,
+                                                       @Nullable Bounds oldBounds, @Nullable Bounds newBounds) -> {
+                // Layout also replaces these bounds when only the content offset changes.
+                if (oldBounds == null || newBounds == null
+                        || oldBounds.getWidth() != newBounds.getWidth()
+                        || oldBounds.getHeight() != newBounds.getHeight())
+                    reset();
+            });
             pane.hvalueProperty().addListener(observable -> positionChanged());
             pane.vvalueProperty().addListener(observable -> positionChanged());
             pane.addEventFilter(ScrollEvent.ANY, event -> {

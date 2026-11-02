@@ -93,6 +93,66 @@ final class ScrollUtilsTest {
         });
     }
 
+    /// Fractional text deltas caused by display scaling retain wheel animation and line distances.
+    @Test
+    void scaledWheelRemainsAnimated() throws Exception {
+        onFxThread(() -> {
+            for (double scale : new double @Unmodifiable []{1.25, 1.5, 2}) {
+                ScrollPane pane = pane(800, 1600);
+                sendScaledWheel(pane.getContent(), scale);
+                assertEquals(0, offset(pane, true), 0.001);
+                assertEquals(0, offset(pane, false), 0.001);
+                finishWheel(pane);
+                assertEquals(40 / scale, offset(pane, true), 0.001);
+                assertEquals(40 / scale, offset(pane, false), 0.001);
+
+                VirtualFlow<?> flow = flow(true);
+                sendScaledWheel(flow, scale);
+                assertEquals(0, flow.getPosition(), 0.001);
+                finishWheel(flow);
+                IndexedCell<?> first = requireNonNull(flow.getFirstVisibleCell());
+                // Cell layout snaps the final displacement to a pixel boundary.
+                assertEquals(72 / scale, first.getIndex() * 24 - first.getLayoutY(), 0.5);
+            }
+            return true;
+        });
+    }
+
+    /// Layout with unchanged viewport dimensions preserves queued wheel movement and gesture state.
+    @Test
+    void layoutPreservesScrolling() throws Exception {
+        onFxThread(() -> {
+            ScrollPane pane = pane(800, 1600);
+            send(pane.getContent(), ScrollEvent.SCROLL, 0, -80, false, false, true);
+            pane.requestLayout();
+            pane.layout();
+            finishWheel(pane);
+            assertEquals(80, offset(pane, false), 0.001);
+
+            send(pane.getContent(), ScrollEvent.SCROLL_STARTED, 0, 0, false, false, true);
+            send(pane.getContent(), ScrollEvent.SCROLL, 0, -96, false, false, true);
+            pane.requestLayout();
+            pane.layout();
+            send(pane.getContent(), ScrollEvent.SCROLL, 0, -96, false, false, true);
+            assertEquals(272, offset(pane, false), 0.001);
+            return true;
+        });
+    }
+
+    /// A viewport resize still discards movement queued for the previous dimensions.
+    @Test
+    void viewportResizeCancelsWheel() throws Exception {
+        onFxThread(() -> {
+            ScrollPane pane = pane(800, 1600);
+            send(pane.getContent(), ScrollEvent.SCROLL, 0, -80, false, false, true);
+            pane.resize(320, 260);
+            pane.layout();
+            finishWheel(pane);
+            assertEquals(0, offset(pane, false), 0.001);
+            return true;
+        });
+    }
+
     /// Reversing direction discards the previous queued movement instead of fighting it.
     @Test
     void wheelReversalCancelsOldDirection() throws Exception {
@@ -331,6 +391,16 @@ final class ScrollUtilsTest {
                 direct, inertia, dx, dy, dx, dy, ScrollEvent.HorizontalTextScrollUnits.NONE, 0,
                 lines ? ScrollEvent.VerticalTextScrollUnits.LINES : ScrollEvent.VerticalTextScrollUnits.NONE,
                 lines ? Math.signum(dy) * 3 : 0, direct ? 1 : 0, new PickResult(target, 10, 10)));
+    }
+
+    /// Dispatches wheel input whose pixel and text deltas have been divided by the display scale.
+    private static void sendScaledWheel(Node target, double scale) {
+        target.fireEvent(new ScrollEvent(ScrollEvent.SCROLL, 10, 10, 10, 10,
+                false, false, false, false, false, false,
+                -40 / scale, -40 / scale, -40 / scale, -40 / scale,
+                ScrollEvent.HorizontalTextScrollUnits.CHARACTERS, -3 / scale,
+                ScrollEvent.VerticalTextScrollUnits.LINES, -3 / scale,
+                0, new PickResult(target, 10, 10)));
     }
 
     /// Creates mouse input for interrupting animation or checking synthesized touch compatibility.
