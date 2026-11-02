@@ -44,6 +44,39 @@ import java.util.function.Consumer;
 /// Artwork is mirrored by JavaFX in RTL layouts; labels belong to the surrounding layout.
 @NotNullByDefault
 public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
+    /// Track width in unscaled MD3 artwork coordinates.
+    private static final double TRACK_WIDTH = 52;
+
+    /// Track height corresponding to the control's default `-jfx-size`.
+    private static final double TRACK_HEIGHT = 32;
+
+    /// Interaction target height before CSS scaling or explicit layout constraints.
+    private static final double TARGET_HEIGHT = 48;
+
+    /// Vertical center shared by the track, handle, state layer, and icon.
+    private static final double CENTER_Y = TARGET_HEIGHT / 2;
+
+    /// Handle center at the leading end of the track.
+    private static final double OFF_CENTER = TRACK_HEIGHT / 2;
+
+    /// Handle center at the trailing end of the track.
+    private static final double ON_CENTER = TRACK_WIDTH - OFF_CENTER;
+
+    /// Diameter of the unselected handle without an icon.
+    private static final double OFF_DIAMETER = 16;
+
+    /// Diameter of a selected handle or a handle containing an icon.
+    private static final double ON_DIAMETER = 24;
+
+    /// Handle diameter while pressed or dragged.
+    private static final double PRESSED_DIAMETER = 28;
+
+    /// Radius of the hover, focus, and pressed overlay.
+    private static final double STATE_LAYER_RADIUS = 20;
+
+    /// Minimum pointer movement in control pixels before a press becomes a drag.
+    private static final double DRAG_THRESHOLD = 3;
+
     /// Marks focus acquired without a pointer press, independently of actual keyboard focus.
     private static final PseudoClass VISUAL_FOCUSED = PseudoClass.getPseudoClass("visual-focused");
 
@@ -57,19 +90,19 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     private final Scale artworkScale = new Scale();
 
     /// Rounded track with its optional outline.
-    private final Rectangle track = new Rectangle(0, 8, 52, 32);
+    private final Rectangle track = new Rectangle(0, (TARGET_HEIGHT - TRACK_HEIGHT) / 2, TRACK_WIDTH, TRACK_HEIGHT);
 
     /// Circular hover, focus, and pressed overlay behind the handle.
-    private final Circle stateLayer = new Circle(16, 24, 20);
+    private final Circle stateLayer = new Circle(OFF_CENTER, CENTER_Y, STATE_LAYER_RADIUS);
 
     /// Circular handle, independently styled from the track.
-    private final Circle handle = new Circle(16, 24, 8);
+    private final Circle handle = new Circle(OFF_CENTER, CENTER_Y, OFF_DIAMETER / 2);
 
     /// Optional check or cross, created on first use and then reused across state changes.
     private @Nullable SVGPath icon;
 
     /// Current logical handle center measured from the track's leading edge.
-    private final DoubleProperty center = new SimpleDoubleProperty(16) {
+    private final DoubleProperty center = new SimpleDoubleProperty(OFF_CENTER) {
         /// Applies each position change directly to the unmanaged artwork.
         @Override
         protected void invalidated() {
@@ -78,7 +111,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     };
 
     /// Current handle diameter in pixels.
-    private final DoubleProperty diameter = new SimpleDoubleProperty(16) {
+    private final DoubleProperty diameter = new SimpleDoubleProperty(OFF_DIAMETER) {
         /// Applies each size change directly to the unmanaged artwork.
         @Override
         protected void invalidated() {
@@ -132,8 +165,8 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         track.getStyleClass().setAll("switch-track");
         stateLayer.getStyleClass().setAll("switch-state-layer");
         handle.getStyleClass().setAll("switch-handle");
-        track.setArcWidth(32);
-        track.setArcHeight(32);
+        track.setArcWidth(TRACK_HEIGHT);
+        track.setArcHeight(TRACK_HEIGHT);
         artwork.setManaged(false);
         artwork.setMouseTransparent(true);
         artwork.getTransforms().add(artworkScale);
@@ -218,14 +251,14 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
             @Nullable Point2D point = artwork.sceneToLocal(event.getSceneX(), event.getSceneY());
             if (point == null)
                 return;
-            if (!dragging && Math.abs(point.getX() - pressX) * sizeScale() < 3)
+            if (!dragging && Math.abs(point.getX() - pressX) * sizeScale() < DRAG_THRESHOLD)
                 return;
             dragging = true;
             if (geometryTransition != null)
                 geometryTransition.stop();
             control.arm();
-            diameter.set(28);
-            center.set(Math.max(16, Math.min(36, pressCenter + point.getX() - pressX)));
+            diameter.set(PRESSED_DIAMETER);
+            center.set(Math.max(OFF_CENTER, Math.min(ON_CENTER, pressCenter + point.getX() - pressX)));
             event.consume();
         } else if (event.getEventType() == MouseEvent.MOUSE_RELEASED && event.getButton() == MouseButton.PRIMARY) {
             if (!mouseDown) {
@@ -234,7 +267,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
             }
             @Nullable Point2D point = control.sceneToLocal(event.getSceneX(), event.getSceneY());
             boolean activate = dragging
-                    ? (center.get() >= 26) != control.isSelected()
+                    ? (center.get() >= (OFF_CENTER + ON_CENTER) / 2) != control.isSelected()
                     : control.isArmed() && point != null && control.contains(point);
             mouseDown = false;
             dragging = false;
@@ -409,8 +442,8 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         boolean selected = control.isSelected();
         boolean pressed = control.isArmed() && !control.isDisabled();
         boolean hasIcon = selected ? control.isShowSelectedIcon() : control.isShowUnselectedIcon();
-        double targetDiameter = pressed ? 28 : selected || hasIcon ? 24 : 16;
-        double targetCenter = selected ? 36 : 16;
+        double targetDiameter = pressed ? PRESSED_DIAMETER : selected || hasIcon ? ON_DIAMETER : OFF_DIAMETER;
+        double targetCenter = selected ? ON_CENTER : OFF_CENTER;
         updateIcon(selected, hasIcon);
         if (immediate || control.isDisableAnimation() || control.getScene() == null
                 || currentCenter == targetCenter && currentDiameter == targetDiameter) {
@@ -459,7 +492,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     /// Returns the artwork and target scale, falling back to MD3 dimensions for invalid sizes.
     private double sizeScale() {
         double size = control.getSize();
-        return Double.isFinite(size) && size > 0 ? size / 32 : 1;
+        return Double.isFinite(size) && size > 0 ? size / TRACK_HEIGHT : 1;
     }
 
     /// Centers the scaled artwork within the control and starts pending color transitions.
@@ -469,7 +502,8 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         artworkScale.setX(scale);
         artworkScale.setY(scale);
         // Keep animation and CSS geometry in MD3 units; scale the entire artwork consistently.
-        artwork.resizeRelocate(x + (w - 52 * scale) / 2, y + (h - 48 * scale) / 2, 52, 48);
+        artwork.resizeRelocate(x + (w - TRACK_WIDTH * scale) / 2,
+                y + (h - TARGET_HEIGHT * scale) / 2, TRACK_WIDTH, TARGET_HEIGHT);
         layoutHandle();
         // JavaFX applies CSS before layout, so all changed paints now share the same start time.
         if (animateColors) {
@@ -491,13 +525,13 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         handle.setRadius(diameter.get() / 2);
         if (icon != null && icon.isVisible())
             icon.relocate(cx - icon.getLayoutBounds().getWidth() / 2,
-                    24 - icon.getLayoutBounds().getHeight() / 2);
+                    CENTER_Y - icon.getLayoutBounds().getHeight() / 2);
     }
 
     /// Reserves the scaled track width and control insets.
     @Override
     protected double computeMinWidth(double h, double top, double right, double bottom, double left) {
-        return left + 52 * sizeScale() + right;
+        return left + TRACK_WIDTH * sizeScale() + right;
     }
 
     /// Uses the same fixed width as the minimum size.
@@ -509,7 +543,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     /// Reserves the scaled interaction target height and control insets.
     @Override
     protected double computeMinHeight(double w, double top, double right, double bottom, double left) {
-        return top + 48 * sizeScale() + bottom;
+        return top + TARGET_HEIGHT * sizeScale() + bottom;
     }
 
     /// Uses the same fixed height as the minimum size.

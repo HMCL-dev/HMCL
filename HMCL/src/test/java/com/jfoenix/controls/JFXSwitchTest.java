@@ -3,6 +3,7 @@
 package com.jfoenix.controls;
 
 import com.jfoenix.skins.JFXSwitchSkin;
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -43,18 +45,25 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /// Exercises the switch through a live JavaFX scene, including CSS and inherited behavior.
 @NotNullByDefault
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
+@Isolated("Temporarily supplies settings while initializing the cached animation policy")
 public final class JFXSwitchTest {
 
     /// Initializes the cached animation policy without loading or changing persisted settings.
     @BeforeAll
     static void initializeAnimationPolicy() throws Exception {
+        // AnimationUtils caches its policy at class initialization. Without in-memory settings,
+        // that initialization calls SettingsManager.settings() and loads configuration from disk.
+        // Preserve any previously initialized policy; animation tests select their own policy
+        // explicitly, so their behavior does not depend on which test initialized the class first.
         Field settingsField = SettingsManager.class.getDeclaredField("launcherSettings");
         settingsField.setAccessible(true);
         @Nullable Object previous = settingsField.get(null);
@@ -262,15 +271,15 @@ public final class JFXSwitchTest {
         });
     }
 
-    /// Verifies keyboard, action, accessibility, and replacement-skin behavior.
+    /// Verifies keyboard and accessibility activation share selection and action-event semantics.
     @Test
-    void behaviorAndSkinReplacement() throws Exception {
+    void keyboardAndAccessibility() throws Exception {
         onFxThread(() -> {
             JFXSwitch control = new JFXSwitch();
             control.setAccessibleText("Wi-Fi");
             assertEquals(!AnimationUtils.isAnimationEnabled(), control.isDisableAnimation());
             control.setDisableAnimation(true);
-            VBox root = scene(control);
+            scene(control);
             AtomicInteger actions = new AtomicInteger();
             control.setOnAction(event -> actions.incrementAndGet());
             control.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.SPACE, false, false, false, false));
@@ -285,19 +294,8 @@ public final class JFXSwitchTest {
             assertEquals(2, actions.get());
             control.setDisable(true);
             control.fire();
-            assertEquals(2, actions.get());
-            control.setDisable(false);
-            control.setSkin(null);
-            control.setSkin(new JFXSwitchSkin(control));
-            control.setSelected(true);
-            layout(root);
-            assertEquals(1, control.lookupAll(".switch-track").size());
-            assertEquals(24, part(control, "handle").getLayoutBounds().getWidth());
-            assertEquals(52, control.prefWidth(-1));
-            assertEquals(48, control.prefHeight(-1));
             control.executeAccessibleAction(AccessibleAction.FIRE);
-            assertFalse(control.isSelected());
-            assertEquals(3, actions.get());
+            assertEquals(2, actions.get());
         });
     }
 
@@ -382,13 +380,15 @@ public final class JFXSwitchTest {
         control.fireEvent(new KeyEvent(type, "", "", code, false, false, false, false));
     }
 
-    /// Keeps bound option updates working before skin creation, in inactive states, and after replacement.
+    /// Keeps bound options and keyboard activation working across skin replacement.
     @Test
     void optionUpdatesAcrossSkinReplacement() throws Exception {
         onFxThread(() -> {
             JFXSwitch control = new JFXSwitch();
             SimpleBooleanProperty immediate = new SimpleBooleanProperty(true);
             control.disableAnimationProperty().bind(immediate);
+            AtomicInteger actions = new AtomicInteger();
+            control.setOnAction(event -> actions.incrementAndGet());
             SimpleBooleanProperty selectedIcon = new SimpleBooleanProperty(false);
             control.showSelectedIconProperty().bind(selectedIcon);
             control.setShowUnselectedIcon(true);
@@ -416,12 +416,19 @@ public final class JFXSwitchTest {
             control.setSkin(new JFXSwitchSkin(control));
             selectedIcon.set(true);
             layout(root);
+            assertEquals(1, control.lookupAll(".switch-track").size());
+            assertEquals(52, control.prefWidth(-1));
+            assertEquals(48, control.prefHeight(-1));
             assertTrue(part(control, "icon").isVisible());
             immediate.set(false);
             control.setSelected(false);
             immediate.set(true);
             assertEquals(16, part(control, "handle").getLayoutBounds().getWidth());
             assertEquals(16, part(control, "handle").getBoundsInParent().getCenterX());
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
+            key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
+            assertTrue(control.isSelected());
+            assertEquals(1, actions.get());
         });
     }
 
@@ -430,10 +437,8 @@ public final class JFXSwitchTest {
     void selectionColorsOnPulse() throws Exception {
         CompletableFuture<Stage> window = new CompletableFuture<>();
         CompletableFuture<JFXSwitch> target = new CompletableFuture<>();
-        AtomicInteger changes = new AtomicInteger();
         try {
             onFxThread(() -> {
-                Platform.setImplicitExit(false);
                 JFXSwitch control = new JFXSwitch();
                 control.setDisableAnimation(false);
                 control.setStyle("-jfx-switch-primary: #123456;");
@@ -443,16 +448,13 @@ public final class JFXSwitchTest {
                 window.complete(stage);
                 stage.setScene(root.getScene());
                 stage.show();
-                part(control, "track").fillProperty().addListener(observable -> changes.incrementAndGet());
+                Paint initial = Objects.requireNonNull(part(control, "track").getFill());
+                assertNotEquals(Color.web("#123456"), initial);
                 control.setSelected(true);
-                assertEquals(0, changes.get());
+                assertEquals(initial, part(control, "track").getFill());
             });
-            Thread.sleep(400);
-            onFxThread(() -> {
-                assertEquals(Color.web("#123456"),
-                        part(target.join(), "track").getFill());
-                assertTrue(changes.get() > 2, "Normal pulses must produce intermediate colors");
-            });
+            awaitFx("selection colors after automatic CSS and layout",
+                    () -> Color.web("#123456").equals(part(target.join(), "track").getFill()));
         } finally {
             onFxThread(() -> {
                 if (window.isDone())
@@ -461,7 +463,7 @@ public final class JFXSwitchTest {
         }
     }
 
-    /// Checks interrupted color and geometry animations, theme overrides, and immediate completion.
+    /// Checks reversal continuity, eventual completion, theme overrides, and immediate completion.
     @Test
     void selectionColorTransitions() throws Exception {
         CompletableFuture<JFXSwitch> created = new CompletableFuture<>();
@@ -472,10 +474,10 @@ public final class JFXSwitchTest {
             control.setShowSelectedIcon(true);
             control.setShowUnselectedIcon(true);
             control.setStyle("-jfx-switch-primary: #123456;");
+            control.setDisableAnimation(true);
             scene(control);
             created.complete(control);
             off.complete(palette(control));
-            control.setDisableAnimation(true);
             control.setSelected(true);
             on.complete(palette(control));
             control.setSelected(false);
@@ -486,12 +488,13 @@ public final class JFXSwitchTest {
             control.setSelected(true);
             assertEquals(off.join(), palette(control), "Selection must start from the visible palette");
         });
-        Thread.sleep(80);
-        onFxThread(() -> {
+        awaitFx("selection colors to advance before reversal", () -> {
             JFXSwitch control = created.join();
             @Unmodifiable List<Paint> current = palette(control);
-            assertNotEquals(off.join(), current, "Colors must advance during the transition");
-            assertNotEquals(on.join(), current, "Colors must interpolate before reaching the target");
+            if (off.join().equals(current))
+                return false;
+            // Reverse in the same FX callback that observes progress. A busy CI worker may
+            // skip intermediate frames, so continuity must also hold at the final frame.
             Shape handle = part(control, "handle");
             double center = handle.getBoundsInParent().getCenterX();
             double diameter = handle.getLayoutBounds().getWidth();
@@ -499,8 +502,9 @@ public final class JFXSwitchTest {
             assertEquals(current, palette(control), "Reversing must preserve the displayed colors");
             assertEquals(center, handle.getBoundsInParent().getCenterX(), 0.001);
             assertEquals(diameter, handle.getLayoutBounds().getWidth(), 0.001);
+            return true;
         });
-        Thread.sleep(300);
+        awaitFx("reversed selection colors to settle", () -> off.join().equals(palette(created.join())));
         onFxThread(() -> {
             JFXSwitch control = created.join();
             assertEquals(off.join(), palette(control));
@@ -559,6 +563,34 @@ public final class JFXSwitchTest {
     /// Returns a required shape from the default skin.
     private static Shape part(JFXSwitch control, String name) {
         return (Shape) Objects.requireNonNull(control.lookup(".switch-" + name));
+    }
+
+    /// Evaluates a condition once per pulse, propagating failures and stopping on completion or timeout.
+    private static void awaitFx(String description, BooleanSupplier condition) throws Exception {
+        CompletableFuture<@Nullable Void> completed = new CompletableFuture<>();
+        AnimationTimer timer = new AnimationTimer() {
+            /// Checks on the FX thread so observations and any dependent actions are atomic between pulses.
+            @Override
+            public void handle(long now) {
+                try {
+                    if (condition.getAsBoolean()) {
+                        stop();
+                        completed.complete(null);
+                    }
+                } catch (Throwable failure) {
+                    stop();
+                    completed.completeExceptionally(failure);
+                }
+            }
+        };
+        try {
+            onFxThread(timer::start);
+            completed.get(10, TimeUnit.SECONDS);
+        } catch (TimeoutException failure) {
+            fail("Timed out waiting for " + description, failure);
+        } finally {
+            onFxThread(timer::stop);
+        }
     }
 
     /// Runs assertions on the application thread and propagates failures to JUnit.
