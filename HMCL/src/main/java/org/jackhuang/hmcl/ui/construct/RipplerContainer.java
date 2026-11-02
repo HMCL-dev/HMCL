@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/// Wraps content with hover, focus, press, and ripple feedback behind it.
+/// Wraps content with uniform hover, focus, and press color transitions behind it.
 /// Feedback covers padding without replacing the background. Corners follow the first background
 /// fill of this pane, then the wrapped [Region], otherwise remaining square. Fill insets are ignored;
 /// percentage radii use this pane's dimensions.
@@ -354,8 +354,8 @@ public class RipplerContainer extends StackPane {
         }
     };
 
-    /// Returns the press feedback switch, initially true. Disabling it clears all waveforms
-    /// and the held press, preserving hover and focus feedback and normal event delivery.
+    /// Returns the press feedback switch, initially true. Disabling it clears the held press
+    /// and settles hover and focus feedback, preserving normal event delivery.
     /// The default stylesheet applies a hand cursor only while this property is true.
     /// Enabling it does not replay an existing press.
     public BooleanProperty pressFeedbackEnabledProperty() {
@@ -372,7 +372,7 @@ public class RipplerContainer extends StackPane {
         pressFeedbackEnabled.set(value);
     }
 
-    /// Clears all held and fading waveforms and immediately restores the current hover/focus state.
+    /// Clears press feedback and immediately restores the current hover/focus state.
     /// Suitable for clearing transient feedback when a virtualized cell is reused.
     public void resetFeedback() {
         interactionLayer.reset();

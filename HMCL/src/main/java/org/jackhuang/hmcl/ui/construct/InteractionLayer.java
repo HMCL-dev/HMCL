@@ -9,32 +9,25 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
-import javafx.scene.Group;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import javafx.scene.shape.Circle;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-
-/// Draws hover, focus, and static press backgrounds with transient circle waveforms.
+/// Draws hover, focus, and press feedback as transitions over the entire background.
 /// All construction, property changes, and operations must occur on the JavaFX application thread.
 /// The owner supplies dimensions, input states, and lifecycle notifications; this layer installs
-/// no input handlers and does not own content. Waveforms share a rounded rectangular clip;
-/// the layer itself retains rectangular pointer picking, including transparent corners.
+/// no input handlers and does not own content. Backgrounds follow the configured corner radii;
+/// the layer retains rectangular pointer picking, including transparent corners.
 /// Solid state colors use the region background; other paints use a lazily created region
 /// so their intrinsic transparency is multiplied by the state opacity.
-/// State opacities follow the
-/// [AndroidX Material 3 state tokens](https://github.com/androidx/androidx/blob/androidx-main/compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/tokens/StateTokens.kt).
-/// Animated presses are represented by waveforms over the existing hover or focus state;
-/// presses without a waveform use a single static state layer instead.
+/// Press feedback takes priority over focus and hover, using a stronger tint for visibility.
 @NotNullByDefault
 public final class InteractionLayer extends Region {
     /// The hover state opacity from Material 3 StateTokens v0_210.
@@ -43,29 +36,20 @@ public final class InteractionLayer extends Region {
     /// The focus state opacity from Material 3 StateTokens v0_210.
     private static final double FOCUS_OPACITY = 0.10;
 
-    /// The pressed waveform or static press opacity from Material 3 StateTokens v0_210.
-    private static final double PRESSED_OPACITY = 0.10;
+    /// The press opacity, distinct from both hover and focus feedback.
+    private static final double PRESSED_OPACITY = 0.16;
 
     /// The duration of transitions within the hover opacity range, in nanoseconds.
     private static final long HOVER_DURATION = (long) (Motion.SHORT2.toMillis() * 1_000_000);
 
-    /// The duration of other state changes and ripple release, in nanoseconds.
+    /// The duration of focus changes and press release, in nanoseconds.
     private static final long STATE_DURATION = (long) (Motion.SHORT4.toMillis() * 1_000_000);
 
-    /// The duration of ripple expansion while held, in nanoseconds.
-    private static final long EXPANSION_DURATION = (long) (Motion.LONG1.toMillis() * 1_000_000);
+    /// The duration of entering the pressed state, in nanoseconds.
+    private static final long PRESS_DURATION = (long) (Motion.SHORT2.toMillis() * 1_000_000);
 
     /// Whether this instance schedules real pulses; deterministic tests advance it explicitly.
     private final boolean automaticPulses;
-
-    /// The current waveforms, including released waves that have not finished fading.
-    private final ArrayList<Ripple> ripples = new ArrayList<>(0);
-
-    /// The lazily created waveform group; it is attached only while waveforms exist.
-    private @Nullable Group waveformGroup;
-
-    /// The shared waveform clip, detached when no waveforms remain.
-    private @Nullable Region waveformClip;
 
     /// The lazily created state region for paints that cannot encode an additional alpha.
     private @Nullable Region paintBackground;
@@ -78,9 +62,6 @@ public final class InteractionLayer extends Region {
 
     /// The corner radii last applied to the persistent state background.
     private CornerRadii backgroundRadii = CornerRadii.EMPTY;
-
-    /// The currently held waveform, or null for a static press or no press.
-    private @Nullable Ripple activeRipple;
 
     /// The lazily allocated, reusable pulse source.
     private @Nullable AnimationTimer timer;
@@ -97,7 +78,7 @@ public final class InteractionLayer extends Region {
     /// Whether a press has started without a release or reset.
     private boolean pressActive;
 
-    /// The currently displayed state opacity, excluding waveforms.
+    /// The currently displayed state opacity.
     private double stateOpacity;
 
     /// The opacity at the beginning of the current state transition.
@@ -109,19 +90,22 @@ public final class InteractionLayer extends Region {
     /// The monotonic start time of the current state transition.
     private long stateStart;
 
+    /// The duration captured when the current transition starts.
+    private long stateDuration;
+
     /// Whether the state opacity has not yet reached its target.
     private boolean transitioning;
 
     /// The optional owner notification for a completed or unnecessary state transition.
     private @Nullable Runnable onStateSettled;
 
-    /// Sets an owner notification delivered after publishing a settled state, independently of waves.
+    /// Sets an owner notification delivered after publishing a settled state.
     /// Reset does not notify; disabling animation does. Assigning a listener does not invoke it.
     void setOnStateSettled(@Nullable Runnable listener) {
         onStateSettled = listener;
     }
 
-    /// Returns whether the persistent state is still transitioning, independently of waves.
+    /// Returns whether the background is still transitioning.
     boolean isStateTransitioning() {
         return transitioning;
     }
@@ -145,15 +129,13 @@ public final class InteractionLayer extends Region {
         fill.addListener(observable -> updateVisuals());
         animationEnabled.addListener(observable -> {
             if (!isAnimationEnabled()) {
-                clearRipples();
-                activeRipple = null;
                 settle();
                 notifyStateSettled();
             }
         });
     }
 
-    /// The paint applied to all feedback, including existing waveforms.
+    /// The paint applied to all feedback.
     private final ObjectProperty<@Nullable Paint> fill = new SimpleObjectProperty<>(this, "fill", Color.BLACK);
 
     /// Returns the feedback paint property. Null suppresses drawing without changing input or state.
@@ -161,7 +143,7 @@ public final class InteractionLayer extends Region {
         return fill;
     }
 
-    /// Returns the paint used for both the state layer and waveforms, or null if hidden.
+    /// Returns the feedback paint, or null if hidden.
     public @Nullable Paint getFill() {
         return fill.get();
     }
@@ -171,13 +153,12 @@ public final class InteractionLayer extends Region {
         fill.set(value);
     }
 
-    /// The corner radii shared by the state background and waveform clip.
+    /// The corner radii of the feedback background.
     private final ObjectProperty<@Nullable CornerRadii> cornerRadii =
             new SimpleObjectProperty<>(this, "cornerRadii", CornerRadii.EMPTY) {
-                /// Applies changed radii to state feedback and the existing shared clip.
+                /// Applies changed radii to the feedback background.
                 @Override
                 protected void invalidated() {
-                    updateWaveformClip();
                     updateVisuals();
                 }
             };
@@ -193,7 +174,7 @@ public final class InteractionLayer extends Region {
         return cornerRadii.get();
     }
 
-    /// Sets the radii used by state feedback and existing waveforms without restarting animation.
+    /// Sets the feedback radii without restarting animation.
     public void setCornerRadii(@Nullable CornerRadii value) {
         cornerRadii.set(value);
     }
@@ -201,9 +182,8 @@ public final class InteractionLayer extends Region {
     /// Whether subsequent state changes and presses animate.
     private final BooleanProperty animationEnabled = new SimpleBooleanProperty(this, "animationEnabled", AnimationUtils.isAnimationEnabled());
 
-    /// Returns the animation switch. Disabling it clears waveforms and immediately displays
-    /// the current state, including a held press. Enabling it does not replay a held press;
-    /// its static press feedback remains until release or reset.
+    /// Returns the animation switch. Disabling it immediately displays the current state,
+    /// including a held press. Enabling it does not replay a settled transition.
     /// Initially uses [AnimationUtils#isAnimationEnabled()]; global settings are not observed.
     public BooleanProperty animationEnabledProperty() {
         return animationEnabled;
@@ -219,8 +199,7 @@ public final class InteractionLayer extends Region {
         animationEnabled.set(value);
     }
 
-    /// Reports hover. The idle hover opacity is 8%, below focus and static press priority.
-    /// An animated press draws a waveform over this state without increasing the state opacity.
+    /// Reports hover. The idle hover opacity is 8%, below focus and press priority.
     public void setHovered(boolean value) {
         setHovered(value, System.nanoTime());
     }
@@ -234,7 +213,7 @@ public final class InteractionLayer extends Region {
     }
 
     /// Reports visual focus independently of the layer's actual focus. Focus opacity is 10%,
-    /// above hover priority. An animated press may draw a waveform over the focus state.
+    /// above hover priority and below press priority.
     public void setFocusActive(boolean value) {
         setFocusActive(value, System.nanoTime());
     }
@@ -247,11 +226,10 @@ public final class InteractionLayer extends Region {
         }
     }
 
-    /// Starts a press at finite local coordinates. With animation enabled, a waveform with
-    /// up to 10% paint opacity overlays the hover or focus state, without a separate press layer.
-    /// With animation disabled, a single 10% state layer replaces the hover or focus state.
-    /// Repeated calls before release or reset have no effect. Coordinates may lie outside
-    /// the layer; drawing remains clipped.
+    /// Starts a press, transitioning the entire background to 16% paint opacity in 100 ms.
+    /// With animation disabled, the pressed state appears immediately.
+    /// Repeated calls before release or reset have no effect. Coordinates are retained for
+    /// API compatibility and validated, but do not affect the uniform feedback.
     ///
     /// @throws IllegalArgumentException if either coordinate is not finite
     public void press(double x, double y) {
@@ -265,31 +243,11 @@ public final class InteractionLayer extends Region {
         if (pressActive)
             return;
         pressActive = true;
-        if (isAnimationEnabled()) {
-            Circle circle = new Circle();
-            circle.setManaged(false);
-            circle.setMouseTransparent(true);
-            activeRipple = new Ripple(x, y, now, circle);
-            ripples.add(activeRipple);
-            if (waveformGroup == null) {
-                waveformGroup = new Group();
-                waveformGroup.setManaged(false);
-                waveformGroup.setMouseTransparent(true);
-                waveformClip = new Region();
-                updateWaveformClip();
-            }
-            if (waveformGroup.getParent() == null) {
-                getChildren().add(waveformGroup);
-                waveformGroup.setClip(waveformClip);
-            }
-            waveformGroup.getChildren().add(circle);
-            updateGeometry();
-        }
         changeState(now);
     }
 
-    /// Releases the current press. Its waveform expands and fades for 200 ms when animation
-    /// is enabled. Repeated calls do nothing; previously released waveforms continue fading.
+    /// Releases the current press, returning to hover, focus, or idle feedback over 200 ms.
+    /// Repeated calls do nothing; animation-disabled changes appear immediately.
     public void release() {
         release(System.nanoTime());
     }
@@ -300,28 +258,19 @@ public final class InteractionLayer extends Region {
             return;
         updateAnimations(now);
         pressActive = false;
-        if (activeRipple != null) {
-            activeRipple.releaseProgress = activeRipple.progress;
-            activeRipple.released = true;
-            activeRipple.start = now;
-            activeRipple = null;
-        }
         changeState(now);
     }
 
-    /// Immediately clears all waveforms and the press, stops pulses, and displays the current
+    /// Immediately clears the press, stops pulses, and displays the current
     /// hover or focus state. Repeated calls have no additional effect.
     public void reset() {
         pressActive = false;
-        activeRipple = null;
-        clearRipples();
         settle();
     }
 
-    /// Returns the persistent state opacity, leaving animated press feedback to its waveform.
+    /// Returns the opacity of the highest-priority active state.
     private double desiredOpacity() {
-        // A press interrupted by disabling animation stays static even if animation is re-enabled.
-        if (pressActive && activeRipple == null)
+        if (pressActive)
             return PRESSED_OPACITY;
         return focusActive ? FOCUS_OPACITY : hovered ? HOVER_OPACITY : 0;
     }
@@ -337,6 +286,9 @@ public final class InteractionLayer extends Region {
         double target = desiredOpacity();
         if (target != targetOpacity) {
             startOpacity = stateOpacity;
+            stateDuration = pressActive ? PRESS_DURATION
+                    : targetOpacity == PRESSED_OPACITY ? STATE_DURATION
+                    : startOpacity <= HOVER_OPACITY && target <= HOVER_OPACITY ? HOVER_DURATION : STATE_DURATION;
             targetOpacity = target;
             stateStart = now;
             transitioning = startOpacity != targetOpacity;
@@ -372,27 +324,13 @@ public final class InteractionLayer extends Region {
         if (transitioning) {
             // Hover-only fades use a uniform opacity change in both directions.
             boolean hoverOnly = startOpacity <= HOVER_OPACITY && targetOpacity <= HOVER_OPACITY;
-            double progress = fraction(now - stateStart, hoverOnly ? HOVER_DURATION : STATE_DURATION);
+            double progress = fraction(now - stateStart, stateDuration);
             Interpolator interpolator = hoverOnly ? Interpolator.LINEAR : Motion.STANDARD;
             stateOpacity = progress == 0 ? startOpacity : progress == 1 ? targetOpacity
                     : interpolator.interpolate(startOpacity, targetOpacity, progress);
             transitioning = progress < 1;
         }
-        boolean moving = transitioning;
-        for (int i = ripples.size() - 1; i >= 0; i--) {
-            Ripple ripple = ripples.get(i);
-            double progress = fraction(now - ripple.start, ripple.released ? STATE_DURATION : EXPANSION_DURATION);
-            if (ripple.released && progress == 1) {
-                ripples.remove(i);
-                removeWaveform(ripple.circle);
-                continue;
-            }
-            double eased = progress == 0 ? 0 : progress == 1 ? 1 : Motion.STANDARD.interpolate(0.0, 1.0, progress);
-            ripple.progress = ripple.released ? ripple.releaseProgress + (1 - ripple.releaseProgress) * eased : eased;
-            ripple.opacity = ripple.released ? PRESSED_OPACITY * (1 - eased) : PRESSED_OPACITY;
-            moving |= progress < 1;
-        }
-        setRunning(moving);
+        setRunning(transitioning);
     }
 
     /// Clamps elapsed time to a unit interval, including exact animation endpoints.
@@ -428,63 +366,27 @@ public final class InteractionLayer extends Region {
         return running;
     }
 
-    /// Returns the current state opacity, excluding waveforms.
+    /// Returns the current feedback opacity.
     double stateOpacity() {
         return stateOpacity;
     }
 
-    /// Returns the number of held and fading waveforms.
-    int rippleCount() {
-        return ripples.size();
-    }
-
-    /// Updates both dimensions before adjusting backgrounds, clipping, and waveform radii.
+    /// Updates both dimensions before adjusting the feedback background.
     @Override
     public void resize(double width, double height) {
         if (width == getWidth() && height == getHeight())
             return;
         super.resize(width, height);
-        updateGeometry();
-    }
-
-    /// Applies the same background geometry to the shared clip, including per-axis percentage radii.
-    private void updateWaveformClip() {
-        if (waveformClip != null)
-            waveformClip.setBackground(new Background(new BackgroundFill(Color.BLACK, getCornerRadii(), Insets.EMPTY)));
-    }
-
-    /// Updates size-dependent geometry without restarting an existing animation.
-    private void updateGeometry() {
-        if (waveformClip != null && !ripples.isEmpty())
-            waveformClip.resize(getWidth(), getHeight());
         if (paintBackground != null)
             paintBackground.resize(getWidth(), getHeight());
-        for (int i = 0; i < ripples.size(); i++) {
-            Ripple ripple = ripples.get(i);
-            double dx = Math.max(Math.abs(ripple.x), Math.abs(getWidth() - ripple.x));
-            double dy = Math.max(Math.abs(ripple.y), Math.abs(getHeight() - ripple.y));
-            ripple.circle.setRadius(Math.hypot(dx, dy));
-        }
         updateVisuals();
     }
 
-    /// Publishes changed state and waveform properties without replaying drawing commands.
+    /// Publishes the current feedback paint, opacity, and corner radii.
     private void updateVisuals() {
         @Nullable Paint paint = getFill();
         @Nullable CornerRadii radii = getCornerRadii();
         updateBackground(paint, radii == null ? CornerRadii.EMPTY : radii);
-        if (waveformGroup != null)
-            waveformGroup.setVisible(paint != null && getWidth() > 0 && getHeight() > 0);
-        for (int i = 0; i < ripples.size(); i++) {
-            Ripple ripple = ripples.get(i);
-            Circle circle = ripple.circle;
-            circle.setFill(paint);
-            circle.setCenterX(ripple.x);
-            circle.setCenterY(ripple.y);
-            circle.setScaleX(ripple.progress);
-            circle.setScaleY(ripple.progress);
-            circle.setOpacity(ripple.opacity);
-        }
     }
 
     /// Updates the persistent background only when its paint, opacity, or corner radii change.
@@ -518,60 +420,6 @@ public final class InteractionLayer extends Region {
             paintBackground.setOpacity(stateOpacity);
             if (paintBackground.getParent() == null)
                 getChildren().add(0, paintBackground);
-        }
-    }
-
-    /// Detaches all waves and releases their animation state.
-    private void clearRipples() {
-        for (int i = ripples.size() - 1; i >= 0; i--)
-            removeWaveform(ripples.remove(i).circle);
-    }
-
-    /// Removes one waveform node and detaches the shared clip when its group becomes empty.
-    private void removeWaveform(Circle circle) {
-        if (waveformGroup != null) {
-            waveformGroup.getChildren().remove(circle);
-            if (waveformGroup.getChildren().isEmpty()) {
-                getChildren().remove(waveformGroup);
-                waveformGroup.setClip(null);
-            }
-        }
-        circle.setFill(null);
-    }
-
-    /// Stores animation progress alongside its waveform node until completion or cancellation.
-    @NotNullByDefault
-    private static final class Ripple {
-        /// The horizontal origin in local coordinates.
-        private final double x;
-
-        /// The vertical origin in local coordinates.
-        private final double y;
-
-        /// The unmanaged circle displaying this waveform.
-        private final Circle circle;
-
-        /// The start of the current expansion or release phase.
-        private long start;
-
-        /// Whether the release phase has begun.
-        private boolean released;
-
-        /// The fraction of the covering radius currently displayed.
-        private double progress;
-
-        /// The expansion fraction captured on release.
-        private double releaseProgress;
-
-        /// The additional paint opacity of this waveform.
-        private double opacity = PRESSED_OPACITY;
-
-        /// Creates an unexpanded held waveform at the supplied position and time.
-        private Ripple(double x, double y, long start, Circle circle) {
-            this.x = x;
-            this.y = y;
-            this.start = start;
-            this.circle = circle;
         }
     }
 }
