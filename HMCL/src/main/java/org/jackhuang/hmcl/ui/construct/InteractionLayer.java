@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /// Draws uniform feedback behind the content of [RipplerContainer].
 /// Press takes priority over focus and hover. Node opacity multiplies the paint's own alpha,
 /// supporting colors, gradients, and image patterns without rebuilding the background per frame.
-/// All animated state changes are linear at eight opacity percentage points per 100 ms.
+/// All animated state changes are linear at eight opacity percentage points per 150 ms.
 /// Picking remains rectangular, including transparent corners and zero-opacity idle states.
 /// All operations must occur on the JavaFX application thread.
 @NotNullByDefault
@@ -32,8 +32,8 @@ final class InteractionLayer extends Region {
     /// The press tint opacity.
     private static final double PRESSED_OPACITY = 0.16;
 
-    /// The time per unit opacity, calibrated so idle-to-hover takes 100 ms.
-    private static final double NANOS_PER_OPACITY = Motion.SHORT2.toMillis() * 1_000_000 / HOVER_OPACITY;
+    /// The time per unit opacity, calibrated so idle-to-hover takes 150 ms.
+    private static final double NANOS_PER_OPACITY = Motion.SHORT3.toMillis() * 1_000_000 / HOVER_OPACITY;
 
     /// Whether real pulses are scheduled; tests supply deterministic timestamps instead.
     private final boolean automaticPulses;
