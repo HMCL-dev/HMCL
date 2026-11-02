@@ -767,7 +767,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             actionContainer.setAlignment(Pos.CENTER_LEFT);
             actionContainer.setOpacity(0);
-            actionContainer.setTranslateX(36);
+            actionContainer.setTranslateX(12);
             actionContainer.setMouseTransparent(true);
 
             actionFade.setToValue(1);
@@ -779,7 +779,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 actionAnimation.stop();
 
                 actionFade.setToValue(isHovered ? 1 : 0);
-                actionTranslate.setToX(isHovered ? 0 : 36);
+                actionTranslate.setToX(isHovered ? 0 : 12);
 
                 actionContainer.setMouseTransparent(!isHovered);
                 actionAnimation.playFromStart();
