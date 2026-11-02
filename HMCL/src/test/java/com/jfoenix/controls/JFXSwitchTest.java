@@ -3,6 +3,7 @@
 package com.jfoenix.controls;
 
 import com.jfoenix.skins.JFXSwitchSkin;
+import javafx.animation.Animation;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.NodeOrientation;
@@ -438,6 +439,62 @@ public final class JFXSwitchTest {
             assertEquals(graphicWidth, graphic.localToScene(graphic.getLayoutBounds()).getWidth(), 0.001);
             assertEquals(compactIconWidth / 0.75, icon.localToScene(icon.getLayoutBounds()).getWidth(), 0.001);
         });
+    }
+
+    /// Keeps unused animation infrastructure unallocated, then reuses and stops it across state changes.
+    @Test
+    void lazyAnimations() throws Exception {
+        onFxThread(() -> {
+            JFXSwitch control = new JFXSwitch();
+            VBox root = scene(control);
+            assertNull(skinField(control, "geometryTransition"));
+            assertNull(skinField(control, "colorTransition"));
+            assertTrue(((List<?>) skinField(control, "colors")).isEmpty());
+
+            control.setDisableAnimation(true);
+            control.setSelected(true);
+            layout(root);
+            control.setSelected(false);
+            control.setShowUnselectedIcon(true);
+            layout(root);
+            assertNull(skinField(control, "geometryTransition"));
+            assertNull(skinField(control, "colorTransition"));
+            assertTrue(((List<?>) skinField(control, "colors")).isEmpty());
+            control.setSkin(null);
+            control.setSkin(new JFXSwitchSkin(control));
+            layout(root);
+
+            control.setDisableAnimation(false);
+            control.setSelected(true);
+            layout(root);
+            Animation geometry = assertInstanceOf(Animation.class, skinField(control, "geometryTransition"));
+            Animation colors = assertInstanceOf(Animation.class, skinField(control, "colorTransition"));
+            assertEquals(5, ((List<?>) skinField(control, "colors")).size());
+            control.setDisableAnimation(true);
+            assertEquals(Animation.Status.STOPPED, geometry.getStatus());
+            assertEquals(Animation.Status.STOPPED, colors.getStatus());
+            control.setSelected(false);
+            layout(root);
+            control.setDisableAnimation(false);
+            control.setSelected(true);
+            layout(root);
+            assertSame(geometry, skinField(control, "geometryTransition"));
+            assertSame(colors, skinField(control, "colorTransition"));
+            control.setSkin(null);
+            assertEquals(Animation.Status.STOPPED, geometry.getStatus());
+            assertEquals(Animation.Status.STOPPED, colors.getStatus());
+        });
+    }
+
+    /// Inspects allocation state without adding testing accessors to the production skin.
+    private static @Nullable Object skinField(JFXSwitch control, String name) {
+        try {
+            Field field = JFXSwitchSkin.class.getDeclaredField(name);
+            field.setAccessible(true);
+            return field.get(Objects.requireNonNull(control.getSkin()));
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
     }
 
     /// Avoids an unused icon node, then reuses a correctly styled icon across visibility and selection changes.
