@@ -3,7 +3,7 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXToggleButton;
+import com.jfoenix.controls.JFXSwitch;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -13,6 +13,7 @@ import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.NotNullByDefault;
 
@@ -41,7 +42,7 @@ public final class LineInheritableToggleButton extends LineButtonBase {
     private final Tooltip inheritTooltip;
 
     /// The visual toggle that displays the effective value.
-    private final JFXToggleButton toggleButton;
+    private final JFXSwitch toggleButton;
 
     /// Creates an inheritable boolean toggle row.
     public LineInheritableToggleButton() {
@@ -68,10 +69,10 @@ public final class LineInheritableToggleButton extends LineButtonBase {
             event.consume();
         });
 
-        this.toggleButton = new JFXToggleButton();
+        this.toggleButton = new JFXSwitch();
         toggleButton.setMouseTransparent(true);
-        toggleButton.setSize(8);
-        FXUtils.setLimitHeight(toggleButton, 30);
+        toggleButton.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
+        toggleButton.accessibleTextProperty().bind(titleProperty());
 
         setTitleTrailing(inheritButton);
         setTrailing(toggleButton);
