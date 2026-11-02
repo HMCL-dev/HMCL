@@ -27,10 +27,10 @@ final class InteractionLayer extends Region {
     private static final double HOVER_OPACITY = 0.08;
 
     /// The focus tint opacity.
-    private static final double FOCUS_OPACITY = 0.10;
+    private static final double FOCUS_OPACITY = 0.12;
 
     /// The press tint opacity.
-    private static final double PRESSED_OPACITY = 0.16;
+    private static final double PRESSED_OPACITY = 0.12;
 
     /// The time per unit opacity, calibrated so idle-to-hover takes 150 ms.
     private static final double NANOS_PER_OPACITY = Motion.SHORT3.toMillis() * 1_000_000 / HOVER_OPACITY;

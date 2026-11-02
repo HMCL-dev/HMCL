@@ -55,25 +55,25 @@ public final class InteractionLayerTest {
             layer.advance(150_000_000);
             assertEquals(0.08, layer.getOpacity());
             layer.press(150_000_000);
+            layer.advance(187_500_000);
+            assertEquals(0.10, layer.getOpacity(), 1e-12);
             layer.advance(225_000_000);
-            assertEquals(0.12, layer.getOpacity(), 1e-12);
-            layer.advance(300_000_000);
-            assertEquals(0.16, layer.getOpacity());
+            assertEquals(0.12, layer.getOpacity());
             assertFalse(layer.isStateTransitioning());
             assertTrue(layer.getChildrenUnmodifiable().isEmpty());
             var fill = Objects.requireNonNull(layer.getBackground()).getFills().get(0);
             assertEquals(1.0, ((Color) fill.getFill()).getOpacity());
             assertEquals(new CornerRadii(8), fill.getRadii());
-            layer.release(300_000_000);
-            layer.advance(375_000_000);
-            assertEquals(0.12, layer.getOpacity(), 1e-12);
-            layer.advance(450_000_000);
+            layer.release(225_000_000);
+            layer.advance(262_500_000);
+            assertEquals(0.10, layer.getOpacity(), 1e-12);
+            layer.advance(300_000_000);
             assertEquals(0.08, layer.getOpacity());
             assertFalse(layer.isStateTransitioning());
         });
     }
 
-    /// Checks that pressing halfway through hover takes another 225 ms without changing speed.
+    /// Checks that pressing halfway through hover takes another 150 ms without changing speed.
     @Test
     void pressDuringHoverKeepsLinearRate() throws Exception {
         onFxThread(() -> {
@@ -84,11 +84,11 @@ public final class InteractionLayerTest {
             assertEquals(0.04, layer.getOpacity(), 1e-12);
             layer.advance(150_000_000);
             assertEquals(0.08, layer.getOpacity(), 1e-12);
-            layer.advance(225_000_000);
-            assertEquals(0.12, layer.getOpacity(), 1e-12);
+            layer.advance(187_500_000);
+            assertEquals(0.10, layer.getOpacity(), 1e-12);
             assertTrue(layer.isStateTransitioning());
-            layer.advance(300_000_000);
-            assertEquals(0.16, layer.getOpacity());
+            layer.advance(225_000_000);
+            assertEquals(0.12, layer.getOpacity());
             assertFalse(layer.isStateTransitioning());
         });
     }
@@ -111,10 +111,10 @@ public final class InteractionLayerTest {
             layer.press(75_000_000);
             layer.advance(180_000_000);
             assertEquals(0.08, layer.getOpacity(), 1e-12);
-            layer.advance(330_000_000);
-            assertEquals(0.16, layer.getOpacity());
-            layer.release(330_000_000);
-            layer.advance(630_000_000);
+            layer.advance(255_000_000);
+            assertEquals(0.12, layer.getOpacity());
+            layer.release(255_000_000);
+            layer.advance(480_000_000);
             assertEquals(0, layer.getOpacity());
             assertTrue(layer.contains(100, 20));
             assertFalse(layer.isStateTransitioning());
@@ -131,19 +131,19 @@ public final class InteractionLayerTest {
             layer.press(0);
             layer.advance(75_000_000);
             layer.setAnimationEnabled(false);
-            assertEquals(0.16, layer.getOpacity());
+            assertEquals(0.12, layer.getOpacity());
             assertFalse(layer.isStateTransitioning());
             layer.release(75_000_000);
-            assertEquals(0.10, layer.getOpacity());
+            assertEquals(0.12, layer.getOpacity());
             layer.setAnimationEnabled(true);
             layer.press(90_000_000);
             layer.reset();
-            assertEquals(0.10, layer.getOpacity());
+            assertEquals(0.12, layer.getOpacity());
             assertFalse(layer.isStateTransitioning());
             layer.setFocusActive(false, 90_000_000);
-            layer.advance(108_750_000);
-            assertEquals(0.09, layer.getOpacity(), 1e-12);
             layer.advance(127_500_000);
+            assertEquals(0.10, layer.getOpacity(), 1e-12);
+            layer.advance(165_000_000);
             assertEquals(0.08, layer.getOpacity());
             assertFalse(layer.isStateTransitioning());
         });
@@ -181,7 +181,7 @@ public final class InteractionLayerTest {
             assertTrue(layer.contains(150, 30));
             layer.advance(300_000_000);
             layer.setFill(Color.color(0, 0, 1, 0.5));
-            assertEquals(0.16, layer.getOpacity());
+            assertEquals(0.12, layer.getOpacity());
             assertEquals(0.5, ((Color) Objects.requireNonNull(layer.getBackground())
                     .getFills().get(0).getFill()).getOpacity());
             assertTrue(layer.getChildrenUnmodifiable().isEmpty());
