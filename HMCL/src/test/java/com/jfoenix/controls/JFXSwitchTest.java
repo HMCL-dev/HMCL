@@ -67,11 +67,12 @@ public final class JFXSwitchTest {
         }
     }
 
-    /// Dragging overrides the inherited value once, despite synchronous refresh by the setting binder.
+    /// Preserves compact row height and overrides the inherited value once despite synchronous binder refresh.
     @Test
     void inheritableRowDragging() throws Exception {
         onFxThread(() -> {
             LineInheritableSwitch row = new LineInheritableSwitch();
+            row.setTitle("Setting");
             row.overriddenProperty().addListener(observable -> row.setEffectiveValue(row.getRawValue()));
             row.rawValueProperty().addListener(observable -> row.setEffectiveValue(row.getRawValue()));
             AtomicInteger actions = new AtomicInteger();
@@ -80,6 +81,8 @@ public final class JFXSwitchTest {
             applyStylesheets(new Scene(root, 300, 100));
             layout(root);
             JFXSwitch control = (JFXSwitch) Objects.requireNonNull(row.lookup(".jfx-switch"));
+            assertEquals(30, control.getHeight());
+            assertEquals(50, row.getHeight());
             control.setDisableAnimation(true);
             mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
             mouse(control, MouseEvent.MOUSE_DRAGGED, 36, true);
@@ -93,7 +96,7 @@ public final class JFXSwitchTest {
         });
     }
 
-    /// Covers handle and track dragging with representative sizes and layout directions.
+    /// Preserves compact row height and covers dragging with representative sizes and layout directions.
     @ParameterizedTest
     @CsvSource({"false, 32, 16", "false, 24, 4", "true, 24, 40"})
     void handleDragging(boolean rtl, double size, double pressX) throws Exception {
@@ -108,6 +111,8 @@ public final class JFXSwitchTest {
             control.setStyle("-jfx-size: " + size + ";");
             control.setDisableAnimation(true);
             layout(root);
+            assertEquals(30, control.getHeight());
+            assertEquals(50, row.getHeight());
             AtomicInteger actions = new AtomicInteger();
             AtomicInteger rowActions = new AtomicInteger();
             control.setOnAction(event -> actions.incrementAndGet());
@@ -226,6 +231,8 @@ public final class JFXSwitchTest {
             layout(root);
             assertEquals(24, control.getSize());
             assertEquals(39, control.prefWidth(-1));
+            assertEquals(30, control.prefHeight(-1));
+            root.getStyleClass().remove("line-switch");
             control.setStyle("-jfx-size: 20px;");
             layout(root);
             assertEquals(20, control.getSize());
@@ -251,6 +258,7 @@ public final class JFXSwitchTest {
             control.setStyle("-jfx-size: 24px;");
             layout(root);
             assertEquals(24, control.getSize());
+            assertEquals(36, control.prefHeight(-1));
         });
     }
 
