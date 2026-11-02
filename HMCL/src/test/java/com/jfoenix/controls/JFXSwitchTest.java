@@ -296,12 +296,62 @@ public final class JFXSwitchTest {
         }
     }
 
+    /// Keeps secondary-button input from resetting an active primary drag.
+    @Test
+    void secondaryButtonDuringDrag() throws Exception {
+        onFxThread(() -> {
+            JFXSwitch control = new JFXSwitch();
+            control.setDisableAnimation(true);
+            scene(control);
+            AtomicInteger actions = new AtomicInteger();
+            control.setOnAction(event -> actions.incrementAndGet());
+            mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
+            mouse(control, MouseEvent.MOUSE_DRAGGED, 20, true);
+            mouse(control, MouseEvent.MOUSE_PRESSED, 20, MouseButton.SECONDARY, true);
+            mouse(control, MouseEvent.MOUSE_RELEASED, 20, MouseButton.SECONDARY, true);
+            mouse(control, MouseEvent.MOUSE_DRAGGED, 36, true);
+            mouse(control, MouseEvent.MOUSE_RELEASED, 36, false);
+            mouse(control, MouseEvent.MOUSE_CLICKED, 36, false);
+            assertTrue(control.isSelected());
+            assertEquals(1, actions.get());
+        });
+    }
+
+    /// A canceled drag must not become a click after re-enabling and re-entering the control.
+    @Test
+    void canceledDragRelease() throws Exception {
+        onFxThread(() -> {
+            JFXSwitch control = new JFXSwitch();
+            control.setDisableAnimation(true);
+            scene(control);
+            AtomicInteger actions = new AtomicInteger();
+            control.setOnAction(event -> actions.incrementAndGet());
+            mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
+            mouse(control, MouseEvent.MOUSE_DRAGGED, 36, true);
+            control.setDisable(true);
+            control.setDisable(false);
+            mouse(control, MouseEvent.MOUSE_EXITED, 60, true);
+            mouse(control, MouseEvent.MOUSE_ENTERED, 36, true);
+            mouse(control, MouseEvent.MOUSE_RELEASED, 36, false);
+            mouse(control, MouseEvent.MOUSE_CLICKED, 36, false);
+            assertFalse(control.isSelected());
+            assertFalse(control.isArmed());
+            assertEquals(0, actions.get());
+        });
+    }
+
     /// Dispatches a primary pointer event at a position in the unscaled switch artwork.
     private static void mouse(JFXSwitch control, EventType<MouseEvent> type, double x, boolean down) {
+        mouse(control, type, x, MouseButton.PRIMARY, down);
+    }
+
+    /// Dispatches a pointer event while preserving the primary button's independent state.
+    private static void mouse(JFXSwitch control, EventType<MouseEvent> type, double x, MouseButton button, boolean down) {
         Point2D scenePoint = Objects.requireNonNull(control.lookup(".switch-artwork")).localToScene(x, 24);
         control.fireEvent(new MouseEvent(type, scenePoint.getX(), scenePoint.getY(),
-                scenePoint.getX(), scenePoint.getY(), MouseButton.PRIMARY, 1,
-                false, false, false, false, down, false, false, false, false, false,
+                scenePoint.getX(), scenePoint.getY(), button, 1,
+                false, false, false, false, down, false,
+                button == MouseButton.SECONDARY && type == MouseEvent.MOUSE_PRESSED, false, false, false,
                 new PickResult(control, scenePoint.getX(), scenePoint.getY())));
     }
 

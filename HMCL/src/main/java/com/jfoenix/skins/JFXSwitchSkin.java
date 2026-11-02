@@ -67,7 +67,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     /// Current handle diameter in pixels.
     private final DoubleProperty diameter = new SimpleDoubleProperty(16);
     /// Interruptible movement and resize animation.
-    private final Timeline transition = new Timeline();
+    private final Timeline geometryTransition = new Timeline();
     /// CSS-controlled paints sharing one selection transition.
     private final @Unmodifiable List<CssColor<?>> colors;
     /// Advances all changing paints together without allocating a timer for each part.
@@ -107,18 +107,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     public JFXSwitchSkin(JFXSwitch control) {
         super(control);
         this.control = control;
-        colors = List.of(backgroundColor(track), backgroundColor(handle),
-                backgroundColor(stateLayer),
-                new CssColor<>(track.borderProperty(), border -> {
-                    if (border.getStrokes().size() != 1 || !border.getImages().isEmpty())
-                        return null;
-                    BorderStroke stroke = border.getStrokes().get(0);
-                    return stroke.isStrokeUniform() && stroke.getTopStroke() instanceof Color color ? color : null;
-                }, (border, color) -> {
-                    BorderStroke stroke = border.getStrokes().get(0);
-                    return new Border(new BorderStroke(color, stroke.getTopStyle(), stroke.getRadii(),
-                            stroke.getWidths(), stroke.getInsets()));
-                }),
+        colors = List.of(backgroundColor(track), backgroundColor(handle), backgroundColor(stateLayer), borderColor(track),
                 new CssColor<Paint>(icon.fillProperty(), paint -> paint instanceof Color color ? color : null,
                         (paint, color) -> color));
         artwork.getStyleClass().setAll("switch-artwork");
@@ -132,22 +121,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         artwork.getChildren().setAll(track, stateLayer, handle, icon);
         artwork.getChildren().forEach(node -> node.setManaged(false));
         getChildren().add(artwork);
-        registerChangeListener(control.selectedProperty(), value -> {
-            update(false);
-            // Resolve the new palette once; animation frames only update paint properties.
-            animateColors = !control.isDisableAnimation() && !control.isDisabled() && control.getScene() != null;
-            if (!animateColors)
-                return;
-            colorTransition.stop();
-            colors.forEach(CssColor::capture);
-            try {
-                control.applyCss();
-            } finally {
-                animateColors = false;
-            }
-            if (colors.stream().anyMatch(color -> color.target != null))
-                colorTransition.playFromStart();
-        });
+        registerChangeListener(control.selectedProperty(), value -> updateSelection());
         registerChangeListener(control.armedProperty(), value -> update(false));
         @Nullable ReadOnlyBooleanProperty focusVisible = FXUtils.focusVisibleProperty(control);
         ReadOnlyBooleanProperty focusIndicator = focusVisible != null ? focusVisible : control.focusedProperty();
@@ -172,18 +146,36 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         update(true);
     }
 
+    /// Retargets geometry and resolves selection colors once, preserving any visible intermediate colors.
+    private void updateSelection() {
+        update(false);
+        if (control.isDisableAnimation() || control.isDisabled() || control.getScene() == null)
+            return;
+        colorTransition.stop();
+        colors.forEach(CssColor::capture);
+        animateColors = true;
+        try {
+            control.applyCss();
+        } finally {
+            animateColors = false;
+        }
+        if (colors.stream().anyMatch(color -> color.target != null))
+            colorTransition.playFromStart();
+    }
+
     /// Drags in artwork coordinates so CSS scaling and RTL mirroring use the same state threshold.
     private void handleDrag(MouseEvent event) {
-        if (event.getEventType() == MouseEvent.MOUSE_CLICKED && suppressClick) {
+        if (event.getEventType() == MouseEvent.MOUSE_CLICKED && event.getButton() == MouseButton.PRIMARY && suppressClick) {
             suppressClick = false;
             event.consume();
             return;
         }
         if (event.getEventType() == MouseEvent.MOUSE_PRESSED) {
+            if (event.getButton() != MouseButton.PRIMARY)
+                return;
             suppressClick = false;
             dragCandidate = false;
-            if (event.getButton() != MouseButton.PRIMARY || control.isDisabled()
-                    || control.selectedProperty().isBound())
+            if (control.isDisabled() || control.selectedProperty().isBound())
                 return;
             @Nullable Point2D point = artwork.sceneToLocal(event.getSceneX(), event.getSceneY());
             if (point != null) {
@@ -198,7 +190,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
             if (!dragging && Math.abs(point.getX() - pressX) * sizeScale() < 3)
                 return;
             dragging = true;
-            transition.stop();
+            geometryTransition.stop();
             // Disarm the button so its release cannot toggle a second time.
             control.disarm();
             diameter.set(28);
@@ -206,8 +198,14 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
             event.consume();
         } else if (event.getEventType() == MouseEvent.MOUSE_RELEASED && event.getButton() == MouseButton.PRIMARY) {
             dragCandidate = false;
-            if (!dragging)
+            if (!dragging) {
+                // Re-entering after cancellation can re-arm the inherited button behavior.
+                if (suppressClick) {
+                    control.disarm();
+                    event.consume();
+                }
                 return;
+            }
             boolean selected = center.get() >= 26;
             dragging = false;
             suppressClick = true;
@@ -244,6 +242,20 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
                     BackgroundFill fill = background.getFills().get(0);
                     return new Background(new BackgroundFill(color, fill.getRadii(), fill.getInsets()));
                 });
+    }
+
+    /// Animates a uniform solid border, preserving its shape, widths, and insets.
+    private CssColor<Border> borderColor(Region region) {
+        return new CssColor<>(region.borderProperty(), border -> {
+            if (border.getStrokes().size() != 1 || !border.getImages().isEmpty())
+                return null;
+            BorderStroke stroke = border.getStrokes().get(0);
+            return stroke.isStrokeUniform() && stroke.getTopStroke() instanceof Color color ? color : null;
+        }, (border, color) -> {
+            BorderStroke stroke = border.getStrokes().get(0);
+            return new Border(new BorderStroke(color, stroke.getTopStyle(), stroke.getRadii(),
+                    stroke.getWidths(), stroke.getInsets()));
+        });
     }
 
     /// Settles pending colors when animation is disabled or pointer interaction is canceled.
@@ -335,10 +347,9 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
             }
         }
 
-        /// Removes the CSS listener and restores its pending target.
+        /// Removes the CSS listener after the skin has settled the shared transition.
         private void dispose() {
             property.removeListener(listener);
-            finish();
         }
     }
 
@@ -348,7 +359,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
             return;
         double currentCenter = center.get();
         double currentDiameter = diameter.get();
-        transition.stop();
+        geometryTransition.stop();
         boolean selected = control.isSelected();
         boolean pressed = control.isArmed() && !control.isDisabled();
         boolean hasIcon = selected ? control.isShowSelectedIcon() : control.isShowUnselectedIcon();
@@ -365,7 +376,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
             // Preserve the visible geometry when a press or reversal interrupts a transition.
             center.set(currentCenter);
             diameter.set(currentDiameter);
-            transition.getKeyFrames().setAll(
+            geometryTransition.getKeyFrames().setAll(
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(center, currentCenter),
                             new KeyValue(diameter, currentDiameter)),
@@ -373,7 +384,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
                             new KeyValue(diameter, targetDiameter, pressed ? Motion.LINEAR : Motion.STANDARD)),
                     new KeyFrame(Motion.MEDIUM2,
                             new KeyValue(center, targetCenter, Motion.EASE_OUT_BACK)));
-            transition.play();
+            geometryTransition.play();
         }
         layoutHandle();
     }
@@ -456,12 +467,10 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     /// Stops animation and removes the listeners and behavior installed by this skin.
     @Override
     public void dispose() {
-        colorTransition.stop();
-        colors.forEach(CssColor::dispose);
         control.removeEventFilter(MouseEvent.ANY, dragHandler);
-        control.pseudoClassStateChanged(VISUAL_FOCUSED, false);
         cancelDrag();
-        transition.stop();
+        colors.forEach(CssColor::dispose);
+        control.pseudoClassStateChanged(VISUAL_FOCUSED, false);
         super.dispose();
     }
 }
