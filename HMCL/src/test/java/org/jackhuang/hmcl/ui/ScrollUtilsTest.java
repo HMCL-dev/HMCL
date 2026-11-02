@@ -6,12 +6,14 @@ import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.event.EventType;
 import javafx.geometry.Orientation;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.IndexedCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Slider;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -226,12 +228,107 @@ final class ScrollUtilsTest {
             send(content, ScrollEvent.SCROLL, 0, -80, true, false, false);
             content.fireEvent(mouse(content, MouseEvent.MOUSE_DRAGGED, true));
             assertEquals(80, offset(pane, false), 0.001);
+            ScrollPane narrow = pane(100, 1600);
+            narrow.setPannable(true);
+            Node viewport = requireNonNull(narrow.lookup(".viewport"));
+            viewport.fireEvent(mouse(viewport, MouseEvent.MOUSE_PRESSED, true));
+            send(viewport, ScrollEvent.SCROLL, 0, -80, true, false, false);
+            viewport.fireEvent(mouse(viewport, MouseEvent.MOUSE_DRAGGED, true));
+            assertEquals(80, offset(narrow, false), 0.001);
             VirtualFlow<?> flow = flow(true);
             flow.setPannable(true);
             flow.fireEvent(mouse(flow, MouseEvent.MOUSE_PRESSED, true));
             send(flow, ScrollEvent.SCROLL, 0, -12, true, false, false);
             flow.fireEvent(mouse(flow, MouseEvent.MOUSE_DRAGGED, true));
             assertEquals(-12, requireNonNull(flow.getFirstVisibleCell()).getLayoutY(), 0.001);
+            return true;
+        });
+    }
+
+    /// Touch-generated drags reach slider thumbs even when the surrounding pane also scrolls.
+    @Test
+    void touchPreservesSliderDragging() throws Exception {
+        onFxThread(() -> {
+            for (double width : new double @Unmodifiable []{280, 800}) {
+                double expected = 0;
+                for (boolean smooth : new boolean @Unmodifiable []{false, true}) {
+                    Slider slider = new Slider(0, 100, 50);
+                    slider.setPrefWidth(280);
+                    Pane content = new Pane(slider);
+                    content.setMinSize(width, 1600);
+                    content.setPrefSize(width, 1600);
+                    ScrollPane pane = new ScrollPane(content);
+                    pane.setPannable(true);
+                    if (smooth)
+                        ScrollUtils.addSmoothScrolling(pane);
+                    layout(pane);
+                    Node thumb = requireNonNull(slider.lookup(".thumb"));
+                    thumb.fireEvent(mouse(thumb, MouseEvent.MOUSE_PRESSED, true));
+                    send(thumb, ScrollEvent.SCROLL, -12, 0, true, false, false);
+                    thumb.fireEvent(mouse(thumb, MouseEvent.MOUSE_DRAGGED, true));
+                    assertTrue(slider.getValue() < 50,
+                            "width=" + width + ", smooth=" + smooth + ", value=" + slider.getValue());
+                    if (smooth)
+                        assertEquals(expected, slider.getValue(), 0.001);
+                    else
+                        expected = slider.getValue();
+                }
+            }
+            return true;
+        });
+    }
+
+    /// Virtual-flow panning filters do not prevent touch dragging inside a cell control.
+    @Test
+    void touchPreservesVirtualCellDragging() throws Exception {
+        onFxThread(() -> {
+            VirtualFlow<?> flow = flow(true);
+            flow.setPannable(true);
+            IndexedCell<?> cell = requireNonNull(flow.getFirstVisibleCell());
+            Slider slider = new Slider(0, 100, 50);
+            slider.setPrefWidth(200);
+            cell.setGraphic(slider);
+            cell.applyCss();
+            cell.layout();
+            Node thumb = requireNonNull(slider.lookup(".thumb"));
+            thumb.fireEvent(mouse(thumb, MouseEvent.MOUSE_PRESSED, true));
+            send(thumb, ScrollEvent.SCROLL, 0, -12, true, false, false);
+            thumb.fireEvent(mouse(thumb, MouseEvent.MOUSE_DRAGGED, true));
+            assertTrue(slider.getValue() < 50);
+            assertEquals(-12, cell.getLayoutY(), 0.001);
+            return true;
+        });
+    }
+
+    /// Direct input on either scrollbar or its track retains native touch-position semantics.
+    @Test
+    void touchPreservesScrollbarPositioning() throws Exception {
+        onFxThread(() -> {
+            for (Orientation orientation : Orientation.values()) {
+                for (boolean track : new boolean @Unmodifiable []{false, true}) {
+                    ScrollPane pane = new ScrollPane(content(800, 1600));
+                    layout(pane);
+                    ScrollBar bar = pane.lookupAll(".scroll-bar").stream()
+                            .map(ScrollBar.class::cast)
+                            .filter(node -> node.getOrientation() == orientation).findFirst().orElseThrow();
+                    Node target = track ? requireNonNull(bar.lookup(".track")) : bar;
+                    Point2D point = target.localToScene(target.getLayoutBounds().getWidth() / 2,
+                            target.getLayoutBounds().getHeight() / 2);
+                    ScrollEvent event = new ScrollEvent(ScrollEvent.SCROLL,
+                            point.getX(), point.getY(), point.getX(), point.getY(),
+                            false, false, false, false, true, false, -4, -4, -4, -4,
+                            ScrollEvent.HorizontalTextScrollUnits.NONE, 0,
+                            ScrollEvent.VerticalTextScrollUnits.NONE, 0, 1,
+                            new PickResult(target, point.getX(), point.getY()));
+                    target.fireEvent(event);
+                    double expected = bar.getValue();
+                    assertTrue(expected > 0.25);
+                    bar.setValue(bar.getMin());
+                    ScrollUtils.addSmoothScrolling(pane);
+                    target.fireEvent(event.copyFor(null, target));
+                    assertEquals(expected, bar.getValue(), 0.001);
+                }
+            }
             return true;
         });
     }
@@ -299,6 +396,45 @@ final class ScrollUtilsTest {
             inner.setVvalue(inner.getVmax());
             send(inner.getContent(), ScrollEvent.SCROLL, 0, -40, true, false, false);
             assertEquals(40, offset(outer, false), 0.001);
+            return true;
+        });
+    }
+
+    /// Unused inertia reaches the ancestor until the tail expires or a press cancels it.
+    @Test
+    void nestedPanesForwardLiveInertia() throws Exception {
+        ScrollPane @Unmodifiable [] panes = onFxThread(() -> {
+            ScrollPane inner = new ScrollPane(content(600, 900));
+            inner.setPrefSize(200, 180);
+            inner.setMaxSize(200, 180);
+            Pane content = new Pane(inner);
+            content.setMinSize(800, 1600);
+            content.setPrefSize(800, 1600);
+            ScrollPane outer = new ScrollPane(content);
+            ScrollUtils.addSmoothScrolling(outer);
+            ScrollUtils.addSmoothScrolling(inner);
+            layout(outer);
+            inner.setVvalue(inner.getVmax());
+            send(inner.getContent(), ScrollEvent.SCROLL_STARTED, 0, 0, true, false, false);
+            send(inner.getContent(), ScrollEvent.SCROLL, 0, -40, true, false, false);
+            send(inner.getContent(), ScrollEvent.SCROLL_FINISHED, 0, 0, true, false, false);
+            send(inner.getContent(), ScrollEvent.SCROLL, 0, -20, true, true, false);
+            assertEquals(60, offset(outer, false), 0.001);
+            assertEquals(inner.getVmax(), inner.getVvalue(), 0.001);
+            return new ScrollPane @Unmodifiable []{inner, outer};
+        });
+        TimeUnit.MILLISECONDS.sleep(250);
+        onFxThread(() -> {
+            ScrollPane inner = panes[0];
+            ScrollPane outer = panes[1];
+            send(inner.getContent(), ScrollEvent.SCROLL, 0, -20, true, true, false);
+            assertEquals(60, offset(outer, false), 0.001);
+            send(inner.getContent(), ScrollEvent.SCROLL, 0, -40, true, false, false);
+            send(inner.getContent(), ScrollEvent.SCROLL, 0, -20, true, true, false);
+            assertEquals(120, offset(outer, false), 0.001);
+            inner.fireEvent(mouse(inner, MouseEvent.MOUSE_PRESSED, true));
+            send(inner.getContent(), ScrollEvent.SCROLL, 0, -20, true, true, false);
+            assertEquals(120, offset(outer, false), 0.001);
             return true;
         });
     }

@@ -7,7 +7,6 @@ import javafx.animation.Interpolator;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.event.Event;
-import javafx.event.EventDispatchChain;
 import javafx.event.EventDispatcher;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
@@ -59,10 +58,7 @@ final class ScrollUtils {
 
     /// Coordinates gesture lifecycles and a short, time-based wheel animation.
     @NotNullByDefault
-    private abstract static class Controller extends AnimationTimer implements EventDispatcher {
-        /// Original dispatcher, including skin filters that must not duplicate touchscreen movement.
-        private final EventDispatcher dispatcher;
-
+    private abstract static class Controller extends AnimationTimer {
         /// Unapplied horizontal wheel distance in pixels.
         private double pendingX;
 
@@ -92,8 +88,6 @@ final class ScrollUtils {
 
         /// Installs interruption and lifecycle listeners without consuming input.
         Controller(Node node) {
-            dispatcher = Objects.requireNonNull(node.getEventDispatcher());
-            node.setEventDispatcher(this);
             node.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> interrupt());
             node.addEventFilter(TouchEvent.TOUCH_PRESSED, event -> interrupt());
             node.addEventFilter(KeyEvent.KEY_PRESSED, event -> interrupt());
@@ -101,15 +95,10 @@ final class ScrollUtils {
             node.visibleProperty().addListener(observable -> reset());
         }
 
-        /// Suppresses duplicate touch-generated drags before any native panning filter runs.
-        @Override
-        public final @Nullable Event dispatchEvent(Event event, EventDispatchChain tail) {
-            if (directGesture && event instanceof MouseEvent mouse
-                    && mouse.getEventType() == MouseEvent.MOUSE_DRAGGED && mouse.isSynthesized()) {
-                event.consume();
-                return event;
-            }
-            return dispatcher.dispatchEvent(event, tail);
+        /// Identifies mouse drags that would repeat a direct touchscreen scroll.
+        final boolean isDuplicateDrag(Event event) {
+            return directGesture && event instanceof MouseEvent mouse
+                    && mouse.getEventType() == MouseEvent.MOUSE_DRAGGED && mouse.isSynthesized();
         }
 
         /// Returns the scrollable pixel distance available in the requested direction.
@@ -169,7 +158,7 @@ final class ScrollUtils {
                 stopWheel();
                 boolean moved = move(true, dx) != 0;
                 moved |= move(false, dy) != 0;
-                if (moved || event.isInertia())
+                if (moved)
                     event.consume();
             } else {
                 if (wheelStart != 0)
@@ -269,6 +258,12 @@ final class ScrollUtils {
         /// Stable handler used when content is replaced or removed.
         private final EventHandler<ScrollEvent> scrollHandler = this::handleScroll;
 
+        /// Stops duplicate panning after child controls have handled synthesized drags.
+        private final EventHandler<MouseEvent> dragHandler = event -> {
+            if (isDuplicateDrag(event))
+                event.consume();
+        };
+
         /// Installs bubbling on content so nested controls receive input first.
         PaneController(ScrollPane pane) {
             super(pane);
@@ -286,12 +281,29 @@ final class ScrollUtils {
             });
             pane.hvalueProperty().addListener(observable -> positionChanged());
             pane.vvalueProperty().addListener(observable -> positionChanged());
-            pane.addEventFilter(ScrollEvent.ANY, event -> {
-                // Empty viewport and scrollbar targets do not pass through the content node.
+            pane.addEventFilter(MouseEvent.MOUSE_DRAGGED, event -> {
+                if (!isDuplicateDrag(event))
+                    return;
+                // Empty viewport targets bypass the content's bubbling handler.
                 @Nullable Node content = pane.getContent();
                 @Nullable Node target = event.getTarget() instanceof Node n ? n : null;
-                while (target != null && target != content && target != pane)
+                while (target != null && target != content && target != pane) {
+                    if (target instanceof ScrollBar)
+                        return;
                     target = target.getParent();
+                }
+                if (content == null || target != content)
+                    event.consume();
+            });
+            pane.addEventFilter(ScrollEvent.ANY, event -> {
+                // Direct scrollbar input belongs to its skin, which uses the touch position.
+                @Nullable Node content = pane.getContent();
+                @Nullable Node target = event.getTarget() instanceof Node n ? n : null;
+                while (target != null && target != content && target != pane) {
+                    if (event.isDirect() && target instanceof ScrollBar)
+                        return;
+                    target = target.getParent();
+                }
                 if (content == null || target != content)
                     handleScroll(event);
             });
@@ -312,10 +324,14 @@ final class ScrollUtils {
         /// Moves the handler to the current content, without retaining detached content nodes.
         private void attach(@Nullable Node oldContent, @Nullable Node newContent) {
             reset();
-            if (oldContent != null)
+            if (oldContent != null) {
                 oldContent.removeEventHandler(ScrollEvent.ANY, scrollHandler);
-            if (newContent != null)
+                oldContent.removeEventHandler(MouseEvent.MOUSE_DRAGGED, dragHandler);
+            }
+            if (newContent != null) {
                 newContent.addEventHandler(ScrollEvent.ANY, scrollHandler);
+                newContent.addEventHandler(MouseEvent.MOUSE_DRAGGED, dragHandler);
+            }
         }
 
         /// Returns overflow measured in the same layout coordinates as gesture pixel deltas.
@@ -373,6 +389,15 @@ final class ScrollUtils {
         FlowController(VirtualFlow<?> flow) {
             super(flow);
             this.flow = flow;
+            EventDispatcher dispatcher = Objects.requireNonNull(flow.getEventDispatcher());
+            flow.setEventDispatcher((event, tail) -> {
+                if (isDuplicateDrag(event)) {
+                    // Bypass the flow's panning filter while preserving delivery to cell controls.
+                    tail.dispatchEvent(event);
+                    return null;
+                }
+                return dispatcher.dispatchEvent(event, tail);
+            });
             @Nullable EventHandler<? super ScrollEvent> nativeHandler = flow.getOnScroll();
             flow.setOnScroll(event -> {
                 // The touch skin must reveal its bars before scrollPixels can move cells.
