@@ -19,6 +19,7 @@ public final class ServerAddress {
 
     private transient final @NotNull HostAndPort hostAndPort;
     private transient final @NotNull Map<String, String> queryProperties;
+    private final boolean includeParameterContent;
 
     // original address.
     private final @NotNull String rawAddress;
@@ -26,10 +27,12 @@ public final class ServerAddress {
     private ServerAddress(
             @NotNull HostAndPort hostAndPort,
             @NotNull Map<String, String> queryProperties,
+            boolean includeParameterContent,
             @NotNull String rawAddress
     ) {
         this.hostAndPort = hostAndPort;
         this.queryProperties = Collections.unmodifiableMap(queryProperties);
+        this.includeParameterContent = includeParameterContent;
         this.rawAddress = rawAddress;
     }
 
@@ -37,6 +40,7 @@ public final class ServerAddress {
      * @throws IllegalArgumentException if the rawAddress is not a valid server address
      */
     public static @NotNull ServerAddress parse(@NotNull final String rawAddress) {
+        boolean includeParameterContent = false;
         String input = rawAddress;
         try {
             input = input.trim();
@@ -46,6 +50,7 @@ public final class ServerAddress {
             // parse query properties
             int queryStart = input.lastIndexOf('?');
             if (queryStart != -1) {
+                includeParameterContent = true;
                 String queryPropertyStr = input.substring(queryStart + 1);
 
                 for (Pair<String, String> pair : NetworkUtils.parseQuery(queryPropertyStr, true)) {
@@ -57,13 +62,14 @@ public final class ServerAddress {
 
             int atEnd = input.indexOf(USER_CHARACTER);
             if (atEnd != -1) {
+                includeParameterContent = true;
                 String value = input.substring(0, atEnd);
                 queryProperties.put("_id", value);
 
                 input = input.substring(atEnd + 1);
             }
 
-            return new ServerAddress(HostAndPort.parse(input, DEFAULT_MINECRAFT_SERVER_PORT), queryProperties, rawAddress);
+            return new ServerAddress(HostAndPort.parse(input, DEFAULT_MINECRAFT_SERVER_PORT), queryProperties, includeParameterContent, rawAddress);
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to parse URL " + rawAddress, e);
         }
@@ -81,15 +87,15 @@ public final class ServerAddress {
         return queryProperties;
     }
 
-    public boolean hasQueryProperties() {
-        return !queryProperties.isEmpty();
-    }
-
     @Override
     public String toString() {
         return "ServerAddress{" +
                 "rawAddress='" + rawAddress + '\'' +
                 '}';
+    }
+
+    public boolean isIncludeParameterContent() {
+        return includeParameterContent;
     }
 
     @Override

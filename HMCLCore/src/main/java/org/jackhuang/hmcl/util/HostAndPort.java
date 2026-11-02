@@ -14,7 +14,11 @@ public final class HostAndPort {
     @VisibleForTesting
     HostAndPort(@NotNull String host, int port) {
         if (port < 0 || port > 65535) {
-            throw new IllegalArgumentException("Invalid server address: " + port);
+            throw new IllegalArgumentException("Invalid port: " + port);
+        }
+
+        if (host.isEmpty()) {
+            throw new IllegalArgumentException("Empty host name.");
         }
         this.host = host;
         this.port = port;
@@ -67,11 +71,8 @@ public final class HostAndPort {
         } else {
             port = defaultPort;
         }
-        if (host.trim().isEmpty()) {
-            throw new IllegalArgumentException("Invalid server address: " + input);
-        }
 
-        return new HostAndPort(host, port);
+        return new HostAndPort(host.trim(), port);
     }
 
     public boolean equals(@NotNull String host, int port) {

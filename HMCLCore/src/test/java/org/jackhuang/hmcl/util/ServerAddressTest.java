@@ -39,10 +39,16 @@ public final class ServerAddressTest {
         assertEquals("id@example.com:12345?key=value", address.getRawAddress());
         assertEquals(new HostAndPort("example.com", 12345), address.getHostAndPort());
         assertEquals(Map.of("key", "value", "_id", "id"), address.getQueryProperties());
-        assertTrue(address.hasQueryProperties());
+        assertTrue(address.isIncludeParameterContent());
 
         ServerAddress noQuery = ServerAddress.parse("example.com");
         assertTrue(noQuery.getQueryProperties().isEmpty());
-        assertFalse(noQuery.hasQueryProperties());
+        assertFalse(noQuery.isIncludeParameterContent());
+
+        ServerAddress badQuery1 = ServerAddress.parse("example.com?");
+        assertTrue(badQuery1.isIncludeParameterContent());
+
+        ServerAddress badQuery2 = ServerAddress.parse("example.com?&");
+        assertTrue(badQuery2.isIncludeParameterContent());
     }
 }

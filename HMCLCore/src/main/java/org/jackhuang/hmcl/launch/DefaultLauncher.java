@@ -362,25 +362,18 @@ public class DefaultLauncher extends Launcher {
                     String quickPlayMultiplayerArg;
                     if (World.supportQueryArgServerAddress(GameVersionNumber.asGameVersion(gameVersion))) {
                         // keep original address.
-                        quickPlayMultiplayerArg = parsed.getRawAddress().trim();
+                        quickPlayMultiplayerArg = parsed.getRawAddress();
                     } else {
-                        if (parsed.hasQueryProperties()) {
+                        if (parsed.isIncludeParameterContent()) {
                             LOG.warning("Ignore the query parameters in the server address.");
-                            // Before support for parameter addresses was introduced, the host did not permit the use of '@'.
-                            quickPlayMultiplayerArg = parsed.getHostAndPort().toString().trim();
+                            // Before support for parameter addresses was introduced, the host did not permit the use of the '@' and '?'.
+                            quickPlayMultiplayerArg = parsed.getHostAndPort().toString();
                         } else {
-                            String raw = parsed.getRawAddress().trim();
-                            if (raw.endsWith("?")) {
-                                LOG.warning("Ignore leading query parameter characters in the server address.");
-                                quickPlayMultiplayerArg = raw.substring(0, raw.length() - 1);
-                            } else {
-                                // keep original address.
-                                quickPlayMultiplayerArg = raw;
-                            }
+                            quickPlayMultiplayerArg = parsed.getRawAddress();
                         }
                     }
 
-                    res.add("--quickPlayMultiplayer").add(quickPlayMultiplayerArg);
+                    res.add("--quickPlayMultiplayer").add(quickPlayMultiplayerArg.trim());
                 } else {
                     String serverArg = parsed.getHostAndPort().getHost();
                     String portArg = String.valueOf(parsed.getHostAndPort().getPort());
@@ -388,7 +381,7 @@ public class DefaultLauncher extends Launcher {
                     res.add("--server").add(serverArg.trim());
                     res.add("--port").add(portArg.trim());
 
-                    if (parsed.hasQueryProperties()) {
+                    if (parsed.isIncludeParameterContent()) {
                         LOG.warning("Ignore the query parameters in the server address.");
                     }
                 }
