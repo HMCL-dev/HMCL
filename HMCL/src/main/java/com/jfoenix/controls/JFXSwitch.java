@@ -23,6 +23,10 @@ import java.util.List;
 ///
 /// The inherited selected property represents the setting. Mouse and keyboard activation
 /// use [ToggleButton] behavior, including action events and toggle-group semantics.
+/// Dragging the handle with the primary mouse button previews its position. Releasing
+/// chooses the nearest end of the track, firing an action only when that changes selection.
+/// A bound selected property prevents dragging. Disabling the control or changing its scene
+/// cancels an active drag without committing the preview.
 /// Supply text or an accessible text description when the switch has no visible label.
 /// The inherited graphic belongs to the label; it is not used as the handle icon.
 ///

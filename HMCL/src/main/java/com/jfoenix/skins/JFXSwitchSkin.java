@@ -9,8 +9,12 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.event.EventHandler;
+import javafx.geometry.Point2D;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.skin.ToggleButtonSkin;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.SVGPath;
@@ -43,6 +47,18 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     private final DoubleProperty diameter = new SimpleDoubleProperty(16);
     /// Interruptible movement and resize animation.
     private final Timeline transition = new Timeline();
+    /// Filters pointer gestures before the inherited button behavior handles release.
+    private final EventHandler<MouseEvent> dragHandler = this::handleDrag;
+    /// Whether the current primary press began on the handle.
+    private boolean dragCandidate;
+    /// Whether the handle is following the pointer instead of an animation.
+    private boolean dragging;
+    /// Suppresses the click generated after a completed or canceled drag.
+    private boolean suppressClick;
+    /// Pointer position in unscaled artwork coordinates at press time.
+    private double pressX;
+    /// Handle center at press time, preserving the pointer's grab offset.
+    private double pressCenter;
 
     /// Creates the artwork and installs listeners that are removed on disposal.
     ///
@@ -63,19 +79,83 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         getChildren().add(artwork);
         registerChangeListener(control.selectedProperty(), value -> update(false));
         registerChangeListener(control.armedProperty(), value -> update(false));
-        registerChangeListener(control.disabledProperty(), value -> update(true));
+        registerChangeListener(control.disabledProperty(), value -> cancelDrag());
         registerChangeListener(control.showSelectedIconProperty(), value -> update(false));
         registerChangeListener(control.showUnselectedIconProperty(), value -> update(false));
         registerChangeListener(control.disableAnimationProperty(), value -> update(true));
-        registerChangeListener(control.sceneProperty(), value -> update(true));
+        registerChangeListener(control.sceneProperty(), value -> cancelDrag());
         registerChangeListener(control.sizeProperty(), value -> control.requestLayout());
         registerChangeListener(center, value -> control.requestLayout());
         registerChangeListener(diameter, value -> control.requestLayout());
+        control.addEventFilter(MouseEvent.ANY, dragHandler);
+        update(true);
+    }
+
+    /// Drags in artwork coordinates so CSS scaling and RTL mirroring use the same state threshold.
+    private void handleDrag(MouseEvent event) {
+        if (event.getEventType() == MouseEvent.MOUSE_CLICKED && suppressClick) {
+            suppressClick = false;
+            event.consume();
+            return;
+        }
+        if (event.getEventType() == MouseEvent.MOUSE_PRESSED) {
+            suppressClick = false;
+            dragCandidate = false;
+            if (event.getButton() != MouseButton.PRIMARY || control.isDisabled()
+                    || control.selectedProperty().isBound())
+                return;
+            @Nullable Point2D point = artwork.sceneToLocal(event.getSceneX(), event.getSceneY());
+            if (point != null && Math.hypot(point.getX() - center.get(), point.getY() - 24) <= diameter.get() / 2) {
+                dragCandidate = true;
+                pressX = point.getX();
+                pressCenter = center.get();
+            }
+        } else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED && dragCandidate && event.isPrimaryButtonDown()) {
+            @Nullable Point2D point = artwork.sceneToLocal(event.getSceneX(), event.getSceneY());
+            if (point == null)
+                return;
+            if (!dragging && Math.abs(point.getX() - pressX) * sizeScale() < 3)
+                return;
+            dragging = true;
+            transition.stop();
+            // Disarm the button so its release cannot toggle a second time.
+            control.disarm();
+            diameter.set(28);
+            center.set(Math.max(16, Math.min(36, pressCenter + point.getX() - pressX)));
+            event.consume();
+        } else if (event.getEventType() == MouseEvent.MOUSE_RELEASED && event.getButton() == MouseButton.PRIMARY) {
+            dragCandidate = false;
+            if (!dragging)
+                return;
+            boolean selected = center.get() >= 26;
+            dragging = false;
+            suppressClick = true;
+            control.disarm();
+            event.consume();
+            if (!control.isDisabled() && !control.selectedProperty().isBound() && selected != control.isSelected())
+                control.fire();
+            update(false);
+        } else if (dragging && (event.getEventType() == MouseEvent.MOUSE_ENTERED
+                || event.getEventType() == MouseEvent.MOUSE_EXITED)) {
+            event.consume();
+        }
+    }
+
+    /// Cancels pointer tracking without committing a state change and restores selected geometry.
+    private void cancelDrag() {
+        dragCandidate = false;
+        if (dragging) {
+            dragging = false;
+            suppressClick = true;
+            control.disarm();
+        }
         update(true);
     }
 
     /// Retargets an in-progress transition from its current geometry, or settles immediately.
     private void update(boolean immediate) {
+        if (dragging)
+            return;
         transition.stop();
         boolean selected = control.isSelected();
         boolean pressed = control.isArmed() && !control.isDisabled();
@@ -171,6 +251,8 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     /// Stops animation and removes the listeners and behavior installed by this skin.
     @Override
     public void dispose() {
+        control.removeEventFilter(MouseEvent.ANY, dragHandler);
+        cancelDrag();
         transition.stop();
         super.dispose();
     }

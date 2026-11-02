@@ -6,21 +6,31 @@ import com.jfoenix.skins.JFXSwitchSkin;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.NodeOrientation;
+import javafx.geometry.Point2D;
+import javafx.event.EventType;
 import javafx.scene.AccessibleAction;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.PickResult;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import org.jackhuang.hmcl.ui.construct.LineToggleButton;
+import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.setting.LauncherSettings;
+import java.lang.reflect.Field;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.Objects;
 import java.util.concurrent.FutureTask;
@@ -34,6 +44,93 @@ import static org.junit.jupiter.api.Assertions.*;
 @NotNullByDefault
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 public final class JFXSwitchTest {
+    /// Exercises handle dragging through the settings-row container in both layout directions.
+    @ParameterizedTest
+    @CsvSource({"false, 24", "true, 24", "false, 32", "true, 32"})
+    void handleDragging(boolean rtl, double size) throws Exception {
+        Field settingsField = SettingsManager.class.getDeclaredField("launcherSettings");
+        settingsField.setAccessible(true);
+        @Nullable Object previous = settingsField.get(null);
+        if (previous == null)
+            settingsField.set(null, new LauncherSettings());
+        try {
+            onFxThread(() -> {
+                LineToggleButton row = new LineToggleButton();
+                row.setTitle("Setting");
+                VBox root = new VBox(row);
+                root.setNodeOrientation(rtl ? NodeOrientation.RIGHT_TO_LEFT : NodeOrientation.LEFT_TO_RIGHT);
+                new Scene(root, 300, 100);
+                layout(root);
+                JFXSwitch control = (JFXSwitch) Objects.requireNonNull(row.lookup(".jfx-switch"));
+                control.setSize(size);
+                control.setDisableAnimation(true);
+                layout(root);
+                AtomicInteger actions = new AtomicInteger();
+                AtomicInteger rowActions = new AtomicInteger();
+                control.setOnAction(event -> actions.incrementAndGet());
+                row.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> rowActions.incrementAndGet());
+                mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
+                mouse(control, MouseEvent.MOUSE_DRAGGED, 28, true);
+                layout(root);
+                assertFalse(control.isSelected());
+                Region handle = part(control, "handle");
+                assertEquals(28, handle.getLayoutX() + handle.getWidth() / 2, 0.001);
+                mouse(control, MouseEvent.MOUSE_DRAGGED, 60, true);
+                mouse(control, MouseEvent.MOUSE_RELEASED, 60, false);
+                mouse(control, MouseEvent.MOUSE_CLICKED, 60, false);
+                layout(root);
+                assertTrue(control.isSelected());
+                assertTrue(row.isSelected());
+                assertEquals(1, actions.get());
+                assertEquals(0, rowActions.get());
+                assertFalse(control.isArmed());
+
+                mouse(control, MouseEvent.MOUSE_PRESSED, 36, true);
+                mouse(control, MouseEvent.MOUSE_DRAGGED, 30, true);
+                mouse(control, MouseEvent.MOUSE_RELEASED, 30, false);
+                mouse(control, MouseEvent.MOUSE_CLICKED, 30, false);
+                assertTrue(control.isSelected());
+                assertTrue(row.isSelected());
+                assertEquals(1, actions.get());
+                layout(root);
+                mouse(control, MouseEvent.MOUSE_PRESSED, 36, true);
+                mouse(control, MouseEvent.MOUSE_DRAGGED, -10, true);
+                mouse(control, MouseEvent.MOUSE_RELEASED, -10, false);
+                mouse(control, MouseEvent.MOUSE_CLICKED, -10, false);
+                assertFalse(control.isSelected());
+                assertEquals(2, actions.get());
+
+                layout(root);
+                mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
+                mouse(control, MouseEvent.MOUSE_DRAGGED, 36, true);
+                control.setDisable(true);
+                mouse(control, MouseEvent.MOUSE_RELEASED, 36, false);
+                mouse(control, MouseEvent.MOUSE_CLICKED, 36, false);
+                assertFalse(control.isSelected());
+                assertEquals(2, actions.get());
+                control.setDisable(false);
+                layout(root);
+                mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
+                mouse(control, MouseEvent.MOUSE_RELEASED, 16, false);
+                mouse(control, MouseEvent.MOUSE_CLICKED, 16, false);
+                assertTrue(control.isSelected());
+                assertTrue(row.isSelected());
+                assertEquals(3, actions.get());
+            });
+        } finally {
+            settingsField.set(null, previous);
+        }
+    }
+
+    /// Dispatches a primary pointer event at a position in the unscaled switch artwork.
+    private static void mouse(JFXSwitch control, EventType<MouseEvent> type, double x, boolean down) {
+        Point2D scenePoint = Objects.requireNonNull(control.lookup(".switch-artwork")).localToScene(x, 24);
+        control.fireEvent(new MouseEvent(type, scenePoint.getX(), scenePoint.getY(),
+                scenePoint.getX(), scenePoint.getY(), MouseButton.PRIMARY, 1,
+                false, false, false, false, down, false, false, false, false, false,
+                new PickResult(control, scenePoint.getX(), scenePoint.getY())));
+    }
+
     /// Verifies settings-row CSS, arbitrary sizes, bound-property precedence, and invalid-size fallback.
     @Test
     void styleableSize() throws Exception {
