@@ -16,8 +16,9 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 /// Draws uniform feedback behind the content of [RipplerContainer].
-/// Press takes priority over focus and hover. Node opacity multiplies the paint's own alpha,
-/// supporting colors, gradients, and image patterns without rebuilding the background per frame.
+/// Selection adds a persistent base tint; press takes priority over focus and hover.
+/// Node opacity multiplies the paint's alpha for colors, gradients, and image patterns.
+/// Only paint or corner changes rebuild the background.
 /// All animated state changes are linear at eight opacity percentage points per 150 ms.
 /// Picking remains rectangular, including transparent corners and zero-opacity idle states.
 /// All operations must occur on the JavaFX application thread.
@@ -31,6 +32,9 @@ final class InteractionLayer extends Region {
 
     /// The press tint opacity.
     private static final double PRESSED_OPACITY = 0.12;
+
+    /// The persistent tint added for selection, independently of pointer or focus feedback.
+    private static final double SELECTED_OPACITY = 0.08;
 
     /// The time per unit opacity, calibrated so idle-to-hover takes 150 ms.
     private static final double NANOS_PER_OPACITY = Motion.SHORT3.toMillis() * 1_000_000 / HOVER_OPACITY;
@@ -59,6 +63,9 @@ final class InteractionLayer extends Region {
     /// Whether a press is held.
     private boolean pressActive;
 
+    /// Whether the owner reports persistent selection.
+    private boolean selected;
+
     /// The opacity at the start of the current transition.
     private double startOpacity;
 
@@ -74,7 +81,7 @@ final class InteractionLayer extends Region {
     /// The optional callback after a transition settles; reset does not invoke it.
     private @Nullable Runnable onStateSettled;
 
-    /// Creates feedback using the loaded animation setting.
+    /// Creates feedback after settings have been loaded, using their animation preference.
     InteractionLayer() {
         this(true);
     }
@@ -161,6 +168,19 @@ final class InteractionLayer extends Region {
         }
     }
 
+    /// Reports persistent selection without changing hover, focus, or press state.
+    void setSelected(boolean value) {
+        setSelected(value, System.nanoTime());
+    }
+
+    /// Reports selection using the same monotonic clock as pointer feedback.
+    void setSelected(boolean value, long now) {
+        if (selected != value) {
+            selected = value;
+            changeState(now);
+        }
+    }
+
     /// Starts uniform press feedback at the shared linear rate; repeated presses have no effect.
     void press() {
         press(System.nanoTime());
@@ -174,7 +194,7 @@ final class InteractionLayer extends Region {
         }
     }
 
-    /// Restores hover, focus, or idle at the shared linear rate; repeated releases have no effect.
+    /// Releases press feedback while retaining selection, hover, and focus; repeated releases do nothing.
     void release() {
         release(System.nanoTime());
     }
@@ -187,15 +207,16 @@ final class InteractionLayer extends Region {
         }
     }
 
-    /// Cancels the press and immediately restores hover or focus without notifying settlement.
+    /// Cancels the press and settles selection, hover, and focus without notifying settlement.
     void reset() {
         pressActive = false;
         settle();
     }
 
-    /// Returns the opacity of the highest-priority active state.
+    /// Adds the selected base tint to the highest-priority transient state.
     private double desiredOpacity() {
-        return pressActive ? PRESSED_OPACITY : focusActive ? FOCUS_OPACITY : hovered ? HOVER_OPACITY : 0;
+        double interaction = pressActive ? PRESSED_OPACITY : focusActive ? FOCUS_OPACITY : hovered ? HOVER_OPACITY : 0;
+        return (selected ? SELECTED_OPACITY : 0) + interaction;
     }
 
     /// Samples the current fade and retargets it without changing the opacity rate.

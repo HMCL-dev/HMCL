@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/// Wraps content with uniform hover, focus, and press color transitions behind it.
+/// Wraps content with uniform selection, hover, focus, and press color transitions behind it.
 /// Feedback covers padding without replacing the background. Corners follow the first background
 /// fill of this pane, then the wrapped [Region], otherwise remaining square. Fill insets are ignored;
 /// percentage radii use this pane's dimensions.
@@ -181,7 +181,7 @@ public class RipplerContainer extends StackPane {
         updateVisualState(false);
     }
 
-    /// Updates persistent states and cancels presses when requested or feedback is unavailable.
+    /// Updates hover and focus and cancels unavailable presses, preserving selection.
     private void updateVisualState(boolean cancelPress) {
         boolean available = isFeedbackAvailable();
         interactionLayer.setHovered(available && pointerInside);
@@ -339,7 +339,7 @@ public class RipplerContainer extends StackPane {
 
     /// Whether background presses produce visual feedback.
     private final BooleanProperty pressFeedbackEnabled = new SimpleBooleanProperty(this, "pressFeedbackEnabled", true) {
-        /// Updates the CSS state and cancels existing feedback when disabled.
+        /// Updates the CSS state and clears press feedback when disabled.
         @Override
         protected void invalidated() {
             pseudoClassStateChanged(PRESS_FEEDBACK_ENABLED, get());
@@ -350,7 +350,7 @@ public class RipplerContainer extends StackPane {
     };
 
     /// Returns the press feedback switch, initially true. Disabling it clears the held press
-    /// and settles hover and focus feedback, preserving normal event delivery.
+    /// and settles selection, hover, and focus feedback, preserving normal event delivery.
     /// The default stylesheet applies a hand cursor only while this property is true.
     /// Enabling it does not replay an existing press.
     public BooleanProperty pressFeedbackEnabledProperty() {
@@ -367,7 +367,15 @@ public class RipplerContainer extends StackPane {
         pressFeedbackEnabled.set(value);
     }
 
-    /// Clears press feedback and immediately restores the current hover/focus state.
+    /// Sets persistent selection feedback for compound controls such as tab headers.
+    /// Hidden or disabled containers settle immediately; selection survives transient resets.
+    final void setSelectedFeedback(boolean selected) {
+        interactionLayer.setSelected(selected);
+        if (!isFeedbackAvailable())
+            interactionLayer.reset();
+    }
+
+    /// Clears press feedback and immediately restores the current selection, hover, and focus.
     /// Suitable for clearing transient feedback when a virtualized cell is reused.
     public void resetFeedback() {
         interactionLayer.reset();

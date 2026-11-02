@@ -476,6 +476,10 @@
     -fx-background-color: derive(-monet-primary-container, -30%);
 }
 
+.tab-header > .rippler-container {
+    -jfx-feedback-fill: -monet-primary;
+}
+
 /* TODO: It seems not actually used */
 .tab-rippler {
     -jfx-rippler-fill: derive(-monet-primary-container, 30%);

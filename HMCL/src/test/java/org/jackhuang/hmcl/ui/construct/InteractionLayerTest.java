@@ -3,7 +3,10 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.application.Platform;
+import javafx.scene.Scene;
 import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
@@ -13,21 +16,25 @@ import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/// Verifies uniform press feedback and interrupted transitions with deterministic pulse times.
+/// Verifies feedback timing, state composition, painting, and tab selection on the FX thread.
 @NotNullByDefault
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 @Isolated("Temporarily supplies settings while initializing the cached animation policy")
@@ -47,20 +54,24 @@ public final class InteractionLayerTest {
         }
     }
 
-    /// Checks uniform background rendering, press timing, and restoration of hover feedback.
-    @Test
-    void pressTintsWholeBackground() throws Exception {
+    /// Verifies the same press cycle with and without a persistent selection tint.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void pressTintsWholeBackground(boolean selected) throws Exception {
         onFxThread(() -> {
             InteractionLayer layer = createLayer();
+            layer.setSelected(selected, 0);
+            layer.reset();
+            double baseOpacity = selected ? 0.08 : 0;
             layer.setCornerRadii(new CornerRadii(8));
             layer.setHovered(true, 0);
             layer.advance(150_000_000);
-            assertEquals(0.08, layer.getOpacity());
+            assertEquals(baseOpacity + 0.08, layer.getOpacity(), 1e-12);
             layer.press(150_000_000);
             layer.advance(187_500_000);
-            assertEquals(0.10, layer.getOpacity(), 1e-12);
+            assertEquals(baseOpacity + 0.10, layer.getOpacity(), 1e-12);
             layer.advance(225_000_000);
-            assertEquals(0.12, layer.getOpacity());
+            assertEquals(baseOpacity + 0.12, layer.getOpacity(), 1e-12);
             assertFalse(layer.isStateTransitioning());
             assertTrue(layer.getChildrenUnmodifiable().isEmpty());
             var fill = Objects.requireNonNull(layer.getBackground()).getFills().get(0);
@@ -68,9 +79,17 @@ public final class InteractionLayerTest {
             assertEquals(new CornerRadii(8), fill.getRadii());
             layer.release(225_000_000);
             layer.advance(262_500_000);
-            assertEquals(0.10, layer.getOpacity(), 1e-12);
+            assertEquals(baseOpacity + 0.10, layer.getOpacity(), 1e-12);
             layer.advance(300_000_000);
-            assertEquals(0.08, layer.getOpacity());
+            assertEquals(baseOpacity + 0.08, layer.getOpacity(), 1e-12);
+            assertFalse(layer.isStateTransitioning());
+            layer.setHovered(false, 300_000_000);
+            layer.advance(450_000_000);
+            layer.reset();
+            assertEquals(baseOpacity, layer.getOpacity());
+            layer.setSelected(false, 450_000_000);
+            layer.advance(600_000_000);
+            assertEquals(0, layer.getOpacity());
             assertFalse(layer.isStateTransitioning());
         });
     }
@@ -175,14 +194,6 @@ public final class InteractionLayerTest {
         });
     }
 
-    /// Creates an animated layer whose pulses are controlled entirely by each test.
-    private static InteractionLayer createLayer() {
-        InteractionLayer layer = new InteractionLayer(false);
-        layer.setAnimationEnabled(true);
-        layer.resize(200, 40);
-        return layer;
-    }
-
     /// Checks that arbitrary paints keep their alpha and backgrounds are reused throughout fades.
     @Test
     void paintsAndCornersRemainIndependentOfAnimation() throws Exception {
@@ -219,7 +230,7 @@ public final class InteractionLayerTest {
     void settlementCallbackFollowsCompletion() throws Exception {
         onFxThread(() -> {
             InteractionLayer layer = createLayer();
-            var notifications = new java.util.concurrent.atomic.AtomicInteger();
+            var notifications = new AtomicInteger();
             layer.setOnStateSettled(notifications::incrementAndGet);
             layer.setHovered(true, 0);
             layer.advance(150_000_000);
@@ -234,6 +245,72 @@ public final class InteractionLayerTest {
             assertEquals(2, notifications.get());
             assertFalse(layer.isStateTransitioning());
         });
+    }
+
+    /// Checks that selection can reverse mid-transition without jumping or delaying press feedback.
+    @Test
+    void interruptedSelectionRemainsContinuous() throws Exception {
+        onFxThread(() -> {
+            InteractionLayer layer = createLayer();
+            layer.setSelected(true, 0);
+            layer.setSelected(false, 75_000_000);
+            assertEquals(0.04, layer.getOpacity(), 1e-12);
+            layer.advance(112_500_000);
+            assertEquals(0.02, layer.getOpacity(), 1e-12);
+            layer.setSelected(true, 112_500_000);
+            layer.press(112_500_000);
+            assertEquals(0.02, layer.getOpacity(), 1e-12);
+            layer.setAnimationEnabled(false);
+            assertEquals(0.20, layer.getOpacity());
+            layer.reset();
+            assertEquals(0.08, layer.getOpacity());
+            assertFalse(layer.isStateTransitioning());
+        });
+    }
+
+    /// Checks that controller selection updates tab backgrounds even without a showing window.
+    @Test
+    void tabSelectionUpdatesBackgrounds() throws Exception {
+        onFxThread(() -> {
+            var first = new TabItem<Region>();
+            var second = new TabItem<Region>();
+            TabHeader header = new TabHeader(first, second);
+            var root = new StackPane(header);
+            new Scene(root, 300, 100);
+            root.applyCss();
+            root.layout();
+            @Unmodifiable List<RipplerContainer> views = header.lookupAll(".rippler-container").stream()
+                    .map(RipplerContainer.class::cast).toList();
+            assertEquals(2, views.size());
+            assertEquals(1, views.stream().filter(view ->
+                    feedbackOpacity(view) == 0.08).count());
+            RipplerContainer previous = views.stream().filter(view ->
+                    feedbackOpacity(view) == 0.08).findFirst().orElseThrow();
+            try {
+                header.getController().selectTab(second);
+                assertEquals(0, feedbackOpacity(previous));
+                assertEquals(1, views.stream().filter(view ->
+                        feedbackOpacity(view) == 0.08).count());
+                header.getController().getTabs().remove(second);
+                assertEquals(0.08, feedbackOpacity(previous));
+            } finally {
+                Objects.requireNonNull(header.getSkin()).dispose();
+            }
+        });
+    }
+
+    /// Finds feedback by node type rather than depending on the wrapper's child order.
+    private static double feedbackOpacity(RipplerContainer view) {
+        return view.getChildren().stream().filter(InteractionLayer.class::isInstance)
+                .findFirst().orElseThrow().getOpacity();
+    }
+
+    /// Creates an animated layer whose pulses are controlled entirely by each test.
+    private static InteractionLayer createLayer() {
+        InteractionLayer layer = new InteractionLayer(false);
+        layer.setAnimationEnabled(true);
+        layer.resize(200, 40);
+        return layer;
     }
 
     /// Runs assertions on the JavaFX thread and propagates failures to the test worker.
