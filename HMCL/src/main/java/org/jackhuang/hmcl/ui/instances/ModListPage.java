@@ -769,6 +769,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             actionContainer.setOpacity(0);
             actionContainer.setTranslateX(12);
             actionContainer.setMouseTransparent(true);
+            actionContainer.setManaged(false);
 
             actionFade.setToValue(1);
             actionTranslate.setToX(0);
@@ -778,10 +779,24 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             hoverProperty().addListener((obs, wasHovered, isHovered) -> {
                 actionAnimation.stop();
 
-                actionFade.setToValue(isHovered ? 1 : 0);
-                actionTranslate.setToX(isHovered ? 0 : 12);
+                if (isHovered) {
+                    actionContainer.setManaged(true);
+                    actionContainer.setMouseTransparent(false);
+                }
 
-                actionContainer.setMouseTransparent(!isHovered);
+                actionFade.setFromValue(actionContainer.getOpacity());
+                actionFade.setToValue(isHovered ? 1.0 : 0.0);
+
+                actionTranslate.setFromX(actionContainer.getTranslateX());
+                actionTranslate.setToX(isHovered ? 0.0 : 12.0);
+
+                actionAnimation.setOnFinished(event -> {
+                    if (!isHover()) {
+                        actionContainer.setManaged(false);
+                        actionContainer.setMouseTransparent(true);
+                    }
+                });
+
                 actionAnimation.playFromStart();
             });
 
