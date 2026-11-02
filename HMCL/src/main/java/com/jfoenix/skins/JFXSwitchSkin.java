@@ -40,8 +40,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-/// Renders a Material Design 3 switch and handles pointer and keyboard gestures.
-/// Artwork is mirrored by JavaFX in RTL layouts; labels belong to the surrounding layout.
+/// Renders a Material Design 3 switch and handles input.
+/// Geometry uses unscaled MD3 units and is mirrored in RTL layouts.
 @NotNullByDefault
 public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     /// Track width in unscaled MD3 artwork coordinates.
@@ -50,7 +50,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     /// Track height corresponding to the control's default `-jfx-size`.
     private static final double TRACK_HEIGHT = 32;
 
-    /// Interaction target height before CSS scaling or explicit layout constraints.
+    /// Unscaled interaction target height.
     private static final double TARGET_HEIGHT = 48;
 
     /// Vertical center shared by the track, handle, state layer, and icon.
@@ -77,13 +77,13 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     /// Minimum pointer movement in control pixels before a press becomes a drag.
     private static final double DRAG_THRESHOLD = 3;
 
-    /// Marks focus acquired without a pointer press, independently of actual keyboard focus.
+    /// Indicates visible keyboard focus.
     private static final PseudoClass VISUAL_FOCUSED = PseudoClass.getPseudoClass("visual-focused");
 
-    /// The control whose properties drive this skin.
+    /// The rendered switch.
     private final JFXSwitch control;
 
-    /// Unmanaged artwork, positioned within the switch's interaction target.
+    /// Unmanaged switch artwork.
     private final Pane artwork = new Pane();
 
     /// Scales artwork from its leading top corner.
@@ -92,52 +92,52 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     /// Rounded track with its optional outline.
     private final Rectangle track = new Rectangle(0, (TARGET_HEIGHT - TRACK_HEIGHT) / 2, TRACK_WIDTH, TRACK_HEIGHT);
 
-    /// Circular hover, focus, and pressed overlay behind the handle.
+    /// Interaction feedback behind the handle.
     private final Circle stateLayer = new Circle(OFF_CENTER, CENTER_Y, STATE_LAYER_RADIUS);
 
-    /// Circular handle, independently styled from the track.
+    /// Switch handle.
     private final Circle handle = new Circle(OFF_CENTER, CENTER_Y, OFF_DIAMETER / 2);
 
-    /// Optional check or cross, created on first use and then reused across state changes.
+    /// Optional handle icon.
     private @Nullable SVGPath icon;
 
     /// Current logical handle center measured from the track's leading edge.
     private final DoubleProperty center = new SimpleDoubleProperty(OFF_CENTER) {
-        /// Applies each position change directly to the unmanaged artwork.
+        /// Updates handle position.
         @Override
         protected void invalidated() {
             layoutHandle();
         }
     };
 
-    /// Current handle diameter in pixels.
+    /// Unscaled handle diameter.
     private final DoubleProperty diameter = new SimpleDoubleProperty(OFF_DIAMETER) {
-        /// Applies each size change directly to the unmanaged artwork.
+        /// Updates handle size.
         @Override
         protected void invalidated() {
             layoutHandle();
         }
     };
 
-    /// Movement and resize animation, allocated on the first animated geometry change.
+    /// Optional movement and resize animation.
     private @Nullable Timeline geometryTransition;
 
-    /// Paint listeners installed on the first animated selection change; initially empty.
+    /// Animated CSS paints.
     private final List<CssColor> colors = new ArrayList<>();
 
-    /// Shared color animation, allocated when CSS supplies the first transition target.
+    /// Optional shared color animation.
     private @Nullable Transition colorTransition;
 
-    /// Whether selection colors are waiting for the next CSS and layout pass.
+    /// Whether a selection color update is pending.
     private boolean animateColors;
 
     /// Prevents animation writes from being interpreted as new CSS targets.
     private boolean applyingColors;
 
-    /// Routes pointer gestures through one activation path.
+    /// Pointer event handler.
     private final EventHandler<MouseEvent> mouseHandler = this::handleMouse;
 
-    /// Handles Space activation and Escape cancellation.
+    /// Keyboard event handler.
     private final EventHandler<KeyEvent> keyHandler = this::handleKey;
 
     /// Whether a primary press is awaiting click or drag completion.
@@ -146,7 +146,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     /// Whether the handle is following the pointer instead of an animation.
     private boolean dragging;
 
-    /// Whether a Space press is awaiting release, excluding repeated key presses.
+    /// Whether a Space press is awaiting release.
     private boolean keyDown;
 
     /// Pointer position in unscaled artwork coordinates at press time.
@@ -155,9 +155,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     /// Handle center at press time, preserving the pointer's grab offset.
     private double pressCenter;
 
-    /// Creates the artwork and installs listeners that are removed on disposal.
-    ///
-    /// @param control the switch to render
+    /// Creates a skin for the switch.
     public JFXSwitchSkin(JFXSwitch control) {
         super(control);
         this.control = control;
@@ -196,15 +194,14 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         update(true);
     }
 
-    /// Called by the control when an optional icon or animation property changes.
-    /// When requested, settles colors and geometry immediately after an animation-policy change.
+    /// Updates icon and animation options, optionally settling active animations.
     public void updateOptions(boolean finishAnimation) {
         if (finishAnimation)
             finishColors();
         update(finishAnimation);
     }
 
-    /// Stops animation and removes the listeners and behavior installed by this skin.
+    /// Stops animations and removes event handlers and listeners.
     @Override
     public void dispose() {
         control.removeEventFilter(MouseEvent.ANY, mouseHandler);
@@ -262,19 +259,19 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         return computeMinHeight(w, top, right, bottom, left);
     }
 
-    /// Keeps layouts from stretching the switch beyond its configured target width.
+    /// Limits width to the preferred size.
     @Override
     protected double computeMaxWidth(double h, double top, double right, double bottom, double left) {
         return computePrefWidth(h, top, right, bottom, left);
     }
 
-    /// Keeps layouts from stretching the switch beyond its configured target height.
+    /// Limits height to the preferred size.
     @Override
     protected double computeMaxHeight(double w, double top, double right, double bottom, double left) {
         return computePrefHeight(w, top, right, bottom, left);
     }
 
-    /// Handles clicks and dragging in artwork coordinates, including CSS scaling and RTL mirroring.
+    /// Handles clicking and dragging.
     private void handleMouse(MouseEvent event) {
         if (event.getEventType() == MouseEvent.MOUSE_CLICKED && event.getButton() == MouseButton.PRIMARY) {
             // Activation happens on release; do not also activate the surrounding settings row.
@@ -344,8 +341,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         return Math.max(OFF_CENTER, Math.min(ON_CENTER, pressCenter + pointerX - pressX));
     }
 
-    /// Activates once per unmodified Space press and release; Enter remains available to scene accelerators.
-    /// Escape cancels an active gesture.
+    /// Handles Space activation and Escape cancellation.
     private void handleKey(KeyEvent event) {
         if (event.getCode() == KeyCode.ESCAPE && event.getEventType() == KeyEvent.KEY_PRESSED) {
             if (mouseDown || keyDown) {
@@ -371,7 +367,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         }
     }
 
-    /// Cancels input without committing a state change and restores selected geometry.
+    /// Cancels input without changing selection.
     private void cancelGesture() {
         finishColors();
         mouseDown = false;
@@ -381,7 +377,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         update(true);
     }
 
-    /// Retargets geometry and lets the next CSS pass collect selection colors before layout.
+    /// Updates geometry and schedules selection colors for the next CSS pass.
     private void updateSelection() {
         update(false);
         if (control.isDisableAnimation() || control.isDisabled() || control.getScene() == null)
@@ -403,7 +399,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         control.requestLayout();
     }
 
-    /// Retargets an in-progress transition from its current geometry, or settles immediately.
+    /// Updates handle geometry, with optional animation.
     private void update(boolean immediate) {
         if (dragging)
             return;
@@ -440,7 +436,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         layoutHandle();
     }
 
-    /// Creates the icon and its paint listener only when needed, retaining them for subsequent toggles.
+    /// Updates the handle icon, creating it if needed.
     private void updateIcon(boolean selected, boolean visible) {
         if (icon == null && visible) {
             icon = new SVGPath();
@@ -461,7 +457,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         }
     }
 
-    /// Updates unmanaged artwork directly, without laying out the settings row each frame.
+    /// Positions and sizes the handle and its overlays.
     private void layoutHandle() {
         double cx = center.get();
         stateLayer.setCenterX(cx);
@@ -472,13 +468,13 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
                     CENTER_Y - icon.getLayoutBounds().getHeight() / 2);
     }
 
-    /// Returns the artwork and target scale, falling back to MD3 dimensions for invalid sizes.
+    /// Returns the size scale, or 1 for an invalid size.
     private double sizeScale() {
         double size = control.getSize();
         return Double.isFinite(size) && size > 0 ? size / TRACK_HEIGHT : 1;
     }
 
-    /// Allocates the shared color animation on first use and reuses it for subsequent transitions.
+    /// Returns the shared color animation, creating it if needed.
     private Transition colorTransition() {
         if (colorTransition == null) {
             colorTransition = new Transition() {
@@ -499,7 +495,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         return colorTransition;
     }
 
-    /// Settles pending colors without allocating animation objects during cancellation or disposal.
+    /// Stops color animation and applies pending targets.
     private void finishColors() {
         animateColors = false;
         if (colorTransition != null)
@@ -508,29 +504,28 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
             color.finish();
     }
 
-    /// Interpolates a solid paint without changing the property's CSS precedence.
-    /// CSS changes outside a selection update take effect immediately, including theme changes.
+    /// Animates a solid paint while preserving CSS precedence.
     private final class CssColor implements ChangeListener<@Nullable Paint> {
 
-        /// The rendered CSS property, also observed for new targets.
+        /// The animated paint property.
         private final ObjectProperty<@Nullable Paint> property;
 
         /// Most recent solid CSS target; null means no transition is pending.
         private @Nullable Color target;
 
-        /// CSS origin retained during animation so stylesheets can still override it.
+        /// CSS origin of the target paint.
         private @Nullable StyleOrigin origin;
 
-        /// Starting color, captured from the displayed paint when CSS supplies a new target.
+        /// Starting color.
         private Color from = Color.TRANSPARENT;
 
-        /// Observes a styleable property for the shared color transition.
+        /// Observes a styleable paint property.
         private CssColor(ObjectProperty<@Nullable Paint> property) {
             this.property = property;
             property.addListener(this);
         }
 
-        /// Starts from the visible color, or accepts unsupported and non-selection changes immediately.
+        /// Animates selection colors and applies other paint changes immediately.
         @Override
         public void changed(ObservableValue<? extends @Nullable Paint> observable,
                             @Nullable Paint previous, @Nullable Paint next) {
@@ -550,7 +545,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
             interpolate(0);
         }
 
-        /// Applies a frame without promoting the value to a user-set CSS override.
+        /// Applies an animation frame.
         private void interpolate(double fraction) {
             if (target != null)
                 apply(fraction == 1 ? target : from.interpolate(target, fraction));
@@ -567,7 +562,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
             }
         }
 
-        /// Restores the exact latest CSS target and clears this paint's pending transition.
+        /// Applies and clears the pending target.
         private void finish() {
             if (target != null) {
                 apply(target);
@@ -575,7 +570,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
             }
         }
 
-        /// Removes the CSS listener after the skin has settled the shared transition.
+        /// Removes the paint listener.
         private void dispose() {
             property.removeListener(this);
         }

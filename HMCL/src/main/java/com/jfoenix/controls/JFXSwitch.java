@@ -29,37 +29,21 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
-/// Selects an immediately applied, binary setting using a Material Design 3 switch.
+/// A Material Design 3 switch for a boolean setting.
 ///
-/// The selected property represents the setting. Clicking or pressing Space toggles it
-/// and fires an action event. Enter remains available to the scene's default button or other accelerators.
-/// Programmatic selection changes do not fire action events.
-/// A primary-button drag anywhere on the control moves the handle by the pointer's horizontal
-/// displacement. Releasing chooses the nearest end of the track, firing an action only when
-/// that changes selection. A press without a drag retains normal click behavior.
-/// A bound selected property prevents activation. Disabling the control, losing focus,
-/// changing its scene, or pressing Escape cancels input without committing a drag preview.
-/// Labels belong to the surrounding layout; supply an accessible text description for this control.
-///
-/// The default skin has a 52 by 32 track within a target at least 48 pixels high.
-/// [#sizeProperty()] controls the track height and scales the artwork and target
-/// proportionally.
-/// Its colors can be customized through the `-jfx-switch-primary`, `-jfx-switch-on-primary`,
-/// `-jfx-switch-primary-container`, `-jfx-switch-on-primary-container`,
-/// `-jfx-switch-surface`, `-jfx-switch-surface-container-highest`,
-/// `-jfx-switch-on-surface`, `-jfx-switch-on-surface-variant`, and `-jfx-switch-outline`
-/// CSS looked-up colors in the application stylesheet.
+/// Supports clicking, dragging, and Space-key activation. Labels belong to the surrounding layout;
+/// supply an accessible text description. Size and colors are configurable through CSS.
 @NotNullByDefault
 public class JFXSwitch extends Control {
 
-    /// Creates an unselected, keyboard-focusable switch with toggle-button accessibility semantics.
+    /// Creates an unselected switch.
     public JFXSwitch() {
         getStyleClass().setAll("jfx-switch");
         setFocusTraversable(true);
         setAccessibleRole(AccessibleRole.TOGGLE_BUTTON);
     }
 
-    /// The selected setting, synchronized with CSS and accessibility state.
+    /// Selection state.
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected") {
         /// Updates visual and accessible selection without firing an action.
         @Override
@@ -84,7 +68,7 @@ public class JFXSwitch extends Control {
         return selected;
     }
 
-    /// Active input feedback, exposed read-only to callers.
+    /// Read-only activation state.
     private final ReadOnlyBooleanWrapper armed = new ReadOnlyBooleanWrapper(this, "armed") {
         /// Reflects input feedback in CSS.
         @Override
@@ -98,12 +82,12 @@ public class JFXSwitch extends Control {
         return armed.get();
     }
 
-    /// Returns whether an input gesture is armed for activation.
+    /// Returns the read-only state indicating a pending activation.
     public final ReadOnlyBooleanProperty armedProperty() {
         return armed.getReadOnlyProperty();
     }
 
-    /// Optional action handler, allocated only when requested.
+    /// Optional action handler.
     private @Nullable ObjectProperty<@Nullable EventHandler<ActionEvent>> onAction;
 
     /// Sets or clears the action handler.
@@ -117,11 +101,11 @@ public class JFXSwitch extends Control {
         return onAction == null ? null : onAction.get();
     }
 
-    /// Returns the handler property for user or programmatic activation.
+    /// Returns the handler property for activation events.
     public final ObjectProperty<@Nullable EventHandler<ActionEvent>> onActionProperty() {
         if (onAction == null) {
             onAction = new SimpleObjectProperty<>(this, "onAction") {
-                /// Installs the handler in the control's event dispatch chain.
+                /// Updates the action handler.
                 @Override
                 protected void invalidated() {
                     setEventHandler(ActionEvent.ACTION, get());
@@ -133,7 +117,7 @@ public class JFXSwitch extends Control {
 
     /// The requested track height in logical pixels.
     private final StyleableDoubleProperty size = new SimpleStyleableDoubleProperty(SIZE, this, "size", 32.0) {
-        /// Requests layout on every size change, including consecutive bound updates.
+        /// Validates the size and requests layout.
         @Override
         protected void invalidated() {
             get();
@@ -141,7 +125,7 @@ public class JFXSwitch extends Control {
         }
     };
 
-    /// Sets the requested track height; see [#sizeProperty()] for rendering and CSS semantics.
+    /// Sets the track height; see [#sizeProperty()].
     public final void setSize(double value) {
         size.set(value);
     }
@@ -151,16 +135,13 @@ public class JFXSwitch extends Control {
         return size.get();
     }
 
-    /// Returns the track-height property, styled by `-jfx-size`. The default is 32 logical pixels.
-    /// Artwork, borders, icons, animation distances, and target dimensions scale proportionally.
-    /// A value of 24 produces a 39 by 24 track and a 39 by 36 target. Nonpositive or nonfinite values are retained
-    /// in this property but rendered using the default size of 32.
-    /// Changes request layout without changing selection or restarting an active transition.
+    /// Track height in logical pixels, styled by `-jfx-size`; the default is 32.
+    /// Scales the artwork and interaction target proportionally; nonpositive or nonfinite sizes render at the default size.
     public final StyleableDoubleProperty sizeProperty() {
         return size;
     }
 
-    /// Lazily allocated selected-icon option; null represents the default false value.
+    /// Optional selected-icon property.
     private @Nullable BooleanProperty showSelectedIcon;
 
     /// Sets the value of [#showSelectedIconProperty()].
@@ -174,14 +155,14 @@ public class JFXSwitch extends Control {
         return showSelectedIcon != null && showSelectedIcon.get();
     }
 
-    /// Returns the property controlling selected icons.
+    /// Whether to show a check mark when selected; defaults to false.
     public final BooleanProperty showSelectedIconProperty() {
         if (showSelectedIcon == null)
             showSelectedIcon = createOptionProperty("showSelectedIcon", false, false);
         return showSelectedIcon;
     }
 
-    /// Lazily allocated unselected-icon option; null represents the default false value.
+    /// Optional unselected-icon property.
     private @Nullable BooleanProperty showUnselectedIcon;
 
     /// Sets the value of [#showUnselectedIconProperty()].
@@ -195,15 +176,14 @@ public class JFXSwitch extends Control {
         return showUnselectedIcon != null && showUnselectedIcon.get();
     }
 
-    /// Returns the property controlling unselected icons. When true, the handle displays a cross
-    /// and grows to three quarters of the track height instead of one half. The default is false.
+    /// Whether to show a cross when unselected; defaults to false.
     public final BooleanProperty showUnselectedIconProperty() {
         if (showUnselectedIcon == null)
             showUnselectedIcon = createOptionProperty("showUnselectedIcon", false, false);
         return showUnselectedIcon;
     }
 
-    /// Lazily allocated animation option; null uses the inverse of the global animation-enabled setting.
+    /// Optional animation policy override.
     private @Nullable BooleanProperty disableAnimation;
 
     /// Sets the value of [#disableAnimationProperty()].
@@ -217,8 +197,7 @@ public class JFXSwitch extends Control {
         return disableAnimation == null ? !AnimationUtils.isAnimationEnabled() : disableAnimation.get();
     }
 
-    /// Returns the property controlling immediate completion of handle movement, resizing, and colors.
-    /// Defaults to the inverse of the global animation-enabled setting.
+    /// Disables animation, defaulting to the inverse of the global animation-enabled setting.
     public final BooleanProperty disableAnimationProperty() {
         if (disableAnimation == null)
             disableAnimation = createOptionProperty("disableAnimation", !AnimationUtils.isAnimationEnabled(), true);
@@ -244,14 +223,13 @@ public class JFXSwitch extends Control {
         }
     }
 
-    /// Creates the skin that renders the track, handle, and interaction states.
+    /// Creates the default switch skin.
     @Override
     protected Skin<?> createDefaultSkin() {
         return new JFXSwitchSkin(this);
     }
 
-    /// Creates an option that notifies the installed default skin without requiring a skin-side listener.
-    /// Animation-policy changes settle existing transitions; icon changes retain normal animation.
+    /// Creates a property that updates the skin, optionally settling active animations.
     private BooleanProperty createOptionProperty(String name, boolean initialValue, boolean finishAnimation) {
         return new SimpleBooleanProperty(this, name, initialValue) {
             /// Validates the value even without a skin, so subsequent changes also reach this callback.
@@ -267,18 +245,18 @@ public class JFXSwitch extends Control {
     /// Indicates that the switch is selected.
     private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
-    /// Indicates that an active input gesture can activate the switch.
+    /// Indicates a pending activation.
     private static final PseudoClass ARMED = PseudoClass.getPseudoClass("armed");
 
-    /// Creates size metadata alongside the inherited control metadata.
+    /// Factory for switch CSS metadata.
     private static final StyleablePropertyFactory<JFXSwitch> STYLEABLES =
             new StyleablePropertyFactory<>(Control.getClassCssMetaData());
 
-    /// Maps the CSS size to the track-height property, respecting property bindings.
+    /// CSS metadata for track height.
     private static final CssMetaData<JFXSwitch, Number> SIZE =
             STYLEABLES.createSizeCssMetaData("-jfx-size", control -> control.size, 32.0);
 
-    /// Immutable metadata for the inherited properties and switch size.
+    /// Switch and inherited CSS metadata.
     private static final @Unmodifiable List<CssMetaData<? extends Styleable, ?>> CSS_META_DATA =
             List.copyOf(STYLEABLES.getCssMetaData());
 
@@ -293,13 +271,13 @@ public class JFXSwitch extends Control {
         return getClassCssMetaData();
     }
 
-    /// Exposes selection to assistive technology while retaining standard Control attributes.
+    /// Exposes selection to assistive technology.
     @Override
     public @Nullable Object queryAccessibleAttribute(AccessibleAttribute attribute, @Nullable Object... parameters) {
         return attribute == AccessibleAttribute.SELECTED ? isSelected() : super.queryAccessibleAttribute(attribute, parameters);
     }
 
-    /// Routes assistive activation through the same action path as pointer and keyboard input.
+    /// Handles accessible activation.
     @Override
     public void executeAccessibleAction(AccessibleAction action, @Nullable Object... parameters) {
         if (action == AccessibleAction.FIRE)

@@ -7,7 +7,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jetbrains.annotations.NotNullByDefault;
 
-/// A settings row whose switch is bidirectionally bound to its selected state.
+/// A switch row for a boolean setting.
 @NotNullByDefault
 public final class LineSwitch extends LineButtonBase {
     /// The style class applied to switch rows.
@@ -16,7 +16,7 @@ public final class LineSwitch extends LineButtonBase {
     /// The switch that edits the selected state.
     private final JFXSwitch switchControl;
 
-    /// Creates a row with a directly attached switch bound to the selected state.
+    /// Creates an unselected switch row.
     public LineSwitch() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
@@ -26,10 +26,10 @@ public final class LineSwitch extends LineButtonBase {
         setTrailing(switchControl);
     }
 
-    /// The selected setting value shared with the switch.
+    /// The selected setting value.
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected");
 
-    /// Sets the selected setting value and updates the switch.
+    /// Sets the selected setting value.
     public void setSelected(boolean selected) {
         selectedProperty().set(selected);
     }

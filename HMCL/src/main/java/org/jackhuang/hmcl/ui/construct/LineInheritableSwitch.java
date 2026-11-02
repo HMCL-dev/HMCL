@@ -17,10 +17,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.NotNullByDefault;
 
-/// A line component that edits an inheritable boolean while showing the effective switch state.
-///
-/// The override state is represented separately from the direct boolean value. The switch always
-/// reflects the effective value currently applied by the setting hierarchy.
+/// A switch row that edits an inheritable boolean and displays its effective value.
 @NotNullByDefault
 public final class LineInheritableSwitch extends LineButtonBase {
     /// The style class applied to inheritable switch rows.
@@ -41,7 +38,7 @@ public final class LineInheritableSwitch extends LineButtonBase {
     /// The tooltip shown on the inheritance button.
     private final Tooltip inheritTooltip;
 
-    /// The visual switch that displays the effective value.
+    /// The switch displaying the effective value.
     private final JFXSwitch switchControl;
 
     /// Creates an inheritable boolean switch row.
