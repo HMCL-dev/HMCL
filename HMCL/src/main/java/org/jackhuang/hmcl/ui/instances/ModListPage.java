@@ -730,22 +730,23 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final ModListPage page;
 
-        private final JFXCheckBox checkBox = new JFXCheckBox();
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
+        private final JFXButton activeButton = FXUtils.newToggleButton4(SVG.CHECK);
         private final JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
         private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
 
-        private final HBox actionContainer = new HBox(8, restoreButton, revealButton, infoButton);
+        private final HBox actionContainer = new HBox(8, activeButton, restoreButton, revealButton, infoButton);
         private final FadeTransition actionFade = new FadeTransition(Duration.millis(180), actionContainer);
         private final TranslateTransition actionTranslate = new TranslateTransition(Duration.millis(180), actionContainer);
         private final ParallelTransition actionAnimation = new ParallelTransition(actionFade, actionTranslate);
 
-        private final InvalidationListener activeListener = obs -> checkBox.setSelected(getItem().getModInfo().isActive());
+        private final InvalidationListener activeListener = obs -> updateActiveState(getItem().getModInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
+        private final Tooltip activeTooltip = new Tooltip();
         private Tooltip warningTooltip;
 
         /// Creates a selectable mod row with file actions for the supplied page.
@@ -763,6 +764,10 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
 
+            FXUtils.installFastTooltip(activeButton, activeTooltip);
+
+            restoreButton.setVisible(false);
+            restoreButton.managedProperty().bind(restoreButton.visibleProperty());
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
             actionContainer.setAlignment(Pos.CENTER_LEFT);
@@ -876,15 +881,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             content.getTags().setAll(tags);
 
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
-            checkBox.setSelected(modInfo.isActive());
-            checkBox.setOnAction(event -> {
+            updateActiveState(getItem().getModInfo().isActive());
+            activeButton.setOnAction(event -> {
                 try {
-                    modInfo.setActive(checkBox.isSelected());
+                    modInfo.setActive(!modInfo.isActive());
                 } catch (IOException e) {
                     LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
                     Controllers.showToast(i18n("mods.toggle.failed"));
                 } finally {
-                    checkBox.setSelected(modInfo.isActive());
+                    updateActiveState(modInfo.isActive());
                 }
             });
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
@@ -910,6 +915,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         : new Tooltip(String.join("\n", warning));
                 FXUtils.installFastTooltip(this, warningTooltip);
             }
+        }
+
+        private void updateActiveState(boolean active) {
+            activeButton.setGraphic((active ? SVG.CLOSE : SVG.CHECK).createIcon());
+            activeTooltip.setText(i18n(active ? "mods.disable" : "mods.enable"));
         }
     }
 }
