@@ -108,7 +108,7 @@ public class RipplerContainer extends StackPane {
         addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
             if (isBackgroundEvent(event) && event.getButton() == MouseButton.PRIMARY
                     && isFeedbackAvailable() && isPressFeedbackEnabled())
-                interactionLayer.press(event.getX(), event.getY());
+                interactionLayer.press();
         });
         addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
             if (isBackgroundEvent(event) && event.getButton() == MouseButton.PRIMARY)
@@ -284,7 +284,7 @@ public class RipplerContainer extends StackPane {
     /// The registration is cleared before invocation.
     ///
     /// Leaving before settlement postpones scheduling until another entry. Once queued, only replacement
-    /// or cancellation prevents invocation. Scheduling does not wait for waveforms or display presentation.
+    /// or cancellation prevents invocation. Scheduling does not wait for display presentation.
     public void setPrepareAction(@Nullable Runnable action) {
         if (action == getPrepareAction())
             return;
@@ -319,7 +319,7 @@ public class RipplerContainer extends StackPane {
             return StyleableProperties.FEEDBACK_FILL;
         }
 
-        /// Repaints existing states and waveforms with the new paint.
+        /// Repaints the feedback background with the new paint.
         @Override
         protected void invalidated() {
             interactionLayer.setFill(get());
