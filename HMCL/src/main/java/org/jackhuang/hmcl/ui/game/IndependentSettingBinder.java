@@ -481,8 +481,8 @@ final class IndependentSettingBinder {
         }
     }
 
-    /// Binds an independent boolean setting to a toggle editor.
-    static void bindToggleButton(
+    /// Binds an independent boolean setting to a switch editor.
+    static void bindSwitch(
             ObjectProperty<? extends @Nullable GameSettings> currentSetting,
             LineInheritableSwitch button,
             Function<GameSettings, SettingProperty<Boolean>> propertyGetter,

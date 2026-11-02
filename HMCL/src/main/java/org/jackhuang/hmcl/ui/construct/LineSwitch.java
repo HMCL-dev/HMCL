@@ -26,10 +26,10 @@ public final class LineSwitch extends LineButtonBase {
         setTrailing(switchControl);
     }
 
-    /// Activates the switch and then fires the row action.
+    /// Toggles the selected setting and fires a single row action.
     @Override
     public void fire() {
-        switchControl.fire();
+        setSelected(!isSelected());
         super.fire();
     }
 

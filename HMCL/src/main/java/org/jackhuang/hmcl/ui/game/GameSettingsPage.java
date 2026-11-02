@@ -1687,7 +1687,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         }
     }
 
-    /// Binds the instance isolation toggle to the current instance setting.
+    /// Binds the instance isolation switch to the current instance setting.
     private void bindInstanceIsolationButton(LineSwitch button) {
         final Holder<Boolean> updating = new Holder<>(false);
 
@@ -2315,7 +2315,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         bindSettingBidirectional(property, (Function<S, Property<T>>) propertyGetter);
     }
 
-    /// Creates a toggle-based editor for a setting property with independent override state.
+    /// Creates a switch editor for a setting property with independent override state.
     private LineInheritableSwitch createIndependentBooleanButton(
             Function<GameSettings, SettingProperty<Boolean>> propertyGetter) {
         var button = new LineInheritableSwitch();
@@ -2323,7 +2323,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         button.setOverriddenTooltip(i18n("settings.game.override_global"));
         button.setInheritAvailable(!isPresetSetting);
 
-        IndependentSettingBinder.bindToggleButton(
+        IndependentSettingBinder.bindSwitch(
                 currentSetting,
                 button,
                 propertyGetter,
@@ -2333,7 +2333,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         return button;
     }
 
-    /// Creates a toggle-based inheritable boolean editor that displays the effective value.
+    /// Creates an inheritable boolean switch editor that displays the effective value.
     private LineInheritableSwitch createInheritableBooleanButton(
             Function<GameSettings, InheritableProperty<Boolean>> propertyGetter) {
         var button = new LineInheritableSwitch();
@@ -2341,7 +2341,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         button.setOverriddenTooltip(i18n("settings.game.override_global"));
         button.setInheritAvailable(!isPresetSetting);
 
-        bindEffectiveInheritableToggleButton(button, propertyGetter);
+        bindEffectiveInheritableSwitch(button, propertyGetter);
         return button;
     }
 
@@ -2455,8 +2455,8 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
         }
     }
 
-    /// Binds an inheritable toggle editor to an inheritable boolean setting.
-    private void bindEffectiveInheritableToggleButton(
+    /// Binds an inheritable switch editor to an inheritable boolean setting.
+    private void bindEffectiveInheritableSwitch(
             LineInheritableSwitch button,
             Function<GameSettings, InheritableProperty<Boolean>> propertyGetter) {
         ObjectProperty<@Nullable InheritableProperty<Boolean>> activeProperty = new SimpleObjectProperty<>();

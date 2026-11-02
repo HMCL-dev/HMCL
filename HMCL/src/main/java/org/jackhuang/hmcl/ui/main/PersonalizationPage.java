@@ -181,8 +181,8 @@ public class PersonalizationPage extends StackPane {
         refresh.invalidated(null);
     }
 
-    /// Binds a line toggle button to an inheritable theme appearance setting.
-    private static void bindThemeAppearanceToggleButton(
+    /// Binds a switch row to an inheritable theme appearance setting.
+    private static void bindThemeAppearanceSwitch(
             LineSwitch button,
             String setting,
             BooleanProperty directProperty,
@@ -1127,7 +1127,7 @@ public class PersonalizationPage extends StackPane {
 
         LineSwitch windowTransparentButton = new LineSwitch();
         windowTransparentButton.setTitle(i18n("settings.launcher.window_transparent"));
-        bindThemeAppearanceToggleButton(
+        bindThemeAppearanceSwitch(
                 windowTransparentButton,
                 LauncherSettings.THEME_APPEARANCE_WINDOW_TRANSPARENT,
                 settings().windowTransparentProperty(),

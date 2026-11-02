@@ -299,6 +299,41 @@ public final class JFXSwitchTest {
         });
     }
 
+    /// Emits one action at the row and its parent for row, pointer, and keyboard activation.
+    @Test
+    void rowActionDispatch() throws Exception {
+        onFxThread(() -> {
+            LineSwitch row = new LineSwitch();
+            VBox root = new VBox(row);
+            applyStylesheets(new Scene(root, 300, 100));
+            layout(root);
+            JFXSwitch control = (JFXSwitch) Objects.requireNonNull(row.lookup(".jfx-switch"));
+            control.setDisableAnimation(true);
+            AtomicInteger rowActions = new AtomicInteger();
+            AtomicInteger parentActions = new AtomicInteger();
+            row.addEventHandler(javafx.event.ActionEvent.ACTION, event -> rowActions.incrementAndGet());
+            root.addEventHandler(javafx.event.ActionEvent.ACTION, event -> parentActions.incrementAndGet());
+
+            row.fire();
+            assertTrue(row.isSelected());
+            assertEquals(1, rowActions.get());
+            assertEquals(1, parentActions.get());
+
+            mouse(control, MouseEvent.MOUSE_PRESSED, 36, true);
+            mouse(control, MouseEvent.MOUSE_RELEASED, 36, false);
+            mouse(control, MouseEvent.MOUSE_CLICKED, 36, false);
+            assertFalse(row.isSelected());
+            assertEquals(2, rowActions.get());
+            assertEquals(2, parentActions.get());
+
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
+            key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
+            assertTrue(row.isSelected());
+            assertEquals(3, rowActions.get());
+            assertEquals(3, parentActions.get());
+        });
+    }
+
     /// Covers repeated keys, canceled input, bound selection, and click cancellation outside the target.
     @Test
     void inputLifecycle() throws Exception {
