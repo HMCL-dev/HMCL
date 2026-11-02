@@ -175,7 +175,7 @@ public class JFXSwitch extends ToggleButton {
 
     /// Sets the value of [#disableAnimationProperty()].
     public final void setDisableAnimation(boolean value) {
-        if (disableAnimation != null || value != !AnimationUtils.isAnimationEnabled())
+        if (disableAnimation != null || value == AnimationUtils.isAnimationEnabled())
             disableAnimationProperty().set(value);
     }
 
