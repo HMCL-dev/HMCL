@@ -20,8 +20,8 @@ import java.util.Locale;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-/// Hosts launcher settings tabs and opts into rendering prewarming for its initial game settings view.
-public class LauncherSettingsPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware, TransitionPane.RenderPrewarmable {
+/// Hosts launcher settings tabs.
+public class LauncherSettingsPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("settings")));
     /// Manages tab selection and content transitions independently of the sidebar.
     private final TabController tabController;

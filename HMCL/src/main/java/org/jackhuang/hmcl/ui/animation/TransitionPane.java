@@ -114,7 +114,7 @@ public class TransitionPane extends StackPane {
     private static void markDisplayed(Node content) {
         @Nullable Scene scene = content.getScene();
         @Nullable Window window = scene == null ? null : scene.getWindow();
-        if (content instanceof RenderPrewarmable && window != null && window.isShowing()
+        if (window != null && window.isShowing()
                 && content.isVisible() && content.getOpacity() > 0) {
             content.getProperties().put(RENDER_INITIALIZED_KEY, Boolean.TRUE);
         }
@@ -151,11 +151,14 @@ public class TransitionPane extends StackPane {
     }
 
     /// Replaces the current page, cancelling any preceding transition.
-    /// Animated changes wait for CSS, layout, and any opted-in rendering preparation; mouse input is
+    /// Animated changes wait for CSS, layout, and first-display rendering preparation; mouse input is
     /// suppressed while pending or running. Detaching the container or hiding
     /// its window cancels the transition. Cancellation applies the end state
     /// of a started animation with a finite duration and restores the target page
     /// through [AnimationProducer#finish(Node)], even if playback has not started.
+    /// Previously undisplayed pages initialized at zero opacity render almost transparently
+    /// before playback, provided they are visible and their opacity is not bound. Preparation
+    /// preserves initialized transforms, so offscreen content may still be culled.
     public void setContent(Node newView, AnimationProducer transition,
                            Duration duration, Interpolator interpolator) {
         if (activeTransition != null) {
@@ -194,8 +197,7 @@ public class TransitionPane extends StackPane {
             /// Arms a one-shot layout notification after navigation handlers return.
             @Override
             public void start() {
-                renderingPending = newView instanceof RenderPrewarmable
-                        && !newView.getProperties().containsKey(RENDER_INITIALIZED_KEY)
+                renderingPending = !newView.getProperties().containsKey(RENDER_INITIALIZED_KEY)
                         && newView.isVisible() && !newView.opacityProperty().isBound()
                         && newView.getOpacity() == 0;
                 if (renderingPending) {
@@ -339,13 +341,6 @@ public class TransitionPane extends StackPane {
         default @Nullable TransitionPane.AnimationProducer opposite() {
             return null;
         }
-    }
-
-    /// Opts a page into near-transparent rendering before its first animated display.
-    /// Playback waits for the subsequent scene synchronization. Preparation uses the initialized
-    /// transforms, so the page must intersect the visible viewport. Normal display suppresses
-    /// later preparation, including after resizing or changing render scale.
-    public interface RenderPrewarmable {
     }
 
     /// Marks a node as cacheable as a bitmap during animation.
