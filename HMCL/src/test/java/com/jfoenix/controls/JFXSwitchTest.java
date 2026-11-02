@@ -24,11 +24,13 @@ import javafx.scene.shape.Shape;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.LineInheritableSwitch;
 import org.jackhuang.hmcl.ui.construct.LineSwitch;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -48,112 +50,110 @@ import static org.junit.jupiter.api.Assertions.*;
 @NotNullByDefault
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 public final class JFXSwitchTest {
-    /// Dragging overrides the inherited value once, despite synchronous refresh by the setting binder.
-    @Test
-    void inheritableRowDragging() throws Exception {
+
+    /// Initializes the cached animation policy without loading or changing persisted settings.
+    @BeforeAll
+    static void initializeAnimationPolicy() throws Exception {
         Field settingsField = SettingsManager.class.getDeclaredField("launcherSettings");
         settingsField.setAccessible(true);
         @Nullable Object previous = settingsField.get(null);
         if (previous == null)
             settingsField.set(null, new LauncherSettings());
         try {
-            onFxThread(() -> {
-                LineInheritableSwitch row = new LineInheritableSwitch();
-                row.overriddenProperty().addListener(observable -> row.setEffectiveValue(row.getRawValue()));
-                row.rawValueProperty().addListener(observable -> row.setEffectiveValue(row.getRawValue()));
-                AtomicInteger actions = new AtomicInteger();
-                row.addEventHandler(javafx.event.ActionEvent.ACTION, event -> actions.incrementAndGet());
-                VBox root = new VBox(row);
-                applyStylesheets(new Scene(root, 300, 100));
-                layout(root);
-                JFXSwitch control = (JFXSwitch) Objects.requireNonNull(row.lookup(".jfx-switch"));
-                control.setDisableAnimation(true);
-                mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
-                mouse(control, MouseEvent.MOUSE_DRAGGED, 36, true);
-                mouse(control, MouseEvent.MOUSE_RELEASED, 36, false);
-                mouse(control, MouseEvent.MOUSE_CLICKED, 36, false);
-                assertTrue(control.isSelected());
-                assertEquals(1, actions.get());
-                assertTrue(row.isOverridden());
-                assertTrue(row.getRawValue());
-                assertTrue(row.isEffectiveValue());
-            });
+            AnimationUtils.init();
         } finally {
             settingsField.set(null, previous);
         }
+    }
+
+    /// Dragging overrides the inherited value once, despite synchronous refresh by the setting binder.
+    @Test
+    void inheritableRowDragging() throws Exception {
+        onFxThread(() -> {
+            LineInheritableSwitch row = new LineInheritableSwitch();
+            row.overriddenProperty().addListener(observable -> row.setEffectiveValue(row.getRawValue()));
+            row.rawValueProperty().addListener(observable -> row.setEffectiveValue(row.getRawValue()));
+            AtomicInteger actions = new AtomicInteger();
+            row.addEventHandler(javafx.event.ActionEvent.ACTION, event -> actions.incrementAndGet());
+            VBox root = new VBox(row);
+            applyStylesheets(new Scene(root, 300, 100));
+            layout(root);
+            JFXSwitch control = (JFXSwitch) Objects.requireNonNull(row.lookup(".jfx-switch"));
+            control.setDisableAnimation(true);
+            mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
+            mouse(control, MouseEvent.MOUSE_DRAGGED, 36, true);
+            mouse(control, MouseEvent.MOUSE_RELEASED, 36, false);
+            mouse(control, MouseEvent.MOUSE_CLICKED, 36, false);
+            assertTrue(control.isSelected());
+            assertEquals(1, actions.get());
+            assertTrue(row.isOverridden());
+            assertTrue(row.getRawValue());
+            assertTrue(row.isEffectiveValue());
+        });
     }
 
     /// Covers handle and track dragging with representative sizes and layout directions.
     @ParameterizedTest
     @CsvSource({"false, 32, 16", "false, 24, 4", "true, 24, 40"})
     void handleDragging(boolean rtl, double size, double pressX) throws Exception {
-        Field settingsField = SettingsManager.class.getDeclaredField("launcherSettings");
-        settingsField.setAccessible(true);
-        @Nullable Object previous = settingsField.get(null);
-        if (previous == null)
-            settingsField.set(null, new LauncherSettings());
-        try {
-            onFxThread(() -> {
-                LineSwitch row = new LineSwitch();
-                row.setTitle("Setting");
-                VBox root = new VBox(row);
-                root.setNodeOrientation(rtl ? NodeOrientation.RIGHT_TO_LEFT : NodeOrientation.LEFT_TO_RIGHT);
-                applyStylesheets(new Scene(root, 300, 100));
-                layout(root);
-                JFXSwitch control = (JFXSwitch) Objects.requireNonNull(row.lookup(".jfx-switch"));
-                control.setStyle("-jfx-size: " + size + ";");
-                control.setDisableAnimation(true);
-                layout(root);
-                AtomicInteger actions = new AtomicInteger();
-                AtomicInteger rowActions = new AtomicInteger();
-                control.setOnAction(event -> actions.incrementAndGet());
-                row.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> rowActions.incrementAndGet());
-                Shape handle = part(control, "handle");
-                double initialX = handle.localToScene(handle.getLayoutBounds()).getCenterX();
-                mouse(control, MouseEvent.MOUSE_PRESSED, pressX, true);
-                mouse(control, MouseEvent.MOUSE_DRAGGED, pressX + 12, true);
-                layout(root);
-                assertFalse(control.isSelected());
-                assertEquals(28, handle.getBoundsInParent().getCenterX(), 0.001);
-                double draggedX = handle.localToScene(handle.getLayoutBounds()).getCenterX();
-                assertTrue(rtl ? draggedX < initialX : draggedX > initialX);
-                mouse(control, MouseEvent.MOUSE_DRAGGED, 60, true);
-                mouse(control, MouseEvent.MOUSE_RELEASED, 60, false);
-                mouse(control, MouseEvent.MOUSE_CLICKED, 60, false);
-                layout(root);
-                assertTrue(control.isSelected());
-                assertTrue(row.isSelected());
-                assertEquals(1, actions.get());
-                assertEquals(0, rowActions.get());
-                assertFalse(control.isArmed());
+        onFxThread(() -> {
+            LineSwitch row = new LineSwitch();
+            row.setTitle("Setting");
+            VBox root = new VBox(row);
+            root.setNodeOrientation(rtl ? NodeOrientation.RIGHT_TO_LEFT : NodeOrientation.LEFT_TO_RIGHT);
+            applyStylesheets(new Scene(root, 300, 100));
+            layout(root);
+            JFXSwitch control = (JFXSwitch) Objects.requireNonNull(row.lookup(".jfx-switch"));
+            control.setStyle("-jfx-size: " + size + ";");
+            control.setDisableAnimation(true);
+            layout(root);
+            AtomicInteger actions = new AtomicInteger();
+            AtomicInteger rowActions = new AtomicInteger();
+            control.setOnAction(event -> actions.incrementAndGet());
+            row.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> rowActions.incrementAndGet());
+            Shape handle = part(control, "handle");
+            double initialX = handle.localToScene(handle.getLayoutBounds()).getCenterX();
+            mouse(control, MouseEvent.MOUSE_PRESSED, pressX, true);
+            mouse(control, MouseEvent.MOUSE_DRAGGED, pressX + 12, true);
+            layout(root);
+            assertFalse(control.isSelected());
+            assertEquals(28, handle.getBoundsInParent().getCenterX(), 0.001);
+            double draggedX = handle.localToScene(handle.getLayoutBounds()).getCenterX();
+            assertTrue(rtl ? draggedX < initialX : draggedX > initialX);
+            mouse(control, MouseEvent.MOUSE_DRAGGED, 60, true);
+            mouse(control, MouseEvent.MOUSE_RELEASED, 60, false);
+            mouse(control, MouseEvent.MOUSE_CLICKED, 60, false);
+            layout(root);
+            assertTrue(control.isSelected());
+            assertTrue(row.isSelected());
+            assertEquals(1, actions.get());
+            assertEquals(0, rowActions.get());
+            assertFalse(control.isArmed());
 
-                mouse(control, MouseEvent.MOUSE_PRESSED, 36, true);
-                mouse(control, MouseEvent.MOUSE_DRAGGED, 30, true);
-                mouse(control, MouseEvent.MOUSE_RELEASED, 30, false);
-                mouse(control, MouseEvent.MOUSE_CLICKED, 30, false);
-                assertTrue(control.isSelected());
-                assertTrue(row.isSelected());
-                assertEquals(1, actions.get());
-                layout(root);
-                mouse(control, MouseEvent.MOUSE_PRESSED, 36, true);
-                mouse(control, MouseEvent.MOUSE_DRAGGED, -10, true);
-                mouse(control, MouseEvent.MOUSE_RELEASED, -10, false);
-                mouse(control, MouseEvent.MOUSE_CLICKED, -10, false);
-                assertFalse(control.isSelected());
-                assertEquals(2, actions.get());
+            mouse(control, MouseEvent.MOUSE_PRESSED, 36, true);
+            mouse(control, MouseEvent.MOUSE_DRAGGED, 30, true);
+            mouse(control, MouseEvent.MOUSE_RELEASED, 30, false);
+            mouse(control, MouseEvent.MOUSE_CLICKED, 30, false);
+            assertTrue(control.isSelected());
+            assertTrue(row.isSelected());
+            assertEquals(1, actions.get());
+            layout(root);
+            mouse(control, MouseEvent.MOUSE_PRESSED, 36, true);
+            mouse(control, MouseEvent.MOUSE_DRAGGED, -10, true);
+            mouse(control, MouseEvent.MOUSE_RELEASED, -10, false);
+            mouse(control, MouseEvent.MOUSE_CLICKED, -10, false);
+            assertFalse(control.isSelected());
+            assertEquals(2, actions.get());
 
-                layout(root);
-                mouse(control, MouseEvent.MOUSE_PRESSED, pressX, true);
-                mouse(control, MouseEvent.MOUSE_DRAGGED, pressX + 1, true);
-                mouse(control, MouseEvent.MOUSE_RELEASED, pressX + 1, false);
-                mouse(control, MouseEvent.MOUSE_CLICKED, pressX + 1, false);
-                assertTrue(control.isSelected());
-                assertTrue(row.isSelected());
-                assertEquals(3, actions.get());
-            });
-        } finally {
-            settingsField.set(null, previous);
-        }
+            layout(root);
+            mouse(control, MouseEvent.MOUSE_PRESSED, pressX, true);
+            mouse(control, MouseEvent.MOUSE_DRAGGED, pressX + 1, true);
+            mouse(control, MouseEvent.MOUSE_RELEASED, pressX + 1, false);
+            mouse(control, MouseEvent.MOUSE_CLICKED, pressX + 1, false);
+            assertTrue(control.isSelected());
+            assertTrue(row.isSelected());
+            assertEquals(3, actions.get());
+        });
     }
 
     /// Keeps secondary-button input from resetting an active primary drag.
@@ -258,6 +258,7 @@ public final class JFXSwitchTest {
     void behaviorAndSkinReplacement() throws Exception {
         onFxThread(() -> {
             JFXSwitch control = new JFXSwitch("Wi-Fi");
+            assertEquals(!AnimationUtils.isAnimationEnabled(), control.isDisableAnimation());
             control.setDisableAnimation(true);
             Label graphic = new Label("Network");
             control.setGraphic(graphic);
@@ -304,6 +305,7 @@ public final class JFXSwitchTest {
             onFxThread(() -> {
                 Platform.setImplicitExit(false);
                 JFXSwitch control = new JFXSwitch();
+                control.setDisableAnimation(false);
                 control.setStyle("-jfx-switch-primary: #123456;");
                 target.complete(control);
                 VBox root = scene(control);

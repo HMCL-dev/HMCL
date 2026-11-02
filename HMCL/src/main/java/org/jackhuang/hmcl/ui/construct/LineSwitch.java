@@ -5,7 +5,6 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXSwitch;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 
 /// A settings row whose switch is bidirectionally bound to its selected state.
@@ -23,7 +22,6 @@ public final class LineSwitch extends LineButtonBase {
 
         this.switchControl = new JFXSwitch();
         switchControl.selectedProperty().bindBidirectional(selectedProperty());
-        switchControl.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
         switchControl.accessibleTextProperty().bind(titleProperty());
         setTrailing(switchControl);
     }

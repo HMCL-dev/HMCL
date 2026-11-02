@@ -12,6 +12,7 @@ import javafx.css.StyleableDoubleProperty;
 import javafx.css.StyleablePropertyFactory;
 import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleButton;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -144,8 +145,9 @@ public class JFXSwitch extends ToggleButton {
     }
 
     /// Whether handle movement, resizing, and selection color transitions finish immediately.
-    /// The default is false.
-    private final BooleanProperty disableAnimation = new SimpleBooleanProperty(this, "disableAnimation", false);
+    /// Defaults to the inverse of the global animation-enabled setting.
+    private final BooleanProperty disableAnimation =
+            new SimpleBooleanProperty(this, "disableAnimation", !AnimationUtils.isAnimationEnabled());
 
     /// Returns the property controlling immediate animation completion.
     public final BooleanProperty disableAnimationProperty() {

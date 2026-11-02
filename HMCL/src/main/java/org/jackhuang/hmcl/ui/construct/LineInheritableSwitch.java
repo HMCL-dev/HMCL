@@ -14,7 +14,6 @@ import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.NotNullByDefault;
 
@@ -71,7 +70,6 @@ public final class LineInheritableSwitch extends LineButtonBase {
         });
 
         this.switchControl = new JFXSwitch();
-        switchControl.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
         switchControl.accessibleTextProperty().bind(titleProperty());
         switchControl.setOnAction(event -> {
             // Override listeners may refresh the switch synchronously; preserve the requested value.
