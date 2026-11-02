@@ -172,43 +172,13 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         }
     },
 
-    /// Cross-fades both pages while moving them left by 32 pixels.
-    TAB_LEFT {
-        /// Creates simultaneous outgoing and incoming page motion.
-        @Override
-        public Timeline animate(Pane container, Node previousNode, Node nextNode,
-                                Duration duration, Interpolator interpolator) {
-            return animateTab(previousNode, nextNode, duration, interpolator, true, 32);
-        }
-
-        /// Returns the reverse tab transition.
-        @Override
-        public TransitionPane.AnimationProducer opposite() {
-            return TAB_RIGHT;
-        }
-    },
-    /// Cross-fades both pages while moving them right by 32 pixels.
-    TAB_RIGHT {
-        /// Creates simultaneous outgoing and incoming page motion.
-        @Override
-        public Timeline animate(Pane container, Node previousNode, Node nextNode,
-                                Duration duration, Interpolator interpolator) {
-            return animateTab(previousNode, nextNode, duration, interpolator, true, -32);
-        }
-
-        /// Returns the reverse tab transition.
-        @Override
-        public TransitionPane.AnimationProducer opposite() {
-            return TAB_LEFT;
-        }
-    },
-    /// Cross-fades both pages while moving them up by 32 pixels.
+    /// Preserves the original slide-up and fade-in transition.
     TAB_UP {
-        /// Creates simultaneous outgoing and incoming page motion.
+        /// Creates the original slide-and-fade timing along the selected vertical direction.
         @Override
         public Timeline animate(Pane container, Node previousNode, Node nextNode,
                                 Duration duration, Interpolator interpolator) {
-            return animateTab(previousNode, nextNode, duration, interpolator, false, 32);
+            return animateTab(container, previousNode, nextNode, duration, interpolator, 1);
         }
 
         /// Returns the reverse tab transition.
@@ -217,13 +187,13 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             return TAB_DOWN;
         }
     },
-    /// Cross-fades both pages while moving them down by 32 pixels.
+    /// Mirrors the original slide-up and fade-in transition vertically.
     TAB_DOWN {
-        /// Creates simultaneous outgoing and incoming page motion.
+        /// Creates the original slide-and-fade timing along the selected vertical direction.
         @Override
         public Timeline animate(Pane container, Node previousNode, Node nextNode,
                                 Duration duration, Interpolator interpolator) {
-            return animateTab(previousNode, nextNode, duration, interpolator, false, -32);
+            return animateTab(container, previousNode, nextNode, duration, interpolator, -1);
         }
 
         /// Returns the reverse tab transition.
@@ -287,21 +257,24 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     },
     ;
 
-    /// Cross-fades pages along the selected axis; displacement is independent of tab distance.
-    private static Timeline animateTab(Node previousNode, Node nextNode, Duration duration,
-                                       Interpolator interpolator, boolean horizontal, double offset) {
-        var previousTranslation = horizontal ? previousNode.translateXProperty() : previousNode.translateYProperty();
-        var nextTranslation = horizontal ? nextNode.translateXProperty() : nextNode.translateYProperty();
+    /// Preserves the original slide-up fade timing, varying only the vertical direction.
+    /// The previous page stays still and fades out halfway through the incoming page's motion.
+    private static Timeline animateTab(Pane container, Node previousNode, Node nextNode, Duration duration,
+                                       Interpolator interpolator, double direction) {
+        double extent = container.getHeight();
+        double offset = (extent > 0 ? extent * 0.2 : 50) * direction;
+        var previousTranslation = previousNode.translateYProperty();
+        var nextTranslation = nextNode.translateYProperty();
         return new Timeline(
                 new KeyFrame(Duration.ZERO,
-                        new KeyValue(previousTranslation, 0),
-                        new KeyValue(nextTranslation, offset),
-                        new KeyValue(previousNode.opacityProperty(), 1),
-                        new KeyValue(nextNode.opacityProperty(), 0)),
+                        new KeyValue(previousTranslation, 0, interpolator),
+                        new KeyValue(previousNode.opacityProperty(), 1, interpolator),
+                        new KeyValue(nextNode.opacityProperty(), 0, interpolator),
+                        new KeyValue(nextTranslation, offset, interpolator)),
+                new KeyFrame(duration.multiply(0.5),
+                        new KeyValue(previousNode.opacityProperty(), 0, interpolator)),
                 new KeyFrame(duration,
-                        new KeyValue(previousTranslation, -offset, interpolator),
-                        new KeyValue(nextTranslation, 0, interpolator),
-                        new KeyValue(previousNode.opacityProperty(), 0, interpolator),
-                        new KeyValue(nextNode.opacityProperty(), 1, interpolator)));
+                        new KeyValue(nextNode.opacityProperty(), 1, interpolator),
+                        new KeyValue(nextTranslation, 0, interpolator)));
     }
 }
