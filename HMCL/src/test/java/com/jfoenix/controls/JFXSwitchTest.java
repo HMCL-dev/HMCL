@@ -487,6 +487,7 @@ public final class JFXSwitchTest {
             control.setSelected(true);
             on.complete(palette(control));
             control.setSelected(false);
+            control.applyCss();
             control.setDisableAnimation(false);
             control.setSelected(true);
             assertEquals(off.join(), palette(control), "Selection must start from the visible palette");
@@ -522,8 +523,9 @@ public final class JFXSwitchTest {
         });
     }
 
-    /// Captures the CSS-controlled solid paints independently of geometry and opacity.
+    /// Applies pending CSS and captures solid paints independently of geometry and opacity.
     private static @Unmodifiable List<Paint> palette(JFXSwitch control) {
+        control.applyCss();
         return List.of(part(control, "track").getBackground().getFills().get(0).getFill(),
                 part(control, "track").getBorder().getStrokes().get(0).getTopStroke(),
                 part(control, "handle").getBackground().getFills().get(0).getFill(),
