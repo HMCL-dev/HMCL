@@ -1189,8 +1189,6 @@
     -jfx-switch-outline: -monet-outline;
     -fx-background-color: transparent;
     -fx-padding: 0;
-    -fx-alignment: center-left;
-    -fx-text-fill: -jfx-switch-on-surface;
     -fx-cursor: hand;
 }
 
@@ -1256,10 +1254,6 @@
 .jfx-switch:disabled {
     -fx-opacity: 1;
     -fx-cursor: default;
-}
-
-.jfx-switch:disabled > .text {
-    -fx-opacity: 0.38;
 }
 
 .jfx-switch:disabled > .switch-artwork > .switch-track {

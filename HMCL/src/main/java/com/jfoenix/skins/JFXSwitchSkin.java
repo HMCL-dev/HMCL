@@ -18,8 +18,9 @@ import javafx.css.StyleOrigin;
 import javafx.css.StyleableProperty;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
-import javafx.scene.control.ContentDisplay;
-import javafx.scene.control.skin.ToggleButtonSkin;
+import javafx.scene.control.SkinBase;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -39,20 +40,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-/// Renders a Material Design 3 switch while retaining standard toggle-button behavior.
-/// Label content remains separate from the switch artwork and is mirrored by JavaFX in RTL layouts.
+/// Renders a Material Design 3 switch and handles pointer and keyboard gestures.
+/// Artwork is mirrored by JavaFX in RTL layouts; labels belong to the surrounding layout.
 @NotNullByDefault
-public final class JFXSwitchSkin extends ToggleButtonSkin {
+public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     /// Marks focus acquired without a pointer press, independently of actual keyboard focus.
     private static final PseudoClass VISUAL_FOCUSED = PseudoClass.getPseudoClass("visual-focused");
 
     /// The control whose properties drive this skin.
     private final JFXSwitch control;
 
-    /// Unmanaged artwork, laid out independently of the inherited label.
+    /// Unmanaged artwork, positioned within the switch's interaction target.
     private final Pane artwork = new Pane();
 
-    /// Scales artwork from its leading top corner without scaling label content.
+    /// Scales artwork from its leading top corner.
     private final Scale artworkScale = new Scale();
 
     /// Rounded track with its optional outline.
@@ -100,17 +101,20 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     /// Prevents animation writes from being interpreted as new CSS targets.
     private boolean applyingColors;
 
-    /// Filters pointer gestures before the inherited button behavior handles release.
-    private final EventHandler<MouseEvent> dragHandler = this::handleDrag;
+    /// Routes pointer gestures through one activation path.
+    private final EventHandler<MouseEvent> mouseHandler = this::handleMouse;
 
-    /// Whether the current primary press on the control can begin a drag.
-    private boolean dragCandidate;
+    /// Handles Space activation and Escape cancellation.
+    private final EventHandler<KeyEvent> keyHandler = this::handleKey;
+
+    /// Whether a primary press is awaiting click or drag completion.
+    private boolean mouseDown;
 
     /// Whether the handle is following the pointer instead of an animation.
     private boolean dragging;
 
-    /// Suppresses the click generated after a completed or canceled drag.
-    private boolean suppressClick;
+    /// Whether a Space press is awaiting release, excluding repeated key presses.
+    private boolean keyDown;
 
     /// Pointer position in unscaled artwork coordinates at press time.
     private double pressX;
@@ -146,10 +150,15 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         // Match the previous toggle skin: pointer press and release both dismiss focus feedback.
         registerChangeListener(control.pressedProperty(), value ->
                 control.pseudoClassStateChanged(VISUAL_FOCUSED, false));
-        Consumer<ObservableValue<?>> cancelGesture = value -> cancelDrag();
+        Consumer<ObservableValue<?>> cancelGesture = value -> cancelGesture();
         registerChangeListener(control.disabledProperty(), cancelGesture);
         registerChangeListener(control.sceneProperty(), cancelGesture);
-        control.addEventFilter(MouseEvent.ANY, dragHandler);
+        registerChangeListener(control.focusedProperty(), value -> {
+            if (!control.isFocused())
+                cancelGesture();
+        });
+        control.addEventFilter(MouseEvent.ANY, mouseHandler);
+        control.addEventFilter(KeyEvent.ANY, keyHandler);
         control.pseudoClassStateChanged(VISUAL_FOCUSED, focusIndicator.get() && !control.isPressed());
         update(true);
     }
@@ -183,27 +192,29 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         control.requestLayout();
     }
 
-    /// Drags in artwork coordinates so CSS scaling and RTL mirroring use the same state threshold.
-    private void handleDrag(MouseEvent event) {
-        if (event.getEventType() == MouseEvent.MOUSE_CLICKED && event.getButton() == MouseButton.PRIMARY && suppressClick) {
-            suppressClick = false;
+    /// Handles clicks and dragging in artwork coordinates, including CSS scaling and RTL mirroring.
+    private void handleMouse(MouseEvent event) {
+        if (event.getEventType() == MouseEvent.MOUSE_CLICKED && event.getButton() == MouseButton.PRIMARY) {
+            // Activation happens on release; do not also activate the surrounding settings row.
             event.consume();
             return;
         }
         if (event.getEventType() == MouseEvent.MOUSE_PRESSED) {
-            if (event.getButton() != MouseButton.PRIMARY)
+            if (event.getButton() != MouseButton.PRIMARY || keyDown)
                 return;
-            suppressClick = false;
-            dragCandidate = false;
             if (control.isDisabled() || control.selectedProperty().isBound())
                 return;
+            if (control.isFocusTraversable())
+                control.requestFocus();
             @Nullable Point2D point = artwork.sceneToLocal(event.getSceneX(), event.getSceneY());
             if (point != null) {
-                dragCandidate = true;
+                mouseDown = true;
                 pressX = point.getX();
                 pressCenter = center.get();
+                control.arm();
             }
-        } else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED && dragCandidate && event.isPrimaryButtonDown()) {
+            event.consume();
+        } else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED && mouseDown && event.isPrimaryButtonDown()) {
             @Nullable Point2D point = artwork.sceneToLocal(event.getSceneX(), event.getSceneY());
             if (point == null)
                 return;
@@ -212,44 +223,69 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
             dragging = true;
             if (geometryTransition != null)
                 geometryTransition.stop();
-            // Disarm the button so its release cannot toggle a second time.
-            control.disarm();
+            control.arm();
             diameter.set(28);
             center.set(Math.max(16, Math.min(36, pressCenter + point.getX() - pressX)));
             event.consume();
         } else if (event.getEventType() == MouseEvent.MOUSE_RELEASED && event.getButton() == MouseButton.PRIMARY) {
-            dragCandidate = false;
-            if (!dragging) {
-                // Re-entering after cancellation can re-arm the inherited button behavior.
-                if (suppressClick) {
-                    control.disarm();
-                    event.consume();
-                }
+            if (!mouseDown) {
+                event.consume();
                 return;
             }
-            boolean selected = center.get() >= 26;
+            @Nullable Point2D point = control.sceneToLocal(event.getSceneX(), event.getSceneY());
+            boolean activate = dragging
+                    ? (center.get() >= 26) != control.isSelected()
+                    : control.isArmed() && point != null && control.contains(point);
+            mouseDown = false;
             dragging = false;
-            suppressClick = true;
             control.disarm();
             event.consume();
-            if (!control.isDisabled() && !control.selectedProperty().isBound() && selected != control.isSelected())
+            if (activate)
                 control.fire();
-            update(false);
-        } else if (dragging && (event.getEventType() == MouseEvent.MOUSE_ENTERED
-                || event.getEventType() == MouseEvent.MOUSE_EXITED)) {
+            // Action handlers may replace or remove the skin synchronously.
+            if (control.getSkin() == this)
+                update(false);
+        } else if (mouseDown && !dragging) {
+            if (event.getEventType() == MouseEvent.MOUSE_ENTERED)
+                control.arm();
+            else if (event.getEventType() == MouseEvent.MOUSE_EXITED)
+                control.disarm();
+        }
+    }
+
+    /// Activates once per unmodified Space press and release, or cancels with Escape.
+    private void handleKey(KeyEvent event) {
+        if (event.getCode() == KeyCode.ESCAPE && event.getEventType() == KeyEvent.KEY_PRESSED) {
+            if (mouseDown || keyDown) {
+                cancelGesture();
+                event.consume();
+            }
+        } else if (event.getCode() == KeyCode.SPACE) {
+            if (event.getEventType() == KeyEvent.KEY_PRESSED) {
+                if (event.isAltDown() || event.isControlDown() || event.isMetaDown())
+                    return;
+                if (!keyDown && !mouseDown && !control.isDisabled() && !control.selectedProperty().isBound()) {
+                    keyDown = true;
+                    control.arm();
+                }
+            } else if (event.getEventType() == KeyEvent.KEY_RELEASED && keyDown) {
+                keyDown = false;
+                boolean activate = control.isArmed();
+                control.disarm();
+                if (activate)
+                    control.fire();
+            }
             event.consume();
         }
     }
 
-    /// Cancels pointer tracking without committing a state change and restores selected geometry.
-    private void cancelDrag() {
+    /// Cancels input without committing a state change and restores selected geometry.
+    private void cancelGesture() {
         finishColors();
-        dragCandidate = false;
-        if (dragging) {
-            dragging = false;
-            suppressClick = true;
-            control.disarm();
-        }
+        mouseDown = false;
+        keyDown = false;
+        dragging = false;
+        control.disarm();
         update(true);
     }
 
@@ -420,46 +456,20 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         }
     }
 
-    /// Restores artwork when the inherited skin rebuilds its label children.
-    @Override
-    protected void updateChildren() {
-        super.updateChildren();
-        // The superclass constructor calls this method before field initialization.
-        @Nullable Pane currentArtwork = artwork;
-        if (currentArtwork != null)
-            getChildren().add(currentArtwork);
-    }
-
-    /// Returns whether the current content display includes any label text or graphic.
-    private boolean hasLabel() {
-        boolean hasText = control.getContentDisplay() != ContentDisplay.GRAPHIC_ONLY
-                && control.getText() != null && !control.getText().isEmpty();
-        boolean hasGraphic = control.getContentDisplay() != ContentDisplay.TEXT_ONLY
-                && control.getGraphic() != null;
-        return hasText || hasGraphic;
-    }
-
-    /// Returns the horizontal space reserved before the inherited label.
-    private double labelOffset() {
-        return 52 * sizeScale() + (hasLabel() ? 12 : 0);
-    }
-
     /// Returns the artwork and target scale, falling back to MD3 dimensions for invalid sizes.
     private double sizeScale() {
         double size = control.getSize();
         return Double.isFinite(size) && size > 0 ? size / 32 : 1;
     }
 
-    /// Positions the scaled artwork in its target and gives the label the remaining width.
+    /// Centers the scaled artwork within the control and starts pending color transitions.
     @Override
     protected void layoutChildren(double x, double y, double w, double h) {
-        double offset = labelOffset();
-        super.layoutChildren(x + offset, y, Math.max(0, w - offset), h);
         double scale = sizeScale();
         artworkScale.setX(scale);
         artworkScale.setY(scale);
         // Keep animation and CSS geometry in MD3 units; scale the entire artwork consistently.
-        artwork.resizeRelocate(x, y + (h - 48 * scale) / 2, 52, 48);
+        artwork.resizeRelocate(x + (w - 52 * scale) / 2, y + (h - 48 * scale) / 2, 52, 48);
         layoutHandle();
         // JavaFX applies CSS before layout, so all changed paints now share the same start time.
         if (animateColors) {
@@ -473,7 +483,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         }
     }
 
-    /// Updates unmanaged artwork directly, without laying out the label or settings row each frame.
+    /// Updates unmanaged artwork directly, without laying out the settings row each frame.
     private void layoutHandle() {
         double cx = center.get();
         stateLayer.setCenterX(cx);
@@ -484,46 +494,48 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
                     24 - icon.getLayoutBounds().getHeight() / 2);
     }
 
-    /// Includes the switch and label gap in the minimum width.
+    /// Reserves the scaled track width and control insets.
     @Override
     protected double computeMinWidth(double h, double top, double right, double bottom, double left) {
-        if (!hasLabel())
-            return left + 52 * sizeScale() + right;
-        return labelOffset() + super.computeMinWidth(h, top, right, bottom, left);
+        return left + 52 * sizeScale() + right;
     }
 
-    /// Includes the switch and label gap in the preferred width.
+    /// Uses the same fixed width as the minimum size.
     @Override
     protected double computePrefWidth(double h, double top, double right, double bottom, double left) {
-        // JavaFX 17 includes hidden text here when GRAPHIC_ONLY has no graphic.
-        if (!hasLabel())
-            return left + 52 * sizeScale() + right;
-        return labelOffset() + super.computePrefWidth(h, top, right, bottom, left);
+        return computeMinWidth(h, top, right, bottom, left);
     }
 
-    /// Preserves the configured target height when the label is shorter than the switch.
+    /// Reserves the scaled interaction target height and control insets.
     @Override
     protected double computeMinHeight(double w, double top, double right, double bottom, double left) {
-        if (!hasLabel())
-            return top + 48 * sizeScale() + bottom;
-        return Math.max(top + 48 * sizeScale() + bottom,
-                super.computeMinHeight(w < 0 ? w : Math.max(0, w - labelOffset()), top, right, bottom, left));
+        return top + 48 * sizeScale() + bottom;
     }
 
-    /// Measures wrapped labels using the width remaining after the switch.
+    /// Uses the same fixed height as the minimum size.
     @Override
     protected double computePrefHeight(double w, double top, double right, double bottom, double left) {
-        if (!hasLabel())
-            return top + 48 * sizeScale() + bottom;
-        return Math.max(top + 48 * sizeScale() + bottom,
-                super.computePrefHeight(w < 0 ? w : Math.max(0, w - labelOffset()), top, right, bottom, left));
+        return computeMinHeight(w, top, right, bottom, left);
+    }
+
+    /// Keeps layouts from stretching the switch beyond its configured target width.
+    @Override
+    protected double computeMaxWidth(double h, double top, double right, double bottom, double left) {
+        return computePrefWidth(h, top, right, bottom, left);
+    }
+
+    /// Keeps layouts from stretching the switch beyond its configured target height.
+    @Override
+    protected double computeMaxHeight(double w, double top, double right, double bottom, double left) {
+        return computePrefHeight(w, top, right, bottom, left);
     }
 
     /// Stops animation and removes the listeners and behavior installed by this skin.
     @Override
     public void dispose() {
-        control.removeEventFilter(MouseEvent.ANY, dragHandler);
-        cancelDrag();
+        control.removeEventFilter(MouseEvent.ANY, mouseHandler);
+        control.removeEventFilter(KeyEvent.ANY, keyHandler);
+        cancelGesture();
         for (CssColor color : colors)
             color.dispose();
         control.pseudoClassStateChanged(VISUAL_FOCUSED, false);

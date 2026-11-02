@@ -10,9 +10,9 @@ import javafx.event.EventType;
 import javafx.geometry.NodeOrientation;
 import javafx.geometry.Point2D;
 import javafx.scene.AccessibleAction;
+import javafx.scene.AccessibleAttribute;
+import javafx.scene.AccessibleRole;
 import javafx.scene.Scene;
-import javafx.scene.control.ContentDisplay;
-import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -254,15 +254,14 @@ public final class JFXSwitchTest {
         });
     }
 
-    /// Verifies keyboard, action, accessibility, label ownership, and replacement-skin behavior.
+    /// Verifies keyboard, action, accessibility, and replacement-skin behavior.
     @Test
     void behaviorAndSkinReplacement() throws Exception {
         onFxThread(() -> {
-            JFXSwitch control = new JFXSwitch("Wi-Fi");
+            JFXSwitch control = new JFXSwitch();
+            control.setAccessibleText("Wi-Fi");
             assertEquals(!AnimationUtils.isAnimationEnabled(), control.isDisableAnimation());
             control.setDisableAnimation(true);
-            Label graphic = new Label("Network");
-            control.setGraphic(graphic);
             VBox root = scene(control);
             AtomicInteger actions = new AtomicInteger();
             control.setOnAction(event -> actions.incrementAndGet());
@@ -270,6 +269,9 @@ public final class JFXSwitchTest {
             control.fireEvent(new KeyEvent(KeyEvent.KEY_RELEASED, "", "", KeyCode.SPACE, false, false, false, false));
             assertTrue(control.isSelected());
             assertEquals(1, actions.get());
+            assertEquals(AccessibleRole.TOGGLE_BUTTON, control.getAccessibleRole());
+            assertEquals(true, control.queryAccessibleAttribute(AccessibleAttribute.SELECTED));
+            assertEquals("Wi-Fi", control.queryAccessibleAttribute(AccessibleAttribute.TEXT));
             control.executeAccessibleAction(AccessibleAction.FIRE);
             assertFalse(control.isSelected());
             assertEquals(2, actions.get());
@@ -281,19 +283,95 @@ public final class JFXSwitchTest {
             control.setSkin(new JFXSwitchSkin(control));
             control.setSelected(true);
             layout(root);
-            assertSame(graphic, control.getGraphic());
             assertEquals(1, control.lookupAll(".switch-track").size());
             assertEquals(24, part(control, "handle").getLayoutBounds().getWidth());
-            assertTrue(control.prefWidth(-1) > 64);
-            control.setGraphic(new Label("Replacement"));
-            control.setText("Updated");
-            control.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-            layout(root);
-            assertEquals(1, control.lookupAll(".switch-track").size());
-            control.setGraphic(null);
-            layout(root);
             assertEquals(52, control.prefWidth(-1));
+            assertEquals(48, control.prefHeight(-1));
+            control.executeAccessibleAction(AccessibleAction.FIRE);
+            assertFalse(control.isSelected());
+            assertEquals(3, actions.get());
         });
+    }
+
+    /// Covers repeated keys, canceled input, bound selection, and click cancellation outside the target.
+    @Test
+    void inputLifecycle() throws Exception {
+        onFxThread(() -> {
+            var control = new JFXSwitch() {
+                /// Exercises focus cancellation without depending on native window activation.
+                void changeFocus(boolean focused) {
+                    setFocused(focused);
+                }
+            };
+            control.setDisableAnimation(true);
+            scene(control);
+            AtomicInteger actions = new AtomicInteger();
+            control.setOnAction(event -> actions.incrementAndGet());
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
+            mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
+            mouse(control, MouseEvent.MOUSE_RELEASED, 16, false);
+            assertTrue(control.isArmed());
+            assertEquals(0, actions.get());
+            key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
+            key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
+            assertEquals(1, actions.get());
+            assertFalse(control.isArmed());
+
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
+            control.setDisable(true);
+            control.setDisable(false);
+            key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.ESCAPE);
+            key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
+            control.changeFocus(true);
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
+            control.changeFocus(false);
+            key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
+            assertFalse(control.isArmed());
+            assertEquals(1, actions.get());
+
+            mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
+            mouse(control, MouseEvent.MOUSE_EXITED, 60, true);
+            assertFalse(control.isArmed());
+            mouse(control, MouseEvent.MOUSE_RELEASED, 60, false);
+            assertEquals(1, actions.get());
+            mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
+            mouse(control, MouseEvent.MOUSE_EXITED, 60, true);
+            mouse(control, MouseEvent.MOUSE_ENTERED, 16, true);
+            assertTrue(control.isArmed());
+            mouse(control, MouseEvent.MOUSE_RELEASED, 16, false);
+            assertEquals(2, actions.get());
+
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
+            control.setSkin(null);
+            control.setSkin(new JFXSwitchSkin(control));
+            key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
+            assertEquals(2, actions.get());
+            assertFalse(control.isArmed());
+
+            SimpleBooleanProperty selected = new SimpleBooleanProperty(true);
+            control.selectedProperty().bind(selected);
+            control.fire();
+            control.executeAccessibleAction(AccessibleAction.FIRE);
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
+            key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
+            mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
+            mouse(control, MouseEvent.MOUSE_DRAGGED, 36, true);
+            mouse(control, MouseEvent.MOUSE_RELEASED, 36, false);
+            assertTrue(control.isSelected());
+            assertFalse(control.isArmed());
+            assertEquals(2, actions.get());
+            selected.set(false);
+            assertFalse(control.isSelected());
+            assertEquals(false, control.queryAccessibleAttribute(AccessibleAttribute.SELECTED));
+        });
+    }
+
+    /// Dispatches an unmodified key event to the switch.
+    private static void key(JFXSwitch control, EventType<KeyEvent> type, KeyCode code) {
+        control.fireEvent(new KeyEvent(type, "", "", code, false, false, false, false));
     }
 
     /// Keeps bound option updates working before skin creation, in inactive states, and after replacement.

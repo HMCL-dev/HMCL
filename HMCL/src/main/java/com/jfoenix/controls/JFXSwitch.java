@@ -4,14 +4,24 @@ package com.jfoenix.controls;
 
 import com.jfoenix.skins.JFXSwitchSkin;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.CssMetaData;
+import javafx.css.PseudoClass;
 import javafx.css.SimpleStyleableDoubleProperty;
 import javafx.css.Styleable;
 import javafx.css.StyleableDoubleProperty;
 import javafx.css.StyleablePropertyFactory;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.scene.AccessibleAction;
+import javafx.scene.AccessibleAttribute;
+import javafx.scene.AccessibleRole;
+import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
-import javafx.scene.control.ToggleButton;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -21,38 +31,143 @@ import java.util.List;
 
 /// Selects an immediately applied, binary setting using a Material Design 3 switch.
 ///
-/// The inherited selected property represents the setting. Mouse and keyboard activation
-/// use [ToggleButton] behavior, including action events and toggle-group semantics.
+/// The selected property represents the setting. Clicking or pressing Space toggles it
+/// and fires an action event. Programmatic selection changes do not fire action events.
 /// A primary-button drag anywhere on the control moves the handle by the pointer's horizontal
 /// displacement. Releasing chooses the nearest end of the track, firing an action only when
 /// that changes selection. A press without a drag retains normal click behavior.
-/// A bound selected property prevents dragging. Disabling the control or changing its scene
-/// cancels an active drag without committing the preview.
-/// Supply text or an accessible text description when the switch has no visible label.
-/// The inherited graphic belongs to the label; it is not used as the handle icon.
+/// A bound selected property prevents activation. Disabling the control, losing focus,
+/// changing its scene, or pressing Escape cancels input without committing a drag preview.
+/// Labels belong to the surrounding layout; supply an accessible text description for this control.
 ///
 /// The default skin has a 52 by 32 track within a target at least 48 pixels high.
 /// [#sizeProperty()] controls the track height and scales the artwork and target
-/// proportionally. Label content is not scaled.
+/// proportionally.
 /// Its colors can be customized through the `-jfx-switch-primary`, `-jfx-switch-on-primary`,
 /// `-jfx-switch-primary-container`, `-jfx-switch-on-primary-container`,
 /// `-jfx-switch-surface`, `-jfx-switch-surface-container-highest`,
 /// `-jfx-switch-on-surface`, `-jfx-switch-on-surface-variant`, and `-jfx-switch-outline`
 /// CSS looked-up colors in the application stylesheet.
 @NotNullByDefault
-public class JFXSwitch extends ToggleButton {
+public class JFXSwitch extends Control {
 
-    /// Creates an unselected switch without a label.
+    /// Creates an unselected, keyboard-focusable switch with toggle-button accessibility semantics.
     public JFXSwitch() {
-        this("");
+        getStyleClass().setAll("jfx-switch");
+        setFocusTraversable(true);
+        setAccessibleRole(AccessibleRole.TOGGLE_BUTTON);
     }
 
-    /// Creates an unselected switch with the given label.
-    ///
-    /// @param text the label, or null for no text
-    public JFXSwitch(@Nullable String text) {
-        super(text);
-        getStyleClass().setAll("jfx-switch");
+    /// Indicates that the switch is selected.
+    private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
+
+    /// Indicates that an active input gesture can activate the switch.
+    private static final PseudoClass ARMED = PseudoClass.getPseudoClass("armed");
+
+    /// The selected setting, synchronized with CSS and accessibility state.
+    private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected") {
+        /// Updates visual and accessible selection without firing an action.
+        @Override
+        protected void invalidated() {
+            pseudoClassStateChanged(SELECTED, get());
+            notifyAccessibleAttributeChanged(AccessibleAttribute.SELECTED);
+        }
+    };
+
+    /// Returns the bindable selection state; the default is false.
+    public final BooleanProperty selectedProperty() {
+        return selected;
+    }
+
+    /// Returns whether the switch is selected.
+    public final boolean isSelected() {
+        return selected.get();
+    }
+
+    /// Changes selection without firing an action event.
+    public final void setSelected(boolean value) {
+        selected.set(value);
+    }
+
+    /// Active input feedback, exposed read-only to callers.
+    private final ReadOnlyBooleanWrapper armed = new ReadOnlyBooleanWrapper(this, "armed") {
+        /// Reflects input feedback in CSS.
+        @Override
+        protected void invalidated() {
+            pseudoClassStateChanged(ARMED, get());
+        }
+    };
+
+    /// Returns whether an input gesture is armed for activation.
+    public final ReadOnlyBooleanProperty armedProperty() {
+        return armed.getReadOnlyProperty();
+    }
+
+    /// Returns whether the switch is armed.
+    public final boolean isArmed() {
+        return armed.get();
+    }
+
+    /// Arms input feedback unless the switch is disabled or its selection is bound.
+    public final void arm() {
+        if (!isDisabled() && !selected.isBound())
+            armed.set(true);
+    }
+
+    /// Clears input feedback without firing an action.
+    public final void disarm() {
+        armed.set(false);
+    }
+
+    /// Optional action handler, allocated only when requested.
+    private @Nullable ObjectProperty<@Nullable EventHandler<ActionEvent>> onAction;
+
+    /// Returns the handler property for user or programmatic activation.
+    public final ObjectProperty<@Nullable EventHandler<ActionEvent>> onActionProperty() {
+        if (onAction == null) {
+            onAction = new SimpleObjectProperty<>(this, "onAction") {
+                /// Installs the handler in the control's event dispatch chain.
+                @Override
+                protected void invalidated() {
+                    setEventHandler(ActionEvent.ACTION, get());
+                }
+            };
+        }
+        return onAction;
+    }
+
+    /// Returns the action handler, or null when none is installed.
+    public final @Nullable EventHandler<ActionEvent> getOnAction() {
+        return onAction == null ? null : onAction.get();
+    }
+
+    /// Sets or clears the action handler.
+    public final void setOnAction(@Nullable EventHandler<ActionEvent> handler) {
+        if (onAction != null || handler != null)
+            onActionProperty().set(handler);
+    }
+
+    /// Toggles selection and fires one action; disabled or bound switches ignore activation.
+    public void fire() {
+        if (!isDisabled() && !selected.isBound()) {
+            setSelected(!isSelected());
+            fireEvent(new ActionEvent(this, this));
+        }
+    }
+
+    /// Exposes selection to assistive technology while retaining standard Control attributes.
+    @Override
+    public @Nullable Object queryAccessibleAttribute(AccessibleAttribute attribute, @Nullable Object... parameters) {
+        return attribute == AccessibleAttribute.SELECTED ? isSelected() : super.queryAccessibleAttribute(attribute, parameters);
+    }
+
+    /// Routes assistive activation through the same action path as pointer and keyboard input.
+    @Override
+    public void executeAccessibleAction(AccessibleAction action, @Nullable Object... parameters) {
+        if (action == AccessibleAction.FIRE)
+            fire();
+        else
+            super.executeAccessibleAction(action, parameters);
     }
 
     /// Creates the skin that renders the track, handle, and interaction states.
@@ -61,9 +176,9 @@ public class JFXSwitch extends ToggleButton {
         return new JFXSwitchSkin(this);
     }
 
-    /// Creates size metadata alongside the inherited toggle-button metadata.
+    /// Creates size metadata alongside the inherited control metadata.
     private static final StyleablePropertyFactory<JFXSwitch> STYLEABLES =
-            new StyleablePropertyFactory<>(ToggleButton.getClassCssMetaData());
+            new StyleablePropertyFactory<>(Control.getClassCssMetaData());
 
     /// Maps the CSS size to the track-height property, respecting property bindings.
     private static final CssMetaData<JFXSwitch, Number> SIZE =
@@ -84,9 +199,8 @@ public class JFXSwitch extends ToggleButton {
     };
 
     /// Returns the track-height property, styled by `-jfx-size`. The default is 32 logical pixels.
-    /// Artwork, borders, icons, animation distances, and target dimensions scale proportionally;
-    /// text and the label gap retain their sizes. A value of 24 produces a 39 by 24 track
-    /// and a 39 by 36 target without a label. Nonpositive or nonfinite values are retained
+    /// Artwork, borders, icons, animation distances, and target dimensions scale proportionally.
+    /// A value of 24 produces a 39 by 24 track and a 39 by 36 target. Nonpositive or nonfinite values are retained
     /// in this property but rendered using the default size of 32.
     /// Changes request layout without changing selection or restarting an active transition.
     public final StyleableDoubleProperty sizeProperty() {
@@ -103,7 +217,7 @@ public class JFXSwitch extends ToggleButton {
         size.set(value);
     }
 
-    /// Returns immutable CSS metadata, including inherited toggle-button properties.
+    /// Returns immutable CSS metadata, including inherited control properties.
     public static @Unmodifiable List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
         return CSS_META_DATA;
     }
