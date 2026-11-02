@@ -215,10 +215,12 @@ public final class JFXSwitchTest {
         }
     }
 
-    /// Exercises handle dragging through the settings-row container in both layout directions.
+    /// Exercises dragging from the handle and either side of it at both sizes and layout directions.
     @ParameterizedTest
-    @CsvSource({"false, 24", "true, 24", "false, 32", "true, 32"})
-    void handleDragging(boolean rtl, double size) throws Exception {
+    @CsvSource({"false, 24, 16", "true, 24, 16", "false, 32, 16", "true, 32, 16",
+            "false, 24, 4", "true, 24, 4", "false, 32, 4", "true, 32, 4",
+            "false, 24, 40", "true, 24, 40", "false, 32, 40", "true, 32, 40"})
+    void handleDragging(boolean rtl, double size, double pressX) throws Exception {
         Field settingsField = SettingsManager.class.getDeclaredField("launcherSettings");
         settingsField.setAccessible(true);
         @Nullable Object previous = settingsField.get(null);
@@ -240,8 +242,8 @@ public final class JFXSwitchTest {
                 AtomicInteger rowActions = new AtomicInteger();
                 control.setOnAction(event -> actions.incrementAndGet());
                 row.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> rowActions.incrementAndGet());
-                mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
-                mouse(control, MouseEvent.MOUSE_DRAGGED, 28, true);
+                mouse(control, MouseEvent.MOUSE_PRESSED, pressX, true);
+                mouse(control, MouseEvent.MOUSE_DRAGGED, pressX + 12, true);
                 layout(root);
                 assertFalse(control.isSelected());
                 Region handle = part(control, "handle");
@@ -281,9 +283,10 @@ public final class JFXSwitchTest {
                 assertEquals(2, actions.get());
                 control.setDisable(false);
                 layout(root);
-                mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
-                mouse(control, MouseEvent.MOUSE_RELEASED, 16, false);
-                mouse(control, MouseEvent.MOUSE_CLICKED, 16, false);
+                mouse(control, MouseEvent.MOUSE_PRESSED, pressX, true);
+                mouse(control, MouseEvent.MOUSE_DRAGGED, pressX + 1, true);
+                mouse(control, MouseEvent.MOUSE_RELEASED, pressX + 1, false);
+                mouse(control, MouseEvent.MOUSE_CLICKED, pressX + 1, false);
                 assertTrue(control.isSelected());
                 assertTrue(row.isSelected());
                 assertEquals(3, actions.get());

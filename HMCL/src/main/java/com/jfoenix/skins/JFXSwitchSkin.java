@@ -90,7 +90,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     private boolean applyingColors;
     /// Filters pointer gestures before the inherited button behavior handles release.
     private final EventHandler<MouseEvent> dragHandler = this::handleDrag;
-    /// Whether the current primary press began on the handle.
+    /// Whether the current primary press on the control can begin a drag.
     private boolean dragCandidate;
     /// Whether the handle is following the pointer instead of an animation.
     private boolean dragging;
@@ -186,7 +186,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
                     || control.selectedProperty().isBound())
                 return;
             @Nullable Point2D point = artwork.sceneToLocal(event.getSceneX(), event.getSceneY());
-            if (point != null && Math.hypot(point.getX() - center.get(), point.getY() - 24) <= diameter.get() / 2) {
+            if (point != null) {
                 dragCandidate = true;
                 pressX = point.getX();
                 pressCenter = center.get();
