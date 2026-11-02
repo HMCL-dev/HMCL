@@ -9,6 +9,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.geometry.Orientation;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -25,6 +26,14 @@ import java.util.Objects;
 public final class TabController implements PageAware {
     /// The optional destination for selected tab content.
     private final @Nullable TransitionPane contentPane;
+
+    /// The tab layout axis, initially vertical for navigation drawers.
+    private Orientation orientation = Orientation.VERTICAL;
+
+    /// Sets the layout axis used to choose content transition directions.
+    public void setOrientation(Orientation orientation) {
+        this.orientation = Objects.requireNonNull(orientation, "orientation");
+    }
 
     /// The mutable tabs in display order.
     private final ObservableList<TabItem<?>> tabs = FXCollections.observableArrayList();
@@ -111,8 +120,12 @@ public final class TabController implements PageAware {
         if (previousContent instanceof PageAware pageAware)
             pageAware.onPageHidden();
         if (contentPane != null) {
-            if (playAnimation && contentPane.getCurrentNode() != null) {
-                contentPane.setContent(content, ContainerAnimations.SLIDE_UP_FADE_IN,
+            if (playAnimation && previous != null && previous != tab && contentPane.getCurrentNode() != null) {
+                boolean forward = tabs.indexOf(tab) > tabs.indexOf(previous);
+                ContainerAnimations animation = orientation == Orientation.HORIZONTAL
+                        ? (forward ? ContainerAnimations.TAB_LEFT : ContainerAnimations.TAB_RIGHT)
+                        : (forward ? ContainerAnimations.TAB_UP : ContainerAnimations.TAB_DOWN);
+                contentPane.setContent(content, animation,
                         Motion.MEDIUM4, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED);
             } else {
                 contentPane.setContent(content, ContainerAnimations.NONE);

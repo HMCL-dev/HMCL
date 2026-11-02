@@ -349,7 +349,10 @@ public class TransitionPane extends StackPane {
         ///         or `null` to not cache it.
         default @Nullable CacheHint getCacheHint(AnimationProducer animationProducer) {
             // https://github.com/HMCL-dev/HMCL/issues/4789
-            return animationProducer == ContainerAnimations.SLIDE_UP_FADE_IN ? CacheHint.SPEED : null;
+            return animationProducer == ContainerAnimations.TAB_LEFT
+                    || animationProducer == ContainerAnimations.TAB_RIGHT
+                    || animationProducer == ContainerAnimations.TAB_UP
+                    || animationProducer == ContainerAnimations.TAB_DOWN ? CacheHint.SPEED : null;
         }
     }
 }

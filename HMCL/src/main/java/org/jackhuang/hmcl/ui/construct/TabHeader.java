@@ -8,6 +8,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Side;
+import javafx.geometry.Orientation;
 import javafx.scene.AccessibleAttribute;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
@@ -30,6 +31,9 @@ public class TabHeader extends Control {
     /// @param tabs the initial tabs in display order, or null for an empty header
     public TabHeader(TabItem<?>... tabs) {
         this.controller = new TabController(tabs);
+        controller.setOrientation(Orientation.HORIZONTAL);
+        sideProperty().addListener((observable, oldSide, newSide) ->
+                controller.setOrientation(newSide.isHorizontal() ? Orientation.HORIZONTAL : Orientation.VERTICAL));
         getStyleClass().setAll("tab-header");
     }
 
