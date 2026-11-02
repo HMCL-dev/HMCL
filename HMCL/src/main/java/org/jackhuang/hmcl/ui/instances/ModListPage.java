@@ -837,7 +837,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
             updateActiveState(modInfo.isActive());
-            checkBox.setSelected(modInfo.isActive());
             checkBox.setOnAction(event -> {
                 try {
                     modInfo.setActive(checkBox.isSelected());
