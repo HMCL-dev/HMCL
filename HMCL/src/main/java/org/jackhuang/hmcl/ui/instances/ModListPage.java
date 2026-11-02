@@ -3,7 +3,12 @@
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.*;
+
+import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
+import javafx.animation.ParallelTransition;
 import javafx.animation.PauseTransition;
+import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
@@ -66,7 +71,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -733,6 +737,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
 
+        private final HBox actionContainer = new HBox(8, restoreButton, revealButton, infoButton);
+        private final FadeTransition actionFade = new FadeTransition(Duration.millis(180), actionContainer);
+        private final TranslateTransition actionTranslate = new TranslateTransition(Duration.millis(180), actionContainer);
+        private final ParallelTransition actionAnimation = new ParallelTransition(actionFade, actionTranslate);
+
         private final InvalidationListener activeListener = obs -> checkBox.setSelected(getItem().getModInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
@@ -756,7 +765,27 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
-            container.getChildren().setAll(checkBox, imageContainer, content, restoreButton, revealButton, infoButton);
+            actionContainer.setAlignment(Pos.CENTER_LEFT);
+            actionContainer.setOpacity(0);
+            actionContainer.setTranslateX(36);
+            actionContainer.setMouseTransparent(true);
+
+            actionFade.setToValue(1);
+            actionTranslate.setToX(0);
+
+            actionAnimation.setInterpolator(Interpolator.EASE_OUT);
+
+            hoverProperty().addListener((obs, wasHovered, isHovered) -> {
+                actionAnimation.stop();
+
+                actionFade.setToValue(isHovered ? 1 : 0);
+                actionTranslate.setToX(isHovered ? 0 : 36);
+
+                actionContainer.setMouseTransparent(!isHovered);
+                actionAnimation.playFromStart();
+            });
+
+            container.getChildren().setAll(imageContainer, content, actionContainer);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
