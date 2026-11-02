@@ -22,14 +22,11 @@ import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.skin.ToggleButtonSkin;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderStroke;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.transform.Scale;
 import javafx.util.Duration;
@@ -59,13 +56,13 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     private final Scale artworkScale = new Scale();
 
     /// Rounded track with its optional outline.
-    private final Region track = new Region();
+    private final Rectangle track = new Rectangle(0, 8, 52, 32);
 
     /// Circular hover, focus, and pressed overlay behind the handle.
-    private final Region stateLayer = new Region();
+    private final Circle stateLayer = new Circle(16, 24, 20);
 
     /// Circular handle, independently styled from the track.
-    private final Region handle = new Region();
+    private final Circle handle = new Circle(16, 24, 8);
 
     /// Optional check or cross, created on first use and then reused across state changes.
     private @Nullable SVGPath icon;
@@ -80,7 +77,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     private @Nullable Timeline geometryTransition;
 
     /// Paint listeners installed on the first animated selection change; initially empty.
-    private final List<CssColor<?>> colors = new ArrayList<>();
+    private final List<CssColor> colors = new ArrayList<>();
 
     /// Shared color animation, allocated when CSS supplies the first transition target.
     private @Nullable Transition colorTransition;
@@ -119,6 +116,8 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         track.getStyleClass().setAll("switch-track");
         stateLayer.getStyleClass().setAll("switch-state-layer");
         handle.getStyleClass().setAll("switch-handle");
+        track.setArcWidth(32);
+        track.setArcHeight(32);
         artwork.setManaged(false);
         artwork.setMouseTransparent(true);
         artwork.getTransforms().add(artworkScale);
@@ -160,16 +159,16 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         if (control.isDisableAnimation() || control.isDisabled() || control.getScene() == null)
             return;
         if (colors.isEmpty()) {
-            colors.add(backgroundColor(track));
-            colors.add(backgroundColor(handle));
-            colors.add(backgroundColor(stateLayer));
-            colors.add(borderColor(track));
+            colors.add(new CssColor(track.fillProperty()));
+            colors.add(new CssColor(handle.fillProperty()));
+            colors.add(new CssColor(stateLayer.fillProperty()));
+            colors.add(new CssColor(track.strokeProperty()));
             if (icon != null)
-                colors.add(iconColor(icon));
+                colors.add(new CssColor(icon.fillProperty()));
         }
         if (colorTransition != null)
             colorTransition.stop();
-        for (CssColor<?> color : colors)
+        for (CssColor color : colors)
             color.capture();
         animateColors = true;
         control.requestLayout();
@@ -245,65 +244,6 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         update(true);
     }
 
-    /// Animates a single solid CSS fill while preserving its radii and insets.
-    /// Complex backgrounds retain their normal immediate CSS behavior.
-    private CssColor<Background> backgroundColor(Region region) {
-        return new CssColor<>(region.backgroundProperty()) {
-            /// Reads a single solid fill without images.
-            @Override
-            protected @Nullable Color colorOf(Background background) {
-                return background.getFills().size() == 1 && background.getImages().isEmpty()
-                        && background.getFills().get(0).getFill() instanceof Color color ? color : null;
-            }
-
-            /// Replaces the fill color while retaining its geometry.
-            @Override
-            protected Background recolor(Background background, Color color) {
-                BackgroundFill fill = background.getFills().get(0);
-                return new Background(new BackgroundFill(color, fill.getRadii(), fill.getInsets()));
-            }
-        };
-    }
-
-    /// Animates a uniform solid border, preserving its shape, widths, and insets.
-    private CssColor<Border> borderColor(Region region) {
-        return new CssColor<>(region.borderProperty()) {
-            /// Reads a single uniform solid stroke without images.
-            @Override
-            protected @Nullable Color colorOf(Border border) {
-                if (border.getStrokes().size() != 1 || !border.getImages().isEmpty())
-                    return null;
-                BorderStroke stroke = border.getStrokes().get(0);
-                return stroke.isStrokeUniform() && stroke.getTopStroke() instanceof Color color ? color : null;
-            }
-
-            /// Replaces the stroke color while retaining its geometry and style.
-            @Override
-            protected Border recolor(Border border, Color color) {
-                BorderStroke stroke = border.getStrokes().get(0);
-                return new Border(new BorderStroke(color, stroke.getTopStyle(), stroke.getRadii(),
-                        stroke.getWidths(), stroke.getInsets()));
-            }
-        };
-    }
-
-    /// Observes the optional icon's solid CSS fill once color animation has been enabled.
-    private CssColor<Paint> iconColor(SVGPath icon) {
-        return new CssColor<>(icon.fillProperty()) {
-            /// Accepts solid icon fills.
-            @Override
-            protected @Nullable Color colorOf(Paint paint) {
-                return paint instanceof Color color ? color : null;
-            }
-
-            /// Uses the interpolated color as the icon fill.
-            @Override
-            protected Paint recolor(Paint paint, Color color) {
-                return color;
-            }
-        };
-    }
-
     /// Allocates the shared color animation on first use and reuses it for subsequent transitions.
     private Transition colorTransition() {
         if (colorTransition == null) {
@@ -316,7 +256,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
                 /// Updates only paints with a pending CSS target.
                 @Override
                 protected void interpolate(double fraction) {
-                    for (CssColor<?> color : colors)
+                    for (CssColor color : colors)
                         color.interpolate(fraction);
                 }
             };
@@ -330,19 +270,19 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         animateColors = false;
         if (colorTransition != null)
             colorTransition.stop();
-        for (CssColor<?> color : colors)
+        for (CssColor color : colors)
             color.finish();
     }
 
     /// Interpolates a solid paint without changing the property's CSS precedence.
     /// CSS changes outside a selection update take effect immediately, including theme changes.
-    private abstract class CssColor<T> implements ChangeListener<@Nullable T> {
+    private final class CssColor implements ChangeListener<@Nullable Paint> {
 
         /// The rendered CSS property, also observed for new targets.
-        private final ObjectProperty<@Nullable T> property;
+        private final ObjectProperty<@Nullable Paint> property;
 
-        /// Most recent CSS value; null means no transition is pending.
-        private @Nullable T target;
+        /// Most recent solid CSS target; null means no transition is pending.
+        private @Nullable Color target;
 
         /// CSS origin retained during animation so stylesheets can still override it.
         private @Nullable StyleOrigin origin;
@@ -350,32 +290,22 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         /// Starting color, captured from the currently displayed value on each reversal.
         private Color from = Color.TRANSPARENT;
 
-        /// Destination color extracted from the current CSS target.
-        private Color to = Color.TRANSPARENT;
-
         /// Observes a styleable property for the shared color transition.
-        private CssColor(ObjectProperty<@Nullable T> property) {
+        private CssColor(ObjectProperty<@Nullable Paint> property) {
             this.property = property;
             property.addListener(this);
         }
 
-        /// Reads a supported solid color, or null for complex paints.
-        protected abstract @Nullable Color colorOf(T value);
-
-        /// Replaces only the color, preserving the target's geometry.
-        protected abstract T recolor(T value, Color color);
-
         /// Preserves an unchanged CSS target when a selection interrupts the shared transition.
         private void capture() {
-            @Nullable T current = property.get();
-            @Nullable Color color = current == null ? null : colorOf(current);
-            if (color != null)
+            if (property.get() instanceof Color color)
                 from = color;
         }
 
         /// Starts from the visible color, or accepts unsupported and non-selection changes immediately.
         @Override
-        public void changed(ObservableValue<? extends @Nullable T> observable, @Nullable T previous, @Nullable T next) {
+        public void changed(ObservableValue<? extends @Nullable Paint> observable,
+                            @Nullable Paint previous, @Nullable Paint next) {
             if (applyingColors)
                 return;
             // CSS may reapply the same target while the displayed value is still interpolating.
@@ -384,13 +314,10 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
                 return;
             }
             target = null;
-            @Nullable Color start = previous == null ? null : colorOf(previous);
-            @Nullable Color end = next == null ? null : colorOf(next);
-            if (!animateColors || start == null || end == null || start.equals(end))
+            if (!animateColors || !(previous instanceof Color start) || !(next instanceof Color end) || start.equals(end))
                 return;
             from = start;
-            to = end;
-            target = next;
+            target = end;
             origin = ((StyleableProperty<?>) property).getStyleOrigin();
             interpolate(0);
         }
@@ -398,15 +325,15 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         /// Applies a frame without promoting the value to a user-set CSS override.
         private void interpolate(double fraction) {
             if (target != null)
-                apply(fraction == 1 ? target : recolor(target, from.interpolate(to, fraction)));
+                apply(fraction == 1 ? target : from.interpolate(target, fraction));
         }
 
         /// Writes a CSS value while suppressing this transition's own listener.
         @SuppressWarnings("unchecked")
-        private void apply(T value) {
+        private void apply(Paint value) {
             applyingColors = true;
             try {
-                ((StyleableProperty<T>) property).applyStyle(origin, value);
+                ((StyleableProperty<Paint>) property).applyStyle(origin, value);
             } finally {
                 applyingColors = false;
             }
@@ -472,15 +399,15 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
             // The first CSS fill should appear immediately, without a transition from default black.
             icon.setFill(null);
             if (!colors.isEmpty())
-                colors.add(iconColor(icon));
+                colors.add(new CssColor(icon.fillProperty()));
             artwork.getChildren().add(icon);
         }
         if (icon != null) {
             icon.setVisible(visible);
             if (visible)
                 icon.setContent(selected
-                        ? "M 2 8 L 6 12 L 14 4 L 12.6 2.6 L 6 9.2 L 3.4 6.6 Z"
-                        : "M 4 2.6 L 8 6.6 L 12 2.6 L 13.4 4 L 9.4 8 L 13.4 12 L 12 13.4 L 8 9.4 L 4 13.4 L 2.6 12 L 6.6 8 L 2.6 4 Z");
+                        ? "M2 8l4 4 8-8-1.4-1.4L6 9.2 3.4 6.6Z"
+                        : "M4 2.6l4 4 4-4L13.4 4l-4 4 4 4-1.4 1.4-4-4-4 4L2.6 12l4-4-4-4Z");
         }
     }
 
@@ -519,12 +446,11 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         artworkScale.setY(scale);
         // Keep animation and CSS geometry in MD3 units; scale the entire artwork consistently.
         artwork.resizeRelocate(x, y + (h - 48 * scale) / 2, 52, 48);
-        track.resizeRelocate(0, 8, 52, 32);
         layoutHandle();
         // JavaFX applies CSS before layout, so all changed paints now share the same start time.
         if (animateColors) {
             animateColors = false;
-            for (CssColor<?> color : colors) {
+            for (CssColor color : colors) {
                 if (color.target != null) {
                     colorTransition().playFromStart();
                     break;
@@ -536,9 +462,9 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     /// Updates unmanaged artwork directly, without laying out the label or settings row each frame.
     private void layoutHandle() {
         double cx = center.get();
-        double size = diameter.get();
-        stateLayer.resizeRelocate(cx - 20, 4, 40, 40);
-        handle.resizeRelocate(cx - size / 2, 24 - size / 2, size, size);
+        stateLayer.setCenterX(cx);
+        handle.setCenterX(cx);
+        handle.setRadius(diameter.get() / 2);
         if (icon != null && icon.isVisible())
             icon.relocate(cx - icon.getLayoutBounds().getWidth() / 2,
                     24 - icon.getLayoutBounds().getHeight() / 2);
@@ -575,7 +501,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     public void dispose() {
         control.removeEventFilter(MouseEvent.ANY, dragHandler);
         cancelDrag();
-        for (CssColor<?> color : colors)
+        for (CssColor color : colors)
             color.dispose();
         control.pseudoClassStateChanged(VISUAL_FOCUSED, false);
         super.dispose();

@@ -1195,47 +1195,44 @@
 }
 
 .jfx-switch > .switch-artwork > .switch-track {
-    -fx-background-color: -jfx-switch-surface-container-highest;
-    -fx-background-radius: 16;
-    -fx-border-color: -jfx-switch-outline;
-    -fx-border-width: 2;
-    -fx-border-radius: 16;
+    -fx-fill: -jfx-switch-surface-container-highest;
+    -fx-stroke: -jfx-switch-outline;
+    -fx-stroke-width: 2;
+    -fx-stroke-type: inside;
 }
 
 .jfx-switch:selected > .switch-artwork > .switch-track {
-    -fx-background-color: -jfx-switch-primary;
-    -fx-border-color: transparent;
+    -fx-fill: -jfx-switch-primary;
+    -fx-stroke: transparent;
 }
 
 .jfx-switch > .switch-artwork > .switch-handle {
-    -fx-background-color: -jfx-switch-outline;
-    -fx-background-radius: 100;
+    -fx-fill: -jfx-switch-outline;
 }
 
 .jfx-switch:selected > .switch-artwork > .switch-handle {
-    -fx-background-color: -jfx-switch-on-primary;
+    -fx-fill: -jfx-switch-on-primary;
 }
 
 .jfx-switch:hover > .switch-artwork > .switch-handle,
 .jfx-switch:visual-focused > .switch-artwork > .switch-handle,
 .jfx-switch:armed > .switch-artwork > .switch-handle {
-    -fx-background-color: -jfx-switch-on-surface-variant;
+    -fx-fill: -jfx-switch-on-surface-variant;
 }
 
 .jfx-switch:selected:hover > .switch-artwork > .switch-handle,
 .jfx-switch:selected:visual-focused > .switch-artwork > .switch-handle,
 .jfx-switch:selected:armed > .switch-artwork > .switch-handle {
-    -fx-background-color: -jfx-switch-primary-container;
+    -fx-fill: -jfx-switch-primary-container;
 }
 
 .jfx-switch > .switch-artwork > .switch-state-layer {
-    -fx-background-color: -jfx-switch-on-surface;
-    -fx-background-radius: 100;
+    -fx-fill: -jfx-switch-on-surface;
     -fx-opacity: 0;
 }
 
 .jfx-switch:selected > .switch-artwork > .switch-state-layer {
-    -fx-background-color: -jfx-switch-primary;
+    -fx-fill: -jfx-switch-primary;
 }
 
 .jfx-switch:hover > .switch-artwork > .switch-state-layer {
@@ -1266,21 +1263,21 @@
 }
 
 .jfx-switch:disabled > .switch-artwork > .switch-track {
-    -fx-background-color: -jfx-switch-surface-container-highest;
-    -fx-border-color: -jfx-switch-on-surface;
+    -fx-fill: -jfx-switch-surface-container-highest;
+    -fx-stroke: -jfx-switch-on-surface;
     -fx-opacity: 0.12;
 }
 
 .jfx-switch:selected:disabled > .switch-artwork > .switch-track {
-    -fx-background-color: -jfx-switch-on-surface;
-    -fx-border-color: transparent;
+    -fx-fill: -jfx-switch-on-surface;
+    -fx-stroke: transparent;
 }
 
 .jfx-switch:disabled > .switch-artwork > .switch-handle,
 .jfx-switch:disabled:hover > .switch-artwork > .switch-handle,
 .jfx-switch:disabled:visual-focused > .switch-artwork > .switch-handle,
 .jfx-switch:disabled:armed > .switch-artwork > .switch-handle {
-    -fx-background-color: -jfx-switch-on-surface;
+    -fx-fill: -jfx-switch-on-surface;
     -fx-opacity: 0.38;
 }
 
@@ -1288,7 +1285,7 @@
 .jfx-switch:selected:disabled:hover > .switch-artwork > .switch-handle,
 .jfx-switch:selected:disabled:visual-focused > .switch-artwork > .switch-handle,
 .jfx-switch:selected:disabled:armed > .switch-artwork > .switch-handle {
-    -fx-background-color: -jfx-switch-surface;
+    -fx-fill: -jfx-switch-surface;
     -fx-opacity: 1;
 }
 

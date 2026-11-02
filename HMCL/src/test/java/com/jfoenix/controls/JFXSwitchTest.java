@@ -17,11 +17,10 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import javafx.scene.shape.SVGPath;
+import javafx.scene.shape.Shape;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
@@ -109,14 +108,14 @@ public final class JFXSwitchTest {
                 AtomicInteger rowActions = new AtomicInteger();
                 control.setOnAction(event -> actions.incrementAndGet());
                 row.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> rowActions.incrementAndGet());
-                Region handle = part(control, "handle");
-                double initialX = handle.localToScene(handle.getWidth() / 2, 0).getX();
+                Shape handle = part(control, "handle");
+                double initialX = handle.localToScene(handle.getLayoutBounds()).getCenterX();
                 mouse(control, MouseEvent.MOUSE_PRESSED, pressX, true);
                 mouse(control, MouseEvent.MOUSE_DRAGGED, pressX + 12, true);
                 layout(root);
                 assertFalse(control.isSelected());
-                assertEquals(28, handle.getLayoutX() + handle.getWidth() / 2, 0.001);
-                double draggedX = handle.localToScene(handle.getWidth() / 2, 0).getX();
+                assertEquals(28, handle.getBoundsInParent().getCenterX(), 0.001);
+                double draggedX = handle.localToScene(handle.getLayoutBounds()).getCenterX();
                 assertTrue(rtl ? draggedX < initialX : draggedX > initialX);
                 mouse(control, MouseEvent.MOUSE_DRAGGED, 60, true);
                 mouse(control, MouseEvent.MOUSE_RELEASED, 60, false);
@@ -231,6 +230,11 @@ public final class JFXSwitchTest {
             assertEquals(20, control.getSize());
             assertEquals(32.5, control.prefWidth(-1));
             assertEquals(30, control.prefHeight(-1));
+            Shape track = part(control, "track");
+            assertEquals(52, track.getLayoutBounds().getWidth(), "The outline must stay inside the track");
+            assertEquals(32, track.getLayoutBounds().getHeight());
+            assertEquals(32.5, track.localToScene(track.getLayoutBounds()).getWidth(), 0.001);
+            assertEquals(20, track.localToScene(track.getLayoutBounds()).getHeight(), 0.001);
 
             SimpleDoubleProperty boundSize = new SimpleDoubleProperty(40);
             control.sizeProperty().bind(boundSize);
@@ -277,7 +281,7 @@ public final class JFXSwitchTest {
             layout(root);
             assertSame(graphic, control.getGraphic());
             assertEquals(1, control.lookupAll(".switch-track").size());
-            assertEquals(24, part(control, "handle").getWidth());
+            assertEquals(24, part(control, "handle").getLayoutBounds().getWidth());
             assertTrue(control.prefWidth(-1) > 64);
             control.setGraphic(new Label("Replacement"));
             control.setText("Updated");
@@ -307,14 +311,14 @@ public final class JFXSwitchTest {
                 window.complete(stage);
                 stage.setScene(root.getScene());
                 stage.show();
-                part(control, "track").backgroundProperty().addListener(observable -> changes.incrementAndGet());
+                part(control, "track").fillProperty().addListener(observable -> changes.incrementAndGet());
                 control.setSelected(true);
                 assertEquals(0, changes.get());
             });
             Thread.sleep(400);
             onFxThread(() -> {
                 assertEquals(Color.web("#123456"),
-                        part(target.join(), "track").getBackground().getFills().get(0).getFill());
+                        part(target.join(), "track").getFill());
                 assertTrue(changes.get() > 2, "Normal pulses must produce intermediate colors");
             });
         } finally {
@@ -356,13 +360,13 @@ public final class JFXSwitchTest {
             @Unmodifiable List<Paint> current = palette(control);
             assertNotEquals(off.join(), current, "Colors must advance during the transition");
             assertNotEquals(on.join(), current, "Colors must interpolate before reaching the target");
-            Region handle = part(control, "handle");
-            double center = handle.getLayoutX() + handle.getWidth() / 2;
-            double diameter = handle.getWidth();
+            Shape handle = part(control, "handle");
+            double center = handle.getBoundsInParent().getCenterX();
+            double diameter = handle.getLayoutBounds().getWidth();
             control.setSelected(false);
             assertEquals(current, palette(control), "Reversing must preserve the displayed colors");
-            assertEquals(center, handle.getLayoutX() + handle.getWidth() / 2, 0.001);
-            assertEquals(diameter, handle.getWidth(), 0.001);
+            assertEquals(center, handle.getBoundsInParent().getCenterX(), 0.001);
+            assertEquals(diameter, handle.getLayoutBounds().getWidth(), 0.001);
         });
         Thread.sleep(300);
         onFxThread(() -> {
@@ -371,9 +375,9 @@ public final class JFXSwitchTest {
             control.setSelected(true);
             control.setDisableAnimation(true);
             assertEquals(on.join(), palette(control), "Disabling animation must settle all colors");
-            Region handle = part(control, "handle");
-            assertEquals(36, handle.getLayoutX() + handle.getWidth() / 2);
-            assertEquals(24, handle.getWidth());
+            Shape handle = part(control, "handle");
+            assertEquals(36, handle.getBoundsInParent().getCenterX());
+            assertEquals(24, handle.getLayoutBounds().getWidth());
             control.setStyle("-jfx-switch-primary: #abcdef;");
             control.applyCss();
             assertEquals(Color.web("#abcdef"), palette(control).get(0), "CSS must still override animated values");
@@ -392,11 +396,11 @@ public final class JFXSwitchTest {
     /// Completes a CSS/layout pass and captures solid paints independently of geometry and opacity.
     private static @Unmodifiable List<Paint> palette(JFXSwitch control) {
         layout((VBox) control.getParent());
-        return List.of(part(control, "track").getBackground().getFills().get(0).getFill(),
-                part(control, "track").getBorder().getStrokes().get(0).getTopStroke(),
-                part(control, "handle").getBackground().getFills().get(0).getFill(),
-                part(control, "state-layer").getBackground().getFills().get(0).getFill(),
-                Objects.requireNonNull(((SVGPath) control.lookup(".switch-icon")).getFill()));
+        return List.of(part(control, "track").getFill(),
+                part(control, "track").getStroke(),
+                part(control, "handle").getFill(),
+                part(control, "state-layer").getFill(),
+                part(control, "icon").getFill());
     }
 
     /// Attaches a switch to a scene with the application theme and component stylesheet.
@@ -420,9 +424,9 @@ public final class JFXSwitchTest {
         root.layout();
     }
 
-    /// Returns a required region from the default skin.
-    private static Region part(JFXSwitch control, String name) {
-        return (Region) Objects.requireNonNull(control.lookup(".switch-" + name));
+    /// Returns a required shape from the default skin.
+    private static Shape part(JFXSwitch control, String name) {
+        return (Shape) Objects.requireNonNull(control.lookup(".switch-" + name));
     }
 
     /// Runs assertions on the application thread and propagates failures to JUnit.
