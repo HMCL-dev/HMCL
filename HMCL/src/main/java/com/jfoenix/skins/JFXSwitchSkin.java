@@ -68,10 +68,22 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     private @Nullable SVGPath icon;
 
     /// Current logical handle center measured from the track's leading edge.
-    private final DoubleProperty center = new SimpleDoubleProperty(16);
+    private final DoubleProperty center = new SimpleDoubleProperty(16) {
+        /// Applies each position change directly to the unmanaged artwork.
+        @Override
+        protected void invalidated() {
+            layoutHandle();
+        }
+    };
 
     /// Current handle diameter in pixels.
-    private final DoubleProperty diameter = new SimpleDoubleProperty(16);
+    private final DoubleProperty diameter = new SimpleDoubleProperty(16) {
+        /// Applies each size change directly to the unmanaged artwork.
+        @Override
+        protected void invalidated() {
+            layoutHandle();
+        }
+    };
 
     /// Movement and resize animation, allocated on the first animated geometry change.
     private @Nullable Timeline geometryTransition;
@@ -126,8 +138,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
             node.setManaged(false);
         getChildren().add(artwork);
         registerChangeListener(control.selectedProperty(), value -> updateSelection());
-        Consumer<ObservableValue<?>> updateGeometry = value -> update(false);
-        registerChangeListener(control.armedProperty(), updateGeometry);
+        registerChangeListener(control.armedProperty(), value -> update(false));
         @Nullable ReadOnlyBooleanProperty focusVisible = FXUtils.focusVisibleProperty(control);
         ReadOnlyBooleanProperty focusIndicator = focusVisible != null ? focusVisible : control.focusedProperty();
         registerChangeListener(focusIndicator, value ->
@@ -137,20 +148,18 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
                 control.pseudoClassStateChanged(VISUAL_FOCUSED, false));
         Consumer<ObservableValue<?>> cancelGesture = value -> cancelDrag();
         registerChangeListener(control.disabledProperty(), cancelGesture);
-        registerChangeListener(control.showSelectedIconProperty(), updateGeometry);
-        registerChangeListener(control.showUnselectedIconProperty(), updateGeometry);
-        registerChangeListener(control.disableAnimationProperty(), value -> {
-            finishColors();
-            update(true);
-        });
         registerChangeListener(control.sceneProperty(), cancelGesture);
-        registerChangeListener(control.sizeProperty(), value -> control.requestLayout());
-        Consumer<ObservableValue<?>> layoutGeometry = value -> layoutHandle();
-        registerChangeListener(center, layoutGeometry);
-        registerChangeListener(diameter, layoutGeometry);
         control.addEventFilter(MouseEvent.ANY, dragHandler);
         control.pseudoClassStateChanged(VISUAL_FOCUSED, focusIndicator.get() && !control.isPressed());
         update(true);
+    }
+
+    /// Called by the control when an optional icon or animation property changes.
+    /// When requested, settles colors and geometry immediately after an animation-policy change.
+    public void updateOptions(boolean finishAnimation) {
+        if (finishAnimation)
+            finishColors();
+        update(finishAnimation);
     }
 
     /// Retargets geometry and lets the next CSS pass collect selection colors before layout.

@@ -4,6 +4,7 @@ package com.jfoenix.controls;
 
 import com.jfoenix.skins.JFXSwitchSkin;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.event.EventType;
 import javafx.geometry.NodeOrientation;
@@ -292,6 +293,49 @@ public final class JFXSwitchTest {
             control.setGraphic(null);
             layout(root);
             assertEquals(52, control.prefWidth(-1));
+        });
+    }
+
+    /// Keeps bound option updates working before skin creation, in inactive states, and after replacement.
+    @Test
+    void optionUpdatesAcrossSkinReplacement() throws Exception {
+        onFxThread(() -> {
+            JFXSwitch control = new JFXSwitch();
+            SimpleBooleanProperty immediate = new SimpleBooleanProperty(true);
+            control.disableAnimationProperty().bind(immediate);
+            SimpleBooleanProperty selectedIcon = new SimpleBooleanProperty(false);
+            control.showSelectedIconProperty().bind(selectedIcon);
+            control.setShowUnselectedIcon(true);
+            control.setShowUnselectedIcon(false);
+            selectedIcon.set(true);
+            selectedIcon.set(false);
+            VBox root = scene(control);
+            assertEquals(16, part(control, "handle").getLayoutBounds().getWidth());
+
+            selectedIcon.set(true);
+            selectedIcon.set(false);
+            selectedIcon.set(true);
+            control.setSelected(true);
+            layout(root);
+            assertTrue(part(control, "icon").isVisible());
+            selectedIcon.set(false);
+            assertFalse(part(control, "icon").isVisible());
+            selectedIcon.set(true);
+            assertTrue(part(control, "icon").isVisible());
+
+            control.setSkin(null);
+            selectedIcon.set(false);
+            selectedIcon.set(true);
+            selectedIcon.set(false);
+            control.setSkin(new JFXSwitchSkin(control));
+            selectedIcon.set(true);
+            layout(root);
+            assertTrue(part(control, "icon").isVisible());
+            immediate.set(false);
+            control.setSelected(false);
+            immediate.set(true);
+            assertEquals(16, part(control, "handle").getLayoutBounds().getWidth());
+            assertEquals(16, part(control, "handle").getBoundsInParent().getCenterX());
         });
     }
 

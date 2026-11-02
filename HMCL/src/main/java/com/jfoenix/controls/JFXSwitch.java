@@ -74,7 +74,14 @@ public class JFXSwitch extends ToggleButton {
             List.copyOf(STYLEABLES.getCssMetaData());
 
     /// The requested track height in logical pixels.
-    private final StyleableDoubleProperty size = new SimpleStyleableDoubleProperty(SIZE, this, "size", 32.0);
+    private final StyleableDoubleProperty size = new SimpleStyleableDoubleProperty(SIZE, this, "size", 32.0) {
+        /// Requests layout on every size change, including consecutive bound updates.
+        @Override
+        protected void invalidated() {
+            get();
+            requestLayout();
+        }
+    };
 
     /// Returns the track-height property, styled by `-jfx-size`. The default is 32 logical pixels.
     /// Artwork, borders, icons, animation distances, and target dimensions scale proportionally;
@@ -107,60 +114,82 @@ public class JFXSwitch extends ToggleButton {
         return getClassCssMetaData();
     }
 
-    /// Whether the selected handle displays a check mark. The default is false.
-    private final BooleanProperty showSelectedIcon = new SimpleBooleanProperty(this, "showSelectedIcon", false);
+    /// Lazily allocated selected-icon option; null represents the default false value.
+    private @Nullable BooleanProperty showSelectedIcon;
 
     /// Returns the property controlling selected icons.
     public final BooleanProperty showSelectedIconProperty() {
+        if (showSelectedIcon == null)
+            showSelectedIcon = createOptionProperty("showSelectedIcon", false, false);
         return showSelectedIcon;
     }
 
     /// Returns whether the selected icon is shown.
     public final boolean isShowSelectedIcon() {
-        return showSelectedIcon.get();
+        return showSelectedIcon != null && showSelectedIcon.get();
     }
 
     /// Sets the value of [#showSelectedIconProperty()].
     public final void setShowSelectedIcon(boolean value) {
-        showSelectedIcon.set(value);
+        if (showSelectedIcon != null || value)
+            showSelectedIconProperty().set(value);
     }
 
-    /// Whether the unselected handle displays a cross and grows to three quarters of the
-    /// track height instead of one half. The default is false.
-    private final BooleanProperty showUnselectedIcon = new SimpleBooleanProperty(this, "showUnselectedIcon", false);
+    /// Lazily allocated unselected-icon option; null represents the default false value.
+    private @Nullable BooleanProperty showUnselectedIcon;
 
-    /// Returns the property controlling unselected icons.
+    /// Returns the property controlling unselected icons. When true, the handle displays a cross
+    /// and grows to three quarters of the track height instead of one half. The default is false.
     public final BooleanProperty showUnselectedIconProperty() {
+        if (showUnselectedIcon == null)
+            showUnselectedIcon = createOptionProperty("showUnselectedIcon", false, false);
         return showUnselectedIcon;
     }
 
     /// Returns whether the unselected icon is shown.
     public final boolean isShowUnselectedIcon() {
-        return showUnselectedIcon.get();
+        return showUnselectedIcon != null && showUnselectedIcon.get();
     }
 
     /// Sets the value of [#showUnselectedIconProperty()].
     public final void setShowUnselectedIcon(boolean value) {
-        showUnselectedIcon.set(value);
+        if (showUnselectedIcon != null || value)
+            showUnselectedIconProperty().set(value);
     }
 
-    /// Whether handle movement, resizing, and selection color transitions finish immediately.
-    /// Defaults to the inverse of the global animation-enabled setting.
-    private final BooleanProperty disableAnimation =
-            new SimpleBooleanProperty(this, "disableAnimation", !AnimationUtils.isAnimationEnabled());
+    /// Lazily allocated animation option; null uses the inverse of the global animation-enabled setting.
+    private @Nullable BooleanProperty disableAnimation;
 
-    /// Returns the property controlling immediate animation completion.
+    /// Returns the property controlling immediate completion of handle movement, resizing, and colors.
+    /// Defaults to the inverse of the global animation-enabled setting.
     public final BooleanProperty disableAnimationProperty() {
+        if (disableAnimation == null)
+            disableAnimation = createOptionProperty("disableAnimation", !AnimationUtils.isAnimationEnabled(), true);
         return disableAnimation;
     }
 
     /// Returns whether animation is disabled.
     public final boolean isDisableAnimation() {
-        return disableAnimation.get();
+        return disableAnimation == null ? !AnimationUtils.isAnimationEnabled() : disableAnimation.get();
     }
 
     /// Sets the value of [#disableAnimationProperty()].
     public final void setDisableAnimation(boolean value) {
-        disableAnimation.set(value);
+        if (disableAnimation != null || value != !AnimationUtils.isAnimationEnabled())
+            disableAnimationProperty().set(value);
+    }
+
+    /// Creates an option that notifies the installed default skin without requiring a skin-side listener.
+    /// Animation-policy changes settle existing transitions; icon changes retain normal animation.
+    private BooleanProperty createOptionProperty(String name, boolean initialValue, boolean finishAnimation) {
+        return new SimpleBooleanProperty(this, name, initialValue) {
+            /// Validates the value even without a skin, so subsequent changes also reach this callback.
+            @Override
+            protected void invalidated() {
+                get();
+                if (getSkin() instanceof JFXSwitchSkin skin)
+                    skin.updateOptions(finishAnimation);
+            }
+        };
     }
 }
