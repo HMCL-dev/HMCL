@@ -836,6 +836,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             content.getTags().setAll(tags);
 
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
+            updateActiveState(modInfo.isActive());
             checkBox.setSelected(modInfo.isActive());
             checkBox.setOnAction(event -> {
                 try {
@@ -873,7 +874,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
 
         private void updateActiveState(boolean active) {
-            checkBox.setSelected(getItem().getModInfo().isActive());
+            checkBox.setSelected(active);
             colorAdjust.setSaturation(active ? 0.0 : -0.75);
             colorAdjust.setBrightness(active ? 0.0 : -0.50);
         }
