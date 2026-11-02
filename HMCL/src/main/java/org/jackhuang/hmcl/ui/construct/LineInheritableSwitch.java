@@ -93,6 +93,119 @@ public final class LineInheritableSwitch extends LineButtonBase {
         refresh();
     }
 
+    /// The raw value stored in this setting.
+    private final BooleanProperty rawValue = new SimpleBooleanProperty(this, "rawValue");
+
+    /// Sets the raw setting value.
+    public void setRawValue(boolean rawValue) {
+        rawValueProperty().set(rawValue);
+    }
+
+    /// Returns the raw setting value.
+    public boolean getRawValue() {
+        return rawValueProperty().get();
+    }
+
+    /// Returns the raw setting value.
+    public BooleanProperty rawValueProperty() {
+        return rawValue;
+    }
+
+    /// Whether the direct value overrides the inherited value.
+    private final BooleanProperty overridden = new SimpleBooleanProperty(this, "overridden");
+
+    /// Sets whether the direct value overrides the inherited value.
+    public void setOverridden(boolean overridden) {
+        overriddenProperty().set(overridden);
+    }
+
+    /// Returns whether the direct value overrides the inherited value.
+    public boolean isOverridden() {
+        return overriddenProperty().get();
+    }
+
+    /// Returns the override-state property.
+    public BooleanProperty overriddenProperty() {
+        return overridden;
+    }
+
+    /// The effective value displayed by the switch.
+    private final BooleanProperty effectiveValue = new SimpleBooleanProperty(this, "effectiveValue");
+
+    /// Sets the effective value displayed by the switch.
+    public void setEffectiveValue(boolean effectiveValue) {
+        effectiveValueProperty().set(effectiveValue);
+    }
+
+    /// Returns the effective value displayed by the switch.
+    public boolean isEffectiveValue() {
+        return effectiveValueProperty().get();
+    }
+
+    /// Returns the effective value displayed by the switch.
+    public BooleanProperty effectiveValueProperty() {
+        return effectiveValue;
+    }
+
+    /// Whether inherited mode can be selected.
+    private final BooleanProperty inheritAvailable = new SimpleBooleanProperty(this, "inheritAvailable", true);
+
+    /// Sets whether inherited mode can be selected.
+    public void setInheritAvailable(boolean inheritAvailable) {
+        inheritAvailableProperty().set(inheritAvailable);
+    }
+
+    /// Returns whether inherited mode can be selected.
+    public boolean isInheritAvailable() {
+        return inheritAvailableProperty().get();
+    }
+
+    /// Returns whether inherited mode can be selected.
+    public BooleanProperty inheritAvailableProperty() {
+        return inheritAvailable;
+    }
+
+    /// The tooltip displayed while inheriting the parent value.
+    private final StringProperty inheritedTooltip = new SimpleStringProperty(this, "inheritedTooltip", "");
+
+    /// Sets the tooltip displayed while inheriting the parent value.
+    public void setInheritedTooltip(String inheritedTooltip) {
+        inheritedTooltipProperty().set(inheritedTooltip);
+    }
+
+    /// Returns the tooltip displayed while inheriting the parent value.
+    public String getInheritedTooltip() {
+        return inheritedTooltipProperty().get();
+    }
+
+    /// Returns the tooltip displayed while inheriting the parent value.
+    public StringProperty inheritedTooltipProperty() {
+        return inheritedTooltip;
+    }
+
+    /// The tooltip displayed while overriding the parent value.
+    private final StringProperty overriddenTooltip = new SimpleStringProperty(this, "overriddenTooltip", "");
+
+    /// Sets the tooltip displayed while overriding the parent value.
+    public void setOverriddenTooltip(String overriddenTooltip) {
+        overriddenTooltipProperty().set(overriddenTooltip);
+    }
+
+    /// Returns the tooltip displayed while overriding the parent value.
+    public String getOverriddenTooltip() {
+        return overriddenTooltipProperty().get();
+    }
+
+    /// Returns the tooltip displayed while overriding the parent value.
+    public StringProperty overriddenTooltipProperty() {
+        return overriddenTooltip;
+    }
+
+    /// Sets the tooltip displayed on the inherit button in inherited mode.
+    public void setInheritTooltip(String tooltip) {
+        setInheritedTooltip(tooltip);
+    }
+
     /// Overrides the inherited value with its inverse and fires the row action.
     @Override
     public void fire() {
@@ -114,118 +227,5 @@ public final class LineInheritableSwitch extends LineButtonBase {
         inheritTooltip.setText(inherited ? getInheritedTooltip() : getOverriddenTooltip());
 
         switchControl.setSelected(isEffectiveValue());
-    }
-
-    /// The raw value stored in this setting.
-    private final BooleanProperty rawValue = new SimpleBooleanProperty(this, "rawValue");
-
-    /// Returns the raw setting value.
-    public BooleanProperty rawValueProperty() {
-        return rawValue;
-    }
-
-    /// Returns the raw setting value.
-    public boolean getRawValue() {
-        return rawValueProperty().get();
-    }
-
-    /// Sets the raw setting value.
-    public void setRawValue(boolean rawValue) {
-        rawValueProperty().set(rawValue);
-    }
-
-    /// Whether the direct value overrides the inherited value.
-    private final BooleanProperty overridden = new SimpleBooleanProperty(this, "overridden");
-
-    /// Returns the override-state property.
-    public BooleanProperty overriddenProperty() {
-        return overridden;
-    }
-
-    /// Returns whether the direct value overrides the inherited value.
-    public boolean isOverridden() {
-        return overriddenProperty().get();
-    }
-
-    /// Sets whether the direct value overrides the inherited value.
-    public void setOverridden(boolean overridden) {
-        overriddenProperty().set(overridden);
-    }
-
-    /// The effective value displayed by the switch.
-    private final BooleanProperty effectiveValue = new SimpleBooleanProperty(this, "effectiveValue");
-
-    /// Returns the effective value displayed by the switch.
-    public BooleanProperty effectiveValueProperty() {
-        return effectiveValue;
-    }
-
-    /// Returns the effective value displayed by the switch.
-    public boolean isEffectiveValue() {
-        return effectiveValueProperty().get();
-    }
-
-    /// Sets the effective value displayed by the switch.
-    public void setEffectiveValue(boolean effectiveValue) {
-        effectiveValueProperty().set(effectiveValue);
-    }
-
-    /// Whether inherited mode can be selected.
-    private final BooleanProperty inheritAvailable = new SimpleBooleanProperty(this, "inheritAvailable", true);
-
-    /// Returns whether inherited mode can be selected.
-    public BooleanProperty inheritAvailableProperty() {
-        return inheritAvailable;
-    }
-
-    /// Returns whether inherited mode can be selected.
-    public boolean isInheritAvailable() {
-        return inheritAvailableProperty().get();
-    }
-
-    /// Sets whether inherited mode can be selected.
-    public void setInheritAvailable(boolean inheritAvailable) {
-        inheritAvailableProperty().set(inheritAvailable);
-    }
-
-    /// The tooltip displayed while inheriting the parent value.
-    private final StringProperty inheritedTooltip = new SimpleStringProperty(this, "inheritedTooltip", "");
-
-    /// Returns the tooltip displayed while inheriting the parent value.
-    public StringProperty inheritedTooltipProperty() {
-        return inheritedTooltip;
-    }
-
-    /// Returns the tooltip displayed while inheriting the parent value.
-    public String getInheritedTooltip() {
-        return inheritedTooltipProperty().get();
-    }
-
-    /// Sets the tooltip displayed while inheriting the parent value.
-    public void setInheritedTooltip(String inheritedTooltip) {
-        inheritedTooltipProperty().set(inheritedTooltip);
-    }
-
-    /// The tooltip displayed while overriding the parent value.
-    private final StringProperty overriddenTooltip = new SimpleStringProperty(this, "overriddenTooltip", "");
-
-    /// Returns the tooltip displayed while overriding the parent value.
-    public StringProperty overriddenTooltipProperty() {
-        return overriddenTooltip;
-    }
-
-    /// Returns the tooltip displayed while overriding the parent value.
-    public String getOverriddenTooltip() {
-        return overriddenTooltipProperty().get();
-    }
-
-    /// Sets the tooltip displayed while overriding the parent value.
-    public void setOverriddenTooltip(String overriddenTooltip) {
-        overriddenTooltipProperty().set(overriddenTooltip);
-    }
-
-    /// Sets the tooltip displayed on the inherit button in inherited mode.
-    public void setInheritTooltip(String tooltip) {
-        setInheritedTooltip(tooltip);
     }
 }

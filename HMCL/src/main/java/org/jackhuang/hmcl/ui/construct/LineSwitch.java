@@ -26,19 +26,12 @@ public final class LineSwitch extends LineButtonBase {
         setTrailing(switchControl);
     }
 
-    /// Toggles the selected setting and fires a single row action.
-    @Override
-    public void fire() {
-        setSelected(!isSelected());
-        super.fire();
-    }
-
     /// The selected setting value shared with the switch.
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected");
 
-    /// Returns the selected-state property bound to the switch.
-    public BooleanProperty selectedProperty() {
-        return selected;
+    /// Sets the selected setting value and updates the switch.
+    public void setSelected(boolean selected) {
+        selectedProperty().set(selected);
     }
 
     /// Returns whether the setting is selected.
@@ -46,8 +39,15 @@ public final class LineSwitch extends LineButtonBase {
         return selectedProperty().get();
     }
 
-    /// Sets the selected setting value and updates the switch.
-    public void setSelected(boolean selected) {
-        selectedProperty().set(selected);
+    /// Returns the selected-state property bound to the switch.
+    public BooleanProperty selectedProperty() {
+        return selected;
+    }
+
+    /// Toggles the selected setting and fires a single row action.
+    @Override
+    public void fire() {
+        setSelected(!isSelected());
+        super.fire();
     }
 }

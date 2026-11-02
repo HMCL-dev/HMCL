@@ -204,25 +204,74 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         update(finishAnimation);
     }
 
-    /// Retargets geometry and lets the next CSS pass collect selection colors before layout.
-    private void updateSelection() {
-        update(false);
-        if (control.isDisableAnimation() || control.isDisabled() || control.getScene() == null)
-            return;
-        if (colors.isEmpty()) {
-            colors.add(new CssColor(track.fillProperty()));
-            colors.add(new CssColor(handle.fillProperty()));
-            colors.add(new CssColor(stateLayer.fillProperty()));
-            colors.add(new CssColor(track.strokeProperty()));
-            if (icon != null)
-                colors.add(new CssColor(icon.fillProperty()));
-        }
-        if (colorTransition != null)
-            colorTransition.stop();
+    /// Stops animation and removes the listeners and behavior installed by this skin.
+    @Override
+    public void dispose() {
+        control.removeEventFilter(MouseEvent.ANY, mouseHandler);
+        control.removeEventFilter(KeyEvent.ANY, keyHandler);
+        cancelGesture();
         for (CssColor color : colors)
-            color.capture();
-        animateColors = true;
-        control.requestLayout();
+            color.dispose();
+        control.pseudoClassStateChanged(VISUAL_FOCUSED, false);
+        super.dispose();
+    }
+
+    /// Centers the scaled artwork within the control and starts pending color transitions.
+    @Override
+    protected void layoutChildren(double x, double y, double w, double h) {
+        double scale = sizeScale();
+        artworkScale.setX(scale);
+        artworkScale.setY(scale);
+        // Keep animation and CSS geometry in MD3 units; scale the entire artwork consistently.
+        artwork.resizeRelocate(x + (w - TRACK_WIDTH * scale) / 2,
+                y + (h - TARGET_HEIGHT * scale) / 2, TRACK_WIDTH, TARGET_HEIGHT);
+        layoutHandle();
+        // JavaFX applies CSS before layout, so all changed paints now share the same start time.
+        if (animateColors) {
+            animateColors = false;
+            for (CssColor color : colors) {
+                if (color.target != null) {
+                    colorTransition().playFromStart();
+                    break;
+                }
+            }
+        }
+    }
+
+    /// Reserves the scaled track width and control insets.
+    @Override
+    protected double computeMinWidth(double h, double top, double right, double bottom, double left) {
+        return left + TRACK_WIDTH * sizeScale() + right;
+    }
+
+    /// Reserves the scaled interaction target height and control insets.
+    @Override
+    protected double computeMinHeight(double w, double top, double right, double bottom, double left) {
+        return top + TARGET_HEIGHT * sizeScale() + bottom;
+    }
+
+    /// Uses the same fixed width as the minimum size.
+    @Override
+    protected double computePrefWidth(double h, double top, double right, double bottom, double left) {
+        return computeMinWidth(h, top, right, bottom, left);
+    }
+
+    /// Uses the same fixed height as the minimum size.
+    @Override
+    protected double computePrefHeight(double w, double top, double right, double bottom, double left) {
+        return computeMinHeight(w, top, right, bottom, left);
+    }
+
+    /// Keeps layouts from stretching the switch beyond its configured target width.
+    @Override
+    protected double computeMaxWidth(double h, double top, double right, double bottom, double left) {
+        return computePrefWidth(h, top, right, bottom, left);
+    }
+
+    /// Keeps layouts from stretching the switch beyond its configured target height.
+    @Override
+    protected double computeMaxHeight(double w, double top, double right, double bottom, double left) {
+        return computePrefHeight(w, top, right, bottom, left);
     }
 
     /// Handles clicks and dragging in artwork coordinates, including CSS scaling and RTL mirroring.
@@ -320,6 +369,102 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         dragging = false;
         control.disarm();
         update(true);
+    }
+
+    /// Retargets geometry and lets the next CSS pass collect selection colors before layout.
+    private void updateSelection() {
+        update(false);
+        if (control.isDisableAnimation() || control.isDisabled() || control.getScene() == null)
+            return;
+        if (colors.isEmpty()) {
+            colors.add(new CssColor(track.fillProperty()));
+            colors.add(new CssColor(handle.fillProperty()));
+            colors.add(new CssColor(stateLayer.fillProperty()));
+            colors.add(new CssColor(track.strokeProperty()));
+            if (icon != null)
+                colors.add(new CssColor(icon.fillProperty()));
+        }
+        if (colorTransition != null)
+            colorTransition.stop();
+        for (CssColor color : colors)
+            color.capture();
+        animateColors = true;
+        control.requestLayout();
+    }
+
+    /// Retargets an in-progress transition from its current geometry, or settles immediately.
+    private void update(boolean immediate) {
+        if (dragging)
+            return;
+        double currentCenter = center.get();
+        double currentDiameter = diameter.get();
+        if (geometryTransition != null)
+            geometryTransition.stop();
+        boolean selected = control.isSelected();
+        boolean pressed = control.isArmed() && !control.isDisabled();
+        boolean hasIcon = selected ? control.isShowSelectedIcon() : control.isShowUnselectedIcon();
+        double targetDiameter = pressed ? PRESSED_DIAMETER : selected || hasIcon ? ON_DIAMETER : OFF_DIAMETER;
+        double targetCenter = selected ? ON_CENTER : OFF_CENTER;
+        updateIcon(selected, hasIcon);
+        if (immediate || control.isDisableAnimation() || control.getScene() == null
+                || currentCenter == targetCenter && currentDiameter == targetDiameter) {
+            center.set(targetCenter);
+            diameter.set(targetDiameter);
+        } else {
+            if (geometryTransition == null)
+                geometryTransition = new Timeline();
+            // Preserve the visible geometry when a press or reversal interrupts a transition.
+            center.set(currentCenter);
+            diameter.set(currentDiameter);
+            geometryTransition.getKeyFrames().setAll(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(center, currentCenter),
+                            new KeyValue(diameter, currentDiameter)),
+                    new KeyFrame(pressed ? Motion.SHORT2 : Motion.MEDIUM1,
+                            new KeyValue(diameter, targetDiameter, pressed ? Motion.LINEAR : Motion.STANDARD)),
+                    new KeyFrame(Motion.MEDIUM2,
+                            new KeyValue(center, targetCenter, Motion.EASE_OUT_BACK)));
+            geometryTransition.play();
+        }
+        layoutHandle();
+    }
+
+    /// Creates the icon and its paint listener only when needed, retaining them for subsequent toggles.
+    private void updateIcon(boolean selected, boolean visible) {
+        if (icon == null && visible) {
+            icon = new SVGPath();
+            icon.getStyleClass().setAll("switch-icon");
+            icon.setManaged(false);
+            // The first CSS fill should appear immediately, without a transition from default black.
+            icon.setFill(null);
+            if (!colors.isEmpty())
+                colors.add(new CssColor(icon.fillProperty()));
+            artwork.getChildren().add(icon);
+        }
+        if (icon != null) {
+            icon.setVisible(visible);
+            if (visible)
+                icon.setContent(selected
+                        ? "M2 8l4 4 8-8-1.4-1.4L6 9.2 3.4 6.6Z"
+                        : "M4 2.6l4 4 4-4L13.4 4l-4 4 4 4-1.4 1.4-4-4-4 4L2.6 12l4-4-4-4Z");
+        }
+    }
+
+    /// Updates unmanaged artwork directly, without laying out the settings row each frame.
+    private void layoutHandle() {
+        double cx = center.get();
+        stateLayer.setCenterX(cx);
+        handle.setCenterX(cx);
+        handle.setRadius(diameter.get() / 2);
+        if (icon != null && icon.isVisible())
+            icon.relocate(cx - icon.getLayoutBounds().getWidth() / 2,
+                    CENTER_Y - icon.getLayoutBounds().getHeight() / 2);
+    }
+
+    /// Returns the artwork and target scale, falling back to MD3 dimensions for invalid sizes.
+    private double sizeScale() {
+        double size = control.getSize();
+        return Double.isFinite(size) && size > 0 ? size / TRACK_HEIGHT : 1;
     }
 
     /// Allocates the shared color animation on first use and reuses it for subsequent transitions.
@@ -429,150 +574,5 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         private void dispose() {
             property.removeListener(this);
         }
-    }
-
-    /// Retargets an in-progress transition from its current geometry, or settles immediately.
-    private void update(boolean immediate) {
-        if (dragging)
-            return;
-        double currentCenter = center.get();
-        double currentDiameter = diameter.get();
-        if (geometryTransition != null)
-            geometryTransition.stop();
-        boolean selected = control.isSelected();
-        boolean pressed = control.isArmed() && !control.isDisabled();
-        boolean hasIcon = selected ? control.isShowSelectedIcon() : control.isShowUnselectedIcon();
-        double targetDiameter = pressed ? PRESSED_DIAMETER : selected || hasIcon ? ON_DIAMETER : OFF_DIAMETER;
-        double targetCenter = selected ? ON_CENTER : OFF_CENTER;
-        updateIcon(selected, hasIcon);
-        if (immediate || control.isDisableAnimation() || control.getScene() == null
-                || currentCenter == targetCenter && currentDiameter == targetDiameter) {
-            center.set(targetCenter);
-            diameter.set(targetDiameter);
-        } else {
-            if (geometryTransition == null)
-                geometryTransition = new Timeline();
-            // Preserve the visible geometry when a press or reversal interrupts a transition.
-            center.set(currentCenter);
-            diameter.set(currentDiameter);
-            geometryTransition.getKeyFrames().setAll(
-                    new KeyFrame(Duration.ZERO,
-                            new KeyValue(center, currentCenter),
-                            new KeyValue(diameter, currentDiameter)),
-                    new KeyFrame(pressed ? Motion.SHORT2 : Motion.MEDIUM1,
-                            new KeyValue(diameter, targetDiameter, pressed ? Motion.LINEAR : Motion.STANDARD)),
-                    new KeyFrame(Motion.MEDIUM2,
-                            new KeyValue(center, targetCenter, Motion.EASE_OUT_BACK)));
-            geometryTransition.play();
-        }
-        layoutHandle();
-    }
-
-    /// Creates the icon and its paint listener only when needed, retaining them for subsequent toggles.
-    private void updateIcon(boolean selected, boolean visible) {
-        if (icon == null && visible) {
-            icon = new SVGPath();
-            icon.getStyleClass().setAll("switch-icon");
-            icon.setManaged(false);
-            // The first CSS fill should appear immediately, without a transition from default black.
-            icon.setFill(null);
-            if (!colors.isEmpty())
-                colors.add(new CssColor(icon.fillProperty()));
-            artwork.getChildren().add(icon);
-        }
-        if (icon != null) {
-            icon.setVisible(visible);
-            if (visible)
-                icon.setContent(selected
-                        ? "M2 8l4 4 8-8-1.4-1.4L6 9.2 3.4 6.6Z"
-                        : "M4 2.6l4 4 4-4L13.4 4l-4 4 4 4-1.4 1.4-4-4-4 4L2.6 12l4-4-4-4Z");
-        }
-    }
-
-    /// Returns the artwork and target scale, falling back to MD3 dimensions for invalid sizes.
-    private double sizeScale() {
-        double size = control.getSize();
-        return Double.isFinite(size) && size > 0 ? size / TRACK_HEIGHT : 1;
-    }
-
-    /// Centers the scaled artwork within the control and starts pending color transitions.
-    @Override
-    protected void layoutChildren(double x, double y, double w, double h) {
-        double scale = sizeScale();
-        artworkScale.setX(scale);
-        artworkScale.setY(scale);
-        // Keep animation and CSS geometry in MD3 units; scale the entire artwork consistently.
-        artwork.resizeRelocate(x + (w - TRACK_WIDTH * scale) / 2,
-                y + (h - TARGET_HEIGHT * scale) / 2, TRACK_WIDTH, TARGET_HEIGHT);
-        layoutHandle();
-        // JavaFX applies CSS before layout, so all changed paints now share the same start time.
-        if (animateColors) {
-            animateColors = false;
-            for (CssColor color : colors) {
-                if (color.target != null) {
-                    colorTransition().playFromStart();
-                    break;
-                }
-            }
-        }
-    }
-
-    /// Updates unmanaged artwork directly, without laying out the settings row each frame.
-    private void layoutHandle() {
-        double cx = center.get();
-        stateLayer.setCenterX(cx);
-        handle.setCenterX(cx);
-        handle.setRadius(diameter.get() / 2);
-        if (icon != null && icon.isVisible())
-            icon.relocate(cx - icon.getLayoutBounds().getWidth() / 2,
-                    CENTER_Y - icon.getLayoutBounds().getHeight() / 2);
-    }
-
-    /// Reserves the scaled track width and control insets.
-    @Override
-    protected double computeMinWidth(double h, double top, double right, double bottom, double left) {
-        return left + TRACK_WIDTH * sizeScale() + right;
-    }
-
-    /// Uses the same fixed width as the minimum size.
-    @Override
-    protected double computePrefWidth(double h, double top, double right, double bottom, double left) {
-        return computeMinWidth(h, top, right, bottom, left);
-    }
-
-    /// Reserves the scaled interaction target height and control insets.
-    @Override
-    protected double computeMinHeight(double w, double top, double right, double bottom, double left) {
-        return top + TARGET_HEIGHT * sizeScale() + bottom;
-    }
-
-    /// Uses the same fixed height as the minimum size.
-    @Override
-    protected double computePrefHeight(double w, double top, double right, double bottom, double left) {
-        return computeMinHeight(w, top, right, bottom, left);
-    }
-
-    /// Keeps layouts from stretching the switch beyond its configured target width.
-    @Override
-    protected double computeMaxWidth(double h, double top, double right, double bottom, double left) {
-        return computePrefWidth(h, top, right, bottom, left);
-    }
-
-    /// Keeps layouts from stretching the switch beyond its configured target height.
-    @Override
-    protected double computeMaxHeight(double w, double top, double right, double bottom, double left) {
-        return computePrefHeight(w, top, right, bottom, left);
-    }
-
-    /// Stops animation and removes the listeners and behavior installed by this skin.
-    @Override
-    public void dispose() {
-        control.removeEventFilter(MouseEvent.ANY, mouseHandler);
-        control.removeEventFilter(KeyEvent.ANY, keyHandler);
-        cancelGesture();
-        for (CssColor color : colors)
-            color.dispose();
-        control.pseudoClassStateChanged(VISUAL_FOCUSED, false);
-        super.dispose();
     }
 }

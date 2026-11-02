@@ -215,21 +215,6 @@ public final class JFXSwitchTest {
         });
     }
 
-    /// Dispatches a primary pointer event at a position in the unscaled switch artwork.
-    private static void mouse(JFXSwitch control, EventType<MouseEvent> type, double x, boolean down) {
-        mouse(control, type, x, MouseButton.PRIMARY, down);
-    }
-
-    /// Dispatches a pointer event while preserving the primary button's independent state.
-    private static void mouse(JFXSwitch control, EventType<MouseEvent> type, double x, MouseButton button, boolean down) {
-        Point2D scenePoint = Objects.requireNonNull(control.lookup(".switch-artwork")).localToScene(x, 24);
-        control.fireEvent(new MouseEvent(type, scenePoint.getX(), scenePoint.getY(),
-                scenePoint.getX(), scenePoint.getY(), button, 1,
-                false, false, false, false, down, false,
-                button == MouseButton.SECONDARY && type == MouseEvent.MOUSE_PRESSED, false, false, false,
-                new PickResult(control, scenePoint.getX(), scenePoint.getY())));
-    }
-
     /// Verifies settings-row CSS, arbitrary sizes, bound-property precedence, and invalid-size fallback.
     @Test
     void styleableSize() throws Exception {
@@ -410,11 +395,6 @@ public final class JFXSwitchTest {
         });
     }
 
-    /// Dispatches an unmodified key event to the switch.
-    private static void key(JFXSwitch control, EventType<KeyEvent> type, KeyCode code) {
-        control.fireEvent(new KeyEvent(type, "", "", code, false, false, false, false));
-    }
-
     /// Keeps bound options and keyboard activation working across skin replacement.
     @Test
     void optionUpdatesAcrossSkinReplacement() throws Exception {
@@ -562,6 +542,26 @@ public final class JFXSwitchTest {
             control.applyCss();
             assertEquals(disabled, palette(control), "Disabling must settle to the same palette as a fresh skin");
         });
+    }
+
+    /// Dispatches a primary pointer event at a position in the unscaled switch artwork.
+    private static void mouse(JFXSwitch control, EventType<MouseEvent> type, double x, boolean down) {
+        mouse(control, type, x, MouseButton.PRIMARY, down);
+    }
+
+    /// Dispatches a pointer event while preserving the primary button's independent state.
+    private static void mouse(JFXSwitch control, EventType<MouseEvent> type, double x, MouseButton button, boolean down) {
+        Point2D scenePoint = Objects.requireNonNull(control.lookup(".switch-artwork")).localToScene(x, 24);
+        control.fireEvent(new MouseEvent(type, scenePoint.getX(), scenePoint.getY(),
+                scenePoint.getX(), scenePoint.getY(), button, 1,
+                false, false, false, false, down, false,
+                button == MouseButton.SECONDARY && type == MouseEvent.MOUSE_PRESSED, false, false, false,
+                new PickResult(control, scenePoint.getX(), scenePoint.getY())));
+    }
+
+    /// Dispatches an unmodified key event to the switch.
+    private static void key(JFXSwitch control, EventType<KeyEvent> type, KeyCode code) {
+        control.fireEvent(new KeyEvent(type, "", "", code, false, false, false, false));
     }
 
     /// Completes a CSS/layout pass and captures solid paints independently of geometry and opacity.
