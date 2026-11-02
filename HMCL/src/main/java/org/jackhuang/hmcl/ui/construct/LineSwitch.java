@@ -44,9 +44,11 @@ public final class LineSwitch extends LineButtonBase {
         return selected;
     }
 
-    /// Toggles the selected setting and fires a single row action.
+    /// Toggles the selected setting and fires a single row action unless the row is disabled.
     @Override
     public void fire() {
+        if (isDisabled())
+            return;
         setSelected(!isSelected());
         super.fire();
     }

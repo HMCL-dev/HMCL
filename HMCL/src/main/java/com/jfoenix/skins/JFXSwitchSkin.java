@@ -33,6 +33,7 @@ import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,7 +138,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     /// Routes pointer gestures through one activation path.
     private final EventHandler<MouseEvent> mouseHandler = this::handleMouse;
 
-    /// Handles Space activation and Escape cancellation.
+    /// Handles platform activation keys and Escape cancellation.
     private final EventHandler<KeyEvent> keyHandler = this::handleKey;
 
     /// Whether a primary press is awaiting click or drag completion.
@@ -146,7 +147,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     /// Whether the handle is following the pointer instead of an animation.
     private boolean dragging;
 
-    /// Whether a Space press is awaiting release, excluding repeated key presses.
+    /// Whether an activation key press is awaiting release, excluding repeated key presses.
     private boolean keyDown;
 
     /// Pointer position in unscaled artwork coordinates at press time.
@@ -307,17 +308,21 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
                 geometryTransition.stop();
             control.arm();
             diameter.set(PRESSED_DIAMETER);
-            center.set(Math.max(OFF_CENTER, Math.min(ON_CENTER, pressCenter + point.getX() - pressX)));
+            center.set(dragCenter(point.getX()));
             event.consume();
         } else if (event.getEventType() == MouseEvent.MOUSE_RELEASED && event.getButton() == MouseButton.PRIMARY) {
             if (!mouseDown) {
                 event.consume();
                 return;
             }
-            @Nullable Point2D point = control.sceneToLocal(event.getSceneX(), event.getSceneY());
-            boolean activate = dragging
+            @Nullable Point2D point = dragging
+                    ? artwork.sceneToLocal(event.getSceneX(), event.getSceneY())
+                    : control.sceneToLocal(event.getSceneX(), event.getSceneY());
+            if (dragging && point != null)
+                center.set(dragCenter(point.getX()));
+            boolean activate = point != null && (dragging
                     ? (center.get() >= (OFF_CENTER + ON_CENTER) / 2) != control.isSelected()
-                    : control.isArmed() && point != null && control.contains(point);
+                    : control.isArmed() && control.contains(point));
             mouseDown = false;
             dragging = false;
             control.disarm();
@@ -335,14 +340,20 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         }
     }
 
-    /// Activates once per unmodified Space press and release, or cancels with Escape.
+    /// Clamps pointer displacement to the track while preserving the initial grab offset.
+    private double dragCenter(double pointerX) {
+        return Math.max(OFF_CENTER, Math.min(ON_CENTER, pressCenter + pointerX - pressX));
+    }
+
+    /// Activates once per unmodified Space or non-macOS Enter press and release; Escape cancels input.
     private void handleKey(KeyEvent event) {
         if (event.getCode() == KeyCode.ESCAPE && event.getEventType() == KeyEvent.KEY_PRESSED) {
             if (mouseDown || keyDown) {
                 cancelGesture();
                 event.consume();
             }
-        } else if (event.getCode() == KeyCode.SPACE) {
+        } else if (event.getCode() == KeyCode.SPACE
+                || event.getCode() == KeyCode.ENTER && OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
             if (event.getEventType() == KeyEvent.KEY_PRESSED) {
                 if (event.isAltDown() || event.isControlDown() || event.isMetaDown())
                     return;
@@ -386,8 +397,9 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         }
         if (colorTransition != null)
             colorTransition.stop();
+        // A reversal before the first frame may reapply the visible paint without emitting a change event.
         for (CssColor color : colors)
-            color.capture();
+            color.target = null;
         animateColors = true;
         control.requestLayout();
     }
@@ -510,19 +522,13 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         /// CSS origin retained during animation so stylesheets can still override it.
         private @Nullable StyleOrigin origin;
 
-        /// Starting color, captured from the currently displayed value on each reversal.
+        /// Starting color, captured from the displayed paint when CSS supplies a new target.
         private Color from = Color.TRANSPARENT;
 
         /// Observes a styleable property for the shared color transition.
         private CssColor(ObjectProperty<@Nullable Paint> property) {
             this.property = property;
             property.addListener(this);
-        }
-
-        /// Preserves an unchanged CSS target when a selection interrupts the shared transition.
-        private void capture() {
-            if (property.get() instanceof Color color)
-                from = color;
         }
 
         /// Starts from the visible color, or accepts unsupported and non-selection changes immediately.

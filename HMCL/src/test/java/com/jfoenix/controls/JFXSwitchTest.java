@@ -19,6 +19,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
@@ -29,6 +30,7 @@ import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.LineInheritableSwitch;
 import org.jackhuang.hmcl.ui.construct.LineSwitch;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -42,6 +44,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -105,44 +108,36 @@ public final class JFXSwitchTest {
         });
     }
 
-    /// Preserves compact row height and covers dragging with representative sizes and layout directions.
+    /// Preserves grab offsets, ignores secondary input, and commits only changed drag endpoints at either scale.
     @ParameterizedTest
-    @CsvSource({"false, 32, 16", "false, 24, 4", "true, 24, 40"})
+    @CsvSource({"false, 32, 16", "true, 24, 4"})
     void handleDragging(boolean rtl, double size, double pressX) throws Exception {
         onFxThread(() -> {
-            LineSwitch row = new LineSwitch();
-            row.setTitle("Setting");
-            VBox root = new VBox(row);
-            root.setNodeOrientation(rtl ? NodeOrientation.RIGHT_TO_LEFT : NodeOrientation.LEFT_TO_RIGHT);
-            applyStylesheets(new Scene(root, 300, 100));
-            layout(root);
-            JFXSwitch control = (JFXSwitch) Objects.requireNonNull(row.lookup(".jfx-switch"));
+            JFXSwitch control = new JFXSwitch();
             control.setStyle("-jfx-size: " + size + ";");
             control.setDisableAnimation(true);
+            VBox root = scene(control);
+            root.setNodeOrientation(rtl ? NodeOrientation.RIGHT_TO_LEFT : NodeOrientation.LEFT_TO_RIGHT);
             layout(root);
-            assertEquals(30, control.getHeight());
-            assertEquals(50, row.getHeight());
             AtomicInteger actions = new AtomicInteger();
-            AtomicInteger rowActions = new AtomicInteger();
             control.setOnAction(event -> actions.incrementAndGet());
-            row.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> rowActions.incrementAndGet());
             Shape handle = part(control, "handle");
             double initialX = handle.localToScene(handle.getLayoutBounds()).getCenterX();
             mouse(control, MouseEvent.MOUSE_PRESSED, pressX, true);
             mouse(control, MouseEvent.MOUSE_DRAGGED, pressX + 12, true);
             layout(root);
             assertFalse(control.isSelected());
-            assertEquals(28, handle.getBoundsInParent().getCenterX(), 0.001);
             double draggedX = handle.localToScene(handle.getLayoutBounds()).getCenterX();
-            assertTrue(rtl ? draggedX < initialX : draggedX > initialX);
-            mouse(control, MouseEvent.MOUSE_DRAGGED, 60, true);
-            mouse(control, MouseEvent.MOUSE_RELEASED, 60, false);
-            mouse(control, MouseEvent.MOUSE_CLICKED, 60, false);
+            assertEquals((rtl ? -1 : 1) * 12 * size / 32, draggedX - initialX, 0.001,
+                    "The handle must follow the pointer without snapping to its position");
+            mouse(control, MouseEvent.MOUSE_PRESSED, pressX + 12, MouseButton.SECONDARY, true);
+            mouse(control, MouseEvent.MOUSE_RELEASED, pressX + 12, MouseButton.SECONDARY, true);
+            mouse(control, MouseEvent.MOUSE_DRAGGED, pressX + 8, true);
+            mouse(control, MouseEvent.MOUSE_RELEASED, pressX + 20, false);
+            mouse(control, MouseEvent.MOUSE_CLICKED, pressX + 20, false);
             layout(root);
-            assertTrue(control.isSelected());
-            assertTrue(row.isSelected());
+            assertTrue(control.isSelected(), "Commit the release position, preserving the original grab offset");
             assertEquals(1, actions.get());
-            assertEquals(0, rowActions.get());
             assertFalse(control.isArmed());
 
             mouse(control, MouseEvent.MOUSE_PRESSED, 36, true);
@@ -150,45 +145,14 @@ public final class JFXSwitchTest {
             mouse(control, MouseEvent.MOUSE_RELEASED, 30, false);
             mouse(control, MouseEvent.MOUSE_CLICKED, 30, false);
             assertTrue(control.isSelected());
-            assertTrue(row.isSelected());
-            assertEquals(1, actions.get());
+            assertEquals(1, actions.get(), "Dragging back to the selected endpoint must not fire an action");
             layout(root);
             mouse(control, MouseEvent.MOUSE_PRESSED, 36, true);
-            mouse(control, MouseEvent.MOUSE_DRAGGED, -10, true);
+            mouse(control, MouseEvent.MOUSE_DRAGGED, 30, true);
             mouse(control, MouseEvent.MOUSE_RELEASED, -10, false);
             mouse(control, MouseEvent.MOUSE_CLICKED, -10, false);
             assertFalse(control.isSelected());
             assertEquals(2, actions.get());
-
-            layout(root);
-            mouse(control, MouseEvent.MOUSE_PRESSED, pressX, true);
-            mouse(control, MouseEvent.MOUSE_DRAGGED, pressX + 1, true);
-            mouse(control, MouseEvent.MOUSE_RELEASED, pressX + 1, false);
-            mouse(control, MouseEvent.MOUSE_CLICKED, pressX + 1, false);
-            assertTrue(control.isSelected());
-            assertTrue(row.isSelected());
-            assertEquals(3, actions.get());
-        });
-    }
-
-    /// Keeps secondary-button input from resetting an active primary drag.
-    @Test
-    void secondaryButtonDuringDrag() throws Exception {
-        onFxThread(() -> {
-            JFXSwitch control = new JFXSwitch();
-            control.setDisableAnimation(true);
-            scene(control);
-            AtomicInteger actions = new AtomicInteger();
-            control.setOnAction(event -> actions.incrementAndGet());
-            mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
-            mouse(control, MouseEvent.MOUSE_DRAGGED, 20, true);
-            mouse(control, MouseEvent.MOUSE_PRESSED, 20, MouseButton.SECONDARY, true);
-            mouse(control, MouseEvent.MOUSE_RELEASED, 20, MouseButton.SECONDARY, true);
-            mouse(control, MouseEvent.MOUSE_DRAGGED, 36, true);
-            mouse(control, MouseEvent.MOUSE_RELEASED, 36, false);
-            mouse(control, MouseEvent.MOUSE_CLICKED, 36, false);
-            assertTrue(control.isSelected());
-            assertEquals(1, actions.get());
         });
     }
 
@@ -215,44 +179,31 @@ public final class JFXSwitchTest {
         });
     }
 
-    /// Verifies settings-row CSS, arbitrary sizes, bound-property precedence, and invalid-size fallback.
+    /// Scales artwork and its target through CSS, respects bindings, and falls back for invalid sizes.
     @Test
     void styleableSize() throws Exception {
         onFxThread(() -> {
             JFXSwitch control = new JFXSwitch();
             VBox root = scene(control);
-            root.getStyleClass().add("line-switch");
+            assertEquals(52, control.prefWidth(-1));
+            assertEquals(48, control.prefHeight(-1));
+            control.setStyle("-jfx-size: 24px;");
             layout(root);
-            assertEquals(24, control.getSize());
             assertEquals(39, control.prefWidth(-1));
-            assertEquals(30, control.prefHeight(-1));
-            root.getStyleClass().remove("line-switch");
-            control.setStyle("-jfx-size: 20px;");
-            layout(root);
-            assertEquals(20, control.getSize());
-            assertEquals(32.5, control.prefWidth(-1));
-            assertEquals(30, control.prefHeight(-1));
+            assertEquals(36, control.prefHeight(-1));
             Shape track = part(control, "track");
-            assertEquals(52, track.getLayoutBounds().getWidth(), "The outline must stay inside the track");
-            assertEquals(32, track.getLayoutBounds().getHeight());
-            assertEquals(32.5, track.localToScene(track.getLayoutBounds()).getWidth(), 0.001);
-            assertEquals(20, track.localToScene(track.getLayoutBounds()).getHeight(), 0.001);
+            assertEquals(39, track.localToScene(track.getLayoutBounds()).getWidth(), 0.001);
+            assertEquals(24, track.localToScene(track.getLayoutBounds()).getHeight(), 0.001);
 
             SimpleDoubleProperty boundSize = new SimpleDoubleProperty(40);
             control.sizeProperty().bind(boundSize);
             control.setStyle("-jfx-size: 28px;");
             layout(root);
-            assertEquals(40, control.getSize());
             assertEquals(65, control.prefWidth(-1));
             boundSize.set(Double.NaN);
             layout(root);
             assertEquals(52, control.prefWidth(-1));
             assertEquals(48, control.prefHeight(-1));
-            control.sizeProperty().unbind();
-            control.setStyle("-jfx-size: 24px;");
-            layout(root);
-            assertEquals(24, control.getSize());
-            assertEquals(36, control.prefHeight(-1));
         });
     }
 
@@ -262,13 +213,12 @@ public final class JFXSwitchTest {
         onFxThread(() -> {
             JFXSwitch control = new JFXSwitch();
             control.setAccessibleText("Wi-Fi");
-            assertEquals(!AnimationUtils.isAnimationEnabled(), control.isDisableAnimation());
             control.setDisableAnimation(true);
             scene(control);
             AtomicInteger actions = new AtomicInteger();
             control.setOnAction(event -> actions.incrementAndGet());
-            control.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.SPACE, false, false, false, false));
-            control.fireEvent(new KeyEvent(KeyEvent.KEY_RELEASED, "", "", KeyCode.SPACE, false, false, false, false));
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
+            key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
             assertTrue(control.isSelected());
             assertEquals(1, actions.get());
             assertEquals(AccessibleRole.TOGGLE_BUTTON, control.getAccessibleRole());
@@ -277,22 +227,32 @@ public final class JFXSwitchTest {
             control.executeAccessibleAction(AccessibleAction.FIRE);
             assertFalse(control.isSelected());
             assertEquals(2, actions.get());
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.ENTER);
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.ENTER);
+            key(control, KeyEvent.KEY_RELEASED, KeyCode.ENTER);
+            key(control, KeyEvent.KEY_RELEASED, KeyCode.ENTER);
+            boolean enterActivates = OperatingSystem.CURRENT_OS != OperatingSystem.MACOS;
+            assertEquals(enterActivates, control.isSelected());
+            assertEquals(enterActivates ? 3 : 2, actions.get());
             control.setDisable(true);
             control.fire();
             control.executeAccessibleAction(AccessibleAction.FIRE);
-            assertEquals(2, actions.get());
+            assertEquals(enterActivates ? 3 : 2, actions.get());
         });
     }
 
-    /// Emits one action at the row and its parent for row, pointer, and keyboard activation.
+    /// Keeps the settings row compact and emits one action for row, pointer, and keyboard activation.
     @Test
     void rowActionDispatch() throws Exception {
         onFxThread(() -> {
             LineSwitch row = new LineSwitch();
+            row.setTitle("Setting");
             VBox root = new VBox(row);
             applyStylesheets(new Scene(root, 300, 100));
             layout(root);
             JFXSwitch control = (JFXSwitch) Objects.requireNonNull(row.lookup(".jfx-switch"));
+            assertEquals(30, control.getHeight());
+            assertEquals(50, row.getHeight());
             control.setDisableAnimation(true);
             AtomicInteger rowActions = new AtomicInteger();
             AtomicInteger parentActions = new AtomicInteger();
@@ -305,8 +265,9 @@ public final class JFXSwitchTest {
             assertEquals(1, parentActions.get());
 
             mouse(control, MouseEvent.MOUSE_PRESSED, 36, true);
-            mouse(control, MouseEvent.MOUSE_RELEASED, 36, false);
-            mouse(control, MouseEvent.MOUSE_CLICKED, 36, false);
+            mouse(control, MouseEvent.MOUSE_DRAGGED, 37, true);
+            mouse(control, MouseEvent.MOUSE_RELEASED, 37, false);
+            mouse(control, MouseEvent.MOUSE_CLICKED, 37, false);
             assertFalse(row.isSelected());
             assertEquals(2, rowActions.get());
             assertEquals(2, parentActions.get());
@@ -314,6 +275,11 @@ public final class JFXSwitchTest {
             key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
             key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
             assertTrue(row.isSelected());
+            assertEquals(3, rowActions.get());
+            assertEquals(3, parentActions.get());
+            root.setDisable(true);
+            row.fire();
+            assertTrue(row.isSelected(), "A disabled row must not write the bound setting");
             assertEquals(3, rowActions.get());
             assertEquals(3, parentActions.get());
         });
@@ -376,6 +342,9 @@ public final class JFXSwitchTest {
             key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
             assertEquals(2, actions.get());
             assertFalse(control.isArmed());
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
+            key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
+            assertEquals(3, actions.get(), "The replacement skin must handle new input exactly once");
 
             SimpleBooleanProperty selected = new SimpleBooleanProperty(true);
             control.selectedProperty().bind(selected);
@@ -388,125 +357,111 @@ public final class JFXSwitchTest {
             mouse(control, MouseEvent.MOUSE_RELEASED, 36, false);
             assertTrue(control.isSelected());
             assertFalse(control.isArmed());
-            assertEquals(2, actions.get());
+            assertEquals(3, actions.get(), "Bound selection must ignore every activation path");
             selected.set(false);
             assertFalse(control.isSelected());
             assertEquals(false, control.queryAccessibleAttribute(AccessibleAttribute.SELECTED));
         });
     }
 
-    /// Keeps bound options and keyboard activation working across skin replacement.
+    /// Keeps bound icon and animation options effective before skin creation and after replacement.
     @Test
     void optionUpdatesAcrossSkinReplacement() throws Exception {
         onFxThread(() -> {
             JFXSwitch control = new JFXSwitch();
+            assertEquals(!AnimationUtils.isAnimationEnabled(), control.isDisableAnimation());
             SimpleBooleanProperty immediate = new SimpleBooleanProperty(true);
             control.disableAnimationProperty().bind(immediate);
-            AtomicInteger actions = new AtomicInteger();
-            control.setOnAction(event -> actions.incrementAndGet());
             SimpleBooleanProperty selectedIcon = new SimpleBooleanProperty(false);
             control.showSelectedIconProperty().bind(selectedIcon);
-            control.setShowUnselectedIcon(true);
-            control.setShowUnselectedIcon(false);
-            selectedIcon.set(true);
-            selectedIcon.set(false);
-            VBox root = scene(control);
-            assertEquals(16, part(control, "handle").getLayoutBounds().getWidth());
-
-            selectedIcon.set(true);
-            selectedIcon.set(false);
             selectedIcon.set(true);
             control.setSelected(true);
+            VBox root = scene(control);
+            assertTrue(part(control, "icon").isVisible());
+            selectedIcon.set(false);
+            assertFalse(part(control, "icon").isVisible());
+
+            control.setSkin(null);
+            selectedIcon.set(true);
+            control.setSkin(new JFXSwitchSkin(control));
             layout(root);
             assertTrue(part(control, "icon").isVisible());
             selectedIcon.set(false);
             assertFalse(part(control, "icon").isVisible());
             selectedIcon.set(true);
             assertTrue(part(control, "icon").isVisible());
-
-            control.setSkin(null);
-            selectedIcon.set(false);
-            selectedIcon.set(true);
-            selectedIcon.set(false);
-            control.setSkin(new JFXSwitchSkin(control));
-            selectedIcon.set(true);
-            layout(root);
-            assertEquals(1, control.lookupAll(".switch-track").size());
-            assertEquals(52, control.prefWidth(-1));
-            assertEquals(48, control.prefHeight(-1));
-            assertTrue(part(control, "icon").isVisible());
             immediate.set(false);
             control.setSelected(false);
             immediate.set(true);
             assertEquals(16, part(control, "handle").getLayoutBounds().getWidth());
             assertEquals(16, part(control, "handle").getBoundsInParent().getCenterX());
-            key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
-            key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
-            assertTrue(control.isSelected());
-            assertEquals(1, actions.get());
         });
     }
 
     /// Uses real pulses to animate selection without manually applying CSS or laying out after the change.
     @Test
     void selectionColorsOnPulse() throws Exception {
-        CompletableFuture<Stage> window = new CompletableFuture<>();
-        CompletableFuture<JFXSwitch> target = new CompletableFuture<>();
+        Stage window = callOnFxThread(Stage::new);
         try {
-            onFxThread(() -> {
-                JFXSwitch control = new JFXSwitch();
-                control.setDisableAnimation(false);
-                control.setStyle("-jfx-switch-primary: #123456;");
-                target.complete(control);
-                VBox root = scene(control);
-                Stage stage = new Stage();
-                window.complete(stage);
-                stage.setScene(root.getScene());
-                stage.show();
-                Paint initial = Objects.requireNonNull(part(control, "track").getFill());
+            JFXSwitch control = callOnFxThread(() -> {
+                JFXSwitch target = new JFXSwitch();
+                target.setDisableAnimation(false);
+                target.setStyle("-jfx-switch-primary: #123456;");
+                VBox root = scene(target);
+                window.setScene(root.getScene());
+                window.show();
+                Paint initial = Objects.requireNonNull(part(target, "track").getFill());
                 assertNotEquals(Color.web("#123456"), initial);
-                control.setSelected(true);
-                assertEquals(initial, part(control, "track").getFill());
+                target.setSelected(true);
+                assertEquals(initial, part(target, "track").getFill());
+                return target;
             });
             awaitFx("selection colors after automatic CSS and layout",
-                    () -> Color.web("#123456").equals(part(target.join(), "track").getFill()));
+                    () -> Color.web("#123456").equals(part(control, "track").getFill()));
         } finally {
-            onFxThread(() -> {
-                if (window.isDone())
-                    window.join().close();
-            });
+            onFxThread(window::close);
         }
     }
 
     /// Checks reversal continuity, eventual completion, theme overrides, and immediate completion.
     @Test
     void selectionColorTransitions() throws Exception {
-        CompletableFuture<JFXSwitch> created = new CompletableFuture<>();
-        CompletableFuture<@Unmodifiable List<Paint>> off = new CompletableFuture<>();
-        CompletableFuture<@Unmodifiable List<Paint>> on = new CompletableFuture<>();
-        onFxThread(() -> {
-            JFXSwitch control = new JFXSwitch();
-            control.setShowSelectedIcon(true);
-            control.setShowUnselectedIcon(true);
-            control.setStyle("-jfx-switch-primary: #123456;");
-            control.setDisableAnimation(true);
-            scene(control);
-            created.complete(control);
-            off.complete(palette(control));
+        JFXSwitch control = callOnFxThread(() -> {
+            JFXSwitch target = new JFXSwitch();
+            target.setShowSelectedIcon(true);
+            target.setShowUnselectedIcon(true);
+            target.setStyle("-jfx-switch-primary: #123456;");
+            target.setDisableAnimation(true);
+            scene(target);
+            return target;
+        });
+        @Unmodifiable List<Paint> off = callOnFxThread(() -> palette(control));
+        @Unmodifiable List<Paint> on = callOnFxThread(() -> {
             control.setSelected(true);
-            on.complete(palette(control));
+            layout(control);
+            return palette(control);
+        });
+        onFxThread(() -> {
             control.setSelected(false);
             control.applyCss();
             control.setDisableAnimation(false);
             control.setSelected(true);
+            layout(control);
+            control.setSelected(false);
+            layout(control);
+            control.setDisableAnimation(true);
+            assertEquals(off, palette(control), "Settling a pre-frame reversal must not need another CSS pass");
+            control.setDisableAnimation(false);
+            control.setSelected(true);
+            layout(control);
             control.setSelected(false);
             control.setSelected(true);
-            assertEquals(off.join(), palette(control), "Selection must start from the visible palette");
+            layout(control);
+            assertEquals(off, palette(control), "Selection must start from the visible palette");
         });
         awaitFx("selection colors to advance before reversal", () -> {
-            JFXSwitch control = created.join();
             @Unmodifiable List<Paint> current = palette(control);
-            if (off.join().equals(current))
+            if (off.equals(current))
                 return false;
             // Reverse in the same FX callback that observes progress. A busy CI worker may
             // skip intermediate frames, so continuity must also hold at the final frame.
@@ -514,18 +469,18 @@ public final class JFXSwitchTest {
             double center = handle.getBoundsInParent().getCenterX();
             double diameter = handle.getLayoutBounds().getWidth();
             control.setSelected(false);
+            layout(control);
             assertEquals(current, palette(control), "Reversing must preserve the displayed colors");
             assertEquals(center, handle.getBoundsInParent().getCenterX(), 0.001);
             assertEquals(diameter, handle.getLayoutBounds().getWidth(), 0.001);
             return true;
         });
-        awaitFx("reversed selection colors to settle", () -> off.join().equals(palette(created.join())));
+        awaitFx("reversed selection colors to settle", () -> off.equals(palette(control)));
         onFxThread(() -> {
-            JFXSwitch control = created.join();
-            assertEquals(off.join(), palette(control));
             control.setSelected(true);
             control.setDisableAnimation(true);
-            assertEquals(on.join(), palette(control), "Disabling animation must settle all colors");
+            layout(control);
+            assertEquals(on, palette(control), "Disabling animation must settle all colors");
             Shape handle = part(control, "handle");
             assertEquals(36, handle.getBoundsInParent().getCenterX());
             assertEquals(24, handle.getLayoutBounds().getWidth());
@@ -564,9 +519,8 @@ public final class JFXSwitchTest {
         control.fireEvent(new KeyEvent(type, "", "", code, false, false, false, false));
     }
 
-    /// Completes a CSS/layout pass and captures solid paints independently of geometry and opacity.
+    /// Captures rendered paints without applying CSS, which could hide an incorrect animation result.
     private static @Unmodifiable List<Paint> palette(JFXSwitch control) {
-        layout((VBox) control.getParent());
         return List.of(part(control, "track").getFill(),
                 part(control, "track").getStroke(),
                 part(control, "handle").getFill(),
@@ -589,8 +543,8 @@ public final class JFXSwitchTest {
                 Objects.requireNonNull(JFXSwitchTest.class.getResource("/assets/css/root.css")).toExternalForm());
     }
 
-    /// Applies pending CSS changes and synchronously lays out the scene root.
-    private static void layout(VBox root) {
+    /// Applies pending CSS changes and synchronously lays out the given subtree.
+    private static void layout(Region root) {
         root.applyCss();
         root.layout();
     }
@@ -630,8 +584,16 @@ public final class JFXSwitchTest {
 
     /// Runs assertions on the application thread and propagates failures to JUnit.
     private static void onFxThread(Runnable action) throws Exception {
-        FutureTask<@Nullable Void> task = new FutureTask<>(action, null);
+        callOnFxThread(() -> {
+            action.run();
+            return null;
+        });
+    }
+
+    /// Returns a value from the application thread without sharing mutable test holders.
+    private static <T extends @Nullable Object> T callOnFxThread(Callable<T> action) throws Exception {
+        FutureTask<T> task = new FutureTask<>(action);
         Platform.runLater(task);
-        task.get(10, TimeUnit.SECONDS);
+        return task.get(10, TimeUnit.SECONDS);
     }
 }

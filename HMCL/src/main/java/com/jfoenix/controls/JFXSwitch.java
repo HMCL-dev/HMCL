@@ -32,7 +32,8 @@ import java.util.List;
 /// Selects an immediately applied, binary setting using a Material Design 3 switch.
 ///
 /// The selected property represents the setting. Clicking or pressing Space toggles it
-/// and fires an action event. Programmatic selection changes do not fire action events.
+/// and fires an action event. Enter also activates the switch on non-macOS platforms.
+/// Programmatic selection changes do not fire action events.
 /// A primary-button drag anywhere on the control moves the handle by the pointer's horizontal
 /// displacement. Releasing chooses the nearest end of the track, firing an action only when
 /// that changes selection. A press without a drag retains normal click behavior.
