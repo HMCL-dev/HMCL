@@ -430,13 +430,18 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
             getChildren().add(currentArtwork);
     }
 
-    /// Returns the horizontal space reserved before the inherited label.
-    private double labelOffset() {
+    /// Returns whether the current content display includes any label text or graphic.
+    private boolean hasLabel() {
         boolean hasText = control.getContentDisplay() != ContentDisplay.GRAPHIC_ONLY
                 && control.getText() != null && !control.getText().isEmpty();
         boolean hasGraphic = control.getContentDisplay() != ContentDisplay.TEXT_ONLY
                 && control.getGraphic() != null;
-        return 52 * sizeScale() + (hasText || hasGraphic ? 12 : 0);
+        return hasText || hasGraphic;
+    }
+
+    /// Returns the horizontal space reserved before the inherited label.
+    private double labelOffset() {
+        return 52 * sizeScale() + (hasLabel() ? 12 : 0);
     }
 
     /// Returns the artwork and target scale, falling back to MD3 dimensions for invalid sizes.
@@ -482,18 +487,25 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     /// Includes the switch and label gap in the minimum width.
     @Override
     protected double computeMinWidth(double h, double top, double right, double bottom, double left) {
+        if (!hasLabel())
+            return left + 52 * sizeScale() + right;
         return labelOffset() + super.computeMinWidth(h, top, right, bottom, left);
     }
 
     /// Includes the switch and label gap in the preferred width.
     @Override
     protected double computePrefWidth(double h, double top, double right, double bottom, double left) {
+        // JavaFX 17 includes hidden text here when GRAPHIC_ONLY has no graphic.
+        if (!hasLabel())
+            return left + 52 * sizeScale() + right;
         return labelOffset() + super.computePrefWidth(h, top, right, bottom, left);
     }
 
     /// Preserves the configured target height when the label is shorter than the switch.
     @Override
     protected double computeMinHeight(double w, double top, double right, double bottom, double left) {
+        if (!hasLabel())
+            return top + 48 * sizeScale() + bottom;
         return Math.max(top + 48 * sizeScale() + bottom,
                 super.computeMinHeight(w < 0 ? w : Math.max(0, w - labelOffset()), top, right, bottom, left));
     }
@@ -501,6 +513,8 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     /// Measures wrapped labels using the width remaining after the switch.
     @Override
     protected double computePrefHeight(double w, double top, double right, double bottom, double left) {
+        if (!hasLabel())
+            return top + 48 * sizeScale() + bottom;
         return Math.max(top + 48 * sizeScale() + bottom,
                 super.computePrefHeight(w < 0 ? w : Math.max(0, w - labelOffset()), top, right, bottom, left));
     }
