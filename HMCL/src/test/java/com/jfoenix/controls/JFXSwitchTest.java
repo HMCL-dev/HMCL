@@ -67,7 +67,9 @@ public final class JFXSwitchTest {
                 VBox root = new VBox(button, control);
                 Stage stage = new Stage();
                 window.complete(stage);
-                stage.setScene(new Scene(root, 300, 160));
+                Scene scene = new Scene(root, 300, 160);
+                applyStylesheets(scene);
+                stage.setScene(scene);
                 stage.show();
                 stage.toFront();
                 layout(root);
@@ -156,9 +158,7 @@ public final class JFXSwitchTest {
                 row.addEventHandler(javafx.event.ActionEvent.ACTION, event -> actions.incrementAndGet());
                 VBox root = new VBox(row);
                 Scene scene = new Scene(root, 400, 120);
-                scene.getStylesheets().addAll(
-                        Objects.requireNonNull(getClass().getResource("/assets/css/blue.css")).toExternalForm(),
-                        Objects.requireNonNull(getClass().getResource("/assets/css/root.css")).toExternalForm());
+                applyStylesheets(scene);
                 Stage stage = new Stage();
                 window.complete(stage);
                 stage.setScene(scene);
@@ -226,10 +226,10 @@ public final class JFXSwitchTest {
                 row.setTitle("Setting");
                 VBox root = new VBox(row);
                 root.setNodeOrientation(rtl ? NodeOrientation.RIGHT_TO_LEFT : NodeOrientation.LEFT_TO_RIGHT);
-                new Scene(root, 300, 100);
+                applyStylesheets(new Scene(root, 300, 100));
                 layout(root);
                 JFXSwitch control = (JFXSwitch) Objects.requireNonNull(row.lookup(".jfx-switch"));
-                control.setSize(size);
+                control.setStyle("-jfx-size: " + size + ";");
                 control.setDisableAnimation(true);
                 layout(root);
                 AtomicInteger actions = new AtomicInteger();
@@ -305,9 +305,6 @@ public final class JFXSwitchTest {
             JFXSwitch control = new JFXSwitch();
             VBox root = scene(control);
             root.getStyleClass().add("line-toggle-button");
-            root.getStylesheets().addAll(
-                    Objects.requireNonNull(getClass().getResource("/assets/css/blue.css")).toExternalForm(),
-                    Objects.requireNonNull(getClass().getResource("/assets/css/root.css")).toExternalForm());
             layout(root);
             assertEquals(24, control.getSize());
             assertEquals(39, control.prefWidth(-1));
@@ -400,7 +397,7 @@ public final class JFXSwitchTest {
             assertEquals(48, control.getHeight());
             assertEquals(16, handle.getWidth());
             assertEquals(16, handle.getLayoutX() + handle.getWidth() / 2);
-            assertEquals(Color.web("#79747E"), handle.getBackground().getFills().get(0).getFill());
+            assertEquals(Color.web("#767683"), handle.getBackground().getFills().get(0).getFill());
 
             control.setSelected(true);
             layout(root);
@@ -521,12 +518,19 @@ public final class JFXSwitchTest {
         });
     }
 
-    /// Attaches a switch to a scene so its user-agent stylesheet and skin are loaded.
+    /// Attaches a switch to a scene with the application theme and component stylesheet.
     private static VBox scene(JFXSwitch control) {
         VBox root = new VBox(control);
-        new Scene(root, 300, 100);
+        applyStylesheets(new Scene(root, 300, 100));
         layout(root);
         return root;
+    }
+
+    /// Loads the same shared component styles and color palette used by the application.
+    private static void applyStylesheets(Scene scene) {
+        scene.getStylesheets().addAll(
+                Objects.requireNonNull(JFXSwitchTest.class.getResource("/assets/css/blue.css")).toExternalForm(),
+                Objects.requireNonNull(JFXSwitchTest.class.getResource("/assets/css/root.css")).toExternalForm());
     }
 
     /// Applies pending CSS changes and synchronously lays out the scene root.

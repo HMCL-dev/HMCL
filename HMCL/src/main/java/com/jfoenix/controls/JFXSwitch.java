@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Objects;
 import java.util.List;
 
 /// Selects an immediately applied, binary setting using a Material Design 3 switch.
@@ -37,7 +36,7 @@ import java.util.List;
 /// `-jfx-switch-primary-container`, `-jfx-switch-on-primary-container`,
 /// `-jfx-switch-surface`, `-jfx-switch-surface-container-highest`,
 /// `-jfx-switch-on-surface`, `-jfx-switch-on-surface-variant`, and `-jfx-switch-outline`
-/// CSS looked-up colors. HMCL's theme supplies these colors automatically.
+/// CSS looked-up colors in the application stylesheet.
 @NotNullByDefault
 public class JFXSwitch extends ToggleButton {
 
@@ -58,12 +57,6 @@ public class JFXSwitch extends ToggleButton {
     @Override
     protected Skin<?> createDefaultSkin() {
         return new JFXSwitchSkin(this);
-    }
-
-    /// Returns the default switch stylesheet, including standalone fallback colors.
-    @Override
-    public String getUserAgentStylesheet() {
-        return Objects.requireNonNull(JFXSwitch.class.getResource("/assets/css/jfx-switch.css")).toExternalForm();
     }
 
     /// Creates size metadata alongside the inherited toggle-button metadata.

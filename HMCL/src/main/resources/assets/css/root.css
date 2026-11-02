@@ -6,22 +6,6 @@
 .root {
 }
 
-.jfx-switch {
-    -jfx-switch-primary: -monet-primary;
-    -jfx-switch-on-primary: -monet-on-primary;
-    -jfx-switch-primary-container: -monet-primary-container;
-    -jfx-switch-on-primary-container: -monet-on-primary-container;
-    -jfx-switch-surface: -monet-surface;
-    -jfx-switch-surface-container-highest: -monet-surface-container-highest;
-    -jfx-switch-on-surface: -monet-on-surface;
-    -jfx-switch-on-surface-variant: -monet-on-surface-variant;
-    -jfx-switch-outline: -monet-outline;
-}
-
-.line-toggle-button .jfx-switch {
-    -jfx-size: 24;
-}
-
 .svg {
     -fx-fill: -monet-on-surface;
 }
@@ -1187,6 +1171,142 @@
     -fx-opacity: 0.4;
 }
 
+/*******************************************************************************
+ *                                                                             *
+ * JFX Switch                                                                  *
+ *                                                                             *
+ ******************************************************************************/
+
+.jfx-switch {
+    -jfx-switch-primary: -monet-primary;
+    -jfx-switch-on-primary: -monet-on-primary;
+    -jfx-switch-primary-container: -monet-primary-container;
+    -jfx-switch-on-primary-container: -monet-on-primary-container;
+    -jfx-switch-surface: -monet-surface;
+    -jfx-switch-surface-container-highest: -monet-surface-container-highest;
+    -jfx-switch-on-surface: -monet-on-surface;
+    -jfx-switch-on-surface-variant: -monet-on-surface-variant;
+    -jfx-switch-outline: -monet-outline;
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-alignment: center-left;
+    -fx-text-fill: -jfx-switch-on-surface;
+    -fx-cursor: hand;
+}
+
+.jfx-switch > .switch-artwork > .switch-track {
+    -fx-background-color: -jfx-switch-surface-container-highest;
+    -fx-background-radius: 16;
+    -fx-border-color: -jfx-switch-outline;
+    -fx-border-width: 2;
+    -fx-border-radius: 16;
+}
+
+.jfx-switch:selected > .switch-artwork > .switch-track {
+    -fx-background-color: -jfx-switch-primary;
+    -fx-border-color: transparent;
+}
+
+.jfx-switch > .switch-artwork > .switch-handle {
+    -fx-background-color: -jfx-switch-outline;
+    -fx-background-radius: 100;
+}
+
+.jfx-switch:selected > .switch-artwork > .switch-handle {
+    -fx-background-color: -jfx-switch-on-primary;
+}
+
+.jfx-switch:hover > .switch-artwork > .switch-handle,
+.jfx-switch:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:armed > .switch-artwork > .switch-handle {
+    -fx-background-color: -jfx-switch-on-surface-variant;
+}
+
+.jfx-switch:selected:hover > .switch-artwork > .switch-handle,
+.jfx-switch:selected:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:selected:armed > .switch-artwork > .switch-handle {
+    -fx-background-color: -jfx-switch-primary-container;
+}
+
+.jfx-switch > .switch-artwork > .switch-state-layer {
+    -fx-background-color: -jfx-switch-on-surface;
+    -fx-background-radius: 100;
+    -fx-opacity: 0;
+}
+
+.jfx-switch:selected > .switch-artwork > .switch-state-layer {
+    -fx-background-color: -jfx-switch-primary;
+}
+
+.jfx-switch:hover > .switch-artwork > .switch-state-layer {
+    -fx-opacity: 0.08;
+}
+
+.jfx-switch:visual-focused > .switch-artwork > .switch-state-layer,
+.jfx-switch:armed > .switch-artwork > .switch-state-layer {
+    -fx-opacity: 0.12;
+}
+
+.jfx-switch > .switch-artwork > .switch-icon {
+    -fx-fill: -jfx-switch-surface-container-highest;
+}
+
+.jfx-switch:selected > .switch-artwork > .switch-icon {
+    -fx-fill: -jfx-switch-on-primary-container;
+}
+
+/* Disabled opacity belongs to individual parts, never to the entire control. */
+.jfx-switch:disabled {
+    -fx-opacity: 1;
+    -fx-cursor: default;
+}
+
+.jfx-switch:disabled > .text {
+    -fx-opacity: 0.38;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-track {
+    -fx-background-color: -jfx-switch-surface-container-highest;
+    -fx-border-color: -jfx-switch-on-surface;
+    -fx-opacity: 0.12;
+}
+
+.jfx-switch:selected:disabled > .switch-artwork > .switch-track {
+    -fx-background-color: -jfx-switch-on-surface;
+    -fx-border-color: transparent;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-handle,
+.jfx-switch:disabled:hover > .switch-artwork > .switch-handle,
+.jfx-switch:disabled:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:disabled:armed > .switch-artwork > .switch-handle {
+    -fx-background-color: -jfx-switch-on-surface;
+    -fx-opacity: 0.38;
+}
+
+.jfx-switch:selected:disabled > .switch-artwork > .switch-handle,
+.jfx-switch:selected:disabled:hover > .switch-artwork > .switch-handle,
+.jfx-switch:selected:disabled:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:selected:disabled:armed > .switch-artwork > .switch-handle {
+    -fx-background-color: -jfx-switch-surface;
+    -fx-opacity: 1;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-icon {
+    -fx-opacity: 0.38;
+}
+
+.jfx-switch:selected:disabled > .switch-artwork > .switch-icon {
+    -fx-fill: -jfx-switch-on-surface;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-state-layer,
+.jfx-switch:disabled:hover > .switch-artwork > .switch-state-layer,
+.jfx-switch:disabled:visual-focused > .switch-artwork > .switch-state-layer,
+.jfx-switch:disabled:armed > .switch-artwork > .switch-state-layer {
+    -fx-opacity: 0;
+}
+
 .toggle-label {
     -fx-font-size: 14.0px;
 }
@@ -1903,6 +2023,10 @@
 
 .line-select-button .menu-container:selected .subtitle-label {
     -fx-text-fill: -monet-primary-transparent-80;
+}
+
+.line-toggle-button .jfx-switch {
+    -jfx-size: 24;
 }
 
 .update-pane:active .subtitle-label {
