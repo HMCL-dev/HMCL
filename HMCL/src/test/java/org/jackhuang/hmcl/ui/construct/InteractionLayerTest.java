@@ -17,6 +17,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.parallel.Isolated;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.lang.reflect.Field;
 import java.util.Objects;
@@ -117,6 +119,30 @@ public final class InteractionLayerTest {
             layer.advance(480_000_000);
             assertEquals(0, layer.getOpacity());
             assertTrue(layer.contains(100, 20));
+            assertFalse(layer.isStateTransitioning());
+        });
+    }
+
+    /// Checks early release below, at, and above hover opacity without completing the press first.
+    @ParameterizedTest
+    @CsvSource({
+            "112500000, 0.06, 131250000, 0.07, 150000000",
+            "150000000, 0.08, 150000000, 0.08, 150000000",
+            "187500000, 0.10, 206250000, 0.09, 225000000"
+    })
+    void earlyReleaseReturnsDirectlyToHover(long releasedAt, double releasedOpacity,
+                                            long sampledAt, double sampledOpacity, long settledAt) throws Exception {
+        onFxThread(() -> {
+            InteractionLayer layer = createLayer();
+            layer.setHovered(true, 0);
+            layer.press(0);
+            layer.release(releasedAt);
+            assertEquals(releasedOpacity, layer.getOpacity(), 1e-12);
+            assertEquals(releasedOpacity != 0.08, layer.isStateTransitioning());
+            layer.advance(sampledAt);
+            assertEquals(sampledOpacity, layer.getOpacity(), 1e-12);
+            layer.advance(settledAt);
+            assertEquals(0.08, layer.getOpacity());
             assertFalse(layer.isStateTransitioning());
         });
     }

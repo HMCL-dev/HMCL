@@ -288,15 +288,10 @@ public class RipplerContainer extends StackPane {
     public void setPrepareAction(@Nullable Runnable action) {
         if (action == getPrepareAction())
             return;
-        if (preparation != null) {
-            interactionLayer.setOnStateSettled(null);
-            preparation = null;
-        }
-        if (action != null) {
-            preparation = new HoverPreparation(action);
-            interactionLayer.setOnStateSettled(preparation);
+        preparation = action == null ? null : new HoverPreparation(action);
+        interactionLayer.setOnStateSettled(preparation);
+        if (preparation != null)
             preparation.run();
-        }
     }
 
     /// The CSS-configurable paint shared by all visual feedback states.
@@ -429,7 +424,7 @@ public class RipplerContainer extends StackPane {
             /// Reports whether CSS can assign this paint property.
             @Override
             public boolean isSettable(RipplerContainer styleable) {
-                return styleable.feedbackFill == null || !styleable.feedbackFill.isBound();
+                return !styleable.feedbackFill.isBound();
             }
 
             /// Returns the paint property receiving stylesheet values.

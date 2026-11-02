@@ -68,9 +68,6 @@ final class InteractionLayer extends Region {
     /// The monotonic start timestamp of the current transition.
     private long stateStart;
 
-    /// The duration calculated from the remaining opacity distance, in nanoseconds.
-    private long stateDuration;
-
     /// Whether the target opacity has not yet been reached.
     private boolean transitioning;
 
@@ -201,7 +198,7 @@ final class InteractionLayer extends Region {
         return pressActive ? PRESSED_OPACITY : focusActive ? FOCUS_OPACITY : hovered ? HOVER_OPACITY : 0;
     }
 
-    /// Samples the current fade and retargets it with a duration proportional to the remaining distance.
+    /// Samples the current fade and retargets it without changing the opacity rate.
     private void changeState(long now) {
         updateAnimation(now);
         if (!animationEnabled) {
@@ -212,7 +209,6 @@ final class InteractionLayer extends Region {
         double target = desiredOpacity();
         if (target != targetOpacity) {
             startOpacity = getOpacity();
-            stateDuration = Math.max(1, Math.round(Math.abs(target - startOpacity) * NANOS_PER_OPACITY));
             targetOpacity = target;
             stateStart = now;
             setTransitioning(startOpacity != targetOpacity);
@@ -240,10 +236,12 @@ final class InteractionLayer extends Region {
     private void updateAnimation(long now) {
         if (!transitioning)
             return;
-        double progress = Math.max(0, Math.min(1, (double) (now - stateStart) / stateDuration));
-        setOpacity(progress == 0 ? startOpacity : progress == 1 ? targetOpacity
-                : startOpacity + (targetOpacity - startOpacity) * progress);
-        setTransitioning(progress < 1);
+        double distance = targetOpacity - startOpacity;
+        long elapsed = Math.max(0, now - stateStart);
+        // Compare rounded clock ticks so floating-point subtraction cannot delay settlement.
+        boolean finished = elapsed >= Math.max(1, Math.round(Math.abs(distance) * NANOS_PER_OPACITY));
+        setOpacity(finished ? targetOpacity : startOpacity + Math.copySign(elapsed / NANOS_PER_OPACITY, distance));
+        setTransitioning(!finished);
     }
 
     /// Keeps transition status and the reusable pulse source in sync.
