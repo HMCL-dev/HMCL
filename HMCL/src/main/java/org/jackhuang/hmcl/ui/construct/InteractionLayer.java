@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.animation.AnimationTimer;
-import javafx.animation.Interpolator;
 import javafx.geometry.Insets;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /// Draws uniform feedback behind the content of [RipplerContainer].
 /// Press takes priority over focus and hover. Node opacity multiplies the paint's own alpha,
 /// supporting colors, gradients, and image patterns without rebuilding the background per frame.
+/// All animated state changes are linear at eight opacity percentage points per 100 ms.
 /// Picking remains rectangular, including transparent corners and zero-opacity idle states.
 /// All operations must occur on the JavaFX application thread.
 @NotNullByDefault
@@ -32,11 +32,8 @@ final class InteractionLayer extends Region {
     /// The press tint opacity.
     private static final double PRESSED_OPACITY = 0.16;
 
-    /// The duration of hover-only transitions and entering press, in nanoseconds.
-    private static final long SHORT_DURATION = (long) (Motion.SHORT2.toMillis() * 1_000_000);
-
-    /// The duration of focus transitions and releasing press, in nanoseconds.
-    private static final long STATE_DURATION = (long) (Motion.SHORT4.toMillis() * 1_000_000);
+    /// The time per unit opacity, calibrated so idle-to-hover takes 100 ms.
+    private static final double NANOS_PER_OPACITY = Motion.SHORT2.toMillis() * 1_000_000 / HOVER_OPACITY;
 
     /// Whether real pulses are scheduled; tests supply deterministic timestamps instead.
     private final boolean automaticPulses;
@@ -71,7 +68,7 @@ final class InteractionLayer extends Region {
     /// The monotonic start timestamp of the current transition.
     private long stateStart;
 
-    /// The duration captured at the start of the current transition.
+    /// The duration calculated from the remaining opacity distance, in nanoseconds.
     private long stateDuration;
 
     /// Whether the target opacity has not yet been reached.
@@ -167,7 +164,7 @@ final class InteractionLayer extends Region {
         }
     }
 
-    /// Starts uniform press feedback over 100 ms; repeated presses have no effect.
+    /// Starts uniform press feedback at the shared linear rate; repeated presses have no effect.
     void press() {
         press(System.nanoTime());
     }
@@ -180,7 +177,7 @@ final class InteractionLayer extends Region {
         }
     }
 
-    /// Releases press feedback over 200 ms; repeated releases have no effect.
+    /// Restores hover, focus, or idle at the shared linear rate; repeated releases have no effect.
     void release() {
         release(System.nanoTime());
     }
@@ -204,7 +201,7 @@ final class InteractionLayer extends Region {
         return pressActive ? PRESSED_OPACITY : focusActive ? FOCUS_OPACITY : hovered ? HOVER_OPACITY : 0;
     }
 
-    /// Starts a transition from the currently displayed opacity, preserving interrupted fades.
+    /// Samples the current fade and retargets it with a duration proportional to the remaining distance.
     private void changeState(long now) {
         updateAnimation(now);
         if (!animationEnabled) {
@@ -215,9 +212,7 @@ final class InteractionLayer extends Region {
         double target = desiredOpacity();
         if (target != targetOpacity) {
             startOpacity = getOpacity();
-            stateDuration = pressActive ? SHORT_DURATION
-                    : targetOpacity == PRESSED_OPACITY ? STATE_DURATION
-                    : startOpacity <= HOVER_OPACITY && target <= HOVER_OPACITY ? SHORT_DURATION : STATE_DURATION;
+            stateDuration = Math.max(1, Math.round(Math.abs(target - startOpacity) * NANOS_PER_OPACITY));
             targetOpacity = target;
             stateStart = now;
             setTransitioning(startOpacity != targetOpacity);
@@ -246,11 +241,8 @@ final class InteractionLayer extends Region {
         if (!transitioning)
             return;
         double progress = Math.max(0, Math.min(1, (double) (now - stateStart) / stateDuration));
-        // Hover-only fades remain linear; focus and press transitions use the standard curve.
-        Interpolator interpolator = startOpacity <= HOVER_OPACITY && targetOpacity <= HOVER_OPACITY
-                ? Interpolator.LINEAR : Motion.STANDARD;
         setOpacity(progress == 0 ? startOpacity : progress == 1 ? targetOpacity
-                : interpolator.interpolate(startOpacity, targetOpacity, progress));
+                : startOpacity + (targetOpacity - startOpacity) * progress);
         setTransitioning(progress < 1);
     }
 

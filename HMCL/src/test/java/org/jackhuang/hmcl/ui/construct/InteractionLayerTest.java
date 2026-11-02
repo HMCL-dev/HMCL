@@ -56,7 +56,7 @@ public final class InteractionLayerTest {
             assertEquals(0.08, layer.getOpacity());
             layer.press(100_000_000);
             layer.advance(150_000_000);
-            assertTrue(layer.getOpacity() > 0.08 && layer.getOpacity() < 0.16);
+            assertEquals(0.12, layer.getOpacity(), 1e-12);
             layer.advance(200_000_000);
             assertEquals(0.16, layer.getOpacity());
             assertFalse(layer.isStateTransitioning());
@@ -65,15 +65,35 @@ public final class InteractionLayerTest {
             assertEquals(1.0, ((Color) fill.getFill()).getOpacity());
             assertEquals(new CornerRadii(8), fill.getRadii());
             layer.release(200_000_000);
+            layer.advance(250_000_000);
+            assertEquals(0.12, layer.getOpacity(), 1e-12);
             layer.advance(300_000_000);
-            assertTrue(layer.getOpacity() > 0.08 && layer.getOpacity() < 0.16);
-            layer.advance(400_000_000);
             assertEquals(0.08, layer.getOpacity());
             assertFalse(layer.isStateTransitioning());
         });
     }
 
-    /// Checks that early release and repeated presses continue from the displayed tint.
+    /// Checks that pressing halfway through hover takes another 150 ms without changing speed.
+    @Test
+    void pressDuringHoverKeepsLinearRate() throws Exception {
+        onFxThread(() -> {
+            InteractionLayer layer = createLayer();
+            layer.setHovered(true, 0);
+            // Input must sample the in-progress hover even when no pulse ran at this timestamp.
+            layer.press(50_000_000);
+            assertEquals(0.04, layer.getOpacity(), 1e-12);
+            layer.advance(100_000_000);
+            assertEquals(0.08, layer.getOpacity(), 1e-12);
+            layer.advance(150_000_000);
+            assertEquals(0.12, layer.getOpacity(), 1e-12);
+            assertTrue(layer.isStateTransitioning());
+            layer.advance(200_000_000);
+            assertEquals(0.16, layer.getOpacity());
+            assertFalse(layer.isStateTransitioning());
+        });
+    }
+
+    /// Checks that early release and repeated presses continue at the same opacity rate.
     @Test
     void rapidClicksRemainContinuous() throws Exception {
         onFxThread(() -> {
@@ -83,16 +103,18 @@ public final class InteractionLayerTest {
             double pressed = layer.getOpacity();
             layer.release(20_000_000);
             assertEquals(pressed, layer.getOpacity());
-            layer.advance(50_000_000);
+            layer.advance(30_000_000);
             double fading = layer.getOpacity();
-            assertTrue(fading > 0 && fading < pressed);
-            layer.press(50_000_000);
+            assertEquals(0.008, fading, 1e-12);
+            layer.press(30_000_000);
             assertEquals(fading, layer.getOpacity());
-            layer.press(70_000_000);
-            layer.advance(150_000_000);
+            layer.press(50_000_000);
+            layer.advance(120_000_000);
+            assertEquals(0.08, layer.getOpacity(), 1e-12);
+            layer.advance(220_000_000);
             assertEquals(0.16, layer.getOpacity());
-            layer.release(150_000_000);
-            layer.advance(350_000_000);
+            layer.release(220_000_000);
+            layer.advance(420_000_000);
             assertEquals(0, layer.getOpacity());
             assertTrue(layer.contains(100, 20));
             assertFalse(layer.isStateTransitioning());
@@ -119,8 +141,11 @@ public final class InteractionLayerTest {
             assertEquals(0.10, layer.getOpacity());
             assertFalse(layer.isStateTransitioning());
             layer.setFocusActive(false, 60_000_000);
-            layer.advance(260_000_000);
+            layer.advance(72_500_000);
+            assertEquals(0.09, layer.getOpacity(), 1e-12);
+            layer.advance(85_000_000);
             assertEquals(0.08, layer.getOpacity());
+            assertFalse(layer.isStateTransitioning());
         });
     }
 
@@ -154,7 +179,7 @@ public final class InteractionLayerTest {
             layer.setFill(null);
             assertNull(layer.getBackground());
             assertTrue(layer.contains(150, 30));
-            layer.advance(100_000_000);
+            layer.advance(200_000_000);
             layer.setFill(Color.color(0, 0, 1, 0.5));
             assertEquals(0.16, layer.getOpacity());
             assertEquals(0.5, ((Color) Objects.requireNonNull(layer.getBackground())
