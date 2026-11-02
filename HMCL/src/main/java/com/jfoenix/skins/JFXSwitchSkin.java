@@ -48,44 +48,64 @@ import java.util.function.Function;
 public final class JFXSwitchSkin extends ToggleButtonSkin {
     /// Marks focus acquired without a pointer press, independently of actual keyboard focus.
     private static final PseudoClass VISUAL_FOCUSED = PseudoClass.getPseudoClass("visual-focused");
+
     /// The control whose properties drive this skin.
     private final JFXSwitch control;
+
     /// Unmanaged artwork, laid out independently of the inherited label.
     private final Pane artwork = new Pane();
+
     /// Scales artwork from its leading top corner without scaling label content.
     private final Scale artworkScale = new Scale();
+
     /// Rounded track with its optional outline.
     private final Region track = new Region();
+
     /// Circular hover, focus, and pressed overlay behind the handle.
     private final Region stateLayer = new Region();
+
     /// Circular handle, independently styled from the track.
     private final Region handle = new Region();
+
     /// Optional check or cross, created on first use and then reused across state changes.
     private @Nullable SVGPath icon;
+
     /// Current logical handle center measured from the track's leading edge.
     private final DoubleProperty center = new SimpleDoubleProperty(16);
+
     /// Current handle diameter in pixels.
     private final DoubleProperty diameter = new SimpleDoubleProperty(16);
+
     /// Movement and resize animation, allocated on the first animated geometry change.
     private @Nullable Timeline geometryTransition;
+
     /// Paint listeners installed on the first animated selection change; initially empty.
     private final List<CssColor<?>> colors = new ArrayList<>();
+
     /// Shared color animation, allocated when CSS supplies the first transition target.
     private @Nullable Transition colorTransition;
+
     /// Whether selection colors are waiting for the next CSS and layout pass.
     private boolean animateColors;
+
     /// Prevents animation writes from being interpreted as new CSS targets.
     private boolean applyingColors;
+
     /// Filters pointer gestures before the inherited button behavior handles release.
     private final EventHandler<MouseEvent> dragHandler = this::handleDrag;
+
     /// Whether the current primary press on the control can begin a drag.
     private boolean dragCandidate;
+
     /// Whether the handle is following the pointer instead of an animation.
     private boolean dragging;
+
     /// Suppresses the click generated after a completed or canceled drag.
     private boolean suppressClick;
+
     /// Pointer position in unscaled artwork coordinates at press time.
     private double pressX;
+
     /// Handle center at press time, preserving the pointer's grab offset.
     private double pressCenter;
 
@@ -283,20 +303,28 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     /// Interpolates a solid paint without changing the property's CSS precedence.
     /// CSS changes outside a selection update take effect immediately, including theme changes.
     private final class CssColor<T> {
+
         /// The rendered CSS property, also observed for new targets.
         private final ObjectProperty<@Nullable T> property;
+
         /// Reads a supported solid color, or null for complex paints.
         private final Function<T, @Nullable Color> colorOf;
+
         /// Replaces only the color, preserving the target's geometry.
         private final BiFunction<T, Color, T> recolor;
+
         /// Listener removed when this skin is disposed.
         private final ChangeListener<@Nullable T> listener = (observable, previous, next) -> retarget(previous, next);
+
         /// Most recent CSS value; null means no transition is pending.
         private @Nullable T target;
+
         /// CSS origin retained during animation so stylesheets can still override it.
         private @Nullable StyleOrigin origin;
+
         /// Starting color, captured from the currently displayed value on each reversal.
         private Color from = Color.TRANSPARENT;
+
         /// Destination color extracted from the current CSS target.
         private Color to = Color.TRANSPARENT;
 
