@@ -440,6 +440,41 @@ public final class JFXSwitchTest {
         });
     }
 
+    /// Avoids an unused icon node, then reuses a correctly styled icon across visibility and selection changes.
+    @Test
+    void lazyIcon() throws Exception {
+        onFxThread(() -> {
+            JFXSwitch control = new JFXSwitch();
+            control.setStyle("-jfx-switch-on-primary-container: #123456;");
+            VBox root = scene(control);
+            var artwork = (javafx.scene.Parent) Objects.requireNonNull(control.lookup(".switch-artwork"));
+            assertEquals(3, artwork.getChildrenUnmodifiable().size());
+            assertNull(control.lookup(".switch-icon"));
+            control.setShowSelectedIcon(true);
+            assertNull(control.lookup(".switch-icon"));
+
+            control.setSelected(true);
+            layout(root);
+            var icon = (SVGPath) Objects.requireNonNull(control.lookup(".switch-icon"));
+            assertTrue(icon.isVisible());
+            assertEquals(4, artwork.getChildrenUnmodifiable().size());
+            assertEquals(Color.web("#123456"), icon.getFill(), "Initial styling must not animate from black");
+            String check = icon.getContent();
+            control.setShowSelectedIcon(false);
+            assertFalse(icon.isVisible());
+            control.setShowUnselectedIcon(true);
+            control.setSelected(false);
+            layout(root);
+            assertSame(icon, control.lookup(".switch-icon"));
+            assertTrue(icon.isVisible());
+            assertNotEquals(check, icon.getContent());
+            control.setShowUnselectedIcon(false);
+            control.setShowUnselectedIcon(true);
+            assertSame(icon, control.lookup(".switch-icon"));
+            assertEquals(4, artwork.getChildrenUnmodifiable().size());
+        });
+    }
+
     /// Checks MD3 geometry, icons, pressed state, and per-part disabled opacity.
     @Test
     void geometryAndStates() throws Exception {

@@ -36,8 +36,8 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -60,16 +60,16 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     private final Region stateLayer = new Region();
     /// Circular handle, independently styled from the track.
     private final Region handle = new Region();
-    /// Optional check or cross, centered on the handle.
-    private final SVGPath icon = new SVGPath();
+    /// Optional check or cross, created on first use and then reused across state changes.
+    private @Nullable SVGPath icon;
     /// Current logical handle center measured from the track's leading edge.
     private final DoubleProperty center = new SimpleDoubleProperty(16);
     /// Current handle diameter in pixels.
     private final DoubleProperty diameter = new SimpleDoubleProperty(16);
     /// Interruptible movement and resize animation.
     private final Timeline geometryTransition = new Timeline();
-    /// CSS-controlled paints sharing one selection transition.
-    private final @Unmodifiable List<CssColor<?>> colors;
+    /// CSS-controlled paints sharing one transition; the optional icon is registered on first use.
+    private final List<CssColor<?>> colors;
     /// Advances all changing paints together without allocating a timer for each part.
     private final Transition colorTransition = new Transition() {
         {
@@ -107,18 +107,16 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     public JFXSwitchSkin(JFXSwitch control) {
         super(control);
         this.control = control;
-        colors = List.of(backgroundColor(track), backgroundColor(handle), backgroundColor(stateLayer), borderColor(track),
-                new CssColor<Paint>(icon.fillProperty(), paint -> paint instanceof Color color ? color : null,
-                        (paint, color) -> color));
+        colors = new ArrayList<>(List.of(backgroundColor(track), backgroundColor(handle),
+                backgroundColor(stateLayer), borderColor(track)));
         artwork.getStyleClass().setAll("switch-artwork");
         track.getStyleClass().setAll("switch-track");
         stateLayer.getStyleClass().setAll("switch-state-layer");
         handle.getStyleClass().setAll("switch-handle");
-        icon.getStyleClass().setAll("switch-icon");
         artwork.setManaged(false);
         artwork.setMouseTransparent(true);
         artwork.getTransforms().add(artworkScale);
-        artwork.getChildren().setAll(track, stateLayer, handle, icon);
+        artwork.getChildren().setAll(track, stateLayer, handle);
         artwork.getChildren().forEach(node -> node.setManaged(false));
         getChildren().add(artwork);
         registerChangeListener(control.selectedProperty(), value -> updateSelection());
@@ -360,10 +358,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         boolean hasIcon = selected ? control.isShowSelectedIcon() : control.isShowUnselectedIcon();
         double targetDiameter = pressed ? 28 : selected || hasIcon ? 24 : 16;
         double targetCenter = selected ? 36 : 16;
-        icon.setVisible(hasIcon);
-        icon.setContent(selected
-                ? "M 2 8 L 6 12 L 14 4 L 12.6 2.6 L 6 9.2 L 3.4 6.6 Z"
-                : "M 4 2.6 L 8 6.6 L 12 2.6 L 13.4 4 L 9.4 8 L 13.4 12 L 12 13.4 L 8 9.4 L 4 13.4 L 2.6 12 L 6.6 8 L 2.6 4 Z");
+        updateIcon(selected, hasIcon);
         if (immediate || control.isDisableAnimation() || control.getScene() == null) {
             center.set(targetCenter);
             diameter.set(targetDiameter);
@@ -382,6 +377,27 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
             geometryTransition.play();
         }
         layoutHandle();
+    }
+
+    /// Creates the icon and its paint listener only when needed, retaining them for subsequent toggles.
+    private void updateIcon(boolean selected, boolean visible) {
+        if (icon == null && visible) {
+            icon = new SVGPath();
+            icon.getStyleClass().setAll("switch-icon");
+            icon.setManaged(false);
+            // The first CSS fill should appear immediately, without a transition from default black.
+            icon.setFill(null);
+            colors.add(new CssColor<Paint>(icon.fillProperty(), paint -> paint instanceof Color color ? color : null,
+                    (paint, color) -> color));
+            artwork.getChildren().add(icon);
+        }
+        if (icon != null) {
+            icon.setVisible(visible);
+            if (visible)
+                icon.setContent(selected
+                        ? "M 2 8 L 6 12 L 14 4 L 12.6 2.6 L 6 9.2 L 3.4 6.6 Z"
+                        : "M 4 2.6 L 8 6.6 L 12 2.6 L 13.4 4 L 9.4 8 L 13.4 12 L 12 13.4 L 8 9.4 L 4 13.4 L 2.6 12 L 6.6 8 L 2.6 4 Z");
+        }
     }
 
     /// Restores artwork when the inherited skin rebuilds its label children.
@@ -435,8 +451,9 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         double size = diameter.get();
         stateLayer.resizeRelocate(cx - 20, 4, 40, 40);
         handle.resizeRelocate(cx - size / 2, 24 - size / 2, size, size);
-        icon.relocate(cx - icon.getLayoutBounds().getWidth() / 2,
-                24 - icon.getLayoutBounds().getHeight() / 2);
+        if (icon != null && icon.isVisible())
+            icon.relocate(cx - icon.getLayoutBounds().getWidth() / 2,
+                    24 - icon.getLayoutBounds().getHeight() / 2);
     }
 
     /// Includes the switch and label gap in the minimum width.
