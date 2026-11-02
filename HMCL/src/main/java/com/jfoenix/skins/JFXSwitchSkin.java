@@ -279,7 +279,9 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
             return;
         }
         if (event.getEventType() == MouseEvent.MOUSE_PRESSED) {
-            if (event.getButton() != MouseButton.PRIMARY || keyDown)
+            if (event.getButton() != MouseButton.PRIMARY || keyDown
+                    || event.isShiftDown() || event.isControlDown() || event.isAltDown() || event.isMetaDown()
+                    || event.isMiddleButtonDown() || event.isSecondaryButtonDown())
                 return;
             if (control.isDisabled() || control.selectedProperty().isBound())
                 return;
@@ -345,25 +347,31 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     private void handleKey(KeyEvent event) {
         if (event.getCode() == KeyCode.ESCAPE && event.getEventType() == KeyEvent.KEY_PRESSED) {
             if (mouseDown || keyDown) {
+                boolean awaitingRelease = keyDown;
                 cancelGesture();
+                // Ignore auto-repeat until the canceled Space press is released.
+                keyDown = awaitingRelease;
                 event.consume();
             }
         } else if (event.getCode() == KeyCode.SPACE) {
             if (event.getEventType() == KeyEvent.KEY_PRESSED) {
-                if (event.isAltDown() || event.isControlDown() || event.isMetaDown())
+                if (event.isShiftDown() || event.isControlDown() || event.isAltDown() || event.isMetaDown())
                     return;
-                if (!keyDown && !mouseDown && !control.isDisabled() && !control.selectedProperty().isBound()) {
+                if (!keyDown) {
+                    if (mouseDown || control.isDisabled() || control.selectedProperty().isBound())
+                        return;
                     keyDown = true;
                     control.arm();
                 }
+                event.consume();
             } else if (event.getEventType() == KeyEvent.KEY_RELEASED && keyDown) {
                 keyDown = false;
                 boolean activate = control.isArmed();
                 control.disarm();
+                event.consume();
                 if (activate)
                     control.fire();
             }
-            event.consume();
         }
     }
 

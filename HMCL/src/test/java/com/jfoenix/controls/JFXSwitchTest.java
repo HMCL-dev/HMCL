@@ -299,7 +299,7 @@ public final class JFXSwitchTest {
         });
     }
 
-    /// Covers repeated keys, canceled input, bound selection, and click cancellation outside the target.
+    /// Rejects modified input and keeps activation state consistent through cancellation.
     @Test
     void inputLifecycle() throws Exception {
         onFxThread(() -> {
@@ -310,9 +310,34 @@ public final class JFXSwitchTest {
                 }
             };
             control.setDisableAnimation(true);
-            scene(control);
+            VBox root = scene(control);
             AtomicInteger actions = new AtomicInteger();
             control.setOnAction(event -> actions.incrementAndGet());
+            AtomicInteger passedKeys = new AtomicInteger();
+            root.addEventHandler(KeyEvent.ANY, event -> passedKeys.incrementAndGet());
+            for (KeyCode modifier : List.of(KeyCode.SHIFT, KeyCode.CONTROL, KeyCode.ALT, KeyCode.META)) {
+                mouse(control, MouseEvent.MOUSE_PRESSED, 16, MouseButton.PRIMARY, true, modifier);
+                mouse(control, MouseEvent.MOUSE_RELEASED, 16, false);
+                mouse(control, MouseEvent.MOUSE_CLICKED, 16, false);
+                assertFalse(control.isSelected(), "Modified clicks must not change selection: " + modifier);
+                key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE, modifier);
+                key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE, modifier);
+                assertFalse(control.isSelected(), "Modified Space must not change selection: " + modifier);
+            }
+            assertEquals(8, passedKeys.get(), "Unaccepted key combinations must propagate");
+            assertEquals(0, actions.get());
+
+            Point2D point = control.localToScene(16, 24);
+            for (MouseButton other : List.of(MouseButton.MIDDLE, MouseButton.SECONDARY)) {
+                control.fireEvent(new MouseEvent(MouseEvent.MOUSE_PRESSED, point.getX(), point.getY(),
+                        point.getX(), point.getY(), MouseButton.PRIMARY, 1,
+                        false, false, false, false, true, other == MouseButton.MIDDLE,
+                        other == MouseButton.SECONDARY, false, false, false,
+                        new PickResult(control, point.getX(), point.getY())));
+                mouse(control, MouseEvent.MOUSE_RELEASED, 16, false);
+                assertEquals(0, actions.get(), "Chorded mouse presses must not activate the switch");
+            }
+
             key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
             key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
             mouse(control, MouseEvent.MOUSE_PRESSED, 16, true);
@@ -330,9 +355,13 @@ public final class JFXSwitchTest {
             key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
             key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
             key(control, KeyEvent.KEY_PRESSED, KeyCode.ESCAPE);
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
             key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
+            assertEquals(1, actions.get(), "Auto-repeat must not reactivate a canceled key gesture");
             control.changeFocus(true);
             key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
+            assertTrue(control.isArmed(), "Space must work again after the canceled key is released");
             control.changeFocus(false);
             key(control, KeyEvent.KEY_RELEASED, KeyCode.SPACE);
             assertFalse(control.isArmed());
@@ -520,17 +549,30 @@ public final class JFXSwitchTest {
 
     /// Dispatches a pointer event while preserving the primary button's independent state.
     private static void mouse(JFXSwitch control, EventType<MouseEvent> type, double x, MouseButton button, boolean down) {
+        mouse(control, type, x, button, down, null);
+    }
+
+    /// Dispatches a pointer event with an optional keyboard modifier.
+    private static void mouse(JFXSwitch control, EventType<MouseEvent> type, double x, MouseButton button,
+                              boolean down, @Nullable KeyCode modifier) {
         Point2D scenePoint = Objects.requireNonNull(control.lookup(".switch-artwork")).localToScene(x, 24);
         control.fireEvent(new MouseEvent(type, scenePoint.getX(), scenePoint.getY(),
                 scenePoint.getX(), scenePoint.getY(), button, 1,
-                false, false, false, false, down, false,
+                modifier == KeyCode.SHIFT, modifier == KeyCode.CONTROL,
+                modifier == KeyCode.ALT, modifier == KeyCode.META, down, false,
                 button == MouseButton.SECONDARY && type == MouseEvent.MOUSE_PRESSED, false, false, false,
                 new PickResult(control, scenePoint.getX(), scenePoint.getY())));
     }
 
     /// Dispatches an unmodified key event to the switch.
     private static void key(JFXSwitch control, EventType<KeyEvent> type, KeyCode code) {
-        control.fireEvent(new KeyEvent(type, "", "", code, false, false, false, false));
+        key(control, type, code, null);
+    }
+
+    /// Dispatches a key event with an optional modifier.
+    private static void key(JFXSwitch control, EventType<KeyEvent> type, KeyCode code, @Nullable KeyCode modifier) {
+        control.fireEvent(new KeyEvent(type, "", "", code, modifier == KeyCode.SHIFT,
+                modifier == KeyCode.CONTROL, modifier == KeyCode.ALT, modifier == KeyCode.META));
     }
 
     /// Captures rendered paints without applying CSS, which could hide an incorrect animation result.
