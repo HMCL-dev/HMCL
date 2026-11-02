@@ -14,6 +14,7 @@ import javafx.scene.AccessibleAction;
 import javafx.scene.AccessibleAttribute;
 import javafx.scene.AccessibleRole;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -30,7 +31,6 @@ import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.LineInheritableSwitch;
 import org.jackhuang.hmcl.ui.construct.LineSwitch;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -207,14 +207,20 @@ public final class JFXSwitchTest {
         });
     }
 
-    /// Verifies keyboard and accessibility activation share selection and action-event semantics.
+    /// Routes Space and accessibility to the switch while leaving Enter to the scene's default button.
     @Test
     void keyboardAndAccessibility() throws Exception {
         onFxThread(() -> {
             JFXSwitch control = new JFXSwitch();
             control.setAccessibleText("Wi-Fi");
             control.setDisableAnimation(true);
-            scene(control);
+            VBox root = scene(control);
+            Button confirm = new Button("Confirm");
+            confirm.setDefaultButton(true);
+            AtomicInteger confirmations = new AtomicInteger();
+            confirm.setOnAction(event -> confirmations.incrementAndGet());
+            root.getChildren().add(confirm);
+            layout(root);
             AtomicInteger actions = new AtomicInteger();
             control.setOnAction(event -> actions.incrementAndGet());
             key(control, KeyEvent.KEY_PRESSED, KeyCode.SPACE);
@@ -228,16 +234,24 @@ public final class JFXSwitchTest {
             assertFalse(control.isSelected());
             assertEquals(2, actions.get());
             key(control, KeyEvent.KEY_PRESSED, KeyCode.ENTER);
+            key(control, KeyEvent.KEY_RELEASED, KeyCode.ENTER);
+            assertEquals(1, confirmations.get(), "Enter must reach the default button");
+            assertFalse(control.isSelected());
+            assertEquals(2, actions.get());
+
+            control.selectedProperty().bind(new SimpleBooleanProperty(false));
             key(control, KeyEvent.KEY_PRESSED, KeyCode.ENTER);
             key(control, KeyEvent.KEY_RELEASED, KeyCode.ENTER);
-            key(control, KeyEvent.KEY_RELEASED, KeyCode.ENTER);
-            boolean enterActivates = OperatingSystem.CURRENT_OS != OperatingSystem.MACOS;
-            assertEquals(enterActivates, control.isSelected());
-            assertEquals(enterActivates ? 3 : 2, actions.get());
+            assertEquals(2, confirmations.get(), "Bound selection must not swallow Enter");
+            control.selectedProperty().unbind();
             control.setDisable(true);
             control.fire();
             control.executeAccessibleAction(AccessibleAction.FIRE);
-            assertEquals(enterActivates ? 3 : 2, actions.get());
+            key(control, KeyEvent.KEY_PRESSED, KeyCode.ENTER);
+            key(control, KeyEvent.KEY_RELEASED, KeyCode.ENTER);
+            assertEquals(3, confirmations.get(), "A disabled switch must not swallow Enter");
+            assertFalse(control.isSelected());
+            assertEquals(2, actions.get());
         });
     }
 

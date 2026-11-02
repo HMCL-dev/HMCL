@@ -33,7 +33,6 @@ import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,7 +137,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     /// Routes pointer gestures through one activation path.
     private final EventHandler<MouseEvent> mouseHandler = this::handleMouse;
 
-    /// Handles platform activation keys and Escape cancellation.
+    /// Handles Space activation and Escape cancellation.
     private final EventHandler<KeyEvent> keyHandler = this::handleKey;
 
     /// Whether a primary press is awaiting click or drag completion.
@@ -147,7 +146,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
     /// Whether the handle is following the pointer instead of an animation.
     private boolean dragging;
 
-    /// Whether an activation key press is awaiting release, excluding repeated key presses.
+    /// Whether a Space press is awaiting release, excluding repeated key presses.
     private boolean keyDown;
 
     /// Pointer position in unscaled artwork coordinates at press time.
@@ -345,15 +344,15 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         return Math.max(OFF_CENTER, Math.min(ON_CENTER, pressCenter + pointerX - pressX));
     }
 
-    /// Activates once per unmodified Space or non-macOS Enter press and release; Escape cancels input.
+    /// Activates once per unmodified Space press and release; Enter remains available to scene accelerators.
+    /// Escape cancels an active gesture.
     private void handleKey(KeyEvent event) {
         if (event.getCode() == KeyCode.ESCAPE && event.getEventType() == KeyEvent.KEY_PRESSED) {
             if (mouseDown || keyDown) {
                 cancelGesture();
                 event.consume();
             }
-        } else if (event.getCode() == KeyCode.SPACE
-                || event.getCode() == KeyCode.ENTER && OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
+        } else if (event.getCode() == KeyCode.SPACE) {
             if (event.getEventType() == KeyEvent.KEY_PRESSED) {
                 if (event.isAltDown() || event.isControlDown() || event.isMetaDown())
                     return;
