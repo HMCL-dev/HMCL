@@ -142,7 +142,8 @@ public class JFXSwitch extends ToggleButton {
         showUnselectedIcon.set(value);
     }
 
-    /// Whether handle movement and resizing finish immediately. The default is false.
+    /// Whether handle movement, resizing, and selection color transitions finish immediately.
+    /// The default is false.
     private final BooleanProperty disableAnimation = new SimpleBooleanProperty(this, "disableAnimation", false);
 
     /// Returns the property controlling immediate animation completion.

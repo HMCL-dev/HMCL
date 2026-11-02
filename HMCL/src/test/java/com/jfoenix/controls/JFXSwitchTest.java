@@ -21,6 +21,8 @@ import javafx.scene.input.PickResult;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
+import javafx.scene.shape.SVGPath;
 import javafx.scene.robot.Robot;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.ui.construct.LineInheritableToggleButton;
@@ -32,6 +34,7 @@ import org.jackhuang.hmcl.setting.LauncherSettings;
 import java.lang.reflect.Field;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -39,6 +42,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.Objects;
+import java.util.List;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -463,6 +467,68 @@ public final class JFXSwitchTest {
             layout(root);
             assertEquals(52, control.prefWidth(-1));
         });
+    }
+
+    /// Checks visible color interpolation, reversal continuity, CSS precedence, and immediate completion.
+    @Test
+    void selectionColorTransitions() throws Exception {
+        CompletableFuture<JFXSwitch> created = new CompletableFuture<>();
+        CompletableFuture<@Unmodifiable List<Paint>> off = new CompletableFuture<>();
+        CompletableFuture<@Unmodifiable List<Paint>> on = new CompletableFuture<>();
+        onFxThread(() -> {
+            JFXSwitch control = new JFXSwitch();
+            control.setShowSelectedIcon(true);
+            control.setShowUnselectedIcon(true);
+            control.setStyle("-jfx-switch-primary: #123456;");
+            scene(control);
+            created.complete(control);
+            off.complete(palette(control));
+            control.setDisableAnimation(true);
+            control.setSelected(true);
+            on.complete(palette(control));
+            control.setSelected(false);
+            control.setDisableAnimation(false);
+            control.setSelected(true);
+            assertEquals(off.join(), palette(control), "Selection must start from the visible palette");
+        });
+        Thread.sleep(80);
+        onFxThread(() -> {
+            JFXSwitch control = created.join();
+            @Unmodifiable List<Paint> current = palette(control);
+            assertNotEquals(off.join(), current, "Colors must advance during the transition");
+            assertNotEquals(on.join(), current, "Colors must interpolate before reaching the target");
+            control.setSelected(false);
+            assertEquals(current, palette(control), "Reversing must preserve the displayed colors");
+        });
+        Thread.sleep(300);
+        onFxThread(() -> {
+            JFXSwitch control = created.join();
+            assertEquals(off.join(), palette(control));
+            control.setSelected(true);
+            control.setDisableAnimation(true);
+            assertEquals(on.join(), palette(control), "Disabling animation must settle all colors");
+            control.setStyle("-jfx-switch-primary: #abcdef;");
+            control.applyCss();
+            assertEquals(Color.web("#abcdef"), palette(control).get(0), "CSS must still override animated values");
+            control.setDisableAnimation(false);
+            control.setSelected(false);
+            control.setDisable(true);
+            control.applyCss();
+            @Unmodifiable List<Paint> disabled = palette(control);
+            control.setSkin(null);
+            control.setSkin(new JFXSwitchSkin(control));
+            control.applyCss();
+            assertEquals(disabled, palette(control), "Disabling must settle to the same palette as a fresh skin");
+        });
+    }
+
+    /// Captures the CSS-controlled solid paints independently of geometry and opacity.
+    private static @Unmodifiable List<Paint> palette(JFXSwitch control) {
+        return List.of(part(control, "track").getBackground().getFills().get(0).getFill(),
+                part(control, "track").getBorder().getStrokes().get(0).getTopStroke(),
+                part(control, "handle").getBackground().getFills().get(0).getFill(),
+                part(control, "state-layer").getBackground().getFills().get(0).getFill(),
+                Objects.requireNonNull(((SVGPath) control.lookup(".switch-icon")).getFill()));
     }
 
     /// Verifies interrupted transitions settle to the latest state and disabling animation snaps immediately.
