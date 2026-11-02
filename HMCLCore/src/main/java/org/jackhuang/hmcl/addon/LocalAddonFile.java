@@ -85,7 +85,7 @@ public abstract class LocalAddonFile<T extends LocalAddonFile<T>> implements Com
 
     @Override
     public int compareTo(@NotNull T o) {
-        return getFileName().compareTo(o.getFileName());
+        return getFileName().compareToIgnoreCase(o.getFileName());
     }
 
     @NotNullByDefault
