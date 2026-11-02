@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -59,17 +58,16 @@ public final class GameLogsHolder {
     private final Map<Log4jLevel, SimpleIntegerProperty> levelCountMap = new EnumMap<>(Log4jLevel.class);
     private final Map<Log4jLevel, SimpleBooleanProperty> levelShownMap = new EnumMap<>(Log4jLevel.class);
 
+    private final ObservableList<Log> items = FXCollections.observableList(new CircularArrayList<>());
+
     {
         for (Log4jLevel level : Log4jLevel.values()) {
             levelCountMap.put(level, new SimpleIntegerProperty());
             levelShownMap.put(level, new SimpleBooleanProperty(true));
         }
     }
-
     private final @Nullable ManagedProcess gameProcess;
-    private final ObservableList<Log> items = FXCollections.observableList(new CircularArrayList<>());
-
-    private WeakReference<Stage> windowRef = new WeakReference<>(null);
+    private @Nullable Stage stage = null;
 
     public GameLogsHolder(@Nullable ManagedProcess gameProcess) {
         this(gameProcess, new CircularArrayList<>());
@@ -84,10 +82,8 @@ public final class GameLogsHolder {
     }
 
     public Stage showWindow() {
-        Stage stage;
-        if ((stage = windowRef.get()) == null) {
+        if (stage == null) {
             stage = new Stage();
-            windowRef = new WeakReference<>(stage);
             Themes.applyNativeDarkMode(stage);
             LogWindowContent content = new LogWindowContent(stage);
             stage.setScene(new Scene(content, 800, 480));
@@ -108,21 +104,25 @@ public final class GameLogsHolder {
         if (levelShownMap.get(level).get())
             items.add(log);
 
-        SimpleIntegerProperty property = levelCountMap.get(log.getLevel());
+        SimpleIntegerProperty property = levelCountMap.get(level);
         property.set(property.get() + 1);
         checkLogCount();
     }
 
     public void logLines(List<Log> logs) {
-        for (Log log : logs) {
-            Log4jLevel level = log.getLevel();
-            this.logs.add(log);
-            if (levelShownMap.get(level).get())
-                items.add(log);
+        this.logs.addAll(logs);
+        this.items.addAll(logs.stream().filter(log -> levelShownMap.get(log.getLevel()).get()).toList());
 
-            SimpleIntegerProperty property = levelCountMap.get(log.getLevel());
-            property.set(property.get() + 1);
-        }
+        Map<Log4jLevel, Integer> levelCounts = new EnumMap<>(Log4jLevel.class);
+        logs.forEach(log -> {
+            var level = log.getLevel();
+            levelCounts.put(level, levelCounts.computeIfAbsent(level, k -> 0) + 1);
+        });
+        levelCounts.forEach((level, count) -> {
+            SimpleIntegerProperty property = levelCountMap.get(level);
+            property.set(property.get() + count);
+        });
+
         this.lastLogLine.set(logs.get(logs.size() - 1).getLog());
         checkLogCount();
     }
