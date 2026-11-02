@@ -479,6 +479,20 @@ public final class JFXSwitchTest {
             control.setSelected(false);
             control.setSelected(true);
         });
+        Thread.sleep(100);
+        onFxThread(() -> {
+            JFXSwitch control = created.join();
+            VBox root = (VBox) control.getParent();
+            layout(root);
+            Region handle = part(control, "handle");
+            double center = handle.getLayoutX() + handle.getWidth() / 2;
+            double diameter = handle.getWidth();
+            control.setSelected(false);
+            layout(root);
+            assertEquals(center, handle.getLayoutX() + handle.getWidth() / 2, 0.001);
+            assertEquals(diameter, handle.getWidth(), 0.001);
+            control.setSelected(true);
+        });
         // Allow JavaFX pulses to complete the last transition before asserting its geometry.
         Thread.sleep(350);
         onFxThread(() -> {

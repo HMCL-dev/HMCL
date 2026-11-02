@@ -3,7 +3,6 @@
 package com.jfoenix.skins;
 
 import com.jfoenix.controls.JFXSwitch;
-import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -23,6 +22,7 @@ import javafx.scene.shape.SVGPath;
 import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,6 +169,8 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     private void update(boolean immediate) {
         if (dragging)
             return;
+        double currentCenter = center.get();
+        double currentDiameter = diameter.get();
         transition.stop();
         boolean selected = control.isSelected();
         boolean pressed = control.isArmed() && !control.isDisabled();
@@ -183,9 +185,17 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
             center.set(targetCenter);
             diameter.set(targetDiameter);
         } else {
-            transition.getKeyFrames().setAll(new KeyFrame(Duration.millis(150),
-                    new KeyValue(center, targetCenter, Interpolator.EASE_BOTH),
-                    new KeyValue(diameter, targetDiameter, Interpolator.EASE_BOTH)));
+            // Preserve the visible geometry when a press or reversal interrupts a transition.
+            center.set(currentCenter);
+            diameter.set(currentDiameter);
+            transition.getKeyFrames().setAll(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(center, currentCenter),
+                            new KeyValue(diameter, currentDiameter)),
+                    new KeyFrame(pressed ? Motion.SHORT2 : Motion.MEDIUM1,
+                            new KeyValue(diameter, targetDiameter, pressed ? Motion.LINEAR : Motion.STANDARD)),
+                    new KeyFrame(Motion.MEDIUM2,
+                            new KeyValue(center, targetCenter, Motion.EASE_OUT_BACK)));
             transition.play();
         }
         control.requestLayout();
