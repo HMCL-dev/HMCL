@@ -116,6 +116,7 @@ final class ScrollUtils {
                 return;
             if (event.getEventType() == ScrollEvent.SCROLL_STARTED) {
                 reset();
+                suppressInertia = false;
                 gesture = true;
                 return;
             }
@@ -438,7 +439,7 @@ final class ScrollUtils {
             return horizontal ? flow.getWidth() : flow.getHeight();
         }
 
-        /// Bounds queued motion to one viewport and rejects movement beyond either end.
+        /// Rejects movement beyond either end without capping queued distance along the flow.
         @Override
         double limit(boolean horizontal, double pixels) {
             if (horizontal == flow.isVertical()) {
@@ -463,8 +464,7 @@ final class ScrollUtils {
                 if (end <= size)
                     return 0;
             }
-            size = Math.max(0, size);
-            return Math.max(-size, Math.min(size, pixels));
+            return pixels;
         }
 
         /// Applies synchronous gesture pixels through the flow or its breadth scrollbar.
@@ -499,7 +499,7 @@ final class ScrollUtils {
                 return -(Math.abs(event.getDeltaX()) > Math.abs(event.getDeltaY()) ? event.getDeltaX() : event.getDeltaY());
             }
             if (!flow.isVertical())
-                return 0;
+                return -event.getDeltaY();
             return switch (event.getTextDeltaYUnits()) {
                 case NONE -> -event.getDeltaY();
                 case PAGES -> -event.getTextDeltaY() * flow.getHeight();

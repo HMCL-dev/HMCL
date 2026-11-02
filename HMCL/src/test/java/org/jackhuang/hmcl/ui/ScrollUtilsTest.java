@@ -10,6 +10,7 @@ import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.IndexedCell;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
@@ -439,6 +440,105 @@ final class ScrollUtilsTest {
         });
     }
 
+    /// A new gesture allows the ancestor to receive inertia even if all finger movement stayed inside.
+    @Test
+    void nestedPanesAcceptInertiaAsFirstMovement() throws Exception {
+        onFxThread(() -> {
+            for (boolean direct : new boolean @Unmodifiable []{false, true}) {
+                ScrollPane inner = new ScrollPane(content(600, 900));
+                inner.setPrefSize(200, 180);
+                inner.setMaxSize(200, 180);
+                Pane content = new Pane(inner);
+                content.setMinSize(800, 1600);
+                content.setPrefSize(800, 1600);
+                ScrollPane outer = new ScrollPane(content);
+                ScrollUtils.addSmoothScrolling(outer);
+                ScrollUtils.addSmoothScrolling(inner);
+                layout(outer);
+                inner.setVvalue(0.99);
+                inner.fireEvent(mouse(inner, MouseEvent.MOUSE_PRESSED, direct));
+                send(inner.getContent(), ScrollEvent.SCROLL_STARTED, 0, 0, direct, false, false);
+                send(inner.getContent(), ScrollEvent.SCROLL, 0, -20, direct, false, false);
+                assertEquals(inner.getVmax(), inner.getVvalue(), 0.001);
+                assertEquals(0, offset(outer, false), 0.001);
+                send(inner.getContent(), ScrollEvent.SCROLL_FINISHED, 0, 0, direct, false, false);
+                send(inner.getContent(), ScrollEvent.SCROLL, 0, -20, direct, true, false);
+                assertEquals(20, offset(outer, false), 0.001);
+            }
+            return true;
+        });
+    }
+
+    /// Horizontal lists retain native vertical wheel movement for cells taller than the viewport.
+    @Test
+    void horizontalFlowScrollsTallCellsWithWheel() throws Exception {
+        onFxThread(() -> {
+            ListView<String> list = new ListView<>();
+            list.setOrientation(Orientation.HORIZONTAL);
+            list.setFixedCellSize(24);
+            list.setCellFactory(view -> {
+                ListCell<String> cell = new ListCell<>();
+                cell.setMinHeight(600);
+                cell.setPrefHeight(600);
+                return cell;
+            });
+            for (int i = 0; i < 100; i++)
+                list.getItems().add("Cell " + i);
+            layout(list);
+            VirtualFlow<?> flow = (VirtualFlow<?>) requireNonNull(list.lookup(".virtual-flow"));
+            flow.setPosition(1);
+            flow.layout();
+            ScrollBar bar = flow.getChildrenUnmodifiable().stream()
+                    .filter(node -> node instanceof ScrollBar scrollBar && scrollBar.getOrientation() == Orientation.VERTICAL)
+                    .map(ScrollBar.class::cast).findFirst().orElseThrow();
+            send(flow, ScrollEvent.SCROLL, 0, -40, false, false, true);
+            double expected = bar.getValue();
+            assertEquals(40, expected, 0.001);
+            bar.setValue(0);
+            ScrollUtils.addSmoothScrolling(flow);
+            send(flow, ScrollEvent.SCROLL, 0, -40, false, false, true);
+            assertEquals(0, bar.getValue(), 0.001);
+            finishWheel(flow);
+            assertEquals(expected, bar.getValue(), 0.001);
+            assertEquals(1, flow.getPosition(), 0.001);
+            send(flow, ScrollEvent.SCROLL, 0, 40, false, false, true);
+            finishWheel(flow);
+            assertEquals(0, bar.getValue(), 0.001);
+            assertTrue(flow.getPosition() < 1);
+            return true;
+        });
+    }
+
+    /// Rapid page inputs retain their full distance, including a multi-page event and reversal.
+    @Test
+    void virtualFlowPreservesQueuedPages() throws Exception {
+        onFxThread(() -> {
+            VirtualFlow<?> flow = flow(true);
+            double page = flow.getHeight();
+            for (int i = 0; i < 3; i++)
+                sendPages(flow, -1);
+            finishWheel(flow);
+            IndexedCell<?> first = requireNonNull(flow.getFirstVisibleCell());
+            assertEquals(3 * page, first.getIndex() * 24 - first.getLayoutY(), 1);
+            sendPages(flow, -3);
+            finishWheel(flow);
+            first = requireNonNull(flow.getFirstVisibleCell());
+            assertEquals(6 * page, first.getIndex() * 24 - first.getLayoutY(), 1);
+            sendPages(flow, 3);
+            finishWheel(flow);
+            first = requireNonNull(flow.getFirstVisibleCell());
+            assertEquals(3 * page, first.getIndex() * 24 - first.getLayoutY(), 1);
+            sendPages(flow, 20);
+            finishWheel(flow);
+            assertEquals(0, flow.getPosition(), 0.001);
+            sendPages(flow, -1);
+            finishWheel(flow);
+            first = requireNonNull(flow.getFirstVisibleCell());
+            assertEquals(page, first.getIndex() * 24 - first.getLayoutY(), 1);
+            return true;
+        });
+    }
+
     /// Virtualized scrolling tracks pixels in either orientation and wheel distances respect cell height.
     @Test
     void virtualFlowSupportsTouchAndWheel() throws Exception {
@@ -567,6 +667,14 @@ final class ScrollUtilsTest {
                 ScrollEvent.HorizontalTextScrollUnits.CHARACTERS, -3 / scale,
                 ScrollEvent.VerticalTextScrollUnits.LINES, -3 / scale,
                 0, new PickResult(target, 10, 10)));
+    }
+
+    /// Dispatches wheel input with an explicit page count independent of its pixel delta.
+    private static void sendPages(Node target, double pages) {
+        target.fireEvent(new ScrollEvent(ScrollEvent.SCROLL, 10, 10, 10, 10,
+                false, false, false, false, false, false, 0, pages * 40, 0, pages * 40,
+                ScrollEvent.HorizontalTextScrollUnits.NONE, 0,
+                ScrollEvent.VerticalTextScrollUnits.PAGES, pages, 0, new PickResult(target, 10, 10)));
     }
 
     /// Creates mouse input for interrupting animation or checking synthesized touch compatibility.
