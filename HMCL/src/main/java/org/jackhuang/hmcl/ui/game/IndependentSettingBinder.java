@@ -19,7 +19,7 @@ import org.jackhuang.hmcl.setting.property.SettingProperty;
 import org.jackhuang.hmcl.ui.MemoryStatusBar;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.LineComponent;
-import org.jackhuang.hmcl.ui.construct.LineInheritableToggleButton;
+import org.jackhuang.hmcl.ui.construct.LineInheritableSwitch;
 import org.jackhuang.hmcl.ui.construct.RadioChoiceList;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -481,10 +481,10 @@ final class IndependentSettingBinder {
         }
     }
 
-    /// Binds an independent boolean setting to a toggle editor.
-    static void bindToggleButton(
+    /// Binds an independent boolean setting to a switch editor.
+    static void bindSwitch(
             ObjectProperty<? extends @Nullable GameSettings> currentSetting,
-            LineInheritableToggleButton button,
+            LineInheritableSwitch button,
             Function<GameSettings, SettingProperty<Boolean>> propertyGetter,
             WeakListenerHolder listenerHolder,
             Function<GameSettings.Instance, GameSettings.Preset> parentGetter,

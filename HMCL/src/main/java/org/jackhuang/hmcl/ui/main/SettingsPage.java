@@ -122,7 +122,7 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 {
-                    LineToggleButton previewPane = new LineToggleButton();
+                    LineSwitch previewPane = new LineSwitch();
                     previewPane.setTitle(i18n("update.preview"));
                     previewPane.setSubtitle(i18n("update.preview.subtitle"));
                     previewPane.selectedProperty().bindBidirectional(settings().acceptPreviewUpdateProperty());
@@ -137,7 +137,7 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 {
-                    LineToggleButton disableAutoShowUpdateDialogPane = new LineToggleButton();
+                    LineSwitch disableAutoShowUpdateDialogPane = new LineSwitch();
                     disableAutoShowUpdateDialogPane.setTitle(i18n("update.disable_auto_show_update_dialog"));
                     disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
                     disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(settings().disableAutoShowUpdateDialogProperty());
@@ -178,7 +178,7 @@ public final class SettingsPage extends ScrollPane {
                 ComponentList miscPaneList = new ComponentList();
 
                 {
-                    LineToggleButton disableAprilFools = new LineToggleButton();
+                    LineSwitch disableAprilFools = new LineSwitch();
                     disableAprilFools.setTitle(i18n("settings.launcher.disable_april_fools"));
                     disableAprilFools.setSubtitle(i18n("settings.take_effect_after_restart"));
                     disableAprilFools.selectedProperty().bindBidirectional(settings().disableAprilFoolsProperty());
