@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXListView;
@@ -25,12 +10,10 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.stage.WindowEvent;
@@ -38,8 +21,10 @@ import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ImageContainer;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.Tag;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -136,29 +121,24 @@ public final class GameListPopupMenu extends StackPane {
 
         private final StringProperty tag = new SimpleStringProperty();
 
+        /// Creates a popup row with a leading icon and the shared advanced-item text styling.
         public Cell(ListView<GameItem> listView) {
             this.setPadding(Insets.EMPTY);
 
             this.imageView = new ImageContainer(32);
             this.imageView.setMouseTransparent(true);
-            BorderPane.setAlignment(imageView, Pos.CENTER);
 
             this.content = new TwoLineListItem();
-            this.content.setMouseTransparent(true);
+            content.getStyleClass().add("container");
+            content.setLeading(imageView);
             FXUtils.onChangeAndOperate(tag, tag -> {
-                content.getTags().clear();
-                if (StringUtils.isNotBlank(tag)) {
-                    content.addTag(tag);
-                }
+                if (StringUtils.isNotBlank(tag))
+                    content.getTags().setAll(new Tag(tag));
+                else
+                    content.getTags().clear();
             });
 
-            BorderPane container = new BorderPane();
-            container.getStyleClass().add("container");
-            container.setPickOnBounds(false);
-            container.setLeft(imageView);
-            container.setCenter(content);
-
-            this.ripplerContainer = new RipplerContainer(container);
+            this.ripplerContainer = new RipplerContainer(content);
 
             StackPane rootPane = new StackPane();
             rootPane.getStyleClass().add("advanced-list-item");
@@ -166,7 +146,7 @@ public final class GameListPopupMenu extends StackPane {
             rootPane.maxWidthProperty().bind(listView.widthProperty().subtract(5));
 
             FXUtils.onClicked(rootPane, () -> {
-                GameItem item = getItem();
+                @Nullable GameItem item = getItem();
                 if (item != null) {
                     item.getRepository().setSelectedInstance(item.getGameInstance());
                     if (getScene().getWindow() instanceof JFXPopup popup)
@@ -186,7 +166,7 @@ public final class GameListPopupMenu extends StackPane {
 
             if (oldItem == item && oldEmpty == empty) return;
 
-            this.ripplerContainer.releaseRippleImmediately();
+            this.ripplerContainer.resetFeedback();
             this.imageView.imageProperty().unbind();
             this.content.titleProperty().unbind();
             this.content.subtitleProperty().unbind();

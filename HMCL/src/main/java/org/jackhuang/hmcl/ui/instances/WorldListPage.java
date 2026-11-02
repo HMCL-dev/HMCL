@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
@@ -54,6 +39,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -270,6 +256,7 @@ public final class WorldListPage extends ListPageBase<World> {
         private final TwoLineListItem content;
         private final JFXButton btnLaunch;
 
+        /// Creates a world row with launch and management actions for the supplied page.
         public WorldListCell(WorldListPage page) {
             this.page = page;
 
@@ -291,7 +278,6 @@ public final class WorldListPage extends ListPageBase<World> {
             {
                 this.content = new TwoLineListItem();
                 root.setCenter(content);
-                content.setMouseTransparent(true);
             }
 
             {
@@ -335,19 +321,20 @@ public final class WorldListPage extends ListPageBase<World> {
             });
         }
 
+        /// Updates world details and replaces version and lock tags together.
         @Override
-        protected void updateItem(World world, boolean empty) {
-            World oldWorld = getItem();
+        protected void updateItem(@Nullable World world, boolean empty) {
+            @Nullable World oldWorld = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(world, empty);
 
             if (oldWorld == world && oldEmpty == empty) return;
 
-            this.graphic.releaseRippleImmediately();
-            this.content.getTags().clear();
+            this.graphic.resetFeedback();
 
             if (empty || world == null) {
+                content.getTags().clear();
                 setGraphic(null);
                 imageView.setImage(null);
                 leftTooltip.setText("");
@@ -358,15 +345,17 @@ public final class WorldListPage extends ListPageBase<World> {
                 leftTooltip.setText(world.getFile().toString());
                 content.setTitle(world.getWorldName() != null ? parseColorEscapes(world.getWorldName()) : "");
 
+                var tags = new ArrayList<Tag>(2);
                 if (world.getGameVersion() != null)
-                    content.addTag(I18n.getDisplayVersion(world.getGameVersion()));
+                    tags.add(new Tag(I18n.getDisplayVersion(world.getGameVersion())));
                 if (world.isLocked()) {
-                    content.addTag(i18n("world.locked"));
+                    tags.add(new Tag(i18n("world.locked")));
                     btnLaunch.setDisable(true);
                 } else {
                     btnLaunch.setDisable(false);
                 }
 
+                content.getTags().setAll(tags);
                 content.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
 
                 setGraphic(graphic);

@@ -1,27 +1,15 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform.linux;
 
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -34,30 +22,49 @@ import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- * @author Glavo
- */
+/// Detects Linux hardware information.
+///
+/// @author Glavo
+@NotNullByDefault
 public final class LinuxHardwareDetector extends HardwareDetector {
 
+    /// Detects Linux processors, using the default detector when native information is unavailable.
     @Override
-    public @Nullable CentralProcessor detectCentralProcessor() {
+    public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
-            return null;
-        CentralProcessor cpu = LinuxCPUDetector.detect();
-        return cpu != null ? cpu : super.detectCentralProcessor();
+            return super.detectCentralProcessors();
+        @Unmodifiable List<CentralProcessor> processors = LinuxCPUDetector.detect();
+        return processors.isEmpty() ? super.detectCentralProcessors() : processors;
     }
 
+    /// Returns an immutable graphics card list, empty if detection is unsupported or fails.
     @Override
-    public List<GraphicsCard> detectGraphicsCards() {
+    public @Unmodifiable List<GraphicsCard> detectGraphicsCards() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
+            return List.of();
+        @Unmodifiable List<GraphicsCard> cards = LinuxGPUDetector.detect();
+        return cards.isEmpty() ? super.detectGraphicsCards() : cards;
+    }
+
+    /// Reads a desktop environment description from this process's environment variables.
+    ///
+    /// Uses `XDG_CURRENT_DESKTOP`, falling back to `XDG_SESSION_DESKTOP` if the former is absent or blank.
+    /// Returns `null` if neither supplies a nonblank name. Otherwise, strips leading and trailing whitespace
+    /// from the name and, if `XDG_SESSION_TYPE` is nonblank, appends its stripped value as `name (type)`.
+    /// Desktop names and session types are otherwise preserved without normalization or validation.
+    @Override
+    public @Nullable String detectDesktopEnvironment() {
+        @Nullable String desktopName = System.getenv("XDG_CURRENT_DESKTOP");
+        if (StringUtils.isBlank(desktopName))
+            desktopName = System.getenv("XDG_SESSION_DESKTOP");
+
+        if (StringUtils.isNotBlank(desktopName)) {
+            @Nullable String sessionType = System.getenv("XDG_SESSION_TYPE");
+            return StringUtils.isNotBlank(sessionType)
+                    ? "%s (%s)".formatted(desktopName.strip(), sessionType.strip())
+                    : desktopName.strip();
+        } else
             return null;
-        List<GraphicsCard> cards = LinuxGPUDetector.detect();
-        if (cards == null || cards.isEmpty()) {
-            List<GraphicsCard> fastfetchResults = super.detectGraphicsCards();
-            if (fastfetchResults != null) // Avoid overwriting empty lists with null
-                cards = fastfetchResults;
-        }
-        return cards;
     }
 
     private static final Path MEMINFO = Paths.get("/proc/meminfo");

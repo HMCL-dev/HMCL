@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
@@ -25,6 +10,7 @@ import javafx.beans.property.StringProperty;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
@@ -44,6 +30,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.tukaani.xz.XZInputStream;
 
 import java.io.IOException;
@@ -55,6 +42,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
@@ -88,18 +76,7 @@ public final class SettingsPage extends ScrollPane {
                     updateButton.setPadding(Insets.EMPTY);
                     FXUtils.installFastTooltip(updateButton, i18n("update.tooltip"));
 
-                    var updatePane = new LineSelectButton<UpdateChannel>() {
-
-                        {
-                            getStyleClass().add("update-pane");
-                            setNode(IDX_TRAILING, updateButton);
-                        }
-
-                        @Override
-                        protected int getTrailingTextIndex() {
-                            return LineComponent.IDX_TRAILING + 1;
-                        }
-                    };
+                    var updatePane = new UpdateChannelButton(updateButton);
                     updateChannel = updatePane.valueProperty();
                     updatePane.setTitle(i18n("update"));
                     updatePane.setValue(UpdateChannel.getChannel());
@@ -391,5 +368,21 @@ public final class SettingsPage extends ScrollPane {
 
             return outputFile;
         }), Schedulers.io());
+    }
+
+    /// Combines an independent update action with the channel selector's existing trailing content.
+    @NotNullByDefault
+    private static final class UpdateChannelButton extends LineSelectButton<UpdateChannel> {
+        /// Creates a channel selector with the supplied action before its value and dropdown icon.
+        private UpdateChannelButton(Node updateButton) {
+            getStyleClass().add("update-pane");
+            Node selection = Objects.requireNonNull(container.getTrailing());
+            setTrailing(null);
+            setMargin(selection, null);
+            HBox trailing = new HBox(SPACING, updateButton, selection);
+            trailing.setAlignment(Pos.CENTER_LEFT);
+            trailing.setPickOnBounds(false);
+            setTrailing(trailing);
+        }
     }
 }

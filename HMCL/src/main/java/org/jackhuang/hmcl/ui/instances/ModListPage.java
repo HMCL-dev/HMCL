@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.*;
@@ -754,6 +739,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private Tooltip warningTooltip;
 
+        /// Creates a selectable mod row with file actions for the supplied page.
         ModInfoListCell(JFXListView<ModInfoObject> listView, ModListPage page) {
             super(listView);
             this.page = page;
@@ -764,7 +750,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(content, Priority.ALWAYS);
-            content.setMouseTransparent(true);
             setSelectable();
 
             imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
@@ -777,8 +762,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             getContainer().getChildren().setAll(container);
         }
 
+        /// Updates mod details, warnings, and tags while retaining reusable tag labels.
         @Override
-        protected void updateControl(ModInfoObject dataItem, boolean empty) {
+        protected void updateControl(@Nullable ModInfoObject dataItem, boolean empty) {
             if (observedActiveProperty != null)
                 observedActiveProperty.removeListener(weakActiveListener);
 
@@ -788,11 +774,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 warningTooltip = null;
             }
 
-            if (empty) return;
+            if (empty || dataItem == null) return;
 
             List<String> warning = new ArrayList<>();
 
-            content.getTags().clear();
+            var tags = new ArrayList<Tag>(2);
 
             LocalModFile modInfo = dataItem.getModInfo();
             @Nullable ModProjectInfo projectInfo = dataItem.getProjectInfo();
@@ -832,16 +818,18 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             content.setSubtitle(joiner.toString());
 
             if (modLoaderType == ModLoaderType.UNKNOWN) {
-                content.addTagWarning(i18n("mods.unknown"));
+                tags.add(Tag.warning(i18n("mods.unknown")));
             } else if (!page.supportedLoaders.contains(modLoaderType)) {
                 warning.add(i18n("mods.warning.loader_mismatch"));
-                content.addTagWarning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType()));
+                tags.add(Tag.warning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType())));
             }
 
             String modVersion = modInfo.getVersion();
             if (StringUtils.isNotBlank(modVersion) && !"${version}".equals(modVersion)) {
-                content.addTag(modVersion);
+                tags.add(new Tag(modVersion));
             }
+
+            content.getTags().setAll(tags);
 
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
             checkBox.setSelected(modInfo.isActive());

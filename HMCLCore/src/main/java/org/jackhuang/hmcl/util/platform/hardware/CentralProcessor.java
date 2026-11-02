@@ -1,35 +1,24 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Glavo
- */
+/// Describes a processor, or synthetic display information when detection is unavailable.
+///
+/// @author Glavo
+@NotNullByDefault
 public final class CentralProcessor {
 
-    public static String cleanName(String name) {
+    /// Normalizes a processor name for display, or returns `null` for a `null` name.
+    @Contract("null -> null; !null -> !null")
+    public static @Nullable String cleanName(@Nullable String name) {
         if (name == null)
             return null;
 
@@ -71,98 +60,126 @@ public final class CentralProcessor {
         return StringUtils.normalizeWhitespaces(name);
     }
 
+    /// The display name.
     private final String name;
+
+    /// The hardware vendor, or `null` if unknown.
     private final @Nullable HardwareVendor vendor;
+
+    /// The processor's core counts, or `null` if unavailable.
     private final @Nullable Cores cores;
 
+    /// Creates a processor snapshot.
     private CentralProcessor(String name, @Nullable HardwareVendor vendor, @Nullable Cores cores) {
         this.name = name;
         this.vendor = vendor;
         this.cores = cores;
     }
 
+    /// Returns the display name.
     public String getName() {
         return name;
     }
 
+    /// Returns the hardware vendor, or `null` if unknown.
     public @Nullable HardwareVendor getVendor() {
         return vendor;
     }
 
+    /// Returns observed or synthetic core counts, or `null` if unavailable.
     public @Nullable Cores getCores() {
         return cores;
     }
 
+    /// Returns the name with P/E counts or a core total, appending threads when their count differs.
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder(128);
-        if (cores != null && cores.packages > 1)
-            builder.append(cores.packages).append(" x ");
-
-        builder.append(name);
-
+        StringBuilder builder = new StringBuilder(name);
         if (cores != null) {
             builder.append(" (");
-            builder.append(cores.physical).append(" Cores");
-            if (cores.logical > 0 && cores.logical != cores.physical)
+            if (cores.efficiency > 0)
+                builder.append(cores.performance).append("P + ").append(cores.efficiency).append('E');
+            else
+                builder.append(cores.physical()).append(" Cores");
+            if (cores.logical != cores.physical())
                 builder.append(" / ").append(cores.logical).append(" Threads");
-            builder.append(")");
+            builder.append(')');
         }
-
         return builder.toString();
     }
 
-    public record Cores(int physical, int logical, int packages) {
-        public Cores(int logical) {
-            this(logical, logical, 1);
+    /// Positive physical and logical core totals for a processor or synthetic display fallback.
+    ///
+    /// Performance and efficiency counts deliberately merge performance tiers to simplify display;
+    /// they do not represent physical clusters. Unclassified physical cores are counted as performance cores.
+    /// Logical counts may be lower than physical totals when the source reports fewer available threads.
+    /// Synthetic fallbacks may use the JVM's available processor count for both logical and performance totals.
+    ///
+    /// @param logical the positive logical processor count
+    /// @param performance the nonnegative physical core count excluding identified efficiency cores
+    /// @param efficiency the nonnegative physical core count classified as efficiency cores
+    public record Cores(int logical, int performance, int efficiency) {
+        /// Requires positive logical and physical totals, nonnegative categories, and no physical total overflow.
+        public Cores {
+            long physical = (long) performance + efficiency;
+            if (logical <= 0 || performance < 0 || efficiency < 0 || physical <= 0 || physical > Integer.MAX_VALUE)
+                throw new IllegalArgumentException("Invalid processor core counts");
         }
 
-        @Override
-        public @NotNull String toString() {
-            return String.format("Cores[physical=%d, logical=%d, packages=%d]", physical, logical, packages);
+        /// Returns the physical core count as the sum of performance and efficiency cores.
+        public int physical() {
+            return performance + efficiency;
         }
     }
 
+    /// Builds processor information.
     public static final class Builder {
-        private String name;
+        /// The display name, or `null` if unset.
+        private @Nullable String name;
+
+        /// The hardware vendor, or `null` if unset.
         private @Nullable HardwareVendor vendor;
+
+        /// The processor's core counts, or `null` if unset.
         private @Nullable Cores cores;
 
+        /// Creates a snapshot, using a vendor-based name or `Unknown` if no name was set.
         public CentralProcessor build() {
-            String name = this.name;
-            if (name == null) {
-                if (vendor != null)
-                    name = vendor + " Processor";
-                else
-                    name = "Unknown";
-            }
-
+            @Nullable String name = this.name;
+            if (name == null)
+                name = vendor != null ? vendor + " Processor" : "Unknown";
             return new CentralProcessor(name, vendor, cores);
         }
 
-        public String getName() {
+        /// Returns the display name, or `null` if unset.
+        public @Nullable String getName() {
             return name;
         }
 
-        public Builder setName(String name) {
+        /// Sets the display name; `null` clears it. Returns this builder.
+        public Builder setName(@Nullable String name) {
             this.name = name;
             return this;
         }
 
+        /// Returns the hardware vendor, or `null` if unset.
         public @Nullable HardwareVendor getVendor() {
             return vendor;
         }
 
-        public Builder setVendor(HardwareVendor vendor) {
+        /// Sets the hardware vendor; `null` clears it. Returns this builder.
+        public Builder setVendor(@Nullable HardwareVendor vendor) {
             this.vendor = vendor;
             return this;
         }
 
+        /// Returns the processor's core counts, or `null` if unset.
         public @Nullable Cores getCores() {
             return cores;
         }
 
-        public Builder setCores(Cores cores) {
+        /// Sets the processor's core counts; `null` clears them. Returns this builder.
+        public Builder setCores(@Nullable Cores cores) {
             this.cores = cores;
             return this;
         }
