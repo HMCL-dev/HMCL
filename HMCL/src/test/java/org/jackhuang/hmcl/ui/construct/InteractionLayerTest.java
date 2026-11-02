@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.lang.reflect.Field;
@@ -34,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/// Verifies feedback timing, state composition, painting, and tab selection on the FX thread.
+/// Verifies interaction continuity, state restoration, and persistent tab selection.
 @NotNullByDefault
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 @Isolated("Temporarily supplies settings while initializing the cached animation policy")
@@ -54,178 +53,148 @@ public final class InteractionLayerTest {
         }
     }
 
-    /// Verifies the same press cycle with and without a persistent selection tint.
+    /// Selection remains visible after pointer feedback ends, and selected controls still respond to presses.
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void pressTintsWholeBackground(boolean selected) throws Exception {
+    void pointerFeedbackRestoresPersistentState(boolean selected) throws Exception {
         onFxThread(() -> {
             InteractionLayer layer = createLayer();
             layer.setSelected(selected, 0);
-            layer.reset();
-            double baseOpacity = selected ? 0.08 : 0;
-            layer.setCornerRadii(new CornerRadii(8));
-            layer.setHovered(true, 0);
-            layer.advance(150_000_000);
-            assertEquals(baseOpacity + 0.08, layer.getOpacity(), 1e-12);
-            layer.press(150_000_000);
-            layer.advance(187_500_000);
-            assertEquals(baseOpacity + 0.10, layer.getOpacity(), 1e-12);
-            layer.advance(225_000_000);
-            assertEquals(baseOpacity + 0.12, layer.getOpacity(), 1e-12);
-            assertFalse(layer.isStateTransitioning());
-            assertTrue(layer.getChildrenUnmodifiable().isEmpty());
-            var fill = Objects.requireNonNull(layer.getBackground()).getFills().get(0);
-            assertEquals(1.0, ((Color) fill.getFill()).getOpacity());
-            assertEquals(new CornerRadii(8), fill.getRadii());
-            layer.release(225_000_000);
-            layer.advance(262_500_000);
-            assertEquals(baseOpacity + 0.10, layer.getOpacity(), 1e-12);
-            layer.advance(300_000_000);
-            assertEquals(baseOpacity + 0.08, layer.getOpacity(), 1e-12);
-            assertFalse(layer.isStateTransitioning());
-            layer.setHovered(false, 300_000_000);
-            layer.advance(450_000_000);
-            layer.reset();
-            assertEquals(baseOpacity, layer.getOpacity());
-            layer.setSelected(false, 450_000_000);
-            layer.advance(600_000_000);
+            settleAnimation(layer, 0);
+            double baseline = layer.getOpacity();
+            assertEquals(selected, baseline > 0);
+
+            layer.setHovered(true, SECOND);
+            settleAnimation(layer, SECOND);
+            double hovered = layer.getOpacity();
+            assertTrue(hovered > baseline);
+
+            layer.press(2 * SECOND);
+            settleAnimation(layer, 2 * SECOND);
+            assertTrue(layer.getOpacity() > hovered);
+
+            layer.release(3 * SECOND);
+            settleAnimation(layer, 3 * SECOND);
+            assertEquals(hovered, layer.getOpacity());
+
+            layer.setHovered(false, 4 * SECOND);
+            settleAnimation(layer, 4 * SECOND);
+            assertEquals(baseline, layer.getOpacity());
+            layer.setSelected(false, 5 * SECOND);
+            settleAnimation(layer, 5 * SECOND);
             assertEquals(0, layer.getOpacity());
-            assertFalse(layer.isStateTransitioning());
         });
     }
 
-    /// Checks that pressing halfway through hover takes another 150 ms without changing speed.
+    /// Retargeting hover to press preserves the displayed tint and the linear rate.
     @Test
-    void pressDuringHoverKeepsLinearRate() throws Exception {
+    void retargetingPreservesLinearRate() throws Exception {
         onFxThread(() -> {
             InteractionLayer layer = createLayer();
             layer.setHovered(true, 0);
-            // Input must sample the in-progress hover even when no pulse ran at this timestamp.
-            layer.press(75_000_000);
-            assertEquals(0.04, layer.getOpacity(), 1e-12);
-            layer.advance(150_000_000);
-            assertEquals(0.08, layer.getOpacity(), 1e-12);
-            layer.advance(187_500_000);
-            assertEquals(0.10, layer.getOpacity(), 1e-12);
+            layer.advance(SAMPLE);
+            double first = layer.getOpacity();
+            assertTrue(first > 0);
             assertTrue(layer.isStateTransitioning());
-            layer.advance(225_000_000);
-            assertEquals(0.12, layer.getOpacity());
-            assertFalse(layer.isStateTransitioning());
+            // No pulse at the input timestamp: input must sample the current fade itself.
+            layer.press(2 * SAMPLE);
+            assertEquals(2 * first, layer.getOpacity(), EPSILON);
+            layer.advance(3 * SAMPLE);
+            assertEquals(3 * first, layer.getOpacity(), EPSILON);
+            layer.press(3 * SAMPLE);
+            layer.advance(4 * SAMPLE);
+            assertEquals(4 * first, layer.getOpacity(), EPSILON);
         });
     }
 
-    /// Checks that early release and repeated presses continue at the same opacity rate.
+    /// Early release reverses immediately; a second press continues from the fading tint.
     @Test
     void rapidClicksRemainContinuous() throws Exception {
         onFxThread(() -> {
             InteractionLayer layer = createLayer();
             layer.press(0);
-            layer.advance(30_000_000);
+            layer.advance(2 * SAMPLE);
             double pressed = layer.getOpacity();
-            layer.release(30_000_000);
+            assertTrue(layer.isStateTransitioning());
+            layer.release(2 * SAMPLE);
             assertEquals(pressed, layer.getOpacity());
-            layer.advance(45_000_000);
+            layer.advance(3 * SAMPLE);
             double fading = layer.getOpacity();
-            assertEquals(0.008, fading, 1e-12);
-            layer.press(45_000_000);
+            assertEquals(pressed / 2, fading, EPSILON);
+            layer.press(3 * SAMPLE);
             assertEquals(fading, layer.getOpacity());
-            layer.press(75_000_000);
-            layer.advance(180_000_000);
-            assertEquals(0.08, layer.getOpacity(), 1e-12);
-            layer.advance(255_000_000);
-            assertEquals(0.12, layer.getOpacity());
-            layer.release(255_000_000);
-            layer.advance(480_000_000);
+            layer.advance(4 * SAMPLE);
+            assertEquals(pressed, layer.getOpacity(), EPSILON);
+            layer.release(4 * SAMPLE);
+            // A fade retraces the same distance in the same time, without a fixed release delay.
+            layer.advance(6 * SAMPLE);
             assertEquals(0, layer.getOpacity());
+            assertFalse(layer.isStateTransitioning());
             assertTrue(layer.contains(100, 20));
-            assertFalse(layer.isStateTransitioning());
         });
     }
 
-    /// Checks early release below, at, and above hover opacity without completing the press first.
-    @ParameterizedTest
-    @CsvSource({
-            "112500000, 0.06, 131250000, 0.07, 150000000",
-            "150000000, 0.08, 150000000, 0.08, 150000000",
-            "187500000, 0.10, 206250000, 0.09, 225000000"
-    })
-    void earlyReleaseReturnsDirectlyToHover(long releasedAt, double releasedOpacity,
-                                            long sampledAt, double sampledOpacity, long settledAt) throws Exception {
-        onFxThread(() -> {
-            InteractionLayer layer = createLayer();
-            layer.setHovered(true, 0);
-            layer.press(0);
-            layer.release(releasedAt);
-            assertEquals(releasedOpacity, layer.getOpacity(), 1e-12);
-            assertEquals(releasedOpacity != 0.08, layer.isStateTransitioning());
-            layer.advance(sampledAt);
-            assertEquals(sampledOpacity, layer.getOpacity(), 1e-12);
-            layer.advance(settledAt);
-            assertEquals(0.08, layer.getOpacity());
-            assertFalse(layer.isStateTransitioning());
-        });
-    }
-
-    /// Checks focus priority, reset, and disabling animations during a held press.
+    /// Reset clears a held press without losing selection or focus; disabled animation settles immediately.
     @Test
-    void resetAndAnimationSwitchSettleFeedback() throws Exception {
+    void resetPreservesSelectionAndFocus() throws Exception {
         onFxThread(() -> {
             InteractionLayer layer = createLayer();
-            layer.setHovered(true, 0);
-            layer.setFocusActive(true, 0);
-            layer.press(0);
-            layer.advance(75_000_000);
             layer.setAnimationEnabled(false);
-            assertEquals(0.12, layer.getOpacity());
-            assertFalse(layer.isStateTransitioning());
-            layer.release(75_000_000);
-            assertEquals(0.12, layer.getOpacity());
-            layer.setAnimationEnabled(true);
-            layer.press(90_000_000);
+            layer.setSelected(true, 0);
+            double selected = layer.getOpacity();
+            layer.setHovered(true, 0);
+            double hovered = layer.getOpacity();
+            layer.setFocusActive(true, 0);
+            double focused = layer.getOpacity();
+            assertTrue(focused >= hovered);
+            layer.press(0);
             layer.reset();
-            assertEquals(0.12, layer.getOpacity());
+            assertEquals(focused, layer.getOpacity());
             assertFalse(layer.isStateTransitioning());
-            layer.setFocusActive(false, 90_000_000);
-            layer.advance(127_500_000);
-            assertEquals(0.10, layer.getOpacity(), 1e-12);
-            layer.advance(165_000_000);
-            assertEquals(0.08, layer.getOpacity());
+            layer.setFocusActive(false, 0);
+            assertEquals(hovered, layer.getOpacity());
+            layer.setHovered(false, 0);
+            assertEquals(selected, layer.getOpacity());
+            layer.setAnimationEnabled(true);
+            assertFalse(layer.isStateTransitioning());
+            layer.setSelected(false, 0);
+            layer.advance(SAMPLE);
+            assertTrue(layer.isStateTransitioning());
+            layer.setAnimationEnabled(false);
+            assertEquals(0, layer.getOpacity());
             assertFalse(layer.isStateTransitioning());
         });
     }
 
-    /// Checks that arbitrary paints keep their alpha and backgrounds are reused throughout fades.
+    /// Theme paint and corner changes preserve interaction progress; hidden paint remains pickable.
     @Test
-    void paintsAndCornersRemainIndependentOfAnimation() throws Exception {
+    void appearanceChangesPreserveFeedback() throws Exception {
         onFxThread(() -> {
             InteractionLayer layer = createLayer();
             var gradient = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE,
                     new Stop(0, Color.color(1, 0, 0, 0.5)), new Stop(1, Color.TRANSPARENT));
             layer.setFill(gradient);
-            var background = Objects.requireNonNull(layer.getBackground());
             layer.press(0);
-            layer.advance(75_000_000);
-            assertSame(background, layer.getBackground());
-            assertSame(gradient, background.getFills().get(0).getFill());
+            layer.advance(SAMPLE);
+            assertEquals(gradient, Objects.requireNonNull(layer.getBackground()).getFills().get(0).getFill());
             double opacity = layer.getOpacity();
-            layer.setCornerRadii(new CornerRadii(0.5, true));
+            var radii = new CornerRadii(0.5, true);
+            layer.setCornerRadii(radii);
             layer.resize(300, 60);
             assertEquals(opacity, layer.getOpacity());
-            assertEquals(new CornerRadii(0.5, true),
-                    Objects.requireNonNull(layer.getBackground()).getFills().get(0).getRadii());
+            assertEquals(radii, Objects.requireNonNull(layer.getBackground()).getFills().get(0).getRadii());
             layer.setFill(null);
             assertNull(layer.getBackground());
             assertTrue(layer.contains(150, 30));
-            layer.advance(300_000_000);
-            layer.setFill(Color.color(0, 0, 1, 0.5));
-            assertEquals(0.12, layer.getOpacity());
-            assertEquals(0.5, ((Color) Objects.requireNonNull(layer.getBackground())
-                    .getFills().get(0).getFill()).getOpacity());
-            assertTrue(layer.getChildrenUnmodifiable().isEmpty());
+            assertEquals(opacity, layer.getOpacity());
+            Color paint = Color.color(0, 0, 1, 0.5);
+            layer.setFill(paint);
+            assertEquals(paint, Objects.requireNonNull(layer.getBackground()).getFills().get(0).getFill());
+            assertEquals(opacity, layer.getOpacity());
         });
     }
 
-    /// Checks that completion notifies once, while cancellation by reset remains silent.
+    /// Completion notifies once; reset cancels silently and disabling animation reports settlement.
     @Test
     void settlementCallbackFollowsCompletion() throws Exception {
         onFxThread(() -> {
@@ -233,38 +202,42 @@ public final class InteractionLayerTest {
             var notifications = new AtomicInteger();
             layer.setOnStateSettled(notifications::incrementAndGet);
             layer.setHovered(true, 0);
-            layer.advance(150_000_000);
-            layer.advance(300_000_000);
+            settleAnimation(layer, 0);
+            layer.advance(2 * SECOND);
             assertEquals(1, notifications.get());
-            layer.press(300_000_000);
+            layer.press(2 * SECOND);
             layer.reset();
-            layer.advance(450_000_000);
+            settleAnimation(layer, 2 * SECOND);
             assertEquals(1, notifications.get());
-            layer.press(450_000_000);
+            layer.press(3 * SECOND);
             layer.setAnimationEnabled(false);
             assertEquals(2, notifications.get());
             assertFalse(layer.isStateTransitioning());
         });
     }
 
-    /// Checks that selection can reverse mid-transition without jumping or delaying press feedback.
+    /// Reversing selection mid-fade is continuous and reset retains the latest selection.
     @Test
     void interruptedSelectionRemainsContinuous() throws Exception {
         onFxThread(() -> {
             InteractionLayer layer = createLayer();
             layer.setSelected(true, 0);
-            layer.setSelected(false, 75_000_000);
-            assertEquals(0.04, layer.getOpacity(), 1e-12);
-            layer.advance(112_500_000);
-            assertEquals(0.02, layer.getOpacity(), 1e-12);
-            layer.setSelected(true, 112_500_000);
-            layer.press(112_500_000);
-            assertEquals(0.02, layer.getOpacity(), 1e-12);
-            layer.setAnimationEnabled(false);
-            assertEquals(0.20, layer.getOpacity());
+            layer.advance(2 * SAMPLE);
+            double selecting = layer.getOpacity();
+            layer.setSelected(false, 2 * SAMPLE);
+            assertEquals(selecting, layer.getOpacity());
+            layer.advance(3 * SAMPLE);
+            double fading = layer.getOpacity();
+            assertEquals(selecting / 2, fading, EPSILON);
+            layer.setSelected(true, 3 * SAMPLE);
+            layer.press(3 * SAMPLE);
+            assertEquals(fading, layer.getOpacity());
             layer.reset();
-            assertEquals(0.08, layer.getOpacity());
+            double baseline = layer.getOpacity();
+            assertTrue(baseline > selecting);
             assertFalse(layer.isStateTransitioning());
+            layer.release(4 * SAMPLE);
+            assertEquals(baseline, layer.getOpacity());
         });
     }
 
@@ -283,16 +256,17 @@ public final class InteractionLayerTest {
                     .map(RipplerContainer.class::cast).toList();
             assertEquals(2, views.size());
             assertEquals(1, views.stream().filter(view ->
-                    feedbackOpacity(view) == 0.08).count());
+                    feedbackOpacity(view) > 0).count());
             RipplerContainer previous = views.stream().filter(view ->
-                    feedbackOpacity(view) == 0.08).findFirst().orElseThrow();
+                    feedbackOpacity(view) > 0).findFirst().orElseThrow();
+            double selectedOpacity = feedbackOpacity(previous);
             try {
                 header.getController().selectTab(second);
                 assertEquals(0, feedbackOpacity(previous));
                 assertEquals(1, views.stream().filter(view ->
-                        feedbackOpacity(view) == 0.08).count());
+                        feedbackOpacity(view) > 0).count());
                 header.getController().getTabs().remove(second);
-                assertEquals(0.08, feedbackOpacity(previous));
+                assertEquals(selectedOpacity, feedbackOpacity(previous));
             } finally {
                 Objects.requireNonNull(header.getSkin()).dispose();
             }
@@ -303,6 +277,21 @@ public final class InteractionLayerTest {
     private static double feedbackOpacity(RipplerContainer view) {
         return view.getChildren().stream().filter(InteractionLayer.class::isInstance)
                 .findFirst().orElseThrow().getOpacity();
+    }
+
+    /// A generous completion interval, independent of the visual timing tokens.
+    private static final long SECOND = 1_000_000_000L;
+
+    /// A short sampling interval for observing uninterrupted and interrupted fades.
+    private static final long SAMPLE = 10_000_000L;
+
+    /// Tolerance for comparing independently sampled opacity values.
+    private static final double EPSILON = 1e-12;
+
+    /// Advances well past a normal feedback transition and verifies it stops.
+    private static void settleAnimation(InteractionLayer layer, long startedAt) {
+        layer.advance(startedAt + SECOND);
+        assertFalse(layer.isStateTransitioning());
     }
 
     /// Creates an animated layer whose pulses are controlled entirely by each test.

@@ -18,8 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /// Draws uniform feedback behind the content of [RipplerContainer].
 /// Selection adds a persistent base tint; press takes priority over focus and hover.
 /// Node opacity multiplies the paint's alpha for colors, gradients, and image patterns.
-/// Only paint or corner changes rebuild the background.
-/// All animated state changes are linear at eight opacity percentage points per 150 ms.
+/// State changes use a constant linear rate, including interrupted and reversed transitions.
 /// Picking remains rectangular, including transparent corners and zero-opacity idle states.
 /// All operations must occur on the JavaFX application thread.
 @NotNullByDefault
@@ -39,7 +38,7 @@ final class InteractionLayer extends Region {
     /// The time per unit opacity, calibrated so idle-to-hover takes 150 ms.
     private static final double NANOS_PER_OPACITY = Motion.SHORT3.toMillis() * 1_000_000 / HOVER_OPACITY;
 
-    /// Whether real pulses are scheduled; tests supply deterministic timestamps instead.
+    /// Whether the layer advances automatically.
     private final boolean automaticPulses;
 
     /// The feedback paint; null hides drawing without affecting input.
@@ -86,7 +85,7 @@ final class InteractionLayer extends Region {
         this(true);
     }
 
-    /// Creates feedback with optional real pulses for deterministic tests.
+    /// Creates feedback with automatic pulses or explicit advancement through [#advance(long)].
     InteractionLayer(boolean automaticPulses) {
         this.automaticPulses = automaticPulses;
         setPickOnBounds(true);
@@ -110,12 +109,12 @@ final class InteractionLayer extends Region {
         }
     }
 
-    /// Rebuilds the background only when the paint or corner radii change.
+    /// Applies the configured paint and corners.
     private void updateBackground() {
         setBackground(fill == null ? null : new Background(new BackgroundFill(fill, cornerRadii, Insets.EMPTY)));
     }
 
-    /// Sets the settlement callback without invoking it.
+    /// Registers a settlement callback; null clears it. Registration does not invoke the callback.
     void setOnStateSettled(@Nullable Runnable listener) {
         onStateSettled = listener;
     }
@@ -147,7 +146,7 @@ final class InteractionLayer extends Region {
         setHovered(value, System.nanoTime());
     }
 
-    /// Reports hover using the monotonic clock shared by all timed operations.
+    /// Reports hover at a monotonic nanosecond timestamp.
     void setHovered(boolean value, long now) {
         if (hovered != value) {
             hovered = value;
@@ -160,7 +159,7 @@ final class InteractionLayer extends Region {
         setFocusActive(value, System.nanoTime());
     }
 
-    /// Reports focus using the monotonic clock shared by all timed operations.
+    /// Reports visual focus at a monotonic nanosecond timestamp.
     void setFocusActive(boolean value, long now) {
         if (focusActive != value) {
             focusActive = value;
@@ -173,7 +172,7 @@ final class InteractionLayer extends Region {
         setSelected(value, System.nanoTime());
     }
 
-    /// Reports selection using the same monotonic clock as pointer feedback.
+    /// Reports selection at a monotonic nanosecond timestamp.
     void setSelected(boolean value, long now) {
         if (selected != value) {
             selected = value;
@@ -186,7 +185,7 @@ final class InteractionLayer extends Region {
         press(System.nanoTime());
     }
 
-    /// Starts a press using the monotonic clock shared by all timed operations.
+    /// Starts a press at a monotonic nanosecond timestamp.
     void press(long now) {
         if (!pressActive) {
             pressActive = true;
@@ -199,7 +198,7 @@ final class InteractionLayer extends Region {
         release(System.nanoTime());
     }
 
-    /// Releases a press using the monotonic clock shared by all timed operations.
+    /// Releases a press at a monotonic nanosecond timestamp.
     void release(long now) {
         if (pressActive) {
             pressActive = false;
@@ -245,7 +244,7 @@ final class InteractionLayer extends Region {
         setOpacity(targetOpacity);
     }
 
-    /// Advances feedback to a monotonic timestamp, notifying settlement once on completion.
+    /// Advances feedback and reports completion once. Timestamps must share the input clock's origin.
     void advance(long now) {
         boolean wasTransitioning = transitioning;
         updateAnimation(now);
