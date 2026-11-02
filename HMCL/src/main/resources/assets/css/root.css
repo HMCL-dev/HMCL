@@ -6,6 +6,18 @@
 .root {
 }
 
+.jfx-switch {
+    -jfx-switch-primary: -monet-primary;
+    -jfx-switch-on-primary: -monet-on-primary;
+    -jfx-switch-primary-container: -monet-primary-container;
+    -jfx-switch-on-primary-container: -monet-on-primary-container;
+    -jfx-switch-surface: -monet-surface;
+    -jfx-switch-surface-container-highest: -monet-surface-container-highest;
+    -jfx-switch-on-surface: -monet-on-surface;
+    -jfx-switch-on-surface-variant: -monet-on-surface-variant;
+    -jfx-switch-outline: -monet-outline;
+}
+
 .svg {
     -fx-fill: -monet-on-surface;
 }
