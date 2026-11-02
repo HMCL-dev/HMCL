@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXSwitch;
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -84,12 +85,13 @@ public final class LineInheritableSwitch extends LineButtonBase {
         setTitleTrailing(inheritButton);
         setTrailing(switchControl);
 
-        rawValue.addListener(observable -> refresh());
-        overridden.addListener(observable -> refresh());
-        effectiveValue.addListener(observable -> refresh());
-        inheritAvailable.addListener(observable -> refresh());
-        inheritedTooltip.addListener(observable -> refresh());
-        overriddenTooltip.addListener(observable -> refresh());
+        InvalidationListener refreshListener = observable -> refresh();
+        rawValue.addListener(refreshListener);
+        overridden.addListener(refreshListener);
+        effectiveValue.addListener(refreshListener);
+        inheritAvailable.addListener(refreshListener);
+        inheritedTooltip.addListener(refreshListener);
+        overriddenTooltip.addListener(refreshListener);
         refresh();
     }
 
