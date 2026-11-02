@@ -81,9 +81,6 @@ final class ScrollUtils {
         /// Prevents synthesized mouse drags from repeating an active touchscreen scroll.
         private boolean directGesture;
 
-        /// Keeps unmarked precision streams direct across occasional integral line deltas.
-        private long precisionUntil;
-
         /// Whether a press has cancelled the previous gesture's inertia.
         private boolean suppressInertia;
 
@@ -143,13 +140,9 @@ final class ScrollUtils {
             long now = System.nanoTime();
             if (event.isDirect() && !event.isInertia())
                 directGesture = true;
-            // Platform scaling can make ordinary wheel text deltas fractional too.
-            boolean precise = gesture || event.isDirect() || event.getTouchCount() > 0 || event.isInertia()
-                    || (event.getTextDeltaXUnits() == ScrollEvent.HorizontalTextScrollUnits.NONE
-                    && event.getTextDeltaYUnits() == ScrollEvent.VerticalTextScrollUnits.NONE);
-            precise |= now < precisionUntil;
-            if (precise && !event.isInertia())
-                precisionUntil = now + WHEEL_DURATION;
+            // Ordinary wheels can report NONE units or fractional text deltas after display scaling.
+            // Only explicit gesture signals bypass animation; unmarked input uses the wheel fallback.
+            boolean precise = gesture || event.isDirect() || event.getTouchCount() > 0 || event.isInertia();
             double dx = precise ? -event.getDeltaX() : wheelDelta(event, true);
             double dy = precise ? -event.getDeltaY() : wheelDelta(event, false);
             if (!Double.isFinite(dx) || !Double.isFinite(dy))
@@ -243,7 +236,6 @@ final class ScrollUtils {
             suppressInertia = true;
             gesture = false;
             directGesture = false;
-            precisionUntil = 0;
         }
 
         /// Clears gesture state when the scrolling surface changes.

@@ -67,6 +67,7 @@ final class ScrollUtilsTest {
             send(pane.getContent(), ScrollEvent.SCROLL_FINISHED, 0, 0, false, false, true);
             finishWheel(pane);
             assertEquals(96, offset(pane, false), 0.001);
+            send(pane.getContent(), ScrollEvent.SCROLL_STARTED, 0, 0, false, false, false);
             send(pane.getContent(), ScrollEvent.SCROLL, 0, -72.5, false, false, false);
             assertEquals(168.5, offset(pane, false), 0.001);
             send(pane.getContent(), ScrollEvent.SCROLL, 0, -40, false, false, true);
@@ -89,6 +90,35 @@ final class ScrollUtilsTest {
             assertEquals(120, offset(pane, false), 0.001);
             finishWheel(pane);
             assertEquals(120, offset(pane, false), 0.001);
+            return true;
+        });
+    }
+
+    /// Unmarked pixel-only wheel events, including GTK input, are animated after a finished gesture too.
+    @Test
+    void pixelOnlyWheelRemainsAnimated() throws Exception {
+        onFxThread(() -> {
+            ScrollPane pane = pane(800, 1600);
+            send(pane.getContent(), ScrollEvent.SCROLL, 0, -40, false, false, false);
+            assertEquals(0, offset(pane, false), 0.001);
+            finishWheel(pane);
+            assertEquals(40, offset(pane, false), 0.001);
+
+            send(pane.getContent(), ScrollEvent.SCROLL_STARTED, 0, 0, false, false, false);
+            send(pane.getContent(), ScrollEvent.SCROLL, 0, -12, false, false, false);
+            assertEquals(52, offset(pane, false), 0.001);
+            send(pane.getContent(), ScrollEvent.SCROLL_FINISHED, 0, 0, false, false, false);
+            send(pane.getContent(), ScrollEvent.SCROLL, 0, -40, false, false, false);
+            assertEquals(52, offset(pane, false), 0.001);
+            finishWheel(pane);
+            assertEquals(92, offset(pane, false), 0.001);
+
+            VirtualFlow<?> flow = flow(true);
+            send(flow, ScrollEvent.SCROLL, 0, -40, false, false, false);
+            assertEquals(0, flow.getPosition(), 0.001);
+            finishWheel(flow);
+            IndexedCell<?> first = requireNonNull(flow.getFirstVisibleCell());
+            assertEquals(40, first.getIndex() * 24 - first.getLayoutY(), 0.001);
             return true;
         });
     }
