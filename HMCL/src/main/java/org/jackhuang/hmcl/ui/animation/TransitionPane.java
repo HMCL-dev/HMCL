@@ -9,18 +9,25 @@ import javafx.application.Platform;
 import javafx.scene.CacheHint;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.transform.Scale;
 import javafx.stage.Window;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BooleanSupplier;
+
 /// Displays one page, retaining the preceding page while a transition runs.
 /// Content changes must be made on the JavaFX Application Thread.
 @NotNullByDefault
 public class TransitionPane extends StackPane {
+
+    /// Marks pages that have completed a rendering preparation or entered their displayed state.
+    private static final Object RENDER_INITIALIZED_KEY = new Object();
 
     /// The requested page, or `null` when content is absent.
     private @Nullable Node currentNode;
@@ -31,7 +38,7 @@ public class TransitionPane extends StackPane {
     /// The hidden preparation container, or `null` when no candidate is retained.
     private @Nullable StackPane preloadPane;
 
-    /// Whether the candidate must survive the next content layout pass.
+    /// Whether the candidate is waiting for its first content layout pass.
     private boolean preloadLayoutPending;
 
     /// Creates an empty container that clips content to its bounds.
@@ -58,12 +65,13 @@ public class TransitionPane extends StackPane {
         }
     }
 
-    /// Attaches unowned content for hidden CSS and layout prewarming during scene pulses.
+    /// Attaches unowned content for hidden CSS and layout prewarming.
     /// Replaces any previous candidate without changing the current content. The hidden
     /// container uses a snapshot of this pane's content-area size and does not affect
-    /// its size requirements. It is retained through the next content layout pass
-    /// and released on a later pass. Any call to [#setContent(Node, AnimationProducer)]
-    /// cancels pending prewarming and releases the hidden container.
+    /// its size requirements. After layout, [RenderPrewarmable] content also receives a
+    /// disposable snapshot at the showing window's render scale. The content is then detached.
+    /// Any call to [#setContent(Node, AnimationProducer)] cancels pending prewarming
+    /// and releases the hidden container.
     /// The caller must retain the content for subsequent use. This method does not wait
     /// for prewarming to finish and must be called on the JavaFX Application Thread.
     ///
@@ -74,14 +82,12 @@ public class TransitionPane extends StackPane {
         if (content.getParent() != null || content.getScene() != null) {
             throw new IllegalArgumentException("Content already belongs to a parent or scene");
         }
-        if (preloadPane == null) {
-            preloadPane = new StackPane();
-            preloadPane.setVisible(false);
-            preloadPane.setManaged(false);
-            preloadPane.setMouseTransparent(true);
-            getChildren().add(0, preloadPane);
-        }
-        preloadPane.getChildren().setAll(content);
+        disposePreloadPane();
+        preloadPane = new StackPane(content);
+        preloadPane.setVisible(false);
+        preloadPane.setManaged(false);
+        preloadPane.setMouseTransparent(true);
+        getChildren().add(0, preloadPane);
         preloadPane.resizeRelocate(snappedLeftInset(), snappedTopInset(),
                 Math.max(0, getWidth() - snappedLeftInset() - snappedRightInset()),
                 Math.max(0, getHeight() - snappedTopInset() - snappedBottomInset()));
@@ -90,18 +96,75 @@ public class TransitionPane extends StackPane {
         return content;
     }
 
-    /// Lays out displayed pages and releases a candidate retained from an earlier pass.
+    /// Schedules rendering preparation after the candidate's descendants have been laid out.
     @Override
     protected void layoutChildren() {
         super.layoutChildren();
-        if (preloadPane != null && getScene() != null) {
-            // Descendant layout follows this method; keep a new candidate attached
-            // through that traversal instead of treating this callback as completion.
-            if (preloadLayoutPending) {
-                preloadLayoutPending = false;
-            } else {
-                disposePreloadPane();
+        @Nullable Scene scene = getScene();
+        if (preloadPane != null && scene != null && preloadLayoutPending) {
+            preloadLayoutPending = false;
+            StackPane candidate = preloadPane;
+            // Snapshotting inside layout would recursively enter the scene's layout pass.
+            Platform.runLater(() -> {
+                if (preloadPane != candidate) {
+                    return;
+                }
+                try {
+                    @Nullable Window window = scene.getWindow();
+                    if (getScene() == scene && window != null && window.isShowing()) {
+                        prewarmRendering(candidate.getChildren().get(0), window,
+                                () -> preloadPane == candidate && getScene() == scene
+                                        && scene.getWindow() == window && window.isShowing());
+                    }
+                } finally {
+                    if (preloadPane == candidate) {
+                        disposePreloadPane();
+                    }
+                }
+            });
+        }
+    }
+
+    /// Warms rendering once before a page's first display, restoring temporary opacity.
+    /// The caller's validity check prevents cancelled preparation from changing a newer transition.
+    private void prewarmRendering(Node content, Window window, BooleanSupplier isCurrent) {
+        if (!(content instanceof RenderPrewarmable)
+                || content.getProperties().containsKey(RENDER_INITIALIZED_KEY)
+                || !content.isVisible() || content.getLayoutBounds().getWidth() <= 0
+                || content.getLayoutBounds().getHeight() <= 0) {
+            return;
+        }
+
+        double opacity = content.getOpacity();
+        boolean restoreOpacity = opacity == 0;
+        if (restoreOpacity && content.opacityProperty().isBound()) {
+            return;
+        }
+        SnapshotParameters parameters = new SnapshotParameters();
+        // Glyph caches depend on the pixel scale; a default 1x snapshot cannot warm HiDPI text.
+        parameters.setTransform(new Scale(window.getRenderScaleX(), window.getRenderScaleY()));
+        try {
+            if (restoreOpacity) {
+                content.setOpacity(1);
             }
+            if (isCurrent.getAsBoolean()) {
+                content.snapshot(parameters, null);
+                content.getProperties().put(RENDER_INITIALIZED_KEY, Boolean.TRUE);
+            }
+        } finally {
+            if (restoreOpacity && isCurrent.getAsBoolean()) {
+                content.setOpacity(opacity);
+            }
+        }
+    }
+
+    /// Suppresses future prewarming after a page enters its displayed state in a showing window.
+    private static void markDisplayed(Node content) {
+        @Nullable Scene scene = content.getScene();
+        @Nullable Window window = scene == null ? null : scene.getWindow();
+        if (content instanceof RenderPrewarmable && window != null && window.isShowing()
+                && content.isVisible() && content.getOpacity() > 0) {
+            content.getProperties().put(RENDER_INITIALIZED_KEY, Boolean.TRUE);
         }
     }
 
@@ -136,7 +199,7 @@ public class TransitionPane extends StackPane {
     }
 
     /// Replaces the current page, cancelling any preceding transition.
-    /// Animated changes wait for a scene CSS and layout pass; mouse input is
+    /// Animated changes wait for CSS, layout, and any opted-in rendering preparation; mouse input is
     /// suppressed while pending or running. Detaching the container or hiding
     /// its window cancels the transition. Cancellation applies the end state
     /// of a started animation with a finite duration and restores the target page
@@ -156,6 +219,7 @@ public class TransitionPane extends StackPane {
                 || window == null || !window.isShowing()) {
             transition.finish(newView);
             replaceContentNodes(null, newView);
+            markDisplayed(newView);
             return;
         }
 
@@ -193,6 +257,10 @@ public class TransitionPane extends StackPane {
                         return;
                     }
                     try {
+                        prewarmRendering(newView, window, this::canContinue);
+                        if (!canContinue()) {
+                            return;
+                        }
                         animation = transition.animate(TransitionPane.this, previousNode, newView, duration, interpolator);
                         if (activeTransition != this) {
                             return;
@@ -246,6 +314,9 @@ public class TransitionPane extends StackPane {
                     newView.setCacheHint(originalCacheHint);
                 }
                 transition.finish(newView);
+                if (animation != null) {
+                    markDisplayed(newView);
+                }
                 getChildren().removeIf(node -> node != newView && node != preloadPane);
                 setMouseTransparent(originalMouseTransparent);
             }
@@ -297,6 +368,12 @@ public class TransitionPane extends StackPane {
         default @Nullable TransitionPane.AnimationProducer opposite() {
             return null;
         }
+    }
+
+    /// Opts a page into one snapshot-based rendering preparation before its first display.
+    /// Completed preparation or normal display suppresses future snapshots, even after resizing
+    /// or changing render scale. Images are discarded; preparation can delay navigation and allocate pixel buffers.
+    public interface RenderPrewarmable {
     }
 
     /// Marks a node as cacheable as a bitmap during animation.
