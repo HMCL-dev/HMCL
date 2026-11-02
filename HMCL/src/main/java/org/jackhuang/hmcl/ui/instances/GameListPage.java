@@ -196,6 +196,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
             private final JFXTextField searchField;
 
+            /// Creates the instance list with search controls and viewport-constrained rows.
             public GameListSkin(GameList skinnable) {
                 super(skinnable);
 
@@ -255,7 +256,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     center.loadingProperty().bind(skinnable.loadingProperty());
                     center.failedReasonProperty().bind(skinnable.failedReasonProperty());
 
-                    listView.setCellFactory(x -> new GameListCell());
+                    listView.setCellFactory(GameListCell::new);
                     listView.setItems(skinnable.getItems());
 
                     ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);

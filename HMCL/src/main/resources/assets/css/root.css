@@ -160,17 +160,14 @@
     -fx-background-color: null;
 }
 
-.advanced-list-item > .rippler-container > .container > .two-line-list-item {
-    -fx-alignment: center-left;
+.advanced-list-item > .rippler-container > .container > .title {
     -fx-padding: 0 0 0 10;
-}
-
-.advanced-list-item > .rippler-container > .container > .two-line-list-item > .first-line > .title {
     -fx-font-size: 13;
     -fx-text-alignment: justify;
 }
 
-.advanced-list-item > .rippler-container > .container > .two-line-list-item > HBox > .subtitle {
+.advanced-list-item > .rippler-container > .container > .subtitle {
+    -fx-padding: 0 0 0 10;
     -fx-font-size: 10;
     -fx-text-alignment: justify;
 }
@@ -179,7 +176,7 @@
     -jfx-selected-background-fill: -monet-secondary-container;
 }
 
-.advanced-list-item:selected > .rippler-container > .container > .two-line-list-item > .first-line > .title {
+.advanced-list-item:selected > .rippler-container > .container > .title {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-font-weight: bold;
 }
@@ -188,27 +185,23 @@
     -fx-fill: -monet-on-secondary-container;
 }
 
-.navigation-drawer-item > .rippler-container > .container > VBox {
-    -fx-padding: 0 0 0 0;
-}
-
-.game-directory-list-item > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
+.game-directory-list-item > .rippler-container > .two-line-list-item > .title {
     -fx-font-size: 13;
 }
 
-.game-directory-list-item > .rippler-container > BorderPane > .two-line-list-item > HBox > .subtitle {
+.game-directory-list-item > .rippler-container > .two-line-list-item > .subtitle {
     -fx-font-size: 10;
 }
 
-.game-directory-list-item > .rippler-container > BorderPane {
+.game-directory-list-item > .rippler-container > .two-line-list-item {
     -fx-padding: 8 0 8 16;
 }
 
-.game-directory-list-item:selected > .rippler-container > BorderPane {
+.game-directory-list-item:selected > .rippler-container > .two-line-list-item {
     -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
-.game-directory-list-item:selected > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
+.game-directory-list-item:selected > .rippler-container > .two-line-list-item > .title {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-font-weight: bold;
 }
@@ -288,54 +281,52 @@
     -fx-padding: 4 0 4 0;
 }
 
-.two-line-list-item > .first-line > .title {
+.two-line-list-item > .title {
     -fx-text-fill: -monet-on-surface;
     -fx-font-size: 15px;
     -fx-padding: 0 8 0 0;
 }
 
-.two-line-list-item > HBox > .subtitle {
+.two-line-list-item > .subtitle {
     -fx-text-fill: -monet-on-surface-variant;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
-.two-line-list-item > .second-line > .subtitle Text {
+.two-line-list-item > .subtitle Text {
     -fx-fill: -monet-on-surface-variant;
 }
 
-.two-line-list-item > .first-line .scroll-bar {
-    -fx-opacity: 0;
-    -fx-max-height: 0;
-    -fx-min-height: 0;
-    -fx-pref-height: 0;
-}
-
-.two-line-list-item > .first-line .tag {
+.tag {
+    -fx-alignment: center;
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
-    -fx-background-radius: 2;
-    -fx-padding: 2;
+    -fx-background-radius: 999px;
+    -fx-padding: 0 5px;
     -fx-font-weight: normal;
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
 }
 
-.two-line-list-item > .first-line .tag:warning {
+.tag:warning {
     -fx-text-fill: -monet-on-error-container;
     -fx-background-color: -fixed-warning-tag-background;
+}
+
+.tag > .text {
+    -fx-bounds-type: logical_vertical_center;
 }
 
 .two-line-item-second-large {
 
 }
 
-.two-line-item-second-large > .first-line > .title, .two-line-item-second-large-title {
+.two-line-item-second-large > .title, .two-line-item-second-large-title {
     -fx-text-fill: -monet-on-surface-variant;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
-.two-line-item-second-large > HBox > .subtitle {
+.two-line-item-second-large > .subtitle {
     -fx-text-fill: -monet-on-surface;
     -fx-font-size: 15px;
 }
@@ -356,7 +347,7 @@
     -fx-fill: -monet-primary;
 }
 
-.wrap-text > HBox > .subtitle {
+.wrap-text > .subtitle {
     -fx-wrap-text: true;
 }
 
@@ -365,8 +356,8 @@
     -fx-background-radius: 2px;
 }
 
-.bubble > HBox > .two-line-list-item > .first-line > .title,
-.bubble > HBox > .two-line-list-item > HBox > .subtitle {
+.bubble > HBox > .two-line-list-item > .title,
+.bubble > HBox > .two-line-list-item > .subtitle {
     -fx-text-fill: -monet-inverse-on-surface;
 }
 

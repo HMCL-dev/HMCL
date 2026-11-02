@@ -183,14 +183,12 @@ public final class Controllers {
     /// The cached settings page.
     private static @Nullable LauncherSettingsPage settingsPage;
 
-    /// Creates the settings page, loads the default preset, and attaches it for layout unless already cached.
+    /// Creates and prewarms the settings page unless already cached.
     @FXThread
     public static void prepareSettingsPage() {
         if (settingsPage == null) {
             LOG.info("Preparing settings page");
-            LauncherSettingsPage page = new LauncherSettingsPage();
-            page.showGameSettings(GameDirectoryManager.getSelectedRepository());
-            settingsPage = getDecorator().prewarmPage(page);
+            settingsPage = getDecorator().prewarmPage(new LauncherSettingsPage());
         }
     }
 

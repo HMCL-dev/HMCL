@@ -2,211 +2,107 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
+import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
-import org.jackhuang.hmcl.ui.FXUtils;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Objects;
-
+/// Displays a title, optional subtitle and tags, and optional leading and trailing nodes.
+///
 /// @author Glavo
 public abstract class LineComponent extends StackPane implements NoPaddingComponent {
     private static final String DEFAULT_STYLE_CLASS = "line-component";
     private static final double MIN_HEIGHT = 48.0;
     private static final PseudoClass PSEUDO_LARGER_TITLE = PseudoClass.getPseudoClass("large-title");
 
-    protected static final int IDX_LEADING = 0;
-    protected static final int IDX_TITLE = 1;
-    protected static final int IDX_TRAILING = 2;
-
+    /// The default gap between text and side nodes, also used within trailing groups.
     public static final double SPACING = 12;
+
+    /// The default margin separating a leading node from the text.
+    private static final Insets LEADING_MARGIN = new Insets(0, SPACING, 0, 0);
+
+    /// The default margin separating a trailing node from the text.
+    private static final Insets TRAILING_MARGIN = new Insets(0, 0, 0, SPACING);
     public static final double DEFAULT_ICON_SIZE = 20;
 
-    public static void setMargin(Node child, Insets value) {
-        HBox.setMargin(child, value);
+    /// Sets the full margin of a leading or trailing node, including its separation from the text.
+    /// Null removes the margin; [Insets#EMPTY] explicitly requests no margin.
+    public static void setMargin(Node child, @Nullable Insets value) {
+        TwoLineListItem.setMargin(child, value);
     }
 
-    protected final HBox container;
+    /// The pane laying out the entire row, including optional side nodes.
+    protected final TwoLineListItem container;
 
-    /// The row containing the title and its optional trailing node.
-    private final HBox titleLine;
-
-    /// The primary title label.
-    private final Label titleLabel;
-
-    /// The container holding the title row and optional subtitle.
-    private final VBox titleContainer;
-
-    /// The optional node displayed immediately after the title.
-    private @Nullable Node titleTrailing;
-
-    /// Tracks visibility and layout participation only when a trailing node has been assigned.
-    private @Nullable InvalidationListener titleTrailingListener;
-
-    /// The optional subtitle label.
-    private @Nullable Label subtitleLabel;
-
-    /// Creates a row with mouse-transparent title text and independently interactive optional nodes.
+    /// Creates a row with truncation tooltips and independently interactive optional nodes.
     public LineComponent() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
-        this.setMinHeight(MIN_HEIGHT);
-
-        this.container = new HBox(SPACING);
-        container.getStyleClass().add("line-component-container");
-        container.setAlignment(Pos.CENTER_LEFT);
-        container.setPickOnBounds(true);
-
-        this.titleLabel = new Label();
-        titleLabel.getStyleClass().add("title-label");
-        titleLabel.setMinWidth(Region.USE_PREF_SIZE);
-        titleLabel.setMouseTransparent(true);
-        titleLabel.setPickOnBounds(false);
-
-        this.titleLine = new HBox(4, titleLabel);
-        titleLine.setAlignment(Pos.CENTER_LEFT);
-        titleLine.setPickOnBounds(false);
-
-        this.titleContainer = new VBox(titleLine);
-        titleContainer.getStyleClass().add("title-container");
-        titleContainer.setAlignment(Pos.CENTER_LEFT);
-        titleContainer.minWidthProperty().bind(titleLine.prefWidthProperty());
-        titleContainer.setMouseTransparent(true);
-        titleContainer.setPickOnBounds(false);
-        HBox.setHgrow(titleContainer, Priority.ALWAYS);
-
-        this.setNode(IDX_TITLE, titleContainer);
+        this.container = new TwoLineListItem();
+        container.getStyleClass().setAll("line-component-container");
+        container.setTitleSpacing(4);
+        container.getTitleLabel().getStyleClass().setAll("label", "title-label");
+        container.getTitleLabel().setMinWidth(Region.USE_PREF_SIZE);
 
         this.getChildren().setAll(container);
-        widthProperty().addListener(observable -> updatePreferredHeight());
     }
 
-    /// Computes wrapped subtitle height from the row width.
-    @Override
-    public Orientation getContentBias() {
-        return Orientation.HORIZONTAL;
-    }
-
-    /// Computes preferred row height from the title column width after fixed-width nodes are removed.
+    /// Computes preferred row height from the horizontal layout, including child margins and wrapped text.
     @Override
     protected double computePrefHeight(double width) {
-        return computeLineHeight(width);
+        return Math.max(MIN_HEIGHT, super.computePrefHeight(width));
     }
 
     /// Keeps wrapped subtitle rows from being compressed below their preferred height.
     @Override
     protected double computeMinHeight(double width) {
-        return computeLineHeight(width);
+        return computePrefHeight(width);
     }
 
-    /// Computes row height with the same width split used by the `HBox` at layout time.
-    private double computeLineHeight(double width) {
-        double horizontalInsets = container.snappedLeftInset() + container.snappedRightInset();
-        double verticalInsets = container.snappedTopInset() + container.snappedBottomInset();
-        double contentWidth = width < 0 ? -1 : Math.max(0, width - horizontalInsets);
-
-        int managedCount = 0;
-        double fixedWidth = 0;
-        double contentHeight = 0;
-        for (Node child : container.getChildren()) {
-            if (!child.isManaged()) {
-                continue;
-            }
-
-            managedCount++;
-            if (child == titleContainer) {
-                continue;
-            }
-
-            fixedWidth += child.prefWidth(-1);
-            contentHeight = Math.max(contentHeight, child.prefHeight(-1));
-        }
-
-        double titleWidth = contentWidth < 0
-                ? -1
-                : Math.max(0, contentWidth - fixedWidth - container.getSpacing() * Math.max(0, managedCount - 1));
-        contentHeight = Math.max(contentHeight, computeTitleHeight(titleWidth));
-
-        return Math.max(MIN_HEIGHT, verticalInsets + contentHeight);
+    /// Sets the trailing node, supplying a 12-pixel left margin only if no margin is assigned.
+    /// Null removes the node. Subclasses may supply a container for multiple trailing controls.
+    protected final void setTrailing(@Nullable Node node) {
+        if (node != null && TwoLineListItem.getMargin(node) == null)
+            setMargin(node, TRAILING_MARGIN);
+        container.setTrailing(node);
     }
 
-    /// Computes the height of the title column at the given width.
-    private double computeTitleHeight(double width) {
-        double height = titleLine.prefHeight(width);
-        if (subtitleLabel != null && subtitleLabel.getParent() == titleContainer) {
-            height += titleContainer.getSpacing() + subtitleLabel.prefHeight(width);
-        }
-        return height;
-    }
-
-    private Node[] nodes = new Node[2];
-
-    protected void setNode(int idx, Node node) {
-        if (nodes.length <= idx)
-            nodes = Arrays.copyOf(nodes, idx + 1);
-
-        if (nodes[idx] != node) {
-            nodes[idx] = node;
-            container.getChildren().setAll(Arrays.stream(nodes).filter(Objects::nonNull).toArray(Node[]::new));
-            updatePreferredHeight();
-        }
-    }
-
-    /// Sets the node displayed immediately after the mouse-transparent title label.
+    /// Sets the node displayed immediately after the title label.
     /// Null removes the node; non-null nodes retain their own mouse input handling.
     /// Nodes that are both invisible and unmanaged remain detached until either property becomes true.
     public final void setTitleTrailing(@Nullable Node node) {
-        if (titleTrailing == node) {
-            return;
-        }
-
-        if (titleTrailing != null) {
-            titleTrailing.visibleProperty().removeListener(titleTrailingListener);
-            titleTrailing.managedProperty().removeListener(titleTrailingListener);
-            titleLine.getChildren().remove(titleTrailing);
-        }
-        titleTrailing = node;
-        if (node != null) {
-            if (titleTrailingListener == null)
-                titleTrailingListener = observable -> updateTitleTrailing();
-            node.visibleProperty().addListener(titleTrailingListener);
-            node.managedProperty().addListener(titleTrailingListener);
-        }
-        updateTitleTrailing();
+        container.setTitleTrailing(node);
     }
 
-    /// Attaches the trailing node only when it needs rendering or layout space.
-    private void updateTitleTrailing() {
-        if (titleTrailing != null) {
-            boolean attached = titleTrailing.getParent() == titleLine;
-            if (titleTrailing.isVisible() || titleTrailing.isManaged()) {
-                if (!attached)
-                    titleLine.getChildren().add(titleTrailing);
-            } else if (attached) {
-                titleLine.getChildren().remove(titleTrailing);
-            }
-        }
-        titleContainer.setMouseTransparent(titleTrailing == null || !titleTrailing.isVisible());
+    /// Returns the mutable list of tags displayed after the title and its optional trailing node.
+    /// Changes to the list are reflected in the row. Tags that do not fit are replaced
+    /// by a single `+N` tag whose tooltip lists the hidden values, one per line.
+    /// The title may shrink to preserve space for this summary.
+    /// An empty list occupies no space. Tag values may be shared or repeated in the list.
+    /// Replace a value in the list to change its text or type. Changes must be made on
+    /// the JavaFX application thread once this component is attached to a showing scene.
+    ///
+    /// @return the live list of tag values; elements must be non-null
+    public final ObservableList<Tag> getTags() {
+        return container.getTags();
     }
 
     public void setLargeTitle(boolean largeTitle) {
         pseudoClassStateChanged(PSEUDO_LARGER_TITLE, largeTitle);
     }
 
+    /// The title text forwarded to the content pane.
     private final StringProperty title = new StringPropertyBase() {
         @Override
         public Object getBean() {
@@ -218,26 +114,32 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
             return "title";
         }
 
+        /// Updates the title displayed by the content pane.
         @Override
         protected void invalidated() {
-            titleLabel.setText(get());
+            container.setTitle(get());
         }
     };
 
+    /// Returns the title property; null text is displayed as empty.
     public final StringProperty titleProperty() {
         return title;
     }
 
-    public String getTitle() {
+    /// Returns the title text, or null if none is assigned.
+    public @Nullable String getTitle() {
         return titleProperty().get();
     }
 
-    public void setTitle(String title) {
+    /// Sets the title text; null is displayed as empty.
+    public void setTitle(@Nullable String title) {
         titleProperty().set(title);
     }
 
-    private StringProperty subtitle;
+    /// The lazily created subtitle property; null and empty values omit the second row.
+    private @Nullable StringProperty subtitle;
 
+    /// Returns the subtitle property; null and empty values omit the second row.
     public final StringProperty subtitleProperty() {
         if (subtitle == null) {
             subtitle = new StringPropertyBase() {
@@ -251,26 +153,18 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
                     return LineComponent.this;
                 }
 
+                /// Updates the wrapping subtitle in the content pane.
                 @Override
                 protected void invalidated() {
-                    String subtitle = get();
+                    @Nullable String subtitle = get();
                     if (subtitle != null && !subtitle.isEmpty()) {
-                        if (subtitleLabel == null) {
-                            subtitleLabel = new Label();
-                            subtitleLabel.setWrapText(true);
-                            subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
-                            subtitleLabel.setMouseTransparent(true);
-                            subtitleLabel.getStyleClass().add("subtitle-label");
-                        }
-                        subtitleLabel.setText(subtitle);
-                        if (titleContainer.getChildren().size() == 1)
-                            titleContainer.getChildren().add(subtitleLabel);
-                    } else if (subtitleLabel != null) {
-                        subtitleLabel.setText(null);
-                        if (titleContainer.getChildren().size() == 2)
-                            titleContainer.getChildren().remove(1);
+                        Label label = container.getSubtitleLabel();
+                        label.getStyleClass().setAll("label", "subtitle-label");
+                        label.setWrapText(true);
+                        container.setSubtitle(subtitle);
+                    } else {
+                        container.setSubtitle(null);
                     }
-                    updatePreferredHeight();
                 }
             };
         }
@@ -278,34 +172,22 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         return subtitle;
     }
 
-    public final String getSubtitle() {
+    /// Returns the assigned subtitle text, or null if none is assigned.
+    public final @Nullable String getSubtitle() {
         return subtitle != null ? subtitle.get() : null;
     }
 
-    public final void setSubtitle(String subtitle) {
+    /// Sets the subtitle text; null and empty values omit the second row.
+    public final void setSubtitle(@Nullable String subtitle) {
         subtitleProperty().set(subtitle);
     }
 
-    /// Updates the fixed preferred height after the row width or subtitle content changes.
-    private void updatePreferredHeight() {
-        if (FXUtils.getLimitHeight(this) > 0) return;
+    /// The lazily created leading-node property forwarded to the content pane.
+    private @Nullable ObjectProperty<@Nullable Node> leading;
 
-        double width = getWidth();
-        if (width <= 0) {
-            setMinHeight(MIN_HEIGHT);
-            setPrefHeight(Region.USE_COMPUTED_SIZE);
-            return;
-        }
-
-        applyCss();
-        double height = computeLineHeight(width);
-        setMinHeight(height);
-        setPrefHeight(height);
-    }
-
-    private ObjectProperty<Node> leading;
-
-    public final ObjectProperty<Node> leadingProperty() {
+    /// Returns the leading-node property, initially null.
+    /// Assigning a node supplies a 12-pixel right margin only if no margin is assigned.
+    public final ObjectProperty<@Nullable Node> leadingProperty() {
         if (leading == null) {
             leading = new ObjectPropertyBase<>() {
                 @Override
@@ -318,28 +200,37 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
                     return "leading";
                 }
 
+                /// Applies the default margin when absent and replaces the leading node.
                 @Override
                 protected void invalidated() {
-                    setNode(IDX_LEADING, get());
+                    @Nullable Node node = get();
+                    if (node != null && TwoLineListItem.getMargin(node) == null)
+                        setMargin(node, LEADING_MARGIN);
+                    container.setLeading(node);
                 }
             };
         }
         return leading;
     }
 
-    public final Node getLeading() {
-        return leadingProperty().get();
+    /// Returns the leading node, or null if none is assigned.
+    public final @Nullable Node getLeading() {
+        return leading == null ? null : leading.get();
     }
 
-    public final void setLeading(Node node) {
+    /// Sets the leading node; null removes it. See [#leadingProperty()] for default margins.
+    public final void setLeading(@Nullable Node node) {
         leadingProperty().set(node);
     }
 
-    public void setLeading(Image icon) {
+    /// Sets a mouse-transparent leading image at its natural dimensions.
+    public void setLeading(@Nullable Image icon) {
         setLeading(icon, -1);
     }
 
-    public void setLeading(Image icon, double size) {
+    /// Sets a mouse-transparent leading image, fitting within size when positive.
+    /// A non-positive size uses the image's natural dimensions; a null image displays no pixels.
+    public void setLeading(@Nullable Image icon, double size) {
         var imageView = new ImageView(icon);
         if (size > 0) {
             imageView.setFitWidth(size);
@@ -349,17 +240,19 @@ public abstract class LineComponent extends StackPane implements NoPaddingCompon
         }
         imageView.setMouseTransparent(true);
 
-        setNode(IDX_LEADING, imageView);
+        setLeading(imageView);
     }
 
+    /// Sets a mouse-transparent leading SVG at the default icon size.
     public void setLeading(SVG svg) {
         setLeading(svg, DEFAULT_ICON_SIZE);
     }
 
+    /// Sets a mouse-transparent leading SVG at the specified size.
     public void setLeading(SVG svg, double size) {
         Node node = svg.createIcon(size);
         node.setMouseTransparent(true);
-        setNode(IDX_LEADING, node);
+        setLeading(node);
     }
 
 }
