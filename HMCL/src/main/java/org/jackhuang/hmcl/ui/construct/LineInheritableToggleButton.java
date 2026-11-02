@@ -70,9 +70,16 @@ public final class LineInheritableToggleButton extends LineButtonBase {
         });
 
         this.toggleButton = new JFXSwitch();
-        toggleButton.setMouseTransparent(true);
         toggleButton.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
         toggleButton.accessibleTextProperty().bind(titleProperty());
+        toggleButton.setOnAction(event -> {
+            // Override listeners may refresh the switch synchronously; preserve the requested value.
+            boolean selected = toggleButton.isSelected();
+            event.consume();
+            setOverridden(true);
+            setRawValue(selected);
+            super.fire();
+        });
 
         setTitleTrailing(inheritButton);
         setTrailing(toggleButton);

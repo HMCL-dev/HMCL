@@ -20,6 +20,10 @@ import javafx.scene.input.PickResult;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.robot.Robot;
+import javafx.stage.Stage;
+import org.jackhuang.hmcl.ui.construct.LineInheritableToggleButton;
+import org.jackhuang.hmcl.ui.construct.LineButtonBase;
 import org.jackhuang.hmcl.ui.construct.LineToggleButton;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.LauncherSettings;
@@ -44,6 +48,93 @@ import static org.junit.jupiter.api.Assertions.*;
 @NotNullByDefault
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 public final class JFXSwitchTest {
+    /// Uses native pointer input to verify picking, row bindings, and inheritable overrides.
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void nativeRowDragging(boolean inheritable) throws Exception {
+        Field settingsField = SettingsManager.class.getDeclaredField("launcherSettings");
+        settingsField.setAccessible(true);
+        @Nullable Object previous = settingsField.get(null);
+        if (previous == null)
+            settingsField.set(null, new LauncherSettings());
+        CompletableFuture<Stage> window = new CompletableFuture<>();
+        CompletableFuture<JFXSwitch> target = new CompletableFuture<>();
+        AtomicInteger presses = new AtomicInteger();
+        AtomicInteger actions = new AtomicInteger();
+        try {
+            onFxThread(() -> {
+                Platform.setImplicitExit(false);
+                LineButtonBase row;
+                if (inheritable) {
+                    LineInheritableToggleButton inheritedRow = new LineInheritableToggleButton();
+                    // Model the setting binder, including synchronous refresh when override mode changes.
+                    inheritedRow.overriddenProperty().addListener(observable ->
+                            inheritedRow.setEffectiveValue(inheritedRow.getRawValue()));
+                    inheritedRow.rawValueProperty().addListener(observable ->
+                            inheritedRow.setEffectiveValue(inheritedRow.getRawValue()));
+                    row = inheritedRow;
+                } else {
+                    row = new LineToggleButton();
+                }
+                row.setTitle("Setting");
+                row.addEventHandler(javafx.event.ActionEvent.ACTION, event -> actions.incrementAndGet());
+                VBox root = new VBox(row);
+                Scene scene = new Scene(root, 400, 120);
+                scene.getStylesheets().addAll(
+                        Objects.requireNonNull(getClass().getResource("/assets/css/blue.css")).toExternalForm(),
+                        Objects.requireNonNull(getClass().getResource("/assets/css/root.css")).toExternalForm());
+                Stage stage = new Stage();
+                window.complete(stage);
+                stage.setScene(scene);
+                stage.show();
+                stage.toFront();
+                layout(root);
+                JFXSwitch control = (JFXSwitch) Objects.requireNonNull(row.lookup(".jfx-switch"));
+                control.setDisableAnimation(true);
+                control.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> presses.incrementAndGet());
+                target.complete(control);
+                for (@Nullable javafx.scene.Node node = control; node != null; node = node.getParent())
+                    assertFalse(node.isMouseTransparent(), "Transparent ancestor: " + node);
+            });
+            Thread.sleep(250);
+            onFxThread(() -> {
+                var artwork = Objects.requireNonNull(target.join().lookup(".switch-artwork"));
+                Point2D start = Objects.requireNonNull(artwork.localToScreen(16, 24));
+                Robot robot = new Robot();
+                robot.mouseMove(start);
+                robot.mousePress(MouseButton.PRIMARY);
+            });
+            Thread.sleep(100);
+            onFxThread(() -> {
+                assertEquals(1, presses.get(), "Native press must hit the switch");
+                var artwork = Objects.requireNonNull(target.join().lookup(".switch-artwork"));
+                new Robot().mouseMove(Objects.requireNonNull(artwork.localToScreen(36, 24)));
+            });
+            Thread.sleep(100);
+            onFxThread(() -> new Robot().mouseRelease(MouseButton.PRIMARY));
+            Thread.sleep(150);
+            onFxThread(() -> {
+                assertTrue(target.join().isSelected());
+                assertEquals(1, actions.get());
+                LineButtonBase row = (LineButtonBase) window.join().getScene().getRoot().getChildrenUnmodifiable().get(0);
+                if (row instanceof LineInheritableToggleButton inheritedRow) {
+                    assertTrue(inheritedRow.isOverridden());
+                    assertTrue(inheritedRow.getRawValue());
+                    assertTrue(inheritedRow.isEffectiveValue());
+                } else {
+                    assertTrue(((LineToggleButton) row).isSelected());
+                }
+            });
+        } finally {
+            onFxThread(() -> {
+                new Robot().mouseRelease(MouseButton.PRIMARY);
+                if (window.isDone())
+                    window.join().close();
+            });
+            settingsField.set(null, previous);
+        }
+    }
+
     /// Exercises handle dragging through the settings-row container in both layout directions.
     @ParameterizedTest
     @CsvSource({"false, 24", "true, 24", "false, 32", "true, 32"})
