@@ -154,20 +154,14 @@ final class WindowsGPUDetector {
             return null;
     }
 
-    /// Builds a video-controller query that resolves each PnP instance's driver matching ID.
-    /// Missing registry properties leave the ID empty without discarding the controller.
+    /// Builds a video-controller query with matching IDs when PnP property lookup is available.
     static String buildCimQuery(String cmdlet) {
         return String.join(" | ",
                 cmdlet + " -Class Win32_VideoController",
                 """
                         Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType,@{Name='MatchingDeviceId';Expression={
-                            if ($_.PNPDeviceID) {
-                                try {
-                                    $gpuDriverKey = (Get-ItemProperty -LiteralPath ('HKLM:\\SYSTEM\\CurrentControlSet\\Enum\\' + $_.PNPDeviceID) -Name Driver -ErrorAction Stop).Driver
-                                    if ($gpuDriverKey) {
-                                        (Get-ItemProperty -LiteralPath ('HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\' + $gpuDriverKey) -Name MatchingDeviceId -ErrorAction Stop).MatchingDeviceId
-                                    }
-                                } catch {}
+                            if ($_.PNPDeviceID -and (Get-Command Get-PnpDeviceProperty -ErrorAction SilentlyContinue)) {
+                                (Get-PnpDeviceProperty -InstanceId $_.PNPDeviceID -KeyName DEVPKEY_Device_MatchingDeviceId -ErrorAction SilentlyContinue).Data
                             }
                         }}
                         """.stripTrailing(),
