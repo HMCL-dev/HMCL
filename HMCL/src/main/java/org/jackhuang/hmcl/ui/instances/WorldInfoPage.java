@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -214,7 +215,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
             }
 
-            var allowCheatsButton = new LineToggleButton();
+            var allowCheatsButton = new LineSwitch();
             {
                 allowCheatsButton.setTitle(i18n("world.info.allow_cheats"));
                 allowCheatsButton.setDisable(isReadOnly);
@@ -222,7 +223,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 bindTagAndToggleButton(dataTag.get("allowCommands"), allowCheatsButton);
             }
 
-            var generateFeaturesButton = new LineToggleButton();
+            var generateFeaturesButton = new LineSwitch();
             {
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
                 generateFeaturesButton.setDisable(isReadOnly);
@@ -276,7 +277,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
             }
 
-            var difficultyLockPane = new LineToggleButton();
+            var difficultyLockPane = new LineSwitch();
             {
                 difficultyLockPane.setTitle(i18n("world.info.difficulty_lock"));
                 difficultyLockPane.setDisable(isReadOnly);
@@ -430,7 +431,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         linePane.setRight(textField);
     }
 
-    private void bindTagAndToggleButton(Tag tag, LineToggleButton toggleButton) {
+    /// Saves boolean byte-tag edits through the switch, disabling it for missing or invalid tags.
+    private void bindTagAndToggleButton(@Nullable Tag tag, LineSwitch toggleButton) {
         if (tag instanceof ByteTag byteTag) {
             byte value = byteTag.getValue();
             if (value == 0 || value == 1) {

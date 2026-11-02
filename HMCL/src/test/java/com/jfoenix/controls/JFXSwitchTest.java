@@ -25,10 +25,10 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.robot.Robot;
 import javafx.stage.Stage;
-import org.jackhuang.hmcl.ui.construct.LineInheritableToggleButton;
+import org.jackhuang.hmcl.ui.construct.LineInheritableSwitch;
 import org.jackhuang.hmcl.ui.construct.LineButtonBase;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.LineToggleButton;
+import org.jackhuang.hmcl.ui.construct.LineSwitch;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.LauncherSettings;
 import java.lang.reflect.Field;
@@ -148,7 +148,7 @@ public final class JFXSwitchTest {
                 Platform.setImplicitExit(false);
                 LineButtonBase row;
                 if (inheritable) {
-                    LineInheritableToggleButton inheritedRow = new LineInheritableToggleButton();
+                    LineInheritableSwitch inheritedRow = new LineInheritableSwitch();
                     // Model the setting binder, including synchronous refresh when override mode changes.
                     inheritedRow.overriddenProperty().addListener(observable ->
                             inheritedRow.setEffectiveValue(inheritedRow.getRawValue()));
@@ -156,7 +156,7 @@ public final class JFXSwitchTest {
                             inheritedRow.setEffectiveValue(inheritedRow.getRawValue()));
                     row = inheritedRow;
                 } else {
-                    row = new LineToggleButton();
+                    row = new LineSwitch();
                 }
                 row.setTitle("Setting");
                 row.addEventHandler(javafx.event.ActionEvent.ACTION, event -> actions.incrementAndGet());
@@ -197,12 +197,12 @@ public final class JFXSwitchTest {
                 assertTrue(target.join().isSelected());
                 assertEquals(1, actions.get());
                 LineButtonBase row = (LineButtonBase) window.join().getScene().getRoot().getChildrenUnmodifiable().get(0);
-                if (row instanceof LineInheritableToggleButton inheritedRow) {
+                if (row instanceof LineInheritableSwitch inheritedRow) {
                     assertTrue(inheritedRow.isOverridden());
                     assertTrue(inheritedRow.getRawValue());
                     assertTrue(inheritedRow.isEffectiveValue());
                 } else {
-                    assertTrue(((LineToggleButton) row).isSelected());
+                    assertTrue(((LineSwitch) row).isSelected());
                 }
             });
         } finally {
@@ -226,7 +226,7 @@ public final class JFXSwitchTest {
             settingsField.set(null, new LauncherSettings());
         try {
             onFxThread(() -> {
-                LineToggleButton row = new LineToggleButton();
+                LineSwitch row = new LineSwitch();
                 row.setTitle("Setting");
                 VBox root = new VBox(row);
                 root.setNodeOrientation(rtl ? NodeOrientation.RIGHT_TO_LEFT : NodeOrientation.LEFT_TO_RIGHT);
@@ -308,7 +308,7 @@ public final class JFXSwitchTest {
         onFxThread(() -> {
             JFXSwitch control = new JFXSwitch();
             VBox root = scene(control);
-            root.getStyleClass().add("line-toggle-button");
+            root.getStyleClass().add("line-switch");
             layout(root);
             assertEquals(24, control.getSize());
             assertEquals(39, control.prefWidth(-1));

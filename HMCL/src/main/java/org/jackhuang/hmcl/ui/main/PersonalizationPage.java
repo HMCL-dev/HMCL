@@ -183,7 +183,7 @@ public class PersonalizationPage extends StackPane {
 
     /// Binds a line toggle button to an inheritable theme appearance setting.
     private static void bindThemeAppearanceToggleButton(
-            LineToggleButton button,
+            LineSwitch button,
             String setting,
             BooleanProperty directProperty,
             Supplier<Boolean> effectiveValueSupplier) {
@@ -849,7 +849,7 @@ public class PersonalizationPage extends StackPane {
             });
             refreshBackground.invalidated(null);
 
-            LineToggleButton networkBackgroundCacheButton = new LineToggleButton();
+            LineSwitch networkBackgroundCacheButton = new LineSwitch();
             networkBackgroundCacheButton.setTitle(i18n("launcher.background.network.cache"));
             networkBackgroundCacheButton.setSelected(Objects.requireNonNullElse(
                     settings().networkBackgroundImageCachePolicyProperty().get(),
@@ -1061,7 +1061,7 @@ public class PersonalizationPage extends StackPane {
 
         {
             String setting = LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT;
-            LineToggleButton titleBarTransparentButton = new LineToggleButton();
+            LineSwitch titleBarTransparentButton = new LineSwitch();
             titleBarTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
             JFXButton inheritButton = createThemeAppearanceOverrideButton();
             titleBarTransparentButton.setTitleTrailing(inheritButton);
@@ -1125,7 +1125,7 @@ public class PersonalizationPage extends StackPane {
             themeAppearanceList.getContent().add(titleBarTransparentButton);
         }
 
-        LineToggleButton windowTransparentButton = new LineToggleButton();
+        LineSwitch windowTransparentButton = new LineSwitch();
         windowTransparentButton.setTitle(i18n("settings.launcher.window_transparent"));
         bindThemeAppearanceToggleButton(
                 windowTransparentButton,
@@ -1152,7 +1152,7 @@ public class PersonalizationPage extends StackPane {
         {
             ComponentList appearanceList = new ComponentList();
 
-            LineToggleButton animationButton = new LineToggleButton();
+            LineSwitch animationButton = new LineSwitch();
             appearanceList.getContent().add(animationButton);
             animationButton.setSelected(settings().isAnimationDisabled());
             FXUtils.onChange(animationButton.selectedProperty(), value -> settings().animationDisabledProperty().set(value));

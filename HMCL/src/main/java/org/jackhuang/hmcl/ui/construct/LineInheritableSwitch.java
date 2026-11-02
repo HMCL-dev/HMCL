@@ -17,14 +17,14 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.NotNullByDefault;
 
-/// A line component that edits an inheritable boolean while showing the effective toggle state.
+/// A line component that edits an inheritable boolean while showing the effective switch state.
 ///
-/// The override state is represented separately from the direct boolean value. The toggle always
+/// The override state is represented separately from the direct boolean value. The switch always
 /// reflects the effective value currently applied by the setting hierarchy.
 @NotNullByDefault
-public final class LineInheritableToggleButton extends LineButtonBase {
-    /// The style class applied to inheritable toggle rows.
-    private static final String DEFAULT_STYLE_CLASS = "line-inheritable-toggle-button";
+public final class LineInheritableSwitch extends LineButtonBase {
+    /// The style class applied to inheritable switch rows.
+    private static final String DEFAULT_STYLE_CLASS = "line-inheritable-switch";
 
     /// The pseudo class applied while the value overrides the inherited setting.
     private static final PseudoClass PSEUDO_OVERRIDDEN = PseudoClass.getPseudoClass("overridden");
@@ -41,12 +41,12 @@ public final class LineInheritableToggleButton extends LineButtonBase {
     /// The tooltip shown on the inheritance button.
     private final Tooltip inheritTooltip;
 
-    /// The visual toggle that displays the effective value.
-    private final JFXSwitch toggleButton;
+    /// The visual switch that displays the effective value.
+    private final JFXSwitch switchControl;
 
-    /// Creates an inheritable boolean toggle row.
-    public LineInheritableToggleButton() {
-        this.getStyleClass().addAll(DEFAULT_STYLE_CLASS, "line-toggle-button");
+    /// Creates an inheritable boolean switch row.
+    public LineInheritableSwitch() {
+        this.getStyleClass().addAll(DEFAULT_STYLE_CLASS, "line-switch");
 
         this.inheritButton = new JFXButton();
         inheritButton.getStyleClass().add(INHERIT_BUTTON_STYLE_CLASS);
@@ -69,12 +69,12 @@ public final class LineInheritableToggleButton extends LineButtonBase {
             event.consume();
         });
 
-        this.toggleButton = new JFXSwitch();
-        toggleButton.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
-        toggleButton.accessibleTextProperty().bind(titleProperty());
-        toggleButton.setOnAction(event -> {
+        this.switchControl = new JFXSwitch();
+        switchControl.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
+        switchControl.accessibleTextProperty().bind(titleProperty());
+        switchControl.setOnAction(event -> {
             // Override listeners may refresh the switch synchronously; preserve the requested value.
-            boolean selected = toggleButton.isSelected();
+            boolean selected = switchControl.isSelected();
             event.consume();
             setOverridden(true);
             setRawValue(selected);
@@ -82,7 +82,7 @@ public final class LineInheritableToggleButton extends LineButtonBase {
         });
 
         setTitleTrailing(inheritButton);
-        setTrailing(toggleButton);
+        setTrailing(switchControl);
 
         rawValue.addListener(observable -> refresh());
         overridden.addListener(observable -> refresh());
@@ -93,6 +93,7 @@ public final class LineInheritableToggleButton extends LineButtonBase {
         refresh();
     }
 
+    /// Overrides the inherited value with its inverse and fires the row action.
     @Override
     public void fire() {
         setOverridden(true);
@@ -112,7 +113,7 @@ public final class LineInheritableToggleButton extends LineButtonBase {
         inheritButton.setManaged(inheritAvailable);
         inheritTooltip.setText(inherited ? getInheritedTooltip() : getOverriddenTooltip());
 
-        toggleButton.setSelected(isEffectiveValue());
+        switchControl.setSelected(isEffectiveValue());
     }
 
     /// The raw value stored in this setting.
@@ -151,20 +152,20 @@ public final class LineInheritableToggleButton extends LineButtonBase {
         overriddenProperty().set(overridden);
     }
 
-    /// The effective value displayed by the toggle.
+    /// The effective value displayed by the switch.
     private final BooleanProperty effectiveValue = new SimpleBooleanProperty(this, "effectiveValue");
 
-    /// Returns the effective value displayed by the toggle.
+    /// Returns the effective value displayed by the switch.
     public BooleanProperty effectiveValueProperty() {
         return effectiveValue;
     }
 
-    /// Returns the effective value displayed by the toggle.
+    /// Returns the effective value displayed by the switch.
     public boolean isEffectiveValue() {
         return effectiveValueProperty().get();
     }
 
-    /// Sets the effective value displayed by the toggle.
+    /// Sets the effective value displayed by the switch.
     public void setEffectiveValue(boolean effectiveValue) {
         effectiveValueProperty().set(effectiveValue);
     }

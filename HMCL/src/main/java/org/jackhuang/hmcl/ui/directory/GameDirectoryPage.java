@@ -62,7 +62,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
     private final LineFileChooserButton gameDir;
 
     /// Toggle that controls whether a saved path is converted to a relative path when possible.
-    private final LineToggleButton toggleUseRelativePath;
+    private final LineSwitch toggleUseRelativePath;
 
     /// Creates a page for adding a new game directory or editing an existing game directory.
     ///
@@ -124,7 +124,7 @@ public final class GameDirectoryPage extends BorderPane implements DecoratorPage
                     gameDir.setType(LineFileChooserButton.Type.OPEN_DIRECTORY);
                     gameDir.locationProperty().bindBidirectional(location);
 
-                    toggleUseRelativePath = new LineToggleButton();
+                    toggleUseRelativePath = new LineSwitch();
                     toggleUseRelativePath.setTitle(i18n("game_directory.use_relative_path"));
 
                     gameDir.convertToRelativePathProperty().bind(toggleUseRelativePath.selectedProperty());

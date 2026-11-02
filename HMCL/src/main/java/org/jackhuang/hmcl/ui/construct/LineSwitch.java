@@ -10,28 +10,28 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 /// A settings row whose switch is bidirectionally bound to its selected state.
 @NotNullByDefault
-public final class LineToggleButton extends LineButtonBase {
-    /// The style class applied to toggle rows.
-    private static final String DEFAULT_STYLE_CLASS = "line-toggle-button";
+public final class LineSwitch extends LineButtonBase {
+    /// The style class applied to switch rows.
+    private static final String DEFAULT_STYLE_CLASS = "line-switch";
 
     /// The switch that edits the selected state.
-    private final JFXSwitch toggleButton;
+    private final JFXSwitch switchControl;
 
-    /// Creates a row with a directly attached toggle bound to the selected state.
-    public LineToggleButton() {
+    /// Creates a row with a directly attached switch bound to the selected state.
+    public LineSwitch() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
-        this.toggleButton = new JFXSwitch();
-        toggleButton.selectedProperty().bindBidirectional(selectedProperty());
-        toggleButton.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
-        toggleButton.accessibleTextProperty().bind(titleProperty());
-        setTrailing(toggleButton);
+        this.switchControl = new JFXSwitch();
+        switchControl.selectedProperty().bindBidirectional(selectedProperty());
+        switchControl.setDisableAnimation(!AnimationUtils.isAnimationEnabled());
+        switchControl.accessibleTextProperty().bind(titleProperty());
+        setTrailing(switchControl);
     }
 
     /// Activates the switch and then fires the row action.
     @Override
     public void fire() {
-        toggleButton.fire();
+        switchControl.fire();
         super.fire();
     }
 

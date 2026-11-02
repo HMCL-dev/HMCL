@@ -2025,7 +2025,7 @@
     -fx-text-fill: -monet-primary-transparent-80;
 }
 
-.line-toggle-button .jfx-switch {
+.line-switch .jfx-switch {
     -jfx-size: 24;
 }
 
