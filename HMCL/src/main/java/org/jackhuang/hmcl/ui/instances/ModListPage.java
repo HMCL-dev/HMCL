@@ -20,6 +20,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -66,7 +67,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -727,13 +727,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         private final ModListPage page;
 
         private final JFXCheckBox checkBox = new JFXCheckBox();
+        private final ColorAdjust colorAdjust = new ColorAdjust();
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
         private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
 
-        private final InvalidationListener activeListener = obs -> checkBox.setSelected(getItem().getModInfo().isActive());
+        private final InvalidationListener activeListener = obs -> updateActiveState(getItem().getModInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
@@ -753,6 +754,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             setSelectable();
 
             imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
+            imageContainer.setEffect(colorAdjust);
+
+            content.setEffect(colorAdjust);
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
@@ -866,6 +870,12 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                         : new Tooltip(String.join("\n", warning));
                 FXUtils.installFastTooltip(this, warningTooltip);
             }
+        }
+
+        private void updateActiveState(boolean active) {
+            checkBox.setSelected(getItem().getModInfo().isActive());
+            colorAdjust.setSaturation(active ? 0.0 : -0.75);
+            colorAdjust.setBrightness(active ? 0.0 : -0.50);
         }
     }
 }
