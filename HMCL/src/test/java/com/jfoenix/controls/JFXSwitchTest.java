@@ -522,6 +522,72 @@ public final class JFXSwitchTest {
         });
     }
 
+    /// Defers selection styling to CSS/layout, coalesces changes, and keeps initial and theme colors immediate.
+    @Test
+    void deferredSelectionColors() throws Exception {
+        onFxThread(() -> {
+            JFXSwitch control = new JFXSwitch();
+            control.setSelected(true);
+            control.setStyle("-jfx-switch-primary: #123456;");
+            VBox root = scene(control);
+            Region track = part(control, "track");
+            assertEquals(Color.web("#123456"), track.getBackground().getFills().get(0).getFill());
+            AtomicInteger changes = new AtomicInteger();
+            track.backgroundProperty().addListener(observable -> changes.incrementAndGet());
+
+            control.setSelected(false);
+            control.setSelected(true);
+            assertEquals(0, changes.get(), "Selection listeners must not force a CSS pass");
+            layout(root);
+            assertEquals(0, changes.get(), "Changes returning to the styled state should be coalesced");
+
+            control.setStyle("-jfx-switch-primary: #abcdef;");
+            layout(root);
+            assertEquals(Color.web("#abcdef"), track.getBackground().getFills().get(0).getFill(),
+                    "A completed layout must not leave selection animation pending for a theme change");
+
+            control.setSelected(false);
+            control.setDisableAnimation(true);
+            layout(root);
+            assertEquals(Color.web("#e3e1e9"), track.getBackground().getFills().get(0).getFill());
+        });
+    }
+
+    /// Uses real pulses to animate selection without manually applying CSS or laying out after the change.
+    @Test
+    void selectionColorsOnPulse() throws Exception {
+        CompletableFuture<Stage> window = new CompletableFuture<>();
+        CompletableFuture<JFXSwitch> target = new CompletableFuture<>();
+        AtomicInteger changes = new AtomicInteger();
+        try {
+            onFxThread(() -> {
+                Platform.setImplicitExit(false);
+                JFXSwitch control = new JFXSwitch();
+                control.setStyle("-jfx-switch-primary: #123456;");
+                target.complete(control);
+                VBox root = scene(control);
+                Stage stage = new Stage();
+                window.complete(stage);
+                stage.setScene(root.getScene());
+                stage.show();
+                part(control, "track").backgroundProperty().addListener(observable -> changes.incrementAndGet());
+                control.setSelected(true);
+                assertEquals(0, changes.get());
+            });
+            Thread.sleep(400);
+            onFxThread(() -> {
+                assertEquals(Color.web("#123456"),
+                        part(target.join(), "track").getBackground().getFills().get(0).getFill());
+                assertTrue(changes.get() > 2, "Normal pulses must produce intermediate colors");
+            });
+        } finally {
+            onFxThread(() -> {
+                if (window.isDone())
+                    window.join().close();
+            });
+        }
+    }
+
     /// Checks visible color interpolation, reversal continuity, CSS precedence, and immediate completion.
     @Test
     void selectionColorTransitions() throws Exception {
@@ -576,9 +642,9 @@ public final class JFXSwitchTest {
         });
     }
 
-    /// Applies pending CSS and captures solid paints independently of geometry and opacity.
+    /// Completes a CSS/layout pass and captures solid paints independently of geometry and opacity.
     private static @Unmodifiable List<Paint> palette(JFXSwitch control) {
-        control.applyCss();
+        layout((VBox) control.getParent());
         return List.of(part(control, "track").getBackground().getFills().get(0).getFill(),
                 part(control, "track").getBorder().getStrokes().get(0).getTopStroke(),
                 part(control, "handle").getBackground().getFills().get(0).getFill(),

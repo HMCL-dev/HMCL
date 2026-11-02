@@ -84,7 +84,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
             colors.forEach(color -> color.interpolate(fraction));
         }
     };
-    /// True only while resolving CSS for a selection change.
+    /// Whether selection colors are waiting for the next CSS and layout pass.
     private boolean animateColors;
     /// Prevents animation writes from being interpreted as new CSS targets.
     private boolean applyingColors;
@@ -146,7 +146,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         update(true);
     }
 
-    /// Retargets geometry and resolves selection colors once, preserving any visible intermediate colors.
+    /// Retargets geometry and lets the next CSS pass collect selection colors before layout.
     private void updateSelection() {
         update(false);
         if (control.isDisableAnimation() || control.isDisabled() || control.getScene() == null)
@@ -154,13 +154,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         colorTransition.stop();
         colors.forEach(CssColor::capture);
         animateColors = true;
-        try {
-            control.applyCss();
-        } finally {
-            animateColors = false;
-        }
-        if (colors.stream().anyMatch(color -> color.target != null))
-            colorTransition.playFromStart();
+        control.requestLayout();
     }
 
     /// Drags in artwork coordinates so CSS scaling and RTL mirroring use the same state threshold.
@@ -260,6 +254,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
 
     /// Settles pending colors when animation is disabled or pointer interaction is canceled.
     private void finishColors() {
+        animateColors = false;
         colorTransition.stop();
         colors.forEach(CssColor::finish);
     }
@@ -426,6 +421,12 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         artwork.resizeRelocate(x, y + (h - 48 * scale) / 2, 52, 48);
         track.resizeRelocate(0, 8, 52, 32);
         layoutHandle();
+        // JavaFX applies CSS before layout, so all changed paints now share the same start time.
+        if (animateColors) {
+            animateColors = false;
+            if (colors.stream().anyMatch(color -> color.target != null))
+                colorTransition.playFromStart();
+        }
     }
 
     /// Updates unmanaged artwork directly, without laying out the label or settings row each frame.
