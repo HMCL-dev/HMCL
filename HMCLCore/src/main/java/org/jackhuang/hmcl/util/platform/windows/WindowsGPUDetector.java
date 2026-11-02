@@ -67,6 +67,16 @@ final class WindowsGPUDetector {
             // Oray Sunlogin virtual display adapter
             "Root\\OrayIddDriver",
 
+            // spacedesk Graphics Adapter
+            "VID_DATRONICSOFT_PID_SPACEDESK_VIRTUAL_DISPLAY_0003",
+
+            // Looking Glass Indirect Display Device
+            "Root\\LGIdd",
+            "LGIdd",
+
+            // Intel indirect display component, not its System-class KMD device
+            "SWC\\IntelVirtDisplay",
+
             // Amyuni USB Mobile Monitor Virtual Display
             "usbmmidd"
     );
@@ -144,7 +154,28 @@ final class WindowsGPUDetector {
             return null;
     }
 
-    /// Reads CIM video controllers and applies the shared name and DAC type heuristics.
+    /// Builds a video-controller query that resolves each PnP instance's driver matching ID.
+    /// Missing registry properties leave the ID empty without discarding the controller.
+    static String buildCimQuery(String cmdlet) {
+        return String.join(" | ",
+                cmdlet + " -Class Win32_VideoController",
+                """
+                        Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType,@{Name='MatchingDeviceId';Expression={
+                            if ($_.PNPDeviceID) {
+                                try {
+                                    $gpuDriverKey = (Get-ItemProperty -LiteralPath ('HKLM:\\SYSTEM\\CurrentControlSet\\Enum\\' + $_.PNPDeviceID) -Name Driver -ErrorAction Stop).Driver
+                                    if ($gpuDriverKey) {
+                                        (Get-ItemProperty -LiteralPath ('HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Class\\' + $gpuDriverKey) -Name MatchingDeviceId -ErrorAction Stop).MatchingDeviceId
+                                    }
+                                } catch {}
+                            }
+                        }}
+                        """.stripTrailing(),
+                "Format-List",
+                "Out-String -Width 4096");
+    }
+
+    /// Reads CIM video controllers and applies the shared device ID, name and DAC type heuristics.
     /// Returns an empty list if the query or its processing fails.
     private static List<GraphicsCard> detectByCim() {
         try {
@@ -156,11 +187,7 @@ final class WindowsGPUDetector {
                             "powershell.exe",
                             "-NoProfile",
                             "-Command",
-                            String.join(" | ",
-                                    getCimInstance + " -Class Win32_VideoController",
-                                    "Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType",
-                                    "Format-List"
-                            )),
+                            buildCimQuery(getCimInstance)),
                     inputStream -> KeyValuePairUtils.loadList(new BufferedReader(new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET))));
 
             ArrayList<GraphicsCard> cards = new ArrayList<>(videoControllers.size());
@@ -169,12 +196,13 @@ final class WindowsGPUDetector {
                 @Nullable HardwareVendor vendor = HardwareVendor.of(videoController.get("AdapterCompatibility"));
                 @Nullable String driverVersion = videoController.get("DriverVersion");
                 @Nullable String adapterDACType = videoController.get("AdapterDACType");
+                @Nullable String matchingDeviceId = videoController.get("MatchingDeviceId");
 
                 if (StringUtils.isNotBlank(name)) {
                     cards.add(GraphicsCard.builder().setName(name)
                             .setVendor(vendor)
                             .setDriverVersion(driverVersion)
-                            .setType(inferType(name, vendor, adapterDACType, null))
+                            .setType(inferType(name, vendor, adapterDACType, matchingDeviceId))
                             .build()
                     );
                 }
