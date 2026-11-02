@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.ui.wizard;
 import javafx.scene.Node;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -117,9 +118,17 @@ public class WizardController implements Navigation {
         return pages.size() > 1;
     }
 
+    /// Finishes the provider and displays its result. Runtime exceptions thrown while preparing
+    /// the result are passed to the displayer as failed tasks, using its normal failure and cleanup handling.
     @Override
     public void onFinish() {
-        Object result = provider.finish(settings);
+        WizardProvider currentProvider = Objects.requireNonNull(provider);
+        @Nullable Object result;
+        try {
+            result = currentProvider.finish(settings);
+        } catch (RuntimeException failure) {
+            result = Task.failed(failure);
+        }
         if (result instanceof Summary) displayer.navigateTo(((Summary) result).getComponent(), NavigationDirection.NEXT);
         else if (result instanceof Task<?>) displayer.handleTask(settings, ((Task<?>) result));
         else if (result != null) throw new IllegalStateException("Unrecognized wizard result: " + result);
