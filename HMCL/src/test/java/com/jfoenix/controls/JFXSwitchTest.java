@@ -11,6 +11,7 @@ import javafx.event.EventType;
 import javafx.scene.AccessibleAction;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -24,6 +25,7 @@ import javafx.scene.robot.Robot;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.ui.construct.LineInheritableToggleButton;
 import org.jackhuang.hmcl.ui.construct.LineButtonBase;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.LineToggleButton;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.setting.LauncherSettings;
@@ -48,6 +50,80 @@ import static org.junit.jupiter.api.Assertions.*;
 @NotNullByDefault
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 public final class JFXSwitchTest {
+    /// Checks native pointer focus dismissal and Tab focus feedback without discarding actual focus.
+    @Test
+    void nativeFocusFeedback() throws Exception {
+        CompletableFuture<Stage> window = new CompletableFuture<>();
+        CompletableFuture<JFXSwitch> target = new CompletableFuture<>();
+        CompletableFuture<Button> before = new CompletableFuture<>();
+        try {
+            onFxThread(() -> {
+                Platform.setImplicitExit(false);
+                Button button = new Button("Before");
+                before.complete(button);
+                JFXSwitch control = new JFXSwitch();
+                control.setDisableAnimation(true);
+                target.complete(control);
+                VBox root = new VBox(button, control);
+                Stage stage = new Stage();
+                window.complete(stage);
+                stage.setScene(new Scene(root, 300, 160));
+                stage.show();
+                stage.toFront();
+                layout(root);
+                button.requestFocus();
+            });
+            Thread.sleep(250);
+            onFxThread(() -> {
+                var artwork = Objects.requireNonNull(target.join().lookup(".switch-artwork"));
+                Robot robot = new Robot();
+                robot.mouseMove(Objects.requireNonNull(artwork.localToScreen(16, 24)));
+                robot.mousePress(MouseButton.PRIMARY);
+            });
+            Thread.sleep(100);
+            onFxThread(() -> new Robot().mouseRelease(MouseButton.PRIMARY));
+            Thread.sleep(100);
+            onFxThread(() -> new Robot().mouseMove(Objects.requireNonNull(
+                    window.join().getScene().getRoot().localToScreen(200, 140))));
+            Thread.sleep(100);
+            onFxThread(() -> {
+                JFXSwitch control = target.join();
+                control.applyCss();
+                assertTrue(control.isFocused());
+                assertFalse(control.isHover());
+                assertEquals(0, part(control, "state-layer").getOpacity());
+                if (FXUtils.focusVisibleProperty(control) != null) {
+                    // Replacing the skin must not turn pointer-acquired focus into visible focus.
+                    control.setSkin(null);
+                    control.setSkin(new JFXSwitchSkin(control));
+                    control.applyCss();
+                    assertTrue(control.isFocused());
+                    assertEquals(0, part(control, "state-layer").getOpacity());
+                }
+                before.join().requestFocus();
+                Robot robot = new Robot();
+                robot.keyPress(KeyCode.TAB);
+                robot.keyRelease(KeyCode.TAB);
+            });
+            Thread.sleep(150);
+            onFxThread(() -> {
+                JFXSwitch control = target.join();
+                control.applyCss();
+                assertTrue(control.isFocused());
+                assertEquals(0.12, part(control, "state-layer").getOpacity());
+                before.join().requestFocus();
+                control.applyCss();
+                assertEquals(0, part(control, "state-layer").getOpacity());
+            });
+        } finally {
+            onFxThread(() -> {
+                new Robot().mouseRelease(MouseButton.PRIMARY);
+                if (window.isDone())
+                    window.join().close();
+            });
+        }
+    }
+
     /// Uses native pointer input to verify picking, row bindings, and inheritable overrides.
     @ParameterizedTest
     @ValueSource(booleans = {false, true})

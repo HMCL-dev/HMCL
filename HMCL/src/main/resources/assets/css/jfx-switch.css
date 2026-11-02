@@ -43,13 +43,13 @@
 }
 
 .jfx-switch:hover > .switch-artwork > .switch-handle,
-.jfx-switch:focused > .switch-artwork > .switch-handle,
+.jfx-switch:visual-focused > .switch-artwork > .switch-handle,
 .jfx-switch:armed > .switch-artwork > .switch-handle {
     -fx-background-color: -jfx-switch-on-surface-variant;
 }
 
 .jfx-switch:selected:hover > .switch-artwork > .switch-handle,
-.jfx-switch:selected:focused > .switch-artwork > .switch-handle,
+.jfx-switch:selected:visual-focused > .switch-artwork > .switch-handle,
 .jfx-switch:selected:armed > .switch-artwork > .switch-handle {
     -fx-background-color: -jfx-switch-primary-container;
 }
@@ -68,7 +68,7 @@
     -fx-opacity: 0.08;
 }
 
-.jfx-switch:focused > .switch-artwork > .switch-state-layer,
+.jfx-switch:visual-focused > .switch-artwork > .switch-state-layer,
 .jfx-switch:armed > .switch-artwork > .switch-state-layer {
     -fx-opacity: 0.12;
 }
@@ -104,7 +104,7 @@
 
 .jfx-switch:disabled > .switch-artwork > .switch-handle,
 .jfx-switch:disabled:hover > .switch-artwork > .switch-handle,
-.jfx-switch:disabled:focused > .switch-artwork > .switch-handle,
+.jfx-switch:disabled:visual-focused > .switch-artwork > .switch-handle,
 .jfx-switch:disabled:armed > .switch-artwork > .switch-handle {
     -fx-background-color: -jfx-switch-on-surface;
     -fx-opacity: 0.38;
@@ -112,7 +112,7 @@
 
 .jfx-switch:selected:disabled > .switch-artwork > .switch-handle,
 .jfx-switch:selected:disabled:hover > .switch-artwork > .switch-handle,
-.jfx-switch:selected:disabled:focused > .switch-artwork > .switch-handle,
+.jfx-switch:selected:disabled:visual-focused > .switch-artwork > .switch-handle,
 .jfx-switch:selected:disabled:armed > .switch-artwork > .switch-handle {
     -fx-background-color: -jfx-switch-surface;
     -fx-opacity: 1;
@@ -128,7 +128,7 @@
 
 .jfx-switch:disabled > .switch-artwork > .switch-state-layer,
 .jfx-switch:disabled:hover > .switch-artwork > .switch-state-layer,
-.jfx-switch:disabled:focused > .switch-artwork > .switch-state-layer,
+.jfx-switch:disabled:visual-focused > .switch-artwork > .switch-state-layer,
 .jfx-switch:disabled:armed > .switch-artwork > .switch-state-layer {
     -fx-opacity: 0;
 }

@@ -8,7 +8,9 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.css.PseudoClass;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
 import javafx.scene.control.ContentDisplay;
@@ -20,6 +22,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.transform.Scale;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 /// Label content remains separate from the switch artwork and is mirrored by JavaFX in RTL layouts.
 @NotNullByDefault
 public final class JFXSwitchSkin extends ToggleButtonSkin {
+    /// Marks focus acquired without a pointer press, independently of actual keyboard focus.
+    private static final PseudoClass VISUAL_FOCUSED = PseudoClass.getPseudoClass("visual-focused");
     /// The control whose properties drive this skin.
     private final JFXSwitch control;
     /// Unmanaged artwork, laid out independently of the inherited label.
@@ -79,6 +84,13 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         getChildren().add(artwork);
         registerChangeListener(control.selectedProperty(), value -> update(false));
         registerChangeListener(control.armedProperty(), value -> update(false));
+        @Nullable ReadOnlyBooleanProperty focusVisible = FXUtils.focusVisibleProperty(control);
+        ReadOnlyBooleanProperty focusIndicator = focusVisible != null ? focusVisible : control.focusedProperty();
+        registerChangeListener(focusIndicator, value ->
+                control.pseudoClassStateChanged(VISUAL_FOCUSED, focusIndicator.get() && !control.isPressed()));
+        // Match the previous toggle skin: pointer press and release both dismiss focus feedback.
+        registerChangeListener(control.pressedProperty(), value ->
+                control.pseudoClassStateChanged(VISUAL_FOCUSED, false));
         registerChangeListener(control.disabledProperty(), value -> cancelDrag());
         registerChangeListener(control.showSelectedIconProperty(), value -> update(false));
         registerChangeListener(control.showUnselectedIconProperty(), value -> update(false));
@@ -88,6 +100,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         registerChangeListener(center, value -> control.requestLayout());
         registerChangeListener(diameter, value -> control.requestLayout());
         control.addEventFilter(MouseEvent.ANY, dragHandler);
+        control.pseudoClassStateChanged(VISUAL_FOCUSED, focusIndicator.get() && !control.isPressed());
         update(true);
     }
 
@@ -252,6 +265,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     @Override
     public void dispose() {
         control.removeEventFilter(MouseEvent.ANY, dragHandler);
+        control.pseudoClassStateChanged(VISUAL_FOCUSED, false);
         cancelDrag();
         transition.stop();
         super.dispose();
