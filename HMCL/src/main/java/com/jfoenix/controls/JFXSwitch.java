@@ -5,12 +5,19 @@ package com.jfoenix.controls;
 import com.jfoenix.skins.JFXSwitchSkin;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.css.CssMetaData;
+import javafx.css.SimpleStyleableDoubleProperty;
+import javafx.css.Styleable;
+import javafx.css.StyleableDoubleProperty;
+import javafx.css.StyleablePropertyFactory;
 import javafx.scene.control.Skin;
 import javafx.scene.control.ToggleButton;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Objects;
+import java.util.List;
 
 /// Selects an immediately applied, binary setting using a Material Design 3 switch.
 ///
@@ -20,6 +27,8 @@ import java.util.Objects;
 /// The inherited graphic belongs to the label; it is not used as the handle icon.
 ///
 /// The default skin has a 52 by 32 track within a target at least 48 pixels high.
+/// [#sizeProperty()] controls the track height and scales the artwork and target
+/// proportionally. Label content is not scaled.
 /// Its colors can be customized through the `-jfx-switch-primary`, `-jfx-switch-on-primary`,
 /// `-jfx-switch-primary-container`, `-jfx-switch-on-primary-container`,
 /// `-jfx-switch-surface`, `-jfx-switch-surface-container-highest`,
@@ -53,6 +62,52 @@ public class JFXSwitch extends ToggleButton {
         return Objects.requireNonNull(JFXSwitch.class.getResource("/assets/css/jfx-switch.css")).toExternalForm();
     }
 
+    /// Creates size metadata alongside the inherited toggle-button metadata.
+    private static final StyleablePropertyFactory<JFXSwitch> STYLEABLES =
+            new StyleablePropertyFactory<>(ToggleButton.getClassCssMetaData());
+
+    /// Maps the CSS size to the track-height property, respecting property bindings.
+    private static final CssMetaData<JFXSwitch, Number> SIZE =
+            STYLEABLES.createSizeCssMetaData("-jfx-size", control -> control.size, 32.0);
+
+    /// Immutable metadata for the inherited properties and switch size.
+    private static final @Unmodifiable List<CssMetaData<? extends Styleable, ?>> CSS_META_DATA =
+            List.copyOf(STYLEABLES.getCssMetaData());
+
+    /// The requested track height in logical pixels.
+    private final StyleableDoubleProperty size = new SimpleStyleableDoubleProperty(SIZE, this, "size", 32.0);
+
+    /// Returns the track-height property, styled by `-jfx-size`. The default is 32 logical pixels.
+    /// Artwork, borders, icons, animation distances, and target dimensions scale proportionally;
+    /// text and the label gap retain their sizes. A value of 24 produces a 39 by 24 track
+    /// and a 39 by 36 target without a label. Nonpositive or nonfinite values are retained
+    /// in this property but rendered using the default size of 32.
+    /// Changes request layout without changing selection or restarting an active transition.
+    public final StyleableDoubleProperty sizeProperty() {
+        return size;
+    }
+
+    /// Returns the requested track height in logical pixels.
+    public final double getSize() {
+        return size.get();
+    }
+
+    /// Sets the requested track height; see [#sizeProperty()] for rendering and CSS semantics.
+    public final void setSize(double value) {
+        size.set(value);
+    }
+
+    /// Returns immutable CSS metadata, including inherited toggle-button properties.
+    public static @Unmodifiable List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
+        return CSS_META_DATA;
+    }
+
+    /// Returns the metadata used to style this switch.
+    @Override
+    public @Unmodifiable List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
+        return getClassCssMetaData();
+    }
+
     /// Whether the selected handle displays a check mark. The default is false.
     private final BooleanProperty showSelectedIcon = new SimpleBooleanProperty(this, "showSelectedIcon", false);
 
@@ -71,7 +126,8 @@ public class JFXSwitch extends ToggleButton {
         showSelectedIcon.set(value);
     }
 
-    /// Whether the unselected handle displays a cross and grows to 24 pixels. The default is false.
+    /// Whether the unselected handle displays a cross and grows to three quarters of the
+    /// track height instead of one half. The default is false.
     private final BooleanProperty showUnselectedIcon = new SimpleBooleanProperty(this, "showUnselectedIcon", false);
 
     /// Returns the property controlling unselected icons.

@@ -14,6 +14,7 @@ import javafx.scene.control.skin.ToggleButtonSkin;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.shape.SVGPath;
+import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,8 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
     private final JFXSwitch control;
     /// Unmanaged artwork, laid out independently of the inherited label.
     private final Pane artwork = new Pane();
+    /// Scales artwork from its leading top corner without scaling label content.
+    private final Scale artworkScale = new Scale();
     /// Rounded track with its optional outline.
     private final Region track = new Region();
     /// Circular hover, focus, and pressed overlay behind the handle.
@@ -54,6 +57,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         icon.getStyleClass().setAll("switch-icon");
         artwork.setManaged(false);
         artwork.setMouseTransparent(true);
+        artwork.getTransforms().add(artworkScale);
         artwork.getChildren().setAll(track, stateLayer, handle, icon);
         artwork.getChildren().forEach(node -> node.setManaged(false));
         getChildren().add(artwork);
@@ -64,6 +68,7 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         registerChangeListener(control.showUnselectedIconProperty(), value -> update(false));
         registerChangeListener(control.disableAnimationProperty(), value -> update(true));
         registerChangeListener(control.sceneProperty(), value -> update(true));
+        registerChangeListener(control.sizeProperty(), value -> control.requestLayout());
         registerChangeListener(center, value -> control.requestLayout());
         registerChangeListener(diameter, value -> control.requestLayout());
         update(true);
@@ -109,15 +114,25 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
                 && control.getText() != null && !control.getText().isEmpty();
         boolean hasGraphic = control.getContentDisplay() != ContentDisplay.TEXT_ONLY
                 && control.getGraphic() != null;
-        return 52 + (hasText || hasGraphic ? 12 : 0);
+        return 52 * sizeScale() + (hasText || hasGraphic ? 12 : 0);
     }
 
-    /// Positions the track in its 48-pixel target and gives the label the remaining width.
+    /// Returns the artwork and target scale, falling back to MD3 dimensions for invalid sizes.
+    private double sizeScale() {
+        double size = control.getSize();
+        return Double.isFinite(size) && size > 0 ? size / 32 : 1;
+    }
+
+    /// Positions the scaled artwork in its target and gives the label the remaining width.
     @Override
     protected void layoutChildren(double x, double y, double w, double h) {
         double offset = labelOffset();
         super.layoutChildren(x + offset, y, Math.max(0, w - offset), h);
-        artwork.resizeRelocate(x, y + (h - 48) / 2, 52, 48);
+        double scale = sizeScale();
+        artworkScale.setX(scale);
+        artworkScale.setY(scale);
+        // Keep animation and CSS geometry in MD3 units; scale the entire artwork consistently.
+        artwork.resizeRelocate(x, y + (h - 48 * scale) / 2, 52, 48);
         track.resizeRelocate(0, 8, 52, 32);
         double cx = center.get();
         double size = diameter.get();
@@ -139,17 +154,17 @@ public final class JFXSwitchSkin extends ToggleButtonSkin {
         return labelOffset() + super.computePrefWidth(h, top, right, bottom, left);
     }
 
-    /// Preserves a 48-pixel target when the label is shorter than the switch.
+    /// Preserves the configured target height when the label is shorter than the switch.
     @Override
     protected double computeMinHeight(double w, double top, double right, double bottom, double left) {
-        return Math.max(top + 48 + bottom,
+        return Math.max(top + 48 * sizeScale() + bottom,
                 super.computeMinHeight(w < 0 ? w : Math.max(0, w - labelOffset()), top, right, bottom, left));
     }
 
     /// Measures wrapped labels using the width remaining after the switch.
     @Override
     protected double computePrefHeight(double w, double top, double right, double bottom, double left) {
-        return Math.max(top + 48 + bottom,
+        return Math.max(top + 48 * sizeScale() + bottom,
                 super.computePrefHeight(w < 0 ? w : Math.max(0, w - labelOffset()), top, right, bottom, left));
     }
 

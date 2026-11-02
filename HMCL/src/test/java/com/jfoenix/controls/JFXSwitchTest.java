@@ -4,6 +4,7 @@ package com.jfoenix.controls;
 
 import com.jfoenix.skins.JFXSwitchSkin;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.NodeOrientation;
 import javafx.scene.AccessibleAction;
 import javafx.scene.Scene;
@@ -18,6 +19,8 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Objects;
 import java.util.concurrent.FutureTask;
@@ -31,6 +34,94 @@ import static org.junit.jupiter.api.Assertions.*;
 @NotNullByDefault
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 public final class JFXSwitchTest {
+    /// Verifies settings-row CSS, arbitrary sizes, bound-property precedence, and invalid-size fallback.
+    @Test
+    void styleableSize() throws Exception {
+        onFxThread(() -> {
+            JFXSwitch control = new JFXSwitch();
+            VBox root = scene(control);
+            root.getStyleClass().add("line-toggle-button");
+            root.getStylesheets().addAll(
+                    Objects.requireNonNull(getClass().getResource("/assets/css/blue.css")).toExternalForm(),
+                    Objects.requireNonNull(getClass().getResource("/assets/css/root.css")).toExternalForm());
+            layout(root);
+            assertEquals(24, control.getSize());
+            assertEquals(39, control.prefWidth(-1));
+            control.setStyle("-jfx-size: 20px;");
+            layout(root);
+            assertEquals(20, control.getSize());
+            assertEquals(32.5, control.prefWidth(-1));
+            assertEquals(30, control.prefHeight(-1));
+
+            SimpleDoubleProperty boundSize = new SimpleDoubleProperty(40);
+            control.sizeProperty().bind(boundSize);
+            control.setStyle("-jfx-size: 28px;");
+            layout(root);
+            assertEquals(40, control.getSize());
+            assertEquals(65, control.prefWidth(-1));
+            boundSize.set(16);
+            layout(root);
+            assertEquals(26, control.prefWidth(-1));
+            assertEquals(24, control.prefHeight(-1));
+            boundSize.set(Double.NaN);
+            layout(root);
+            assertEquals(52, control.prefWidth(-1));
+            assertEquals(48, control.prefHeight(-1));
+            boundSize.set(-1);
+            layout(root);
+            assertEquals(52, control.prefWidth(-1));
+            boundSize.set(Double.POSITIVE_INFINITY);
+            layout(root);
+            assertEquals(52, control.prefWidth(-1));
+            control.sizeProperty().unbind();
+            control.setStyle("-jfx-size: 24px;");
+            layout(root);
+            assertEquals(24, control.getSize());
+        });
+    }
+
+    /// Checks compact visual bounds, layout space, and density changes without scaling labels.
+    @Test
+    void compactDimensions() throws Exception {
+        onFxThread(() -> {
+            JFXSwitch control = new JFXSwitch();
+            control.setDisableAnimation(true);
+            control.setSize(24);
+            VBox root = scene(control);
+            Region track = part(control, "track");
+            Region handle = part(control, "handle");
+            assertEquals(39, control.prefWidth(-1));
+            assertEquals(39, control.minWidth(-1));
+            assertEquals(36, control.getHeight());
+            assertEquals(36, control.minHeight(-1));
+            assertEquals(39, track.localToScene(track.getLayoutBounds()).getWidth(), 0.001);
+            assertEquals(24, track.localToScene(track.getLayoutBounds()).getHeight(), 0.001);
+            assertEquals(12, handle.localToScene(handle.getLayoutBounds()).getWidth(), 0.001);
+            control.setSelected(true);
+            control.setShowSelectedIcon(true);
+            layout(root);
+            assertEquals(18, handle.localToScene(handle.getLayoutBounds()).getWidth(), 0.001);
+            control.arm();
+            layout(root);
+            assertEquals(21, handle.localToScene(handle.getLayoutBounds()).getWidth(), 0.001);
+            control.disarm();
+            Label graphic = new Label("Network");
+            control.setGraphic(graphic);
+            layout(root);
+            double graphicWidth = graphic.localToScene(graphic.getLayoutBounds()).getWidth();
+            double compactWidth = control.prefWidth(-1);
+            var icon = Objects.requireNonNull(control.lookup(".switch-icon"));
+            double compactIconWidth = icon.localToScene(icon.getLayoutBounds()).getWidth();
+            control.setSize(32);
+            layout(root);
+            assertTrue(control.isSelected());
+            assertEquals(48, control.getHeight());
+            assertEquals(compactWidth + 13, control.prefWidth(-1), 0.001);
+            assertEquals(graphicWidth, graphic.localToScene(graphic.getLayoutBounds()).getWidth(), 0.001);
+            assertEquals(compactIconWidth / 0.75, icon.localToScene(icon.getLayoutBounds()).getWidth(), 0.001);
+        });
+    }
+
     /// Checks MD3 geometry, icons, pressed state, and per-part disabled opacity.
     @Test
     void geometryAndStates() throws Exception {
@@ -114,11 +205,13 @@ public final class JFXSwitchTest {
     }
 
     /// Verifies interrupted transitions settle to the latest state and disabling animation snaps immediately.
-    @Test
-    void animationRetargeting() throws Exception {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void animationRetargeting(boolean compact) throws Exception {
         CompletableFuture<JFXSwitch> created = new CompletableFuture<>();
         onFxThread(() -> {
             JFXSwitch control = new JFXSwitch();
+            control.setSize(compact ? 24 : 32);
             scene(control);
             created.complete(control);
             control.setSelected(true);
@@ -133,6 +226,7 @@ public final class JFXSwitchTest {
             layout(root);
             Region handle = part(control, "handle");
             assertEquals(24, handle.getWidth(), 0.001);
+            assertEquals(compact ? 18 : 24, handle.localToScene(handle.getLayoutBounds()).getWidth(), 0.001);
             assertEquals(36, handle.getLayoutX() + handle.getWidth() / 2, 0.001);
             control.setSelected(false);
             control.setDisableAnimation(true);
@@ -143,10 +237,12 @@ public final class JFXSwitchTest {
     }
 
     /// Checks theme lookup overrides and logical movement mirrored by the scene graph.
-    @Test
-    void themeAndRtl() throws Exception {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void themeAndRtl(boolean compact) throws Exception {
         onFxThread(() -> {
             JFXSwitch control = new JFXSwitch();
+            control.setSize(compact ? 24 : 32);
             control.setDisableAnimation(true);
             control.setStyle("-jfx-switch-primary: #123456;");
             control.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);

@@ -18,6 +18,10 @@
     -jfx-switch-outline: -monet-outline;
 }
 
+.line-toggle-button .jfx-switch {
+    -jfx-size: 24;
+}
+
 .svg {
     -fx-fill: -monet-on-surface;
 }
