@@ -328,6 +328,8 @@ final class MainWindowPane extends StackPane {
             public void init(TransitionPane container, Node previousNode, Node nextNode) {
                 super.init(container, previousNode, nextNode);
                 nextNode.setTranslateX(container.getWidth());
+                // Clipping hides the title; nonzero opacity skips offscreen rendering preparation.
+                nextNode.setOpacity(1);
             }
 
             /// {@inheritDoc}
@@ -355,6 +357,8 @@ final class MainWindowPane extends StackPane {
             public void init(TransitionPane container, Node previousNode, Node nextNode) {
                 super.init(container, previousNode, nextNode);
                 nextNode.setTranslateX(-container.getWidth());
+                // Clipping hides the title; nonzero opacity skips offscreen rendering preparation.
+                nextNode.setOpacity(1);
             }
 
             /// {@inheritDoc}
