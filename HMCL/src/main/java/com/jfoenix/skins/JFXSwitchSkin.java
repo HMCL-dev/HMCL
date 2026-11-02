@@ -201,7 +201,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         update(finishAnimation);
     }
 
-    /// Stops animations and removes event handlers and listeners.
+    /// Stops animations and removes artwork, event handlers, and listeners.
     @Override
     public void dispose() {
         control.removeEventFilter(MouseEvent.ANY, mouseHandler);
@@ -210,6 +210,7 @@ public final class JFXSwitchSkin extends SkinBase<JFXSwitch> {
         for (CssColor color : colors)
             color.dispose();
         control.pseudoClassStateChanged(VISUAL_FOCUSED, false);
+        getChildren().remove(artwork);
         super.dispose();
     }
 

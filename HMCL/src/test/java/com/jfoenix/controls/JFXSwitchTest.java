@@ -13,8 +13,10 @@ import javafx.geometry.Point2D;
 import javafx.scene.AccessibleAction;
 import javafx.scene.AccessibleAttribute;
 import javafx.scene.AccessibleRole;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -424,10 +426,14 @@ public final class JFXSwitchTest {
             selectedIcon.set(false);
             assertFalse(part(control, "icon").isVisible());
 
-            control.setSkin(null);
+            Node oldArtwork = Objects.requireNonNull(control.lookup(".switch-artwork"));
+            // JavaFX 17 ignores same-class replacements; another SkinBase exercises disposal on both versions.
+            control.setSkin(new SkinBase<>(control) {});
+            assertNull(oldArtwork.getParent(), "Replacing the skin must detach its artwork");
             selectedIcon.set(true);
             control.setSkin(new JFXSwitchSkin(control));
             layout(root);
+            assertEquals(1, control.lookupAll(".switch-artwork").size());
             assertTrue(part(control, "icon").isVisible());
             selectedIcon.set(false);
             assertFalse(part(control, "icon").isVisible());
