@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
+import org.jackhuang.hmcl.ui.download.ProxyFailureHandler;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -76,6 +77,20 @@ public final class Instances {
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
         }
+        downloadModpackFile(downloadProvider, repository, instanceId, mod, file, modpack, downloadURLs);
+    }
+
+    /// Downloads the modpack file and offers to retry without the proxy if it is unreachable.
+    ///
+    /// @param downloadProvider the provider used to create download candidates
+    /// @param repository       the repository that receives the modpack
+    /// @param instanceId       the target instance id, or `null` to let the modpack choose
+    /// @param mod              the remote modpack being downloaded
+    /// @param file             the remote modpack file to download
+    /// @param modpack          the local temporary file that receives the download
+    /// @param downloadURLs     the candidate URLs of the modpack file
+    private static void downloadModpackFile(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId,
+                                            RemoteAddon mod, RemoteAddon.Version file, Path modpack, DownloadCandidates downloadURLs) {
         Controllers.taskDialog(
                 new FileDownloadTask(downloadURLs, modpack)
                         .setName(file.name())
@@ -90,9 +105,11 @@ public final class Instances {
                                     installWizardProvider.setIconUrl(mod.iconUrl());
                                 Controllers.getDecorator().startWizard(installWizardProvider);
                             } else if (!(e instanceof CancellationException)) {
-                                Controllers.dialog(
-                                        i18n("install.failed.downloading.detail", file.file().url()) + "\n" + StringUtils.getStackTrace(e),
-                                        i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
+                                ProxyFailureHandler.handle(e,
+                                        () -> downloadModpackFile(downloadProvider, repository, instanceId, mod, file, modpack, downloadURLs),
+                                        () -> Controllers.dialog(
+                                                i18n("install.failed.downloading.detail", file.file().url()) + "\n" + StringUtils.getStackTrace(e),
+                                                i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR));
                             }
                         }),
                 i18n("message.downloading"),
