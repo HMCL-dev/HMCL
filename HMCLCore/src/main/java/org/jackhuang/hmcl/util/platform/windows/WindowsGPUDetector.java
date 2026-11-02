@@ -100,6 +100,10 @@ final class WindowsGPUDetector {
                     return GraphicsCard.Type.DISPLAY_ONLY;
                 }
             }
+
+            // VMware drivers may report Broadcom as their provider.
+            if (StringUtils.startsWithIgnoreCase(matchingDeviceId, "PCI\\VEN_15AD&"))
+                return GraphicsCard.Type.VIRTUAL;
         }
 
         if (HardwareVendor.VMWARE.equals(vendor) || HardwareVendor.PARALLEL.equals(vendor))
