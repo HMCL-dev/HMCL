@@ -33,3 +33,15 @@
 .addon-channel-icon.release .svg {
     -fx-fill: #1bd96a;
 }
+
+.mod-info-list-cell .mod-active-indicator {
+    -fx-fill: #6C757D;
+}
+
+.mod-info-list-cell .mod-active-indicator:active {
+    -fx-fill: #1bd96a;
+}
+
+.mod-info-list-cell .mod-active-indicator:warning {
+    -fx-fill: #ffa347;
+}
