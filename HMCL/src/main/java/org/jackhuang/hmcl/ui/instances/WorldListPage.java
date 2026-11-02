@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.ChunkBaseApp;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -108,14 +109,13 @@ public final class WorldListPage extends ListPageBase<World> {
         if (worldManager == null || gameInstance == null)
             return;
         WorldManager manager = worldManager;
+        HMCLGameInstance instance = gameInstance;
 
         int currentRefresh = ++refreshCount;
-        supportQuickPlay.set(QuickPlayOption.isSupportedVersion(gameInstance.getVersion()));
-
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
             manager.refresh();
-            return manager.getLocalFiles();
+            return Pair.pair(manager.getLocalFiles(), QuickPlayOption.isSupportedVersion(instance.getVersion()));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh)
                 return; // A newer refresh task is running, discard this result
@@ -123,8 +123,11 @@ public final class WorldListPage extends ListPageBase<World> {
             if (exception != null) {
                 LOG.warning("Failed to load world list page", exception);
                 worlds = List.of();
-            } else
-                worlds = result;
+                supportQuickPlay.set(false);
+            } else {
+                worlds = result.getKey();
+                supportQuickPlay.set(result.getValue());
+            }
             updateWorldList();
             setLoading(false);
         }).start();

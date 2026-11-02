@@ -226,7 +226,7 @@ public final class World implements AutoCloseable, Comparable<World> {
             worldLock.force(true);
             if (worldLock.tryLock() != null)
                 return this;
-        } catch (IOException ignored) {
+        } catch (IOException | OverlappingFileLockException ignored) {
         }
         close();
         return null;
