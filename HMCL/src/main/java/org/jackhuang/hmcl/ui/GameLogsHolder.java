@@ -66,6 +66,7 @@ public final class GameLogsHolder {
             levelShownMap.put(level, new SimpleBooleanProperty(true));
         }
     }
+
     private final @Nullable ManagedProcess gameProcess;
     private @Nullable Stage stage = null;
 
