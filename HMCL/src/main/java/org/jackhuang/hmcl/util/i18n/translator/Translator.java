@@ -4,11 +4,18 @@ package org.jackhuang.hmcl.util.i18n.translator;
 
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
+import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
+import org.jackhuang.hmcl.util.platform.macos.MacDeviceInfo;
+import org.jackhuang.hmcl.util.platform.macos.MacModel;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /// @author Glavo
@@ -35,6 +42,24 @@ public class Translator {
 
     public String getDisplayVersion(GameVersionNumber versionNumber) {
         return versionNumber.toNormalizedString();
+    }
+
+    /// Localizes known Mac model details using this translator's locale; other identities retain their names.
+    /// Diagnostic names and cached device information are not modified.
+    public @NotNull String formatDeviceName(@NotNull DeviceInfo device) {
+        if (!(device instanceof MacDeviceInfo mac))
+            return device.name();
+        @Nullable MacModel model = mac.model();
+        if (model == null)
+            return device.name();
+
+        List<String> details = new ArrayList<>();
+        for (MacModel.Detail detail : model.details()) {
+            details.add(supportedLocale.i18n("about.device.mac." + detail.type(), detail.arguments().toArray()));
+        }
+        return details.isEmpty() ? model.productName()
+                : supportedLocale.i18n("about.device.mac.name", model.productName(),
+                String.join(supportedLocale.i18n("about.device.mac.separator"), details));
     }
 
     /// @see [#formatDateTime(TemporalAccessor)]
