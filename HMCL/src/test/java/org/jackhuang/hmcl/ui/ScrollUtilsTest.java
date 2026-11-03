@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
-import javafx.animation.AnimationTimer;
 import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
 import javafx.event.EventDispatcher;
@@ -1565,12 +1564,11 @@ final class ScrollUtilsTest {
         }
     }
 
-    /// Advances installed animation timers beyond their end while keeping tests independent of pulse timing.
+    /// Completes the installed wheel animation while keeping tests independent of pulse timing.
     private static void finishWheel(Node node) {
-        for (Object value : node.getProperties().values()) {
-            if (value instanceof AnimationTimer timer)
-                timer.handle(System.nanoTime() + TimeUnit.SECONDS.toNanos(1));
-        }
+        @Nullable ScrollController controller = ScrollUtils.controller(node);
+        if (controller != null)
+            controller.wheel.handle(System.nanoTime() + TimeUnit.SECONDS.toNanos(1));
     }
 
     /// Runs an operation and propagates assertion failures from the JavaFX application thread.
