@@ -6,6 +6,7 @@ import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.input.ScrollEvent;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 
 /// Bridges control geometry and native skin dispatch to the shared scrolling policy.
@@ -14,8 +15,26 @@ abstract class ScrollAdapter {
     /// Whether native skins need zero-distance input to animate overlay scrollbar visibility.
     static final boolean TOUCH_SUPPORTED = Platform.isSupported(ConditionalFeature.INPUT_TOUCH);
 
-    /// Distance multiplier for ordinary wheel pixel deltas.
-    private static final double WHEEL_SPEED = 3;
+    /// Base wheel pixel multiplier scaled by the startup `hmcl.scroll.speed` preference.
+    private static final double WHEEL_SPEED;
+
+    static {
+        final double speedBase = 3.0;
+        double speedScale = 1.0;
+        try {
+            String value = System.getProperty("hmcl.scroll.speed", System.getenv("HMCL_SCROLL_SPEED"));
+            if (StringUtils.isNotBlank(value)) {
+                value = value.strip();
+                speedScale = value.endsWith("%")
+                        ? Double.parseDouble(value.substring(0, value.length() - 1)) / 100.0
+                        : Double.parseDouble(value);
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        WHEEL_SPEED = Double.isFinite(speedScale) && speedScale > 0
+                ? speedBase * Math.max(speedScale, 0.0001)
+                : speedBase;
+    }
 
     /// Coordinates animation and gestures independently of this control's geometry.
     final ScrollController controller;
