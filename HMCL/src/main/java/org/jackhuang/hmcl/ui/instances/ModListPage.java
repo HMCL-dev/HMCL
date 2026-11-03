@@ -757,6 +757,8 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
             imageContainer.setEffect(colorAdjust);
 
+            content.setEffect(colorAdjust);
+
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
             HBox actions = new HBox();
