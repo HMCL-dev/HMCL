@@ -58,9 +58,9 @@ public final class LinuxHardwareDetector extends HardwareDetector {
         return cards.isEmpty() ? super.detectGraphicsCards() : cards;
     }
 
-    /// Reads the hardware model from the device tree.
+    /// Reads the hardware model from the device tree, falling back to the DMI product name.
     ///
-    /// Prefers the stable `/proc/device-tree` ABI, with the sysfs tree as a fallback.
+    /// Tries the stable `/proc/device-tree` ABI, then the sysfs tree, then `/sys/class/dmi/id/product_name`.
     /// Values are truncated at the first NUL and stripped of surrounding whitespace.
     /// Missing, unreadable, blank, and known placeholder values are skipped; returns `null` if none are available.
     /// Placeholder matching ignores case and requires a full match; other model names are preserved.
@@ -71,7 +71,8 @@ public final class LinuxHardwareDetector extends HardwareDetector {
 
         for (Path path : List.of(
                 Path.of("/proc/device-tree/model"),
-                Path.of("/sys/firmware/devicetree/base/model"))) {
+                Path.of("/sys/firmware/devicetree/base/model"),
+                Path.of("/sys/class/dmi/id/product_name"))) {
             try {
                 String name = Files.readString(path);
                 // Device-tree strings are NUL-terminated.
