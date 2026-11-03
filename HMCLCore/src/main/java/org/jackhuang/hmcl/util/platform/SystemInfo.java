@@ -10,6 +10,7 @@ import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jackhuang.hmcl.util.platform.hardware.PageFileConfiguration;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
+import org.jackhuang.hmcl.util.platform.macos.MacDeviceInfo;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
 import org.jackhuang.hmcl.util.platform.windows.*;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -62,8 +63,14 @@ public final class SystemInfo {
         StringBuilder builder = new StringBuilder("System Info:");
 
         @Nullable DeviceInfo deviceInfo = getDeviceInfo();
-        if (deviceInfo != null)
+        if (deviceInfo != null) {
             builder.append("\n - Device: ").append(deviceInfo.name());
+            if (deviceInfo instanceof MacDeviceInfo macDeviceInfo) {
+                @Nullable String modelIdentifier = macDeviceInfo.modelIdentifier();
+                if (modelIdentifier != null && !modelIdentifier.isBlank() && !modelIdentifier.equals(deviceInfo.name()))
+                    builder.append(" (").append(modelIdentifier).append(')');
+            }
+        }
 
         // CPU
         @Unmodifiable List<CentralProcessor> processors = getCentralProcessors();

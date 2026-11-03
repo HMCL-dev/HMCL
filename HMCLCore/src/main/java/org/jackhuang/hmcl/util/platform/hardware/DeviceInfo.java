@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 @NotNullByDefault
 public interface DeviceInfo {
 
-    /// Returns the default hardware model name for display and logging, independent of the UI locale.
+    /// Returns the default hardware model name for display, independent of the UI locale.
     String name();
 
     /// Device identity containing only a default hardware model name.
