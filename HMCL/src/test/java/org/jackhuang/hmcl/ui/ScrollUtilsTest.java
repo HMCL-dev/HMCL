@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
+import java.lang.ref.WeakReference;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -96,6 +97,27 @@ final class ScrollUtilsTest {
             assertEquals(120, offset(pane, false), 0.001);
             finishWheel(pane);
             assertEquals(120, offset(pane, false), 0.001);
+            return true;
+        });
+    }
+
+    /// Multiple wheel inputs share the next animation frame without losing accepted distance.
+    @Test
+    void wheelBurstsWaitForAnimationFrame() throws Exception {
+        onFxThread(() -> {
+            ScrollPane pane = pane(800, 1600);
+            VirtualFlow<?> flow = flow(true);
+            for (int i = 0; i < 3; i++) {
+                send(pane.getContent(), ScrollEvent.SCROLL, 0, -40, false, false, true);
+                send(flow, ScrollEvent.SCROLL, 0, -40, false, false, true);
+            }
+            assertEquals(0, offset(pane, false), 0.001);
+            assertEquals(0, flow.getPosition(), 0.001);
+            finishWheel(pane);
+            finishWheel(flow);
+            assertEquals(120, offset(pane, false), 0.001);
+            IndexedCell<?> first = requireNonNull(flow.getFirstVisibleCell());
+            assertEquals(216, first.getIndex() * 24 - first.getLayoutY(), 0.001);
             return true;
         });
     }
@@ -605,6 +627,44 @@ final class ScrollUtilsTest {
             content.addEventHandler(ScrollEvent.SCROLL, event -> event.consume());
             send(content, ScrollEvent.SCROLL, 0, -40, true, false, false);
             assertEquals(40, offset(pane, false), 0.001);
+            return true;
+        });
+    }
+
+    /// A viewport filter may dispatch another scroll before the original event finishes.
+    @Test
+    void viewportSupportsReentrantScroll() throws Exception {
+        onFxThread(() -> {
+            ScrollPane pane = pane(800, 1600);
+            Node viewport = requireNonNull(pane.lookup(".viewport"));
+            int[] captured = {0};
+            viewport.addEventFilter(ScrollEvent.SCROLL, event -> {
+                if (++captured[0] == 1)
+                    send(viewport, ScrollEvent.SCROLL, 0, -30, true, false, false);
+            });
+            send(viewport, ScrollEvent.SCROLL, 0, -20, true, false, false);
+            assertEquals(2, captured[0]);
+            assertEquals(50, offset(pane, false), 0.001);
+            send(viewport, ScrollEvent.SCROLL, 0, -10, true, false, false);
+            assertEquals(60, offset(pane, false), 0.001);
+            return true;
+        });
+    }
+
+    /// Completed dispatch and expired skin animations do not retain a detached scrolling pane.
+    @Test
+    void detachedPaneIsCollectibleAfterScroll() throws Exception {
+        WeakReference<ScrollPane> reference = onFxThread(() -> {
+            ScrollPane pane = pane(800, 1600);
+            send(pane.getContent(), ScrollEvent.SCROLL, 0, -40, false, false, true);
+            ((Pane) pane.getParent()).getChildren().clear();
+            return new WeakReference<>(pane);
+        });
+        TimeUnit.MILLISECONDS.sleep(1200);
+        onFxThread(() -> {
+            for (int i = 0; i < 3; i++)
+                System.gc();
+            assertNull(reference.get());
             return true;
         });
     }

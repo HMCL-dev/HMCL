@@ -4,9 +4,12 @@ package org.jackhuang.hmcl.ui;
 
 import javafx.animation.AnimationTimer;
 import javafx.animation.Interpolator;
+import javafx.application.ConditionalFeature;
+import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.event.Event;
+import javafx.event.EventDispatchChain;
 import javafx.event.EventDispatcher;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
@@ -30,6 +33,9 @@ import java.util.Objects;
 final class ScrollUtils {
     /// Identifies the controller installed on a node, making installation idempotent.
     private static final Object CONTROLLER_KEY = new Object();
+
+    /// Whether native skins need zero-distance input to animate overlay scrollbar visibility.
+    private static final boolean TOUCH_SUPPORTED = Platform.isSupported(ConditionalFeature.INPUT_TOUCH);
 
     /// Material 3 short3 duration, in nanoseconds, for discrete wheel movement.
     private static final long WHEEL_DURATION = 150_000_000L;
@@ -100,6 +106,9 @@ final class ScrollUtils {
         /// Inertia timing shared with ancestor controllers for the current gesture.
         private Inertia inertia = new Inertia();
 
+        /// Whether the current inertia state belongs to an ancestor controller.
+        private boolean inheritedInertia;
+
         /// Distinguishes controller writes from external position changes.
         boolean updating;
 
@@ -126,12 +135,15 @@ final class ScrollUtils {
                 suppressInertia = false;
                 // Capture visits ancestors first, so all controllers inherit the same fresh tail.
                 for (@Nullable Node parent = node.getParent(); parent != null; parent = parent.getParent()) {
-                    if (parent.getProperties().get(CONTROLLER_KEY) instanceof Controller controller) {
+                    if (parent.hasProperties() && parent.getProperties().get(CONTROLLER_KEY) instanceof Controller controller) {
                         inertia = controller.inertia;
+                        inheritedInertia = true;
                         return;
                     }
                 }
-                inertia = new Inertia();
+                if (inheritedInertia || inertia.start != 0)
+                    inertia = new Inertia();
+                inheritedInertia = false;
             }
         }
 
@@ -190,17 +202,18 @@ final class ScrollUtils {
                     event.consume();
                 }
             } else {
-                if (wheelStart != 0)
-                    handle(now);
                 double x = limit(true, dx);
                 double y = limit(false, dy);
                 if (x == 0 && y == 0)
                     return;
                 pendingX = accumulate(pendingX, x, true);
                 pendingY = accumulate(pendingY, y, false);
+                boolean running = wheelStart != 0;
                 wheelStart = now;
                 wheelProgress = 0;
-                start();
+                // Coalesce wheel input until the next pulse, especially for expensive virtual flows.
+                if (!running)
+                    start();
                 event.consume();
             }
         }
@@ -260,6 +273,7 @@ final class ScrollUtils {
         final void reset() {
             interrupt();
             inertia = new Inertia();
+            inheritedInertia = false;
         }
 
         /// Cancels animation after an external position change, such as scrollbar dragging.
@@ -270,6 +284,8 @@ final class ScrollUtils {
 
         /// Releases the pulse timer and all unapplied wheel movement.
         private void stopWheel() {
+            if (wheelStart == 0)
+                return;
             stop();
             pendingX = 0;
             pendingY = 0;
@@ -356,27 +372,73 @@ final class ScrollUtils {
                 if (!child.getStyleClass().contains("viewport"))
                     continue;
                 EventDispatcher dispatcher = Objects.requireNonNull(child.getEventDispatcher());
-                EventDispatcher wrapper = (event, tail) -> {
-                    if (!(event instanceof ScrollEvent) || event.getEventType() != ScrollEvent.SCROLL)
-                        return dispatcher.dispatchEvent(event, tail);
-                    @Nullable ScrollEvent[] unused = new ScrollEvent[1];
-                    dispatcher.dispatchEvent(event, tail.prepend((captured, remaining) -> {
-                        @Nullable Event result = remaining.dispatchEvent(captured);
-                        if (!(result instanceof ScrollEvent scroll))
-                            return result;
-                        onScroll(scroll);
-                        if (!scroll.isConsumed())
-                            unused[0] = scroll;
-                        // Only the skin's bubbling handlers see the zero-distance notification.
-                        return stationaryScroll(scroll);
-                    }));
-                    return unused[0];
-                };
+                EventDispatcher wrapper = new ViewportDispatcher(dispatcher);
                 viewport = child;
                 viewportDispatcher = dispatcher;
                 viewportWrapper = wrapper;
                 child.setEventDispatcher(wrapper);
                 break;
+            }
+        }
+
+        /// Reuses a private tail adapter without inserting controller references into JavaFX's cached chain.
+        @NotNullByDefault
+        private final class ViewportDispatcher implements EventDispatcher, EventDispatchChain {
+            /// Original viewport dispatcher, including native capture filters and bubbling handlers.
+            private final EventDispatcher dispatcher;
+
+            /// Active child chain, cleared as soon as dispatch completes.
+            private @Nullable EventDispatchChain tail;
+
+            /// Original unused event to resume bubbling above the viewport.
+            private @Nullable ScrollEvent unused;
+
+            /// Wraps the viewport's native dispatch while preserving its capture phase.
+            private ViewportDispatcher(EventDispatcher dispatcher) {
+                this.dispatcher = dispatcher;
+            }
+
+            /// Handles scroll input with isolated state for the uncommon reentrant dispatch case.
+            @Override
+            public @Nullable Event dispatchEvent(Event event, EventDispatchChain tail) {
+                if (!(event instanceof ScrollEvent) || event.getEventType() != ScrollEvent.SCROLL)
+                    return dispatcher.dispatchEvent(event, tail);
+                if (this.tail != null)
+                    return new ViewportDispatcher(dispatcher).dispatchEvent(event, tail);
+                this.tail = tail;
+                try {
+                    dispatcher.dispatchEvent(event, this);
+                    return unused;
+                } finally {
+                    this.tail = null;
+                    unused = null;
+                }
+            }
+
+            /// Gives descendants priority, then suppresses native displacement while retaining touch visibility.
+            @Override
+            public @Nullable Event dispatchEvent(Event event) {
+                @Nullable Event result = Objects.requireNonNull(tail).dispatchEvent(event);
+                if (!(result instanceof ScrollEvent scroll))
+                    return result;
+                onScroll(scroll);
+                if (!scroll.isConsumed())
+                    unused = scroll;
+                return TOUCH_SUPPORTED ? stationaryScroll(scroll) : null;
+            }
+
+            /// Appends a caller-supplied dispatcher while keeping this adapter around the child chain.
+            @Override
+            public EventDispatchChain append(EventDispatcher dispatcher) {
+                tail = Objects.requireNonNull(tail).append(dispatcher);
+                return this;
+            }
+
+            /// Prepends a caller-supplied dispatcher while keeping this adapter around the child chain.
+            @Override
+            public EventDispatchChain prepend(EventDispatcher dispatcher) {
+                tail = Objects.requireNonNull(tail).prepend(dispatcher);
+                return this;
             }
         }
 
@@ -457,7 +519,7 @@ final class ScrollUtils {
             flow.setOnScroll(event -> {
                 // The touch skin must reveal its bars before scrollPixels can move cells.
                 // A zero-distance event preserves its visibility lifecycle without scrolling twice.
-                if (nativeHandler != null && !event.isInertia()) {
+                if (TOUCH_SUPPORTED && nativeHandler != null && !event.isInertia()) {
                     nativeHandler.handle(stationaryScroll(event));
                 }
                 onScroll(event);
