@@ -726,13 +726,13 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
         private final ModListPage page;
 
-        private final JFXCheckBox checkBox = new JFXCheckBox();
         private final ColorAdjust colorAdjust = new ColorAdjust();
         private final ImageContainer imageContainer = new ImageContainer(32);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
-        private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
         private final JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER);
+        private final JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
+        private final JFXSwitch activeSwitch = new JFXSwitch();
 
         private final InvalidationListener activeListener = obs -> updateActiveState(getItem().getModInfo().isActive());
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
@@ -750,6 +750,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
+            container.setPadding(new Insets(0, 8, 0, 8));
             HBox.setHgrow(content, Priority.ALWAYS);
             setSelectable();
 
@@ -760,7 +761,17 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
-            container.getChildren().setAll(checkBox, imageContainer, content, restoreButton, revealButton, infoButton);
+            HBox actions = new HBox();
+            actions.setAlignment(Pos.CENTER);
+            actions.getChildren().setAll(restoreButton, revealButton, infoButton, activeSwitch);
+
+            activeSwitch.setSize(24);
+            activeSwitch.setMinSize(30, 30);
+            activeSwitch.setPrefSize(30, 30);
+            activeSwitch.setMaxSize(30, 30);
+            HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 8));
+
+            container.getChildren().setAll(imageContainer, content, actions);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -837,14 +848,14 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             (observedActiveProperty = modInfo.activeProperty()).addListener(weakActiveListener);
             updateActiveState(modInfo.isActive());
-            checkBox.setOnAction(event -> {
+            activeSwitch.setOnAction(event -> {
                 try {
-                    modInfo.setActive(checkBox.isSelected());
+                    modInfo.setActive(activeSwitch.isSelected());
                 } catch (IOException e) {
                     LOG.warning("Unable to change state of mod file " + modInfo.getFile(), e);
                     Controllers.showToast(i18n("mods.toggle.failed"));
                 } finally {
-                    checkBox.setSelected(modInfo.isActive());
+                    activeSwitch.setSelected(modInfo.isActive());
                 }
             });
             restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
@@ -873,7 +884,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
 
         private void updateActiveState(boolean active) {
-            checkBox.setSelected(active);
+            activeSwitch.setSelected(active);
             colorAdjust.setSaturation(active ? 0.0 : -0.75);
             colorAdjust.setBrightness(active ? 0.0 : -0.50);
         }

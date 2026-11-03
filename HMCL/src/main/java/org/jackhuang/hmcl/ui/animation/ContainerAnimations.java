@@ -7,7 +7,10 @@ import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
+import org.jetbrains.annotations.NotNullByDefault;
 
+/// Supplies reusable page replacement animations.
+@NotNullByDefault
 public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     NONE {
         @Override
@@ -170,28 +173,36 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         }
     },
 
-    /// Imitates the animation when switching tabs in the Windows 11 Settings interface
-    SLIDE_UP_FADE_IN {
+    /// Preserves the original slide-up and fade-in transition.
+    TAB_UP {
+        /// Creates the original slide-and-fade timing along the selected vertical direction.
         @Override
-        public Timeline animate(
-                Pane container, Node previousNode, Node nextNode,
-                Duration duration, Interpolator interpolator) {
-            double offset = container.getHeight() > 0 ? container.getHeight() * 0.2 : 50;
-            return new Timeline(
-                    new KeyFrame(Duration.ZERO,
-                            new KeyValue(previousNode.translateYProperty(), 0, interpolator),
-                            new KeyValue(previousNode.opacityProperty(), 1, interpolator),
-                            new KeyValue(nextNode.opacityProperty(), 0, interpolator),
-                            new KeyValue(nextNode.translateYProperty(), offset, interpolator)),
-                    new KeyFrame(duration.multiply(0.5),
-                            new KeyValue(previousNode.opacityProperty(), 0, interpolator)),
-                    new KeyFrame(duration,
-                            new KeyValue(nextNode.opacityProperty(), 1, interpolator),
-                            new KeyValue(nextNode.translateYProperty(), 0, interpolator))
-            );
+        public Timeline animate(Pane container, Node previousNode, Node nextNode,
+                                Duration duration, Interpolator interpolator) {
+            return animateTab(container, previousNode, nextNode, duration, interpolator, 1);
+        }
+
+        /// Returns the reverse tab transition.
+        @Override
+        public TransitionPane.AnimationProducer opposite() {
+            return TAB_DOWN;
         }
     },
+    /// Mirrors the original slide-up and fade-in transition vertically.
+    TAB_DOWN {
+        /// Creates the original slide-and-fade timing along the selected vertical direction.
+        @Override
+        public Timeline animate(Pane container, Node previousNode, Node nextNode,
+                                Duration duration, Interpolator interpolator) {
+            return animateTab(container, previousNode, nextNode, duration, interpolator, -1);
+        }
 
+        /// Returns the reverse tab transition.
+        @Override
+        public TransitionPane.AnimationProducer opposite() {
+            return TAB_UP;
+        }
+    },
     NAVIGATION {
         /// Also clears the horizontal offsets of the target page's navigation panels.
         @Override
@@ -246,4 +257,25 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         }
     },
     ;
+
+    /// Preserves the original slide-up fade timing, varying only the vertical direction.
+    /// The previous page stays still and fades out halfway through the incoming page's motion.
+    private static Timeline animateTab(Pane container, Node previousNode, Node nextNode, Duration duration,
+                                       Interpolator interpolator, double direction) {
+        double extent = container.getHeight();
+        double offset = (extent > 0 ? extent * 0.2 : 50) * direction;
+        var previousTranslation = previousNode.translateYProperty();
+        var nextTranslation = nextNode.translateYProperty();
+        return new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(previousTranslation, 0, interpolator),
+                        new KeyValue(previousNode.opacityProperty(), 1, interpolator),
+                        new KeyValue(nextNode.opacityProperty(), 0, interpolator),
+                        new KeyValue(nextTranslation, offset, interpolator)),
+                new KeyFrame(duration.multiply(0.5),
+                        new KeyValue(previousNode.opacityProperty(), 0, interpolator)),
+                new KeyFrame(duration,
+                        new KeyValue(nextNode.opacityProperty(), 1, interpolator),
+                        new KeyValue(nextTranslation, 0, interpolator)));
+    }
 }

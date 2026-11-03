@@ -310,7 +310,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     if (skinnable.options.isRequireForceUpdate()) {
-                        var requireForceUpdateButton = new LineToggleButton();
+                        var requireForceUpdateButton = new LineSwitch();
                         requireForceUpdateButton.setTitle(i18n("modpack.wizard.step.initialization.force_update"));
                         requireForceUpdateButton.selectedProperty().bindBidirectional(skinnable.forceUpdate);
 
@@ -318,7 +318,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     {
-                        var canIncludeLauncherButton = new LineToggleButton();
+                        var canIncludeLauncherButton = new LineSwitch();
                         canIncludeLauncherButton.setTitle(i18n("modpack.wizard.step.initialization.include_launcher"));
                         canIncludeLauncherButton.setDisable(!skinnable.canIncludeLauncher);
                         canIncludeLauncherButton.selectedProperty().bindBidirectional(skinnable.packWithLauncher);
@@ -327,7 +327,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     if (skinnable.options.isRequireNoCreateRemoteFiles()) {
-                        var requireNoCreateRemoteFilesButton = new LineToggleButton();
+                        var requireNoCreateRemoteFilesButton = new LineSwitch();
                         requireNoCreateRemoteFilesButton.setTitle(i18n("modpack.wizard.step.initialization.no_create_remote_files"));
                         requireNoCreateRemoteFilesButton.selectedProperty().bindBidirectional(skinnable.noCreateRemoteFiles);
 
@@ -335,7 +335,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     if (skinnable.options.isRequireSkipCurseForgeRemoteFiles()) {
-                        var skipCurseForgeRemoteFilesButton = new LineToggleButton();
+                        var skipCurseForgeRemoteFilesButton = new LineSwitch();
                         skipCurseForgeRemoteFilesButton.setTitle(i18n("modpack.wizard.step.initialization.skip_curseforge_remote_files"));
                         skipCurseForgeRemoteFilesButton.selectedProperty().bindBidirectional(skinnable.skipCurseForgeRemoteFiles);
 

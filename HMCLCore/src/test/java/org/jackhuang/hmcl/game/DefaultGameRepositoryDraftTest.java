@@ -61,6 +61,47 @@ public final class DefaultGameRepositoryDraftTest {
         assertFalse(Files.exists(repository.getLayout().getInstanceJson(id)));
     }
 
+    /// Supplies missing IDs for conventional, single-candidate, and multiple-candidate manifests without rewriting files.
+    @ParameterizedTest
+    @ValueSource(strings = {"conventional", "single", "multiple"})
+    public void testRefreshSuppliesMissingManifestId(String layout, @TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        Path root = Files.createDirectories(repository.getLayout().getInstanceRoot(id));
+        Path manifestFile = root.resolve(layout.equals("conventional") ? "instance.json" : "game.json");
+        String originalJson = "{\"mainClass\":\"example.Main\"}";
+        Files.writeString(manifestFile, originalJson);
+        if (layout.equals("multiple")) {
+            Files.writeString(root.resolve("a-settings.json"), "{}");
+            Files.writeString(root.resolve("b-broken.json"), "{");
+        }
+
+        repository.refresh();
+
+        DefaultGameInstance instance = repository.getInstance(id);
+        assertEquals(id, instance.getManifest().id());
+        assertEquals("example.Main", instance.getManifest().mainClass());
+        assertEquals(manifestFile, instance.getManifestFile());
+        assertEquals(originalJson, Files.readString(manifestFile));
+    }
+
+    /// Uses the directory identity even when the JSON ID is null, invalid, or different.
+    @ParameterizedTest
+    @ValueSource(strings = {"null", "42", "{}", "\"..\"", "\"original\""})
+    public void testRefreshOverridesManifestId(String jsonId, @TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        Files.createDirectories(repository.getLayout().getInstanceRoot(id));
+        Path manifestFile = repository.getLayout().getInstanceJson(id);
+        String originalJson = "{\"id\":" + jsonId + ",\"mainClass\":\"example.Main\"}";
+        Files.writeString(manifestFile, originalJson);
+
+        repository.refresh();
+
+        assertEquals(id, repository.getInstance(id).getManifest().id());
+        assertEquals(originalJson, Files.readString(manifestFile));
+    }
+
     /// Ignores directories whose multiple JSON files do not contain an instance manifest.
     @Test
     public void testRefreshIgnoresUnrelatedJsonFiles(@TempDir Path tempDirectory) throws IOException {
