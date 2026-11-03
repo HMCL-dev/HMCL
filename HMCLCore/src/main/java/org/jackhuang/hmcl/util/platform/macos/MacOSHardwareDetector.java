@@ -33,20 +33,20 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @NotNullByDefault
 public final class MacOSHardwareDetector extends HardwareDetector {
 
-    /// Reads the model name from `system_profiler`, falling back to a model identifier.
+    /// Reads a structured Mac identity from `system_profiler`, falling back to `sysctl -n hw.model`.
     ///
-    /// Uses `machine_name`, then `machine_model`, then `sysctl -n hw.model`.
+    /// Preserves `machine_model` separately and uses it as the display name when `machine_name` is unavailable.
     /// Names use the shared whitespace and placeholder filtering. Returns `null` outside macOS
     /// or when no valid value is available. Interrupted queries restore the interrupt flag and stop detection.
     @Override
-    public @Nullable String detectDeviceName() {
+    public @Nullable MacDeviceInfo detectDeviceInfo() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS)
             return null;
 
         try {
-            @Nullable String name = parseDeviceName(SystemUtils.run("/usr/sbin/system_profiler", "SPHardwareDataType", "-json"));
-            if (name != null)
-                return name;
+            @Nullable MacDeviceInfo info = parseDeviceInfo(SystemUtils.run("/usr/sbin/system_profiler", "SPHardwareDataType", "-json"));
+            if (info != null)
+                return info;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return null;
@@ -55,7 +55,8 @@ public final class MacOSHardwareDetector extends HardwareDetector {
         }
 
         try {
-            return cleanDeviceName(SystemUtils.run("/usr/sbin/sysctl", "-n", "hw.model"));
+            @Nullable String modelIdentifier = cleanDeviceName(SystemUtils.run("/usr/sbin/sysctl", "-n", "hw.model"));
+            return modelIdentifier == null ? null : new MacDeviceInfo(modelIdentifier, modelIdentifier);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return null;
@@ -65,10 +66,11 @@ public final class MacOSHardwareDetector extends HardwareDetector {
         }
     }
 
-    /// Extracts a model name or identifier from the first usable hardware entry in profiler JSON.
+    /// Extracts a model name and identifier from the first usable hardware entry in profiler JSON.
+    /// Retains the identifier even when a readable name is available; uses it as the name if needed.
     /// Ignores missing, non-string, blank, and placeholder fields; returns `null` if none are usable.
     /// Malformed JSON is rejected by Gson so the caller can fall back to another source.
-    static @Nullable String parseDeviceName(String json) {
+    static @Nullable MacDeviceInfo parseDeviceInfo(String json) {
         @Nullable JsonElement root = JsonUtils.GSON.fromJson(json, JsonElement.class);
         if (!(root instanceof JsonObject object)
                 || !(object.get("SPHardwareDataType") instanceof JsonArray hardware))
@@ -77,15 +79,20 @@ public final class MacOSHardwareDetector extends HardwareDetector {
         for (JsonElement element : hardware) {
             if (!(element instanceof JsonObject item))
                 continue;
-            for (String key : List.of("machine_name", "machine_model")) {
-                if (item.get(key) instanceof JsonPrimitive value && value.isString()) {
-                    @Nullable String name = cleanDeviceName(value.getAsString());
-                    if (name != null)
-                        return name;
-                }
-            }
+            @Nullable String name = readDeviceNameField(item, "machine_name");
+            @Nullable String modelIdentifier = readDeviceNameField(item, "machine_model");
+            if (name != null)
+                return new MacDeviceInfo(name, modelIdentifier);
+            if (modelIdentifier != null)
+                return new MacDeviceInfo(modelIdentifier, modelIdentifier);
         }
         return null;
+    }
+
+    /// Reads and cleans a profiler string field, returning `null` for absent or invalid values.
+    private static @Nullable String readDeviceNameField(JsonObject object, String key) {
+        return object.get(key) instanceof JsonPrimitive value && value.isString()
+                ? cleanDeviceName(value.getAsString()) : null;
     }
 
     /// Detects macOS processors, using the default detector when native information is unavailable.

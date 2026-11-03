@@ -8,6 +8,7 @@ import com.sun.jna.WString;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
+import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jackhuang.hmcl.util.platform.hardware.PageFileConfiguration;
@@ -50,11 +51,11 @@ public final class WindowsHardwareDetector extends HardwareDetector {
 
     /// Reads `SystemProductName` from `HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS` using JNA.
     ///
-    /// Applies the shared hardware model name cleaning and placeholder filtering.
+    /// Applies the shared hardware model name cleaning and placeholder filtering to produce a simple device identity.
     /// Returns `null` outside Windows, when native access is disabled or unavailable, or if the value
     /// is missing, not a string, invalid, or cannot be read.
     @Override
-    public @Nullable String detectDeviceName() {
+    public @Nullable DeviceInfo detectDeviceInfo() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS || !NativeUtils.USE_JNA)
             return null;
 
@@ -65,7 +66,8 @@ public final class WindowsHardwareDetector extends HardwareDetector {
 
             @Nullable Object value = registry.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
                     "HARDWARE\\DESCRIPTION\\System\\BIOS", "SystemProductName");
-            return value instanceof String name ? cleanDeviceName(name) : null;
+            @Nullable String name = value instanceof String string ? cleanDeviceName(string) : null;
+            return name == null ? null : new DeviceInfo.Simple(name);
         } catch (RuntimeException | LinkageError e) {
             LOG.warning("Failed to detect device name", e);
             return null;

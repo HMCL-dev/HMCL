@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.DataSizeUnit;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
+import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jackhuang.hmcl.util.platform.hardware.PageFileConfiguration;
@@ -49,8 +50,8 @@ public final class SystemInfo {
         /// The immutable graphics card snapshot, empty if detection is unavailable or fails.
         public static final @Unmodifiable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
 
-        /// The cached hardware model name, or `null` if unavailable.
-        public static final @Nullable String DEVICE_NAME = DETECTOR.detectDeviceName();
+        /// The cached device identity, or `null` if unavailable.
+        public static final @Nullable DeviceInfo DEVICE_INFO = DETECTOR.detectDeviceInfo();
 
         /// The cached desktop environment description, or `null` if unavailable.
         public static final @Nullable String DESKTOP = DETECTOR.detectDesktopEnvironment();
@@ -60,9 +61,9 @@ public final class SystemInfo {
     public static void initialize() {
         StringBuilder builder = new StringBuilder("System Info:");
 
-        @Nullable String deviceName = getDeviceName();
-        if (deviceName != null)
-            builder.append("\n - Device: ").append(deviceName);
+        @Nullable DeviceInfo deviceInfo = getDeviceInfo();
+        if (deviceInfo != null)
+            builder.append("\n - Device: ").append(deviceInfo.name());
 
         // CPU
         @Unmodifiable List<CentralProcessor> processors = getCentralProcessors();
@@ -173,12 +174,12 @@ public final class SystemInfo {
         return Holder.GRAPHICS_CARDS;
     }
 
-    /// Returns the cached hardware model name, or `null` if unavailable or unsupported.
+    /// Returns the cached device identity, or `null` if unavailable or unsupported.
     ///
     /// This describes the hardware product, not the user-configured hostname.
     /// Detection runs once during initialization of the cached system information.
-    public static @Nullable String getDeviceName() {
-        return Holder.DEVICE_NAME;
+    public static @Nullable DeviceInfo getDeviceInfo() {
+        return Holder.DEVICE_INFO;
     }
 
     /// Returns the cached desktop environment description, or `null` if detection is unsupported or no name is available.

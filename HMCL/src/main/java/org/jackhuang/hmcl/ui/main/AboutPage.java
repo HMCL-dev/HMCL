@@ -18,6 +18,7 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
+import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.PageFileConfiguration;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -82,13 +83,13 @@ public final class AboutPage extends SpinnerPane {
 
         ComponentList deviceInfo = new ComponentList();
         {
-            @Nullable String deviceName = SystemInfo.getDeviceName();
-            if (!Architecture.SYSTEM_ARCH.isX86() && deviceName != null) {
+            @Nullable DeviceInfo deviceIdentity = SystemInfo.getDeviceInfo();
+            if (!Architecture.SYSTEM_ARCH.isX86() && deviceIdentity != null) {
                 var device = new LinePane();
                 device.setLargeTitle(true);
                 device.setLeading(SVG.HOST.createIcon(32));
                 device.setTitle(i18n("about.device.model"));
-                device.setSubtitle(deviceName);
+                device.setSubtitle(deviceIdentity.name());
                 deviceInfo.getContent().add(device);
             }
 

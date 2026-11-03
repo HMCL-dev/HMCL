@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.util.platform.linux;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
+import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -46,16 +47,16 @@ public final class LinuxHardwareDetector extends HardwareDetector {
         return cards.isEmpty() ? super.detectGraphicsCards() : cards;
     }
 
-    /// Reads the hardware model from the device tree, falling back to the DMI product name.
+    /// Reads a simple device identity from the device tree, falling back to the DMI product name.
     ///
     /// Tries the stable `/proc/device-tree` ABI, then the sysfs tree, then `/sys/class/dmi/id/product_name`.
     /// Device-tree values are truncated at the first NUL; all names are stripped of surrounding whitespace.
     /// Missing, unreadable, blank, and known placeholder values are skipped; returns `null` if none are available.
     /// Placeholder matching ignores case and requires a full match; other model names are preserved.
     @Override
-    public @Nullable String detectDeviceName() {
+    public @Nullable DeviceInfo detectDeviceInfo() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
-            return super.detectDeviceName();
+            return super.detectDeviceInfo();
 
         for (Path path : List.of(
                 Path.of("/proc/device-tree/model"),
@@ -68,13 +69,14 @@ public final class LinuxHardwareDetector extends HardwareDetector {
                     value = value.substring(0, terminator);
                 @Nullable String name = cleanDeviceName(value);
                 if (name != null)
-                    return name;
+                    return new DeviceInfo.Simple(name);
             } catch (IOException | SecurityException ignored) {
                 // A source may be absent or inaccessible; continue with the remaining sources.
             }
         }
         try {
-            return cleanDeviceName(Files.readString(Path.of("/sys/class/dmi/id/product_name")));
+            @Nullable String name = cleanDeviceName(Files.readString(Path.of("/sys/class/dmi/id/product_name")));
+            return name == null ? null : new DeviceInfo.Simple(name);
         } catch (IOException | SecurityException ignored) {
             return null;
         }
