@@ -49,6 +49,9 @@ public final class SystemInfo {
         /// The immutable graphics card snapshot, empty if detection is unavailable or fails.
         public static final @Unmodifiable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
 
+        /// The cached hardware model name, or `null` if unavailable.
+        public static final @Nullable String DEVICE_NAME = DETECTOR.detectDeviceName();
+
         /// The cached desktop environment description, or `null` if unavailable.
         public static final @Nullable String DESKTOP = DETECTOR.detectDesktopEnvironment();
     }
@@ -56,6 +59,10 @@ public final class SystemInfo {
     /// Initializes cached hardware information if needed and logs a system summary on each call.
     public static void initialize() {
         StringBuilder builder = new StringBuilder("System Info:");
+
+        @Nullable String deviceName = getDeviceName();
+        if (deviceName != null)
+            builder.append("\n - Device: ").append(deviceName);
 
         // CPU
         @Unmodifiable List<CentralProcessor> processors = getCentralProcessors();
@@ -164,6 +171,14 @@ public final class SystemInfo {
     /// Returns the cached immutable graphics card list, empty if no cards were reported or detection failed.
     public static @Unmodifiable List<GraphicsCard> getGraphicsCards() {
         return Holder.GRAPHICS_CARDS;
+    }
+
+    /// Returns the cached hardware model name, or `null` if unavailable or unsupported.
+    ///
+    /// This describes the hardware product, not the user-configured hostname.
+    /// Detection runs once during initialization of the cached system information.
+    public static @Nullable String getDeviceName() {
+        return Holder.DEVICE_NAME;
     }
 
     /// Returns the cached desktop environment description, or `null` if detection is unsupported or no name is available.

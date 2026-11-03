@@ -46,6 +46,36 @@ public final class LinuxHardwareDetector extends HardwareDetector {
         return cards.isEmpty() ? super.detectGraphicsCards() : cards;
     }
 
+    /// Reads the hardware model from the device tree, falling back to the DMI product name.
+    ///
+    /// Prefers the stable `/proc/device-tree` ABI, with the sysfs tree as a fallback.
+    /// Values are truncated at the first NUL and stripped of surrounding whitespace.
+    /// Missing, unreadable, and blank values are skipped; returns `null` if none are available.
+    @Override
+    public @Nullable String detectDeviceName() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
+            return super.detectDeviceName();
+
+        for (Path path : List.of(
+                Path.of("/proc/device-tree/model"),
+                Path.of("/sys/firmware/devicetree/base/model"),
+                Path.of("/sys/class/dmi/id/product_name"))) {
+            try {
+                String name = Files.readString(path);
+                // Device-tree strings are NUL-terminated, unlike DMI sysfs text attributes.
+                int terminator = name.indexOf('\0');
+                if (terminator >= 0)
+                    name = name.substring(0, terminator);
+                name = name.strip();
+                if (!name.isEmpty())
+                    return name;
+            } catch (IOException | SecurityException ignored) {
+                // A source may be absent or inaccessible; continue with the remaining sources.
+            }
+        }
+        return null;
+    }
+
     /// Reads a desktop environment description from this process's environment variables.
     ///
     /// Uses `XDG_CURRENT_DESKTOP`, falling back to `XDG_SESSION_DESKTOP` if the former is absent or blank.

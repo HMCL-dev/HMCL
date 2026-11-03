@@ -37,6 +37,15 @@ public class HardwareDetector {
         return USE_FAST_FETCH ? FastFetchUtils.detectGraphicsCards() : List.of();
     }
 
+    /// Returns the device's hardware model name, or `null` if unavailable or unsupported.
+    ///
+    /// This describes the hardware product, not the user-configured hostname.
+    ///
+    /// @implSpec The default implementation returns `null`.
+    public @Nullable String detectDeviceName() {
+        return null;
+    }
+
     /// Returns a desktop environment description, or `null` if detection is unsupported or no name is available.
     ///
     /// The description may include the session type.
