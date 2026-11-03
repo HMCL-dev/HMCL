@@ -302,7 +302,8 @@ public class FloatScrollBarSkin implements Skin<ScrollBar> {
             return;
         double position = vertical ? point.getY() : point.getX();
         double fraction;
-        if (event.getTarget() == thumb) {
+        // Gesture recognition can pick the track after the finger has already grabbed the thumb.
+        if (Double.isFinite(touchGrabOffset) || event.getTarget() == thumb) {
             if (Double.isNaN(touchGrabOffset))
                 captureTouchGrab(event.getSceneX(), event.getSceneY());
             fraction = (position - touchGrabOffset) / (length - thumbLength);

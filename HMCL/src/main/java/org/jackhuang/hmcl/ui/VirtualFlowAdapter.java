@@ -174,7 +174,7 @@ final class VirtualFlowAdapter extends ScrollAdapter {
         return horizontal ? flow.getWidth() : flow.getHeight();
     }
 
-    /// Bounds movement at visible end cells while allowing multi-page queues elsewhere.
+    /// Bounds fixed-size flows against their full extent, falling back to visible edges for variable-size cells.
     @Override
     double limit(boolean horizontal, double pixels) {
         if (horizontal == flow.isVertical()) {
@@ -193,11 +193,19 @@ final class VirtualFlowAdapter extends ScrollAdapter {
                 || (pixels > 0 && flow.getPosition() >= 1))
             return 0;
         @Nullable IndexedCell<?> first = flow.getFirstVisibleCell();
+        double size = viewportLength(horizontal);
+        double cellSize = flow.getFixedCellSize();
+        if (first != null && cellSize > 0) {
+            // Queued movement can reach an edge before its end cell becomes visible.
+            double extent = Math.max(0, flow.getCellCount() * cellSize - size);
+            double start = horizontal ? first.getLayoutX() : first.getLayoutY();
+            double position = MathUtils.clamp(first.getIndex() * cellSize - start, 0, extent);
+            return MathUtils.clamp(pixels, -position, extent - position);
+        }
         if (pixels < 0 && first != null && first.getIndex() == 0) {
             double start = horizontal ? first.getLayoutX() : first.getLayoutY();
             return Math.max(Math.min(0, start), pixels);
         }
-        double size = viewportLength(horizontal);
         @Nullable IndexedCell<?> last = flow.getLastVisibleCell();
         if (pixels > 0 && last != null && last.getIndex() == flow.getCellCount() - 1) {
             double end = horizontal ? last.getLayoutX() + last.getWidth() : last.getLayoutY() + last.getHeight();

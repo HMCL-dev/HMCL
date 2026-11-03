@@ -608,6 +608,50 @@ final class ScrollUtilsTest {
         });
     }
 
+    /// A thumb press keeps its grab offset when gesture recognition picks the track as its target.
+    @Test
+    void floatingScrollbarPreservesGrabWhenGestureTargetsTrack() throws Exception {
+        onFxThread(() -> {
+            for (Orientation orientation : Orientation.values()) {
+                for (double initial : new double @Unmodifiable []{10, 14}) {
+                    ScrollBar bar = new ScrollBar();
+                    bar.setOrientation(orientation);
+                    bar.setMin(10);
+                    bar.setMax(30);
+                    bar.setVisibleAmount(10);
+                    bar.setValue(initial);
+                    bar.setSkin(new FloatScrollBarSkin(bar));
+                    layout(bar);
+                    boolean vertical = orientation == Orientation.VERTICAL;
+                    bar.resize(vertical ? 12 : 208, vertical ? 208 : 12);
+                    bar.layout();
+                    Node thumb = requireNonNull(bar.lookup(".thumb"));
+                    Node track = requireNonNull(bar.lookup(".track"));
+                    Point2D press = thumb.localToScene(
+                            thumb.getBoundsInLocal().getMinX() + thumb.getBoundsInLocal().getWidth() * (vertical ? 0.5 : 0.98),
+                            thumb.getBoundsInLocal().getMinY() + thumb.getBoundsInLocal().getHeight() * (vertical ? 0.98 : 0.5));
+                    thumb.fireEvent(mouseAt(thumb, MouseEvent.MOUSE_PRESSED, true, press.getX(), press.getY()));
+                    double x = press.getX() + (vertical ? 0 : 5);
+                    double y = press.getY() + (vertical ? 5 : 0);
+                    assertFalse(thumb.contains(thumb.sceneToLocal(x, y)));
+                    sendDirectAt(track, ScrollEvent.SCROLL_STARTED, x, y);
+                    sendDirectAt(track, x, y);
+                    assertEquals(initial + 1, bar.getValue(), 0.001);
+                    sendDirectAt(track, x + (vertical ? 0 : 5), y + (vertical ? 5 : 0));
+                    assertEquals(initial + 2, bar.getValue(), 0.001);
+                    sendDirectAt(track, ScrollEvent.SCROLL_FINISHED, x, y);
+
+                    Point2D trackPress = track.localToScene(vertical ? 3 : 150, vertical ? 150 : 3);
+                    sendDirectAt(track, ScrollEvent.SCROLL_STARTED, trackPress.getX(), trackPress.getY());
+                    sendDirectAt(track, trackPress.getX(), trackPress.getY());
+                    assertEquals(25, bar.getValue(), 0.001);
+                    sendDirectAt(track, ScrollEvent.SCROLL_FINISHED, trackPress.getX(), trackPress.getY());
+                }
+            }
+            return true;
+        });
+    }
+
     /// The application's floating skin responds to direct input on the thumb and track in both orientations.
     @Test
     void floatingScrollbarHandlesTouch() throws Exception {
@@ -662,6 +706,8 @@ final class ScrollUtilsTest {
                     assertTrue(orientation == Orientation.VERTICAL ? pane.getVvalue() > 0 : pane.getHvalue() > 0);
                     target.fireEvent(mouseAt(target, MouseEvent.MOUSE_DRAGGED, true, point.getX(), point.getY()));
                     assertEquals(expected, bar.getValue(), 0.001);
+                    target.fireEvent(mouseAt(target, MouseEvent.MOUSE_RELEASED, true, point.getX(), point.getY()));
+                    sendDirectAt(target, ScrollEvent.SCROLL_FINISHED, point.getX(), point.getY());
                 }
             }
             return true;
@@ -1351,6 +1397,38 @@ final class ScrollUtilsTest {
         });
     }
 
+    /// Fixed-size flows reserve unseen end cells for queued movement before the first animation pulse.
+    @Test
+    void virtualFlowHandsOffWhenQueueReachesUnseenEdge() throws Exception {
+        onFxThread(() -> {
+            for (boolean vertical : new boolean @Unmodifiable []{true, false}) {
+                for (boolean end : new boolean @Unmodifiable []{true, false}) {
+                    for (double initial : new double @Unmodifiable []{end ? 0 : 1, 0.43}) {
+                        VirtualFlow<?> flow = flow(vertical);
+                        flow.setPosition(initial);
+                        flow.layout();
+                        if (end)
+                            assertTrue(requireNonNull(flow.getLastVisibleCell()).getIndex() < 99);
+                        else
+                            assertTrue(requireNonNull(flow.getFirstVisibleCell()).getIndex() > 0);
+                        int[] bubbled = {0};
+                        flow.getScene().getRoot().addEventHandler(ScrollEvent.SCROLL, event -> bubbled[0]++);
+                        double before = flow.getPosition();
+                        double direction = end ? -1 : 1;
+                        sendPages(flow, direction * (vertical ? 10 : 100));
+                        assertEquals(0, bubbled[0]);
+                        sendPages(flow, direction);
+                        assertEquals(1, bubbled[0]);
+                        assertEquals(before, flow.getPosition(), 0.001);
+                        finishWheel(flow);
+                        assertEquals(end ? 1 : 0, flow.getPosition(), 0.001);
+                    }
+                }
+            }
+            return true;
+        });
+    }
+
     /// Rapid page inputs retain their full distance, including a multi-page event and reversal.
     @Test
     void virtualFlowPreservesQueuedPages() throws Exception {
@@ -1518,7 +1596,12 @@ final class ScrollUtilsTest {
 
     /// Sends direct positioning input at scene coordinates to a grabbed thumb or track.
     private static void sendDirectAt(Node target, double x, double y) {
-        target.fireEvent(new ScrollEvent(ScrollEvent.SCROLL, x, y, x, y,
+        sendDirectAt(target, ScrollEvent.SCROLL, x, y);
+    }
+
+    /// Sends a direct gesture lifecycle event at the recognition point's scene coordinates.
+    private static void sendDirectAt(Node target, EventType<ScrollEvent> type, double x, double y) {
+        target.fireEvent(new ScrollEvent(type, x, y, x, y,
                 false, false, false, false, true, false, 5, 5, 5, 5,
                 ScrollEvent.HorizontalTextScrollUnits.NONE, 0,
                 ScrollEvent.VerticalTextScrollUnits.NONE, 0, 1, new PickResult(target, x, y)));
