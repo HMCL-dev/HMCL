@@ -36,6 +36,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
     /// Reads a structured Mac identity from `system_profiler`, falling back to `sysctl -n hw.model`.
     ///
     /// Preserves `machine_model` separately and uses it as the display name when `machine_name` is unavailable.
+    /// Known identifiers use the bundled model's English name and expose its structured details for localization.
     /// Names use the shared whitespace and placeholder filtering. Returns `null` outside macOS
     /// or when no valid value is available. Interrupted queries restore the interrupt flag and stop detection.
     @Override

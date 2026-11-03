@@ -14,6 +14,7 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.DataSizeUnit;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.DeviceInfoFormatter;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
@@ -30,6 +31,7 @@ import java.io.InputStream;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.getResourceBundle;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -89,7 +91,7 @@ public final class AboutPage extends SpinnerPane {
                 device.setLargeTitle(true);
                 device.setLeading(SVG.HOST.createIcon(32));
                 device.setTitle(i18n("about.device.model"));
-                device.setSubtitle(deviceIdentity.name());
+                device.setSubtitle(DeviceInfoFormatter.format(deviceIdentity, getResourceBundle()));
                 deviceInfo.getContent().add(device);
             }
 
