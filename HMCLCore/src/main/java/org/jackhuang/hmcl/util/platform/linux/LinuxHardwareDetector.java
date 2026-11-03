@@ -17,6 +17,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,6 +29,16 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @author Glavo
 @NotNullByDefault
 public final class LinuxHardwareDetector extends HardwareDetector {
+
+    /// Lowercase placeholder names excluded by exact, case-insensitive matching after stripping whitespace.
+    private static final @Unmodifiable Set<String> DEVICE_NAME_PLACEHOLDERS = Set.of(
+            "unknown",
+            "none",
+            "n/a",
+            "default string",
+            "to be filled by o.e.m.",
+            "to be filled by o.e.m",
+            "system product name");
 
     /// Detects Linux processors, using the default detector when native information is unavailable.
     @Override
@@ -50,7 +62,8 @@ public final class LinuxHardwareDetector extends HardwareDetector {
     ///
     /// Prefers the stable `/proc/device-tree` ABI, with the sysfs tree as a fallback.
     /// Values are truncated at the first NUL and stripped of surrounding whitespace.
-    /// Missing, unreadable, and blank values are skipped; returns `null` if none are available.
+    /// Missing, unreadable, blank, and known placeholder values are skipped; returns `null` if none are available.
+    /// Placeholder matching ignores case and requires a full match; other model names are preserved.
     @Override
     public @Nullable String detectDeviceName() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
@@ -66,7 +79,7 @@ public final class LinuxHardwareDetector extends HardwareDetector {
                 if (terminator >= 0)
                     name = name.substring(0, terminator);
                 name = name.strip();
-                if (!name.isEmpty())
+                if (!name.isEmpty() && !DEVICE_NAME_PLACEHOLDERS.contains(name.toLowerCase(Locale.ROOT)))
                     return name;
             } catch (IOException | SecurityException ignored) {
                 // A source may be absent or inaccessible; continue with the remaining sources.
