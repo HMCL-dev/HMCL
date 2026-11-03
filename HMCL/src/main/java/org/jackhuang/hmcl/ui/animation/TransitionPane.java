@@ -22,6 +22,12 @@ import org.jetbrains.annotations.Nullable;
 @NotNullByDefault
 public class TransitionPane extends StackPane {
 
+    /// Marks pages that have completed a rendering preparation or entered their displayed state.
+    private static final Object RENDER_INITIALIZED_KEY = new Object();
+
+    /// Keeps the first page render active while contributing negligible visible opacity.
+    private static final double PREPARATION_OPACITY = 0.00001;
+
     /// The requested page, or `null` when content is absent.
     private @Nullable Node currentNode;
 
@@ -31,7 +37,7 @@ public class TransitionPane extends StackPane {
     /// The hidden preparation container, or `null` when no candidate is retained.
     private @Nullable StackPane preloadPane;
 
-    /// Whether the candidate must survive the next content layout pass.
+    /// Whether the candidate is waiting for its first content layout pass.
     private boolean preloadLayoutPending;
 
     /// Creates an empty container that clips content to its bounds.
@@ -58,12 +64,12 @@ public class TransitionPane extends StackPane {
         }
     }
 
-    /// Attaches unowned content for hidden CSS and layout prewarming during scene pulses.
+    /// Attaches unowned content for hidden CSS and layout prewarming.
     /// Replaces any previous candidate without changing the current content. The hidden
     /// container uses a snapshot of this pane's content-area size and does not affect
-    /// its size requirements. It is retained through the next content layout pass
-    /// and released on a later pass. Any call to [#setContent(Node, AnimationProducer)]
-    /// cancels pending prewarming and releases the hidden container.
+    /// its size requirements. The content is detached after the layout pass.
+    /// Any call to [#setContent(Node, AnimationProducer)] cancels pending prewarming
+    /// and releases the hidden container.
     /// The caller must retain the content for subsequent use. This method does not wait
     /// for prewarming to finish and must be called on the JavaFX Application Thread.
     ///
@@ -74,14 +80,12 @@ public class TransitionPane extends StackPane {
         if (content.getParent() != null || content.getScene() != null) {
             throw new IllegalArgumentException("Content already belongs to a parent or scene");
         }
-        if (preloadPane == null) {
-            preloadPane = new StackPane();
-            preloadPane.setVisible(false);
-            preloadPane.setManaged(false);
-            preloadPane.setMouseTransparent(true);
-            getChildren().add(0, preloadPane);
-        }
-        preloadPane.getChildren().setAll(content);
+        disposePreloadPane();
+        preloadPane = new StackPane(content);
+        preloadPane.setVisible(false);
+        preloadPane.setManaged(false);
+        preloadPane.setMouseTransparent(true);
+        getChildren().add(0, preloadPane);
         preloadPane.resizeRelocate(snappedLeftInset(), snappedTopInset(),
                 Math.max(0, getWidth() - snappedLeftInset() - snappedRightInset()),
                 Math.max(0, getHeight() - snappedTopInset() - snappedBottomInset()));
@@ -90,18 +94,29 @@ public class TransitionPane extends StackPane {
         return content;
     }
 
-    /// Lays out displayed pages and releases a candidate retained from an earlier pass.
+    /// Releases the preparation container after its descendants have been laid out.
     @Override
     protected void layoutChildren() {
         super.layoutChildren();
-        if (preloadPane != null && getScene() != null) {
-            // Descendant layout follows this method; keep a new candidate attached
-            // through that traversal instead of treating this callback as completion.
-            if (preloadLayoutPending) {
-                preloadLayoutPending = false;
-            } else {
-                disposePreloadPane();
-            }
+        @Nullable Scene scene = getScene();
+        if (preloadPane != null && scene != null && preloadLayoutPending) {
+            preloadLayoutPending = false;
+            StackPane candidate = preloadPane;
+            Platform.runLater(() -> {
+                if (preloadPane == candidate) {
+                    disposePreloadPane();
+                }
+            });
+        }
+    }
+
+    /// Suppresses future prewarming after a page enters its displayed state in a showing window.
+    private static void markDisplayed(Node content) {
+        @Nullable Scene scene = content.getScene();
+        @Nullable Window window = scene == null ? null : scene.getWindow();
+        if (window != null && window.isShowing()
+                && content.isVisible() && content.getOpacity() > 0) {
+            content.getProperties().put(RENDER_INITIALIZED_KEY, Boolean.TRUE);
         }
     }
 
@@ -136,11 +151,14 @@ public class TransitionPane extends StackPane {
     }
 
     /// Replaces the current page, cancelling any preceding transition.
-    /// Animated changes wait for a scene CSS and layout pass; mouse input is
+    /// Animated changes wait for CSS, layout, and first-display rendering preparation; mouse input is
     /// suppressed while pending or running. Detaching the container or hiding
     /// its window cancels the transition. Cancellation applies the end state
     /// of a started animation with a finite duration and restores the target page
     /// through [AnimationProducer#finish(Node)], even if playback has not started.
+    /// Previously undisplayed pages initialized at zero opacity render almost transparently
+    /// before playback, provided they are visible and their opacity is not bound. Preparation
+    /// preserves initialized transforms, so offscreen content may still be culled.
     public void setContent(Node newView, AnimationProducer transition,
                            Duration duration, Interpolator interpolator) {
         if (activeTransition != null) {
@@ -156,6 +174,7 @@ public class TransitionPane extends StackPane {
                 || window == null || !window.isShowing()) {
             transition.finish(newView);
             replaceContentNodes(null, newView);
+            markDisplayed(newView);
             return;
         }
 
@@ -172,10 +191,21 @@ public class TransitionPane extends StackPane {
             private final Runnable layoutListener = this::layoutCompleted;
             /// The animation created after preparation, or `null` before playback.
             private @Nullable Animation animation;
+            /// Whether the near-transparent render still needs a subsequent scene synchronization.
+            private boolean renderingPending;
 
             /// Arms a one-shot layout notification after navigation handlers return.
             @Override
             public void start() {
+                renderingPending = !newView.getProperties().containsKey(RENDER_INITIALIZED_KEY)
+                        && newView.isVisible() && !newView.opacityProperty().isBound()
+                        && newView.getOpacity() == 0;
+                if (renderingPending) {
+                    newView.setOpacity(PREPARATION_OPACITY);
+                }
+                if (!canContinue()) {
+                    return;
+                }
                 super.start();
                 Platform.runLater(() -> {
                     if (canContinue()) {
@@ -193,6 +223,17 @@ public class TransitionPane extends StackPane {
                         return;
                     }
                     try {
+                        if (renderingPending) {
+                            renderingPending = false;
+                            // This dirty state forces the next scene synchronization to wait for
+                            // the preceding render. Only its following runLater starts the clock.
+                            newView.setOpacity(0);
+                            if (canContinue()) {
+                                scene.addPostLayoutPulseListener(layoutListener);
+                                Platform.requestNextPulse();
+                            }
+                            return;
+                        }
                         animation = transition.animate(TransitionPane.this, previousNode, newView, duration, interpolator);
                         if (activeTransition != this) {
                             return;
@@ -246,6 +287,9 @@ public class TransitionPane extends StackPane {
                     newView.setCacheHint(originalCacheHint);
                 }
                 transition.finish(newView);
+                if (animation != null) {
+                    markDisplayed(newView);
+                }
                 getChildren().removeIf(node -> node != newView && node != preloadPane);
                 setMouseTransparent(originalMouseTransparent);
             }
@@ -305,7 +349,8 @@ public class TransitionPane extends StackPane {
         ///         or `null` to not cache it.
         default @Nullable CacheHint getCacheHint(AnimationProducer animationProducer) {
             // https://github.com/HMCL-dev/HMCL/issues/4789
-            return animationProducer == ContainerAnimations.SLIDE_UP_FADE_IN ? CacheHint.SPEED : null;
+            return animationProducer == ContainerAnimations.TAB_UP
+                    || animationProducer == ContainerAnimations.TAB_DOWN ? CacheHint.SPEED : null;
         }
     }
 }
