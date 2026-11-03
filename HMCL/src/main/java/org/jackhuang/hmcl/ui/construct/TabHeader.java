@@ -287,14 +287,16 @@ public class TabHeader extends Control {
                 setOnAction(event -> getSkinnable().getController().selectTab(tab));
             }
 
-            /// Reflects the controller's selected tab in the label's pseudo-class.
+            /// Updates persistent background feedback and the label's selected pseudo-class.
             private void updateSelection() {
-                tabText.pseudoClassStateChanged(SELECTED_PSEUDOCLASS_STATE,
-                        getSkinnable().getController().getSelectedTab() == tab);
+                boolean selected = getSkinnable().getController().getSelectedTab() == tab;
+                setSelectedFeedback(selected);
+                tabText.pseudoClassStateChanged(SELECTED_PSEUDOCLASS_STATE, selected);
             }
 
-            /// Releases the tab's text binding.
+            /// Stops background feedback animation and releases the tab's text binding.
             private void dispose() {
+                resetFeedback();
                 tabText.textProperty().unbind();
             }
         }
