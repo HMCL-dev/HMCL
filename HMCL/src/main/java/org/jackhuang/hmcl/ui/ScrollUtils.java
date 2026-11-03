@@ -106,6 +106,12 @@ final class ScrollUtils {
         /// Vertical native panning already included in the first direct scroll delta.
         double pannedY;
 
+        /// Horizontal panning eligible for deduction by the currently dispatched direct event only.
+        private double eventPannedX;
+
+        /// Vertical panning eligible for deduction by the currently dispatched direct event only.
+        private double eventPannedY;
+
         /// Whether a press has cancelled the previous gesture's inertia.
         private boolean suppressInertia;
 
@@ -120,6 +126,24 @@ final class ScrollUtils {
 
         /// Installs interruption and lifecycle listeners without consuming input.
         Controller(Node node) {
+            EventDispatcher dispatcher = Objects.requireNonNull(node.getEventDispatcher());
+            node.setEventDispatcher((event, tail) -> {
+                if (!(event instanceof ScrollEvent scroll) || scroll.getEventType() != ScrollEvent.SCROLL
+                        || !scroll.isDirect() || scroll.isInertia())
+                    return dispatcher.dispatchEvent(event, tail);
+                double previousX = eventPannedX;
+                double previousY = eventPannedY;
+                eventPannedX = pannedX;
+                eventPannedY = pannedY;
+                clearPanning();
+                try {
+                    return dispatcher.dispatchEvent(event, tail);
+                } finally {
+                    // Consumption by descendants must expire credit too; nested dispatch keeps its own scope.
+                    eventPannedX = previousX;
+                    eventPannedY = previousY;
+                }
+            });
             node.addEventFilter(ScrollEvent.ANY, event -> observeScroll(node, event));
             node.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> interrupt());
             node.addEventFilter(MouseEvent.MOUSE_RELEASED, event -> clearPanning());
@@ -217,9 +241,11 @@ final class ScrollUtils {
 
             boolean panned = false;
             if (event.isDirect() && !event.isInertia()) {
-                panned = pannedX != 0 || pannedY != 0;
-                dx -= pannedX;
-                dy -= pannedY;
+                panned = eventPannedX != 0 || eventPannedY != 0;
+                dx -= eventPannedX;
+                dy -= eventPannedY;
+                eventPannedX = 0;
+                eventPannedY = 0;
             }
             clearPanning();
 

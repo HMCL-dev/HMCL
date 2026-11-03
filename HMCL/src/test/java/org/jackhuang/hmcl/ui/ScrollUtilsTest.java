@@ -25,12 +25,20 @@ import javafx.scene.input.PickResult;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import org.jackhuang.hmcl.setting.LauncherSettings;
+import org.jackhuang.hmcl.setting.SettingsManager;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +49,23 @@ import static org.junit.jupiter.api.Assertions.*;
 /// Exercises scrolling through real JavaFX event dispatch and laid-out control skins.
 @NotNullByDefault
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
+@Isolated("Temporarily supplies settings while initializing the floating skin's animation policy")
 final class ScrollUtilsTest {
+    /// Initializes skin animation policy using temporary in-memory settings without accessing persisted settings.
+    @BeforeAll
+    static void initializeAnimationPolicy() throws Exception {
+        Field field = SettingsManager.class.getDeclaredField("launcherSettings");
+        field.setAccessible(true);
+        @Nullable Object previous = field.get(null);
+        if (previous == null)
+            field.set(null, new LauncherSettings());
+        try {
+            AnimationUtils.init();
+        } finally {
+            field.set(null, previous);
+        }
+    }
+
     /// Touch deltas are immediate, independent on both axes, and respect custom value ranges.
     @Test
     void touchTracksPixels() throws Exception {
@@ -413,6 +437,155 @@ final class ScrollUtilsTest {
             assertEquals(0, flow.getPosition(), 0.001);
             assertEquals(20, offset(inner, false), 0.001);
             assertEquals(1, dragged[0]);
+            return true;
+        });
+    }
+
+    /// Early outer panning is eligible only for the first direct event, even if an inner pane consumes it.
+    @Test
+    void nestedTouchDiscardsConsumedPanningCredit() throws Exception {
+        onFxThread(() -> {
+            VirtualFlow<?> flow = flow(true);
+            flow.setFixedCellSize(180);
+            flow.setPannable(true);
+            flow.layout();
+            IndexedCell<?> cell = requireNonNull(flow.getFirstVisibleCell());
+            ScrollPane inner = new ScrollPane(content(800, 1600));
+            inner.setPrefSize(200, 120);
+            inner.setMaxSize(200, 120);
+            ScrollUtils.addSmoothScrolling(inner);
+            cell.setGraphic(inner);
+            cell.applyCss();
+            cell.layout();
+            inner.layout();
+            inner.setVvalue(1);
+            double size = offset(inner, false);
+            inner.setVvalue(1 - 12 / size);
+            Node target = requireNonNull(inner.getContent());
+            target.fireEvent(mouseAt(target, MouseEvent.MOUSE_PRESSED, true, 50, 50));
+            target.fireEvent(mouseAt(target, MouseEvent.MOUSE_DRAGGED, true, 50, 45));
+            assertEquals(-5, requireNonNull(flow.getFirstVisibleCell()).getLayoutY(), 0.001);
+            send(target, ScrollEvent.SCROLL, 0, -12, true, false, false);
+            assertEquals(1, inner.getVvalue(), 0.001);
+            send(target, ScrollEvent.SCROLL, 0, -2, true, false, false);
+            assertEquals(-7, requireNonNull(flow.getFirstVisibleCell()).getLayoutY(), 0.001);
+            return true;
+        });
+    }
+
+    /// A nested dispatch cannot borrow or erase the panning credit of the direct event already in progress.
+    @Test
+    void panningCreditIsIsolatedDuringReentrantScroll() throws Exception {
+        onFxThread(() -> {
+            ScrollPane pane = pane(800, 1600);
+            pane.setPannable(true);
+            Node content = requireNonNull(pane.getContent());
+            content.fireEvent(mouseAt(content, MouseEvent.MOUSE_PRESSED, true, 50, 50));
+            content.fireEvent(mouseAt(content, MouseEvent.MOUSE_DRAGGED, true, 50, 45));
+            assertEquals(5, offset(pane, false), 0.001);
+            Node viewport = requireNonNull(pane.lookup(".viewport"));
+            int[] captured = {0};
+            viewport.addEventFilter(ScrollEvent.SCROLL, event -> {
+                if (++captured[0] == 1)
+                    send(content, ScrollEvent.SCROLL, 0, -2, true, false, false);
+            });
+            send(content, ScrollEvent.SCROLL, 0, -12, true, false, false);
+            assertEquals(14, offset(pane, false), 0.001);
+            send(content, ScrollEvent.SCROLL, 0, -3, true, false, false);
+            assertEquals(17, offset(pane, false), 0.001);
+            return true;
+        });
+    }
+
+    /// The application's floating skin responds to direct input on the thumb and track in both orientations.
+    @Test
+    void floatingScrollbarHandlesTouch() throws Exception {
+        ScrollPane @Unmodifiable [] panes = onFxThread(() -> {
+            ScrollPane @Unmodifiable [] result = {
+                    new ScrollPane(content(800, 1600)), new ScrollPane(content(800, 1600))
+            };
+            for (ScrollPane pane : result) {
+                pane.setSkin(new ScrollPaneSkin(pane));
+                // Install the application skin before CSS creates native skins, whose handlers survive disposal on JavaFX 17.
+                for (Node node : pane.lookupAll(".scroll-bar")) {
+                    ScrollBar bar = (ScrollBar) node;
+                    bar.setSkin(new FloatScrollBarSkin(bar));
+                }
+                ScrollUtils.addSmoothScrolling(pane);
+                layout(pane);
+                send(pane.getContent(), ScrollEvent.SCROLL, 0, -1, false, false, true);
+                finishWheel(pane);
+            }
+            return result;
+        });
+        // Touch skins reveal and size overlay scrollbars on the next animation pulse.
+        TimeUnit.MILLISECONDS.sleep(100);
+        onFxThread(() -> {
+            for (Orientation orientation : Orientation.values()) {
+                ScrollPane pane = panes[orientation == Orientation.HORIZONTAL ? 0 : 1];
+                pane.requestLayout();
+                pane.layout();
+                ScrollBar bar = pane.lookupAll(".scroll-bar").stream().map(ScrollBar.class::cast)
+                        .filter(node -> node.getOrientation() == orientation).findFirst().orElseThrow();
+                assertInstanceOf(FloatScrollBarSkin.class, bar.getSkin());
+                assertTrue(bar.isVisible());
+                Node thumb = requireNonNull(bar.lookup(".thumb"));
+                Node track = requireNonNull(bar.lookup(".track"));
+                for (Node target : new Node @Unmodifiable []{thumb, track}) {
+                    bar.setValue(bar.getMin());
+                    Point2D press = thumb.localToScene(thumb.getBoundsInLocal().getCenterX(), thumb.getBoundsInLocal().getCenterY());
+                    target.fireEvent(mouseAt(target, MouseEvent.MOUSE_PRESSED, true, press.getX(), press.getY()));
+                    Point2D point = track.localToScene(track.getBoundsInLocal().getWidth() * 0.75,
+                            track.getBoundsInLocal().getHeight() * 0.75);
+                    target.fireEvent(new ScrollEvent(ScrollEvent.SCROLL,
+                            point.getX(), point.getY(), point.getX(), point.getY(),
+                            false, false, false, false, true, false, 4, 4, 4, 4,
+                            ScrollEvent.HorizontalTextScrollUnits.NONE, 0,
+                            ScrollEvent.VerticalTextScrollUnits.NONE, 0, 1,
+                            new PickResult(target, point.getX(), point.getY())));
+                    double expected = bar.getMin() + 0.75 * (bar.getMax() - bar.getMin());
+                    assertEquals(expected, bar.getValue(), 0.001);
+                    assertTrue(orientation == Orientation.VERTICAL ? pane.getVvalue() > 0 : pane.getHvalue() > 0);
+                    target.fireEvent(mouseAt(target, MouseEvent.MOUSE_DRAGGED, true, point.getX(), point.getY()));
+                    assertEquals(expected, bar.getValue(), 0.001);
+                }
+            }
+            return true;
+        });
+    }
+
+    /// Floating touch handlers respect custom ranges and bindings, leave wheels alone, and detach on disposal.
+    @Test
+    void floatingScrollbarTouchLifecycle() throws Exception {
+        onFxThread(() -> {
+            ScrollBar bar = new ScrollBar();
+            bar.setMin(10);
+            bar.setMax(30);
+            bar.setVisibleAmount(4);
+            bar.setValue(10);
+            FloatScrollBarSkin skin = new FloatScrollBarSkin(bar);
+            bar.setSkin(skin);
+            layout(bar);
+            Node track = requireNonNull(bar.lookup(".track"));
+            Point2D point = track.localToScene(track.getBoundsInLocal().getWidth() / 2,
+                    track.getBoundsInLocal().getHeight() / 2);
+            ScrollEvent direct = new ScrollEvent(ScrollEvent.SCROLL,
+                    point.getX(), point.getY(), point.getX(), point.getY(),
+                    false, false, false, false, true, false, 4, 4, 4, 4,
+                    ScrollEvent.HorizontalTextScrollUnits.NONE, 0,
+                    ScrollEvent.VerticalTextScrollUnits.NONE, 0, 1,
+                    new PickResult(track, point.getX(), point.getY()));
+            track.fireEvent(direct);
+            assertEquals(20, bar.getValue(), 0.001);
+            send(track, ScrollEvent.SCROLL, 40, 0, false, false, false);
+            assertEquals(20, bar.getValue(), 0.001);
+            bar.valueProperty().bind(new javafx.beans.property.SimpleDoubleProperty(15));
+            track.fireEvent(direct.copyFor(null, track));
+            assertEquals(15, bar.getValue(), 0.001);
+            bar.valueProperty().unbind();
+            skin.dispose();
+            track.fireEvent(direct.copyFor(null, track));
+            assertEquals(15, bar.getValue(), 0.001);
             return true;
         });
     }
