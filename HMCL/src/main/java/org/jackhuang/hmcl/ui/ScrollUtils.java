@@ -143,6 +143,25 @@ final class ScrollUtils {
                 gesture = false;
                 clearPanning();
             }
+            if (event.getEventType() == ScrollEvent.SCROLL) {
+                // Descendants may consume the event before this controller's bubbling handler runs.
+                if (event.isDirect() && !event.isInertia())
+                    directGesture = true;
+                if (wheelStart != 0) {
+                    if (isPrecise(event)) {
+                        stopWheel();
+                    } else {
+                        double dx = wheelDelta(event, true);
+                        double dy = wheelDelta(event, false);
+                        if (Double.isFinite(dx) && Double.isFinite(dy)) {
+                            pendingX = cancelReversal(pendingX, dx);
+                            pendingY = cancelReversal(pendingY, dy);
+                            if (pendingX == 0 && pendingY == 0)
+                                stopWheel();
+                        }
+                    }
+                }
+            }
             if (event.getEventType() == ScrollEvent.SCROLL_STARTED
                     || (event.getEventType() == ScrollEvent.SCROLL && !event.isInertia())) {
                 suppressInertia = false;
@@ -166,6 +185,11 @@ final class ScrollUtils {
                     && mouse.getEventType() == MouseEvent.MOUSE_DRAGGED && mouse.isSynthesized();
         }
 
+        /// Distinguishes continuous gestures from wheels, including unmarked fractional wheel input.
+        private boolean isPrecise(ScrollEvent event) {
+            return gesture || event.isDirect() || event.getTouchCount() > 0 || event.isInertia();
+        }
+
         /// Returns the scrollable pixel distance available in the requested direction.
         abstract double limit(boolean horizontal, double pixels);
 
@@ -185,7 +209,7 @@ final class ScrollUtils {
             long now = System.nanoTime();
             // Ordinary wheels can report NONE units or fractional text deltas after display scaling.
             // Only explicit gesture signals bypass animation; unmarked input uses the wheel fallback.
-            boolean precise = gesture || event.isDirect() || event.getTouchCount() > 0 || event.isInertia();
+            boolean precise = isPrecise(event);
             double dx = precise ? -event.getDeltaX() : wheelDelta(event, true);
             double dy = precise ? -event.getDeltaY() : wheelDelta(event, false);
             if (!Double.isFinite(dx) || !Double.isFinite(dy))
@@ -193,7 +217,6 @@ final class ScrollUtils {
 
             boolean panned = false;
             if (event.isDirect() && !event.isInertia()) {
-                directGesture = true;
                 panned = pannedX != 0 || pannedY != 0;
                 dx -= pannedX;
                 dy -= pannedY;
@@ -223,17 +246,13 @@ final class ScrollUtils {
                     event.consume();
                 }
             } else {
-                pendingX = cancelReversal(pendingX, dx);
-                pendingY = cancelReversal(pendingY, dy);
-                double x = limit(true, dx);
-                double y = limit(false, dy);
-                if (x == 0 && y == 0) {
-                    if (pendingX == 0 && pendingY == 0)
-                        stopWheel();
+                double x = limit(true, pendingX + dx);
+                double y = limit(false, pendingY + dy);
+                // Queued movement already reserves its space before the next pulse updates the position.
+                if (x == pendingX && y == pendingY)
                     return;
-                }
-                pendingX = limit(true, pendingX + x);
-                pendingY = limit(false, pendingY + y);
+                pendingX = x;
+                pendingY = y;
                 boolean running = wheelStart != 0;
                 wheelStart = now;
                 wheelProgress = 0;
@@ -715,7 +734,7 @@ final class ScrollUtils {
             return horizontal ? flow.getWidth() : flow.getHeight();
         }
 
-        /// Rejects movement beyond either end without capping queued distance along the flow.
+        /// Bounds movement at visible end cells while allowing multi-page queues elsewhere.
         @Override
         double limit(boolean horizontal, double pixels) {
             if (horizontal == flow.isVertical()) {
@@ -733,12 +752,16 @@ final class ScrollUtils {
                     || (pixels < 0 && flow.getPosition() <= 0)
                     || (pixels > 0 && flow.getPosition() >= 1))
                 return 0;
+            @Nullable IndexedCell<?> first = flow.getFirstVisibleCell();
+            if (pixels < 0 && first != null && first.getIndex() == 0) {
+                double start = horizontal ? first.getLayoutX() : first.getLayoutY();
+                return Math.max(Math.min(0, start), pixels);
+            }
             double size = viewportLength(horizontal);
             @Nullable IndexedCell<?> last = flow.getLastVisibleCell();
             if (pixels > 0 && last != null && last.getIndex() == flow.getCellCount() - 1) {
                 double end = horizontal ? last.getLayoutX() + last.getWidth() : last.getLayoutY() + last.getHeight();
-                if (end <= size)
-                    return 0;
+                return Math.min(Math.max(0, end - size), pixels);
             }
             return pixels;
         }

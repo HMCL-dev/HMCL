@@ -287,6 +287,136 @@ final class ScrollUtilsTest {
         });
     }
 
+    /// Descendant consumption cannot hide a wheel reversal from an ancestor's queued animation.
+    @Test
+    void nestedWheelReversalCancelsOuterQueue() throws Exception {
+        onFxThread(() -> {
+            for (boolean horizontal : new boolean @Unmodifiable []{false, true}) {
+                ScrollPane @Unmodifiable [] panes = nestedPanes();
+                ScrollPane inner = panes[0];
+                ScrollPane outer = panes[1];
+                inner.setHvalue(1);
+                inner.setVvalue(1);
+                double before = offset(inner, horizontal);
+                send(inner.getContent(), ScrollEvent.SCROLL, horizontal ? -80 : 0, horizontal ? 0 : -80,
+                        false, false, false);
+                send(inner.getContent(), ScrollEvent.SCROLL, horizontal ? 80 : 0, horizontal ? 0 : 80,
+                        false, false, false);
+                finishWheel(inner);
+                finishWheel(outer);
+                assertEquals(before - 80, offset(inner, horizontal), 0.001);
+                assertEquals(0, offset(outer, horizontal), 0.001);
+            }
+            return true;
+        });
+    }
+
+    /// A pane already queued to an edge passes the next wheel input to its ancestor before a pulse.
+    @Test
+    void nestedWheelHandsOffAfterQueueReachesEdge() throws Exception {
+        onFxThread(() -> {
+            for (boolean horizontal : new boolean @Unmodifiable []{false, true}) {
+                for (boolean end : new boolean @Unmodifiable []{false, true}) {
+                    ScrollPane @Unmodifiable [] panes = nestedPanes();
+                    ScrollPane inner = panes[0];
+                    ScrollPane outer = panes[1];
+                    inner.setHvalue(1);
+                    inner.setVvalue(1);
+                    double size = offset(inner, horizontal);
+                    double value = end ? 1 - 10 / size : 10 / size;
+                    if (horizontal)
+                        inner.setHvalue(value);
+                    else
+                        inner.setVvalue(value);
+                    outer.setHvalue(0.5);
+                    outer.setVvalue(0.5);
+                    double before = offset(outer, horizontal);
+                    double delta = end ? -80 : 80;
+                    for (int i = 0; i < 2; i++)
+                        send(inner.getContent(), ScrollEvent.SCROLL, horizontal ? delta : 0, horizontal ? 0 : delta,
+                                false, false, false);
+                    finishWheel(inner);
+                    finishWheel(outer);
+                    assertEquals(end ? size : 0, offset(inner, horizontal), 0.001);
+                    assertEquals(before - delta, offset(outer, horizontal), 0.001);
+                }
+            }
+            return true;
+        });
+    }
+
+    /// A nested virtual list also reserves the remaining pixels when its boundary cells are visible.
+    @Test
+    void nestedFlowHandsOffAfterQueueReachesEdge() throws Exception {
+        onFxThread(() -> {
+            for (boolean end : new boolean @Unmodifiable []{false, true}) {
+                ListView<String> list = new ListView<>();
+                list.setFixedCellSize(24);
+                list.setPrefSize(200, 180);
+                for (int i = 0; i < 100; i++)
+                    list.getItems().add("Cell " + i);
+                Pane content = new Pane(list);
+                content.setMinSize(800, 1600);
+                content.setPrefSize(800, 1600);
+                ScrollPane outer = new ScrollPane(content);
+                ScrollUtils.addSmoothScrolling(outer);
+                layout(outer);
+                VirtualFlow<?> flow = (VirtualFlow<?>) requireNonNull(list.lookup(".virtual-flow"));
+                ScrollUtils.addSmoothScrolling(flow);
+                flow.setPosition(end ? 1 : 0);
+                flow.layout();
+                // Touch skins do not scroll hidden bars until input reveals them.
+                for (Node child : flow.getChildrenUnmodifiable()) {
+                    if (child instanceof ScrollBar bar && bar.getOrientation() == Orientation.VERTICAL)
+                        bar.setVisible(true);
+                }
+                assertEquals(end ? -10 : 10, flow.scrollPixels(end ? -10 : 10), 0.001);
+                outer.setVvalue(0.5);
+                double before = offset(outer, false);
+                double delta = end ? -80 : 80;
+                for (int i = 0; i < 2; i++)
+                    send(flow, ScrollEvent.SCROLL, 0, delta, false, false, false);
+                finishWheel(flow);
+                finishWheel(outer);
+                assertEquals(end ? 1 : 0, flow.getPosition(), 0.001);
+                assertEquals(before - delta, offset(outer, false), 0.001);
+            }
+            return true;
+        });
+    }
+
+    /// A flow observes direct input consumed by its nested pane and still delivers child mouse drags.
+    @Test
+    void nestedTouchDoesNotAlsoPanOuterFlow() throws Exception {
+        onFxThread(() -> {
+            VirtualFlow<?> flow = flow(true);
+            flow.setFixedCellSize(180);
+            flow.setPannable(true);
+            flow.layout();
+            IndexedCell<?> cell = requireNonNull(flow.getFirstVisibleCell());
+            ScrollPane inner = new ScrollPane(content(800, 1600));
+            inner.setPrefSize(200, 120);
+            inner.setMaxSize(200, 120);
+            inner.setPannable(true);
+            ScrollUtils.addSmoothScrolling(inner);
+            cell.setGraphic(inner);
+            cell.applyCss();
+            cell.layout();
+            inner.layout();
+            Node target = requireNonNull(inner.getContent());
+            int[] dragged = {0};
+            target.addEventHandler(MouseEvent.MOUSE_DRAGGED, event -> dragged[0]++);
+            target.fireEvent(mouseAt(target, MouseEvent.MOUSE_PRESSED, true, 50, 50));
+            send(target, ScrollEvent.SCROLL, 0, -20, true, false, false);
+            assertEquals(20, offset(inner, false), 0.001);
+            target.fireEvent(mouseAt(target, MouseEvent.MOUSE_DRAGGED, true, 50, 30));
+            assertEquals(0, flow.getPosition(), 0.001);
+            assertEquals(20, offset(inner, false), 0.001);
+            assertEquals(1, dragged[0]);
+            return true;
+        });
+    }
+
     /// Virtual-flow panning before recognition is counted only once in either orientation.
     @Test
     void virtualFlowDeductsPanningBeforeRecognition() throws Exception {
@@ -1033,6 +1163,21 @@ final class ScrollUtilsTest {
         ScrollUtils.addSmoothScrolling(result);
         layout(result);
         return result;
+    }
+
+    /// Creates nested installed panes with independent overflow on both axes, inner pane first.
+    private static ScrollPane @Unmodifiable [] nestedPanes() {
+        ScrollPane inner = new ScrollPane(content(600, 900));
+        inner.setPrefSize(200, 180);
+        inner.setMaxSize(200, 180);
+        Pane content = new Pane(inner);
+        content.setMinSize(800, 1600);
+        content.setPrefSize(800, 1600);
+        ScrollPane outer = new ScrollPane(content);
+        ScrollUtils.addSmoothScrolling(outer);
+        ScrollUtils.addSmoothScrolling(inner);
+        layout(outer);
+        return new ScrollPane[]{inner, outer};
     }
 
     /// Creates a laid-out flow with uniform cells for pixel displacement assertions.
