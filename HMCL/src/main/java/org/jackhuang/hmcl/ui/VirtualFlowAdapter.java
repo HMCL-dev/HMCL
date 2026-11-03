@@ -2,16 +2,27 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui;
 
+import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 import javafx.event.Event;
 import javafx.event.EventDispatchChain;
 import javafx.event.EventDispatcher;
 import javafx.event.EventHandler;
+import javafx.event.WeakEventHandler;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.IndexedCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollToEvent;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeTableView;
+import javafx.scene.control.TreeView;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -34,6 +45,58 @@ final class VirtualFlowAdapter extends ScrollAdapter {
     /// Cancels pending movement before native keyboard or scroll-to navigation.
     private final EventHandler<Event> navigationHandler = event -> controller.interrupt();
 
+    /// Visible edge anchoring the measured offscreen interval, or -1 when invalid.
+    private int measuredEdge = -1;
+
+    /// Direction of the measured interval.
+    private int measuredDirection;
+
+    /// First index beyond the measured interval.
+    private int nextMeasure;
+
+    /// Combined length of measured offscreen cells; no cell references are retained.
+    private double measuredLength;
+
+    /// Invalidates measurements if data changes synchronously during cell updates.
+    private long measurementRevision;
+
+    /// Distinguishes layout requests caused by measurement from external layout changes.
+    private boolean measuring;
+
+    /// Observes layout changes while ignoring requests caused by the reusable measurement cell.
+    private final ChangeListener<Boolean> layoutListener = (observable, oldValue, value) -> {
+        if (!measuring)
+            invalidateMeasurements();
+    };
+
+    /// Invalidates cached sizes after data, factory, or geometry changes.
+    private final InvalidationListener measurementListener = observable -> {
+        if (observable instanceof ObservableValue<?> value)
+            value.getValue();
+        invalidateMeasurements();
+    };
+
+    /// Prevents externally retained item lists from retaining a detached control.
+    private final InvalidationListener weakMeasurementListener = new WeakInvalidationListener(measurementListener);
+
+    /// Owner's replaceable items or tree root property.
+    private @Nullable ObservableValue<?> dataSource;
+
+    /// Flat item list currently observed for updates, permutations, and replacements.
+    private @Nullable ObservableList<?> items;
+
+    /// Tree root currently observed for descendant changes.
+    private @Nullable TreeItem<?> root;
+
+    /// Rebinds data listeners when the owner replaces its items or root.
+    private final InvalidationListener dataSourceListener = observable -> bindData();
+
+    /// Invalidates tree measurements when descendants change or expand.
+    private final EventHandler<TreeItem.TreeModificationEvent<Object>> treeListener = event -> invalidateMeasurements();
+
+    /// Prevents externally retained tree models from retaining a detached control.
+    private final EventHandler<TreeItem.TreeModificationEvent<Object>> weakTreeListener = new WeakEventHandler<>(treeListener);
+
     /// Wraps native bubbling so cell controls and nested scroll panes retain priority.
     VirtualFlowAdapter(VirtualFlow<?> flow) {
         super(flow);
@@ -52,6 +115,13 @@ final class VirtualFlowAdapter extends ScrollAdapter {
         // Input filters handle interruptions without treating those estimates as external scrolling.
         flow.verticalProperty().addListener(observable -> controller.reset());
         flow.cellCountProperty().addListener(observable -> controller.reset());
+        flow.cellCountProperty().addListener(measurementListener);
+        flow.verticalProperty().addListener(measurementListener);
+        flow.fixedCellSizeProperty().addListener(measurementListener);
+        flow.cellFactoryProperty().addListener(measurementListener);
+        flow.layoutBoundsProperty().addListener(measurementListener);
+        flow.positionProperty().addListener(measurementListener);
+        flow.needsLayoutProperty().addListener(layoutListener);
         flow.parentProperty().addListener(observable -> bindOwner());
         flow.sceneProperty().addListener(observable -> bindOwner());
         bindOwner();
@@ -67,12 +137,48 @@ final class VirtualFlowAdapter extends ScrollAdapter {
         if (owner != null) {
             owner.removeEventFilter(KeyEvent.KEY_PRESSED, navigationHandler);
             owner.removeEventFilter(ScrollToEvent.ANY, navigationHandler);
+            owner.needsLayoutProperty().removeListener(layoutListener);
+            owner.getProperties().removeListener(measurementListener);
         }
+        if (dataSource != null)
+            dataSource.removeListener(dataSourceListener);
         owner = (Control) parent;
         if (owner != null) {
             owner.addEventFilter(KeyEvent.KEY_PRESSED, navigationHandler);
             owner.addEventFilter(ScrollToEvent.ANY, navigationHandler);
+            owner.needsLayoutProperty().addListener(layoutListener);
+            // Native refresh operations use the control's properties to invalidate cells.
+            owner.getProperties().addListener(measurementListener);
         }
+        dataSource = owner instanceof ListView<?> list ? list.itemsProperty()
+                : owner instanceof TableView<?> table ? table.itemsProperty()
+                : owner instanceof TreeView<?> tree ? tree.rootProperty()
+                : owner instanceof TreeTableView<?> treeTable ? treeTable.rootProperty() : null;
+        if (dataSource != null)
+            dataSource.addListener(dataSourceListener);
+        bindData();
+    }
+
+    /// Releases old data listeners and observes the current model without retaining replaced items.
+    private void bindData() {
+        if (items != null)
+            items.removeListener(weakMeasurementListener);
+        if (root != null)
+            root.removeEventHandler(TreeItem.treeNotificationEvent(), weakTreeListener);
+        @Nullable Object data = dataSource == null ? null : dataSource.getValue();
+        items = data instanceof ObservableList<?> list ? list : null;
+        root = data instanceof TreeItem<?> tree ? tree : null;
+        if (items != null)
+            items.addListener(weakMeasurementListener);
+        if (root != null)
+            root.addEventHandler(TreeItem.treeNotificationEvent(), weakTreeListener);
+        invalidateMeasurements();
+    }
+
+    /// Discards the measured interval without retaining cells or allocating per-item state.
+    private void invalidateMeasurements() {
+        measuredEdge = -1;
+        measurementRevision++;
     }
 
     /// Measures native capture-phase panning before descendants can change the flow themselves.
@@ -240,13 +346,30 @@ final class VirtualFlowAdapter extends ScrollAdapter {
         double length = horizontal ? edge.getWidth() : edge.getHeight();
         double available = Math.max(0, pixels < 0 ? -start : start + length - size);
         int direction = pixels < 0 ? -1 : 1;
-        // Measure only as far as the requested queue reaches, using VirtualFlow's reusable measurement cell.
-        for (int index = edge.getIndex() + direction;
-             available < Math.abs(pixels) && index >= 0 && index < flow.getCellCount(); index += direction) {
-            IndexedCell<?> cell = flow.getCell(index);
-            available += horizontal ? cell.getWidth() : cell.getHeight();
+        int edgeIndex = edge.getIndex();
+        boolean reuse = measuredEdge == edgeIndex && measuredDirection == direction;
+        double measured = reuse ? measuredLength : 0;
+        int index = reuse ? nextMeasure : edgeIndex + direction;
+        long revision = measurementRevision;
+        boolean previous = measuring;
+        measuring = true;
+        try {
+            // Extend the previous interval instead of remeasuring the whole queued distance.
+            while (available + measured < Math.abs(pixels) && index >= 0 && index < flow.getCellCount()) {
+                IndexedCell<?> cell = flow.getCell(index);
+                measured += horizontal ? cell.getWidth() : cell.getHeight();
+                index += direction;
+            }
+        } finally {
+            measuring = previous;
         }
-        return direction * Math.min(Math.abs(pixels), available);
+        if (revision == measurementRevision) {
+            measuredEdge = edgeIndex;
+            measuredDirection = direction;
+            nextMeasure = index;
+            measuredLength = measured;
+        }
+        return direction * Math.min(Math.abs(pixels), available + measured);
     }
 
     /// Applies synchronous gesture pixels through the flow or its breadth scrollbar.

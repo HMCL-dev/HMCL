@@ -8,6 +8,7 @@ import javafx.scene.Node;
 import javafx.scene.input.ScrollEvent;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 /// Bridges control geometry and native skin dispatch to the shared scrolling policy.
 @NotNullByDefault
@@ -16,13 +17,14 @@ abstract class ScrollAdapter {
     static final boolean TOUCH_SUPPORTED = Platform.isSupported(ConditionalFeature.INPUT_TOUCH);
 
     /// Base wheel pixel multiplier scaled by the startup `hmcl.scroll.speed` preference.
-    private static final double WHEEL_SPEED;
+    private static final double WHEEL_SPEED = readWheelSpeed(
+            System.getProperty("hmcl.scroll.speed", System.getenv("HMCL_SCROLL_SPEED")));
 
-    static {
+    /// Resolves a factor or percentage to a wheel pixel multiplier, using the default for invalid values.
+    static double readWheelSpeed(@Nullable String value) {
         final double speedBase = 3.0;
         double speedScale = 1.0;
         try {
-            String value = System.getProperty("hmcl.scroll.speed", System.getenv("HMCL_SCROLL_SPEED"));
             if (StringUtils.isNotBlank(value)) {
                 value = value.strip();
                 speedScale = value.endsWith("%")
@@ -31,7 +33,7 @@ abstract class ScrollAdapter {
             }
         } catch (NumberFormatException ignored) {
         }
-        WHEEL_SPEED = Double.isFinite(speedScale) && speedScale > 0
+        return Double.isFinite(speedScale) && speedScale > 0
                 ? speedBase * Math.max(speedScale, 0.0001)
                 : speedBase;
     }
