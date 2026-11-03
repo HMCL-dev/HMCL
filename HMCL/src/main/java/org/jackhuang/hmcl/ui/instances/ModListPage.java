@@ -757,8 +757,6 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             imageContainer.setImage(GameInstanceIconType.COMMAND.getIcon());
             imageContainer.setEffect(colorAdjust);
 
-            content.setEffect(colorAdjust);
-
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
             HBox actions = new HBox();
@@ -884,9 +882,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
         }
 
         private void updateActiveState(boolean active) {
-            activeSwitch.setSelected(active);
             colorAdjust.setSaturation(active ? 0.0 : -0.75);
             colorAdjust.setBrightness(active ? 0.0 : -0.50);
+            content.getTitleLabel().setOpacity(active ? 1.0 : 0.5);
+            content.getSubtitleLabel().setOpacity(active ? 1.0 : 0.5);
+            activeSwitch.setSelected(active);
         }
     }
 }
