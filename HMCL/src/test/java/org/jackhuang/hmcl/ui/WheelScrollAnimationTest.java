@@ -19,6 +19,131 @@ import static org.junit.jupiter.api.Assertions.*;
 @NotNullByDefault
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 final class WheelScrollAnimationTest {
+    /// Regular wheel input converges to a steady speed instead of replaying a fast start on every notch.
+    @Test
+    void regularInputMaintainsSteadySpeed() throws Exception {
+        onFxThread(() -> {
+            for (int interval : new int @Unmodifiable []{40, 60, 80, 100}) {
+                Surface surface = new Surface();
+                surface.maxY = 100_000;
+                WheelScrollAnimation animation = new WheelScrollAnimation(surface);
+                try {
+                    long start = System.nanoTime();
+                    double previous = 0;
+                    double sum = 0;
+                    double sumSquares = 0;
+                    int samples = 0;
+                    int inputs = 0;
+                    for (int millis = 0; millis <= 2000; millis += 10) {
+                        long now = start + millis * 1_000_000L;
+                        if (millis % interval == 0) {
+                            assertTrue(animation.offer(0, 40, now));
+                            inputs++;
+                        }
+                        animation.handle(now);
+                        double movement = surface.y - previous;
+                        previous = surface.y;
+                        if (millis >= 600) {
+                            assertTrue(movement > 0);
+                            sum += movement;
+                            sumSquares += movement * movement;
+                            samples++;
+                        }
+                    }
+                    double mean = sum / samples;
+                    double deviation = Math.sqrt(Math.max(0, sumSquares / samples - mean * mean));
+                    assertTrue(deviation / mean < 0.12, "Speed variation at interval " + interval + " ms: " + deviation / mean);
+                    animation.handle(start + 2_150_000_000L);
+                    assertEquals(inputs * 40, surface.y, 0.0001);
+                    assertFalse(animation.isRunning());
+                } finally {
+                    animation.cancel();
+                }
+            }
+        });
+    }
+
+    /// Retargeting preserves velocity on both sides of an input arriving between regular animation pulses.
+    @Test
+    void additionalInputDoesNotJumpVelocity() throws Exception {
+        onFxThread(() -> {
+            Surface surface = new Surface();
+            WheelScrollAnimation animation = new WheelScrollAnimation(surface);
+            try {
+                long start = System.nanoTime();
+                assertTrue(animation.offer(0, 100, start));
+                animation.handle(start + 49_900_000L);
+                double before = surface.y;
+                animation.handle(start + 50_000_000L);
+                double previousStep = surface.y - before;
+                assertTrue(previousStep > 0);
+                before = surface.y;
+                assertTrue(animation.offer(0, 40, start + 50_000_000L));
+                animation.handle(start + 50_100_000L);
+                assertEquals(previousStep, surface.y - before, previousStep * 0.01);
+                animation.handle(start + 200_000_000L);
+                assertEquals(140, surface.y, 0.0001);
+            } finally {
+                animation.cancel();
+            }
+        });
+    }
+
+    /// Input between pulses advances the same trajectory regardless of the rendering cadence.
+    @Test
+    void inputTimingIsIndependentOfPulseCadence() throws Exception {
+        onFxThread(() -> {
+            double expected = -1;
+            for (int frameInterval : new int @Unmodifiable []{5, 16, 33}) {
+                Surface surface = new Surface();
+                WheelScrollAnimation animation = new WheelScrollAnimation(surface);
+                try {
+                    long start = System.nanoTime();
+                    for (int millis = 0; millis <= 280; millis++) {
+                        long now = start + millis * 1_000_000L;
+                        if (millis % 70 == 0)
+                            assertTrue(animation.offer(0, 40, now));
+                        if (millis % frameInterval == 0 || millis == 280)
+                            animation.handle(now);
+                    }
+                    if (expected < 0)
+                        expected = surface.y;
+                    else
+                        assertEquals(expected, surface.y, 0.0001);
+                    animation.handle(start + 430_000_000L);
+                    assertEquals(200, surface.y, 0.0001);
+                } finally {
+                    animation.cancel();
+                }
+            }
+        });
+    }
+
+    /// Reversing a moving axis clears its forward velocity while preserving the other axis's distance.
+    @Test
+    void reversalDiscardsExistingVelocity() throws Exception {
+        onFxThread(() -> {
+            Surface surface = new Surface();
+            surface.y = 500;
+            WheelScrollAnimation animation = new WheelScrollAnimation(surface);
+            try {
+                long start = System.nanoTime();
+                assertTrue(animation.offer(80, 100, start));
+                animation.handle(start + 50_000_000L);
+                double before = surface.y;
+                animation.cancelReversal(0, -40);
+                assertTrue(animation.offer(0, -40, start + 50_000_000L));
+                animation.handle(start + 51_000_000L);
+                assertTrue(surface.y < before);
+                animation.handle(start + 200_000_000L);
+                assertEquals(before - 40, surface.y, 0.0001);
+                assertEquals(80, surface.x, 0.0001);
+            } finally {
+                animation.cancel();
+            }
+        });
+    }
+
     /// Retargeting after partial playback preserves every accepted pixel across unequal frame intervals.
     @Test
     void retargetingPreservesDistance() throws Exception {
