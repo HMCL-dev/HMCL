@@ -8,7 +8,6 @@ import org.jackhuang.hmcl.addon.meta.PackMcMeta;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -109,11 +108,6 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile<ResourcePac
 
     // 64*64
     public abstract @Nullable Image loadIcon();
-
-    @Override
-    public int compareTo(@NotNull ResourcePackFile other) {
-        return this.fileNameWithExtension.compareTo(other.fileNameWithExtension);
-    }
 
     public enum Compatibility {
         COMPATIBLE,
