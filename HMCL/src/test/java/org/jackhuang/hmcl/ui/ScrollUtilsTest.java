@@ -3,7 +3,9 @@
 package org.jackhuang.hmcl.ui;
 
 import javafx.animation.AnimationTimer;
+import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
+import javafx.event.EventDispatcher;
 import javafx.event.EventType;
 import javafx.geometry.Orientation;
 import javafx.geometry.Point2D;
@@ -15,6 +17,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.ScrollBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Slider;
+import javafx.scene.control.skin.ScrollPaneSkin;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -465,6 +468,143 @@ final class ScrollUtilsTest {
                 send(inner.getContent(), ScrollEvent.SCROLL, 0, -20, direct, true, false);
                 assertEquals(20, offset(outer, false), 0.001);
             }
+            return true;
+        });
+    }
+
+    /// Inertia keeps its original age when the inner pane reaches its boundary mid-tail.
+    @Test
+    void nestedPanesPreserveInertiaAge() throws Exception {
+        long[] started = new long[2];
+        ScrollPane @Unmodifiable [] panes = onFxThread(() -> {
+            ScrollPane inner = new ScrollPane(content(600, 900));
+            inner.setPrefSize(200, 180);
+            inner.setMaxSize(200, 180);
+            Pane content = new Pane(inner);
+            content.setMinSize(800, 1600);
+            content.setPrefSize(800, 1600);
+            ScrollPane outer = new ScrollPane(content);
+            ScrollUtils.addSmoothScrolling(outer);
+            ScrollUtils.addSmoothScrolling(inner);
+            layout(outer);
+            inner.setVvalue(0.99);
+            send(inner.getContent(), ScrollEvent.SCROLL_STARTED, 0, 0, true, false, false);
+            send(inner.getContent(), ScrollEvent.SCROLL, 0, -1, true, false, false);
+            send(inner.getContent(), ScrollEvent.SCROLL_FINISHED, 0, 0, true, false, false);
+            started[0] = System.nanoTime();
+            send(inner.getContent(), ScrollEvent.SCROLL, 0, -20, true, true, false);
+            started[1] = System.nanoTime();
+            assertEquals(inner.getVmax(), inner.getVvalue(), 0.001);
+            assertEquals(0, offset(outer, false), 0.001);
+            return new ScrollPane @Unmodifiable []{inner, outer};
+        });
+        TimeUnit.MILLISECONDS.sleep(120);
+        onFxThread(() -> {
+            long before = System.nanoTime();
+            send(panes[0].getContent(), ScrollEvent.SCROLL, 0, -20, true, true, false);
+            long after = System.nanoTime();
+            double minimum = 20 * Math.pow(Math.max(0, 1 - (after - started[0]) / 200_000_000.0), 2);
+            double maximum = 20 * Math.pow(Math.max(0, 1 - (before - started[1]) / 200_000_000.0), 2);
+            double actual = offset(panes[1], false);
+            assertTrue(actual >= minimum - 0.001 && actual <= maximum + 0.001,
+                    "Expected " + minimum + ".." + maximum + " pixels, got " + actual);
+            return true;
+        });
+    }
+
+    /// Boundary handoff uses the original dispatch, preserving filters, handlers, and event targets.
+    @Test
+    void unusedScrollPassesAncestorsOnce() throws Exception {
+        onFxThread(() -> {
+            for (boolean viewportTarget : new boolean @Unmodifiable []{false, true}) {
+                ScrollPane pane = pane(100, 1600);
+                Node target = requireNonNull(viewportTarget ? pane.lookup(".viewport") : pane.getContent());
+                Node root = pane.getScene().getRoot();
+                int[] captured = {0};
+                int[] bubbled = {0};
+                root.addEventFilter(ScrollEvent.SCROLL, event -> captured[0]++);
+                root.addEventHandler(ScrollEvent.SCROLL, event -> {
+                    bubbled[0]++;
+                    assertSame(target, event.getTarget());
+                    assertEquals(20, event.getDeltaY(), 0.001);
+                });
+                send(target, ScrollEvent.SCROLL, 0, 20, false, false, true);
+                assertEquals(1, captured[0]);
+                assertEquals(1, bubbled[0]);
+                send(target, ScrollEvent.SCROLL, 0, -20, false, false, true);
+                finishWheel(pane);
+                assertEquals(2, captured[0]);
+                assertEquals(1, bubbled[0]);
+                assertEquals(20, offset(pane, false), 0.001);
+            }
+            return true;
+        });
+    }
+
+    /// Indirect scrolling over blank viewport space preserves the native scrollbar visibility timer.
+    @Test
+    void blankViewportPreservesScrollbarVisibility() throws Exception {
+        ScrollPane @Unmodifiable [] panes = onFxThread(() -> {
+            ScrollPane nativePane = new ScrollPane(content(100, 1600));
+            layout(nativePane);
+            ScrollPane smoothPane = pane(100, 1600);
+            ScrollPane @Unmodifiable [] result = {nativePane, smoothPane};
+            for (ScrollPane pane : result)
+                send(requireNonNull(pane.lookup(".viewport")), ScrollEvent.SCROLL, 0, -40, false, false, true);
+            finishWheel(smoothPane);
+            assertEquals(offset(nativePane, false), offset(smoothPane, false), 0.001);
+            return result;
+        });
+        TimeUnit.MILLISECONDS.sleep(100);
+        onFxThread(() -> {
+            for (ScrollPane pane : panes) {
+                pane.requestLayout();
+                pane.layout();
+                ScrollBar bar = pane.lookupAll(".scroll-bar").stream().map(ScrollBar.class::cast)
+                        .filter(node -> node.getOrientation() == Orientation.VERTICAL).findFirst().orElseThrow();
+                assertTrue(bar.isVisible());
+            }
+            return true;
+        });
+        TimeUnit.MILLISECONDS.sleep(1100);
+        onFxThread(() -> {
+            for (ScrollPane pane : panes) {
+                pane.requestLayout();
+                pane.layout();
+                ScrollBar bar = pane.lookupAll(".scroll-bar").stream().map(ScrollBar.class::cast)
+                        .filter(node -> node.getOrientation() == Orientation.VERTICAL).findFirst().orElseThrow();
+                assertEquals(!Platform.isSupported(ConditionalFeature.INPUT_TOUCH), bar.isVisible());
+            }
+            return true;
+        });
+    }
+
+    /// Replacing a skin restores its old dispatcher and installs scrolling on the new viewport.
+    @Test
+    void paneSkinReplacementPreservesScrolling() throws Exception {
+        onFxThread(() -> {
+            ScrollPane pane = new ScrollPane(content(100, 1600));
+            layout(pane);
+            Node oldViewport = requireNonNull(pane.lookup(".viewport"));
+            EventDispatcher original = requireNonNull(oldViewport.getEventDispatcher());
+            ScrollUtils.addSmoothScrolling(pane);
+            pane.setSkin(new ScrollPaneSkin(pane));
+            pane.applyCss();
+            pane.layout();
+            Node viewport = requireNonNull(pane.lookup(".viewport"));
+            assertNotSame(oldViewport, viewport);
+            assertSame(original, oldViewport.getEventDispatcher());
+            int[] captured = {0};
+            pane.getScene().getRoot().addEventFilter(ScrollEvent.SCROLL, event -> captured[0]++);
+            send(viewport, ScrollEvent.SCROLL, 0, 40, false, false, true);
+            assertEquals(1, captured[0]);
+            send(viewport, ScrollEvent.SCROLL, 0, -40, false, false, true);
+            finishWheel(pane);
+            assertEquals(40, offset(pane, false), 0.001);
+            Node content = requireNonNull(pane.getContent());
+            content.addEventHandler(ScrollEvent.SCROLL, event -> event.consume());
+            send(content, ScrollEvent.SCROLL, 0, -40, true, false, false);
+            assertEquals(40, offset(pane, false), 0.001);
             return true;
         });
     }

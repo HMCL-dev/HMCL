@@ -56,6 +56,23 @@ final class ScrollUtils {
             virtualFlow.getProperties().put(CONTROLLER_KEY, new FlowController(virtualFlow));
     }
 
+    /// Preserves a skin's scroll lifecycle without applying its native displacement.
+    private static ScrollEvent stationaryScroll(ScrollEvent event) {
+        return new ScrollEvent(event.getSource(), event.getTarget(), event.getEventType(),
+                event.getX(), event.getY(), event.getScreenX(), event.getScreenY(),
+                event.isShiftDown(), event.isControlDown(), event.isAltDown(), event.isMetaDown(),
+                event.isDirect(), event.isInertia(), 0, 0, 0, 0,
+                ScrollEvent.HorizontalTextScrollUnits.NONE, 0,
+                ScrollEvent.VerticalTextScrollUnits.NONE, 0, event.getTouchCount(), event.getPickResult());
+    }
+
+    /// Shares the native inertia age across nested scrolling surfaces.
+    @NotNullByDefault
+    private static final class Inertia {
+        /// Time of the first accepted inertia movement, or zero before the tail starts.
+        private long start;
+    }
+
     /// Coordinates gesture lifecycles and a short, time-based wheel animation.
     @NotNullByDefault
     private abstract static class Controller extends AnimationTimer {
@@ -80,19 +97,42 @@ final class ScrollUtils {
         /// Whether a press has cancelled the previous gesture's inertia.
         private boolean suppressInertia;
 
-        /// First inertia event's time, or zero before a tail begins.
-        private long inertiaStart;
+        /// Inertia timing shared with ancestor controllers for the current gesture.
+        private Inertia inertia = new Inertia();
 
         /// Distinguishes controller writes from external position changes.
         boolean updating;
 
         /// Installs interruption and lifecycle listeners without consuming input.
         Controller(Node node) {
+            node.addEventFilter(ScrollEvent.ANY, event -> observeScroll(node, event));
             node.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> interrupt());
             node.addEventFilter(TouchEvent.TOUCH_PRESSED, event -> interrupt());
             node.addEventFilter(KeyEvent.KEY_PRESSED, event -> interrupt());
             node.sceneProperty().addListener(observable -> reset());
             node.visibleProperty().addListener(observable -> reset());
+        }
+
+        /// Observes gesture boundaries even when a descendant consumes every movement event.
+        private void observeScroll(Node node, ScrollEvent event) {
+            if (event.getEventType() == ScrollEvent.SCROLL_STARTED) {
+                reset();
+                gesture = true;
+            } else if (event.getEventType() == ScrollEvent.SCROLL_FINISHED) {
+                gesture = false;
+            }
+            if (event.getEventType() == ScrollEvent.SCROLL_STARTED
+                    || (event.getEventType() == ScrollEvent.SCROLL && !event.isInertia())) {
+                suppressInertia = false;
+                // Capture visits ancestors first, so all controllers inherit the same fresh tail.
+                for (@Nullable Node parent = node.getParent(); parent != null; parent = parent.getParent()) {
+                    if (parent.getProperties().get(CONTROLLER_KEY) instanceof Controller controller) {
+                        inertia = controller.inertia;
+                        return;
+                    }
+                }
+                inertia = new Inertia();
+            }
         }
 
         /// Identifies mouse drags that would repeat a direct touchscreen scroll.
@@ -114,16 +154,6 @@ final class ScrollUtils {
         final void onScroll(ScrollEvent event) {
             if (event.isConsumed())
                 return;
-            if (event.getEventType() == ScrollEvent.SCROLL_STARTED) {
-                reset();
-                suppressInertia = false;
-                gesture = true;
-                return;
-            }
-            if (event.getEventType() == ScrollEvent.SCROLL_FINISHED) {
-                gesture = false;
-                return;
-            }
             if (event.getEventType() != ScrollEvent.SCROLL)
                 return;
 
@@ -140,9 +170,7 @@ final class ScrollUtils {
 
             if (event.isInertia()) {
                 stopWheel();
-                if (inertiaStart == 0)
-                    inertiaStart = now;
-                double remaining = 1 - (double) (now - inertiaStart) / INERTIA_DURATION;
+                double remaining = inertia.start == 0 ? 1 : 1 - (double) (now - inertia.start) / INERTIA_DURATION;
                 if (suppressInertia || remaining <= 0) {
                     // Do not let a native skin or ancestor restart a cancelled tail.
                     event.consume();
@@ -150,17 +178,17 @@ final class ScrollUtils {
                 }
                 dx *= remaining * remaining;
                 dy *= remaining * remaining;
-            } else {
-                suppressInertia = false;
-                inertiaStart = 0;
             }
 
             if (precise) {
                 stopWheel();
                 boolean moved = move(true, dx) != 0;
                 moved |= move(false, dy) != 0;
-                if (moved)
+                if (moved) {
+                    if (event.isInertia() && inertia.start == 0)
+                        inertia.start = now;
                     event.consume();
+                }
             } else {
                 if (wheelStart != 0)
                     handle(now);
@@ -231,7 +259,7 @@ final class ScrollUtils {
         /// Clears gesture state when the scrolling surface changes.
         final void reset() {
             interrupt();
-            inertiaStart = 0;
+            inertia = new Inertia();
         }
 
         /// Cancels animation after an external position change, such as scrollbar dragging.
@@ -256,8 +284,14 @@ final class ScrollUtils {
         /// Pane whose content and viewport determine the scroll range.
         private final ScrollPane pane;
 
-        /// Stable handler used when content is replaced or removed.
-        private final EventHandler<ScrollEvent> scrollHandler = this::handleScroll;
+        /// Current skin viewport, whose bubbling dispatch controls native scrolling.
+        private @Nullable Node viewport;
+
+        /// Original viewport dispatcher restored when its skin is replaced.
+        private @Nullable EventDispatcher viewportDispatcher;
+
+        /// Installed wrapper, retained to avoid replacing a later application dispatcher.
+        private @Nullable EventDispatcher viewportWrapper;
 
         /// Stops duplicate panning after child controls have handled synthesized drags.
         private final EventHandler<MouseEvent> dragHandler = event -> {
@@ -270,6 +304,8 @@ final class ScrollUtils {
             super(pane);
             this.pane = pane;
             attach(null, pane.getContent());
+            attachViewport();
+            pane.skinProperty().addListener(observable -> attachViewport());
             pane.contentProperty().addListener((ObservableValue<? extends Node> observable,
                                                @Nullable Node oldContent, @Nullable Node newContent) -> attach(oldContent, newContent));
             pane.viewportBoundsProperty().addListener((ObservableValue<? extends Bounds> observable,
@@ -296,43 +332,61 @@ final class ScrollUtils {
                 if (content == null || target != content)
                     event.consume();
             });
-            pane.addEventFilter(ScrollEvent.ANY, event -> {
-                // Direct scrollbar input belongs to its skin, which uses the touch position.
-                @Nullable Node content = pane.getContent();
+            pane.addEventHandler(ScrollEvent.SCROLL, event -> {
+                // Viewport input was already handled; direct scrollbar input belongs to its skin.
                 @Nullable Node target = event.getTarget() instanceof Node n ? n : null;
-                while (target != null && target != content && target != pane) {
-                    if (event.isDirect() && target instanceof ScrollBar)
+                while (target != null && target != pane) {
+                    if (target == viewport || (event.isDirect() && target instanceof ScrollBar))
                         return;
                     target = target.getParent();
                 }
-                if (content == null || target != content)
-                    handleScroll(event);
+                onScroll(event);
             });
         }
 
-        /// Passes unused input above the skin, which otherwise overscrolls on touch-enabled systems.
-        private void handleScroll(ScrollEvent event) {
-            onScroll(event);
-            if (event.getEventType() == ScrollEvent.SCROLL && !event.isConsumed()) {
-                @Nullable Node parent = pane.getParent();
-                ScrollEvent forwarded = event.copyFor(parent, parent);
-                event.consume();
-                if (parent != null)
-                    parent.fireEvent(forwarded);
+        /// Preserves native scrollbar visibility while unused input continues its original bubbling route.
+        private void attachViewport() {
+            reset();
+            if (viewport != null && viewport.getEventDispatcher() == viewportWrapper)
+                viewport.setEventDispatcher(viewportDispatcher);
+            viewport = null;
+            viewportDispatcher = null;
+            viewportWrapper = null;
+            for (Node child : pane.getChildrenUnmodifiable()) {
+                if (!child.getStyleClass().contains("viewport"))
+                    continue;
+                EventDispatcher dispatcher = Objects.requireNonNull(child.getEventDispatcher());
+                EventDispatcher wrapper = (event, tail) -> {
+                    if (!(event instanceof ScrollEvent) || event.getEventType() != ScrollEvent.SCROLL)
+                        return dispatcher.dispatchEvent(event, tail);
+                    @Nullable ScrollEvent[] unused = new ScrollEvent[1];
+                    dispatcher.dispatchEvent(event, tail.prepend((captured, remaining) -> {
+                        @Nullable Event result = remaining.dispatchEvent(captured);
+                        if (!(result instanceof ScrollEvent scroll))
+                            return result;
+                        onScroll(scroll);
+                        if (!scroll.isConsumed())
+                            unused[0] = scroll;
+                        // Only the skin's bubbling handlers see the zero-distance notification.
+                        return stationaryScroll(scroll);
+                    }));
+                    return unused[0];
+                };
+                viewport = child;
+                viewportDispatcher = dispatcher;
+                viewportWrapper = wrapper;
+                child.setEventDispatcher(wrapper);
+                break;
             }
         }
 
         /// Moves the handler to the current content, without retaining detached content nodes.
         private void attach(@Nullable Node oldContent, @Nullable Node newContent) {
             reset();
-            if (oldContent != null) {
-                oldContent.removeEventHandler(ScrollEvent.ANY, scrollHandler);
+            if (oldContent != null)
                 oldContent.removeEventHandler(MouseEvent.MOUSE_DRAGGED, dragHandler);
-            }
-            if (newContent != null) {
-                newContent.addEventHandler(ScrollEvent.ANY, scrollHandler);
+            if (newContent != null)
                 newContent.addEventHandler(MouseEvent.MOUSE_DRAGGED, dragHandler);
-            }
         }
 
         /// Returns overflow measured in the same layout coordinates as gesture pixel deltas.
@@ -404,17 +458,10 @@ final class ScrollUtils {
                 // The touch skin must reveal its bars before scrollPixels can move cells.
                 // A zero-distance event preserves its visibility lifecycle without scrolling twice.
                 if (nativeHandler != null && !event.isInertia()) {
-                    nativeHandler.handle(new ScrollEvent(ScrollEvent.SCROLL,
-                            event.getX(), event.getY(), event.getScreenX(), event.getScreenY(),
-                            event.isShiftDown(), event.isControlDown(), event.isAltDown(), event.isMetaDown(),
-                            event.isDirect(), false, 0, 0, 0, 0,
-                            ScrollEvent.HorizontalTextScrollUnits.NONE, 0,
-                            ScrollEvent.VerticalTextScrollUnits.NONE, 0, event.getTouchCount(), event.getPickResult()));
+                    nativeHandler.handle(stationaryScroll(event));
                 }
                 onScroll(event);
             });
-            flow.addEventHandler(ScrollEvent.SCROLL_STARTED, this::onScroll);
-            flow.addEventHandler(ScrollEvent.SCROLL_FINISHED, this::onScroll);
             flow.positionProperty().addListener(observable -> positionChanged());
             flow.verticalProperty().addListener(observable -> reset());
             flow.cellCountProperty().addListener(observable -> reset());
