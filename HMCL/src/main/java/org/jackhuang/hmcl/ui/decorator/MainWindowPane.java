@@ -184,7 +184,10 @@ final class MainWindowPane extends StackPane {
         tasksButton.setFocusTraversable(false);
         tasksButton.setAccessibleText(i18n("task.list"));
         tasksButton.getStyleClass().add("jfx-decorator-button");
-        tasksButton.setOnAction(event -> Controllers.navigate(new TaskManagerPage()));
+        tasksButton.setOnAction(event -> {
+            if (!(decorator.getNavigator().getCurrentPage() instanceof TaskManagerPage))
+                Controllers.navigate(new TaskManagerPage());
+        });
         decorator.forbidDraggingWindow(tasksButton);
 
         SVGPath tasksEmptyIcon = SVG.LISTS.createIcon(Themes.titleFillProperty());
