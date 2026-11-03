@@ -766,11 +766,11 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             actions.setAlignment(Pos.CENTER);
             actions.getChildren().setAll(restoreButton, revealButton, infoButton, activeSwitch);
 
-            activeSwitch.setSize(24);
+            activeSwitch.setSize(20);
             activeSwitch.setMinSize(30, 30);
             activeSwitch.setPrefSize(30, 30);
             activeSwitch.setMaxSize(30, 30);
-            HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 8));
+            HBox.setMargin(activeSwitch, new Insets(0, 0, 0, 6));
 
             container.getChildren().setAll(imageContainer, content, actions);
 
