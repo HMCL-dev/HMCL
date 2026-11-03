@@ -207,6 +207,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 ComponentList root = new ComponentList();
                 root.getStyleClass().add("no-padding");
                 JFXListView<GameListItem> listView = new JFXListView<>();
+                listView.getStyleClass().add("no-horizontal-scrollbar");
 
                 {
                     toolbarPane = new TransitionPane();
