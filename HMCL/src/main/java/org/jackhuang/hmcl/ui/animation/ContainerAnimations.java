@@ -7,9 +7,10 @@ import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
+import org.jetbrains.annotations.NotNullByDefault;
 
 /// Supplies reusable page replacement animations.
-@org.jetbrains.annotations.NotNullByDefault
+@NotNullByDefault
 public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     NONE {
         @Override
