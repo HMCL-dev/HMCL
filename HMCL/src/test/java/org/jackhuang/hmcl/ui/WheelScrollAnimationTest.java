@@ -5,6 +5,8 @@ package org.jackhuang.hmcl.ui;
 import javafx.application.Platform;
 import org.jackhuang.hmcl.util.MathUtils;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
@@ -132,6 +134,85 @@ final class WheelScrollAnimationTest {
         });
     }
 
+    /// A synchronous cancellation cannot leave old pixels for the next wheel input or move the other axis.
+    @Test
+    void cancellationDuringFrameDiscardsRemainingMovement() throws Exception {
+        onFxThread(() -> {
+            for (boolean horizontal : new boolean @Unmodifiable []{true, false}) {
+                Surface surface = new Surface();
+                WheelScrollAnimation animation = new WheelScrollAnimation(surface);
+                try {
+                    long start = System.nanoTime();
+                    surface.callbackHorizontal = horizontal;
+                    surface.afterScroll = () -> {
+                        animation.cancel();
+                        surface.x = 0;
+                        surface.y = 0;
+                    };
+                    assertTrue(animation.offer(100, 100, start));
+                    animation.handle(start + 20_000_000L);
+                    assertFalse(animation.isRunning());
+                    assertEquals(0, surface.x);
+                    assertEquals(0, surface.y);
+                    assertTrue(animation.offer(10, 20, start + 20_000_000L));
+                    animation.handle(start + 170_000_000L);
+                    assertEquals(10, surface.x, 0.0001);
+                    assertEquals(20, surface.y, 0.0001);
+                } finally {
+                    animation.cancel();
+                }
+            }
+        });
+    }
+
+    /// The final frame of an old animation cannot stop or overwrite a replacement queued by a listener.
+    @Test
+    void replacementDuringFrameSurvivesOldCompletion() throws Exception {
+        onFxThread(() -> {
+            Surface surface = new Surface();
+            WheelScrollAnimation animation = new WheelScrollAnimation(surface);
+            try {
+                long start = System.nanoTime();
+                surface.callbackHorizontal = true;
+                surface.afterScroll = () -> {
+                    animation.cancel();
+                    surface.x = 0;
+                    surface.y = 0;
+                    assertTrue(animation.offer(10, 20, start));
+                };
+                assertTrue(animation.offer(100, 100, start));
+                animation.handle(start + 150_000_000L);
+                assertTrue(animation.isRunning());
+                assertEquals(0, surface.x);
+                assertEquals(0, surface.y);
+                animation.handle(start + 150_000_000L);
+                assertEquals(10, surface.x, 0.0001);
+                assertEquals(20, surface.y, 0.0001);
+            } finally {
+                animation.cancel();
+            }
+        });
+    }
+
+    /// Input accepted during a frame accumulates only the pixels that have not yet been applied.
+    @Test
+    void inputDuringFramePreservesAcceptedDistance() throws Exception {
+        onFxThread(() -> {
+            Surface surface = new Surface();
+            WheelScrollAnimation animation = new WheelScrollAnimation(surface);
+            try {
+                long start = System.nanoTime();
+                surface.afterScroll = () -> assertTrue(animation.offer(0, 20, start + 20_000_000L));
+                assertTrue(animation.offer(0, 100, start));
+                animation.handle(start + 20_000_000L);
+                animation.handle(start + 170_000_000L);
+                assertEquals(120, surface.y, 0.0001);
+            } finally {
+                animation.cancel();
+            }
+        });
+    }
+
     /// Executes manual frames between toolkit pulses and propagates failures to JUnit.
     private static void onFxThread(Runnable action) throws Exception {
         FutureTask<Boolean> task = new FutureTask<>(action, true);
@@ -151,6 +232,12 @@ final class WheelScrollAnimationTest {
         /// Mutable vertical boundary used to simulate content resizing during playback.
         private double maxY = 1000;
 
+        /// One-shot position listener invoked synchronously after movement.
+        private @Nullable Runnable afterScroll;
+
+        /// Axis whose movement triggers the position listener.
+        private boolean callbackHorizontal;
+
         /// Bounds movement against each axis's remaining pixel range.
         @Override
         public double limit(boolean horizontal, double pixels) {
@@ -166,6 +253,11 @@ final class WheelScrollAnimationTest {
                 x += distance;
             else
                 y += distance;
+            if (distance != 0 && horizontal == callbackHorizontal && afterScroll != null) {
+                Runnable callback = afterScroll;
+                afterScroll = null;
+                callback.run();
+            }
             return distance;
         }
     }

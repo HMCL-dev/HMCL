@@ -174,7 +174,7 @@ final class VirtualFlowAdapter extends ScrollAdapter {
         return horizontal ? flow.getWidth() : flow.getHeight();
     }
 
-    /// Bounds fixed-size flows against their full extent, falling back to visible edges for variable-size cells.
+    /// Bounds movement against the full fixed-size extent or the variable-size cells along its path.
     @Override
     double limit(boolean horizontal, double pixels) {
         if (horizontal == flow.isVertical()) {
@@ -188,7 +188,7 @@ final class VirtualFlowAdapter extends ScrollAdapter {
                 max = Math.min(max, bar.getMax());
             return MathUtils.clamp(pixels, bar.getMin() - bar.getValue(), max - bar.getValue());
         }
-        if (flow.getCellCount() == 0 || flow.positionProperty().isBound()
+        if (pixels == 0 || flow.getCellCount() == 0 || flow.positionProperty().isBound()
                 || (pixels < 0 && flow.getPosition() <= 0)
                 || (pixels > 0 && flow.getPosition() >= 1))
             return 0;
@@ -202,16 +202,20 @@ final class VirtualFlowAdapter extends ScrollAdapter {
             double position = MathUtils.clamp(first.getIndex() * cellSize - start, 0, extent);
             return MathUtils.clamp(pixels, -position, extent - position);
         }
-        if (pixels < 0 && first != null && first.getIndex() == 0) {
-            double start = horizontal ? first.getLayoutX() : first.getLayoutY();
-            return Math.max(Math.min(0, start), pixels);
+        @Nullable IndexedCell<?> edge = pixels < 0 ? first : flow.getLastVisibleCell();
+        if (edge == null)
+            return pixels;
+        double start = horizontal ? edge.getLayoutX() : edge.getLayoutY();
+        double length = horizontal ? edge.getWidth() : edge.getHeight();
+        double available = Math.max(0, pixels < 0 ? -start : start + length - size);
+        int direction = pixels < 0 ? -1 : 1;
+        // Measure only as far as the requested queue reaches, using VirtualFlow's reusable measurement cell.
+        for (int index = edge.getIndex() + direction;
+             available < Math.abs(pixels) && index >= 0 && index < flow.getCellCount(); index += direction) {
+            IndexedCell<?> cell = flow.getCell(index);
+            available += horizontal ? cell.getWidth() : cell.getHeight();
         }
-        @Nullable IndexedCell<?> last = flow.getLastVisibleCell();
-        if (pixels > 0 && last != null && last.getIndex() == flow.getCellCount() - 1) {
-            double end = horizontal ? last.getLayoutX() + last.getWidth() : last.getLayoutY() + last.getHeight();
-            return Math.min(Math.max(0, end - size), pixels);
-        }
-        return pixels;
+        return direction * Math.min(Math.abs(pixels), available);
     }
 
     /// Applies synchronous gesture pixels through the flow or its breadth scrollbar.

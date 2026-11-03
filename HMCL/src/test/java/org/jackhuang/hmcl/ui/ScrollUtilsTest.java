@@ -1397,6 +1397,125 @@ final class ScrollUtilsTest {
         });
     }
 
+    /// A content replacement in a position listener cannot revive the frame's cancelled wheel distance.
+    @Test
+    void contentReplacementDuringWheelFrameDiscardsPendingMovement() throws Exception {
+        onFxThread(() -> {
+            for (boolean horizontal : new boolean @Unmodifiable []{false, true}) {
+                ScrollPane pane = pane(1200, 1600);
+                Region replacement = content(1200, 1600);
+                boolean[] replaced = {false};
+                (horizontal ? pane.hvalueProperty() : pane.vvalueProperty()).addListener(observable -> {
+                    if (replaced[0])
+                        return;
+                    replaced[0] = true;
+                    pane.setContent(replacement);
+                    pane.layout();
+                    pane.setHvalue(0);
+                    pane.setVvalue(0);
+                });
+                send(pane.getContent(), ScrollEvent.SCROLL, horizontal ? -100 : 0, horizontal ? 0 : -100,
+                        false, false, false);
+                ScrollController controller = requireNonNull(ScrollUtils.controller(pane));
+                controller.wheel.handle(System.nanoTime() + 20_000_000L);
+                assertSame(replacement, pane.getContent());
+                assertFalse(controller.wheel.isRunning());
+                send(replacement, ScrollEvent.SCROLL, horizontal ? -20 : 0, horizontal ? 0 : -20,
+                        false, false, false);
+                finishWheel(pane);
+                assertEquals(20, offset(pane, horizontal), 0.001);
+            }
+            return true;
+        });
+    }
+
+    /// Variable-size flows pass the second page to ancestors when the first page already reserves the edge.
+    @Test
+    void variableFlowHandsOffWhenQueueReachesUnseenEdge() throws Exception {
+        onFxThread(() -> {
+            for (boolean vertical : new boolean @Unmodifiable []{true, false}) {
+                for (boolean end : new boolean @Unmodifiable []{true, false}) {
+                    ListView<String> list = new ListView<>();
+                    list.setOrientation(vertical ? Orientation.VERTICAL : Orientation.HORIZONTAL);
+                    list.setCellFactory(view -> {
+                        ListCell<String> cell = new ListCell<>();
+                        cell.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+                        cell.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+                        cell.indexProperty().addListener((observable, oldIndex, index) -> {
+                            double length = 20 + Math.floorMod(index.intValue(), 3) * 4;
+                            cell.setPrefSize(vertical ? 100 : length, vertical ? length : 100);
+                        });
+                        return cell;
+                    });
+                    for (int i = 0; i < 16; i++)
+                        list.getItems().add("Cell " + i);
+                    layout(list);
+                    VirtualFlow<?> flow = (VirtualFlow<?>) requireNonNull(list.lookup(".virtual-flow"));
+                    // Settle native horizontal size estimates before testing queue handoff.
+                    if (!vertical) {
+                        for (Node child : flow.getChildrenUnmodifiable()) {
+                            if (child instanceof ScrollBar bar && bar.getOrientation() == Orientation.HORIZONTAL)
+                                bar.setVisible(true);
+                        }
+                        assertTrue(flow.scrollPixels(1000) > 0);
+                    }
+                    ScrollUtils.addSmoothScrolling(flow);
+                    flow.setPosition(end ? 0 : 1);
+                    flow.layout();
+                    if (end)
+                        assertTrue(requireNonNull(flow.getLastVisibleCell()).getIndex() < 15);
+                    else
+                        assertTrue(requireNonNull(flow.getFirstVisibleCell()).getIndex() > 0);
+                    int[] bubbled = {0};
+                    list.getScene().getRoot().addEventHandler(ScrollEvent.SCROLL, event -> bubbled[0]++);
+                    double direction = end ? -1 : 1;
+                    for (int i = 0; i < 2; i++) {
+                        if (vertical)
+                            sendPages(flow, direction);
+                        else
+                            send(flow, ScrollEvent.SCROLL, direction * flow.getWidth(), 0, false, false, false);
+                        assertEquals(i, bubbled[0]);
+                    }
+                    finishWheel(flow);
+                    assertEquals(end ? 1 : 0, flow.getPosition(), 0.001,
+                            "vertical=" + vertical + ", end=" + end);
+                }
+            }
+            return true;
+        });
+    }
+
+    /// Small wheel inputs do not measure every row of a large variable-height list.
+    @Test
+    void variableFlowBoundsMeasurementToRequestedDistance() throws Exception {
+        onFxThread(() -> {
+            int[] measurements = {0};
+            ListView<String> list = new ListView<>();
+            list.setCellFactory(view -> {
+                ListCell<String> cell = new ListCell<>();
+                cell.setMinHeight(Region.USE_PREF_SIZE);
+                cell.setMaxHeight(Region.USE_PREF_SIZE);
+                cell.indexProperty().addListener((observable, oldIndex, index) -> {
+                    measurements[0]++;
+                    cell.setPrefHeight(20 + Math.floorMod(index.intValue(), 3) * 4);
+                });
+                return cell;
+            });
+            for (int i = 0; i < 10_000; i++)
+                list.getItems().add("Cell " + i);
+            layout(list);
+            VirtualFlow<?> flow = (VirtualFlow<?>) requireNonNull(list.lookup(".virtual-flow"));
+            ScrollUtils.addSmoothScrolling(flow);
+            measurements[0] = 0;
+            send(flow, ScrollEvent.SCROLL, 0, -40, false, false, false);
+            int measured = measurements[0];
+            finishWheel(flow);
+            assertTrue(measured < 100, "A small wheel input must not measure the entire list");
+            assertTrue(flow.getPosition() > 0);
+            return true;
+        });
+    }
+
     /// Fixed-size flows reserve unseen end cells for queued movement before the first animation pulse.
     @Test
     void virtualFlowHandsOffWhenQueueReachesUnseenEdge() throws Exception {

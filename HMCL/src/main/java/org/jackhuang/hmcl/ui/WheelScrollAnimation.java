@@ -38,6 +38,9 @@ final class WheelScrollAnimation extends AnimationTimer {
     /// Eased fraction already applied to the current wheel interpolation.
     private double wheelProgress;
 
+    /// Invalidates an in-progress frame when synchronous callbacks change the animation's queue or lifetime.
+    private long revision;
+
     /// Creates an idle animation for a pixel-based scrolling target.
     WheelScrollAnimation(Target target) {
         this.target = target;
@@ -50,10 +53,16 @@ final class WheelScrollAnimation extends AnimationTimer {
 
     /// Queues additional pixels, returning false when pending movement already reserves all available space.
     boolean offer(double dx, double dy, long now) {
+        long version = revision;
         double x = target.limit(true, pendingX + dx);
+        if (revision != version)
+            return false;
         double y = target.limit(false, pendingY + dy);
+        if (revision != version)
+            return false;
         if (x == pendingX && y == pendingY)
             return false;
+        revision++;
         pendingX = x;
         pendingY = y;
         boolean running = wheelStart != 0;
@@ -66,8 +75,13 @@ final class WheelScrollAnimation extends AnimationTimer {
 
     /// Cancels opposing queued pixels before a descendant can consume the new input.
     void cancelReversal(double dx, double dy) {
-        pendingX = withoutReversal(pendingX, dx);
-        pendingY = withoutReversal(pendingY, dy);
+        double x = withoutReversal(pendingX, dx);
+        double y = withoutReversal(pendingY, dy);
+        if (x != pendingX || y != pendingY) {
+            revision++;
+            pendingX = x;
+            pendingY = y;
+        }
         if (pendingX == 0 && pendingY == 0)
             cancel();
     }
@@ -82,29 +96,44 @@ final class WheelScrollAnimation extends AnimationTimer {
     public void handle(long now) {
         if (wheelStart == 0)
             return;
+        long version = ++revision;
         double fraction = MathUtils.clamp((double) (now - wheelStart) / WHEEL_DURATION, 0, 1);
         // Preserve exact endpoints despite the shared curve's approximate solver.
         double progress = fraction == 0 || fraction == 1 ? fraction
                 : Motion.STANDARD_DECELERATE.interpolate(0.0, 1.0, fraction);
         double step = (progress - wheelProgress) / (1 - wheelProgress);
-        pendingX = advance(true, pendingX, step);
-        pendingY = advance(false, pendingY, step);
+        if (!advance(true, step, version) || !advance(false, step, version))
+            return;
         wheelProgress = progress;
         if (fraction >= 1 || (pendingX == 0 && pendingY == 0))
             cancel();
     }
 
-    /// Removes applied distance and discards any remainder that hits a boundary.
-    private double advance(boolean horizontal, double pending, double fraction) {
+    /// Applies one axis without overwriting queue changes made by synchronous target callbacks.
+    private boolean advance(boolean horizontal, double fraction, long version) {
+        double pending = horizontal ? pendingX : pendingY;
         double requested = pending * fraction;
+        // Listeners accepting new input must see only the distance left after this movement.
+        if (horizontal)
+            pendingX -= requested;
+        else
+            pendingY -= requested;
         double actual = target.scroll(horizontal, requested);
-        if (Math.abs(actual - requested) > 0.01)
-            return 0;
-        return target.limit(horizontal, pending - requested);
+        if (revision != version)
+            return false;
+        double remaining = Math.abs(actual - requested) > 0.01 ? 0 : target.limit(horizontal, pending - requested);
+        if (revision != version)
+            return false;
+        if (horizontal)
+            pendingX = remaining;
+        else
+            pendingY = remaining;
+        return true;
     }
 
     /// Releases the pulse timer and all unapplied wheel movement.
     void cancel() {
+        revision++;
         if (wheelStart == 0)
             return;
         stop();
