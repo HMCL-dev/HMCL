@@ -23,6 +23,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.TouchEvent;
 import org.jackhuang.hmcl.ui.animation.Motion;
+import org.jackhuang.hmcl.util.MathUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -296,7 +297,7 @@ final class ScrollUtils {
         public final void handle(long now) {
             if (wheelStart == 0)
                 return;
-            double fraction = Math.max(0, Math.min(1, (double) (now - wheelStart) / WHEEL_DURATION));
+            double fraction = MathUtils.clamp((double) (now - wheelStart) / WHEEL_DURATION, 0, 1);
             // Preserve exact endpoints despite the shared curve's approximate solver.
             double progress = fraction == 0 || fraction == 1 ? fraction
                     : Motion.STANDARD_DECELERATE.interpolate(0.0, 1.0, fraction);
@@ -566,7 +567,7 @@ final class ScrollUtils {
             double max = horizontal ? pane.getHmax() : pane.getVmax();
             double value = horizontal ? pane.getHvalue() : pane.getVvalue();
             double size = overflow(horizontal);
-            return max > min ? Math.max(0, Math.min(size, (value - min) / (max - min) * size)) : 0;
+            return max > min ? MathUtils.clamp((value - min) / (max - min) * size, 0, size) : 0;
         }
 
         /// Clamps to the distance before an edge, including non-default scroll value ranges.
@@ -578,8 +579,8 @@ final class ScrollUtils {
             double size = overflow(horizontal);
             if (value.isBound() || !(max > min) || !(size > 0))
                 return 0;
-            double position = Math.max(0, Math.min(size, (value.get() - min) / (max - min) * size));
-            return Math.max(-position, Math.min(size - position, pixels));
+            double position = MathUtils.clamp((value.get() - min) / (max - min) * size, 0, size);
+            return MathUtils.clamp(pixels, -position, size - position);
         }
 
         /// Scrolls both axes independently without assuming normalized values or overflowing content.
@@ -591,7 +592,7 @@ final class ScrollUtils {
             double min = horizontal ? pane.getHmin() : pane.getVmin();
             double max = horizontal ? pane.getHmax() : pane.getVmax();
             DoubleProperty value = horizontal ? pane.hvalueProperty() : pane.vvalueProperty();
-            value.set(Math.max(min, Math.min(max, value.get() + distance / overflow(horizontal) * (max - min))));
+            value.set(MathUtils.clamp(value.get() + distance / overflow(horizontal) * (max - min), min, max));
             return distance;
         }
 
@@ -771,7 +772,7 @@ final class ScrollUtils {
                 double max = bar.getMin() + Math.max(0, extent);
                 if (bar.maxProperty().isBound())
                     max = Math.min(max, bar.getMax());
-                return Math.max(bar.getMin() - bar.getValue(), Math.min(max - bar.getValue(), pixels));
+                return MathUtils.clamp(pixels, bar.getMin() - bar.getValue(), max - bar.getValue());
             }
             if (flow.getCellCount() == 0 || flow.positionProperty().isBound()
                     || (pixels < 0 && flow.getPosition() <= 0)
