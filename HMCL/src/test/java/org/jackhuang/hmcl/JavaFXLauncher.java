@@ -23,6 +23,8 @@ public final class JavaFXLauncher {
     private static boolean started = false;
 
     static {
+        // Keep pixel-distance assertions independent of local launcher preferences.
+        System.setProperty("hmcl.scroll.speed", "1");
         try {
             initializeAnimationPolicy();
             Platform.startup(() -> {
