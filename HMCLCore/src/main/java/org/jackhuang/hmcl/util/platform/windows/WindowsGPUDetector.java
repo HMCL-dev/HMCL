@@ -64,6 +64,19 @@ final class WindowsGPUDetector {
             "Root\\IddSampleDriver",
             "IddSampleDriver",
 
+            // Oray Sunlogin virtual display adapter
+            "Root\\OrayIddDriver",
+
+            // spacedesk Graphics Adapter
+            "VID_DATRONICSOFT_PID_SPACEDESK_VIRTUAL_DISPLAY_0003",
+
+            // Looking Glass Indirect Display Device
+            "Root\\LGIdd",
+            "LGIdd",
+
+            // Intel indirect display component, not its System-class KMD device
+            "SWC\\IntelVirtDisplay",
+
             // Amyuni USB Mobile Monitor Virtual Display
             "usbmmidd"
     );
@@ -87,6 +100,10 @@ final class WindowsGPUDetector {
                     return GraphicsCard.Type.DISPLAY_ONLY;
                 }
             }
+
+            // VMware drivers may report Broadcom as their provider.
+            if (StringUtils.startsWithIgnoreCase(matchingDeviceId, "PCI\\VEN_15AD&"))
+                return GraphicsCard.Type.VIRTUAL;
         }
 
         if (HardwareVendor.VMWARE.equals(vendor) || HardwareVendor.PARALLEL.equals(vendor))
@@ -141,7 +158,22 @@ final class WindowsGPUDetector {
             return null;
     }
 
-    /// Reads CIM video controllers and applies the shared name and DAC type heuristics.
+    /// Builds a video-controller query with matching IDs when PnP property lookup is available.
+    static String buildCimQuery(String cmdlet) {
+        return String.join(" | ",
+                cmdlet + " -Class Win32_VideoController",
+                """
+                        Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType,@{Name='MatchingDeviceId';Expression={
+                            if ($_.PNPDeviceID -and (Get-Command Get-PnpDeviceProperty -ErrorAction SilentlyContinue)) {
+                                (Get-PnpDeviceProperty -InstanceId $_.PNPDeviceID -KeyName DEVPKEY_Device_MatchingDeviceId -ErrorAction SilentlyContinue).Data
+                            }
+                        }}
+                        """.stripTrailing(),
+                "Format-List",
+                "Out-String -Width 4096");
+    }
+
+    /// Reads CIM video controllers and applies the shared device ID, name and DAC type heuristics.
     /// Returns an empty list if the query or its processing fails.
     private static List<GraphicsCard> detectByCim() {
         try {
@@ -153,11 +185,7 @@ final class WindowsGPUDetector {
                             "powershell.exe",
                             "-NoProfile",
                             "-Command",
-                            String.join(" | ",
-                                    getCimInstance + " -Class Win32_VideoController",
-                                    "Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType",
-                                    "Format-List"
-                            )),
+                            buildCimQuery(getCimInstance)),
                     inputStream -> KeyValuePairUtils.loadList(new BufferedReader(new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET))));
 
             ArrayList<GraphicsCard> cards = new ArrayList<>(videoControllers.size());
@@ -166,12 +194,13 @@ final class WindowsGPUDetector {
                 @Nullable HardwareVendor vendor = HardwareVendor.of(videoController.get("AdapterCompatibility"));
                 @Nullable String driverVersion = videoController.get("DriverVersion");
                 @Nullable String adapterDACType = videoController.get("AdapterDACType");
+                @Nullable String matchingDeviceId = videoController.get("MatchingDeviceId");
 
                 if (StringUtils.isNotBlank(name)) {
                     cards.add(GraphicsCard.builder().setName(name)
                             .setVendor(vendor)
                             .setDriverVersion(driverVersion)
-                            .setType(inferType(name, vendor, adapterDACType, null))
+                            .setType(inferType(name, vendor, adapterDACType, matchingDeviceId))
                             .build()
                     );
                 }
