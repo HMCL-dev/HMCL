@@ -83,7 +83,7 @@ public final class AboutPage extends SpinnerPane {
         ComponentList deviceInfo = new ComponentList();
         {
             @Nullable String deviceName = SystemInfo.getDeviceName();
-            if (deviceName != null) {
+            if (!Architecture.SYSTEM_ARCH.isX86() && deviceName != null) {
                 var device = new LinePane();
                 device.setLargeTitle(true);
                 device.setLeading(SVG.HOST.createIcon(32));
