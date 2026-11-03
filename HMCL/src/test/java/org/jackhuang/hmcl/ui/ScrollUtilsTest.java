@@ -18,6 +18,8 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Slider;
 import javafx.scene.control.skin.ScrollPaneSkin;
 import javafx.scene.control.skin.VirtualFlow;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.PickResult;
@@ -140,12 +142,12 @@ final class ScrollUtilsTest {
             send(pane.getContent(), ScrollEvent.SCROLL, 0, -40, false, false, true);
             assertEquals(0, offset(pane, false), 0.001);
             finishWheel(pane);
-            assertEquals(40, offset(pane, false), 0.001);
+            assertEquals(120, offset(pane, false), 0.001);
             send(pane.getContent(), ScrollEvent.SCROLL, 0, -80, false, false, true);
             finishWheel(pane);
-            assertEquals(120, offset(pane, false), 0.001);
+            assertEquals(360, offset(pane, false), 0.001);
             finishWheel(pane);
-            assertEquals(120, offset(pane, false), 0.001);
+            assertEquals(360, offset(pane, false), 0.001);
             return true;
         });
     }
@@ -164,9 +166,9 @@ final class ScrollUtilsTest {
             assertEquals(0, flow.getPosition(), 0.001);
             finishWheel(pane);
             finishWheel(flow);
-            assertEquals(120, offset(pane, false), 0.001);
+            assertEquals(360, offset(pane, false), 0.001);
             IndexedCell<?> first = requireNonNull(flow.getFirstVisibleCell());
-            assertEquals(216, first.getIndex() * 24 - first.getLayoutY(), 0.001);
+            assertEquals(360, first.getIndex() * 24 - first.getLayoutY(), 0.001);
             return true;
         });
     }
@@ -179,28 +181,28 @@ final class ScrollUtilsTest {
             send(pane.getContent(), ScrollEvent.SCROLL, 0, -40, false, false, false);
             assertEquals(0, offset(pane, false), 0.001);
             finishWheel(pane);
-            assertEquals(40, offset(pane, false), 0.001);
+            assertEquals(120, offset(pane, false), 0.001);
 
             send(pane.getContent(), ScrollEvent.SCROLL_STARTED, 0, 0, false, false, false);
             send(pane.getContent(), ScrollEvent.SCROLL, 0, -12, false, false, false);
-            assertEquals(52, offset(pane, false), 0.001);
+            assertEquals(132, offset(pane, false), 0.001);
             send(pane.getContent(), ScrollEvent.SCROLL_FINISHED, 0, 0, false, false, false);
             send(pane.getContent(), ScrollEvent.SCROLL, 0, -40, false, false, false);
-            assertEquals(52, offset(pane, false), 0.001);
+            assertEquals(132, offset(pane, false), 0.001);
             finishWheel(pane);
-            assertEquals(92, offset(pane, false), 0.001);
+            assertEquals(252, offset(pane, false), 0.001);
 
             VirtualFlow<?> flow = flow(true);
             send(flow, ScrollEvent.SCROLL, 0, -40, false, false, false);
             assertEquals(0, flow.getPosition(), 0.001);
             finishWheel(flow);
             IndexedCell<?> first = requireNonNull(flow.getFirstVisibleCell());
-            assertEquals(40, first.getIndex() * 24 - first.getLayoutY(), 0.001);
+            assertEquals(120, first.getIndex() * 24 - first.getLayoutY(), 0.001);
             return true;
         });
     }
 
-    /// Fractional text deltas caused by display scaling retain wheel animation and line distances.
+    /// Display-scaled deltas retain wheel animation and the same pixel speed across controls.
     @Test
     void scaledWheelRemainsAnimated() throws Exception {
         onFxThread(() -> {
@@ -210,8 +212,8 @@ final class ScrollUtilsTest {
                 assertEquals(0, offset(pane, true), 0.001);
                 assertEquals(0, offset(pane, false), 0.001);
                 finishWheel(pane);
-                assertEquals(40 / scale, offset(pane, true), 0.001);
-                assertEquals(40 / scale, offset(pane, false), 0.001);
+                assertEquals(120 / scale, offset(pane, true), 0.001);
+                assertEquals(120 / scale, offset(pane, false), 0.001);
 
                 VirtualFlow<?> flow = flow(true);
                 sendScaledWheel(flow, scale);
@@ -219,7 +221,7 @@ final class ScrollUtilsTest {
                 finishWheel(flow);
                 IndexedCell<?> first = requireNonNull(flow.getFirstVisibleCell());
                 // Cell layout snaps the final displacement to a pixel boundary.
-                assertEquals(72 / scale, first.getIndex() * 24 - first.getLayoutY(), 0.5);
+                assertEquals(120 / scale, first.getIndex() * 24 - first.getLayoutY(), 0.5);
             }
             return true;
         });
@@ -234,14 +236,14 @@ final class ScrollUtilsTest {
             pane.requestLayout();
             pane.layout();
             finishWheel(pane);
-            assertEquals(80, offset(pane, false), 0.001);
+            assertEquals(240, offset(pane, false), 0.001);
 
             send(pane.getContent(), ScrollEvent.SCROLL_STARTED, 0, 0, false, false, true);
             send(pane.getContent(), ScrollEvent.SCROLL, 0, -96, false, false, true);
             pane.requestLayout();
             pane.layout();
             send(pane.getContent(), ScrollEvent.SCROLL, 0, -96, false, false, true);
-            assertEquals(272, offset(pane, false), 0.001);
+            assertEquals(432, offset(pane, false), 0.001);
             return true;
         });
     }
@@ -305,7 +307,7 @@ final class ScrollUtilsTest {
             send(pane.getContent(), ScrollEvent.SCROLL, 80, 0, false, false, false);
             finishWheel(pane);
             assertEquals(0, offset(pane, true), 0.001);
-            assertEquals(80, offset(pane, false), 0.001);
+            assertEquals(240, offset(pane, false), 0.001);
             return true;
         });
     }
@@ -331,7 +333,7 @@ final class ScrollUtilsTest {
             finishWheel(inner);
             finishWheel(outer);
             assertEquals(0, offset(inner, false), 0.001);
-            assertEquals(before - 80, offset(outer, false), 0.001);
+            assertEquals(before - 240, offset(outer, false), 0.001);
             return true;
         });
     }
@@ -353,7 +355,7 @@ final class ScrollUtilsTest {
                         false, false, false);
                 finishWheel(inner);
                 finishWheel(outer);
-                assertEquals(before - 80, offset(inner, horizontal), 0.001);
+                assertEquals(before - 240, offset(inner, horizontal), 0.001);
                 assertEquals(0, offset(outer, horizontal), 0.001);
             }
             return true;
@@ -387,7 +389,7 @@ final class ScrollUtilsTest {
                     finishWheel(inner);
                     finishWheel(outer);
                     assertEquals(end ? size : 0, offset(inner, horizontal), 0.001);
-                    assertEquals(before - delta, offset(outer, horizontal), 0.001);
+                    assertEquals(before - delta * 3, offset(outer, horizontal), 0.001);
                 }
             }
             return true;
@@ -428,7 +430,7 @@ final class ScrollUtilsTest {
                 finishWheel(flow);
                 finishWheel(outer);
                 assertEquals(end ? 1 : 0, flow.getPosition(), 0.001);
-                assertEquals(before - delta, offset(outer, false), 0.001);
+                assertEquals(before - delta * 3, offset(outer, false), 0.001);
             }
             return true;
         });
@@ -1244,7 +1246,7 @@ final class ScrollUtilsTest {
                 finishWheel(pane);
                 assertEquals(2, captured[0]);
                 assertEquals(1, bubbled[0]);
-                assertEquals(20, offset(pane, false), 0.001);
+                assertEquals(60, offset(pane, false), 0.001);
             }
             return true;
         });
@@ -1262,7 +1264,7 @@ final class ScrollUtilsTest {
                 send(requireNonNull(pane.lookup(".viewport")), ScrollEvent.SCROLL, 0, -40, false, false, true);
             finishWheel(smoothPane);
             assertTrue(offset(nativePane, false) > 0);
-            assertEquals(40, offset(smoothPane, false), 0.001);
+            assertEquals(120, offset(smoothPane, false), 0.001);
             return result;
         });
         TimeUnit.MILLISECONDS.sleep(100);
@@ -1310,11 +1312,11 @@ final class ScrollUtilsTest {
             assertEquals(1, captured[0]);
             send(viewport, ScrollEvent.SCROLL, 0, -40, false, false, true);
             finishWheel(pane);
-            assertEquals(40, offset(pane, false), 0.001);
+            assertEquals(120, offset(pane, false), 0.001);
             Node content = requireNonNull(pane.getContent());
             content.addEventHandler(ScrollEvent.SCROLL, event -> event.consume());
             send(content, ScrollEvent.SCROLL, 0, -40, true, false, false);
-            assertEquals(40, offset(pane, false), 0.001);
+            assertEquals(120, offset(pane, false), 0.001);
             return true;
         });
     }
@@ -1387,12 +1389,135 @@ final class ScrollUtilsTest {
             send(flow, ScrollEvent.SCROLL, 0, -40, false, false, true);
             assertEquals(0, bar.getValue(), 0.001);
             finishWheel(flow);
-            assertEquals(expected, bar.getValue(), 0.001);
+            assertEquals(expected * 3, bar.getValue(), 0.001);
             assertEquals(1, flow.getPosition(), 0.001);
             send(flow, ScrollEvent.SCROLL, 0, 40, false, false, true);
             finishWheel(flow);
             assertEquals(0, bar.getValue(), 0.001);
             assertTrue(flow.getPosition() < 1);
+            return true;
+        });
+    }
+
+    /// Ordinary wheel distance is consistent across panes, cell sizes, orientations, and line-unit metadata.
+    @Test
+    void wheelDistanceIsConsistentAcrossControls() throws Exception {
+        onFxThread(() -> {
+            for (boolean lines : new boolean @Unmodifiable []{false, true}) {
+                ScrollPane pane = pane(1200, 5000);
+                send(pane.getContent(), ScrollEvent.SCROLL, 0, -40, false, false, lines);
+                finishWheel(pane);
+                assertEquals(120, offset(pane, false), 0.001);
+                for (boolean vertical : new boolean @Unmodifiable []{true, false}) {
+                    for (double cellSize : new double @Unmodifiable []{24, 72, 120}) {
+                        VirtualFlow<?> flow = flow(vertical);
+                        flow.setFixedCellSize(cellSize);
+                        flow.layout();
+                        send(flow, ScrollEvent.SCROLL, 0, -40, false, false, lines);
+                        finishWheel(flow);
+                        IndexedCell<?> first = requireNonNull(flow.getFirstVisibleCell());
+                        double offset = first.getIndex() * cellSize - (vertical ? first.getLayoutY() : first.getLayoutX());
+                        assertEquals(120, offset, 0.001, "vertical=" + vertical + ", cellSize=" + cellSize);
+                    }
+                }
+            }
+            return true;
+        });
+    }
+
+    /// Page-sized wheel input retains its viewport unit instead of receiving the ordinary wheel multiplier.
+    @Test
+    void pageScrollingKeepsViewportDistance() throws Exception {
+        onFxThread(() -> {
+            ScrollPane pane = pane(1200, 5000);
+            sendPages(pane.getContent(), -1);
+            finishWheel(pane);
+            assertEquals(pane.getViewportBounds().getHeight(), offset(pane, false), 0.001);
+            VirtualFlow<?> flow = flow(true);
+            sendPages(flow, -1);
+            finishWheel(flow);
+            IndexedCell<?> first = requireNonNull(flow.getFirstVisibleCell());
+            assertEquals(flow.getHeight(), first.getIndex() * 24 - first.getLayoutY(), 0.001);
+            return true;
+        });
+    }
+
+    /// A fresh variable-size flow completes its first queued movement across animation and layout pulses.
+    @Test
+    void virtualFlowFirstWheelSurvivesLayoutPulses() throws Exception {
+        onFxThread(() -> {
+            for (boolean vertical : new boolean @Unmodifiable []{true, false}) {
+                ListView<String> list = new ListView<>();
+                list.setOrientation(vertical ? Orientation.VERTICAL : Orientation.HORIZONTAL);
+                list.setCellFactory(view -> {
+                    ListCell<String> cell = new ListCell<>();
+                    cell.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+                    cell.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+                    cell.indexProperty().addListener((observable, oldIndex, index) -> {
+                        double length = 20 + Math.floorMod(index.intValue(), 3) * 4;
+                        cell.setPrefSize(vertical ? 100 : length, vertical ? length : 100);
+                    });
+                    return cell;
+                });
+                for (int i = 0; i < 100; i++)
+                    list.getItems().add("Cell " + i);
+                layout(list);
+                VirtualFlow<?> flow = (VirtualFlow<?>) requireNonNull(list.lookup(".virtual-flow"));
+                ScrollUtils.addSmoothScrolling(flow);
+                ScrollController controller = requireNonNull(ScrollUtils.controller(flow));
+                for (int input = 0; input < 2; input++) {
+                    long start = System.nanoTime();
+                    assertTrue(controller.wheel.offer(vertical ? 0 : 60, vertical ? 60 : 0, start));
+                    for (int frame = 1; frame <= 10; frame++) {
+                        controller.wheel.handle(start + frame * 16_666_667L);
+                        flow.layout();
+                        if (frame < 9)
+                            assertTrue(controller.wheel.isRunning(), "Native layout must preserve pending movement");
+                    }
+                    IndexedCell<?> first = requireNonNull(flow.getFirstVisibleCell());
+                    int index = first.getIndex();
+                    double preceding = index / 3 * 72 + index % 3 * 20 + (index % 3 == 2 ? 4 : 0);
+                    double offset = preceding - (vertical ? first.getLayoutY() : first.getLayoutX());
+                    assertEquals((input + 1) * 60, offset, 1, "vertical=" + vertical + ", input=" + input);
+                    assertFalse(controller.wheel.isRunning());
+                }
+                long start = System.nanoTime();
+                assertTrue(controller.wheel.offer(vertical ? 0 : 60, vertical ? 60 : 0, start));
+                flow.fireEvent(mouse(flow, MouseEvent.MOUSE_PRESSED, false));
+                assertFalse(controller.wheel.isRunning());
+                finishWheel(flow);
+                IndexedCell<?> first = requireNonNull(flow.getFirstVisibleCell());
+                int index = first.getIndex();
+                double preceding = index / 3 * 72 + index % 3 * 20 + (index % 3 == 2 ? 4 : 0);
+                assertEquals(120, preceding - (vertical ? first.getLayoutY() : first.getLayoutX()), 1);
+            }
+            return true;
+        });
+    }
+
+    /// Navigation targeted at the owning list cancels its flow's pending wheel movement.
+    @Test
+    void virtualFlowNavigationInterruptsWheel() throws Exception {
+        onFxThread(() -> {
+            VirtualFlow<?> flow = flow(true);
+            ListView<?> list = (ListView<?>) flow.getParent();
+            ScrollController controller = requireNonNull(ScrollUtils.controller(flow));
+            send(flow, ScrollEvent.SCROLL, 0, -40, false, false, true);
+            assertTrue(controller.wheel.isRunning());
+            list.fireEvent(new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.DOWN,
+                    false, false, false, false));
+            assertFalse(controller.wheel.isRunning());
+            send(flow, ScrollEvent.SCROLL, 0, -40, false, false, true);
+            assertTrue(controller.wheel.isRunning());
+            list.scrollTo(50);
+            assertFalse(controller.wheel.isRunning());
+            flow.layout();
+            IndexedCell<?> first = requireNonNull(flow.getFirstVisibleCell());
+            int index = first.getIndex();
+            double position = first.getLayoutY();
+            finishWheel(flow);
+            assertEquals(index, requireNonNull(flow.getFirstVisibleCell()).getIndex());
+            assertEquals(position, requireNonNull(flow.getFirstVisibleCell()).getLayoutY());
             return true;
         });
     }
@@ -1423,7 +1548,7 @@ final class ScrollUtilsTest {
                 send(replacement, ScrollEvent.SCROLL, horizontal ? -20 : 0, horizontal ? 0 : -20,
                         false, false, false);
                 finishWheel(pane);
-                assertEquals(20, offset(pane, horizontal), 0.001);
+                assertEquals(60, offset(pane, horizontal), 0.001);
             }
             return true;
         });
@@ -1578,7 +1703,7 @@ final class ScrollUtilsTest {
         });
     }
 
-    /// Virtualized scrolling tracks pixels in either orientation and wheel distances respect cell height.
+    /// Virtualized scrolling tracks gestures in either orientation and uses the shared wheel speed.
     @Test
     void virtualFlowSupportsTouchAndWheel() throws Exception {
         onFxThread(() -> {
@@ -1593,7 +1718,7 @@ final class ScrollUtilsTest {
                 assertTrue(flow.getPosition() > 0);
                 first = requireNonNull(flow.getFirstVisibleCell());
                 double offset = first.getIndex() * 24 - (vertical ? first.getLayoutY() : first.getLayoutX());
-                assertEquals(vertical ? 84 : 52, offset, 0.001);
+                assertEquals(132, offset, 0.001);
             }
             return true;
         });

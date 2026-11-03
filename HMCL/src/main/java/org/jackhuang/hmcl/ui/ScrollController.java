@@ -126,7 +126,7 @@ final class ScrollController implements WheelScrollAnimation.Target {
     }
 
     /// Cancels queued movement and prevents old native inertia from resuming after a press.
-    private void interrupt() {
+    void interrupt() {
         wheel.cancel();
         gesture.interrupt();
     }

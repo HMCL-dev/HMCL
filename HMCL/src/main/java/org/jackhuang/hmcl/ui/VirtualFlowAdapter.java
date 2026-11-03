@@ -8,9 +8,12 @@ import javafx.event.EventDispatcher;
 import javafx.event.EventHandler;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
+import javafx.scene.control.Control;
 import javafx.scene.control.IndexedCell;
 import javafx.scene.control.ScrollBar;
+import javafx.scene.control.ScrollToEvent;
 import javafx.scene.control.skin.VirtualFlow;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import org.jackhuang.hmcl.util.MathUtils;
@@ -24,6 +27,12 @@ import java.util.Objects;
 final class VirtualFlowAdapter extends ScrollAdapter {
     /// Flow providing pixel scrolling and normalized boundary positions.
     private final VirtualFlow<?> flow;
+
+    /// Owning control whose navigation events interrupt queued wheel movement.
+    private @Nullable Control owner;
+
+    /// Cancels pending movement before native keyboard or scroll-to navigation.
+    private final EventHandler<Event> navigationHandler = event -> controller.interrupt();
 
     /// Wraps native bubbling so cell controls and nested scroll panes retain priority.
     VirtualFlowAdapter(VirtualFlow<?> flow) {
@@ -39,9 +48,31 @@ final class VirtualFlowAdapter extends ScrollAdapter {
             }
             controller.onScroll(event);
         });
-        flow.positionProperty().addListener(observable -> controller.positionChanged());
+        // Native layout revises the estimated scroll position without moving the viewport.
+        // Input filters handle interruptions without treating those estimates as external scrolling.
         flow.verticalProperty().addListener(observable -> controller.reset());
         flow.cellCountProperty().addListener(observable -> controller.reset());
+        flow.parentProperty().addListener(observable -> bindOwner());
+        flow.sceneProperty().addListener(observable -> bindOwner());
+        bindOwner();
+    }
+
+    /// Follows the owning control and releases its handlers when the flow is detached.
+    private void bindOwner() {
+        @Nullable Node parent = flow.getParent();
+        while (parent != null && !(parent instanceof Control))
+            parent = parent.getParent();
+        if (owner == parent)
+            return;
+        if (owner != null) {
+            owner.removeEventFilter(KeyEvent.KEY_PRESSED, navigationHandler);
+            owner.removeEventFilter(ScrollToEvent.ANY, navigationHandler);
+        }
+        owner = (Control) parent;
+        if (owner != null) {
+            owner.addEventFilter(KeyEvent.KEY_PRESSED, navigationHandler);
+            owner.addEventFilter(ScrollToEvent.ANY, navigationHandler);
+        }
     }
 
     /// Measures native capture-phase panning before descendants can change the flow themselves.
@@ -249,25 +280,13 @@ final class VirtualFlowAdapter extends ScrollAdapter {
         return super.gestureDelta(event, horizontal);
     }
 
-    /// Respects system line/page settings for wheels without scaling touch gestures by cell size.
+    /// Uses shared wheel speed, retaining native horizontal-axis mapping and viewport-sized pages.
     @Override
     double wheelDelta(ScrollEvent event, boolean horizontal) {
-        if (horizontal) {
-            if (flow.isVertical())
-                return -event.getDeltaX();
-            return -(Math.abs(event.getDeltaX()) > Math.abs(event.getDeltaY()) ? event.getDeltaX() : event.getDeltaY());
-        }
-        if (!flow.isVertical())
-            return -event.getDeltaY();
-        return switch (event.getTextDeltaYUnits()) {
-            case NONE -> -event.getDeltaY();
-            case PAGES -> -event.getTextDeltaY() * flow.getHeight();
-            case LINES -> {
-                @Nullable IndexedCell<?> cell = flow.getFirstVisibleCell();
-                double line = flow.getFixedCellSize() > 0 ? flow.getFixedCellSize()
-                        : cell == null ? 16 : cell.getHeight();
-                yield -event.getTextDeltaY() * Math.min(line, flow.getHeight() / 8);
-            }
-        };
+        if (!horizontal && flow.isVertical() && event.getTextDeltaYUnits() == ScrollEvent.VerticalTextScrollUnits.PAGES)
+            return -event.getTextDeltaY() * flow.getHeight();
+        if (horizontal && !flow.isVertical())
+            return super.wheelDelta(event, Math.abs(event.getDeltaX()) > Math.abs(event.getDeltaY()));
+        return super.wheelDelta(event, horizontal);
     }
 }

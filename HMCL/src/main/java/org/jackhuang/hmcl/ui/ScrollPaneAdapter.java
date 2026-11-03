@@ -246,11 +246,11 @@ final class ScrollPaneAdapter extends ScrollAdapter {
         return distance;
     }
 
-    /// Uses platform pixel deltas except for explicitly requested page scrolling.
+    /// Uses shared wheel speed except for explicitly requested viewport-sized page scrolling.
     @Override
     double wheelDelta(ScrollEvent event, boolean horizontal) {
         if (!horizontal && event.getTextDeltaYUnits() == ScrollEvent.VerticalTextScrollUnits.PAGES)
             return -event.getTextDeltaY() * pane.getViewportBounds().getHeight();
-        return horizontal ? -event.getDeltaX() : -event.getDeltaY();
+        return super.wheelDelta(event, horizontal);
     }
 }

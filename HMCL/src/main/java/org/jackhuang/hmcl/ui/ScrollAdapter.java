@@ -14,6 +14,9 @@ abstract class ScrollAdapter {
     /// Whether native skins need zero-distance input to animate overlay scrollbar visibility.
     static final boolean TOUCH_SUPPORTED = Platform.isSupported(ConditionalFeature.INPUT_TOUCH);
 
+    /// Distance multiplier for ordinary wheel pixel deltas.
+    private static final double WHEEL_SPEED = 3;
+
     /// Coordinates animation and gestures independently of this control's geometry.
     final ScrollController controller;
 
@@ -28,8 +31,10 @@ abstract class ScrollAdapter {
     /// Applies a bounded pixel displacement and returns the distance actually moved.
     abstract double scroll(boolean horizontal, double pixels);
 
-    /// Returns a wheel displacement in pixels, respecting page scroll settings.
-    abstract double wheelDelta(ScrollEvent event, boolean horizontal);
+    /// Scales platform wheel pixels consistently, preserving system settings and fractional deltas.
+    double wheelDelta(ScrollEvent event, boolean horizontal) {
+        return -(horizontal ? event.getDeltaX() : event.getDeltaY()) * WHEEL_SPEED;
+    }
 
     /// Maps continuous input to pixels without applying wheel line or page scaling.
     double gestureDelta(ScrollEvent event, boolean horizontal) {
