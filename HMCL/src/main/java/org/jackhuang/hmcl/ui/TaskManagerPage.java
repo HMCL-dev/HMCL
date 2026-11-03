@@ -8,7 +8,6 @@ import com.jfoenix.controls.JFXSpinner;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
@@ -17,8 +16,6 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
@@ -108,28 +105,24 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
 
         /// Creates a row that activates the current task through its body or trailing action.
         private TaskCell() {
-            BorderPane row = new BorderPane();
-            row.getStyleClass().add("md-list-cell");
-            row.setPadding(new Insets(8));
-            row.setCursor(Cursor.HAND);
+            content.getStyleClass().add("md-list-cell");
+            content.setPadding(new Insets(8));
 
             statusIcon.setMinSize(32, 32);
             statusIcon.setPrefSize(32, 32);
             statusIcon.setMaxSize(32, 32);
+            statusIcon.setMouseTransparent(true);
             content.setMinWidth(0);
-            HBox.setHgrow(content, Priority.ALWAYS);
-            HBox center = new HBox(8, statusIcon, content);
-            center.setAlignment(Pos.CENTER_LEFT);
-            center.setMouseTransparent(true);
-            row.setCenter(center);
+            TwoLineListItem.setMargin(statusIcon, new Insets(0, 8, 0, 0));
+            content.setLeading(statusIcon);
 
             FXUtils.installFastTooltip(actionButton, actionTooltip);
             actionButton.setOnAction(event -> activateTask());
-            BorderPane.setAlignment(actionButton, Pos.CENTER);
-            BorderPane.setMargin(actionButton, new Insets(0, 0, 0, 8));
-            row.setRight(actionButton);
+            TwoLineListItem.setMargin(actionButton, new Insets(0, 0, 0, 8));
+            content.setTrailing(actionButton);
 
-            graphic = new RipplerContainer(row);
+            graphic = new RipplerContainer(content);
+            graphic.setCursor(Cursor.HAND);
             graphic.setOnAction(event -> activateTask());
         }
 
