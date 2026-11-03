@@ -100,6 +100,12 @@ final class ScrollUtils {
         /// Prevents synthesized mouse drags from repeating an active touchscreen scroll.
         private boolean directGesture;
 
+        /// Horizontal native panning already included in the first direct scroll delta.
+        double pannedX;
+
+        /// Vertical native panning already included in the first direct scroll delta.
+        double pannedY;
+
         /// Whether a press has cancelled the previous gesture's inertia.
         private boolean suppressInertia;
 
@@ -116,6 +122,7 @@ final class ScrollUtils {
         Controller(Node node) {
             node.addEventFilter(ScrollEvent.ANY, event -> observeScroll(node, event));
             node.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> interrupt());
+            node.addEventFilter(MouseEvent.MOUSE_RELEASED, event -> clearPanning());
             node.addEventFilter(TouchEvent.TOUCH_PRESSED, event -> interrupt());
             node.addEventFilter(KeyEvent.KEY_PRESSED, event -> interrupt());
             node.sceneProperty().addListener(observable -> reset());
@@ -125,10 +132,16 @@ final class ScrollUtils {
         /// Observes gesture boundaries even when a descendant consumes every movement event.
         private void observeScroll(Node node, ScrollEvent event) {
             if (event.getEventType() == ScrollEvent.SCROLL_STARTED) {
+                // Recognition can follow native mouse panning from the same touch press.
+                double x = pannedX;
+                double y = pannedY;
                 reset();
+                pannedX = x;
+                pannedY = y;
                 gesture = true;
             } else if (event.getEventType() == ScrollEvent.SCROLL_FINISHED) {
                 gesture = false;
+                clearPanning();
             }
             if (event.getEventType() == ScrollEvent.SCROLL_STARTED
                     || (event.getEventType() == ScrollEvent.SCROLL && !event.isInertia())) {
@@ -170,8 +183,6 @@ final class ScrollUtils {
                 return;
 
             long now = System.nanoTime();
-            if (event.isDirect() && !event.isInertia())
-                directGesture = true;
             // Ordinary wheels can report NONE units or fractional text deltas after display scaling.
             // Only explicit gesture signals bypass animation; unmarked input uses the wheel fallback.
             boolean precise = gesture || event.isDirect() || event.getTouchCount() > 0 || event.isInertia();
@@ -179,6 +190,15 @@ final class ScrollUtils {
             double dy = precise ? -event.getDeltaY() : wheelDelta(event, false);
             if (!Double.isFinite(dx) || !Double.isFinite(dy))
                 return;
+
+            boolean panned = false;
+            if (event.isDirect() && !event.isInertia()) {
+                directGesture = true;
+                panned = pannedX != 0 || pannedY != 0;
+                dx -= pannedX;
+                dy -= pannedY;
+            }
+            clearPanning();
 
             if (event.isInertia()) {
                 stopWheel();
@@ -194,7 +214,8 @@ final class ScrollUtils {
 
             if (precise) {
                 stopWheel();
-                boolean moved = move(true, dx) != 0;
+                boolean moved = panned;
+                moved |= move(true, dx) != 0;
                 moved |= move(false, dy) != 0;
                 if (moved) {
                     if (event.isInertia() && inertia.start == 0)
@@ -264,9 +285,16 @@ final class ScrollUtils {
         /// Cancels queued movement and prevents old native inertia from resuming after a press.
         private void interrupt() {
             stopWheel();
+            clearPanning();
             suppressInertia = true;
             gesture = false;
             directGesture = false;
+        }
+
+        /// Discards native displacement that cannot belong to a later direct gesture.
+        private void clearPanning() {
+            pannedX = 0;
+            pannedY = 0;
         }
 
         /// Clears gesture state when the scrolling surface changes.
@@ -393,21 +421,40 @@ final class ScrollUtils {
             /// Original unused event to resume bubbling above the viewport.
             private @Nullable ScrollEvent unused;
 
+            /// Horizontal offset after child dispatch, or NaN if the child consumed the drag.
+            private double panStartX;
+
+            /// Vertical offset immediately before native viewport bubbling.
+            private double panStartY;
+
             /// Wraps the viewport's native dispatch while preserving its capture phase.
             private ViewportDispatcher(EventDispatcher dispatcher) {
                 this.dispatcher = dispatcher;
             }
 
-            /// Handles scroll input with isolated state for the uncommon reentrant dispatch case.
+            /// Coordinates scroll and native panning with isolated state for reentrant dispatch.
             @Override
             public @Nullable Event dispatchEvent(Event event, EventDispatchChain tail) {
-                if (!(event instanceof ScrollEvent) || event.getEventType() != ScrollEvent.SCROLL)
+                boolean panning = event instanceof MouseEvent mouse && mouse.isSynthesized()
+                        && mouse.getEventType() == MouseEvent.MOUSE_DRAGGED && !isDuplicateDrag(mouse);
+                if (!panning && (!(event instanceof ScrollEvent) || event.getEventType() != ScrollEvent.SCROLL))
                     return dispatcher.dispatchEvent(event, tail);
                 if (this.tail != null)
                     return new ViewportDispatcher(dispatcher).dispatchEvent(event, tail);
                 this.tail = tail;
+                double previousX = pannedX;
+                double previousY = pannedY;
+                panStartX = Double.NaN;
                 try {
-                    dispatcher.dispatchEvent(event, this);
+                    @Nullable Event result = dispatcher.dispatchEvent(event, this);
+                    if (panning) {
+                        if (!Double.isNaN(panStartX)) {
+                            // Position listeners interrupt animation during native panning; retain its credit.
+                            pannedX = previousX + position(true) - panStartX;
+                            pannedY = previousY + position(false) - panStartY;
+                        }
+                        return result;
+                    }
                     return unused;
                 } finally {
                     this.tail = null;
@@ -415,10 +462,15 @@ final class ScrollUtils {
                 }
             }
 
-            /// Gives descendants priority, then suppresses native displacement while retaining touch visibility.
+            /// Gives descendants priority, then measures native panning or replaces native scrolling.
             @Override
             public @Nullable Event dispatchEvent(Event event) {
                 @Nullable Event result = Objects.requireNonNull(tail).dispatchEvent(event);
+                if (result instanceof MouseEvent) {
+                    panStartX = position(true);
+                    panStartY = position(false);
+                    return result;
+                }
                 if (!(result instanceof ScrollEvent scroll))
                     return result;
                 onScroll(scroll);
@@ -459,6 +511,15 @@ final class ScrollUtils {
             return Math.max(0, horizontal
                     ? content.getLayoutBounds().getWidth() - pane.getViewportBounds().getWidth()
                     : content.getLayoutBounds().getHeight() - pane.getViewportBounds().getHeight());
+        }
+
+        /// Measures the pane's current displacement in content pixels, clamped to its overflow.
+        private double position(boolean horizontal) {
+            double min = horizontal ? pane.getHmin() : pane.getVmin();
+            double max = horizontal ? pane.getHmax() : pane.getVmax();
+            double value = horizontal ? pane.getHvalue() : pane.getVvalue();
+            double size = overflow(horizontal);
+            return max > min ? Math.max(0, Math.min(size, (value - min) / (max - min) * size)) : 0;
         }
 
         /// Clamps to the distance before an edge, including non-default scroll value ranges.

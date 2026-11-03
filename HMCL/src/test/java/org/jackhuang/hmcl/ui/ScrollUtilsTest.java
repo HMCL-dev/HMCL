@@ -271,6 +271,80 @@ final class ScrollUtilsTest {
         });
     }
 
+    /// The first direct delta includes movement already applied before native gesture recognition.
+    @Test
+    void touchDeductsPanningBeforeRecognition() throws Exception {
+        onFxThread(() -> {
+            for (boolean viewportTarget : new boolean @Unmodifiable []{false, true}) {
+                for (boolean started : new boolean @Unmodifiable []{false, true}) {
+                    ScrollPane pane = pane(800, 1600);
+                    pane.setPannable(true);
+                    Node target = requireNonNull(viewportTarget ? pane.lookup(".viewport") : pane.getContent());
+                    target.fireEvent(mouseAt(target, MouseEvent.MOUSE_PRESSED, true, 100, 100));
+                    target.fireEvent(mouseAt(target, MouseEvent.MOUSE_DRAGGED, true, 97, 95));
+                    assertEquals(3, offset(pane, true), 0.001);
+                    assertEquals(5, offset(pane, false), 0.001);
+                    target.fireEvent(mouseAt(target, MouseEvent.MOUSE_DRAGGED, true, 96, 93));
+                    assertEquals(4, offset(pane, true), 0.001);
+                    assertEquals(7, offset(pane, false), 0.001);
+                    if (started)
+                        send(target, ScrollEvent.SCROLL_STARTED, 0, 0, true, false, false);
+                    send(target, ScrollEvent.SCROLL, -8, -12, true, false, false);
+                    assertEquals(8, offset(pane, true), 0.001);
+                    assertEquals(12, offset(pane, false), 0.001);
+                    send(target, ScrollEvent.SCROLL, -4, -6, true, false, false);
+                    target.fireEvent(mouseAt(target, MouseEvent.MOUSE_DRAGGED, true, 88, 82));
+                    assertEquals(12, offset(pane, true), 0.001);
+                    assertEquals(18, offset(pane, false), 0.001);
+                }
+            }
+            return true;
+        });
+    }
+
+    /// A delta already applied by native panning is consumed without reaching ancestors a second time.
+    @Test
+    void fullyPannedTouchDeltaDoesNotBubble() throws Exception {
+        onFxThread(() -> {
+            ScrollPane pane = pane(800, 1600);
+            pane.setPannable(true);
+            Node target = requireNonNull(pane.getContent());
+            int[] bubbled = {0};
+            pane.getParent().addEventHandler(ScrollEvent.SCROLL, event -> bubbled[0]++);
+            target.fireEvent(mouseAt(target, MouseEvent.MOUSE_PRESSED, true, 100, 100));
+            target.fireEvent(mouseAt(target, MouseEvent.MOUSE_DRAGGED, true, 100, 95));
+            send(target, ScrollEvent.SCROLL, 0, -5, true, false, false);
+            assertEquals(5, offset(pane, false), 0.001);
+            assertEquals(0, bubbled[0]);
+            return true;
+        });
+    }
+
+    /// Releasing the pointer, changing position, or starting a new press discards old panning credit.
+    @Test
+    void previousPanningDoesNotAffectNewInput() throws Exception {
+        onFxThread(() -> {
+            for (int interruption = 0; interruption < 4; interruption++) {
+                ScrollPane pane = pane(800, 1600);
+                pane.setPannable(true);
+                Node target = requireNonNull(pane.getContent());
+                target.fireEvent(mouseAt(target, MouseEvent.MOUSE_PRESSED, true, 100, 100));
+                target.fireEvent(mouseAt(target, MouseEvent.MOUSE_DRAGGED, true, 100, 95));
+                assertEquals(5, offset(pane, false), 0.001);
+                switch (interruption) {
+                    case 0 -> target.fireEvent(mouseAt(target, MouseEvent.MOUSE_RELEASED, true, 100, 95));
+                    case 1 -> target.fireEvent(mouseAt(target, MouseEvent.MOUSE_PRESSED, true, 100, 95));
+                    case 2 -> pane.setVvalue(0.5);
+                    case 3 -> send(target, ScrollEvent.SCROLL_FINISHED, 0, 0, true, false, false);
+                }
+                double before = offset(pane, false);
+                send(target, ScrollEvent.SCROLL, 0, -12, true, false, false);
+                assertEquals(before + 12, offset(pane, false), 0.001);
+            }
+            return true;
+        });
+    }
+
     /// Touch-generated drags reach slider thumbs even when the surrounding pane also scrolls.
     @Test
     void touchPreservesSliderDragging() throws Exception {
@@ -289,9 +363,12 @@ final class ScrollUtilsTest {
                         ScrollUtils.addSmoothScrolling(pane);
                     layout(pane);
                     Node thumb = requireNonNull(slider.lookup(".thumb"));
-                    thumb.fireEvent(mouse(thumb, MouseEvent.MOUSE_PRESSED, true));
+                    Point2D pressed = slider.localToScene(140, 10);
+                    thumb.fireEvent(mouseAt(thumb, MouseEvent.MOUSE_PRESSED, true, pressed.getX(), pressed.getY()));
                     send(thumb, ScrollEvent.SCROLL, -12, 0, true, false, false);
-                    thumb.fireEvent(mouse(thumb, MouseEvent.MOUSE_DRAGGED, true));
+                    pane.layout();
+                    Point2D dragged = slider.localToScene(110, 10);
+                    thumb.fireEvent(mouseAt(thumb, MouseEvent.MOUSE_DRAGGED, true, dragged.getX(), dragged.getY()));
                     assertTrue(slider.getValue() < 50,
                             "width=" + width + ", smooth=" + smooth + ", value=" + slider.getValue());
                     if (smooth)
@@ -574,7 +651,8 @@ final class ScrollUtilsTest {
             for (ScrollPane pane : result)
                 send(requireNonNull(pane.lookup(".viewport")), ScrollEvent.SCROLL, 0, -40, false, false, true);
             finishWheel(smoothPane);
-            assertEquals(offset(nativePane, false), offset(smoothPane, false), 0.001);
+            assertTrue(offset(nativePane, false) > 0);
+            assertEquals(40, offset(smoothPane, false), 0.001);
             return result;
         });
         TimeUnit.MILLISECONDS.sleep(100);
@@ -610,7 +688,7 @@ final class ScrollUtilsTest {
             Node oldViewport = requireNonNull(pane.lookup(".viewport"));
             EventDispatcher original = requireNonNull(oldViewport.getEventDispatcher());
             ScrollUtils.addSmoothScrolling(pane);
-            pane.setSkin(new ScrollPaneSkin(pane));
+            pane.setSkin(new ReplacementScrollPaneSkin(pane));
             pane.applyCss();
             pane.layout();
             Node viewport = requireNonNull(pane.lookup(".viewport"));
@@ -880,9 +958,23 @@ final class ScrollUtilsTest {
     /// Creates mouse input for interrupting animation or checking synthesized touch compatibility.
     private static MouseEvent mouse(Node target, EventType<MouseEvent> type, boolean synthesized) {
         double position = type == MouseEvent.MOUSE_DRAGGED ? -20 : 10;
-        return new MouseEvent(type, position, position, position, position, MouseButton.PRIMARY, 1,
+        return mouseAt(target, type, synthesized, position, position);
+    }
+
+    /// Creates mouse input at explicit scene coordinates, independent of content scrolling.
+    private static MouseEvent mouseAt(Node target, EventType<MouseEvent> type, boolean synthesized, double x, double y) {
+        return new MouseEvent(type, x, y, x, y, MouseButton.PRIMARY, 1,
                 false, false, false, false, true, false, false, synthesized, false, true,
-                new PickResult(target, position, position));
+                new PickResult(target, x, y));
+    }
+
+    /// Uses a distinct skin class so JavaFX 17 also performs an actual replacement.
+    @NotNullByDefault
+    private static final class ReplacementScrollPaneSkin extends ScrollPaneSkin {
+        /// Creates a native scroll pane skin with a distinct runtime type.
+        private ReplacementScrollPaneSkin(ScrollPane pane) {
+            super(pane);
+        }
     }
 
     /// Advances installed animation timers beyond their end while keeping tests independent of pulse timing.
