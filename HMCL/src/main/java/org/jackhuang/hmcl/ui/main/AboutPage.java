@@ -68,7 +68,6 @@ public final class AboutPage extends SpinnerPane {
             system.setSubtitle((OperatingSystem.OS_RELEASE_PRETTY_NAME == null
                     ? "%s %s".formatted(OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion())
                     : "%s (%s %s)".formatted(OperatingSystem.OS_RELEASE_PRETTY_NAME, OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion())));
-            system.getTags().add(new Tag(Architecture.SYSTEM_ARCH.getDisplayName()));
             systemInfo.getContent().add(system);
 
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && SystemInfo.getDesktopEnvironment() != null) {
@@ -109,6 +108,7 @@ public final class AboutPage extends SpinnerPane {
                 pane.setTitle(title);
                 pane.setSubtitle(subtitle);
                 pane.setLeading(SVG.LUCIDE_CPU.createIcon(32));
+                pane.getTags().add(new Tag(Architecture.SYSTEM_ARCH.getDisplayName()));
                 deviceInfo.getContent().add(pane);
             }
 
