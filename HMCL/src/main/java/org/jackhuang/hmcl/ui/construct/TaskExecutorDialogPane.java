@@ -240,7 +240,7 @@ public class TaskExecutorDialogPane extends BorderPane implements DialogAware {
         if (executor == null)
             throw new IllegalStateException("No executor is attached");
         @Nullable TaskExecutor parentExecutor = parent == null
-                ? null 
+                ? null
                 : Objects.requireNonNull(parent.executor, "parent executor");
         queued.set(true);
         lblProgress.setText(i18n("task.queued"));

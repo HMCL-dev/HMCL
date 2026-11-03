@@ -117,7 +117,6 @@ public final class TaskManagerPage extends Control implements DecoratorPage {
             statusIcon.setPrefSize(32, 32);
             statusIcon.setMaxSize(32, 32);
             content.setMinWidth(0);
-            content.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(content, Priority.ALWAYS);
             HBox center = new HBox(8, statusIcon, content);
             center.setAlignment(Pos.CENTER_LEFT);
