@@ -5,6 +5,7 @@ package org.jackhuang.hmcl.util.platform.macos;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -31,6 +32,61 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @author Glavo
 @NotNullByDefault
 public final class MacOSHardwareDetector extends HardwareDetector {
+
+    /// Reads the model name from `system_profiler`, falling back to a model identifier.
+    ///
+    /// Uses `machine_name`, then `machine_model`, then `sysctl -n hw.model`.
+    /// Names use the shared whitespace and placeholder filtering. Returns `null` outside macOS
+    /// or when no valid value is available. Interrupted queries restore the interrupt flag and stop detection.
+    @Override
+    public @Nullable String detectDeviceName() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS)
+            return null;
+
+        try {
+            @Nullable String name = parseDeviceName(SystemUtils.run("/usr/sbin/system_profiler", "SPHardwareDataType", "-json"));
+            if (name != null)
+                return name;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        } catch (Exception e) {
+            LOG.warning("Failed to detect device name using system_profiler", e);
+        }
+
+        try {
+            return cleanDeviceName(SystemUtils.run("/usr/sbin/sysctl", "-n", "hw.model"));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        } catch (Exception e) {
+            LOG.warning("Failed to detect device name using sysctl", e);
+            return null;
+        }
+    }
+
+    /// Extracts a model name or identifier from the first usable hardware entry in profiler JSON.
+    /// Ignores missing, non-string, blank, and placeholder fields; returns `null` if none are usable.
+    /// Malformed JSON is rejected by Gson so the caller can fall back to another source.
+    static @Nullable String parseDeviceName(String json) {
+        @Nullable JsonElement root = JsonUtils.GSON.fromJson(json, JsonElement.class);
+        if (!(root instanceof JsonObject object)
+                || !(object.get("SPHardwareDataType") instanceof JsonArray hardware))
+            return null;
+
+        for (JsonElement element : hardware) {
+            if (!(element instanceof JsonObject item))
+                continue;
+            for (String key : List.of("machine_name", "machine_model")) {
+                if (item.get(key) instanceof JsonPrimitive value && value.isString()) {
+                    @Nullable String name = cleanDeviceName(value.getAsString());
+                    if (name != null)
+                        return name;
+                }
+            }
+        }
+        return null;
+    }
 
     /// Detects macOS processors, using the default detector when native information is unavailable.
     @Override
