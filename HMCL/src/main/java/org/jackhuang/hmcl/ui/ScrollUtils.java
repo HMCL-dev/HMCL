@@ -223,12 +223,17 @@ final class ScrollUtils {
                     event.consume();
                 }
             } else {
+                pendingX = cancelReversal(pendingX, dx);
+                pendingY = cancelReversal(pendingY, dy);
                 double x = limit(true, dx);
                 double y = limit(false, dy);
-                if (x == 0 && y == 0)
+                if (x == 0 && y == 0) {
+                    if (pendingX == 0 && pendingY == 0)
+                        stopWheel();
                     return;
-                pendingX = accumulate(pendingX, x, true);
-                pendingY = accumulate(pendingY, y, false);
+                }
+                pendingX = limit(true, pendingX + x);
+                pendingY = limit(false, pendingY + y);
                 boolean running = wheelStart != 0;
                 wheelStart = now;
                 wheelProgress = 0;
@@ -239,11 +244,9 @@ final class ScrollUtils {
             }
         }
 
-        /// Drops old momentum on reversal and keeps queued movement within the available range.
-        private double accumulate(double pending, double delta, boolean horizontal) {
-            if (delta != 0 && Math.signum(pending) != Math.signum(delta))
-                pending = 0;
-            return limit(horizontal, pending + delta);
+        /// Drops queued movement opposing raw input, even when an edge prevents new displacement.
+        private static double cancelReversal(double pending, double delta) {
+            return delta != 0 && Math.signum(pending) != Math.signum(delta) ? 0 : pending;
         }
 
         /// Applies this frame's eased fraction, ending exactly at the requested displacement.
@@ -567,15 +570,7 @@ final class ScrollUtils {
         FlowController(VirtualFlow<?> flow) {
             super(flow);
             this.flow = flow;
-            EventDispatcher dispatcher = Objects.requireNonNull(flow.getEventDispatcher());
-            flow.setEventDispatcher((event, tail) -> {
-                if (isDuplicateDrag(event)) {
-                    // Bypass the flow's panning filter while preserving delivery to cell controls.
-                    tail.dispatchEvent(event);
-                    return null;
-                }
-                return dispatcher.dispatchEvent(event, tail);
-            });
+            flow.setEventDispatcher(new FlowDispatcher(Objects.requireNonNull(flow.getEventDispatcher())));
             @Nullable EventHandler<? super ScrollEvent> nativeHandler = flow.getOnScroll();
             flow.setOnScroll(event -> {
                 // The touch skin must reveal its bars before scrollPixels can move cells.
@@ -588,6 +583,117 @@ final class ScrollUtils {
             flow.positionProperty().addListener(observable -> positionChanged());
             flow.verticalProperty().addListener(observable -> reset());
             flow.cellCountProperty().addListener(observable -> reset());
+        }
+
+        /// Measures native capture-phase panning before descendants can change the flow themselves.
+        @NotNullByDefault
+        private final class FlowDispatcher implements EventDispatcher, EventDispatchChain {
+            /// Native flow dispatcher, including its panning filters.
+            private final EventDispatcher dispatcher;
+
+            /// Active child chain, never inserted into JavaFX's reusable dispatch chain.
+            private @Nullable EventDispatchChain tail;
+
+            /// Whether native panning still needs to be measured for this dispatch.
+            private boolean recording;
+
+            /// Index of the first visible cell before native panning, or -1 for an empty flow.
+            private int firstIndex;
+
+            /// Layout position of the first visible cell before native panning.
+            private double firstPosition;
+
+            /// Breadth scrollbar value before native panning.
+            private double breadthPosition;
+
+            /// Horizontal panning credit preserved across native position-change notifications.
+            private double previousX;
+
+            /// Vertical panning credit preserved across native position-change notifications.
+            private double previousY;
+
+            /// Wraps native dispatch without changing ordinary mouse or wheel input.
+            private FlowDispatcher(EventDispatcher dispatcher) {
+                this.dispatcher = dispatcher;
+            }
+
+            /// Suppresses duplicate drags and measures early synthesized panning with reentrant isolation.
+            @Override
+            public @Nullable Event dispatchEvent(Event event, EventDispatchChain tail) {
+                if (isDuplicateDrag(event)) {
+                    tail.dispatchEvent(event);
+                    return null;
+                }
+                if (!(event instanceof MouseEvent mouse) || !mouse.isSynthesized()
+                        || mouse.getEventType() != MouseEvent.MOUSE_DRAGGED || !flow.isPannable())
+                    return dispatcher.dispatchEvent(event, tail);
+                if (this.tail != null)
+                    return new FlowDispatcher(dispatcher).dispatchEvent(event, tail);
+                @Nullable IndexedCell<?> first = flow.getFirstVisibleCell();
+                firstIndex = first == null ? -1 : first.getIndex();
+                firstPosition = first == null ? 0 : flow.isVertical() ? first.getLayoutY() : first.getLayoutX();
+                @Nullable ScrollBar breadth = bar(flow.isVertical());
+                breadthPosition = breadth == null ? 0 : breadth.getValue();
+                previousX = pannedX;
+                previousY = pannedY;
+                this.tail = tail;
+                recording = true;
+                try {
+                    @Nullable Event result = dispatcher.dispatchEvent(event, this);
+                    recordPanning();
+                    return result;
+                } finally {
+                    recording = false;
+                    this.tail = null;
+                }
+            }
+
+            /// Records capture-phase displacement before dispatching to cell controls.
+            @Override
+            public @Nullable Event dispatchEvent(Event event) {
+                recordPanning();
+                return Objects.requireNonNull(tail).dispatchEvent(event);
+            }
+
+            /// Preserves actual pixel movement even when panning recycles variable-size cells.
+            private void recordPanning() {
+                if (!recording)
+                    return;
+                recording = false;
+                double length = 0;
+                @Nullable IndexedCell<?> first = flow.getFirstVisibleCell();
+                if (firstIndex >= 0 && first != null) {
+                    int index = first.getIndex();
+                    length = firstPosition - (flow.isVertical() ? first.getLayoutY() : first.getLayoutX());
+                    if (flow.getFixedCellSize() > 0) {
+                        length += (index - firstIndex) * flow.getFixedCellSize();
+                    } else {
+                        int direction = Integer.compare(index, firstIndex);
+                        for (int i = Math.min(index, firstIndex); i < Math.max(index, firstIndex); i++) {
+                            IndexedCell<?> cell = flow.getCell(i);
+                            length += direction * (flow.isVertical() ? cell.getHeight() : cell.getWidth());
+                        }
+                    }
+                }
+                @Nullable ScrollBar breadth = bar(flow.isVertical());
+                double cross = breadth == null ? 0 : breadth.getValue() - breadthPosition;
+                pannedX = previousX + (flow.isVertical() ? cross : length);
+                pannedY = previousY + (flow.isVertical() ? length : cross);
+            }
+
+            /// Appends a caller's dispatcher without adding this adapter to the shared chain.
+            @Override
+            public EventDispatchChain append(EventDispatcher dispatcher) {
+                tail = Objects.requireNonNull(tail).append(dispatcher);
+                return this;
+            }
+
+            /// Prepends a caller's dispatcher while retaining the capture-phase measurement boundary.
+            @Override
+            public EventDispatchChain prepend(EventDispatcher dispatcher) {
+                tail = Objects.requireNonNull(tail).prepend(dispatcher);
+                return this;
+            }
         }
 
         /// Finds the flow's own scrollbar on the requested axis.

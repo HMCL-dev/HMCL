@@ -226,6 +226,153 @@ final class ScrollUtilsTest {
         });
     }
 
+    /// Reversing at an edge cancels queued movement even before the first animation pulse.
+    @Test
+    void wheelReversalAtBoundaryCancelsQueue() throws Exception {
+        onFxThread(() -> {
+            for (boolean end : new boolean @Unmodifiable []{false, true}) {
+                double delta = end ? 80 : -80;
+                ScrollPane pane = pane(800, 1600);
+                pane.setHvalue(end ? 1 : 0);
+                pane.setVvalue(end ? 1 : 0);
+                double x = offset(pane, true);
+                double y = offset(pane, false);
+                send(pane.getContent(), ScrollEvent.SCROLL, delta, delta, false, false, false);
+                send(pane.getContent(), ScrollEvent.SCROLL, -delta, -delta, false, false, false);
+                finishWheel(pane);
+                assertEquals(x, offset(pane, true), 0.001);
+                assertEquals(y, offset(pane, false), 0.001);
+
+                VirtualFlow<?> flow = flow(true);
+                flow.setPosition(end ? 1 : 0);
+                flow.layout();
+                send(flow, ScrollEvent.SCROLL, 0, delta, false, false, false);
+                send(flow, ScrollEvent.SCROLL, 0, -delta, false, false, false);
+                finishWheel(flow);
+                assertEquals(end ? 1 : 0, flow.getPosition(), 0.001);
+            }
+            ScrollPane pane = pane(800, 1600);
+            send(pane.getContent(), ScrollEvent.SCROLL, -80, -80, false, false, false);
+            send(pane.getContent(), ScrollEvent.SCROLL, 80, 0, false, false, false);
+            finishWheel(pane);
+            assertEquals(0, offset(pane, true), 0.001);
+            assertEquals(80, offset(pane, false), 0.001);
+            return true;
+        });
+    }
+
+    /// A reversal handed to an ancestor cannot leave the inner pane moving the opposite way.
+    @Test
+    void nestedWheelReversalCancelsInnerQueue() throws Exception {
+        onFxThread(() -> {
+            ScrollPane inner = new ScrollPane(content(600, 900));
+            inner.setPrefSize(200, 180);
+            inner.setMaxSize(200, 180);
+            Pane content = new Pane(inner);
+            content.setMinSize(800, 1600);
+            content.setPrefSize(800, 1600);
+            ScrollPane outer = new ScrollPane(content);
+            ScrollUtils.addSmoothScrolling(outer);
+            ScrollUtils.addSmoothScrolling(inner);
+            layout(outer);
+            outer.setVvalue(0.5);
+            double before = offset(outer, false);
+            send(inner.getContent(), ScrollEvent.SCROLL, 0, -80, false, false, false);
+            send(inner.getContent(), ScrollEvent.SCROLL, 0, 80, false, false, false);
+            finishWheel(inner);
+            finishWheel(outer);
+            assertEquals(0, offset(inner, false), 0.001);
+            assertEquals(before - 80, offset(outer, false), 0.001);
+            return true;
+        });
+    }
+
+    /// Virtual-flow panning before recognition is counted only once in either orientation.
+    @Test
+    void virtualFlowDeductsPanningBeforeRecognition() throws Exception {
+        onFxThread(() -> {
+            for (boolean vertical : new boolean @Unmodifiable []{false, true}) {
+                VirtualFlow<?> flow = flow(vertical);
+                flow.setPannable(true);
+                flow.fireEvent(mouseAt(flow, MouseEvent.MOUSE_PRESSED, true, 100, 100));
+                flow.fireEvent(mouseAt(flow, MouseEvent.MOUSE_DRAGGED, true, vertical ? 100 : 95, vertical ? 95 : 100));
+                IndexedCell<?> first = requireNonNull(flow.getFirstVisibleCell());
+                assertEquals(-5, vertical ? first.getLayoutY() : first.getLayoutX(), 0.001);
+                send(flow, ScrollEvent.SCROLL_STARTED, 0, 0, true, false, false);
+                send(flow, ScrollEvent.SCROLL, vertical ? 0 : -12, vertical ? -12 : 0, true, false, false);
+                first = requireNonNull(flow.getFirstVisibleCell());
+                assertEquals(-12, vertical ? first.getLayoutY() : first.getLayoutX(), 0.001);
+                send(flow, ScrollEvent.SCROLL, vertical ? 0 : -6, vertical ? -6 : 0, true, false, false);
+                flow.fireEvent(mouseAt(flow, MouseEvent.MOUSE_DRAGGED, true, 82, 82));
+                first = requireNonNull(flow.getFirstVisibleCell());
+                assertEquals(-18, vertical ? first.getLayoutY() : first.getLayoutX(), 0.001);
+            }
+            return true;
+        });
+    }
+
+    /// Recognition preserves both axes across repeated native drags and variable-size cell recycling.
+    @Test
+    void virtualFlowMeasuresPanningAcrossCells() throws Exception {
+        onFxThread(() -> {
+            ListView<String> list = new ListView<>();
+            list.setCellFactory(view -> {
+                ListCell<String> cell = new ListCell<>();
+                cell.setMinHeight(Region.USE_PREF_SIZE);
+                cell.setMaxHeight(Region.USE_PREF_SIZE);
+                cell.setMinWidth(900);
+                cell.setPrefWidth(900);
+                cell.indexProperty().addListener((observable, oldIndex, index) ->
+                        cell.setPrefHeight(20 + Math.floorMod(index.intValue(), 3) * 10));
+                return cell;
+            });
+            for (int i = 0; i < 100; i++)
+                list.getItems().add("Cell " + i);
+            layout(list);
+            VirtualFlow<?> flow = (VirtualFlow<?>) requireNonNull(list.lookup(".virtual-flow"));
+            ScrollUtils.addSmoothScrolling(flow);
+            flow.setPannable(true);
+            ScrollBar breadth = flow.getChildrenUnmodifiable().stream()
+                    .filter(node -> node instanceof ScrollBar bar && bar.getOrientation() == Orientation.HORIZONTAL)
+                    .map(ScrollBar.class::cast).findFirst().orElseThrow();
+            breadth.setVisible(true);
+            flow.fireEvent(mouseAt(flow, MouseEvent.MOUSE_PRESSED, true, 150, 150));
+            flow.fireEvent(mouseAt(flow, MouseEvent.MOUSE_DRAGGED, true, 147, 108));
+            flow.fireEvent(mouseAt(flow, MouseEvent.MOUSE_DRAGGED, true, 145, 85));
+            IndexedCell<?> first = requireNonNull(flow.getFirstVisibleCell());
+            assertEquals(2, first.getIndex());
+            assertEquals(-15, first.getLayoutY(), 0.001);
+            assertEquals(5, breadth.getValue(), 0.001);
+            send(flow, ScrollEvent.SCROLL, -12, -92, true, false, false);
+            first = requireNonNull(flow.getFirstVisibleCell());
+            assertEquals(3, first.getIndex());
+            assertEquals(-2, first.getLayoutY(), 0.001);
+            assertEquals(12, breadth.getValue(), 0.001);
+            return true;
+        });
+    }
+
+    /// Recognition deducts only available native movement, and release clears that credit.
+    @Test
+    void virtualFlowPanningCreditRespectsEdgesAndRelease() throws Exception {
+        onFxThread(() -> {
+            VirtualFlow<?> flow = flow(true);
+            flow.setPannable(true);
+            send(flow, ScrollEvent.SCROLL, 0, -3, true, false, false);
+            flow.fireEvent(mouseAt(flow, MouseEvent.MOUSE_PRESSED, true, 100, 100));
+            flow.fireEvent(mouseAt(flow, MouseEvent.MOUSE_DRAGGED, true, 100, 105));
+            assertEquals(0, flow.getPosition(), 0.001);
+            send(flow, ScrollEvent.SCROLL, 0, 12, true, false, false);
+            assertEquals(0, flow.getPosition(), 0.001);
+            flow.fireEvent(mouseAt(flow, MouseEvent.MOUSE_PRESSED, true, 100, 100));
+            flow.fireEvent(mouseAt(flow, MouseEvent.MOUSE_DRAGGED, true, 100, 95));
+            flow.fireEvent(mouseAt(flow, MouseEvent.MOUSE_RELEASED, true, 100, 95));
+            send(flow, ScrollEvent.SCROLL, 0, -12, true, false, false);
+            assertEquals(-17, requireNonNull(flow.getFirstVisibleCell()).getLayoutY(), 0.001);
+            return true;
+        });
+    }
+
     /// A mouse press cancels wheel movement and stale native inertia, but allows fresh input.
     @Test
     void pressingStopsScrolling() throws Exception {
