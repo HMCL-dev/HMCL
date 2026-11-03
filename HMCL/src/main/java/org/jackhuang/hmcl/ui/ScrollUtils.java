@@ -77,6 +77,16 @@ final class ScrollUtils {
         private long start;
     }
 
+    /// Native displacement shared by all controllers participating in one direct scroll event.
+    @NotNullByDefault
+    private static final class Panning {
+        /// Horizontal content displacement already applied before gesture recognition.
+        private double x;
+
+        /// Vertical content displacement already applied before gesture recognition.
+        private double y;
+    }
+
     /// Coordinates gesture lifecycles and a short, time-based wheel animation.
     @NotNullByDefault
     private abstract static class Controller extends AnimationTimer {
@@ -104,11 +114,11 @@ final class ScrollUtils {
         /// Vertical native panning already included in the first direct scroll delta.
         double pannedY;
 
-        /// Horizontal panning eligible for deduction by the currently dispatched direct event only.
-        private double eventPannedX;
+        /// Reusable displacement scope when this controller is the outermost participant.
+        private final Panning panning = new Panning();
 
-        /// Vertical panning eligible for deduction by the currently dispatched direct event only.
-        private double eventPannedY;
+        /// Shared displacement for the currently dispatched direct event, or null outside dispatch.
+        private @Nullable Panning eventPanning;
 
         /// Whether a press has cancelled the previous gesture's inertia.
         private boolean suppressInertia;
@@ -129,17 +139,29 @@ final class ScrollUtils {
                 if (!(event instanceof ScrollEvent scroll) || scroll.getEventType() != ScrollEvent.SCROLL
                         || !scroll.isDirect() || scroll.isInertia())
                     return dispatcher.dispatchEvent(event, tail);
-                double previousX = eventPannedX;
-                double previousY = eventPannedY;
-                eventPannedX = pannedX;
-                eventPannedY = pannedY;
+                @Nullable Panning previous = eventPanning;
+                @Nullable Panning shared = null;
+                for (@Nullable Node parent = node.getParent(); parent != null; parent = parent.getParent()) {
+                    if (parent.hasProperties() && parent.getProperties().get(CONTROLLER_KEY) instanceof Controller controller
+                            && controller.eventPanning != null) {
+                        shared = controller.eventPanning;
+                        break;
+                    }
+                }
+                if (shared == null) {
+                    shared = previous == null ? panning : new Panning();
+                    shared.x = 0;
+                    shared.y = 0;
+                }
+                shared.x += pannedX;
+                shared.y += pannedY;
+                eventPanning = shared;
                 clearPanning();
                 try {
                     return dispatcher.dispatchEvent(event, tail);
                 } finally {
                     // Consumption by descendants must expire credit too; nested dispatch keeps its own scope.
-                    eventPannedX = previousX;
-                    eventPannedY = previousY;
+                    eventPanning = previous;
                 }
             });
             node.addEventFilter(ScrollEvent.ANY, event -> observeScroll(node, event));
@@ -221,6 +243,11 @@ final class ScrollUtils {
         /// Returns a wheel displacement in pixels, respecting page scroll settings.
         abstract double wheelDelta(ScrollEvent event, boolean horizontal);
 
+        /// Maps continuous input to pixels without applying wheel line or page scaling.
+        double gestureDelta(ScrollEvent event, boolean horizontal) {
+            return horizontal ? -event.getDeltaX() : -event.getDeltaY();
+        }
+
         /// Handles gestures before the native skin, consuming only accepted movement or inertia.
         final void onScroll(ScrollEvent event) {
             if (event.isConsumed())
@@ -232,18 +259,16 @@ final class ScrollUtils {
             // Ordinary wheels can report NONE units or fractional text deltas after display scaling.
             // Only explicit gesture signals bypass animation; unmarked input uses the wheel fallback.
             boolean precise = isPrecise(event);
-            double dx = precise ? -event.getDeltaX() : wheelDelta(event, true);
-            double dy = precise ? -event.getDeltaY() : wheelDelta(event, false);
+            double dx = precise ? gestureDelta(event, true) : wheelDelta(event, true);
+            double dy = precise ? gestureDelta(event, false) : wheelDelta(event, false);
             if (!Double.isFinite(dx) || !Double.isFinite(dy))
                 return;
 
             boolean panned = false;
-            if (event.isDirect() && !event.isInertia()) {
-                panned = eventPannedX != 0 || eventPannedY != 0;
-                dx -= eventPannedX;
-                dy -= eventPannedY;
-                eventPannedX = 0;
-                eventPannedY = 0;
+            if (event.isDirect() && !event.isInertia() && eventPanning != null) {
+                panned = eventPanning.x != 0 || eventPanning.y != 0;
+                dx -= eventPanning.x;
+                dy -= eventPanning.y;
             }
             clearPanning();
 
@@ -261,7 +286,8 @@ final class ScrollUtils {
 
             if (precise) {
                 stopWheel();
-                boolean moved = panned;
+                // Keep shared credit available if this controller cannot apply the remaining movement.
+                boolean moved = panned && dx == 0 && dy == 0;
                 moved |= move(true, dx) != 0;
                 moved |= move(false, dy) != 0;
                 if (moved) {
@@ -813,6 +839,14 @@ final class ScrollUtils {
             if (bar != null && !bar.isVisible() && !bar.visibleProperty().isBound())
                 bar.setVisible(true);
             return flow.scrollPixels(pixels);
+        }
+
+        /// Preserves horizontal-list trackpad mapping while direct touch follows the physical finger axes.
+        @Override
+        double gestureDelta(ScrollEvent event, boolean horizontal) {
+            if (horizontal && !flow.isVertical() && !event.isDirect())
+                return -(Math.abs(event.getDeltaX()) > Math.abs(event.getDeltaY()) ? event.getDeltaX() : event.getDeltaY());
+            return super.gestureDelta(event, horizontal);
         }
 
         /// Respects system line/page settings for wheels without scaling touch gestures by cell size.

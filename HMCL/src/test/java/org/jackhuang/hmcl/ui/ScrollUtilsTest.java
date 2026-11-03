@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.setting.LauncherSettings;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin;
+import org.jackhuang.hmcl.util.MathUtils;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -103,6 +104,31 @@ final class ScrollUtilsTest {
             assertEquals(168.5, offset(pane, false), 0.001);
             send(pane.getContent(), ScrollEvent.SCROLL, 0, -40, false, false, true);
             assertEquals(208.5, offset(pane, false), 0.001);
+            return true;
+        });
+    }
+
+    /// Horizontal lists map indirect vertical gestures to their length, while touch remains directional.
+    @Test
+    void horizontalFlowMapsTrackpadGestures() throws Exception {
+        onFxThread(() -> {
+            VirtualFlow<?> flow = flow(false);
+            send(flow, ScrollEvent.SCROLL_STARTED, 0, 0, false, false, false);
+            send(flow, ScrollEvent.SCROLL, 0, -60, false, false, false);
+            IndexedCell<?> first = requireNonNull(flow.getFirstVisibleCell());
+            assertEquals(60, first.getIndex() * 24 - first.getLayoutX(), 0.001);
+            send(flow, ScrollEvent.SCROLL_FINISHED, 0, 0, false, false, false);
+            send(flow, ScrollEvent.SCROLL, 0, -20, false, true, false);
+            first = requireNonNull(flow.getFirstVisibleCell());
+            assertEquals(80, first.getIndex() * 24 - first.getLayoutX(), 0.001);
+
+            VirtualFlow<?> touch = flow(false);
+            send(touch, ScrollEvent.SCROLL_STARTED, 0, 0, true, false, false);
+            send(touch, ScrollEvent.SCROLL, 0, -60, true, false, false);
+            assertEquals(0, touch.getPosition(), 0.001);
+            send(touch, ScrollEvent.SCROLL, -60, 0, true, false, false);
+            first = requireNonNull(touch.getFirstVisibleCell());
+            assertEquals(60, first.getIndex() * 24 - first.getLayoutX(), 0.001);
             return true;
         });
     }
@@ -460,7 +486,7 @@ final class ScrollUtilsTest {
             inner.layout();
             inner.setVvalue(1);
             double size = offset(inner, false);
-            inner.setVvalue(1 - 12 / size);
+            inner.setVvalue(1 - 7 / size);
             Node target = requireNonNull(inner.getContent());
             target.fireEvent(mouseAt(target, MouseEvent.MOUSE_PRESSED, true, 50, 50));
             target.fireEvent(mouseAt(target, MouseEvent.MOUSE_DRAGGED, true, 50, 45));
@@ -493,6 +519,92 @@ final class ScrollUtilsTest {
             assertEquals(14, offset(pane, false), 0.001);
             send(content, ScrollEvent.SCROLL, 0, -3, true, false, false);
             assertEquals(17, offset(pane, false), 0.001);
+            return true;
+        });
+    }
+
+    /// The inner consumer deducts native movement already applied by its outer virtual flow.
+    @Test
+    void nestedTouchSharesAncestorPanningCredit() throws Exception {
+        onFxThread(() -> {
+            VirtualFlow<?> flow = flow(true);
+            flow.setFixedCellSize(180);
+            flow.setPannable(true);
+            flow.layout();
+            IndexedCell<?> cell = requireNonNull(flow.getFirstVisibleCell());
+            ScrollPane inner = new ScrollPane(content(800, 1600));
+            inner.setPrefSize(200, 120);
+            inner.setMaxSize(200, 120);
+            ScrollUtils.addSmoothScrolling(inner);
+            cell.setGraphic(inner);
+            cell.applyCss();
+            cell.layout();
+            inner.layout();
+            Node target = requireNonNull(inner.getContent());
+            target.fireEvent(mouseAt(target, MouseEvent.MOUSE_PRESSED, true, 50, 50));
+            target.fireEvent(mouseAt(target, MouseEvent.MOUSE_DRAGGED, true, 50, 45));
+            assertEquals(-5, requireNonNull(flow.getFirstVisibleCell()).getLayoutY(), 0.001);
+            send(target, ScrollEvent.SCROLL, 0, -12, true, false, false);
+            assertEquals(7, offset(inner, false), 0.001);
+            assertEquals(-5, requireNonNull(flow.getFirstVisibleCell()).getLayoutY(), 0.001);
+            send(target, ScrollEvent.SCROLL, 0, -2, true, false, false);
+            assertEquals(9, offset(inner, false), 0.001);
+
+            inner.setVvalue(1);
+            flow.setPosition(0);
+            flow.layout();
+            target.fireEvent(mouseAt(target, MouseEvent.MOUSE_PRESSED, true, 50, 50));
+            target.fireEvent(mouseAt(target, MouseEvent.MOUSE_DRAGGED, true, 50, 45));
+            assertEquals(-5, requireNonNull(flow.getFirstVisibleCell()).getLayoutY(), 0.001);
+            send(target, ScrollEvent.SCROLL, 0, -12, true, false, false);
+            assertEquals(1, inner.getVvalue(), 0.001);
+            assertEquals(-12, requireNonNull(flow.getFirstVisibleCell()).getLayoutY(), 0.001);
+            return true;
+        });
+    }
+
+    /// Thumb dragging preserves different grab offsets and uses only the thumb's available travel.
+    @Test
+    void floatingScrollbarPreservesTouchGrabOffset() throws Exception {
+        onFxThread(() -> {
+            for (Orientation orientation : Orientation.values()) {
+                for (double grab : new double @Unmodifiable []{0.2, 0.5, 0.8}) {
+                    ScrollBar bar = new ScrollBar();
+                    bar.setOrientation(orientation);
+                    bar.setMin(10);
+                    bar.setMax(30);
+                    bar.setVisibleAmount(10);
+                    bar.setValue(10);
+                    bar.setSkin(new FloatScrollBarSkin(bar));
+                    layout(bar);
+                    boolean vertical = orientation == Orientation.VERTICAL;
+                    bar.resize(vertical ? 12 : 208, vertical ? 208 : 12);
+                    bar.layout();
+                    Node thumb = requireNonNull(bar.lookup(".thumb"));
+                    Node track = requireNonNull(bar.lookup(".track"));
+                    assertEquals(200, vertical ? track.getBoundsInLocal().getHeight() : track.getBoundsInLocal().getWidth(), 0.001);
+                    assertEquals(100, vertical ? thumb.getBoundsInLocal().getHeight() : thumb.getBoundsInLocal().getWidth(), 0.001);
+                    Point2D press = thumb.localToScene(
+                            thumb.getBoundsInLocal().getMinX() + thumb.getBoundsInLocal().getWidth() * grab,
+                            thumb.getBoundsInLocal().getMinY() + thumb.getBoundsInLocal().getHeight() * grab);
+                    thumb.fireEvent(mouseAt(thumb, MouseEvent.MOUSE_PRESSED, true, press.getX(), press.getY()));
+                    sendDirectAt(thumb, press.getX() + (vertical ? 0 : 5), press.getY() + (vertical ? 5 : 0));
+                    assertEquals(11, bar.getValue(), 0.001);
+                    sendDirectAt(thumb, press.getX() + (vertical ? 0 : 10), press.getY() + (vertical ? 10 : 0));
+                    assertEquals(12, bar.getValue(), 0.001);
+                    sendDirectAt(thumb, press.getX(), press.getY());
+                    assertEquals(10, bar.getValue(), 0.001);
+                    thumb.fireEvent(mouseAt(thumb, MouseEvent.MOUSE_RELEASED, true, press.getX(), press.getY()));
+                    send(thumb, ScrollEvent.SCROLL_FINISHED, 0, 0, true, false, false);
+                    send(thumb, ScrollEvent.SCROLL, 5, 5, true, true, false);
+                    assertEquals(10, bar.getValue(), 0.001);
+                    bar.setValue(14);
+                    Point2D nextPress = thumb.localToScene(thumb.getBoundsInLocal().getCenterX(), thumb.getBoundsInLocal().getCenterY());
+                    thumb.fireEvent(mouseAt(thumb, MouseEvent.MOUSE_PRESSED, true, nextPress.getX(), nextPress.getY()));
+                    sendDirectAt(thumb, nextPress.getX() + (vertical ? 0 : 5), nextPress.getY() + (vertical ? 5 : 0));
+                    assertEquals(15, bar.getValue(), 0.001);
+                }
+            }
             return true;
         });
     }
@@ -543,7 +655,10 @@ final class ScrollUtilsTest {
                             ScrollEvent.HorizontalTextScrollUnits.NONE, 0,
                             ScrollEvent.VerticalTextScrollUnits.NONE, 0, 1,
                             new PickResult(target, point.getX(), point.getY())));
-                    double expected = bar.getMin() + 0.75 * (bar.getMax() - bar.getMin());
+                    double length = orientation == Orientation.VERTICAL ? track.getBoundsInLocal().getHeight() : track.getBoundsInLocal().getWidth();
+                    double thumbLength = orientation == Orientation.VERTICAL ? thumb.getBoundsInLocal().getHeight() : thumb.getBoundsInLocal().getWidth();
+                    double fraction = target == thumb ? (0.75 * length - thumbLength / 2) / (length - thumbLength) : 0.75;
+                    double expected = bar.getMin() + MathUtils.clamp(fraction, 0, 1) * (bar.getMax() - bar.getMin());
                     assertEquals(expected, bar.getValue(), 0.001);
                     assertTrue(orientation == Orientation.VERTICAL ? pane.getVvalue() > 0 : pane.getHvalue() > 0);
                     target.fireEvent(mouseAt(target, MouseEvent.MOUSE_DRAGGED, true, point.getX(), point.getY()));
@@ -1400,6 +1515,14 @@ final class ScrollUtilsTest {
                 direct, inertia, dx, dy, dx, dy, ScrollEvent.HorizontalTextScrollUnits.NONE, 0,
                 lines ? ScrollEvent.VerticalTextScrollUnits.LINES : ScrollEvent.VerticalTextScrollUnits.NONE,
                 lines ? Math.signum(dy) * 3 : 0, direct ? 1 : 0, new PickResult(target, 10, 10)));
+    }
+
+    /// Sends direct positioning input at scene coordinates to a grabbed thumb or track.
+    private static void sendDirectAt(Node target, double x, double y) {
+        target.fireEvent(new ScrollEvent(ScrollEvent.SCROLL, x, y, x, y,
+                false, false, false, false, true, false, 5, 5, 5, 5,
+                ScrollEvent.HorizontalTextScrollUnits.NONE, 0,
+                ScrollEvent.VerticalTextScrollUnits.NONE, 0, 1, new PickResult(target, x, y)));
     }
 
     /// Dispatches wheel input whose pixel and text deltas have been divided by the display scale.
