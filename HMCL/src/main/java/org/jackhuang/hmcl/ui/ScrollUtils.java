@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui;
 
 import javafx.animation.AnimationTimer;
-import javafx.animation.Interpolator;
 import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
@@ -23,6 +22,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.TouchEvent;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,9 +39,6 @@ final class ScrollUtils {
 
     /// Material 3 short3 duration, in nanoseconds, for discrete wheel movement.
     private static final long WHEEL_DURATION = 150_000_000L;
-
-    /// Material 3 standard decelerate easing for an immediately responsive wheel step.
-    private static final Interpolator WHEEL_EASING = Interpolator.SPLINE(0, 0, 0, 1);
 
     /// Maximum native inertia tail, in nanoseconds; active gestures are never attenuated.
     private static final long INERTIA_DURATION = 200_000_000L;
@@ -300,7 +297,9 @@ final class ScrollUtils {
             if (wheelStart == 0)
                 return;
             double fraction = Math.max(0, Math.min(1, (double) (now - wheelStart) / WHEEL_DURATION));
-            double progress = WHEEL_EASING.interpolate(0.0, 1.0, fraction);
+            // Preserve exact endpoints despite the shared curve's approximate solver.
+            double progress = fraction == 0 || fraction == 1 ? fraction
+                    : Motion.STANDARD_DECELERATE.interpolate(0.0, 1.0, fraction);
             double step = (progress - wheelProgress) / (1 - wheelProgress);
             pendingX = advance(true, pendingX, step);
             pendingY = advance(false, pendingY, step);
