@@ -48,6 +48,30 @@ public final class WindowsHardwareDetector extends HardwareDetector {
         return WindowsGPUDetector.detect();
     }
 
+    /// Reads `SystemProductName` from `HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS` using JNA.
+    ///
+    /// Applies the shared hardware model name cleaning and placeholder filtering.
+    /// Returns `null` outside Windows, when native access is disabled or unavailable, or if the value
+    /// is missing, not a string, invalid, or cannot be read.
+    @Override
+    public @Nullable String detectDeviceName() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS || !NativeUtils.USE_JNA)
+            return null;
+
+        try {
+            @Nullable WinReg registry = WinReg.INSTANCE;
+            if (registry == null)
+                return null;
+
+            @Nullable Object value = registry.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
+                    "HARDWARE\\DESCRIPTION\\System\\BIOS", "SystemProductName");
+            return value instanceof String name ? cleanDeviceName(name) : null;
+        } catch (RuntimeException | LinkageError e) {
+            LOG.warning("Failed to detect device name", e);
+            return null;
+        }
+    }
+
     /// Queries current page file capacity in bytes; returns zero for no page files, or -1 on failure.
     @Override
     public long getTotalPageFileSize() {

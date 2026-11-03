@@ -17,8 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,16 +27,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// @author Glavo
 @NotNullByDefault
 public final class LinuxHardwareDetector extends HardwareDetector {
-
-    /// Lowercase placeholder names excluded by exact, case-insensitive matching after stripping whitespace.
-    private static final @Unmodifiable Set<String> DEVICE_NAME_PLACEHOLDERS = Set.of(
-            "unknown",
-            "none",
-            "n/a",
-            "default string",
-            "to be filled by o.e.m.",
-            "to be filled by o.e.m",
-            "system product name");
 
     /// Detects Linux processors, using the default detector when native information is unavailable.
     @Override
@@ -61,7 +49,7 @@ public final class LinuxHardwareDetector extends HardwareDetector {
     /// Reads the hardware model from the device tree, falling back to the DMI product name.
     ///
     /// Tries the stable `/proc/device-tree` ABI, then the sysfs tree, then `/sys/class/dmi/id/product_name`.
-    /// Values are truncated at the first NUL and stripped of surrounding whitespace.
+    /// Device-tree values are truncated at the first NUL; all names are stripped of surrounding whitespace.
     /// Missing, unreadable, blank, and known placeholder values are skipped; returns `null` if none are available.
     /// Placeholder matching ignores case and requires a full match; other model names are preserved.
     @Override
@@ -71,22 +59,25 @@ public final class LinuxHardwareDetector extends HardwareDetector {
 
         for (Path path : List.of(
                 Path.of("/proc/device-tree/model"),
-                Path.of("/sys/firmware/devicetree/base/model"),
-                Path.of("/sys/class/dmi/id/product_name"))) {
+                Path.of("/sys/firmware/devicetree/base/model"))) {
             try {
-                String name = Files.readString(path);
-                // Device-tree strings are NUL-terminated.
-                int terminator = name.indexOf('\0');
+                String value = Files.readString(path);
+                // Device-tree model properties contain a NUL-terminated string.
+                int terminator = value.indexOf('\0');
                 if (terminator >= 0)
-                    name = name.substring(0, terminator);
-                name = name.strip();
-                if (!name.isEmpty() && !DEVICE_NAME_PLACEHOLDERS.contains(name.toLowerCase(Locale.ROOT)))
+                    value = value.substring(0, terminator);
+                @Nullable String name = cleanDeviceName(value);
+                if (name != null)
                     return name;
             } catch (IOException | SecurityException ignored) {
                 // A source may be absent or inaccessible; continue with the remaining sources.
             }
         }
-        return null;
+        try {
+            return cleanDeviceName(Files.readString(Path.of("/sys/class/dmi/id/product_name")));
+        } catch (IOException | SecurityException ignored) {
+            return null;
+        }
     }
 
     /// Reads a desktop environment description from this process's environment variables.
