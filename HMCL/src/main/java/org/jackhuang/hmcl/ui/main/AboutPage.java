@@ -82,6 +82,16 @@ public final class AboutPage extends SpinnerPane {
 
         ComponentList deviceInfo = new ComponentList();
         {
+            @Nullable String deviceName = SystemInfo.getDeviceName();
+            if (deviceName != null) {
+                var device = new LinePane();
+                device.setLargeTitle(true);
+                device.setLeading(SVG.HOST.createIcon(32));
+                device.setTitle(i18n("about.device.model"));
+                device.setSubtitle(deviceName);
+                deviceInfo.getContent().add(device);
+            }
+
             @Unmodifiable List<CentralProcessor> processors = SystemInfo.getCentralProcessors();
             for (int i = 0; i < processors.size(); i++) {
                 String title = processors.size() == 1
