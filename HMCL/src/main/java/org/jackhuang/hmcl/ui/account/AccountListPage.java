@@ -11,7 +11,6 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
@@ -80,9 +79,6 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
         {
             VBox boxMethods = new VBox();
             {
-                boxMethods.getStyleClass().add("advanced-list-box-content");
-                FXUtils.setLimitWidth(boxMethods, 200);
-
                 AdvancedListItem microsoftItem = new AdvancedListItem();
                 microsoftItem.getStyleClass().add("navigation-drawer-item");
                 microsoftItem.setTitle(i18n("account.methods.microsoft"));
@@ -176,12 +172,10 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                         Controllers.dialog(new AddAuthlibInjectorServerPane());
                     }
                 });
-                VBox.setMargin(addAuthServerItem, new Insets(0, 0, 12, 0));
             }
 
-            ScrollPane scrollPane = new ScrollPane(boxMethods);
-            VBox.setVgrow(scrollPane, Priority.ALWAYS);
-            setLeft(scrollPane, addAuthServerItem);
+            getSidebar().add(boxMethods);
+            setSidebarBottom(addAuthServerItem);
         }
 
         ScrollPane scrollPane = new ScrollPane();
@@ -197,7 +191,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
         scrollPane.setContent(list);
         FXUtils.smoothScrolling(scrollPane);
 
-        setCenter(scrollPane);
+        setContent(scrollPane);
     }
 
     /// Returns the account selection shared with the launcher.

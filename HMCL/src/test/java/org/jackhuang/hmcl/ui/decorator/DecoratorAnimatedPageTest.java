@@ -6,17 +6,12 @@ import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -35,48 +30,35 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnabledIf("org.jackhuang.hmcl.JavaFXLauncher#isStarted")
 public final class DecoratorAnimatedPageTest {
 
-    /// Checks wrapping, insets, minimum-size overflow, and column placement against the previous layout.
+    /// Checks sidebar width, insets, and content allocation at narrow and normal page widths.
     @ParameterizedTest
     @ValueSource(ints = {100, 480, 960})
-    public void testLayoutMatchesBorderPane(int width) {
+    public void testColumnLayout(int width) {
         onFxThread(() -> {
             DecoratorAnimatedPage page = new DecoratorAnimatedPage();
-            populate(page.getLeft(), page.getCenter());
+            Region content = new Region();
+            content.setMinSize(80, 40);
+            page.setContent(content);
             page.setPadding(new Insets(7, 11, 13, 17));
             new Scene(page);
             page.applyCss();
-
-            VBox left = new VBox();
-            FXUtils.setLimitWidth(left, 200);
-            StackPane center = new StackPane();
-            populate(left, center);
-            // The old Control applied its insets outside the skin's BorderPane.
-            StackPane reference = new StackPane(new BorderPane(center, null, null, null, left));
-            reference.setPadding(page.getPadding());
-            new Scene(reference);
-            reference.applyCss();
-
-            assertEquals(Orientation.HORIZONTAL, page.getContentBias());
-            assertEquals(reference.minWidth(-1), page.minWidth(-1), 0.001);
-            assertEquals(reference.prefWidth(-1), page.prefWidth(-1), 0.001);
-            assertEquals(reference.minHeight(width), page.minHeight(width), 0.001);
-            assertEquals(reference.prefHeight(width), page.prefHeight(width), 0.001);
             page.resize(width, 360);
-            reference.resize(width, 360);
             page.layout();
-            reference.layout();
-            assertBounds(left, page.getLeft(), 17, 7);
-            assertBounds(center, page.getCenter(), 17, 7);
-            assertEquals(200, page.getLeft().getWidth());
+            assertEquals(17, page.getLeft().getLayoutX());
+            assertEquals(7, page.getLeft().getLayoutY());
+            assertEquals(200, page.getLeft().getLayoutBounds().getWidth());
+            assertEquals(217, page.getCenter().getLayoutX());
+            assertEquals(7, page.getCenter().getLayoutY());
+            assertEquals(Math.max(80, width - 228), page.getCenter().getLayoutBounds().getWidth());
+            assertEquals(340, page.getCenter().getLayoutBounds().getHeight());
             assertSame(page, page.getLeft().getParent());
             assertSame(page, page.getCenter().getParent());
 
             page.resize(width + 300, 520);
-            reference.resize(width + 300, 520);
             page.layout();
-            reference.layout();
-            assertBounds(left, page.getLeft(), 17, 7);
-            assertBounds(center, page.getCenter(), 17, 7);
+            assertEquals(200, page.getLeft().getLayoutBounds().getWidth());
+            assertEquals(width + 300 - 228, page.getCenter().getLayoutBounds().getWidth());
+            assertEquals(500, page.getCenter().getLayoutBounds().getHeight());
         });
     }
 
@@ -86,11 +68,15 @@ public final class DecoratorAnimatedPageTest {
         onFxThread(() -> {
             DecoratorAnimatedPage page = new DecoratorAnimatedPage();
             Region oldContent = new Region();
-            page.setCenter(oldContent);
+            page.setContent(oldContent);
             Region newContent = new Region();
-            page.setCenter(newContent);
+            page.setContent(newContent);
             assertNull(oldContent.getParent());
             assertSame(page.getCenter(), newContent.getParent());
+            assertSame(newContent, page.getContent());
+            page.setContent(null);
+            assertNull(newContent.getParent());
+            assertNull(page.getContent());
             page.resize(800, 600);
             page.layout();
             page.getLeft().setVisible(false);
@@ -99,15 +85,86 @@ public final class DecoratorAnimatedPageTest {
             page.getLeft().setManaged(false);
             page.layout();
             assertEquals(0, page.getCenter().getLayoutX());
-            assertEquals(800, page.getCenter().getWidth());
+            assertEquals(800, page.getCenter().getLayoutBounds().getWidth());
             assertEquals(0, page.minWidth(-1));
             page.getLeft().setManaged(true);
             page.getLeft().setVisible(true);
             page.layout();
             assertEquals(200, page.getCenter().getLayoutX());
-            assertEquals(600, page.getCenter().getWidth());
+            assertEquals(600, page.getCenter().getLayoutBounds().getWidth());
             page.getCenter().setManaged(false);
             assertEquals(200, page.minWidth(-1));
+        });
+    }
+
+    /// Keeps bottom actions at their preferred height while long navigation lists scroll above them.
+    @Test
+    public void testSidebarBottomSizingAndReplacement() {
+        onFxThread(() -> {
+            DecoratorAnimatedPage page = new DecoratorAnimatedPage();
+            AdvancedListBox sidebar = page.getSidebar();
+            for (int i = 0; i < 100; i++) {
+                sidebar.addNavigationDrawerItem("Entry " + i, null, null);
+            }
+            Region bottom = new Region();
+            bottom.setPrefHeight(70);
+            page.setSidebarBottom(bottom);
+            new Scene(page);
+            page.applyCss();
+            page.resize(800, 300);
+            page.layout();
+            assertSame(page.getLeft(), sidebar.getParent());
+            assertSame(page.getLeft(), bottom.getParent());
+            assertSame(bottom, page.getSidebarBottom());
+            assertEquals(70, bottom.getHeight(), 0.001);
+            assertEquals(218, bottom.getLayoutY(), 0.001);
+            assertEquals(218, sidebar.getHeight(), 0.001);
+            assertTrue(sidebar.getContent().getLayoutBounds().getHeight() > sidebar.getViewportBounds().getHeight());
+
+            bottom.setPrefHeight(110);
+            page.layout();
+            assertEquals(110, bottom.getHeight(), 0.001);
+            assertEquals(178, sidebar.getHeight(), 0.001);
+            bottom.setManaged(false);
+            page.layout();
+            assertEquals(300, sidebar.getHeight(), 0.001);
+
+            Region replacement = new Region();
+            replacement.setPrefHeight(40);
+            page.setSidebarBottom(replacement);
+            page.layout();
+            assertNull(bottom.getParent());
+            assertEquals(248, sidebar.getHeight(), 0.001);
+            page.setSidebarBottom(null);
+            page.layout();
+            assertNull(replacement.getParent());
+            assertNull(page.getSidebarBottom());
+            assertSame(sidebar, page.getSidebar());
+            assertEquals(300, sidebar.getHeight(), 0.001);
+        });
+    }
+
+    /// Sizes real bottom navigation lists from their contents, including entries added after layout.
+    @Test
+    public void testSidebarBottomListUsesPreferredHeight() {
+        onFxThread(() -> {
+            DecoratorAnimatedPage page = new DecoratorAnimatedPage();
+            AdvancedListBox bottom = new AdvancedListBox()
+                    .addNavigationDrawerItem("Action", null, null);
+            page.setSidebarBottom(bottom);
+            new Scene(page);
+            page.resize(800, 600);
+            settleLayout(page);
+            double initialHeight = bottom.getHeight();
+            assertEquals(Math.max(bottom.minHeight(200), bottom.prefHeight(200)), initialHeight, 0.001);
+            assertEquals(600 - initialHeight - 12, page.getSidebar().getHeight(), 0.001);
+
+            bottom.addNavigationDrawerItem("Another action", null, null)
+                    .addNavigationDrawerItem("Third action", null, null);
+            settleLayout(page);
+            assertTrue(bottom.getHeight() > initialHeight);
+            assertEquals(Math.max(bottom.minHeight(200), bottom.prefHeight(200)), bottom.getHeight(), 0.001);
+            assertEquals(600 - bottom.getHeight() - 12, page.getSidebar().getHeight(), 0.001);
         });
     }
 
@@ -122,8 +179,8 @@ public final class DecoratorAnimatedPageTest {
             page.layout();
             assertEquals(4.5, page.getLeft().getLayoutX());
             assertEquals(204.5, page.getCenter().getLayoutX());
-            assertEquals(593.5, page.getCenter().getWidth());
-            assertEquals(595.25, page.getCenter().getHeight());
+            assertEquals(593.5, page.getCenter().getLayoutBounds().getWidth());
+            assertEquals(595.25, page.getCenter().getLayoutBounds().getHeight());
             page.getLeft().setTranslateX(-30);
             page.getCenter().setTranslateX(30);
             page.requestLayout();
@@ -140,6 +197,8 @@ public final class DecoratorAnimatedPageTest {
         onFxThread(() -> {
             DecoratorAnimatedPage previous = new DecoratorAnimatedPage();
             DecoratorAnimatedPage next = new DecoratorAnimatedPage();
+            Region bottom = new Region();
+            next.setSidebarBottom(bottom);
             Pane host = new Pane(previous, next);
             assertFalse(ContainerAnimations.NAVIGATION.shouldCache(next));
             Animation animation = ContainerAnimations.NAVIGATION.animate(host, previous, next,
@@ -151,6 +210,9 @@ public final class DecoratorAnimatedPageTest {
             assertEquals(30, previous.getCenter().getTranslateX());
             assertEquals(-30, next.getLeft().getTranslateX());
             assertEquals(30, next.getCenter().getTranslateX());
+            assertSame(next.getLeft(), bottom.getParent());
+            assertSame(next.getLeft(), next.getSidebar().getParent());
+            assertEquals(next.getSidebar().localToScene(0, 0).getX(), bottom.localToScene(0, 0).getX(), 0.001);
             animation.stop();
             ContainerAnimations.NAVIGATION.finish(next);
             assertEquals(0, next.getLeft().getTranslateX());
@@ -159,20 +221,12 @@ public final class DecoratorAnimatedPageTest {
         });
     }
 
-    /// Supplies matching sidebar and wrapping content to the old and new layouts.
-    private static void populate(VBox left, StackPane center) {
-        left.getChildren().setAll(new Label("Sidebar"), new Label("Second entry"));
-        Label content = new Label("Content that wraps when the page becomes narrow. ".repeat(12));
-        content.setWrapText(true);
-        center.getChildren().setAll(content);
-    }
-
-    /// Compares layout positions and allocated dimensions without including transforms.
-    private static void assertBounds(Region expected, Region actual, double offsetX, double offsetY) {
-        assertEquals(expected.getLayoutX() + offsetX, actual.getLayoutX(), 0.001);
-        assertEquals(expected.getLayoutY() + offsetY, actual.getLayoutY(), 0.001);
-        assertEquals(expected.getWidth(), actual.getWidth(), 0.001);
-        assertEquals(expected.getHeight(), actual.getHeight(), 0.001);
+    /// Allows scroll-pane skins to update viewport-dependent preferred sizes after CSS and layout.
+    private static void settleLayout(DecoratorAnimatedPage page) {
+        for (int pass = 0; pass < 3; pass++) {
+            page.applyCss();
+            page.layout();
+        }
     }
 
     /// Runs assertions on the JavaFX thread and propagates failures to the test runner.

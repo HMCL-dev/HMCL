@@ -17,7 +17,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.account.AccountListPopupMenu;
-import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
@@ -132,7 +131,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         });
 
         // the left sidebar
-        AdvancedListBox sideBar = new AdvancedListBox()
+        getSidebar()
                 .startCategory(i18n("account").toUpperCase(Locale.ROOT))
                 .add(accountListItem)
                 .startCategory(i18n("instance").toUpperCase(Locale.ROOT))
@@ -148,8 +147,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 });
 
         // the root page, with the sidebar in left, navigator in center.
-        setLeft(sideBar);
-        setCenter(getMainPage());
+        setContent(getMainPage());
     }
 
     @Override

@@ -9,8 +9,6 @@ import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.event.Event;
 import javafx.event.EventType;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -123,14 +121,13 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
             }
         }));
 
-        AdvancedListBox sideBar = new AdvancedListBox()
+        getSidebar()
                 .addNavigationDrawerTab(tabController, gameSettingsTab, i18n("settings.game"), SVG.SETTINGS, SVG.SETTINGS_FILL)
                 .addNavigationDrawerTab(tabController, installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL)
                 .addNavigationDrawerTab(tabController, modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                 .addNavigationDrawerTab(tabController, resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
                 .addNavigationDrawerTab(tabController, worldListTab, i18n("world.manage"), SVG.PUBLIC)
                 .addNavigationDrawerTab(tabController, schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
-        VBox.setVgrow(sideBar, Priority.ALWAYS);
 
         PopupMenu browseList = new PopupMenu();
         JFXPopup browsePopup = new JFXPopup(browseList);
@@ -182,15 +179,14 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                     managementItem.setOnAction(e -> managementPopup.show(managementItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managementItem.getWidth(), 0));
                 });
         toolbar.getStyleClass().add("advanced-list-box-clear-padding");
-        FXUtils.setLimitHeight(toolbar, 40 * 4 + 12 * 2);
 
-        setLeft(sideBar, toolbar);
+        setSidebarBottom(toolbar);
 
         state.bind(Bindings.createObjectBinding(() ->
                         State.fromTitle(i18n("instance.manage.manage.title", getInstanceId()), -1),
                 instance));
 
-        setCenter(transitionPane);
+        setContent(transitionPane);
     }
 
     /// Observes snapshot publications for the repository associated with the current page context.

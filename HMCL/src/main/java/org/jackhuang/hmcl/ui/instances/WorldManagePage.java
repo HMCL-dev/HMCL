@@ -5,10 +5,6 @@ package org.jackhuang.hmcl.ui.instances;
 import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.beans.property.*;
-import javafx.geometry.Insets;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -80,8 +76,9 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
-        setCenter(transitionPane);
-        setLeft(createSidebar());
+        setContent(transitionPane);
+        initializeSidebar();
+        setSidebarBottom(createToolBar());
     }
 
     /// Reloads world metadata and refreshes only tab pages whose content is already initialized.
@@ -170,43 +167,23 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         return refreshable;
     }
 
-    /// Places the tab entries above the world management toolbar.
-    private BorderPane createSidebar() {
-        BorderPane sidebar = new BorderPane();
-        {
-            FXUtils.setLimitWidth(sidebar, 200);
-            VBox.setVgrow(sidebar, Priority.ALWAYS);
-        }
-
-        sidebar.setTop(createTabBar());
-        sidebar.setBottom(createToolBar());
-
-        return sidebar;
-    }
-
     /// Registers supported world tabs and selects the information tab.
-    private AdvancedListBox createTabBar() {
-        AdvancedListBox tabBar = new AdvancedListBox();
-        {
-            tabController.getTabs().addAll(worldInfoTab, worldBackupsTab);
-            tabController.selectTab(worldInfoTab);
+    private void initializeSidebar() {
+        tabController.getTabs().addAll(worldInfoTab, worldBackupsTab);
+        tabController.selectTab(worldInfoTab);
 
-            tabBar.addNavigationDrawerTab(tabController, worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
-                    .addNavigationDrawerTab(tabController, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
+        getSidebar().addNavigationDrawerTab(tabController, worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
+                .addNavigationDrawerTab(tabController, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
-            if (world.supportDataPacks()) {
-                tabController.getTabs().add(dataPackTab);
-                tabBar.addNavigationDrawerTab(tabController, dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
-            }
+        if (world.supportDataPacks()) {
+            tabController.getTabs().add(dataPackTab);
+            getSidebar().addNavigationDrawerTab(tabController, dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
         }
-
-        return tabBar;
     }
 
     /// Creates world actions and binds write operations to the lock state.
     private AdvancedListBox createToolBar() {
         AdvancedListBox toolbar = new AdvancedListBox();
-        BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         {
             if (supportQuickPlay) {
                 toolbar.addNavigationDrawerItem(i18n("instance.launch"), SVG.ROCKET_LAUNCH, () -> launch(), advancedListItem -> advancedListItem.disableProperty().bind(readOnlyProperty()));
