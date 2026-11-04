@@ -89,6 +89,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         this.callback = callback;
 
         load(false);
+
+        if (componentType == GameComponentType.FABRIC) setInstallFabricApi(true);
     }
 
     @Override
@@ -389,8 +391,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     fabricApiCheckBox.selectedProperty().bindBidirectional(control.installFabricApiProperty);
                     fabricApiCheckBox.setOnAction(event -> control.setInstallFabricApi(fabricApiCheckBox.isSelected()));
                     topBox.getChildren().add(fabricApiCheckBox);
-
-                    control.setInstallFabricApi(true);
                 }
             }
 
