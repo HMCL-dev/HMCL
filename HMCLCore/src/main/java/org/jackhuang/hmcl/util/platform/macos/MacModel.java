@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// A known Mac product with size and release-date details for diagnostics and localization.
+/// A known Mac product with size and unambiguous release-date details for diagnostics and localization.
 ///
 /// @param productName the product name, such as `Mac mini`, preserved across locales
 /// @param details the ordered description components, copied into an immutable list
@@ -61,15 +61,6 @@ public record MacModel(String productName, @Unmodifiable List<Detail> details) {
                 case "early" -> "Early %s";
                 case "mid" -> "Mid %s";
                 case "late" -> "Late %s";
-                case "early_late" -> "Early/Late %s";
-                case "early_mid" -> "Early/Mid %s";
-                case "mid_early" -> "Mid/Early %s";
-                case "late_early" -> "Late %s/Early %s";
-                case "late_mid" -> "Late %s/Mid %s";
-                case "mid_early_years" -> "Mid %s/Early %s";
-                case "late_mid_range" -> "Late %s - Mid %s";
-                case "mid_range" -> "Mid %s - Mid %s";
-                case "early_or_year" -> "Early %s/%s";
                 case "november" -> "Nov %s";
                 default -> throw new IllegalArgumentException("Unknown Mac model detail type: " + type);
             };

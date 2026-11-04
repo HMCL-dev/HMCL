@@ -24,6 +24,7 @@
 # SOFTWARE.
 #
 # Correction: Macmini7,1 is Late 2014, per https://support.apple.com/en-us/102852.
+# Dates shared by multiple releases retain only a common year, or are omitted when the years differ.
 # Columns: identifier prefix,identifier suffix,product name,size or release-date detail...
 # Each detail is type:argument[:argument...].
 # The first two columns form the model identifier joined by a comma.
@@ -38,8 +39,8 @@ MacBookPro16,4,MacBook Pro,size:16,year:2019
 MacBookPro16,1,MacBook Pro,size:16,year:2019
 MacBookPro15,4,MacBook Pro,size:13,year:2019
 MacBookPro15,3,MacBook Pro,size:15,year:2019
-MacBookPro15,2,MacBook Pro,size:13,year:2018/2019
-MacBookPro15,1,MacBook Pro,size:15,year:2018/2019
+MacBookPro15,2,MacBook Pro,size:13
+MacBookPro15,1,MacBook Pro,size:15
 MacBookPro14,3,MacBook Pro,size:15,year:2017
 MacBookPro14,2,MacBook Pro,size:13,year:2017
 MacBookPro14,1,MacBook Pro,size:13,year:2017
@@ -49,11 +50,11 @@ MacBookPro13,1,MacBook Pro,size:13,year:2016
 MacBookPro12,1,MacBook Pro,size:13,early:2015
 MacBookPro11,4,MacBook Pro,size:15,mid:2015
 MacBookPro11,5,MacBook Pro,size:15,mid:2015
-MacBookPro11,2,MacBook Pro,size:15,late_mid:2013:2014
-MacBookPro11,3,MacBook Pro,size:15,late_mid:2013:2014
-MacBookPro11,1,MacBook Pro,size:13,late_mid:2013:2014
-MacBookPro10,2,MacBook Pro,size:13,late_early:2012:2013
-MacBookPro10,1,MacBook Pro,size:15,mid_early_years:2012:2013
+MacBookPro11,2,MacBook Pro,size:15
+MacBookPro11,3,MacBook Pro,size:15
+MacBookPro11,1,MacBook Pro,size:13
+MacBookPro10,2,MacBook Pro,size:13
+MacBookPro10,1,MacBook Pro,size:15
 MacBookPro9,2,MacBook Pro,size:13,mid:2012
 MacBookPro9,1,MacBook Pro,size:15,mid:2012
 MacBookPro8,3,MacBook Pro,size:17,year:2011
@@ -64,17 +65,17 @@ MacBookPro6,2,MacBook Pro,size:15,mid:2010
 MacBookPro6,1,MacBook Pro,size:17,mid:2010
 MacBookPro5,5,MacBook Pro,size:13,mid:2009
 MacBookPro5,3,MacBook Pro,size:15,mid:2009
-MacBookPro5,2,MacBook Pro,size:17,mid_early:2009
+MacBookPro5,2,MacBook Pro,size:17,year:2009
 MacBookPro5,1,MacBook Pro,size:15,late:2008
 MacBookPro4,1,MacBook Pro,size:17/15,early:2008
 MacBookAir10,1,MacBook Air,year:2020
 MacBookAir9,1,MacBook Air,size:13,year:2020
 MacBookAir8,2,MacBook Air,size:13,year:2019
 MacBookAir8,1,MacBook Air,size:13,year:2018
-MacBookAir7,2,MacBook Air,size:13,early_or_year:2015:2017
+MacBookAir7,2,MacBook Air,size:13
 MacBookAir7,1,MacBook Air,size:11,early:2015
-MacBookAir6,2,MacBook Air,size:13,mid_early_years:2013:2014
-MacBookAir6,1,MacBook Air,size:11,mid_early_years:2013:2014
+MacBookAir6,2,MacBook Air,size:13
+MacBookAir6,1,MacBook Air,size:11
 MacBookAir5,2,MacBook Air,size:13,mid:2012
 MacBookAir5,1,MacBook Air,size:11,mid:2012
 MacBookAir4,2,MacBook Air,size:13,mid:2011
@@ -90,16 +91,16 @@ Macmini6,2,Mac mini,late:2012
 Macmini5,1,Mac mini,mid:2011
 Macmini5,2,Mac mini,mid:2011
 Macmini4,1,Mac mini,mid:2010
-Macmini3,1,Mac mini,early_late:2009
+Macmini3,1,Mac mini,year:2009
 MacBook10,1,MacBook,size:12,year:2017
 MacBook9,1,MacBook,size:12,early:2016
 MacBook8,1,MacBook,size:12,early:2015
 MacBook7,1,MacBook,size:13,mid:2010
 MacBook6,1,MacBook,size:13,late:2009
-MacBook5,2,MacBook,size:13,early_mid:2009
+MacBook5,2,MacBook,size:13,year:2009
 MacPro7,1,Mac Pro,year:2019
 MacPro6,1,Mac Pro,late:2013
-MacPro5,1,Mac Pro,mid_range:2010:2012
+MacPro5,1,Mac Pro
 MacPro4,1,Mac Pro,early:2009
 Mac18,5,Mac Mini,year:2026
 Mac17,16,Mac Mini,year:2026
@@ -164,7 +165,7 @@ iMac18,1,iMac,size:21.5,year:2017
 iMac17,1,iMac,size:27,late:2015
 iMac16,2,iMac,size:21.5,late:2015
 iMac16,1,iMac,size:21.5,late:2015
-iMac15,1,iMac,size:27,late_mid_range:2014:2015
+iMac15,1,iMac,size:27
 iMac14,4,iMac,size:21.5,mid:2014
 iMac14,2,iMac,size:27,late:2013
 iMac14,1,iMac,size:21.5,late:2013
