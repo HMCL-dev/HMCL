@@ -44,7 +44,7 @@ public class Translator {
         return versionNumber.toNormalizedString();
     }
 
-    /// Localizes known Mac model hardware details without release dates; other identities retain their names.
+    /// Localizes known Mac model sizes and release dates; other identities retain their names.
     /// Diagnostic names and cached device information are not modified.
     public @NotNull String formatDeviceName(@NotNull DeviceInfo device) {
         if (!(device instanceof MacDeviceInfo mac))
@@ -55,17 +55,7 @@ public class Translator {
 
         List<String> details = new ArrayList<>();
         for (MacModel.Detail detail : model.details()) {
-            switch (detail.type()) {
-                case "ports", "front_ports" -> {
-                    String portType = detail.arguments().get(1).replace("Thunderbolt",
-                            supportedLocale.i18n("about.device.mac.thunderbolt"));
-                    details.add(supportedLocale.i18n("about.device.mac." + detail.type(), detail.arguments().get(0), portType));
-                }
-                case "literal", "size", "retina", "retina_resolution" ->
-                        details.add(supportedLocale.i18n("about.device.mac." + detail.type(), detail.arguments().toArray()));
-                default -> {
-                }
-            }
+            details.add(supportedLocale.i18n("about.device.mac." + detail.type(), detail.arguments().toArray()));
         }
         return details.isEmpty() ? model.productName()
                 : supportedLocale.i18n("about.device.mac.name", model.productName(),

@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// A known Mac product and structured details for diagnostics and presentation-layer localization.
+/// A known Mac product with size and release-date details for diagnostics and localization.
 ///
 /// @param productName the product name, such as `Mac mini`, preserved across locales
 /// @param details the ordered description components, copied into an immutable list
@@ -42,7 +42,7 @@ public record MacModel(String productName, @Unmodifiable List<Detail> details) {
 
     /// One description component whose type selects a presentation template.
     ///
-    /// @param type the component type, such as `size`, `year`, or `ports`
+    /// @param type the size or release-date component type, such as `size`, `year`, or `early`
     /// @param arguments the ordered template arguments, copied into an immutable list
     @NotNullByDefault
     public record Detail(String type, @Unmodifiable List<String> arguments) {
@@ -56,7 +56,7 @@ public record MacModel(String productName, @Unmodifiable List<Detail> details) {
         /// Unknown types or invalid arguments are rejected when the bundled CSV is loaded.
         public String formatEnglish() {
             String template = switch (type) {
-                case "literal", "year" -> "%s";
+                case "year" -> "%s";
                 case "size" -> "%s-inch";
                 case "early" -> "Early %s";
                 case "mid" -> "Mid %s";
@@ -71,10 +71,6 @@ public record MacModel(String productName, @Unmodifiable List<Detail> details) {
                 case "mid_range" -> "Mid %s - Mid %s";
                 case "early_or_year" -> "Early %s/%s";
                 case "november" -> "Nov %s";
-                case "ports" -> "%s %s ports";
-                case "front_ports" -> "%s %s front ports";
-                case "retina" -> "Retina";
-                case "retina_resolution" -> "Retina %s";
                 default -> throw new IllegalArgumentException("Unknown Mac model detail type: " + type);
             };
             int argumentCount = (template.length() - template.replace("%s", "").length()) / 2;
