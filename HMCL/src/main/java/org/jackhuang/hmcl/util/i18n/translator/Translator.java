@@ -44,18 +44,23 @@ public class Translator {
         return versionNumber.toNormalizedString();
     }
 
-    /// Localizes known Mac model details using this translator's locale; other identities retain their names.
+    /// Localizes known Mac model hardware details without release dates; other identities retain their names.
     /// Diagnostic names and cached device information are not modified.
     public @NotNull String formatDeviceName(@NotNull DeviceInfo device) {
         if (!(device instanceof MacDeviceInfo mac))
             return device.name();
-        @Nullable MacModel model = mac.model();
+        @Nullable MacModel model = MacModel.find(mac.modelIdentifier());
         if (model == null)
             return device.name();
 
         List<String> details = new ArrayList<>();
         for (MacModel.Detail detail : model.details()) {
-            details.add(supportedLocale.i18n("about.device.mac." + detail.type(), detail.arguments().toArray()));
+            switch (detail.type()) {
+                case "literal", "size", "ports", "front_ports", "retina", "retina_resolution" ->
+                        details.add(supportedLocale.i18n("about.device.mac." + detail.type(), detail.arguments().toArray()));
+                default -> {
+                }
+            }
         }
         return details.isEmpty() ? model.productName()
                 : supportedLocale.i18n("about.device.mac.name", model.productName(),
