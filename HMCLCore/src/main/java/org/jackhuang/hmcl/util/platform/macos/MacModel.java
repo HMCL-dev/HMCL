@@ -56,16 +56,10 @@ public record MacModel(String productName, @Unmodifiable List<Detail> details) {
         }
     }
 
-    /// Loads the bundled model table only when a model identifier is queried.
-    @NotNullByDefault
-    private static final class Holder {
-        /// Immutable identifier-to-model mappings, empty if the bundled resource cannot be read.
-        private static final @Unmodifiable Map<String, MacModel> MODELS = loadModels();
-    }
-
     /// Returns the known model for an exact identifier, or `null` for missing or unknown identifiers.
+    /// Reads the bundled model table on each lookup without retaining a cache.
     public static @Nullable MacModel find(@Nullable String identifier) {
-        return identifier == null ? null : Holder.MODELS.get(identifier);
+        return identifier == null ? null : loadModels().get(identifier);
     }
 
     /// Reads the versioned, unquoted CSV resource, skipping comments and blank lines.
