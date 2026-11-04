@@ -56,7 +56,12 @@ public class Translator {
         List<String> details = new ArrayList<>();
         for (MacModel.Detail detail : model.details()) {
             switch (detail.type()) {
-                case "literal", "size", "ports", "front_ports", "retina", "retina_resolution" ->
+                case "ports", "front_ports" -> {
+                    String portType = detail.arguments().get(1).replace("Thunderbolt",
+                            supportedLocale.i18n("about.device.mac.thunderbolt"));
+                    details.add(supportedLocale.i18n("about.device.mac." + detail.type(), detail.arguments().get(0), portType));
+                }
+                case "literal", "size", "retina", "retina_resolution" ->
                         details.add(supportedLocale.i18n("about.device.mac." + detail.type(), detail.arguments().toArray()));
                 default -> {
                 }
