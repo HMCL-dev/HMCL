@@ -46,7 +46,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Pair.pair;
