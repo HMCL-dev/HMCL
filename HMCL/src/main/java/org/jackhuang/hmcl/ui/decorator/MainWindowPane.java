@@ -190,7 +190,7 @@ final class MainWindowPane extends StackPane {
         });
         decorator.forbidDraggingWindow(tasksButton);
 
-        SVGPath tasksEmptyIcon = SVG.LISTS.createIcon(Themes.titleFillProperty());
+        SVGPath tasksEmptyIcon = SVG.LIST_ALT.createIcon(Themes.titleFillProperty());
 
         holder.onWeakChangeAndOperate(TaskManager.getInstance().statusProperty(), status -> {
             switch (status) {
