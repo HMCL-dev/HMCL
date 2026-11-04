@@ -117,7 +117,6 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
 
             getSidebar().add(offlineItem);
 
-
             for (AuthlibInjectorServer server : authServers) {
                 AdvancedListItem item = new AdvancedListItem();
                 item.getStyleClass().add("navigation-drawer-item");
