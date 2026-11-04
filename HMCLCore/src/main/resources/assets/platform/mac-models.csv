@@ -26,7 +26,7 @@
 # Correction: Macmini7,1 is Late 2014, per https://support.apple.com/en-us/102852.
 # Dates shared by multiple releases retain only a common year, or are omitted when the years differ.
 # Columns: identifier prefix,identifier suffix,product name,size or release-date detail...
-# Each detail is type:argument[:argument...].
+# Each detail is type:argument[:argument...]; month dates use month:year:month-number.
 # The first two columns form the model identifier joined by a comma.
 MacBookPro18,3,MacBook Pro,size:14,year:2021
 MacBookPro18,4,MacBook Pro,size:14,year:2021
@@ -129,15 +129,15 @@ Mac16,5,MacBook Pro,size:16,year:2024
 Mac15,14,Mac Studio,year:2025
 Mac15,13,MacBook Air,size:15,year:2024
 Mac15,12,MacBook Air,size:13,year:2024
-Mac15,3,MacBook Pro,size:14,november:2023
+Mac15,3,MacBook Pro,size:14,month:2023:11
 Mac15,4,iMac,size:24,year:2023
 Mac15,5,iMac,size:24,year:2023
-Mac15,6,MacBook Pro,size:14,november:2023
-Mac15,8,MacBook Pro,size:14,november:2023
-Mac15,10,MacBook Pro,size:14,november:2023
-Mac15,7,MacBook Pro,size:16,november:2023
-Mac15,9,MacBook Pro,size:16,november:2023
-Mac15,11,MacBook Pro,size:16,november:2023
+Mac15,6,MacBook Pro,size:14,month:2023:11
+Mac15,8,MacBook Pro,size:14,month:2023:11
+Mac15,10,MacBook Pro,size:14,month:2023:11
+Mac15,7,MacBook Pro,size:16,month:2023:11
+Mac15,9,MacBook Pro,size:16,month:2023:11
+Mac15,11,MacBook Pro,size:16,month:2023:11
 Mac14,15,MacBook Air,size:15,year:2023
 Mac14,14,Mac Studio,year:2023
 Mac14,13,Mac Studio,year:2023

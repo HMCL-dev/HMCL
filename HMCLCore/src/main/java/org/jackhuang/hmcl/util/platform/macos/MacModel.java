@@ -11,10 +11,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -42,7 +45,7 @@ public record MacModel(String productName, @Unmodifiable List<Detail> details) {
 
     /// One description component whose type selects a presentation template.
     ///
-    /// @param type the size or release-date component type, such as `size`, `year`, or `early`
+    /// @param type the size or release-date component type, such as `size`, `year`, or `month`
     /// @param arguments the ordered template arguments, copied into an immutable list
     @NotNullByDefault
     public record Detail(String type, @Unmodifiable List<String> arguments) {
@@ -55,13 +58,18 @@ public record MacModel(String productName, @Unmodifiable List<Detail> details) {
         /// Formats this component in English without depending on UI resources or the current locale.
         /// Unknown types or invalid arguments are rejected when the bundled CSV is loaded.
         public String formatEnglish() {
+            if (type.equals("month")) {
+                if (arguments.size() != 2)
+                    throw new IllegalArgumentException("Invalid argument count for Mac model detail: " + type);
+                return YearMonth.of(Integer.parseInt(arguments.get(0)), Integer.parseInt(arguments.get(1)))
+                        .format(DateTimeFormatter.ofPattern("MMM uuuu", Locale.ENGLISH));
+            }
             String template = switch (type) {
                 case "year" -> "%s";
                 case "size" -> "%s-inch";
                 case "early" -> "Early %s";
                 case "mid" -> "Mid %s";
                 case "late" -> "Late %s";
-                case "november" -> "Nov %s";
                 default -> throw new IllegalArgumentException("Unknown Mac model detail type: " + type);
             };
             int argumentCount = (template.length() - template.replace("%s", "").length()) / 2;

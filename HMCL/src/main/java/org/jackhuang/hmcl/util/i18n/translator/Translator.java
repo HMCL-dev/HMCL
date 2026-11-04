@@ -11,6 +11,7 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -55,7 +56,12 @@ public class Translator {
 
         List<String> details = new ArrayList<>();
         for (MacModel.Detail detail : model.details()) {
-            details.add(supportedLocale.i18n("about.device.mac." + detail.type(), detail.arguments().toArray()));
+            if (detail.type().equals("month")) {
+                YearMonth month = YearMonth.of(Integer.parseInt(detail.arguments().get(0)), Integer.parseInt(detail.arguments().get(1)));
+                details.add(month.format(DateTimeFormatter.ofPattern(supportedLocale.i18n("about.device.mac.month"), displayLocale)));
+            } else {
+                details.add(supportedLocale.i18n("about.device.mac." + detail.type(), detail.arguments().toArray()));
+            }
         }
         return details.isEmpty() ? model.productName()
                 : supportedLocale.i18n("about.device.mac.name", model.productName(),
