@@ -9,7 +9,9 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jetbrains.annotations.NotNullByDefault;
 
-/// Supplies reusable page replacement animations.
+import static org.jackhuang.hmcl.ui.animation.TransitionPane.isCacheAllowed;
+
+/// Supplies reusable page replacement animations that honor each cache target's transition preference.
 @NotNullByDefault
 public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     NONE {
@@ -43,7 +45,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
                 Duration duration, Interpolator interpolator) {
             return new Timeline(
                     new KeyFrame(Duration.ZERO,
-                            new KeyValue(nextNode.cacheProperty(), true, Interpolator.DISCRETE),
+                            new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
                             new KeyValue(previousNode.opacityProperty(), 1, interpolator),
                             new KeyValue(nextNode.opacityProperty(), 0, interpolator)),
                     new KeyFrame(duration,
@@ -75,7 +77,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
                 Pane container, Node previousNode, Node nextNode,
                 Duration duration, Interpolator interpolator) {
             return new Timeline(new KeyFrame(Duration.ZERO,
-                    new KeyValue(nextNode.cacheProperty(), true, Interpolator.DISCRETE),
+                    new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
                     new KeyValue(nextNode.translateXProperty(), container.getWidth(), interpolator),
                     new KeyValue(previousNode.translateXProperty(), 0, interpolator)),
                     new KeyFrame(duration,
@@ -105,7 +107,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
                 Pane container, Node previousNode, Node nextNode,
                 Duration duration, Interpolator interpolator) {
             return new Timeline(new KeyFrame(Duration.ZERO,
-                    new KeyValue(nextNode.cacheProperty(), true, Interpolator.DISCRETE),
+                    new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
                     new KeyValue(nextNode.translateXProperty(), -container.getWidth(), interpolator),
                     new KeyValue(previousNode.translateXProperty(), 0, interpolator)),
                     new KeyFrame(duration,
@@ -130,7 +132,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             double offset = container.getWidth() > 0 ? container.getWidth() * 0.2 : 50;
             return new Timeline(
                     new KeyFrame(Duration.ZERO,
-                            new KeyValue(nextNode.cacheProperty(), true, Interpolator.DISCRETE),
+                            new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
                             new KeyValue(previousNode.translateXProperty(), 0, interpolator),
                             new KeyValue(previousNode.opacityProperty(), 1, interpolator),
                             new KeyValue(nextNode.opacityProperty(), 0, interpolator)),
@@ -163,7 +165,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             double offset = container.getWidth() > 0 ? container.getWidth() * 0.2 : 50;
             return new Timeline(
                     new KeyFrame(Duration.ZERO,
-                            new KeyValue(nextNode.cacheProperty(), true, Interpolator.DISCRETE),
+                            new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
                             new KeyValue(previousNode.translateXProperty(), 0, interpolator),
                             new KeyValue(previousNode.opacityProperty(), 1, interpolator),
                             new KeyValue(nextNode.opacityProperty(), 0, interpolator)),
@@ -242,8 +244,8 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
                 Node center = prevPage.getCenter();
 
                 timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
-                        new KeyValue(left.cacheProperty(), true, Interpolator.DISCRETE),
-                        new KeyValue(center.cacheProperty(), true, Interpolator.DISCRETE),
+                        new KeyValue(left.cacheProperty(), isCacheAllowed(left), Interpolator.DISCRETE),
+                        new KeyValue(center.cacheProperty(), isCacheAllowed(center), Interpolator.DISCRETE),
                         new KeyValue(left.translateXProperty(), 0, interpolator),
                         new KeyValue(center.translateXProperty(), 0, interpolator)));
                 timeline.getKeyFrames().add(new KeyFrame(halfDuration,
@@ -265,8 +267,8 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
                 Node center = nextPage.getCenter();
 
                 timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
-                        new KeyValue(left.cacheProperty(), true, Interpolator.DISCRETE),
-                        new KeyValue(center.cacheProperty(), true, Interpolator.DISCRETE)));
+                        new KeyValue(left.cacheProperty(), isCacheAllowed(left), Interpolator.DISCRETE),
+                        new KeyValue(center.cacheProperty(), isCacheAllowed(center), Interpolator.DISCRETE)));
                 timeline.getKeyFrames().add(new KeyFrame(halfDuration,
                         new KeyValue(left.translateXProperty(), -30, interpolator),
                         new KeyValue(center.translateXProperty(), 30, interpolator)));
@@ -278,7 +280,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             } else {
                 timeline.getKeyFrames().addAll(
                         new KeyFrame(Duration.ZERO,
-                                new KeyValue(nextNode.cacheProperty(), true, Interpolator.DISCRETE)),
+                                new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE)),
                         new KeyFrame(duration,
                                 new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE)));
             }
@@ -298,7 +300,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         var nextTranslation = nextNode.translateYProperty();
         return new Timeline(
                 new KeyFrame(Duration.ZERO,
-                        new KeyValue(nextNode.cacheProperty(), true, Interpolator.DISCRETE),
+                        new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
                         new KeyValue(previousTranslation, 0, interpolator),
                         new KeyValue(previousNode.opacityProperty(), 1, interpolator),
                         new KeyValue(nextNode.opacityProperty(), 0, interpolator),

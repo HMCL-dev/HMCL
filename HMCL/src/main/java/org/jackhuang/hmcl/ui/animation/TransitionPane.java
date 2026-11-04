@@ -21,6 +21,26 @@ import org.jetbrains.annotations.Nullable;
 @NotNullByDefault
 public class TransitionPane extends StackPane {
 
+    /// Stores an explicit opt-out from bitmap caching during transitions.
+    private static final Object CACHE_ALLOWED_KEY = new Object();
+
+    /// Returns this node's transition cache preference, defaulting to true without allocating properties.
+    public static boolean isCacheAllowed(Node node) {
+        return !node.hasProperties() || !Boolean.FALSE.equals(node.getProperties().get(CACHE_ALLOWED_KEY));
+    }
+
+    /// Sets this node's transition cache preference without changing its cache property.
+    /// Passing true removes the override without allocating properties. Animations read the preference
+    /// when constructed; it is not inherited by ancestors or descendants.
+    public static void setCacheAllowed(Node node, boolean allowed) {
+        if (allowed) {
+            if (node.hasProperties())
+                node.getProperties().remove(CACHE_ALLOWED_KEY);
+        } else {
+            node.getProperties().put(CACHE_ALLOWED_KEY, Boolean.FALSE);
+        }
+    }
+
     /// Marks pages that have completed a rendering preparation or entered their displayed state.
     private static final Object RENDER_INITIALIZED_KEY = new Object();
 
