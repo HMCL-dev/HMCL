@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.game.GameComponentType;
 import org.jackhuang.hmcl.setting.GameInstanceIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -68,6 +69,9 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
     private final ObservableList<ComponentRemoteVersion> versions = FXCollections.observableArrayList();
     private final ObjectProperty<Status> status = new SimpleObjectProperty<>(Status.LOADING);
+
+    private boolean installFabricApi;
+    private int fabricApiRequestId;
 
     public VersionsPage(Navigation navigation,
                         String title, GameVersionNumber gameVersion,
@@ -300,10 +304,13 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             BorderPane root = new BorderPane();
 
+            VBox topBox = new VBox(8);
+            root.setTop(topBox);
+
             GridPane searchPane = new GridPane();
-            root.setTop(searchPane);
-            searchPane.getStyleClass().addAll("card");
-            BorderPane.setMargin(searchPane, new Insets(10, 10, 0, 10));
+            topBox.getChildren().add(searchPane);
+            topBox.getStyleClass().addAll("card");
+            BorderPane.setMargin(topBox, new Insets(10, 10, 0, 10));
 
             ColumnConstraints nameColumn = new ColumnConstraints();
             nameColumn.setMinWidth(USE_PREF_SIZE);
@@ -364,6 +371,17 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                                 refreshButton
                         );
                     }
+                }
+            }
+
+            {
+                if (control.componentType == GameComponentType.FABRIC) {
+                    JFXCheckBox fabricApiCheckBox = new JFXCheckBox(i18n("install.installer.fabric-api.install"));
+                    fabricApiCheckBox.setOnAction(event -> control.setInstallFabricApi(fabricApiCheckBox.isSelected()));
+                    topBox.getChildren().add(fabricApiCheckBox);
+
+                    fabricApiCheckBox.setSelected(true);
+                    control.setInstallFabricApi(true);
                 }
             }
 
@@ -486,5 +504,43 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             list.getItems().setAll(versions.toList());
             list.scrollTo(0);
         }
+    }
+
+    private void setInstallFabricApi(boolean selected) {
+        installFabricApi = selected;
+
+        int requestId = ++fabricApiRequestId;
+        String key = GameComponentType.FABRIC_API.getPatchId();
+
+        if (!selected) {
+            navigation.getSettings().remove(key);
+
+            return;
+        }
+
+        if (componentType != GameComponentType.FABRIC || gameVersion == null) return;
+
+        downloadProvider.getVersionsAsync(GameComponentType.FABRIC_API, gameVersion, false)
+            .whenComplete(Schedulers.javafx(), (versions, exception) -> {
+                if (requestId != fabricApiRequestId || !installFabricApi) return;
+
+                if (exception != null) {
+                    LOG.warning("Failed to fetch Fabric API versions", exception);
+                    installFabricApi = false;
+                    Controllers.showToast(i18n("download.failed.refresh"));
+
+                    return;
+                }
+
+                if (versions.isEmpty()) {
+                    LOG.warning("No compatible Fabric API version found for " + gameVersion);
+                    installFabricApi = false;
+                    Controllers.showToast(i18n("download.failed.empty"));
+
+                    return;
+                }
+
+                navigation.getSettings().put(key, versions.get(0));
+            }).start();
     }
 }
