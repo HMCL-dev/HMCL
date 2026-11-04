@@ -95,7 +95,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
         load(false);
 
-        if (componentType == GameComponentType.FABRIC) setInstallFabricApi(true);
+        if (enableFabricApiAutoInstall && componentType == GameComponentType.FABRIC) setInstallFabricApi(true);
     }
 
     @Override
@@ -106,7 +106,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     @Override
     public void refresh() {
         load(true);
-        setInstallFabricApi(true);
+        if (enableFabricApiAutoInstall && componentType == GameComponentType.FABRIC) setInstallFabricApi(true);
     }
 
     @Override
