@@ -4,7 +4,9 @@ package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.*;
 import javafx.beans.InvalidationListener;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -71,7 +73,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     private final ObservableList<ComponentRemoteVersion> versions = FXCollections.observableArrayList();
     private final ObjectProperty<Status> status = new SimpleObjectProperty<>(Status.LOADING);
 
-    private boolean installFabricApi;
+    private final BooleanProperty installFabricApiProperty = new SimpleBooleanProperty(true);
     private int fabricApiRequestId;
 
     public VersionsPage(Navigation navigation,
@@ -384,10 +386,10 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             {
                 if (control.componentType == GameComponentType.FABRIC) {
                     JFXCheckBox fabricApiCheckBox = new JFXCheckBox(i18n("install.installer.install", i18n("install.installer.fabric-api")));
+                    fabricApiCheckBox.selectedProperty().bindBidirectional(control.installFabricApiProperty);
                     fabricApiCheckBox.setOnAction(event -> control.setInstallFabricApi(fabricApiCheckBox.isSelected()));
                     topBox.getChildren().add(fabricApiCheckBox);
 
-                    fabricApiCheckBox.setSelected(true);
                     control.setInstallFabricApi(true);
                 }
             }
@@ -514,7 +516,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     }
 
     private void setInstallFabricApi(boolean selected) {
-        installFabricApi = selected;
+        installFabricApiProperty.setValue(selected);
 
         int requestId = ++fabricApiRequestId;
         String key = GameComponentType.FABRIC_API.getPatchId();
@@ -529,11 +531,11 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
         downloadProvider.getVersionsAsync(GameComponentType.FABRIC_API, gameVersion, false)
             .whenComplete(Schedulers.javafx(), (versions, exception) -> {
-                if (requestId != fabricApiRequestId || !installFabricApi) return;
+                if (requestId != fabricApiRequestId || !installFabricApiProperty.getValue()) return;
 
                 if (exception != null) {
                     LOG.warning("Failed to fetch Fabric API versions", exception);
-                    installFabricApi = false;
+                    installFabricApiProperty.setValue(false);
                     Controllers.showToast(i18n("download.failed.refresh"));
 
                     return;
@@ -541,7 +543,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
                 if (versions.isEmpty()) {
                     LOG.warning("No compatible Fabric API version found for " + gameVersion);
-                    installFabricApi = false;
+                    installFabricApiProperty.setValue(false);
                     Controllers.showToast(i18n("download.failed.empty"));
 
                     return;
