@@ -74,6 +74,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     private final ObservableList<ComponentRemoteVersion> versions = FXCollections.observableArrayList();
     private final ObjectProperty<Status> status = new SimpleObjectProperty<>(Status.LOADING);
 
+    private final boolean enableFabricApiAutoInstall;
     private final BooleanProperty installFabricApiProperty = new SimpleBooleanProperty(true);
     private final ObjectProperty<FabricApiStatus> fabricApiStatusProperty = new SimpleObjectProperty<>(FabricApiStatus.LOADING);
     private int fabricApiRequestId;
@@ -82,13 +83,15 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         String title, GameVersionNumber gameVersion,
                         DownloadProvider downloadProvider,
                         GameComponentType componentType,
-                        Runnable callback) {
+                        Runnable callback,
+                        boolean enableFabricApiAutoInstall) {
         this.title = title;
         this.gameVersion = componentType == GameComponentType.GAME ? null : gameVersion;
         this.componentType = componentType;
         this.navigation = navigation;
         this.downloadProvider = downloadProvider;
         this.callback = callback;
+        this.enableFabricApiAutoInstall = enableFabricApiAutoInstall;
 
         load(false);
 
@@ -396,7 +399,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             }
 
             {
-                if (control.componentType == GameComponentType.FABRIC) {
+                if (control.enableFabricApiAutoInstall && control.componentType == GameComponentType.FABRIC) {
                     JFXSpinner fabricApiProgress = new JFXSpinner();
                     fabricApiProgress.getStyleClass().add("small-spinner");
                     fabricApiProgress.setRadius(8);

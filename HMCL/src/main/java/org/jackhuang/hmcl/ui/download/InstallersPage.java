@@ -136,4 +136,9 @@ public class InstallersPage extends AbstractInstallersPage {
         isNameModifiedByUser = false;
         setTxtNameWithLoaders();
     }
+
+    @Override
+    protected boolean enableFabricApiAutoInstall() {
+        return true;
+    }
 }

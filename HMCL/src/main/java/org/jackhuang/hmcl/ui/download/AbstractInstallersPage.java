@@ -68,7 +68,8 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                                     gameVersion,
                                     downloadProvider,
                                     type,
-                                    () -> controller.onPrev(false, Navigation.NavigationDirection.PREVIOUS)
+                                    () -> controller.onPrev(false, Navigation.NavigationDirection.PREVIOUS),
+                                    enableFabricApiAutoInstall()
                             ), Navigation.NavigationDirection.NEXT
                     );
             });
@@ -110,6 +111,10 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
 
     /// Restores the default value of the name field.
     protected abstract void resetDefaultName();
+
+    protected boolean enableFabricApiAutoInstall() {
+        return false;
+    }
 
     protected static class InstallersPageSkin extends SkinBase<AbstractInstallersPage> {
         /**
