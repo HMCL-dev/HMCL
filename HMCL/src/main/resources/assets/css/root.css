@@ -255,6 +255,11 @@
 
 .iconed-menu-item {
     -jfx-feedback-fill: -monet-secondary-container;
+    -fx-cursor: hand;
+}
+
+.iconed-menu-item:disabled {
+    -fx-cursor: default;
 }
 
 .iconed-menu-item .iconed-item-container {
