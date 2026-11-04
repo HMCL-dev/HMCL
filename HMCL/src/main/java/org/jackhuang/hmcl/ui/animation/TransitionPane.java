@@ -179,9 +179,7 @@ public class TransitionPane extends StackPane {
 
         replaceContentNodes(previousNode, newView);
 
-        boolean originalCache = newView.isCache();
         boolean originalMouseTransparent = isMouseTransparent();
-        boolean enableCache = transition.shouldCache(newView);
 
         AnimationTimer timer = new AnimationTimer() {
             /// Queues playback after the scene has completed CSS and layout.
@@ -279,9 +277,6 @@ public class TransitionPane extends StackPane {
                     }
                     animation.stop();
                 }
-                if (enableCache) {
-                    newView.setCache(originalCache);
-                }
                 transition.finish(newView);
                 if (animation != null) {
                     markDisplayed(newView);
@@ -297,9 +292,6 @@ public class TransitionPane extends StackPane {
             if (activeTransition != timer) {
                 return;
             }
-            if (enableCache) {
-                newView.setCache(true);
-            }
             timer.start();
         } catch (RuntimeException | Error e) {
             timer.stop();
@@ -309,14 +301,6 @@ public class TransitionPane extends StackPane {
 
     /// Prepares page properties and creates animations for content replacements.
     public interface AnimationProducer {
-        /// Returns whether to temporarily enable bitmap caching for the incoming page during
-        /// preparation and playback, preserving its cache hint. Called before [#init].
-        /// If `true`, the original cache state is restored on completion or cancellation;
-        /// if `false`, caching is left unchanged.
-        default boolean shouldCache(Node nextNode) {
-            return false;
-        }
-
         /// Resets page transforms, making the old page opaque and the new page transparent.
         default void init(TransitionPane container, Node previousNode, Node nextNode) {
             AnimationUtils.reset(previousNode, true);
@@ -324,6 +308,8 @@ public class TransitionPane extends StackPane {
         }
 
         /// Creates the transition between the prepared pages using the given timing.
+        /// Temporary settings such as caching belong in the animation's key values, with their
+        /// original values restored at its finite end so cancellation can apply them by jumping there.
         Animation animate(Pane container, Node previousNode, Node nextNode,
                           Duration duration, Interpolator interpolator);
 
