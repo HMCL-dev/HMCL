@@ -6,7 +6,6 @@ import javafx.animation.Animation;
 import javafx.animation.AnimationTimer;
 import javafx.animation.Interpolator;
 import javafx.application.Platform;
-import javafx.scene.CacheHint;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
@@ -181,9 +180,8 @@ public class TransitionPane extends StackPane {
         replaceContentNodes(previousNode, newView);
 
         boolean originalCache = newView.isCache();
-        CacheHint originalCacheHint = newView.getCacheHint();
         boolean originalMouseTransparent = isMouseTransparent();
-        @Nullable CacheHint cacheHint = transition.getCacheHint(newView);
+        boolean enableCache = transition.shouldCache(newView);
 
         AnimationTimer timer = new AnimationTimer() {
             /// Queues playback after the scene has completed CSS and layout.
@@ -281,9 +279,8 @@ public class TransitionPane extends StackPane {
                     }
                     animation.stop();
                 }
-                if (cacheHint != null) {
+                if (enableCache) {
                     newView.setCache(originalCache);
-                    newView.setCacheHint(originalCacheHint);
                 }
                 transition.finish(newView);
                 if (animation != null) {
@@ -300,9 +297,8 @@ public class TransitionPane extends StackPane {
             if (activeTransition != timer) {
                 return;
             }
-            if (cacheHint != null) {
+            if (enableCache) {
                 newView.setCache(true);
-                newView.setCacheHint(cacheHint);
             }
             timer.start();
         } catch (RuntimeException | Error e) {
@@ -313,11 +309,12 @@ public class TransitionPane extends StackPane {
 
     /// Prepares page properties and creates animations for content replacements.
     public interface AnimationProducer {
-        /// Returns the bitmap cache hint for the incoming page during preparation and playback,
-        /// or `null` to leave its cache settings unchanged. Called before [#init].
-        /// The original cache settings are restored on completion or cancellation when a hint is returned.
-        default @Nullable CacheHint getCacheHint(Node nextNode) {
-            return null;
+        /// Returns whether to temporarily enable bitmap caching for the incoming page during
+        /// preparation and playback, preserving its cache hint. Called before [#init].
+        /// If `true`, the original cache state is restored on completion or cancellation;
+        /// if `false`, caching is left unchanged.
+        default boolean shouldCache(Node nextNode) {
+            return false;
         }
 
         /// Resets page transforms, making the old page opaque and the new page transparent.

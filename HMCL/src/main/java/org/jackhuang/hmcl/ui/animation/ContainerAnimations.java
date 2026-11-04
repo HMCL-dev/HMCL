@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.ui.animation;
 
 import javafx.animation.*;
-import javafx.scene.CacheHint;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.util.Duration;
@@ -178,8 +177,8 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     TAB_UP {
         /// Caches the incoming page for the slide-and-fade transition.
         @Override
-        public CacheHint getCacheHint(Node nextNode) {
-            return CacheHint.SPEED;
+        public boolean shouldCache(Node nextNode) {
+            return true;
         }
 
         /// Creates the original slide-and-fade timing along the selected vertical direction.
@@ -199,8 +198,8 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     TAB_DOWN {
         /// Caches the incoming page for the slide-and-fade transition.
         @Override
-        public CacheHint getCacheHint(Node nextNode) {
-            return CacheHint.SPEED;
+        public boolean shouldCache(Node nextNode) {
+            return true;
         }
 
         /// Creates the original slide-and-fade timing along the selected vertical direction.
