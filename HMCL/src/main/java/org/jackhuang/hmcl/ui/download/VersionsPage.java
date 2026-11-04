@@ -412,7 +412,10 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     fabricApiCheckBox.selectedProperty().bindBidirectional(control.installFabricApiProperty);
                     fabricApiCheckBox.setOnAction(event -> control.setInstallFabricApi(fabricApiCheckBox.isSelected()));
 
-                    HBox fabricApiBox = new HBox(8, fabricApiCheckBox);
+                    StackPane fabricApiHelpIcon = new StackPane(SVG.HELP.createIcon(16));
+                    FXUtils.installFastTooltip(fabricApiHelpIcon, i18n("install.installer.fabric-quilt-api.warning", i18n("install.installer.fabric-api")));
+
+                    HBox fabricApiBox = new HBox(8, fabricApiCheckBox, fabricApiHelpIcon);
 
                     BooleanBinding loading = Bindings.createBooleanBinding(
                         () -> control.fabricApiStatusProperty.get() == FabricApiStatus.LOADING,
