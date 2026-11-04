@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TabController;
 import org.jackhuang.hmcl.ui.construct.TabItem;
@@ -88,11 +87,13 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     private WeakListenerHolder listenerHolder;
 
+    /// Creates the download tabs and fills the shared navigation sidebar.
     public DownloadPage() {
         this(null);
     }
 
-    public DownloadPage(GameInstanceID uploadInstance) {
+    /// Creates download navigation, optionally targeting an existing instance for modpack installation.
+    public DownloadPage(@Nullable GameInstanceID uploadInstance) {
         this.newGameTab = new TabItem<>(() -> new VersionsPage(
                 versionPageNavigator,
                 i18n("install.installer.choose", i18n("install.installer.game")),
@@ -128,7 +129,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         tabController.selectTab(newGameTab);
 
-        AdvancedListBox sideBar = new AdvancedListBox()
+        getSidebar()
                 .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
                 .addNavigationDrawerTab(tabController, newGameTab, i18n("game"), SVG.STADIA_CONTROLLER, SVG.STADIA_CONTROLLER_FILL)
                 .addNavigationDrawerTab(tabController, modpackTab, i18n("modpack"), SVG.PACKAGE2, SVG.PACKAGE2_FILL)
@@ -137,10 +138,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 .addNavigationDrawerTab(tabController, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
                 .addNavigationDrawerTab(tabController, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
                 .addNavigationDrawerTab(tabController, worldTab, i18n("world"), SVG.PUBLIC);
-        FXUtils.setLimitWidth(sideBar, 200);
-        setLeft(sideBar);
 
-        setCenter(transitionPane);
+        setContent(transitionPane);
     }
 
     private static TabItem<DownloadListPage> newDownloadListTab(Supplier<DownloadListPage> pageSupplier) {
