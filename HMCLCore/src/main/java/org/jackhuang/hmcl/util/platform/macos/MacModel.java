@@ -12,19 +12,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// A known Mac product with size and unambiguous release-date details for diagnostics and localization.
+/// A known Mac product with size and unambiguous release-date details for localization.
 ///
 /// @param productName the product name, such as `Mac mini`, preserved across locales
 /// @param details the ordered description components, copied into an immutable list
@@ -37,45 +34,25 @@ public record MacModel(String productName, @Unmodifiable List<Detail> details) {
         details = List.copyOf(details);
     }
 
-    /// Builds the English diagnostic name from the product name and ordered details.
-    public String name() {
-        return details.isEmpty() ? productName : productName + " ("
-                + details.stream().map(Detail::formatEnglish).collect(Collectors.joining(", ")) + ")";
-    }
-
     /// One description component whose type selects a presentation template.
     ///
     /// @param type the size or release-date component type, such as `size`, `year`, or `month`
     /// @param arguments the ordered template arguments, copied into an immutable list
     @NotNullByDefault
     public record Detail(String type, @Unmodifiable List<String> arguments) {
-        /// Validates the component type and takes an immutable snapshot of its arguments.
+        /// Copies the arguments and rejects unknown types, incorrect argument counts, and invalid month dates.
         public Detail {
             Objects.requireNonNull(type);
             arguments = List.copyOf(arguments);
-        }
-
-        /// Formats this component in English without depending on UI resources or the current locale.
-        /// Unknown types or invalid arguments are rejected when the bundled CSV is loaded.
-        public String formatEnglish() {
-            if (type.equals("month")) {
-                if (arguments.size() != 2)
-                    throw new IllegalArgumentException("Invalid argument count for Mac model detail: " + type);
-                return YearMonth.of(Integer.parseInt(arguments.get(0)), Integer.parseInt(arguments.get(1)))
-                        .format(DateTimeFormatter.ofPattern("MMM uuuu", Locale.ENGLISH));
-            }
-            String template = switch (type) {
-                case "year" -> "%s";
-                case "size" -> "%s-inch";
-                case "early" -> "Early %s";
-                case "mid" -> "Mid %s";
-                case "late" -> "Late %s";
+            int argumentCount = switch (type) {
+                case "year", "size", "early", "mid", "late" -> 1;
+                case "month" -> 2;
                 default -> throw new IllegalArgumentException("Unknown Mac model detail type: " + type);
             };
-            int argumentCount = (template.length() - template.replace("%s", "").length()) / 2;
             if (arguments.size() != argumentCount)
                 throw new IllegalArgumentException("Invalid argument count for Mac model detail: " + type);
-            return template.formatted(arguments.toArray());
+            if (type.equals("month"))
+                YearMonth.of(Integer.parseInt(arguments.get(0)), Integer.parseInt(arguments.get(1)));
         }
     }
 
@@ -112,7 +89,6 @@ public record MacModel(String productName, @Unmodifiable List<Detail> details) {
                     for (int i = 3; i < columns.length; i++) {
                         String @Unmodifiable [] parts = columns[i].split(":", -1);
                         Detail detail = new Detail(parts[0], List.copyOf(Arrays.asList(parts).subList(1, parts.length)));
-                        detail.formatEnglish();
                         details.add(detail);
                     }
                     if (result.putIfAbsent(identifier, new MacModel(columns[2], details)) != null)
