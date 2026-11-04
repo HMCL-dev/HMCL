@@ -376,7 +376,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             {
                 if (control.componentType == GameComponentType.FABRIC) {
-                    JFXCheckBox fabricApiCheckBox = new JFXCheckBox(i18n("install.installer.fabric-api.install"));
+                    JFXCheckBox fabricApiCheckBox = new JFXCheckBox(i18n("install.installer.install", i18n("install.installer.fabric-api")));
                     fabricApiCheckBox.setOnAction(event -> control.setInstallFabricApi(fabricApiCheckBox.isSelected()));
                     topBox.getChildren().add(fabricApiCheckBox);
 
