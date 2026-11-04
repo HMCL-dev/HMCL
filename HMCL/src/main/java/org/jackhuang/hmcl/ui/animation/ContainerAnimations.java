@@ -90,9 +90,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         }
     },
 
-    /**
-     * A swipe effect
-     */
+    /// A swipe effect
     SWIPE_RIGHT {
         @Override
         public void init(TransitionPane container, Node previousNode, Node nextNode) {
@@ -210,7 +208,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         }
     },
     NAVIGATION {
-        /// Avoids caching pages whose child panels move independently.
+        /// Leaves independently moving page panels to the timeline's cache key values.
         @Override
         public boolean shouldCache(Node nextNode) {
             return !(nextNode instanceof DecoratorAnimatedPage);
@@ -226,6 +224,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             }
         }
 
+        /// Animates navigation panels with temporary caching, restoring their original cache states at the end.
         @Override
         public Animation animate(Pane container, Node previousNode, Node nextNode, Duration duration, Interpolator interpolator) {
             Timeline timeline = new Timeline();
@@ -240,11 +239,16 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
                 Node center = prevPage.getCenter();
 
                 timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
+                        new KeyValue(left.cacheProperty(), true, Interpolator.DISCRETE),
+                        new KeyValue(center.cacheProperty(), true, Interpolator.DISCRETE),
                         new KeyValue(left.translateXProperty(), 0, interpolator),
                         new KeyValue(center.translateXProperty(), 0, interpolator)));
                 timeline.getKeyFrames().add(new KeyFrame(halfDuration,
                         new KeyValue(left.translateXProperty(), -30, interpolator),
                         new KeyValue(center.translateXProperty(), 30, interpolator)));
+                timeline.getKeyFrames().add(new KeyFrame(duration,
+                        new KeyValue(left.cacheProperty(), left.isCache(), Interpolator.DISCRETE),
+                        new KeyValue(center.cacheProperty(), center.isCache(), Interpolator.DISCRETE)));
             }
 
             timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
@@ -257,10 +261,15 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
                 Node left = nextPage.getLeft();
                 Node center = nextPage.getCenter();
 
+                timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
+                        new KeyValue(left.cacheProperty(), true, Interpolator.DISCRETE),
+                        new KeyValue(center.cacheProperty(), true, Interpolator.DISCRETE)));
                 timeline.getKeyFrames().add(new KeyFrame(halfDuration,
                         new KeyValue(left.translateXProperty(), -30, interpolator),
                         new KeyValue(center.translateXProperty(), 30, interpolator)));
                 timeline.getKeyFrames().add(new KeyFrame(duration,
+                        new KeyValue(left.cacheProperty(), left.isCache(), Interpolator.DISCRETE),
+                        new KeyValue(center.cacheProperty(), center.isCache(), Interpolator.DISCRETE),
                         new KeyValue(left.translateXProperty(), 0, interpolator),
                         new KeyValue(center.translateXProperty(), 0, interpolator)));
             }

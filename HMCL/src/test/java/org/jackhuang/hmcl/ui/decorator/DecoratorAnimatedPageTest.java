@@ -6,6 +6,8 @@ import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
+import javafx.scene.CacheHint;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -13,6 +15,7 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,6 +25,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -213,11 +217,49 @@ public final class DecoratorAnimatedPageTest {
             assertSame(next.getLeft(), bottom.getParent());
             assertSame(next.getLeft(), next.getSidebar().getParent());
             assertEquals(next.getSidebar().localToScene(0, 0).getX(), bottom.localToScene(0, 0).getX(), 0.001);
+            animation.jumpTo(animation.getTotalDuration());
             animation.stop();
             ContainerAnimations.NAVIGATION.finish(next);
             assertEquals(0, next.getLeft().getTranslateX());
             assertEquals(0, next.getCenter().getTranslateX());
             assertEquals(1, next.getOpacity());
+        });
+    }
+
+    /// Restores mixed cache states through the same end-jump and stop sequence used for cancellation.
+    @ParameterizedTest
+    @ValueSource(ints = {0, 5, 10, 15})
+    public void testNavigationCacheRestoration(int mask) {
+        onFxThread(() -> {
+            DecoratorAnimatedPage previous = new DecoratorAnimatedPage();
+            DecoratorAnimatedPage next = new DecoratorAnimatedPage();
+            @Unmodifiable List<Node> panels = List.of(previous.getLeft(), previous.getCenter(), next.getLeft(), next.getCenter());
+            @Unmodifiable List<CacheHint> hints = List.of(CacheHint.DEFAULT, CacheHint.SPEED, CacheHint.QUALITY, CacheHint.SCALE);
+            for (int i = 0; i < panels.size(); i++) {
+                panels.get(i).setCache((mask & (1 << i)) != 0);
+                panels.get(i).setCacheHint(hints.get(i));
+            }
+            Animation animation = ContainerAnimations.NAVIGATION.animate(new Pane(previous, next), previous, next,
+                    Duration.millis(200), Interpolator.LINEAR);
+            for (int i = 0; i < panels.size(); i++)
+                assertEquals((mask & (1 << i)) != 0, panels.get(i).isCache());
+
+            animation.play();
+            animation.pause();
+            for (int millis : List.of(1, 100, 199)) {
+                animation.jumpTo(Duration.millis(millis));
+                assertTrue(panels.stream().allMatch(Node::isCache));
+                assertFalse(previous.isCache());
+                assertFalse(next.isCache());
+                for (int i = 0; i < panels.size(); i++)
+                    assertEquals(hints.get(i), panels.get(i).getCacheHint());
+            }
+            animation.jumpTo(animation.getTotalDuration());
+            animation.stop();
+            for (int i = 0; i < panels.size(); i++) {
+                assertEquals((mask & (1 << i)) != 0, panels.get(i).isCache());
+                assertEquals(hints.get(i), panels.get(i).getCacheHint());
+            }
         });
     }
 
