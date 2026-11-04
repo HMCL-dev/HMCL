@@ -21,7 +21,7 @@ import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// A known Mac product with size and unambiguous release-date details for localization.
+/// A known Mac product with size, unambiguous chip, and release-date details for localization.
 ///
 /// @param productName the product name, such as `Mac mini`, preserved across locales
 /// @param details the ordered description components, copied into an immutable list
@@ -34,9 +34,9 @@ public record MacModel(String productName, @Unmodifiable List<Detail> details) {
         details = List.copyOf(details);
     }
 
-    /// One description component whose type selects a presentation template.
+    /// One description component whose type selects its presentation.
     ///
-    /// @param type the size or release-date component type, such as `size`, `year`, or `month`
+    /// @param type the component type: `size`, `chip`, `year`, `early`, `mid`, `late`, or `month`
     /// @param arguments the ordered template arguments, copied into an immutable list
     @NotNullByDefault
     public record Detail(String type, @Unmodifiable List<String> arguments) {
@@ -45,7 +45,7 @@ public record MacModel(String productName, @Unmodifiable List<Detail> details) {
             Objects.requireNonNull(type);
             arguments = List.copyOf(arguments);
             int argumentCount = switch (type) {
-                case "year", "size", "early", "mid", "late" -> 1;
+                case "year", "size", "chip", "early", "mid", "late" -> 1;
                 case "month" -> 2;
                 default -> throw new IllegalArgumentException("Unknown Mac model detail type: " + type);
             };

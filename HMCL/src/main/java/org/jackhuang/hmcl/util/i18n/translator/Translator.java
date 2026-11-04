@@ -46,6 +46,7 @@ public class Translator {
     }
 
     /// Localizes known Mac model sizes and release dates; other identities retain their names.
+    /// Chip names from the model table are preserved verbatim.
     /// Diagnostic names and cached device information are not modified.
     public @NotNull String formatDeviceName(@NotNull DeviceInfo device) {
         if (!(device instanceof MacDeviceInfo mac))
@@ -56,7 +57,9 @@ public class Translator {
 
         List<String> details = new ArrayList<>();
         for (MacModel.Detail detail : model.details()) {
-            if (detail.type().equals("month")) {
+            if (detail.type().equals("chip")) {
+                details.add(detail.arguments().get(0));
+            } else if (detail.type().equals("month")) {
                 YearMonth month = YearMonth.of(Integer.parseInt(detail.arguments().get(0)), Integer.parseInt(detail.arguments().get(1)));
                 details.add(month.format(DateTimeFormatter.ofPattern(supportedLocale.i18n("about.device.mac.month"), displayLocale)));
             } else {
