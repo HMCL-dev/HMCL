@@ -13,6 +13,12 @@ import org.jetbrains.annotations.NotNullByDefault;
 @NotNullByDefault
 public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     NONE {
+        /// Leaves caching unchanged when content is replaced without animation.
+        @Override
+        public boolean shouldCache(Node nextNode) {
+            return false;
+        }
+
         @Override
         public void init(TransitionPane container, Node previousNode, Node nextNode) {
             AnimationUtils.reset(previousNode, false);
@@ -175,12 +181,6 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
 
     /// Preserves the original slide-up and fade-in transition.
     TAB_UP {
-        /// Caches the incoming page for the slide-and-fade transition.
-        @Override
-        public boolean shouldCache(Node nextNode) {
-            return true;
-        }
-
         /// Creates the original slide-and-fade timing along the selected vertical direction.
         @Override
         public Timeline animate(Pane container, Node previousNode, Node nextNode,
@@ -196,12 +196,6 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     },
     /// Mirrors the original slide-up and fade-in transition vertically.
     TAB_DOWN {
-        /// Caches the incoming page for the slide-and-fade transition.
-        @Override
-        public boolean shouldCache(Node nextNode) {
-            return true;
-        }
-
         /// Creates the original slide-and-fade timing along the selected vertical direction.
         @Override
         public Timeline animate(Pane container, Node previousNode, Node nextNode,
@@ -216,6 +210,12 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         }
     },
     NAVIGATION {
+        /// Avoids caching pages whose child panels move independently.
+        @Override
+        public boolean shouldCache(Node nextNode) {
+            return !(nextNode instanceof DecoratorAnimatedPage);
+        }
+
         /// Also clears the horizontal offsets of the target page's navigation panels.
         @Override
         public void finish(Node nextNode) {
@@ -269,6 +269,12 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         }
     },
     ;
+
+    /// Temporarily caches the incoming page during whole-page motion and fading.
+    @Override
+    public boolean shouldCache(Node nextNode) {
+        return true;
+    }
 
     /// Preserves the original slide-up fade timing, varying only the vertical direction.
     /// The previous page stays still and fades out halfway through the incoming page's motion.
