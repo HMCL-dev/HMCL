@@ -103,6 +103,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     @Override
     public void refresh() {
         load(true);
+        setInstallFabricApi(true);
     }
 
     @Override
