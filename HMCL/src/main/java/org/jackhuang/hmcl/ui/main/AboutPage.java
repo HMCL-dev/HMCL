@@ -182,10 +182,11 @@ public final class AboutPage extends SpinnerPane {
                         String pageFileCapacity = "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(pageFileSize));
                         PageFileConfiguration configuration = SystemInfo.getPageFileConfiguration();
                         subtitle = switch (configuration.mode()) {
-                            case MANUAL ->
-                                    i18n("about.device.memory.page_files.maximum", subtitle, pageFileCapacity, "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(configuration.maximumSize())));
-                            case SYSTEM_MANAGED, MIXED, UNKNOWN ->
-                                    i18n("about.device.memory.page_files", subtitle, pageFileCapacity);
+                            case MANUAL -> i18n("about.device.memory.page_files.maximum",
+                                    subtitle,
+                                    pageFileCapacity,
+                                    "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(configuration.maximumSize())));
+                            case SYSTEM_MANAGED, MIXED, UNKNOWN -> i18n("about.device.memory.page_files", subtitle, pageFileCapacity);
                         };
                     }
                 }
