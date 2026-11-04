@@ -85,7 +85,9 @@ public final class AboutPage extends SpinnerPane {
         ComponentList deviceInfo = new ComponentList();
         {
             @Nullable DeviceInfo deviceIdentity = SystemInfo.getDeviceInfo();
-            if (deviceIdentity != null && OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
+            if (deviceIdentity != null
+                    && !"Virtual Machine".equals(deviceIdentity.name())
+                    && OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
                     && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS || !Architecture.SYSTEM_ARCH.isX86())) {
                 var device = new LinePane();
                 device.setLargeTitle(true);
@@ -180,8 +182,10 @@ public final class AboutPage extends SpinnerPane {
                         String pageFileCapacity = "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(pageFileSize));
                         PageFileConfiguration configuration = SystemInfo.getPageFileConfiguration();
                         subtitle = switch (configuration.mode()) {
-                            case MANUAL -> i18n("about.device.memory.page_files.maximum", subtitle, pageFileCapacity, "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(configuration.maximumSize())));
-                            case SYSTEM_MANAGED, MIXED, UNKNOWN -> i18n("about.device.memory.page_files", subtitle, pageFileCapacity);
+                            case MANUAL ->
+                                    i18n("about.device.memory.page_files.maximum", subtitle, pageFileCapacity, "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(configuration.maximumSize())));
+                            case SYSTEM_MANAGED, MIXED, UNKNOWN ->
+                                    i18n("about.device.memory.page_files", subtitle, pageFileCapacity);
                         };
                     }
                 }
