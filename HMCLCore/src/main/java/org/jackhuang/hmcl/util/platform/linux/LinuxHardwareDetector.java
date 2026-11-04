@@ -14,10 +14,12 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,9 +49,9 @@ public final class LinuxHardwareDetector extends HardwareDetector {
         return cards.isEmpty() ? super.detectGraphicsCards() : cards;
     }
 
-    /// Reads a simple device identity from the device tree, falling back to the DMI product name.
+    /// Reads Android product properties, falling back to the device tree and DMI product name.
     ///
-    /// Tries the stable `/proc/device-tree` ABI, then the sysfs tree, then `/sys/class/dmi/id/product_name`.
+    /// After Android detection, tries `/proc/device-tree`, the sysfs tree, and `/sys/class/dmi/id/product_name`.
     /// Device-tree values are truncated at the first NUL; all names are stripped of surrounding whitespace.
     /// Missing, unreadable, blank, and known placeholder values are skipped; returns `null` if none are available.
     /// Placeholder matching ignores case and requires a full match; other model names are preserved.
@@ -57,6 +59,10 @@ public final class LinuxHardwareDetector extends HardwareDetector {
     public @Nullable DeviceInfo detectDeviceInfo() {
         if (OperatingSystem.CURRENT_OS != OperatingSystem.LINUX)
             return super.detectDeviceInfo();
+
+        @Nullable String androidName = detectAndroidDeviceName();
+        if (androidName != null)
+            return new DeviceInfo.Simple(androidName);
 
         for (Path path : List.of(
                 Path.of("/proc/device-tree/model"),
@@ -79,6 +85,76 @@ public final class LinuxHardwareDetector extends HardwareDetector {
             return name == null ? null : new DeviceInfo.Simple(name);
         } catch (IOException | SecurityException ignored) {
             return null;
+        }
+    }
+
+    /// Uses Fastfetch's Android name priority, adding the manufacturer and distinct model code when available.
+    /// Requires Android's `getprop` executable, including its system bindings when running under proot.
+    private static @Nullable String detectAndroidDeviceName() {
+        try {
+            if (!Files.isExecutable(Path.of("/system/bin/getprop")))
+                return null;
+
+            @Nullable String name = null;
+            // https://github.com/fastfetch-cli/fastfetch/blob/dev/src/detection/host/host_android.c
+            for (String property : List.of(
+                    "ro.product.marketname",
+                    "ro.vendor.product.display",
+                    "ro.vivo.market.name",
+                    "ro.product.oppo_model",
+                    "ro.oppo.market.name",
+                    "ro.vendor.oplus.market.enname",
+                    "ro.config.devicename",
+                    "ro.config.marketing_name",
+                    "ro.product.vendor.model",
+                    "ro.product.brand")) {
+                name = readAndroidProperty(property);
+                if (name != null)
+                    break;
+            }
+
+            @Nullable String model = readAndroidProperty("ro.product.model");
+            if (name == null) {
+                name = model;
+                model = null;
+            } else if (model != null && StringUtils.startsWithIgnoreCase(model, name)) {
+                model = cleanDeviceName(model.substring(name.length()));
+            }
+            if (name == null)
+                return null;
+
+            @Nullable String manufacturer = readAndroidProperty("ro.product.manufacturer");
+            if (manufacturer != null && !StringUtils.startsWithIgnoreCase(name, manufacturer))
+                name = manufacturer + " " + name;
+            return model == null ? name : name + " (" + model + ")";
+        } catch (IOException | SecurityException ignored) {
+            return null;
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+            return null;
+        }
+    }
+
+    /// Reads one Android property as UTF-8, filtering blank and placeholder values.
+    /// Throws on execution failure or a two-second timeout; interruption is propagated to the caller.
+    private static @Nullable String readAndroidProperty(String property) throws IOException, InterruptedException {
+        ProcessBuilder builder = new ProcessBuilder("/system/bin/getprop", property)
+                .redirectError(ProcessBuilder.Redirect.DISCARD);
+        // Android binaries must not inherit the JVM's Termux or GNU/Linux loader overrides.
+        builder.environment().remove("LD_LIBRARY_PATH");
+        builder.environment().remove("LD_PRELOAD");
+        Process process = builder.start();
+        try (var input = process.getInputStream()) {
+            process.getOutputStream().close();
+            // A single product property is small enough to fit in the process output pipe.
+            if (!process.waitFor(2, TimeUnit.SECONDS))
+                throw new IOException("Android property query timed out");
+            if (process.exitValue() != 0)
+                throw new IOException("Android property query failed: " + process.exitValue());
+            return cleanDeviceName(new String(input.readAllBytes(), StandardCharsets.UTF_8));
+        } finally {
+            if (process.isAlive())
+                process.destroyForcibly();
         }
     }
 
