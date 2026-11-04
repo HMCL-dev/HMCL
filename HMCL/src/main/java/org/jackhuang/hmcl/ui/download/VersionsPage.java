@@ -396,7 +396,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             {
                 if (control.componentType == GameComponentType.FABRIC) {
-                    
                     JFXSpinner fabricApiProgress = new JFXSpinner();
                     fabricApiProgress.getStyleClass().add("small-spinner");
                     fabricApiProgress.setRadius(8);
