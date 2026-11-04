@@ -922,6 +922,7 @@ public final class LauncherHelper {
                     public void run() {
                         try {
                             logFile = Files.createTempFile("hmcl-game-log-%d-".formatted(pid), ".log");
+                            logFile.toFile().deleteOnExit();
                             logFileWriter = new PrintWriter(Files.newBufferedWriter(logFile, UTF_8));
                             LOG.info("Saving game log file for process %d at %s".formatted(pid, logFile));
                         } catch (IOException e) {
