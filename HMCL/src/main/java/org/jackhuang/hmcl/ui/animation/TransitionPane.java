@@ -183,8 +183,7 @@ public class TransitionPane extends StackPane {
         boolean originalCache = newView.isCache();
         CacheHint originalCacheHint = newView.getCacheHint();
         boolean originalMouseTransparent = isMouseTransparent();
-        @Nullable CacheHint cacheHint = newView instanceof Cacheable cacheable
-                ? cacheable.getCacheHint(transition) : null;
+        @Nullable CacheHint cacheHint = transition.getCacheHint(newView);
 
         AnimationTimer timer = new AnimationTimer() {
             /// Queues playback after the scene has completed CSS and layout.
@@ -314,6 +313,13 @@ public class TransitionPane extends StackPane {
 
     /// Prepares page properties and creates animations for content replacements.
     public interface AnimationProducer {
+        /// Returns the bitmap cache hint for the incoming page during preparation and playback,
+        /// or `null` to leave its cache settings unchanged. Called before [#init].
+        /// The original cache settings are restored on completion or cancellation when a hint is returned.
+        default @Nullable CacheHint getCacheHint(Node nextNode) {
+            return null;
+        }
+
         /// Resets page transforms, making the old page opaque and the new page transparent.
         default void init(TransitionPane container, Node previousNode, Node nextNode) {
             AnimationUtils.reset(previousNode, true);
@@ -340,17 +346,6 @@ public class TransitionPane extends StackPane {
         /// Returns the reverse transition, or `null` if none is specified.
         default @Nullable TransitionPane.AnimationProducer opposite() {
             return null;
-        }
-    }
-
-    /// Marks a node as cacheable as a bitmap during animation.
-    public interface Cacheable {
-        /// @return the [cache hint][CacheHint] to use when caching this node during the given animation,
-        ///         or `null` to not cache it.
-        default @Nullable CacheHint getCacheHint(AnimationProducer animationProducer) {
-            // https://github.com/HMCL-dev/HMCL/issues/4789
-            return animationProducer == ContainerAnimations.TAB_UP
-                    || animationProducer == ContainerAnimations.TAB_DOWN ? CacheHint.SPEED : null;
         }
     }
 }
