@@ -13,6 +13,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Window;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.IdentityPropertyKey;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 public class TransitionPane extends StackPane {
 
     /// Stores an explicit opt-out from bitmap caching during transitions.
-    private static final Object CACHE_ALLOWED_KEY = new Object();
+    private static final IdentityPropertyKey<Boolean> CACHE_ALLOWED_KEY = new IdentityPropertyKey<>(TransitionPane.class, "CACHE_ALLOWED_KEY");
 
     /// Returns this node's transition cache preference, defaulting to true without allocating properties.
     public static boolean isCacheAllowed(Node node) {
@@ -42,7 +43,7 @@ public class TransitionPane extends StackPane {
     }
 
     /// Marks pages that have completed a rendering preparation or entered their displayed state.
-    private static final Object RENDER_INITIALIZED_KEY = new Object();
+    private static final IdentityPropertyKey<Boolean> RENDER_INITIALIZED_KEY = new IdentityPropertyKey<>(TransitionPane.class, "RENDER_INITIALIZED_KEY");
 
     /// Keeps the first page render active while contributing negligible visible opacity.
     private static final double PREPARATION_OPACITY = 0.00001;
