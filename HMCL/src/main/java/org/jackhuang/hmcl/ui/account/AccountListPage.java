@@ -103,16 +103,17 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
             offlineItem.getStyleClass().add("navigation-drawer-item");
             offlineItem.setTitle(i18n("account.methods.offline"));
             offlineItem.setLeftIcon(SVG.PERSON);
-            offlineItem.setOnAction(e -> {
-                if (SettingsManager.isUserGameAccountsReadOnly()) {
-                    confirmOverwriteUserAccounts(() -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
-                } else {
-                    Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE));
-                }
-            });
             if (restricted) {
-                offlineItem.setDisable(true);
+                offlineItem.setActionDisabled(true);
                 FXUtils.installFastTooltip(offlineItem, i18n("account.login.restricted"));
+            } else {
+                offlineItem.setOnAction(e -> {
+                    if (SettingsManager.isUserGameAccountsReadOnly()) {
+                        confirmOverwriteUserAccounts(() -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
+                    } else {
+                        Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE));
+                    }
+                });
             }
 
             getSidebar().add(offlineItem);
@@ -121,13 +122,6 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                 AdvancedListItem item = new AdvancedListItem();
                 item.getStyleClass().add("navigation-drawer-item");
                 item.setLeftIcon(SVG.DRESSER);
-                item.setOnAction(e -> {
-                    if (SettingsManager.isUserGameAccountsReadOnly()) {
-                        confirmOverwriteUserAccounts(() -> Controllers.dialog(new CreateAccountPane(server)));
-                    } else {
-                        Controllers.dialog(new CreateAccountPane(server));
-                    }
-                });
                 item.setRightAction(SVG.CLOSE, () -> {
                     if (SettingsManager.isAuthlibInjectorServersReadOnly()) {
                         confirmOverwriteAuthlibInjectorServers(() -> confirmRemoveAuthlibInjectorServer(server));
@@ -142,10 +136,17 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
 
                 Tooltip tooltip = new Tooltip();
                 if (restricted) {
-                    item.setDisable(true);
                     tooltip.setText(i18n("account.login.restricted"));
+                    item.setActionDisabled(true);
                 } else {
                     tooltip.textProperty().bind(Bindings.format("%s (%s)", title, server.getUrl()));
+                    item.setOnAction(e -> {
+                        if (SettingsManager.isUserGameAccountsReadOnly()) {
+                            confirmOverwriteUserAccounts(() -> Controllers.dialog(new CreateAccountPane(server)));
+                        } else {
+                            Controllers.dialog(new CreateAccountPane(server));
+                        }
+                    });
                 }
                 FXUtils.installFastTooltip(item, tooltip);
 

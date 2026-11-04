@@ -151,8 +151,19 @@
     -fx-cursor: hand;
 }
 
+.advanced-list-item:action-disabled > .rippler-container > .container > .title,
+.advanced-list-item:action-disabled > .rippler-container > .container > .subtitle,
+.advanced-list-item:action-disabled > .rippler-container > .container > :action-disabled {
+    -fx-opacity: 0.4;
+}
+
 .advanced-list-item:selected .rippler-container {
     -jfx-feedback-fill: -monet-on-secondary-container;
+}
+
+.advanced-list-item:action-disabled > .rippler-container {
+    -jfx-feedback-fill: transparent;
+    -fx-cursor: default;
 }
 
 .advanced-list-item > .rippler-container > .container {

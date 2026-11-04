@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.*;
 import javafx.css.CssMetaData;
+import javafx.css.PseudoClass;
 import javafx.css.SimpleStyleableObjectProperty;
 import javafx.css.Styleable;
 import javafx.css.StyleableObjectProperty;
@@ -45,9 +46,9 @@ public class AdvancedListItem extends Control {
         getStyleClass().add("advanced-list-item");
     }
 
-    /// Fires this item's action unless disabled, without waiting for feedback or preparation.
+    /// Fires this item's action unless the node or main action is disabled.
     public void fire() {
-        if (!isDisabled())
+        if (!isDisabled() && !isActionDisabled())
             fireEvent(new ActionEvent(this, this));
     }
 
@@ -209,6 +210,52 @@ public class AdvancedListItem extends Control {
     /// Sets [#selectedBackgroundFillProperty()]; null hides the selected background.
     public void setSelectedBackgroundFill(@Nullable Paint value) {
         selectedBackgroundFill.set(value);
+    }
+
+    /// Marks the main action as unavailable without disabling descendant controls.
+    private static final PseudoClass ACTION_DISABLED = PseudoClass.getPseudoClass("action-disabled");
+
+    /// The lazily allocated main-action restriction.
+    private @Nullable BooleanProperty actionDisabled;
+
+    /// Returns the main-action restriction, initially false. The default skin suppresses background
+    /// feedback and preparation and dims the text and left graphic. Right-side controls and tooltips
+    /// remain interactive. The inherited disable property still disables the entire subtree.
+    public BooleanProperty actionDisabledProperty() {
+        if (actionDisabled == null) {
+            actionDisabled = new SimpleBooleanProperty(this, "actionDisabled") {
+                /// Updates styling and the default skin without disabling descendant controls.
+                @Override
+                protected void invalidated() {
+                    boolean disabled = get();
+                    pseudoClassStateChanged(ACTION_DISABLED, disabled);
+                    @Nullable Node graphic = getLeftGraphic();
+                    if (graphic != null)
+                        graphic.pseudoClassStateChanged(ACTION_DISABLED, disabled);
+                    @Nullable Skin<?> skin = getSkin();
+                    if (skin instanceof AdvancedListItemSkin itemSkin)
+                        itemSkin.updateActionDisabled();
+                }
+            };
+            leftGraphic.addListener((var observable, @Nullable var previous, @Nullable var current) -> {
+                if (previous != null)
+                    previous.pseudoClassStateChanged(ACTION_DISABLED, false);
+                if (current != null)
+                    current.pseudoClassStateChanged(ACTION_DISABLED, isActionDisabled());
+            });
+        }
+        return actionDisabled;
+    }
+
+    /// Returns whether the main action is disabled without allocating its property.
+    public boolean isActionDisabled() {
+        return actionDisabled != null && actionDisabled.get();
+    }
+
+    /// Sets whether the main action is disabled; setting the default does not allocate a property.
+    public void setActionDisabled(boolean value) {
+        if (actionDisabled != null || value)
+            actionDisabledProperty().set(value);
     }
 
     /// The handler for actions originating from this item, excluding descendant controls.
