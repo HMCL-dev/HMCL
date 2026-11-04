@@ -8,6 +8,7 @@ import javafx.scene.layout.Pane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
 import static org.jackhuang.hmcl.ui.animation.TransitionPane.isCacheAllowed;
 
@@ -229,7 +230,8 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             }
         }
 
-        /// Animates navigation panels with temporary caching, restoring their original cache states at the end.
+        /// Animates navigation panels, respecting the content's cache preference for each center panel.
+        /// Restores the panels' original cache states at the end.
         @Override
         public Animation animate(Pane container, Node previousNode, Node nextNode, Duration duration, Interpolator interpolator) {
             Timeline timeline = new Timeline();
@@ -242,10 +244,12 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             if (previousNode instanceof DecoratorAnimatedPage prevPage) {
                 Node left = prevPage.getLeft();
                 Node center = prevPage.getCenter();
+                @Nullable Node content = prevPage.getContent();
+                boolean cacheCenter = isCacheAllowed(center) && (content == null || isCacheAllowed(content));
 
                 timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
                         new KeyValue(left.cacheProperty(), isCacheAllowed(left), Interpolator.DISCRETE),
-                        new KeyValue(center.cacheProperty(), isCacheAllowed(center), Interpolator.DISCRETE),
+                        new KeyValue(center.cacheProperty(), cacheCenter, Interpolator.DISCRETE),
                         new KeyValue(left.translateXProperty(), 0, interpolator),
                         new KeyValue(center.translateXProperty(), 0, interpolator)));
                 timeline.getKeyFrames().add(new KeyFrame(halfDuration,
@@ -265,10 +269,12 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             if (nextNode instanceof DecoratorAnimatedPage nextPage) {
                 Node left = nextPage.getLeft();
                 Node center = nextPage.getCenter();
+                @Nullable Node content = nextPage.getContent();
+                boolean cacheCenter = isCacheAllowed(center) && (content == null || isCacheAllowed(content));
 
                 timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
                         new KeyValue(left.cacheProperty(), isCacheAllowed(left), Interpolator.DISCRETE),
-                        new KeyValue(center.cacheProperty(), isCacheAllowed(center), Interpolator.DISCRETE)));
+                        new KeyValue(center.cacheProperty(), cacheCenter, Interpolator.DISCRETE)));
                 timeline.getKeyFrames().add(new KeyFrame(halfDuration,
                         new KeyValue(left.translateXProperty(), -30, interpolator),
                         new KeyValue(center.translateXProperty(), 30, interpolator)));
