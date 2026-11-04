@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.management.ManagementFactory;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 /// Detects hardware information, with platform-specific subclasses providing native queries.
 ///
@@ -17,6 +19,26 @@ public class HardwareDetector {
 
     /// Controls external-process detection without disabling native platform queries.
     private static final boolean USE_FAST_FETCH = "true".equalsIgnoreCase(System.getProperty("hmcl.hardware.fastfetch", "true"));
+
+    /// Lowercase placeholder names excluded by exact, case-insensitive matching after stripping whitespace.
+    private static final @Unmodifiable Set<String> DEVICE_NAME_PLACEHOLDERS = Set.of(
+            "unknown",
+            "none",
+            "n/a",
+            "default string",
+            "to be filled by o.e.m.",
+            "to be filled by o.e.m",
+            "system product name");
+
+    /// Strips surrounding whitespace from a decoded hardware model name.
+    /// Returns `null` for absent, blank, or known placeholder names, matching placeholders without case sensitivity.
+    /// Other model names are preserved without requiring a known manufacturer or model.
+    protected static @Nullable String cleanDeviceName(@Nullable String name) {
+        if (name == null)
+            return null;
+        name = name.strip();
+        return name.isEmpty() || DEVICE_NAME_PLACEHOLDERS.contains(name.toLowerCase(Locale.ROOT)) ? null : name;
+    }
 
     /// Returns a nonempty immutable processor list, estimating missing counts for a single entry.
     ///
@@ -35,6 +57,15 @@ public class HardwareDetector {
     /// The default implementation runs Fastfetch when enabled.
     public @Unmodifiable List<GraphicsCard> detectGraphicsCards() {
         return USE_FAST_FETCH ? FastFetchUtils.detectGraphicsCards() : List.of();
+    }
+
+    /// Returns the device's hardware identity, or `null` if unavailable or unsupported.
+    ///
+    /// This describes the hardware product, not the user-configured hostname.
+    ///
+    /// @implSpec The default implementation returns `null`.
+    public @Nullable DeviceInfo detectDeviceInfo() {
+        return null;
     }
 
     /// Returns a desktop environment description, or `null` if detection is unsupported or no name is available.

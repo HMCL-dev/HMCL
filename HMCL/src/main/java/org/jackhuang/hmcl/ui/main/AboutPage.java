@@ -18,6 +18,7 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
+import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.PageFileConfiguration;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -29,6 +30,7 @@ import java.io.InputStream;
 import java.util.Comparator;
 import java.util.List;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.getTranslator;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -82,6 +84,19 @@ public final class AboutPage extends SpinnerPane {
 
         ComponentList deviceInfo = new ComponentList();
         {
+            @Nullable DeviceInfo deviceIdentity = SystemInfo.getDeviceInfo();
+            if (deviceIdentity != null
+                    && !"Virtual Machine".equals(deviceIdentity.name())
+                    && OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
+                    && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS || !Architecture.SYSTEM_ARCH.isX86())) {
+                var device = new LinePane();
+                device.setLargeTitle(true);
+                device.setLeading(SVG.HOST.createIcon(32));
+                device.setTitle(i18n("about.device.model"));
+                device.setSubtitle(getTranslator().formatDeviceName(deviceIdentity));
+                deviceInfo.getContent().add(device);
+            }
+
             @Unmodifiable List<CentralProcessor> processors = SystemInfo.getCentralProcessors();
             for (int i = 0; i < processors.size(); i++) {
                 String title = processors.size() == 1
@@ -167,7 +182,10 @@ public final class AboutPage extends SpinnerPane {
                         String pageFileCapacity = "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(pageFileSize));
                         PageFileConfiguration configuration = SystemInfo.getPageFileConfiguration();
                         subtitle = switch (configuration.mode()) {
-                            case MANUAL -> i18n("about.device.memory.page_files.maximum", subtitle, pageFileCapacity, "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(configuration.maximumSize())));
+                            case MANUAL -> i18n("about.device.memory.page_files.maximum",
+                                    subtitle,
+                                    pageFileCapacity,
+                                    "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(configuration.maximumSize())));
                             case SYSTEM_MANAGED, MIXED, UNKNOWN -> i18n("about.device.memory.page_files", subtitle, pageFileCapacity);
                         };
                     }
