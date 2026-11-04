@@ -410,19 +410,14 @@ public class DefaultLauncher extends Launcher {
     }
 
     /// Returns the feature flags used to evaluate conditional game arguments.
-    /// The `has_custom_resolution` flag is enabled when both dimensions are non-null and nonzero,
-    /// except for snapshots `13w16a` through `13w23a`, which reject the resolution arguments.
+    /// The `has_custom_resolution` flag is enabled when both dimensions are non-null and nonzero
+    /// and the game version is at least `1.6` (snapshot `13w25a`).
     ///
     /// @return an unmodifiable snapshot containing the custom resolution flag
     public @Unmodifiable Map<String, Boolean> getFeatures() {
         boolean hasCustomResolution = options.getHeight() != null && options.getHeight() != 0
-                && options.getWidth() != null && options.getWidth() != 0;
-
-        // These snapshots reject unknown options instead of ignoring the unsupported resolution arguments.
-        GameVersionNumber gameVersion = instance.getVersion();
-        if (gameVersion instanceof GameVersionNumber.LegacySnapshot
-                && gameVersion.compareTo("13w16a") >= 0 && gameVersion.compareTo("13w23a") <= 0)
-            hasCustomResolution = false;
+                && options.getWidth() != null && options.getWidth() != 0
+                && instance.getVersion().isAtLeast("1.6", "13w25a");
 
         return Collections.singletonMap("has_custom_resolution", hasCustomResolution);
     }
