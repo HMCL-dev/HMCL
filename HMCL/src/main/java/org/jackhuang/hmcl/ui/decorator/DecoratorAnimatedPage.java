@@ -53,7 +53,7 @@ public class DecoratorAnimatedPage extends BorderPane {
 
     /// Returns the page content, or null when no content is installed.
     public @Nullable Node getContent() {
-        return center.getChildren().isEmpty() ? null : center.getChildren().getFirst();
+        return center.getChildren().isEmpty() ? null : center.getChildren().get(0);
     }
 
     /// Replaces the page content; null clears it while preserving the animation target.
