@@ -30,9 +30,6 @@ final class NativeWindowDecoration {
     /// Marks nodes whose title-content descendants are already observed for native hit testing.
     private static final Object DRAG_CONFIGURED = new Object();
 
-    /// Whether the user explicitly enabled native decoration regardless of automatic platform or brightness exclusions.
-    private final boolean forced;
-
     /// The platform-supported extended stage style.
     final StageStyle style;
 
@@ -62,10 +59,8 @@ final class NativeWindowDecoration {
 
     /// Resolves all required public APIs and creates a detached header bar.
     ///
-    /// @param forced whether to bypass the automatic theme brightness exclusion
     /// @throws Throwable if a required API cannot be resolved or invoked
-    private NativeWindowDecoration(boolean forced) throws Throwable {
-        this.forced = forced;
+    private NativeWindowDecoration() throws Throwable {
         MethodHandles.Lookup lookup = MethodHandles.publicLookup();
         style = (StageStyle) lookup.findStaticGetter(StageStyle.class, "EXTENDED", StageStyle.class).invokeExact();
         Class<?> headerClass = Class.forName("javafx.scene.layout.HeaderBar");
@@ -115,23 +110,11 @@ final class NativeWindowDecoration {
             if (version < 27 || !Platform.isSupported(ConditionalFeature.valueOf("EXTENDED_WINDOW"))) {
                 return null;
             }
-            return new NativeWindowDecoration(forced);
+            return new NativeWindowDecoration();
         } catch (Throwable e) {
             LOG.warning("Native window decoration is unavailable; using custom decoration", e);
             return null;
         }
-    }
-
-    /// Returns whether to use native decoration with the current transparency and theme brightness.
-    ///
-    /// Transparent windows always use custom decoration. Automatic mode also excludes dark windows on Windows;
-    /// explicitly enabling native decoration bypasses only that brightness exclusion.
-    ///
-    /// @param transparent whether the theme requests window transparency
-    /// @param dark whether the current theme is dark
-    /// @return whether this instance permits native decoration for the supplied theme settings
-    boolean isPreferred(boolean transparent, boolean dark) {
-        return !transparent && (forced || !(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && dark));
     }
 
     /// Sets or removes the header content; the caller must first detach it from any other parent.

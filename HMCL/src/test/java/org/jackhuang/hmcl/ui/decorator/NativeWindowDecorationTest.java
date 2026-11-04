@@ -71,20 +71,12 @@ final class NativeWindowDecorationTest {
                 System.setProperty("hmcl.nativeDecoration", " TRUE ");
                 @Nullable NativeWindowDecoration forced = NativeWindowDecoration.create();
                 assertEquals(supported, forced != null);
-                if (forced != null) {
-                    assertTrue(forced.isPreferred(false, true));
-                    assertFalse(forced.isPreferred(true, false));
-                    assertFalse(forced.isPreferred(true, true));
-                }
 
                 boolean automatic = supported && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
                         || OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11));
                 System.setProperty("hmcl.nativeDecoration", " AUTO ");
                 @Nullable NativeWindowDecoration decoration = NativeWindowDecoration.create();
                 assertEquals(automatic, decoration != null);
-                if (decoration != null) {
-                    assertFalse(decoration.isPreferred(true, false));
-                }
 
                 System.clearProperty("hmcl.nativeDecoration");
                 @Nullable String environment = System.getenv("HMCL_NATIVE_DECORATION");
@@ -104,19 +96,6 @@ final class NativeWindowDecorationTest {
                     System.setProperty("hmcl.nativeDecoration", previous);
                 }
             }
-            return null;
-        });
-    }
-
-    /// Verifies automatic mode preserves transparency and Windows dark-mode exclusions.
-    @Test
-    void retainsAutomaticThemeExclusions() throws Exception {
-        onFxThread(() -> {
-            NativeWindowDecoration decoration = createDecoration();
-            assertTrue(decoration.isPreferred(false, false));
-            assertFalse(decoration.isPreferred(true, false));
-            assertFalse(decoration.isPreferred(true, true));
-            assertEquals(OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS, decoration.isPreferred(false, true));
             return null;
         });
     }
@@ -219,9 +198,9 @@ final class NativeWindowDecorationTest {
 
     /// Resolves the real APIs even when the headless toolkit reports no native window decorations.
     private static NativeWindowDecoration createDecoration() throws ReflectiveOperationException {
-        Constructor<NativeWindowDecoration> constructor = NativeWindowDecoration.class.getDeclaredConstructor(boolean.class);
+        Constructor<NativeWindowDecoration> constructor = NativeWindowDecoration.class.getDeclaredConstructor();
         constructor.setAccessible(true);
-        return constructor.newInstance(false);
+        return constructor.newInstance();
     }
 
     /// Applies CSS so hit testing includes control skins, then lays out the header at a fixed size.
