@@ -35,6 +35,8 @@ import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.addon.AddonProjectInfo;
+import org.jackhuang.hmcl.addon.AddonProjectInfoRegistry;
 import org.jackhuang.hmcl.addon.RemoteAddon;
 import org.jackhuang.hmcl.addon.repository.CurseForgeRemoteAddonRepository;
 import org.jackhuang.hmcl.download.DownloadCandidates;
@@ -454,9 +456,9 @@ public class AddonFavoritesPage extends Control implements DecoratorPage, PageAw
             }));
             if (addon != null) {
                 if (addon.type() != null && I18n.isUseChinese()) {
-                    ModTranslations.Mod mod = ModTranslations.getTranslationsByAddonType(addon.type()).getModByCurseForgeId(addon.slug());
-                    if (mod != null) content.setTitle(mod.getDisplayName());
-                    else content.setTitle(addon.title());
+                    @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(addon.type());
+                    @Nullable AddonProjectInfo mod = registry != null ? registry.getInfoByCurseForgeId(addon.slug()) : null;
+                    content.setTitle(mod != null ? mod.displayName() : addon.title());
                 } else {
                     content.setTitle(addon.title());
                 }

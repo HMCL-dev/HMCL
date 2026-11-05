@@ -644,13 +644,13 @@ public class DownloadListPage extends Control implements DecoratorPage, PageAwar
 
             this.graphic.resetFeedback();
 
-            if (favChangeListener != null) control.favoritesLoaded.removeListener(favChangeListener);
+            if (favChangeListener != null) page.favoritesLoaded.removeListener(favChangeListener);
             favChangeListener = null;
 
             if (empty || item == null) {
                 setGraphic(null);
             } else {
-                favChangeListener = FXUtils.onWeakChangeAndOperate(control.favoritesLoaded, loaded -> {
+                favChangeListener = FXUtils.onWeakChangeAndOperate(page.favoritesLoaded, loaded -> {
                     if (loaded) addedToFav.set(favoritesManager.contains(item));
                 });
 
