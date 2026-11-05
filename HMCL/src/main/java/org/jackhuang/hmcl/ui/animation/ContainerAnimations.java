@@ -178,34 +178,6 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         }
     },
 
-    /// Preserves the original slide-up and fade-in transition.
-    TAB_UP {
-        /// Creates a 400 ms slide-and-fade transition along the selected vertical direction.
-        @Override
-        public Timeline animate(Pane container, Node previousNode, Node nextNode) {
-            return animateTab(container, previousNode, nextNode, 1);
-        }
-
-        /// Returns the reverse tab transition.
-        @Override
-        public TransitionPane.AnimationProducer opposite() {
-            return TAB_DOWN;
-        }
-    },
-    /// Mirrors the original slide-up and fade-in transition vertically.
-    TAB_DOWN {
-        /// Creates a 400 ms slide-and-fade transition along the selected vertical direction.
-        @Override
-        public Timeline animate(Pane container, Node previousNode, Node nextNode) {
-            return animateTab(container, previousNode, nextNode, -1);
-        }
-
-        /// Returns the reverse tab transition.
-        @Override
-        public TransitionPane.AnimationProducer opposite() {
-            return TAB_UP;
-        }
-    },
     NAVIGATION {
         /// Also clears the horizontal offsets of the target page's navigation panels.
         @Override
@@ -280,27 +252,4 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         }
     },
     ;
-
-    /// Creates the slide-and-fade transition with emphasized easing in the selected direction.
-    /// The previous page stays still and fades out halfway through the incoming page's motion.
-    private static Timeline animateTab(Pane container, Node previousNode, Node nextNode, double direction) {
-        Duration duration = Motion.MEDIUM4;
-        double extent = container.getHeight();
-        double offset = (extent > 0 ? extent * 0.2 : 50) * direction;
-        var previousTranslation = previousNode.translateYProperty();
-        var nextTranslation = nextNode.translateYProperty();
-        return new Timeline(
-                new KeyFrame(Duration.ZERO,
-                        new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
-                        new KeyValue(previousTranslation, 0, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED),
-                        new KeyValue(previousNode.opacityProperty(), 1, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED),
-                        new KeyValue(nextNode.opacityProperty(), 0, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED),
-                        new KeyValue(nextTranslation, offset, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED)),
-                new KeyFrame(duration.multiply(0.5),
-                        new KeyValue(previousNode.opacityProperty(), 0, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED)),
-                new KeyFrame(duration,
-                        new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE),
-                        new KeyValue(nextNode.opacityProperty(), 1, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED),
-                        new KeyValue(nextTranslation, 0, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED)));
-    }
 }
