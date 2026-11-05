@@ -10,7 +10,6 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -114,8 +113,7 @@ public final class TabController implements PageAware {
             if (playAnimation && previous != null && previous != tab && contentPane.getCurrentNode() != null) {
                 boolean forward = tabs.indexOf(tab) > tabs.indexOf(previous);
                 ContainerAnimations animation = forward ? ContainerAnimations.TAB_UP : ContainerAnimations.TAB_DOWN;
-                contentPane.setContent(content, animation,
-                        Motion.MEDIUM4, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED);
+                contentPane.setContent(content, animation);
             } else {
                 contentPane.setContent(content, ContainerAnimations.NONE);
             }
