@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
 import com.jfoenix.controls.JFXButton;
@@ -443,10 +428,11 @@ public final class LauncherHelper {
             }
         });
 
-        executor.start();
+        launchingStepsPane.startExecutor();
     }
 
-    private static Task<JavaRuntime> checkGameState(HMCLGameInstance gameInstance, GameSettings.Effective setting, GameInstanceManifest manifest) {
+    /// Checks launch requirements, allowing required Java downloads to share this launch's execution slot.
+    private Task<JavaRuntime> checkGameState(HMCLGameInstance gameInstance, GameSettings.Effective setting, GameInstanceManifest manifest) {
         GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, gameInstance.getVersion());
         GameVersionNumber gameVersion = gameInstance.getVersion();
 
@@ -748,13 +734,18 @@ public final class LauncherHelper {
         return task.withStage("launch.state.java");
     }
 
-    private static CompletableFuture<JavaRuntime> downloadJava(GameJavaVersion javaVersion, HMCLGameRepository repository) {
+    /// Prompts for and downloads Java as a required child of this launch operation.
+    private CompletableFuture<JavaRuntime> downloadJava(GameJavaVersion javaVersion, HMCLGameRepository repository) {
         CompletableFuture<JavaRuntime> future = new CompletableFuture<>();
         Controllers.dialog(new MessageDialogPane.Builder(
                 i18n("launch.advice.require_newer_java_version", javaVersion.majorVersion()),
                 i18n("message.warning"),
                 MessageType.QUESTION)
                 .yesOrNo(() -> {
+                    if (!launchingStepsPane.canStartChild()) {
+                        future.completeExceptionally(new CancellationException());
+                        return;
+                    }
                     DownloadProvider downloadProvider = repository.getDependency().getDownloadProvider();
                     Controllers.taskDialog(JavaManager.getDownloadJavaTask(downloadProvider, SYSTEM_PLATFORM, javaVersion)
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
@@ -768,7 +759,7 @@ public final class LauncherHelper {
                                     }
                                     future.completeExceptionally(new CancellationException());
                                 }
-                            }), i18n("download.java"), it -> future.completeExceptionally(new CancellationException()));
+                            }), i18n("download.java"), it -> future.completeExceptionally(new CancellationException()), launchingStepsPane);
                 }, () -> future.completeExceptionally(new CancellationException())).build());
 
         return future;

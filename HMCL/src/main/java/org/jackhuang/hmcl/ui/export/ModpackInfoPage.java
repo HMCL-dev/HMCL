@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.export;
 
 import com.jfoenix.controls.JFXButton;
@@ -325,7 +310,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     if (skinnable.options.isRequireForceUpdate()) {
-                        var requireForceUpdateButton = new LineToggleButton();
+                        var requireForceUpdateButton = new LineSwitch();
                         requireForceUpdateButton.setTitle(i18n("modpack.wizard.step.initialization.force_update"));
                         requireForceUpdateButton.selectedProperty().bindBidirectional(skinnable.forceUpdate);
 
@@ -333,7 +318,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     {
-                        var canIncludeLauncherButton = new LineToggleButton();
+                        var canIncludeLauncherButton = new LineSwitch();
                         canIncludeLauncherButton.setTitle(i18n("modpack.wizard.step.initialization.include_launcher"));
                         canIncludeLauncherButton.setDisable(!skinnable.canIncludeLauncher);
                         canIncludeLauncherButton.selectedProperty().bindBidirectional(skinnable.packWithLauncher);
@@ -342,7 +327,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     if (skinnable.options.isRequireNoCreateRemoteFiles()) {
-                        var requireNoCreateRemoteFilesButton = new LineToggleButton();
+                        var requireNoCreateRemoteFilesButton = new LineSwitch();
                         requireNoCreateRemoteFilesButton.setTitle(i18n("modpack.wizard.step.initialization.no_create_remote_files"));
                         requireNoCreateRemoteFilesButton.selectedProperty().bindBidirectional(skinnable.noCreateRemoteFiles);
 
@@ -350,7 +335,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     if (skinnable.options.isRequireSkipCurseForgeRemoteFiles()) {
-                        var skipCurseForgeRemoteFilesButton = new LineToggleButton();
+                        var skipCurseForgeRemoteFilesButton = new LineSwitch();
                         skipCurseForgeRemoteFilesButton.setTitle(i18n("modpack.wizard.step.initialization.skip_curseforge_remote_files"));
                         skipCurseForgeRemoteFilesButton.selectedProperty().bindBidirectional(skinnable.skipCurseForgeRemoteFiles);
 

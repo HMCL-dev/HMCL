@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2024 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2024 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
@@ -32,6 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.glavo.nbt.tag.*;
+import org.glavo.nbt.tag.Tag;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -41,6 +27,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -228,21 +215,21 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
             }
 
-            var allowCheatsButton = new LineToggleButton();
+            var allowCheatsButton = new LineSwitch();
             {
                 allowCheatsButton.setTitle(i18n("world.info.allow_cheats"));
                 allowCheatsButton.setDisable(isReadOnly);
 
-                bindTagAndToggleButton(dataTag.get("allowCommands"), allowCheatsButton);
+                bindTagAndSwitch(dataTag.get("allowCommands"), allowCheatsButton);
             }
 
-            var generateFeaturesButton = new LineToggleButton();
+            var generateFeaturesButton = new LineSwitch();
             {
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
                 generateFeaturesButton.setDisable(isReadOnly);
                 // Valid before (1.16)20w20a
                 if (dataTag.get("MapFeatures") instanceof ByteTag generateFeaturesTag) {
-                    bindTagAndToggleButton(generateFeaturesTag, generateFeaturesButton);
+                    bindTagAndSwitch(generateFeaturesTag, generateFeaturesButton);
                 }
                 // Valid after (1.16)20w20a
                 else if (world.getNormalizedWorldGenSettingsData() != null) {
@@ -250,7 +237,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     Tag tag = unifiedWorldGenSettingsDataTag.get("generate_features"); // Valid between (1.16)20w20a and 26.1-snapshot-6
                     if (tag == null)
                         tag = unifiedWorldGenSettingsDataTag.get("generate_structures"); // Valid after 26.1-snapshot-6
-                    bindTagAndToggleButton(tag, generateFeaturesButton);
+                    bindTagAndSwitch(tag, generateFeaturesButton);
                 } else {
                     generateFeaturesButton.setDisable(true);
                 }
@@ -290,18 +277,18 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
             }
 
-            var difficultyLockPane = new LineToggleButton();
+            var difficultyLockPane = new LineSwitch();
             {
                 difficultyLockPane.setTitle(i18n("world.info.difficulty_lock"));
                 difficultyLockPane.setDisable(isReadOnly);
                 // Valid before 26.1-snapshot-6
                 if (dataTag.get("DifficultyLocked") instanceof ByteTag difficultyLockedTag) {
-                    bindTagAndToggleButton(difficultyLockedTag, difficultyLockPane);
+                    bindTagAndSwitch(difficultyLockedTag, difficultyLockPane);
                 }
                 // Valid after 26.1-snapshot-6
                 else if (dataTag.get("difficulty_settings") instanceof CompoundTag difficultySettingTag
                         && difficultySettingTag.get("locked") instanceof ByteTag lockedTag) {
-                    bindTagAndToggleButton(lockedTag, difficultyLockPane);
+                    bindTagAndSwitch(lockedTag, difficultyLockPane);
                 } else {
                     difficultyLockPane.setDisable(true);
                 }
@@ -444,25 +431,26 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         linePane.setRight(textField);
     }
 
-    private void bindTagAndToggleButton(Tag tag, LineToggleButton toggleButton) {
+    /// Saves boolean byte-tag edits through the switch, disabling it for missing or invalid tags.
+    private void bindTagAndSwitch(@Nullable Tag tag, LineSwitch switchControl) {
         if (tag instanceof ByteTag byteTag) {
             byte value = byteTag.getValue();
             if (value == 0 || value == 1) {
-                toggleButton.setSelected(value == 1);
-                toggleButton.selectedProperty().addListener((o, oldValue, newValue) -> {
+                switchControl.setSelected(value == 1);
+                switchControl.selectedProperty().addListener((o, oldValue, newValue) -> {
                     try {
                         byteTag.setValue((byte) (newValue ? 1 : 0));
                         saveWorldData();
                     } catch (Exception e) {
-                        toggleButton.setSelected(oldValue);
+                        switchControl.setSelected(oldValue);
                         LOG.warning("Exception happened when saving world info", e);
                     }
                 });
             } else {
-                toggleButton.setDisable(true);
+                switchControl.setDisable(true);
             }
         } else {
-            toggleButton.setDisable(true);
+            switchControl.setDisable(true);
         }
     }
 

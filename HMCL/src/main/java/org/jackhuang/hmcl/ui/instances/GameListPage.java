@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.JFXButton;
@@ -34,7 +19,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
@@ -75,10 +59,10 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     @SuppressWarnings("FieldCanBeLocal")
     private final ObservableList<GameDirectoryListItem> gameDirectoryListItems;
 
+    /// Creates game-directory navigation, its bottom action, and the instance list.
     public GameListPage() {
         gameDirectoryListItems = MappedObservableList.create(GameDirectoryManager.getGameDirectories(), gameDirectory -> {
             GameDirectoryListItem item = new GameDirectoryListItem(gameDirectory);
-            FXUtils.setLimitWidth(item, 200);
             FXUtils.onSecondaryButtonClicked(item, () -> {
                 PopupMenu menu = new PopupMenu();
                 JFXPopup popup = new JFXPopup(menu);
@@ -92,34 +76,19 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             return item;
         });
 
-        {
-            ScrollPane pane = new ScrollPane();
-            VBox.setVgrow(pane, Priority.ALWAYS);
-            {
-                AdvancedListItem addGameDirectoryItem = new AdvancedListItem();
-                addGameDirectoryItem.getStyleClass().add("navigation-drawer-item");
-                addGameDirectoryItem.setTitle(i18n("game_directory.new"));
-                addGameDirectoryItem.setLeftIcon(SVG.ADD_CIRCLE);
-                addGameDirectoryItem.setOnAction(e -> Controllers.navigate(new GameDirectoryPage(null)));
+        AdvancedListItem addGameDirectoryItem = new AdvancedListItem();
+        addGameDirectoryItem.getStyleClass().add("navigation-drawer-item");
+        addGameDirectoryItem.setTitle(i18n("game_directory.new"));
+        addGameDirectoryItem.setLeftIcon(SVG.ADD_CIRCLE);
+        addGameDirectoryItem.setOnAction(e -> Controllers.navigate(new GameDirectoryPage(null)));
 
-                pane.setFitToWidth(true);
-                VBox wrapper = new VBox();
-                wrapper.getStyleClass().add("advanced-list-box-content");
-                VBox box = new VBox();
-                box.setFillWidth(true);
-                Bindings.bindContent(box.getChildren(), gameDirectoryListItems);
-                wrapper.getChildren().setAll(box, addGameDirectoryItem);
-                pane.setContent(wrapper);
-            }
-            FXUtils.smoothScrolling(pane);
+        VBox directories = new VBox();
+        Bindings.bindContent(directories.getChildren(), gameDirectoryListItems);
+        getSidebar().add(directories).add(addGameDirectoryItem);
+        setSidebarBottom(new AdvancedListBox()
+                .addNavigationDrawerItem(i18n("settings.type.global.manage"), SVG.SETTINGS, this::modifyGlobalGameSettings));
 
-            AdvancedListBox bottomLeftCornerList = new AdvancedListBox()
-                    .addNavigationDrawerItem(i18n("settings.type.global.manage"), SVG.SETTINGS, this::modifyGlobalGameSettings);
-            FXUtils.setLimitHeight(bottomLeftCornerList, 40 + 12 * 2);
-            setLeft(pane, bottomLeftCornerList);
-        }
-
-        setCenter(new GameList());
+        setContent(new GameList());
 
         FXUtils.applyDragListener(this, file -> ModpackHelper.isFileModpackByExtension(file) || "json".equalsIgnoreCase(FileUtils.getNameWithoutExtension(file)), files -> {
             Path file = files.get(0);
@@ -211,6 +180,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
             private final JFXTextField searchField;
 
+            /// Creates the instance list with search controls and viewport-constrained rows.
             public GameListSkin(GameList skinnable) {
                 super(skinnable);
 
@@ -221,6 +191,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 ComponentList root = new ComponentList();
                 root.getStyleClass().add("no-padding");
                 JFXListView<GameListItem> listView = new JFXListView<>();
+                listView.getStyleClass().add("no-horizontal-scrollbar");
 
                 {
                     toolbarPane = new TransitionPane();
@@ -270,7 +241,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     center.loadingProperty().bind(skinnable.loadingProperty());
                     center.failedReasonProperty().bind(skinnable.failedReasonProperty());
 
-                    listView.setCellFactory(x -> new GameListCell());
+                    listView.setCellFactory(GameListCell::new);
                     listView.setItems(skinnable.getItems());
 
                     ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
