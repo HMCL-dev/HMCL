@@ -588,7 +588,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
                 if (exception != null) {
                     LOG.warning("Failed to fetch Fabric API versions", exception);
-                    installFabricApiProperty.setValue(false);
                     fabricApiStatusProperty.setValue(FabricApiStatus.FAILED);
 
                     return;
