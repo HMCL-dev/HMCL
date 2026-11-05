@@ -117,7 +117,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     @Override
     public void cleanup(SettingsMap settings) {
         ++fabricApiRequestId;
-        settings.remove(GameComponentType.FABRIC_API.getPatchId());
+        if (enableFabricApiAutoInstall && componentType == GameComponentType.FABRIC) settings.remove(GameComponentType.FABRIC_API.getPatchId());
     }
 
     private void load(boolean refresh) {
