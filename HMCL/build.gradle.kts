@@ -362,6 +362,11 @@ fun parseToolOptions(options: String?): MutableList<String> {
     return result
 }
 
+// Tests use the same JavaFX reflective access as the packaged application.
+tasks.withType<Test> {
+    jvmArgs(addOpens.map { "--add-opens=$it=ALL-UNNAMED" })
+}
+
 // For IntelliJ IDEA
 tasks.withType<JavaExec> {
     if (name != "run") {

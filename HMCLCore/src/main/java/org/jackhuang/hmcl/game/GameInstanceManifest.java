@@ -295,8 +295,37 @@ public record GameInstanceManifest(
         return root != null && root;
     }
 
+    /// Returns whether component installation and removal are supported for this manifest.
+    ///
+    /// An independent manifest is modifiable if it contains a game patch, or if its
+    /// [#patches()] is `null` and it uses [GameComponentAnalyzer#VANILLA_MAIN] as its main class.
+    /// An empty patch list does not qualify.
+    /// This method does not change the manifest.
+    ///
+    /// @return whether the manifest satisfies these conditions
     public boolean isModifiable() {
-        return inheritsFrom == null && patches != null && hasPatch(GameComponentType.GAME);
+        return inheritsFrom == null
+                && (hasPatch(GameComponentType.GAME)
+                || (patches == null && GameComponentAnalyzer.VANILLA_MAIN.equals(mainClass)));
+    }
+
+    /// Preserves an unpatched modern vanilla manifest's launch metadata in a base game patch.
+    ///
+    /// If this manifest is independent, its [#patches()] is `null`, and it uses
+    /// [GameComponentAnalyzer#VANILLA_MAIN], returns a copy with a game patch and `root` set
+    /// to `true`. Otherwise, returns this manifest unchanged. The returned copy can receive
+    /// component patches before [#reconstructByPatches()] is called.
+    ///
+    /// @param gameVersion the Minecraft version to record in the base game patch
+    /// @return the manifest with a base game patch, or this manifest if conversion is unnecessary
+    public GameInstanceManifest withBaseGamePatch(String gameVersion) {
+        if (patches != null || !isModifiable()) {
+            return this;
+        }
+
+        GameInstancePatch patch = GameInstancePatch.fromManifest(
+                this, GameComponentType.GAME.getPatchId(), gameVersion, GameInstancePatch.PRIORITY_MC);
+        return withPatches(List.of(patch)).withRoot(true);
     }
 
     /// Returns the pending patches.
