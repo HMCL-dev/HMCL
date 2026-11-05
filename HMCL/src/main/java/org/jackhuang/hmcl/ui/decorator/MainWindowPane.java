@@ -364,10 +364,7 @@ final class MainWindowPane extends StackPane {
 
             /// {@inheritDoc}
             @Override
-            public Timeline animate(
-                    Pane container,
-                    Node previousNode,
-                    Node nextNode) {
+            public Timeline animate(Pane container, Node previousNode, Node nextNode) {
                 return createTimeline(previousNode, nextNode, 50, -50);
             }
 
@@ -391,10 +388,7 @@ final class MainWindowPane extends StackPane {
 
             /// {@inheritDoc}
             @Override
-            public Timeline animate(
-                    Pane container,
-                    Node previousNode,
-                    Node nextNode) {
+            public Timeline animate(Pane container, Node previousNode, Node nextNode) {
                 return createTimeline(previousNode, nextNode, -50, 50);
             }
 
