@@ -78,19 +78,27 @@ public class McbbsModpackExportTask extends Task<Void> {
         LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
         try (var zip = new Zipper(modpackFile)) {
             Path runDirectory = instance.getRunDirectory();
-            List<McbbsModpackManifest.File> files = new ArrayList<>();
-            zip.putDirectory(runDirectory, "overrides", path -> {
+
+            List<Path> paths = new ArrayList<>();
+            zip.putDirectoryProgressed(runDirectory, "overrides", path -> {
                 if (Modpack.acceptFile(path, blackList, info.getWhitelist())) {
                     Path file = runDirectory.resolve(path);
                     if (Files.isRegularFile(file)) {
-                        String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                        files.add(new McbbsModpackManifest.AddonFile(true, relativePath, DigestUtils.digestToString("SHA-1", file)));
+                        paths.add(file);
                     }
                     return true;
                 } else {
                     return false;
                 }
-            });
+            }, progress -> updateProgress(0.5 * progress));
+
+            List<McbbsModpackManifest.File> files = new ArrayList<>();
+            long current = 0;
+            for (Path file : paths) {
+                String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
+                files.add(new McbbsModpackManifest.AddonFile(true, relativePath, DigestUtils.digestToString("SHA-1", file)));
+                updateProgress(0.5 + 0.5 * ++current / paths.size());
+            }
 
             GameVersionNumber version = instance.getVersion();
             if (version == GameVersionNumber.unknown()) {
@@ -134,6 +142,7 @@ public class McbbsModpackExportTask extends Task<Void> {
             CurseManifest curseManifest = new CurseManifest(CurseManifest.MINECRAFT_MODPACK, 1, info.getName(), info.getVersion(), info.getAuthor(), "overrides", new CurseManifestMinecraft(gameVersion, modLoaders), Collections.emptyList());
             zip.putTextFile(JsonUtils.GSON.toJson(curseManifest), "manifest.json");
         }
+        updateProgress(1);
     }
 
     /// Export options supported by the MCBBS format.
