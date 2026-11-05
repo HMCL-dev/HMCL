@@ -188,6 +188,9 @@ public final class TabController implements PageAware {
         /// Mirrors the original slide-up and fade-in transition vertically.
         TAB_DOWN(-1.0);
 
+        private static final Duration DURATION = Motion.MEDIUM4;
+        private static final Duration HALF_DURATION = DURATION.divide(2);
+
         private final double direction;
 
         TabAnimation(double direction) {
@@ -196,7 +199,6 @@ public final class TabController implements PageAware {
 
         @Override
         public Animation animate(Pane container, Node previousNode, Node nextNode) {
-            Duration duration = Motion.MEDIUM4;
             double extent = container.getHeight();
             double offset = (extent > 0 ? extent * 0.2 : 50) * direction;
             var previousTranslation = previousNode.translateYProperty();
@@ -208,9 +210,9 @@ public final class TabController implements PageAware {
                             new KeyValue(previousNode.opacityProperty(), 1, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED),
                             new KeyValue(nextNode.opacityProperty(), 0, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED),
                             new KeyValue(nextTranslation, offset, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED)),
-                    new KeyFrame(duration.multiply(0.5),
+                    new KeyFrame(HALF_DURATION,
                             new KeyValue(previousNode.opacityProperty(), 0, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED)),
-                    new KeyFrame(duration,
+                    new KeyFrame(DURATION,
                             new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE),
                             new KeyValue(nextNode.opacityProperty(), 1, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED),
                             new KeyValue(nextTranslation, 0, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED)));
