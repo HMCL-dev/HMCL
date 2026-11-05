@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.animation.*;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -9,12 +10,17 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.layout.Pane;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+
+import static org.jackhuang.hmcl.ui.animation.TransitionPane.isCacheAllowed;
 
 /// Manages tab selection, lazy content initialization, and page lifecycle callbacks.
 /// An optional transition pane displays content activated by [#selectTab(TabItem)].
@@ -31,15 +37,15 @@ public final class TabController implements PageAware {
     /// Creates a controller with the supplied tabs and no content destination.
     ///
     /// @param tabs the initial tabs in display order, or null for an empty controller
-    public TabController(TabItem<?> ... tabs) {
+    public TabController(TabItem<?>... tabs) {
         this(null, tabs);
     }
 
     /// Creates a controller with an optional destination for selected content.
     ///
     /// @param contentPane the destination updated by [#selectTab(TabItem)], or null
-    /// @param tabs the initial tabs in display order, or null for an empty controller
-    public TabController(@Nullable TransitionPane contentPane, TabItem<?> ... tabs) {
+    /// @param tabs        the initial tabs in display order, or null for an empty controller
+    public TabController(@Nullable TransitionPane contentPane, TabItem<?>... tabs) {
         this.contentPane = contentPane;
         this.tabs.addListener(this::tabsChanged);
         this.tabs.setAll(tabs);
@@ -90,11 +96,11 @@ public final class TabController implements PageAware {
     /// Exceptions from subsequent callbacks or content replacement propagate without
     /// rolling back completed effects. A shown callback runs after selection is updated.
     ///
-    /// @param tab a tab belonging to [#getTabs()]
+    /// @param tab           a tab belonging to [#getTabs()]
     /// @param playAnimation whether to animate replacement of existing content
-    /// @throws NullPointerException if the tab is null
+    /// @throws NullPointerException     if the tab is null
     /// @throws IllegalArgumentException if the tab does not belong to this controller
-    /// @throws IllegalStateException if a content destination is configured but the
+    /// @throws IllegalStateException    if a content destination is configured but the
     /// tab has no content after initialization
     public void selectTab(TabItem<?> tab, boolean playAnimation) {
         Objects.requireNonNull(tab, "tab");
@@ -112,7 +118,7 @@ public final class TabController implements PageAware {
         if (contentPane != null) {
             if (playAnimation && previous != null && previous != tab && contentPane.getCurrentNode() != null) {
                 boolean forward = tabs.indexOf(tab) > tabs.indexOf(previous);
-                ContainerAnimations animation = forward ? ContainerAnimations.TAB_UP : ContainerAnimations.TAB_DOWN;
+                TabAnimation animation = forward ? TabAnimation.TAB_UP : TabAnimation.TAB_DOWN;
                 contentPane.setContent(content, animation);
             } else {
                 contentPane.setContent(content, ContainerAnimations.NONE);
@@ -173,5 +179,48 @@ public final class TabController implements PageAware {
         @Nullable TabItem<?> tab = getSelectedTab();
         if (tab != null && tab.isInitialized() && tab.getNode() instanceof PageAware pageAware)
             pageAware.onPageHidden();
+    }
+
+    @NotNullByDefault
+    public enum TabAnimation implements TransitionPane.AnimationProducer {
+        /// Preserves the original slide-up and fade-in transition.
+        TAB_UP(1.0),
+        /// Mirrors the original slide-up and fade-in transition vertically.
+        TAB_DOWN(-1.0);
+
+        private static final Duration DURATION = Motion.MEDIUM4;
+        private static final Duration HALF_DURATION = DURATION.divide(2);
+
+        private final double direction;
+
+        TabAnimation(double direction) {
+            this.direction = direction;
+        }
+
+        @Override
+        public Animation animate(Pane container, Node previousNode, Node nextNode) {
+            double extent = container.getHeight();
+            double offset = (extent > 0 ? extent * 0.2 : 50) * direction;
+            var previousTranslation = previousNode.translateYProperty();
+            var nextTranslation = nextNode.translateYProperty();
+            return new Timeline(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
+                            new KeyValue(previousTranslation, 0, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED),
+                            new KeyValue(previousNode.opacityProperty(), 1, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED),
+                            new KeyValue(nextNode.opacityProperty(), 0, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED),
+                            new KeyValue(nextTranslation, offset, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED)),
+                    new KeyFrame(HALF_DURATION,
+                            new KeyValue(previousNode.opacityProperty(), 0, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED)),
+                    new KeyFrame(DURATION,
+                            new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE),
+                            new KeyValue(nextNode.opacityProperty(), 1, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED),
+                            new KeyValue(nextTranslation, 0, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED)));
+        }
+
+        @Override
+        public TransitionPane.AnimationProducer opposite() {
+            return this == TAB_UP ? TAB_DOWN : TAB_UP;
+        }
     }
 }
