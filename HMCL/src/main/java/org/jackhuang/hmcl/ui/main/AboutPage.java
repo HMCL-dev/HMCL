@@ -18,23 +18,30 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
+import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
+import org.jackhuang.hmcl.util.platform.hardware.PageFileConfiguration;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Comparator;
 import java.util.List;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.getTranslator;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// Displays launcher, system, device, runtime, and project information.
 @NotNullByDefault
 public final class AboutPage extends SpinnerPane {
 
+    /// Keeps theme listeners alive while the page is visible.
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
+    /// Builds the page from cached hardware information and bundled project lists.
     public AboutPage() {
         VBox content = new VBox();
         content.getStyleClass().add("spinner-pane-content");
@@ -54,95 +61,147 @@ public final class AboutPage extends SpinnerPane {
             about.getContent().setAll(launcher);
         }
 
-        ComponentList environment = new ComponentList();
+        ComponentList systemInfo = new ComponentList();
         {
             var system = new LinePane();
             system.setLargeTitle(true);
             system.setLeading(SVG.LUCIDE_APP_WINDOW.createIcon(32));
-            system.setTitle(i18n("about.environment.system"));
+            system.setTitle(i18n("about.system.os"));
             system.setSubtitle((OperatingSystem.OS_RELEASE_PRETTY_NAME == null
-                    ? "%s %s (%s)".formatted(OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion(), Architecture.SYSTEM_ARCH.getDisplayName())
-                    : "%s (%s %s, %s)".formatted(OperatingSystem.OS_RELEASE_PRETTY_NAME, OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion(), Architecture.SYSTEM_ARCH.getDisplayName())));
-            environment.getContent().add(system);
+                    ? "%s %s".formatted(OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion())
+                    : "%s (%s %s)".formatted(OperatingSystem.OS_RELEASE_PRETTY_NAME, OperatingSystem.SYSTEM_NAME, OperatingSystem.SYSTEM_VERSION.getVersion())));
+            systemInfo.getContent().add(system);
 
-            if (SystemInfo.getTotalMemorySize() > 0) {
-                var memory = new LinePane();
-                memory.setLargeTitle(true);
-                memory.setLeading(SVG.LUCIDE_MEMORY_STICK.createIcon(32));
-                memory.setTitle(i18n("about.environment.memory"));
-                memory.setSubtitle("%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
-                environment.getContent().add(memory);
+            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && SystemInfo.getDesktopEnvironment() != null) {
+                var desktop = new LinePane();
+                desktop.setLargeTitle(true);
+                desktop.setLeading(SVG.LUCIDE_PANELS_TOP_LEFT.createIcon(32));
+                desktop.setTitle(i18n("about.system.desktop"));
+                desktop.setSubtitle(SystemInfo.getDesktopEnvironment());
+                systemInfo.getContent().add(desktop);
+            }
+        }
+
+        ComponentList deviceInfo = new ComponentList();
+        {
+            @Nullable DeviceInfo deviceIdentity = SystemInfo.getDeviceInfo();
+            if (deviceIdentity != null
+                    && !"Virtual Machine".equals(deviceIdentity.name())
+                    && OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
+                    && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS || !Architecture.SYSTEM_ARCH.isX86())) {
+                var device = new LinePane();
+                device.setLargeTitle(true);
+                device.setLeading(SVG.HOST.createIcon(32));
+                device.setTitle(i18n("about.device.model"));
+                device.setSubtitle(getTranslator().formatDeviceName(deviceIdentity));
+                deviceInfo.getContent().add(device);
             }
 
-            @Nullable CentralProcessor cpu = SystemInfo.getCentralProcessor();
-            if (cpu != null) {
-                int cpuCount;
-                int logicalPerPackage;
-                int physicalPerPackage;
-
-                CentralProcessor.Cores cores = cpu.getCores();
-                if (cores != null && cores.packages() > 1) {
-                    cpuCount = cores.packages();
-
-                    // TODO: Usually, all CPUs on a multi-socket platform have the same core count, but environments
-                    // like Linux allow some cores to be offline, in which case cores and threads cannot be evenly
-                    // distributed. In the future, we may consider detecting the CPU topology in more detail to
-                    // handle this case correctly.
-                    logicalPerPackage = cores.logical() / cores.packages();
-                    physicalPerPackage = cores.physical() / cores.packages();
+            @Unmodifiable List<CentralProcessor> processors = SystemInfo.getCentralProcessors();
+            for (int i = 0; i < processors.size(); i++) {
+                String title = processors.size() == 1
+                        ? i18n("about.device.cpu")
+                        : i18n("about.device.cpu.n", i + 1);
+                CentralProcessor processor = processors.get(i);
+                String name = processor.getName();
+                @Nullable CentralProcessor.Cores cores = processor.getCores();
+                String subtitle;
+                if (cores == null)
+                    subtitle = i18n("about.device.cpu.name", name);
+                else if (cores.efficiency() > 0) {
+                    subtitle = cores.logical() == cores.physical()
+                            ? i18n("about.device.cpu.name.cores.hybrid", name, cores.performance(), cores.efficiency())
+                            : i18n("about.device.cpu.name.cores.hybrid.threads", name, cores.performance(), cores.efficiency(), cores.logical());
                 } else {
-                    cpuCount = 1;
-                    if (cores != null) {
-                        logicalPerPackage = cores.logical();
-                        physicalPerPackage = cores.physical();
+                    subtitle = cores.logical() == cores.physical()
+                            ? i18n("about.device.cpu.name.cores", name, cores.physical())
+                            : i18n("about.device.cpu.name.cores.threads", name, cores.physical(), cores.logical());
+                }
+
+                var pane = new LinePane();
+                pane.setLargeTitle(true);
+                pane.setTitle(title);
+                pane.setSubtitle(subtitle);
+                pane.setLeading(SVG.LUCIDE_CPU.createIcon(32));
+                pane.getTags().add(new Tag(Architecture.SYSTEM_ARCH.getDisplayName()));
+                deviceInfo.getContent().add(pane);
+            }
+
+            @Unmodifiable List<GraphicsCard> visibleGraphicsCards = SystemInfo.getGraphicsCards().stream()
+                    .filter(card -> card.getType() != GraphicsCard.Type.DISPLAY_ONLY && !"Unknown".equals(card.getName()))
+                    .sorted(Comparator.comparing(GraphicsCard::getType))
+                    .toList();
+
+            for (int i = 0; i < visibleGraphicsCards.size(); i++) {
+                GraphicsCard graphicsCard = visibleGraphicsCards.get(i);
+
+                String title = visibleGraphicsCards.size() == 1
+                        ? i18n("about.device.gpu")
+                        : i18n("about.device.gpu.n", i + 1);
+
+                var button = new LinePane();
+                button.setLargeTitle(true);
+                button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
+                button.setTitle(title);
+
+                StringBuilder subtitle = new StringBuilder(graphicsCard.getName());
+
+                if (graphicsCard.getDriver() != null || graphicsCard.getDriverVersion() != null) {
+                    subtitle.append(" (");
+                    if (graphicsCard.getDriver() != null) {
+                        subtitle.append(graphicsCard.getDriver());
+                        if (graphicsCard.getDriverVersion() != null) {
+                            subtitle.append(' ');
+                        }
+                    }
+                    if (graphicsCard.getDriverVersion() != null) {
+                        subtitle.append(graphicsCard.getDriverVersion());
+                    }
+                    subtitle.append(')');
+                }
+
+                button.setSubtitle(subtitle.toString());
+
+                switch (graphicsCard.getType()) {
+                    case INTEGRATED -> button.getTags().add(new Tag(i18n("about.device.gpu.type.integrated")));
+                    case DISCRETE -> button.getTags().add(new Tag(i18n("about.device.gpu.type.discrete")));
+                    case VIRTUAL -> button.getTags().add(new Tag(i18n("about.device.gpu.type.virtual")));
+                }
+
+                deviceInfo.getContent().add(button);
+            }
+
+            if (SystemInfo.getTotalMemorySize() > 0) {
+                String subtitle = i18n("about.device.memory.system",
+                        "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize())));
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    long pageFileSize = SystemInfo.getTotalPageFileSize();
+                    if (pageFileSize < 0) {
+                        subtitle = i18n("about.device.memory.page_files.unknown", subtitle);
                     } else {
-                        logicalPerPackage = 0;
-                        physicalPerPackage = 0;
+                        String pageFileCapacity = "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(pageFileSize));
+                        PageFileConfiguration configuration = SystemInfo.getPageFileConfiguration();
+                        subtitle = switch (configuration.mode()) {
+                            case MANUAL -> i18n("about.device.memory.page_files.maximum",
+                                    subtitle,
+                                    pageFileCapacity,
+                                    "%.1f GiB".formatted(DataSizeUnit.GIGABYTES.convertFromBytes(configuration.maximumSize())));
+                            case SYSTEM_MANAGED, MIXED, UNKNOWN -> i18n("about.device.memory.page_files", subtitle, pageFileCapacity);
+                        };
                     }
                 }
 
-                String cpuName;
-                if (logicalPerPackage == 0) {
-                    cpuName = i18n("about.environment.cpu.name", cpu.getName());
-                } else if (logicalPerPackage > 0 && logicalPerPackage != physicalPerPackage)
-                    cpuName = i18n("about.environment.cpu.name.cores.hyper_threading", cpu.getName(), physicalPerPackage, logicalPerPackage);
-                else
-                    cpuName = i18n("about.environment.cpu.name.cores", cpu.getName(), physicalPerPackage);
-
-                for (int i = 1; i <= cpuCount; i++) {
-                    var button = new LinePane();
-                    button.setLargeTitle(true);
-                    button.setTitle(i == 1 && cpuCount == 1
-                            ? i18n("about.environment.cpu")
-                            : i18n("about.environment.cpu.n", i));
-                    button.setSubtitle(cpuName);
-                    button.setLeading(SVG.LUCIDE_CPU.createIcon(32));
-                    environment.getContent().add(button);
-                }
+                var memory = new LinePane();
+                memory.setLargeTitle(true);
+                memory.setLeading(SVG.LUCIDE_MEMORY_STICK.createIcon(32));
+                memory.setTitle(i18n("about.device.memory"));
+                memory.setSubtitle(subtitle);
+                deviceInfo.getContent().add(memory);
             }
+        }
 
-            @Nullable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
-            if (graphicsCards != null) {
-                @Unmodifiable List<GraphicsCard> visibleGraphicsCards = graphicsCards.stream()
-                        .filter(card -> !card.isVirtualDisplayAdapter())
-                        .toList();
-                int index = 1;
-                for (GraphicsCard graphicsCard : visibleGraphicsCards) {
-                    String name = index == 1 && visibleGraphicsCards.size() == 1
-                            ? i18n("about.environment.gpu")
-                            : i18n("about.environment.gpu.n", index);
-                    index++;
-                    var button = new LinePane();
-                    button.setLargeTitle(true);
-                    button.setTitle(name);
-                    button.setSubtitle(graphicsCard.getName());
-
-                    button.setLeading(SVG.LUCIDE_GPU.createIcon(32));
-
-                    environment.getContent().add(button);
-                }
-            }
-
+        ComponentList runtimeInfo = new ComponentList();
+        {
             var java = new LinePane();
             java.setLargeTitle(true);
             java.setLeading(SVG.LOCAL_CAFE.createIcon(32));
@@ -151,21 +210,21 @@ public final class AboutPage extends SpinnerPane {
                     Runtime.version().toString(),
                     System.getProperty("java.vm.name"),
                     System.getProperty("java.vendor")));
-            environment.getContent().add(java);
+            runtimeInfo.getContent().add(java);
 
             var javaFX = new LinePane();
             javaFX.setLargeTitle(true);
             javaFX.setLeading(SVG.LOCAL_CAFE.createIcon(32));
             javaFX.setTitle("JavaFX");
             javaFX.setSubtitle(System.getProperty("javafx.runtime.version"));
-            environment.getContent().add(javaFX);
+            runtimeInfo.getContent().add(javaFX);
         }
 
         ComponentList deps = loadIconedTwoLineList("/assets/about/deps.json");
 
         ComponentList legal = new ComponentList();
         {
-            var copyright = new LineButton();
+            var copyright = new LinePane();
             copyright.setLargeTitle(true);
             copyright.setTitle(i18n("about.copyright"));
             copyright.setSubtitle(i18n("about.copyright.statement"));
@@ -186,8 +245,12 @@ public final class AboutPage extends SpinnerPane {
         content.getChildren().setAll(
                 ComponentList.createComponentListTitle(i18n("about")),
                 about,
-                ComponentList.createComponentListTitle(i18n("about.environment")),
-                environment,
+                ComponentList.createComponentListTitle(i18n("about.system")),
+                systemInfo,
+                ComponentList.createComponentListTitle(i18n("about.device")),
+                deviceInfo,
+                ComponentList.createComponentListTitle(i18n("about.runtime")),
+                runtimeInfo,
                 ComponentList.createComponentListTitle(i18n("about.dependency")),
                 deps,
                 ComponentList.createComponentListTitle(i18n("about.legal")),

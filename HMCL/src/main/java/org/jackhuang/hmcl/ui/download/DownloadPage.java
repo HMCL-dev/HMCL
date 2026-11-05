@@ -26,9 +26,9 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.TabHeader;
+import org.jackhuang.hmcl.ui.construct.TabController;
+import org.jackhuang.hmcl.ui.construct.TabItem;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -45,10 +45,14 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -64,26 +68,39 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             (downloadProvider, repository, version, shader, file) -> download(downloadProvider, repository, version, file, "shaderpacks");
 
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
-    private final TabHeader tab;
-    private final TabHeader.Tab<VersionsPage> newGameTab = new TabHeader.Tab<>("newGameTab");
-    private final TabHeader.Tab<DownloadListPage> modTab = new TabHeader.Tab<>("modTab");
-    private final TabHeader.Tab<DownloadListPage> modpackTab = new TabHeader.Tab<>("modpackTab");
-    private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
-    private final TabHeader.Tab<DownloadListPage> shaderTab = new TabHeader.Tab<>("shaderTab");
-    private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
+    /// Manages tab selection and content transitions independently of the sidebar.
+    private final TabController tabController;
+    /// The tab for choosing a game version to install.
+    private final TabItem<VersionsPage> newGameTab;
+    /// The tab for browsing and importing modpacks.
+    private final TabItem<DownloadListPage> modpackTab;
+    /// The tab for browsing downloadable mods.
+    private final TabItem<DownloadListPage> modTab;
+    /// The tab for browsing downloadable resource packs.
+    private final TabItem<DownloadListPage> resourcePackTab;
+    /// The tab for browsing downloadable shader packs.
+    private final TabItem<DownloadListPage> shaderTab;
+    /// The tab for browsing downloadable worlds.
+    private final TabItem<DownloadListPage> worldTab;
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
 
     private WeakListenerHolder listenerHolder;
 
+    /// Creates the download tabs and fills the shared navigation sidebar.
     public DownloadPage() {
         this(null);
     }
 
-    public DownloadPage(GameInstanceID uploadInstance) {
-        newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), GameVersionNumber.unknown(), DownloadProviders.getDownloadProvider(),
-                GameComponentType.GAME, versionPageNavigator::onGameSelected)));
-        modpackTab.setNodeSupplier(loadVersionFor(() -> {
+    /// Creates download navigation, optionally targeting an existing instance for modpack installation.
+    public DownloadPage(@Nullable GameInstanceID uploadInstance) {
+        this.newGameTab = new TabItem<>(() -> new VersionsPage(
+                versionPageNavigator,
+                i18n("install.installer.choose", i18n("install.installer.game")),
+                GameVersionNumber.unknown(),
+                DownloadProviders.getDownloadProvider(),
+                GameComponentType.GAME, versionPageNavigator::onGameSelected));
+        this.modpackTab = newDownloadListTab(() -> {
             DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((downloadProvider, repository, __, modpack, file) -> {
                 Instances.downloadModpackImpl(downloadProvider, repository, uploadInstance, modpack, file);
             }, false);
@@ -93,40 +110,44 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
             page.getActions().add(installLocalModpackButton);
             return page;
-        }));
-        modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod(FOR_MOD, true)));
-        resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack(FOR_RESOURCE_PACK, true)));
-        shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack(FOR_SHADER, true)));
-        worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(RemoteAddon.Type.WORLD, CurseForgeRemoteAddonRepository.getInstance())));
-        tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
+        });
+        this.modTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofMod(FOR_MOD, true));
+        this.resourcePackTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofResourcePack(FOR_RESOURCE_PACK, true));
+        this.shaderTab = newDownloadListTab(() -> HMCLLocalizedDownloadListPage.ofShaderPack(FOR_SHADER, true));
+        this.worldTab = newDownloadListTab(() -> new DownloadListPage(RemoteAddon.Type.WORLD, CurseForgeRemoteAddonRepository.getInstance()));
+
+        this.tabController = new TabController(transitionPane,
+                newGameTab,
+                modpackTab,
+                modTab,
+                resourcePackTab,
+                shaderTab,
+                worldTab
+        );
 
         GameDirectoryManager.registerVersionsListener(this::loadVersions);
 
-        tab.select(newGameTab);
+        tabController.selectTab(newGameTab);
 
-        AdvancedListBox sideBar = new AdvancedListBox()
+        getSidebar()
                 .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
-                .addNavigationDrawerTab(tab, newGameTab, i18n("game"), SVG.STADIA_CONTROLLER, SVG.STADIA_CONTROLLER_FILL)
-                .addNavigationDrawerTab(tab, modpackTab, i18n("modpack"), SVG.PACKAGE2, SVG.PACKAGE2_FILL)
+                .addNavigationDrawerTab(tabController, newGameTab, i18n("game"), SVG.STADIA_CONTROLLER, SVG.STADIA_CONTROLLER_FILL)
+                .addNavigationDrawerTab(tabController, modpackTab, i18n("modpack"), SVG.PACKAGE2, SVG.PACKAGE2_FILL)
                 .startCategory(i18n("download.content").toUpperCase(Locale.ROOT))
-                .addNavigationDrawerTab(tab, modTab, i18n("mods"), SVG.EXTENSION, SVG.EXTENSION_FILL)
-                .addNavigationDrawerTab(tab, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
-                .addNavigationDrawerTab(tab, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
-                .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC);
-        FXUtils.setLimitWidth(sideBar, 200);
-        setLeft(sideBar);
+                .addNavigationDrawerTab(tabController, modTab, i18n("mods"), SVG.EXTENSION, SVG.EXTENSION_FILL)
+                .addNavigationDrawerTab(tabController, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
+                .addNavigationDrawerTab(tabController, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
+                .addNavigationDrawerTab(tabController, worldTab, i18n("world"), SVG.PUBLIC);
 
-        setCenter(transitionPane);
+        setContent(transitionPane);
     }
 
-    private static <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
-        return () -> {
-            T node = nodeSupplier.get();
-            if (node instanceof DownloadListPage page) {
-                page.loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()));
-            }
-            return node;
-        };
+    private static TabItem<DownloadListPage> newDownloadListTab(Supplier<DownloadListPage> pageSupplier) {
+        return new TabItem<>(() -> {
+            DownloadListPage page = pageSupplier.get();
+            page.loadInstance(HMCLGameInstance.Optional.empty(GameDirectoryManager.getSelectedRepository()));
+            return page;
+        });
     }
 
     public static void download(DownloadProvider downloadProvider, HMCLGameRepository repository, @Nullable GameInstanceID instanceId, RemoteAddon.Version file, String subdirectoryName) {
@@ -197,25 +218,25 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public void showGameDownloads() {
-        tab.select(newGameTab, false);
+        tabController.selectTab(newGameTab, false);
     }
 
     public void showModpackDownloads() {
-        tab.select(modpackTab, false);
+        tabController.selectTab(modpackTab, false);
     }
 
     public DownloadListPage showResourcePackDownloads() {
-        tab.select(resourcePackTab, false);
+        tabController.selectTab(resourcePackTab, false);
         return resourcePackTab.getNode();
     }
 
     public DownloadListPage showModDownloads() {
-        tab.select(modTab, false);
+        tabController.selectTab(modTab, false);
         return modTab.getNode();
     }
 
     public void showWorldDownloads() {
-        tab.select(worldTab, false);
+        tabController.selectTab(worldTab, false);
     }
 
     private static final class DownloadNavigator implements Navigation {
@@ -289,41 +310,55 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             settings.put(GameComponentType.GAME.getPatchId(), gameVersion);
         }
 
-        /// Builds the selected instance and selects it after successful completion.
+        /// Captures the installation selections and defers reserving the instance until execution.
+        /// Registers cleanup for the eventual builder, including cancellation before its build task
+        /// starts. Successful completion selects the installed instance in the original repository.
         ///
         /// @param settings the installer selections and target instance id
-        /// @return the builder task with its stage hints preserved as the outermost task wrapper
+        /// @return a deferred build task retaining the builder task's stage hints
         private Task<?> finishVersionDownloadingAsync(SettingsMap settings) {
             @Nullable GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
             if (instanceId == null) {
                 throw new IllegalStateException("Instance ID is not set");
             }
 
-            try (HMCLGameBuilder builder = dependencyManager.newGameBuilder(instanceId)) {
-                builder.component(GameComponentType.GAME, ((ComponentRemoteVersion) settings.get(GameComponentType.GAME.getPatchId())).getGameVersion().toString());
+            String selectedGameVersion = ((ComponentRemoteVersion) settings.get(GameComponentType.GAME.getPatchId()))
+                    .getGameVersion().toString();
+            @Unmodifiable List<ComponentRemoteVersion> components = settings.asStringMap().entrySet().stream()
+                    .filter(entry -> !GameComponentType.GAME.getPatchId().equals(entry.getKey()))
+                    .map(Map.Entry::getValue)
+                    .filter(ComponentRemoteVersion.class::isInstance)
+                    .map(ComponentRemoteVersion.class::cast)
+                    .toList();
+            boolean modded = GameComponentType.MOD_LOADERS.stream()
+                    .anyMatch(componentType -> settings.get(componentType.getPatchId()) instanceof ComponentRemoteVersion);
+            boolean isolated = repository.shouldIsolateNewInstance(modded);
 
-                settings.asStringMap().forEach((key, value) -> {
-                    if (!GameComponentType.GAME.getPatchId().equals(key)
-                            && value instanceof ComponentRemoteVersion remoteVersion)
-                        builder.component(remoteVersion);
-                });
+            AtomicReference<@Nullable HMCLGameBuilder> builderReference = new AtomicReference<>();
+            settings.put(TaskCleanup.KEY, () -> {
+                @Nullable HMCLGameBuilder builder = builderReference.get();
+                if (builder != null)
+                    builder.abort();
+            });
 
-                boolean modded = GameComponentType.MOD_LOADERS.stream()
-                        .anyMatch(componentType ->
-                                settings.get(componentType.getPatchId()) instanceof ComponentRemoteVersion);
-                if (repository.shouldIsolateNewInstance(modded)) {
-                    builder.enableIsolation();
-                }
-
-                Task<?> buildTask = builder.buildAsync();
-                settings.put(TaskCleanup.KEY, builder::abort);
-                buildTask.onDone().register(event -> {
-                    if (!event.isFailed()) {
-                        runInFX(() -> repository.setSelectedInstance(repository.getInstance(instanceId)));
+            return Task.composeAsync(() -> {
+                try (HMCLGameBuilder builder = dependencyManager.newGameBuilder(instanceId)) {
+                    builderReference.set(builder);
+                    builder.component(GameComponentType.GAME, selectedGameVersion);
+                    components.forEach(builder::component);
+                    if (isolated) {
+                        builder.enableIsolation();
                     }
-                });
-                return buildTask;
-            }
+
+                    Task<?> buildTask = builder.buildAsync();
+                    buildTask.onDone().register(event -> {
+                        if (!event.isFailed()) {
+                            runInFX(() -> repository.setSelectedInstance(repository.getInstance(instanceId)));
+                        }
+                    });
+                    return buildTask;
+                }
+            });
         }
 
         @Override

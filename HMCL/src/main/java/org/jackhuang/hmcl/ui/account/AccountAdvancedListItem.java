@@ -5,7 +5,6 @@ package org.jackhuang.hmcl.ui.account;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Tooltip;
 import org.jackhuang.hmcl.auth.Account;
@@ -17,6 +16,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jetbrains.annotations.Nullable;
 
 import static javafx.beans.binding.Bindings.createStringBinding;
 import static org.jackhuang.hmcl.setting.Accounts.getAccountFactory;
@@ -60,12 +60,12 @@ public class AccountAdvancedListItem extends AdvancedListItem {
         this(null);
     }
 
-    public AccountAdvancedListItem(Account account) {
+    /// Creates an account item; null enables scrolling through the configured accounts.
+    public AccountAdvancedListItem(@Nullable Account account) {
         tooltip = new Tooltip();
 
         canvas = new Canvas(32, 32);
         canvas.setMouseTransparent(true);
-        AdvancedListItem.setAlignment(canvas, Pos.CENTER);
 
         setLeftGraphic(canvas);
 

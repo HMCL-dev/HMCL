@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -131,6 +132,12 @@ public final class WorldListPage extends ListPageBase<World> {
             updateWorldList();
             setLoading(false);
         }).start();
+    }
+
+    public void openSavesFolder() {
+        if (gameInstance != null) {
+            FXUtils.openFolder(gameInstance.getSavesDirectory());
+        }
     }
 
     public void add() {
@@ -231,6 +238,7 @@ public final class WorldListPage extends ListPageBase<World> {
                     chkShowAll,
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add),
+                    createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openSavesFolder),
                     createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download)
             );
         }
@@ -251,6 +259,7 @@ public final class WorldListPage extends ListPageBase<World> {
         private final TwoLineListItem content;
         private final JFXButton btnLaunch;
 
+        /// Creates a world row with launch and management actions for the supplied page.
         public WorldListCell(WorldListPage page) {
             this.page = page;
 
@@ -272,7 +281,6 @@ public final class WorldListPage extends ListPageBase<World> {
             {
                 this.content = new TwoLineListItem();
                 root.setCenter(content);
-                content.setMouseTransparent(true);
             }
 
             {
@@ -316,19 +324,20 @@ public final class WorldListPage extends ListPageBase<World> {
             });
         }
 
+        /// Updates world details and replaces version and lock tags together.
         @Override
-        protected void updateItem(World world, boolean empty) {
-            World oldWorld = getItem();
+        protected void updateItem(@Nullable World world, boolean empty) {
+            @Nullable World oldWorld = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(world, empty);
 
             if (oldWorld == world && oldEmpty == empty) return;
 
-            this.graphic.releaseRippleImmediately();
-            this.content.getTags().clear();
+            this.graphic.resetFeedback();
 
             if (empty || world == null) {
+                content.getTags().clear();
                 setGraphic(null);
                 imageView.setImage(null);
                 leftTooltip.setText("");
@@ -339,15 +348,17 @@ public final class WorldListPage extends ListPageBase<World> {
                 leftTooltip.setText(world.getFile().toString());
                 content.setTitle(parseColorEscapes(world.getWorldName()));
 
+                var tags = new ArrayList<Tag>(2);
                 if (world.getGameVersion() != null)
-                    content.addTag(I18n.getDisplayVersion(world.getGameVersion()));
+                    tags.add(new Tag(I18n.getDisplayVersion(world.getGameVersion())));
                 if (world.isLocked()) {
-                    content.addTag(i18n("world.locked"));
+                    tags.add(new Tag(i18n("world.locked")));
                     btnLaunch.setDisable(true);
                 } else {
                     btnLaunch.setDisable(false);
                 }
 
+                content.getTags().setAll(tags);
                 content.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
 
                 setGraphic(graphic);

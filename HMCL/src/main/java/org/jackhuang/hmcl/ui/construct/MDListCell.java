@@ -50,7 +50,7 @@ public abstract class MDListCell<T> extends ListCell<T> {
             return;
         }
 
-        ripplerContainer.releaseRippleImmediately();
+        ripplerContainer.resetFeedback();
 
         updateControl(item, empty);
         if (empty || item == null) {
