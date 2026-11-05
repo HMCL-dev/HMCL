@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -133,7 +132,6 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     }
 
     public static final SettingsMap.Key<ModpackExportInfo> MODPACK_INFO = new SettingsMap.Key<>("modpack.info");
-    public static final SettingsMap.Key<Path> MODPACK_FILE = new SettingsMap.Key<>("modpack.file");
     public static final SettingsMap.Key<ModpackExportInfo.Options> MODPACK_INFO_OPTION = new SettingsMap.Key<>("modpack.info.option");
 
     public static class ModpackInfoPageSkin extends SkinBase<ModpackInfoPage> {

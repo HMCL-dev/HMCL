@@ -43,7 +43,7 @@ public final class ExportWizardProvider implements WizardProvider {
     @Override
     public Object finish(SettingsMap settings) {
         List<String> whitelist = settings.get(ModpackFileSelectionPage.MODPACK_FILE_SELECTION);
-        Path modpackFile = settings.get(ModpackInfoPage.MODPACK_FILE);
+        Path modpackFile = settings.get(ModpackFileSelectionPage.MODPACK_FILE);
         ModpackExportInfo exportInfo = Objects.requireNonNull(settings.get(ModpackInfoPage.MODPACK_INFO));
         exportInfo.setWhitelist(whitelist);
         String modpackType = settings.get(ModpackTypeSelectionPage.MODPACK_TYPE);

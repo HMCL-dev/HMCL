@@ -42,7 +42,6 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.ui.export.ModpackInfoPage.MODPACK_FILE;
 import static org.jackhuang.hmcl.ui.export.ModpackInfoPage.MODPACK_INFO;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH;
@@ -55,6 +54,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huangyuhui
  */
 public final class ModpackFileSelectionPage extends BorderPane implements WizardPage {
+    public static final SettingsMap.Key<Path> MODPACK_FILE = new SettingsMap.Key<>("modpack.file");
     private final WizardController controller;
     private final HMCLGameInstance gameInstance;
     private final ModAdviser adviser;
