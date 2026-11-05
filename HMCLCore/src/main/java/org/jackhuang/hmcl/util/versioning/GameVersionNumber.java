@@ -1,15 +1,18 @@
-// SPDX-FileCopyrightText: Copyright (C) 2024 The HMCL Authors
+// SPDX-FileCopyrightText: Copyright (C) 2020-2026 The HMCL Authors
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.versioning;
 
+import org.jackhuang.hmcl.util.ByteArrayKey;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,6 +61,41 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
     public static GameVersionNumber asGameVersion(Optional<String> version) {
         return version.isPresent() ? asGameVersion(version.get()) : unknown();
+    }
+
+    /// Detects a Minecraft version from a JAR's metadata, class constants, or known SHA-1 hash.
+    /// Converts detected identifiers using [#asGameVersion(String)] and reuses cached versions for known hashes.
+    ///
+    /// Legacy client identifiers prefixed with `Beta ` or `Alpha v` are converted to `b` or `a` notation.
+    /// A client identifier of `2.0` is refined to its color variant when its hash is known;
+    /// otherwise, `2.0` is retained, including when hashing fails.
+    ///
+    /// This method performs blocking file I/O and may read the entire file to compute its hash.
+    /// All files and streams opened by this method are closed before it returns.
+    /// The client hash table is shared with [#getKnownVersions()].
+    /// An I/O failure may still yield a version if the fallback hash lookup succeeds.
+    ///
+    /// @param file the JAR to inspect, or `null`
+    /// @return the detected version, or `null` if the path is null, is not a regular file,
+    ///         or no version can be identified
+    public static @Nullable GameVersionNumber detectFromJar(@Nullable Path file) {
+        return JarVersionDetector.detect(file);
+    }
+
+    /// Returns the immutable mapping from binary client JAR SHA-1 hashes to parsed version numbers.
+    /// The mapping is loaded once from `/assets/game/client-sha1.csv`; retained identifiers are parsed
+    /// using [#asGameVersion(String)], and both the mapping and its version objects are shared between calls.
+    /// It contains only the versions recorded in that resource; an absent hash does not imply
+    /// that the JAR is not a Minecraft client. If multiple records share a hash, the first valid
+    /// record determines its version identifier.
+    ///
+    /// Invalid records are logged and skipped. If reading or closing the resource fails with
+    /// an I/O error, the failure is logged and an empty mapping is retained.
+    ///
+    /// @return the shared immutable hash-to-version mapping, possibly empty
+    /// @throws ExceptionInInitializerError if initialization fails because the resource is missing
+    public static @Unmodifiable Map<ByteArrayKey, GameVersionNumber> getKnownVersions() {
+        return JarVersionDetector.VERSIONS;
     }
 
     public static GameVersionNumber unknown() {

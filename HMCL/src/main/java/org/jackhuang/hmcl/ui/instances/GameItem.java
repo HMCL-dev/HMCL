@@ -71,7 +71,7 @@ public class GameItem {
         }
 
         CompletableFuture.supplyAsync(() -> {
-            // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
+            // Version detection performs blocking JAR reads and may hash the entire file.
             GameVersionNumber version = gameInstance.getVersion();
             @Nullable String gameVersion = version == GameVersionNumber.unknown() ? null : version.toString();
             @Nullable String modPackVersion = null;

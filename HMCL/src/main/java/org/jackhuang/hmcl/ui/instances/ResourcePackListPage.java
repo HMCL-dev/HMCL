@@ -238,12 +238,18 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
     }
 
+    /// Checks the supplied resource packs for updates and opens the results for the current instance.
+    /// The target directory is retained even if this page switches instances during the check.
+    /// Does nothing when no instance is selected.
+    ///
+    /// @param resourcePacks the resource packs to check
     public void checkUpdates(Collection<ResourcePackFile> resourcePacks) {
-        HMCLGameInstance gameInstance = this.gameInstance;
+        @Nullable HMCLGameInstance gameInstance = this.gameInstance;
         if (gameInstance == null) {
             return;
         }
 
+        Path resourcePackDirectory = gameInstance.getResourcePackManager().getDirectory();
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             GameVersionNumber version = gameInstance.getVersion();
@@ -260,7 +266,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                             } else if (result.commonUpdates().isEmpty()) {
                                 Controllers.dialog(i18n("addon.check_update.empty"));
                             } else {
-                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), resourcePackManager.getDirectory(), result));
+                                Controllers.navigateForward(new AddonUpdatesPage(DownloadProviders.getDownloadProvider(), resourcePackDirectory, result));
                             }
                         })
                         .withStagesHints("update.checking"),
@@ -530,6 +536,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         private BooleanProperty booleanProperty = null;
 
+        /// Creates a selectable pack row with compatibility confirmation and file actions.
         public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, ResourcePackListPage page) {
             super(listView);
             this.page = page;
@@ -562,7 +569,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             });
 
             HBox.setHgrow(content, Priority.ALWAYS);
-            content.setMouseTransparent(true);
 
             root.getChildren().setAll(checkBox, imageContainer, content, btnReveal, btnInfo);
 
@@ -572,8 +578,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             getContainer().getChildren().add(root);
         }
 
+        /// Updates pack details and reuses the compatibility tag when a warning remains.
         @Override
-        protected void updateControl(ResourcePackInfoObject item, boolean empty) {
+        protected void updateControl(@Nullable ResourcePackInfoObject item, boolean empty) {
             pseudoClassStateChanged(WARNING, false);
 
             if (empty || item == null) return;
@@ -581,7 +588,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             ResourcePackFile file = item.getFile();
             item.iconCache.attachValue(imageContainer.imageProperty(), new WeakReference<>(itemProperty()));
 
-            content.getTags().clear();
             content.setTitle(file.getFileName());
             {
                 var description = file.getDescription();
@@ -602,7 +608,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 var compatibility = file.getCompatibility();
                 if (compatibility != ResourcePackFile.Compatibility.COMPATIBLE) {
                     pseudoClassStateChanged(WARNING, true);
-                    content.addTagWarning(getWarning(compatibility));
+                    content.getTags().setAll(Tag.warning(getWarning(compatibility)));
+                } else {
+                    content.getTags().clear();
                 }
             }
         }
