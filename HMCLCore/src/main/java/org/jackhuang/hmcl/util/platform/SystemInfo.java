@@ -11,7 +11,6 @@ import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
 import org.jackhuang.hmcl.util.platform.windows.*;
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
@@ -45,8 +44,8 @@ public final class SystemInfo {
         /// A nonempty immutable processor snapshot supplied by the detector.
         public static final @Unmodifiable List<CentralProcessor> CENTRAL_PROCESSORS = DETECTOR.detectCentralProcessors();
 
-        /// The detected graphics cards, or `null` if unavailable.
-        public static final @Nullable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
+        /// The immutable graphics card snapshot, empty if detection is unavailable or fails.
+        public static final @Unmodifiable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
     }
 
     /// Initializes cached hardware information if needed and logs a system summary on each call.
@@ -63,17 +62,15 @@ public final class SystemInfo {
         }
 
         // Graphics Card
-        @Nullable List<GraphicsCard> graphicsCards = getGraphicsCards();
-        if (graphicsCards != null) {
-            if (graphicsCards.isEmpty())
-                builder.append("\n - GPU: Not Found");
-            else if (graphicsCards.size() == 1)
-                builder.append("\n - GPU: ").append(graphicsCards.get(0));
-            else {
-                int index = 1;
-                for (GraphicsCard graphicsCard : graphicsCards) {
-                    builder.append("\n - GPU ").append(index++).append(": ").append(graphicsCard);
-                }
+        @Unmodifiable List<GraphicsCard> graphicsCards = getGraphicsCards();
+        if (graphicsCards.isEmpty())
+            builder.append("\n - GPU: Not Found");
+        else if (graphicsCards.size() == 1)
+            builder.append("\n - GPU: ").append(graphicsCards.get(0));
+        else {
+            int index = 1;
+            for (GraphicsCard graphicsCard : graphicsCards) {
+                builder.append("\n - GPU ").append(index++).append(": ").append(graphicsCard);
             }
         }
 
@@ -137,10 +134,8 @@ public final class SystemInfo {
         return Holder.CENTRAL_PROCESSORS;
     }
 
-    /// Returns the cached graphics card list, or `null` if detection produced no result.
-    ///
-    /// An empty list means no cards were reported. The list is not copied; its mutability depends on the detector.
-    public static @Nullable List<GraphicsCard> getGraphicsCards() {
+    /// Returns the cached immutable graphics card list, empty if no cards were reported or detection failed.
+    public static @Unmodifiable List<GraphicsCard> getGraphicsCards() {
         return Holder.GRAPHICS_CARDS;
     }
 

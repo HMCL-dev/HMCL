@@ -115,10 +115,15 @@ final class LinuxCPUDetector {
         return null;
     }
 
-    /// Reads the processor name and vendor, preferring the device tree on ARM and procfs elsewhere.
+    /// Reads the processor identity, using AVF heuristics and a virtual CPU fallback when direct names are unavailable.
     private static void detectNameAndVendor(CentralProcessor.Builder builder, TreeMap<Integer, Map<String, String>> cpuInfo) {
         // assert !cpuInfo.isEmpty();
+        @Unmodifiable List<Path> deviceTreeRoots = List.of(
+                Path.of("/sys/firmware/devicetree/base"),
+                Path.of("/proc/device-tree"));
+
         Map<String, String> firstCore = cpuInfo.firstEntry().getValue();
+        boolean dummyVirt = false;
 
         @Nullable String modelName = firstCore.get("model name");
         if (modelName == null)
@@ -130,9 +135,8 @@ final class LinuxCPUDetector {
 
         // ARM's procfs model name may describe only the architecture, not the actual SoC.
         if (modelName == null || Architecture.SYSTEM_ARCH.isArm()) {
-            for (Path compatiblePath : List.of(
-                    Path.of("/sys/firmware/devicetree/base/compatible"),
-                    Path.of("/proc/device-tree/compatible"))) {
+            for (Path deviceTreeRoot : deviceTreeRoots) {
+                Path compatiblePath = deviceTreeRoot.resolve("compatible");
                 try {
                     if (!Files.isRegularFile(compatiblePath))
                         continue;
@@ -142,6 +146,11 @@ final class LinuxCPUDetector {
 
                     for (int i = data.length - 1; i >= 0; i--) {
                         String device = data[i];
+                        // Retain the virtual platform marker for fallback without treating Linux as a CPU vendor.
+                        if (device.equals("linux,dummy-virt")) {
+                            dummyVirt = true;
+                            continue;
+                        }
                         int idx = device.indexOf(',');
                         if (idx <= 0 || idx >= device.length() - 1)
                             continue;
@@ -180,12 +189,33 @@ final class LinuxCPUDetector {
             }
         }
 
+        boolean avf = deviceTreeRoots.stream().anyMatch(root -> Files.isDirectory(root.resolve("avf")));
+        if (avf && (StringUtils.isBlank(modelName) || modelName.startsWith("ARMv8 Processor"))) {
+            try {
+                for (AVFSoCModel model : AVFSoCModel.values()) {
+                    if (model.matches(cpuInfo)) {
+                        builder.setName(model.getDisplayName()).setVendor(model.getVendor());
+                        return;
+                    }
+                }
+            } catch (IllegalArgumentException e) {
+                // Missing or malformed CPU identities leave the remaining name fallbacks available.
+            }
+        }
+
         if (modelName != null) {
             builder.setName(CentralProcessor.cleanName(modelName));
             builder.setVendor(HardwareVendor.of(firstCore.get("vendor_id")));
 
             if (builder.getVendor() == null && modelName.startsWith("Loongson"))
                 builder.setVendor(HardwareVendor.LOONGSON);
+        }
+
+        if (StringUtils.isBlank(builder.getName())) {
+            if (avf)
+                builder.setName("Android Virtual CPU");
+            else if (dummyVirt)
+                builder.setName("Virtual CPU");
         }
     }
 

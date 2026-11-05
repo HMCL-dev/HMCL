@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jetbrains.annotations.NotNullByDefault;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.management.ManagementFactory;
@@ -30,11 +29,11 @@ public class HardwareDetector {
         return List.of(new CentralProcessor.Builder().setCores(new CentralProcessor.Cores(count, count, 0)).build());
     }
 
-    /// Detects graphics cards, or returns `null` if unavailable; an empty list reports no cards.
+    /// Returns an immutable graphics card list, empty if no cards are found or detection fails.
     ///
     /// The default implementation runs Fastfetch when enabled.
-    public @Nullable List<GraphicsCard> detectGraphicsCards() {
-        return USE_FAST_FETCH ? FastFetchUtils.detectGraphicsCards() : null;
+    public @Unmodifiable List<GraphicsCard> detectGraphicsCards() {
+        return USE_FAST_FETCH ? FastFetchUtils.detectGraphicsCards() : List.of();
     }
 
     /// Returns total physical memory in bytes, or zero if the required management bean is unavailable.
