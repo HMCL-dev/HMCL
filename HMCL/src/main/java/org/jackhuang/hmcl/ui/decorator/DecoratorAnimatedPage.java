@@ -1,81 +1,67 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.decorator;
 
+import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.Control;
-import javafx.scene.control.Skin;
-import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
-public class DecoratorAnimatedPage extends Control {
+/// Lays out a fixed-width sidebar and a growing content area as independent animation targets.
+@NotNullByDefault
+public class DecoratorAnimatedPage extends BorderPane {
 
-    protected final VBox left = new VBox();
-    protected final StackPane center = new StackPane();
+    /// The fixed-width animation target containing navigation and optional bottom actions.
+    private final BorderPane left = new BorderPane();
+    /// The scrollable navigation list owned by this page.
+    private final AdvancedListBox sidebar = new AdvancedListBox();
+    /// The stable animation target containing the replaceable page content.
+    private final StackPane center = new StackPane();
 
-    {
+    /// Creates both animation targets without requiring CSS or skin initialization.
+    public DecoratorAnimatedPage() {
         getStyleClass().add("gray-background");
+        FXUtils.setLimitWidth(left, 200);
+        sidebar.setMinSize(0, 0);
+        left.setCenter(sidebar);
+        setLeft(left);
+        setCenter(center);
     }
 
-    protected void setLeft(Node... children) {
-        left.getChildren().setAll(children);
+    /// Returns the navigation list; its entries share the space above the bottom content.
+    public AdvancedListBox getSidebar() {
+        return sidebar;
     }
 
-    protected void setCenter(Node... children) {
-        center.getChildren().setAll(children);
+    /// Returns the fixed bottom content, or null when none is installed.
+    public @Nullable Node getSidebarBottom() {
+        return left.getBottom();
     }
 
-    public VBox getLeft() {
-        return left;
-    }
-
-    public StackPane getCenter() {
-        return center;
-    }
-
-    @Override
-    protected Skin<?> createDefaultSkin() {
-        return new DecoratorAnimatedPageSkin<>(this);
-    }
-
-    public static class DecoratorAnimatedPageSkin<T extends DecoratorAnimatedPage> extends SkinBase<T> {
-
-        protected DecoratorAnimatedPageSkin(T control) {
-            super(control);
-
-            BorderPane pane = new BorderPane();
-            pane.setLeft(control.left);
-            FXUtils.setLimitWidth(control.left, 200);
-            pane.setCenter(control.center);
-            getChildren().setAll(pane);
+    /// Replaces the bottom content, reserving its preferred height and a 12-pixel bottom gap.
+    /// Passing null removes it without replacing the sidebar animation target.
+    public void setSidebarBottom(@Nullable Node node) {
+        if (node != null) {
+            BorderPane.setMargin(node, new Insets(0, 0, 12, 0));
         }
-
-        protected void setLeft(Node... children) {
-            getSkinnable().setLeft(children);
-        }
-
-        protected void setCenter(Node... children) {
-            getSkinnable().setCenter(children);
-        }
-
+        left.setBottom(node);
     }
 
+    /// Returns the page content, or null when no content is installed.
+    public @Nullable Node getContent() {
+        return center.getChildren().isEmpty() ? null : center.getChildren().get(0);
+    }
+
+    /// Replaces the page content; null clears it while preserving the animation target.
+    public void setContent(@Nullable Node node) {
+        if (node == null) {
+            center.getChildren().clear();
+        } else {
+            center.getChildren().setAll(node);
+        }
+    }
 }

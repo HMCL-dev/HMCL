@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.*;
@@ -196,9 +181,9 @@ public class PersonalizationPage extends StackPane {
         refresh.invalidated(null);
     }
 
-    /// Binds a line toggle button to an inheritable theme appearance setting.
-    private static void bindThemeAppearanceToggleButton(
-            LineToggleButton button,
+    /// Binds a switch row to an inheritable theme appearance setting.
+    private static void bindThemeAppearanceSwitch(
+            LineSwitch button,
             String setting,
             BooleanProperty directProperty,
             Supplier<Boolean> effectiveValueSupplier) {
@@ -864,7 +849,7 @@ public class PersonalizationPage extends StackPane {
             });
             refreshBackground.invalidated(null);
 
-            LineToggleButton networkBackgroundCacheButton = new LineToggleButton();
+            LineSwitch networkBackgroundCacheButton = new LineSwitch();
             networkBackgroundCacheButton.setTitle(i18n("launcher.background.network.cache"));
             networkBackgroundCacheButton.setSelected(Objects.requireNonNullElse(
                     settings().networkBackgroundImageCachePolicyProperty().get(),
@@ -1076,7 +1061,7 @@ public class PersonalizationPage extends StackPane {
 
         {
             String setting = LauncherSettings.THEME_APPEARANCE_TITLE_BAR_TRANSPARENT;
-            LineToggleButton titleBarTransparentButton = new LineToggleButton();
+            LineSwitch titleBarTransparentButton = new LineSwitch();
             titleBarTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
             JFXButton inheritButton = createThemeAppearanceOverrideButton();
             titleBarTransparentButton.setTitleTrailing(inheritButton);
@@ -1140,9 +1125,9 @@ public class PersonalizationPage extends StackPane {
             themeAppearanceList.getContent().add(titleBarTransparentButton);
         }
 
-        LineToggleButton windowTransparentButton = new LineToggleButton();
+        LineSwitch windowTransparentButton = new LineSwitch();
         windowTransparentButton.setTitle(i18n("settings.launcher.window_transparent"));
-        bindThemeAppearanceToggleButton(
+        bindThemeAppearanceSwitch(
                 windowTransparentButton,
                 LauncherSettings.THEME_APPEARANCE_WINDOW_TRANSPARENT,
                 settings().windowTransparentProperty(),
@@ -1167,7 +1152,7 @@ public class PersonalizationPage extends StackPane {
         {
             ComponentList appearanceList = new ComponentList();
 
-            LineToggleButton animationButton = new LineToggleButton();
+            LineSwitch animationButton = new LineSwitch();
             appearanceList.getContent().add(animationButton);
             animationButton.setSelected(settings().isAnimationDisabled());
             FXUtils.onChange(animationButton.selectedProperty(), value -> settings().animationDisabledProperty().set(value));

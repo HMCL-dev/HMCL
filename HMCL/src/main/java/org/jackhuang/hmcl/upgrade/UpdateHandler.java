@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.upgrade;
 
 import com.google.gson.Gson;
@@ -26,7 +11,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.SettingsManager;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.UpgradeDialog;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
@@ -36,6 +21,7 @@ import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -50,7 +36,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.checkFxUserThread;
-import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -98,6 +83,8 @@ public final class UpdateHandler {
         return false;
     }
 
+    /// Prompts for an update, then downloads and hands it off while holding one business-task slot.
+    /// Must be invoked on the JavaFX thread; a successful handoff exits this launcher process.
     public static void updateFrom(RemoteVersion version) {
         checkFxUserThread();
 
@@ -115,15 +102,8 @@ public final class UpdateHandler {
                 return;
             }
 
-            Task<?> task = new HMCLDownloadTask(version, downloaded);
-
-            TaskExecutor executor = task.executor();
-            Controllers.taskDialog(executor, i18n("message.downloading"), TaskCancellationAction.NORMAL);
-            thread(() -> {
-                boolean success = executor.test();
-
-                if (success) {
-                    try {
+            Task<?> task = new HMCLDownloadTask(version, downloaded)
+                    .thenRunAsync(Schedulers.io(), () -> {
                         if (!IntegrityChecker.isSelfVerified() && !IntegrityChecker.DISABLE_SELF_INTEGRITY_CHECK) {
                             throw new IOException("Current JAR is not verified");
                         }
@@ -151,19 +131,14 @@ public final class UpdateHandler {
 
                         requestUpdate(downloaded, getCurrentLocation());
                         EntryPoint.exit(0);
-                    } catch (IOException e) {
-                        LOG.warning("Failed to update to " + version, e);
-                        Platform.runLater(() -> Controllers.dialog(StringUtils.getStackTrace(e), i18n("update.failed"), MessageType.ERROR));
-                    }
-
-                } else {
-                    Exception e = executor.getException();
-                    LOG.warning("Failed to update to " + version, e);
-                    if (!(e instanceof CancellationException)) {
-                        Platform.runLater(() -> Controllers.dialog(e.toString(), i18n("update.failed"), MessageType.ERROR));
-                    }
-                }
-            });
+                    })
+                    .whenComplete(Schedulers.javafx(), (@Nullable Exception exception) -> {
+                        if (exception != null && !(exception instanceof CancellationException)) {
+                            LOG.warning("Failed to update to " + version, exception);
+                            Controllers.dialog(StringUtils.getStackTrace(exception), i18n("update.failed"), MessageType.ERROR);
+                        }
+                    });
+            Controllers.taskDialog(task, i18n("message.downloading"), TaskCancellationAction.NORMAL);
         }));
     }
 

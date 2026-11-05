@@ -1,29 +1,22 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.i18n.translator;
 
 import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
+import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
+import org.jackhuang.hmcl.util.platform.macos.MacDeviceInfo;
+import org.jackhuang.hmcl.util.platform.macos.MacModel;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /// @author Glavo
@@ -50,6 +43,32 @@ public class Translator {
 
     public String getDisplayVersion(GameVersionNumber versionNumber) {
         return versionNumber.toNormalizedString();
+    }
+
+    /// Localizes known Mac model sizes and release dates; other identities retain their names.
+    /// Chip names from the model table are preserved verbatim.
+    /// Diagnostic names and cached device information are not modified.
+    public @NotNull String formatDeviceName(@NotNull DeviceInfo device) {
+        if (!(device instanceof MacDeviceInfo mac))
+            return device.name();
+        @Nullable MacModel model = MacModel.find(mac.modelIdentifier());
+        if (model == null)
+            return device.name();
+
+        List<String> details = new ArrayList<>();
+        for (MacModel.Detail detail : model.details()) {
+            if (detail.type().equals("chip")) {
+                details.add(detail.arguments().get(0));
+            } else if (detail.type().equals("month")) {
+                YearMonth month = YearMonth.of(Integer.parseInt(detail.arguments().get(0)), Integer.parseInt(detail.arguments().get(1)));
+                details.add(month.format(DateTimeFormatter.ofPattern(supportedLocale.i18n("about.device.mac.month"), displayLocale)));
+            } else {
+                details.add(supportedLocale.i18n("about.device.mac." + detail.type(), detail.arguments().toArray()));
+            }
+        }
+        return details.isEmpty() ? model.productName()
+                : supportedLocale.i18n("about.device.mac.name", model.productName(),
+                String.join(supportedLocale.i18n("about.device.mac.separator"), details));
     }
 
     /// @see [#formatDateTime(TemporalAccessor)]

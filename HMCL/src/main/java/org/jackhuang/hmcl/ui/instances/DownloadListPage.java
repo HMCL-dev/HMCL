@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.instances;
 
 import com.jfoenix.controls.*;
@@ -566,117 +551,7 @@ public class DownloadListPage extends Control implements DecoratorPage, PageAwar
                 listView.setSelectionModel(new NoneMultipleSelectionModel<>());
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-                listView.setCellFactory(x -> new ListCell<>() {
-                    private static final Insets PADDING = new Insets(9, 9, 0, 9);
-                    private static final Insets LAST_PADDING = new Insets(9, 9, 9, 9);
-
-                    private final RipplerContainer graphic;
-                    private final StackPane wrapper = new StackPane();
-
-                    private final TwoLineListItem content = new TwoLineListItem();
-                    private final ImageContainer imageContainer = new ImageContainer(40);
-                    private final JFXButton addToFavBtn = FXUtils.newToggleButton4(SVG.STAR);
-
-                    private final BooleanProperty addedToFav = new SimpleBooleanProperty();
-                    private ChangeListener<Boolean> favChangeListener = null;
-
-                    {
-                        setPadding(PADDING);
-
-                        HBox container = new HBox(8);
-                        container.setPadding(new Insets(8));
-                        container.setCursor(Cursor.HAND);
-                        container.setAlignment(Pos.CENTER_LEFT);
-
-                        imageContainer.setMouseTransparent(true);
-
-                        container.getChildren().setAll(imageContainer, content, addToFavBtn);
-                        HBox.setHgrow(content, Priority.ALWAYS);
-
-                        FXUtils.onChangeAndOperate(addedToFav, added -> {
-                            if (added) {
-                                addToFavBtn.setGraphic(SVG.STAR_FILL.createIcon());
-                            } else {
-                                addToFavBtn.setGraphic(SVG.STAR.createIcon());
-                            }
-                        });
-
-                        this.graphic = new RipplerContainer(container);
-                        wrapper.getChildren().setAll(this.graphic);
-                        wrapper.getStyleClass().add("card-no-padding");
-
-                        FXUtils.onClicked(wrapper, () -> {
-                            RemoteAddon item = getItem();
-                            if (item != null)
-                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getInstanceOptional(), getSkinnable().callback));
-                        });
-
-                        setPrefWidth(0);
-
-                        FXUtils.limitCellWidth(listView, this);
-
-                    }
-
-                    @Override
-                    protected void updateItem(RemoteAddon item, boolean empty) {
-                        RemoteAddon oldItem = getItem();
-                        boolean oldEmpty = isEmpty();
-
-                        super.updateItem(item, empty);
-
-                        if (oldItem == item && oldEmpty == empty) return;
-
-                        this.graphic.releaseRippleImmediately();
-
-                        if (favChangeListener != null) control.favoritesLoaded.removeListener(favChangeListener);
-                        favChangeListener = null;
-
-                        if (empty || item == null) {
-                            setGraphic(null);
-                        } else {
-                            favChangeListener = FXUtils.onWeakChangeAndOperate(control.favoritesLoaded, loaded -> {
-                                if (loaded) addedToFav.set(favoritesManager.contains(item));
-                            });
-
-                            setPadding(
-                                    getIndex() == getListView().getItems().size() - 1
-                                            ? LAST_PADDING
-                                            : PADDING
-                            );
-
-                            @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(getSkinnable().type);
-                            @Nullable AddonProjectInfo mod = registry != null ? registry.getInfoByCurseForgeId(item.slug()) : null;
-                            content.setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : item.title());
-                            String description = item.description();
-                            if (description != null) {
-                                description = description.replaceAll("\\R", " ");
-                            }
-                            content.setSubtitle(description);
-                            content.getTags().clear();
-                            for (String category : item.categories()) {
-                                if (getSkinnable().shouldDisplayCategory(category))
-                                    content.addTag(getSkinnable().getLocalizedCategory(category, null));
-                            }
-
-                            iconLoader.load(imageContainer.imageProperty(), item.iconUrl());
-
-                            addToFavBtn.setOnAction(e -> {
-                                if (FavoritesManager.getInstance().getFavorites().size() > 1) {
-                                    Controllers.dialog(new AddToFavoritesDialog(item, addedToFav));
-                                } else {
-                                    if (addedToFav.get()) {
-                                        FavoritesManager.getInstance().getDefault().removeAddons(List.of(item));
-                                    } else {
-                                        FavoritesManager.getInstance().getDefault().add(item);
-                                    }
-                                    addedToFav.set(!addedToFav.get());
-                                }
-                            });
-
-                            setGraphic(wrapper);
-                        }
-                    }
-                });
+                listView.setCellFactory(x -> new DownloadListCell(getSkinnable(), listView, iconLoader));
             }
 
             this.getChildren().setAll(pane);
@@ -690,6 +565,131 @@ public class DownloadListPage extends Control implements DecoratorPage, PageAwar
             result.add(new CategoryIndented(indent, category));
             for (RemoteAddonRepository.Category subcategory : category.subcategories()) {
                 resolveCategory(subcategory, indent + 1, result);
+            }
+        }
+    }
+
+    private static final class DownloadListCell extends ListCell<RemoteAddon> {
+        private final DownloadListPage page;
+        private final JFXListView<RemoteAddon> listView;
+        private final RemoteImageLoader iconLoader;
+
+        private static final Insets PADDING = new Insets(9, 9, 0, 9);
+        private static final Insets LAST_PADDING = new Insets(9, 9, 9, 9);
+
+        private final RipplerContainer graphic;
+        private final StackPane wrapper = new StackPane();
+
+        private final TwoLineListItem content = new TwoLineListItem();
+        private final ImageContainer imageContainer = new ImageContainer(40);
+        private final JFXButton addToFavBtn = FXUtils.newToggleButton4(SVG.STAR);
+
+        private final BooleanProperty addedToFav = new SimpleBooleanProperty();
+        private ChangeListener<Boolean> favChangeListener = null;
+
+        /// Creates a download card with its icon and text laid out by the same row.
+        private DownloadListCell(DownloadListPage page, JFXListView<RemoteAddon> listView, RemoteImageLoader iconLoader) {
+            this.page = page;
+            this.listView = listView;
+            this.iconLoader = iconLoader;
+
+            setPadding(PADDING);
+
+            HBox container = new HBox(8);
+            container.setPadding(new Insets(8));
+            container.setCursor(Cursor.HAND);
+            container.setAlignment(Pos.CENTER_LEFT);
+
+            content.setPadding(new Insets(8));
+            content.setCursor(Cursor.HAND);
+            imageContainer.setMouseTransparent(true);
+            content.setLeading(imageContainer);
+
+            container.getChildren().setAll(content, addToFavBtn);
+            HBox.setHgrow(content, Priority.ALWAYS);
+
+            FXUtils.onChangeAndOperate(addedToFav, added -> {
+                if (added) {
+                    addToFavBtn.setGraphic(SVG.STAR_FILL.createIcon());
+                } else {
+                    addToFavBtn.setGraphic(SVG.STAR.createIcon());
+                }
+            });
+
+            this.graphic = new RipplerContainer(content);
+            wrapper.getChildren().setAll(this.graphic);
+            wrapper.getStyleClass().add("card-no-padding");
+
+            FXUtils.onClicked(wrapper, () -> {
+                RemoteAddon item = getItem();
+                if (item != null) {
+                    Controllers.navigate(new DownloadPage(page, item, page.getInstanceOptional(), page.callback));
+                }
+            });
+
+            setPrefWidth(0);
+
+            FXUtils.limitCellWidth(listView, this);
+        }
+
+        /// Updates addon text and replaces category tags together so their labels can be reused.
+        @Override
+        protected void updateItem(@Nullable RemoteAddon item, boolean empty) {
+            @Nullable RemoteAddon oldItem = getItem();
+            boolean oldEmpty = isEmpty();
+
+            super.updateItem(item, empty);
+
+            if (oldItem == item && oldEmpty == empty) return;
+
+            this.graphic.resetFeedback();
+
+            if (favChangeListener != null) control.favoritesLoaded.removeListener(favChangeListener);
+            favChangeListener = null;
+
+            if (empty || item == null) {
+                setGraphic(null);
+            } else {
+                favChangeListener = FXUtils.onWeakChangeAndOperate(control.favoritesLoaded, loaded -> {
+                    if (loaded) addedToFav.set(favoritesManager.contains(item));
+                });
+
+                setPadding(
+                        getIndex() == listView.getItems().size() - 1
+                                ? LAST_PADDING
+                                : PADDING
+                );
+
+                @Nullable AddonProjectInfoRegistry<?> registry = AddonProjectInfoRegistry.getByAddonType(page.type);
+                @Nullable AddonProjectInfo mod = registry != null ? registry.getInfoByCurseForgeId(item.slug()) : null;
+                content.setTitle(mod != null && I18n.isUseChinese() ? mod.displayName() : item.title());
+                @Nullable String description = item.description();
+                if (description != null) {
+                    description = description.replaceAll("\\R", " ");
+                }
+                content.setSubtitle(description);
+                content.getTags().setAll(item.categories().stream()
+                        .filter(page::shouldDisplayCategory)
+                        .map(category -> new Tag(page.getLocalizedCategory(category, null)))
+                        .toList());
+
+                iconLoader.load(imageContainer.imageProperty(), item.iconUrl());
+
+                addToFavBtn.setOnAction(e -> {
+                    if (FavoritesManager.getInstance().getFavorites().size() > 1) {
+                        Controllers.dialog(new AddToFavoritesDialog(item, addedToFav));
+                    } else {
+                        if (addedToFav.get()) {
+                            FavoritesManager.getInstance().getDefault().removeAddons(List.of(item));
+                        } else {
+                            FavoritesManager.getInstance().getDefault().add(item);
+                        }
+                        addedToFav.set(!addedToFav.get());
+                    }
+                });
+
+                setGraphic(wrapper);
+
             }
         }
     }

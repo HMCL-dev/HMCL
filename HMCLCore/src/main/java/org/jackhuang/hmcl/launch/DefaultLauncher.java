@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.launch;
 
 import org.glavo.uuid.UUIDs;
@@ -33,6 +18,7 @@ import org.jackhuang.hmcl.util.platform.macos.HomebrewUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -423,11 +409,17 @@ public class DefaultLauncher extends Launcher {
         return new Command(res, tempNativeFolder, javaNativeFolder, encoding);
     }
 
-    public Map<String, Boolean> getFeatures() {
-        return Collections.singletonMap(
-                "has_custom_resolution",
-                options.getHeight() != null && options.getHeight() != 0 && options.getWidth() != null && options.getWidth() != 0
-        );
+    /// Returns the feature flags used to evaluate conditional game arguments.
+    /// The `has_custom_resolution` flag is enabled when both dimensions are non-null and nonzero
+    /// and the game version is at least `1.6` (snapshot `13w25a`).
+    ///
+    /// @return an unmodifiable snapshot containing the custom resolution flag
+    public @Unmodifiable Map<String, Boolean> getFeatures() {
+        boolean hasCustomResolution = options.getHeight() != null && options.getHeight() != 0
+                && options.getWidth() != null && options.getWidth() != 0
+                && instance.getVersion().isAtLeast("1.6", "13w25a");
+
+        return Collections.singletonMap("has_custom_resolution", hasCustomResolution);
     }
 
     private final Map<String, Supplier<Boolean>> forbiddens = mapOf(
@@ -781,17 +773,22 @@ public class DefaultLauncher extends Launcher {
         }
 
         if (options.getRenderer() == Renderer.DEFAULT) {
-            List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards();
-            if (graphicsCards != null && graphicsCards.size() == 2) {
+            @Unmodifiable List<GraphicsCard> graphicsCards = SystemInfo.getGraphicsCards().stream()
+                    .filter(it -> it.getType() != GraphicsCard.Type.DISPLAY_ONLY)
+                    .toList();
+            if (graphicsCards.size() == 2) {
                 GraphicsCard card0 = graphicsCards.get(0);
                 GraphicsCard card1 = graphicsCards.get(1);
 
-                if (card0.getType() != null && card1.getType() != null
-                        && card0.getType() != card1.getType()) {
-                    GraphicsCard discreteGraphicsCard = card0.getType() == GraphicsCard.Type.Discrete ? card0 : card1;
+                boolean hasIntegrated = card0.getType() == GraphicsCard.Type.INTEGRATED || card1.getType() == GraphicsCard.Type.INTEGRATED;
+                boolean hasDiscrete = card0.getType() == GraphicsCard.Type.DISCRETE || card1.getType() == GraphicsCard.Type.DISCRETE;
+
+                if (hasIntegrated && hasDiscrete) {
+                    GraphicsCard discreteGraphicsCard = card0.getType() == GraphicsCard.Type.DISCRETE ? card0 : card1;
 
                     if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
-                        if (HardwareVendor.NVIDIA.equals(discreteGraphicsCard.getVendor())) {
+                        if (HardwareVendor.NVIDIA.equals(discreteGraphicsCard.getVendor())
+                                && "nvidia".equals(discreteGraphicsCard.getDriver())) {
                             // https://askubuntu.com/a/1350825
                             env.put("__NV_PRIME_RENDER_OFFLOAD", "1");
                             env.put("__GLX_VENDOR_LIBRARY_NAME", "nvidia");

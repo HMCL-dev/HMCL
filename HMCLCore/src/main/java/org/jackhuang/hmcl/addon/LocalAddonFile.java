@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2025  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2025 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.addon;
 
 import org.jackhuang.hmcl.addon.update.AddonUpdate;
@@ -23,6 +8,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -36,7 +22,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /// @param <T> this type of addon
-public abstract class LocalAddonFile<T> implements Comparable<T> {
+public abstract class LocalAddonFile<T extends LocalAddonFile<T>> implements Comparable<T> {
 
     protected LocalAddonFile() {
     }
@@ -95,6 +81,11 @@ public abstract class LocalAddonFile<T> implements Comparable<T> {
     }
 
     public void onUpdated(String newFileNameWithExt) {
+    }
+
+    @Override
+    public int compareTo(@NotNull T o) {
+        return getFileName().compareToIgnoreCase(o.getFileName());
     }
 
     @NotNullByDefault

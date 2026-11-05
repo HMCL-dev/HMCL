@@ -14,6 +14,13 @@
         <property name="max" value="2000"/>
     </module>
 
+    <module name="RegexpSingleline">
+        <property name="format" value="\s+$"/>
+        <property name="minimum" value="0"/>
+        <property name="maximum" value="0"/>
+        <property name="message" value="Line has trailing whitespace."/>
+    </module>
+
     <module name="TreeWalker">
         <module name="SuppressionCommentFilter"/> <!-- use //CHECKSTYLE:OFF (...) //CHECKSTYLE:ON to disable checkstyle: http://checkstyle.sourceforge.net/config_filters.html#SuppressionCommentFilter -->
         <module name="SuppressionXpathSingleFilter">
