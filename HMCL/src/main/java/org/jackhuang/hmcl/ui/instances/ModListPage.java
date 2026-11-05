@@ -13,6 +13,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
@@ -416,9 +417,31 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
                 toolbarSelecting.getChildren().setAll(
                         createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
-                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                                skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
-                            }, null);
+                            ObservableList<ModInfoObject> selectedMods = FXCollections.observableArrayList(listView.getSelectionModel().getSelectedItems());
+
+                            if (selectedMods.isEmpty()) return;
+
+                            String message;
+
+                            if (selectedMods.size() == 1) {
+                                message = i18n("mods.delete.confirm", selectedMods.get(0).getModInfo().getName());
+                            } else {
+                                String modNames = String.join(
+                                    "\n",
+                                    selectedMods.stream()
+                                        .map(mod -> mod.getModInfo().getName())
+                                        .toList()
+                                );
+
+                                message = i18n("mods.delete.confirm.multiple", selectedMods.size(), modNames);
+                            }
+
+                            Controllers.confirm(
+                                message,
+                                i18n("button.remove"),
+                                () -> skinnable.removeSelected(selectedMods),
+                                null
+                            );
                         }),
                         createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
                                 skinnable.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
