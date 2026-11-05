@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXSpinner;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -16,20 +17,22 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorScheme;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.WeakListenerHolder;
+import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
+import org.jackhuang.hmcl.util.TaskManager;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Renders the clipped background, title bar, and navigation content owned by a [Decorator].
 @NotNullByDefault
@@ -176,7 +179,7 @@ final class MainWindowPane extends StackPane {
         return backgroundNode;
     }
 
-    /// Creates the help, minimize, and application-close buttons.
+    /// Creates the task, help, minimize, and application-close buttons.
     ///
     /// @return a size-limited top-right button row
     private HBox createWindowButtons() {
@@ -184,6 +187,34 @@ final class MainWindowPane extends StackPane {
         buttons.setAlignment(Pos.TOP_RIGHT);
         decorator.capableDraggingWindow(buttons);
         buttons.setMaxSize(Region.USE_PREF_SIZE, 40);
+
+        JFXButton tasksButton = new JFXButton();
+        tasksButton.setFocusTraversable(false);
+        tasksButton.setAccessibleText(i18n("task.list"));
+        tasksButton.getStyleClass().add("jfx-decorator-button");
+        tasksButton.setOnAction(event -> {
+            if (!(decorator.getNavigator().getCurrentPage() instanceof TaskManagerPage))
+                Controllers.navigate(new TaskManagerPage());
+        });
+        decorator.forbidDraggingWindow(tasksButton);
+
+        SVGPath tasksEmptyIcon = SVG.LIST_ALT.createIcon(Themes.titleFillProperty());
+
+        holder.onWeakChangeAndOperate(TaskManager.getInstance().statusProperty(), status -> {
+            switch (status) {
+                case IDLE -> tasksButton.setGraphic(tasksEmptyIcon);
+                case PENDING -> tasksButton.setGraphic(SVG.PENDING.createIcon(Themes.titleFillProperty()));
+                case RUNNING -> {
+                    JFXSpinner tasksSpinner = new JFXSpinner();
+                    tasksSpinner.getStyleClass().add("small-spinner");
+                    tasksSpinner.setRadius(9);
+                    tasksSpinner.setMouseTransparent(true);
+                    FXUtils.setLimitWidth(tasksSpinner, 20);
+                    FXUtils.setLimitHeight(tasksSpinner, 20);
+                    tasksButton.setGraphic(tasksSpinner);
+                }
+            }
+        });
 
         JFXButton helpButton = new JFXButton();
         helpButton.setFocusTraversable(false);
@@ -206,7 +237,7 @@ final class MainWindowPane extends StackPane {
         closeButton.setOnAction(event -> decorator.closeWindow());
         decorator.forbidDraggingWindow(closeButton);
 
-        buttons.getChildren().setAll(helpButton, minimizeButton, closeButton);
+        buttons.getChildren().setAll(tasksButton, helpButton, minimizeButton, closeButton);
         buttons.getStyleClass().add("jfx-tool-bar");
         return buttons;
     }
@@ -341,6 +372,8 @@ final class MainWindowPane extends StackPane {
             public void init(TransitionPane container, Node previousNode, Node nextNode) {
                 super.init(container, previousNode, nextNode);
                 nextNode.setTranslateX(container.getWidth());
+                // Clipping hides the title; nonzero opacity skips offscreen rendering preparation.
+                nextNode.setOpacity(1);
             }
 
             /// {@inheritDoc}
@@ -368,6 +401,8 @@ final class MainWindowPane extends StackPane {
             public void init(TransitionPane container, Node previousNode, Node nextNode) {
                 super.init(container, previousNode, nextNode);
                 nextNode.setTranslateX(-container.getWidth());
+                // Clipping hides the title; nonzero opacity skips offscreen rendering preparation.
+                nextNode.setOpacity(1);
             }
 
             /// {@inheritDoc}

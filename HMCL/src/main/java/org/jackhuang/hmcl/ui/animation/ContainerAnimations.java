@@ -7,7 +7,13 @@ import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
+import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 
+import static org.jackhuang.hmcl.ui.animation.TransitionPane.isCacheAllowed;
+
+/// Supplies reusable page replacement animations that honor each cache target's transition preference.
+@NotNullByDefault
 public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     NONE {
         @Override
@@ -33,15 +39,18 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
      * A fade between the old and new view
      */
     FADE {
+        /// Fades between pages while temporarily caching the incoming page.
         @Override
         public Timeline animate(
                 Pane container, Node previousNode, Node nextNode,
                 Duration duration, Interpolator interpolator) {
             return new Timeline(
                     new KeyFrame(Duration.ZERO,
+                            new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
                             new KeyValue(previousNode.opacityProperty(), 1, interpolator),
                             new KeyValue(nextNode.opacityProperty(), 0, interpolator)),
                     new KeyFrame(duration,
+                            new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE),
                             new KeyValue(previousNode.opacityProperty(), 0, interpolator),
                             new KeyValue(nextNode.opacityProperty(), 1, interpolator)));
         }
@@ -63,14 +72,17 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             nextNode.setTranslateX(container.getWidth());
         }
 
+        /// Slides pages left while temporarily caching the incoming page.
         @Override
         public Timeline animate(
                 Pane container, Node previousNode, Node nextNode,
                 Duration duration, Interpolator interpolator) {
             return new Timeline(new KeyFrame(Duration.ZERO,
+                    new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
                     new KeyValue(nextNode.translateXProperty(), container.getWidth(), interpolator),
                     new KeyValue(previousNode.translateXProperty(), 0, interpolator)),
                     new KeyFrame(duration,
+                            new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE),
                             new KeyValue(nextNode.translateXProperty(), 0, interpolator),
                             new KeyValue(previousNode.translateXProperty(), -container.getWidth(), interpolator)));
         }
@@ -81,9 +93,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         }
     },
 
-    /**
-     * A swipe effect
-     */
+    /// A swipe effect
     SWIPE_RIGHT {
         @Override
         public void init(TransitionPane container, Node previousNode, Node nextNode) {
@@ -92,14 +102,17 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             nextNode.setTranslateX(-container.getWidth());
         }
 
+        /// Slides pages right while temporarily caching the incoming page.
         @Override
         public Timeline animate(
                 Pane container, Node previousNode, Node nextNode,
                 Duration duration, Interpolator interpolator) {
             return new Timeline(new KeyFrame(Duration.ZERO,
+                    new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
                     new KeyValue(nextNode.translateXProperty(), -container.getWidth(), interpolator),
                     new KeyValue(previousNode.translateXProperty(), 0, interpolator)),
                     new KeyFrame(duration,
+                            new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE),
                             new KeyValue(nextNode.translateXProperty(), 0, interpolator),
                             new KeyValue(previousNode.translateXProperty(), container.getWidth(), interpolator)));
         }
@@ -112,6 +125,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
 
     /// @see <a href="https://m3.material.io/styles/motion/transitions/transition-patterns">Transitions - Material Design 3</a>
     FORWARD {
+        /// Animates forward navigation with temporary incoming-page caching.
         @Override
         public Timeline animate(
                 Pane container, Node previousNode, Node nextNode,
@@ -119,6 +133,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             double offset = container.getWidth() > 0 ? container.getWidth() * 0.2 : 50;
             return new Timeline(
                     new KeyFrame(Duration.ZERO,
+                            new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
                             new KeyValue(previousNode.translateXProperty(), 0, interpolator),
                             new KeyValue(previousNode.opacityProperty(), 1, interpolator),
                             new KeyValue(nextNode.opacityProperty(), 0, interpolator)),
@@ -129,6 +144,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
                             new KeyValue(nextNode.opacityProperty(), 0, interpolator),
                             new KeyValue(nextNode.translateXProperty(), offset, interpolator)),
                     new KeyFrame(duration,
+                            new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE),
                             new KeyValue(nextNode.opacityProperty(), 1, interpolator),
                             new KeyValue(nextNode.translateXProperty(), 0, interpolator))
             );
@@ -142,6 +158,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
 
     /// @see <a href="https://m3.material.io/styles/motion/transitions/transition-patterns">Transitions - Material Design 3</a>
     BACKWARD {
+        /// Animates backward navigation with temporary incoming-page caching.
         @Override
         public Timeline animate(
                 Pane container, Node previousNode, Node nextNode,
@@ -149,6 +166,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             double offset = container.getWidth() > 0 ? container.getWidth() * 0.2 : 50;
             return new Timeline(
                     new KeyFrame(Duration.ZERO,
+                            new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
                             new KeyValue(previousNode.translateXProperty(), 0, interpolator),
                             new KeyValue(previousNode.opacityProperty(), 1, interpolator),
                             new KeyValue(nextNode.opacityProperty(), 0, interpolator)),
@@ -159,6 +177,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
                             new KeyValue(nextNode.opacityProperty(), 0, interpolator),
                             new KeyValue(nextNode.translateXProperty(), -offset, interpolator)),
                     new KeyFrame(duration,
+                            new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE),
                             new KeyValue(nextNode.opacityProperty(), 1, interpolator),
                             new KeyValue(nextNode.translateXProperty(), 0, interpolator))
             );
@@ -170,28 +189,36 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         }
     },
 
-    /// Imitates the animation when switching tabs in the Windows 11 Settings interface
-    SLIDE_UP_FADE_IN {
+    /// Preserves the original slide-up and fade-in transition.
+    TAB_UP {
+        /// Creates the original slide-and-fade timing along the selected vertical direction.
         @Override
-        public Timeline animate(
-                Pane container, Node previousNode, Node nextNode,
-                Duration duration, Interpolator interpolator) {
-            double offset = container.getHeight() > 0 ? container.getHeight() * 0.2 : 50;
-            return new Timeline(
-                    new KeyFrame(Duration.ZERO,
-                            new KeyValue(previousNode.translateYProperty(), 0, interpolator),
-                            new KeyValue(previousNode.opacityProperty(), 1, interpolator),
-                            new KeyValue(nextNode.opacityProperty(), 0, interpolator),
-                            new KeyValue(nextNode.translateYProperty(), offset, interpolator)),
-                    new KeyFrame(duration.multiply(0.5),
-                            new KeyValue(previousNode.opacityProperty(), 0, interpolator)),
-                    new KeyFrame(duration,
-                            new KeyValue(nextNode.opacityProperty(), 1, interpolator),
-                            new KeyValue(nextNode.translateYProperty(), 0, interpolator))
-            );
+        public Timeline animate(Pane container, Node previousNode, Node nextNode,
+                                Duration duration, Interpolator interpolator) {
+            return animateTab(container, previousNode, nextNode, duration, interpolator, 1);
+        }
+
+        /// Returns the reverse tab transition.
+        @Override
+        public TransitionPane.AnimationProducer opposite() {
+            return TAB_DOWN;
         }
     },
+    /// Mirrors the original slide-up and fade-in transition vertically.
+    TAB_DOWN {
+        /// Creates the original slide-and-fade timing along the selected vertical direction.
+        @Override
+        public Timeline animate(Pane container, Node previousNode, Node nextNode,
+                                Duration duration, Interpolator interpolator) {
+            return animateTab(container, previousNode, nextNode, duration, interpolator, -1);
+        }
 
+        /// Returns the reverse tab transition.
+        @Override
+        public TransitionPane.AnimationProducer opposite() {
+            return TAB_UP;
+        }
+    },
     NAVIGATION {
         /// Also clears the horizontal offsets of the target page's navigation panels.
         @Override
@@ -203,6 +230,8 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             }
         }
 
+        /// Animates navigation panels, respecting the content's cache preference for each center panel.
+        /// Restores the panels' original cache states at the end.
         @Override
         public Animation animate(Pane container, Node previousNode, Node nextNode, Duration duration, Interpolator interpolator) {
             Timeline timeline = new Timeline();
@@ -215,13 +244,20 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             if (previousNode instanceof DecoratorAnimatedPage prevPage) {
                 Node left = prevPage.getLeft();
                 Node center = prevPage.getCenter();
+                @Nullable Node content = prevPage.getContent();
+                boolean cacheCenter = isCacheAllowed(center) && (content == null || isCacheAllowed(content));
 
                 timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
+                        new KeyValue(left.cacheProperty(), isCacheAllowed(left), Interpolator.DISCRETE),
+                        new KeyValue(center.cacheProperty(), cacheCenter, Interpolator.DISCRETE),
                         new KeyValue(left.translateXProperty(), 0, interpolator),
                         new KeyValue(center.translateXProperty(), 0, interpolator)));
                 timeline.getKeyFrames().add(new KeyFrame(halfDuration,
                         new KeyValue(left.translateXProperty(), -30, interpolator),
                         new KeyValue(center.translateXProperty(), 30, interpolator)));
+                timeline.getKeyFrames().add(new KeyFrame(duration,
+                        new KeyValue(left.cacheProperty(), left.isCache(), Interpolator.DISCRETE),
+                        new KeyValue(center.cacheProperty(), center.isCache(), Interpolator.DISCRETE)));
             }
 
             timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
@@ -233,17 +269,53 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             if (nextNode instanceof DecoratorAnimatedPage nextPage) {
                 Node left = nextPage.getLeft();
                 Node center = nextPage.getCenter();
+                @Nullable Node content = nextPage.getContent();
+                boolean cacheCenter = isCacheAllowed(center) && (content == null || isCacheAllowed(content));
 
+                timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
+                        new KeyValue(left.cacheProperty(), isCacheAllowed(left), Interpolator.DISCRETE),
+                        new KeyValue(center.cacheProperty(), cacheCenter, Interpolator.DISCRETE)));
                 timeline.getKeyFrames().add(new KeyFrame(halfDuration,
                         new KeyValue(left.translateXProperty(), -30, interpolator),
                         new KeyValue(center.translateXProperty(), 30, interpolator)));
                 timeline.getKeyFrames().add(new KeyFrame(duration,
+                        new KeyValue(left.cacheProperty(), left.isCache(), Interpolator.DISCRETE),
+                        new KeyValue(center.cacheProperty(), center.isCache(), Interpolator.DISCRETE),
                         new KeyValue(left.translateXProperty(), 0, interpolator),
                         new KeyValue(center.translateXProperty(), 0, interpolator)));
+            } else {
+                timeline.getKeyFrames().addAll(
+                        new KeyFrame(Duration.ZERO,
+                                new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE)),
+                        new KeyFrame(duration,
+                                new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE)));
             }
 
             return timeline;
         }
     },
     ;
+
+    /// Preserves the original slide-up fade timing, varying only the vertical direction.
+    /// The previous page stays still and fades out halfway through the incoming page's motion.
+    private static Timeline animateTab(Pane container, Node previousNode, Node nextNode, Duration duration,
+                                       Interpolator interpolator, double direction) {
+        double extent = container.getHeight();
+        double offset = (extent > 0 ? extent * 0.2 : 50) * direction;
+        var previousTranslation = previousNode.translateYProperty();
+        var nextTranslation = nextNode.translateYProperty();
+        return new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(nextNode.cacheProperty(), isCacheAllowed(nextNode), Interpolator.DISCRETE),
+                        new KeyValue(previousTranslation, 0, interpolator),
+                        new KeyValue(previousNode.opacityProperty(), 1, interpolator),
+                        new KeyValue(nextNode.opacityProperty(), 0, interpolator),
+                        new KeyValue(nextTranslation, offset, interpolator)),
+                new KeyFrame(duration.multiply(0.5),
+                        new KeyValue(previousNode.opacityProperty(), 0, interpolator)),
+                new KeyFrame(duration,
+                        new KeyValue(nextNode.cacheProperty(), nextNode.isCache(), Interpolator.DISCRETE),
+                        new KeyValue(nextNode.opacityProperty(), 1, interpolator),
+                        new KeyValue(nextTranslation, 0, interpolator)));
+    }
 }

@@ -10,6 +10,7 @@ import javafx.beans.property.StringProperty;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
@@ -29,6 +30,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jetbrains.annotations.NotNullByDefault;
 import org.tukaani.xz.XZInputStream;
 
 import java.io.IOException;
@@ -40,6 +42,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
@@ -73,18 +76,7 @@ public final class SettingsPage extends ScrollPane {
                     updateButton.setPadding(Insets.EMPTY);
                     FXUtils.installFastTooltip(updateButton, i18n("update.tooltip"));
 
-                    var updatePane = new LineSelectButton<UpdateChannel>() {
-
-                        {
-                            getStyleClass().add("update-pane");
-                            setNode(IDX_TRAILING, updateButton);
-                        }
-
-                        @Override
-                        protected int getTrailingTextIndex() {
-                            return LineComponent.IDX_TRAILING + 1;
-                        }
-                    };
+                    var updatePane = new UpdateChannelButton(updateButton);
                     updateChannel = updatePane.valueProperty();
                     updatePane.setTitle(i18n("update"));
                     updatePane.setValue(UpdateChannel.getChannel());
@@ -130,7 +122,7 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 {
-                    LineToggleButton previewPane = new LineToggleButton();
+                    LineSwitch previewPane = new LineSwitch();
                     previewPane.setTitle(i18n("update.preview"));
                     previewPane.setSubtitle(i18n("update.preview.subtitle"));
                     previewPane.selectedProperty().bindBidirectional(settings().acceptPreviewUpdateProperty());
@@ -145,7 +137,7 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 {
-                    LineToggleButton disableAutoShowUpdateDialogPane = new LineToggleButton();
+                    LineSwitch disableAutoShowUpdateDialogPane = new LineSwitch();
                     disableAutoShowUpdateDialogPane.setTitle(i18n("update.disable_auto_show_update_dialog"));
                     disableAutoShowUpdateDialogPane.setSubtitle(i18n("update.disable_auto_show_update_dialog.subtitle"));
                     disableAutoShowUpdateDialogPane.selectedProperty().bindBidirectional(settings().disableAutoShowUpdateDialogProperty());
@@ -186,7 +178,7 @@ public final class SettingsPage extends ScrollPane {
                 ComponentList miscPaneList = new ComponentList();
 
                 {
-                    LineToggleButton disableAprilFools = new LineToggleButton();
+                    LineSwitch disableAprilFools = new LineSwitch();
                     disableAprilFools.setTitle(i18n("settings.launcher.disable_april_fools"));
                     disableAprilFools.setSubtitle(i18n("settings.take_effect_after_restart"));
                     disableAprilFools.selectedProperty().bindBidirectional(settings().disableAprilFoolsProperty());
@@ -376,5 +368,21 @@ public final class SettingsPage extends ScrollPane {
 
             return outputFile;
         }), Schedulers.io());
+    }
+
+    /// Combines an independent update action with the channel selector's existing trailing content.
+    @NotNullByDefault
+    private static final class UpdateChannelButton extends LineSelectButton<UpdateChannel> {
+        /// Creates a channel selector with the supplied action before its value and dropdown icon.
+        private UpdateChannelButton(Node updateButton) {
+            getStyleClass().add("update-pane");
+            Node selection = Objects.requireNonNull(container.getTrailing());
+            setTrailing(null);
+            setMargin(selection, null);
+            HBox trailing = new HBox(SPACING, updateButton, selection);
+            trailing.setAlignment(Pos.CENTER_LEFT);
+            trailing.setPickOnBounds(false);
+            setTrailing(trailing);
+        }
     }
 }
