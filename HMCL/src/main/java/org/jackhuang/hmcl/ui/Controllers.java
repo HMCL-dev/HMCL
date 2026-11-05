@@ -673,12 +673,12 @@ public final class Controllers {
 
     /// Navigates to the node using the standard navigation animation. Requires an initialized decorator.
     public static void navigate(Node node) {
-        decorator.navigate(node, ContainerAnimations.NAVIGATION, Motion.SHORT4, Motion.EASE);
+        decorator.navigate(node, ContainerAnimations.NAVIGATION, Motion.SHORT4);
     }
 
     /// Navigates to the node using the forward animation. Requires an initialized decorator.
     public static void navigateForward(Node node) {
-        decorator.navigate(node, ContainerAnimations.FORWARD, Motion.SHORT4, Motion.EASE);
+        decorator.navigate(node, ContainerAnimations.FORWARD, Motion.SHORT4);
     }
 
     /// Shows a toast in the main window. Requires an initialized decorator.

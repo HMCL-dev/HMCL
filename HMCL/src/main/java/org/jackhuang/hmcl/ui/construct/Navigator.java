@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.animation.Interpolator;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -43,11 +42,13 @@ public class Navigator extends TransitionPane {
         initialized = true;
     }
 
+    /// Pushes the page using the supplied transition and [Motion#SHORT4].
     public void navigate(Node node, AnimationProducer animationProducer) {
-        navigate(node, animationProducer, Motion.SHORT4, Motion.EASE);
+        navigate(node, animationProducer, Motion.SHORT4);
     }
 
-    public void navigate(Node node, AnimationProducer animationProducer, Duration duration, Interpolator interpolator) {
+    /// Pushes the page using the supplied transition and duration.
+    public void navigate(Node node, AnimationProducer animationProducer, Duration duration) {
         FXUtils.checkFxUserThread();
 
         if (!initialized)
@@ -67,7 +68,7 @@ public class Navigator extends TransitionPane {
         node.fireEvent(navigating);
 
         node.getProperties().put("hmcl.navigator.animation", animationProducer);
-        setContent(node, animationProducer, duration, interpolator);
+        setContent(node, animationProducer, duration);
 
         NavigationEvent navigated = new NavigationEvent(this, node, Navigation.NavigationDirection.NEXT, NavigationEvent.NAVIGATED);
         node.fireEvent(navigated);
@@ -152,9 +153,10 @@ public class Navigator extends TransitionPane {
         return stack.size();
     }
 
+    /// Replaces the page and allows region content to shrink within the clipped viewport.
     @Override
-    public void setContent(Node newView, AnimationProducer transition, Duration duration, Interpolator interpolator) {
-        super.setContent(newView, transition, duration, interpolator);
+    public void setContent(Node newView, AnimationProducer transition, Duration duration) {
+        super.setContent(newView, transition, duration);
 
         if (newView instanceof Region region) {
             region.setMinSize(0, 0);

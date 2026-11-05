@@ -57,10 +57,11 @@ public class DecoratorWizardDisplayer extends DecoratorTransitionPage implements
         displayer.onEnd();
     }
 
+    /// Shows the wizard page with the directional transition and updates its navigation state.
     @Override
     public void navigateTo(Node page, Navigation.NavigationDirection nav) {
         displayer.navigateTo(page, nav);
-        navigate(page, nav.getAnimation(), Motion.SHORT4, Motion.EASE);
+        navigate(page, nav.getAnimation(), Motion.SHORT4);
 
         String prefix = category == null ? "" : category + " - ";
 

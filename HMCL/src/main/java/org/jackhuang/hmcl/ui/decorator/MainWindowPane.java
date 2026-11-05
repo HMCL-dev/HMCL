@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXSpinner;
-import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -369,9 +368,8 @@ final class MainWindowPane extends StackPane {
                     Pane container,
                     Node previousNode,
                     Node nextNode,
-                    Duration duration,
-                    Interpolator interpolator) {
-                return createTimeline(previousNode, nextNode, 50, -50, duration, interpolator);
+                    Duration duration) {
+                return createTimeline(previousNode, nextNode, 50, -50, duration);
             }
 
             /// {@inheritDoc}
@@ -398,9 +396,8 @@ final class MainWindowPane extends StackPane {
                     Pane container,
                     Node previousNode,
                     Node nextNode,
-                    Duration duration,
-                    Interpolator interpolator) {
-                return createTimeline(previousNode, nextNode, -50, 50, duration, interpolator);
+                    Duration duration) {
+                return createTimeline(previousNode, nextNode, -50, 50, duration);
             }
 
             /// {@inheritDoc}
@@ -417,26 +414,24 @@ final class MainWindowPane extends StackPane {
         /// @param nextOffset     the initial offset of the next title
         /// @param previousOffset the final offset of the previous title
         /// @param duration       the transition duration
-        /// @param interpolator   the transition interpolator
         /// @return the unstarted transition timeline
         private static Timeline createTimeline(
                 Node previousNode,
                 Node nextNode,
                 double nextOffset,
                 double previousOffset,
-                Duration duration,
-                Interpolator interpolator) {
+                Duration duration) {
             return new Timeline(
                     new KeyFrame(Duration.ZERO,
-                            new KeyValue(nextNode.translateXProperty(), nextOffset, interpolator),
-                            new KeyValue(previousNode.translateXProperty(), 0, interpolator),
-                            new KeyValue(nextNode.opacityProperty(), 0, interpolator),
-                            new KeyValue(previousNode.opacityProperty(), 1, interpolator)),
+                            new KeyValue(nextNode.translateXProperty(), nextOffset, Motion.EASE),
+                            new KeyValue(previousNode.translateXProperty(), 0, Motion.EASE),
+                            new KeyValue(nextNode.opacityProperty(), 0, Motion.EASE),
+                            new KeyValue(previousNode.opacityProperty(), 1, Motion.EASE)),
                     new KeyFrame(duration,
-                            new KeyValue(nextNode.translateXProperty(), 0, interpolator),
-                            new KeyValue(previousNode.translateXProperty(), previousOffset, interpolator),
-                            new KeyValue(nextNode.opacityProperty(), 1, interpolator),
-                            new KeyValue(previousNode.opacityProperty(), 0, interpolator)));
+                            new KeyValue(nextNode.translateXProperty(), 0, Motion.EASE),
+                            new KeyValue(previousNode.translateXProperty(), previousOffset, Motion.EASE),
+                            new KeyValue(nextNode.opacityProperty(), 1, Motion.EASE),
+                            new KeyValue(previousNode.opacityProperty(), 0, Motion.EASE)));
         }
     }
 }

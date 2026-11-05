@@ -6,7 +6,6 @@ import com.jfoenix.controls.JFXSnackbar;
 import com.jfoenix.controls.JFXSnackbarLayout;
 import com.jfoenix.skins.JFXDatePickerContent;
 import com.jfoenix.skins.JFXDatePickerSkin;
-import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -338,13 +337,11 @@ public final class Decorator {
     /// @param node              the page to push
     /// @param animationProducer the transition used to reveal the page
     /// @param duration          the transition duration
-    /// @param interpolator      the transition interpolator
     public void navigate(
             Node node,
             TransitionPane.AnimationProducer animationProducer,
-            Duration duration,
-            Interpolator interpolator) {
-        navigator.navigate(node, animationProducer, duration, interpolator);
+            Duration duration) {
+        navigator.navigate(node, animationProducer, duration);
     }
 
     /// Returns whether the navigation stack contains a page before the current page.
@@ -393,8 +390,7 @@ public final class Decorator {
         navigator.navigate(
                 new DecoratorWizardDisplayer(wizardProvider, category),
                 ContainerAnimations.FORWARD,
-                Motion.SHORT4,
-                Motion.EASE);
+                Motion.SHORT4);
     }
 
     /// Marks `node` as an area from which a primary-button drag may move the stage.

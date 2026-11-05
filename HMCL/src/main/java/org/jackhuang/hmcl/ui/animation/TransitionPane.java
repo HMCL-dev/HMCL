@@ -4,7 +4,6 @@ package org.jackhuang.hmcl.ui.animation;
 
 import javafx.animation.Animation;
 import javafx.animation.AnimationTimer;
-import javafx.animation.Interpolator;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -160,14 +159,9 @@ public class TransitionPane extends StackPane {
         }
     }
 
-    /// Replaces the content using [Motion#SHORT4] and [Motion#EASE].
+    /// Replaces the content using [Motion#SHORT4].
     public final void setContent(Node newView, AnimationProducer transition) {
         setContent(newView, transition, Motion.SHORT4);
-    }
-
-    /// Replaces the content using the given duration and [Motion#EASE].
-    public final void setContent(Node newView, AnimationProducer transition, Duration duration) {
-        setContent(newView, transition, duration, Motion.EASE);
     }
 
     /// Replaces the current page, cancelling any preceding transition.
@@ -179,8 +173,7 @@ public class TransitionPane extends StackPane {
     /// Previously undisplayed pages initialized at zero opacity render almost transparently
     /// before playback, provided they are visible and their opacity is not bound. Preparation
     /// preserves initialized transforms, so offscreen content may still be culled.
-    public void setContent(Node newView, AnimationProducer transition,
-                           Duration duration, Interpolator interpolator) {
+    public void setContent(Node newView, AnimationProducer transition, Duration duration) {
         if (activeTransition != null) {
             activeTransition.stop();
         }
@@ -250,7 +243,7 @@ public class TransitionPane extends StackPane {
                             }
                             return;
                         }
-                        animation = transition.animate(TransitionPane.this, previousNode, newView, duration, interpolator);
+                        animation = transition.animate(TransitionPane.this, previousNode, newView, duration);
                         if (activeTransition != this) {
                             return;
                         }
@@ -328,11 +321,11 @@ public class TransitionPane extends StackPane {
             AnimationUtils.reset(nextNode, false);
         }
 
-        /// Creates the transition between the prepared pages using the given timing.
+        /// Creates the transition between the prepared pages using the given duration and implementation-selected interpolators.
         /// Temporary settings such as caching belong in the animation's key values, with their
         /// original values restored at its finite end so cancellation can apply them by jumping there.
         Animation animate(Pane container, Node previousNode, Node nextNode,
-                          Duration duration, Interpolator interpolator);
+                          Duration duration);
 
         /// Restores the target page to its settled state after completion or cancellation,
         /// or when animation is skipped. May be called without [#init] or [#animate]
