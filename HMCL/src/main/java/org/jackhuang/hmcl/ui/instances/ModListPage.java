@@ -250,8 +250,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
             return;
         }
 
-        HMCLGameInstance gameInstance = this.gameInstance;
-        Runnable action = () -> AddonCheckUpdatesTask.openAddonsCheckUpdateDialog(gameInstance, mods, gameInstance.getRunDirectory());
+        Runnable action = () -> AddonCheckUpdatesTask.openAddonsCheckUpdateDialog(gameInstance, mods, gameInstance.getModsDirectory());
 
         if (gameInstance.isModpack()) {
             Controllers.confirm(

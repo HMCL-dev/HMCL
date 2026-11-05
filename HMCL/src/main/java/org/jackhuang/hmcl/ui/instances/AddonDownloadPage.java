@@ -420,7 +420,7 @@ public class AddonDownloadPage extends Control implements DecoratorPage {
         }
 
         /// Creates a version summary, optionally enabling navigation to its details.
-        AddonItem(RemoteAddon mod, RemoteAddon.Version dataItem, DownloadPage selfPage, boolean interactive) {
+        AddonItem(RemoteAddon mod, RemoteAddon.Version dataItem, AddonDownloadPage selfPage, boolean interactive) {
             VBox pane = new VBox(8);
             pane.setPadding(new Insets(8, 0, 8, 0));
 
