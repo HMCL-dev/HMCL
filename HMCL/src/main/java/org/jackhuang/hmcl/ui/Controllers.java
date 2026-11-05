@@ -159,6 +159,15 @@ public final class Controllers {
     /// The cached game-list page.
     private static @Nullable GameListPage gameListPage;
 
+    /// Creates and attaches the game-list page for a layout pulse unless already cached.
+    @FXThread
+    public static void prepareGameListPage() {
+        if (gameListPage == null) {
+            LOG.info("Preparing game list page");
+            gameListPage = getDecorator().prewarmPage(new GameListPage());
+        }
+    }
+
     /// Returns the cached game-list page, creating it if necessary.
     @FXThread
     public static GameListPage getGameListPage() {
@@ -167,6 +176,7 @@ public final class Controllers {
         }
         return gameListPage;
     }
+
 
     /// The cached root page.
     private static @Nullable RootPage rootPage;
