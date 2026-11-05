@@ -867,15 +867,15 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                             warnCoreMod = true;
                             warning.add(i18n("mods.coremods.check_dir"));
                         }
-                        if (warnCoreMod) content.add(Tag.warning("CoreMod"));
+                        if (warnCoreMod) content.addTagWarning("CoreMod");
                         else content.addTag("CoreMod");
                     } else {
-                        content.add(Tag.warning(i18n("mods.unknown")));
+                        content.addTagWarning(i18n("mods.unknown"));
                     }
                 } else if (!page.supportedLoaders.contains(modLoaderType)) {
-                    content.add(Tag.warning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType())));
+                    content.addTagWarning(I18n.translateLoaderType(dataItem.getModInfo().getModLoaderType()));
                     if (modInfo.isCoreMod()) {
-                        content.addTag(Tag.warning("CoreMod"));
+                        content.addTagWarning("CoreMod");
                         if (coreModLoaderMismatches) warning.add((i18n("mods.coremods.loader_mismatch")));
                         warning.add(i18n("mods.coremods.supported_only_as_coremod"));
                         if (wrongCoreModDir) warning.add(i18n("mods.coremods.check_dir"));
@@ -885,7 +885,7 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
                 } else {
                     if (modInfo.isCoreMod()) {
                         if (wrongCoreModDir) {
-                            content.add(Tag.warning("CoreMod"));
+                            content.addTagWarning("CoreMod");
                             warning.add(i18n("mods.coremods.check_dir"));
                         } else {
                             content.addTag("CoreMod");
