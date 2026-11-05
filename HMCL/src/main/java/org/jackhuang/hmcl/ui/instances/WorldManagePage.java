@@ -185,7 +185,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         if (world.supportStructures()) {
             tabController.getTabs().add(structureTab);
-            getSidebar().addNavigationDrawerTab(tabController, getSkinnable().structureTab, i18n("world.structure"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL);
+            getSidebar().addNavigationDrawerTab(tabController, structureTab, i18n("world.structure"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL);
         }
     }
 
