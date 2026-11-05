@@ -219,9 +219,8 @@ public final class World implements AutoCloseable, Comparable<World> {
     public @Nullable World tryLock() {
         if (worldLock != null)
             return this;
-        Path lockFile = getLockFile();
         try {
-            worldLock = FileChannel.open(lockFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            worldLock = FileChannel.open(getLockFile(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
             worldLock.write(ByteBuffer.wrap("\u2603".getBytes(StandardCharsets.UTF_8)));
             worldLock.force(true);
             if (worldLock.tryLock() != null)
@@ -262,15 +261,14 @@ public final class World implements AutoCloseable, Comparable<World> {
     public boolean isLocked() {
         if (worldLock != null)
             return true;
-        Path lockFile = getLockFile();
-        try (FileChannel fileChannel = FileChannel.open(lockFile, StandardOpenOption.WRITE)) {
+        try (FileChannel fileChannel = FileChannel.open(getLockFile(), StandardOpenOption.WRITE)) {
             return fileChannel.tryLock() == null;
         } catch (AccessDeniedException | OverlappingFileLockException accessDeniedException) {
             return true;
         } catch (NoSuchFileException noSuchFileException) {
             return false;
         } catch (IOException e) {
-            LOG.warning("Failed to open the lock file " + lockFile, e);
+            LOG.warning("Failed to open the lock file " + getLockFile(), e);
             return false;
         }
     }

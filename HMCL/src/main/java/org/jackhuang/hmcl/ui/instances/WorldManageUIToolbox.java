@@ -60,7 +60,7 @@ public record WorldManageUIToolbox(World world, WorldManager manager) {
         Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller -> new WorldExportPage(world, file, controller::onFinish)));
     }
 
-    public void copyWorld(@Nullable Runnable runnable) {
+    public void copyWorld(@Nullable Runnable onComplete) {
         Path worldPath = world.getFile();
         Controllers.prompt(i18n("world.duplicate.prompt"), (result, handler) -> {
             Path targetDir = worldPath.resolveSibling(result);
@@ -69,11 +69,12 @@ public record WorldManageUIToolbox(World world, WorldManager manager) {
                 return;
             }
 
-            Task.runAsync(Schedulers.io(), () -> manager.copy(world, result)).whenComplete(Schedulers.javafx(), (throwable) -> {
+            world.close();
+            Task.runAsync(Schedulers.io(), () -> manager.copy(world, result)).whenComplete(Schedulers.javafx(), throwable -> {
+                if (onComplete != null)
+                    onComplete.run();
                 if (throwable == null) {
                     Controllers.showToast(i18n("world.duplicate.success.toast"));
-                    if (runnable != null)
-                        runnable.run();
                     handler.resolve();
                 } else {
                     handler.reject(i18n("world.duplicate.failed"));
