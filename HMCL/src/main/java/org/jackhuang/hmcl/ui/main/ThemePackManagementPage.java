@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
@@ -420,9 +405,6 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             ThemePackManifest manifest = themePack.manifest();
             maxWidthProperty().bind(Controllers.getDecorator().contentWidthProperty().multiply(0.7));
 
-            HBox heading = new HBox(8);
-            heading.setAlignment(Pos.CENTER_LEFT);
-
             Node icon = page.createIconNode(themePack, manifest.icon(), SVG.PACKAGE2);
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(manifest.displayName());
@@ -433,8 +415,9 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             if (!StringUtils.isBlank(authors)) {
                 title.addTag(i18n("archive.author") + ": " + authors);
             }
-            heading.getChildren().setAll(icon, title);
-            setHeading(heading);
+            TwoLineListItem.setMargin(icon, new Insets(0, 8, 0, 0));
+            title.setLeading(icon);
+            setHeading(title);
 
             ComponentList themes = new ComponentList();
             themes.getStyleClass().add("no-padding");
@@ -661,39 +644,31 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         private ThemePackItemCell(ThemePackManagementPage page) {
             this.page = page;
 
-            BorderPane root = new BorderPane();
-            root.getStyleClass().add("md-list-cell");
-            root.setPadding(new Insets(8));
+            content.getStyleClass().add("md-list-cell");
+            content.setPadding(new Insets(8));
+            content.setCursor(Cursor.HAND);
 
-            var ripplerContainer = new RipplerContainer(root);
+            var ripplerContainer = new RipplerContainer(content);
             this.graphic = ripplerContainer;
-
-            HBox center = new HBox();
-            center.setSpacing(8);
-            center.setAlignment(Pos.CENTER_LEFT);
-            center.setMouseTransparent(true);
-            root.setCenter(center);
 
             icon.setMouseTransparent(true);
             icon.getChildren().setAll(iconImage, iconFallback);
-            BorderPane.setAlignment(content, Pos.CENTER);
-            content.setMouseTransparent(true);
-            center.getChildren().setAll(icon, content);
-            HBox.setHgrow(content, Priority.ALWAYS);
-            center.setCursor(Cursor.HAND);
+            TwoLineListItem.setMargin(icon, new Insets(0, 8, 0, 0));
+            content.setLeading(icon);
             FXUtils.onClicked(ripplerContainer, () -> {
-                ThemePackManager.InstalledThemePack themePack = getItem();
+                ThemePackManager.@Nullable InstalledThemePack themePack = getItem();
                 if (themePack != null) {
                     page.selectThemePack(themePack);
                 }
             });
 
             right.setAlignment(Pos.CENTER_RIGHT);
-            root.setRight(right);
+            right.setPickOnBounds(false);
+            content.setTrailing(right);
 
             revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
             revealButton.setOnAction(event -> {
-                ThemePackManager.InstalledThemePack themePack = getItem();
+                ThemePackManager.@Nullable InstalledThemePack themePack = getItem();
                 if (themePack != null) {
                     revealThemePack(themePack);
                 }
@@ -702,7 +677,7 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
 
             deleteButton = FXUtils.newToggleButton4(SVG.DELETE);
             deleteButton.setOnAction(event -> {
-                ThemePackManager.InstalledThemePack themePack = getItem();
+                ThemePackManager.@Nullable InstalledThemePack themePack = getItem();
                 if (themePack != null) {
                     page.deleteThemePack(themePack);
                 }
@@ -713,19 +688,19 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
         /// Updates this cell for one installed theme pack.
         @Override
         protected void updateItem(ThemePackManager.@Nullable InstalledThemePack themePack, boolean empty) {
-            var currentItem = getItem();
+            ThemePackManager.@Nullable InstalledThemePack currentItem = getItem();
             boolean oldEmpty = isEmpty();
 
             super.updateItem(themePack, empty);
 
             if (Objects.equals(getItem(), currentItem) && oldEmpty == empty) return;
 
-            this.graphic.releaseRippleImmediately();
-            content.getTags().clear();
+            this.graphic.resetFeedback();
             iconImage.setImage(null);
             iconFallback.setVisible(false);
 
             if (empty || themePack == null) {
+                content.getTags().clear();
                 setGraphic(null);
                 return;
             }
@@ -736,11 +711,13 @@ public final class ThemePackManagementPage extends ListPageBase<ThemePackManager
             content.setTitle(manifest.displayName());
             @Nullable String description = manifest.displayDescription();
             content.setSubtitle(StringUtils.isBlank(description) ? manifest.id() : description);
+            var tags = new ArrayList<Tag>(3);
             if (themePack.builtin()) {
-                content.addTag(i18n("theme_pack.builtin"));
+                tags.add(new Tag(i18n("theme_pack.builtin")));
             }
-            content.addTag(i18n("theme_pack.version", manifest.version()));
-            content.addTag(i18n("theme_pack.themes", manifest.themes().size()));
+            tags.add(new Tag(i18n("theme_pack.version", manifest.version())));
+            tags.add(new Tag(i18n("theme_pack.themes", manifest.themes().size())));
+            content.getTags().setAll(tags);
 
             if (themePack.builtin()) {
                 right.getChildren().clear();

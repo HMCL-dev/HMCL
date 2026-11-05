@@ -116,7 +116,12 @@
   },
   {
     "title": "CommonMark",
-    "subtitle": "Copyright (c) 2015 Robin Stocker.\nAll rights reserved.",
+    "subtitle": "Copyright © 2015 Robin Stocker.\nLicensed under the BSD 2-clause License.",
     "externalLink": "https://github.com/commonmark/commonmark-java"
+  },
+  {
+    "title": "Fastfetch",
+    "subtitle": "Copyright © 2021-2023 Linus Dierheimer, 2022-2026 Carter Li.\nLicensed under the MIT License.",
+    "externalLink": "https://github.com/fastfetch-cli/fastfetch"
   }
 ]

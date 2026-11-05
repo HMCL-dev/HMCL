@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2021 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.*;
@@ -148,14 +133,19 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
 
         if (showMethodSwitcher) {
-            TabControl.Tab<?>[] tabs = new TabControl.Tab[Accounts.FACTORIES.size()];
-            TabControl.Tab<?> selected = null;
+            TabItem<?>[] tabs = new TabItem<?>[Accounts.FACTORIES.size()];
+            var tabToFactory = new IdentityHashMap<TabItem<?>, AccountFactory<?>>();
+
+            @Nullable TabItem<?> selected = null;
             for (int i = 0; i < tabs.length; i++) {
                 AccountFactory<?> f = Accounts.FACTORIES.get(i);
-                tabs[i] = new TabControl.Tab<>(Accounts.getLoginType(f), Accounts.getLocalizedLoginTypeName(f));
-                tabs[i].setUserData(f);
+                TabItem<Node> tab = new TabItem<>();
+                tabs[i] = tab;
+
+                tab.setText(Accounts.getLocalizedLoginTypeName(f));
+                tabToFactory.put(tab, f);
                 if (factory == f) {
-                    selected = tabs[i];
+                    selected = tab;
                 }
             }
 
@@ -163,12 +153,13 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             tabHeader.getStyleClass().add("add-account-tab-header");
             tabHeader.setMinWidth(USE_PREF_SIZE);
             tabHeader.setMaxWidth(USE_PREF_SIZE);
-            tabHeader.getSelectionModel().select(selected);
-            onChange(tabHeader.getSelectionModel().selectedItemProperty(),
+            if (selected != null)
+                tabHeader.getController().selectTab(selected);
+            onChange(tabHeader.getController().selectedTabProperty(),
                     newItem -> {
                         if (newItem == null)
                             return;
-                        AccountFactory<?> newMethod = (AccountFactory<?>) newItem.getUserData();
+                        AccountFactory<?> newMethod = tabToFactory.get(newItem);
                         settings().preferredLoginTypeProperty().set(Accounts.getLoginType(newMethod));
                         this.factory = newMethod;
                         initDetailsPane();

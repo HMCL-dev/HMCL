@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXSpinner;
@@ -30,6 +15,7 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jetbrains.annotations.Nullable;
 
 /// A spinner pane that can show spinner, failed reason, or content.
 public class SpinnerPane extends Control {
@@ -48,7 +34,11 @@ public class SpinnerPane extends Control {
         setLoading(false);
     }
 
+    /// Refreshes the displayed state and its cache preference, including before skin creation.
     private void updateContent() {
+        @Nullable Node displayedContent = content == null ? null : content.get();
+        TransitionPane.setCacheAllowed(this, !isLoading() && (getFailedReason() != null
+                || displayedContent == null || TransitionPane.isCacheAllowed(displayedContent)));
         if (getSkin() instanceof Skin skin) {
             skin.updateContent();
         }
@@ -200,6 +190,7 @@ public class SpinnerPane extends Control {
         private StackPane failedPane;
         private Label failedReasonLabel;
 
+        /// Selects the visible state and passes its cache preference to the transition target.
         void updateContent() {
             SpinnerPane control = getSkinnable();
 
@@ -208,6 +199,7 @@ public class SpinnerPane extends Control {
                 if (spinnerPane == null) {
                     spinnerPane = new StackPane(new JFXSpinner());
                     spinnerPane.getStyleClass().add("notice-pane");
+                    TransitionPane.setCacheAllowed(spinnerPane, false);
                 }
                 nextContent = spinnerPane;
             } else if (control.getFailedReason() != null) {
@@ -224,12 +216,13 @@ public class SpinnerPane extends Control {
                     contentPane = new StackPane();
                 }
 
-                Node content = control.getContent();
+                @Nullable Node content = control.getContent();
                 if (content != null)
                     contentPane.getChildren().setAll(content);
                 else
                     contentPane.getChildren().clear();
 
+                TransitionPane.setCacheAllowed(contentPane, content == null || TransitionPane.isCacheAllowed(content));
                 nextContent = contentPane;
             }
 
@@ -237,6 +230,7 @@ public class SpinnerPane extends Control {
                 failedReasonLabel.setText(null);
             }
 
+            TransitionPane.setCacheAllowed(control, TransitionPane.isCacheAllowed(nextContent));
             root.setContent(nextContent, ContainerAnimations.FADE);
         }
     }

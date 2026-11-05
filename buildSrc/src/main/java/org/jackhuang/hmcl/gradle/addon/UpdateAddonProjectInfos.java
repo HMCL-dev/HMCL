@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2026 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.gradle.addon;
 
 import com.google.gson.*;
@@ -22,6 +7,8 @@ import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.reflect.TypeToken;
 import com.ibm.icu.lang.UCharacter;
 import com.ibm.icu.lang.UCharacterCategory;
+import com.ibm.icu.lang.UProperty;
+import com.ibm.icu.text.BreakIterator;
 import com.ibm.icu.util.ULocale;
 import org.glavo.url.WebURL;
 import org.gradle.api.DefaultTask;
@@ -89,7 +76,7 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
             writer.writeComment("""
                     
                     Hello Minecraft! Launcher
-                    Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+                    Copyright (C) 2026 The HMCL Authors
                     
                     mcmod.cn
                     Copyright (C) 2026. All Rights Reserved.
@@ -131,6 +118,16 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
                 String mainName = cleanChineseName(info.name.main);
                 String subName = cleanName(info.name.sub);
                 String abbr = cleanName(info.name.abbr);
+
+                // https://www.mcmod.cn/class/4112.html
+                if (projectType == AddonProjectType.MOD && mcmodId == 4112) {
+                    mainName = "20W14✨";
+                }
+
+                // https://www.mcmod.cn/class/4242.html
+                if (projectType == AddonProjectType.MOD && mcmodId == 4242) {
+                    mainName = "钓\uD83D\uDC1F\uD83D\uDC20";
+                }
 
                 if (mainName.isEmpty()) {
                     LOGGER.warn("Mod \"{}\" has empty main name", info.name.main);
@@ -300,6 +297,8 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
         return name;
     }
 
+    private static final Pattern MULTI_SPACE = Pattern.compile("  +");
+
     /// Cleans a primary name and normalizes fullwidth parentheses and their spacing.
     private static String cleanChineseName(String chineseName) {
         chineseName = cleanName(chineseName);
@@ -309,23 +308,40 @@ public abstract class UpdateAddonProjectInfos extends DefaultTask {
         }
 
         StringBuilder builder = new StringBuilder(chineseName.length());
-        int[] codePoints = chineseName.codePoints().toArray();
-        for (int i = 0; i < codePoints.length; i++) {
-            int ch = codePoints[i];
-            int prev = i > 0 ? codePoints[i - 1] : 0;
+
+
+        BreakIterator iterator = BreakIterator.getCharacterInstance();
+        iterator.setText(chineseName);
+        int start = iterator.first();
+
+        @Nullable String prev = null;
+        for (int end = iterator.next();
+             end != BreakIterator.DONE;
+             start = end, end = iterator.next()) {
+
+            String ch = chineseName.substring(start, end);
 
             switch (ch) {
-                case '（' -> {
-                    if (Character.isWhitespace(prev) || prev == '！' || prev == '。')
+                case "（" -> {
+                    if (prev != null && prev.isBlank() || "！".equals(prev) || "。".equals(prev))
                         builder.append('(');
                     else
                         builder.append(" (");
                 }
-                case '）' -> builder.append(')');
-                default -> builder.appendCodePoint(ch);
+                case "）" -> builder.append(')');
+                case "\t" -> builder.append(' ');
+                default -> {
+                    if (!UCharacter.hasBinaryProperty(ch, UProperty.RGI_EMOJI)) {
+                        builder.append(ch);
+                    }
+                }
             }
+
+            prev = ch;
         }
-        return builder.toString().trim();
+
+        String result = builder.toString().trim();
+        return MULTI_SPACE.matcher(result).replaceAll(" ");
     }
 
     /// Recognizes accepted mod ID syntax.

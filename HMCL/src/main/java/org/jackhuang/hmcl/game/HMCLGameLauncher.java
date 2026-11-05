@@ -1,20 +1,5 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+// SPDX-FileCopyrightText: Copyright (C) 2020 The HMCL Authors
+// SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.Metadata;
@@ -104,6 +89,12 @@ public final class HMCLGameLauncher extends DefaultLauncher {
          */
         GameVersionNumber gameVersion = instance.getVersion();
         if (gameVersion == GameVersionNumber.unknown() || gameVersion.compareTo("1.1") < 0)
+            return;
+
+        // These snapshots lack the external language resources needed for non-English locales.
+        // Selecting an unavailable language causes a NullPointerException during startup.
+        if (gameVersion instanceof GameVersionNumber.LegacySnapshot
+                && gameVersion.compareTo("13w16a") >= 0 && gameVersion.compareTo("13w23b") <= 0)
             return;
 
         String lang = normalizedLanguageTag(locale, gameVersion);
