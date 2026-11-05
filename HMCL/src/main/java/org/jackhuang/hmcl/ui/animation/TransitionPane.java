@@ -159,11 +159,6 @@ public class TransitionPane extends StackPane {
         }
     }
 
-    /// Replaces the content using [Motion#SHORT4].
-    public final void setContent(Node newView, AnimationProducer transition) {
-        setContent(newView, transition, Motion.SHORT4);
-    }
-
     /// Replaces the current page, cancelling any preceding transition.
     /// Animated changes wait for CSS, layout, and first-display rendering preparation; mouse input is
     /// suppressed while pending or running. Detaching the container or hiding
@@ -173,7 +168,7 @@ public class TransitionPane extends StackPane {
     /// Previously undisplayed pages initialized at zero opacity render almost transparently
     /// before playback, provided they are visible and their opacity is not bound. Preparation
     /// preserves initialized transforms, so offscreen content may still be culled.
-    public void setContent(Node newView, AnimationProducer transition, Duration duration) {
+    public void setContent(Node newView, AnimationProducer transition) {
         if (activeTransition != null) {
             activeTransition.stop();
         }
@@ -243,7 +238,7 @@ public class TransitionPane extends StackPane {
                             }
                             return;
                         }
-                        animation = transition.animate(TransitionPane.this, previousNode, newView, duration);
+                        animation = transition.animate(TransitionPane.this, previousNode, newView);
                         if (activeTransition != this) {
                             return;
                         }
@@ -321,11 +316,10 @@ public class TransitionPane extends StackPane {
             AnimationUtils.reset(nextNode, false);
         }
 
-        /// Creates the transition between the prepared pages using the given duration and implementation-selected interpolators.
+        /// Creates the transition between the prepared pages using implementation-selected timing and interpolators.
         /// Temporary settings such as caching belong in the animation's key values, with their
         /// original values restored at its finite end so cancellation can apply them by jumping there.
-        Animation animate(Pane container, Node previousNode, Node nextNode,
-                          Duration duration);
+        Animation animate(Pane container, Node previousNode, Node nextNode);
 
         /// Restores the target page to its settled state after completion or cancellation,
         /// or when animation is skipped. May be called without [#init] or [#animate]

@@ -268,7 +268,7 @@ final class MainWindowPane extends StackPane {
                 default -> ContainerAnimations.FADE;
             };
             decorator.setNavigationDirection(Navigation.NavigationDirection.START);
-            navBarPane.setContent(navBar, animation, Motion.SHORT4);
+            navBarPane.setContent(navBar, animation);
         } else {
             navBarPane.getChildren().setAll(navBar);
         }
@@ -367,9 +367,8 @@ final class MainWindowPane extends StackPane {
             public Timeline animate(
                     Pane container,
                     Node previousNode,
-                    Node nextNode,
-                    Duration duration) {
-                return createTimeline(previousNode, nextNode, 50, -50, duration);
+                    Node nextNode) {
+                return createTimeline(previousNode, nextNode, 50, -50);
             }
 
             /// {@inheritDoc}
@@ -395,9 +394,8 @@ final class MainWindowPane extends StackPane {
             public Timeline animate(
                     Pane container,
                     Node previousNode,
-                    Node nextNode,
-                    Duration duration) {
-                return createTimeline(previousNode, nextNode, -50, 50, duration);
+                    Node nextNode) {
+                return createTimeline(previousNode, nextNode, -50, 50);
             }
 
             /// {@inheritDoc}
@@ -413,21 +411,19 @@ final class MainWindowPane extends StackPane {
         /// @param nextNode       the title being shown
         /// @param nextOffset     the initial offset of the next title
         /// @param previousOffset the final offset of the previous title
-        /// @param duration       the transition duration
         /// @return the unstarted transition timeline
         private static Timeline createTimeline(
                 Node previousNode,
                 Node nextNode,
                 double nextOffset,
-                double previousOffset,
-                Duration duration) {
+                double previousOffset) {
             return new Timeline(
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(nextNode.translateXProperty(), nextOffset, Motion.EASE),
                             new KeyValue(previousNode.translateXProperty(), 0, Motion.EASE),
                             new KeyValue(nextNode.opacityProperty(), 0, Motion.EASE),
                             new KeyValue(previousNode.opacityProperty(), 1, Motion.EASE)),
-                    new KeyFrame(duration,
+                    new KeyFrame(Motion.SHORT4,
                             new KeyValue(nextNode.translateXProperty(), 0, Motion.EASE),
                             new KeyValue(previousNode.translateXProperty(), previousOffset, Motion.EASE),
                             new KeyValue(nextNode.opacityProperty(), 1, Motion.EASE),

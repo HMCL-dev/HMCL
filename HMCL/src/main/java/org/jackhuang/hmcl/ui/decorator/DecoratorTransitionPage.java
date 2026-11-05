@@ -9,7 +9,6 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
-import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 
@@ -21,9 +20,9 @@ public abstract class DecoratorTransitionPage extends Control implements Decorat
     private Node currentPage;
     protected final TransitionPane transitionPane = new TransitionPane();
 
-    /// Replaces the current page using the supplied transition and duration.
-    protected void navigate(Node page, TransitionPane.AnimationProducer animation, Duration duration) {
-        transitionPane.setContent(currentPage = page, animation, duration);
+    /// Replaces the current page using the supplied transition.
+    protected void navigate(Node page, TransitionPane.AnimationProducer animation) {
+        transitionPane.setContent(currentPage = page, animation);
     }
 
     protected void onNavigating(Node from) {

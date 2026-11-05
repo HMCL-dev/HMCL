@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.Decorator;
@@ -673,12 +672,12 @@ public final class Controllers {
 
     /// Navigates to the node using the standard navigation animation. Requires an initialized decorator.
     public static void navigate(Node node) {
-        decorator.navigate(node, ContainerAnimations.NAVIGATION, Motion.SHORT4);
+        decorator.navigate(node, ContainerAnimations.NAVIGATION);
     }
 
     /// Navigates to the node using the forward animation. Requires an initialized decorator.
     public static void navigateForward(Node node) {
-        decorator.navigate(node, ContainerAnimations.FORWARD, Motion.SHORT4);
+        decorator.navigate(node, ContainerAnimations.FORWARD);
     }
 
     /// Shows a toast in the main window. Requires an initialized decorator.

@@ -336,12 +336,10 @@ public final class Decorator {
     ///
     /// @param node              the page to push
     /// @param animationProducer the transition used to reveal the page
-    /// @param duration          the transition duration
     public void navigate(
             Node node,
-            TransitionPane.AnimationProducer animationProducer,
-            Duration duration) {
-        navigator.navigate(node, animationProducer, duration);
+            TransitionPane.AnimationProducer animationProducer) {
+        navigator.navigate(node, animationProducer);
     }
 
     /// Returns whether the navigation stack contains a page before the current page.
@@ -389,8 +387,7 @@ public final class Decorator {
         FXUtils.checkFxUserThread();
         navigator.navigate(
                 new DecoratorWizardDisplayer(wizardProvider, category),
-                ContainerAnimations.FORWARD,
-                Motion.SHORT4);
+                ContainerAnimations.FORWARD);
     }
 
     /// Marks `node` as an area from which a primary-button drag may move the stage.
