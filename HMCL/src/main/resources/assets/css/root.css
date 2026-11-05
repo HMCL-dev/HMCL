@@ -151,8 +151,19 @@
     -fx-cursor: hand;
 }
 
+.advanced-list-item:action-disabled > .rippler-container > .container > .title,
+.advanced-list-item:action-disabled > .rippler-container > .container > .subtitle,
+.advanced-list-item:action-disabled > .rippler-container > .container > :action-disabled {
+    -fx-opacity: 0.4;
+}
+
 .advanced-list-item:selected .rippler-container {
     -jfx-feedback-fill: -monet-on-secondary-container;
+}
+
+.advanced-list-item:action-disabled > .rippler-container {
+    -jfx-feedback-fill: transparent;
+    -fx-cursor: default;
 }
 
 .advanced-list-item > .rippler-container > .container {
@@ -160,17 +171,14 @@
     -fx-background-color: null;
 }
 
-.advanced-list-item > .rippler-container > .container > .two-line-list-item {
-    -fx-alignment: center-left;
+.advanced-list-item > .rippler-container > .container > .title {
     -fx-padding: 0 0 0 10;
-}
-
-.advanced-list-item > .rippler-container > .container > .two-line-list-item > .first-line > .title {
     -fx-font-size: 13;
     -fx-text-alignment: justify;
 }
 
-.advanced-list-item > .rippler-container > .container > .two-line-list-item > HBox > .subtitle {
+.advanced-list-item > .rippler-container > .container > .subtitle {
+    -fx-padding: 0 0 0 10;
     -fx-font-size: 10;
     -fx-text-alignment: justify;
 }
@@ -179,7 +187,7 @@
     -jfx-selected-background-fill: -monet-secondary-container;
 }
 
-.advanced-list-item:selected > .rippler-container > .container > .two-line-list-item > .first-line > .title {
+.advanced-list-item:selected > .rippler-container > .container > .title {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-font-weight: bold;
 }
@@ -188,27 +196,23 @@
     -fx-fill: -monet-on-secondary-container;
 }
 
-.navigation-drawer-item > .rippler-container > .container > VBox {
-    -fx-padding: 0 0 0 0;
-}
-
-.game-directory-list-item > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
+.game-directory-list-item > .rippler-container > .two-line-list-item > .title {
     -fx-font-size: 13;
 }
 
-.game-directory-list-item > .rippler-container > BorderPane > .two-line-list-item > HBox > .subtitle {
+.game-directory-list-item > .rippler-container > .two-line-list-item > .subtitle {
     -fx-font-size: 10;
 }
 
-.game-directory-list-item > .rippler-container > BorderPane {
+.game-directory-list-item > .rippler-container > .two-line-list-item {
     -fx-padding: 8 0 8 16;
 }
 
-.game-directory-list-item:selected > .rippler-container > BorderPane {
+.game-directory-list-item:selected > .rippler-container > .two-line-list-item {
     -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
-.game-directory-list-item:selected > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
+.game-directory-list-item:selected > .rippler-container > .two-line-list-item > .title {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-font-weight: bold;
 }
@@ -262,6 +266,11 @@
 
 .iconed-menu-item {
     -jfx-feedback-fill: -monet-secondary-container;
+    -fx-cursor: hand;
+}
+
+.iconed-menu-item:disabled {
+    -fx-cursor: default;
 }
 
 .iconed-menu-item .iconed-item-container {
@@ -288,54 +297,52 @@
     -fx-padding: 4 0 4 0;
 }
 
-.two-line-list-item > .first-line > .title {
+.two-line-list-item > .title {
     -fx-text-fill: -monet-on-surface;
     -fx-font-size: 15px;
     -fx-padding: 0 8 0 0;
 }
 
-.two-line-list-item > HBox > .subtitle {
+.two-line-list-item > .subtitle {
     -fx-text-fill: -monet-on-surface-variant;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
-.two-line-list-item > .second-line > .subtitle Text {
+.two-line-list-item > .subtitle Text {
     -fx-fill: -monet-on-surface-variant;
 }
 
-.two-line-list-item > .first-line .scroll-bar {
-    -fx-opacity: 0;
-    -fx-max-height: 0;
-    -fx-min-height: 0;
-    -fx-pref-height: 0;
-}
-
-.two-line-list-item > .first-line .tag {
+.tag {
+    -fx-alignment: center;
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
-    -fx-background-radius: 2;
-    -fx-padding: 2;
+    -fx-background-radius: 999px;
+    -fx-padding: 0 5px;
     -fx-font-weight: normal;
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
 }
 
-.two-line-list-item > .first-line .tag:warning {
+.tag:warning {
     -fx-text-fill: -monet-on-error-container;
     -fx-background-color: -fixed-warning-tag-background;
+}
+
+.tag > .text {
+    -fx-bounds-type: logical_vertical_center;
 }
 
 .two-line-item-second-large {
 
 }
 
-.two-line-item-second-large > .first-line > .title, .two-line-item-second-large-title {
+.two-line-item-second-large > .title, .two-line-item-second-large-title {
     -fx-text-fill: -monet-on-surface-variant;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
-.two-line-item-second-large > HBox > .subtitle {
+.two-line-item-second-large > .subtitle {
     -fx-text-fill: -monet-on-surface;
     -fx-font-size: 15px;
 }
@@ -356,7 +363,7 @@
     -fx-fill: -monet-primary;
 }
 
-.wrap-text > HBox > .subtitle {
+.wrap-text > .subtitle {
     -fx-wrap-text: true;
 }
 
@@ -365,8 +372,8 @@
     -fx-background-radius: 2px;
 }
 
-.bubble > HBox > .two-line-list-item > .first-line > .title,
-.bubble > HBox > .two-line-list-item > HBox > .subtitle {
+.bubble > HBox > .two-line-list-item > .title,
+.bubble > HBox > .two-line-list-item > .subtitle {
     -fx-text-fill: -monet-inverse-on-surface;
 }
 
@@ -483,6 +490,10 @@
 
 .tab-selected-line {
     -fx-background-color: derive(-monet-primary-container, -30%);
+}
+
+.tab-header > .rippler-container {
+    -jfx-feedback-fill: -monet-primary;
 }
 
 /* TODO: It seems not actually used */
@@ -694,6 +705,10 @@
 
 .jfx-tool-bar .jfx-decorator-button .svg {
     -fx-fill: -monet-on-primary-container;
+}
+
+.jfx-decorator-button .jfx-spinner .arc {
+    -fx-stroke: -monet-on-primary-container;
 }
 
 .jfx-tool-bar Label {
@@ -1181,53 +1196,131 @@
 }
 
 /*******************************************************************************
-*                                                                              *
-* JFX Toggle Button                                                            *
-*                                                                              *
-*******************************************************************************/
+ *                                                                             *
+ * JFX Switch                                                                  *
+ *                                                                             *
+ ******************************************************************************/
 
-.jfx-toggle-button,
-.jfx-toggle-button:armed,
-.jfx-toggle-button:hover,
-.jfx-toggle-button:focused,
-.jfx-toggle-button:selected,
-.jfx-toggle-button:focused:selected {
-    -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
-    -fx-background-radius: 3px;
-    -fx-background-insets: 0px;
-
-    -jfx-toggle-color: -monet-primary;
-    -jfx-toggle-line-color: -monet-secondary-container;
-    -jfx-untoggle-color: -monet-outline;
-    -jfx-untoggle-line-color: -monet-surface-container-highest;
-    -jfx-size: 10;
+.jfx-switch {
+    -jfx-switch-primary: -monet-primary;
+    -jfx-switch-on-primary: -monet-on-primary;
+    -jfx-switch-primary-container: -monet-primary-container;
+    -jfx-switch-on-primary-container: -monet-on-primary-container;
+    -jfx-switch-surface: -monet-surface;
+    -jfx-switch-surface-container-highest: -monet-surface-container-highest;
+    -jfx-switch-on-surface: -monet-on-surface;
+    -jfx-switch-on-surface-variant: -monet-on-surface-variant;
+    -jfx-switch-outline: -monet-outline;
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-cursor: hand;
 }
 
-
-.jfx-toggle-button Line {
-    -fx-stroke: -jfx-untoggle-line-color;
+.jfx-switch > .switch-artwork > .switch-track {
+    -fx-fill: -jfx-switch-surface-container-highest;
+    -fx-stroke: -jfx-switch-outline;
+    -fx-stroke-width: 2;
+    -fx-stroke-type: inside;
 }
 
-.jfx-toggle-button:selected Line {
-    -fx-stroke: -jfx-toggle-line-color;
+.jfx-switch:selected > .switch-artwork > .switch-track {
+    -fx-fill: -jfx-switch-primary;
+    -fx-stroke: transparent;
 }
 
-.jfx-toggle-button Circle {
-    -fx-fill: -jfx-untoggle-color;
+.jfx-switch > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-outline;
 }
 
-.jfx-toggle-button:selected Circle {
-    -fx-fill: -jfx-toggle-color;
+.jfx-switch:selected > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-on-primary;
 }
 
-.jfx-toggle-button .jfx-rippler {
-    -jfx-rippler-fill: -jfx-untoggle-line-color;
+.jfx-switch:hover > .switch-artwork > .switch-handle,
+.jfx-switch:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:armed > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-on-surface-variant;
 }
 
-.jfx-toggle-button:selected .jfx-rippler {
-    -jfx-rippler-fill: -jfx-toggle-line-color;
+.jfx-switch:selected:hover > .switch-artwork > .switch-handle,
+.jfx-switch:selected:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:selected:armed > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-primary-container;
 }
 
+.jfx-switch > .switch-artwork > .switch-state-layer {
+    -fx-fill: -jfx-switch-on-surface;
+    -fx-opacity: 0;
+}
+
+.jfx-switch:selected > .switch-artwork > .switch-state-layer {
+    -fx-fill: -jfx-switch-primary;
+}
+
+.jfx-switch:hover > .switch-artwork > .switch-state-layer {
+    -fx-opacity: 0.08;
+}
+
+.jfx-switch:visual-focused > .switch-artwork > .switch-state-layer,
+.jfx-switch:armed > .switch-artwork > .switch-state-layer {
+    -fx-opacity: 0.12;
+}
+
+.jfx-switch > .switch-artwork > .switch-icon {
+    -fx-fill: -jfx-switch-surface-container-highest;
+}
+
+.jfx-switch:selected > .switch-artwork > .switch-icon {
+    -fx-fill: -jfx-switch-on-primary-container;
+}
+
+/* Disabled opacity belongs to individual parts, never to the entire control. */
+.jfx-switch:disabled {
+    -fx-opacity: 1;
+    -fx-cursor: default;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-track {
+    -fx-fill: -jfx-switch-surface-container-highest;
+    -fx-stroke: -jfx-switch-on-surface;
+    -fx-opacity: 0.12;
+}
+
+.jfx-switch:selected:disabled > .switch-artwork > .switch-track {
+    -fx-fill: -jfx-switch-on-surface;
+    -fx-stroke: transparent;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-handle,
+.jfx-switch:disabled:hover > .switch-artwork > .switch-handle,
+.jfx-switch:disabled:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:disabled:armed > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-on-surface;
+    -fx-opacity: 0.38;
+}
+
+.jfx-switch:selected:disabled > .switch-artwork > .switch-handle,
+.jfx-switch:selected:disabled:hover > .switch-artwork > .switch-handle,
+.jfx-switch:selected:disabled:visual-focused > .switch-artwork > .switch-handle,
+.jfx-switch:selected:disabled:armed > .switch-artwork > .switch-handle {
+    -fx-fill: -jfx-switch-surface;
+    -fx-opacity: 1;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-icon {
+    -fx-opacity: 0.38;
+}
+
+.jfx-switch:selected:disabled > .switch-artwork > .switch-icon {
+    -fx-fill: -jfx-switch-on-surface;
+}
+
+.jfx-switch:disabled > .switch-artwork > .switch-state-layer,
+.jfx-switch:disabled:hover > .switch-artwork > .switch-state-layer,
+.jfx-switch:disabled:visual-focused > .switch-artwork > .switch-state-layer,
+.jfx-switch:disabled:armed > .switch-artwork > .switch-state-layer {
+    -fx-opacity: 0;
+}
 
 .toggle-label {
     -fx-font-size: 14.0px;
@@ -1947,8 +2040,11 @@
     -fx-text-fill: -monet-primary-transparent-80;
 }
 
-.line-toggle-button .jfx-toggle-button {
-    -fx-padding: 0;
+.line-switch .jfx-switch {
+    -jfx-size: 24;
+    -fx-min-height: 30;
+    -fx-pref-height: 30;
+    -fx-max-height: 30;
 }
 
 .update-pane:active .subtitle-label {
