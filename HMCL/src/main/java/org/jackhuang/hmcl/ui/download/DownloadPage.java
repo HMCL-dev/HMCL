@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TabController;
 import org.jackhuang.hmcl.ui.construct.TabItem;
@@ -46,11 +45,15 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -89,10 +92,12 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     private WeakListenerHolder listenerHolder;
 
+    /// Creates the download tabs and fills the shared navigation sidebar.
     public DownloadPage() {
         this(DEFAULT_CALLBACK);
     }
 
+    /// Creates download navigation with specific download callback
     public DownloadPage(DownloadCallback callback) {
         this.newGameTab = new TabItem<>(() -> new VersionsPage(
                 versionPageNavigator,
@@ -127,7 +132,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         tabController.selectTab(newGameTab);
 
-        AdvancedListBox sideBar = new AdvancedListBox()
+        getSidebar()
                 .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
                 .addNavigationDrawerTab(tabController, newGameTab, i18n("game"), SVG.STADIA_CONTROLLER, SVG.STADIA_CONTROLLER_FILL)
                 .addNavigationDrawerTab(tabController, modpackTab, i18n("modpack"), SVG.PACKAGE2, SVG.PACKAGE2_FILL)
@@ -136,10 +141,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 .addNavigationDrawerTab(tabController, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
                 .addNavigationDrawerTab(tabController, shaderTab, i18n("shaderpack"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
                 .addNavigationDrawerTab(tabController, worldTab, i18n("world"), SVG.PUBLIC);
-        FXUtils.setLimitWidth(sideBar, 200);
-        setLeft(sideBar);
 
-        setCenter(transitionPane);
+        setContent(transitionPane);
     }
 
     private static TabItem<DownloadListPage> newDownloadListTab(Supplier<DownloadListPage> pageSupplier) {
@@ -330,41 +333,55 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             settings.put(GameComponentType.GAME.getPatchId(), gameVersion);
         }
 
-        /// Builds the selected instance and selects it after successful completion.
+        /// Captures the installation selections and defers reserving the instance until execution.
+        /// Registers cleanup for the eventual builder, including cancellation before its build task
+        /// starts. Successful completion selects the installed instance in the original repository.
         ///
         /// @param settings the installer selections and target instance id
-        /// @return the builder task with its stage hints preserved as the outermost task wrapper
+        /// @return a deferred build task retaining the builder task's stage hints
         private Task<?> finishVersionDownloadingAsync(SettingsMap settings) {
             @Nullable GameInstanceID instanceId = settings.get(AbstractInstallersPage.INSTANCE_ID);
             if (instanceId == null) {
                 throw new IllegalStateException("Instance ID is not set");
             }
 
-            try (HMCLGameBuilder builder = dependencyManager.newGameBuilder(instanceId)) {
-                builder.component(GameComponentType.GAME, ((ComponentRemoteVersion) settings.get(GameComponentType.GAME.getPatchId())).getGameVersion().toString());
+            String selectedGameVersion = ((ComponentRemoteVersion) settings.get(GameComponentType.GAME.getPatchId()))
+                    .getGameVersion().toString();
+            @Unmodifiable List<ComponentRemoteVersion> components = settings.asStringMap().entrySet().stream()
+                    .filter(entry -> !GameComponentType.GAME.getPatchId().equals(entry.getKey()))
+                    .map(Map.Entry::getValue)
+                    .filter(ComponentRemoteVersion.class::isInstance)
+                    .map(ComponentRemoteVersion.class::cast)
+                    .toList();
+            boolean modded = GameComponentType.MOD_LOADERS.stream()
+                    .anyMatch(componentType -> settings.get(componentType.getPatchId()) instanceof ComponentRemoteVersion);
+            boolean isolated = repository.shouldIsolateNewInstance(modded);
 
-                settings.asStringMap().forEach((key, value) -> {
-                    if (!GameComponentType.GAME.getPatchId().equals(key)
-                            && value instanceof ComponentRemoteVersion remoteVersion)
-                        builder.component(remoteVersion);
-                });
+            AtomicReference<@Nullable HMCLGameBuilder> builderReference = new AtomicReference<>();
+            settings.put(TaskCleanup.KEY, () -> {
+                @Nullable HMCLGameBuilder builder = builderReference.get();
+                if (builder != null)
+                    builder.abort();
+            });
 
-                boolean modded = GameComponentType.MOD_LOADERS.stream()
-                        .anyMatch(componentType ->
-                                settings.get(componentType.getPatchId()) instanceof ComponentRemoteVersion);
-                if (repository.shouldIsolateNewInstance(modded)) {
-                    builder.enableIsolation();
-                }
-
-                Task<?> buildTask = builder.buildAsync();
-                settings.put(TaskCleanup.KEY, builder::abort);
-                buildTask.onDone().register(event -> {
-                    if (!event.isFailed()) {
-                        runInFX(() -> repository.setSelectedInstance(repository.getInstance(instanceId)));
+            return Task.composeAsync(() -> {
+                try (HMCLGameBuilder builder = dependencyManager.newGameBuilder(instanceId)) {
+                    builderReference.set(builder);
+                    builder.component(GameComponentType.GAME, selectedGameVersion);
+                    components.forEach(builder::component);
+                    if (isolated) {
+                        builder.enableIsolation();
                     }
-                });
-                return buildTask;
-            }
+
+                    Task<?> buildTask = builder.buildAsync();
+                    buildTask.onDone().register(event -> {
+                        if (!event.isFailed()) {
+                            runInFX(() -> repository.setSelectedInstance(repository.getInstance(instanceId)));
+                        }
+                    });
+                    return buildTask;
+                }
+            });
         }
 
         @Override

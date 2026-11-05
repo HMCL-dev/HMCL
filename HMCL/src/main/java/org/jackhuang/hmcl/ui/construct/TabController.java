@@ -111,8 +111,10 @@ public final class TabController implements PageAware {
         if (previousContent instanceof PageAware pageAware)
             pageAware.onPageHidden();
         if (contentPane != null) {
-            if (playAnimation && contentPane.getCurrentNode() != null) {
-                contentPane.setContent(content, ContainerAnimations.SLIDE_UP_FADE_IN,
+            if (playAnimation && previous != null && previous != tab && contentPane.getCurrentNode() != null) {
+                boolean forward = tabs.indexOf(tab) > tabs.indexOf(previous);
+                ContainerAnimations animation = forward ? ContainerAnimations.TAB_UP : ContainerAnimations.TAB_DOWN;
+                contentPane.setContent(content, animation,
                         Motion.MEDIUM4, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED);
             } else {
                 contentPane.setContent(content, ContainerAnimations.NONE);

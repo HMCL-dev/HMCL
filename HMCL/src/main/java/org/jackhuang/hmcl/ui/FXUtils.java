@@ -1062,27 +1062,28 @@ public final class FXUtils {
 
     private static final String LABEL_FULL_TEXT_PROP_KEY = FXUtils.class.getName() + ".LABEL_FULL_TEXT";
 
+    private static final ChangeListener<Boolean> TEXT_TRUNCATED_LISTENER = (observable, oldValue, newValue) -> {
+        var label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
+        var tooltip = (Tooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
+
+        if (newValue) {
+            if (tooltip == null) {
+                tooltip = new Tooltip();
+                tooltip.textProperty().bind(label.textProperty());
+                label.getProperties().put(LABEL_FULL_TEXT_PROP_KEY, tooltip);
+            }
+
+            FXUtils.installFastTooltip(label, tooltip);
+        } else if (tooltip != null) {
+            Tooltip.uninstall(label, tooltip);
+        }
+    };
+
     public static void showTooltipWhenTruncated(Labeled labeled) {
         ReadOnlyBooleanProperty textTruncatedProperty = textTruncatedProperty(labeled);
         if (textTruncatedProperty != null) {
-            ChangeListener<Boolean> listener = (observable, oldValue, newValue) -> {
-                var label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
-                var tooltip = (Tooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
-
-                if (newValue) {
-                    if (tooltip == null) {
-                        tooltip = new Tooltip();
-                        tooltip.textProperty().bind(label.textProperty());
-                        label.getProperties().put(LABEL_FULL_TEXT_PROP_KEY, tooltip);
-                    }
-
-                    FXUtils.installFastTooltip(label, tooltip);
-                } else if (tooltip != null) {
-                    Tooltip.uninstall(label, tooltip);
-                }
-            };
-            listener.changed(textTruncatedProperty, false, textTruncatedProperty.get());
-            textTruncatedProperty.addListener(listener);
+            TEXT_TRUNCATED_LISTENER.changed(textTruncatedProperty, false, textTruncatedProperty.get());
+            textTruncatedProperty.addListener(TEXT_TRUNCATED_LISTENER);
         }
     }
 

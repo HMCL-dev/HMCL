@@ -6,11 +6,13 @@ import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.addon.mod.ModManager;
 import org.jackhuang.hmcl.addon.pack.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.addon.shader.ShaderPackManager;
+import org.jackhuang.hmcl.util.ByteArrayKey;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -222,15 +224,30 @@ public abstract class DefaultGameInstance implements GameInstance {
     /// @return the detected version, or [GameVersionNumber#unknown()] when detection fails
     private GameVersionNumber detectVersion() {
         try {
+            GameInstanceManifest resolvedManifest = getResolvedManifest();
+            @Nullable DownloadInfo clientDownloadInfo = resolvedManifest.getDownloads()
+                    .get(DownloadType.CLIENT);
+
+            if (clientDownloadInfo != null && clientDownloadInfo.getSha1() != null) {
+                @Unmodifiable Map<ByteArrayKey, GameVersionNumber> knownVersions = GameVersionNumber.getKnownVersions();
+
+                try {
+                    @Nullable GameVersionNumber knownVersion = knownVersions.get(ByteArrayKey.fromHexString(clientDownloadInfo.getSha1()));
+                    if (knownVersion != null)
+                        return knownVersion;
+                } catch (Exception ignored) {
+                }
+            }
+
             Path jar = getInstanceJarFile();
-            Optional<String> detected = GameVersion.minecraftVersion(jar);
-            if (detected.isEmpty()) {
+            @Nullable GameVersionNumber detected = GameVersionNumber.detectFromJar(jar);
+            if (detected == null) {
                 LOG.warning("Cannot find out game version of " + id
                         + ", primary jar: " + jar
                         + ", jar exists: " + Files.exists(jar));
                 return GameVersionNumber.unknown();
             }
-            return GameVersionNumber.asGameVersion(detected.get());
+            return detected;
         } catch (NoSuchGameInstanceException e) {
             LOG.warning("Cannot resolve game version of " + id, e);
             return GameVersionNumber.unknown();

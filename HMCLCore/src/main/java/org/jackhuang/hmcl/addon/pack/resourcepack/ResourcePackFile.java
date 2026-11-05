@@ -117,11 +117,6 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile<ResourcePac
         return getPackInfo().description();
     }
 
-    @Override
-    public int compareTo(@NotNull ResourcePackFile other) {
-        return this.fileNameWithExtension.compareTo(other.fileNameWithExtension);
-    }
-
     public enum Compatibility {
         COMPATIBLE,
         TOO_NEW,

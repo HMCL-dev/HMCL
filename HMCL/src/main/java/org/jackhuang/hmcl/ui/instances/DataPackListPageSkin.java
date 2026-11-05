@@ -308,6 +308,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         private final WeakInvalidationListener weakActiveListener = new WeakInvalidationListener(activeListener);
         private @Nullable ReadOnlyBooleanProperty observedActiveProperty;
 
+        /// Creates a selectable data pack row whose checkbox follows the read-only state.
         DataPackInfoListCell(JFXListView<DataPackInfoObject> listView, BooleanProperty isReadOnlyProperty) {
             super(listView);
 
@@ -315,7 +316,6 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(content, Priority.ALWAYS);
-            content.setMouseTransparent(true);
             setSelectable();
 
             checkBox.disableProperty().bind(isReadOnlyProperty);

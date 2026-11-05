@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.game;
 
 import org.glavo.url.WebURL;
+import org.jackhuang.hmcl.download.ComponentRemoteVersion;
 import org.jackhuang.hmcl.download.DefaultCacheRepository;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
@@ -10,20 +11,26 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.UrlResponseInfo;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.net.http.HttpHeaders;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -52,6 +59,47 @@ public final class DefaultGameRepositoryDraftTest {
         assertEquals(id, repository.getInstance(id).getManifest().id());
         assertEquals("example.Main", repository.getInstance(id).getManifest().mainClass());
         assertFalse(Files.exists(repository.getLayout().getInstanceJson(id)));
+    }
+
+    /// Supplies missing IDs for conventional, single-candidate, and multiple-candidate manifests without rewriting files.
+    @ParameterizedTest
+    @ValueSource(strings = {"conventional", "single", "multiple"})
+    public void testRefreshSuppliesMissingManifestId(String layout, @TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        Path root = Files.createDirectories(repository.getLayout().getInstanceRoot(id));
+        Path manifestFile = root.resolve(layout.equals("conventional") ? "instance.json" : "game.json");
+        String originalJson = "{\"mainClass\":\"example.Main\"}";
+        Files.writeString(manifestFile, originalJson);
+        if (layout.equals("multiple")) {
+            Files.writeString(root.resolve("a-settings.json"), "{}");
+            Files.writeString(root.resolve("b-broken.json"), "{");
+        }
+
+        repository.refresh();
+
+        DefaultGameInstance instance = repository.getInstance(id);
+        assertEquals(id, instance.getManifest().id());
+        assertEquals("example.Main", instance.getManifest().mainClass());
+        assertEquals(manifestFile, instance.getManifestFile());
+        assertEquals(originalJson, Files.readString(manifestFile));
+    }
+
+    /// Uses the directory identity even when the JSON ID is null, invalid, or different.
+    @ParameterizedTest
+    @ValueSource(strings = {"null", "42", "{}", "\"..\"", "\"original\""})
+    public void testRefreshOverridesManifestId(String jsonId, @TempDir Path tempDirectory) throws IOException {
+        TestRepository repository = new TestRepository(tempDirectory);
+        GameInstanceID id = new GameInstanceID("instance");
+        Files.createDirectories(repository.getLayout().getInstanceRoot(id));
+        Path manifestFile = repository.getLayout().getInstanceJson(id);
+        String originalJson = "{\"id\":" + jsonId + ",\"mainClass\":\"example.Main\"}";
+        Files.writeString(manifestFile, originalJson);
+
+        repository.refresh();
+
+        assertEquals(id, repository.getInstance(id).getManifest().id());
+        assertEquals(originalJson, Files.readString(manifestFile));
     }
 
     /// Ignores directories whose multiple JSON files do not contain an instance manifest.
@@ -356,6 +404,72 @@ public final class DefaultGameRepositoryDraftTest {
         assertEquals("new client", Files.readString(cached));
     }
 
+    /// Game installation takes ownership of the new client; loader installation retains the shared client.
+    @ParameterizedTest
+    @CsvSource({"GAME,false", "GAME,true", "FABRIC,false", "FABRIC,true"})
+    public void testComponentInstallationUpdatesJarOwnership(
+            GameComponentType componentType, boolean hasGamePatch, @TempDir Path tempDirectory) throws Exception {
+        TestRepository repository = new TestRepository(tempDirectory.resolve("game"));
+        GameInstanceID id = new GameInstanceID("instance");
+        GameInstanceID sharedId = new GameInstanceID("1.21.1");
+        repository.save(new GameInstanceManifest(sharedId));
+        Path sharedJar = repository.getLayout().getInstanceJarFile(sharedId);
+        writeVersionJar(sharedJar, "1.21.1");
+        String oldSha1 = DigestUtils.digestToString("SHA-1", sharedJar);
+        GameInstanceManifest original = new GameInstanceManifest(id)
+                .withRoot(null)
+                .withMainClass(GameComponentAnalyzer.VANILLA_MAIN)
+                .withJar(sharedId)
+                .withDownloads(Map.of(DownloadType.CLIENT,
+                        new DownloadInfo("https://example.invalid/old.jar", oldSha1)));
+        repository.save(hasGamePatch ? original.withBaseGamePatch("1.21.1") : original);
+        Path target = repository.getLayout().getInstanceJarFile(id);
+        DefaultDependencyManager manager = createDependencyManager(repository);
+        Path source = tempDirectory.resolve("new-client.jar");
+        writeVersionJar(source, "1.21.2");
+        String newSha1 = DigestUtils.digestToString("SHA-1", source);
+        manager.getCacheRepository().cacheFile(source, "SHA-1", newSha1);
+
+        boolean installGame = componentType == GameComponentType.GAME;
+        GameInstancePatch patch = installGame
+                ? GameInstancePatch.fromManifest(new GameInstanceManifest(id)
+                        .withMainClass(GameComponentAnalyzer.VANILLA_MAIN)
+                        .withDownloads(Map.of(DownloadType.CLIENT,
+                                new DownloadInfo("https://example.invalid/new.jar", newSha1))),
+                        componentType.getPatchId(), "1.21.2", GameInstancePatch.PRIORITY_MC)
+                : new GameInstancePatch(componentType.getPatchId(), "0.16.0", GameInstancePatch.PRIORITY_LOADER,
+                        null, "net.fabricmc.loader.impl.launch.knot.KnotClient", List.of());
+        ComponentRemoteVersion remote = new ComponentRemoteVersion(componentType,
+                GameVersionNumber.asGameVersion(installGame ? "1.21.2" : "1.21.1"),
+                Objects.requireNonNull(patch.version()), null, ComponentRemoteVersion.Type.RELEASE, List.of()) {
+            /// Supplies a fixed installer result while exercising the actual installation and commit pipeline.
+            @Override
+            public Task<GameInstancePatch> getInstallTask(
+                    DefaultDependencyManager dependencyManager, GameInstanceManifest baseManifest, Path modsDirectory) {
+                return Task.completed(patch);
+            }
+        };
+
+        assertTrue(manager.updateInstanceAsync(id, instance -> manager
+                .installComponentRemoteAsync(instance, instance.getManifest(), remote)
+                .thenApplyAsync(manifest -> {
+                    assertEquals(sharedJar, repository.getInstance(id).getInstanceJarFile());
+                    assertFalse(Files.exists(target));
+                    return manifest;
+                })).executor().test());
+
+        repository.refresh();
+        DefaultGameInstance updated = repository.getInstance(id);
+        assertEquals(installGame ? id : sharedId, updated.getManifest().jar());
+        assertEquals(installGame ? target : sharedJar, updated.getInstanceJarFile());
+        assertEquals(GameVersionNumber.asGameVersion(installGame ? "1.21.2" : "1.21.1"), updated.getVersion());
+        assertEquals(installGame ? newSha1 : oldSha1,
+                DigestUtils.digestToString("SHA-1", updated.getInstanceJarFile()));
+        assertEquals(installGame ? "1.21.2" : "1.21.1", updated.getComponentVersion(GameComponentType.GAME));
+        assertEquals(oldSha1, DigestUtils.digestToString("SHA-1", sharedJar));
+        assertEquals(installGame, Files.exists(target));
+    }
+
     /// Equivalent checksums preserve a customized client even when the download URL changes.
     @Test
     public void testUpdateInstanceAsyncPreservesClientWithSameChecksum(@TempDir Path tempDirectory) throws Exception {
@@ -562,6 +676,15 @@ public final class DefaultGameRepositoryDraftTest {
 
         try (DefaultGameRepositoryDraft ignored = repository.openDraft()) {
             assertTrue(ignored.isOpen());
+        }
+    }
+
+    /// Writes a minimal client JAR whose version can be detected after committing and refreshing.
+    private static void writeVersionJar(Path jar, String version) throws IOException {
+        try (ZipOutputStream output = new ZipOutputStream(Files.newOutputStream(jar))) {
+            output.putNextEntry(new ZipEntry("version.json"));
+            output.write(("{\"id\":\"" + version + "\"}").getBytes(StandardCharsets.UTF_8));
+            output.closeEntry();
         }
     }
 
