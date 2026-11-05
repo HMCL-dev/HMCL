@@ -32,13 +32,14 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.TaskManager;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import static org.jackhuang.hmcl.ui.animation.TransitionPane.DEFAULT_DURATION;
+import static org.jackhuang.hmcl.ui.animation.TransitionPane.DEFAULT_INTERPOLATOR;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// Renders the clipped background, title bar, and navigation content owned by a [Decorator].
@@ -413,15 +414,15 @@ final class MainWindowPane extends StackPane {
                 double previousOffset) {
             return new Timeline(
                     new KeyFrame(Duration.ZERO,
-                            new KeyValue(nextNode.translateXProperty(), nextOffset, Motion.EASE),
-                            new KeyValue(previousNode.translateXProperty(), 0, Motion.EASE),
-                            new KeyValue(nextNode.opacityProperty(), 0, Motion.EASE),
-                            new KeyValue(previousNode.opacityProperty(), 1, Motion.EASE)),
-                    new KeyFrame(Motion.SHORT4,
-                            new KeyValue(nextNode.translateXProperty(), 0, Motion.EASE),
-                            new KeyValue(previousNode.translateXProperty(), previousOffset, Motion.EASE),
-                            new KeyValue(nextNode.opacityProperty(), 1, Motion.EASE),
-                            new KeyValue(previousNode.opacityProperty(), 0, Motion.EASE)));
+                            new KeyValue(nextNode.translateXProperty(), nextOffset, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.translateXProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(nextNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.opacityProperty(), 1, DEFAULT_INTERPOLATOR)),
+                    new KeyFrame(DEFAULT_DURATION,
+                            new KeyValue(nextNode.translateXProperty(), 0, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.translateXProperty(), previousOffset, DEFAULT_INTERPOLATOR),
+                            new KeyValue(nextNode.opacityProperty(), 1, DEFAULT_INTERPOLATOR),
+                            new KeyValue(previousNode.opacityProperty(), 0, DEFAULT_INTERPOLATOR)));
         }
     }
 }

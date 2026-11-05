@@ -4,6 +4,7 @@ package org.jackhuang.hmcl.ui.animation;
 
 import javafx.animation.Animation;
 import javafx.animation.AnimationTimer;
+import javafx.animation.Interpolator;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -20,6 +21,15 @@ import org.jetbrains.annotations.Nullable;
 /// Content changes must be made on the JavaFX Application Thread.
 @NotNullByDefault
 public class TransitionPane extends StackPane {
+
+    /// The default easing curve for page transitions.
+    public static final Interpolator DEFAULT_INTERPOLATOR = Motion.EASE;
+
+    /// The default duration for page transitions.
+    public static final Duration DEFAULT_DURATION = Motion.SHORT4;
+
+    /// Half the default duration for transitions with two phases.
+    public static final Duration DEFAULT_DURATION_HALF = DEFAULT_DURATION.divide(2);
 
     /// Stores an explicit opt-out from bitmap caching during transitions.
     private static final IdentityPropertyKey<Boolean> CACHE_ALLOWED_KEY = new IdentityPropertyKey<>(TransitionPane.class, "CACHE_ALLOWED_KEY");
