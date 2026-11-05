@@ -9,6 +9,7 @@ import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.jackhuang.hmcl.gradle.utils.PropertiesUtils;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +25,9 @@ public abstract class UpsideDownTranslate extends DefaultTask {
 
     static final Locale EN_QABS = Locale.forLanguageTag("en-Qabs");
 
-    private static final Map<String, String> PROPERTIES = Map.of(
+    /// Date patterns whose syntax must survive upside-down translation.
+    private static final @Unmodifiable Map<String, String> PROPERTIES = Map.of(
+            "about.device.mac.month", "MMM uuuu",
             "datetime.format", "MMM d, yyyy, h:mm:ss a"
     );
 

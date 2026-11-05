@@ -9,8 +9,6 @@ import javafx.beans.property.*;
 import javafx.beans.value.ChangeListener;
 import javafx.event.Event;
 import javafx.event.EventType;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.GameInstanceID;
 import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -36,6 +34,7 @@ import java.nio.file.Path;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
+/// Displays settings and management tools for the selected game instance.
 public class GameInstancePage extends DecoratorAnimatedPage implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     /// Manages tab selection and content transitions independently of the sidebar.
@@ -80,6 +79,7 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
         }
     }
 
+    /// Creates the instance tabs, context listeners, and navigation controls.
     public GameInstancePage() {
         // Child tabs subscribe to instanceProperty() themselves and reload on change.
         this.gameSettingsTab = new TabItem<>(() -> new GameSettingsPage<>(GameSettings.Instance.class, instance));
@@ -125,6 +125,74 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
                 preferredInstanceId = gameInstance.getId();
             }
         }));
+
+        getSidebar()
+                .addNavigationDrawerTab(tabController, gameSettingsTab, i18n("settings.game"), SVG.SETTINGS, SVG.SETTINGS_FILL)
+                .addNavigationDrawerTab(tabController, installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL)
+                .addNavigationDrawerTab(tabController, modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL)
+                .addNavigationDrawerTab(tabController, resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
+                .addNavigationDrawerTab(tabController, worldListTab, i18n("world.manage"), SVG.PUBLIC)
+                .addNavigationDrawerTab(tabController, schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
+
+        PopupMenu browseList = new PopupMenu();
+        JFXPopup browsePopup = new JFXPopup(browseList);
+        browseList.getContent().setAll(
+                new IconedMenuItem(SVG.STADIA_CONTROLLER, i18n("folder.game"), () -> onBrowse(""), browsePopup),
+                new IconedMenuItem(SVG.SETTINGS, i18n("folder.config"), () -> onBrowse("config"), browsePopup),
+                new MenuSeparator(),
+                new IconedMenuItem(SVG.EXTENSION, i18n("folder.mod"), () -> onBrowse("mods"), browsePopup),
+                new IconedMenuItem(SVG.TEXTURE, i18n("folder.resourcepacks"), () -> onBrowse("resourcepacks"), browsePopup),
+                new IconedMenuItem(SVG.PUBLIC, i18n("folder.saves"), () -> onBrowse("saves"), browsePopup),
+                new IconedMenuItem(SVG.SCHEMA, i18n("folder.schematics"), this::onBrowseSchematics, browsePopup),
+                new IconedMenuItem(SVG.WB_SUNNY, i18n("folder.shaderpacks"), () -> onBrowse("shaderpacks"), browsePopup),
+                new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("folder.screenshots"), () -> onBrowse("screenshots"), browsePopup),
+                new MenuSeparator(),
+                new IconedMenuItem(SVG.SCRIPT, i18n("folder.logs"), () -> onBrowse("logs"), browsePopup),
+                new IconedMenuItem(SVG.FRAME_BUG, i18n("folder.crash-reports"), () -> onBrowse("crash-reports"), browsePopup)
+        );
+
+        PopupMenu managementList = new PopupMenu();
+        JFXPopup managementPopup = new JFXPopup(managementList);
+        managementList.getContent().setAll(
+                new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch.test"), this::testGame, managementPopup),
+                new IconedMenuItem(SVG.SCRIPT, i18n("instance.launch_script"), this::generateLaunchScript, managementPopup),
+                new MenuSeparator(),
+                new IconedMenuItem(SVG.EDIT, i18n("instance.manage.rename"), this::rename, managementPopup),
+                new IconedMenuItem(SVG.FOLDER_COPY, i18n("instance.manage.duplicate"), this::duplicate, managementPopup),
+                new IconedMenuItem(SVG.DELETE, i18n("instance.manage.remove"), this::remove, managementPopup),
+                new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), this::export, managementPopup),
+                new MenuSeparator(),
+                // Due to the sidebar height limit, we temporarily place the entries for these tabs
+                // in the management menu; they will be moved back to the sidebar after a future UI refactor.
+                new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("screenshots.manage"), () -> tabController.selectTab(screenshotsTab), managementPopup),
+                new IconedMenuItem(SVG.DRESSER, i18n("server.manage"), () -> tabController.selectTab(serversTab), managementPopup),
+                new MenuSeparator(),
+                new IconedMenuItem(null, i18n("instance.manage.redownload_assets_index"), this::redownloadAssetIndex, managementPopup),
+                new IconedMenuItem(null, i18n("instance.manage.remove_assets"), this::clearAssets, managementPopup),
+                new IconedMenuItem(null, i18n("instance.manage.remove_libraries"), this::clearLibraries, managementPopup),
+                new IconedMenuItem(null, i18n("instance.manage.clean"), this::clearJunkFiles, managementPopup).addTooltip(i18n("instance.manage.clean.tooltip"))
+        );
+
+        AdvancedListBox toolbar = new AdvancedListBox()
+                .addNavigationDrawerItem(i18n("instance.update"), SVG.UPDATE, this::updateGame, upgradeItem -> {
+                    upgradeItem.visibleProperty().bind(currentInstanceUpgradable);
+                })
+                .addNavigationDrawerItem(i18n("instance.launch.test"), SVG.ROCKET_LAUNCH, this::testGame)
+                .addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, null, browseMenuItem -> {
+                    browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0));
+                })
+                .addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managementItem -> {
+                    managementItem.setOnAction(e -> managementPopup.show(managementItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managementItem.getWidth(), 0));
+                });
+        toolbar.getStyleClass().add("advanced-list-box-clear-padding");
+
+        setSidebarBottom(toolbar);
+
+        state.bind(Bindings.createObjectBinding(() ->
+                        State.fromTitle(i18n("instance.manage.manage.title", getInstanceId()), -1),
+                instance));
+
+        setContent(transitionPane);
     }
 
     /// Observes snapshot publications for the repository associated with the current page context.
@@ -337,99 +405,8 @@ public class GameInstancePage extends DecoratorAnimatedPage implements Decorator
     }
 
     @Override
-    protected Skin createDefaultSkin() {
-        return new Skin(this);
-    }
-
-    @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state.getReadOnlyProperty();
-    }
-
-    public static class Skin extends DecoratorAnimatedPageSkin<GameInstancePage> {
-
-        /**
-         * Constructor for all SkinBase instances.
-         *
-         * @param control The control for which this Skin should attach to.
-         */
-        protected Skin(GameInstancePage control) {
-            super(control);
-
-            {
-                AdvancedListBox sideBar = new AdvancedListBox()
-                        .addNavigationDrawerTab(control.tabController, control.gameSettingsTab, i18n("settings.game"), SVG.SETTINGS, SVG.SETTINGS_FILL)
-                        .addNavigationDrawerTab(control.tabController, control.installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL)
-                        .addNavigationDrawerTab(control.tabController, control.modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL)
-                        .addNavigationDrawerTab(control.tabController, control.resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
-                        .addNavigationDrawerTab(control.tabController, control.worldListTab, i18n("world.manage"), SVG.PUBLIC)
-                        .addNavigationDrawerTab(control.tabController, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
-                VBox.setVgrow(sideBar, Priority.ALWAYS);
-
-                PopupMenu browseList = new PopupMenu();
-                JFXPopup browsePopup = new JFXPopup(browseList);
-                browseList.getContent().setAll(
-                        new IconedMenuItem(SVG.STADIA_CONTROLLER, i18n("folder.game"), () -> control.onBrowse(""), browsePopup),
-                        new IconedMenuItem(SVG.SETTINGS, i18n("folder.config"), () -> control.onBrowse("config"), browsePopup),
-                        new MenuSeparator(),
-                        new IconedMenuItem(SVG.EXTENSION, i18n("folder.mod"), () -> control.onBrowse("mods"), browsePopup),
-                        new IconedMenuItem(SVG.TEXTURE, i18n("folder.resourcepacks"), () -> control.onBrowse("resourcepacks"), browsePopup),
-                        new IconedMenuItem(SVG.PUBLIC, i18n("folder.saves"), () -> control.onBrowse("saves"), browsePopup),
-                        new IconedMenuItem(SVG.SCHEMA, i18n("folder.schematics"), control::onBrowseSchematics, browsePopup),
-                        new IconedMenuItem(SVG.WB_SUNNY, i18n("folder.shaderpacks"), () -> control.onBrowse("shaderpacks"), browsePopup),
-                        new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("folder.screenshots"), () -> control.onBrowse("screenshots"), browsePopup),
-                        new MenuSeparator(),
-                        new IconedMenuItem(SVG.SCRIPT, i18n("folder.logs"), () -> control.onBrowse("logs"), browsePopup),
-                        new IconedMenuItem(SVG.FRAME_BUG, i18n("folder.crash-reports"), () -> control.onBrowse("crash-reports"), browsePopup)
-                );
-
-                PopupMenu managementList = new PopupMenu();
-                JFXPopup managementPopup = new JFXPopup(managementList);
-                managementList.getContent().setAll(
-                        new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("instance.launch.test"), control::testGame, managementPopup),
-                        new IconedMenuItem(SVG.SCRIPT, i18n("instance.launch_script"), control::generateLaunchScript, managementPopup),
-                        new MenuSeparator(),
-                        new IconedMenuItem(SVG.EDIT, i18n("instance.manage.rename"), control::rename, managementPopup),
-                        new IconedMenuItem(SVG.FOLDER_COPY, i18n("instance.manage.duplicate"), control::duplicate, managementPopup),
-                        new IconedMenuItem(SVG.DELETE, i18n("instance.manage.remove"), control::remove, managementPopup),
-                        new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), control::export, managementPopup),
-                        new MenuSeparator(),
-                        // Due to the sidebar height limit, we temporarily place the entries for these tabs
-                        // in the management menu; they will be moved back to the sidebar after a future UI refactor.
-                        new IconedMenuItem(SVG.SCREENSHOT_MONITOR, i18n("screenshots.manage"), () -> control.tabController.selectTab(control.screenshotsTab), managementPopup),
-                        new IconedMenuItem(SVG.DRESSER, i18n("server.manage"), () -> control.tabController.selectTab(control.serversTab), managementPopup),
-                        new MenuSeparator(),
-                        new IconedMenuItem(null, i18n("instance.manage.redownload_assets_index"), control::redownloadAssetIndex, managementPopup),
-                        new IconedMenuItem(null, i18n("instance.manage.remove_assets"), control::clearAssets, managementPopup),
-                        new IconedMenuItem(null, i18n("instance.manage.remove_libraries"), control::clearLibraries, managementPopup),
-                        new IconedMenuItem(null, i18n("instance.manage.clean"), control::clearJunkFiles, managementPopup).addTooltip(i18n("instance.manage.clean.tooltip"))
-                );
-
-                AdvancedListBox toolbar = new AdvancedListBox()
-                        .addNavigationDrawerItem(i18n("instance.update"), SVG.UPDATE, control::updateGame, upgradeItem -> {
-                            upgradeItem.visibleProperty().bind(control.currentInstanceUpgradable);
-                        })
-                        .addNavigationDrawerItem(i18n("instance.launch.test"), SVG.ROCKET_LAUNCH, control::testGame)
-                        .addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, null, browseMenuItem -> {
-                            browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0));
-                        })
-                        .addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managementItem -> {
-                            managementItem.setOnAction(e -> managementPopup.show(managementItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managementItem.getWidth(), 0));
-                        });
-                toolbar.getStyleClass().add("advanced-list-box-clear-padding");
-                FXUtils.setLimitHeight(toolbar, 40 * 4 + 12 * 2);
-
-                setLeft(sideBar, toolbar);
-            }
-
-            control.state.bind(Bindings.createObjectBinding(() ->
-                            State.fromTitle(i18n("instance.manage.manage.title", getSkinnable().getInstanceId()), -1),
-                    getSkinnable().instance));
-
-            //control.transitionPane.getStyleClass().add("gray-background");
-            //FXUtils.setOverflowHidden(control.transitionPane, 8);
-            setCenter(control.transitionPane);
-        }
     }
 
 }
