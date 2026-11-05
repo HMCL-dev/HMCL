@@ -763,6 +763,9 @@ public final class ModListPage extends ListPageBase<ModListPage.ModInfoObject> i
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
+            // free up space when not visible
+            restoreButton.managedProperty().bind(restoreButton.visibleProperty());
+
             HBox actions = new HBox();
             actions.setAlignment(Pos.CENTER);
             actions.getChildren().setAll(restoreButton, revealButton, infoButton, activeSwitch);
