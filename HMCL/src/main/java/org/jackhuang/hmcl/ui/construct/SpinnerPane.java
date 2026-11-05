@@ -15,6 +15,7 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jetbrains.annotations.Nullable;
 
 /// A spinner pane that can show spinner, failed reason, or content.
 public class SpinnerPane extends Control {
@@ -33,7 +34,11 @@ public class SpinnerPane extends Control {
         setLoading(false);
     }
 
+    /// Refreshes the displayed state and its cache preference, including before skin creation.
     private void updateContent() {
+        @Nullable Node displayedContent = content == null ? null : content.get();
+        TransitionPane.setCacheAllowed(this, !isLoading() && (getFailedReason() != null
+                || displayedContent == null || TransitionPane.isCacheAllowed(displayedContent)));
         if (getSkin() instanceof Skin skin) {
             skin.updateContent();
         }
@@ -185,6 +190,7 @@ public class SpinnerPane extends Control {
         private StackPane failedPane;
         private Label failedReasonLabel;
 
+        /// Selects the visible state and passes its cache preference to the transition target.
         void updateContent() {
             SpinnerPane control = getSkinnable();
 
@@ -193,6 +199,7 @@ public class SpinnerPane extends Control {
                 if (spinnerPane == null) {
                     spinnerPane = new StackPane(new JFXSpinner());
                     spinnerPane.getStyleClass().add("notice-pane");
+                    TransitionPane.setCacheAllowed(spinnerPane, false);
                 }
                 nextContent = spinnerPane;
             } else if (control.getFailedReason() != null) {
@@ -209,12 +216,13 @@ public class SpinnerPane extends Control {
                     contentPane = new StackPane();
                 }
 
-                Node content = control.getContent();
+                @Nullable Node content = control.getContent();
                 if (content != null)
                     contentPane.getChildren().setAll(content);
                 else
                     contentPane.getChildren().clear();
 
+                TransitionPane.setCacheAllowed(contentPane, content == null || TransitionPane.isCacheAllowed(content));
                 nextContent = contentPane;
             }
 
@@ -222,6 +230,7 @@ public class SpinnerPane extends Control {
                 failedReasonLabel.setText(null);
             }
 
+            TransitionPane.setCacheAllowed(control, TransitionPane.isCacheAllowed(nextContent));
             root.setContent(nextContent, ContainerAnimations.FADE);
         }
     }

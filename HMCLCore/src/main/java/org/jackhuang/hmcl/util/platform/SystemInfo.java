@@ -4,13 +4,17 @@ package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.DataSizeUnit;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
+import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareDetector;
+import org.jackhuang.hmcl.util.platform.hardware.PageFileConfiguration;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.platform.linux.LinuxHardwareDetector;
+import org.jackhuang.hmcl.util.platform.macos.MacDeviceInfo;
 import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
 import org.jackhuang.hmcl.util.platform.windows.*;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
@@ -46,11 +50,27 @@ public final class SystemInfo {
 
         /// The immutable graphics card snapshot, empty if detection is unavailable or fails.
         public static final @Unmodifiable List<GraphicsCard> GRAPHICS_CARDS = DETECTOR.detectGraphicsCards();
+
+        /// The cached device identity, or `null` if unavailable.
+        public static final @Nullable DeviceInfo DEVICE_INFO = DETECTOR.detectDeviceInfo();
+
+        /// The cached desktop environment description, or `null` if unavailable.
+        public static final @Nullable String DESKTOP = DETECTOR.detectDesktopEnvironment();
     }
 
     /// Initializes cached hardware information if needed and logs a system summary on each call.
     public static void initialize() {
         StringBuilder builder = new StringBuilder("System Info:");
+
+        @Nullable DeviceInfo deviceInfo = getDeviceInfo();
+        if (deviceInfo != null) {
+            builder.append("\n - Device: ").append(deviceInfo.name());
+            if (deviceInfo instanceof MacDeviceInfo macDeviceInfo) {
+                @Nullable String modelIdentifier = macDeviceInfo.modelIdentifier();
+                if (modelIdentifier != null && !modelIdentifier.isBlank() && !modelIdentifier.equals(deviceInfo.name()))
+                    builder.append(" (").append(modelIdentifier).append(')');
+            }
+        }
 
         // CPU
         @Unmodifiable List<CentralProcessor> processors = getCentralProcessors();
@@ -86,6 +106,16 @@ public final class SystemInfo {
         if (totalMemorySize > 0 && usedMemorySize > 0)
             builder.append(" (").append((int) (((double) usedMemorySize / totalMemorySize) * 100)).append("%)");
 
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            long pageFileSize = getTotalPageFileSize();
+            builder.append("\n - Page Files (Current Capacity): ")
+                    .append(pageFileSize >= 0 ? DataSizeUnit.format(pageFileSize) : "Unknown");
+            PageFileConfiguration configuration = getPageFileConfiguration();
+            builder.append(", Configuration: ").append(configuration.mode());
+            if (configuration.mode() == PageFileConfiguration.Mode.MANUAL)
+                builder.append(", Configured Limit: ").append(DataSizeUnit.format(configuration.maximumSize()));
+        }
+
         LOG.info(builder.toString());
     }
 
@@ -104,6 +134,18 @@ public final class SystemInfo {
     /// Returns the cached total physical memory size in bytes, or zero if detection is unsupported.
     public static long getTotalMemorySize() {
         return Holder.TOTAL_MEMORY;
+    }
+
+    /// Queries current page file capacity in bytes without caching it.
+    ///
+    /// Returns zero when no page files exist, or -1 if unsupported or detection fails.
+    public static long getTotalPageFileSize() {
+        return Holder.DETECTOR.getTotalPageFileSize();
+    }
+
+    /// Queries configured page file sizing policy without caching; changes may require a restart.
+    public static PageFileConfiguration getPageFileConfiguration() {
+        return Holder.DETECTOR.getPageFileConfiguration();
     }
 
     /// Queries the available physical memory in bytes, including reclaimable memory where supported.
@@ -137,6 +179,22 @@ public final class SystemInfo {
     /// Returns the cached immutable graphics card list, empty if no cards were reported or detection failed.
     public static @Unmodifiable List<GraphicsCard> getGraphicsCards() {
         return Holder.GRAPHICS_CARDS;
+    }
+
+    /// Returns the cached device identity, or `null` if unavailable or unsupported.
+    ///
+    /// This describes the hardware product, not the user-configured hostname.
+    /// Detection runs once during initialization of the cached system information.
+    public static @Nullable DeviceInfo getDeviceInfo() {
+        return Holder.DEVICE_INFO;
+    }
+
+    /// Returns the cached desktop environment description, or `null` if detection is unsupported or no name is available.
+    ///
+    /// The description includes the session type when supplied by the platform detector.
+    /// The result is detected once during initialization of the cached system information and is not refreshed.
+    public static @Nullable String getDesktopEnvironment() {
+        return Holder.DESKTOP;
     }
 
     /// Prevents instantiation of this utility class.
