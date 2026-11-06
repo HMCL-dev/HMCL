@@ -71,12 +71,20 @@ public final class JavaInfo {
         return new JavaInfo(NativePlatform.of(os, arch), javaVersion, vendor);
     }
 
+    /// Reads JDK metadata and verifies that the archive contains a Java executable.
+    /// On old-world LoongArch hosts, assumes Linux LoongArch64 archives use the host ABI.
+    /// Does not distinguish new-world archives imported on an old-world host.
     public static <F, E extends ArchiveEntry> JavaInfo fromArchive(ArchiveFileTree<F, E> tree) throws IOException {
+        return fromArchive(tree, SystemInfo.SYSTEM_ARCH);
+    }
+
+    /// Reads an archive using the supplied host architecture for the LoongArch ABI fallback.
+    static <F, E extends ArchiveEntry> JavaInfo fromArchive(ArchiveFileTree<F, E> tree, Architecture hostArchitecture) throws IOException {
         if (tree.getRoot().getSubDirs().size() != 1 || !tree.getRoot().getFiles().isEmpty())
             throw new IOException();
 
         ArchiveFileTree.Dir<E> jdkRoot = tree.getRoot().getSubDirs().values().iterator().next();
-        E releaseEntry = jdkRoot.getFiles().get("release");
+        @Nullable E releaseEntry = jdkRoot.getFiles().get("release");
         if (releaseEntry == null)
             throw new IOException("Missing release file");
 
@@ -85,9 +93,15 @@ public final class JavaInfo {
             info = JavaInfo.fromReleaseFile(reader);
         }
 
-        ArchiveFileTree.Dir<E> binDir = jdkRoot.getSubDirs().get("bin");
-        if (binDir == null || binDir.getFiles().get(info.getPlatform().os().getJavaExecutable()) == null)
+        @Nullable ArchiveFileTree.Dir<E> binDir = jdkRoot.getSubDirs().get("bin");
+        @Nullable E executable = binDir == null ? null : binDir.getFiles().get(info.getPlatform().os().getJavaExecutable());
+        if (executable == null)
             throw new IOException("Missing java executable file");
+
+        if (hostArchitecture == Architecture.LOONGARCH64_OW
+                && info.getPlatform().equals(NativePlatform.LINUX_LOONGARCH64)) {
+            info = new JavaInfo(NativePlatform.LINUX_LOONGARCH64_OW, info.getVersion(), info.getVendor());
+        }
 
         return info;
     }
