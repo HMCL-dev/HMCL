@@ -86,7 +86,7 @@ public final class NativePatcher {
         final boolean useNativeGLFWorSDL = settings.getInheritable(GameSettings::useNativeGLFWorSDLProperty);
         final boolean useNativeOpenAL = settings.getInheritable(GameSettings::useNativeOpenALProperty);
 
-        if (SystemInfo.CURRENT_OS.isLinuxOrBSD()
+        if (SystemInfo.CURRENT_OS.isUnixLike() && SystemInfo.CURRENT_OS != OperatingSystem.MACOS
                 && (useNativeGLFWorSDL || useNativeOpenAL) && gameVersion.compareTo("1.19") >= 0) {
 
             manifest = manifest.withLibraries(manifest.getLibraries().stream()

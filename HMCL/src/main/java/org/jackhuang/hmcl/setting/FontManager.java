@@ -11,6 +11,7 @@ import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +74,7 @@ public final class FontManager {
         // Default
 
         String fcMatchPattern;
-        if (SystemInfo.CURRENT_OS.isLinuxOrBSD()
+        if (SystemInfo.CURRENT_OS.isUnixLike() && SystemInfo.CURRENT_OS != OperatingSystem.MACOS
                 && !(fcMatchPattern = I18n.getLocale().getFcMatchPattern()).isEmpty())
             return findByFcMatch(fcMatchPattern);
         else

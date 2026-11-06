@@ -237,12 +237,6 @@ public final class Launcher extends Application {
                     || configPath.contains("\\INetCache\\")
                     || configPath.contains("\\$Recycle.Bin\\")
                     || configPath.contains("\\recycler\\");
-        } else if (SystemInfo.CURRENT_OS.isLinuxOrBSD()) {
-            return configPath.startsWith("/tmp/")
-                    || configPath.startsWith("/var/tmp/")
-                    || configPath.startsWith("/var/cache/")
-                    || configPath.startsWith("/dev/shm/")
-                    || configPath.contains("/Trash/");
         } else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
             return configPath.startsWith("/var/folders/")
                     || configPath.startsWith("/private/var/folders/")
@@ -251,6 +245,12 @@ public final class Launcher extends Application {
                     || configPath.startsWith("/var/tmp/")
                     || configPath.startsWith("/private/var/tmp/")
                     || configPath.contains("/.Trash/");
+        } else if (SystemInfo.CURRENT_OS.isUnixLike()) {
+            return configPath.startsWith("/tmp/")
+                    || configPath.startsWith("/var/tmp/")
+                    || configPath.startsWith("/var/cache/")
+                    || configPath.startsWith("/dev/shm/")
+                    || configPath.contains("/Trash/");
         } else {
             return false;
         }
@@ -316,7 +316,7 @@ public final class Launcher extends Application {
             } catch (NoClassDefFoundError ignored) {
             }
             LOG.info("Native Backend: " + (NativeUtils.USE_JNA ? "JNA" : "None"));
-            if (SystemInfo.CURRENT_OS.isLinuxOrBSD()) {
+            if (SystemInfo.CURRENT_OS.isUnixLike() && SystemInfo.CURRENT_OS != OperatingSystem.MACOS) {
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
                 LOG.info("XDG Current Desktop: " + System.getenv("XDG_CURRENT_DESKTOP"));
             }
@@ -541,7 +541,7 @@ public final class Launcher extends Application {
             } catch (Throwable e) {
                 LOG.warning("Invalid UI scale: " + uiScale);
             }
-        } else if (SystemInfo.CURRENT_OS.isLinuxOrBSD()) {
+        } else if (SystemInfo.CURRENT_OS.isUnixLike() && SystemInfo.CURRENT_OS != OperatingSystem.MACOS) {
             String xdgSessionType = Objects.requireNonNullElse(System.getenv("XDG_SESSION_TYPE"), "");
             String xdgCurrentDesktop = Objects.requireNonNullElse(System.getenv("XDG_CURRENT_DESKTOP"), "");
 

@@ -51,7 +51,9 @@ public final class OSRestriction {
                 Architecture arch = Architecture.parseArchName(parts[1]);
 
                 if (os != OperatingSystem.UNKNOWN && arch != Architecture.UNKNOWN) {
-                    if (os != SystemInfo.CURRENT_OS && !(os == OperatingSystem.LINUX && SystemInfo.CURRENT_OS.isLinuxOrBSD())) {
+                    if (os != SystemInfo.CURRENT_OS
+                            && !(os == OperatingSystem.LINUX && SystemInfo.CURRENT_OS.isUnixLike()
+                            && SystemInfo.CURRENT_OS != OperatingSystem.MACOS)) {
                         return false;
                     }
 
@@ -67,7 +69,8 @@ public final class OSRestriction {
         OperatingSystem os = OperatingSystem.parseOSName(name);
         if (os != OperatingSystem.UNKNOWN
                 && os != SystemInfo.CURRENT_OS
-                && !(os == OperatingSystem.LINUX && SystemInfo.CURRENT_OS.isLinuxOrBSD()))
+                && !(os == OperatingSystem.LINUX && SystemInfo.CURRENT_OS.isUnixLike()
+                && SystemInfo.CURRENT_OS != OperatingSystem.MACOS))
             return false;
 
         if (version != null)

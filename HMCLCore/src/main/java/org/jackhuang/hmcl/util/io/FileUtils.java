@@ -333,7 +333,7 @@ public final class FileUtils {
     }
 
     public static boolean hasKnownDesktop() {
-        if (!SystemInfo.CURRENT_OS.isLinuxOrBSD())
+        if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS || !SystemInfo.CURRENT_OS.isUnixLike())
             return true;
 
         String desktops = System.getenv("XDG_CURRENT_DESKTOP");
@@ -366,7 +366,7 @@ public final class FileUtils {
      * @return false if moveToTrash does not exist, or platform does not support Desktop.Action.MOVE_TO_TRASH
      */
     public static boolean moveToTrash(Path file) {
-        if (SystemInfo.CURRENT_OS.isLinuxOrBSD() && hasKnownDesktop()) {
+        if (SystemInfo.CURRENT_OS.isUnixLike() && SystemInfo.CURRENT_OS != OperatingSystem.MACOS && hasKnownDesktop()) {
             if (!Files.exists(file)) {
                 return false;
             }

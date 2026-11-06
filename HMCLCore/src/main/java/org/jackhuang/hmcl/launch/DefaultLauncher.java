@@ -50,14 +50,14 @@ public class DefaultLauncher extends Launcher {
             case HIGH:
                 if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/high");
-                } else if (SystemInfo.CURRENT_OS.isLinuxOrBSD() || SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
+                } else if (SystemInfo.CURRENT_OS.isUnixLike()) {
                     res.addAll("nice", "-n", "-5");
                 }
                 break;
             case ABOVE_NORMAL:
                 if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/abovenormal");
-                } else if (SystemInfo.CURRENT_OS.isLinuxOrBSD() || SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
+                } else if (SystemInfo.CURRENT_OS.isUnixLike()) {
                     res.addAll("nice", "-n", "-1");
                 }
                 break;
@@ -67,14 +67,14 @@ public class DefaultLauncher extends Launcher {
             case BELOW_NORMAL:
                 if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/belownormal");
-                } else if (SystemInfo.CURRENT_OS.isLinuxOrBSD() || SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
+                } else if (SystemInfo.CURRENT_OS.isUnixLike()) {
                     res.addAll("nice", "-n", "1");
                 }
                 break;
             case LOW:
                 if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/low");
-                } else if (SystemInfo.CURRENT_OS.isLinuxOrBSD() || SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
+                } else if (SystemInfo.CURRENT_OS.isUnixLike()) {
                     res.addAll("nice", "-n", "5");
                 }
                 break;
@@ -736,7 +736,16 @@ public class DefaultLauncher extends Launcher {
                     env.put("VK_ICD_FILENAMES", icdFile);
                     env.put("VK_DRIVER_FILES", icdFile);
                 }
-            } else if (SystemInfo.CURRENT_OS.isLinuxOrBSD()) {
+            } else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
+                if (options.getJava().getArchitecture() == SystemInfo.SYSTEM_ARCH
+                        && driver instanceof Renderer.Vulkan vulkanDriver
+                        && vulkanDriver != Renderer.Vulkan.MOLTENVK
+                        && vulkanDriver.icdFile() != null) {
+                    String absolutePath = FileUtils.getAbsolutePath(vulkanDriver.icdFile());
+                    env.put("VK_ICD_FILENAMES", absolutePath);
+                    env.put("VK_DRIVER_FILES", absolutePath);
+                }
+            } else if (SystemInfo.CURRENT_OS.isUnixLike()) {
                 if (driver instanceof Renderer.OpenGL oglDriver) {
                     if (oglDriver == Renderer.OpenGL.LLVMPIPE) {
                         env.put("__GLX_VENDOR_LIBRARY_NAME", "mesa");
@@ -759,15 +768,6 @@ public class DefaultLauncher extends Launcher {
                         env.put("VK_ICD_FILENAMES", absolutePath);
                         env.put("VK_DRIVER_FILES", absolutePath);
                     }
-                }
-            } else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS
-                    && options.getJava().getArchitecture() == SystemInfo.SYSTEM_ARCH) {
-                if (driver instanceof Renderer.Vulkan vulkanDriver
-                        && vulkanDriver != Renderer.Vulkan.MOLTENVK
-                        && vulkanDriver.icdFile() != null) {
-                    String absolutePath = FileUtils.getAbsolutePath(vulkanDriver.icdFile());
-                    env.put("VK_ICD_FILENAMES", absolutePath);
-                    env.put("VK_DRIVER_FILES", absolutePath);
                 }
             }
         }

@@ -46,12 +46,9 @@ public enum OperatingSystem {
         return mojangName;
     }
 
-    public boolean isLinuxOrBSD() {
-        return this == LINUX || this == FREEBSD;
-    }
-
+    /// Returns whether this system belongs to the Unix-like family, including macOS.
     public boolean isUnixLike() {
-        return isLinuxOrBSD() || this == MACOS;
+        return this == LINUX || this == FREEBSD || this == MACOS;
     }
 
     public String getJavaExecutable() {

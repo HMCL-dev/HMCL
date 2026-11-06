@@ -510,7 +510,7 @@ public final class FXUtils {
             openCommand = "explorer.exe";
         else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS)
             openCommand = "/usr/bin/open";
-        else if (SystemInfo.CURRENT_OS.isLinuxOrBSD() && Files.exists(Path.of("/usr/bin/xdg-open")))
+        else if (SystemInfo.CURRENT_OS.isUnixLike() && Files.exists(Path.of("/usr/bin/xdg-open")))
             openCommand = "/usr/bin/xdg-open";
         else
             openCommand = null;
@@ -547,7 +547,7 @@ public final class FXUtils {
             openCommands = new String[]{"explorer.exe", "/select,", path};
         else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS)
             openCommands = new String[]{"/usr/bin/open", "-R", path};
-        else if (SystemInfo.CURRENT_OS.isLinuxOrBSD() && SystemUtils.which("dbus-send") != null)
+        else if (SystemInfo.CURRENT_OS.isUnixLike() && SystemUtils.which("dbus-send") != null)
             openCommands = new String[]{
                     "dbus-send",
                     "--print-reply",

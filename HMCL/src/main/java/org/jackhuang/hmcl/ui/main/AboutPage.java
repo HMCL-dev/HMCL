@@ -69,7 +69,8 @@ public final class AboutPage extends SpinnerPane {
             system.setSubtitle(SystemInfo.getOperatingSystemDescription());
             systemInfo.getContent().add(system);
 
-            if (SystemInfo.CURRENT_OS.isLinuxOrBSD() && SystemInfo.getDesktopEnvironment() != null) {
+            if (SystemInfo.CURRENT_OS.isUnixLike() && SystemInfo.CURRENT_OS != OperatingSystem.MACOS
+                    && SystemInfo.getDesktopEnvironment() != null) {
                 var desktop = new LinePane();
                 desktop.setLargeTitle(true);
                 desktop.setLeading(SVG.LUCIDE_PANELS_TOP_LEFT.createIcon(32));

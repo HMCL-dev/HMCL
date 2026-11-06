@@ -52,7 +52,7 @@ final class ExitWaiter implements Runnable {
             } else if (exitCode != 0 || StringUtils.containsOne(errorLines,
                     "Crash report saved to", "Could not save crash report to", "This crash report has been saved to:",
                     "Unable to launch", "An exception was thrown, the game will display an error screen and halt.")) {
-                if (exitCode == 137 && SystemInfo.CURRENT_OS.isLinuxOrBSD()) {
+                if (exitCode == 137 && SystemInfo.CURRENT_OS.isUnixLike()) {
                     exitType = ProcessListener.ExitType.SIGKILL;
                 } else {
                     exitType = ProcessListener.ExitType.APPLICATION_ERROR;
