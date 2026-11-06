@@ -3,25 +3,20 @@
 package org.jackhuang.hmcl.util;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.Objects;
+public record HostAndPort(
+        @NotNull String host,
+        int port
+) {
 
-public final class HostAndPort {
-    private final @NotNull String host;
-    private final int port;
-
-    @VisibleForTesting
-    HostAndPort(@NotNull String host, int port) {
+    public HostAndPort {
         if (port < 0 || port > 65535) {
-            throw new IllegalArgumentException("Invalid port: " + port);
+            throw new IllegalArgumentException("Invalid port: " + port + ". Expected range: 0..65535.");
         }
 
         if (host.isEmpty()) {
-            throw new IllegalArgumentException("Empty host name.");
+            throw new IllegalArgumentException("Host cannot be empty.");
         }
-        this.host = host;
-        this.port = port;
     }
 
     public static @NotNull HostAndPort parse(@NotNull String input, int defaultPort) {
@@ -91,27 +86,5 @@ public final class HostAndPort {
         builder.append(':').append(port);
 
         return builder.toString();
-    }
-
-    public @NotNull String getHost() {
-        return host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) return true;
-        if (obj == null || obj.getClass() != this.getClass()) return false;
-        var that = (HostAndPort) obj;
-        return Objects.equals(this.host, that.host) &&
-                this.port == that.port;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(host, port);
     }
 }

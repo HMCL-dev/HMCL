@@ -375,8 +375,8 @@ public class DefaultLauncher extends Launcher {
 
                     res.add("--quickPlayMultiplayer").add(quickPlayMultiplayerArg.trim());
                 } else {
-                    String serverArg = parsed.getHostAndPort().getHost();
-                    String portArg = String.valueOf(parsed.getHostAndPort().getPort());
+                    String serverArg = parsed.getHostAndPort().host();
+                    String portArg = String.valueOf(parsed.getHostAndPort().port());
 
                     res.add("--server").add(serverArg.trim());
                     res.add("--port").add(portArg.trim());
