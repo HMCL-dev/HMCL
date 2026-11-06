@@ -20,7 +20,7 @@ import java.nio.file.Paths;
 public final class JavaRuntime implements Comparable<JavaRuntime> {
 
     public static JavaRuntime of(Path binary, JavaInfo info, boolean isManaged) {
-        String javacName = info.getPlatform().getOperatingSystem() == OperatingSystem.WINDOWS ? "javac.exe" : "javac";
+        String javacName = info.getPlatform().os() == OperatingSystem.WINDOWS ? "javac.exe" : "javac";
         return new JavaRuntime(binary, info, isManaged, Files.isRegularFile(binary.resolveSibling(javacName)));
     }
 
@@ -53,11 +53,11 @@ public final class JavaRuntime implements Comparable<JavaRuntime> {
     }
 
     public Architecture getArchitecture() {
-        return getPlatform().getArchitecture();
+        return getPlatform().arch();
     }
 
     public Bits getBits() {
-        return getPlatform().getBits();
+        return getPlatform().arch().getBits();
     }
 
     public VersionNumber getVersionNumber() {

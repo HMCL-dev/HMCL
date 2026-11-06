@@ -339,7 +339,7 @@ public final class JavaDownloadDialog extends StackPane {
             setHeading(new Label(i18n("java.download.title")));
             setBody(body);
             setActions(warningLabel, downloadButtonPane, cancelButton);
-            if (platform.getOperatingSystem() == OperatingSystem.LINUX && platform.getArchitecture() == Architecture.RISCV64) {
+            if (platform.os() == OperatingSystem.LINUX && platform.arch() == Architecture.RISCV64) {
                 JFXHyperlink hyperlink = new JFXHyperlink(i18n("java.download.banshanjdk-8"));
                 hyperlink.setExternalLink("https://www.zthread.cn/#product");
                 getActions().add(0, hyperlink);

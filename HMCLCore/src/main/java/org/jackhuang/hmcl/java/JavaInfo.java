@@ -86,7 +86,7 @@ public final class JavaInfo {
         }
 
         ArchiveFileTree.Dir<E> binDir = jdkRoot.getSubDirs().get("bin");
-        if (binDir == null || binDir.getFiles().get(info.getPlatform().getOperatingSystem().getJavaExecutable()) == null)
+        if (binDir == null || binDir.getFiles().get(info.getPlatform().os().getJavaExecutable()) == null)
             throw new IOException("Missing java executable file");
 
         return info;

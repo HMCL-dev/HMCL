@@ -58,8 +58,8 @@ public record GameJavaVersion(String component, int majorVersion) {
     }
 
     public static List<GameJavaVersion> getSupportedVersions(NativePlatform platform) {
-        OperatingSystem operatingSystem = platform.getOperatingSystem();
-        Architecture architecture = platform.getArchitecture();
+        OperatingSystem operatingSystem = platform.os();
+        Architecture architecture = platform.arch();
         if (architecture == Architecture.X86) {
             switch (operatingSystem) {
                 case WINDOWS:

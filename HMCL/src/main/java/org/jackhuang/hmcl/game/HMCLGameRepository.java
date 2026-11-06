@@ -502,7 +502,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         final long minHeapSize;
         final long maxHeapSize;
 
-        if (platform.getBits() == Bits.BIT_32) {
+        if (platform.arch().getBits() == Bits.BIT_32) {
             // https://github.com/HMCL-dev/HMCL/issues/6638
             maxHeapSize = 768 * 1024 * 1024;        // 768 MiB
             minHeapSize = 256 * 1024 * 1024;        // 128 MiB

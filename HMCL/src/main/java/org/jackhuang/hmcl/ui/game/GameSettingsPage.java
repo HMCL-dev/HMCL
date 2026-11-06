@@ -237,7 +237,7 @@ public final class GameSettingsPage<S extends GameSettings> extends StackPane
                                     i18n("settings.game.java_directory.template",
                                             java.getVersion(),
                                             isX86 ? i18n("settings.game.java_directory.bit", java.getBits().getBit())
-                                                    : java.getPlatform().getArchitecture().getDisplayName()),
+                                                    : java.getPlatform().arch().getDisplayName()),
                                     pair(JavaVersionType.DETECTED, java))
                                     .setSubtitle(java.getBinary().toString()));
                         }

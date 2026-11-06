@@ -66,7 +66,7 @@ public final class JavaManager {
     public static final HMCLJavaRepository LOCAL_REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_LOCAL_HOME.resolve("java"));
 
     public static String getMojangJavaPlatform(NativePlatform platform) {
-        if (platform.getOperatingSystem() == OperatingSystem.WINDOWS) {
+        if (platform.os() == OperatingSystem.WINDOWS) {
             if (Architecture.SYSTEM_ARCH == Architecture.X86) {
                 return "windows-x86";
             } else if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
@@ -74,17 +74,19 @@ public final class JavaManager {
             } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
                 return "windows-arm64";
             }
-        } else if (platform.getOperatingSystem() == OperatingSystem.LINUX) {
+        } else if (platform.os() == OperatingSystem.LINUX) {
             if (Architecture.SYSTEM_ARCH == Architecture.X86) {
                 return "linux-i386";
             } else if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
                 return "linux";
             }
-        } else if (platform.getOperatingSystem() == OperatingSystem.MACOS) {
-            if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
-                return "mac-os";
-            } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-                return "mac-os-arm64";
+        } else {
+            if (platform.os() == OperatingSystem.MACOS) {
+                if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
+                    return "mac-os";
+                } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+                    return "mac-os-arm64";
+                }
             }
         }
 
@@ -100,10 +102,10 @@ public final class JavaManager {
     }
 
     public static boolean isCompatible(NativePlatform platform) {
-        if (platform.getOperatingSystem() != OperatingSystem.CURRENT_OS)
+        if (platform.os() != OperatingSystem.CURRENT_OS)
             return false;
 
-        Architecture architecture = platform.getArchitecture();
+        Architecture architecture = platform.arch();
         if (architecture == Architecture.SYSTEM_ARCH || architecture == Architecture.CURRENT_ARCH)
             return true;
 
@@ -479,7 +481,7 @@ public final class JavaManager {
                 .map(it -> String.format(" - %s %s (%s, %s): %s",
                         it.isJDK() ? "JDK" : "JRE",
                         it.getVersion(),
-                        it.getPlatform().getArchitecture().getDisplayName(),
+                        it.getPlatform().arch().getDisplayName(),
                         Objects.requireNonNullElse(it.getVendor(), "Unknown"),
                         it.getBinary()))
                 .collect(Collectors.joining("\n", "Finished Java lookup, found " + searcher.javaRuntimes.size() + "\n", "")));
@@ -764,7 +766,7 @@ public final class JavaManager {
 
             if (platform.os() == OperatingSystem.MACOS) {
                 // In the past, we used 'osx' as the checked name for macOS
-                Path platformRoot = REPOSITORY.getPlatformRoot(platform).resolveSibling("osx-" + platform.getArchitecture().getCheckedName());
+                Path platformRoot = REPOSITORY.getPlatformRoot(platform).resolveSibling("osx-" + platform.arch().getCheckedName());
                 searchAllJavaInDirectory(platformRoot);
             }
         }

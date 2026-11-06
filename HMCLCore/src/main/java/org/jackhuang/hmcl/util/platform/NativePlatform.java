@@ -84,26 +84,6 @@ public record NativePlatform(OperatingSystem os, Architecture arch) {
         return new NativePlatform(os, arch);
     }
 
-    /// Returns the operating system represented by this platform.
-    public OperatingSystem getOperatingSystem() {
-        return os;
-    }
-
-    /// Returns the architecture represented by this platform.
-    public Architecture getArchitecture() {
-        return arch;
-    }
-
-    /// Returns the architecture bit width, or unknown for an unspecified architecture.
-    public Bits getBits() {
-        return arch.getBits();
-    }
-
-    /// Returns whether both the operating system and architecture match.
-    public boolean equals(OperatingSystem os, Architecture arch) {
-        return this.os == os && this.arch == arch;
-    }
-
     /// Returns the stable operating-system and architecture identifier used in platform directory names.
     @Override
     public String toString() {

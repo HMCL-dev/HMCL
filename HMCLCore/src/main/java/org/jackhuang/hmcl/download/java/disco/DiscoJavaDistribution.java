@@ -112,8 +112,8 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
     }
 
     public boolean isSupport(NativePlatform platform) {
-        EnumSet<Architecture> architectures = supportedPlatforms.get(platform.getOperatingSystem());
-        return architectures != null && architectures.contains(platform.getArchitecture());
+        EnumSet<Architecture> architectures = supportedPlatforms.get(platform.os());
+        return architectures != null && architectures.contains(platform.arch());
     }
 
     public boolean testVersion(DiscoJavaRemoteVersion version) {

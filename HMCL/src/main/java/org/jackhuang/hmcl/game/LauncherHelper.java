@@ -621,7 +621,7 @@ public final class LauncherHelper {
 
                 List<String> suggestions = new ArrayList<>();
 
-                if (Architecture.SYSTEM_ARCH == Architecture.X86_64 && java.getPlatform().getArchitecture() == Architecture.X86) {
+                if (Architecture.SYSTEM_ARCH == Architecture.X86_64 && java.getPlatform().arch() == Architecture.X86) {
                     suggestions.add(i18n("launch.advice.different_platform"));
                 }
 

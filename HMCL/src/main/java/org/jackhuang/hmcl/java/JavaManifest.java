@@ -28,8 +28,8 @@ public record JavaManifest(JavaInfo info, @Nullable Map<String, Object> update, 
         @Override
         public JsonElement serialize(JavaManifest src, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject res = new JsonObject();
-            res.addProperty("os.name", src.info().getPlatform().getOperatingSystem().getCheckedName());
-            res.addProperty("os.arch", src.info().getPlatform().getArchitecture().getCheckedName());
+            res.addProperty("os.name", src.info().getPlatform().os().getCheckedName());
+            res.addProperty("os.arch", src.info().getPlatform().arch().getCheckedName());
             res.addProperty("java.version", src.info().getVersion());
             res.addProperty("java.vendor", src.info().getVendor());
 

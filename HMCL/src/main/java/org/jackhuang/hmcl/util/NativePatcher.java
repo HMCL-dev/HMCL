@@ -106,7 +106,7 @@ public final class NativePatcher {
 
         // Try patch natives
 
-        OperatingSystem os = javaVersion.getPlatform().getOperatingSystem();
+        OperatingSystem os = javaVersion.getPlatform().os();
         Architecture arch = javaVersion.getArchitecture();
 
         if (settings.getInheritable(GameSettings::notPatchNativesProperty))
@@ -213,7 +213,7 @@ public final class NativePatcher {
             if (gameVersion.compareTo("1.19") >= 0)
                 return SupportStatus.OFFICIAL_SUPPORTED;
 
-            String minVersion = platform.getOperatingSystem() == OperatingSystem.WINDOWS
+            String minVersion = platform.os() == OperatingSystem.WINDOWS
                     ? "1.8"
                     : "1.6";
 

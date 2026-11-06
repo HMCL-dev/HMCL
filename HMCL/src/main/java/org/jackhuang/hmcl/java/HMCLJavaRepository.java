@@ -69,7 +69,7 @@ public final class HMCLJavaRepository implements JavaRepository {
         try {
             return JavaManager.getExecutable(javaDir).toRealPath();
         } catch (IOException ignored) {
-            if (platform.getOperatingSystem() == OperatingSystem.MACOS) {
+            if (platform.os() == OperatingSystem.MACOS) {
                 try {
                     return JavaManager.getMacExecutable(javaDir).toRealPath();
                 } catch (IOException ignored1) {
@@ -95,7 +95,7 @@ public final class HMCLJavaRepository implements JavaRepository {
                         try {
                             executable = JavaManager.getExecutable(javaDir).toRealPath();
                         } catch (IOException e) {
-                            if (platform.getOperatingSystem() == OperatingSystem.MACOS)
+                            if (platform.os() == OperatingSystem.MACOS)
                                 executable = JavaManager.getMacExecutable(javaDir).toRealPath();
                             else
                                 throw e;
@@ -136,7 +136,7 @@ public final class HMCLJavaRepository implements JavaRepository {
             try {
                 executable = JavaManager.getExecutable(javaDir).toRealPath();
             } catch (IOException e) {
-                if (platform.getOperatingSystem() == OperatingSystem.MACOS)
+                if (platform.os() == OperatingSystem.MACOS)
                     executable = JavaManager.getMacExecutable(javaDir).toRealPath();
                 else
                     throw e;
@@ -178,7 +178,7 @@ public final class HMCLJavaRepository implements JavaRepository {
             if (!result.info().getPlatform().equals(platform))
                 throw new IOException("Platform is mismatch: expected " + platform + " but got " + result.info().getPlatform());
 
-            Path executable = javaDir.resolve("bin").resolve(platform.getOperatingSystem().getJavaExecutable()).toRealPath();
+            Path executable = javaDir.resolve("bin").resolve(platform.os().getJavaExecutable()).toRealPath();
             JsonUtils.writeToJsonFile(getManifestFile(platform, name), result);
             return JavaRuntime.of(executable, result.info(), true);
         });

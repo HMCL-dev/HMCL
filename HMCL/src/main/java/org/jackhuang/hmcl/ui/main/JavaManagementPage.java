@@ -33,12 +33,9 @@ import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.SystemInfo;
-import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
+import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jetbrains.annotations.Nullable;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -61,7 +58,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
     public JavaManagementPage() {
         this.listener = FXUtils.onWeakChangeAndOperate(JavaManager.getAllJavaProperty(), this::loadJava);
 
-        if (SystemInfo.SYSTEM_PLATFORM.equals(OperatingSystem.LINUX, Architecture.LOONGARCH64_OW)) {
+        if (SystemInfo.SYSTEM_PLATFORM.equals(NativePlatform.LINUX_LOONGARCH64_OW)) {
             onInstallJava = () -> FXUtils.openLink("https://www.loongnix.cn/zh/api/java/");
         } else {
             onInstallJava = JavaDownloadDialog.showDialogAction(DownloadProviders.getDownloadProvider());
