@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 
 /// Immutable operating system display information.
 ///
-/// @param name the system or distribution name, including the Windows display release when available
+/// @param name the system or distribution name, including a display release or release name when available
 /// @param description the detailed system name and version, including distribution release information when available
 @NotNullByDefault
 public record OperatingSystemInfo(String name, String description) {

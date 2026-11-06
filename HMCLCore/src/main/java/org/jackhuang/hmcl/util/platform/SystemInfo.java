@@ -99,7 +99,7 @@ public final class SystemInfo {
     }
 
     /// Returns the cached distribution or system name, falling back to `os.name`.
-    /// Windows names include the display release when available.
+    /// Includes the Windows display release or macOS release name when available.
     public static String getOperatingSystemName() {
         return Holder.OPERATING_SYSTEM.name();
     }

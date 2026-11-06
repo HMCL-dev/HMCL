@@ -10,6 +10,7 @@ import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.OperatingSystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
@@ -22,17 +23,106 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.time.Duration;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/// Detects macOS hardware information.
+/// Detects macOS system and hardware information.
 ///
 /// @author Glavo
 @NotNullByDefault
 public final class MacOSHardwareDetector extends HardwareDetector {
+
+    /// Reads the macOS name, version, and optional build number from `sw_vers`, adding known release names.
+    /// Falls back to JVM information on failure or incomplete output, preserving interruption.
+    @Override
+    public OperatingSystemInfo detectOperatingSystemInfo() {
+        if (SystemInfo.CURRENT_OS != OperatingSystem.MACOS)
+            return super.detectOperatingSystemInfo();
+
+        try {
+            ProcessBuilder processBuilder = new ProcessBuilder("/usr/bin/sw_vers");
+            // Older macOS releases can otherwise report a compatibility version such as 10.16.
+            processBuilder.environment().put("SYSTEM_VERSION_COMPAT", "0");
+            String output = SystemUtils.run(processBuilder, Duration.ofSeconds(5));
+            @Nullable OperatingSystemInfo info = parseOperatingSystemInfo(output);
+            if (info != null)
+                return info;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            LOG.warning("Failed to detect macOS version using sw_vers", e);
+        }
+        return super.detectOperatingSystemInfo();
+    }
+
+    /// Parses `sw_vers` output, returning null when the product name or version is missing or blank.
+    /// Expands generic Apple product names for known releases and includes optional version suffixes and build numbers.
+    static @Nullable OperatingSystemInfo parseOperatingSystemInfo(String output) {
+        Map<String, String> properties = KeyValuePairUtils.loadPairs(output.lines().iterator());
+        @Nullable String name = properties.get("ProductName");
+        @Nullable String version = properties.get("ProductVersion");
+        if (name == null || name.isBlank() || version == null || version.isBlank())
+            return null;
+
+        if (name.equals("macOS") || name.equals("Mac OS X") || name.equals("OS X")) {
+            @Nullable String releaseName = getReleaseName(version);
+            if (releaseName != null)
+                name = releaseName;
+        }
+
+        String description = name + ' ' + version;
+        @Nullable String extra = properties.get("ProductVersionExtra");
+        if (extra != null && !extra.isBlank())
+            description += ' ' + extra;
+        @Nullable String build = properties.get("BuildVersion");
+        if (build != null && !build.isBlank())
+            description += " (" + build + ')';
+        return new OperatingSystemInfo(name, description);
+    }
+
+    /// Returns the Apple release name for a known numeric product version, or null otherwise.
+    /// See https://support.apple.com/109033 for the version-to-name mapping.
+    private static @Nullable String getReleaseName(String version) {
+        if (!version.matches("[0-9]+(?:\\.[0-9]+)*"))
+            return null;
+
+        String[] parts = version.split("\\.", 3);
+        if (parts[0].equals("10") && parts.length > 1) {
+            return switch (parts[1]) {
+                case "0" -> "Mac OS X Cheetah";
+                case "1" -> "Mac OS X Puma";
+                case "2" -> "Mac OS X Jaguar";
+                case "3" -> "Mac OS X Panther";
+                case "4" -> "Mac OS X Tiger";
+                case "5" -> "Mac OS X Leopard";
+                case "6" -> "Mac OS X Snow Leopard";
+                case "7" -> "OS X Lion";
+                case "8" -> "OS X Mountain Lion";
+                case "9" -> "OS X Mavericks";
+                case "10" -> "OS X Yosemite";
+                case "11" -> "OS X El Capitan";
+                case "12" -> "macOS Sierra";
+                case "13" -> "macOS High Sierra";
+                case "14" -> "macOS Mojave";
+                case "15" -> "macOS Catalina";
+                default -> null;
+            };
+        }
+        return switch (parts[0]) {
+            case "11" -> "macOS Big Sur";
+            case "12" -> "macOS Monterey";
+            case "13" -> "macOS Ventura";
+            case "14" -> "macOS Sonoma";
+            case "15" -> "macOS Sequoia";
+            case "26" -> "macOS Tahoe";
+            case "27" -> "macOS Golden Gate";
+            default -> null;
+        };
+    }
 
     /// Reads a structured Mac identity from `system_profiler`, falling back to `sysctl -n hw.model`.
     ///
