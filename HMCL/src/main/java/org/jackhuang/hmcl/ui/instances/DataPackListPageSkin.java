@@ -16,7 +16,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ListChangeListener;
-import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -52,6 +51,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
@@ -65,15 +66,12 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
     private final HBox searchBar;
     private final HBox normalToolbar;
     private final HBox selectingToolbar;
-    InvalidationListener updateBarByStateWeakListener;
 
     private final JFXListView<DataPackInfoObject> listView;
-    private final FilteredList<DataPackInfoObject> filteredList;
 
     /// Whether the search mechanism is currently active.
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
 
-    private final BooleanProperty isSelecting = new SimpleBooleanProperty(false);
     private final JFXTextField searchField;
 
     /// Timer for debouncing search input to avoid executing search on every keystroke.
@@ -92,7 +90,6 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
-        filteredList = new FilteredList<>(skinnable.getItems());
 
         // reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
         var selectAllButton = createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () -> listView.getSelectionModel().selectRange(0, listView.getItems().size()));
@@ -112,7 +109,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     createToolbarButton2(i18n("datapack.add"), SVG.ADD, skinnable::add),
                     createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openDataPackFolder),
-                    createToolbarButton2(i18n("search"), SVG.SEARCH, () -> isSearching.set(true))
+                    createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
             );
 
             JFXButton removeButton = createToolbarButton2(i18n("button.remove"), SVG.DELETE_FOREVER, () -> {
@@ -144,7 +141,7 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             searchField = new JFXTextField();
             searchField.setPromptText(i18n("search"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
-            searchPause.setOnFinished(e -> filteredList.setPredicate(skinnable.updateSearchPredicate(searchField.getText())));
+            searchPause.setOnFinished(e -> search());
             searchField.textProperty().addListener((observable, oldValue, newValue) -> {
                 if (isSearching.get() || !StringUtils.isBlank(newValue)) {
                     searchPause.setRate(1);
@@ -153,12 +150,13 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             });
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                     () -> {
+                        changeToolbar(normalToolbar);
+
                         searchField.clear();
                         searchPause.stop();
 
-                        filteredList.setPredicate(null);
-
                         isSearching.set(false);
+                        Bindings.bindContent(listView.getItems(), skinnable.getItems());
                     });
             FXUtils.onEscPressed(searchField, closeSearchBar::fire);
             searchBar.getChildren().addAll(searchField, closeSearchBar);
@@ -173,18 +171,13 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             });
 
             FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
-                    selectedItem -> isSelecting.set(selectedItem != null));
+                    selectedItem -> {
+                        if (selectedItem == null)
+                            changeToolbar(isSearching.get() ? searchBar : normalToolbar);
+                        else
+                            changeToolbar(selectingToolbar);
+                    });
             root.getContent().add(toolbarPane);
-
-            updateBarByStateWeakListener = FXUtils.observeWeak(() -> {
-                if (isSelecting.get()) {
-                    changeToolbar(selectingToolbar);
-                } else if (!isSelecting.get() && !isSearching.get()) {
-                    changeToolbar(normalToolbar);
-                } else {
-                    changeToolbar(searchBar);
-                }
-            }, isSearching, isSelecting);
         }
 
         {
@@ -211,7 +204,12 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
             placeholderContainer.getChildren().add(placeholderLabel);
             listView.setPlaceholder(placeholderContainer);
 
-            this.listView.setItems(filteredList);
+            Bindings.bindContent(listView.getItems(), skinnable.getItems());
+            skinnable.getItems().addListener((ListChangeListener<? super DataPackInfoObject>) change -> {
+                if (isSearching.get()) {
+                    search();
+                }
+            });
             listView.getItems().addListener(listener);
 
             // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
@@ -231,6 +229,33 @@ final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
         pane.getChildren().setAll(root);
         getChildren().setAll(pane);
+    }
+
+    /// Filters pack IDs and descriptions using the shared query syntax; invalid regular expressions leave the list empty.
+    private void search() {
+        isSearching.set(true);
+        Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
+
+        String queryString = searchField.getText();
+        if (StringUtils.isBlank(queryString)) {
+            listView.getItems().setAll(getSkinnable().getItems());
+        } else {
+            listView.getItems().clear();
+
+            Predicate<@Nullable String> predicate;
+            try {
+                predicate = StringUtils.compileQuery(queryString);
+            } catch (PatternSyntaxException e) {
+                LOG.warning("Illegal regular expression", e);
+                return;
+            }
+
+            for (DataPackInfoObject item : getSkinnable().getItems()) {
+                if (predicate.test(item.getTitle()) || predicate.test(item.getSubtitle())) {
+                    listView.getItems().add(item);
+                }
+            }
+        }
     }
 
     private void changeToolbar(HBox newToolbar) {
