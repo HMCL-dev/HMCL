@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
@@ -447,7 +448,7 @@ public final class SystemInfo {
     /// Resolves ambiguous architecture names using the current JVM byte order and kernel version.
     private static Architecture detectArchitecture(@Nullable String name) {
         Architecture architecture = Architecture.parseArchName(name);
-        if (architecture == Architecture.PPC64 && "little".equals(System.getProperty("sun.cpu.endian")))
+        if (architecture == Architecture.PPC64 && ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN)
             return Architecture.PPC64LE;
         if (architecture == Architecture.LOONGARCH64
                 && VersionNumber.compare(System.getProperty("os.version", "0"), "5.19") < 0)
