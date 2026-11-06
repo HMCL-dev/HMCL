@@ -301,11 +301,11 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
 
 
                 // Helper
-                String archName = switch (Architecture.SYSTEM_ARCH) {
+                String archName = switch (SystemInfo.SYSTEM_ARCH) {
                     case X86 -> "i686";
                     case X86_64 -> "x86_64";
                     case ARM64 -> "aarch64";
-                    default -> Architecture.SYSTEM_ARCH.getCheckedName();
+                    default -> SystemInfo.SYSTEM_ARCH.getCheckedName();
                 };
 
                 var icdFileNamePattern = Pattern.compile("(?<name>[a-zA-Z0-9_-]+)_icd(?:\\." + Pattern.quote(archName) + ")?\\.json");
@@ -313,7 +313,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
 
                 supported.add(DEFAULT);
 
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                     supported.addAll(List.of(LAVAPIPE, DOZEN));
 
                     EnumSet<Vulkan> foundSupported = EnumSet.noneOf(Vulkan.class);
@@ -333,43 +333,43 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                                 } else {
                                     switch (fileName.substring(0, fileName.length() - ".json".length())) {
                                         case "igvk64" -> {
-                                            if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_64)
+                                            if (SystemInfo.SYSTEM_ARCH.getBits() == Bits.BIT_64)
                                                 driver = INTEL_VULKAN;
                                             else
                                                 continue;
                                         }
                                         case "igvk32" -> {
-                                            if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
+                                            if (SystemInfo.SYSTEM_ARCH.getBits() == Bits.BIT_32)
                                                 driver = INTEL_VULKAN;
                                             else
                                                 continue;
                                         }
                                         case "nv-vk64" -> {
-                                            if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_64)
+                                            if (SystemInfo.SYSTEM_ARCH.getBits() == Bits.BIT_64)
                                                 driver = NVIDIA_VULKAN;
                                             else
                                                 continue;
                                         }
                                         case "nv-vk32" -> {
-                                            if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
+                                            if (SystemInfo.SYSTEM_ARCH.getBits() == Bits.BIT_32)
                                                 driver = NVIDIA_VULKAN;
                                             else
                                                 continue;
                                         }
                                         case "amd-vulkan64" -> {
-                                            if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_64)
+                                            if (SystemInfo.SYSTEM_ARCH.getBits() == Bits.BIT_64)
                                                 driver = AMDVLK;
                                             else
                                                 continue;
                                         }
                                         case "amd-vulkan32" -> {
-                                            if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
+                                            if (SystemInfo.SYSTEM_ARCH.getBits() == Bits.BIT_32)
                                                 driver = AMDVLK;
                                             else
                                                 continue;
                                         }
                                         case "qcvk_icd_arm64x" -> {
-                                            if (Architecture.SYSTEM_ARCH == Architecture.ARM64)
+                                            if (SystemInfo.SYSTEM_ARCH == Architecture.ARM64)
                                                 driver = QUALCOMM;
                                             else
                                                 continue;
@@ -387,7 +387,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                     }
                     supported.addAll(foundSupported);
 
-                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                } else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
                     // LWJGL integrates MoltenVK, so it is always available
                     supported.add(MOLTENVK);
 
@@ -406,7 +406,7 @@ public sealed interface Renderer permits Renderer.Default, Renderer.Driver, Rend
                         }
                     }
                 } else {
-                    List<Path> icdDirs = switch (OperatingSystem.CURRENT_OS) {
+                    List<Path> icdDirs = switch (SystemInfo.CURRENT_OS) {
                         case LINUX -> List.of(
                                 Path.of("/usr/share/vulkan/icd.d"),
                                 Path.of("/etc/vulkan/icd.d")

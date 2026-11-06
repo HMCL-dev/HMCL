@@ -40,7 +40,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
     /// Returns the Windows name and version, correcting Windows 11 names and including the display release when available.
     @Override
     public OperatingSystemInfo detectOperatingSystemInfo() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
+        if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS)
             return super.detectOperatingSystemInfo();
 
         String systemName = System.getProperty("os.name", "Unknown");
@@ -81,7 +81,7 @@ public final class WindowsHardwareDetector extends HardwareDetector {
     /// is missing, not a string, invalid, or cannot be read.
     @Override
     public @Nullable DeviceInfo detectDeviceInfo() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS || !NativeUtils.USE_JNA)
+        if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS || !NativeUtils.USE_JNA)
             return null;
 
         try {

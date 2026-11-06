@@ -102,7 +102,7 @@ final class NativeWindowDecoration {
         if (!forced && preference != null && !"auto".equalsIgnoreCase(preference)) {
             LOG.warning("Invalid native decoration preference: " + preference + "; using auto");
         }
-        if (!forced && OperatingSystem.CURRENT_OS != OperatingSystem.MACOS
+        if (!forced && SystemInfo.CURRENT_OS != OperatingSystem.MACOS
                 && !SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11)) {
             return null;
         }

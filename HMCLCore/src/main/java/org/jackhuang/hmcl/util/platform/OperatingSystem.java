@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Locale;
 
 /// Represents the operating system.
@@ -58,12 +58,8 @@ public enum OperatingSystem {
         return this == WINDOWS ? "java.exe" : "java";
     }
 
-    /**
-     * The current operating system.
-     */
-    public static final OperatingSystem CURRENT_OS = parseOSName(System.getProperty("os.name"));
-
-    public static OperatingSystem parseOSName(String name) {
+    /// Parses a system name, returning unknown for null or unrecognized input.
+    public static OperatingSystem parseOSName(@Nullable String name) {
         if (name == null) {
             return UNKNOWN;
         }
@@ -81,21 +77,4 @@ public enum OperatingSystem {
         else
             return UNKNOWN;
     }
-
-    public static Path getWorkingDirectory(String folder) {
-        String home = System.getProperty("user.home", ".");
-        switch (OperatingSystem.CURRENT_OS) {
-            case LINUX:
-            case FREEBSD:
-                return Paths.get(home, "." + folder).toAbsolutePath();
-            case WINDOWS:
-                String appdata = System.getenv("APPDATA");
-                return Paths.get(appdata == null ? home : appdata, "." + folder).toAbsolutePath();
-            case MACOS:
-                return Paths.get(home, "Library", "Application Support", folder).toAbsolutePath();
-            default:
-                return Paths.get(home, folder).toAbsolutePath();
-        }
-    }
-
 }

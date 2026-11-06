@@ -67,24 +67,24 @@ public final class JavaManager {
 
     public static String getMojangJavaPlatform(NativePlatform platform) {
         if (platform.os() == OperatingSystem.WINDOWS) {
-            if (Architecture.SYSTEM_ARCH == Architecture.X86) {
+            if (SystemInfo.SYSTEM_ARCH == Architecture.X86) {
                 return "windows-x86";
-            } else if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
+            } else if (SystemInfo.SYSTEM_ARCH == Architecture.X86_64) {
                 return "windows-x64";
-            } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+            } else if (SystemInfo.SYSTEM_ARCH == Architecture.ARM64) {
                 return "windows-arm64";
             }
         } else if (platform.os() == OperatingSystem.LINUX) {
-            if (Architecture.SYSTEM_ARCH == Architecture.X86) {
+            if (SystemInfo.SYSTEM_ARCH == Architecture.X86) {
                 return "linux-i386";
-            } else if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
+            } else if (SystemInfo.SYSTEM_ARCH == Architecture.X86_64) {
                 return "linux";
             }
         } else {
             if (platform.os() == OperatingSystem.MACOS) {
-                if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
+                if (SystemInfo.SYSTEM_ARCH == Architecture.X86_64) {
                     return "mac-os";
-                } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+                } else if (SystemInfo.SYSTEM_ARCH == Architecture.ARM64) {
                     return "mac-os-arm64";
                 }
             }
@@ -94,7 +94,7 @@ public final class JavaManager {
     }
 
     public static Path getExecutable(Path javaHome) {
-        return javaHome.resolve("bin").resolve(OperatingSystem.CURRENT_OS.getJavaExecutable());
+        return javaHome.resolve("bin").resolve(SystemInfo.CURRENT_OS.getJavaExecutable());
     }
 
     public static Path getMacExecutable(Path javaHome) {
@@ -102,19 +102,19 @@ public final class JavaManager {
     }
 
     public static boolean isCompatible(NativePlatform platform) {
-        if (platform.os() != OperatingSystem.CURRENT_OS)
+        if (platform.os() != SystemInfo.CURRENT_OS)
             return false;
 
         Architecture architecture = platform.arch();
-        if (architecture == Architecture.SYSTEM_ARCH || architecture == Architecture.CURRENT_ARCH)
+        if (architecture == SystemInfo.SYSTEM_ARCH || architecture == SystemInfo.CURRENT_ARCH)
             return true;
 
-        switch (OperatingSystem.CURRENT_OS) {
+        switch (SystemInfo.CURRENT_OS) {
             case WINDOWS:
-                if (Architecture.SYSTEM_ARCH == Architecture.X86_64)
+                if (SystemInfo.SYSTEM_ARCH == Architecture.X86_64)
                     // Windows x86-64 platform is compatible with x86 programs
                     return architecture == Architecture.X86;
-                if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+                if (SystemInfo.SYSTEM_ARCH == Architecture.ARM64) {
 
                     // Since Windows 10 Build 21277, Windows Arm64 has been compatible with x86-64 programs via translation
                     if (architecture == Architecture.X86_64 && SystemInfo.isSupportedTranslationX86_64())
@@ -127,12 +127,12 @@ public final class JavaManager {
                 }
                 break;
             case LINUX:
-                if (Architecture.SYSTEM_ARCH == Architecture.X86_64)
+                if (SystemInfo.SYSTEM_ARCH == Architecture.X86_64)
                     return architecture == Architecture.X86;
                 break;
             case MACOS:
                 // macOS Arm64 compatible with x86-64 programs via Rosetta 2.
-                if (Architecture.SYSTEM_ARCH == Architecture.ARM64 && SystemInfo.isSupportedTranslationX86_64())
+                if (SystemInfo.SYSTEM_ARCH == Architecture.ARM64 && SystemInfo.isSupportedTranslationX86_64())
                     return architecture == Architecture.X86_64;
                 break;
         }
@@ -306,8 +306,8 @@ public final class JavaManager {
     public static JavaRuntime findSuitableJava(Collection<JavaRuntime> javaRuntimes, GameVersionNumber gameVersion, GameInstanceManifest manifest) {
         GameComponentAnalyzer analyzer = manifest != null ? GameComponentAnalyzer.analyze(manifest, gameVersion) : null;
 
-        boolean forceX86 = Architecture.SYSTEM_ARCH == Architecture.ARM64
-                && (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+        boolean forceX86 = SystemInfo.SYSTEM_ARCH == Architecture.ARM64
+                && (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS || SystemInfo.CURRENT_OS == OperatingSystem.MACOS)
                 && (gameVersion == null || gameVersion.compareTo("1.6") < 0);
 
         JavaRuntime mandatory = null;
@@ -317,7 +317,7 @@ public final class JavaManager {
                 if (!java.getArchitecture().isX86())
                     continue;
             } else {
-                if (java.getArchitecture() != Architecture.SYSTEM_ARCH)
+                if (java.getArchitecture() != SystemInfo.SYSTEM_ARCH)
                     continue;
             }
 
@@ -362,23 +362,23 @@ public final class JavaManager {
             searcher.loadCache();
 
         searcher.searchAllJavaInRepository(SystemInfo.SYSTEM_PLATFORM);
-        switch (OperatingSystem.CURRENT_OS) {
+        switch (SystemInfo.CURRENT_OS) {
             case WINDOWS:
-                if (Architecture.SYSTEM_ARCH == Architecture.X86_64)
+                if (SystemInfo.SYSTEM_ARCH == Architecture.X86_64)
                     searcher.searchAllJavaInRepository(NativePlatform.WINDOWS_X86);
-                if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+                if (SystemInfo.SYSTEM_ARCH == Architecture.ARM64) {
                     if (SystemInfo.isSupportedTranslationX86_64())
                         searcher.searchAllJavaInRepository(NativePlatform.WINDOWS_X86_64);
                     searcher.searchAllJavaInRepository(NativePlatform.WINDOWS_X86);
                 }
                 break;
             case MACOS:
-                if (Architecture.SYSTEM_ARCH == Architecture.ARM64 && SystemInfo.isSupportedTranslationX86_64())
+                if (SystemInfo.SYSTEM_ARCH == Architecture.ARM64 && SystemInfo.isSupportedTranslationX86_64())
                     searcher.searchAllJavaInRepository(NativePlatform.MACOS_X86_64);
                 break;
         }
 
-        switch (OperatingSystem.CURRENT_OS) {
+        switch (SystemInfo.CURRENT_OS) {
             case WINDOWS:
                 searcher.queryJavaInRegistryKey(WinReg.HKEY.HKEY_LOCAL_MACHINE, "SOFTWARE\\JavaSoft\\Java Runtime Environment");
                 searcher.queryJavaInRegistryKey(WinReg.HKEY.HKEY_LOCAL_MACHINE, "SOFTWARE\\JavaSoft\\Java Development Kit");
@@ -417,15 +417,15 @@ public final class JavaManager {
         }
 
         // Search Minecraft bundled runtimes
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && Architecture.SYSTEM_ARCH.isX86()) {
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS && SystemInfo.SYSTEM_ARCH.isX86()) {
             FileUtils.tryGetPath(System.getenv("localappdata"), "Packages\\Microsoft.4297127D64EC6_8wekyb3d8bbwe\\LocalCache\\Local\\runtime")
                     .ifPresent(it -> searcher.searchAllOfficialJava(it, false));
 
             FileUtils.tryGetPath(Objects.requireNonNullElse(System.getenv("ProgramFiles(x86)"), "C:\\Program Files (x86)"), "Minecraft Launcher\\runtime")
                     .ifPresent(it -> searcher.searchAllOfficialJava(it, false));
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.SYSTEM_ARCH == Architecture.X86_64) {
+        } else if (SystemInfo.CURRENT_OS == OperatingSystem.LINUX && SystemInfo.SYSTEM_ARCH == Architecture.X86_64) {
             searcher.searchAllOfficialJava(Path.of(System.getProperty("user.home"), ".minecraft/runtime"), false);
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+        } else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
             searcher.searchAllOfficialJava(Path.of(System.getProperty("user.home"), "Library/Application Support/minecraft/runtime"), false);
         }
         searcher.searchAllOfficialJava(HMCLCacheRepository.REPOSITORY.getCacheDirectory().resolve("java"), true);
@@ -436,13 +436,13 @@ public final class JavaManager {
             for (String path : paths) {
                 // https://github.com/HMCL-dev/HMCL/issues/4079
                 // https://github.com/Meloong-Git/PCL/issues/4261
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && path.toLowerCase(Locale.ROOT)
+                if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS && path.toLowerCase(Locale.ROOT)
                         .contains("\\common files\\oracle\\java\\")) {
                     continue;
                 }
 
                 try {
-                    searcher.tryAddJavaExecutable(Path.of(path, OperatingSystem.CURRENT_OS.getJavaExecutable()));
+                    searcher.tryAddJavaExecutable(Path.of(path, SystemInfo.CURRENT_OS.getJavaExecutable()));
                 } catch (InvalidPathException ignored) {
                 }
             }
@@ -743,7 +743,7 @@ public final class JavaManager {
                 }
             }
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
                 Path macPath = dir.resolve("jre.bundle/Contents/Home");
                 if (Files.exists(macPath)) {
                     tryAddJavaHome(macPath);
@@ -783,17 +783,17 @@ public final class JavaManager {
                 searchAllOfficialJava(directory, javaPlatform, verify);
             }
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
+            if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (SystemInfo.SYSTEM_ARCH == Architecture.X86_64) {
                     searchAllOfficialJava(directory, getMojangJavaPlatform(NativePlatform.WINDOWS_X86), verify);
-                } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
+                } else if (SystemInfo.SYSTEM_ARCH == Architecture.ARM64) {
                     if (SystemInfo.isSupportedTranslationX86_64()) {
                         searchAllOfficialJava(directory, getMojangJavaPlatform(NativePlatform.WINDOWS_X86_64), verify);
                     }
                     searchAllOfficialJava(directory, getMojangJavaPlatform(NativePlatform.WINDOWS_X86), verify);
                 }
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                if (Architecture.SYSTEM_ARCH == Architecture.ARM64 && SystemInfo.isSupportedTranslationX86_64()) {
+            } else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
+                if (SystemInfo.SYSTEM_ARCH == Architecture.ARM64 && SystemInfo.isSupportedTranslationX86_64()) {
                     searchAllOfficialJava(directory, getMojangJavaPlatform(NativePlatform.MACOS_X86_64), verify);
                 }
             }

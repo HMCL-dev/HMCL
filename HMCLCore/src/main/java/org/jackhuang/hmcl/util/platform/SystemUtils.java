@@ -26,6 +26,24 @@ public final class SystemUtils {
     private SystemUtils() {
     }
 
+    /// Returns the absolute application directory using the current system's home-directory convention.
+    /// Does not create the directory.
+    public static Path getWorkingDirectory(String folder) {
+        String home = System.getProperty("user.home", ".");
+        switch (SystemInfo.CURRENT_OS) {
+            case LINUX:
+            case FREEBSD:
+                return Paths.get(home, "." + folder).toAbsolutePath();
+            case WINDOWS:
+                @Nullable String appdata = System.getenv("APPDATA");
+                return Paths.get(appdata == null ? home : appdata, "." + folder).toAbsolutePath();
+            case MACOS:
+                return Paths.get(home, "Library", "Application Support", folder).toAbsolutePath();
+            default:
+                return Paths.get(home, folder).toAbsolutePath();
+        }
+    }
+
     public static @Nullable Path which(String command) {
         String path = System.getenv("PATH");
         if (path == null)

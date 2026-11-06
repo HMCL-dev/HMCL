@@ -12,6 +12,7 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +86,7 @@ public final class NativePatcher {
         final boolean useNativeGLFWorSDL = settings.getInheritable(GameSettings::useNativeGLFWorSDLProperty);
         final boolean useNativeOpenAL = settings.getInheritable(GameSettings::useNativeOpenALProperty);
 
-        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()
+        if (SystemInfo.CURRENT_OS.isLinuxOrBSD()
                 && (useNativeGLFWorSDL || useNativeOpenAL) && gameVersion.compareTo("1.19") >= 0) {
 
             manifest = manifest.withLibraries(manifest.getLibraries().stream()

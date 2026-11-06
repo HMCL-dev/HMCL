@@ -14,7 +14,7 @@ import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.UrlResponseInfo;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.tree.TarFileTree;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,7 +122,7 @@ public final class TerracottaBundle {
                         throw new ChecksumMismatchException(check.algorithm(), check.checksum(), hash);
                     }
 
-                    switch (OperatingSystem.CURRENT_OS) {
+                    switch (SystemInfo.CURRENT_OS) {
                         case LINUX, MACOS, FREEBSD -> Files.setPosixFilePermissions(path, FileUtils.parsePosixFilePermission(archive.getMode()));
                     }
                 }

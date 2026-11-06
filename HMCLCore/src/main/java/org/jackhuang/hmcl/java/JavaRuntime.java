@@ -6,6 +6,7 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNull;
 
@@ -125,7 +126,7 @@ public final class JavaRuntime implements Comparable<JavaRuntime> {
         String javaHome = System.getProperty("java.home");
         Path executable = null;
         if (javaHome != null) {
-            executable = Paths.get(javaHome, "bin", OperatingSystem.CURRENT_OS.getJavaExecutable());
+            executable = Paths.get(javaHome, "bin", SystemInfo.CURRENT_OS.getJavaExecutable());
             try {
                 executable = executable.toRealPath();
             } catch (IOException ignored) {

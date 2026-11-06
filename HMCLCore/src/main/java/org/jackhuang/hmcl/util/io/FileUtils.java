@@ -138,7 +138,7 @@ public final class FileUtils {
 
     /// @see #isNameValid(OperatingSystem, String)
     public static boolean isNameValid(String name) {
-        return isNameValid(OperatingSystem.CURRENT_OS, name);
+        return isNameValid(SystemInfo.CURRENT_OS, name);
     }
 
     /// Returns true if the given name is a valid file name on the given operating system,
@@ -208,7 +208,7 @@ public final class FileUtils {
 
     /// @see #isNameValidForJar(OperatingSystem, String)
     public static boolean isNameValidForJar(String name) {
-        return isNameValidForJar(OperatingSystem.CURRENT_OS, name);
+        return isNameValidForJar(SystemInfo.CURRENT_OS, name);
     }
 
     /// Returns true if the given name is a valid jar file name on the given operating system,
@@ -333,7 +333,7 @@ public final class FileUtils {
     }
 
     public static boolean hasKnownDesktop() {
-        if (!OperatingSystem.CURRENT_OS.isLinuxOrBSD())
+        if (!SystemInfo.CURRENT_OS.isLinuxOrBSD())
             return true;
 
         String desktops = System.getenv("XDG_CURRENT_DESKTOP");
@@ -366,7 +366,7 @@ public final class FileUtils {
      * @return false if moveToTrash does not exist, or platform does not support Desktop.Action.MOVE_TO_TRASH
      */
     public static boolean moveToTrash(Path file) {
-        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && hasKnownDesktop()) {
+        if (SystemInfo.CURRENT_OS.isLinuxOrBSD() && hasKnownDesktop()) {
             if (!Files.exists(file)) {
                 return false;
             }

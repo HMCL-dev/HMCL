@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -466,7 +467,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (FORBIDDEN_INSTANCE_IDS.contains(id))
             return false;
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS &&
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS &&
                 FORBIDDEN_INSTANCE_IDS.contains(id.toLowerCase(Locale.ROOT)))
             return false;
 
@@ -485,7 +486,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public boolean instanceIdConflicts(GameInstanceID id) {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
             // on Windows, filenames are case-insensitive
             for (HMCLGameInstance instance : getSnapshot().getInstances()) {
                 if (instance.getId().toString().equalsIgnoreCase(id.toString())) {

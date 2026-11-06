@@ -29,7 +29,7 @@ public final class CommandBuilder {
     private final List<String> external = new ArrayList<>();
 
     public CommandBuilder() {
-        this(OperatingSystem.CURRENT_OS);
+        this(SystemInfo.CURRENT_OS);
     }
 
     public CommandBuilder(OperatingSystem os) {
@@ -276,7 +276,7 @@ public final class CommandBuilder {
 
         @Override
         public @NotNull String toString() {
-            return parse ? (OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS ? toBatchStringLiteral(arg) : toShellStringLiteral(arg)) : arg;
+            return parse ? (OperatingSystem.WINDOWS == SystemInfo.CURRENT_OS ? toBatchStringLiteral(arg) : toShellStringLiteral(arg)) : arg;
         }
     }
 
@@ -285,7 +285,7 @@ public final class CommandBuilder {
     }
 
     public static boolean hasExecutionPolicy() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
+        if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS)
             return true;
         if (!SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7))
             return false;
@@ -299,7 +299,7 @@ public final class CommandBuilder {
     }
 
     public static boolean setExecutionPolicy() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
+        if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS)
             return true;
         if (!SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7))
             return false;

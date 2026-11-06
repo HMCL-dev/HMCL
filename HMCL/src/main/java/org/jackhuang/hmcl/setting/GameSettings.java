@@ -293,7 +293,7 @@ public sealed abstract class GameSettings extends ObservableSetting {
         /// Returns the path hash for a Java executable path string.
         public static String hashPathText(String javaBinaryPath) {
             String normalizedPath = javaBinaryPath.replace('\\', '/');
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                 normalizedPath = normalizedPath.toLowerCase(Locale.ROOT);
             }
             return DigestUtils.digestToString("SHA-256", normalizedPath.getBytes(StandardCharsets.UTF_8));

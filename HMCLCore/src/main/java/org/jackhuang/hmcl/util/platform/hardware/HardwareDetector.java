@@ -3,7 +3,6 @@
 package org.jackhuang.hmcl.util.platform.hardware;
 
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.OperatingSystemInfo;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -56,7 +55,7 @@ public class HardwareDetector {
     public OperatingSystemInfo detectOperatingSystemInfo() {
         String systemName = System.getProperty("os.name", "Unknown");
         String description = systemName + ' ' + SystemInfo.SYSTEM_VERSION.getVersion();
-        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+        if (SystemInfo.CURRENT_OS.isLinuxOrBSD()) {
             Path osReleaseFile = Path.of("/etc/os-release");
             try {
                 if (Files.exists(osReleaseFile)) {

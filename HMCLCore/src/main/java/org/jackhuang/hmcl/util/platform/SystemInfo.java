@@ -3,6 +3,7 @@
 package org.jackhuang.hmcl.util.platform;
 
 import org.jackhuang.hmcl.util.DataSizeUnit;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.DeviceInfo;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
@@ -15,6 +16,7 @@ import org.jackhuang.hmcl.util.platform.macos.MacOSHardwareDetector;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.platform.windows.WindowsHardwareDetector;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -27,6 +29,7 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,6 +38,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// Provides cached operating system and hardware information and current physical memory usage.
 @NotNullByDefault
 public final class SystemInfo {
+
+    /// The operating system reported by the current JVM.
+    public static final OperatingSystem CURRENT_OS = OperatingSystem.parseOSName(System.getProperty("os.name"));
 
     /// The charset used for native text, honoring the `hmcl.native.encoding` override.
     public static final Charset NATIVE_CHARSET;
@@ -69,7 +75,7 @@ public final class SystemInfo {
         }
         NATIVE_CHARSET = nativeCharset;
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+        if (CURRENT_OS == OperatingSystem.WINDOWS) {
             int codePage = -1;
             @Nullable OSVersion.Windows windowsVersion = null;
 
@@ -146,16 +152,79 @@ public final class SystemInfo {
             SYSTEM_VERSION = windowsVersion;
             CODE_PAGE = codePage;
         } else {
-            SYSTEM_VERSION = OSVersion.of(OperatingSystem.CURRENT_OS, System.getProperty("os.version", "Unknown"));
+            SYSTEM_VERSION = OSVersion.of(CURRENT_OS, System.getProperty("os.version", "Unknown"));
             CODE_PAGE = -1;
         }
     }
 
+    /// The current JVM architecture, including native byte-order and ABI refinements.
+    public static final Architecture CURRENT_ARCH;
+
+    /// The host architecture, falling back to the JVM architecture when detection fails.
+    public static final Architecture SYSTEM_ARCH;
+
+    static {
+        CURRENT_ARCH = detectArchitecture(System.getProperty("os.arch"));
+
+        @Nullable Architecture sysArch = null;
+        if (CURRENT_OS == OperatingSystem.WINDOWS) {
+            @Nullable String processorIdentifier = System.getenv("PROCESSOR_IDENTIFIER");
+            if (processorIdentifier != null) {
+                int idx = processorIdentifier.indexOf(' ');
+                if (idx > 0) {
+                    sysArch = detectArchitecture(processorIdentifier.substring(0, idx));
+                }
+            }
+        } else if (CURRENT_OS == OperatingSystem.MACOS) {
+            if (CURRENT_ARCH == Architecture.X86_64) {
+                try {
+                    Process process = Runtime.getRuntime().exec(new String[]{"/usr/sbin/sysctl", "-n", "sysctl.proc_translated"});
+                    if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0
+                            && "1".equals(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim())) {
+                        sysArch = Architecture.ARM64;
+                    }
+                } catch (Throwable e) {
+                    e.printStackTrace(System.err);
+                }
+            }
+        } else {
+            for (String uname : new String[]{
+                    "/bin/uname",
+                    "/usr/bin/uname"
+            }) {
+                if (Files.exists(Path.of(uname))) {
+                    try {
+                        Process process = Runtime.getRuntime().exec(new String[]{uname, "-m"});
+                        if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0) {
+                            sysArch = detectArchitecture(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim());
+                        }
+                    } catch (Throwable e) {
+                        e.printStackTrace(System.err);
+                    }
+                    break;
+                }
+            }
+        }
+
+        SYSTEM_ARCH = sysArch == null || sysArch == Architecture.UNKNOWN ? CURRENT_ARCH : sysArch;
+    }
+
+    /// Resolves ambiguous architecture names using the current JVM byte order and kernel version.
+    private static Architecture detectArchitecture(@Nullable String name) {
+        Architecture architecture = Architecture.parseArchName(name);
+        if (architecture == Architecture.PPC64 && "little".equals(System.getProperty("sun.cpu.endian")))
+            return Architecture.PPC64LE;
+        if (architecture == Architecture.LOONGARCH64
+                && VersionNumber.compare(System.getProperty("os.version", "0"), "5.19") < 0)
+            return Architecture.LOONGARCH64_OW;
+        return architecture;
+    }
+
     /// The operating system and architecture of the current JVM.
-    public static final NativePlatform CURRENT_PLATFORM = NativePlatform.of(OperatingSystem.CURRENT_OS, Architecture.CURRENT_ARCH);
+    public static final NativePlatform CURRENT_PLATFORM = NativePlatform.of(CURRENT_OS, CURRENT_ARCH);
 
     /// The operating system and native architecture of the host system.
-    public static final NativePlatform SYSTEM_PLATFORM = NativePlatform.of(OperatingSystem.CURRENT_OS, Architecture.SYSTEM_ARCH);
+    public static final NativePlatform SYSTEM_PLATFORM = NativePlatform.of(CURRENT_OS, SYSTEM_ARCH);
 
     /// Whether the ARM64 host supports executing x86-64 applications through translation.
     private static final boolean SUPPORTED_TRANSLATION_X86_64;
@@ -178,7 +247,7 @@ public final class SystemInfo {
 
     /// Returns whether a Wine environment variable is present on Windows.
     public static boolean isRunningUnderWine() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+        if (CURRENT_OS != OperatingSystem.WINDOWS) {
             return false;
         }
 
@@ -203,11 +272,11 @@ public final class SystemInfo {
         public static final HardwareDetector DETECTOR;
 
         static {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+            if (CURRENT_OS == OperatingSystem.WINDOWS)
                 DETECTOR = new WindowsHardwareDetector();
-            else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
+            else if (CURRENT_OS == OperatingSystem.LINUX)
                 DETECTOR = new LinuxHardwareDetector();
-            else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+            else if (CURRENT_OS == OperatingSystem.MACOS)
                 DETECTOR = new MacOSHardwareDetector();
             else
                 DETECTOR = new HardwareDetector();
@@ -281,7 +350,7 @@ public final class SystemInfo {
         if (totalMemorySize > 0 && usedMemorySize > 0)
             builder.append(" (").append((int) (((double) usedMemorySize / totalMemorySize) * 100)).append("%)");
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+        if (CURRENT_OS == OperatingSystem.WINDOWS) {
             long pageFileSize = getTotalPageFileSize();
             builder.append("\n - Page Files (Current Capacity): ")
                     .append(pageFileSize >= 0 ? DataSizeUnit.format(pageFileSize) : "Unknown");

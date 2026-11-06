@@ -7,6 +7,7 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.NativePlatform;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,7 @@ public final class JavaVersionConstraintTest {
     /// Modern manifest requirements suppress the ceiling for both discovery and explicit runtime validation.
     @Test
     public void testModernRequirementsTakePrecedence() {
-        assumeTrue(OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.SYSTEM_ARCH == Architecture.X86_64);
+        assumeTrue(SystemInfo.CURRENT_OS == OperatingSystem.LINUX && SystemInfo.SYSTEM_ARCH == Architecture.X86_64);
         for (int major : List.of(17, 25)) {
             GameInstanceManifest manifest = new GameInstanceManifest(new GameInstanceID("modern"))
                     .withJavaVersion(new GameJavaVersion("test", major));
@@ -54,7 +55,7 @@ public final class JavaVersionConstraintTest {
     public void testLegacyRequirementsRetainCeiling() {
         GameInstanceManifest manifest = new GameInstanceManifest(new GameInstanceID("legacy"));
         GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, GAME);
-        boolean affectedPlatform = OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.SYSTEM_ARCH == Architecture.X86_64;
+        boolean affectedPlatform = SystemInfo.CURRENT_OS == OperatingSystem.LINUX && SystemInfo.SYSTEM_ARCH == Architecture.X86_64;
         for (int major : List.of(0, 8, -1)) {
             @Nullable GameInstanceManifest candidate = major == -1 ? null
                     : major == 0 ? manifest : manifest.withJavaVersion(GameJavaVersion.JAVA_8);
@@ -68,7 +69,7 @@ public final class JavaVersionConstraintTest {
     /// Newer games, other runtime architectures, and Cleanroom remain exempt.
     @Test
     public void testExistingExemptions() {
-        assumeTrue(OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.SYSTEM_ARCH == Architecture.X86_64);
+        assumeTrue(SystemInfo.CURRENT_OS == OperatingSystem.LINUX && SystemInfo.SYSTEM_ARCH == Architecture.X86_64);
         GameInstanceManifest manifest = new GameInstanceManifest(new GameInstanceID("legacy"));
         GameComponentAnalyzer analyzer = GameComponentAnalyzer.analyze(manifest, GAME);
         assertFalse(JavaVersionConstraint.VANILLA_LINUX_JAVA_8.appliesToVersion(

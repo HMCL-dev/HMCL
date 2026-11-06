@@ -5,7 +5,7 @@ package org.jackhuang.hmcl.launch;
 import org.jackhuang.hmcl.util.Log4jLevel;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import java.util.Collection;
 import java.util.List;
@@ -52,7 +52,7 @@ final class ExitWaiter implements Runnable {
             } else if (exitCode != 0 || StringUtils.containsOne(errorLines,
                     "Crash report saved to", "Could not save crash report to", "This crash report has been saved to:",
                     "Unable to launch", "An exception was thrown, the game will display an error screen and halt.")) {
-                if (exitCode == 137 && OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+                if (exitCode == 137 && SystemInfo.CURRENT_OS.isLinuxOrBSD()) {
                     exitType = ProcessListener.ExitType.SIGKILL;
                 } else {
                     exitType = ProcessListener.ExitType.APPLICATION_ERROR;

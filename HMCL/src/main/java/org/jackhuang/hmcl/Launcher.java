@@ -98,7 +98,7 @@ public final class Launcher extends Application {
             initializeSettingsRuntime();
 
             // https://lapcatsoftware.com/articles/app-translocation.html
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+            if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS
                     && SettingsManager.isNewlyCreated()
                     && System.getProperty("user.dir").startsWith("/private/var/folders/")) {
                 if (!confirmWithCountdown(AlertType.WARNING, i18n("fatal.mac_app_translocation"), 5))
@@ -226,18 +226,18 @@ public final class Launcher extends Application {
                 return true;
         }
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
             return configPath.contains("\\Temporary Internet Files\\")
                     || configPath.contains("\\INetCache\\")
                     || configPath.contains("\\$Recycle.Bin\\")
                     || configPath.contains("\\recycler\\");
-        } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+        } else if (SystemInfo.CURRENT_OS.isLinuxOrBSD()) {
             return configPath.startsWith("/tmp/")
                     || configPath.startsWith("/var/tmp/")
                     || configPath.startsWith("/var/cache/")
                     || configPath.startsWith("/dev/shm/")
                     || configPath.contains("/Trash/");
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+        } else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
             return configPath.startsWith("/var/folders/")
                     || configPath.startsWith("/private/var/folders/")
                     || configPath.startsWith("/tmp/")
@@ -275,21 +275,21 @@ public final class Launcher extends Application {
 
         try {
             LOG.info("*** " + Metadata.TITLE + " ***");
-            LOG.info("Operating System: " + OperatingSystem.CURRENT_OS);
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            LOG.info("Operating System: " + SystemInfo.CURRENT_OS);
+            if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                 LOG.info("Processor Identifier: " + System.getenv("PROCESSOR_IDENTIFIER"));
             }
-            LOG.info("System Architecture: " + Architecture.SYSTEM_ARCH.getDisplayName());
+            LOG.info("System Architecture: " + SystemInfo.SYSTEM_ARCH.getDisplayName());
             try {
                 LOG.info("Process PID: " + ProcessHandle.current().pid());
             } catch (UnsupportedOperationException ignored) {
             }
             LOG.info("Native Encoding: " + SystemInfo.NATIVE_CHARSET);
             LOG.info("JNU Encoding: " + System.getProperty("sun.jnu.encoding"));
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                 LOG.info("Code Page: " + SystemInfo.CODE_PAGE);
             }
-            LOG.info("Java Architecture: " + Architecture.CURRENT_ARCH.getDisplayName());
+            LOG.info("Java Architecture: " + SystemInfo.CURRENT_ARCH.getDisplayName());
             LOG.info("Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor"));
             LOG.info("Java VM Version: " + System.getProperty("java.vm.name") + " (" + System.getProperty("java.vm.info") + "), " + System.getProperty("java.vm.vendor"));
             LOG.info("Java Home: " + System.getProperty("java.home"));
@@ -310,7 +310,7 @@ public final class Launcher extends Application {
             } catch (NoClassDefFoundError ignored) {
             }
             LOG.info("Native Backend: " + (NativeUtils.USE_JNA ? "JNA" : "None"));
-            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            if (SystemInfo.CURRENT_OS.isLinuxOrBSD()) {
                 LOG.info("XDG Session Type: " + System.getenv("XDG_SESSION_TYPE"));
                 LOG.info("XDG Current Desktop: " + System.getenv("XDG_CURRENT_DESKTOP"));
             }
@@ -370,7 +370,7 @@ public final class Launcher extends Application {
 
     /// Sets the process-level AppUserModelID on Windows so the launcher groups correctly on the taskbar.
     private static void setupWindowsAppUserModelID() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
+        if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS)
             return;
         if (!NativeUtils.USE_JNA || Shell32.INSTANCE == null)
             return;
@@ -425,7 +425,7 @@ public final class Launcher extends Application {
             if (Boolean.TRUE.equals(settings().animationDisabledProperty().get()))
                 break setUpAnimationFrameRate;
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                 if (NativeUtils.USE_JNA && Gdi32.INSTANCE != null && User32.INSTANCE != null) {
                     @Nullable Pointer pointer = User32.INSTANCE.GetDC(Pointer.NULL);
                     if (pointer != null) {
@@ -450,7 +450,7 @@ public final class Launcher extends Application {
         float uiScaleLowerBound;
         float uiScaleUpperBound;
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
             // JavaFX behavior may be abnormal when the DPI scaling factor is too high
             uiScaleLowerBound = 0.25f;
             uiScaleUpperBound = 4f;
@@ -476,7 +476,7 @@ public final class Launcher extends Application {
             } catch (Throwable e) {
                 LOG.warning("Invalid UI scale: " + uiScale);
             }
-        } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+        } else if (SystemInfo.CURRENT_OS.isLinuxOrBSD()) {
             String xdgSessionType = Objects.requireNonNullElse(System.getenv("XDG_SESSION_TYPE"), "");
             String xdgCurrentDesktop = Objects.requireNonNullElse(System.getenv("XDG_CURRENT_DESKTOP"), "");
 
@@ -517,9 +517,9 @@ public final class Launcher extends Application {
 
         if (Float.isFinite(scaleValue)) {
             if (scaleValue >= uiScaleLowerBound && scaleValue <= uiScaleUpperBound) {
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS) {
                     System.getProperties().putIfAbsent("glass.win.uiScale", uiScale);
-                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                } else if (SystemInfo.CURRENT_OS == OperatingSystem.MACOS) {
                     LOG.warning("macOS does not support setting UI scale, so it will be ignored");
                 } else {
                     System.getProperties().putIfAbsent("glass.gtk.uiScale", uiScale);
@@ -531,7 +531,7 @@ public final class Launcher extends Application {
     }
 
     private static void checkConfigOwner() {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS)
             return;
 
         String userName = System.getProperty("user.name");
@@ -584,7 +584,7 @@ public final class Launcher extends Application {
     }
 
     private static @Nullable Boolean isRootUser() {
-        switch (OperatingSystem.CURRENT_OS) {
+        switch (SystemInfo.CURRENT_OS) {
             case WINDOWS -> {
                 WinReg reg = WinReg.INSTANCE;
 
@@ -631,7 +631,7 @@ public final class Launcher extends Application {
             }
         }
 
-        if (OperatingSystem.CURRENT_OS.isUnixLike()) {
+        if (SystemInfo.CURRENT_OS.isUnixLike()) {
             @Nullable Path id = SystemUtils.which("id");
             if (id != null) {
                 try {

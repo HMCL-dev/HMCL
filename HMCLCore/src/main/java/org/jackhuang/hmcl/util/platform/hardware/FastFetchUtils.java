@@ -34,7 +34,7 @@ final class FastFetchUtils {
 
     /// Runs Fastfetch for one module, returning `null` if execution or response parsing fails.
     private static <T> @Nullable T get(String type, TypeToken<T> resultType) {
-        @Nullable Path fastfetch = SystemUtils.which(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "fastfetch.exe" : "fastfetch");
+        @Nullable Path fastfetch = SystemUtils.which(SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS ? "fastfetch.exe" : "fastfetch");
         if (fastfetch == null)
             return null;
 

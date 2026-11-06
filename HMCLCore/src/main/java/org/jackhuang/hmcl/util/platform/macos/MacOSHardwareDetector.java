@@ -41,7 +41,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
     /// or when no valid value is available. Interrupted queries restore the interrupt flag and stop detection.
     @Override
     public @Nullable MacDeviceInfo detectDeviceInfo() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS)
+        if (SystemInfo.CURRENT_OS != OperatingSystem.MACOS)
             return null;
 
         try {
@@ -99,14 +99,14 @@ public final class MacOSHardwareDetector extends HardwareDetector {
     /// Detects macOS processors, using the default detector when native information is unavailable.
     @Override
     public @Unmodifiable List<CentralProcessor> detectCentralProcessors() {
-        @Unmodifiable List<CentralProcessor> processors = OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ? MacOSCPUDetector.detect() : List.of();
+        @Unmodifiable List<CentralProcessor> processors = SystemInfo.CURRENT_OS == OperatingSystem.MACOS ? MacOSCPUDetector.detect() : List.of();
         return processors.isEmpty() ? super.detectCentralProcessors() : processors;
     }
 
     /// Returns an immutable graphics card list, empty if detection is unsupported or fails.
     @Override
     public @Unmodifiable List<GraphicsCard> detectGraphicsCards() {
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS)
+        if (SystemInfo.CURRENT_OS != OperatingSystem.MACOS)
             return List.of();
 
         @Nullable String json = null;

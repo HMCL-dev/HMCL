@@ -71,7 +71,7 @@ final class NativeWindowDecorationTest {
                 @Nullable NativeWindowDecoration forced = NativeWindowDecoration.create();
                 assertEquals(supported, forced != null);
 
-                boolean automatic = supported && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS
+                boolean automatic = supported && (SystemInfo.CURRENT_OS == OperatingSystem.MACOS
                         || SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11));
                 System.setProperty("hmcl.nativeDecoration", " AUTO ");
                 @Nullable NativeWindowDecoration decoration = NativeWindowDecoration.create();

@@ -2,14 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later WITH AdditionRef-HMCL
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Nullable;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
 import static org.jackhuang.hmcl.util.platform.Bits.BIT_32;
 import static org.jackhuang.hmcl.util.platform.Bits.BIT_64;
@@ -76,10 +71,10 @@ public enum Architecture {
         return this == ARM32 || this == ARM64;
     }
 
-    public static final Architecture CURRENT_ARCH;
-    public static final Architecture SYSTEM_ARCH;
-
-    public static Architecture parseArchName(String value) {
+    /// Parses an architecture name without consulting the current system.
+    /// Unqualified PowerPC names are big-endian; `loongarch64` denotes the new-world ABI.
+    /// Returns unknown for null or unrecognized input.
+    public static Architecture parseArchName(@Nullable String value) {
         if (value == null) {
             return UNKNOWN;
         }
@@ -141,7 +136,7 @@ public enum Architecture {
                 return SPARC;
             case "ppc64":
             case "powerpc64":
-                return "little".equals(System.getProperty("sun.cpu.endian")) ? PPC64LE : PPC64;
+                return PPC64;
             case "ppc64le":
             case "powerpc64le":
                 return PPC64LE;
@@ -161,14 +156,10 @@ public enum Architecture {
                 return S390X;
             case "loongarch32":
                 return LOONGARCH32;
-            case "loongarch64": {
-                if (VersionNumber.compare(System.getProperty("os.version"), "5.19") < 0)
-                    return LOONGARCH64_OW;
+            case "loongarch64":
                 return LOONGARCH64;
-            }
-            case "loongarch64_ow": {
+            case "loongarch64_ow":
                 return LOONGARCH64_OW;
-            }
             default:
                 if (value.startsWith("armv7")) {
                     return ARM32;
@@ -178,52 +169,5 @@ public enum Architecture {
                 }
                 return UNKNOWN;
         }
-    }
-
-    static {
-        CURRENT_ARCH = parseArchName(System.getProperty("os.arch"));
-
-        // Architecture probes return ASCII tokens and must not depend on SystemInfo initialization.
-        Architecture sysArch = null;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            String processorIdentifier = System.getenv("PROCESSOR_IDENTIFIER");
-            if (processorIdentifier != null) {
-                int idx = processorIdentifier.indexOf(' ');
-                if (idx > 0) {
-                    sysArch = parseArchName(processorIdentifier.substring(0, idx));
-                }
-            }
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-            if (CURRENT_ARCH == X86_64) {
-                try {
-                    Process process = Runtime.getRuntime().exec(new String[]{"/usr/sbin/sysctl", "-n", "sysctl.proc_translated"});
-                    if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0
-                            && "1".equals(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim())) {
-                        sysArch = ARM64;
-                    }
-                } catch (Throwable e) {
-                    e.printStackTrace(System.err);
-                }
-            }
-        } else {
-            for (String uname : new String[]{
-                    "/bin/uname",
-                    "/usr/bin/uname"
-            }) {
-                if (Files.exists(Path.of(uname))) {
-                    try {
-                        Process process = Runtime.getRuntime().exec(new String[]{uname, "-m"});
-                        if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0) {
-                            sysArch = parseArchName(IOUtils.readFullyAsString(process.getInputStream(), StandardCharsets.US_ASCII).trim());
-                        }
-                    } catch (Throwable e) {
-                        e.printStackTrace(System.err);
-                    }
-                    break;
-                }
-            }
-        }
-
-        SYSTEM_ARCH = sysArch == null || sysArch == UNKNOWN ? CURRENT_ARCH : sysArch;
     }
 }

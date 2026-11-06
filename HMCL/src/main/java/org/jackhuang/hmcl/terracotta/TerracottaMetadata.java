@@ -15,9 +15,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OSVersion;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
@@ -114,7 +112,7 @@ public final class TerracottaMetadata {
 
         LATEST = config.latest;
 
-        Options options = new Options(config.latest, OperatingSystem.CURRENT_OS.getCheckedName() + "-" + Architecture.SYSTEM_ARCH.getCheckedName());
+        Options options = new Options(config.latest, SystemInfo.CURRENT_OS.getCheckedName() + "-" + SystemInfo.SYSTEM_ARCH.getCheckedName());
         TerracottaBundle bundle = config.resolve(options);
         AbstractTerracottaProvider provider;
         if (bundle == null || (provider = locateProvider(bundle, options)) == null) {
@@ -139,7 +137,7 @@ public final class TerracottaMetadata {
 
         // FIXME: As HMCL is a cross-platform application, developers may mistakenly locate
         //        non-existent files in non-native platform logic without assertion errors during debugging.
-        return switch (OperatingSystem.CURRENT_OS) {
+        return switch (SystemInfo.CURRENT_OS) {
             case WINDOWS -> {
                 if (!SystemInfo.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
                     yield null;

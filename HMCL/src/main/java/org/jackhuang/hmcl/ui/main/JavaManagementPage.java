@@ -66,7 +66,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         FXUtils.applyDragListener(this, it -> {
             String name = FileUtils.getName(it);
-            return Files.isDirectory(it) || name.endsWith(".zip") || name.endsWith(".tar.gz") || name.equals(OperatingSystem.CURRENT_OS.getJavaExecutable());
+            return Files.isDirectory(it) || name.endsWith(".zip") || name.endsWith(".tar.gz") || name.equals(SystemInfo.CURRENT_OS.getJavaExecutable());
         }, files -> {
             for (Path file : files) {
                 if (Files.isDirectory(file)) {
@@ -74,7 +74,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                 } else {
                     String fileName = FileUtils.getName(file);
 
-                    if (fileName.equals(OperatingSystem.CURRENT_OS.getJavaExecutable())) {
+                    if (fileName.equals(SystemInfo.CURRENT_OS.getJavaExecutable())) {
                         onAddJavaBinary(file);
                     } else if (fileName.endsWith(".zip") || fileName.endsWith(".tar.gz")) {
                         onInstallArchive(file);
@@ -93,7 +93,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
     void onAddJava() {
         FileChooser chooser = new FileChooser();
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
+        if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS)
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe"));
         chooser.setTitle(i18n("settings.game.java_directory.choose"));
         Path file = Controllers.showOpenDialog(chooser);
@@ -128,7 +128,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             Path releaseFile = file.resolve("release");
             if (Files.notExists(releaseFile))
                 throw new IOException("Missing release file " + releaseFile);
-            return JavaManager.getAddJavaTask(file.resolve("bin").resolve(OperatingSystem.CURRENT_OS.getJavaExecutable()));
+            return JavaManager.getAddJavaTask(file.resolve("bin").resolve(SystemInfo.CURRENT_OS.getJavaExecutable()));
         }).whenComplete(Schedulers.javafx(), exception -> {
             if (exception != null) {
                 LOG.warning("Failed to add java", exception);

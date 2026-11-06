@@ -189,7 +189,7 @@ public final class LauncherHelper {
                                 }
                             }),
                             Task.composeAsync(() -> {
-                                if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS
+                                if (SystemInfo.CURRENT_OS != OperatingSystem.WINDOWS
                                         || !(setting.getRenderer(gameInstance.getVersion()) instanceof Renderer.Driver renderer)
                                         || renderer.mesaDriverName() == null)
                                     return null;
@@ -254,7 +254,7 @@ public final class LauncherHelper {
                         launchOptionsBuilder.setQuickPlayOption(quickPlayOption);
                     }
 
-                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && setting.getInheritable(GameSettings::highPerformanceProperty)) {
+                    if (SystemInfo.CURRENT_OS == OperatingSystem.WINDOWS && setting.getInheritable(GameSettings::highPerformanceProperty)) {
                         @Nullable String javaPathGpuReg = FileUtils.getAbsolutePath(context.javaExecutable);
                         try {
                             WinReg reg = WinReg.INSTANCE;
@@ -621,7 +621,7 @@ public final class LauncherHelper {
 
                 List<String> suggestions = new ArrayList<>();
 
-                if (Architecture.SYSTEM_ARCH == Architecture.X86_64 && java.getPlatform().arch() == Architecture.X86) {
+                if (SystemInfo.SYSTEM_ARCH == Architecture.X86_64 && java.getPlatform().arch() == Architecture.X86) {
                     suggestions.add(i18n("launch.advice.different_platform"));
                 }
 
