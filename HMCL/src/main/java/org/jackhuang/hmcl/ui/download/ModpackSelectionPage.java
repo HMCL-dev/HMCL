@@ -14,7 +14,6 @@ import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
 import org.glavo.url.WebURL;
 import org.jackhuang.hmcl.game.GameInstanceID;
-import org.jackhuang.hmcl.game.HMCLGameInstance;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.modpack.server.ServerModpackManifest;
 import org.jackhuang.hmcl.task.FileDownloadTask;
