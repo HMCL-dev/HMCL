@@ -209,17 +209,6 @@ public final class SystemInfo {
         SYSTEM_ARCH = sysArch == null || sysArch == Architecture.UNKNOWN ? CURRENT_ARCH : sysArch;
     }
 
-    /// Resolves ambiguous architecture names using the current JVM byte order and kernel version.
-    private static Architecture detectArchitecture(@Nullable String name) {
-        Architecture architecture = Architecture.parseArchName(name);
-        if (architecture == Architecture.PPC64 && "little".equals(System.getProperty("sun.cpu.endian")))
-            return Architecture.PPC64LE;
-        if (architecture == Architecture.LOONGARCH64
-                && VersionNumber.compare(System.getProperty("os.version", "0"), "5.19") < 0)
-            return Architecture.LOONGARCH64_OW;
-        return architecture;
-    }
-
     /// The operating system and architecture of the current JVM.
     public static final NativePlatform CURRENT_PLATFORM = NativePlatform.of(CURRENT_OS, CURRENT_ARCH);
 
@@ -238,31 +227,6 @@ public final class SystemInfo {
         } else {
             SUPPORTED_TRANSLATION_X86_64 = false;
         }
-    }
-
-    /// Returns whether the ARM64 host supports x86-64 translation based on Windows build or Rosetta availability.
-    public static boolean isSupportedTranslationX86_64() {
-        return SUPPORTED_TRANSLATION_X86_64;
-    }
-
-    /// Returns whether a Wine environment variable is present on Windows.
-    public static boolean isRunningUnderWine() {
-        if (CURRENT_OS != OperatingSystem.WINDOWS) {
-            return false;
-        }
-
-        String @Unmodifiable [] wineEnvVars = {
-                "WINEPREFIX",
-                "WINELOADER",
-                "WINEDLLPATH"
-        };
-
-        for (String var : wineEnvVars) {
-            if (System.getenv(var) != null) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /// Lazily initializes the platform detector and cached system information.
@@ -374,6 +338,62 @@ public final class SystemInfo {
         return Holder.OPERATING_SYSTEM.description();
     }
 
+    /// Returns the cached desktop environment description, or `null` if detection is unsupported or no name is available.
+    ///
+    /// The description includes the session type when supplied by the platform detector.
+    /// The result is detected once during initialization of the cached system information and is not refreshed.
+    public static @Nullable String getDesktopEnvironment() {
+        return Holder.DESKTOP;
+    }
+
+    /// Returns whether the ARM64 host supports x86-64 translation based on Windows build or Rosetta availability.
+    public static boolean isSupportedTranslationX86_64() {
+        return SUPPORTED_TRANSLATION_X86_64;
+    }
+
+    /// Returns whether a Wine environment variable is present on Windows.
+    public static boolean isRunningUnderWine() {
+        if (CURRENT_OS != OperatingSystem.WINDOWS) {
+            return false;
+        }
+
+        String @Unmodifiable [] wineEnvVars = {
+                "WINEPREFIX",
+                "WINELOADER",
+                "WINEDLLPATH"
+        };
+
+        for (String var : wineEnvVars) {
+            if (System.getenv(var) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// Returns the cached device identity, or `null` if unavailable or unsupported.
+    ///
+    /// This describes the hardware product, not the user-configured hostname.
+    /// Detection runs once during initialization of the cached system information.
+    public static @Nullable DeviceInfo getDeviceInfo() {
+        return Holder.DEVICE_INFO;
+    }
+
+    /// Returns a nonempty immutable list of processor snapshots in stable order.
+    ///
+    /// Sources without package topology may provide only the first processor identity.
+    /// If detection returns no processors, a synthetic `Unknown` processor with no vendor is supplied.
+    /// For a single entry with no core counts, logical and performance counts use [Runtime#availableProcessors()].
+    /// These display estimates do not establish the hardware's physical core count or package topology.
+    public static @Unmodifiable List<CentralProcessor> getCentralProcessors() {
+        return Holder.CENTRAL_PROCESSORS;
+    }
+
+    /// Returns the cached immutable graphics card list, empty if no cards were reported or detection failed.
+    public static @Unmodifiable List<GraphicsCard> getGraphicsCards() {
+        return Holder.GRAPHICS_CARDS;
+    }
+
     /// Returns a snapshot using the cached total and currently available physical memory.
     ///
     /// Returns [PhysicalMemoryStatus#INVALID] if the total is non-positive or available memory is negative.
@@ -389,18 +409,6 @@ public final class SystemInfo {
     /// Returns the cached total physical memory size in bytes, or zero if detection is unsupported.
     public static long getTotalMemorySize() {
         return Holder.TOTAL_MEMORY;
-    }
-
-    /// Queries current page file capacity in bytes without caching it.
-    ///
-    /// Returns zero when no page files exist, or -1 if unsupported or detection fails.
-    public static long getTotalPageFileSize() {
-        return Holder.DETECTOR.getTotalPageFileSize();
-    }
-
-    /// Queries configured page file sizing policy without caching; changes may require a restart.
-    public static PageFileConfiguration getPageFileConfiguration() {
-        return Holder.DETECTOR.getPageFileConfiguration();
     }
 
     /// Queries the available physical memory in bytes, including reclaimable memory where supported.
@@ -421,35 +429,27 @@ public final class SystemInfo {
         return Long.max(0, totalMemorySize - getFreeMemorySize());
     }
 
-    /// Returns a nonempty immutable list of processor snapshots in stable order.
+    /// Queries current page file capacity in bytes without caching it.
     ///
-    /// Sources without package topology may provide only the first processor identity.
-    /// If detection returns no processors, a synthetic `Unknown` processor with no vendor is supplied.
-    /// For a single entry with no core counts, logical and performance counts use [Runtime#availableProcessors()].
-    /// These display estimates do not establish the hardware's physical core count or package topology.
-    public static @Unmodifiable List<CentralProcessor> getCentralProcessors() {
-        return Holder.CENTRAL_PROCESSORS;
+    /// Returns zero when no page files exist, or -1 if unsupported or detection fails.
+    public static long getTotalPageFileSize() {
+        return Holder.DETECTOR.getTotalPageFileSize();
     }
 
-    /// Returns the cached immutable graphics card list, empty if no cards were reported or detection failed.
-    public static @Unmodifiable List<GraphicsCard> getGraphicsCards() {
-        return Holder.GRAPHICS_CARDS;
+    /// Queries configured page file sizing policy without caching; changes may require a restart.
+    public static PageFileConfiguration getPageFileConfiguration() {
+        return Holder.DETECTOR.getPageFileConfiguration();
     }
 
-    /// Returns the cached device identity, or `null` if unavailable or unsupported.
-    ///
-    /// This describes the hardware product, not the user-configured hostname.
-    /// Detection runs once during initialization of the cached system information.
-    public static @Nullable DeviceInfo getDeviceInfo() {
-        return Holder.DEVICE_INFO;
-    }
-
-    /// Returns the cached desktop environment description, or `null` if detection is unsupported or no name is available.
-    ///
-    /// The description includes the session type when supplied by the platform detector.
-    /// The result is detected once during initialization of the cached system information and is not refreshed.
-    public static @Nullable String getDesktopEnvironment() {
-        return Holder.DESKTOP;
+    /// Resolves ambiguous architecture names using the current JVM byte order and kernel version.
+    private static Architecture detectArchitecture(@Nullable String name) {
+        Architecture architecture = Architecture.parseArchName(name);
+        if (architecture == Architecture.PPC64 && "little".equals(System.getProperty("sun.cpu.endian")))
+            return Architecture.PPC64LE;
+        if (architecture == Architecture.LOONGARCH64
+                && VersionNumber.compare(System.getProperty("os.version", "0"), "5.19") < 0)
+            return Architecture.LOONGARCH64_OW;
+        return architecture;
     }
 
     /// Prevents instantiation of this utility class.
